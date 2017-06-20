@@ -704,3 +704,67 @@ cdef void predict_sample{{name}}({{c_type}}* x_data_ptr, int* x_ind_ptr, int xnn
 
 
 {{endfor}}
+
+
+def _multinomial_grad_loss_all_samples(
+        SequentialDataset64 dataset,
+        np.ndarray[double, ndim=2, mode='c'] weights_array,
+        np.ndarray[double, ndim=1, mode='c'] intercept_array,
+        int n_samples, int n_features, int n_classes):
+    """Compute multinomial gradient and loss across all samples.
+
+    Used for testing purpose only.
+    """
+    cdef double* weights = <double * >weights_array.data
+    cdef double* intercept = <double * >intercept_array.data
+
+    cdef double *x_data_ptr = NULL
+    cdef int *x_ind_ptr = NULL
+    cdef int xnnz = -1
+    cdef double y
+    cdef double sample_weight
+
+    cdef double wscale = 1.0
+    cdef int i, j, class_ind, feature_ind
+    cdef double val
+    cdef double sum_loss = 0.0
+
+    cdef MultinomialLogLoss64 multiloss = MultinomialLogLoss64()
+
+    cdef np.ndarray[double, ndim=2] sum_gradient_array = \
+        np.zeros((n_features, n_classes), dtype=np.double, order="c")
+    cdef double* sum_gradient = <double*> sum_gradient_array.data
+
+    cdef np.ndarray[double, ndim=1] prediction_array = \
+        np.zeros(n_classes, dtype=np.double, order="c")
+    cdef double* prediction = <double*> prediction_array.data
+
+    cdef np.ndarray[double, ndim=1] gradient_array = \
+        np.zeros(n_classes, dtype=np.double, order="c")
+    cdef double* gradient = <double*> gradient_array.data
+
+    with nogil:
+        for i in range(n_samples):
+            # get next sample on the dataset
+            dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz,
+                         &y, &sample_weight)
+
+            # prediction of the multinomial classifier for the sample
+            predict_sample64(x_data_ptr, x_ind_ptr, xnnz, weights, wscale,
+                           intercept, prediction, n_classes)
+
+            # compute the gradient for this sample, given the prediction
+            multiloss._dloss(prediction, y, n_classes, sample_weight, gradient)
+
+            # compute the loss for this sample, given the prediction
+            sum_loss += multiloss._loss(prediction, y, n_classes, sample_weight)
+
+            # update the sum of the gradient
+            for j in range(xnnz):
+                feature_ind = x_ind_ptr[j]
+                val = x_data_ptr[j]
+                for class_ind in range(n_classes):
+                    sum_gradient[feature_ind * n_classes + class_ind] += \
+                        gradient[class_ind] * val
+
+    return sum_loss, sum_gradient_array
