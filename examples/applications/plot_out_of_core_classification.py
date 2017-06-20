@@ -194,7 +194,7 @@ def stream_reuters_documents(data_path=None):
 # maximum
 
 vectorizer = HashingVectorizer(decode_error='ignore', n_features=2 ** 18,
-                               non_negative=True)
+                               alternate_sign=False)
 
 
 # Iterator over parsed Reuters SGML files.
