@@ -180,7 +180,7 @@ following rules before submitting:
 
 -  Please include your operating system type and version number, as well
    as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by runnning the following code snippet:
+   can be found by running the following code snippet:
 
   ```python
   import platform; print(platform.platform())

@@ -217,6 +217,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         self.min_hash_match = min_hash_match
         self.radius_cutoff_ratio = radius_cutoff_ratio
 
+        warnings.warn("LSHForest has poor performance and has been deprecated "
+                      "in 0.19. It will be removed in version 0.21.",
+                      DeprecationWarning)
+
     def _compute_distances(self, query, candidates):
         """Computes the cosine distance.
 

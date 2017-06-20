@@ -332,7 +332,7 @@ following rules before submitting:
 
 -  Please include your operating system type and version number, as well
    as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by runnning the following code snippet::
+   can be found by running the following code snippet::
 
      import platform; print(platform.platform())
      import sys; print("Python", sys.version)
@@ -428,7 +428,7 @@ opposed to how it works "under the hood".
 You may also be asked to show your changes when it's built. When you create
 a pull request or make changes in an existing one modifying the docs, CircleCI
 automatically builds them. Thus, you can easily view your changes in the built
-artifacts using the following formula:
+artifacts using the following URL:
 
 ``http://scikit-learn.org/circle?{BUILD_NUMBER}``
 
