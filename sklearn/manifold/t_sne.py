@@ -183,62 +183,6 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     return kl_divergence, grad
 
 
-def _kl_divergence_error(params, P, neighbors, degrees_of_freedom, n_samples,
-                         n_components):
-    """t-SNE objective function: the absolute error of the
-    KL divergence of p_ijs and q_ijs.
-
-    Parameters
-    ----------
-    params : array, shape (n_params,)
-        Unraveled embedding.
-
-    P : array, shape (n_samples * (n_samples-1) / 2,)
-        Condensed joint probability matrix.
-
-    neighbors : array (n_samples, K)
-        The neighbors is not actually required to calculate the
-        divergence, but is here to match the signature of the
-        gradient function
-
-    degrees_of_freedom : float
-        Degrees of freedom of the Student's-t distribution.
-
-    n_samples : int
-        Number of samples.
-
-    n_components : int
-        Dimension of the embedded space.
-
-    Returns
-    -------
-    kl_divergence : float
-        Kullback-Leibler divergence of p_ij and q_ij.
-
-    grad : array, shape (n_params,)
-        Unraveled gradient of the Kullback-Leibler divergence with respect to
-        the embedding.
-    """
-    X_embedded = params.reshape(n_samples, n_components)
-
-    # Q is a heavy-tailed distribution: Student's t-distribution
-    n = pdist(X_embedded, "sqeuclidean")
-    n += 1.
-    n /= degrees_of_freedom
-    n **= (degrees_of_freedom + 1.0) / -2.0
-    Q = np.maximum(n / (2.0 * np.sum(n)), MACHINE_EPSILON)
-
-    # Optimization trick below: np.dot(x, y) is faster than
-    # np.sum(x * y) because it calls BLAS
-
-    # Objective: C (Kullback-Leibler divergence of P and Q)
-    if len(P.shape) == 2:
-        P = squareform(P)
-    kl_divergence = 2.0 * np.dot(P, np.log(P / Q))
-
-    return kl_divergence
-
-
 def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
                       angle=0.5, skip_num_points=0, verbose=False):
     """t-SNE objective function: KL divergence of p_ijs and q_ijs.
@@ -307,7 +251,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
     return error, grad
 
 
-def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
+def _gradient_descent(objective, p0, it, n_iter,
                       n_iter_check=1, n_iter_without_progress=51,
                       momentum=0.8, learning_rate=200.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
@@ -335,10 +279,6 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
     n_iter_check : int
         Number of iterations before evaluating the global error. If the error
         is sufficiently low, we abort the optimization.
-
-    objective_error : function or callable
-        Should return a tuple of cost and gradient for a given parameter
-        vector.
 
     n_iter_without_progress : int, optional (default: 51)
         Maximum number of iterations without progress before we abort the
@@ -400,11 +340,7 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
 
     tic = time()
     for i in range(it, n_iter):
-        try:
-            new_error, grad = objective(p, *args, **kwargs)
-        except AssertionError:
-            np.save("dump_X_embedded.npy", p)
-            raise
+        new_error, grad = objective(p, *args, **kwargs)
         grad_norm = linalg.norm(grad)
 
         inc = update * grad < 0.0
@@ -420,8 +356,6 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
             toc = time()
             duration = toc - tic
             tic = toc
-            if new_error is None:
-                new_error = objective_error(p, *args)
             error_diff = np.abs(new_error - error)
             error = new_error
 
@@ -894,7 +828,6 @@ class TSNE(BaseEstimator):
             opt_args['n_iter_without_progress'] = EXPLORATION_N_ITER
             # Don't always calculate the cost since that calculation
             # can be nearly as expensive as the gradient
-            opt_args['objective_error'] = _kl_divergence_error
             opt_args['kwargs']['angle'] = self.angle
             opt_args['kwargs']['verbose'] = self.verbose
         else:
