@@ -272,6 +272,7 @@ def test_sample_weight():
     msg = ('Underlying estimator \'knn\' does not support sample weights.')
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
 
+
 def test_set_params():
     """set_params should be able to set estimators"""
     clf1 = LogisticRegression(random_state=123, C=1.0)
@@ -364,8 +365,9 @@ def test_estimator_weights_format():
     eclf2.fit(X, y)
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
+
 def test_transform():
-    """Check trqansform method of VotingClassifier on toy dataset."""
+    """Check transform method of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
     clf3 = GaussianNB()
@@ -382,3 +384,5 @@ def test_transform():
 
     assert_array_equal(eclf1.transform(X).shape, (3, 4, 2))
     assert_array_equal(eclf2.transform(X).shape, (4, 6))
+    assert_array_equal(eclf1.transform(X).swapaxes(0, 1).reshape((4, 6)),
+                       eclf2.transform(X))

@@ -65,8 +65,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     flatten_transform : bool, optional (default=False)
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
-        matrix with shape [n_samples, n_classifiers * n_classes] instead of
-        [n_classifiers, n_samples, n_classes].
+        matrix with shape (n_samples, n_classifiers * n_classes) instead of
+        (n_classifiers, n_samples, n_classes).
 
     Attributes
     ----------
@@ -101,10 +101,13 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     [1 1 1 2 2 2]
     >>> eclf3 = VotingClassifier(estimators=[
     ...        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-    ...        voting='soft', weights=[2,1,1])
+    ...        voting='soft', weights=[2,1,1],
+    ...        flatten_transform=True)
     >>> eclf3 = eclf3.fit(X, y)
     >>> print(eclf3.predict(X))
     [1 1 1 2 2 2]
+    >>> print(eclf3.transform(X).shape)
+    (6, 6)
     >>>
     """
 
@@ -174,8 +177,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
                              'required to be a classifier!')
 
         if not self.flatten_transform and self.voting is 'soft':
-            warnings.warn("'flatten_transform' default value will be changed to True"
-                          "in 0.21.", DeprecationWarning)
+            warnings.warn("'flatten_transform' default value will be changed "
+                          "to True in 0.21.", DeprecationWarning)
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         self.estimators_ = []
@@ -270,10 +273,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         Returns
         -------
         If `voting='soft'` and `flatten_transform=False`:
-          array-like = [n_classifiers, n_samples, n_classes]
-            Class probabilities calculated by each classifier.
-        If `voting='soft'` and `flatten_transform=True`:
-          array-like = [n_samples, n_classifiers * n_classes]
+          array-like = (n_classifiers, n_samples, n_classes)
             Class probabilities calculated by each classifier.
         If `voting='hard'`:
           array-like = [n_samples, n_classifiers]
