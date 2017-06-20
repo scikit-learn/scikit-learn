@@ -17,6 +17,7 @@ from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..externals import six
+from ..externals.six import string_types
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -820,7 +821,14 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, Y=None):
-        """Apply the dimension reduction learned on the train data."""
+        """Apply the dimension reduction learned on the train data.
+
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
+        """
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_

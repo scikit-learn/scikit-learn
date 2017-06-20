@@ -539,6 +539,11 @@ API changes summary
      - ``utils.stats.rankdata``
      - ``neighbors.approximate.LSHForest``
 
+    - Deprecate the ``y`` parameter in :meth:`transform`.
+      The method  should not accept ``y`` parameter, as it's used at the prediction time.
+      :issue:`8174` by :user:`Tahar Zanouda <tzano>`.
+
+
 .. _changes_0_18_1:
 
 Version 0.18.1
