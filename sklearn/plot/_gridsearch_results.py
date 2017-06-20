@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.plot import plot_heatmap
 
 
-def plot_gridsearch_results(cv_results, param_grid, metric='mean_test_score',
+def plot_gridsearch_results(cv_results, metric='mean_test_score',
                             xlabel=None, ylabel=None,
                             title='Grid Search Results', cmap=None,
                             vmin=None, vmax=None, ax=None, fmt="{:.2f}",
@@ -14,10 +14,6 @@ def plot_gridsearch_results(cv_results, param_grid, metric='mean_test_score',
     ----------
     cv_results : dict of numpy (masked) ndarrays
         The cv_results_ attribute of the GridSearchCV object.
-
-    param_grid : dict
-        A dictionary with keys as the two parameters searched and values
-        as a list of their respective values searched.
 
     xlabel : string, default=None
         Label for the x-axis. If None, the first key of the param_grid will
@@ -61,19 +57,28 @@ def plot_gridsearch_results(cv_results, param_grid, metric='mean_test_score',
 
     import matplotlib.pyplot as plt
 
-    parameter1, parameter2 = param_grid.keys()
-    parameter1_values = param_grid[parameter1]
-    parameter2_values = param_grid[parameter2]
+    params = sorted(cv_results['params'][0].keys())
 
-    scores = cv_results[metric].reshape(len(parameter1_values),
-                                        len(parameter2_values))
+    if len(params) == 1:
+        # plot a line chart
+        pass
+    elif len(params) == 2:
+        parameter1_values = np.unique(cv_results['param_%s' % params[0]])
+        parameter2_values = np.unique(cv_results['param_%s' % params[1]])
 
-    xlabel = parameter1 if xlabel is None else xlabel
-    ylabel = parameter2 if ylabel is None else ylabel
+        scores = cv_results[metric].reshape(len(parameter1_values),
+                                            len(parameter2_values))
 
-    plot_heatmap(scores, cmap=plt.cm.hot, xlabel=xlabel, ylabel=ylabel,
-                 xticklabels=parameter1_values, yticklabels=parameter2_values,
-                 ax=ax, norm=norm)
+        xlabel = params[0] if xlabel is None else xlabel
+        ylabel = params[1] if ylabel is None else ylabel
 
-    plt.title(title)
-    plt.show()
+        plot_heatmap(scores, cmap=plt.cm.hot, xlabel=xlabel, ylabel=ylabel,
+                     xticklabels=parameter1_values,
+                     yticklabels=parameter2_values,
+                     ax=ax, norm=norm)
+
+        plt.title(title)
+        plt.show()
+    else:
+        # print error statement
+        pass
