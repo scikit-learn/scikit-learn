@@ -32,7 +32,6 @@ from sklearn.svm import LinearSVC
 from sklearn.utils import shuffle
 
 
-
 def test_multi_target_regression():
     X, y = datasets.make_regression(n_targets=3)
     X_train, y_train = X[:50], y[:50]
