@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 
 from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA
@@ -69,6 +70,13 @@ def test_fit_transform():
                            alpha=alpha)
     spca_lasso.fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
+
+    # Test that deprecated ridge_alpha parameter throws warning
+    warning_msg = "The ridge_alpha parameter on transform()"
+    assert_warns_message(DeprecationWarning, warning_msg, spca_lars.transform,
+                         Y, ridge_alpha=0.01)
+    assert_warns_message(DeprecationWarning, warning_msg, spca_lars.transform,
+                         Y, ridge_alpha=None)
 
 
 @if_safe_multiprocessing_with_blas

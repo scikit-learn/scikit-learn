@@ -20,7 +20,7 @@ from ..neighbors import NearestNeighbors
 from ._dbscan_inner import dbscan_inner
 
 
-def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
+def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
            algorithm='auto', leaf_size=30, p=2, sample_weight=None, n_jobs=1):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
@@ -49,6 +49,11 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square. X may be a sparse matrix, in which case only "nonzero"
         elements may be considered neighbors for DBSCAN.
+
+    metric_params : dict, optional
+        Additional keyword arguments for the metric function.
+
+        .. versionadded:: 0.19
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
@@ -130,7 +135,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     else:
         neighbors_model = NearestNeighbors(radius=eps, algorithm=algorithm,
                                            leaf_size=leaf_size,
-                                           metric=metric, p=p,
+                                           metric=metric,
+                                           metric_params=metric_params, p=p,
                                            n_jobs=n_jobs)
         neighbors_model.fit(X)
         # This has worst case O(n^2) memory complexity
@@ -183,6 +189,11 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
         .. versionadded:: 0.17
            metric *precomputed* to accept precomputed sparse matrix.
+
+    metric_params : dict, optional
+        Additional keyword arguments for the metric function.
+
+        .. versionadded:: 0.19
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         The algorithm to be used by the NearestNeighbors module
@@ -237,10 +248,12 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
-                 algorithm='auto', leaf_size=30, p=None, n_jobs=1):
+                 metric_params=None, algorithm='auto', leaf_size=30, p=None,
+                 n_jobs=1):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
+        self.metric_params = metric_params
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.p = p

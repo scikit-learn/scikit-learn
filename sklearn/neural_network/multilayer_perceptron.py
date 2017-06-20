@@ -908,6 +908,13 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_
+        elif self.warm_start:
+            classes = unique_labels(y)
+            if set(classes) != set(self.classes_):
+                raise ValueError("warm_start can only be used where `y` has "
+                                 "the same classes as in the previous "
+                                 "call to fit. Previously got %s, `y` has %s" %
+                                 (self.classes_, classes))
         else:
             classes = unique_labels(y)
             if np.setdiff1d(classes, self.classes_, assume_unique=True):
@@ -938,6 +945,25 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             y_pred = y_pred.ravel()
 
         return self._label_binarizer.inverse_transform(y_pred)
+
+    def fit(self, X, y):
+        """Fit the model to data matrix X and target(s) y.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input data.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        Returns
+        -------
+        self : returns a trained MLP model.
+        """
+        return self._fit(X, y, incremental=(self.warm_start and
+                                            hasattr(self, "classes_")))
 
     @property
     def partial_fit(self):
