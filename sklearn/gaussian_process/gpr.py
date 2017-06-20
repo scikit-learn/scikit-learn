@@ -289,6 +289,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
             Covariance of joint predictive distribution a query points.
             Only returned when return_cov is True.
         """
+        if self.kernel is None:
+            self.kernel = C(1.0, constant_value_bounds="fixed") \
+                * RBF(1.0, length_scale_bounds="fixed")
+
         if return_std and return_cov:
             raise RuntimeError(
                 "Not returning standard deviation of predictions when "
