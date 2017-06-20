@@ -394,6 +394,7 @@ def test_classifier_chain_fit_and_predict_with_linear_svc():
 
     Y_binary = (Y_decision >= 0)
     assert_array_equal(Y_binary, Y_pred)
+    assert not hasattr(classifier_chain, 'predict_proba')
 
 
 def test_classifier_chain_fit_and_predict_with_sparse_data():
@@ -426,8 +427,8 @@ def test_classifier_chain_random_order():
     # Fit classifier chain with random order
     X, Y = generate_multilabel_dataset_with_correlations()
     classifier_chain_random = ClassifierChain(LogisticRegression(),
-                                       order='random',
-                                       random_state=42)
+                                              order='random',
+                                              random_state=42)
     classifier_chain_random.fit(X, Y)
     Y_pred_random = classifier_chain_random.predict(X)
 
@@ -435,10 +436,14 @@ def test_classifier_chain_random_order():
     assert_equal(len(classifier_chain_random.order_), 4)
     assert_equal(len(set(classifier_chain_random.order_)), 4)
 
-    classifier_chain_fixed = ClassifierChain(LogisticRegression(),
-                                             order=classifier_chain_random.order_)
+    classifier_chain_fixed = \
+        ClassifierChain(LogisticRegression(),
+                        order=classifier_chain_random.order_)
     classifier_chain_fixed.fit(X, Y)
     Y_pred_fixed = classifier_chain_fixed.predict(X)
+
+    # Randomly ordered chain should behave identically to a fixed order chain
+    # with the same order.
     assert_array_equal(Y_pred_random, Y_pred_fixed)
 
 
