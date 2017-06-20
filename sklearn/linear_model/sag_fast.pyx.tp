@@ -20,12 +20,12 @@ License: BSD 3 clause
 """
 
 # name, c_type
-dtypes = [('64', 'double'),
-          ('32', 'float')]
+dtypes = [('64', 'double', 'np.float64'),
+          ('32', 'float', 'np.float32')]
 
 def get_dispatch(dtypes):
-    for name, c_type in dtypes:
-        yield name, c_type
+    for name, c_type, np_type in dtypes:
+        yield name, c_type, np_type
 
 }}
 
@@ -60,14 +60,15 @@ cdef void raise_infinite_error(int n_iter):
 
 
 
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in get_dispatch(dtypes)}}
 
 cdef extern from "sgd_fast_helpers.h":
     bint skl_isfinite{{name}}({{c_type}}) nogil
 
+
 {{endfor}}
 
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in get_dispatch(dtypes)}}
 
 cdef inline {{c_type}} fmax{{name}}({{c_type}} x, {{c_type}} y) nogil:
     if x > y:
@@ -77,7 +78,7 @@ cdef inline {{c_type}} fmax{{name}}({{c_type}} x, {{c_type}} y) nogil:
 {{endfor}}
 
 
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in get_dispatch(dtypes)}}
 
 cdef {{c_type}} _logsumexp{{name}}({{c_type}}* arr, int n_classes) nogil:
     """Computes the sum of arr assuming arr is in the log domain.
@@ -103,7 +104,7 @@ cdef {{c_type}} _logsumexp{{name}}({{c_type}}* arr, int n_classes) nogil:
 {{endfor}}
 
 
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in get_dispatch(dtypes)}}
 
 cdef class MultinomialLogLoss{{name}}:
     cdef {{c_type}} _loss(self, {{c_type}}* prediction, {{c_type}} y, int n_classes,
@@ -207,7 +208,7 @@ cdef class MultinomialLogLoss{{name}}:
 
 {{endfor}}
 
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in get_dispatch(dtypes)}}
 
 cdef inline {{c_type}} _soft_thresholding{{name}}({{c_type}} x, {{c_type}} shrinkage) nogil:
     return fmax{{name}}(x - shrinkage, 0) - fmax{{name}}(- x - shrinkage, 0)
@@ -215,7 +216,8 @@ cdef inline {{c_type}} _soft_thresholding{{name}}({{c_type}} x, {{c_type}} shrin
 {{endfor}}
 
 
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in get_dispatch(dtypes)}}
+
 def sag{{name}}(SequentialDataset{{name}} dataset,
         np.ndarray[{{c_type}}, ndim=2, mode='c'] weights_array,
         np.ndarray[{{c_type}}, ndim=1, mode='c'] intercept_array,
@@ -319,7 +321,7 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
 
     # the cumulative sums needed for JIT params
     cdef np.ndarray[{{c_type}}, ndim=1] cumulative_sums_array = \
-        np.empty(n_samples, dtype=np.{{c_type}}, order="c")
+        np.empty(n_samples, dtype={{np_type}}, order="c")
     cdef {{c_type}}* cumulative_sums = <{{c_type}}*> cumulative_sums_array.data
 
     # the index for the last time this feature was updated
@@ -329,15 +331,15 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
 
     # the previous weights to use to compute stopping criteria
     cdef np.ndarray[{{c_type}}, ndim=2] previous_weights_array = \
-        np.zeros((n_features, n_classes), dtype=np.{{c_type}}, order="c")
+        np.zeros((n_features, n_classes), dtype={{np_type}}, order="c")
     cdef {{c_type}}* previous_weights = <{{c_type}}*> previous_weights_array.data
 
     cdef np.ndarray[{{c_type}}, ndim=1] prediction_array = \
-        np.zeros(n_classes, dtype=np.{{c_type}}, order="c")
+        np.zeros(n_classes, dtype={{np_type}}, order="c")
     cdef {{c_type}}* prediction = <{{c_type}}*> prediction_array.data
 
     cdef np.ndarray[{{c_type}}, ndim=1] gradient_array = \
-        np.zeros(n_classes, dtype=np.{{c_type}}, order="c")
+        np.zeros(n_classes, dtype={{np_type}}, order="c")
     cdef {{c_type}}* gradient = <{{c_type}}*> gradient_array.data
 
     # Intermediate variable that need declaration since cython cannot infer when templating
@@ -379,7 +381,7 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
 
     if prox:
         cumulative_sums_prox_array = np.empty(n_samples,
-                                              dtype=np.{{c_type}}, order="c")
+                                              dtype={{np_type}}, order="c")
         cumulative_sums_prox = <{{c_type}}*> cumulative_sums_prox_array.data
     else:
         cumulative_sums_prox = NULL
@@ -531,7 +533,7 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
 {{endfor}}
 
 
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in get_dispatch(dtypes)}}
 
 cdef {{c_type}} scale_weights{{name}}({{c_type}}* weights, {{c_type}} wscale, int n_features,
                           int n_samples, int n_classes, int sample_itr,
@@ -566,7 +568,7 @@ cdef {{c_type}} scale_weights{{name}}({{c_type}}* weights, {{c_type}} wscale, in
 {{endfor}}
 
 
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in get_dispatch(dtypes)}}
 
 cdef void lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
                                 int n_samples, int n_classes, int sample_itr,
@@ -652,7 +654,7 @@ cdef void lagged_update{{name}}({{c_type}}* weights, {{c_type}} wscale, int xnnz
 {{endfor}}
 
 
-{{for name, c_type in get_dispatch(dtypes)}}
+{{for name, c_type, np_type in get_dispatch(dtypes)}}
 
 cdef void predict_sample{{name}}({{c_type}}* x_data_ptr, int* x_ind_ptr, int xnnz,
                                  {{c_type}}* w_data_ptr, {{c_type}} wscale,
