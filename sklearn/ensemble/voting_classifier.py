@@ -98,8 +98,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>> eclf1 = eclf1.fit(X, y)
     >>> print(eclf1.predict(X))
     [1 1 1 2 2 2]
-    >>> eclf1.named_estimators_.lr.predict(X) == eclf1
-    ...         .named_estimators_['lr'].predict(X)
+    >>> np.array_equal(eclf1.named_estimators_.lr.predict(X),
+    ...         eclf1.named_estimators_['lr'].predict(X))
     True
     >>> eclf2 = VotingClassifier(estimators=[
     ...         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
