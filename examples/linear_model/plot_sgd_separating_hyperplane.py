@@ -36,7 +36,8 @@ levels = [-1.0, 0.0, 1.0]
 linestyles = ['dashed', 'solid', 'dashed']
 colors = 'k'
 plt.contour(X1, X2, Z, levels, colors=colors, linestyles=linestyles)
-plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired)
+plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired,
+            edgecolor='black', s=20)
 
 plt.axis('tight')
 plt.show()

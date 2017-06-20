@@ -21,7 +21,12 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 run_tests() {
-    # Get into a temp directory to run test from the installed scikit learn and
+    if [[ "$USE_PYTEST" == "true" ]]; then
+        TEST_CMD="pytest --showlocals --pyargs"
+    else
+        TEST_CMD="nosetests --with-timer --timer-top-n 20"
+    fi
+    # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
     mkdir -p $TEST_DIR
     # We need the setup.cfg for the nose settings
@@ -34,14 +39,16 @@ run_tests() {
     export SKLEARN_SKIP_NETWORK_TESTS=1
 
     if [[ "$COVERAGE" == "true" ]]; then
-        nosetests -s --with-coverage --with-timer --timer-top-n 20 sklearn
-    else
-        nosetests -s --with-timer --timer-top-n 20 sklearn
+        TEST_CMD="$TEST_CMD --with-coverage"
     fi
+    $TEST_CMD sklearn
 
-    # Test doc
-    cd $OLDPWD
-    make test-doc test-sphinxext
+    # Test doc (only with nose until we switch completely to pytest)
+    if [[ "$USE_PYTEST" != "true" ]]; then
+        # Going back to git checkout folder needed for make test-doc
+        cd $OLDPWD
+        make test-doc
+    fi
 }
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then

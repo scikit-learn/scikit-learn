@@ -191,7 +191,7 @@ minimum. This is highly dependent on the initialization of the centroids.
 As a result, the computation is often done several times, with different
 initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
-(use the ``init='kmeans++'`` parameter). This initializes the centroids to be
+(use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
 random initialization, as shown in the reference.
 
@@ -746,17 +746,18 @@ by black points below.
 
 .. topic:: Implementation
 
-    The algorithm is non-deterministic, but the core samples will
-    always belong to the same clusters (although the labels may be
-    different). The non-determinism comes from deciding to which cluster a
-    non-core sample belongs. A non-core sample can have a distance lower
-    than ``eps`` to two core samples in different clusters. By the
+    The DBSCAN algorithm is deterministic, always generating the same clusters 
+    when given the same data in the same order.  However, the results can differ when
+    data is provided in a different order. First, even though the core samples 
+    will always be assigned to the same clusters, the labels of those clusters
+    will depend on the order in which those samples are encountered in the data.
+    Second and more importantly, the clusters to which non-core samples are assigned
+    can differ depending on the data order.  This would happen when a non-core sample
+    has a distance lower than ``eps`` to two core samples in different clusters. By the
     triangular inequality, those two core samples must be more distant than
     ``eps`` from each other, or they would be in the same cluster. The non-core
-    sample is assigned to whichever cluster is generated first, where
-    the order is determined randomly. Other than the ordering of
-    the dataset, the algorithm is deterministic, making the results relatively
-    stable between runs on the same data.
+    sample is assigned to whichever cluster is generated first in a pass
+    through the data, and so the results will depend on the data ordering.
 
     The current implementation uses ball trees and kd-trees
     to determine the neighborhood of points,
@@ -1129,9 +1130,13 @@ With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U`
 and :math:`V` is calculated by:
 
 .. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|}\sum_{j=1}^{|V|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
-
+ 
 where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object
 picked at random falls into both classes :math:`U_i` and :math:`V_j`.
+
+It also can be expressed in set cardinality formulation:
+
+.. math:: \text{MI}(U, V) = \sum_{i=1}^|U| \sum_{j=1}^|V| \frac{|U_i \cap V_j|}{N}\log\left(\frac{N|U_i \cap V_j|}{|U_i||V_j|}\right)
 
 The normalized mutual information is defined as
 

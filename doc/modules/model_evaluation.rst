@@ -55,9 +55,9 @@ available as neg_mean_squared_error which return the negated value
 of the metric.
 
 
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 Scoring                         Function                                      Comment
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 **Classification**
 'accuracy'                      :func:`metrics.accuracy_score`
 'average_precision'             :func:`metrics.average_precision_score`
@@ -77,9 +77,10 @@ Scoring                         Function                                      Co
 **Regression**
 'neg_mean_absolute_error'       :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'        :func:`metrics.mean_squared_error`
+'neg_mean_squared_log_error'    :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'     :func:`metrics.median_absolute_error`
 'r2'                            :func:`metrics.r2_score`
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 
 Usage examples:
 
@@ -93,7 +94,7 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_median_absolute_error', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'completeness_score', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
 
 .. note::
 
@@ -172,7 +173,7 @@ Here is an example of building custom scorers, and of using the
     >>> #  and predictions defined below.
     >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
-    >>> ground_truth = [[1, 1]]
+    >>> ground_truth = [[1], [1]]
     >>> predictions  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
@@ -222,7 +223,6 @@ Some of these are restricted to the binary classification case:
 .. autosummary::
    :template: function.rst
 
-   matthews_corrcoef
    precision_recall_curve
    roc_curve
 
@@ -235,6 +235,7 @@ Others also work in the multiclass case:
    cohen_kappa_score
    confusion_matrix
    hinge_loss
+   matthews_corrcoef
 
 
 Some also work in the multilabel case:
@@ -253,6 +254,14 @@ Some also work in the multilabel case:
    precision_score
    recall_score
    zero_one_loss
+
+Some are typically used for ranking:
+
+.. autosummary::
+   :template: function.rst
+
+   dcg_score
+   ndcg_score
 
 And some work with binary and multilabel (but not multiclass) problems:
 
@@ -465,7 +474,7 @@ and inferred labels::
     for an example of classification report usage for text
     documents.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
 
@@ -601,7 +610,7 @@ binary classification and multilabel indicator format.
     for an example of :func:`f1_score` usage to classify  text
     documents.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
     to estimate parameters using grid search with nested cross-validation.
 
@@ -680,7 +689,7 @@ Here are some small examples in binary classification::
   >>> threshold
   array([ 0.35,  0.4 ,  0.8 ])
   >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
-  0.79...
+  0.83...
 
 
 
@@ -900,13 +909,39 @@ for binary classes.  Quoting Wikipedia:
     prediction, 0 an average random prediction and -1 an inverse prediction.
     The statistic is also known as the phi coefficient."
 
-If :math:`tp`, :math:`tn`, :math:`fp` and :math:`fn` are respectively the
-number of true positives, true negatives, false positives and false negatives,
-the MCC coefficient is defined as
+
+In the binary (two-class) case, :math:`tp`, :math:`tn`, :math:`fp` and
+:math:`fn` are respectively the number of true positives, true negatives, false
+positives and false negatives, the MCC is defined as
 
 .. math::
 
   MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}.
+
+In the multiclass case, the Matthews correlation coefficient can be `defined
+<http://rk.kvl.dk/introduction/index.html>`_ in terms of a
+:func:`confusion_matrix` :math:`C` for :math:`K` classes.  To simplify the
+definition consider the following intermediate variables:
+
+* :math:`t_k=\sum_{i}^{K} C_{ik}` the number of times class :math:`k` truly occurred,
+* :math:`p_k=\sum_{i}^{K} C_{ki}` the number of times class :math:`k` was predicted,
+* :math:`c=\sum_{k}^{K} C_{kk}` the total number of samples correctly predicted,
+* :math:`s=\sum_{i}^{K} \sum_{j}^{K} C_{ij}` the total number of samples.
+
+Then the multiclass MCC is defined as:
+
+.. math::
+    MCC = \frac{
+        c \times s - \sum_{k}^{K} p_k \times t_k
+    }{\sqrt{
+        (s^2 - \sum_{k}^{K} p_k^2) \times
+        (s^2 - \sum_{k}^{K} t_k^2)
+    }}
+
+When there are more than two labels, the value of the MCC will no longer range
+between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
+depending on the number and distribution of ground true labels. The maximum
+value is always +1.
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:
@@ -1133,6 +1168,12 @@ are predicted. This is useful if you want to know how many top-scored-labels
 you have to predict in average without missing any true one. The best value
 of this metrics is thus the average number of true labels.
 
+.. note::
+
+    Our implementation's score is 1 greater than the one given in Tsoumakas
+    et al., 2010. This extends it to handle the degenerate case in which an
+    instance has 0 true labels.
+
 Formally, given a binary indicator matrix of the ground truth labels
 :math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
 score associated with each label
@@ -1235,6 +1276,12 @@ Here is a small example of usage of this function::
     >>> y_score = np.array([[1.0, 0.1, 0.2], [0.1, 0.2, 0.9]])
     >>> label_ranking_loss(y_true, y_score)
     0.0
+
+
+.. topic:: References:
+
+  * Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010). Mining multi-label data. In
+    Data mining and knowledge discovery handbook (pp. 667-685). Springer US.
 
 .. _regression_metrics:
 
@@ -1348,7 +1395,7 @@ Mean squared error
 
 The :func:`mean_squared_error` function computes `mean square
 error <https://en.wikipedia.org/wiki/Mean_squared_error>`_, a risk
-metric corresponding to the expected value of the squared (quadratic) error loss or
+metric corresponding to the expected value of the squared (quadratic) error or
 loss.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
@@ -1377,6 +1424,43 @@ function::
   * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
+
+.. _mean_squared_log_error:
+
+Mean squared logarithmic error
+------------------------------
+
+The :func:`mean_squared_log_error` function computes a risk metric
+corresponding to the expected value of the squared logarithmic (quadratic)
+error or loss.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample,
+and :math:`y_i` is the corresponding true value, then the mean squared
+logarithmic error (MSLE) estimated over :math:`n_{\text{samples}}` is
+defined as
+
+.. math::
+
+  \text{MSLE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (\log_e (1 + y_i) - \log_e (1 + \hat{y}_i) )^2.
+
+Where :math:`\log_e (x)` means the natural logarithm of :math:`x`. This metric
+is best to use when targets having exponential growth, such as population
+counts, average sales of a commodity over a span of years etc. Note that this
+metric penalizes an under-predicted estimate greater than an over-predicted
+estimate.
+
+Here is a small example of usage of the :func:`mean_squared_log_error`
+function::
+
+  >>> from sklearn.metrics import mean_squared_log_error
+  >>> y_true = [3, 5, 2.5, 7]
+  >>> y_pred = [2.5, 5, 4, 8]
+  >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.039...
+  >>> y_true = [[0.5, 1], [1, 2], [7, 6]]
+  >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
+  >>> mean_squared_log_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.044...
 
 .. _median_absolute_error:
 

@@ -173,7 +173,7 @@ which a sample can have more than one target.
 Regularization
 ==============
 
-Both :class:`MLPRegressor` and class:`MLPClassifier` use parameter ``alpha``
+Both :class:`MLPRegressor` and :class:`MLPClassifier` use parameter ``alpha``
 for regularization (L2 regularization) term which helps in avoiding overfitting
 by penalizing weights with large magnitudes. Following plot displays varying
 decision function with value of alpha.
@@ -290,7 +290,7 @@ For regression, MLP uses the Square Error loss function; written as,
 
 .. math::
 
-    Loss(\hat{y},y,W) = \frac{1}{2}||\hat{y} - y ||_2^2 + \alpha ||W||_2^2
+    Loss(\hat{y},y,W) = \frac{1}{2}||\hat{y} - y ||_2^2 + \frac{\alpha}{2} ||W||_2^2
 
 
 Starting from initial random weights, multi-layer perceptron (MLP) minimizes

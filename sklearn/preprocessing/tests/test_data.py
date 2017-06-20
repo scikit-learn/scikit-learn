@@ -1,9 +1,9 @@
-
 # Authors:
 #
 #          Giorgio Patrini
 #
 # License: BSD 3 clause
+from __future__ import division
 
 import warnings
 import numpy as np
@@ -27,7 +27,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
-from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import skip_if_32bit
 
@@ -43,6 +42,8 @@ from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
 from sklearn.preprocessing.data import minmax_scale
+from sklearn.preprocessing.data import QuantileTransformer
+from sklearn.preprocessing.data import quantile_transform
 from sklearn.preprocessing.data import MaxAbsScaler
 from sklearn.preprocessing.data import maxabs_scale
 from sklearn.preprocessing.data import RobustScaler
@@ -142,7 +143,8 @@ def test_polynomial_feature_names():
                         'b c^2', 'c^3'], feature_names)
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
-    feature_names = poly.get_feature_names([u"\u0001F40D", u"\u262E", u"\u05D0"])
+    feature_names = poly.get_feature_names(
+        [u"\u0001F40D", u"\u262E", u"\u05D0"])
     assert_array_equal([u"1", u"\u0001F40D", u"\u262E", u"\u05D0"],
                        feature_names)
 
@@ -790,12 +792,12 @@ def test_scale_sparse_with_mean_raise_exception():
 
 def test_scale_input_finiteness_validation():
     # Check if non finite inputs raise ValueError
-    X = [np.nan, 5, 6, 7, 8]
+    X = [[np.nan, 5, 6, 7, 8]]
     assert_raises_regex(ValueError,
                         "Input contains NaN, infinity or a value too large",
                         scale, X)
 
-    X = [np.inf, 5, 6, 7, 8]
+    X = [[np.inf, 5, 6, 7, 8]]
     assert_raises_regex(ValueError,
                         "Input contains NaN, infinity or a value too large",
                         scale, X)
@@ -850,6 +852,328 @@ def test_robust_scaler_iris_quantiles():
     q = np.percentile(X_trans, q=(10, 90), axis=0)
     q_range = q[1] - q[0]
     assert_array_almost_equal(q_range, 1)
+
+
+def test_quantile_transform_iris():
+    X = iris.data
+    # uniform output distribution
+    transformer = QuantileTransformer(n_quantiles=30)
+    X_trans = transformer.fit_transform(X)
+    X_trans_inv = transformer.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+    # normal output distribution
+    transformer = QuantileTransformer(n_quantiles=30,
+                                      output_distribution='normal')
+    X_trans = transformer.fit_transform(X)
+    X_trans_inv = transformer.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+    # make sure it is possible to take the inverse of a sparse matrix
+    # which contain negative value; this is the case in the iris dataset
+    X_sparse = sparse.csc_matrix(X)
+    X_sparse_tran = transformer.fit_transform(X_sparse)
+    X_sparse_tran_inv = transformer.inverse_transform(X_sparse_tran)
+    assert_array_almost_equal(X_sparse.A, X_sparse_tran_inv.A)
+
+
+def test_quantile_transform_check_error():
+    X = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
+                      [2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
+                      [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
+    X = sparse.csc_matrix(X)
+    X_neg = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
+                          [-2, 4, 0, 0, 6, 8, 0, 10, 0, 0],
+                          [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
+    X_neg = sparse.csc_matrix(X_neg)
+
+    assert_raises_regex(ValueError, "Invalid value for 'n_quantiles': 0.",
+                        QuantileTransformer(n_quantiles=0).fit, X)
+    assert_raises_regex(ValueError, "Invalid value for 'subsample': 0.",
+                        QuantileTransformer(subsample=0).fit, X)
+    assert_raises_regex(ValueError, "The number of quantiles cannot be"
+                        " greater than the number of samples used. Got"
+                        " 1000 quantiles and 10 samples.",
+                        QuantileTransformer(subsample=10).fit, X)
+
+    transformer = QuantileTransformer(n_quantiles=10)
+    assert_raises_regex(ValueError, "QuantileTransformer only accepts "
+                        "non-negative sparse matrices.",
+                        transformer.fit, X_neg)
+    transformer.fit(X)
+    assert_raises_regex(ValueError, "QuantileTransformer only accepts "
+                        "non-negative sparse matrices.",
+                        transformer.transform, X_neg)
+
+    X_bad_feat = np.transpose([[0, 25, 50, 0, 0, 0, 75, 0, 0, 100],
+                               [0, 0, 2.6, 4.1, 0, 0, 2.3, 0, 9.5, 0.1]])
+    assert_raises_regex(ValueError, "X does not have the same number of "
+                        "features as the previously fitted data. Got 2"
+                        " instead of 3.",
+                        transformer.transform, X_bad_feat)
+    assert_raises_regex(ValueError, "X does not have the same number of "
+                        "features as the previously fitted data. Got 2"
+                        " instead of 3.",
+                        transformer.inverse_transform, X_bad_feat)
+
+    transformer = QuantileTransformer(n_quantiles=10,
+                                      output_distribution='rnd')
+    # check that an error is raised at fit time
+    assert_raises_regex(ValueError, "'output_distribution' has to be either"
+                        " 'normal' or 'uniform'. Got 'rnd' instead.",
+                        transformer.fit, X)
+    # check that an error is raised at transform time
+    transformer.output_distribution = 'uniform'
+    transformer.fit(X)
+    X_tran = transformer.transform(X)
+    transformer.output_distribution = 'rnd'
+    assert_raises_regex(ValueError, "'output_distribution' has to be either"
+                        " 'normal' or 'uniform'. Got 'rnd' instead.",
+                        transformer.transform, X)
+    # check that an error is raised at inverse_transform time
+    assert_raises_regex(ValueError, "'output_distribution' has to be either"
+                        " 'normal' or 'uniform'. Got 'rnd' instead.",
+                        transformer.inverse_transform, X_tran)
+
+
+def test_quantile_transform_sparse_ignore_zeros():
+    X = np.array([[0, 1],
+                  [0, 0],
+                  [0, 2],
+                  [0, 2],
+                  [0, 1]])
+    X_sparse = sparse.csc_matrix(X)
+    transformer = QuantileTransformer(ignore_implicit_zeros=True,
+                                      n_quantiles=5)
+
+    # dense case -> warning raise
+    assert_warns_message(UserWarning, "'ignore_implicit_zeros' takes effect"
+                         " only with sparse matrix. This parameter has no"
+                         " effect.", transformer.fit, X)
+
+    X_expected = np.array([[0, 0],
+                           [0, 0],
+                           [0, 1],
+                           [0, 1],
+                           [0, 0]])
+    X_trans = transformer.fit_transform(X_sparse)
+    assert_almost_equal(X_expected, X_trans.A)
+
+    # consider the case where sparse entries are missing values and user-given
+    # zeros are to be considered
+    X_data = np.array([0, 0, 1, 0, 2, 2, 1, 0, 1, 2, 0])
+    X_col = np.array([0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1])
+    X_row = np.array([0, 4, 0, 1, 2, 3, 4, 5, 6, 7, 8])
+    X_sparse = sparse.csc_matrix((X_data, (X_row, X_col)))
+    X_trans = transformer.fit_transform(X_sparse)
+    X_expected = np.array([[0., 0.5],
+                           [0., 0.],
+                           [0., 1.],
+                           [0., 1.],
+                           [0., 0.5],
+                           [0., 0.],
+                           [0., 0.5],
+                           [0., 1.],
+                           [0., 0.]])
+    assert_almost_equal(X_expected, X_trans.A)
+
+    transformer = QuantileTransformer(ignore_implicit_zeros=True,
+                                      n_quantiles=5)
+    X_data = np.array([-1, -1, 1, 0, 0, 0, 1, -1, 1])
+    X_col = np.array([0, 0, 1, 1, 1, 1, 1, 1, 1])
+    X_row = np.array([0, 4, 0, 1, 2, 3, 4, 5, 6])
+    X_sparse = sparse.csc_matrix((X_data, (X_row, X_col)))
+    X_trans = transformer.fit_transform(X_sparse)
+    X_expected = np.array([[0, 1],
+                           [0, 0.375],
+                           [0, 0.375],
+                           [0, 0.375],
+                           [0, 1],
+                           [0, 0],
+                           [0, 1]])
+    assert_almost_equal(X_expected, X_trans.A)
+    assert_almost_equal(X_sparse.A, transformer.inverse_transform(X_trans).A)
+
+    # check in conjunction with subsampling
+    transformer = QuantileTransformer(ignore_implicit_zeros=True,
+                                      n_quantiles=5,
+                                      subsample=8,
+                                      random_state=0)
+    X_trans = transformer.fit_transform(X_sparse)
+    assert_almost_equal(X_expected, X_trans.A)
+    assert_almost_equal(X_sparse.A, transformer.inverse_transform(X_trans).A)
+
+
+def test_quantile_transform_dense_toy():
+    X = np.array([[0, 2, 2.6],
+                  [25, 4, 4.1],
+                  [50, 6, 2.3],
+                  [75, 8, 9.5],
+                  [100, 10, 0.1]])
+
+    transformer = QuantileTransformer(n_quantiles=5)
+    transformer.fit(X)
+
+    # using the a uniform output, each entry of X should be map between 0 and 1
+    # and equally spaced
+    X_trans = transformer.fit_transform(X)
+    X_expected = np.tile(np.linspace(0, 1, num=5), (3, 1)).T
+    assert_almost_equal(np.sort(X_trans, axis=0), X_expected)
+
+    X_test = np.array([
+        [-1, 1, 0],
+        [101, 11, 10],
+    ])
+    X_expected = np.array([
+        [0, 0, 0],
+        [1, 1, 1],
+    ])
+    assert_array_almost_equal(transformer.transform(X_test), X_expected)
+
+    X_trans_inv = transformer.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+
+
+def test_quantile_transform_subsampling():
+    # Test that subsampling the input yield to a consistent results We check
+    # that the computed quantiles are almost mapped to a [0, 1] vector where
+    # values are equally spaced. The infinite norm is checked to be smaller
+    # than a given threshold. This is repeated 5 times.
+
+    # dense support
+    n_samples = 1000000
+    n_quantiles = 1000
+    X = np.sort(np.random.sample((n_samples, 1)), axis=0)
+    ROUND = 5
+    inf_norm_arr = []
+    for random_state in range(ROUND):
+        transformer = QuantileTransformer(random_state=random_state,
+                                          n_quantiles=n_quantiles,
+                                          subsample=n_samples // 10)
+        transformer.fit(X)
+        diff = (np.linspace(0, 1, n_quantiles) -
+                np.ravel(transformer.quantiles_))
+        inf_norm = np.max(np.abs(diff))
+        assert_true(inf_norm < 1e-2)
+        inf_norm_arr.append(inf_norm)
+    # each random subsampling yield a unique approximation to the expected
+    # linspace CDF
+    assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
+
+    # sparse support
+
+    # TODO: rng should be seeded once we drop support for older versions of
+    # scipy (< 0.13) that don't support seeding.
+    X = sparse.rand(n_samples, 1, density=.99, format='csc')
+    inf_norm_arr = []
+    for random_state in range(ROUND):
+        transformer = QuantileTransformer(random_state=random_state,
+                                          n_quantiles=n_quantiles,
+                                          subsample=n_samples // 10)
+        transformer.fit(X)
+        diff = (np.linspace(0, 1, n_quantiles) -
+                np.ravel(transformer.quantiles_))
+        inf_norm = np.max(np.abs(diff))
+        assert_true(inf_norm < 1e-1)
+        inf_norm_arr.append(inf_norm)
+    # each random subsampling yield a unique approximation to the expected
+    # linspace CDF
+    assert_equal(len(np.unique(inf_norm_arr)), len(inf_norm_arr))
+
+
+def test_quantile_transform_sparse_toy():
+    X = np.array([[0., 2., 0.],
+                  [25., 4., 0.],
+                  [50., 0., 2.6],
+                  [0., 0., 4.1],
+                  [0., 6., 0.],
+                  [0., 8., 0.],
+                  [75., 0., 2.3],
+                  [0., 10., 0.],
+                  [0., 0., 9.5],
+                  [100., 0., 0.1]])
+
+    X = sparse.csc_matrix(X)
+
+    transformer = QuantileTransformer(n_quantiles=10)
+    transformer.fit(X)
+
+    X_trans = transformer.fit_transform(X)
+    assert_array_almost_equal(np.min(X_trans.toarray(), axis=0), 0.)
+    assert_array_almost_equal(np.max(X_trans.toarray(), axis=0), 1.)
+
+    X_trans_inv = transformer.inverse_transform(X_trans)
+    assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
+
+    transformer_dense = QuantileTransformer(n_quantiles=10).fit(
+        X.toarray())
+
+    X_trans = transformer_dense.transform(X)
+    assert_array_almost_equal(np.min(X_trans.toarray(), axis=0), 0.)
+    assert_array_almost_equal(np.max(X_trans.toarray(), axis=0), 1.)
+
+    X_trans_inv = transformer_dense.inverse_transform(X_trans)
+    assert_array_almost_equal(X.toarray(), X_trans_inv.toarray())
+
+
+def test_quantile_transform_axis1():
+    X = np.array([[0, 25, 50, 75, 100],
+                  [2, 4, 6, 8, 10],
+                  [2.6, 4.1, 2.3, 9.5, 0.1]])
+
+    X_trans_a0 = quantile_transform(X.T, axis=0, n_quantiles=5)
+    X_trans_a1 = quantile_transform(X, axis=1, n_quantiles=5)
+    assert_array_almost_equal(X_trans_a0, X_trans_a1.T)
+
+
+def test_quantile_transform_bounds():
+    # Lower and upper bounds are manually mapped. We checked that in the case
+    # of a constant feature and binary feature, the bounds are properly mapped.
+    X_dense = np.array([[0, 0],
+                        [0, 0],
+                        [1, 0]])
+    X_sparse = sparse.csc_matrix(X_dense)
+
+    # check sparse and dense are consistent
+    X_trans = QuantileTransformer(n_quantiles=3,
+                                  random_state=0).fit_transform(X_dense)
+    assert_array_almost_equal(X_trans, X_dense)
+    X_trans_sp = QuantileTransformer(n_quantiles=3,
+                                     random_state=0).fit_transform(X_sparse)
+    assert_array_almost_equal(X_trans_sp.A, X_dense)
+    assert_array_almost_equal(X_trans, X_trans_sp.A)
+
+    # check the consistency of the bounds by learning on 1 matrix
+    # and transforming another
+    X = np.array([[0, 1],
+                  [0, 0.5],
+                  [1, 0]])
+    X1 = np.array([[0, 0.1],
+                   [0, 0.5],
+                   [1, 0.1]])
+    transformer = QuantileTransformer(n_quantiles=3).fit(X)
+    X_trans = transformer.transform(X1)
+    assert_array_almost_equal(X_trans, X1)
+
+    # check that values outside of the range learned will be mapped properly.
+    X = np.random.random((1000, 1))
+    transformer = QuantileTransformer()
+    transformer.fit(X)
+    assert_equal(transformer.transform(-10), transformer.transform(np.min(X)))
+    assert_equal(transformer.transform(10), transformer.transform(np.max(X)))
+    assert_equal(transformer.inverse_transform(-10),
+                 transformer.inverse_transform(
+                     np.min(transformer.references_)))
+    assert_equal(transformer.inverse_transform(10),
+                 transformer.inverse_transform(
+                     np.max(transformer.references_)))
+
+
+def test_quantile_transform_and_inverse():
+    # iris dataset
+    X = iris.data
+    transformer = QuantileTransformer(n_quantiles=1000, random_state=0)
+    X_trans = transformer.fit_transform(X)
+    X_trans_inv = transformer.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
 
 
 def test_robust_scaler_invalid_range():
@@ -1017,22 +1341,6 @@ def test_maxabs_scaler_transform_one_row_csr():
     assert_array_almost_equal(X_trans.toarray(), X_expected.toarray())
     X_scaled_back = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X.toarray(), X_scaled_back.toarray())
-
-
-def test_deprecation_minmax_scaler():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((5, 4))
-    scaler = MinMaxScaler().fit(X)
-
-    depr_message = ("Attribute data_range will be removed in "
-                    "0.19. Use ``data_range_`` instead")
-    assert_warns_message(DeprecationWarning, depr_message, getattr, scaler,
-                         "data_range")
-
-    depr_message = ("Attribute data_min will be removed in "
-                    "0.19. Use ``data_min_`` instead")
-    assert_warns_message(DeprecationWarning, depr_message, getattr, scaler,
-                         "data_min")
 
 
 def test_warning_scaling_integers():
@@ -1315,6 +1623,24 @@ def test_normalize():
 
                 assert_array_almost_equal(row_sums, ones)
 
+    # Test return_norm
+    X_dense = np.array([[3.0, 0, 4.0], [1.0, 0.0, 0.0], [2.0, 3.0, 0.0]])
+    for norm in ('l1', 'l2', 'max'):
+        _, norms = normalize(X_dense, norm=norm, return_norm=True)
+        if norm == 'l1':
+            assert_array_almost_equal(norms, np.array([7.0, 1.0, 5.0]))
+        elif norm == 'l2':
+            assert_array_almost_equal(norms, np.array([5.0, 1.0, 3.60555127]))
+        else:
+            assert_array_almost_equal(norms, np.array([4.0, 1.0, 3.0]))
+
+    X_sparse = sparse.csr_matrix(X_dense)
+    for norm in ('l1', 'l2'):
+        assert_raises(NotImplementedError, normalize, X_sparse,
+                      norm=norm, return_norm=True)
+    _, norms = normalize(X_sparse, norm='max', return_norm=True)
+    assert_array_almost_equal(norms, np.array([4.0, 1.0, 3.0]))
+
 
 def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, -1]])
@@ -1423,17 +1749,6 @@ def test_fit_transform():
         X_transformed = obj.fit(X).transform(X)
         X_transformed2 = obj.fit_transform(X)
         assert_array_equal(X_transformed, X_transformed2)
-
-
-def test_deprecation_standard_scaler():
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((5, 4))
-    scaler = StandardScaler().fit(X)
-    depr_message = ("Function std_ is deprecated; Attribute ``std_`` will be "
-                    "removed in 0.19. Use ``scale_`` instead")
-    std_ = assert_warns_message(DeprecationWarning, depr_message, getattr,
-                                scaler, "std_")
-    assert_array_equal(std_, scaler.scale_)
 
 
 def test_add_dummy_feature():
@@ -1651,3 +1966,12 @@ def test_fit_cold_start():
         # with a different shape, this may break the scaler unless the internal
         # state is reset
         scaler.fit_transform(X_2d)
+
+
+def test_quantile_transform_valid_axis():
+    X = np.array([[0, 25, 50, 75, 100],
+                  [2, 4, 6, 8, 10],
+                  [2.6, 4.1, 2.3, 9.5, 0.1]])
+
+    assert_raises_regex(ValueError, "axis should be either equal to 0 or 1"
+                        ". Got axis=2", quantile_transform, X.T, axis=2)

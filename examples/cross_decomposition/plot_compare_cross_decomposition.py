@@ -36,10 +36,10 @@ latents = np.array([l1, l1, l2, l2]).T
 X = latents + np.random.normal(size=4 * n).reshape((n, 4))
 Y = latents + np.random.normal(size=4 * n).reshape((n, 4))
 
-X_train = X[:n / 2]
-Y_train = Y[:n / 2]
-X_test = X[n / 2:]
-Y_test = Y[n / 2:]
+X_train = X[:n // 2]
+Y_train = Y[:n // 2]
+X_test = X[n // 2:]
+Y_test = Y[n // 2:]
 
 print("Corr(X)")
 print(np.round(np.corrcoef(X.T), 2))
@@ -144,5 +144,5 @@ print(np.round(pls1.coef_, 1))
 
 cca = CCA(n_components=2)
 cca.fit(X_train, Y_train)
-X_train_r, Y_train_r = plsca.transform(X_train, Y_train)
-X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
+X_train_r, Y_train_r = cca.transform(X_train, Y_train)
+X_test_r, Y_test_r = cca.transform(X_test, Y_test)

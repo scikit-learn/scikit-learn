@@ -30,16 +30,16 @@ def l1_cross_distances(X):
     Parameters
     ----------
 
-    X: array_like
+    X : array_like
         An array with shape (n_samples, n_features)
 
     Returns
     -------
 
-    D: array with shape (n_samples * (n_samples - 1) / 2, n_features)
+    D : array with shape (n_samples * (n_samples - 1) / 2, n_features)
         The array of componentwise L1 cross-distances.
 
-    ij: arrays with shape (n_samples * (n_samples - 1) / 2, 2)
+    ij : arrays with shape (n_samples * (n_samples - 1) / 2, 2)
         The indices i and j of the vectors in X associated to the cross-
         distances in D: D[k] = np.abs(X[ij[k, 0]] - Y[ij[k, 1]]).
     """
@@ -169,11 +169,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         exponential distribution (log-uniform on [thetaL, thetaU]).
         Default does not use random starting point (random_start = 1).
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : int, RandomState instance or None, optional (default=None)
         The generator used to shuffle the sequence of coordinates of theta in
-        the Welch optimizer. If an integer is given, it fixes the seed.
-        Defaults to the global numpy random number generator.
-
+        the Welch optimizer. If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -618,14 +619,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Get generalized least squares solution
         Ft = linalg.solve_triangular(C, F, lower=True)
-        try:
-            Q, G = linalg.qr(Ft, econ=True)
-        except:
-            #/usr/lib/python2.6/dist-packages/scipy/linalg/decomp.py:1177:
-            # DeprecationWarning: qr econ argument will be removed after scipy
-            # 0.7. The economy transform will then be available through the
-            # mode='economic' argument.
-            Q, G = linalg.qr(Ft, mode='economic')
+        Q, G = linalg.qr(Ft, mode='economic')
 
         sv = linalg.svd(G, compute_uv=False)
         rcondG = sv[-1] / sv[0]

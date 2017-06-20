@@ -1,14 +1,14 @@
 import numpy as np
-import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import skip_if_32bit
 
 from sklearn import datasets
@@ -17,33 +17,10 @@ from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.utils.fixes import norm
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
 rng = np.random.RandomState(0)
-
-
-def test_transform_linear_model():
-    for clf in (LogisticRegression(C=0.1),
-                LinearSVC(C=0.01, dual=False),
-                SGDClassifier(alpha=0.001, n_iter=50, shuffle=True,
-                              random_state=0)):
-        for thresh in (None, ".09*mean", "1e-5 * median"):
-            for func in (np.array, sp.csr_matrix):
-                X = func(data)
-                clf.set_params(penalty="l1")
-                clf.fit(X, y)
-                X_new = assert_warns(
-                    DeprecationWarning, clf.transform, X, thresh)
-                if isinstance(clf, SGDClassifier):
-                    assert_true(X_new.shape[1] <= X.shape[1])
-                else:
-                    assert_less(X_new.shape[1], X.shape[1])
-                clf.set_params(penalty="l2")
-                clf.fit(X_new, y)
-                pred = clf.predict(X_new)
-                assert_greater(np.mean(pred == y), 0.7)
 
 
 def test_invalid_input():
@@ -123,7 +100,7 @@ def test_feature_importances_2d_coef():
 
             # Manually check that the norm is correctly performed
             est.fit(X, y)
-            importances = norm(est.coef_, axis=0, ord=order)
+            importances = np.linalg.norm(est.coef_, axis=0, ord=order)
             feature_mask = importances > func(importances)
             assert_array_equal(X_new, X[:, feature_mask])
 
@@ -143,15 +120,18 @@ def test_partial_fit():
     transformer.fit(np.vstack((data, data)), np.concatenate((y, y)))
     assert_array_equal(X_transform, transformer.transform(data))
 
+    # check that if est doesn't have partial_fit, neither does SelectFromModel
+    transformer = SelectFromModel(estimator=RandomForestClassifier())
+    assert_false(hasattr(transformer, "partial_fit"))
 
-def test_warm_start():
-    est = PassiveAggressiveClassifier(warm_start=True, random_state=0)
+
+def test_calling_fit_reinitializes():
+    est = LinearSVC(random_state=0)
     transformer = SelectFromModel(estimator=est)
     transformer.fit(data, y)
-    old_model = transformer.estimator_
+    transformer.set_params(estimator__C=100)
     transformer.fit(data, y)
-    new_model = transformer.estimator_
-    assert_true(old_model is new_model)
+    assert_equal(transformer.estimator_.C, 100)
 
 
 def test_prefit():
@@ -195,10 +175,10 @@ def test_threshold_string():
 def test_threshold_without_refitting():
     """Test that the threshold can be set without refitting the model."""
     clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=0)
-    model = SelectFromModel(clf, threshold=0.1)
+    model = SelectFromModel(clf, threshold="0.1 * mean")
     model.fit(data, y)
     X_transform = model.transform(data)
 
     # Set a higher threshold to filter out more features.
-    model.threshold = 1.0
+    model.threshold = "1.0 * mean"
     assert_greater(X_transform.shape[1], model.transform(data).shape[1])

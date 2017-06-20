@@ -20,11 +20,13 @@ from __future__ import print_function
 import numpy as np
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
+from scipy.linalg import pinvh
 from scipy.spatial.distance import cdist
 
 from ..externals.six.moves import xrange
 from ..utils import check_random_state, check_array, deprecated
-from ..utils.extmath import logsumexp, pinvh, squared_norm, stable_cumsum
+from ..utils.fixes import logsumexp
+from ..utils.extmath import squared_norm, stable_cumsum
 from ..utils.validation import check_is_fitted
 from .. import cluster
 from .gmm import _GMMBase
@@ -146,14 +148,14 @@ class _DPGMMBase(_GMMBase):
 
     Parameters
     ----------
-    n_components: int, default 1
+    n_components : int, default 1
         Number of mixture components.
 
-    covariance_type: string, default 'diag'
+    covariance_type : string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
 
-    alpha: float, default 1
+    alpha : float, default 1
         Real number representing the concentration parameter of
         the dirichlet process. Intuitively, the Dirichlet Process
         is as likely to start a new cluster for a point as it is
@@ -674,14 +676,14 @@ class VBGMM(_DPGMMBase):
 
     Parameters
     ----------
-    n_components: int, default 1
+    n_components : int, default 1
         Number of mixture components.
 
-    covariance_type: string, default 'diag'
+    covariance_type : string, default 'diag'
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
 
-    alpha: float, default 1
+    alpha : float, default 1
         Real number representing the concentration parameter of
         the dirichlet distribution. Intuitively, the higher the
         value of alpha the more likely the variational mixture of

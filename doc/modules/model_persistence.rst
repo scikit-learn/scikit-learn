@@ -23,7 +23,7 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+      decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
       max_iter=-1, probability=False, random_state=None, shrinking=True,
       tol=0.001, verbose=False)
 
@@ -80,6 +80,10 @@ additional metadata should be saved along the pickled model:
 
 This should make it possible to check that the cross-validation score is in the
 same range as before.
+
+Since a model internal representation may be different on two different
+architectures, dumping a model on one architecture and loading it on
+another architecture is not supported.
 
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this

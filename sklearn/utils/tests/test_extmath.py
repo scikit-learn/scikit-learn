@@ -1,6 +1,6 @@
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
-#          Denis Engemann <d.engemann@fz-juelich.de>
+#          Denis Engemann <denis-alexander.engemann@inria.fr>
 #
 # License: BSD 3 clause
 
@@ -18,8 +18,10 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.fixes import np_version
 
 from sklearn.utils.extmath import density
@@ -30,13 +32,11 @@ from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
-from sklearn.utils.extmath import fast_dot, _fast_dot
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -86,6 +86,7 @@ def test_random_weights():
     assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
 
 
+@ignore_warnings  # Test deprecated backport to be removed in 0.21
 def test_logsumexp():
     # Try to add some smallish numbers in logspace
     x = np.array([1e-40] * 1000000)
@@ -141,6 +142,7 @@ def test_randomized_svd_low_rank():
         assert_almost_equal(s[:rank], sa[:rank])
 
 
+@ignore_warnings  # extmath.norm is deprecated to be removed in 0.21
 def test_norm_squared_norm():
     X = np.random.RandomState(42).randn(50, 63)
     X *= 100        # check stability
@@ -149,6 +151,11 @@ def test_norm_squared_norm():
     assert_almost_equal(np.linalg.norm(X.ravel()), norm(X))
     assert_almost_equal(norm(X) ** 2, squared_norm(X), decimal=6)
     assert_almost_equal(np.linalg.norm(X), np.sqrt(squared_norm(X)), decimal=6)
+    # Check the warning with an int array and np.dot potential overflow
+    assert_warns_message(
+                    UserWarning, 'Array type is integer, np.dot may '
+                    'overflow. Data should be float type to avoid this issue',
+                    squared_norm, X.astype(int))
 
 
 def test_row_norms():
@@ -418,84 +425,6 @@ def test_logistic_sigmoid():
     assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
 
 
-def test_fast_dot():
-    # Check fast dot blas wrapper function
-    if fast_dot is np.dot:
-        return
-
-    rng = np.random.RandomState(42)
-    A = rng.random_sample([2, 10])
-    B = rng.random_sample([2, 10])
-
-    try:
-        linalg.get_blas_funcs(['gemm'])[0]
-        has_blas = True
-    except (AttributeError, ValueError):
-        has_blas = False
-
-    if has_blas:
-        # Test _fast_dot for invalid input.
-
-        # Maltyped data.
-        for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
-            assert_raises(ValueError, _fast_dot, A.astype(dt1),
-                          B.astype(dt2).T)
-
-        # Malformed data.
-
-        # ndim == 0
-        E = np.empty(0)
-        assert_raises(ValueError, _fast_dot, E, E)
-
-        # ndim == 1
-        assert_raises(ValueError, _fast_dot, A, A[0])
-
-        # ndim > 2
-        assert_raises(ValueError, _fast_dot, A.T, np.array([A, A]))
-
-        # min(shape) == 1
-        assert_raises(ValueError, _fast_dot, A, A[0, :][None, :])
-
-        # test for matrix mismatch error
-        assert_raises(ValueError, _fast_dot, A, A)
-
-    # Test cov-like use case + dtypes.
-    for dtype in ['f8', 'f4']:
-        A = A.astype(dtype)
-        B = B.astype(dtype)
-
-        #  col < row
-        C = np.dot(A.T, A)
-        C_ = fast_dot(A.T, A)
-        assert_almost_equal(C, C_, decimal=5)
-
-        C = np.dot(A.T, B)
-        C_ = fast_dot(A.T, B)
-        assert_almost_equal(C, C_, decimal=5)
-
-        C = np.dot(A, B.T)
-        C_ = fast_dot(A, B.T)
-        assert_almost_equal(C, C_, decimal=5)
-
-    # Test square matrix * rectangular use case.
-    A = rng.random_sample([2, 2])
-    for dtype in ['f8', 'f4']:
-        A = A.astype(dtype)
-        B = B.astype(dtype)
-
-        C = np.dot(A, B)
-        C_ = fast_dot(A, B)
-        assert_almost_equal(C, C_, decimal=5)
-
-        C = np.dot(A.T, B)
-        C_ = fast_dot(A.T, B)
-        assert_almost_equal(C, C_, decimal=5)
-
-    if has_blas:
-        for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
-            assert_raises(ValueError, _fast_dot, x, x.T)
-
-
 def test_incremental_variance_update_formulas():
     # Test Youngs and Cramer incremental variance formulas.
     # Doggie data from http://www.mathsisfun.com/data/standard-deviation.html
@@ -655,7 +584,7 @@ def test_stable_cumsum():
         raise SkipTest("Sum is as unstable as cumsum for numpy < 1.9")
     assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
     r = np.random.RandomState(0).rand(100000)
-    assert_warns(ConvergenceWarning, stable_cumsum, r, rtol=0, atol=0)
+    assert_warns(RuntimeWarning, stable_cumsum, r, rtol=0, atol=0)
 
     # test axis parameter
     A = np.random.RandomState(36).randint(1000, size=(5, 5, 5))

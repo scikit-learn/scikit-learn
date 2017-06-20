@@ -5,14 +5,13 @@ from .base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
-from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_X_y
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
 
 
 class LinearSVC(BaseEstimator, LinearClassifierMixin,
-                _LearntSelectorMixin, SparseCoefMixin):
+                SparseCoefMixin):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
@@ -47,16 +46,16 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     tol : float, optional (default=1e-4)
         Tolerance for stopping criteria.
 
-    multi_class: string, 'ovr' or 'crammer_singer' (default='ovr')
+    multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
         two classes.
-        ``"ovr"`` trains n_classes one-vs-rest classifiers, while ``"crammer_singer"``
-        optimizes a joint objective over all classes.
+        ``"ovr"`` trains n_classes one-vs-rest classifiers, while
+        ``"crammer_singer"`` optimizes a joint objective over all classes.
         While `crammer_singer` is interesting from a theoretical perspective
         as it is consistent, it is seldom used in practice as it rarely leads
         to better accuracy and is more expensive to compute.
-        If ``"crammer_singer"`` is chosen, the options loss, penalty and dual will
-        be ignored.
+        If ``"crammer_singer"`` is chosen, the options loss, penalty and dual
+        will be ignored.
 
     fit_intercept : boolean, optional (default=True)
         Whether to calculate the intercept for this model. If set
@@ -87,9 +86,12 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int seed, RandomState instance, or None (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
@@ -278,9 +280,12 @@ class LinearSVR(LinearModel, RegressorMixin):
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state : int seed, RandomState instance, or None (default=None)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
@@ -454,14 +459,14 @@ class SVC(BaseSVC):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
-    decision_function_shape : 'ovo', 'ovr' or None, default=None
+    decision_function_shape : 'ovo', 'ovr', default='ovr'
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2).
-        The default of None will currently behave as 'ovo' for backward
-        compatibility and raise a deprecation warning, but will change 'ovr'
-        in 0.19.
+
+        .. versionchanged:: 0.19
+            decision_function_shape is 'ovr' by default.
 
         .. versionadded:: 0.17
            *decision_function_shape='ovr'* is recommended.
@@ -469,9 +474,12 @@ class SVC(BaseSVC):
         .. versionchanged:: 0.17
            Deprecated *decision_function_shape='ovo' and None*.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data for probability estimation.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Attributes
     ----------
@@ -510,7 +518,7 @@ class SVC(BaseSVC):
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+        decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -531,7 +539,7 @@ class SVC(BaseSVC):
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
-                 verbose=False, max_iter=-1, decision_function_shape=None,
+                 verbose=False, max_iter=-1, decision_function_shape='ovr',
                  random_state=None):
 
         super(SVC, self).__init__(
@@ -595,8 +603,8 @@ class NuSVC(BaseSVC):
     class_weight : {dict, 'balanced'}, optional
         Set the parameter C of class i to class_weight[i]*C for
         SVC. If not given, all classes are supposed to have
-        weight one. The "balanced" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies as
+        weight one. The "balanced" mode uses the values of y to automatically
+        adjust weights inversely proportional to class frequencies as
         ``n_samples / (n_classes * np.bincount(y))``
 
     verbose : bool, default: False
@@ -607,14 +615,14 @@ class NuSVC(BaseSVC):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
-    decision_function_shape : 'ovo', 'ovr' or None, default=None
+    decision_function_shape : 'ovo', 'ovr', default='ovr'
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
         (n_samples, n_classes * (n_classes - 1) / 2).
-        The default of None will currently behave as 'ovo' for backward
-        compatibility and raise a deprecation warning, but will change 'ovr'
-        in 0.19.
+
+        .. versionchanged:: 0.19
+            decision_function_shape is 'ovr' by default.
 
         .. versionadded:: 0.17
            *decision_function_shape='ovr'* is recommended.
@@ -622,9 +630,12 @@ class NuSVC(BaseSVC):
         .. versionchanged:: 0.17
            Deprecated *decision_function_shape='ovo' and None*.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data for probability estimation.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Attributes
     ----------
@@ -663,7 +674,7 @@ class NuSVC(BaseSVC):
     >>> clf = NuSVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     NuSVC(cache_size=200, class_weight=None, coef0=0.0,
-          decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+          decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
           max_iter=-1, nu=0.5, probability=False, random_state=None,
           shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -679,10 +690,10 @@ class NuSVC(BaseSVC):
         liblinear.
     """
 
-    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto',
-                 coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, class_weight=None, verbose=False,
-                 max_iter=-1, decision_function_shape=None, random_state=None):
+    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
+                 shrinking=True, probability=False, tol=1e-3, cache_size=200,
+                 class_weight=None, verbose=False, max_iter=-1,
+                 decision_function_shape='ovr', random_state=None):
 
         super(NuSVC, self).__init__(
             impl='nu_svc', kernel=kernel, degree=degree, gamma=gamma,
@@ -973,9 +984,12 @@ class OneClassSVM(BaseLibSVM):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data for probability estimation.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Attributes
     ----------
@@ -1037,7 +1051,9 @@ class OneClassSVM(BaseLibSVM):
         return self
 
     def decision_function(self, X):
-        """Distance of the samples X to the separating hyperplane.
+        """Signed distance to the separating hyperplane.
+
+        Signed distance is positive for an inlier and negative for an outlier.
 
         Parameters
         ----------
@@ -1050,3 +1066,23 @@ class OneClassSVM(BaseLibSVM):
         """
         dec = self._decision_function(X)
         return dec
+
+    def predict(self, X):
+        """
+        Perform classification on samples in X.
+
+        For an one-class model, +1 or -1 is returned.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            For kernel="precomputed", the expected shape of X is
+            [n_samples_test, n_samples_train]
+
+        Returns
+        -------
+        y_pred : array, shape (n_samples,)
+            Class labels for samples in X.
+        """
+        y = super(OneClassSVM, self).predict(X)
+        return np.asarray(y, dtype=np.intp)

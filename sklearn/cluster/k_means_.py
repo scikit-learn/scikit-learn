@@ -22,14 +22,12 @@ from ..metrics.pairwise import pairwise_distances_argmin_min
 from ..utils.extmath import row_norms, squared_norm, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.fixes import astype
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import as_float_array
 from ..utils import gen_batches
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..utils.random import choice
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.six import string_types
@@ -47,20 +45,20 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
     Parameters
     -----------
-    X: array or sparse matrix, shape (n_samples, n_features)
+    X : array or sparse matrix, shape (n_samples, n_features)
         The data to pick seeds for. To avoid memory copy, the input data
         should be double precision (dtype=np.float64).
 
-    n_clusters: integer
+    n_clusters : integer
         The number of seeds to choose
 
-    x_squared_norms: array, shape (n_samples,)
+    x_squared_norms : array, shape (n_samples,)
         Squared Euclidean norm of each data point.
 
-    random_state: numpy.RandomState
+    random_state : numpy.RandomState
         The generator used to initialize the centers.
 
-    n_local_trials: integer, optional
+    n_local_trials : integer, optional
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
@@ -230,10 +228,11 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     verbose : boolean, optional
         Verbosity mode.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     copy_x : boolean, optional
         When pre-computing distances it is more numerically accurate to center
@@ -267,7 +266,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         The final value of the inertia criterion (sum of squared distances to
         the closest centroid for all observations in the training set).
 
-    best_n_iter: int
+    best_n_iter : int
         Number of iterations corresponding to the best results.
         Returned only if `return_n_iter` is set to True.
 
@@ -298,24 +297,26 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
                          ", but a value of %r was passed" %
                          precompute_distances)
 
-    # subtract of mean of x for more accurate distance computations
-    if not sp.issparse(X) or hasattr(init, '__array__'):
-        X_mean = X.mean(axis=0)
-    if not sp.issparse(X):
-        # The copy was already done above
-        X -= X_mean
-
+    # Validate init array
     if hasattr(init, '__array__'):
         init = check_array(init, dtype=X.dtype.type, copy=True)
         _validate_center_shape(X, n_clusters, init)
 
-        init -= X_mean
         if n_init != 1:
             warnings.warn(
                 'Explicit initial center position passed: '
                 'performing only one init in k-means instead of n_init=%d'
                 % n_init, RuntimeWarning, stacklevel=2)
             n_init = 1
+
+    # subtract of mean of x for more accurate distance computations
+    if not sp.issparse(X):
+        X_mean = X.mean(axis=0)
+        # The copy was already done above
+        X -= X_mean
+
+        if hasattr(init, '__array__'):
+            init -= X_mean
 
     # precompute squared norms of data points
     x_squared_norms = row_norms(X, squared=True)
@@ -409,17 +410,17 @@ def _kmeans_single_lloyd(X, n_clusters, max_iter=300, init='k-means++',
 
     Parameters
     ----------
-    X: array-like of floats, shape (n_samples, n_features)
+    X : array-like of floats, shape (n_samples, n_features)
         The observations to cluster.
 
-    n_clusters: int
+    n_clusters : int
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    max_iter: int, optional, default 300
+    max_iter : int, optional, default 300
         Maximum number of iterations of the k-means algorithm to run.
 
-    init: {'k-means++', 'random', or ndarray, or a callable}, optional
+    init : {'k-means++', 'random', or ndarray, or a callable}, optional
         Method for initialization, default to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -435,33 +436,34 @@ def _kmeans_single_lloyd(X, n_clusters, max_iter=300, init='k-means++',
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
 
-    tol: float, optional
+    tol : float, optional
         The relative increment in the results before declaring convergence.
 
-    verbose: boolean, optional
+    verbose : boolean, optional
         Verbosity mode
 
-    x_squared_norms: array
+    x_squared_norms : array
         Precomputed x_squared_norms.
 
     precompute_distances : boolean, default: True
         Precompute distances (faster but takes more memory).
 
-    random_state: integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
-    centroid: float ndarray with shape (k, n_features)
+    centroid : float ndarray with shape (k, n_features)
         Centroids found at the last iteration of k-means.
 
-    label: integer ndarray with shape (n_samples,)
+    label : integer ndarray with shape (n_samples,)
         label[i] is the code or index of the centroid the
         i'th observation is closest to.
 
-    inertia: float
+    inertia : float
         The final value of the inertia criterion (sum of squared distances to
         the closest centroid for all observations in the training set).
 
@@ -577,26 +579,26 @@ def _labels_inertia(X, x_squared_norms, centers,
 
     Parameters
     ----------
-    X: float64 array-like or CSR sparse matrix, shape (n_samples, n_features)
+    X : float64 array-like or CSR sparse matrix, shape (n_samples, n_features)
         The input samples to assign to the labels.
 
-    x_squared_norms: array, shape (n_samples,)
+    x_squared_norms : array, shape (n_samples,)
         Precomputed squared euclidean norm of each data point, to speed up
         computations.
 
-    centers: float array, shape (k, n_features)
+    centers : float array, shape (k, n_features)
         The cluster centers.
 
     precompute_distances : boolean, default: True
         Precompute distances (faster but takes more memory).
 
-    distances: float array, shape (n_samples,)
+    distances : float array, shape (n_samples,)
         Pre-allocated array to be filled in with each sample's distance
         to the closest center.
 
     Returns
     -------
-    labels: int array of shape(n)
+    labels : int array of shape(n)
         The resulting assignment
 
     inertia : float
@@ -628,20 +630,21 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     Parameters
     ----------
 
-    X: array, shape (n_samples, n_features)
+    X : array, shape (n_samples, n_features)
 
-    k: int
+    k : int
         number of centroids
 
-    init: {'k-means++', 'random' or ndarray or callable} optional
+    init : {'k-means++', 'random' or ndarray or callable} optional
         Method for initialization
 
-    random_state: integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
-    x_squared_norms:  array, shape (n_samples,), optional
+    x_squared_norms :  array, shape (n_samples,), optional
         Squared euclidean norm of each data point. Pass it if you have it at
         hands already to avoid it being recomputed here. Default: None
 
@@ -653,7 +656,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     Returns
     -------
-    centers: array, shape(k, n_features)
+    centers : array, shape(k, n_features)
     """
     random_state = check_random_state(random_state)
     n_samples = X.shape[0]
@@ -764,10 +767,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     verbose : int, default 0
         Verbosity mode.
@@ -909,7 +913,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X = self._check_fit_data(X)
         return self.fit(X)._transform(X)
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transform X to a cluster-distance space.
 
         In the new space, each dimension is the distance to the cluster
@@ -1006,10 +1010,11 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         the distances of each sample to its closest center.
         May not be None when random_reassign is True.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     random_reassign : boolean, optional
         If True, centers with very low counts are randomly reassigned
@@ -1055,16 +1060,15 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         n_reassigns = to_reassign.sum()
         if n_reassigns:
             # Pick new clusters amongst observations with uniform probability
-            new_centers = choice(X.shape[0], replace=False, size=n_reassigns,
-                                 random_state=random_state)
+            new_centers = random_state.choice(X.shape[0], replace=False,
+                                              size=n_reassigns)
             if verbose:
                 print("[MiniBatchKMeans] Reassigning %i cluster centers."
                       % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
-                assign_rows_csr(X,
-                                astype(new_centers, np.intp),
-                                astype(np.where(to_reassign)[0], np.intp),
+                assign_rows_csr(X, new_centers.astype(np.intp),
+                                np.where(to_reassign)[0].astype(np.intp),
                                 centers)
             else:
                 centers[to_reassign] = X[new_centers]
@@ -1245,10 +1249,11 @@ class MiniBatchKMeans(KMeans):
         Compute label assignment and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     reassignment_ratio : float, default: 0.01
         Control the fraction of the maximum number of counts for a

@@ -26,6 +26,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
@@ -298,15 +299,6 @@ def test_feature_importances():
                                         presort=presort)
         clf.fit(X, y)
         assert_true(hasattr(clf, 'feature_importances_'))
-
-        # XXX: Remove this test in 0.19 after transform support to estimators
-        # is removed.
-        X_new = assert_warns(
-            DeprecationWarning, clf.transform, X, threshold="mean")
-        assert_less(X_new.shape[1], X.shape[1])
-        feature_mask = (
-            clf.feature_importances_ > clf.feature_importances_.mean())
-        assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
 def test_probability_log():
@@ -970,6 +962,33 @@ def test_max_leaf_nodes_max_depth():
         assert_equal(tree.max_depth, 1)
 
 
+def test_min_impurity_split():
+    # Test if min_impurity_split of base estimators is set
+    # Regression test for #8006
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    all_estimators = [GradientBoostingRegressor, GradientBoostingClassifier]
+
+    for GBEstimator in all_estimators:
+        est = GBEstimator(min_impurity_split=0.1)
+        est = assert_warns_message(DeprecationWarning, "min_impurity_decrease",
+                                   est.fit, X, y)
+        for tree in est.estimators_.flat:
+            assert_equal(tree.min_impurity_split, 0.1)
+
+
+def test_min_impurity_decrease():
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    all_estimators = [GradientBoostingRegressor, GradientBoostingClassifier]
+
+    for GBEstimator in all_estimators:
+        est = GBEstimator(min_impurity_decrease=0.1)
+        est.fit(X, y)
+        for tree in est.estimators_.flat:
+            # Simply check if the parameter is passed on correctly. Tree tests
+            # will suffice for the actual working of this param
+            assert_equal(tree.min_impurity_decrease, 0.1)
+
+
 def test_warm_start_wo_nestimators_change():
     # Test if warm_start does nothing if n_estimators is not changed.
     # Regression test for #3513.
@@ -1072,6 +1091,7 @@ def check_sparse_input(EstimatorClass, X, X_sparse, y):
         assert_array_almost_equal(
             np.array(sparse.staged_decision_function(X_sparse)),
             np.array(sparse.staged_decision_function(X)))
+
 
 @skip_if_32bit
 def test_sparse_input():

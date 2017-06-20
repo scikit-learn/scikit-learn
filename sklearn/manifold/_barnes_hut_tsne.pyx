@@ -80,7 +80,7 @@ cdef struct Node:
 cdef struct Tree:
     # Holds a pointer to the root node
     Node* root_node 
-    # Number of dimensions in the ouput
+    # Number of dimensions in the output
     int n_dimensions
     # Total number of cells
     long n_cells
