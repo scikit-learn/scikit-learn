@@ -50,6 +50,7 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
     if ax is None:
         ax = plt.gca()
     img = ax.pcolormesh(values, cmap=cmap, vmin=vmin, vmax=vmax, norm=norm)
+
     # this will allow us to access the pixel values:
     img.update_scalarmappable()
     ax.set_xlabel(xlabel)
@@ -84,4 +85,9 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
         else:
             c = 'w'
         ax.text(x, y, fmt.format(value), color=c, ha="center", va="center")
+
+    # Invert the y-axis so that the matrix looks like a diagonal matrix and
+    # not anti-diagonal matrix
+    ax.invert_yaxis()
+
     return ax
