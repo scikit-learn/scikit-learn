@@ -49,7 +49,7 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
     import matplotlib.pyplot as plt
     if ax is None:
         ax = plt.gca()
-    img = ax.pcolormesh(values, cmap=cmap, vmin=None, vmax=None, norm=norm)
+    img = ax.pcolormesh(values, cmap=cmap, vmin=vmin, vmax=vmax, norm=norm)
     # this will allow us to access the pixel values:
     img.update_scalarmappable()
     ax.set_xlabel(xlabel)
