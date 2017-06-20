@@ -9,6 +9,7 @@ from __future__ import division, print_function
 # License: BSD 3 clause
 
 import os
+import os.path as op
 from time import time
 import numpy as np
 import json
@@ -60,6 +61,10 @@ def nn_accuracy(X, X_embedded, k=1):
 def tsne_fit_transform(model, data):
     transformed = model.fit_transform(data)
     return transformed, model.n_iter_
+
+
+def sanitize(filename):
+    return filename.replace("/", '-').replace(" ", "_")
 
 
 if __name__ == "__main__":
@@ -150,11 +155,15 @@ $ cd ..
     log_filename = os.path.join(LOG_DIR, basename + '.json')
     for n in data_size:
         X_train = X[:n]
+        y_train = y[:n]
         n = X_train.shape[0]
         for name, method in methods:
             print("Fitting {} on {} samples...".format(name, n))
             t0 = time()
-            np.save("dump_X.npy", X_train)
+            np.save(os.path.join(LOG_DIR, 'mnist_{}_{}.npy'
+                                 .format('original', n)), X_train)
+            np.save(os.path.join(LOG_DIR, 'mnist_{}_{}.npy'
+                                 .format('original_labels', n)), y_train)
             X_embedded, n_iter = method(X_train)
             duration = time() - t0
             precision_5 = nn_accuracy(X_train, X_embedded)
@@ -164,6 +173,6 @@ $ cd ..
             results.append(dict(method=name, duration=duration, n_samples=n))
             with open(log_filename, 'w', encoding='utf-8') as f:
                 json.dump(results, f)
-            np.save(os.path.join(LOG_DIR, 'mnist_{}_{}.npy'
-                                 .format(name.replace("/", '-'), n)),
+            method_name = sanitize(name)
+            np.save(op.join(LOG_DIR, 'mnist_{}_{}.npy'.format(method_name, n)),
                     X_embedded)
