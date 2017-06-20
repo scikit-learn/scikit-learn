@@ -802,6 +802,8 @@ div.sprint-wrapper:hover {
 
 /*-----------------------The Examples Gallery-------------------------------*/
 
+div.sphx-glr-footer .container  {width: auto;}
+
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img.align-center {
     max-width:805px;

@@ -5,6 +5,31 @@
 Release history
 ===============
 
+.. _changes_0_18_2:
+
+Version 0.18.2
+==============
+
+**June 20, 2017**
+
+.. topic:: Last release with Python 2.6 support
+
+    Scikit-learn 0.18 is the last major release of scikit-learn to support Python 2.6.
+    Later versions of scikit-learn will require Python 2.7 or above.
+
+
+Changelog
+---------
+    - Fixes for compatibility with NumPy 1.13.0: :issue:`7946` :issue:`8355` by `Loic Esteve`_.
+
+    - Minor compatibility changes in the examples :issue:`9010` :issue:`8040` :issue:`9149`.
+
+
+Code Contributors
+-----------------
+Aman Dalmia, Loic Esteve, Nate Guerin, Sergei Lebedev
+
+
 .. _changes_0_18_1:
 
 Version 0.18.1
@@ -53,7 +78,7 @@ Bug fixes
      with SVD and Eigen solver are now of the same length. :issue:`7632`
      by :user:`JPFrancoia <JPFrancoia>`
 
-   - Fixes issue in :ref:`univariate_feature_selection` where score 
+   - Fixes issue in :ref:`univariate_feature_selection` where score
      functions were not accepting multi-label targets. :issue:`7676`
      by `Mohammed Affan`_
 
@@ -307,7 +332,7 @@ Other estimators
 
    - New :class:`mixture.GaussianMixture` and :class:`mixture.BayesianGaussianMixture`
      replace former mixture models, employing faster inference
-     for sounder results. :issue:`7295` by :user:`Wei Xue <xuewei4d>` and 
+     for sounder results. :issue:`7295` by :user:`Wei Xue <xuewei4d>` and
      :user:`Thierry Guillemot <tguillemot>`.
 
    - Class :class:`decomposition.RandomizedPCA` is now factored into :class:`decomposition.PCA`
@@ -430,7 +455,7 @@ Decomposition, manifold learning and clustering
    - :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` now works
      with ``np.float32`` and ``np.float64`` input data without converting it.
      This allows to reduce the memory consumption by using ``np.float32``.
-     :issue:`6846` by :user:`Sebastian Säger <ssaeger>` and 
+     :issue:`6846` by :user:`Sebastian Säger <ssaeger>` and
      :user:`YenChen Lin <yenchenlin>`.
 
 Preprocessing and feature selection
@@ -439,7 +464,7 @@ Preprocessing and feature selection
      :issue:`5929` by :user:`Konstantin Podshumok <podshumok>`.
 
    - :class:`feature_extraction.FeatureHasher` now accepts string values.
-     :issue:`6173` by :user:`Ryad Zenine <ryadzenine>` and 
+     :issue:`6173` by :user:`Ryad Zenine <ryadzenine>` and
      :user:`Devashish Deshpande <dsquareindia>`.
 
    - Keyword arguments can now be supplied to ``func`` in
@@ -453,7 +478,7 @@ Preprocessing and feature selection
 Model evaluation and meta-estimators
 
    - :class:`multiclass.OneVsOneClassifier` and :class:`multiclass.OneVsRestClassifier`
-     now support ``partial_fit``. By :user:`Asish Panda <kaichogami>` and 
+     now support ``partial_fit``. By :user:`Asish Panda <kaichogami>` and
      :user:`Philipp Dowling <phdowling>`.
 
    - Added support for substituting or disabling :class:`pipeline.Pipeline`
@@ -481,7 +506,7 @@ Metrics
 
    - Added ``labels`` flag to :class:`metrics.log_loss` to to explicitly provide
      the labels when the number of classes in ``y_true`` and ``y_pred`` differ.
-     :issue:`7239` by :user:`Hong Guangguo <hongguangguo>` with help from 
+     :issue:`7239` by :user:`Hong Guangguo <hongguangguo>` with help from
      :user:`Mads Jensen <indianajensen>` and :user:`Nelson Liu <nelson-liu>`.
 
    - Support sparse contingency matrices in cluster evaluation
@@ -601,7 +626,7 @@ Decomposition, manifold learning and clustering
     - Fixed incorrect initialization of :func:`utils.arpack.eigsh` on all
       occurrences. Affects :class:`cluster.bicluster.SpectralBiclustering`,
       :class:`decomposition.KernelPCA`, :class:`manifold.LocallyLinearEmbedding`,
-      and :class:`manifold.SpectralEmbedding` (:issue:`5012`). By 
+      and :class:`manifold.SpectralEmbedding` (:issue:`5012`). By
       :user:`Peter Fischer <yanlend>`.
 
     - Attribute ``explained_variance_ratio_`` calculated with the SVD solver
@@ -884,7 +909,7 @@ New features
      :class:`cross_validation.LabelShuffleSplit` generate train-test folds,
      respectively similar to :class:`cross_validation.KFold` and
      :class:`cross_validation.ShuffleSplit`, except that the folds are
-     conditioned on a label array. By `Brian McFee`_, :user:`Jean 
+     conditioned on a label array. By `Brian McFee`_, :user:`Jean
      Kossaifi <JeanKossaifi>` and `Gilles Louppe`_.
 
    - :class:`decomposition.LatentDirichletAllocation` implements the Latent
@@ -974,7 +999,7 @@ Enhancements
      By `Trevor Stephens`_.
 
    - Provide an option for sparse output from
-     :func:`sklearn.metrics.pairwise.cosine_similarity`. By 
+     :func:`sklearn.metrics.pairwise.cosine_similarity`. By
      :user:`Jaidev Deshpande <jaidevd>`.
 
    - Add :func:`minmax_scale` to provide a function interface for
@@ -1185,7 +1210,7 @@ Bug fixes
       By `Tom Dupre la Tour`_.
 
     - Fixed bug :issue:`5495` when
-      doing OVR(SVC(decision_function_shape="ovr")). Fixed by 
+      doing OVR(SVC(decision_function_shape="ovr")). Fixed by
       :user:`Elvis Dohmatob <dohmatob>`.
 
 
