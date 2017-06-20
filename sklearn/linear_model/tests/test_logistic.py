@@ -1140,8 +1140,7 @@ def test_dtype_match():
     y_64 = np.array(Y1).astype(np.float64)
     X_sparse_32 = sp.csr_matrix(X, dtype=np.float32)
 
-    # for solver in ['newton-cg', 'saga']:
-    for solver in ['saga', ]:
+    for solver in ['newton-cg', 'saga']:
         for multi_class in ['ovr', 'multinomial']:
 
             # Check accuracy consistency
