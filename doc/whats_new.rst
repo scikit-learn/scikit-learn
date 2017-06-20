@@ -404,9 +404,14 @@ Bug fixes
      reused the same estimator for each parameter value.
      :issue:`7365` by :user:`Aleksandr Sandrovskii <Sundrique>`.
 
+   - :class:`multiclass.OneVsOneClassifier`'s ``partial_fit`` now ensures all
+     classes are provided up-front. :issue:`6250` by
+     :user:`Asish Panda <kaichogami>`.
+
    - Fixed an integer overflow bug in :func:`metrics.confusion_matrix` and
      hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
      by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
+
 
 API changes summary
 -------------------
