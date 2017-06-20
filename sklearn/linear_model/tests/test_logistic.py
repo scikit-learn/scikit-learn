@@ -1163,4 +1163,5 @@ def test_dtype_match():
             assert_equal(lr_32_coef.dtype, X_32.dtype)
             assert_equal(lr_64_coef.dtype, X_64.dtype)
             assert_equal(lr_32_sparse.coef_.dtype, X_sparse_32.dtype)
-            assert_almost_equal(lr_32_coef, lr_64_coef.astype(np.float32))
+            assert_almost_equal(lr_32_coef, lr_64_coef.astype(np.float32),
+                                decimal=4)
