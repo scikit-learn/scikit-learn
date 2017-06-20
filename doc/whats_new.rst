@@ -294,11 +294,12 @@ Model evaluation and meta-estimators
    - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
      will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
      norm 'max' the norms returned will be the same as for dense matrices.
-     :issue:`7771` by `Ang Lu <https://github.com/luang008>`_.
+     :issue:`7771` by `Ang Lu <https://github.com/luang008>`.
+
    - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
      to change output shape of `transform` method to 2 dimensional.
-     (`#7794 <https://github.com/scikit-learn/scikit-learn/pull/7794>`_)
-     by `Ibraim Ganiev`_.
+     :issue:`7794` by `Ibraim Ganiev <olologin>` and
+     `Herilalaina Rakotoarison <herilalaina>`.
 
 Bug fixes
 .........
