@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
-from sklearn.plot import plot_heatmap
+from sklearn.plot import plot_confusion_matrix
 
 # import some data to play with
 iris = datasets.load_iris()
@@ -46,27 +46,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 classifier = svm.SVC(kernel='linear', C=0.01)
 y_pred = classifier.fit(X_train, y_train).predict(X_test)
 
-
-def plot_confusion_matrix(cm, classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-
-    print(title)
-    print(cm)
-
-    fmt = '{:.2f}' if normalize else '{:d}'
-    plot_heatmap(cm, xticklabels=classes, yticklabels=classes, cmap=cmap,
-                 xlabel="Predicted label", ylabel="True label", fmt=fmt)
-
-    plt.title(title)
-
 # Compute confusion matrix
 cnf_matrix = confusion_matrix(y_test, y_pred)
 np.set_printoptions(precision=2)
@@ -74,11 +53,13 @@ np.set_printoptions(precision=2)
 # Plot non-normalized confusion matrix
 plt.figure()
 plot_confusion_matrix(cnf_matrix, classes=class_names,
-                      title='Confusion matrix, without normalization')
+                      title='Confusion matrix, without normalization',
+                      cmap=plt.cm.Blues)
 
 # Plot normalized confusion matrix
 plt.figure()
 plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True,
-                      title='Normalized confusion matrix')
+                      title='Normalized confusion matrix',
+                      cmap=plt.cm.Blues)
 
 plt.show()
