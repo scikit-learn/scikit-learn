@@ -48,7 +48,7 @@ print(__doc__)
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
 
 
-###############################################################################
+# #############################################################################
 # Download the data, if not already on disk and load it as numpy arrays
 
 lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
@@ -72,7 +72,7 @@ print("n_features: %d" % n_features)
 print("n_classes: %d" % n_classes)
 
 
-###############################################################################
+# #############################################################################
 # Split into a training set and a test set using a stratified k fold
 
 # split into a training and testing set
@@ -80,7 +80,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.25, random_state=42)
 
 
-###############################################################################
+# #############################################################################
 # Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
 # dataset): unsupervised feature extraction / dimensionality reduction
 n_components = 150
@@ -101,7 +101,7 @@ X_test_pca = pca.transform(X_test)
 print("done in %0.3fs" % (time() - t0))
 
 
-###############################################################################
+# #############################################################################
 # Train a SVM classification model
 
 print("Fitting the classifier to the training set")
@@ -115,7 +115,7 @@ print("Best estimator found by grid search:")
 print(clf.best_estimator_)
 
 
-###############################################################################
+# #############################################################################
 # Quantitative evaluation of the model quality on the test set
 
 print("Predicting people's names on the test set")
@@ -127,7 +127,7 @@ print(classification_report(y_test, y_pred, target_names=target_names))
 print(confusion_matrix(y_test, y_pred, labels=range(n_classes)))
 
 
-###############################################################################
+# #############################################################################
 # Qualitative evaluation of the predictions using matplotlib
 
 def plot_gallery(images, titles, h, w, n_row=3, n_col=4):
