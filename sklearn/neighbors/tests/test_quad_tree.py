@@ -1,6 +1,7 @@
 import pickle
 import numpy as np
 from sklearn.neighbors.quad_tree import QuadTree
+from sklearn.utils import check_random_state
 
 
 def test_quadtree_similar_point():
@@ -39,10 +40,10 @@ def test_quadtree_similar_point():
 
 
 def test_quad_tree_pickle():
-    np.random.seed(0)
+    rng = check_random_state(0)
 
     for n_dimensions in (2, 3):
-        X = np.random.random((10, n_dimensions))
+        X = rng.random_sample((10, n_dimensions))
 
         tree = QuadTree(n_dimensions=n_dimensions, verbose=0)
         tree.build_tree(X)
@@ -61,11 +62,11 @@ def test_quad_tree_pickle():
 
 
 def test_qt_insert_duplicate():
-    np.random.seed(0)
+    rng = check_random_state(0)
 
     def check_insert_duplicate(n_dimensions=2):
 
-        X = np.random.random((10, n_dimensions))
+        X = rng.random_sample((10, n_dimensions))
         Xd = np.r_[X, X[:5]]
         tree = QuadTree(n_dimensions=n_dimensions, verbose=0)
         tree.build_tree(Xd)
