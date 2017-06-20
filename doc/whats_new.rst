@@ -372,6 +372,12 @@ Bug fixes
    - Add ``shuffle`` parameter to :func:`model_selection.train_test_split`.
      :issue:`#8845` by  :user:`themrmax <themrmax>`
 
+   - Fixed the implementation of explained_variance_
+     in :class:`decomposition.PCA`,
+     :class:`decomposition.RandomizedPCA` and
+     :class:`decomposition.IncrementalPCA`.
+     :issue:`#9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+
 API changes summary
 -------------------
 
