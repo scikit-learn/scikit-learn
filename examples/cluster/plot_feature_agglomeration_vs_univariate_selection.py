@@ -34,7 +34,7 @@ from sklearn.externals.joblib import Memory
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold
 
-###############################################################################
+# #############################################################################
 # Generate data
 n_samples = 200
 size = 40  # image size
@@ -58,7 +58,7 @@ noise = np.random.randn(y.shape[0])
 noise_coef = (linalg.norm(y, 2) / np.exp(snr / 20.)) / linalg.norm(noise, 2)
 y += noise_coef * noise  # add noise
 
-###############################################################################
+# #############################################################################
 # Compute the coefs of a Bayesian Ridge with GridSearch
 cv = KFold(2)  # cross-validation generator for model selection
 ridge = BayesianRidge()
@@ -88,7 +88,7 @@ coef_ = clf.best_estimator_.steps[-1][1].coef_
 coef_ = clf.best_estimator_.steps[0][1].inverse_transform(coef_.reshape(1, -1))
 coef_selection_ = coef_.reshape(size, size)
 
-###############################################################################
+# #############################################################################
 # Inverse the transformation to plot the results on an image
 plt.close('all')
 plt.figure(figsize=(7.3, 2.7))

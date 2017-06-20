@@ -499,6 +499,9 @@ def load_digits(n_class=10, return_X_y=False):
 
         .. versionadded:: 0.18
 
+    This is a copy of the test set of the UCI ML hand-written digits datasets
+    http://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
+
     Examples
     --------
     To load the data and visualize the images::
@@ -588,10 +591,12 @@ def load_diabetes(return_X_y=False):
 def load_linnerud(return_X_y=False):
     """Load and return the linnerud dataset (multivariate regression).
 
-    Samples total: 20
-    Dimensionality: 3 for both data and targets
-    Features: integer
-    Targets: integer
+    ==============    ============================
+    Samples total     20
+    Dimensionality    3 (for both data and target)
+    Features          integer
+    Targets           integer
+    ==============    ============================
 
     Parameters
     ----------

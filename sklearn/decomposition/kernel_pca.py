@@ -5,9 +5,9 @@
 
 import numpy as np
 from scipy import linalg
+from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
-from ..utils.arpack import eigsh
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
