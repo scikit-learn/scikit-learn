@@ -370,7 +370,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             self.coef_ = self.coef_ * self.y_std_
         return self
 
-    def transform(self, X, Y='deprecated', copy=True):
+    def transform(self, X, Y=None, copy=True):
         """Apply the dimension reduction learned on the train data.
 
         Parameters
@@ -390,12 +390,6 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
-        # XXX : don't know what to do with Y
-        if not isinstance(Y, string_types) or Y != 'deprecated':
-            warnings.warn("The parameter Y on transform() is "
-                          "deprecated since 0.19 and will be removed in 0.21",
-                          DeprecationWarning)
-
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
@@ -835,7 +829,6 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             Training vectors, where n_samples in the number of samples and
             p is the number of predictors.
         """
-        # XXX Y param need fixing...
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
