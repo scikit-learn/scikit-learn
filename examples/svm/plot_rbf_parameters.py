@@ -75,7 +75,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV
-from sklearn.plot import plot_heatmap
+from sklearn.plot import plot_gridsearch_results
 
 print(__doc__)
 
@@ -174,9 +174,6 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
     plt.yticks(())
     plt.axis('tight')
 
-scores = grid.cv_results_['mean_test_score'].reshape(len(C_range),
-                                                     len(gamma_range))
-
 # Draw heatmap of the validation accuracy as a function of gamma and C
 #
 # The score are encoded as colors with the hot colormap which varies from dark
@@ -188,8 +185,7 @@ scores = grid.cv_results_['mean_test_score'].reshape(len(C_range),
 
 plt.figure(figsize=(10, 10))
 plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
-plot_heatmap(scores, cmap=plt.cm.hot, xlabel="gamma", ylabel="C",
-             xticklabels=gamma_range, yticklabels=C_range,
-             norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
-plt.title('Validation accuracy')
+plot_gridsearch_results(grid.cv_results_, param_grid=param_grid,
+                        title="Validation accuracy", cmap=plt.cm.hot,
+                        norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
 plt.show()
