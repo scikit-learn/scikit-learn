@@ -27,6 +27,9 @@ def plot_confusion_matrix(values, classes, normalize=False,
     ylabel : string, default="True Label"
         Label for the y-axis.
 
+    title : string, default="Confusion matrix"
+        Title for the heatmap.
+
     cmap : string or colormap
         Matpotlib colormap to use.
 
