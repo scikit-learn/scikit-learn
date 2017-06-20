@@ -2,13 +2,13 @@ import numpy as np
 from sklearn.plot import plot_heatmap
 
 
-def plot_confusion_matrix(values, classes, normalize=True,
+def plot_confusion_matrix(values, classes, normalize=False,
                           xlabel="Predicted Label", ylabel="True Label",
                           title='Confusion matrix', cmap=None, vmin=None,
                           vmax=None, ax=None, fmt="{:.2f}",
                           xtickrotation=45, norm=None):
-    """Print and plot the confusion matrix. Normalization can be applied by
-    setting `normalize=True`.
+    """Print and plot the confusion matrix as a heatmap. Normalization can be
+    applied by setting `normalize=True`.
 
     Parameters
     ----------
@@ -18,23 +18,25 @@ def plot_confusion_matrix(values, classes, normalize=True,
     classes : list of strings
         The list of classes represented in the two-dimensional input array.
 
-    normalize : boolean, default=True
+    normalize : boolean, default=False
         If True, the confusion matrix will be normalized by row.
 
-    xlabel : string, default=""
+    xlabel : string, default="Predicted Label"
         Label for the x-axis.
 
-    ylabel : string, default=""
+    ylabel : string, default="True Label"
         Label for the y-axis.
 
     cmap : string or colormap
         Matpotlib colormap to use.
 
     vmin : int, float or None
-        Minimum clipping value.
+        Minimum clipping value. This argument will be passed on to the
+        pcolormesh function from matplotlib used to generate the heatmap.
 
     vmax : int, float or None
-        Maximum clipping value.
+        Maximum clipping value. This argument will be passed on to the
+        pcolormesh function from matplotlib used to generate the heatmap.
 
     ax : axes object or None
         Matplotlib axes object to plot into. If None, the current axes are
@@ -48,7 +50,8 @@ def plot_confusion_matrix(values, classes, normalize=True,
         Rotation of the xticklabels.
 
     norm : matplotlib normalizer
-        Normalizer passed to pcolor
+        Normalizer passed to pcolormesh function from matplotlib used to
+        generate the heatmap.
     """
 
     import matplotlib.pyplot as plt
