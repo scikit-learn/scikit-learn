@@ -609,15 +609,14 @@ References
       `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
 
 Select Dimension Kernel
-------------------
+-----------------------
 
-The :class:`SelectDimensionKernel` is a thin wrapper around any given kernel. It
-applies the underlying kernel on a set of specific features of data. This can
-be useful when different kernels, e.g. periodic and RBF, are needed to model
-the dataset.
+The :class:`SelectDimensionKernel` can be used to apply a kernel on a set of
+specific features. This can be useful when different kernels, e.g.
+periodic and RBF, are needed to model the different feautres of the dataset.
 
-By combining two or more different kinds of kernels we can construct new kernels that
-might model the data better. The following example uses two kernels, :class:`ExpSineSquared`
+By combining two or more different kernels we can construct new kernels that
+can model the data better. The following example uses two kernels, :class:`ExpSineSquared`
 and :class:`RBF`, for first and second feature dimensions of data:
 
 .. figure:: ../auto_examples/gaussian_process/images/plot_gpr_dim_selection.png

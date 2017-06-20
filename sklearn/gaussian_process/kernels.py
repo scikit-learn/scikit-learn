@@ -1879,9 +1879,7 @@ class SelectDimensionKernel(Kernel):
          For an anisotropic kernel, the length_scale of the kernel and
          the active_dims should have same length and the indices of the
          active_dims correspond to the indices of the features in X.
-
     """
-
     def __init__(self, kernel, active_dims):
         self.active_dims = active_dims
         self.kernel = kernel

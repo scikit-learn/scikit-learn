@@ -593,6 +593,7 @@ Kernels:
   gaussian_process.kernels.PairwiseKernel
   gaussian_process.kernels.CompoundKernel
   gaussian_process.kernels.Hyperparameter
+  gaussian_process.kernels.SelectDimensionKernel
 
 .. _isotonic_ref:
 
