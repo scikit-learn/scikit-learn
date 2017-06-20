@@ -51,6 +51,7 @@ estimators = [('OLS', LinearRegression()),
 colors = {'OLS': 'turquoise', 'Theil-Sen': 'gold', 'RANSAC': 'lightgreen'}
 lw = 2
 
+# #############################################################################
 # Outliers only in the y direction
 
 np.random.seed(0)
@@ -79,6 +80,7 @@ plt.axis('tight')
 plt.legend(loc='upper left')
 plt.title("Corrupt y")
 
+# #############################################################################
 # Outliers in the X direction
 
 np.random.seed(0)

@@ -24,6 +24,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 
+# #############################################################################
 # Dataset based latent variables model
 
 n = 500
@@ -45,6 +46,7 @@ print(np.round(np.corrcoef(X.T), 2))
 print("Corr(Y)")
 print(np.round(np.corrcoef(Y.T), 2))
 
+# #############################################################################
 # Canonical (symmetric) PLS
 
 # Transform data
@@ -104,6 +106,7 @@ plt.xticks(())
 plt.yticks(())
 plt.show()
 
+# #############################################################################
 # PLS regression, with multivariate response, a.k.a. PLS2
 
 n = 1000
@@ -135,6 +138,7 @@ pls1.fit(X, y)
 print("Estimated betas")
 print(np.round(pls1.coef_, 1))
 
+# #############################################################################
 # CCA (PLS mode B with symmetric deflation)
 
 cca = CCA(n_components=2)

@@ -20,6 +20,7 @@ from matplotlib import colors
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
+# #############################################################################
 # Colormap
 cmap = colors.LinearSegmentedColormap(
     'red_blue_classes',
@@ -29,6 +30,7 @@ cmap = colors.LinearSegmentedColormap(
 plt.cm.register_cmap(cmap=cmap)
 
 
+# #############################################################################
 # Generate datasets
 def dataset_fixed_cov():
     '''Generate 2 Gaussians samples with the same covariance matrix'''
@@ -52,6 +54,7 @@ def dataset_cov():
     return X, y
 
 
+# #############################################################################
 # Plot functions
 def plot_data(lda, X, y, y_pred, fig_index):
     splot = plt.subplot(2, 2, fig_index)

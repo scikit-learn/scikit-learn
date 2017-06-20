@@ -33,6 +33,7 @@ import mpl_toolkits.mplot3d.axes3d as p3
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets.samples_generator import make_swiss_roll
 
+# #############################################################################
 # Generate data (swiss roll dataset)
 n_samples = 1500
 noise = 0.05
@@ -40,6 +41,7 @@ X, _ = make_swiss_roll(n_samples, noise)
 # Make it thinner
 X[:, 1] *= .5
 
+# #############################################################################
 # Compute clustering
 print("Compute unstructured hierarchical clustering...")
 st = time.time()
@@ -49,6 +51,7 @@ label = ward.labels_
 print("Elapsed time: %.2fs" % elapsed_time)
 print("Number of points: %i" % label.size)
 
+# #############################################################################
 # Plot result
 fig = plt.figure()
 ax = p3.Axes3D(fig)
@@ -59,10 +62,12 @@ for l in np.unique(label):
 plt.title('Without connectivity constraints (time %.2fs)' % elapsed_time)
 
 
+# #############################################################################
 # Define the structure A of the data. Here a 10 nearest neighbors
 from sklearn.neighbors import kneighbors_graph
 connectivity = kneighbors_graph(X, n_neighbors=10, include_self=False)
 
+# #############################################################################
 # Compute clustering
 print("Compute structured hierarchical clustering...")
 st = time.time()
@@ -73,6 +78,7 @@ label = ward.labels_
 print("Elapsed time: %.2fs" % elapsed_time)
 print("Number of points: %i" % label.size)
 
+# #############################################################################
 # Plot result
 fig = plt.figure()
 ax = p3.Axes3D(fig)
