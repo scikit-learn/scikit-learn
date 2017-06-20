@@ -14,17 +14,15 @@ from sklearn.metrics.pairwise \
 from sklearn.gaussian_process.kernels \
     import (RBF, Matern, RationalQuadratic, ExpSineSquared, DotProduct,
             ConstantKernel, WhiteKernel, PairwiseKernel, KernelOperator,
-            Exponentiation)
+            Exponentiation, SelectDimensionKernel)
 from sklearn.base import clone
 
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
                                    assert_not_equal, assert_array_equal,
                                    assert_array_almost_equal)
 
-
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
 Y = np.random.RandomState(0).normal(0, 1, (6, 2))
-
 kernel_white = RBF(length_scale=2.0) + WhiteKernel(noise_level=3.0)
 kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
            ConstantKernel(constant_value=10.0),
@@ -46,6 +44,12 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
     kernels.append(PairwiseKernel(gamma=1.0, metric=metric))
+kernels += [SelectDimensionKernel(RBF(length_scale=2.0),
+                                  active_dims=[0]),
+            SelectDimensionKernel(RBF(length_scale=[2.0, 1.0]),
+                                  active_dims=[True, True]),
+            SelectDimensionKernel(Matern(length_scale=0.5, nu=0.5),
+                                  active_dims=[1])]
 
 
 def test_kernel_gradient():
@@ -71,8 +75,9 @@ def test_kernel_gradient():
 def test_kernel_theta():
     # Check that parameter vector theta of kernel is set correctly.
     for kernel in kernels:
-        if isinstance(kernel, KernelOperator) \
-           or isinstance(kernel, Exponentiation):  # skip non-basic kernels
+        # skip non-basic kernels
+        if isinstance(kernel, (KernelOperator, Exponentiation,
+                               SelectDimensionKernel)):
             continue
         theta = kernel.theta
         _, K_gradient = kernel(X, eval_gradient=True)

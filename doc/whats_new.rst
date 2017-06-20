@@ -74,6 +74,11 @@ New features
      cumulative gain (NDCG).
      :issue:`7739` by :user:`David Gasquez <davidgasquez>`.
 
+   - Added :class:`gaussian_process.kernels.SelectDimensionKernel`, which 
+     allows for applying an input kernel on specific features of input
+     X.
+     :issue:`6868` by :user:`Behzad Tabibian <btabibian>`.
+
 Enhancements
 ............
 
