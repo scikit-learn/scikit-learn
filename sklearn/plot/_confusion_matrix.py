@@ -7,7 +7,7 @@ def plot_confusion_matrix(values, classes, normalize=False,
                           title='Confusion matrix', cmap=None, vmin=None,
                           vmax=None, ax=None, fmt="{:.2f}",
                           xtickrotation=45, norm=None):
-    """Print and plot the confusion matrix as a heatmap. Normalization can be
+    """Plot the confusion matrix as a heatmap. Normalization can be
     applied by setting `normalize=True`.
 
     Parameters
@@ -61,9 +61,6 @@ def plot_confusion_matrix(values, classes, normalize=False,
 
     if normalize:
         values = values.astype('float') / values.sum(axis=1)[:, np.newaxis]
-
-    print(title)
-    print(values)
 
     fmt = fmt if normalize else '{:d}'
 
