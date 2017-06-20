@@ -5,6 +5,31 @@
 Release history
 ===============
 
+.. _changes_0_18_2:
+
+Version 0.18.2
+==============
+
+**June 20, 2017**
+
+.. topic:: Last release with Python 2.6 support
+
+    Scikit-learn 0.18 is the last major release of scikit-learn to support Python 2.6.
+    Later versions of scikit-learn will require Python 2.7 or above.
+
+
+Changelog
+---------
+    - Fixes for compatibility with NumPy 1.13.0: :issue:`7946` :issue:`8355` by `Loic Esteve`_.
+
+    - Minor compatibility changes in the examples :issue:`9010` :issue:`8040` :issue:`9149`.
+
+
+Code Contributors
+-----------------
+Aman Dalmia, Loic Esteve, Nate Guerin, Sergei Lebedev
+
+
 .. _changes_0_18_1:
 
 Version 0.18.1
