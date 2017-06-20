@@ -213,8 +213,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Notes
     -----
-    See examples/linear_model/plot_lasso_coordinate_descent_path.py
-    for an example.
+    For an example, see
+    :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
@@ -368,8 +369,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Notes
     -----
-    See examples/linear_model/plot_lasso_coordinate_descent_path.py for an
-    example.
+    For an example, see
+    :ref:`examples/linear_model/plot_lasso_coordinate_descent_path.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_coordinate_descent_path.py>`.
 
     See also
     --------
@@ -1329,8 +1331,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/plot_lasso_model_selection.py
-    for an example.
+    For an example, see
+    :ref:`examples/linear_model/plot_lasso_model_selection.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
@@ -1485,8 +1488,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/plot_lasso_model_selection.py
-    for an example.
+    For an example, see
+    :ref:`examples/linear_model/plot_lasso_model_selection.py
+    <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
