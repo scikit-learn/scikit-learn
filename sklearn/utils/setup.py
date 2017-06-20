@@ -7,7 +7,7 @@ from sklearn._build_utils import get_blas_info
 def configuration(parent_package='', top_path=None):
     import numpy
     from numpy.distutils.misc_util import Configuration
-    from Cython import Tempita as tempita
+    from Cython import Tempita
 
     config = Configuration('utils', parent_package, top_path)
     config.add_subpackage('sparsetools')
@@ -68,7 +68,7 @@ def configuration(parent_package='', top_path=None):
 
         with open(pyxfiles, "r") as f:
             tmpl = f.read()
-        pyxcontent = tempita.sub(tmpl)
+        pyxcontent = Tempita.sub(tmpl)
 
         with open(outfile, "w") as f:
             f.write(pyxcontent)

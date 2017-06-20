@@ -5,7 +5,7 @@ import numpy
 
 from sklearn._build_utils import get_blas_info
 
-from Cython import Tempita as tempita
+from Cython import Tempita
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -44,7 +44,7 @@ def configuration(parent_package='', top_path=None):
 
         with open(sag_template, "r") as f:
             tmpl = f.read()
-        tmpl_ = tempita.sub(tmpl)
+        tmpl_ = Tempita.sub(tmpl)
 
         with open(sag_file, "w") as f:
             f.write(tmpl_)
@@ -57,6 +57,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('tests')
 
     return config
+
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup
