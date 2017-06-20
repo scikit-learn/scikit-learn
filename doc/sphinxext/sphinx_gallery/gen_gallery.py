@@ -136,7 +136,7 @@ def setup(app):
     app.add_stylesheet('gallery.css')
 
     extensions_attr = '_extensions' if hasattr(app, '_extensions') else 'extensions'
-    if 'sphinx.ext.autodoc' in getattr(app, extensions_attr)::
+    if 'sphinx.ext.autodoc' in getattr(app, extensions_attr):
         app.connect('autodoc-process-docstring', touch_empty_backreferences)
 
     app.connect('builder-inited', generate_gallery_rst)
