@@ -24,7 +24,8 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
         be used as the ylabel.
 
     metric : string, default="mean_test_score"
-        The metric from the GridSearchCV results to display.
+        The metric from the GridSearchCV results to display. This is ignored
+        if only 1 parameter is used in grid search.
 
     title : string, default="Grid Search Results"
         Title for the heatmap.
@@ -58,11 +59,38 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
     import matplotlib.pyplot as plt
 
     params = sorted(cv_results['params'][0].keys())
+    nparams = len(params)
 
-    if len(params) == 1:
-        # plot a line chart
-        pass
-    elif len(params) == 2:
+    if nparams == 1:
+        param = params[0]
+        param_range = sorted(cv_results['param_%s' % param])
+        train_scores_mean = cv_results['mean_train_score']
+        train_scores_std = cv_results['mean_train_std']
+        test_scores_mean = cv_results['mean_test_score']
+        test_scores_std = cv_results['mean_test_std']
+
+        lw = 2
+        plt.semilogx(param_range, train_scores_mean,
+                     label="Training score",
+                     color="darkorange", lw=lw)
+        plt.fill_between(param_range, train_scores_mean - train_scores_std,
+                         train_scores_mean + train_scores_std, alpha=0.2,
+                         color="darkorange", lw=lw)
+
+        plt.semilogx(param_range, test_scores_mean,
+                     label="Cross-validation score",
+                     color="navy", lw=lw)
+        plt.fill_between(param_range, test_scores_mean - test_scores_std,
+                         test_scores_mean + test_scores_std, alpha=0.2,
+                         color="navy", lw=lw)
+
+        plt.title(title)
+        plt.xlabel(param)
+        ylabel = "Score" if ylabel is None else ylabel
+        plt.ylabel(ylabel)
+        plt.show()
+
+    elif nparams == 2:
         parameter1_values = np.unique(cv_results['param_%s' % params[0]])
         parameter2_values = np.unique(cv_results['param_%s' % params[1]])
 
@@ -79,6 +107,8 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
 
         plt.title(title)
         plt.show()
+
     else:
-        # print error statement
+        raise ValueError('Plot functions supports upto 2 parameters in grid'
+                         'search, got {0}.'.format(nparams))
         pass
