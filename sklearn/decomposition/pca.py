@@ -285,12 +285,6 @@ class PCA(_BasePCA):
     >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
     [ 6.30061...]
 
-    Notes
-    -----
-    PCA uses the maximum likelihood estimate of the eigenvalues, which does not
-    include the Bessel correction, though in practice this should rarely make a
-    difference in a machine learning context.
-
     See also
     --------
     KernelPCA
@@ -346,7 +340,7 @@ class PCA(_BasePCA):
 
         if self.whiten:
             # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
-            U *= sqrt(X.shape[0])
+            U *= sqrt(X.shape[0] - 1)
         else:
             # X_new = X * V = U * S * V^T * V = U * S
             U *= S[:self.n_components_]
@@ -416,7 +410,7 @@ class PCA(_BasePCA):
         components_ = V
 
         # Get variance explained by singular values
-        explained_variance_ = (S ** 2) / n_samples
+        explained_variance_ = (S ** 2) / (n_samples - 1)
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = S.copy()  # Store the singular values.
@@ -495,8 +489,8 @@ class PCA(_BasePCA):
         self.n_components_ = n_components
 
         # Get variance explained by singular values
-        self.explained_variance_ = (S ** 2) / n_samples
-        total_var = np.var(X, axis=0)
+        self.explained_variance_ = (S ** 2) / (n_samples - 1)
+        total_var = np.var(X, ddof=1, axis=0)
         self.explained_variance_ratio_ = \
             self.explained_variance_ / total_var.sum()
         self.singular_values_ = S.copy()  # Store the singular values.
@@ -714,8 +708,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
                                  n_iter=self.iterated_power,
                                  random_state=random_state)
 
-        self.explained_variance_ = exp_var = (S ** 2) / n_samples
-        full_var = np.var(X, axis=0).sum()
+        self.explained_variance_ = exp_var = (S ** 2) / (n_samples - 1)
+        full_var = np.var(X, ddof=1, axis=0).sum()
         self.explained_variance_ratio_ = exp_var / full_var
         self.singular_values_ = S  # Store the singular values.
 

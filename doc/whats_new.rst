@@ -413,6 +413,12 @@ Bug fixes
      by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
 
 
+   - Fixed the implementation of `explained_variance_`
+     in :class:`decomposition.PCA`,
+     :class:`decomposition.RandomizedPCA` and
+     :class:`decomposition.IncrementalPCA`.
+     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+
 API changes summary
 -------------------
 
