@@ -306,8 +306,8 @@ class LabelPropagation(BaseLabelPropagation):
         Clamping factor.
 
         .. deprecated:: 0.19
-        This parameter will be removed in 0.21.
-        'alpha' is fixed to zero in 'LabelPropagation'.
+            This parameter will be removed in 0.21.
+            'alpha' is fixed to zero in 'LabelPropagation'.
 
     max_iter : float
         Change maximum number of iterations allowed
