@@ -412,8 +412,9 @@ class LabelSpreading(BaseLabelPropagation):
       parameter for knn kernel
 
     alpha : float
-      Clamping factor [0, 1], it specifies the relative amount of the
-      information from its neighbors and its initial label information.
+      Clamping factor. A value in [0, 1] that specifies the relative amount
+      that an instance should adopt the information from its neighbors as
+      opposed to its initial label.
       alpha=0 means keeping the initial label information; alpha=1 means
       replacing all initial information.
 
