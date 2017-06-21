@@ -174,7 +174,8 @@ def test_whitening():
         X_whitened2 = pca.transform(X_)
         assert_array_almost_equal(X_whitened, X_whitened2)
 
-        assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components),
+        assert_almost_equal(X_whitened.std(ddof=1, axis=0),
+                            np.ones(n_components),
                             decimal=6)
         assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
 
@@ -213,17 +214,25 @@ def test_explained_variance():
                               rpca.explained_variance_ratio_, 1)
 
     # compare to empirical variances
+    expected_result = np.linalg.eig(np.cov(X, rowvar=False))[0]
+    expected_result = sorted(expected_result, reverse=True)[:2]
+
     X_pca = pca.transform(X)
     assert_array_almost_equal(pca.explained_variance_,
-                              np.var(X_pca, axis=0))
+                              np.var(X_pca, ddof=1, axis=0))
+    assert_array_almost_equal(pca.explained_variance_, expected_result)
 
     X_pca = apca.transform(X)
     assert_array_almost_equal(apca.explained_variance_,
-                              np.var(X_pca, axis=0))
+                              np.var(X_pca, ddof=1, axis=0))
+    assert_array_almost_equal(apca.explained_variance_, expected_result)
 
     X_rpca = rpca.transform(X)
-    assert_array_almost_equal(rpca.explained_variance_, np.var(X_rpca, axis=0),
+    assert_array_almost_equal(rpca.explained_variance_,
+                              np.var(X_rpca, ddof=1, axis=0),
                               decimal=1)
+    assert_array_almost_equal(rpca.explained_variance_,
+                              expected_result, decimal=1)
 
     # Same with correlated data
     X = datasets.make_classification(n_samples, n_features,

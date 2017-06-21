@@ -107,7 +107,7 @@ def generate_synthetic_data():
     mask[(points[0]).astype(np.int), (points[1]).astype(np.int)] = 1
     mask = ndimage.gaussian_filter(mask, sigma=l / n_pts)
     res = np.logical_and(mask > mask.mean(), mask_outer)
-    return res - ndimage.binary_erosion(res)
+    return np.logical_xor(res, ndimage.binary_erosion(res))
 
 
 # Generate synthetic images, and projections

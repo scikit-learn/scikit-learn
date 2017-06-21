@@ -58,7 +58,6 @@ import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
-from sklearn.cluster import DBSCAN
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
@@ -375,6 +374,47 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
                              (names, function.__name__))
 
 
+def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
+    """Assert allclose for sparse and dense data.
+
+    Both x and y need to be either sparse or dense, they
+    can't be mixed.
+
+    Parameters
+    ----------
+    x : array-like or sparse matrix
+        First array to compare.
+
+    y : array-like or sparse matrix
+        Second array to compare.
+
+    rtol : float, optional
+        relative tolerance; see numpy.allclose
+
+    atol : float, optional
+        absolute tolerance; see numpy.allclose. Note that the default here is
+        more tolerant than the default for numpy.testing.assert_allclose, where
+        atol=0.
+
+    err_msg : string, default=''
+        Error message to raise.
+    """
+    if sp.sparse.issparse(x) and sp.sparse.issparse(y):
+        x = x.tocsr()
+        y = y.tocsr()
+        x.sum_duplicates()
+        y.sum_duplicates()
+        assert_array_equal(x.indices, y.indices, err_msg=err_msg)
+        assert_array_equal(x.indptr, y.indptr, err_msg=err_msg)
+        assert_allclose(x.data, y.data, rtol=rtol, atol=atol, err_msg=err_msg)
+    elif not sp.sparse.issparse(x) and not sp.sparse.issparse(y):
+        # both dense
+        assert_allclose(x, y, rtol=rtol, atol=atol, err_msg=err_msg)
+    else:
+        raise ValueError("Can only compare two sparse matrices,"
+                         " not a sparse matrix and an array.")
+
+
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     """Create a fake mldata data set.
 
@@ -594,13 +634,7 @@ def all_estimators(include_meta_estimators=False,
 
 def set_random_state(estimator, random_state=0):
     """Set random state of an estimator if it has the `random_state` param.
-
-    Classes for whom random_state is deprecated are ignored. Currently DBSCAN
-    is one such class.
     """
-    if isinstance(estimator, DBSCAN):
-        return
-
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
 
