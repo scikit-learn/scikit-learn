@@ -206,6 +206,14 @@ API changes summary
      (``n_samples``, ``n_classes``) for that particular output.
      :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
+   - ``store_covariances`` has been deprecated in :class: 
+     `sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`. use 
+     ``store_covariance`` instead. This change ensure that parameters are
+     consistent between :class:
+     `sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis` and :class:
+     `sklearn.discriminant_analysis.LinearDiscriminantAnalysis`. :issue: `7998`
+     by :user: `Jiacheng <mrbeann>`
+
 .. _changes_0_18_1:
 
 Version 0.18.1
