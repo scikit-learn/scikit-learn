@@ -42,8 +42,13 @@ def test_confusion_matrix():
         plt.figure()
         cnf_matrix = np.random.randomint(1, 10, size=(2, 2))
 
-        # use mixture of default values and keyword args
+        # plot un-normalized matrix
         plot_confusion_matrix(cnf_matrix, classes=["dummay1", "dummy2"],
+                              cmap="Paired", ax=plt.gca())
+
+        # plot normalized matrix
+        plot_confusion_matrix(cnf_matrix, normalize=True,
+                              classes=["dummay1", "dummy2"],
                               cmap="Paired", ax=plt.gca())
 
         plt.draw()
