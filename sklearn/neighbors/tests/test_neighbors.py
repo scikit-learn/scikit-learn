@@ -542,21 +542,6 @@ def test_classifiers_sparse_multilabel_y():
         yield check_classifier_sparse_multilabel_y, name
 
 
-def test_sparse_multilabel_y():
-    n_features = 2
-    n_samples = 10
-    n_output = 3
-
-    rng = check_random_state(0)
-    X = rng.rand(n_samples, n_features)
-    y = rng.randint(0, 5, (n_samples, n_output))
-
-    clf = neighbors.KNeighborsClassifier(n_neighbors=3)
-    assert_raises_regex(ValueError,
-                        "Sparse y is only supported for multilabel",
-                        clf.fit, csr_matrix(X), y)
-
-
 def test_KNeighborsClassifier_multioutput():
     # Test k-NN classifier on multioutput data
     rng = check_random_state(0)
