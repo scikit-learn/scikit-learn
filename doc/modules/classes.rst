@@ -1365,7 +1365,8 @@ Low-level methods
    :no-inherited-members:
 
 This module is experimental. Use at your own risk.
-Use of this module requires the matplotlib library.
+Use of this module requires the matplotlib library,
+version 1.5 or later (preferably 2.0).
 
 .. currentmodule:: sklearn.plot
 
@@ -1374,6 +1375,8 @@ Use of this module requires the matplotlib library.
    :template: function.rst
 
    plot_heatmap
+   plot_confusion_matrix
+   plot_gridsearch_results
 
 
 Recently deprecated
