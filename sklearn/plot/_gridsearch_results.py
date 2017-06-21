@@ -110,6 +110,6 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
         plt.show()
 
     else:
-        raise ValueError('Plot functions supports upto 2 parameters in grid'
+        raise ValueError('Plot function supports upto 2 parameters in grid'
                          'search, got {0}.'.format(nparams))
         pass
