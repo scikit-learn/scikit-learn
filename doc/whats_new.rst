@@ -517,6 +517,11 @@ API changes summary
      :mod:`sklearn.utils` have been removed or deprecated accordingly.
      :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
 
+   - The ``store_covariances`` and ``covariances_`` parameters of :class:
+     `discriminant_analysis.QuadraticDiscriminantAnalysis`
+     has been renamed to ``store_covariance`` and ``covariance_``,they will be
+     removed in version 0.21. :issue:`7998` by :user:`Jiacheng <mrbeann>`
+
      Removed in 0.19:
 
      - ``utils.fixes.argpartition``
@@ -544,6 +549,8 @@ API changes summary
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
      - ``neighbors.approximate.LSHForest``
+     - ``discriminant_analysis.QuadraticDiscriminantAnalysis.covariances_``
+     - ``discriminant_analysis.QuadraticDiscriminantAnalysis.store_covariances``
 
 .. _changes_0_18_1:
 
