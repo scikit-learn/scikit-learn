@@ -17,7 +17,6 @@ from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..externals import six
-from ..externals.six import string_types
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
