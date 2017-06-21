@@ -213,6 +213,10 @@ Enhancements
      passing a range of bytes to :func:`datasets.load_svmlight_file`.
      :issue:`935` by :user:`Olivier Grisel <ogrisel>`.
 
+   - Small performance improvement to n-gram creation in
+     :mod:`feature_extraction.text` by binding methods for loops and
+     special-casing unigrams. :issue:`7567` by `Jaye Doepke <jtdoepke>`
+
 Bug fixes
 .........
 
