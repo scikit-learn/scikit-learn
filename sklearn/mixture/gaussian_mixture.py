@@ -463,7 +463,7 @@ class GaussianMixture(BaseMixture):
         The convergence threshold. EM iterations will stop when the
         lower bound average gain is below this threshold.
 
-    reg_covar : float, defaults to 0.
+    reg_covar : float, defaults to 1e-6.
         Non-negative regularization added to the diagonal of covariance.
         Allows to assure that the covariance matrices are all positive.
 
@@ -500,8 +500,11 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    random_state : RandomState or an int seed, defaults to None.
-        A random number generator instance.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as

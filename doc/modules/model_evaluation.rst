@@ -55,9 +55,9 @@ available as neg_mean_squared_error which return the negated value
 of the metric.
 
 
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 Scoring                         Function                                      Comment
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 **Classification**
 'accuracy'                      :func:`metrics.accuracy_score`
 'average_precision'             :func:`metrics.average_precision_score`
@@ -80,7 +80,7 @@ Scoring                         Function                                      Co
 'neg_mean_squared_log_error'    :func:`metrics.mean_squared_log_error`
 'neg_median_absolute_error'     :func:`metrics.median_absolute_error`
 'r2'                            :func:`metrics.r2_score`
-===========================     =========================================     ==================================
+============================    =========================================     ==================================
 
 Usage examples:
 
@@ -173,7 +173,7 @@ Here is an example of building custom scorers, and of using the
     >>> #  and predictions defined below.
     >>> loss  = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> score = make_scorer(my_custom_loss_func, greater_is_better=True)
-    >>> ground_truth = [[1, 1]]
+    >>> ground_truth = [[1], [1]]
     >>> predictions  = [0, 1]
     >>> from sklearn.dummy import DummyClassifier
     >>> clf = DummyClassifier(strategy='most_frequent', random_state=0)
@@ -223,7 +223,6 @@ Some of these are restricted to the binary classification case:
 .. autosummary::
    :template: function.rst
 
-   matthews_corrcoef
    precision_recall_curve
    roc_curve
 
@@ -236,6 +235,7 @@ Others also work in the multiclass case:
    cohen_kappa_score
    confusion_matrix
    hinge_loss
+   matthews_corrcoef
 
 
 Some also work in the multilabel case:
@@ -254,6 +254,14 @@ Some also work in the multilabel case:
    precision_score
    recall_score
    zero_one_loss
+
+Some are typically used for ranking:
+
+.. autosummary::
+   :template: function.rst
+
+   dcg_score
+   ndcg_score
 
 And some work with binary and multilabel (but not multiclass) problems:
 
@@ -466,7 +474,7 @@ and inferred labels::
     for an example of classification report usage for text
     documents.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
 
@@ -602,7 +610,7 @@ binary classification and multilabel indicator format.
     for an example of :func:`f1_score` usage to classify  text
     documents.
 
-  * See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`
+  * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
     to estimate parameters using grid search with nested cross-validation.
 
@@ -681,7 +689,7 @@ Here are some small examples in binary classification::
   >>> threshold
   array([ 0.35,  0.4 ,  0.8 ])
   >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
-  0.79...
+  0.83...
 
 
 
@@ -901,13 +909,39 @@ for binary classes.  Quoting Wikipedia:
     prediction, 0 an average random prediction and -1 an inverse prediction.
     The statistic is also known as the phi coefficient."
 
-If :math:`tp`, :math:`tn`, :math:`fp` and :math:`fn` are respectively the
-number of true positives, true negatives, false positives and false negatives,
-the MCC coefficient is defined as
+
+In the binary (two-class) case, :math:`tp`, :math:`tn`, :math:`fp` and
+:math:`fn` are respectively the number of true positives, true negatives, false
+positives and false negatives, the MCC is defined as
 
 .. math::
 
   MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}.
+
+In the multiclass case, the Matthews correlation coefficient can be `defined
+<http://rk.kvl.dk/introduction/index.html>`_ in terms of a
+:func:`confusion_matrix` :math:`C` for :math:`K` classes.  To simplify the
+definition consider the following intermediate variables:
+
+* :math:`t_k=\sum_{i}^{K} C_{ik}` the number of times class :math:`k` truly occurred,
+* :math:`p_k=\sum_{i}^{K} C_{ki}` the number of times class :math:`k` was predicted,
+* :math:`c=\sum_{k}^{K} C_{kk}` the total number of samples correctly predicted,
+* :math:`s=\sum_{i}^{K} \sum_{j}^{K} C_{ij}` the total number of samples.
+
+Then the multiclass MCC is defined as:
+
+.. math::
+    MCC = \frac{
+        c \times s - \sum_{k}^{K} p_k \times t_k
+    }{\sqrt{
+        (s^2 - \sum_{k}^{K} p_k^2) \times
+        (s^2 - \sum_{k}^{K} t_k^2)
+    }}
+
+When there are more than two labels, the value of the MCC will no longer range
+between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
+depending on the number and distribution of ground true labels. The maximum
+value is always +1.
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:

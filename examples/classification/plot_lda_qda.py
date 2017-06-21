@@ -20,8 +20,8 @@ from matplotlib import colors
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 
-###############################################################################
-# colormap
+# #############################################################################
+# Colormap
 cmap = colors.LinearSegmentedColormap(
     'red_blue_classes',
     {'red': [(0, 1, 1), (1, 0.7, 0.7)],
@@ -30,8 +30,8 @@ cmap = colors.LinearSegmentedColormap(
 plt.cm.register_cmap(cmap=cmap)
 
 
-###############################################################################
-# generate datasets
+# #############################################################################
+# Generate datasets
 def dataset_fixed_cov():
     '''Generate 2 Gaussians samples with the same covariance matrix'''
     n, dim = 300, 2
@@ -54,8 +54,8 @@ def dataset_cov():
     return X, y
 
 
-###############################################################################
-# plot functions
+# #############################################################################
+# Plot functions
 def plot_data(lda, X, y, y_pred, fig_index):
     splot = plt.subplot(2, 2, fig_index)
     if fig_index == 1:
@@ -132,7 +132,6 @@ def plot_qda_cov(qda, splot):
     plot_ellipse(splot, qda.means_[0], qda.covariances_[0], 'red')
     plot_ellipse(splot, qda.means_[1], qda.covariances_[1], 'blue')
 
-###############################################################################
 for i, (X, y) in enumerate([dataset_fixed_cov(), dataset_cov()]):
     # Linear Discriminant Analysis
     lda = LinearDiscriminantAnalysis(solver="svd", store_covariance=True)

@@ -28,9 +28,12 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional, default=None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     verbose : integer, optional
         The verbosity level
@@ -204,9 +207,12 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional, default=None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     verbose : integer, optional
         The verbosity level

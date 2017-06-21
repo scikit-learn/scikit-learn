@@ -171,7 +171,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
         if sp.issparse(X):
             X_offset, X_var = mean_variance_axis(X, axis=0)
             if not return_mean:
-                X_offset = np.zeros(X.shape[1])
+                X_offset[:] = 0
 
             if normalize:
 
@@ -186,7 +186,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
                 X_scale[X_scale == 0] = 1
                 inplace_column_scale(X, 1. / X_scale)
             else:
-                X_scale = np.ones(X.shape[1])
+                X_scale = np.ones(X.shape[1], dtype=X.dtype)
 
         else:
             X_offset = np.average(X, axis=0, weights=sample_weight)
@@ -195,12 +195,12 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
                 X, X_scale = f_normalize(X, axis=0, copy=False,
                                          return_norm=True)
             else:
-                X_scale = np.ones(X.shape[1])
+                X_scale = np.ones(X.shape[1], dtype=X.dtype)
         y_offset = np.average(y, axis=0, weights=sample_weight)
         y = y - y_offset
     else:
-        X_offset = np.zeros(X.shape[1])
-        X_scale = np.ones(X.shape[1])
+        X_offset = np.zeros(X.shape[1], dtype=X.dtype)
+        X_scale = np.ones(X.shape[1], dtype=X.dtype)
         y_offset = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
 
     return X, y, X_offset, y_offset, X_scale
@@ -404,20 +404,18 @@ class LinearRegression(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    fit_intercept : boolean, optional
+    fit_intercept : boolean, optional, default True
         whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
+        to False, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
-        This parameter is ignored when `fit_intercept` is set to False.
-        When the regressors are normalized, note that this makes the
-        hyperparameters learnt more robust and almost independent of the number
-        of samples. The same property is not valid for standardized data.
-        However, if you wish to standardize, please use
-        `preprocessing.StandardScaler` before calling `fit` on an estimator
-        with `normalize=False`.
+        This parameter is ignored when ``fit_intercept`` is set to False.
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
+        an estimator with ``normalize=False``.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -434,16 +432,6 @@ class LinearRegression(LinearModel, RegressorMixin):
         If multiple targets are passed during the fit (y 2D), this
         is a 2D array of shape (n_targets, n_features), while if only
         one target is passed, this is a 1D array of length n_features.
-
-    residues_ : array, shape (n_targets,) or (1,) or empty
-        Sum of residuals. Squared Euclidean 2-norm for each target passed
-        during the fit. If the linear regression problem is under-determined
-        (the number of linearly independent rows of the training matrix is less
-        than its number of linearly independent columns), this is an empty
-        array. If the target vector passed during the fit is 1-dimensional,
-        this is a (1,) shape array.
-
-        .. versionadded:: 0.18
 
     intercept_ : array
         Independent term in the linear model.

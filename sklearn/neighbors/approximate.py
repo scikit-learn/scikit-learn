@@ -93,7 +93,7 @@ class GaussianRandomProjectionHash(ProjectionToHashMixin,
                                    GaussianRandomProjection):
     """Use GaussianRandomProjection to produce a cosine LSH fingerprint"""
     def __init__(self,
-                 n_components=8,
+                 n_components=32,
                  random_state=None):
         super(GaussianRandomProjectionHash, self).__init__(
             n_components=n_components,
@@ -216,6 +216,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         self.n_neighbors = n_neighbors
         self.min_hash_match = min_hash_match
         self.radius_cutoff_ratio = radius_cutoff_ratio
+
+        warnings.warn("LSHForest has poor performance and has been deprecated "
+                      "in 0.19. It will be removed in version 0.21.",
+                      DeprecationWarning)
 
     def _compute_distances(self, query, candidates):
         """Computes the cosine distance.
@@ -407,7 +411,7 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
             List of n_features-dimensional data points.  Each row
             corresponds to a single query.
 
-        n_neighbors : int, opitonal (default = None)
+        n_neighbors : int, optional (default = None)
             Number of neighbors required. If not provided, this will
             return the number specified at the initialization.
 

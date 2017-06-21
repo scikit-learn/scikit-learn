@@ -71,9 +71,14 @@ class MockClassifier(object):
     def predict(self, T):
         return T.shape[0]
 
+    def transform(self, X):
+        return X - self.foo_param
+
+    def inverse_transform(self, X):
+        return X + self.foo_param
+
     predict_proba = predict
     decision_function = predict
-    transform = predict
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
@@ -166,6 +171,14 @@ def test_grid_search():
     assert_raises(ValueError, grid_search.fit, X, y)
 
 
+def test_transform_inverse_transform_round_trip():
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
+    grid_search.fit(X, y)
+    X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
+    assert_array_equal(X, X_round_trip)
+
+
 @ignore_warnings
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
@@ -204,15 +217,13 @@ def test_grid_search_score_method():
                                               scoring='roc_auc').fit(X, y)
     search_auc = GridSearchCV(clf, grid, scoring='roc_auc').fit(X, y)
 
-    # Check warning only occurs in situation where behavior changed:
-    # estimator requires score method to compete with scoring parameter
+    # ChangedBehaviourWarning occurred previously (prior to #9005)
     score_no_scoring = assert_no_warnings(search_no_scoring.score, X, y)
-    score_accuracy = assert_warns(ChangedBehaviorWarning,
-                                  search_accuracy.score, X, y)
+    score_accuracy = assert_no_warnings(search_accuracy.score, X, y)
     score_no_score_auc = assert_no_warnings(search_no_score_method_auc.score,
                                             X, y)
-    score_auc = assert_warns(ChangedBehaviorWarning,
-                             search_auc.score, X, y)
+    score_auc = assert_no_warnings(search_auc.score, X, y)
+
     # ensure the test is sane
     assert_true(score_auc < 1.0)
     assert_true(score_accuracy < 1.0)

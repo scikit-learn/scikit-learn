@@ -4,11 +4,11 @@
 import numpy as np
 
 from .base import SelectorMixin
-from ..base import BaseEstimator, clone
+from ..base import BaseEstimator, clone, MetaEstimatorMixin
 from ..externals import six
 
 from ..exceptions import NotFittedError
-from ..utils.fixes import norm
+from ..utils.metaestimators import if_delegate_has_method
 
 
 def _get_feature_importances(estimator, norm_order=1):
@@ -20,7 +20,8 @@ def _get_feature_importances(estimator, norm_order=1):
             importances = np.abs(estimator.coef_)
 
         else:
-            importances = norm(estimator.coef_, axis=0, ord=norm_order)
+            importances = np.linalg.norm(estimator.coef_, axis=0,
+                                         ord=norm_order)
 
     elif importances is None:
         raise ValueError(
@@ -76,7 +77,7 @@ def _calculate_threshold(estimator, importances, threshold):
     return threshold
 
 
-class SelectFromModel(BaseEstimator, SelectorMixin):
+class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
     """Meta-transformer for selecting features based on importance weights.
 
     .. versionadded:: 0.17
@@ -113,15 +114,14 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
 
     Attributes
     ----------
-    `estimator_`: an estimator
+    estimator_ : an estimator
         The base estimator from which the transformer is built.
         This is stored only when a non-fitted estimator is passed to the
         ``SelectFromModel``, i.e when prefit is False.
 
-    `threshold_`: float
+    threshold_ : float
         The threshold value used for feature selection.
     """
-
     def __init__(self, estimator, threshold=None, prefit=False, norm_order=1):
         self.estimator = estimator
         self.threshold = threshold
@@ -136,12 +136,11 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
             estimator = self.estimator_
         else:
             raise ValueError(
-                'Either fit the model before transform or set "prefit=True"'
-                ' while passing the fitted estimator to the constructor.')
+                'Either fit SelectFromModel before transform or set "prefit='
+                'True" and pass a fitted estimator to the constructor.')
         scores = _get_feature_importances(estimator, self.norm_order)
-        self.threshold_ = _calculate_threshold(estimator, scores,
-                                               self.threshold)
-        return scores >= self.threshold_
+        threshold = _calculate_threshold(estimator, scores, self.threshold)
+        return scores >= threshold
 
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
@@ -169,6 +168,12 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         self.estimator_.fit(X, y, **fit_params)
         return self
 
+    @property
+    def threshold_(self):
+        scores = _get_feature_importances(self.estimator_, self.norm_order)
+        return _calculate_threshold(self.estimator, scores, self.threshold)
+
+    @if_delegate_has_method('estimator')
     def partial_fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer only once.
 

@@ -109,21 +109,21 @@ The curse of dimensionality
 
 For an estimator to be effective, you need the distance between neighboring
 points to be less than some value :math:`d`, which depends on the problem.
-In one dimension, this requires on average :math:`n ~ 1/d` points.
+In one dimension, this requires on average :math:`n \sim 1/d` points.
 In the context of the above :math:`k`-NN example, if the data is described by
 just one feature with values ranging from 0 to 1 and with :math:`n` training
 observations, then new data will be no further away than :math:`1/n`.
 Therefore, the nearest neighbor decision rule will be efficient as soon as
 :math:`1/n` is small compared to the scale of between-class feature variations.
 
-If the number of features is :math:`p`, you now require :math:`n ~ 1/d^p`
+If the number of features is :math:`p`, you now require :math:`n \sim 1/d^p`
 points.  Let's say that we require 10 points in one dimension: now :math:`10^p`
 points are required in :math:`p` dimensions to pave the :math:`[0, 1]` space.
 As :math:`p` becomes large, the number of training points required for a good
 estimator grows exponentially.
 
 For example, if each point is just a single number (8 bytes), then an
-effective :math:`k`-NN estimator in a paltry :math:`p~20` dimensions would
+effective :math:`k`-NN estimator in a paltry :math:`p \sim 20` dimensions would
 require more training data than the current estimated size of the entire
 internet (±1000 Exabytes or so).
 
@@ -339,9 +339,9 @@ application of Occam's razor: *prefer simpler models*.
     Different algorithms can be used to solve the same mathematical
     problem. For instance the ``Lasso`` object in scikit-learn
     solves the lasso regression problem using a
-    `coordinate decent <https://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
+    `coordinate descent <https://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
     that is efficient on large datasets. However, scikit-learn also
-    provides the :class:`LassoLars` object using the *LARS* algorthm,
+    provides the :class:`LassoLars` object using the *LARS* algorithm,
     which is very efficient for problems in which the weight vector estimated
     is very sparse (i.e. problems with very few observations).
 

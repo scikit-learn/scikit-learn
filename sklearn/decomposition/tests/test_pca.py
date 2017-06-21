@@ -174,7 +174,8 @@ def test_whitening():
         X_whitened2 = pca.transform(X_)
         assert_array_almost_equal(X_whitened, X_whitened2)
 
-        assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components),
+        assert_almost_equal(X_whitened.std(ddof=1, axis=0),
+                            np.ones(n_components),
                             decimal=6)
         assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
 
@@ -213,17 +214,25 @@ def test_explained_variance():
                               rpca.explained_variance_ratio_, 1)
 
     # compare to empirical variances
+    expected_result = np.linalg.eig(np.cov(X, rowvar=False))[0]
+    expected_result = sorted(expected_result, reverse=True)[:2]
+
     X_pca = pca.transform(X)
     assert_array_almost_equal(pca.explained_variance_,
-                              np.var(X_pca, axis=0))
+                              np.var(X_pca, ddof=1, axis=0))
+    assert_array_almost_equal(pca.explained_variance_, expected_result)
 
     X_pca = apca.transform(X)
     assert_array_almost_equal(apca.explained_variance_,
-                              np.var(X_pca, axis=0))
+                              np.var(X_pca, ddof=1, axis=0))
+    assert_array_almost_equal(apca.explained_variance_, expected_result)
 
     X_rpca = rpca.transform(X)
-    assert_array_almost_equal(rpca.explained_variance_, np.var(X_rpca, axis=0),
+    assert_array_almost_equal(rpca.explained_variance_,
+                              np.var(X_rpca, ddof=1, axis=0),
                               decimal=1)
+    assert_array_almost_equal(rpca.explained_variance_,
+                              expected_result, decimal=1)
 
     # Same with correlated data
     X = datasets.make_classification(n_samples, n_features,
@@ -574,8 +583,7 @@ def test_deprecation_randomized_pca():
     assert_array_almost_equal(Y, Y_pca)
 
 
-def test_pca_spase_input():
-
+def test_pca_sparse_input():
     X = np.random.RandomState(0).rand(5, 4)
     X = sp.sparse.csr_matrix(X)
     assert(sp.sparse.issparse(X))
@@ -584,3 +592,9 @@ def test_pca_spase_input():
         pca = PCA(n_components=3, svd_solver=svd_solver)
 
         assert_raises(TypeError, pca.fit, X)
+
+
+def test_pca_bad_solver():
+    X = np.random.RandomState(0).rand(5, 4)
+    pca = PCA(n_components=3, svd_solver='bad_argument')
+    assert_raises(ValueError, pca.fit, X)

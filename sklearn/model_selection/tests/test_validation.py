@@ -51,6 +51,7 @@ from sklearn.svm import SVC
 from sklearn.cluster import KMeans
 
 from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import LabelEncoder
 from sklearn.pipeline import Pipeline
 
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -61,6 +62,7 @@ from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
+from sklearn.model_selection import GridSearchCV
 
 
 try:
@@ -129,6 +131,21 @@ class MockEstimatorWithParameter(BaseEstimator):
 
     def _is_training_data(self, X):
         return X is self.X_subset
+
+
+class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
+    """Dummy classifier that disallows repeated calls of fit method"""
+
+    def fit(self, X_subset, y_subset):
+        assert_false(
+            hasattr(self, 'fit_called_'),
+            'fit is called the second time'
+        )
+        self.fit_called_ = True
+        return super(type(self), self).fit(X_subset, y_subset)
+
+    def predict(self, X):
+        raise NotImplementedError
 
 
 class MockClassifier(object):
@@ -257,10 +274,10 @@ def test_cross_val_score_predict_groups():
                  GroupShuffleSplit()]
     for cv in group_cvs:
         assert_raise_message(ValueError,
-                             "The groups parameter should not be None",
+                             "The 'groups' parameter should not be None.",
                              cross_val_score, estimator=clf, X=X, y=y, cv=cv)
         assert_raise_message(ValueError,
-                             "The groups parameter should not be None",
+                             "The 'groups' parameter should not be None.",
                              cross_val_predict, estimator=clf, X=X, y=y, cv=cv)
 
 
@@ -850,6 +867,18 @@ def test_validation_curve():
     assert_array_almost_equal(test_scores.mean(axis=1), 1 - param_range)
 
 
+def test_validation_curve_clone_estimator():
+    X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+
+    param_range = np.linspace(1, 0, 10)
+    _, _ = validation_curve(
+        MockEstimatorWithSingleFitCallAllowed(), X, y,
+        param_name="param", param_range=param_range, cv=2
+    )
+
+
 def test_validation_curve_cv_splits_consistency():
     n_samples = 100
     n_splits = 5
@@ -913,18 +942,16 @@ def test_cross_val_predict_sparse_prediction():
     assert_array_almost_equal(preds_sparse, preds)
 
 
-def test_cross_val_predict_with_method():
+def check_cross_val_predict_with_method(est):
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
     classes = len(set(y))
 
-    kfold = KFold(len(iris.target))
+    kfold = KFold()
 
     methods = ['decision_function', 'predict_proba', 'predict_log_proba']
     for method in methods:
-        est = LogisticRegression()
-
         predictions = cross_val_predict(est, X, y, method=method)
         assert_equal(len(predictions), len(y))
 
@@ -938,6 +965,90 @@ def test_cross_val_predict_with_method():
 
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold)
+        assert_array_almost_equal(expected_predictions, predictions)
+
+        # Test alternative representations of y
+        predictions_y1 = cross_val_predict(est, X, y + 1, method=method,
+                                           cv=kfold)
+        assert_array_equal(predictions, predictions_y1)
+
+        predictions_y2 = cross_val_predict(est, X, y - 2, method=method,
+                                           cv=kfold)
+        assert_array_equal(predictions, predictions_y2)
+
+        predictions_ystr = cross_val_predict(est, X, y.astype('str'),
+                                             method=method, cv=kfold)
+        assert_array_equal(predictions, predictions_ystr)
+
+
+def test_cross_val_predict_with_method():
+    check_cross_val_predict_with_method(LogisticRegression())
+
+
+def test_gridsearchcv_cross_val_predict_with_method():
+    est = GridSearchCV(LogisticRegression(random_state=42),
+                       {'C': [0.1, 1]},
+                       cv=2)
+    check_cross_val_predict_with_method(est)
+
+
+def get_expected_predictions(X, y, cv, classes, est, method):
+
+    expected_predictions = np.zeros([len(y), classes])
+    func = getattr(est, method)
+
+    for train, test in cv.split(X, y):
+        est.fit(X[train], y[train])
+        expected_predictions_ = func(X[test])
+        # To avoid 2 dimensional indexing
+        exp_pred_test = np.zeros((len(test), classes))
+        if method is 'decision_function' and len(est.classes_) == 2:
+            exp_pred_test[:, est.classes_[-1]] = expected_predictions_
+        else:
+            exp_pred_test[:, est.classes_] = expected_predictions_
+        expected_predictions[test] = exp_pred_test
+
+    return expected_predictions
+
+
+def test_cross_val_predict_class_subset():
+
+    X = np.arange(8).reshape(4, 2)
+    y = np.array([0, 0, 1, 2])
+    classes = 3
+
+    kfold3 = KFold(n_splits=3)
+    kfold4 = KFold(n_splits=4)
+
+    le = LabelEncoder()
+
+    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
+    for method in methods:
+        est = LogisticRegression()
+
+        # Test with n_splits=3
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold3)
+
+        # Runs a naive loop (should be same as cross_val_predict):
+        expected_predictions = get_expected_predictions(X, y, kfold3, classes,
+                                                        est, method)
+        assert_array_almost_equal(expected_predictions, predictions)
+
+        # Test with n_splits=4
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold4)
+        expected_predictions = get_expected_predictions(X, y, kfold4, classes,
+                                                        est, method)
+        assert_array_almost_equal(expected_predictions, predictions)
+
+        # Testing unordered labels
+        y = [1, 1, -4, 6]
+        predictions = cross_val_predict(est, X, y, method=method,
+                                        cv=kfold3)
+        y = le.fit_transform(y)
+        expected_predictions = get_expected_predictions(X, y, kfold3, classes,
+                                                        est, method)
         assert_array_almost_equal(expected_predictions, predictions)
 
 

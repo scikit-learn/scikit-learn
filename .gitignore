@@ -62,3 +62,6 @@ benchmarks/bench_covertype_data/
 !*/src/*.cpp
 *.sln
 *.pyproj
+
+# Used by py.test
+.cache

@@ -229,7 +229,7 @@ For high-dimensional datasets with many collinear regressors,
 :class:`LassoCV` is most often preferable. However, :class:`LassoLarsCV` has
 the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
-observations, it is often faster than :class:`LassoCV`.
+features, it is often faster than :class:`LassoCV`.
 
 .. |lasso_cv_1| image:: ../auto_examples/linear_model/images/sphx_glr_plot_lasso_model_selection_002.png
     :target: ../auto_examples/linear_model/plot_lasso_model_selection.html
@@ -270,7 +270,7 @@ Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The equivalence between ``alpha`` and the regularization parameter of SVM,
-``C`` is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``, 
+``C`` is given by ``alpha = 1 / C`` or ``alpha = 1 / (n_samples * C)``,
 depending on the estimator and the exact objective function optimized by the
 model.
 
@@ -398,7 +398,11 @@ Least Angle Regression
 
 Least-angle regression (LARS) is a regression algorithm for
 high-dimensional data, developed by Bradley Efron, Trevor Hastie, Iain
-Johnstone and Robert Tibshirani.
+Johnstone and Robert Tibshirani. LARS is similar to forward stepwise
+regression. At each step, it finds the predictor most correlated with the
+response. When there are multiple predictors having equal correlation, instead
+of continuing along the same predictor, it proceeds in a direction equiangular
+between the predictors.
 
 The advantages of LARS are:
 
@@ -540,8 +544,8 @@ This can be done by introducing `uninformative priors
 <https://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
 over the hyper parameters of the model.
 The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
-to finding a maximum a-postiori solution under a Gaussian prior over the
-parameters :math:`w` with precision :math:`\lambda^-1`.  Instead of setting
+to finding a maximum a posteriori estimation under a Gaussian prior over the
+parameters :math:`w` with precision :math:`\lambda^{-1}`.  Instead of setting
 `\lambda` manually, it is possible to treat it as a random variable to be
 estimated from the data.
 
@@ -597,7 +601,7 @@ remaining hyperparameters are the parameters of the gamma priors over
 *non-informative*.  The parameters are estimated by maximizing the *marginal
 log likelihood*.
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_bayesian_ridge_001.png
@@ -717,7 +721,7 @@ optimization problem
 .. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
 
 The solvers implemented in the class :class:`LogisticRegression`
-are "liblinear", "newton-cg", "lbfgs" and "sag":
+are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
 
 The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
 on the excellent C++ `LIBLINEAR library
@@ -735,25 +739,31 @@ The "lbfgs", "sag" and "newton-cg" solvers only support L2 penalization and
 are found to converge faster for some high dimensional data. Setting
 `multi_class` to "multinomial" with these solvers learns a true multinomial
 logistic regression model [5]_, which means that its probability estimates
-should be better calibrated than the default "one-vs-rest" setting. The
-"lbfgs", "sag" and "newton-cg"" solvers cannot optimize L1-penalized models,
-therefore the "multinomial" setting does not learn sparse models.
+should be better calibrated than the default "one-vs-rest" setting.
 
-The solver "sag" uses a Stochastic Average Gradient descent [6]_. It is faster
+The "sag" solver uses a Stochastic Average Gradient descent [6]_. It is faster
 than other solvers for large datasets, when both the number of samples and the
 number of features are large.
 
+The "saga" solver [7]_ is a variant of "sag" that also supports the
+non-smooth `penalty="l1"` option. This is therefore the solver of choice
+for sparse multinomial logistic regression.
+
 In a nutshell, one may choose the solver with the following rules:
 
-=================================  =============================
+=================================  =====================================
 Case                               Solver
-=================================  =============================
-Small dataset or L1 penalty        "liblinear"
-Multinomial loss or large dataset  "lbfgs", "sag" or "newton-cg"
-Very Large dataset                 "sag"
-=================================  =============================
+=================================  =====================================
+L1 penalty                         "liblinear" or "saga"
+Multinomial loss                   "lbfgs", "sag", "saga" or "newton-cg"
+Very Large dataset (`n_samples`)   "sag" or "saga"
+=================================  =====================================
 
-For large dataset, you may also consider using :class:`SGDClassifier` with 'log' loss.
+The "saga" solver is often the best choice. The "liblinear" solver is
+used by default for historical reasons.
+
+For large dataset, you may also consider using :class:`SGDClassifier`
+with 'log' loss.
 
 .. topic:: Examples:
 
@@ -762,6 +772,10 @@ For large dataset, you may also consider using :class:`SGDClassifier` with 'log'
   * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_path.py`
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_logistic_multinomial.py`
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_20newsgroups.py`
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_logistic_regression_mnist.py`
 
 .. _liblinear_differences:
 
@@ -784,19 +798,22 @@ For large dataset, you may also consider using :class:`SGDClassifier` with 'log'
    thus be used to perform feature selection, as detailed in
    :ref:`l1_feature_selection`.
 
-:class:`LogisticRegressionCV` implements Logistic Regression with builtin
-cross-validation to find out the optimal C parameter. "newton-cg", "sag" and
-"lbfgs" solvers are found to be faster for high-dimensional dense data, due to
-warm-starting. For the multiclass case, if `multi_class` option is set to
-"ovr", an optimal C is obtained for each class and if the `multi_class` option
-is set to "multinomial", an optimal C is obtained by minimizing the cross-
-entropy loss.
+:class:`LogisticRegressionCV` implements Logistic Regression with
+builtin cross-validation to find out the optimal C parameter.
+"newton-cg", "sag", "saga" and "lbfgs" solvers are found to be faster
+for high-dimensional dense data, due to warm-starting. For the
+multiclass case, if `multi_class` option is set to "ovr", an optimal C
+is obtained for each class and if the `multi_class` option is set to
+"multinomial", an optimal C is obtained by minimizing the cross-entropy
+loss.
 
 .. topic:: References:
 
     .. [5] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 4.3.4
 
     .. [6] Mark Schmidt, Nicolas Le Roux, and Francis Bach: `Minimizing Finite Sums with the Stochastic Average Gradient. <https://hal.inria.fr/hal-00860051/document>`_
+
+    .. [7] Aaron Defazio, Francis Bach, Simon Lacoste-Julien: `SAGA: A Fast Incremental Gradient Method With Support for Non-Strongly Convex Composite Objectives. <https://arxiv.org/abs/1407.0202>`_
 
 Stochastic Gradient Descent - SGD
 =================================

@@ -15,7 +15,6 @@ import scipy.sparse as sp
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
-from ..utils.fixes import astype
 from ..utils.random import sample_without_replacement
 from ..externals import six
 map = six.moves.map
@@ -26,11 +25,11 @@ def _generate_hypercube(samples, dimensions, rng):
     """Returns distinct binary samples of length dimensions
     """
     if dimensions > 30:
-        return np.hstack([_generate_hypercube(samples, dimensions - 30, rng),
+        return np.hstack([rng.randint(2, size=(samples, dimensions - 30)),
                           _generate_hypercube(samples, 30, rng)])
-    out = astype(sample_without_replacement(2 ** dimensions, samples,
-                                            random_state=rng),
-                 dtype='>u4', copy=False)
+    out = sample_without_replacement(2 ** dimensions, samples,
+                                     random_state=rng).astype(dtype='>u4',
+                                                              copy=False)
     out = np.unpackbits(out.view('>u1')).reshape((-1, 32))[:, -dimensions:]
     return out
 
@@ -665,8 +664,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),
                    np.append(outer_circ_y, inner_circ_y))).T
-    y = np.hstack([np.zeros(n_samples_in, dtype=np.intp),
-                   np.ones(n_samples_out, dtype=np.intp)])
+    y = np.hstack([np.zeros(n_samples_out, dtype=np.intp),
+                   np.ones(n_samples_in, dtype=np.intp)])
 
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
@@ -1059,8 +1058,11 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     n_nonzero_coefs : int
         number of active (non-zero) coefficients in each sample
 
-    random_state : int or RandomState instance, optional (default=None)
-        seed used by the pseudo random number generator
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
