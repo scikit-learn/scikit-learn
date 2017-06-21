@@ -321,10 +321,42 @@ def test_non_square_precomputed_distances():
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
+def test_non_positive_precomputed_distances():
+    # Precomputed distance matrices must be positive.
+    bad_dist = np.array([[0., -1.], [1., 0.]])
+    for method in ['barnes_hut', 'exact']:
+        tsne = TSNE(metric="precomputed", method=method)
+        assert_raises_regexp(ValueError, "All distances .*precomputed.*",
+                             tsne.fit_transform, bad_dist)
+
+
+def test_non_positive_computed_distances():
+    # Computed distance matrices must be positive.
+    def metric(x, y):
+        return -1
+
+    tsne = TSNE(metric=metric, method='exact')
+    X = np.array([[0.0, 0.0], [1.0, 1.0]])
+    assert_raises_regexp(ValueError, "All distances .*metric given.*",
+                         tsne.fit_transform, X)
+
+
+def test_not_available_neighbors_method():
+    # Computed distance matrices must be positive.
+    tsne = TSNE(neighbors_method='not available', method='barnes_hut')
+    assert_raises_regexp(ValueError, "unrecognized algorithm: 'not available'",
+                         tsne.fit_transform, np.array([[0.0, 1.0]]))
+    tsne = TSNE(neighbors_method=1, method='barnes_hut')
+    assert_raises_regexp(ValueError, "'neighbors_method' should be .*",
+                         tsne.fit_transform, np.array([[0.0, 1.0]]))
+
+
 def test_init_not_available():
     # 'init' must be 'pca', 'random', or numpy array.
+    tsne = TSNE(init="not available")
     m = "'init' must be 'pca', 'random', or a numpy array"
-    assert_raises_regexp(ValueError, m, TSNE, init="not available")
+    assert_raises_regexp(ValueError, m, tsne.fit_transform,
+                         np.array([[0.0], [1.0]]))
 
 
 def test_init_ndarray():
@@ -353,11 +385,33 @@ def test_distance_not_available():
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
+def test_method_not_available():
+    # 'nethod' must be 'barnes_hut' or 'exact'
+    tsne = TSNE(method='not available')
+    assert_raises_regexp(ValueError, "'method' must be 'barnes_hut' or ",
+                         tsne.fit_transform, np.array([[0.0], [1.0]]))
+
+
+def test_angle_out_of_range_checks():
+    # check the angle parameter range
+    for angle in [-1, -1e-6, 1 + 1e-6, 2]:
+        tsne = TSNE(angle=angle)
+        assert_raises_regexp(ValueError, "'angle' must be between 0.0 - 1.0",
+                             tsne.fit_transform, np.array([[0.0], [1.0]]))
+
+
 def test_pca_initialization_not_compatible_with_precomputed_kernel():
     # Precomputed distance matrices must be square matrices.
     tsne = TSNE(metric="precomputed", init="pca")
     assert_raises_regexp(ValueError, "The parameter init=\"pca\" cannot be "
                          "used with metric=\"precomputed\".",
+                         tsne.fit_transform, np.array([[0.0], [1.0]]))
+
+
+def test_n_components_range():
+    # barnes_hut method should only be used with n_components <= 3
+    tsne = TSNE(n_components=4, method="barnes_hut")
+    assert_raises_regexp(ValueError, "'n_components' should be .*",
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 

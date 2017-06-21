@@ -625,11 +625,6 @@ class TSNE(BaseEstimator):
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5, n_jobs=1,
                  neighbors_method='ball_tree'):
-        if not ((isinstance(init, string_types) and
-                init in ["pca", "random"]) or
-                isinstance(init, np.ndarray)):
-            msg = "'init' must be 'pca', 'random', or a numpy array"
-            raise ValueError(msg)
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -678,6 +673,10 @@ class TSNE(BaseEstimator):
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
+            if np.any(X < 0):
+                raise ValueError("All distances should be positive, the "
+                                 "precomputed distances given as X is not "
+                                 "correct")
         if self.method == 'barnes_hut' and sp.issparse(X):
             raise TypeError('A sparse matrix was passed, but dense '
                             'data is required for method="barnes_hut". Use '
@@ -688,6 +687,10 @@ class TSNE(BaseEstimator):
         else:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                             dtype=[np.float32, np.float64])
+        if self.method == 'barnes_hut' and self.n_components > 3:
+            raise ValueError("'n_components' should be inferior to 4 for the "
+                             "barnes_hut algorithm as it relies on "
+                             "quad-tree or oct-tree.")
         random_state = check_random_state(self.random_state)
 
         if self.early_exaggeration < 1.0:
@@ -697,7 +700,12 @@ class TSNE(BaseEstimator):
         if self.n_iter < 250:
             raise ValueError("n_iter should be at least 250")
 
+        n_samples = X.shape[0]
+
+        neighbors_nn = None
         if self.method == "exact":
+            # Retrieve the distance matrix, either using the precomputed one or
+            # computing it.
             if self.metric == "precomputed":
                 distances = X
             else:
@@ -710,20 +718,18 @@ class TSNE(BaseEstimator):
                 else:
                     distances = pairwise_distances(X, metric=self.metric)
 
-            if not np.all(distances >= 0):
-                raise ValueError("All distances should be positive, either "
-                                 "the metric or precomputed distances given "
-                                 "as X are not correct")
+                if np.any(distances < 0):
+                    raise ValueError("All distances should be positive, the "
+                                     "metric given is not correct")
 
-        # Degrees of freedom of the Student's t-distribution. The suggestion
-        # degrees_of_freedom = n_components - 1 comes from
-        # "Learning a Parametric Embedding by Preserving Local Structure"
-        # Laurens van der Maaten, 2009.
-        degrees_of_freedom = max(self.n_components - 1.0, 1)
-        n_samples = X.shape[0]
+            # compute the joint probability distribution for the input space
+            P = _joint_probabilities(distances, self.perplexity, self.verbose)
+            assert np.all(np.isfinite(P)), "All probabilities should be finite"
+            assert np.all(P >= 0), "All probabilities should be non-negative"
+            assert np.all(P <= 1), ("All probabilities should be less "
+                                    "or then equal to one")
 
-        neighbors_nn = None
-        if self.method == 'barnes_hut':
+        else:
             # Cpmpute the number of nearest neighbors to find.
             # LvdM uses 3 * perplexity as the number of neighbors.
             # In the event that we have very small # of points
@@ -747,15 +753,17 @@ class TSNE(BaseEstimator):
             elif isinstance(self.neighbors_method, NeighborsBase):
                 knn = self.neighbors_method
             else:
-                ValueError("neighbors_method should be either a string or "
-                           "a subclass of NeighborsBase. {} is not valid."
-                           .format(self.neighbors_method))
+                raise ValueError("'neighbors_method' should be either a "
+                                 "string or a subclass of NeighborsBase. {} "
+                                 "is not valid.".format(self.neighbors_method))
+
             t0 = time()
             knn.fit(X)
             duration = time() - t0
             if self.verbose:
                 print("[t-SNE] Indexed {} samples in {:.3f}s...".format(
                     n_samples, duration))
+
             t0 = time()
             distances_nn, neighbors_nn = knn.kneighbors(
                 None, n_neighbors=k)
@@ -764,20 +772,17 @@ class TSNE(BaseEstimator):
                 print("[t-SNE] Computed neighbors for {} samples in {:.3f}s..."
                       .format(n_samples, duration))
 
-            if self.metric != "precomputed":
-                # knn return the euclidean distance but we need it squared.
-                # TODO: the computation are valid for euclidean distance.
-                # Should we enforce that with an assert?
+            if self.metric == "euclidean":
+                # knn return the euclidean distance but we need it squared
+                # to be consistent with the 'exact' method. Note that the
+                # the method was derived using the euclidean method as in the
+                # input space. Not sure of the implication of using a different
+                # metric.
                 distances_nn **= 2
 
+            # compute the joint probability distribution for the input space
             P = _joint_probabilities_nn(distances_nn, neighbors_nn,
                                         self.perplexity, self.verbose)
-        else:
-            P = _joint_probabilities(distances, self.perplexity, self.verbose)
-            assert np.all(np.isfinite(P)), "All probabilities should be finite"
-            assert np.all(P >= 0), "All probabilities should be non-negative"
-            assert np.all(P <= 1), ("All probabilities should be less "
-                                    "or then equal to one")
 
         if isinstance(self.init, np.ndarray):
             X_embedded = self.init
@@ -789,8 +794,14 @@ class TSNE(BaseEstimator):
             X_embedded = 1e-4 * random_state.randn(
                 n_samples, self.n_components).astype(np.float32)
         else:
-            raise ValueError("Unsupported initialization scheme: {}"
-                             .format(self.init))
+            raise ValueError("'init' must be 'pca', 'random', or "
+                             "a numpy array")
+
+        # Degrees of freedom of the Student's t-distribution. The suggestion
+        # degrees_of_freedom = n_components - 1 comes from
+        # "Learning a Parametric Embedding by Preserving Local Structure"
+        # Laurens van der Maaten, 2009.
+        degrees_of_freedom = max(self.n_components - 1.0, 1)
 
         return self._tsne(P, degrees_of_freedom, n_samples, random_state,
                           X_embedded=X_embedded,
