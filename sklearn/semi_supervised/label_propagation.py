@@ -17,8 +17,8 @@ Label clamping:
   The algorithm tries to learn distributions of labels over the dataset. In the
   "Hard Clamp" mode, the true ground labels are never allowed to change. They
   are clamped into position. In the "Soft Clamp" mode, they are allowed some
-  wiggle room, but some alpha of their original value will always be retained.
-  Hard clamp is the same as soft clamping with alpha set to 1.
+  wiggle room, but (1 - alpha) of their original value will be retained.
+  Hard clamp is the same as soft clamping with alpha set to 0.
 
 Kernel:
   A function which projects a vector into some higher dimensional space. This
