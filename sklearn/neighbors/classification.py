@@ -10,7 +10,7 @@
 
 import numpy as np
 from scipy import sparse
-from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
 from scipy import stats
 from ..utils.extmath import weighted_mode
 
@@ -161,7 +161,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
             for k, classes_k in enumerate(classes_):
                 mode = self._mode(_y[neigh_ind, k].toarray(), weights)
-                y_pred_sparse_multilabel.append(csc_matrix(mode.T))
+                # `csr_matrix(mode).T` is a CSC matrix with a single column
+                # so that it's fast to hstack it with the other columns
+                y_pred_sparse_multilabel.append(csr_matrix(mode).T)
 
             y_pred = sparse.hstack(y_pred_sparse_multilabel)
 
@@ -395,7 +397,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 if outliers and self.outlier_label != 0:
                     y_pred_k[outliers] = self.outlier_label
 
-                y_pred_sparse_multilabel.append(csc_matrix(y_pred_k).T)
+                # `csr_matrix(y_pred_k).T` is a CSC matrix with a single column
+                # so that it's fast to hstack it with the other columns
+                y_pred_sparse_multilabel.append(csr_matrix(y_pred_k).T)
 
             y_pred = sparse.hstack(y_pred_sparse_multilabel)
 
