@@ -65,9 +65,9 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
         param = params[0]
         param_range = sorted(cv_results['param_%s' % param])
         train_scores_mean = cv_results['mean_train_score']
-        train_scores_std = cv_results['mean_train_std']
+        train_scores_std = cv_results['std_train_score']
         test_scores_mean = cv_results['mean_test_score']
-        test_scores_std = cv_results['mean_test_std']
+        test_scores_std = cv_results['std_test_score']
 
         lw = 2
         plt.semilogx(param_range, train_scores_mean,
@@ -86,6 +86,7 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
 
         plt.title(title)
         plt.xlabel(param)
+        plt.legend()
         ylabel = "Score" if ylabel is None else ylabel
         plt.ylabel(ylabel)
         plt.show()
