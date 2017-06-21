@@ -1142,6 +1142,7 @@ def check_classifiers_train(name, classifier_orig):
             if hasattr(classifier, "predict_log_proba"):
                 # predict_log_proba is a transformation of predict_proba
                 y_log_prob = classifier.predict_log_proba(X)
+                assert_allclose(y_log_prob, np.log(y_prob), 8, atol=1e-9)
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
