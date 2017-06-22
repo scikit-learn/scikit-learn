@@ -36,10 +36,10 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.19
 
-    tol : float, optional
-        The stopping criterion. The iterations will stop when
-        loss > previous_loss - tol. Defaults to -inf.
-        Defaults to 1e-3 from 0.21, or if max_iter is not None.
+    tol : float or None, optional
+        The stopping criterion. If it is not None, the iterations will stop
+        when (loss > previous_loss - tol). Defaults to None.
+        Defaults to 1e-3 from 0.21.
 
         .. versionadded:: 0.19
 
@@ -240,10 +240,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.19
 
-    tol : float, optional
-        The stopping criterion. The iterations will stop when
-        loss > previous_loss - tol. Defaults to -inf.
-        Defaults to 1e-3 from 0.21, or if max_iter is not None.
+    tol : float or None, optional
+        The stopping criterion. If it is not None, the iterations will stop
+        when (loss > previous_loss - tol). Defaults to None.
+        Defaults to 1e-3 from 0.21.
 
         .. versionadded:: 0.19
 

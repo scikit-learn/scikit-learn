@@ -1216,11 +1216,11 @@ def test_future_and_deprecation_warnings():
 def test_tol_and_max_iter_default_values():
     # Test that the default values are correctly changed
     est = SGDClassifier()
-    assert_equal(est.tol, -np.inf)
+    assert_equal(est.tol, None)
     assert_equal(est.max_iter, 5)
 
     est = SGDClassifier(n_iter=42)
-    assert_equal(est.tol, -np.inf)
+    assert_equal(est.tol, None)
     assert_equal(est.max_iter, 42)
 
     est = SGDClassifier(tol=1e-2)
@@ -1228,7 +1228,7 @@ def test_tol_and_max_iter_default_values():
     assert_equal(est.max_iter, 1000)
 
     est = SGDClassifier(max_iter=42)
-    assert_equal(est.tol, 1e-3)
+    assert_equal(est.tol, None)
     assert_equal(est.max_iter, 42)
 
     est = SGDClassifier(max_iter=42, tol=1e-2)

@@ -73,22 +73,21 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                           DeprecationWarning)
             # Same behavior as before 0.19
             self.max_iter = n_iter
-            self.tol = -np.inf
+            tol = None
 
         elif tol is None and max_iter is None:
             warnings.warn(
                 "max_iter and tol parameters have been added in %s in 0.19. If"
-                "both are left unset, they default to max_iter=5 and tol=-inf."
-                " If you set one of them, the other one is set to its future "
-                "default value: From 0.21, default max_iter will be 1000, "
+                "both are left unset, they default to max_iter=5 and tol=None."
+                " If tol is not None, max_iter defaults to max_iter=1000. "
+                "From 0.21, default max_iter will be 1000, "
                 "and default tol will be 1e-3." % type(self), FutureWarning)
             # Before 0.19, default was n_iter=5
             self.max_iter = 5
-            self.tol = -np.inf
-
         else:
             self.max_iter = max_iter if max_iter is not None else 1000
-            self.tol = tol if tol is not None else 1e-3
+
+        self.tol = tol
 
         self._validate_params()
 
@@ -281,10 +280,12 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
     # Windows
     seed = random_state.randint(0, np.iinfo(np.int32).max)
 
+    tol = est.tol if est.tol is not None else -np.inf
+
     if not est.average:
         return plain_sgd(coef, intercept, est.loss_function_,
                          penalty_type, alpha, C, est.l1_ratio,
-                         dataset, max_iter, est.tol, int(est.fit_intercept),
+                         dataset, max_iter, tol, int(est.fit_intercept),
                          int(est.verbose), int(est.shuffle), seed,
                          pos_weight, neg_weight,
                          learning_rate_type, est.eta0,
@@ -295,7 +296,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
             n_iter_ = average_sgd(coef, intercept, average_coef,
                                   average_intercept, est.loss_function_,
                                   penalty_type, alpha, C, est.l1_ratio,
-                                  dataset, max_iter, est.tol,
+                                  dataset, max_iter, tol,
                                   int(est.fit_intercept), int(est.verbose),
                                   int(est.shuffle), seed, pos_weight,
                                   neg_weight, learning_rate_type, est.eta0,
@@ -435,7 +436,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         self._partial_fit(X, y, alpha, C, loss, learning_rate, self.max_iter,
                           classes, sample_weight, coef_init, intercept_init)
 
-        if (self.tol > -np.inf and self.n_iter_ == self.max_iter):
+        if (self.tol is not None and self.tol > -np.inf
+                and self.n_iter_ == self.max_iter):
             warnings.warn("Maximum number of iteration reached before "
                           "convergence. Consider increasing max_iter to "
                           "improve the fit.",
@@ -650,10 +652,10 @@ class SGDClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.19
 
-    tol : float, optional
-        The stopping criterion. The iterations will stop when
-        loss > previous_loss - tol. Defaults to -inf.
-        Defaults to 1e-3 from 0.21, or if max_iter is not None.
+    tol : float or None, optional
+        The stopping criterion. If it is not None, the iterations will stop
+        when (loss > previous_loss - tol). Defaults to None.
+        Defaults to 1e-3 from 0.21.
 
         .. versionadded:: 0.19
 
@@ -750,7 +752,7 @@ class SGDClassifier(BaseSGDClassifier):
            eta0=0.0, fit_intercept=True, l1_ratio=0.15,
            learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
            n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
-           shuffle=True, tol=-inf, verbose=0, warm_start=False)
+           shuffle=True, tol=None, verbose=0, warm_start=False)
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -1001,7 +1003,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           self.max_iter, sample_weight, coef_init,
                           intercept_init)
 
-        if (self.tol > -np.inf and self.n_iter_ == self.max_iter):
+        if (self.tol is not None and self.tol > -np.inf
+                and self.n_iter_ == self.max_iter):
             warnings.warn("Maximum number of iteration reached before "
                           "convergence. Consider increasing max_iter to "
                           "improve the fit.",
@@ -1090,6 +1093,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
 
+        tol = self.tol if self.tol is not None else -np.inf
+
         if self.average > 0:
             self.standard_coef_, self.standard_intercept_, \
                 self.average_coef_, self.average_intercept_, self.n_iter_ =\
@@ -1102,7 +1107,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                             alpha, C,
                             self.l1_ratio,
                             dataset,
-                            max_iter, self.tol,
+                            max_iter, tol,
                             int(self.fit_intercept),
                             int(self.verbose),
                             int(self.shuffle),
@@ -1132,7 +1137,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           alpha, C,
                           self.l1_ratio,
                           dataset,
-                          max_iter, self.tol,
+                          max_iter, tol,
                           int(self.fit_intercept),
                           int(self.verbose),
                           int(self.shuffle),
@@ -1211,10 +1216,10 @@ class SGDRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.19
 
-    tol : float, optional
-        The stopping criterion. The iterations will stop when
-        loss > previous_loss - tol. Defaults to -inf.
-        Defaults to 1e-3 from 0.21, or if max_iter is not None.
+    tol : float or None, optional
+        The stopping criterion. If it is not None, the iterations will stop
+        when (loss > previous_loss - tol). Defaults to None.
+        Defaults to 1e-3 from 0.21.
 
         .. versionadded:: 0.19
 
@@ -1297,7 +1302,7 @@ class SGDRegressor(BaseSGDRegressor):
     SGDRegressor(alpha=0.0001, average=False, epsilon=0.1, eta0=0.01,
            fit_intercept=True, l1_ratio=0.15, learning_rate='invscaling',
            loss='squared_loss', max_iter=5, n_iter=None, penalty='l2',
-           power_t=0.25, random_state=None, shuffle=True, tol=-inf,
+           power_t=0.25, random_state=None, shuffle=True, tol=None,
            verbose=0, warm_start=False)
 
 
