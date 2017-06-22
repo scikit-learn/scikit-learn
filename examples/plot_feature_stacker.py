@@ -40,9 +40,6 @@ selection = SelectKBest(k=1)
 
 combined_features = FeatureUnion([("pca", pca), ("univ_select", selection)])
 
-# Use combined features to transform dataset:
-X_features = combined_features.fit(X, y).transform(X)
-
 svm = SVC(kernel="linear")
 
 # Do grid search over k, n_components and C:
@@ -54,5 +51,5 @@ param_grid = dict(features__pca__n_components=[1, 2, 3],
                   svm__C=[0.1, 1, 10])
 
 grid_search = GridSearchCV(pipeline, param_grid=param_grid, verbose=10)
-grid_search.fit(X_features, y)
+grid_search.fit(X, y)
 print(grid_search.best_estimator_)
