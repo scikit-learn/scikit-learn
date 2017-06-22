@@ -509,7 +509,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         -------
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
             Document-term matrix.
-
         """
         if isinstance(X, six.string_types):
             raise ValueError(
