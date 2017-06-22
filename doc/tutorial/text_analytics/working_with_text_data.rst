@@ -353,7 +353,7 @@ classifier object into our pipeline::
   ...                      ('tfidf', TfidfTransformer()),
   ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
   ...                                            alpha=1e-3, random_state=42,
-  ...                                            max_iter=5, tol=-np.inf)),
+  ...                                            max_iter=5, tol=None)),
   ... ])
   >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
   Pipeline(...)

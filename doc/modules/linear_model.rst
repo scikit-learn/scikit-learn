@@ -1265,7 +1265,7 @@ This way, we can solve the XOR problem with a linear classifier::
            [1, 0, 1, 0],
            [1, 1, 0, 0],
            [1, 1, 1, 1]])
-    >>> clf = Perceptron(fit_intercept=False, tol=-np.inf,
+    >>> clf = Perceptron(fit_intercept=False, max_iter=10, tol=None,
     ...                  shuffle=False).fit(X, y)
 
 And the classifier "predictions" are perfect::

@@ -108,7 +108,7 @@ class CommonTest(object):
             kwargs["random_state"] = 42
 
         if "tol" not in kwargs:
-            kwargs["tol"] = -np.inf
+            kwargs["tol"] = None
         if "max_iter" not in kwargs:
             kwargs["max_iter"] = 5
 
@@ -479,7 +479,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # We cannot use the factory here, because it defines predict_proba
         # anyway.
         clf = SGDClassifier(loss="hinge", alpha=0.01,
-                            max_iter=10, tol=-np.inf).fit(X, Y)
+                            max_iter=10, tol=None).fit(X, Y)
         assert_false(hasattr(clf, "predict_proba"))
         assert_false(hasattr(clf, "predict_log_proba"))
 
@@ -551,7 +551,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         Y = Y4[idx]
 
         clf = self.factory(penalty='l1', alpha=.2, fit_intercept=False,
-                           max_iter=2000, tol=-np.inf, shuffle=False)
+                           max_iter=2000, tol=None, shuffle=False)
         clf.fit(X, Y)
         assert_array_equal(clf.coef_[0, 1:-1], np.zeros((4,)))
         pred = clf.predict(X)
@@ -1098,19 +1098,19 @@ def test_l1_ratio():
                                         random_state=1234)
 
     # test if elasticnet with l1_ratio near 1 gives same result as pure l1
-    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', tol=-np.inf,
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', tol=None,
                            max_iter=6, l1_ratio=0.9999999999,
                            random_state=42).fit(X, y)
     est_l1 = SGDClassifier(alpha=0.001, penalty='l1', max_iter=6,
-                           random_state=42, tol=-np.inf).fit(X, y)
+                           random_state=42, tol=None).fit(X, y)
     assert_array_almost_equal(est_en.coef_, est_l1.coef_)
 
     # test if elasticnet with l1_ratio near 0 gives same result as pure l2
-    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', tol=-np.inf,
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', tol=None,
                            max_iter=6, l1_ratio=0.0000000001,
                            random_state=42).fit(X, y)
     est_l2 = SGDClassifier(alpha=0.001, penalty='l2', max_iter=6,
-                           random_state=42, tol=-np.inf).fit(X, y)
+                           random_state=42, tol=None).fit(X, y)
     assert_array_almost_equal(est_en.coef_, est_l2.coef_)
 
 
@@ -1154,7 +1154,7 @@ def test_numerical_stability_large_gradient():
     # where the gradient can still explode with some losses
     model = SGDClassifier(loss='squared_hinge', max_iter=10, shuffle=True,
                           penalty='elasticnet', l1_ratio=0.3, alpha=0.01,
-                          eta0=0.001, random_state=0, tol=-np.inf)
+                          eta0=0.001, random_state=0, tol=None)
     with np.errstate(all='raise'):
         model.fit(iris.data, iris.target)
     assert_true(np.isfinite(model.coef_).all())
@@ -1166,7 +1166,7 @@ def test_large_regularization():
     for penalty in ['l2', 'l1', 'elasticnet']:
         model = SGDClassifier(alpha=1e5, learning_rate='constant', eta0=0.1,
                               penalty=penalty, shuffle=False,
-                              tol=-np.inf, max_iter=6)
+                              tol=None, max_iter=6)
         with np.errstate(all='raise'):
             model.fit(iris.data, iris.target)
         assert_array_almost_equal(model.coef_, np.zeros_like(model.coef_))
@@ -1175,21 +1175,26 @@ def test_large_regularization():
 def test_tol_parameter():
     # Test that the tol parameter behaves as expected
     X = StandardScaler().fit_transform(iris.data)
-    y = iris.target
+    y = iris.target == 1
 
-    # With tol == -np.inf, the number of iteration should be equal to max_iter
+    # With tol is None, the number of iteration should be equal to max_iter
     max_iter = 42
-    model_0 = SGDClassifier(tol=-np.inf, max_iter=max_iter).fit(X, y)
+    model_0 = SGDClassifier(tol=None, random_state=0, max_iter=max_iter)
+    model_0.fit(X, y)
     assert_equal(max_iter, model_0.n_iter_)
 
-    # With tol > -np.inf, the number of iteration should be less than max_iter
+    # If tol is not None, the number of iteration should be less than max_iter
     max_iter = 2000
-    model_1 = SGDClassifier(tol=0, max_iter=max_iter).fit(X, y)
+    model_1 = SGDClassifier(tol=0, random_state=0, max_iter=max_iter)
+    model_1.fit(X, y)
     assert_greater(max_iter, model_1.n_iter_)
+    assert_greater(model_1.n_iter_, 5)
 
     # A larger tol should yield a smaller number of iteration
-    model_2 = SGDClassifier(tol=1e-3, max_iter=max_iter).fit(X, y)
+    model_2 = SGDClassifier(tol=0.1, random_state=0, max_iter=max_iter)
+    model_2.fit(X, y)
     assert_greater(model_1.n_iter_, model_2.n_iter_)
+    assert_greater(model_2.n_iter_, 3)
 
 
 def test_future_and_deprecation_warnings():

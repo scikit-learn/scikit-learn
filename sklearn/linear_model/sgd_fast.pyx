@@ -610,6 +610,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     t_start = time()
     with nogil:
         for epoch in range(max_iter):
+            sumloss = 0
             if verbose > 0:
                 with gil:
                     print("-- Epoch %d" % (epoch + 1))
@@ -692,7 +693,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     print("Norm: %.2f, NNZs: %d, "
                           "Bias: %.6f, T: %d, Avg. loss: %.6f"
                           % (w.norm(), weights.nonzero()[0].shape[0],
-                             intercept, count, sumloss / count))
+                             intercept, count, sumloss / n_samples))
                     print("Total training time: %.2f seconds."
                           % (time() - t_start))
 
@@ -702,7 +703,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 infinity = True
                 break
 
-            if tol > -INFINITY and sumloss > previous_loss - tol:
+            if tol > -INFINITY and sumloss > previous_loss - tol * n_samples:
                 if verbose:
                     with gil:
                         print("convergence after %d epochs took %.2f seconds"

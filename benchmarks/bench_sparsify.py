@@ -78,7 +78,7 @@ print("test data sparsity: %f" % sparsity_ratio(X_test))
 
 ###############################################################################
 clf = SGDRegressor(penalty='l1', alpha=.2, fit_intercept=True, max_iter=2000,
-                   tol=-np.inf)
+                   tol=None)
 clf.fit(X_train, y_train)
 print("model sparsity: %f" % sparsity_ratio(clf.coef_))
 

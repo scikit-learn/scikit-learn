@@ -106,7 +106,7 @@ def test_feature_importances_2d_coef():
 
 def test_partial_fit():
     est = PassiveAggressiveClassifier(random_state=0, shuffle=False,
-                                      max_iter=5, tol=-np.inf)
+                                      max_iter=5, tol=None)
     transformer = SelectFromModel(estimator=est)
     transformer.partial_fit(data, y,
                             classes=np.unique(y))
@@ -140,7 +140,7 @@ def test_prefit():
     # Passing a prefit parameter with the selected model
     # and fitting a unfit model with prefit=False should give same results.
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
-                        random_state=0, tol=-np.inf)
+                        random_state=0, tol=None)
     model = SelectFromModel(clf)
     model.fit(data, y)
     X_transform = model.transform(data)
@@ -175,7 +175,7 @@ def test_threshold_string():
 def test_threshold_without_refitting():
     # Test that the threshold can be set without refitting the model.
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
-                        random_state=0, tol=-np.inf)
+                        random_state=0, tol=None)
     model = SelectFromModel(clf, threshold="0.1 * mean")
     model.fit(data, y)
     X_transform = model.transform(data)

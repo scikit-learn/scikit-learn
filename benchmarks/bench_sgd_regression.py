@@ -25,6 +25,7 @@ if __name__ == "__main__":
     list_n_samples = np.linspace(100, 10000, 5).astype(np.int)
     list_n_features = [10, 100, 1000]
     n_test = 1000
+    max_iter = 1000
     noise = 0.1
     alpha = 0.01
     sgd_results = np.zeros((len(list_n_samples), len(list_n_features), 2))
@@ -75,10 +76,9 @@ if __name__ == "__main__":
 
             gc.collect()
             print("- benchmarking SGD")
-            max_iter = np.ceil(10 ** 4.0 / n_train)
             clf = SGDRegressor(alpha=alpha / n_train, fit_intercept=False,
                                max_iter=max_iter, learning_rate="invscaling",
-                               eta0=.01, power_t=0.25, tol=-np.inf)
+                               eta0=.01, power_t=0.25, tol=1e-3)
 
             tstart = time()
             clf.fit(X_train, y_train)
@@ -89,10 +89,9 @@ if __name__ == "__main__":
             gc.collect()
             print("max_iter", max_iter)
             print("- benchmarking A-SGD")
-            max_iter = np.ceil(10 ** 4.0 / n_train)
             clf = SGDRegressor(alpha=alpha / n_train, fit_intercept=False,
                                max_iter=max_iter, learning_rate="invscaling",
-                               eta0=.002, power_t=0.05, tol=-np.inf,
+                               eta0=.002, power_t=0.05, tol=1e-3,
                                average=(max_iter * n_train // 2))
 
             tstart = time()

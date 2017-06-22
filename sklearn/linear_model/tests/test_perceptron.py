@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 
 from sklearn.utils import check_random_state
@@ -45,10 +45,10 @@ class MyPerceptron(object):
 
 def test_perceptron_accuracy():
     for data in (X, X_csr):
-        clf = Perceptron(tol=-np.inf, shuffle=False)
+        clf = Perceptron(max_iter=100, tol=None, shuffle=False)
         clf.fit(data, y)
         score = clf.score(data, y)
-        assert_true(score >= 0.7)
+        assert_greater(score, 0.7)
 
 
 def test_perceptron_correctness():
@@ -58,7 +58,7 @@ def test_perceptron_correctness():
     clf1 = MyPerceptron(n_iter=2)
     clf1.fit(X, y_bin)
 
-    clf2 = Perceptron(max_iter=2, shuffle=False, tol=-np.inf)
+    clf2 = Perceptron(max_iter=2, shuffle=False, tol=None)
     clf2.fit(X, y_bin)
 
     assert_array_almost_equal(clf1.w, clf2.coef_.ravel())
