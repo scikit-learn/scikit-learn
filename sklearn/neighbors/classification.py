@@ -397,7 +397,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                     y_pred_k[outliers] = self.outlier_label
 
                 y_pred_sparse_multilabel.append(
-                    csc_matrix(mode.reshape(-1, 1)))
+                    csc_matrix(y_pred_k.reshape(-1, 1)))
 
             y_pred = sparse.hstack(y_pred_sparse_multilabel)
 
