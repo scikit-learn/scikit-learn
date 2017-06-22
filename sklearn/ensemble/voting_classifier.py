@@ -208,7 +208,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             maj = np.apply_along_axis(
                 lambda x: np.argmax(
                     np.bincount(x, weights=self._weights_not_none)),
-                axis=1, arr=predictions.astype('int'))
+                axis=1, arr=predictions)
 
         maj = self.le_.inverse_transform(maj)
 

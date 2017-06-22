@@ -28,7 +28,6 @@ from ..externals import six
 from ..externals.six import u, b
 from ..externals.six.moves import range, zip
 from ..utils import check_array
-from ..utils.fixes import frombuffer_empty
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
@@ -162,11 +161,11 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id):
 
     # convert from array.array, give data the right dtype
     if not multilabel:
-        labels = frombuffer_empty(labels, np.float64)
-    data = frombuffer_empty(data, actual_dtype)
-    indices = frombuffer_empty(ind, np.intc)
+        labels = np.frombuffer(labels, np.float64)
+    data = np.frombuffer(data, actual_dtype)
+    indices = np.frombuffer(ind, np.intc)
     indptr = np.frombuffer(indptr, dtype=np.intc)   # never empty
-    query = frombuffer_empty(query, np.int64)
+    query = np.frombuffer(query, np.int64)
 
     data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
     return data, indices, indptr, labels, query

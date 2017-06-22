@@ -15,8 +15,6 @@ Hungarian algorithm (also known as Munkres algorithm).
 
 import numpy as np
 
-from .fixes import astype
-
 
 def linear_assignment(X):
     """Solve the linear assignment problem using the Hungarian algorithm.
@@ -193,7 +191,7 @@ def _step4(state):
     # We convert to int as numpy operations are faster on int
     C = (state.C == 0).astype(np.int)
     covered_C = C * state.row_uncovered[:, np.newaxis]
-    covered_C *= astype(state.col_uncovered, dtype=np.int, copy=False)
+    covered_C *= state.col_uncovered.astype(dtype=np.int, copy=False)
     n = state.C.shape[0]
     m = state.C.shape[1]
     while True:
@@ -215,7 +213,7 @@ def _step4(state):
                 state.row_uncovered[row] = False
                 state.col_uncovered[col] = True
                 covered_C[:, col] = C[:, col] * (
-                    astype(state.row_uncovered, dtype=np.int, copy=False))
+                    state.row_uncovered.astype(dtype=np.int, copy=False))
                 covered_C[row] = 0
 
 

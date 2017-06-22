@@ -27,7 +27,6 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 from .base import BaseEnsemble
-from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..externals import six
@@ -43,6 +42,7 @@ from scipy import stats
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
+from scipy.special import expit
 
 from time import time
 from ..tree.tree import DecisionTreeRegressor
@@ -54,17 +54,15 @@ from ..utils import check_array
 from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
-from ..utils.extmath import logsumexp
-from ..utils.fixes import expit
-from ..utils.fixes import bincount
 from ..utils import deprecated
+from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 
 
-class QuantileEstimator(BaseEstimator):
+class QuantileEstimator(object):
     """An estimator predicting the alpha-quantile of the training targets."""
     def __init__(self, alpha=0.9):
         if not 0 < alpha < 1.0:
@@ -86,7 +84,7 @@ class QuantileEstimator(BaseEstimator):
         return y
 
 
-class MeanEstimator(BaseEstimator):
+class MeanEstimator(object):
     """An estimator predicting the mean of the training targets."""
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
@@ -102,7 +100,7 @@ class MeanEstimator(BaseEstimator):
         return y
 
 
-class LogOddsEstimator(BaseEstimator):
+class LogOddsEstimator(object):
     """An estimator predicting the log odds ratio."""
     scale = 1.0
 
@@ -132,14 +130,14 @@ class ScaledLogOddsEstimator(LogOddsEstimator):
     scale = 0.5
 
 
-class PriorProbabilityEstimator(BaseEstimator):
+class PriorProbabilityEstimator(object):
     """An estimator predicting the probability of each
     class in the training data.
     """
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=np.float64)
-        class_counts = bincount(y, weights=sample_weight)
+        class_counts = np.bincount(y, weights=sample_weight)
         self.priors = class_counts / class_counts.sum()
 
     def predict(self, X):
@@ -150,7 +148,7 @@ class PriorProbabilityEstimator(BaseEstimator):
         return y
 
 
-class ZeroEstimator(BaseEstimator):
+class ZeroEstimator(object):
     """An estimator that simply predicts zero. """
 
     def fit(self, X, y, sample_weight=None):

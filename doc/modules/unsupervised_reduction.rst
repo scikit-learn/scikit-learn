@@ -26,7 +26,7 @@ capture well the variance of the original features. See :ref:`decompositions`.
 
 .. topic:: **Examples**
 
-   * :ref:`sphx_glr_auto_examples_applications_face_recognition.py`
+   * :ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`
 
 Random projections
 -------------------
