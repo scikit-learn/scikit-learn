@@ -79,7 +79,7 @@ cdef class QuadTree:
 
     cdef SIZE_t insert_point_in_new_child(self, DTYPE_t[3] point, Cell* cell,
                                           SIZE_t point_index, SIZE_t size=*) nogil
-    cdef void init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) nogil
+    cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) nogil
     cdef bint is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) nogil
     cdef SIZE_t select_child(self, DTYPE_t[3] point, Cell* cell) nogil
     cdef void _init_root(self, DTYPE_t[3] min_bounds, DTYPE_t[3] max_bounds) nogil

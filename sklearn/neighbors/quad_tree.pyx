@@ -28,6 +28,8 @@ cdef extern from "numpy/arrayobject.h":
                                 void* data, int flags, object obj)
 
 
+# XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
+# (i.e., older MSVC).
 cdef SIZE_t DEFAULT = <SIZE_t>(-1)
 
 
@@ -36,7 +38,7 @@ CELL_DTYPE = np.dtype({
     'names': ['parent', 'children', 'cell_id', 'point_index', 'is_leaf',
               'max_width', 'depth', 'cumulative_size', 'center', 'barycenter',
               'min_bounds', 'max_bounds'],
-    'formats': [np.intp, (np.intp, 8), np.intp, np.intp, np.int32, np.float32, 
+    'formats': [np.intp, (np.intp, 8), np.intp, np.intp, np.int32, np.float32,
                 np.intp, np.intp, (np.float32, 3), (np.float32, 3),
                 (np.float32, 3), (np.float32, 3)],
     'offsets': [
@@ -88,64 +90,31 @@ cdef class QuadTree:
         def __get__(self):
             return self._get_cell_ndarray()['is_leaf'][:self.cell_count]
 
-    cdef int _resize(self, SIZE_t capacity) nogil except -1:
-        """Resize all inner arrays to `capacity`, if `capacity` == -1, then
-           double the size of the inner arrays.
+    def build_tree(self, X):
+        """Build a tree from an arary of points X."""
+        cdef DTYPE_t[3] pt
+        cdef DTYPE_t[3] min_bounds, max_bounds
 
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        if self._resize_c(capacity) != 0:
-            # Acquire gil only if we need to raise
-            with gil:
-                raise MemoryError()
+        # validate X and prepare for query
+        # X = check_array(X, dtype=DTYPE_t, order='C')
+        n_samples = X.shape[0]
 
-    # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
-    # (i.e., older MSVC).
-    cdef int _resize_c(self, SIZE_t capacity=DEFAULT) nogil except -1:
-        """Guts of _resize
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        if capacity == self.capacity and self.cells != NULL:
-            return 0
-
-        if capacity == DEFAULT:
-            if self.capacity == 0:
-                capacity = 9  # default initial value to min
-            else:
-                capacity = 2 * self.capacity
-
-        safe_realloc(&self.cells, capacity)
-
-        # if capacity smaller than cell_count, adjust the counter
-        if capacity < self.cell_count:
-            self.cell_count = capacity
-
-        self.capacity = capacity
-        return 0
-
-    cdef int check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
-                                  ) nogil except -1:
-        if self.verbose >= 10:
-            printf("[QuadTree] Checking point (%f, %f, %f) in cell %li "
-                    "([%f/%f, %f/%f, %f/%f], size %li)\n",
-                    point[0], point[1], point[2], cell.cell_id,
-                    cell.min_bounds[0], cell.max_bounds[0], cell.min_bounds[1],
-                    cell.max_bounds[1], cell.min_bounds[2], cell.max_bounds[2],
-                    cell.cumulative_size)
-                
+        capacity = 100
+        self._resize(capacity)
+        m, M = np.min(X, axis=0) - 1e-3, np.max(X, axis=0) + 1e-3
         for i in range(self.n_dimensions):
-            if (cell.min_bounds[i] > point[i] or
-                    cell.max_bounds[i] <= point[i]):
-                with gil:
-                    msg = "[QuadTree] InsertionError: point out of cell boundary.\n"
-                    msg += "Axis %li: cell [%f, %f]; point %f\n"
-                    
-                    msg %= i, cell.min_bounds[i],  cell.max_bounds[i], point[i]
-                    raise ValueError(msg)
-        
+            min_bounds[i] = m[i]
+            max_bounds[i] = M[i]
+
+        # Create the initial node with boundaries from the dataset
+        self._init_root(min_bounds, max_bounds)
+
+        for i in range(n_samples):
+            for j in range(self.n_dimensions):
+                pt[j] = X[i, j]
+            self.insert_point(pt, i)
+
+        self._resize(capacity=self.cell_count)
 
     cdef int insert_point(self, DTYPE_t[3] point, SIZE_t point_index,
                           SIZE_t cell_id=0) nogil except -1:
@@ -181,7 +150,7 @@ cdef class QuadTree:
             for i in range(self.n_dimensions):
                 # barycenter update using a weighted mean
                 cell.barycenter[i] = (n_point * cell.barycenter[i] + point[i]) / (n_point + 1)
-            
+
             # Increase the size of the subtree starting from this cell
             cell.cumulative_size += 1
 
@@ -212,17 +181,19 @@ cdef class QuadTree:
     # XXX: This operation is not Thread safe
     cdef SIZE_t insert_point_in_new_child(self, DTYPE_t[3] point, Cell* cell,
                                           SIZE_t point_index, SIZE_t size=1) nogil:
+        """Create a child of cell which will contain point."""
 
         # Local variable definition
-        cdef SIZE_t cell_id, cell_child_id, parent_id
-        cdef DTYPE_t[3] save_point
-        cdef DTYPE_t width
-        cdef Cell* child
-        cdef int i
+        cdef:
+            SIZE_t cell_id, cell_child_id, parent_id
+            DTYPE_t[3] save_point
+            DTYPE_t width
+            Cell* child
+            int i
 
         # If the maximal capacity of the Tree have been reach, double the capacity
         # We need to save the current cell id and the current point to retrieve them
-        # in case the reallocation 
+        # in case the reallocation
         if self.cell_count + 1 > self.capacity:
             parent_id = cell.cell_id
             for i in range(self.n_dimensions):
@@ -235,15 +206,16 @@ cdef class QuadTree:
         cell_id = self.cell_count
         self.cell_count += 1
         child  = &self.cells[cell_id]
-        
-        self.init_cell(child, cell.cell_id, cell.depth + 1)
+
+        self._init_cell(child, cell.cell_id, cell.depth + 1)
         child.cell_id = cell_id
 
         # Set the cell as an inner cell of the Tree
         cell.is_leaf = False
         cell.point_index = -1
 
-        # Set the correct boundary for the cell and store the point in it
+        # Set the correct boundary for the cell, store the point in the cell
+        # and compute its index in the children array.
         cell_child_id = 0
         for i in range(self.n_dimensions):
             cell_child_id *= 2
@@ -259,14 +231,14 @@ cdef class QuadTree:
 
             child.barycenter[i] = point[i]
             child.max_width = max(child.max_width, width*width)
-            
-            # TODO: max_width
+
+        # Store the point info and the size to account for duplicated points
         child.point_index = point_index
         child.cumulative_size = size
 
         # Store the child cell in the correct place in children
         cell.children[cell_child_id] = child.cell_id
-            
+
         if DEBUGFLAG:
             # Assert that the point is in the right range
             self.check_point_in_cell(point, child)
@@ -274,18 +246,10 @@ cdef class QuadTree:
             printf("[QuadTree] inserted point %li in new child %li\n", point_index, cell_id)
 
         return cell_id
-            
-    cdef void init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) nogil:
-        cell.parent = parent
-        cell.is_leaf = True
-        cell.depth = depth
-        cell.max_width = 0
-        cell.cumulative_size = 0
-        for i in range(self.n_cells_per_cell):
-            cell.children[i] = DEFAULT
 
 
     cdef bint is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) nogil:
+        """Check if the two given points are equals."""
         cdef int i
         cdef bint res = True
         for i in range(self.n_dimensions):
@@ -294,8 +258,11 @@ cdef class QuadTree:
 
 
     cdef SIZE_t select_child(self, DTYPE_t[3] point, Cell* cell) nogil:
-        cdef int i
-        cdef SIZE_t selected_child = 0
+        """Select the child of cell which contains the given query point."""
+        cdef:
+            int i
+            SIZE_t selected_child = 0
+
         for i in range(self.n_dimensions):
             # Select the correct child cell to insert the point by comparing
             # it to the borders of the cells using precomputed center.
@@ -304,11 +271,25 @@ cdef class QuadTree:
                 selected_child += 1
         return cell.children[selected_child]
 
-    cdef void _init_root(self, DTYPE_t[3] min_bounds, DTYPE_t[3] max_bounds) nogil:
-        cdef int i
-        cdef DTYPE_t width
-        cdef Cell* root = &self.cells[0]
-        self.init_cell(root, -1, 0)
+    cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) nogil:
+        """Initialize a cell structure with some constants."""
+        cell.parent = parent
+        cell.is_leaf = True
+        cell.depth = depth
+        cell.max_width = 0
+        cell.cumulative_size = 0
+        for i in range(self.n_cells_per_cell):
+            cell.children[i] = DEFAULT
+
+    cdef void _init_root(self, DTYPE_t[3] min_bounds, DTYPE_t[3] max_bounds
+                         ) nogil:
+        """Initialize the root node with the given space boundaries"""
+        cdef:
+            int i
+            DTYPE_t width
+            Cell* root = &self.cells[0]
+
+        self._init_cell(root, -1, 0)
         for i in range(self.n_dimensions):
             root.min_bounds[i] = min_bounds[i]
             root.max_bounds[i] = max_bounds[i]
@@ -316,34 +297,8 @@ cdef class QuadTree:
             width = max_bounds[i] - min_bounds[i]
             root.max_width = max(root.max_width, width*width)
         root.cell_id = 0
-        
+
         self.cell_count += 1
-
-    def build_tree(self, X):
-        """Build a tree from the points in X."""
-        cdef DTYPE_t[3] pt
-        cdef DTYPE_t[3] min_bounds, max_bounds
-
-        # validate X and prepare for query
-        # X = check_array(X, dtype=DTYPE_t, order='C')
-        n_samples = X.shape[0]
-
-        capacity = 100
-        self._resize(capacity)
-        m, M = np.min(X, axis=0) - 1e-3, np.max(X, axis=0) + 1e-3
-        for i in range(self.n_dimensions):
-            min_bounds[i] = m[i]
-            max_bounds[i] = M[i]
-
-        # Create the initial node with boundaries from the dataset
-        self._init_root(min_bounds, max_bounds)
-
-        for i in range(n_samples):
-            for j in range(self.n_dimensions):
-                pt[j] = X[i, j]
-            self.insert_point(pt, i)
-
-        self._resize(capacity=self.cell_count)
 
     def plot_tree(self):
         """Plot the tree with cell boundaries and the points inserted in it."""
@@ -359,17 +314,50 @@ cdef class QuadTree:
             else:
                 # If the cell is a leaf, display the point contained in it.
                 plt.scatter(c.barycenter[0], c.barycenter[1], c='b', marker='.')
-            
+
         # Print bounding box of the Tree
         root = self.cells[0]
         plt.vlines([root.min_bounds[0], root.max_bounds[0]], root.min_bounds[1], root.max_bounds[1])
         plt.hlines([root.min_bounds[1], root.max_bounds[1]], root.min_bounds[0], root.max_bounds[0])
         plt.show()
 
+    cdef int check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
+                                  ) nogil except -1:
+        """Check that the given point is in the cell boundaries."""
+
+        if self.verbose >= 10:
+            printf("[QuadTree] Checking point (%f, %f, %f) in cell %li "
+                    "([%f/%f, %f/%f, %f/%f], size %li)\n",
+                    point[0], point[1], point[2], cell.cell_id,
+                    cell.min_bounds[0], cell.max_bounds[0], cell.min_bounds[1],
+                    cell.max_bounds[1], cell.min_bounds[2], cell.max_bounds[2],
+                    cell.cumulative_size)
+
+        for i in range(self.n_dimensions):
+            if (cell.min_bounds[i] > point[i] or
+                    cell.max_bounds[i] <= point[i]):
+                with gil:
+                    msg = "[QuadTree] InsertionError: point out of cell boundary.\n"
+                    msg += "Axis %li: cell [%f, %f]; point %f\n"
+
+                    msg %= i, cell.min_bounds[i],  cell.max_bounds[i], point[i]
+                    raise ValueError(msg)
+
     def check_coherence(self):
+        """Check the coherence of the cells of the tree.
+
+        Check that the info stored in each cell are compatible with the info
+        stored in descendent and sibling cells. Raise a RuntimeError if this
+        fails.
+        """
         for cell in self.cells[:self.cell_count]:
+            # Check that the barycenter of inserted point is within the cell
+            # boundaries
             self.check_point_in_cell(cell.barycenter, &cell)
+
             if not cell.is_leaf:
+                # Compute the number of point in children and compare with
+                # its cummulative_size.
                 n_points = 0
                 for idx in range(self.n_cells_per_cell):
                     child_id = cell.children[idx]
@@ -384,16 +372,19 @@ cdef class QuadTree:
                         "in children. ({})"
                         .format(cell.cell_id, cell.cumulative_size,
                                 n_points, cell.children))
+
+        # Make sure that the number of point in the tree correspond to the
+        # cummulative size in root cell.
         if self.n_points != self.cells[0].cumulative_size:
             raise RuntimeError(
                 "QuadTree is incoherent. Size={} but found {} points "
                 "in children."
                 .format(self.n_points, self.cells[0].cumulative_size))
-                    
+
     cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results, SIZE_t cell_id=0,
                         long idx=0, float squared_theta=.5) nogil:
         """Summarize the tree compared to a query point.
-        
+
         Input arguments
         ---------------
         point: array (n_dimensions)
@@ -410,11 +401,11 @@ cdef class QuadTree:
         result: array (n_samples * (n_dimensions+2))
             result will contain a summary of the tree information compared to
             the query point:
-            - results[idx:idx+n_dimensions] contains the delta between a summary
-                node idx and the query point.
+            - results[idx:idx+n_dimensions] contains the delta between the summary
+                cell idx and the query point.
             - result[idx+n_dimensions+1] contains the squared euclidean distance
-                to the summary node idx.
-            - result[idx+n_dimensions+2] contains the size of the summary node idx.
+                to the summary cell idx.
+            - result[idx+n_dimensions+2] contains the size of the summary cell idx.
 
         Return
         ------
@@ -440,7 +431,7 @@ cdef class QuadTree:
         # Check whether we can use this node as a summary
         # It's a summary node if the angular size as measured from the point
         # is relatively small (w.r.t. to theta) or if it is a leaf node.
-        # If it can be summarized, we use the cell center of mass 
+        # If it can be summarized, we use the cell center of mass
         # Otherwise, we go a higher level of resolution and into the leaves.
         if cell.is_leaf or ((cell.max_width / results[idx_d]) < squared_theta):
             results[idx_d + 1] = <DTYPE_t> cell.cumulative_size
@@ -454,17 +445,29 @@ cdef class QuadTree:
                     idx = self.summarize(point, results, child_id, idx)
 
         return idx
-        
+
     def get_cell(self, point):
+        """return the id of the cell containing the query point or raise 
+        ValueError if the point is not in the tree
+        """
         cdef DTYPE_t[3] query_pt
         cdef int i
+
+        assert len(point) == self.n_dimensions, (
+            "Query point should be a point in dimension {}."
+            .format(self.n_dimensions))
 
         for i in range(self.n_dimensions):
             query_pt[i] = point[i]
 
         return self._get_cell(query_pt, 0)
 
-    cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=0) nogil except -1:
+    cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=0
+                       ) nogil except -1:
+        """guts of get_cell.
+        
+        Return the id of the cell containing the query point or raise ValueError
+        if the point is not in the tree"""
         cdef:
             SIZE_t selected_child
             Cell* cell = &self.cells[cell_id]
@@ -484,6 +487,8 @@ cdef class QuadTree:
             return self._get_cell(point, selected_child)
         with gil:
             raise ValueError("Query point not in the Tree.")
+
+    # Pickling primitives
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
@@ -526,6 +531,10 @@ cdef class QuadTree:
         cells = memcpy(self.cells, (<np.ndarray> cell_ndarray).data,
                        self.capacity * sizeof(Cell))
 
+
+    # Array manipulation methods, to convert it to numpy or to resize
+    # self.cells array
+
     cdef np.ndarray _get_cell_ndarray(self):
         """Wraps nodes as a NumPy struct array.
 
@@ -545,3 +554,39 @@ cdef class QuadTree:
         Py_INCREF(self)
         arr.base = <PyObject*> self
         return arr
+
+    cdef int _resize(self, SIZE_t capacity) nogil except -1:
+        """Resize all inner arrays to `capacity`, if `capacity` == -1, then
+           double the size of the inner arrays.
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
+        if self._resize_c(capacity) != 0:
+            # Acquire gil only if we need to raise
+            with gil:
+                raise MemoryError()
+
+    cdef int _resize_c(self, SIZE_t capacity=DEFAULT) nogil except -1:
+        """Guts of _resize
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
+        if capacity == self.capacity and self.cells != NULL:
+            return 0
+
+        if capacity == DEFAULT:
+            if self.capacity == 0:
+                capacity = 9  # default initial value to min
+            else:
+                capacity = 2 * self.capacity
+
+        safe_realloc(&self.cells, capacity)
+
+        # if capacity smaller than cell_count, adjust the counter
+        if capacity < self.cell_count:
+            self.cell_count = capacity
+
+        self.capacity = capacity
+        return 0
