@@ -23,7 +23,7 @@ cdef extern from "math.h":
     float fabsf(float x) nogil
 
 # Round points differing by less than this amount
-# effectively ignoring differences near the 32bit 
+# effectively ignoring differences near the 32bit
 # floating point precision
 cdef float EPSILON = 1e-6
 
@@ -52,18 +52,20 @@ cdef float compute_gradient(float[:] val_P,
                             long stop) nogil:
     # Having created the tree, calculate the gradient
     # in two components, the positive and negative forces
-    cdef long i, coord
-    cdef int ax
-    cdef long n_samples = pos_reference.shape[0]
-    cdef int n_dimensions = qt.n_dimensions
+    cdef:
+        long i, coord
+        int ax
+        long n_samples = pos_reference.shape[0]
+        int n_dimensions = qt.n_dimensions
+        float[1] sum_Q
+        clock_t t1, t2
+        float sQ, error
+
     if qt.verbose > 11:
         printf("[t-SNE] Allocating %li elements in force arrays\n",
                 n_samples * n_dimensions * 2)
-    cdef float* sum_Q = <float*> malloc(sizeof(float))
     cdef float* neg_f = <float*> malloc(sizeof(float) * n_samples * n_dimensions)
     cdef float* pos_f = <float*> malloc(sizeof(float) * n_samples * n_dimensions)
-    cdef clock_t t1, t2
-    cdef float sQ, error
 
     sum_Q[0] = 0.0
     t1 = clock()
@@ -84,7 +86,7 @@ cdef float compute_gradient(float[:] val_P,
         for ax in range(n_dimensions):
             coord = i * n_dimensions + ax
             tot_force[i, ax] = pos_f[coord] - (neg_f[coord] / sum_Q[0])
-    free(sum_Q)
+
     free(neg_f)
     free(pos_f)
     return error
@@ -112,15 +114,16 @@ cdef float compute_gradient_positive(float[:] val_P,
         float dij, qij, pij
         float C = 0.0
         float exponent = (dof + 1.0) / -2.0
-    cdef clock_t t1, t2
-    cdef float* buff = <float*> malloc(sizeof(float) * n_dimensions)
+        float[3] buff
+        clock_t t1, t2
+
     t1 = clock()
     for i in range(start, n_samples):
         for ax in range(n_dimensions):
             pos_f[i * n_dimensions + ax] = 0.0
         for k in range(indptr[i], indptr[i+1]):
             j = neighbors[k]
-            # we don't need to exclude the i==j case since we've 
+            # we don't need to exclude the i==j case since we've
             # already thrown it out from the list of neighbors
             dij = 0.0
             pij = val_P[k]
@@ -138,7 +141,6 @@ cdef float compute_gradient_positive(float[:] val_P,
     if verbose > 10:
         printf("[t-SNE] Computed error=%1.4f in %1.1e ticks\n", C, dt)
 
-    free(buff)
     return C
 
 
@@ -147,34 +149,26 @@ cdef void compute_gradient_negative(float[:,:] pos_reference,
                                     quad_tree.QuadTree qt,
                                     float* sum_Q,
                                     float dof,
-                                    float theta, 
-                                    long start, 
+                                    float theta,
+                                    long start,
                                     long stop) nogil:
     if stop == -1:
-        stop = pos_reference.shape[0] 
+        stop = pos_reference.shape[0]
     cdef:
         int ax
-        long i, j
-        long n = stop - start
-        float* force
-        float* iQ 
-        float* pos
-        float size, dist2s
-        long* l
         int n_dimensions = qt.n_dimensions
-        float qijZ, mult
-        long idx, 
+        long i, j, idx
+        long n = stop - start
         long dta = 0
         long dtb = 0
-        clock_t t1, t2, t3
-        float* neg_force
         long offset = n_dimensions + 2
+        long* l
+        float size, dist2s, qijZ, mult
+        float[1] iQ
+        float[3] force, neg_force, pos
+        clock_t t1, t2, t3
 
-    iQ = <float*> malloc(sizeof(float))
-    force = <float*> malloc(sizeof(float) * n_dimensions)
-    pos = <float*> malloc(sizeof(float) * n_dimensions)
     summary = <float*> malloc(sizeof(float) * n * offset)
-    neg_force= <float*> malloc(sizeof(float) * n_dimensions)
 
     for i in range(start, stop):
         # Clear the arrays
@@ -190,11 +184,11 @@ cdef void compute_gradient_negative(float[:,:] pos_reference,
         t2 = clock()
         # Compute the t-SNE negative force
         # for the digits dataset, walking the tree
-        # is about 10-15x more expensive than the 
+        # is about 10-15x more expensive than the
         # following for loop
         exponent = (dof + 1.0) / -2.0
         for j in range(idx // offset):
-            
+
             dist2s = summary[j * offset + n_dimensions]
             size = summary[j * offset + n_dimensions + 1]
             qijZ = ((1.0 + dist2s) / dof) ** exponent  # 1/(1+dist)
@@ -210,18 +204,15 @@ cdef void compute_gradient_negative(float[:,:] pos_reference,
     if qt.verbose > 20:
         printf("[t-SNE] Tree: %li clock ticks | ", dta)
         printf("Force computation: %li clock ticks\n", dtb)
-    free(iQ)
-    free(force)
-    free(pos)
+
     free(summary)
-    free(neg_force)
 
 
 def calculate_edge(pos_output):
     # Make the boundaries slightly outside of the data
     # to avoid floating point error near the edge
     left_edge = np.min(pos_output, axis=0)
-    right_edge = np.max(pos_output, axis=0) 
+    right_edge = np.max(pos_output, axis=0)
     center = (right_edge + left_edge) * 0.5
     width = np.maximum(np.subtract(right_edge, left_edge), EPSILON)
     # Exagerate width to avoid boundary edge
