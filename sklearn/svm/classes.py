@@ -1002,7 +1002,7 @@ class OneClassSVM(BaseLibSVM):
     dual_coef_ : array, shape = [n_classes-1, n_SV]
         Coefficients of the support vectors in the decision function.
 
-    coef_ : array, shape = [n_classes-1, n_features]
+    coef_ : array, shape = [1, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
