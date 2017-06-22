@@ -77,17 +77,17 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
         elif tol is None and max_iter is None:
             warnings.warn(
-                "max_iter and tol parameters have been added in 0.19. If both "
-                "are left unset, they default to max_iter=5 and tol=-inf. "
-                "If you set one of them, the other one is set to its future "
-                "default value: From 0.21, default max_iter will be 100, "
-                "and default tol will be 1e-3.", FutureWarning)
+                "max_iter and tol parameters have been added in %s in 0.19. If"
+                "both are left unset, they default to max_iter=5 and tol=-inf."
+                " If you set one of them, the other one is set to its future "
+                "default value: From 0.21, default max_iter will be 1000, "
+                "and default tol will be 1e-3." % type(self), FutureWarning)
             # Before 0.19, default was n_iter=5
             self.max_iter = 5
             self.tol = -np.inf
 
         else:
-            self.max_iter = max_iter if max_iter is not None else 100
+            self.max_iter = max_iter if max_iter is not None else 1000
             self.tol = tol if tol is not None else 1e-3
 
         self._validate_params()
@@ -106,7 +106,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
         if self.max_iter <= 0:
-            raise ValueError("max_iter must be > zero")
+            raise ValueError("max_iter must be > zero. Got %f" % self.max_iter)
         if not (0.0 <= self.l1_ratio <= 1.0):
             raise ValueError("l1_ratio must be in [0, 1]")
         if self.alpha < 0.0:
@@ -646,7 +646,7 @@ class SGDClassifier(BaseSGDClassifier):
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         `partial_fit`.
-        Defaults to 5. Defaults to 100 from 0.21, or if tol is not None.
+        Defaults to 5. Defaults to 1000 from 0.21, or if tol is not None.
 
         .. versionadded:: 0.19
 
@@ -1207,7 +1207,7 @@ class SGDRegressor(BaseSGDRegressor):
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
         `partial_fit`.
-        Defaults to 5. Defaults to 100 from 0.21, or if tol is not None.
+        Defaults to 5. Defaults to 1000 from 0.21, or if tol is not None.
 
         .. versionadded:: 0.19
 

@@ -1196,7 +1196,7 @@ def test_future_and_deprecation_warnings():
     # Test that warnings are raised. Will be removed in 0.21
 
     # When all default values are used
-    msg_future = "max_iter and tol parameters have been added in 0.19"
+    msg_future = "max_iter and tol parameters have been added in "
     assert_warns_message(FutureWarning, msg_future, SGDClassifier)
 
     def init(max_iter=None, tol=None, n_iter=None):
@@ -1225,7 +1225,7 @@ def test_tol_and_max_iter_default_values():
 
     est = SGDClassifier(tol=1e-2)
     assert_equal(est.tol, 1e-2)
-    assert_equal(est.max_iter, 100)
+    assert_equal(est.max_iter, 1000)
 
     est = SGDClassifier(max_iter=42)
     assert_equal(est.tol, 1e-3)
