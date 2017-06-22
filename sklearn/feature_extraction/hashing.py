@@ -126,7 +126,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self._validate_params(self.n_features, self.input_type)
         return self
 
-    def transform(self, raw_X, y=None):
+    def transform(self, raw_X):
         """Transform a sequence of instances to a scipy.sparse matrix.
 
         Parameters
@@ -137,7 +137,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             the input_type constructor argument) which will be hashed.
             raw_X need not support the len function, so it can be the result
             of a generator; n_samples is determined on the fly.
-        y : (ignored)
 
         Returns
         -------
