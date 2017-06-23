@@ -7,6 +7,7 @@ from numpy.testing import assert_array_almost_equal
 from scipy.spatial.distance import cdist
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from sklearn.neighbors import BallTree
+from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_raises_regex
 
 
@@ -17,24 +18,24 @@ def dist_func(x1, x2, p):
 class TestMetrics:
     def __init__(self, n1=20, n2=25, d=4, zero_frac=0.5,
                  rseed=0, dtype=np.float64):
-        np.random.seed(rseed)
-        self.X1 = np.random.random((n1, d)).astype(dtype)
-        self.X2 = np.random.random((n2, d)).astype(dtype)
+        rng = check_random_state(rseed)
+        self.X1 = rng.random_sample((n1, d)).astype(dtype)
+        self.X2 = rng.random_sample((n2, d)).astype(dtype)
 
         # make boolean arrays: ones and zeros
         self.X1_bool = self.X1.round(0)
         self.X2_bool = self.X2.round(0)
 
-        V = np.random.random((d, d))
+        V = rng.random_sample((d, d))
         VI = np.dot(V, V.T)
 
         self.metrics = {'euclidean': {},
                         'cityblock': {},
                         'minkowski': dict(p=(1, 1.5, 2, 3)),
                         'chebyshev': {},
-                        'seuclidean': dict(V=(np.random.random(d),)),
+                        'seuclidean': dict(V=(rng.random_sample(d),)),
                         'wminkowski': dict(p=(1, 1.5, 3),
-                                           w=(np.random.random(d),)),
+                                           w=(rng.random_sample(d),)),
                         'mahalanobis': dict(VI=(VI,)),
                         'hamming': {},
                         'canberra': {},
@@ -172,7 +173,7 @@ def test_input_data_size():
         assert x.shape[0] == 3
         return np.sum((x - y) ** 2)
 
-    rng = np.random.RandomState(0)
+    rng = check_random_state(0)
     X = rng.rand(10, 3)
 
     pyfunc = DistanceMetric.get_metric("pyfunc", func=dist_func, p=2)
