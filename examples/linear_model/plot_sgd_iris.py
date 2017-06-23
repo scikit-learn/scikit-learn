@@ -76,6 +76,7 @@ def plot_hyperplane(c, color):
     plt.plot([xmin, xmax], [line(xmin), line(xmax)],
              ls="--", color=color)
 
+
 for i, color in zip(clf.classes_, colors):
     plot_hyperplane(i, color)
 plt.legend()

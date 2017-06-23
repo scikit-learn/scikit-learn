@@ -25,7 +25,7 @@ rng = np.random.RandomState(0)
 
 def test_invalid_input():
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
-                        random_state=None, tol=0)
+                        random_state=None, tol=None)
     for threshold in ["gobbledigook", ".5 * gobbledigook"]:
         model = SelectFromModel(clf, threshold=threshold)
         model.fit(data, y)
