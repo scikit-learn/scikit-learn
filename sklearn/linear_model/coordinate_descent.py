@@ -185,15 +185,15 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     verbose : bool or integer
         Amount of verbosity.
 
-    params : kwargs
-        keyword arguments passed to the coordinate descent solver.
+    return_n_iter : bool
+        whether to return the number of iterations or not.
 
     positive : bool, default False
         If set to True, forces coefficients to be positive.
         (Only allowed when ``y.ndim == 1``).
 
-    return_n_iter : bool
-        whether to return the number of iterations or not.
+    **params : kwargs
+        keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
@@ -347,7 +347,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         Skip input validation checks, including the Gram matrix when provided
         assuming there are handled by the caller when check_input=False.
 
-    params : kwargs
+    **params : kwargs
         keyword arguments passed to the coordinate descent solver.
 
     Returns
