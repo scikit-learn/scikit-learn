@@ -86,7 +86,6 @@ def test_iforest_sparse():
             dense_results = dense_classifier.predict(X_test)
 
             assert_array_equal(sparse_results, dense_results)
-            assert_array_equal(sparse_results, dense_results)
 
 
 def test_iforest_error():

@@ -125,11 +125,10 @@ Since the hash function might cause collisions between (unrelated) features,
 a signed hash function is used and the sign of the hash value
 determines the sign of the value stored in the output matrix for a feature.
 This way, collisions are likely to cancel out rather than accumulate error,
-and the expected mean of any output feature's value is zero.
-
-If ``non_negative=True`` is passed to the constructor, the absolute
-value is taken.  This undoes some of the collision handling, but allows
-the output to be passed to estimators like
+and the expected mean of any output feature's value is zero. This mechanism
+is enabled by default with ``alternate_sign=True`` and is particularly useful
+for small hash table sizes (``n_features < 10000``). For large hash table
+sizes, it can be disabled, to allow the output to be passed to estimators like
 :class:`sklearn.naive_bayes.MultinomialNB` or
 :class:`sklearn.feature_selection.chi2`
 feature selectors that expect non-negative inputs.
@@ -669,7 +668,7 @@ Finally it is possible to discover the main topics of a corpus by
 relaxing the hard assignment constraint of clustering, for instance by
 using :ref:`NMF`:
 
-  * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
+  * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
 
 
 Limitations of the Bag of Words representation

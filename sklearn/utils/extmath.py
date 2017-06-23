@@ -17,10 +17,10 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse, csr_matrix
-from scipy.misc import logsumexp as scipy_logsumexp
 
 from . import check_random_state, deprecated
 from .fixes import np_version
+from .fixes import logsumexp as scipy_logsumexp
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
@@ -195,6 +195,9 @@ def randomized_range_finder(A, size, n_iter,
 
     # Generating normal random vectors with shape: (A.shape[1], size)
     Q = random_state.normal(size=(A.shape[1], size))
+    if A.dtype.kind == 'f':
+        # Ensure f32 is preserved as f32
+        Q = Q.astype(A.dtype, copy=False)
 
     # Deal with "auto" mode
     if power_iteration_normalizer == 'auto':
@@ -327,6 +330,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     # compute the SVD on the thin matrix: (k + p) wide
     Uhat, s, V = linalg.svd(B, full_matrices=False)
+
     del B
     U = np.dot(Q, Uhat)
 

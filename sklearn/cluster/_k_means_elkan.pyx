@@ -18,7 +18,7 @@ from ..metrics import euclidean_distances
 from ._k_means import _centers_dense
 
 
-cdef floating euclidian_dist(floating* a, floating* b, int n_features) nogil:
+cdef floating euclidean_dist(floating* a, floating* b, int n_features) nogil:
     cdef floating result, tmp
     result = 0
     cdef int i
@@ -89,12 +89,12 @@ cdef update_labels_distances_inplace(
         # assign first cluster center
         c_x = 0
         x = X + sample * n_features
-        d_c = euclidian_dist(x, centers, n_features)
+        d_c = euclidean_dist(x, centers, n_features)
         lower_bounds[sample, 0] = d_c
         for j in range(1, n_clusters):
             if d_c > center_half_distances[c_x, j]:
                 c = centers + j * n_features
-                dist = euclidian_dist(x, c, n_features)
+                dist = euclidean_dist(x, c, n_features)
                 lower_bounds[sample, j] = dist
                 if dist < d_c:
                     d_c = dist
@@ -197,7 +197,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_, int n_clusters,
                     # Recompute the upper bound by calculating the actual distance
                     # between the sample and label.
                     if not bounds_tight[point_index]:
-                        upper_bound = euclidian_dist(x_p, centers_p + label * n_features, n_features)
+                        upper_bound = euclidean_dist(x_p, centers_p + label * n_features, n_features)
                         lower_bounds[point_index, label] = upper_bound
                         bounds_tight[point_index] = 1
 
@@ -206,7 +206,7 @@ def k_means_elkan(np.ndarray[floating, ndim=2, mode='c'] X_, int n_clusters,
                     # distance, reassign labels.
                     if (upper_bound > lower_bounds[point_index, center_index]
                             or (upper_bound > center_half_distances[label, center_index])):
-                        distance = euclidian_dist(x_p, centers_p + center_index * n_features, n_features)
+                        distance = euclidean_dist(x_p, centers_p + center_index * n_features, n_features)
                         lower_bounds[point_index, center_index] = distance
                         if distance < upper_bound:
                             label = center_index
