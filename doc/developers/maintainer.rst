@@ -37,16 +37,21 @@ Making a release
 
        $ python setup.py sdist register upload
 
-   - Upload manually the tarball on SourceForge:
-     https://sourceforge.net/projects/scikit-learn/files/
 
 5. Push the documentation to the website (see README in doc folder)
 
 
-6. Build binaries for windows and push them to PyPI::
+6. Build binaries using dedicated CI servers by updating the git submodule
+   reference to the new scikit-learn tag of the release at:
 
-    $ python setup.py bdist_wininst upload
+   https://github.com/MacPython/scikit-learn-wheels
 
-   And upload them also to sourceforge
+   Once the CI has completed successfully, collect the generated binary wheel
+   packages and upload them to PyPI by running the following commands in the
+   scikit-learn source folder (checked out at the release tag)::
+
+       $ pip install -U wheelhouse_uploader
+       $ python setup.py sdist fetch_artifacts upload_all
+
 
 7. FOR FINAL RELEASE: Update the release date in What's New
