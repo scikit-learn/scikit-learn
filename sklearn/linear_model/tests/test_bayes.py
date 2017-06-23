@@ -6,7 +6,6 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import SkipTest
@@ -115,11 +114,25 @@ def test_dtype_match():
     y_64 = np.array(y).astype(np.float64)
 
     # check type consistency
+    for X, dtype in [(X_32, np.float32), (X_64, np.float64)]:
+        for y in [y_32, y_64]:
+            for model in [BayesianRidge(), ARDRegression()]:
+                model.fit(X, y)
+                y_mean, y_std = model.predict(X, return_std=True)
+                assert X.dtype == dtype
+                assert model.coef_.dtype == X.dtype
+                assert y_mean.dtype == X.dtype
+                assert y_std.dtype == X.dtype
+
+    # check accuracy
     br_32 = BayesianRidge()
     br_32.fit(X_32, y_32)
-    assert_equal(br_32.coef_.dtype, X_32.dtype)
     br_64 = BayesianRidge()
     br_64.fit(X_64, y_64)
-    assert_equal(br_64.coef_.dtype, X_64.dtype)
-    # check accuracy
-    assert_array_almost_equal(br_32.coef_, br_64.coef_)
+    ard_32 = ARDRegression()
+    ard_32.fit(X_32, y_32)
+    ard_64 = ARDRegression()
+    ard_64.fit(X_64, y_64)
+
+    assert_array_almost_equal(br_32.coef_, br_64.coef_, decimal=5)
+    assert_array_almost_equal(ard_32.coef_, ard_64.coef_, decimal=5)

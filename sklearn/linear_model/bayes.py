@@ -154,7 +154,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
+        X, y = check_X_y(X, y, dtype=[np.float64, np.float32], y_numeric=True)
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
         self.X_offset_ = X_offset_
@@ -426,10 +426,10 @@ class ARDRegression(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
+        X, y = check_X_y(X, y, dtype=[np.float64, np.float32], y_numeric=True)
 
         n_samples, n_features = X.shape
-        coef_ = np.zeros(n_features)
+        coef_ = np.zeros(n_features, dtype=X.dtype)
 
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X)
@@ -445,7 +445,7 @@ class ARDRegression(LinearModel, RegressorMixin):
 
         # Initialization of the values of the parameters
         alpha_ = 1. / np.var(y)
-        lambda_ = np.ones(n_features)
+        lambda_ = np.ones(n_features, dtype=X.dtype)
 
         self.scores_ = list()
         coef_old_ = None
@@ -453,7 +453,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         # Iterative procedure of ARDRegression
         for iter_ in range(self.n_iter):
             # Compute mu and sigma (using Woodbury matrix identity)
-            sigma_ = pinvh(np.eye(n_samples) / alpha_ +
+            sigma_ = pinvh(np.eye(n_samples, dtype=X.dtype) / alpha_ +
                            np.dot(X[:, keep_lambda] *
                            np.reshape(1. / lambda_[keep_lambda], [1, -1]),
                            X[:, keep_lambda].T))
