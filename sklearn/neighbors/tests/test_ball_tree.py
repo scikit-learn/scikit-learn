@@ -17,6 +17,7 @@ METRICS = {'euclidean': {},
            'manhattan': {},
            'minkowski': dict(p=3),
            'chebyshev': {},
+           'arccos': {},
            'seuclidean': dict(V=np.random.random(DIMENSION)),
            'wminkowski': dict(p=3, w=np.random.random(DIMENSION)),
            'mahalanobis': dict(V=V)}
