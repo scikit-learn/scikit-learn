@@ -630,6 +630,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         y : (ignored)
             .. deprecated:: 0.19
                This parameter will be removed in 0.21.
+        copy : bool, optional (default: None)
+            Copy the input X or not.
         """
         if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
@@ -663,8 +665,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data used to scale along the features axis.
-
-        copy : bool
+        copy : bool, optional (default: None)
             Copy the input X or not.
 
         Returns
@@ -1478,6 +1479,8 @@ class Normalizer(BaseEstimator, TransformerMixin):
         y : (ignored)
             .. deprecated:: 0.19
                This parameter will be removed in 0.21.
+        copy : bool, optional (default: None)
+            Copy the input X or not.
         """
         if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
@@ -1602,6 +1605,8 @@ class Binarizer(BaseEstimator, TransformerMixin):
         y : (ignored)
             .. deprecated:: 0.19
                This parameter will be removed in 0.21.
+        copy : bool
+            Copy the input X or not.
         """
         if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
