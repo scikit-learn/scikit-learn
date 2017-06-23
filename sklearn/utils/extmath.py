@@ -17,17 +17,17 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse, csr_matrix
-from scipy.misc import logsumexp as scipy_logsumexp
 
 from . import check_random_state, deprecated
 from .fixes import np_version
+from .fixes import logsumexp as scipy_logsumexp
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 
 
-@deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19"
+@deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19 "
             "and will be removed in 0.21. Use scipy.linalg.norm instead.")
 def norm(x):
     """Compute the Euclidean or Frobenius norm of x.
@@ -94,7 +94,7 @@ def _impose_f_order(X):
         return check_array(X, copy=False, order='F'), False
 
 
-@deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19"
+@deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19 "
             "and will be removed in 0.21. Use the equivalent np.dot instead.")
 def fast_dot(a, b, out=None):
     return np.dot(a, b, out)
@@ -195,6 +195,9 @@ def randomized_range_finder(A, size, n_iter,
 
     # Generating normal random vectors with shape: (A.shape[1], size)
     Q = random_state.normal(size=(A.shape[1], size))
+    if A.dtype.kind == 'f':
+        # Ensure f32 is preserved as f32
+        Q = Q.astype(A.dtype, copy=False)
 
     # Deal with "auto" mode
     if power_iteration_normalizer == 'auto':
@@ -327,6 +330,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     # compute the SVD on the thin matrix: (k + p) wide
     Uhat, s, V = linalg.svd(B, full_matrices=False)
+
     del B
     U = np.dot(Q, Uhat)
 
@@ -345,7 +349,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
-@deprecated("sklearn.utils.extmath.logsumexp was deprecated in version 0.19"
+@deprecated("sklearn.utils.extmath.logsumexp was deprecated in version 0.19 "
             "and will be removed in 0.21. Use scipy.misc.logsumexp instead.")
 def logsumexp(arr, axis=0):
     """Computes the sum of arr assuming arr is in the log domain.
@@ -438,7 +442,7 @@ def weighted_mode(a, w, axis=0):
     return mostfrequent, oldcounts
 
 
-@deprecated("sklearn.utils.extmath.pinvh was deprecated in version 0.19"
+@deprecated("sklearn.utils.extmath.pinvh was deprecated in version 0.19 "
             "and will be removed in 0.21. Use scipy.linalg.pinvh instead.")
 def pinvh(a, cond=None, rcond=None, lower=True):
     return linalg.pinvh(a, cond, rcond, lower)

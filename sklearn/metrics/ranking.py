@@ -46,10 +46,8 @@ def auc(x, y, reorder=False):
     ----------
     x : array, shape = [n]
         x coordinates.
-
     y : array, shape = [n]
         y coordinates.
-
     reorder : boolean, optional (default=False)
         If True, assume that the curve is ascending in the case of ties, as for
         an ROC curve. If the curve is non-ascending, the result will be wrong.
@@ -71,10 +69,8 @@ def auc(x, y, reorder=False):
     See also
     --------
     roc_auc_score : Computes the area under the ROC curve
-
     precision_recall_curve :
         Compute precision-recall pairs for different probability thresholds
-
     """
     check_consistent_length(x, y)
     x = column_or_1d(x)
@@ -111,8 +107,6 @@ def auc(x, y, reorder=False):
 def average_precision_score(y_true, y_score, average="macro",
                             sample_weight=None):
     """Compute average precision (AP) from prediction scores
-
-    This score corresponds to the area under the precision-recall curve.
 
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
@@ -155,7 +149,13 @@ def average_precision_score(y_true, y_score, average="macro",
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-           <https://en.wikipedia.org/wiki/Average_precision>`_
+           <http://en.wikipedia.org/wiki/Average_precision>`_
+    .. [2] `Stanford Information Retrieval book
+            <http://nlp.stanford.edu/IR-book/html/htmledition/
+            evaluation-of-ranked-retrieval-results-1.html>`_
+    .. [3] `The PASCAL Visual Object Classes (VOC) Challenge
+            <http://citeseerx.ist.psu.edu/viewdoc/
+            download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_
 
     See also
     --------
@@ -171,16 +171,22 @@ def average_precision_score(y_true, y_score, average="macro",
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
-    0.79...
+    0.83...
 
     """
-    def _binary_average_precision(y_true, y_score, sample_weight=None):
+    def _binary_uninterpolated_average_precision(
+            y_true, y_score, sample_weight=None):
         precision, recall, thresholds = precision_recall_curve(
             y_true, y_score, sample_weight=sample_weight)
-        return auc(recall, precision)
+        # Return the step function integral
+        # The following works because the last entry of precision is
+        # garantee to be 1, as returned by precision_recall_curve
+        return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
-    return _average_binary_score(_binary_average_precision, y_true, y_score,
-                                 average, sample_weight=sample_weight)
+    return _average_binary_score(_binary_uninterpolated_average_precision,
+                                 y_true, y_score, average,
+                                 sample_weight=sample_weight)
+
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
@@ -798,6 +804,7 @@ def dcg_score(y_true, y_score, k=5):
 
 def ndcg_score(y_true, y_score, k=5):
     """Normalized discounted cumulative gain (NDCG) at rank K.
+
     Normalized Discounted Cumulative Gain (NDCG) measures the performance of a
     recommendation system based on the graded relevance of the recommended
     entities. It varies from 0.0 to 1.0, with 1.0 representing the ideal
@@ -836,7 +843,7 @@ def ndcg_score(y_true, y_score, k=5):
     # Make sure we use all the labels (max between the lenght and the higher
     # number in the array)
     lb = LabelBinarizer()
-    lb.fit(range(max(max(y_true) + 1, len(y_true))))
+    lb.fit(np.arange(max(np.max(y_true) + 1, len(y_true))))
     binarized_y_true = lb.transform(y_true)
 
     if binarized_y_true.shape != y_score.shape:

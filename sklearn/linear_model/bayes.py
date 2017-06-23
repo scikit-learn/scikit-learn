@@ -110,7 +110,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/plot_bayesian_ridge.py for an example.
+    For an example, see :ref:`examples/linear_model/plot_bayesian_ridge.py
+    <sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py>`.
 
     References
     ----------
@@ -147,7 +148,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         X : numpy array of shape [n_samples,n_features]
             Training data
         y : numpy array of shape [n_samples]
-            Target values
+            Target values. Will be cast to X's dtype if necessary
 
         Returns
         -------
@@ -372,8 +373,9 @@ class ARDRegression(LinearModel, RegressorMixin):
     array([ 1.])
 
     Notes
-    --------
-    See examples/linear_model/plot_ard.py for an example.
+    -----
+    For an example, see :ref:`examples/linear_model/plot_ard.py
+    <sphx_glr_auto_examples_linear_model_plot_ard.py>`.
 
     References
     ----------
@@ -418,7 +420,7 @@ class ARDRegression(LinearModel, RegressorMixin):
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
         y : array, shape = [n_samples]
-            Target values (integers)
+            Target values (integers). Will be cast to X's dtype if necessary
 
         Returns
         -------

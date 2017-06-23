@@ -597,3 +597,23 @@ def test_dummy_regressor_sample_weight(n_samples=10):
     est = DummyRegressor(strategy="quantile", quantile=.95).fit(X, y,
                                                                 sample_weight)
     assert_equal(est.constant_, _weighted_percentile(y, sample_weight, 95.))
+
+
+def test_dummy_classifier_on_nan_value():
+    X = [[np.NaN]]
+    y = [1]
+    y_expected = [1]
+    clf = DummyClassifier()
+    clf.fit(X, y)
+    y_pred = clf.predict(X)
+    assert_array_equal(y_pred, y_expected)
+
+
+def test_dummy_regressor_on_nan_value():
+    X = [[np.NaN]]
+    y = [1]
+    y_expected = [1]
+    clf = DummyRegressor()
+    clf.fit(X, y)
+    y_pred = clf.predict(X)
+    assert_array_equal(y_pred, y_expected)

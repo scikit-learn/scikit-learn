@@ -661,12 +661,11 @@ def test_check_input_false():
     clf = ElasticNet(selection='cyclic', tol=1e-8)
     # Check that no error is raised if data is provided in the right format
     clf.fit(X, y, check_input=False)
+    # With check_input=False, an exhaustive check is not made on y but its
+    # dtype is still cast in _preprocess_data to X's dtype. So the test should
+    # pass anyway
     X = check_array(X, order='F', dtype='float32')
-    clf.fit(X, y, check_input=True)
-    # Check that an error is raised if data is provided in the wrong dtype,
-    # because of check bypassing
-    assert_raises(ValueError, clf.fit, X, y, check_input=False)
-
+    clf.fit(X, y, check_input=False)
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order='C', dtype='float64')
