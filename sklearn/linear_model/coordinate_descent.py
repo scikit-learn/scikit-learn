@@ -1680,8 +1680,7 @@ class MultiTaskElasticNet(Lasso):
         X : ndarray, shape (n_samples, n_features)
             Data
         y : ndarray, shape (n_samples, n_tasks)
-            Target. If it's not the case, y is cast in X.dtype further
-            in the code
+            Target. Will be cast to X's dtype if necessary
 
         Notes
         -----

@@ -421,8 +421,7 @@ class ARDRegression(LinearModel, RegressorMixin):
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
         y : array, shape = [n_samples]
-            Target values (integers). If it's not the case, y is cast in
-            X.dtype further in the code
+            Target values (integers). Will be cast to X's dtype if necessary
 
         Returns
         -------
