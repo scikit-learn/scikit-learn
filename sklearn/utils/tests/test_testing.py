@@ -5,6 +5,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.utils.testing import (
+    assert_true,
     assert_raises,
     assert_less,
     assert_greater,
@@ -15,9 +16,11 @@ from sklearn.utils.testing import (
     assert_equal,
     set_random_state,
     assert_raise_message,
-    assert_allclose_dense_sparse,
-    ignore_warnings)
+    ignore_warnings,
+    check_parameters_match,
+    assert_allclose_dense_sparse)
 
+from sklearn.utils.testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
@@ -235,3 +238,129 @@ class TestWarns(unittest.TestCase):
 
         if failed:
             raise AssertionError("wrong warning caught by assert_warn")
+
+
+# Tests for docstrings:
+
+def f_ok(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_bad_sections(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Results
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_bad_order(b, a):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_missing(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+class Klass(object):
+    def f_missing(self, X, y):
+        pass
+
+    def f_bad_sections(self, X, y):
+        """Function f
+
+        Parameter
+        ----------
+        a : int
+            Parameter a
+        b : float
+            Parameter b
+
+        Results
+        -------
+        c : list
+            Parameter c
+        """
+        pass
+
+
+def test_check_parameters_match():
+    try:
+        import numpydoc  # noqa
+    except ImportError:
+        raise SkipTest(
+            "numpydoc is required to test the docstrings")
+
+    incorrect = check_parameters_match(f_ok)
+    assert_equal(incorrect, [])
+    incorrect = check_parameters_match(f_ok, ignore=['b'])
+    assert_equal(incorrect, [])
+    incorrect = check_parameters_match(f_missing, ignore=['b'])
+    assert_equal(incorrect, [])
+    assert_raise_message(RuntimeError, 'Unknown section Results',
+                         check_parameters_match, f_bad_sections)
+    assert_raise_message(RuntimeError, 'Unknown section Parameter',
+                         check_parameters_match, Klass.f_bad_sections)
+
+    messages = ['a != b']
+    messages += ["arg mismatch: ['b']"]
+    messages += ["arg mismatch: ['X', 'y']"]
+    for mess, f in zip(messages, [f_bad_order, f_missing, Klass.f_missing]):
+        incorrect = check_parameters_match(f)
+        assert_true(len(incorrect) >= 1)
+        assert_true(mess in incorrect[0],
+                    '"%s" not in "%s"' % (mess, incorrect[0]))

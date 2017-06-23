@@ -394,6 +394,9 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
     Parameters
     ----------
+    X : array-like, shape (n_samples, n_features)
+        The data.
+
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
@@ -465,6 +468,12 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
+    copy : boolean, optional, default True
+        If False, try to avoid a copy and do inplace scaling instead.
+        This is not guaranteed to always work inplace; e.g. if the data is
+        not a NumPy array or scipy.sparse CSR matrix, a copy may still be
+        returned.
+
     with_mean : boolean, True by default
         If True, center the data before scaling.
         This does not work (and will raise an exception) when attempted on
@@ -475,12 +484,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     with_std : boolean, True by default
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
-
-    copy : boolean, optional, default True
-        If False, try to avoid a copy and do inplace scaling instead.
-        This is not guaranteed to always work inplace; e.g. if the data is
-        not a NumPy array or scipy.sparse CSR matrix, a copy may still be
-        returned.
 
     Attributes
     ----------
@@ -660,6 +663,14 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data used to scale along the features axis.
+
+        copy : bool
+            Copy the input X or not.
+
+        Returns
+        -------
+        X_tr : array-like, shape [n_samples, n_features]
+            Transformed array.
         """
         check_is_fitted(self, 'scale_')
 
@@ -844,6 +855,9 @@ def maxabs_scale(X, axis=0, copy=True):
 
     Parameters
     ----------
+    X : array-like, shape (n_samples, n_features)
+        The data.
+
     axis : int (0 by default)
         axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
@@ -1241,6 +1255,16 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """
         Compute number of output features.
+
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data.
+
+        Returns
+        -------
+        self : instance
         """
         n_samples, n_features = check_array(X).shape
         combinations = self._combinations(n_features, self.degree,
@@ -1435,6 +1459,10 @@ class Normalizer(BaseEstimator, TransformerMixin):
 
         This method is just there to implement the usual API and hence
         work in pipelines.
+
+        Parameters
+        ----------
+        X : array-like
         """
         X = check_array(X, accept_sparse='csr')
         return self
@@ -1554,6 +1582,10 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
         This method is just there to implement the usual API and hence
         work in pipelines.
+
+        Parameters
+        ----------
+        X : array-like
         """
         check_array(X, accept_sparse='csr')
         return self
@@ -1933,6 +1965,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         Equivalent to self.fit(X).transform(X), but more convenient and more
         efficient. See fit for the parameters, transform for the return value.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_feature]
+            Input array of type int.
         """
         return _transform_selected(X, self._fit_transform,
                                    self.categorical_features, copy=True)

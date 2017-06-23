@@ -607,13 +607,6 @@ class SGDClassifier(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
-
     verbose : integer, optional
         The verbosity level
 
@@ -629,6 +622,13 @@ class SGDClassifier(BaseSGDClassifier):
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     learning_rate : string, optional
         The learning rate schedule:
@@ -1136,13 +1136,6 @@ class SGDRegressor(BaseSGDRegressor):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
-
     verbose : integer, optional
         The verbosity level.
 
@@ -1153,6 +1146,13 @@ class SGDRegressor(BaseSGDRegressor):
         important to get the prediction exactly right.
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     learning_rate : string, optional
         The learning rate schedule:

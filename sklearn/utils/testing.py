@@ -773,3 +773,116 @@ class _named_check(object):
 
     def __call__(self, *args, **kwargs):
         return self.check(*args, **kwargs)
+
+# Utils to test docstrings
+
+# helpers to get function arguments
+if hasattr(inspect, 'signature'):  # py35
+    def _get_args(function, varargs=False):
+        params = inspect.signature(function).parameters
+        args = [key for key, param in params.items()
+                if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
+        if varargs:
+            varargs = [param.name for param in params.values()
+                       if param.kind == param.VAR_POSITIONAL]
+            if len(varargs) == 0:
+                varargs = None
+            return args, varargs
+        else:
+            return args
+else:
+    def _get_args(function, varargs=False):
+        out = inspect.getargspec(function)  # args, varargs, keywords, defaults
+        if varargs:
+            return out[:2]
+        else:
+            return out[0]
+
+
+def get_func_name(func):
+    """Get function full name
+
+    Parameters
+    ----------
+    func : callable
+        The function object.
+
+    Returns
+    -------
+    name : str
+        The function name.
+    """
+    parts = []
+    module = inspect.getmodule(func)
+    if module:
+        parts.append(module.__name__)
+    if hasattr(func, 'im_class'):
+        parts.append(func.im_class.__name__)
+    parts.append(func.__name__)
+    return '.'.join(parts)
+
+
+def check_parameters_match(func, doc=None, ignore=None):
+    """Helper to check docstring
+
+    Parameters
+    ----------
+    func : callable
+        The function object to test.
+    doc : str
+        Pass evenually manually the docstring to test.
+    ignore : None | list
+        Parameters to ignore.
+
+    Returns
+    -------
+    incorrect : list
+        A list of string describing the incorrect results.
+    """
+    from numpydoc import docscrape
+    incorrect = []
+    name_ = get_func_name(func)
+    if (not name_.startswith('sklearn.') or
+            name_.startswith('sklearn.externals')):
+        return incorrect
+    if inspect.isdatadescriptor(func):
+        return incorrect
+    args = _get_args(func)
+    # drop self
+    if len(args) > 0 and args[0] == 'self':
+        args = args[1:]
+
+    if ignore is not None:
+        for p in ignore:
+            args.remove(p)
+
+    if doc is None:
+        with warnings.catch_warnings(record=True) as w:
+            try:
+                doc = docscrape.FunctionDoc(func)
+            except Exception as exp:
+                incorrect += [name_ + ' parsing error: ' + str(exp)]
+                return incorrect
+        if len(w):
+            raise RuntimeError('Error for %s:\n%s' % (name_, w[0]))
+    # check set
+    param_names = [name for name, _, _ in doc['Parameters']]
+
+    # clean up some docscrape output:
+    param_names = [name.split(':')[0].strip('` ') for name in param_names]
+    param_names = [name for name in param_names if '*' not in name]
+
+    if ignore is not None:
+        for p in ignore:
+            if p in param_names:
+                param_names.remove(p)
+
+    if len(param_names) != len(args):
+        bad = str(sorted(list(set(param_names) - set(args)) +
+                         list(set(args) - set(param_names))))
+        incorrect += [name_ + ' arg mismatch: ' + bad]
+    else:
+        for n1, n2 in zip(param_names, args):
+            if n1 != n2:
+                incorrect += [name_ + ' ' + n1 + ' != ' + n2]
+    return incorrect
