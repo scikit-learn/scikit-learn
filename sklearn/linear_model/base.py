@@ -464,8 +464,7 @@ class LinearRegression(LinearModel, RegressorMixin):
             Training data
 
         y : numpy array of shape [n_samples, n_targets]
-            Target values. Will be cast to X's dtype further in the code if
-            necessary
+            Target values. Will be cast to X's dtype if necessary
 
         sample_weight : numpy array of shape [n_samples]
             Individual weights for each sample
