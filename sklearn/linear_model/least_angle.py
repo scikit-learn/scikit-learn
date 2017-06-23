@@ -1455,7 +1455,7 @@ class LassoLarsIC(LassoLars):
             training data.
 
         y : array-like, shape (n_samples,)
-            target values.
+            target values. Will be cast to X's dtype if necessary
 
         copy_X : boolean, optional, default True
             If ``True``, X will be copied; else, it may be overwritten.
