@@ -126,7 +126,7 @@ Using the Iris dataset, we can construct a tree as follows::
 
 Once trained, we can export the tree in `Graphviz
 <http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. If you use the `conda<http://conda.io>`_ package manager, the graphviz binaries  
+exporter. If you use the `conda <http://conda.io>`_ package manager, the graphviz binaries  
 and the python package can be installed with 
 
     conda install python-graphviz
