@@ -1,6 +1,5 @@
-# Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
-#          Justin Vincent
-#          Lars Buitinck
+# Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#          Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import print_function
@@ -18,11 +17,11 @@ from sklearn.base import signature
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_parameters_match, get_func_name
 
-_doc_special_members = ('__contains__', '__getitem__', '__iter__', '__len__',
+_DOC_SPECIAL_MEMBERS = ('__contains__', '__getitem__', '__iter__', '__len__',
                         '__call__', '__add__', '__sub__', '__mul__', '__div__',
                         '__neg__', '__hash__')
 
-public_modules = [
+PUBLIC_MODULES = [
     # the list of modules users need to access for all functionality
     # 'sklearn',
     'sklearn.base',
@@ -53,9 +52,8 @@ public_modules = [
     # 'sklearn.utils',
 ]
 
-
 # functions to ignore args / docstring of
-_docstring_ignores = [
+_DOCSTRING_IGNORES = [
     'sklearn.utils.deprecation.load_mlcomp',
     'sklearn.pipeline.make_pipeline',
     'sklearn.pipeline.make_union',
@@ -73,7 +71,7 @@ _docstring_ignores = [
     'sample_gaussian',  # deprecated
 ]
 
-_tab_ignores = [
+_TAB_IGNORES = [
 ]
 
 
@@ -88,7 +86,7 @@ def test_docstring_parameters():
     from numpydoc import docscrape
 
     incorrect = []
-    for name in public_modules:
+    for name in PUBLIC_MODULES:
         with warnings.catch_warnings(record=True):  # traits warnings
             module = __import__(name, globals())
         for submod in name.split('.')[1:]:
@@ -96,9 +94,9 @@ def test_docstring_parameters():
         classes = inspect.getmembers(module, inspect.isclass)
         for cname, cls in classes:
             this_incorrect = []
-            if cname in _docstring_ignores:
+            if cname in _DOCSTRING_IGNORES:
                 continue
-            if cname.startswith('_') and cname not in _doc_special_members:
+            if cname.startswith('_') and cname not in _DOC_SPECIAL_MEMBERS:
                 continue
             with warnings.catch_warnings(record=True) as w:
                 cdoc = docscrape.ClassDoc(cls)
@@ -136,7 +134,7 @@ def test_docstring_parameters():
                 # Don't test private methods / functions
                 continue
             name_ = get_func_name(func)
-            if not any(d in name_ for d in _docstring_ignores) and \
+            if not any(d in name_ for d in _DOCSTRING_IGNORES) and \
                     'deprecation_wrapped' not in func.__code__.co_name:
                 incorrect += check_parameters_match(func)
     msg = '\n' + '\n'.join(sorted(list(set(incorrect))))
@@ -146,7 +144,7 @@ def test_docstring_parameters():
 
 def test_tabs():
     """Test that there are no tabs in our source files"""
-    ignore = _tab_ignores[:]
+    ignore = _TAB_IGNORES[:]
 
     for importer, modname, ispkg in walk_packages(sklearn.__path__,
                                                   prefix='sklearn.'):
