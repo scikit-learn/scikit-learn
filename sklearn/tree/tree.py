@@ -35,7 +35,6 @@ from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
-from ..exceptions import NotFittedError
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -614,7 +613,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
            ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
            Use ``min_impurity_decrease`` instead.
 
-    class_weight : dict, list of dicts, "balanced" or None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
