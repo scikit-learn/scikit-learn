@@ -874,7 +874,7 @@ def test_pipeline_memory():
         # Memoize the transformer at the first fit
         cached_pipe.fit(X, y)
         pipe.fit(X, y)
-        # Get the time stamp of the tranformer in the cached pipeline
+        # Get the time stamp of the transformer in the cached pipeline
         ts = cached_pipe.named_steps['transf'].timestamp_
         # Check that cached_pipe and pipe yield identical results
         assert_array_equal(pipe.predict(X), cached_pipe.predict(X))
