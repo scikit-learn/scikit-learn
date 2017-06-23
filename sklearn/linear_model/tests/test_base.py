@@ -9,7 +9,7 @@ from scipy import linalg
 from itertools import product
 
 
-from sklearn.utils.testing import assert_array_almost_equal, assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import ignore_warnings
@@ -331,13 +331,9 @@ def test_dtype_preprocess_data():
     y = rng.rand(n_samples)
 
     X_32 = np.asarray(X, dtype=np.float32)
-    X_32_initial = np.copy(X_32)
     y_32 = np.asarray(y, dtype=np.float32)
-    y_32_initial = np.copy(y_32)
     X_64 = np.asarray(X, dtype=np.float64)
-    X_64_initial = np.copy(X_64)
     y_64 = np.asarray(y, dtype=np.float64)
-    y_64_initial = np.copy(y_64)
 
     for fit_intercept in [True, False]:
         for normalize in [True, False]:
@@ -382,16 +378,16 @@ def test_dtype_preprocess_data():
             assert_equal(y_mean_6432.dtype, np.float64)
             assert_equal(X_norm_6432.dtype, np.float64)
 
+            assert_equal(X_32.dtype, np.float32)
+            assert_equal(y_32.dtype, np.float32)
+            assert_equal(X_64.dtype, np.float64)
+            assert_equal(y_64.dtype, np.float64)
+
             assert_array_almost_equal(Xt_32, Xt_64)
             assert_array_almost_equal(yt_32, yt_64)
             assert_array_almost_equal(X_mean_32, X_mean_64)
             assert_array_almost_equal(y_mean_32, y_mean_64)
             assert_array_almost_equal(X_norm_32, X_norm_64)
-
-            assert_array_equal(X_32, X_32_initial)
-            assert_array_equal(y_32, y_32_initial)
-            assert_array_equal(X_64, X_64_initial)
-            assert_array_equal(y_64, y_64_initial)
 
 
 def test_rescale_data():
