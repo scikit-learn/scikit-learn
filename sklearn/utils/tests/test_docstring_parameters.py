@@ -1,3 +1,8 @@
+# Authors: Gael Varoquaux <gael.varoquaux@normalesup.org>
+#          Justin Vincent
+#          Lars Buitinck
+# License: BSD 3 clause
+
 from __future__ import print_function
 
 from nose.tools import assert_true
@@ -108,10 +113,11 @@ def test_docstring_parameters():
                 param_ignore = None
                 # Now skip docstring test for y when y is None
                 # by default for API reason
-                if method_name in \
-                        ['fit', 'score', 'fit_predict', 'fit_transform',
-                         'partial_fit',
-                         'transform', 'inverse_transform', 'predict']:  # XXX remove transform
+                # XXX remove transform
+                if method_name in ['fit', 'score', 'fit_predict',
+                                   'fit_transform', 'partial_fit',
+                                   'transform', 'inverse_transform',
+                                   'predict']:
                     sig = signature(method)
                     if ('y' in sig.parameters and
                             sig.parameters['y'].default is None):
