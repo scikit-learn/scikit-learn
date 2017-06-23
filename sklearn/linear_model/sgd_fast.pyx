@@ -690,8 +690,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
             # report epoch information
             if verbose > 0:
                 with gil:
-                    print("Norm: %.2f, NNZs: %d, "
-                          "Bias: %.6f, T: %d, Avg. loss: %.6f"
+                    print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
+                          "Avg. loss: %f"
                           % (w.norm(), weights.nonzero()[0].shape[0],
                              intercept, count, sumloss / n_samples))
                     print("Total training time: %.2f seconds."
@@ -706,7 +706,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
             if tol > -INFINITY and sumloss > previous_loss - tol * n_samples:
                 if verbose:
                     with gil:
-                        print("convergence after %d epochs took %.2f seconds"
+                        print("Convergence after %d epochs took %.2f seconds"
                               % (epoch + 1, time() - t_start))
                 break
             previous_loss = sumloss

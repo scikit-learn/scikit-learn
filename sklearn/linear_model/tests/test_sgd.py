@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
@@ -23,6 +24,7 @@ from sklearn.base import clone
 from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
+from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.linear_model import sgd_fast
 
@@ -1195,6 +1197,11 @@ def test_tol_parameter():
     model_2.fit(X, y)
     assert_greater(model_1.n_iter_, model_2.n_iter_)
     assert_greater(model_2.n_iter_, 3)
+
+    # Strict tolerance and small max_iter should trigger a warning
+    model_3 = SGDClassifier(max_iter=3, tol=1e-3, random_state=0)
+    model_3 = assert_warns(ConvergenceWarning, model_3.fit, X, y)
+    assert_equal(model_3.n_iter_, 3)
 
 
 def test_future_and_deprecation_warnings():
