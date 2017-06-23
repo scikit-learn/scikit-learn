@@ -428,26 +428,33 @@ def test_fused_types_make_dataset():
     # array
     dataset_32, _ = make_dataset(X_32, y_32, sample_weight_32)
     dataset_64, _ = make_dataset(X_64, y_64, sample_weight_64)
-    xi_32, _, _, _ = dataset_32._next_py()
-    xi_64, _, _, _ = dataset_64._next_py()
+    xi_32, yi_32, _, _ = dataset_32._next_py()
+    xi_64, yi_64, _, _ = dataset_64._next_py()
     xi_data_32, _, _ = xi_32
     xi_data_64, _, _ = xi_64
 
     assert_equal(xi_data_32.dtype, np.float32)
     assert_equal(xi_data_64.dtype, np.float64)
-    assert_array_almost_equal(xi_data_64, xi_data_32, decimal=5)
+    assert_equal(yi_32.dtype, np.float32)
+    assert_equal(yi_64.dtype, np.float64)
+    assert_array_almost_equal(yi_64, yi_32, decimal=5)
 
     # csr
     datasetcsr_32, _ = make_dataset(X_csr_32, y_32, sample_weight_32)
     datasetcsr_64, _ = make_dataset(X_csr_64, y_64, sample_weight_64)
-    xicsr_32, _, _, _ = datasetcsr_32._next_py()
-    xicsr_64, _, _, _ = datasetcsr_64._next_py()
+    xicsr_32, yicsr_32, _, _ = datasetcsr_32._next_py()
+    xicsr_64, yicsr_64, _, _ = datasetcsr_64._next_py()
     xicsr_data_32, _, _ = xicsr_32
     xicsr_data_64, _, _ = xicsr_64
 
     assert_equal(xicsr_data_32.dtype, np.float32)
     assert_equal(xicsr_data_64.dtype, np.float64)
+    assert_equal(yicsr_32.dtype, np.float32)
+    assert_equal(yicsr_64.dtype, np.float64)
     assert_array_almost_equal(xicsr_data_64, xicsr_data_32, decimal=5)
+    assert_array_almost_equal(yicsr_64, yicsr_32, decimal=5)
 
     assert_array_equal(xi_data_32, xicsr_data_32)
     assert_array_equal(xi_data_64, xicsr_data_64)
+    assert_array_equal(yi_32, yicsr_32)
+    assert_array_equal(yi_64, yicsr_64)
