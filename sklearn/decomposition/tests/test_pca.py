@@ -471,26 +471,6 @@ def test_infer_dim_by_explained_variance():
     assert_equal(pca.n_components_, 2)
 
 
-def test_pca_score_equal():
-    # ensure that the scores calculated by different svd_solver are equal
-    # specially designed for issue #7568, #8541, #8544
-    digits = datasets.load_digits()
-    X_digits = digits.data
-
-    pca1 = PCA(n_components=30, svd_solver='full')
-    pca1.fit(X_digits)
-    score1 = pca1.score(X_digits)
-    pca2 = PCA(n_components=30, svd_solver='arpack')
-    pca2.fit(X_digits)
-    score2 = pca2.score(X_digits)
-    pca3 = PCA(n_components=30, svd_solver='randomized')
-    pca3.fit(X_digits)
-    score3 = pca3.score(X_digits)
-
-    assert_almost_equal(score1, score2)
-    assert_almost_equal(score1, score3, decimal=1)
-
-
 def test_pca_score():
     # Test that probabilistic PCA scoring yields a reasonable score
     n, p = 1000, 3
@@ -540,6 +520,26 @@ def test_pca_score3():
     assert_true(ll.argmax() == 1)
 
 
+def test_pca_score4():
+    # Ensure that the scores are correctly calculated in extreme situations
+    # Specially designed for issue #7568, #8541, #8544
+    digits = datasets.load_digits()
+    X_digits = digits.data
+
+    pca1 = PCA(n_components=30, svd_solver='full')
+    pca1.fit(X_digits)
+    score1 = pca1.score(X_digits)
+    pca2 = PCA(n_components=30, svd_solver='arpack')
+    pca2.fit(X_digits)
+    score2 = pca2.score(X_digits)
+    pca3 = PCA(n_components=30, svd_solver='randomized')
+    pca3.fit(X_digits)
+    score3 = pca3.score(X_digits)
+
+    assert_almost_equal(score1, score2, 12)
+    assert_almost_equal(score1, score3, 2)
+
+	
 def test_svd_solver_auto():
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(1000, 50))
