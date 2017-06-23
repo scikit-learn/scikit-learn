@@ -217,7 +217,6 @@ METRIC_UNDEFINED_BINARY = [
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = [
     "brier_score_loss",
-    "matthews_corrcoef_score",
 
     # with default average='binary', multiclass is prohibited
     "precision_score",

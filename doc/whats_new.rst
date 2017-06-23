@@ -77,10 +77,11 @@ New features
 Enhancements
 ............
 
+   - :func:`metrics.matthews_corrcoef` now support multiclass classification.
+     :issue:`8094` by :user:`Jon Crall <Erotemic>`.
    - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
      documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986` by
      :user:`Oscar Najera <Titan-C>`
-
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using `partial_fit`.
      issue: `8053` by :user:`Peng Yu <yupbank>`.
@@ -212,6 +213,10 @@ Enhancements
      passing a range of bytes to :func:`datasets.load_svmlight_file`.
      :issue:`935` by :user:`Olivier Grisel <ogrisel>`.
 
+   - Small performance improvement to n-gram creation in
+     :mod:`feature_extraction.text` by binding methods for loops and
+     special-casing unigrams. :issue:`7567` by `Jaye Doepke <jtdoepke>`
+
 Bug fixes
 .........
 
@@ -257,6 +262,10 @@ Bug fixes
 
    - Fixed a bug where :func:`linear_model.RANSACRegressor.fit` may run until
      ``max_iter`` if finds a large inlier group early. :issue:`8251` by :user:`aivision2020`.
+
+   - Fixed a bug where :class:`sklearn.naive_bayes.MultinomialNB` and :class:`sklearn.naive_bayes.BernoulliNB`
+     failed when `alpha=0`. :issue:`5814` by :user:`Yichuan Liu <yl565>` and 
+     :user:`Herilalaina Rakotoarison <herilalaina>`.
 
    - Fixed a bug where :func:`datasets.make_moons` gives an
      incorrect result when ``n_samples`` is odd.
@@ -399,6 +408,21 @@ Bug fixes
      reused the same estimator for each parameter value.
      :issue:`7365` by :user:`Aleksandr Sandrovskii <Sundrique>`.
 
+   - :class:`multiclass.OneVsOneClassifier`'s ``partial_fit`` now ensures all
+     classes are provided up-front. :issue:`6250` by
+     :user:`Asish Panda <kaichogami>`.
+
+   - Fixed an integer overflow bug in :func:`metrics.confusion_matrix` and
+     hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
+     by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
+
+
+   - Fixed the implementation of `explained_variance_`
+     in :class:`decomposition.PCA`,
+     :class:`decomposition.RandomizedPCA` and
+     :class:`decomposition.IncrementalPCA`.
+     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+
 API changes summary
 -------------------
 
@@ -524,6 +548,12 @@ API changes summary
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
      - ``neighbors.approximate.LSHForest``
+
+    - Deprecate the ``y`` parameter in `transform` and `inverse_transform`.
+      The method  should not accept ``y`` parameter, as it's used at the prediction time.
+      :issue:`8174` by :user:`Tahar Zanouda <tzano>`, `Alexandre Gramfort`_
+      and `Raghav RV`_.
+
 
 .. _changes_0_18_1:
 
