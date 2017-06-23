@@ -148,8 +148,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         X : numpy array of shape [n_samples,n_features]
             Training data
         y : numpy array of shape [n_samples]
-            Target values. If it's not the case, y is cast in X.dtype further
-            in the code
+            Target values. Will be cast to X's dtype if necessary
 
         Returns
         -------
