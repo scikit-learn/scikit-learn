@@ -97,11 +97,15 @@ def test_fused_types_consistency():
 
     for i in range(5):
         # next sample
-        xi32, yi32, swi32, idx32 = dataset32._next_py()
-        xi64, yi64, swi64, idx64 = dataset64._next_py()
+        xi32, yi32, _, _ = dataset32._next_py()
+        xi64, yi64, _, _ = dataset64._next_py()
 
         xi_data32, _, _ = xi32
         xi_data64, _, _ = xi64
+
         assert_equal(xi_data32.dtype, np.float32)
         assert_equal(xi_data64.dtype, np.float64)
+        assert_equal(yi32.dtype, np.float32)
+        assert_equal(yi64.dtype, np.float64)
         assert_array_almost_equal(xi_data64, xi_data32, decimal=5)
+        assert_array_almost_equal(yi64, yi32, decimal=5)
