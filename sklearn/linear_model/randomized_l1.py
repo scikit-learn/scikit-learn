@@ -82,7 +82,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
             Training data.
 
         y : array-like, shape = [n_samples]
-            Target values.
+            Target values. Will be cast to X's dtype if necessary
 
         Returns
         -------
