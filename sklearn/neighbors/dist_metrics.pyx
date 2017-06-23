@@ -343,7 +343,7 @@ cdef class DistanceMetric:
         """Convert the Reduced distance to the true distance.
 
         The reduced distance, defined for some metrics, is a computationally
-        more efficent measure which preserves the rank of the true distance.
+        more efficient measure which preserves the rank of the true distance.
         For example, in the Euclidean distance metric, the reduced distance
         is the squared-euclidean distance.
         """
@@ -353,7 +353,7 @@ cdef class DistanceMetric:
         """Convert the true distance to the reduced distance.
 
         The reduced distance, defined for some metrics, is a computationally
-        more efficent measure which preserves the rank of the true distance.
+        more efficient measure which preserves the rank of the true distance.
         For example, in the Euclidean distance metric, the reduced distance
         is the squared-euclidean distance.
         """
