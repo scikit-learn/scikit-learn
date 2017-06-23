@@ -65,7 +65,7 @@ def test_classification():
 
     for base_estimator in [None,
                            DummyClassifier(),
-                           Perceptron(),
+                           Perceptron(tol=1e-3),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),
                            SVC()]:
@@ -519,7 +519,7 @@ def test_base_estimator():
 
     assert_true(isinstance(ensemble.base_estimator_, DecisionTreeClassifier))
 
-    ensemble = BaggingClassifier(Perceptron(),
+    ensemble = BaggingClassifier(Perceptron(tol=1e-3),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
@@ -668,7 +668,7 @@ def test_oob_score_removed_on_warm_start():
 
 
 def test_oob_score_consistency():
-    # Make sure OOB scores are identical when random_state, estimator, and 
+    # Make sure OOB scores are identical when random_state, estimator, and
     # training data are fixed and fitting is done twice
     X, y = make_hastie_10_2(n_samples=200, random_state=1)
     bagging = BaggingClassifier(KNeighborsClassifier(), max_samples=0.5,

@@ -221,7 +221,8 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     train_sizes = np.linspace(0.2, 1.0, 5)
-    estimator = PassiveAggressiveClassifier(n_iter=1, shuffle=False)
+    estimator = PassiveAggressiveClassifier(max_iter=1, tol=None,
+                                            shuffle=False)
 
     train_sizes_inc, train_scores_inc, test_scores_inc = \
         learning_curve(

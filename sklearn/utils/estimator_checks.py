@@ -42,6 +42,7 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
+from sklearn.linear_model.stochastic_gradient import BaseSGD
 from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
@@ -132,7 +133,7 @@ def _yield_classifier_checks(name, classifier):
     yield check_decision_proba_consistency
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_supervised_y_no_nan(name, estimator_orig):
     # Checks that the Estimator targets are not NaN.
     estimator = clone(estimator_orig)
@@ -284,7 +285,8 @@ def set_checking_parameters(estimator):
     # set parameters to speed up some estimators and
     # avoid deprecated behaviour
     params = estimator.get_params()
-    if ("n_iter" in params and estimator.__class__.__name__ != "TSNE"):
+    if ("n_iter" in params and estimator.__class__.__name__ != "TSNE"
+            and not isinstance(estimator, BaseSGD)):
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
         warnings.simplefilter("ignore", ConvergenceWarning)
@@ -363,14 +365,14 @@ def check_estimator_sparse_data(name, estimator_orig):
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
         X = X_csr.asformat(sparse_format)
         # catch deprecation warnings
-        with ignore_warnings(category=DeprecationWarning):
+        with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
             if name in ['Scaler', 'StandardScaler']:
                 estimator = clone(estimator).set_params(with_mean=False)
             else:
                 estimator = clone(estimator)
         # fit and predict
         try:
-            with ignore_warnings(category=DeprecationWarning):
+            with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
                 estimator.fit(X, y)
             if hasattr(estimator, "predict"):
                 pred = estimator.predict(X)
@@ -392,7 +394,7 @@ def check_estimator_sparse_data(name, estimator_orig):
             raise
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_sample_weights_pandas_series(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type pandas.Series in the 'fit' function.
@@ -414,7 +416,7 @@ def check_sample_weights_pandas_series(name, estimator_orig):
                            "input of type pandas.Series to class weight.")
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_sample_weights_list(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type list in the 'fit' function.
@@ -429,7 +431,7 @@ def check_sample_weights_list(name, estimator_orig):
         estimator.fit(X, y, sample_weight=sample_weight)
 
 
-@ignore_warnings(category=(DeprecationWarning, UserWarning))
+@ignore_warnings(category=(DeprecationWarning, FutureWarning, UserWarning))
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
@@ -498,7 +500,7 @@ def is_public_parameter(attr):
     return not (attr.startswith('_') or attr.endswith('_'))
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_dont_overwrite_parameters(name, estimator_orig):
     # check that fit method only changes or sets private attributes
     if hasattr(estimator_orig.__init__, "deprecated_original"):
@@ -548,7 +550,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
                  ' %s changed' % ', '.join(attrs_changed_by_fit)))
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_fit2d_predict1d(name, estimator_orig):
     # check by fitting a 2d array and predicting with a 1d array
     rnd = np.random.RandomState(0)
@@ -658,7 +660,7 @@ def check_fit1d_1sample(name, estimator_orig):
         pass
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_transformer_general(name, transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
@@ -668,7 +670,7 @@ def check_transformer_general(name, transformer):
     _check_transformer(name, transformer, X.tolist(), y.tolist())
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_transformer_data_not_an_array(name, transformer):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
@@ -681,12 +683,11 @@ def check_transformer_data_not_an_array(name, transformer):
     _check_transformer(name, transformer, this_X, this_y)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_transformers_unfitted(name, transformer):
     X, y = _boston_subset()
 
     transformer = clone(transformer)
-
     assert_raises((AttributeError, ValueError), transformer.transform, X)
 
 
@@ -844,7 +845,7 @@ def check_estimators_dtypes(name, estimator_orig):
                 getattr(estimator, method)(X_train)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_empty_data_messages(name, estimator_orig):
     e = clone(estimator_orig)
     set_random_state(e, 1)
@@ -882,7 +883,7 @@ def check_estimators_nan_inf(name, estimator_orig):
                               " transform.")
     for X_train in [X_train_nan, X_train_inf]:
         # catch deprecation warnings
-        with ignore_warnings(category=DeprecationWarning):
+        with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
             estimator = clone(estimator_orig)
             set_random_state(estimator, 1)
             # try to fit
@@ -969,7 +970,7 @@ def check_estimators_pickle(name, estimator_orig):
         assert_allclose_dense_sparse(result[method], unpickled_result)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_partial_fit_n_features(name, estimator_orig):
     # check if number of features changes between calls to partial_fit.
     if not hasattr(estimator_orig, 'partial_fit'):
@@ -990,7 +991,7 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
     assert_raises(ValueError, estimator.partial_fit, X[:, :-1], y)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_clustering(name, clusterer_orig):
     clusterer = clone(clusterer_orig)
     X, y = make_blobs(n_samples=50, random_state=1)
@@ -1050,7 +1051,7 @@ def check_classifiers_one_label(name, classifier_orig):
     X_test = rnd.uniform(size=(10, 3))
     y = np.ones(10)
     # catch deprecation warnings
-    with ignore_warnings(category=DeprecationWarning):
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
         classifier = clone(classifier_orig)
         # try to fit
         try:
@@ -1146,7 +1147,7 @@ def check_classifiers_train(name, classifier_orig):
                 assert_array_equal(np.argsort(y_log_prob), np.argsort(y_prob))
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_fit_returns_self(name, estimator_orig):
     """Check if self is returned when calling fit"""
     X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
@@ -1193,7 +1194,7 @@ def check_estimators_unfitted(name, estimator_orig):
                              est.predict_log_proba, X)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_supervised_y_2d(name, estimator_orig):
     if "MultiTask" in name:
         # These only work on 2d, so this test makes no sense
@@ -1225,7 +1226,7 @@ def check_supervised_y_2d(name, estimator_orig):
     assert_allclose(y_pred.ravel(), y_pred_2d.ravel())
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_classifiers_classes(name, classifier_orig):
     X, y = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
     X, y = shuffle(X, y, random_state=7)
@@ -1259,7 +1260,7 @@ def check_classifiers_classes(name, classifier_orig):
                   (classifier, classes, classifier.classes_))
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_regressors_int(name, regressor_orig):
     X, _ = _boston_subset()
     X = X[:50]
@@ -1287,7 +1288,7 @@ def check_regressors_int(name, regressor_orig):
     assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_regressors_train(name, regressor_orig):
     X, y = _boston_subset()
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
@@ -1346,7 +1347,7 @@ def check_regressors_no_decision_function(name, regressor_orig):
         assert_warns_message(DeprecationWarning, msg, func, X)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_class_weight_classifiers(name, classifier_orig):
     if name == "NuSVC":
         # the sparse version has a parameter that doesn't do anything
@@ -1372,6 +1373,8 @@ def check_class_weight_classifiers(name, classifier_orig):
             class_weight=class_weight)
         if hasattr(classifier, "n_iter"):
             classifier.set_params(n_iter=100)
+        if hasattr(classifier, "max_iter"):
+            classifier.set_params(max_iter=1000)
         if hasattr(classifier, "min_weight_fraction_leaf"):
             classifier.set_params(min_weight_fraction_leaf=0.01)
 
@@ -1383,12 +1386,14 @@ def check_class_weight_classifiers(name, classifier_orig):
         assert_greater(np.mean(y_pred == 0), 0.87)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_class_weight_balanced_classifiers(name, classifier_orig, X_train,
                                             y_train, X_test, y_test, weights):
     classifier = clone(classifier_orig)
     if hasattr(classifier, "n_iter"):
         classifier.set_params(n_iter=100)
+    if hasattr(classifier, "max_iter"):
+        classifier.set_params(max_iter=1000)
 
     set_random_state(classifier)
     classifier.fit(X_train, y_train)
@@ -1401,7 +1406,7 @@ def check_class_weight_balanced_classifiers(name, classifier_orig, X_train,
                    f1_score(y_test, y_pred, average='weighted'))
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_class_weight_balanced_linear_classifier(name, Classifier):
     """Test class weights with non-contiguous class labels."""
     # this is run on classes, not instances, though this should be changed
@@ -1410,10 +1415,13 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
     y = np.array([1, 1, 1, -1, -1])
 
     classifier = Classifier()
+
     if hasattr(classifier, "n_iter"):
         # This is a very small dataset, default n_iter are likely to prevent
         # convergence
         classifier.set_params(n_iter=1000)
+    if hasattr(classifier, "max_iter"):
+        classifier.set_params(max_iter=1000)
     set_random_state(classifier)
 
     # Let the model compute the class frequencies
@@ -1432,7 +1440,7 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
     assert_allclose(coef_balanced, coef_manual)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_overwrite_params(name, estimator_orig):
     X, y = make_blobs(random_state=0, n_samples=9)
     # some want non-negative input
@@ -1466,7 +1474,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
                      % (name, param_name, original_value, new_value))
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_no_fit_attributes_set_in_init(name, Estimator):
     """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
     # this check works on classes, not instances
@@ -1485,7 +1493,7 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                 'was found in estimator {}'.format(attr, name))
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_sparsify_coefficients(name, estimator_orig):
     X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1],
                   [-1, -2], [2, 2], [-2, -2]])
@@ -1523,9 +1531,8 @@ def check_regressor_data_not_an_array(name, estimator_orig):
     check_estimators_data_not_an_array(name, estimator_orig, X, y)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_data_not_an_array(name, estimator_orig, X, y):
-
     if name in CROSS_DECOMPOSITION:
         raise SkipTest
     # separate estimators to control random seeds
@@ -1550,7 +1557,7 @@ def check_parameters_default_constructible(name, Estimator):
     classifier = LinearDiscriminantAnalysis()
     # test default-constructibility
     # get rid of deprecation warnings
-    with ignore_warnings(category=DeprecationWarning):
+    with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
         if name in META_ESTIMATORS:
             estimator = Estimator(classifier)
         else:
@@ -1601,11 +1608,16 @@ def check_parameters_default_constructible(name, Estimator):
                 assert_true(init_param.default is None)
                 continue
 
+            if (issubclass(Estimator, BaseSGD) and
+                    init_param.name in ['tol', 'max_iter']):
+                # To remove in 0.21, when they get their future default values
+                continue
+
             param_value = params[init_param.name]
             if isinstance(param_value, np.ndarray):
                 assert_array_equal(param_value, init_param.default)
             else:
-                assert_equal(param_value, init_param.default)
+                assert_equal(param_value, init_param.default, init_param.name)
 
 
 def multioutput_estimator_convert_y_2d(estimator, y):
@@ -1616,7 +1628,7 @@ def multioutput_estimator_convert_y_2d(estimator, y):
     return y
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_non_transformer_estimators_n_iter(name, estimator_orig):
     # Test that estimators that are not transformers with a parameter
     # max_iter, return the attribute of n_iter_ at least 1.
@@ -1655,7 +1667,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
             assert_greater_equal(estimator.n_iter_, 1)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_transformer_n_iter(name, estimator_orig):
     # Test that transformers with a parameter max_iter, return the
     # attribute of n_iter_ at least 1.
@@ -1681,7 +1693,7 @@ def check_transformer_n_iter(name, estimator_orig):
             assert_greater_equal(estimator.n_iter_, 1)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_get_params_invariance(name, estimator_orig):
     # Checks if get_params(deep=False) is a subset of get_params(deep=True)
     class T(BaseEstimator):
@@ -1706,7 +1718,7 @@ def check_get_params_invariance(name, estimator_orig):
                     shallow_params.items()))
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_classifiers_regression_target(name, estimator_orig):
     # Check if classifier throws an exception when fed regression targets
 
@@ -1717,7 +1729,7 @@ def check_classifiers_regression_target(name, estimator_orig):
     assert_raises_regex(ValueError, msg, e.fit, X, y)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_decision_proba_consistency(name, estimator_orig):
     # Check whether an estimator having both decision_function and
     # predict_proba methods has outputs with perfect rank correlation.

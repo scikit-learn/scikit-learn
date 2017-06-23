@@ -145,6 +145,15 @@ Enhancements
      do not set attributes on the estimator.
      :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
+   - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
+     :class:`linear_model.PassiveAggressiveClassifier`,
+     :class:`linear_model.PassiveAggressiveRegressor` and
+     :class:`linear_model.Perceptron` now expose a ``max_iter`` and
+     ``tol`` parameters, to handle convergence more precisely.
+     ``n_iter`` parameter is deprecated, and the fitted estimator exposes
+     a ``n_iter_`` attribute, with actual number of iterations before
+     convergence. By `Tom Dupre la Tour`_.
+
    - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
      will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
      norm 'max' the norms returned will be the same as for dense matrices.
@@ -1334,7 +1343,6 @@ Birodkar, Vikram, Villu Ruusmann, Vinayak Mehta, walter, waterponey, Wenhua
 Yang, Wenjian Huang, Will Welch, wyseguy7, xyguo, yanlend, Yaroslav Halchenko,
 yelite, Yen, YenChenLin, Yichuan Liu, Yoav Ram, Yoshiki, Zheng RuiFeng, zivori, Óscar Nájera
 
-
 .. currentmodule:: sklearn
 
 .. _changes_0_17_1:
@@ -1374,6 +1382,7 @@ Bug fixes
     - Fixed a joblib error when evaluating the perplexity of a
       :class:`decomposition.LatentDirichletAllocation` model. See :issue:`6258`
       By Chyi-Kwei Yau.
+
 
 .. _changes_0_17:
 
