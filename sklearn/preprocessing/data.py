@@ -2389,6 +2389,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     def inverse_transform(self, X):
         """Back-projection to the original space.
 
+        Parameters
+        ----------
         X : ndarray or sparse matrix, shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse
