@@ -651,8 +651,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             Data
 
         y : ndarray, shape (n_samples,) or (n_samples, n_targets)
-            Target. If it's not the case, y is cast in X.dtype further
-            in the code
+            Target. Will be cast to X's dtype if necessary
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.

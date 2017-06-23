@@ -172,7 +172,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
         if sp.issparse(X):
             X_offset, X_var = mean_variance_axis(X, axis=0)
             if not return_mean:
-                X_offset = np.zeros(X.shape[1], dtype=X.dtype)
+                X_offset[:] = X.dtype.type(0)
 
             if normalize:
 
@@ -464,8 +464,8 @@ class LinearRegression(LinearModel, RegressorMixin):
             Training data
 
         y : numpy array of shape [n_samples, n_targets]
-            Target values. If it's not the case, y is cast in X.dtype further
-            in the code
+            Target values. Will be cast to X's dtype further in the code if
+            necessary
 
         sample_weight : numpy array of shape [n_samples]
             Individual weights for each sample
