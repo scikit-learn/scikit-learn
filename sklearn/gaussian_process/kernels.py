@@ -1874,8 +1874,10 @@ class SelectDimensionKernel(Kernel):
     active_dims: array-like, shape (n_active_dims,) or (n_features,)
          If `active_dims` is a boolean array, then it should be of size
          `n_features` marked as True for an active index.
+
          If `active_dims` is an integer array, then it should be size of
          `n_active_dims` denoting the indices of the active dimensions.
+
          For an anisotropic kernel, the length_scale of the kernel and
          the active_dims should have same length and the indices of the
          active_dims correspond to the indices of the features in X.

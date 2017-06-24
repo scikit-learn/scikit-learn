@@ -350,5 +350,6 @@ def test_select_dimension_kernel_properties():
     # Check error message
     sdk = SelectDimensionKernel(RBF(length_scale=[0, 1]), active_dims=[0])
     assert_raises_regexp(ValueError, "expected active_dims size", sdk, X)
-    sdk = SelectDimensionKernel(RBF(length_scale=[0, 1]), active_dims=[True, False])
+    sdk = SelectDimensionKernel(
+        RBF(length_scale=[0, 1]), active_dims=[True, False])
     assert_raises_regexp(ValueError, "expected active_dims size", sdk, X)

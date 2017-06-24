@@ -76,7 +76,7 @@ New features
 
    - Added :class:`gaussian_process.kernels.SelectDimensionKernel` by which
      a kernel can be applied on specific features.
-     :issue:`6868` by :user:`Behzad Tabibian <btabibian>`.
+     :issue:`6868` by :user:`Behzad Tabibian <btabibian>` and `Manoj Kumar`_.
 
 Enhancements
 ............
