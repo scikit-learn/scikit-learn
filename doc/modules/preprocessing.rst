@@ -517,12 +517,12 @@ feature is active if x > i (for i = 0, ... k - 1).
 
 Continuing the example above::
 
-  >>> enc = preprocessing.UnaryEncoder()
-  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
-  UnaryEncoder(ordinal_features='all', dtype=<... 'numpy.float64'>,
-         handle_unknown='error', n_values='auto', sparse=True)
-  >>> enc.transform([[0, 1, 1]]).toarray()
-  array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
+    >>> enc = preprocessing.UnaryEncoder()
+    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
+    UnaryEncoder(dtype=<type 'numpy.float64'>, handle_unknown='error',
+        n_values='auto', ordinal_features='all', sparse=True)
+    >>> enc.transform([[0, 1, 1]]).toarray()
+    array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
 
 By default, how many values each feature can take is inferred automatically from the dataset.
 It is possible to specify this explicitly using the parameter ``n_values``.
@@ -539,8 +539,8 @@ features, one has to explicitly set ``n_values``. For example,
     >>> # Note that there are missing categorical values for the 2nd and 3rd
     >>> # features
     >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
-    UnaryEncoder(ordinal_features='all', dtype=<... 'numpy.float64'>,
-           handle_unknown='error', n_values=[2, 3, 4], sparse=True)
+    UnaryEncoder(dtype=<type 'numpy.float64'>, handle_unknown='error',
+            n_values=[2, 3, 4], ordinal_features='all', sparse=True)
     >>> enc.transform([[1, 1, 2]]).toarray()
     array([[ 1.,  1.,  0.,  1.,  1.,  0.]])
 
