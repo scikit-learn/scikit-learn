@@ -59,6 +59,7 @@ __all__ = [
     'maxabs_scale',
     'minmax_scale',
     'quantile_transform',
+    'UnaryEncoder'
 ]
 
 
@@ -1999,7 +2000,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             except (ValueError, TypeError):
                 raise TypeError("Wrong type for parameter `n_values`. Expected"
                                 " 'auto', int or array of ints, got %r"
-                                % type(X))
+                                % self.n_values)
             if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
@@ -2061,8 +2062,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         mask = (X < self.n_values_).ravel()
         if np.any(~mask):
             if self.handle_unknown not in ['error', 'ignore']:
-                raise ValueError("handle_unknown should be either error or "
-                                 "unknown got %s" % self.handle_unknown)
+                raise ValueError("handle_unknown should be either 'error' or "
+                                 "'ignore' got %s" % self.handle_unknown)
             if self.handle_unknown == 'error':
                 raise ValueError("unknown categorical feature present %s "
                                  "during transform." % X.ravel()[~mask])
@@ -2875,7 +2876,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         return X_tr
 
 
-class OrdinalEncoder(BaseEstimator, TransformerMixin):
+class UnaryEncoder(BaseEstimator, TransformerMixin):
     """Encode ordinal integer features using a unary scheme.
 
     The input to this transformer should be a matrix of integers, denoting
@@ -2936,11 +2937,11 @@ class OrdinalEncoder(BaseEstimator, TransformerMixin):
     find the maximum value per feature and transform the data to a binary
     Ordinal encoding.
 
-    >>> from sklearn.preprocessing import OrdinalEncoder
-    >>> enc = OrdinalEncoder()
+    >>> from sklearn.preprocessing import UnaryEncoder
+    >>> enc = UnaryEncoder()
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
-    OrdinalEncoder(dtype=<... 'numpy.float64'>, handle_unknown='error',
+    UnaryEncoder(dtype=<... 'numpy.float64'>, handle_unknown='error',
             n_values='auto', ordinal_features='all', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
@@ -2972,7 +2973,7 @@ class OrdinalEncoder(BaseEstimator, TransformerMixin):
         self.handle_unknown = handle_unknown
 
     def fit(self, X, y=None):
-        """Fit OrdinalEncoder to X.
+        """Fit UnaryEncoder to X.
 
         Parameters
         ----------
@@ -3027,7 +3028,7 @@ class OrdinalEncoder(BaseEstimator, TransformerMixin):
         return out if self.sparse else out.toarray()
 
     def fit_transform(self, X, y=None):
-        """Fit OrdinalEncoder to X, then transform X.
+        """Fit UnaryEncoder to X, then transform X.
 
         Equivalent to self.fit(X).transform(X), but more convenient and more
         efficient. See fit for the parameters, transform for the return value.
