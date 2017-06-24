@@ -76,7 +76,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not `None`.
 
-    named_estimators_ : bunch object, a dictionary with attribute access
+    named_estimators_ : Bunch object, a dictionary with attribute access
         Attribute to access any fitted sub-estimators by name.
 
     classes_ : array-like, shape = [n_predictions]
@@ -99,7 +99,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>> print(eclf1.predict(X))
     [1 1 1 2 2 2]
     >>> np.array_equal(eclf1.named_estimators_.lr.predict(X),
-    ...         eclf1.named_estimators_['lr'].predict(X))
+    ...                eclf1.named_estimators_['lr'].predict(X))
     True
     >>> eclf2 = VotingClassifier(estimators=[
     ...         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
