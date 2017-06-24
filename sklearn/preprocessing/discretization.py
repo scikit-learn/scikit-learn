@@ -199,7 +199,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xt : numeric array-like, shape (n_samples, n_features)
             Data in the binned space.
         """
-        X = self._check_X_post_fit(X)
+        X = self._check_post_fit(X)
 
         return _transform_selected(X, self._transform,
                                    self.transformed_features_, copy=True,
@@ -245,7 +245,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xinv : numeric array-like
             Data in the original feature space.
         """
-        Xt = self._check_X_post_fit(Xt)
+        Xt = self._check_post_fit(Xt)
         trans = self.transformed_features_
         Xinv = Xt.copy()
         Xinv_sel = Xinv[:, trans]
@@ -257,7 +257,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xinv[:, trans] = Xinv_sel
         return Xinv
 
-    def _check_X_post_fit(self, X):
+    def _check_post_fit(self, X):
         check_is_fitted(self, ["offset_", "bin_width_"])
         X = check_array(X, dtype='numeric')
 
