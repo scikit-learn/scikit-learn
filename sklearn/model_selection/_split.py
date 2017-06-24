@@ -1522,7 +1522,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              (n_test, n_classes))
 
         # Find the sorted list of instances for each class:
-        # (np.unique above performs a sort, so code is O(n logn) already
+        # (np.unique above performs a sort, so code is O(n logn) already)
         class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
                                  np.cumsum(class_counts)[:-1])
 
