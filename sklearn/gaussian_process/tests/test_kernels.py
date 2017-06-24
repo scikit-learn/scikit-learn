@@ -19,7 +19,8 @@ from sklearn.base import clone
 
 from sklearn.utils.testing import (assert_equal, assert_almost_equal,
                                    assert_not_equal, assert_array_equal,
-                                   assert_array_almost_equal)
+                                   assert_array_almost_equal, assert_true,
+                                   assert_raises_regexp)
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
 Y = np.random.RandomState(0).normal(0, 1, (6, 2))
@@ -324,3 +325,30 @@ def test_repr_kernels():
 
     for kernel in kernels:
         repr(kernel)
+
+
+def test_select_dimension_kernel_properties():
+    kernel1 = RBF(length_scale=[1.0, 2.0])
+    kernel2 = Matern(length_scale=[2.0, 3.0])
+    sdk1 = SelectDimensionKernel(kernel=kernel1, active_dims=[0, 1])
+    assert_true(sdk1.get_params()["kernel"] is kernel1)
+
+    # Check setting of kernel, the test above checks setting of the
+    # length scale.
+    sdk1.set_params(kernel=kernel2)
+    assert_true(sdk1.get_params()["kernel"] is kernel2)
+    assert_array_equal(sdk1(X), kernel2(X))
+
+    # Check active_dims boolean mask
+    sdk1.set_params(active_dims=[True, True])
+    assert_array_equal(sdk1(X), kernel2(X))
+
+    kernel2 = kernel2.set_params(length_scale=[2.0])
+    sdk1.set_params(kernel=kernel2, active_dims=[True, False])
+    assert_array_equal(sdk1(X), kernel2(X[:, :1]))
+
+    # Check error message
+    sdk = SelectDimensionKernel(RBF(length_scale=[0, 1]), active_dims=[0])
+    assert_raises_regexp(ValueError, "expected active_dims size", sdk, X)
+    sdk = SelectDimensionKernel(RBF(length_scale=[0, 1]), active_dims=[True, False])
+    assert_raises_regexp(ValueError, "expected active_dims size", sdk, X)

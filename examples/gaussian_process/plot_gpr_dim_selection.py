@@ -30,7 +30,7 @@ from sklearn.model_selection import train_test_split
 print(__doc__)
 
 # Fixing seed
-np.random.seed(0)
+rng = np.random.RandomState(0)
 
 # Define a kernel with sum of two RBF kernels applied on individual dimentsion.
 kernel = (SelectDimensionKernel(RBF(length_scale=[1.0]), [0]) *
@@ -48,13 +48,14 @@ for count in param_range:
     X[:, 1] = np.linspace(0, 40, count)
 
     # Construct a mesh grid and compute synthetic data
-    y = np.sin(2 * X[:, 1]) + (X[:, 0] - 20) / 2 + np.random.normal(X.shape[0],
-                                                                    scale=2)
+    y = np.sin(2 * X[:, 1]) + (X[:, 0] - 20) / 2 + rng.normal(X.shape[0],
+                                                              scale=2)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.85)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.85, random_state=2)
 
-    gp_mix_kernel = GaussianProcessRegressor(kernel=kernel)
-    gp_rbf = GaussianProcessRegressor(kernel=RBF([1.0, 1.0]))
+    gp_mix_kernel = GaussianProcessRegressor(kernel=kernel, random_state=0)
+    gp_rbf = GaussianProcessRegressor(kernel=RBF([1.0, 1.0]), random_state=0)
 
     gp_rbf.fit(X_train, y_train)
     y_pred_rbf = gp_rbf.predict(X_test)
@@ -62,7 +63,7 @@ for count in param_range:
     gp_mix_kernel.fit(X_train, y_train)
     y_pred_rbf_sin = gp_mix_kernel.predict(X_test)
 
-    rbf_sin_err.append(mean_absolute_error(y_test , y_pred_rbf_sin))
+    rbf_sin_err.append(mean_absolute_error(y_test, y_pred_rbf_sin))
     rbf_only_err.append(mean_absolute_error(y_test, y_pred_rbf))
 
 plt.hold('on')

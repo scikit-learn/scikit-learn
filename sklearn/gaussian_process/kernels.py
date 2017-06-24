@@ -1912,22 +1912,24 @@ class SelectDimensionKernel(Kernel):
             is True.
         """
         active_dims = np.asarray(self.active_dims)
-        if np.issubdtype(active_dims.dtype, np.bool):
-            if active_dims.shape[0] == X.shape[1]:
-                active_dims = np.where(active_dims)[0]
-            elif active_dims.dtype == np.bool:
-                raise ValueError("A boolean active_dims should have the same"
-                                 "number of feature dimension size as"
-                                 "input data, active_dims shape: "
-                                 "%d, X shape (%d,%d)" % (active_dims.size,
-                                                          X.shape[0],
-                                                          X.shape[1]))
-        else:
-            active_dims = active_dims.astype(int)
         if active_dims.size == 0:
-            raise ValueError("active_dims should be have at least one \
-                              element, current size: %d " % active_dims.size)
+            raise ValueError("active_dims should be have at least one "
+                             "element, current size: %d " % active_dims.size)
+        if active_dims.dtype == np.bool:
+            if active_dims.shape[0] != X.shape[1]:
+                raise ValueError("A boolean active_dims should have the same"
+                                 " shape as the number of features."
+                                 "%d, %d" % (active_dims.size, X.shape[1]))
+            active_dims = np.where(active_dims)[0]
+        active_dims = active_dims.astype(int)
 
+        kernel_params = self.kernel.get_params()
+        if "length_scale" in kernel_params:
+            length_scale = np.atleast_1d(kernel_params["length_scale"])
+            if len(active_dims) != len(length_scale):
+                raise ValueError("expected active_dims size equal to the "
+                                 "length_scale %d, got %d" %
+                                 (len(length_scale), len(active_dims)))
         return self.kernel(X[:, active_dims],
                            None if Y is None else Y[:, active_dims],
                            eval_gradient)
