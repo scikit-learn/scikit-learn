@@ -2007,7 +2007,7 @@ def test_unary_encoder_stack():
     encoder = UnaryEncoder(n_values, sparse=False)
     X_multi = _generate_random_features_matrix(n_values, size)
     X_multi_t = encoder.fit_transform(X_multi)
-    assert_equal(X_multi_t.shape, (size, n_values* (n_values - 1)))
+    assert_equal(X_multi_t.shape, (size, n_values * (n_values - 1)))
 
     expected = np.hstack([encoder.fit_transform(X_multi[:, i:(i + 1)])
                           for i in range(X_multi.shape[1])])
@@ -2075,7 +2075,8 @@ def test_unary_encoder_errors():
     assert_raises(ValueError, encoder.transform, X_out_of_bounds)
     error_msg = ("unknown ordinal feature present \[{}\] "
                  "during transform.".format(n_values + delta))
-    assert_raises_regex(ValueError, error_msg, encoder.transform, X_out_of_bounds)
+    assert_raises_regex(ValueError, error_msg, encoder.transform,
+                        X_out_of_bounds)
 
     # test exception on wrong init param
     assert_raises(TypeError, UnaryEncoder(n_values=np.int).fit, X)
@@ -2123,5 +2124,7 @@ def test_unary_encoder_n_values_int():
     X = _generate_random_features_matrix(n_values, size)
     X_trans = enc.fit_transform(X)
     assert_equal(X_trans.shape, (size, unary_n_values * len(X[0])))
-    assert_array_equal(enc.feature_indices_,
-                       np.arange(0, unary_n_values * len(X[0]) + 1, unary_n_values))
+    assert_array_equal(
+        enc.feature_indices_,
+        np.arange(0, unary_n_values * len(X[0]) + 1, unary_n_values)
+    )
