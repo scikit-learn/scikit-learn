@@ -1,5 +1,7 @@
 # Author: Henry Lin <hlin117@gmail.com>
 
+# License: BSD
+
 from __future__ import division, absolute_import
 
 import numbers
@@ -11,7 +13,6 @@ from sklearn.preprocessing.data import _transform_selected
 from sklearn.utils.validation import check_array
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.validation import column_or_1d
-from sklearn.utils.validation import FLOAT_DTYPES
 
 
 class KBinsDiscretizer(BaseEstimator, TransformerMixin):
@@ -111,7 +112,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = check_array(X, dtype=FLOAT_DTYPES)
+        X = check_array(X, dtype='numeric')
 
         n_features = X.shape[1]
         ignored = self._check_ignored_features(self.ignored_features,
@@ -145,9 +146,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         if isinstance(n_bins, numbers.Number):
             if n_bins < 2:
-                raise ValueError("Discretizer received an invalid number "
-                                 "of bins. Received {0}, expected at least 2."
-                                 .format(n_bins))
+                raise ValueError("{} received an invalid number "
+                                 "of bins. Received {}, expected at least 2."
+                                 .format(KBinsDiscretizer.__name__, n_bins))
             return np.ones(n_features) * n_bins
 
         n_bins = check_array(n_bins, dtype=int, copy=True, ensure_2d=False)
@@ -162,10 +163,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         violating_indices = np.where(bad_nbins_value)[0]
         if violating_indices.shape[0] > 0:
             indices = ", ".join(str(i) for i in violating_indices)
-            raise ValueError("Discretizer received an invalid number "
+            raise ValueError("{} received an invalid number "
                              "of bins at indices {}. Number of bins "
                              "must be at least 2."
-                             .format(indices))
+                             .format(KBinsDiscretizer.__name__, indices))
         n_bins[ignored] = 0
         return n_bins
 
@@ -221,7 +222,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         # of ``rtol`` and ``atol``.
         rtol = 1.e-5
         atol = 1.e-8
-        eps = atol + rtol * abs(bin_width)
+        eps = atol + rtol * bin_width
         np.floor(X + eps, out=X)
 
         X[~np.isfinite(X)] = 0  # Case when a feature is constant
@@ -258,7 +259,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     def _check_X_post_fit(self, X):
         check_is_fitted(self, ["offset_", "bin_width_"])
-        X = check_array(X, dtype=FLOAT_DTYPES)
+        X = check_array(X, dtype='numeric')
 
         n_features = self.n_bins_.shape[0]
         if X.shape[1] != n_features:
