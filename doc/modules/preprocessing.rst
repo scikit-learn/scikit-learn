@@ -450,22 +450,24 @@ of continuous attributes to one with only nominal attributes.
 K-bins discretization
 ---------------------
 
-Scikit-learn allows users to discretize features into ``k``
-equal width bins using a :class:`KBinsDiscretizer`::
+:class:`KBinsDiscretizer` discretizers features into ``k`` equal width bins::
 
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],
   ...               [  6., 3., 11 ]])
   >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 3, 2]).fit(X)
+  >>> est.bin_width_
+  array([ 3., 1., 2.,]) # doctest: +NORMALIZE_WHITESPACE
 
-In this example, the "bin edges" (boundaries for the discretization criteria)
-for each of the three features are as follows:
+For each feature, the bin width is computed during ``fit`` and together with
+the number of bins, they will define the intervals. Therefore, for the current
+example, these intervals are defined as:
 
- - ``0`` and ``3``
- - ``4`` and ``5``
- - ``13``
+ - feature 1: :math:`{[-\infty, 0), [0, 3), [3, \infty)}`
+ - feature 2: :math:`{[-\infty, 4), [4, 5), [5, \infty)}`
+ - feature 3: :math:`{[-\infty, 13), [13, \infty)}`
 
-Based on these bin edges, we transform ``X`` as follows::
+ Based on these bin intervals, ``X`` is transformed as follows::
 
   >>> est.transform(X)                      # doctest: +SKIP
   array([[ 0., 2., 1.],
@@ -473,7 +475,7 @@ Based on these bin edges, we transform ``X`` as follows::
          [ 2., 0., 0.]])
 
 The resulting dataset contains ordinal attributes which can be further used
-in a pipeline.
+in a :class:`sklearn.pipeline.Pipeline`.
 
 Discretization is similar to constructing histograms for continuous data.
 However, histograms focus on counting features which fall into particular
@@ -527,7 +529,7 @@ preprocessing module provides a companion function :func:`binarize`
 to be used when the transformer API is not necessary.
 
 Note that the :class:`Binarizer` is similar to the :class:`KBinsDiscretizer`
-when ``k = 2``, and when our bin edge is at the value ``threshold``.
+when ``k = 2``, and when the bin edge is at the value ``threshold``.
 
 .. topic:: Sparse input
 

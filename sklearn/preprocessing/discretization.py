@@ -8,12 +8,10 @@ import warnings
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing.data import _transform_selected
-from sklearn.utils.validation import (
-    check_array,
-    check_is_fitted,
-    column_or_1d,
-    FLOAT_DTYPES
-)
+from sklearn.utils.validation import check_array
+from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import column_or_1d
+from sklearn.utils.validation import FLOAT_DTYPES
 
 
 class KBinsDiscretizer(BaseEstimator, TransformerMixin):
@@ -44,7 +42,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         will have ``n_bins_[i] == 0``.
 
     bin_width_ : float array, shape (n_features,)
-        The width of each bin. Ignored features will have width ``0``.
+        The width of each bin. Ignored features will have widths equal
+        to ``0``.
 
     transformed_features_ : int array, shape (n_features,)
         Features which are transformed.
@@ -124,7 +123,6 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.offset_ = offset
 
         n_bins = self._check_n_bins(self.n_bins, n_features, ignored)
-        n_bins[ignored] = 0
         self.n_bins_ = n_bins
 
         ptp = np.ptp(X, axis=0)
@@ -141,6 +139,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     @staticmethod
     def _check_n_bins(n_bins, n_features, ignored):
+        """Returns n_bins_, the number of bins per feature.
+
+        Also ensures that ignored bins are zero.
+        """
         if isinstance(n_bins, numbers.Number):
             if n_bins < 2:
                 raise ValueError("Discretizer received an invalid number "
@@ -164,6 +166,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                              "of bins at indices {}. Number of bins "
                              "must be at least 2."
                              .format(indices))
+        n_bins[ignored] = 0
         return n_bins
 
     @staticmethod
@@ -227,6 +230,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
     def inverse_transform(self, Xt):
         """Transforms discretized data back to original feature space.
+
+        Note that this function does not regenerate the original data
+        due to discretization rounding.
 
         Parameters
         ----------
