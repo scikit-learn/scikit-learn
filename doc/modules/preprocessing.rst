@@ -520,7 +520,7 @@ Continuing the example above::
     >>> enc = preprocessing.UnaryEncoder()
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
     UnaryEncoder(dtype=<type 'numpy.float64'>, handle_unknown='error',
-        n_values='auto', ordinal_features='all', sparse=True)
+           n_values='auto', ordinal_features='all', sparse=True)
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
 
@@ -540,7 +540,7 @@ features, one has to explicitly set ``n_values``. For example,
     >>> # features
     >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
     UnaryEncoder(dtype=<type 'numpy.float64'>, handle_unknown='error',
-            n_values=[2, 3, 4], ordinal_features='all', sparse=True)
+           n_values=[2, 3, 4], ordinal_features='all', sparse=True)
     >>> enc.transform([[1, 1, 2]]).toarray()
     array([[ 1.,  1.,  0.,  1.,  1.,  0.]])
 

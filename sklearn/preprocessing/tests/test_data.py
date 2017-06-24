@@ -2001,7 +2001,7 @@ def test_unary_encoder():
 
 def test_unary_encoder_stack():
     # multiple input features stack to same output
-    n_values = np.random.randint(1, 10)
+    n_values = np.random.randint(2, 10)
     size = np.random.randint(1, 10)
 
     encoder = UnaryEncoder(n_values, sparse=False)
