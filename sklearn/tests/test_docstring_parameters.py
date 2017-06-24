@@ -58,20 +58,27 @@ _DOCSTRING_IGNORES = [
     'sklearn.pipeline.make_pipeline',
     'sklearn.pipeline.make_union',
     'sklearn.utils.extmath.safe_sparse_dot',
-    'RandomizedPCA',  # deprecated
-    'BaseForest',
-    'BaseDecisionTree',
-    'ExtraTreeClassifier',
-    'ExtraTreeRegressor',
-    'GaussianProcess',  # deprecated
-    'VBGMM',  # deprecated
-    'DPGMM',  # deprecated
-    'GMM',  # deprecated
-    'log_multivariate_normal_density',  # deprecated
-    'sample_gaussian',  # deprecated
+    # Deprecated classes and functions
+    'RandomizedPCA',
+    'GaussianProcess',
+    'VBGMM',
+    'DPGMM',
+    'GMM',
+    'log_multivariate_normal_density',
+    'sample_gaussian',
 ]
 
 _TAB_IGNORES = [
+]
+
+# Methods to test for, in any class
+_METHODS_IGNORE_NONE_Y = [
+        'fit',
+        'score',
+        'fit_predict',
+        'fit_transform',
+        'partial_fit',
+        'predict'
 ]
 
 
@@ -112,16 +119,22 @@ def test_docstring_parameters():
                 # Now skip docstring test for y when y is None
                 # by default for API reason
                 # XXX remove transform
-                if method_name in ['fit', 'score', 'fit_predict',
-                                   'fit_transform', 'partial_fit',
-                                   'transform', 'inverse_transform',
-                                   'predict']:
+                if method_name in _METHODS_IGNORE_NONE_Y:
                     sig = signature(method)
                     if ('y' in sig.parameters and
                             sig.parameters['y'].default is None):
                         param_ignore = ['y']  # ignore y for fit and score
                 this_incorrect += check_parameters_match(method,
                                                          ignore=param_ignore)
+                if cname == "Pipeline":
+                    print(method)
+                    print(method_name)
+                    print(param_ignore)
+                    print('result: ',
+                          check_parameters_match(method,
+                                                 ignore=param_ignore,
+                                                 debug=True))
+
             if hasattr(cls, '__call__'):
                 this_incorrect += check_parameters_match(cls.__call__)
 
@@ -140,6 +153,8 @@ def test_docstring_parameters():
     msg = '\n' + '\n'.join(sorted(list(set(incorrect))))
     if len(incorrect) > 0:
         raise AssertionError(msg)
+
+    assert False
 
 
 def test_tabs():

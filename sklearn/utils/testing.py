@@ -822,17 +822,19 @@ def get_func_name(func):
     return '.'.join(parts)
 
 
-def check_parameters_match(func, doc=None, ignore=None):
+def check_parameters_match(func, doc=None, ignore=None, debug=False):
     """Helper to check docstring
 
     Parameters
     ----------
     func : callable
         The function object to test.
-    doc : str
-        Pass evenually manually the docstring to test.
+    doc : str, optional (default: None)
+        Docstring if it is passed manually to the test.
     ignore : None | list
         Parameters to ignore.
+    debug : bool, optional (default: False)
+        Whether to print debug messages
 
     Returns
     -------
@@ -882,6 +884,8 @@ def check_parameters_match(func, doc=None, ignore=None):
                          list(set(args) - set(param_names))))
         incorrect += [name_ + ' arg mismatch: ' + bad]
     else:
+        if debug:
+            print(param_names, args)
         for n1, n2 in zip(param_names, args):
             if n1 != n2:
                 incorrect += [name_ + ' ' + n1 + ' != ' + n2]

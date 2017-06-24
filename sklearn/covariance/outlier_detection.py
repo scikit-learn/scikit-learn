@@ -97,6 +97,14 @@ class EllipticEnvelope(MinCovDet):
         self.contamination = contamination
 
     def fit(self, X, y=None):
+        """Fit the EllipticEnvelope model with X.
+
+        Parameters
+        ----------
+        X : numpy array or sparse matrix of shape [n_samples, n_features]
+            Training data
+        y : (ignored)
+        """
         super(EllipticEnvelope, self).fit(X)
         self.threshold_ = sp.stats.scoreatpercentile(
             self.dist_, 100. * (1. - self.contamination))
