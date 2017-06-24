@@ -1825,7 +1825,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc = OneHotEncoder()
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', dtype=<type 'numpy.float64'>,
+    OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
            handle_unknown='error', n_values='auto', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
@@ -2018,7 +2018,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     ----------
     active_features_ : array
         Indices for active features, meaning values that actually occur
-        in the training set. All featurs ar Only available when n_values is ``'auto'``.
+        in the training set. All featurs are available when n_values is
+        ``'auto'``.
 
     feature_indices_ : array of shape (n_features,)
         Indices to feature ranges.
@@ -2037,8 +2038,9 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
     >>> from sklearn.preprocessing import UnaryEncoder
     >>> enc = UnaryEncoder()
-    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
-    UnaryEncoder(dtype=<type 'numpy.float64'>, handle_unknown='error',
+    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
+[1, 0, 2]])  # doctest: +ELLIPSIS
+    UnaryEncoder(dtype=<... 'numpy.float64'>, handle_unknown='error',
            n_values='auto', ordinal_features='all', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
@@ -2099,7 +2101,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         indices = np.cumsum(np.hstack([[0], n_values - 1]))
         self.feature_indices_ = indices
 
-        unary_values = [np.array([np.arange(max(i, 1))]) for i in (self.n_values_ - 1)]
+        unary_values = [np.array([np.arange(max(i, 1))])
+                        for i in (self.n_values_ - 1)]
         data = [unary_values[i] < X[:, i, None] for i in range(X.shape[1])]
         out_boolean = np.concatenate(data, axis=1)
         out = sparse.coo_matrix(out_boolean.astype(self.dtype)).tocsr()
