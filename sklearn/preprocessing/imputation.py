@@ -398,6 +398,8 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # KNN
         elif strategy == "knn":
+            if self.copy:
+                X = np.copy(X)
 
             if axis == 1:
                 X = X.transpose()
@@ -544,19 +546,18 @@ class Imputer(BaseEstimator, TransformerMixin):
                     mask = mask.transpose()
                     statistics = statistics.transpose()
 
-                #Check if unmasked values of X and statistics are equal
+                #Check if the masks and the unmasked values are equal
                 mask_fitted = statistics.mask
-                if mask_fitted.shape == X.shape:
-                    masked_X = np.ma.array(X, mask=mask_fitted)
-                    if np.ma.allequal(masked_X,statistics):
+                masked_X = np.ma.array(X, mask=mask)
+                if np.array_equal(mask, mask_fitted)\
+                        and np.ma.allequal(masked_X, statistics):
                         X = statistics.data
                 else:
-                    X_imputed_masked = self._dense_fit(X,
+                    X = self._dense_fit(X,
                                                        self.strategy,
                                                        self.missing_values,
                                                        self.axis,
-                                                       statistics.data)
-                    X = X_imputed_masked.data
+                                                       Y=statistics.data).data
 
                 if self.axis == 1:
                     X = X.transpose()
