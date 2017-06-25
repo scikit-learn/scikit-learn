@@ -245,8 +245,11 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             alpha = 0
         y = np.asarray(y)
         unlabeled = y == -1
-        clamp_weights = np.ones((n_samples, 1))
-        clamp_weights[~unlabeled, 0] = alpha
+        # clamp_weights = np.ones((n_samples, 1))
+        # clamp_weights[~unlabeled, 0] = alpha
+
+        # TODO TESTING
+        clamp_weights = alpha * np.ones((n_samples, 1))
 
         # initialize distributions
         self.label_distributions_ = np.zeros((n_samples, n_classes))
@@ -256,7 +259,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         y_static = np.copy(self.label_distributions_)
         if alpha > 0.:
             y_static *= 1 - alpha
-        y_static[unlabeled] = 0
+        # TODO TESTING
+        # y_static[unlabeled] = 0
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
