@@ -1199,6 +1199,7 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
+   preprocessing.UnaryEncoder
    preprocessing.PolynomialFeatures
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
