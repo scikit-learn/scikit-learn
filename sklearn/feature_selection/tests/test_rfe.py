@@ -166,6 +166,11 @@ def test_rfecv():
                   scoring=test_scorer)
     rfecv.fit(X, y)
     assert_array_equal(rfecv.grid_scores_, np.ones(len(rfecv.grid_scores_)))
+    # In the event of cross validation score ties, the expected behavior of
+    # RFECV is to return the FEWEST features that maximize the CV score.
+    # Because test_scorer always returns 1.0 in this example, RFECV should
+    # reduce the dimensionality to a single feature (i.e. n_features_ = 1)
+    assert_equal(rfecv.n_features_, 1)
 
     # Same as the first two tests, but with step=2
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=2, cv=5)

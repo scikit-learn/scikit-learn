@@ -431,8 +431,10 @@ class RFECV(RFE, MetaEstimatorMixin):
             for train, test in cv.split(X, y))
 
         scores = np.sum(scores, axis=0)
+        scores_rev = scores[::-1]
+        argmax_idx = len(scores) - np.argmax(scores_rev) - 1
         n_features_to_select = max(
-            n_features - (np.argmax(scores) * step),
+            n_features - (argmax_idx * step),
             n_features_to_select)
 
         # Re-execute an elimination with best_k over the whole set
