@@ -216,7 +216,7 @@ def test_pipeline_methods_anova():
     # Test with Anova + LogisticRegression
     clf = LogisticRegression()
     filter1 = SelectKBest(f_classif, k=2)
-    pipe = Pipeline([('anova', filter1), ('logistic', clf)])
+    pipe = Pipeline((('anova', filter1), ('logistic', clf)))
     pipe.fit(X, y)
     pipe.predict(X)
     pipe.predict_proba(X)

@@ -145,6 +145,9 @@ class Pipeline(_BaseComposition):
         return self
 
     def _validate_steps(self):
+        if isinstance(self.steps, tuple):
+            self.steps = list(self.steps)
+
         names, estimators = zip(*self.steps)
 
         # validate names
