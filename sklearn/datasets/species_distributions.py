@@ -176,8 +176,16 @@ def fetch_species_distributions(data_home=None,
     grid_size : float
         The spacing between points of the grid, in degrees
 
+    References
+    ----------
+
+    * `"Maximum entropy modeling of species geographic distributions"
+      <http://rob.schapire.net/papers/ecolmod.pdf>`_
+      S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
+      190:231-259, 2006.
+
     Notes
-    ------
+    -----
 
     This dataset represents the geographic distribution of species.
     The dataset is provided by Phillips et. al. (2006).
@@ -193,16 +201,6 @@ def fetch_species_distributions(data_home=None,
       also known as the Forest Small Rice Rat, a rodent that lives in Peru,
       Colombia, Ecuador, Peru, and Venezuela.
 
-    References
-    ----------
-
-    * `"Maximum entropy modeling of species geographic distributions"
-      <http://rob.schapire.net/papers/ecolmod.pdf>`_
-      S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
-      190:231-259, 2006.
-
-    Notes
-    -----
 
     * For an example of using this dataset with scikit-learn, see
       :ref:`examples/applications/plot_species_distribution_modeling.py
