@@ -523,7 +523,7 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              'TfidfVectorizer', 'IsotonicRegression',
              'OneHotEncoder', 'RandomTreesEmbedding', 'CategoricalEncoder',
              'FeatureHasher', 'DummyClassifier', 'DummyRegressor',
-             'TruncatedSVD', 'PolynomialFeatures',
+             'TruncatedSVD', 'PolynomialFeatures', 'UnaryEncoder',
              'GaussianRandomProjectionHash', 'HashingVectorizer',
              'CheckingClassifier', 'PatchExtractor', 'CountVectorizer',
              # GradientBoosting base estimators, maybe should

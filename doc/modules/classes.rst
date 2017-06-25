@@ -1199,6 +1199,7 @@ Model validation
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
    preprocessing.CategoricalEncoder
+   preprocessing.UnaryEncoder
    preprocessing.PolynomialFeatures
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler

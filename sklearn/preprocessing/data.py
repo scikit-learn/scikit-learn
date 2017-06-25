@@ -1955,6 +1955,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       matrix indicating the presence of a class label.
     sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
       and n_classes-1.
+    sklearn.preprocessing.UnaryEncoder: encodes ordinal integer features
+      using a unary scheme.
     """
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):
@@ -2881,14 +2883,14 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
     The input to this transformer should be a matrix of integers, denoting
     the values taken on by ordinal (discrete) features. The output will be
-    a matrix where all the columns with index lower than feature value will
-    be active. It is assumed that input features take on values in the range
+    a sparse matrix where each column corresponds to one possible value of one
+    feature. It is assumed that input features take on values in the range
     [0, n_values).
 
-    This encoding is needed for feeding ordinal data to many scikit-learn
+    This encoding is needed for feeding ordinal features to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
 
-    Read more in the :ref:`User Guide <FIXME>`.
+    Read more in the :ref:`User Guide <preprocessing_ordinal_features>`.
 
     Parameters
     ----------
@@ -2923,10 +2925,16 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
+    active_features_ : array
+        Indices for active features, meaning values that actually occur
+        in the training set. All featurs are available when n_values is
+        ``'auto'``.
+
     feature_indices_ : array of shape (n_features,)
         Indices to feature ranges.
         Feature ``i`` in the original data is mapped to features
         from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
+        (and then potentially masked by `active_features_` afterwards)
 
     n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
@@ -2935,18 +2943,20 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     --------
     Given a dataset with three features and four samples, we let the encoder
     find the maximum value per feature and transform the data to a binary
-    Ordinal encoding.
+    unary encoding.
 
     >>> from sklearn.preprocessing import UnaryEncoder
     >>> enc = UnaryEncoder()
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
     UnaryEncoder(dtype=<... 'numpy.float64'>, handle_unknown='error',
-            n_values='auto', ordinal_features='all', sparse=True)
+           n_values='auto', ordinal_features='all', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
     array([0, 1, 3, 6])
+    >>> enc.active_features_
+    array([0, 1, 2, 3, 4, 5])
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
 
@@ -2956,6 +2966,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : performs an approximate Ordinal
       encoding of dictionary items or strings.
+    sklearn.preprocessing.OneHotEncoder: encodes categorical integer features
+      using a one-hot aka one-of-K scheme.
     sklearn.preprocessing.LabelBinarizer : binarizes labels in a one-vs-all
       fashion.
     sklearn.preprocessing.MultiLabelBinarizer : transforms between iterable of
@@ -3024,6 +3036,10 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
+
+        if (isinstance(self.n_values, six.string_types) and
+                self.n_values == 'auto'):
+            self.active_features_ = np.arange(out.shape[1])
 
         return out if self.sparse else out.toarray()
 

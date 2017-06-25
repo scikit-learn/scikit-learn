@@ -537,6 +537,53 @@ columns for this feature will be all zeros
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as scalars.
 
+.. _preprocessing_ordinal_features:
+
+Encoding ordinal features
+=============================
+Often categorical features have a clear ordering. For example a person could have features
+``["short", "tall"]``,
+``["low income", "medium income", "high income"]``,
+``["elementary school graduate", "high school graduate", "some college", "college graduate"]``.
+Even though these features can be ordered, we shouldn't necessarily assign scores to them,
+as the difference between categories one and two is not the same as the difference
+between categories two and three.
+
+One possibility to convert these ordinal features to features that can be used
+with scikit-learn estimators is to use a unary encoding, which is
+implemented in :class:`UnaryEncoder`.  This estimator transforms each
+ordinal feature with ``m`` possible values into ``m - 1`` binary features, where the ith
+feature is active if x > i (for i = 0, ... k - 1).
+
+Continuing the example above::
+
+    >>> enc = preprocessing.UnaryEncoder()
+    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
+    UnaryEncoder(dtype=<... 'numpy.float64'>, handle_unknown='error',
+           n_values='auto', ordinal_features='all', sparse=True)
+    >>> enc.transform([[0, 1, 1]]).toarray()
+    array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
+
+By default, how many values each feature can take is inferred automatically from the dataset.
+It is possible to specify this explicitly using the parameter ``n_values``.
+There are two genders, three possible continents and four web browsers in our
+dataset.
+Then we fit the estimator, and transform a data point.
+In the result, the first number encodes the height, the next two numbers the income level,
+and the next set of three numbers the education level.
+
+Note that, if there is a possibilty that the training data might have missing categorical
+features, one has to explicitly set ``n_values``. For example,
+
+    >>> enc = preprocessing.UnaryEncoder(n_values=[2, 3, 4])
+    >>> # Note that there are missing categorical values for the 2nd and 3rd
+    >>> # features
+    >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
+    UnaryEncoder(dtype=<... 'numpy.float64'>, handle_unknown='error',
+           n_values=[2, 3, 4], ordinal_features='all', sparse=True)
+    >>> enc.transform([[1, 1, 2]]).toarray()
+    array([[ 1.,  1.,  0.,  1.,  1.,  0.]])
+
 .. _imputation:
 
 Imputation of missing values
