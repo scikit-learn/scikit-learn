@@ -97,7 +97,7 @@ def test_pickle():
                        " after pickling (classification).")
 
 
-def test_shrinkage():
+def test_shrinkage_correct():
     # Ensure that the shrinking is correct.
     # The corrent result is calculated by R (pamr),
     # which is implemented by the author of the original paper.
