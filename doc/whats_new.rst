@@ -273,7 +273,7 @@ Bug fixes
      ``max_iter`` if finds a large inlier group early. :issue:`8251` by :user:`aivision2020`.
 
    - Fixed a bug where :class:`sklearn.naive_bayes.MultinomialNB` and :class:`sklearn.naive_bayes.BernoulliNB`
-     failed when `alpha=0`. :issue:`5814` by :user:`Yichuan Liu <yl565>` and 
+     failed when `alpha=0`. :issue:`5814` by :user:`Yichuan Liu <yl565>` and
      :user:`Herilalaina Rakotoarison <herilalaina>`.
 
    - Fixed a bug where :func:`datasets.make_moons` gives an
@@ -425,6 +425,11 @@ Bug fixes
      hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
      by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
 
+  -  Fixed a bug in :class:`gaussian_process.GaussianProcessRegressor`
+     when the standard deviation and covariance predicted without fit
+     would fail with a unmeaningful error by default.
+     :issue:`6573` by :user:`Quazi Marufur Rahman <qmaruf>` and
+     `Manoj Kumar`_.
 
    - Fixed the implementation of `explained_variance_`
      in :class:`decomposition.PCA`,
