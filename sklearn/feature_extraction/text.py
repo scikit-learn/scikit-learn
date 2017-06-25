@@ -306,7 +306,7 @@ class VectorizerMixin(object):
             raise ValueError("Vocabulary is empty")
 
 
-class HashingVectorizer(BaseEstimator, VectorizerMixin):
+class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -522,9 +522,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
         return X
-
-    # Alias transform to fit_transform for convenience
-    fit_transform = transform
 
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
