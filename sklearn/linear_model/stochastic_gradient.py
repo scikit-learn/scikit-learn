@@ -78,8 +78,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         elif tol is None and max_iter is None:
             warnings.warn(
                 "max_iter and tol parameters have been added in %s in 0.19. If"
-                "both are left unset, they default to max_iter=5 and tol=None."
-                " If tol is not None, max_iter defaults to max_iter=1000. "
+                " both are left unset, they default to max_iter=5 and tol=None"
+                ". If tol is not None, max_iter defaults to max_iter=1000. "
                 "From 0.21, default max_iter will be 1000, "
                 "and default tol will be 1e-3." % type(self), FutureWarning)
             # Before 0.19, default was n_iter=5
