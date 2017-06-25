@@ -345,7 +345,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                 raise ValueError("strategy='knn' does not support sparse "
                                  "matrix input yet.")
 
-    def _dense_fit(self, X, strategy, missing_values, axis, Y=None):
+    def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
         X = check_array(X, force_all_finite=False)
         mask = _get_mask(X, missing_values)
@@ -425,33 +425,32 @@ class Imputer(BaseEstimator, TransformerMixin):
 
             # Check for excessive missingness in rows
             bad_rows = row_missing_sum > (mask.shape[1] * self.row_max_missing)
-            Xbad = X[bad_rows, :]
+            X_bad = X[bad_rows, :]
 
             if np.any(bad_rows):
                 X = X[~bad_rows, :]
                 mask = _get_mask(X, missing_values)
 
-            #Get the k nearest neighbors
-            if Y is None:
-                knnrows_index, knncols_index = _get_knn(X,
-                                                        n_neighbors=self.n_neighbors)
-
-            else:
+            #Get the k nearest neighbors and impute
+            if hasattr(self, 'statistics_'):
+                Y = self.statistics_.data
                 knnrows_index, knncols_index = _get_knn(X,
                                                         n_neighbors=self.n_neighbors, Y=Y)
-            X[mask] = np.nan
-            if Y is None:
-                imputed = np.nanmean((X[(knnrows_index, knncols_index)]).
+                X[mask] = np.nan
+                imputed = np.nanmean((Y[(knnrows_index, knncols_index)]).
                                      reshape((-1, self.n_neighbors)), axis=1)
             else:
-                imputed = np.nanmean((Y[(knnrows_index, knncols_index)]).
+                knnrows_index, knncols_index = _get_knn(X,
+                                                        n_neighbors=self.n_neighbors)
+                X[mask] = np.nan
+                imputed = np.nanmean((X[(knnrows_index, knncols_index)]).
                                      reshape((-1, self.n_neighbors)), axis=1)
             X[mask] = imputed
 
             #Merge bad rows to X and mean impute any leftover missing
             if np.any(bad_rows):
                 X_merged = np.empty((n_rows, n_cols))
-                X_merged[bad_rows, :] = Xbad
+                X_merged[bad_rows, :] = X_bad
                 X_merged[~bad_rows, :] = X
                 X = X_merged
 
@@ -556,8 +555,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                     X = self._dense_fit(X,
                                                        self.strategy,
                                                        self.missing_values,
-                                                       self.axis,
-                                                       Y=statistics.data).data
+                                                       self.axis).data
 
                 if self.axis == 1:
                     X = X.transpose()
