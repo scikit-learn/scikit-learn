@@ -411,6 +411,9 @@ Bug fixes
    - Fixed an integer overflow bug in :func:`metrics.confusion_matrix` and
      hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
      by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
+	 
+   - Fixed the shrinkage implementation in :class:`neighbors.NearestCentroid`.
+     :issue:`9219` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 
 API changes summary
