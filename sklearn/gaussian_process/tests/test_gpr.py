@@ -14,7 +14,8 @@ from sklearn.gaussian_process.kernels import DotProduct
 
 from sklearn.utils.testing \
     import (assert_true, assert_greater, assert_array_less,
-            assert_almost_equal, assert_equal, assert_raise_message)
+            assert_almost_equal, assert_equal, assert_raise_message,
+            assert_array_almost_equal)
 
 
 def f(x):
@@ -327,3 +328,19 @@ def test_duplicate_input():
 
         assert_almost_equal(y_pred_equal, y_pred_similar)
         assert_almost_equal(y_std_equal, y_std_similar)
+
+
+def test_no_fit_default_predict():
+    # Test that GPR predictions without fit does not break by default.
+    default_kernel = (C(1.0, constant_value_bounds="fixed") *
+                      RBF(1.0, length_scale_bounds="fixed"))
+    gpr1 = GaussianProcessRegressor()
+    _, y_std1 = gpr1.predict(X, return_std=True)
+    _, y_cov1 = gpr1.predict(X, return_cov=True)
+
+    gpr2 = GaussianProcessRegressor(kernel=default_kernel)
+    _, y_std2 = gpr2.predict(X, return_std=True)
+    _, y_cov2 = gpr2.predict(X, return_cov=True)
+
+    assert_array_almost_equal(y_std1, y_std2)
+    assert_array_almost_equal(y_cov1, y_cov2)
