@@ -66,11 +66,53 @@ def test_predict_proba():
 def test_alpha_deprecation():
     X, y = make_classification(n_samples=100)
     y[::3] = -1
-    # Using kernel=knn as rbf appears to result in exp underflow
-    lp_default = label_propagation.LabelPropagation(kernel='knn')
+
+    lp_default = label_propagation.LabelPropagation(kernel='rbf', gamma=0.1)
     lp_default_y = assert_no_warnings(lp_default.fit, X, y).transduction_
 
-    lp_0 = label_propagation.LabelPropagation(alpha=0, kernel='knn')
+    lp_0 = label_propagation.LabelPropagation(alpha=0, kernel='rbf', gamma=0.1)
     lp_0_y = assert_warns(DeprecationWarning, lp_0.fit, X, y).transduction_
 
     assert_array_equal(lp_default_y, lp_0_y)
+
+
+def test_label_spreading():
+    n_classes = 2
+    X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
+    y[::3] = -1
+    clf = label_propagation.LabelSpreading().fit(X, y)
+    # adopting notation from Zhou et al (2004):
+    S = clf._build_graph()
+    Y = np.zeros((len(y), n_classes + 1))
+    Y[np.arange(len(y)), y] = 1
+    Y = Y[:, :-1]
+    for alpha in [0.1, 0.3, 0.5, 0.7, 0.9]:
+        expected = np.dot(np.linalg.inv(np.eye(len(S)) - alpha * S), Y)
+        expected /= expected.sum(axis=1)[:, np.newaxis]
+        clf = label_propagation.LabelSpreading(max_iter=10000, alpha=alpha)
+        clf.fit(X, y)
+        assert_array_almost_equal(expected, clf.label_distributions_, 4)
+
+
+def test_label_propagation():
+    n_classes = 2
+    X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
+    y[::3] = -1
+    Y = np.zeros((len(y), n_classes + 1))
+    Y[np.arange(len(y)), y] = 1
+    unlabelled_idx = Y[:, (-1,)].nonzero()[0]
+    labelled_idx = (Y[:, (-1,)] == 0).nonzero()[0]
+
+    clf = label_propagation.LabelPropagation(max_iter=10000, gamma=0.1).fit(X, y)
+    T_bar = clf._build_graph()
+    Tuu = T_bar[np.meshgrid(unlabelled_idx, unlabelled_idx, indexing='ij')]
+    Tul = T_bar[np.meshgrid(unlabelled_idx, labelled_idx, indexing='ij')]
+    Y = Y[:, :-1]
+    Y_l = Y[labelled_idx, :]
+    Y_u = np.dot(np.dot(np.linalg.inv(np.eye(Tuu.shape[0]) - Tuu), Tul), Y_l)
+
+    expected = Y.copy()
+    expected[unlabelled_idx, :] = Y_u
+    expected /= expected.sum(axis=1)[:, np.newaxis]
+
+    assert_array_almost_equal(expected, clf.label_distributions_, 4)

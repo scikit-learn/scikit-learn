@@ -241,15 +241,16 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         n_samples, n_classes = len(y), len(classes)
 
         alpha = self.alpha
-        if alpha is None:
-            alpha = 0
         y = np.asarray(y)
         unlabeled = y == -1
-        # clamp_weights = np.ones((n_samples, 1))
-        # clamp_weights[~unlabeled, 0] = alpha
 
-        # TODO TESTING
-        clamp_weights = alpha * np.ones((n_samples, 1))
+        if alpha is None:
+            # LabelPropagation
+            clamp_weights = np.ones((n_samples, 1))
+            clamp_weights[~unlabeled, 0] = 0.0
+        else:
+            # LabelSpreading
+            clamp_weights = alpha * np.ones((n_samples, 1))
 
         # initialize distributions
         self.label_distributions_ = np.zeros((n_samples, n_classes))
@@ -257,10 +258,12 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             self.label_distributions_[y == label, classes == label] = 1
 
         y_static = np.copy(self.label_distributions_)
-        if alpha > 0.:
+        if alpha is None:
+            # LabelPropagation
+            y_static[unlabeled] = 0
+        else:
+            # LabelSpreading
             y_static *= 1 - alpha
-        # TODO TESTING
-        # y_static[unlabeled] = 0
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
@@ -272,6 +275,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             l_previous = self.label_distributions_
             self.label_distributions_ = safe_sparse_dot(
                 graph_matrix, self.label_distributions_)
+
             # clamp
             self.label_distributions_ = np.multiply(
                 clamp_weights, self.label_distributions_) + y_static
@@ -279,6 +283,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         self.label_distributions_ /= normalizer
+
         # set the transduction item
         transduction = self.classes_[np.argmax(self.label_distributions_,
                                                axis=1)]
@@ -389,6 +394,7 @@ class LabelPropagation(BaseLabelPropagation):
                 "alpha is deprecated since 0.19 and will be removed in 0.21.",
                 DeprecationWarning
             )
+            self.alpha = None
         return super(LabelPropagation, self).fit(X, y)
 
 
