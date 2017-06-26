@@ -1521,6 +1521,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              'equal to the number of classes = %d' %
                              (n_test, n_classes))
 
+        # Find the sorted list of instances for each class:
+        # (np.unique above performs a sort, so code is O(n logn) already)
+        class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
+                                 np.cumsum(class_counts)[:-1])
+
         rng = check_random_state(self.random_state)
 
         for _ in range(self.n_splits):
@@ -1533,12 +1538,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             train = []
             test = []
 
-            for i, class_i in enumerate(classes):
+            for i in range(n_classes):
                 permutation = rng.permutation(class_counts[i])
-                perm_indices_class_i = np.where((y == class_i))[0][permutation]
+                perm_indices_class_i = class_indices[i].take(permutation,
+                                                             mode='clip')
 
                 train.extend(perm_indices_class_i[:n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
+
             train = rng.permutation(train)
             test = rng.permutation(test)
 
