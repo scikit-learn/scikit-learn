@@ -347,15 +347,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             inverse transformation.
 
         threshold : float or None
-            Threshold used in the binary and multi-label cases.
-
-            Use 0 when:
-                - Y contains the output of decision_function (classifier)
-            Use 0.5 when:
-                - Y contains the output of predict_proba
-
-            If None, the threshold is assumed to be half way between
-            neg_label and pos_label.
+            Threshold used in the binary and multi-label cases.  Use 0 when,
+            ``Y`` contains the output of decision_function (classifier).  Use
+            0.5 when, ``Y`` contains the output of predict_proba.  If ``None``,
+            the threshold is assumed to be half way between neg_label and
+            pos_label.
 
         Returns
         -------
@@ -368,6 +364,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         greatest value. Typically, this allows to use the output of a
         linear model's decision_function method directly as the input
         of inverse_transform.
+
         """
         check_is_fitted(self, 'classes_')
 

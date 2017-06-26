@@ -1,5 +1,3 @@
-
-
 About us
 ========
 
@@ -169,13 +167,13 @@ for code sprints, as well as towards the organization budget of the project [#f1
     <input type="hidden" name="cmd" value="_s-xclick">
     <input type="hidden" name="hosted_button_id" value="74EYUMF3FTSW8">
     <input type="image"
-    src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
+    src="http://www.pngall.com/wp-content/uploads/2016/05/PayPal-Donate-Button-High-Quality-PNG.png"
     border="0" name="submit" alt="PayPal - The safer, easier way to pay
     online!" style="position: relative;
     left: 40%;">
-    <img alt="" border="0"
+    <!-- <img alt="" border="0"
     src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1"
-    height="1">
+    height="1"> -->
     </form>
     </br>
 
@@ -221,7 +219,7 @@ The 2013 Paris international sprint
    :width: 120pt
    :target: http://www.frs-fnrs.be/
 
-.. figure:: http://sites.uclouvain.be/dysco/pmwiki/uploads/Main/dysco.gif
+.. figure:: images/dysco.png
    :width: 120pt
    :target: http://sites.uclouvain.be/dysco/
 
