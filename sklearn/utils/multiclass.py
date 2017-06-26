@@ -247,7 +247,10 @@ def type_of_target(y):
         return 'multilabel-indicator'
 
     try:
-        y = np.asarray(y)
+        if not issparse(y):
+            y = np.asarray(y)
+        else:
+            y = y.A
     except ValueError:
         # Known to fail in numpy 1.3 for array of arrays
         return 'unknown'

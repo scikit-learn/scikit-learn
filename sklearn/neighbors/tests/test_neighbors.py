@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
@@ -539,6 +540,27 @@ def check_classifier_sparse_multilabel_y(name):
 def test_classifiers_sparse_multilabel_y():
     for name in CLASSIFIERS:
         yield check_classifier_sparse_multilabel_y, name
+
+
+def test_sparse_multioutput_error_raise():
+    # Test k-NN classifier on multioutput data
+    rng = check_random_state(0)
+    n_features = 5
+    n_samples = 50
+    n_output = 3
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.randint(0, 3, (n_samples, n_output))
+
+    y_sparse = csc_matrix(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y_sparse,
+                                                        random_state=0)
+
+    knn_mo = neighbors.KNeighborsClassifier(weights=None,
+                                            algorithm='auto')
+    # print(y_sparse.A)
+    msg = 'Sparse y is only supported for multilabel'
+    assert_raise_message(ValueError, msg, knn_mo.fit, X_train, y_train)
 
 
 def test_KNeighborsClassifier_multioutput():
