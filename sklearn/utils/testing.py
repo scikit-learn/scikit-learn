@@ -799,13 +799,16 @@ else:
             return out[0]
 
 
-def get_func_name(func):
+def get_func_name(func, class_name=None):
     """Get function full name
 
     Parameters
     ----------
     func : callable
         The function object.
+    class_name : string, optional (default: None)
+       If ``func`` is a class method and the class name is known specify
+       class_name for the error message.
 
     Returns
     -------
@@ -816,13 +819,16 @@ def get_func_name(func):
     module = inspect.getmodule(func)
     if module:
         parts.append(module.__name__)
-    if hasattr(func, 'im_class'):
+    if class_name is not None:
+        parts.append(class_name)
+    elif hasattr(func, 'im_class'):
         parts.append(func.im_class.__name__)
+
     parts.append(func.__name__)
     return '.'.join(parts)
 
 
-def check_parameters_match(func, doc=None, ignore=None, debug=False):
+def check_parameters_match(func, doc=None, ignore=None, class_name=None):
     """Helper to check docstring
 
     Parameters
@@ -833,8 +839,9 @@ def check_parameters_match(func, doc=None, ignore=None, debug=False):
         Docstring if it is passed manually to the test.
     ignore : None | list
         Parameters to ignore.
-    debug : bool, optional (default: False)
-        Whether to print debug messages
+    class_name : string, optional (default: None)
+       If ``func`` is a class method and the class name is known specify
+       class_name for the error message.
 
     Returns
     -------
@@ -843,9 +850,9 @@ def check_parameters_match(func, doc=None, ignore=None, debug=False):
     """
     from numpydoc import docscrape
     incorrect = []
-    name_ = get_func_name(func)
-    if (not name_.startswith('sklearn.') or
-            name_.startswith('sklearn.externals')):
+    func_name = get_func_name(func, class_name=class_name)
+    if (not func_name.startswith('sklearn.') or
+            func_name.startswith('sklearn.externals')):
         return incorrect
     if inspect.isdatadescriptor(func):
         return incorrect
@@ -863,10 +870,10 @@ def check_parameters_match(func, doc=None, ignore=None, debug=False):
             try:
                 doc = docscrape.FunctionDoc(func)
             except Exception as exp:
-                incorrect += [name_ + ' parsing error: ' + str(exp)]
+                incorrect += [func_name + ' parsing error: ' + str(exp)]
                 return incorrect
         if len(w):
-            raise RuntimeError('Error for %s:\n%s' % (name_, w[0]))
+            raise RuntimeError('Error for %s:\n%s' % (func_name, w[0]))
     # check set
     param_names = [name for name, _, _ in doc['Parameters']]
 
@@ -882,11 +889,9 @@ def check_parameters_match(func, doc=None, ignore=None, debug=False):
     if len(param_names) != len(args):
         bad = str(sorted(list(set(param_names) - set(args)) +
                          list(set(args) - set(param_names))))
-        incorrect += [name_ + ' arg mismatch: ' + bad]
+        incorrect += [func_name + ' arg mismatch: ' + bad]
     else:
-        if debug:
-            print(param_names, args)
         for n1, n2 in zip(param_names, args):
             if n1 != n2:
-                incorrect += [name_ + ' ' + n1 + ' != ' + n2]
+                incorrect += [func_name + ' ' + n1 + ' != ' + n2]
     return incorrect

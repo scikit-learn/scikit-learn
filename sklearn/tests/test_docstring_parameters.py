@@ -111,7 +111,8 @@ def test_docstring_parameters():
                 raise RuntimeError('Error for __init__ of %s in %s:\n%s'
                                    % (cls, name, w[0]))
             if hasattr(cls, '__init__'):
-                this_incorrect += check_parameters_match(cls.__init__, cdoc)
+                this_incorrect += check_parameters_match(cls.__init__, cdoc,
+                                                         class_name=cname)
 
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
@@ -124,19 +125,13 @@ def test_docstring_parameters():
                     if ('y' in sig.parameters and
                             sig.parameters['y'].default is None):
                         param_ignore = ['y']  # ignore y for fit and score
-                this_incorrect += check_parameters_match(method,
-                                                         ignore=param_ignore)
-                if cname == "Pipeline":
-                    print(method)
-                    print(method_name)
-                    print(param_ignore)
-                    print('result: ',
-                          check_parameters_match(method,
-                                                 ignore=param_ignore,
-                                                 debug=True))
+                result = check_parameters_match(method, ignore=param_ignore,
+                                                class_name=cname)
+                this_incorrect += result
 
             if hasattr(cls, '__call__'):
-                this_incorrect += check_parameters_match(cls.__call__)
+                this_incorrect += check_parameters_match(cls.__call__,
+                                                         class_name=cname)
 
             # Append class name
             incorrect += [c + ' (' + cname + ')' for c in this_incorrect]
