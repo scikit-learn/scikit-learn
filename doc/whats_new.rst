@@ -430,7 +430,10 @@ Bug fixes
      in :class:`decomposition.PCA`,
      :class:`decomposition.RandomizedPCA` and
      :class:`decomposition.IncrementalPCA`.
-     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
+
+   - Fixed computation of `n_features_to_compute` for edge case with tied
+     CV scores in :class:`RFECV` by `Nick Hoh <nickypie>`_.
 
 API changes summary
 -------------------
