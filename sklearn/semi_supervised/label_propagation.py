@@ -484,6 +484,9 @@ class LabelSpreading(BaseLabelPropagation):
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
                  max_iter=30, tol=1e-3, n_jobs=1):
 
+        if alpha <= 0.0 or alpha >= 1.0:
+            raise ValueError('alpha must be inside the open interval (0, 1)')
+
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
                                              n_neighbors=n_neighbors,
