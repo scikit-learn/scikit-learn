@@ -79,6 +79,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     named_estimators_ : Bunch object, a dictionary with attribute access
         Attribute to access any fitted sub-estimators by name.
 
+        .. versionadded:: 0.19
+
     classes_ : array-like, shape = [n_predictions]
         The classes labels.
 
