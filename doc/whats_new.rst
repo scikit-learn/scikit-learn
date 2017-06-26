@@ -19,6 +19,7 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
    * :class:`sklearn.ensemble.IsolationForest` (bug fix)
+   * :class:`sklearn.neighbors.NearestCentroid` (bug fix)
 
 Details are listed in the changelog below.
 
