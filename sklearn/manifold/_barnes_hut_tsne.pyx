@@ -45,7 +45,7 @@ cdef float compute_gradient(float[:] val_P,
                             np.int64_t[:] neighbors,
                             np.int64_t[:] indptr,
                             float[:,:] tot_force,
-                            quad_tree.QuadTree qt,
+                            quad_tree._QuadTree qt,
                             float theta,
                             float dof,
                             long start,
@@ -146,7 +146,7 @@ cdef float compute_gradient_positive(float[:] val_P,
 
 cdef void compute_gradient_negative(float[:,:] pos_reference,
                                     float* neg_f,
-                                    quad_tree.QuadTree qt,
+                                    quad_tree._QuadTree qt,
                                     float* sum_Q,
                                     float dof,
                                     float theta,
@@ -249,7 +249,7 @@ def gradient(float[:] val_P,
     assert n == indptr.shape[0] - 1, m
     if verbose > 10:
         printf("[t-SNE] Initializing tree of n_dimensions %i\n", n_dimensions)
-    cdef quad_tree.QuadTree qt = quad_tree.QuadTree(pos_output.shape[1], 0)
+    cdef quad_tree._QuadTree qt = quad_tree._QuadTree(pos_output.shape[1], 0)
     if verbose > 10:
         printf("[t-SNE] Inserting %li points\n", pos_output.shape[0])
     qt.build_tree(pos_output)

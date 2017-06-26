@@ -51,7 +51,7 @@ cdef struct Cell:
     DTYPE_t[3] max_bounds      # Superior boundaries of this cell (exclusive)
 
 
-cdef class QuadTree:
+cdef class _QuadTree:
     # The QuadTree object is a quad tree structure constructed by inserting
     # recursively points in the tree and splitting cells in 4 so that each
     # leaf cell contains at most one point.
@@ -73,9 +73,6 @@ cdef class QuadTree:
                           SIZE_t cell_id=*) nogil except -1
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
-
-    # cdef np.ndarray _get_value_ndarray(self)
-    # cdef np.ndarray _get_node_ndarray(self)
 
     cdef SIZE_t insert_point_in_new_child(self, DTYPE_t[3] point, Cell* cell,
                                           SIZE_t point_index, SIZE_t size=*) nogil

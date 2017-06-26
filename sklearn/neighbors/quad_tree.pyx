@@ -60,8 +60,17 @@ CELL_DTYPE = np.dtype({
 assert CELL_DTYPE.itemsize == sizeof(Cell)
 
 
-cdef class QuadTree:
+cdef class _QuadTree:
     """Array-based representation of a QuadTree.
+
+    This class is currently working for indexing 2D data (regular QuadTree) and
+    for indexing 3D data (OcTree). It is planned to split the 2 implementation
+    using `Cython.Tempita` to save some memory for QuadTree.
+
+    Note that this code is currently internally used only by the Barnes-Hut
+    method in `sklearn.manifold.TSNE`. It is planned to be refactored and
+    generalized in the future to be compatible with nearest neighbors API of
+    `sklearn.neighbors` with 2D and 3D data.
     """
     def __cinit__(self, int n_dimensions, int verbose):
         """Constructor."""
@@ -119,7 +128,7 @@ cdef class QuadTree:
     cdef int insert_point(self, DTYPE_t[3] point, SIZE_t point_index,
                           SIZE_t cell_id=0) nogil except -1:
         """Insert a point in the QuadTree."""
-        cdef int i
+        cdef int ax
         cdef DTYPE_t n_frac
         cdef SIZE_t selected_child
         cdef Cell* cell = &self.cells[cell_id]
@@ -131,7 +140,6 @@ cdef class QuadTree:
         # Assert that the point is in the right range
         if DEBUGFLAG:
             self.check_point_in_cell(point, cell)
-
 
         # If the cell is an empty leaf, insert the point in it
         if cell.cumulative_size == 0:
@@ -147,9 +155,10 @@ cdef class QuadTree:
         # If the cell is not a leaf, update cell internals and
         # recurse in selected child
         if not cell.is_leaf:
-            for i in range(self.n_dimensions):
+            for ax in range(self.n_dimensions):
                 # barycenter update using a weighted mean
-                cell.barycenter[i] = (n_point * cell.barycenter[i] + point[i]) / (n_point + 1)
+                cell.barycenter[ax] = (
+                    n_point * cell.barycenter[ax] + point[ax]) / (n_point + 1)
 
             # Increase the size of the subtree starting from this cell
             cell.cumulative_size += 1
@@ -175,12 +184,14 @@ cdef class QuadTree:
 
         # In a leaf, the barycenter correspond to the only point included
         # in it.
-        self.insert_point_in_new_child(cell.barycenter, cell, cell.point_index, cell.cumulative_size)
+        self.insert_point_in_new_child(cell.barycenter, cell, cell.point_index,
+                                       cell.cumulative_size)
         return self.insert_point(point, point_index, cell_id)
 
     # XXX: This operation is not Thread safe
     cdef SIZE_t insert_point_in_new_child(self, DTYPE_t[3] point, Cell* cell,
-                                          SIZE_t point_index, SIZE_t size=1) nogil:
+                                          SIZE_t point_index, SIZE_t size=1
+                                          ) nogil:
         """Create a child of cell which will contain point."""
 
         # Local variable definition
@@ -243,7 +254,8 @@ cdef class QuadTree:
             # Assert that the point is in the right range
             self.check_point_in_cell(point, child)
         if self.verbose >= 10:
-            printf("[QuadTree] inserted point %li in new child %li\n", point_index, cell_id)
+            printf("[QuadTree] inserted point %li in new child %li\n",
+                   point_index, cell_id)
 
         return cell_id
 
@@ -302,7 +314,7 @@ cdef class QuadTree:
 
     def plot_tree(self):
         """Plot the tree with cell boundaries and the points inserted in it."""
-        self.check_coherence()
+        self._check_coherence()
         import matplotlib.pyplot as plt
 
         plt.figure()
@@ -317,8 +329,10 @@ cdef class QuadTree:
 
         # Print bounding box of the Tree
         root = self.cells[0]
-        plt.vlines([root.min_bounds[0], root.max_bounds[0]], root.min_bounds[1], root.max_bounds[1])
-        plt.hlines([root.min_bounds[1], root.max_bounds[1]], root.min_bounds[0], root.max_bounds[0])
+        plt.vlines([root.min_bounds[0], root.max_bounds[0]], root.min_bounds[1],
+                    root.max_bounds[1])
+        plt.hlines([root.min_bounds[1], root.max_bounds[1]], root.min_bounds[0],
+                    root.max_bounds[0])
         plt.show()
 
     cdef int check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
@@ -337,17 +351,17 @@ cdef class QuadTree:
             if (cell.min_bounds[i] > point[i] or
                     cell.max_bounds[i] <= point[i]):
                 with gil:
-                    msg = "[QuadTree] InsertionError: point out of cell boundary.\n"
-                    msg += "Axis %li: cell [%f, %f]; point %f\n"
+                    msg = "[QuadTree] InsertionError: point out of cell "
+                    msg += "boundary.\nAxis %li: cell [%f, %f]; point %f\n"
 
                     msg %= i, cell.min_bounds[i],  cell.max_bounds[i], point[i]
                     raise ValueError(msg)
 
-    def check_coherence(self):
+    def _check_coherence(self):
         """Check the coherence of the cells of the tree.
 
-        Check that the info stored in each cell are compatible with the info
-        stored in descendent and sibling cells. Raise a RuntimeError if this
+        Check that the info stored in each cell is compatible with the info
+        stored in descendent and sibling cells. Raise a ValueError if this
         fails.
         """
         for cell in self.cells[:self.cell_count]:
@@ -367,7 +381,7 @@ cdef class QuadTree:
                         assert child.cell_id == child_id, (
                             "Cell id not correctly initiliazed.")
                 if n_points != cell.cumulative_size:
-                    raise RuntimeError(
+                    raise ValueError(
                         "Cell {} is incoherent. Size={} but found {} points "
                         "in children. ({})"
                         .format(cell.cell_id, cell.cumulative_size,
@@ -376,13 +390,14 @@ cdef class QuadTree:
         # Make sure that the number of point in the tree correspond to the
         # cummulative size in root cell.
         if self.n_points != self.cells[0].cumulative_size:
-            raise RuntimeError(
+            raise ValueError(
                 "QuadTree is incoherent. Size={} but found {} points "
                 "in children."
                 .format(self.n_points, self.cells[0].cumulative_size))
 
-    cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results, SIZE_t cell_id=0,
-                        long idx=0, float squared_theta=.5) nogil:
+    cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results,
+                        SIZE_t cell_id=0, long idx=0, float squared_theta=.5
+                        ) nogil:
         """Summarize the tree compared to a query point.
 
         Input arguments
@@ -401,11 +416,13 @@ cdef class QuadTree:
         result: array (n_samples * (n_dimensions+2))
             result will contain a summary of the tree information compared to
             the query point:
-            - results[idx:idx+n_dimensions] contains the delta between the summary
-                cell idx and the query point.
-            - result[idx+n_dimensions+1] contains the squared euclidean distance
-                to the summary cell idx.
-            - result[idx+n_dimensions+2] contains the size of the summary cell idx.
+            - results[idx:idx+n_dimensions] contains the coordinate-wise
+                difference between the query point and the summary cell idx.
+                This is usefull in t-SNE to compute the negative forces.
+            - result[idx+n_dimensions+1] contains the squared euclidean
+                distance to the summary cell idx.
+            - result[idx+n_dimensions+2] contains the number of point of the
+                tree contained in the summary cell idx.
 
         Return
         ------
@@ -475,7 +492,8 @@ cdef class QuadTree:
         if cell.is_leaf:
             if self.is_duplicate(cell.barycenter, point):
                 if self.verbose > 99:
-                    printf("[QuadTree] Found point in cell: %li\n", cell.cell_id)
+                    printf("[QuadTree] Found point in cell: %li\n",
+                           cell.cell_id)
                 return cell_id
             with gil:
                 raise ValueError("Query point not in the Tree.")
@@ -492,7 +510,7 @@ cdef class QuadTree:
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
-        return (QuadTree, (self.n_dimensions, self.verbose),
+        return (_QuadTree, (self.n_dimensions, self.verbose),
                            self.__getstate__())
 
     def __getstate__(self):

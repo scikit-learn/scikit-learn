@@ -1,6 +1,6 @@
 import pickle
 import numpy as np
-from sklearn.neighbors.quad_tree import QuadTree
+from sklearn.neighbors.quad_tree import _QuadTree
 from sklearn.utils import check_random_state
 
 
@@ -34,9 +34,9 @@ def test_quadtree_similar_point():
               dtype=np.float32))
 
     for X in Xs:
-        tree = QuadTree(n_dimensions=2, verbose=0)
+        tree = _QuadTree(n_dimensions=2, verbose=0)
         tree.build_tree(X)
-        tree.check_coherence()
+        tree._check_coherence()
 
 
 def test_quad_tree_pickle():
@@ -45,7 +45,7 @@ def test_quad_tree_pickle():
     for n_dimensions in (2, 3):
         X = rng.random_sample((10, n_dimensions))
 
-        tree = QuadTree(n_dimensions=n_dimensions, verbose=0)
+        tree = _QuadTree(n_dimensions=n_dimensions, verbose=0)
         tree.build_tree(X)
 
         def check_pickle_protocol(protocol):
@@ -68,7 +68,7 @@ def test_qt_insert_duplicate():
 
         X = rng.random_sample((10, n_dimensions))
         Xd = np.r_[X, X[:5]]
-        tree = QuadTree(n_dimensions=n_dimensions, verbose=0)
+        tree = _QuadTree(n_dimensions=n_dimensions, verbose=0)
         tree.build_tree(Xd)
 
         cumulative_size = tree.cumulative_size

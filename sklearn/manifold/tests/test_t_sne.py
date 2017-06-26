@@ -288,7 +288,7 @@ def test_fit_csr_matrix():
 def test_preserve_trustworthiness_approximately_with_precomputed_distances():
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
-    for i in range(5):
+    for i in range(3):
         X = random_state.randn(100, 2)
         D = squareform(pdist(X), "sqeuclidean")
         tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
