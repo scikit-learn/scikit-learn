@@ -276,6 +276,11 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             self.label_distributions_ = safe_sparse_dot(
                 graph_matrix, self.label_distributions_)
 
+            if alpha is None:
+                # LabelPropagation
+                normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
+                self.label_distributions_ /= normalizer
+
             # clamp
             self.label_distributions_ = np.multiply(
                 clamp_weights, self.label_distributions_) + y_static
