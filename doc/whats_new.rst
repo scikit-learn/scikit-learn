@@ -226,6 +226,9 @@ Enhancements
      :mod:`feature_extraction.text` by binding methods for loops and
      special-casing unigrams. :issue:`7567` by `Jaye Doepke <jtdoepke>`
 
+   - Speed improvements to :class:`model_selection.StratifiedShuffleSplit`.
+     :issue:`5991` by :user:`Arthur Mensch <arthurmensch>` and `Joel Nothman`_.
+
 Bug fixes
 .........
 
