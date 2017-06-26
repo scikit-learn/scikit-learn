@@ -34,7 +34,7 @@ matrix:
     # This environment tests the oldest supported anaconda env
     - env: DISTRIB="conda" PYTHON_VERSION="2.7" INSTALL_MKL="false"
            NUMPY_VERSION="1.8.2" SCIPY_VERSION="0.13.3" CYTHON_VERSION="0.23.5"
-           COVERAGE=true TEST_DOCSTRINGS="true"
+           COVERAGE=true
     # This environment tests the newest supported Anaconda release (4.4.0)
     # It also runs tests requiring Pandas.
     - env: DISTRIB="conda" PYTHON_VERSION="3.6.1" INSTALL_MKL="true"
