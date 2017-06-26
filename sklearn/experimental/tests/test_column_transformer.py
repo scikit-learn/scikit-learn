@@ -5,6 +5,7 @@ Test the ColumnTransformer.
 import numpy as np
 from scipy import sparse
 
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
@@ -16,8 +17,9 @@ from sklearn.utils.testing import SkipTest
 
 from sklearn.base import BaseEstimator
 from sklearn.experimental import ColumnTransformer, make_column_transformer
-
+from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import StandardScaler, Normalizer
+from sklearn.feature_extraction import DictVectorizer
 
 
 class Trans(BaseEstimator):
@@ -347,3 +349,40 @@ def test_column_transformer_cloning():
     ct.fit_transform(X_array)
     assert_false(hasattr(ct.transformers[0][1], 'mean_'))
     assert_true(hasattr(ct.transformers_[0][1], 'mean_'))
+
+
+def test_column_transformer_none():
+
+    # one None -> ignore
+    X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
+    ct = ColumnTransformer(
+        [('trans1', Trans(), [0]), ('trans2', None, [1])])
+    exp = np.array([[0.], [1.], [2.]])
+    assert_array_equal(ct.fit_transform(X_array), exp)
+    assert_array_equal(ct.fit(X_array).transform(X_array), exp)
+
+    # all None -> return shape 0 array
+    ct = ColumnTransformer(
+        [('trans1', None, [0]), ('trans2', None, [1])])
+    assert_array_equal(ct.fit(X_array).transform(X_array).shape, (3, 0))
+    assert_array_equal(ct.fit_transform(X_array).shape, (3, 0))
+
+
+def test_column_transformer_get_feature_names():
+    X_array = np.array([[0., 1., 2.], [2., 4., 6.]]).T
+    ct = ColumnTransformer([('trans', Trans(), [0, 1])])
+    # raise correct error when not fitted
+    assert_raises(NotFittedError, ct.get_feature_names)
+    # raise correct error when no feature names are available
+    ct.fit(X_array)
+    assert_raise_message(AttributeError,
+                         "Transformer trans (type Trans) does not provide "
+                         "get_feature_names", ct.get_feature_names)
+
+    # working example
+    X = np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
+                  [{'c': 5}, {'c': 6}]], dtype=object).T
+    ct = ColumnTransformer(
+        [('col' + str(i), DictVectorizer(), i) for i in range(2)])
+    ct.fit(X)
+    assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b', 'col1__c'])
