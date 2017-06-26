@@ -2003,6 +2003,36 @@ def test_categorical_encoder_errors():
     assert_allclose(Xtr.toarray(), [[0, 0, 1, 0, 1, 0], [0, 1, 0, 1, 0, 1]])
 
 
+def test_categorical_encoder_specified_categories():
+    X = np.array([['a', 'b']], dtype=object).T
+
+    enc = CategoricalEncoder(categories=[['a', 'b', 'c']])
+    exp = np.array([[1., 0., 0.],
+                    [0., 1., 0.]])
+    assert_array_equal(enc.fit_transform(X).toarray(), exp)
+
+    # don't follow order of passed categories, but sort them
+    enc = CategoricalEncoder(categories=[['c', 'b', 'a']])
+    exp = np.array([[1., 0., 0.],
+                    [0., 1., 0.]])
+    assert_array_equal(enc.fit_transform(X).toarray(), exp)
+
+    # multiple columns
+    X = np.array([['a', 'b'], ['A', 'C']], dtype=object).T
+    enc = CategoricalEncoder(categories=[['a', 'b', 'c'], ['A', 'B', 'C']])
+    exp = np.array([[1., 0., 0., 1., 0., 0.],
+                    [0., 1., 0., 0., 0., 1.]])
+    assert_array_equal(enc.fit_transform(X).toarray(), exp)
+
+    # when specifying categories manually, unknown categories should already
+    # raise when fitting
+    X = np.array([['a', 'b', 'c']]).T
+    enc = CategoricalEncoder(categories=[['a', 'b']])
+    assert_raises(ValueError, enc.fit, X)
+    enc = CategoricalEncoder(categories=[['a', 'b']], handle_unknown='ignore')
+    enc.fit(X)
+
+
 def test_fit_cold_start():
     X = iris.data
     X_2d = X[:, :2]

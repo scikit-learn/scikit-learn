@@ -2462,11 +2462,12 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    categories : 'auto', 2D array of ints or strings or both.
+    categories : 'auto' or a list of lists/arrays of values.
         Values per feature.
 
         - 'auto' : Determine classes automatically from the training data.
-        - array: ``classes[i]`` holds the classes expected in the ith column.
+        - list : ``categories[i]`` holds the categories expected in the ith
+          column.
 
     dtype : number type, default=np.float
         Desired dtype of output.
@@ -2544,7 +2545,18 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             if self.categories == 'auto':
                 le.fit(X[:, i])
             else:
-                le.classes_ = np.array(self.categories[i])
+                if not np.all(np.in1d(X[:, i], self.categories[i])):
+                    if self.handle_unknown == 'error':
+                        diff = np.setdiff1d(X[:, i], self.categories[i])
+                        msg = 'Unknown feature(s) %s in column %d' % (diff, i)
+                        raise ValueError(msg)
+                le.classes_ = np.array(np.sort(self.categories[i]))
+
+    @staticmethod
+    def _check_unknown_categories(values, categories):
+        """Returns False if not all categories in the values are known"""
+        valid_mask = np.in1d(values, categories)
+        return np.all(valid_mask)
 
     def transform(self, X, y=None):
         """Encode the selected categorical features using the one-hot scheme.
