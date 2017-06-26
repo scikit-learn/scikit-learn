@@ -116,10 +116,6 @@ def test_docstring_parameters():
 
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
-                if cname == 'Pipeline' and method_name == 'score':
-                    print(method.__doc__)
-                    print(method.__name__)
-                    print(method_name)
                 param_ignore = None
                 # Now skip docstring test for y when y is None
                 # by default for API reason
@@ -150,8 +146,6 @@ def test_docstring_parameters():
     msg = '\n' + '\n'.join(sorted(list(set(incorrect))))
     if len(incorrect) > 0:
         raise AssertionError(msg)
-
-    assert False
 
 
 def test_tabs():
