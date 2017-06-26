@@ -1513,7 +1513,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     supported at the moment. The kernel given by:
 
     k(x_i, x_j) =
-    exp(-2 (sin(\pi / periodicity * d(x_i, x_j)) / length_scale) ^ 2)
+    exp(-2(sin(\pi / periodicity * d(x_i, x_j)) / length_scale) ^ 2)
 
     .. versionadded:: 0.18
 
