@@ -738,6 +738,7 @@ Kernels:
    :toctree: generated/
    :template: function.rst
 
+   linear_model.enet_path
    linear_model.lars_path
    linear_model.lasso_path
    linear_model.lasso_stability_path

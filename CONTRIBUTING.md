@@ -180,7 +180,7 @@ following rules before submitting:
 
 -  Please include your operating system type and version number, as well
    as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by runnning the following code snippet:
+   can be found by running the following code snippet:
 
   ```python
   import platform; print(platform.platform())
@@ -224,7 +224,7 @@ be placed in ``_build/html/`` and are viewable in a web browser. See the
 
 For building the documentation, you will need
 [sphinx](http://sphinx.pocoo.org/),
-[matplotlib](http://matplotlib.sourceforge.net/), and
+[matplotlib](http://matplotlib.org/), and
 [pillow](http://pillow.readthedocs.io/en/latest/).
 
 When you are writing documentation, it is important to keep a good
