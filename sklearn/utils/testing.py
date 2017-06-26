@@ -776,6 +776,7 @@ class _named_check(object):
 
 # Utils to test docstrings
 
+
 def _get_args(function, varargs=False):
     """Helper to get function arguments"""
     # NOTE this works only in python3.5
