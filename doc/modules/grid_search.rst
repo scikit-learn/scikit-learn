@@ -179,8 +179,9 @@ the predefined scorer name(s). See :ref:`multimetric_scoring` for more details.
 
 When specifying multiple metrics, the ``refit`` parameter must be set to the
 metric (string) for which the ``best_params_`` will be found and used to build
-the ``best_estimator_`` on the whole dataset. If that is not needed, ``refit``
-can be set to ``False``.
+the ``best_estimator_`` on the whole dataset. If the search should not be
+refit, set ``refit=False``. Leaving refit to the default value ``None`` will
+result in an error when using multiple metrics.
 
 See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation`
 for an example usage.

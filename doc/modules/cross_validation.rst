@@ -182,17 +182,19 @@ The ``cross_validate`` function differs from ``cross_val_score`` in two ways -
 
 - It allows specifying multiple metrics for evaluation.
 
-- It returns a dict with more useful information such as train scores,
-  fit-times and score-times.
+- It returns a dict containing training scores, fit-times and score-times in
+  addition to the test score.
 
-For single metric evaluataion, where the scoring parameter is a string,
+For single metric evaluation, where the scoring parameter is a string,
 callable or None, the keys will be - ``['test_score', 'fit_time', 'score_time']``
 
-And for multiple metric evaluation, the return is a dict with the following
-keys - ``['test_<scrorer1_name>', 'test_<scorer2_name>', 'test_<scorer...>', 'fit_time', 'score_time']``
+And for multiple metric evaluation, the return value is a dict with the
+following keys -
+``['test_<scorer1_name>', 'test_<scorer2_name>', 'test_<scorer...>', 'fit_time', 'score_time']``
 
-Additionally setting ``return_train_score`` to ``True`` adds train score keys
-for all the scorers.
+``return_train_score`` is set to ``True`` by default. It adds train score keys
+for all the scorers. If train scores are not needed, this should be set to
+``False`` explicitly.
 
 The multiple metrics can be specified either as a list, tuple or set of
 predefined scorer names::
@@ -221,7 +223,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
     >>> scores['train_rec_micro']                         # doctest: +ELLIPSIS
     array([ 0.97...,  0.97...,  0.99...,  0.98...,  0.98...])
 
-This also works for single metric evaluation::
+Here is an example of ``cross_validate`` using a single metric::
 
     >>> scores = cross_validate(clf, iris.data, iris.target,
     ...                         scoring='precision_macro')

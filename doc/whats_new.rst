@@ -40,7 +40,7 @@ New features
    - Added the :func:`model_selection.cross_validate` which allows evaluation
      of multiple metrics. This function returns a dict with more useful
      information from cross-validation such as the train scores, fit times and
-     score times even for single metric evaluation.
+     score times.
      Refer to :ref:`multimetric_cross_validation` section of the userguide
      for more information. :issue:`7388` by `Raghav RV`_
 
