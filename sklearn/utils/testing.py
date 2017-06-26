@@ -851,6 +851,12 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
     from numpydoc import docscrape
     incorrect = []
     func_name = get_func_name(func, class_name=class_name)
+    # Unwrap the function if it is a decorator
+    try:
+        func = func.__wrapped__
+        print(func, 'was wrapped')
+    except AttributeError:
+        pass
     if (not func_name.startswith('sklearn.') or
             func_name.startswith('sklearn.externals')):
         return incorrect
@@ -859,7 +865,7 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
     args = _get_args(func)
     # drop self
     if len(args) > 0 and args[0] == 'self':
-        args = args[1:]
+        args.remove('self')
 
     if ignore is not None:
         for p in ignore:
@@ -887,6 +893,7 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
                 param_names.remove(p)
 
     if len(param_names) != len(args):
+        print(param_names, args)
         bad = str(sorted(list(set(param_names) - set(args)) +
                          list(set(args) - set(param_names))))
         incorrect += [func_name + ' arg mismatch: ' + bad]

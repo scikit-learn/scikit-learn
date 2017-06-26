@@ -116,10 +116,13 @@ def test_docstring_parameters():
 
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
+                if cname == 'Pipeline' and method_name == 'score':
+                    print(method.__doc__)
+                    print(method.__name__)
+                    print(method_name)
                 param_ignore = None
                 # Now skip docstring test for y when y is None
                 # by default for API reason
-                # XXX remove transform
                 if method_name in _METHODS_IGNORE_NONE_Y:
                     sig = signature(method)
                     if ('y' in sig.parameters and
@@ -133,13 +136,12 @@ def test_docstring_parameters():
                 this_incorrect += check_parameters_match(cls.__call__,
                                                          class_name=cname)
 
-            # Append class name
-            incorrect += [c + ' (' + cname + ')' for c in this_incorrect]
+            incorrect += this_incorrect
 
         functions = inspect.getmembers(module, inspect.isfunction)
         for fname, func in functions:
+            # Don't test private methods / functions
             if fname.startswith('_'):
-                # Don't test private methods / functions
                 continue
             name_ = get_func_name(func)
             if not any(d in name_ for d in _DOCSTRING_IGNORES) and \
