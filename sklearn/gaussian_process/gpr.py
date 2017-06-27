@@ -320,13 +320,17 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
                 return y_mean, y_cov
             elif return_std:
-                # compute inverse K_inv of K based on its Cholesky
-                # decomposition L and its inverse L_inv
-                L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
-                K_inv = L_inv.dot(L_inv.T)
+                # cache result of K_inv computation
+                if not hasattr(self,'K_inv_'):
+                    # compute inverse K_inv of K based on its Cholesky
+                    # decomposition L and its inverse L_inv
+                    L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
+                    self.K_inv_ = L_inv.dot(L_inv.T)
+                
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ij,ij->i", np.dot(K_trans, K_inv), K_trans)
+                sum1 = np.dot(K_trans, self.K_inv_).T
+                y_var -= np.einsum("ki,ik->k", K_trans, sum1)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
