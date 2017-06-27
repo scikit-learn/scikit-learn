@@ -1199,7 +1199,7 @@ def test_prf_warnings():
     my_assert(w, msg, f, np.array([[0, 0], [0, 0]]),
               np.array([[1, 1], [1, 1]]), average='micro')
 
-    # single postive label
+    # single positive label
     msg = ('Precision and F-score are ill-defined and '
            'being set to 0.0 due to no predicted samples.')
     my_assert(w, msg, f, [1, 1], [-1, -1], average='binary')

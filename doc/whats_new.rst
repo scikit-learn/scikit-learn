@@ -412,7 +412,7 @@ Bug fixes
    - Fixed a bug in :class:`linear_model.RandomizedLasso`,
      :class:`linear_model.Lars`, :class:`linear_model.LassoLars`,
      :class:`linear_model.LarsCV` and :class:`linear_model.LassoLarsCV`,
-     where the parameter ``precompute`` were not used consistently accross
+     where the parameter ``precompute`` were not used consistently across
      classes, and some values proposed in the docstring could raise errors.
      :issue:`5359` by `Tom Dupre la Tour`_.
 
@@ -1025,7 +1025,7 @@ Model evaluation and meta-estimators
 
 Metrics
 
-   - Added ``labels`` flag to :class:`metrics.log_loss` to to explicitly provide
+   - Added ``labels`` flag to :class:`metrics.log_loss` to explicitly provide
      the labels when the number of classes in ``y_true`` and ``y_pred`` differ.
      :issue:`7239` by :user:`Hong Guangguo <hongguangguo>` with help from
      :user:`Mads Jensen <indianajensen>` and :user:`Nelson Liu <nelson-liu>`.

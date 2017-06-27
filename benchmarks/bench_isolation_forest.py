@@ -26,7 +26,7 @@ def print_outlier_ratio(y):
     uniq, cnt = np.unique(y, return_counts=True)
     print("----- Target count values: ")
     for u, c in zip(uniq, cnt):
-        print("------ %s -> %d occurences" % (str(u), c))
+        print("------ %s -> %d occurrences" % (str(u), c))
     print("----- Outlier ratio: %.5f" % (np.min(cnt) / len(y)))
 
 
