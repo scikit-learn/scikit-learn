@@ -321,7 +321,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         """
         return self.score_samples(X).mean()
 
-    def predict(self, X, y=None):
+    def predict(self, X):
         """Predict the labels for the data samples in X using trained model.
 
         Parameters
