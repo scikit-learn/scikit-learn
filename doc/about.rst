@@ -167,13 +167,13 @@ for code sprints, as well as towards the organization budget of the project [#f1
     <input type="hidden" name="cmd" value="_s-xclick">
     <input type="hidden" name="hosted_button_id" value="74EYUMF3FTSW8">
     <input type="image"
-    src="http://www.pngall.com/wp-content/uploads/2016/05/PayPal-Donate-Button-High-Quality-PNG.png"
+    src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
     border="0" name="submit" alt="PayPal - The safer, easier way to pay
     online!" style="position: relative;
     left: 40%;">
-    <!-- <img alt="" border="0"
+    <img alt="" border="0"
     src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1"
-    height="1"> -->
+    height="1">
     </form>
     </br>
 

@@ -539,7 +539,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 return y
 
     def reduced_likelihood_function(self, theta=None):
-        """This function determines the BLUP parameters and evaluates the reduced
+        """
+        This function determines the BLUP parameters and evaluates the reduced
         likelihood function for the given autocorrelation parameters theta.
 
         Maximizing this function wrt the autocorrelation parameters theta is
@@ -565,14 +566,15 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             A dictionary containing the requested Gaussian Process model
             parameters:
 
-            - sigma2 is the Gaussian Process variance.
-            - beta is the generalized least-squares regression weights for
+            - ``sigma2`` is the Gaussian Process variance.
+            - ``beta`` is the generalized least-squares regression weights for
               Universal Kriging or given beta0 for Ordinary Kriging.
-            - gamma is the Gaussian Process weights.
-            - C is the Cholesky decomposition of the correlation matrix [R].
-            - Ft is the solution of the linear equation system : [R] x Ft = F
-            - G is the QR decomposition of the matrix Ft.
-
+            - ``gamma`` is the Gaussian Process weights.
+            - ``C`` is the Cholesky decomposition of the correlation
+              matrix [R].
+            - ``Ft`` is the solution of the linear equation system
+              [R] x Ft = F
+            - ``G`` is the QR decomposition of the matrix Ft.
         """
         check_is_fitted(self, "X")
 
