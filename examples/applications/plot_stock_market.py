@@ -77,6 +77,7 @@ from sklearn import cluster, covariance, manifold
 # #############################################################################
 # Retrieve the data from Internet
 
+
 def quotes_historical_google(symbol, date1, date2):
     """Get the historical data from Google finance.
 
@@ -102,15 +103,15 @@ def quotes_historical_google(symbol, date1, date2):
         'output': 'csv'
     })
     url = 'http://www.google.com/finance/historical?' + params
-    with urlopen(url) as response:
-        dtype = {
-            'names': ['date', 'open', 'high', 'low', 'close', 'volume'],
-            'formats': ['object', 'f4', 'f4', 'f4', 'f4', 'f4']
-        }
-        converters = {0: lambda s: datetime.strptime(s.decode(), '%d-%b-%y')}
-        return np.genfromtxt(response, delimiter=',', skip_header=1,
-                             dtype=dtype, converters=converters,
-                             missing_values='-', filling_values=-1)
+    response = urlopen(url)
+    dtype = {
+        'names': ['date', 'open', 'high', 'low', 'close', 'volume'],
+        'formats': ['object', 'f4', 'f4', 'f4', 'f4', 'f4']
+    }
+    converters = {0: lambda s: datetime.strptime(s.decode(), '%d-%b-%y')}
+    return np.genfromtxt(response, delimiter=',', skip_header=1,
+                         dtype=dtype, converters=converters,
+                         missing_values='-', filling_values=-1)
 
 
 # Choose a time period reasonably calm (not too long ago so that we get
@@ -182,8 +183,8 @@ quotes = [
     quotes_historical_google(symbol, d1, d2) for symbol in symbols
 ]
 
-close_prices = np.stack([q['close'] for q in quotes])
-open_prices = np.stack([q['open'] for q in quotes])
+close_prices = np.vstack([q['close'] for q in quotes])
+open_prices = np.vstack([q['open'] for q in quotes])
 
 # The daily variations of the quotes are what carry most information
 variation = close_prices - open_prices
