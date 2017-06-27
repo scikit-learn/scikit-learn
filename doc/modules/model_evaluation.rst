@@ -71,14 +71,14 @@ Scoring                           Function                                      
 'roc_auc'                         :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_rand_score'             :func:`metrics.adjusted_rand_score`
-'homogeneity_score'               :func:`metrics.homogeneity_score`
-'completeness_score'              :func:`metrics.completeness_score`
-'v_measure_score'                 :func:`metrics.v_measure_score`
-'mutual_info_score'               :func:`metrics.mutual_info_score`
 'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
-'normalized_mutual_info_score'    :func:`metrics.normalized_mutual_info_score`
+'adjusted_rand_score'             :func:`metrics.adjusted_rand_score`
+'completeness_score'              :func:`metrics.completeness_score`
 'fowlkes_mallows_score'           :func:`metrics.fowlkes_mallows_score`
+'homogeneity_score'               :func:`metrics.homogeneity_score`
+'mutual_info_score'               :func:`metrics.mutual_info_score`
+'normalized_mutual_info_score'    :func:`metrics.normalized_mutual_info_score`
+'v_measure_score'                 :func:`metrics.v_measure_score`
 
 **Regression**
 'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
