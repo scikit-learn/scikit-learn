@@ -74,7 +74,9 @@ fi
 
 if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
-    MAKE_TARGET="dist LATEXMKOPTS=--interaction=nonstopmode"  # PDF linked into HTML
+    # nonstopmode is used to not wait for CI timeout in case of an error
+    # PDF linked into HTML
+    MAKE_TARGET="dist LATEXMKOPTS=--interaction=nonstopmode"
 elif [[ "$build_type" =~ ^QUICK ]]
 then
 	MAKE_TARGET=html-noplot
