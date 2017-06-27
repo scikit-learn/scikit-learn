@@ -327,29 +327,61 @@ def test_repr_kernels():
         repr(kernel)
 
 
-def test_select_dimension_kernel_properties():
-    kernel1 = RBF(length_scale=[1.0, 2.0])
-    kernel2 = Matern(length_scale=[2.0, 3.0])
-    sdk1 = SelectDimensionKernel(kernel=kernel1, active_dims=[0, 1])
-    assert_true(sdk1.get_params()["kernel"] is kernel1)
+def check_K1_K2_equal_on_X_Y(K1, K2, X, Y):
+    # Checks that calling K1 on X and K2 on Y are equal.
+    K1, K1_grad = K1(X, eval_gradient=True)
+    K2, K2_grad = K2(Y, eval_gradient=True)
+    assert_array_equal(K1, K2)
+    assert_array_equal(K1_grad, K2_grad)
 
-    # Check setting of kernel, the test above checks setting of the
-    # length scale.
+
+def check_select_dimension_kernel(active_dims):
+    # Check with active_dims equal to X.shape[1]
+    kernel1 = RBF(length_scale=[1.0, 2.0])
+    sdk1 = SelectDimensionKernel(kernel=kernel1, active_dims=active_dims)
+    assert_true(sdk1.get_params()["kernel"] is kernel1)
+    check_K1_K2_equal_on_X_Y(sdk1, kernel1, X, X)
+
+    # Check with active_dims to be a numpy array.
+    sdk1.set_params(active_dims=np.array(active_dims))
+    check_K1_K2_equal_on_X_Y(sdk1, kernel1, X, X)
+
+    # Check setting of kernel, the test test_set_get_params
+    # above checks setting of the length scale.
+    kernel2 = Matern(length_scale=[2.0, 3.0])
     sdk1.set_params(kernel=kernel2)
     assert_true(sdk1.get_params()["kernel"] is kernel2)
-    assert_array_equal(sdk1(X), kernel2(X))
+    check_K1_K2_equal_on_X_Y(sdk1, kernel2, X, X)
 
-    # Check active_dims boolean mask
-    sdk1.set_params(active_dims=[True, True])
-    assert_array_equal(sdk1(X), kernel2(X))
+    # Out of order active_dims
+    if np.array(active_dims).dtype != np.bool:
+        kernel2.set_params(length_scale=[2.0, 3.0])
+        sdk = SelectDimensionKernel(kernel2, active_dims=active_dims[::-1])
+        check_K1_K2_equal_on_X_Y(sdk, kernel2, X, X[:, ::-1])
 
+    if np.array(active_dims).dtype == np.bool:
+        single = [True, False]
+        empty = [False, False]
+    else:
+        single = [0]
+        empty = []
+
+    # Check with just using the first index as active dimension
     kernel2 = kernel2.set_params(length_scale=[2.0])
-    sdk1.set_params(kernel=kernel2, active_dims=[True, False])
-    assert_array_equal(sdk1(X), kernel2(X[:, :1]))
+    sdk1.set_params(kernel=kernel2, active_dims=single)
+    check_K1_K2_equal_on_X_Y(sdk1, kernel2, X, X[:, :1])
 
-    # Check error message
-    sdk = SelectDimensionKernel(RBF(length_scale=[0, 1]), active_dims=[0])
+    # Check error when length_scale is not equal to the number of active
+    # indices.
+    sdk = SelectDimensionKernel(RBF(length_scale=[0, 1]), active_dims=single)
     assert_raises_regexp(ValueError, "expected active_dims size", sdk, X)
-    sdk = SelectDimensionKernel(
-        RBF(length_scale=[0, 1]), active_dims=[True, False])
-    assert_raises_regexp(ValueError, "expected active_dims size", sdk, X)
+
+    # Error for empty active_dims
+    sdk = SelectDimensionKernel(RBF(length_scale=[0, 1]), active_dims=empty)
+    assert_raises_regexp(
+        ValueError, "should have at least one element", sdk, X)
+
+
+def test_select_dimension_kernel():
+    check_select_dimension_kernel(active_dims=[0, 1])
+    check_select_dimension_kernel(active_dims=[True, True])

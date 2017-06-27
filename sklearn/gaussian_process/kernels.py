@@ -1878,17 +1878,15 @@ class SelectDimensionKernel(Kernel):
          If `active_dims` is an integer array, then it should be size of
          `n_active_dims` denoting the indices of the active dimensions.
 
-         For an anisotropic kernel, the length_scale of the kernel and
-         the active_dims should have same length and the indices of the
-         active_dims correspond to the indices of the features in X.
+         For an anisotropic kernel, the `length_scale` of the kernel should have
+         the same length as `active_dims`.
     """
     def __init__(self, kernel, active_dims):
         self.active_dims = active_dims
         self.kernel = kernel
 
     def __call__(self, X, Y=None, eval_gradient=False):
-        """Return the kernel k(X, Y) and optionally its gradient on selected
-           dimensions.
+        """Return k(X, Y) and optionally its gradient on selected dimensions.
 
         Parameters
         ----------
@@ -1914,9 +1912,6 @@ class SelectDimensionKernel(Kernel):
             is True.
         """
         active_dims = np.asarray(self.active_dims)
-        if active_dims.size == 0:
-            raise ValueError("active_dims should be have at least one "
-                             "element, current size: %d " % active_dims.size)
         if active_dims.dtype == np.bool:
             if active_dims.shape[0] != X.shape[1]:
                 raise ValueError("A boolean active_dims should have the same"
@@ -1924,6 +1919,9 @@ class SelectDimensionKernel(Kernel):
                                  "%d, %d" % (active_dims.size, X.shape[1]))
             active_dims = np.where(active_dims)[0]
         active_dims = active_dims.astype(int)
+        if active_dims.size == 0:
+            raise ValueError("active_dims should have at least one "
+                             "element, current size: %d " % active_dims.size)
 
         kernel_params = self.kernel.get_params()
         if "length_scale" in kernel_params:
