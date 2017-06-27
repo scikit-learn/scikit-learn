@@ -1878,8 +1878,8 @@ class SelectDimensionKernel(Kernel):
          If `active_dims` is an integer array, then it should be size of
          `n_active_dims` denoting the indices of the active dimensions.
 
-         For an anisotropic kernel, the `length_scale` of the kernel should have
-         the same length as `active_dims`.
+         For an anisotropic kernel, the `length_scale` of the kernel should
+         have the same length as `active_dims`.
     """
     def __init__(self, kernel, active_dims):
         self.active_dims = active_dims
