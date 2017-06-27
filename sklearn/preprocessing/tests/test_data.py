@@ -32,7 +32,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import skip_if_32bit
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
-from sklearn.preprocessing.data import _apply_selected
+from sklearn.preprocessing.data import _transform_selected
 from sklearn.preprocessing.data import _handle_zeros_in_scale
 from sklearn.preprocessing.data import Binarizer
 from sklearn.preprocessing.data import KernelCenterer
@@ -1853,29 +1853,29 @@ def test_one_hot_encoder_dense():
                                  [1., 0., 1., 0., 1.]]))
 
 
-def _check_apply_selected(X, X_expected, sel):
+def _check_transform_selected(X, X_expected, sel):
     for M in (X, sparse.csr_matrix(X)):
-        Xtr = _apply_selected(M, Binarizer().transform, sel)
+        Xtr = _transform_selected(M, Binarizer().transform, sel)
         assert_array_equal(toarray(Xtr), X_expected)
 
 
-def test_apply_selected():
+def test_transform_selected():
     X = np.array([[3, 2, 1], [0, 1, 1]])
 
     X_expected = [[1, 2, 1], [0, 1, 1]]
-    _check_apply_selected(X, X_expected, [0])
-    _check_apply_selected(X, X_expected, [True, False, False])
+    _check_transform_selected(X, X_expected, [0])
+    _check_transform_selected(X, X_expected, [True, False, False])
 
     X_expected = [[1, 1, 1], [0, 1, 1]]
-    _check_apply_selected(X, X_expected, [0, 1, 2])
-    _check_apply_selected(X, X_expected, [True, True, True])
-    _check_apply_selected(X, X_expected, "all")
+    _check_transform_selected(X, X_expected, [0, 1, 2])
+    _check_transform_selected(X, X_expected, [True, True, True])
+    _check_transform_selected(X, X_expected, "all")
 
-    _check_apply_selected(X, X, [])
-    _check_apply_selected(X, X, [False, False, False])
+    _check_transform_selected(X, X, [])
+    _check_transform_selected(X, X, [False, False, False])
 
 
-def test_apply_selected_copy_arg():
+def test_transform_selected_copy_arg():
     # transformer that alters X
     def _mutating_transformer(X):
         X[0, 0] = X[0, 0] + 1
@@ -1885,7 +1885,7 @@ def test_apply_selected_copy_arg():
     expected_Xtr = [[2, 2], [3, 4]]
 
     X = original_X.copy()
-    Xtr = _apply_selected(X, _mutating_transformer, copy=True,
+    Xtr = _transform_selected(X, _mutating_transformer, copy=True,
                               selected='all')
 
     assert_array_equal(toarray(X), toarray(original_X))
@@ -2031,6 +2031,19 @@ def test_categorical_encoder_specified_categories():
     assert_raises(ValueError, enc.fit, X)
     enc = CategoricalEncoder(categories=[['a', 'b']], handle_unknown='ignore')
     enc.fit(X)
+
+
+def test_categorical_encoder_pandas():
+
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest("pandas is not installed")
+
+    X_df = pd.DataFrame({'A': ['a', 'b'], 'B': ['c', 'd']})
+
+    Xtr = check_categorical(X_df)
+    assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
 
 
 def test_fit_cold_start():
