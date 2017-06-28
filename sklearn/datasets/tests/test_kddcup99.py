@@ -5,7 +5,6 @@ The test is skipped if the data wasn't previously fetched and saved to
 scikit-learn data folder.
 """
 
-import errno
 from sklearn.datasets import fetch_kddcup99
 from sklearn.utils.testing import assert_equal, SkipTest
 
@@ -13,9 +12,8 @@ from sklearn.utils.testing import assert_equal, SkipTest
 def test_percent10():
     try:
         data = fetch_kddcup99(download_if_missing=False)
-    except IOError as e:
-        if e.errno == errno.ENOENT:
-            raise SkipTest("kddcup99 dataset can not be loaded.")
+    except IOError:
+        raise SkipTest("kddcup99 dataset can not be loaded.")
 
     assert_equal(data.data.shape, (494021, 41))
     assert_equal(data.target.shape, (494021,))

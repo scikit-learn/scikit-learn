@@ -22,7 +22,7 @@ such that among the samples to which it gave a predict_proba value close to 0.8,
 approximately 80% actually belong to the positive class. The following plot compares
 how well the probabilistic predictions of different classifiers are calibrated:
 
-.. figure:: ../auto_examples/calibration/images/plot_compare_calibration_001.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_compare_calibration_001.png
    :target: ../auto_examples/calibration/plot_compare_calibration.html
    :align: center
 
@@ -57,9 +57,9 @@ with different biases per method:
    ensemble away from 0. We observe this effect most strongly with random
    forests because the base-level trees trained with random forests have
    relatively high variance due to feature subseting." As a result, the
-   calibration curve shows a characteristic sigmoid shape, indicating that the
-   classifier could trust its "intuition" more and return probabilties closer
-   to 0 or 1 typically.
+   calibration curve also referred to as the reliability diagram (Wilks 1995[5]) shows a
+   characteristic sigmoid shape, indicating that the classifier could trust its
+   "intuition" more and return probabilties closer to 0 or 1 typically.
 
 .. currentmodule:: sklearn.svm
 
@@ -87,7 +87,7 @@ The first image present a dataset with 2 classes and 3 blobs of
 data. The blob in the middle contains random samples of each class.
 The probability for the samples in this blob should be 0.5.
 
-.. figure:: ../auto_examples/calibration/images/plot_calibration_001.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_001.png
    :target: ../auto_examples/calibration/plot_calibration.html
    :align: center
 
@@ -98,7 +98,7 @@ calibration. One can observe that the non-parametric model
 provides the most accurate probability estimates for samples
 in the middle, i.e., 0.5.
 
-.. figure:: ../auto_examples/calibration/images/plot_calibration_002.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_002.png
    :target: ../auto_examples/calibration/plot_calibration.html
    :align: center
 
@@ -113,20 +113,21 @@ both isotonic calibration and sigmoid calibration. The calibration performance
 is evaluated with Brier score :func:`brier_score_loss`, reported in the legend
 (the smaller the better).
 
-.. figure:: ../auto_examples/calibration/images/plot_calibration_curve_002.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_curve_002.png
    :target: ../auto_examples/calibration/plot_calibration_curve.html
    :align: center
 
 One can observe here that logistic regression is well calibrated as its curve is
-nearly diagonal. Linear SVC's calibration curve has a sigmoid curve, which is
-typical for an under-confident classifier. In the case of LinearSVC, this is
-caused by the margin property of the hinge loss, which lets the model focus on
-hard samples that are close to the decision boundary (the support vectors). Both
-kinds of calibration can fix this issue and yield nearly identical results.
-The next figure shows the calibration curve of Gaussian naive Bayes on
-the same data, with both kinds of calibration and also without calibration.
+nearly diagonal. Linear SVC's calibration curve or reliability diagram has a
+sigmoid curve, which is typical for an under-confident classifier. In the case of
+LinearSVC, this is caused by the margin property of the hinge loss, which lets
+the model focus on hard samples that are close to the decision boundary
+(the support vectors). Both kinds of calibration can fix this issue and yield
+nearly identical results. The next figure shows the calibration curve of
+Gaussian naive Bayes on the same data, with both kinds of calibration and also
+without calibration.
 
-.. figure:: ../auto_examples/calibration/images/plot_calibration_curve_001.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_curve_001.png
    :target: ../auto_examples/calibration/plot_calibration_curve.html
    :align: center
 
@@ -167,7 +168,7 @@ probability vectors predicted by the same classifier after sigmoid calibration
 on a hold-out validation set. Colors indicate the true class of an instance
 (red: class 1, green: class 2, blue: class 3).
 
-.. figure:: ../auto_examples/calibration/images/plot_calibration_multiclass_000.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_000.png
    :target: ../auto_examples/calibration/plot_calibration_multiclass.html
    :align: center
 
@@ -179,7 +180,7 @@ method='sigmoid' on the remaining 200 datapoints reduces the confidence of the
 predictions, i.e., moves the probability vectors from the edges of the simplex
 towards the center:
 
-.. figure:: ../auto_examples/calibration/images/plot_calibration_multiclass_001.png
+.. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_multiclass_001.png
    :target: ../auto_examples/calibration/plot_calibration_multiclass.html
    :align: center
 
@@ -200,3 +201,7 @@ a similar decrease in log-loss.
 
     .. [4] Predicting Good Probabilities with Supervised Learning,
           A. Niculescu-Mizil & R. Caruana, ICML 2005
+
+    .. [5] On the combination of forecast probabilities for
+         consecutive precipitation periods. Wea. Forecasting, 5, 640–
+         650., Wilks, D. S., 1990a

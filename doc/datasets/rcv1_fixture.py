@@ -1,7 +1,7 @@
 """Fixture module to skip the datasets loading when offline
 
 The RCV1 data is rather large and some CI workers such as travis are
-stateless hence will not cache the dataset as regular sklearn users would do.
+stateless hence will not cache the dataset as regular scikit-learn users would do.
 
 The following will skip the execution of the rcv1.rst doctests
 if the proper environment variable is configured (see the source code of

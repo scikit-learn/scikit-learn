@@ -64,7 +64,7 @@ X = np.c_[X, rng.randn(X.shape[0], 14)]  # add some bad features
 # normalize data as done by Lars to allow for comparison
 X /= np.sqrt(np.sum(X ** 2, axis=0))
 
-##############################################################################
+# #############################################################################
 # LassoLarsIC: least angle regression with BIC/AIC criterion
 
 model_bic = LassoLarsIC(criterion='bic')
@@ -96,7 +96,7 @@ plt.legend()
 plt.title('Information-criterion for model selection (training time %.3fs)'
           % t_bic)
 
-##############################################################################
+# #############################################################################
 # LassoCV: coordinate descent
 
 # Compute paths
@@ -125,7 +125,7 @@ plt.title('Mean square error on each fold: coordinate descent '
 plt.axis('tight')
 plt.ylim(ymin, ymax)
 
-##############################################################################
+# #############################################################################
 # LassoLarsCV: least angle regression
 
 # Compute paths
@@ -138,8 +138,8 @@ t_lasso_lars_cv = time.time() - t1
 m_log_alphas = -np.log10(model.cv_alphas_)
 
 plt.figure()
-plt.plot(m_log_alphas, model.cv_mse_path_, ':')
-plt.plot(m_log_alphas, model.cv_mse_path_.mean(axis=-1), 'k',
+plt.plot(m_log_alphas, model.mse_path_, ':')
+plt.plot(m_log_alphas, model.mse_path_.mean(axis=-1), 'k',
          label='Average across the folds', linewidth=2)
 plt.axvline(-np.log10(model.alpha_), linestyle='--', color='k',
             label='alpha CV')

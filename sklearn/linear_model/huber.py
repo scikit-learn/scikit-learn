@@ -41,10 +41,10 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
 
     Returns
     -------
-    loss: float
+    loss : float
         Huber loss.
 
-    gradient: ndarray, shape (len(w))
+    gradient : ndarray, shape (len(w))
         Returns the derivative of the Huber loss with respect to each
         coefficient, intercept and the scale as a vector.
     """
@@ -183,7 +183,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         Number of iterations that fmin_l_bfgs_b has run for.
         Not available if SciPy version is 0.9 and below.
 
-    outliers_: array, shape (n_samples,)
+    outliers_ : array, shape (n_samples,)
         A boolean mask which is set to True where the samples are identified
         as outliers.
 
@@ -245,12 +245,15 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 parameters = np.zeros(X.shape[1] + 2)
             else:
                 parameters = np.zeros(X.shape[1] + 1)
+            # Make sure to initialize the scale parameter to a strictly
+            # positive value:
+            parameters[-1] = 1
 
         # Sigma or the scale factor should be non-negative.
         # Setting it to be zero might cause undefined bounds hence we set it
         # to a value close to zero.
         bounds = np.tile([-np.inf, np.inf], (parameters.shape[0], 1))
-        bounds[-1][0] = 1e-12
+        bounds[-1][0] = np.finfo(np.float64).eps * 10
 
         # Type Error caused in old versions of SciPy because of no
         # maxiter argument ( <= 0.9).
@@ -258,14 +261,17 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             parameters, f, dict_ = optimize.fmin_l_bfgs_b(
                 _huber_loss_and_gradient, parameters,
                 args=(X, y, self.epsilon, self.alpha, sample_weight),
-                maxiter=self.max_iter, tol=self.tol, bounds=bounds,
+                maxiter=self.max_iter, pgtol=self.tol, bounds=bounds,
                 iprint=0)
         except TypeError:
             parameters, f, dict_ = optimize.fmin_l_bfgs_b(
                 _huber_loss_and_gradient, parameters,
                 args=(X, y, self.epsilon, self.alpha, sample_weight),
                 bounds=bounds)
-
+        if dict_['warnflag'] == 2:
+            raise ValueError("HuberRegressor convergence failed:"
+                             " l-BFGS-b solver terminated with %s"
+                             % dict_['task'].decode('ascii'))
         self.n_iter_ = dict_.get('nit', None)
         self.scale_ = parameters[-1]
         if self.fit_intercept:

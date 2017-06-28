@@ -23,14 +23,35 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     n_iter : int, optional
         The number of passes over the training data (aka epochs).
-        Defaults to 5.
+        Defaults to None. Deprecated, will be removed in 0.21.
+
+        .. versionchanged:: 0.19
+            Deprecated
+
+    max_iter : int, optional
+        The maximum number of passes over the training data (aka epochs).
+        It only impacts the behavior in the ``fit`` method, and not the
+        `partial_fit`.
+        Defaults to 5. Defaults to 1000 from 0.21, or if tol is not None.
+
+        .. versionadded:: 0.19
+
+    tol : float or None, optional
+        The stopping criterion. If it is not None, the iterations will stop
+        when (loss > previous_loss - tol). Defaults to None.
+        Defaults to 1e-3 from 0.21.
+
+        .. versionadded:: 0.19
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional, default=None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     verbose : integer, optional
         The verbosity level
@@ -62,6 +83,15 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         .. versionadded:: 0.17
            parameter *class_weight* to automatically weight samples.
 
+    average : bool or int, optional
+        When set to True, computes the averaged SGD weights and stores the
+        result in the ``coef_`` attribute. If set to an int greater than 1,
+        averaging will begin once the total number of samples seen reaches
+        average. So average=10 will begin averaging after seeing 10 samples.
+
+        .. versionadded:: 0.19
+           parameter *average* to use weights averaging in SGD
+
     Attributes
     ----------
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
@@ -70,6 +100,10 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
+
+    n_iter_ : int
+        The actual number of iterations to reach the stopping criterion.
+        For multiclass fits, it is the maximum over every binary fit.
 
     See also
     --------
@@ -84,20 +118,25 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, n_iter=5, shuffle=True,
-                 verbose=0, loss="hinge", n_jobs=1, random_state=None,
-                 warm_start=False, class_weight=None):
+    def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
+                 shuffle=True, verbose=0, loss="hinge", n_jobs=1,
+                 random_state=None, warm_start=False, class_weight=None,
+                 average=False, n_iter=None):
         super(PassiveAggressiveClassifier, self).__init__(
             penalty=None,
             fit_intercept=fit_intercept,
-            n_iter=n_iter,
+            max_iter=max_iter,
+            tol=tol,
             shuffle=shuffle,
             verbose=verbose,
             random_state=random_state,
             eta0=1.0,
             warm_start=warm_start,
             class_weight=class_weight,
-            n_jobs=n_jobs)
+            average=average,
+            n_jobs=n_jobs,
+            n_iter=n_iter)
+
         self.C = C
         self.loss = loss
 
@@ -136,7 +175,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                              "parameter.")
         lr = "pa1" if self.loss == "hinge" else "pa2"
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
-                                 loss="hinge", learning_rate=lr, n_iter=1,
+                                 loss="hinge", learning_rate=lr, max_iter=1,
                                  classes=classes, sample_weight=None,
                                  coef_init=None, intercept_init=None)
 
@@ -188,14 +227,35 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     n_iter : int, optional
         The number of passes over the training data (aka epochs).
-        Defaults to 5.
+        Defaults to None. Deprecated, will be removed in 0.21.
+
+        .. versionchanged:: 0.19
+            Deprecated
+
+    max_iter : int, optional
+        The maximum number of passes over the training data (aka epochs).
+        It only impacts the behavior in the ``fit`` method, and not the
+        `partial_fit`.
+        Defaults to 5. Defaults to 1000 from 0.21, or if tol is not None.
+
+        .. versionadded:: 0.19
+
+    tol : float or None, optional
+        The stopping criterion. If it is not None, the iterations will stop
+        when (loss > previous_loss - tol). Defaults to None.
+        Defaults to 1e-3 from 0.21.
+
+        .. versionadded:: 0.19
 
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
+    random_state : int, RandomState instance or None, optional, default=None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     verbose : integer, optional
         The verbosity level
@@ -210,6 +270,15 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+    average : bool or int, optional
+        When set to True, computes the averaged SGD weights and stores the
+        result in the ``coef_`` attribute. If set to an int greater than 1,
+        averaging will begin once the total number of samples seen reaches
+        average. So average=10 will begin averaging after seeing 10 samples.
+
+        .. versionadded:: 0.19
+           parameter *average* to use weights averaging in SGD
+
     Attributes
     ----------
     coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
@@ -218,6 +287,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
+
+    n_iter_ : int
+        The actual number of iterations to reach the stopping criterion.
 
     See also
     --------
@@ -231,20 +303,24 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR (2006)
 
     """
-    def __init__(self, C=1.0, fit_intercept=True, n_iter=5, shuffle=True,
-                 verbose=0, loss="epsilon_insensitive",
-                 epsilon=DEFAULT_EPSILON, random_state=None, warm_start=False):
+    def __init__(self, C=1.0, fit_intercept=True, max_iter=None, tol=None,
+                 shuffle=True, verbose=0, loss="epsilon_insensitive",
+                 epsilon=DEFAULT_EPSILON, random_state=None, warm_start=False,
+                 average=False, n_iter=None):
         super(PassiveAggressiveRegressor, self).__init__(
             penalty=None,
             l1_ratio=0,
             epsilon=epsilon,
             eta0=1.0,
             fit_intercept=fit_intercept,
-            n_iter=n_iter,
+            max_iter=max_iter,
+            tol=tol,
             shuffle=shuffle,
             verbose=verbose,
             random_state=random_state,
-            warm_start=warm_start)
+            warm_start=warm_start,
+            average=average,
+            n_iter=n_iter)
         self.C = C
         self.loss = loss
 
@@ -266,7 +342,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="epsilon_insensitive",
-                                 learning_rate=lr, n_iter=1,
+                                 learning_rate=lr, max_iter=1,
                                  sample_weight=None,
                                  coef_init=None, intercept_init=None)
 

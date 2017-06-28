@@ -7,11 +7,11 @@ density estimate) on geospatial data, using a Ball Tree built upon the
 Haversine distance metric -- i.e. distances over points in latitude/longitude.
 The dataset is provided by Phillips et. al. (2006).
 If available, the example uses
-`basemap <http://matplotlib.sourceforge.net/basemap/doc/html/>`_
+`basemap <http://matplotlib.org/basemap>`_
 to plot the coast lines and national boundaries of South America.
 
 This example does not perform any learning over the data
-(see :ref:`example_applications_plot_species_distribution_modeling.py` for
+(see :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py` for
 an example of classification based on the attributes in this dataset).  It
 simply shows the kernel density estimate of observed data points in
 geospatial coordinates.
@@ -23,7 +23,7 @@ The two species are:
    the Brown-throated Sloth.
 
  - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+   <http://www.iucnredlist.org/details/13408/0>`_ ,
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
@@ -31,7 +31,7 @@ References
 ----------
 
  * `"Maximum entropy modeling of species geographic distributions"
-   <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
+   <http://rob.schapire.net/papers/ecolmod.pdf>`_
    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
    190:231-259, 2006.
 """

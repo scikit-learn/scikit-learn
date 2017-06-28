@@ -11,6 +11,7 @@ __all__ = ['NotFittedError',
            'EfficiencyWarning',
            'FitFailedWarning',
            'NonBLASDotWarning',
+           'SkipTestWarning',
            'UndefinedMetricWarning']
 
 
@@ -30,15 +31,26 @@ class NotFittedError(ValueError, AttributeError):
     ...     print(repr(e))
     ...                        # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     NotFittedError('This LinearSVC instance is not fitted yet',)
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.utils.validation.
     """
 
 
 class ChangedBehaviorWarning(UserWarning):
-    """Warning class used to notify the user of any change in the behavior."""
+    """Warning class used to notify the user of any change in the behavior.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.base.
+    """
 
 
 class ConvergenceWarning(UserWarning):
-    """Custom warning to capture convergence problems"""
+    """Custom warning to capture convergence problems
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.utils.
+    """
 
 
 class DataConversionWarning(UserWarning):
@@ -53,6 +65,9 @@ class DataConversionWarning(UserWarning):
         - requests a non-copying operation, but a copy is required to meet the
           implementation's data-type expectations;
         - passes an input whose shape can be interpreted ambiguously.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.utils.validation.
     """
 
 
@@ -64,6 +79,9 @@ class DataDimensionalityWarning(UserWarning):
     projection space, is higher than the number of features, which quantifies
     the dimensionality of the original source space, to imply that the
     dimensionality of the problem will not be reduced.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.utils.
     """
 
 
@@ -73,6 +91,8 @@ class EfficiencyWarning(UserWarning):
     This warning notifies the user that the efficiency may not be optimal due
     to some reason which may be included as a part of the warning message.
     This may be subclassed into a more specific Warning class.
+
+    .. versionadded:: 0.18
     """
 
 
@@ -102,6 +122,9 @@ class FitFailedWarning(RuntimeWarning):
     FitFailedWarning("Classifier fit failed. The score on this train-test
     partition for these parameters will be set to 0.000000. Details:
     \\nValueError('Penalty term must be positive; got (C=-2)',)",)
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.cross_validation.
     """
 
 
@@ -110,8 +133,24 @@ class NonBLASDotWarning(EfficiencyWarning):
 
     This warning is used to notify the user that BLAS was not used for dot
     operation and hence the efficiency may be affected.
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.utils.validation, extends EfficiencyWarning.
+    """
+
+
+class SkipTestWarning(UserWarning):
+    """Warning class used to notify the user of a test that was skipped.
+
+    For example, one of the estimator checks requires a pandas import.
+    If the pandas package cannot be imported, the test will be skipped rather
+    than register as a failure.
     """
 
 
 class UndefinedMetricWarning(UserWarning):
-    """Warning used when the metric is invalid"""
+    """Warning used when the metric is invalid
+
+    .. versionchanged:: 0.18
+       Moved from sklearn.base.
+    """

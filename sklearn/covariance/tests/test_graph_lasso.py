@@ -7,6 +7,7 @@ from scipy import linalg
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_less
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.covariance import (graph_lasso, GraphLasso, GraphLassoCV,
                                 empirical_covariance)
@@ -14,6 +15,8 @@ from sklearn.datasets.samples_generator import make_sparse_spd_matrix
 from sklearn.externals.six.moves import StringIO
 from sklearn.utils import check_random_state
 from sklearn import datasets
+
+from numpy.testing import assert_equal
 
 
 def test_graph_lasso(random_state=0):
@@ -61,8 +64,8 @@ def test_graph_lasso(random_state=0):
 
 def test_graph_lasso_iris():
     # Hard-coded solution from R glasso package for alpha=1.0
-    # The iris datasets in R and sklearn do not match in a few places, these
-    # values are for the sklearn version
+    # The iris datasets in R and scikit-learn do not match in a few places,
+    # these values are for the scikit-learn version.
     cov_R = np.array([
         [0.68112222, 0.0, 0.2651911, 0.02467558],
         [0.00, 0.1867507, 0.0, 0.00],
@@ -131,3 +134,23 @@ def test_graph_lasso_cv(random_state=1):
 
     # Smoke test with specified alphas
     GraphLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
+
+
+def test_deprecated_grid_scores(random_state=1):
+    dim = 5
+    n_samples = 6
+    random_state = check_random_state(random_state)
+    prec = make_sparse_spd_matrix(dim, alpha=.96,
+                                  random_state=random_state)
+    cov = linalg.inv(prec)
+    X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
+    graph_lasso = GraphLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1)
+    graph_lasso.fit(X)
+
+    depr_message = ("Attribute grid_scores was deprecated in version "
+                    "0.19 and will be removed in 0.21. Use "
+                    "``grid_scores_`` instead")
+
+    assert_warns_message(DeprecationWarning, depr_message,
+                         lambda: graph_lasso.grid_scores)
+    assert_equal(graph_lasso.grid_scores, graph_lasso.grid_scores_)

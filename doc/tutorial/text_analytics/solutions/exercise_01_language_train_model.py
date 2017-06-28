@@ -54,9 +54,9 @@ print(metrics.classification_report(y_test, y_predicted,
 cm = metrics.confusion_matrix(y_test, y_predicted)
 print(cm)
 
-#import pylab as pl
-#pl.matshow(cm, cmap=pl.cm.jet)
-#pl.show()
+#import matlotlib.pyplot as plt
+#plt.matshow(cm, cmap=plt.cm.jet)
+#plt.show()
 
 # Predict the result on some short new sentences:
 sentences = [

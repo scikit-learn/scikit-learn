@@ -15,6 +15,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #         (parts based on earlier work by Mathieu Blondel)
 #
 # License: BSD 3 clause
+import warnings
 
 from abc import ABCMeta, abstractmethod
 
@@ -25,10 +26,10 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array
-from .utils.extmath import safe_sparse_dot, logsumexp
+from .utils import check_X_y, check_array, check_consistent_length
+from .utils.extmath import safe_sparse_dot
+from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.fixes import in1d
 from .utils.validation import check_is_fitted
 from .externals import six
 
@@ -115,6 +116,12 @@ class GaussianNB(BaseNB):
 
     Read more in the :ref:`User Guide <gaussian_naive_bayes>`.
 
+    Parameters
+    ----------
+    priors : array-like, shape (n_classes,)
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
+
     Attributes
     ----------
     class_prior_ : array, shape (n_classes,)
@@ -137,15 +144,18 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB()
+    GaussianNB(priors=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB()
+    GaussianNB(priors=None)
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
+
+    def __init__(self, priors=None):
+        self.priors = priors
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -159,7 +169,7 @@ class GaussianNB(BaseNB):
         y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
             .. versionadded:: 0.17
@@ -203,7 +213,7 @@ class GaussianNB(BaseNB):
         var : array-like, shape (number of Gaussians,)
             Variances for Gaussians in original set.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -273,13 +283,13 @@ class GaussianNB(BaseNB):
         y : array-like, shape (n_samples,)
             Target values.
 
-        classes : array-like, shape (n_classes,)
+        classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
             .. versionadded:: 0.17
@@ -305,17 +315,17 @@ class GaussianNB(BaseNB):
         y : array-like, shape (n_samples,)
             Target values.
 
-        classes : array-like, shape (n_classes,)
+        classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        _refit: bool
+        _refit: bool, optional (default=False)
             If true, act as though this were the first time we called
             _partial_fit (ie, throw away any past fitting and start over).
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -324,6 +334,9 @@ class GaussianNB(BaseNB):
             Returns self.
         """
         X, y = check_X_y(X, y)
+        if sample_weight is not None:
+            sample_weight = check_array(sample_weight, ensure_2d=False)
+            check_consistent_length(y, sample_weight)
 
         # If the ratio of data variance between dimensions is too small, it
         # will cause numerical errors. To address this, we artificially
@@ -341,8 +354,29 @@ class GaussianNB(BaseNB):
             n_classes = len(self.classes_)
             self.theta_ = np.zeros((n_classes, n_features))
             self.sigma_ = np.zeros((n_classes, n_features))
-            self.class_prior_ = np.zeros(n_classes)
-            self.class_count_ = np.zeros(n_classes)
+
+            self.class_count_ = np.zeros(n_classes, dtype=np.float64)
+
+            # Initialise the class prior
+            n_classes = len(self.classes_)
+            # Take into account the priors
+            if self.priors is not None:
+                priors = np.asarray(self.priors)
+                # Check that the provide prior match the number of classes
+                if len(priors) != n_classes:
+                    raise ValueError('Number of priors must match number of'
+                                     ' classes.')
+                # Check that the sum is 1
+                if priors.sum() != 1.0:
+                    raise ValueError('The sum of the priors should be 1.')
+                # Check that the prior are non-negative
+                if (priors < 0).any():
+                    raise ValueError('Priors must be non-negative.')
+                self.class_prior_ = priors
+            else:
+                # Initialize the priors to zeros for each class
+                self.class_prior_ = np.zeros(len(self.classes_),
+                                             dtype=np.float64)
         else:
             if X.shape[1] != self.theta_.shape[1]:
                 msg = "Number of features %d does not match previous data %d."
@@ -353,12 +387,12 @@ class GaussianNB(BaseNB):
         classes = self.classes_
 
         unique_y = np.unique(y)
-        unique_y_in_classes = in1d(unique_y, classes)
+        unique_y_in_classes = np.in1d(unique_y, classes)
 
         if not np.all(unique_y_in_classes):
             raise ValueError("The target label(s) %s in y do not exist in the "
                              "initial classes %s" %
-                             (y[~unique_y_in_classes], classes))
+                             (unique_y[~unique_y_in_classes], classes))
 
         for y_i in unique_y:
             i = classes.searchsorted(y_i)
@@ -380,7 +414,12 @@ class GaussianNB(BaseNB):
             self.class_count_[i] += N_i
 
         self.sigma_[:, :] += epsilon
-        self.class_prior_[:] = self.class_count_ / np.sum(self.class_count_)
+
+        # Update if only no priors is provided
+        if self.priors is None:
+            # Empirical prior, with sample_weight taken into account
+            self.class_prior_ = self.class_count_ / self.class_count_.sum()
+
         return self
 
     def _joint_log_likelihood(self, X):
@@ -397,6 +436,8 @@ class GaussianNB(BaseNB):
 
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
+
+_ALPHA_MIN = 1e-10
 
 
 class BaseDiscreteNB(BaseNB):
@@ -417,10 +458,20 @@ class BaseDiscreteNB(BaseNB):
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = (np.log(self.class_count_)
-                                     - np.log(self.class_count_.sum()))
+            self.class_log_prior_ = (np.log(self.class_count_) -
+                                     np.log(self.class_count_.sum()))
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+
+    def _check_alpha(self):
+        if self.alpha < 0:
+            raise ValueError('Smoothing parameter alpha = %.1e. '
+                             'alpha should be > 0.' % self.alpha)
+        if self.alpha < _ALPHA_MIN:
+            warnings.warn('alpha too small will result in numeric errors, '
+                          'setting alpha = %.1e' % _ALPHA_MIN)
+            return _ALPHA_MIN
+        return self.alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
@@ -445,13 +496,13 @@ class BaseDiscreteNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        classes : array-like, shape = [n_classes]
+        classes : array-like, shape = [n_classes] (default=None)
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like, shape = [n_samples] (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -500,7 +551,8 @@ class BaseDiscreteNB(BaseNB):
         # be called by the user explicitly just once after several consecutive
         # calls to partial_fit and prior any call to predict[_[log_]proba]
         # to avoid computing the smooth log probas at each call to partial fit
-        self._update_feature_log_prob()
+        alpha = self._check_alpha()
+        self._update_feature_log_prob(alpha)
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
@@ -516,7 +568,7 @@ class BaseDiscreteNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        sample_weight : array-like, shape = [n_samples], optional
+        sample_weight : array-like, shape = [n_samples], (default=None)
             Weights applied to individual samples (1. for unweighted).
 
         Returns
@@ -550,7 +602,8 @@ class BaseDiscreteNB(BaseNB):
         self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                        dtype=np.float64)
         self._count(X, Y)
-        self._update_feature_log_prob()
+        alpha = self._check_alpha()
+        self._update_feature_log_prob(alpha)
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
@@ -585,11 +638,11 @@ class MultinomialNB(BaseDiscreteNB):
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
 
-    fit_prior : boolean
+    fit_prior : boolean, optional (default=True)
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    class_prior : array-like, size (n_classes,)
+    class_prior : array-like, size (n_classes,), optional (default=None)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
@@ -656,21 +709,21 @@ class MultinomialNB(BaseDiscreteNB):
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
-    def _update_feature_log_prob(self):
+    def _update_feature_log_prob(self, alpha):
         """Apply smoothing to raw counts and recompute log probabilities"""
-        smoothed_fc = self.feature_count_ + self.alpha
+        smoothed_fc = self.feature_count_ + alpha
         smoothed_cc = smoothed_fc.sum(axis=1)
 
-        self.feature_log_prob_ = (np.log(smoothed_fc)
-                                  - np.log(smoothed_cc.reshape(-1, 1)))
+        self.feature_log_prob_ = (np.log(smoothed_fc) -
+                                  np.log(smoothed_cc.reshape(-1, 1)))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
         check_is_fitted(self, "classes_")
 
         X = check_array(X, accept_sparse='csr')
-        return (safe_sparse_dot(X, self.feature_log_prob_.T)
-                + self.class_log_prior_)
+        return (safe_sparse_dot(X, self.feature_log_prob_.T) +
+                self.class_log_prior_)
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -688,15 +741,15 @@ class BernoulliNB(BaseDiscreteNB):
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
 
-    binarize : float or None, optional
+    binarize : float or None, optional (default=0.0)
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
 
-    fit_prior : boolean
+    fit_prior : boolean, optional (default=True)
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    class_prior : array-like, size=[n_classes,]
+    class_prior : array-like, size=[n_classes,], optional (default=None)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
@@ -758,13 +811,13 @@ class BernoulliNB(BaseDiscreteNB):
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
-    def _update_feature_log_prob(self):
+    def _update_feature_log_prob(self, alpha):
         """Apply smoothing to raw counts and recompute log probabilities"""
-        smoothed_fc = self.feature_count_ + self.alpha
-        smoothed_cc = self.class_count_ + self.alpha * 2
+        smoothed_fc = self.feature_count_ + alpha
+        smoothed_cc = self.class_count_ + alpha * 2
 
-        self.feature_log_prob_ = (np.log(smoothed_fc)
-                                  - np.log(smoothed_cc.reshape(-1, 1)))
+        self.feature_log_prob_ = (np.log(smoothed_fc) -
+                                  np.log(smoothed_cc.reshape(-1, 1)))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
