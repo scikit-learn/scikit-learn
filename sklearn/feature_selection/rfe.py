@@ -9,6 +9,7 @@
 import numpy as np
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
+from ..utils.validation import check_is_fitted
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -29,6 +30,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     return rfe._fit(
         X_train, y_train, lambda estimator, features:
         _score(estimator, X_test[:, features], y_test, scorer)).scores_
+
 
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
@@ -135,6 +137,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         return self._fit(X, y)
 
     def _fit(self, X, y, step_score=None):
+        # Parameter step_score controls the calculation of self.scores_
+        # step_score is not exposed to users
+        # and is used when implementing RFECV
+        # self.scores_ will not be calculated when calling _fit through fit
+
         X, y = check_X_y(X, y, "csc")
         # Initialization
         n_features = X.shape[1]
@@ -227,6 +234,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array of shape [n_samples]
             The predicted target values.
         """
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.predict(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
@@ -242,21 +250,26 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array of shape [n_samples]
             The target values.
         """
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.score(self.transform(X), y)
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'support_')
         return self.support_
 
     @if_delegate_has_method(delegate='estimator')
     def decision_function(self, X):
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.decision_function(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
     def predict_proba(self, X):
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_proba(self.transform(X))
 
     @if_delegate_has_method(delegate='estimator')
     def predict_log_proba(self, X):
+        check_is_fitted(self, 'estimator_')
         return self.estimator_.predict_log_proba(self.transform(X))
 
 
@@ -293,8 +306,8 @@ class RFECV(RFE, MetaEstimatorMixin):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used. If the 
-        estimator is a classifier or if ``y`` is neither binary nor multiclass, 
+        :class:`sklearn.model_selection.StratifiedKFold` is used. If the
+        estimator is a classifier or if ``y`` is neither binary nor multiclass,
         :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various

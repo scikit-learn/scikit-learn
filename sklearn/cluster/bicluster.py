@@ -8,16 +8,16 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
-from scipy.sparse import dia_matrix
-from scipy.sparse import issparse
+from scipy.linalg import norm
+from scipy.sparse import dia_matrix, issparse
+from scipy.sparse.linalg import eigsh, svds
 
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 from ..externals import six
 from ..utils import check_random_state
-from ..utils.arpack import eigsh, svds
 
-from ..utils.extmath import (make_nonnegative, norm, randomized_svd,
+from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
 
 from ..utils.validation import assert_all_finite, check_array
@@ -110,7 +110,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                              " one of {1}.".format(self.svd_method,
                                                    legal_svd_methods))
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """Creates a biclustering for X.
 
         Parameters
@@ -202,7 +202,7 @@ class SpectralCoclustering(BaseSpectral):
         'randomized' or 'arpack'. If 'randomized', use
         :func:`sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', use
-        :func:`sklearn.utils.arpack.svds`, which is more accurate, but
+        :func:`scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
@@ -334,7 +334,7 @@ class SpectralBiclustering(BaseSpectral):
         'randomized' or 'arpack'. If 'randomized', uses
         `sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', uses
-        `sklearn.utils.arpack.svds`, which is more accurate, but
+        `scipy.sparse.linalg.svds`, which is more accurate, but
         possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None

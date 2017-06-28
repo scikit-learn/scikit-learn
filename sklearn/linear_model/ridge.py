@@ -36,7 +36,7 @@ from ..metrics.scorer import check_scoring
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
     n_samples, n_features = X.shape
     X1 = sp_linalg.aslinearoperator(X)
-    coefs = np.empty((y.shape[1], n_features))
+    coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
 
     if n_features > n_samples:
         def create_mv(curr_alpha):
@@ -80,7 +80,7 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0):
 
 def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
     n_samples, n_features = X.shape
-    coefs = np.empty((y.shape[1], n_features))
+    coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
     n_iter = np.empty(y.shape[1], dtype=np.int32)
 
     # According to the lsqr documentation, alpha = damp^2.
@@ -111,7 +111,7 @@ def _solve_cholesky(X, y, alpha):
         return linalg.solve(A, Xy, sym_pos=True,
                             overwrite_a=True).T
     else:
-        coefs = np.empty([n_targets, n_features])
+        coefs = np.empty([n_targets, n_features], dtype=X.dtype)
         for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
             A.flat[::n_features + 1] += current_alpha
             coef[:] = linalg.solve(A, target, sym_pos=True,
@@ -165,7 +165,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
         return dual_coef
     else:
         # One penalty per target. We need to solve each target separately.
-        dual_coefs = np.empty([n_targets, n_samples])
+        dual_coefs = np.empty([n_targets, n_samples], K.dtype)
 
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
             K.flat[::n_samples + 1] += current_alpha
@@ -186,7 +186,7 @@ def _solve_svd(X, y, alpha):
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
     s_nnz = s[idx][:, np.newaxis]
     UTy = np.dot(U.T, y)
-    d = np.zeros((s.size, alpha.size))
+    d = np.zeros((s.size, alpha.size), dtype=X.dtype)
     d[idx] = s_nnz / (s_nnz ** 2 + alpha)
     d_UT_y = d * UTy
     return np.dot(Vt.T, d_UT_y).T
@@ -320,6 +320,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                           "automatically changed into 'sag'.")
         solver = 'sag'
 
+    _dtype = [np.float64, np.float32]
+
     # SAG needs X and y columns to be C-contiguous and np.float64
     if solver in ['sag', 'saga']:
         X = check_array(X, accept_sparse=['csr'],
@@ -327,8 +329,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         y = check_array(y, dtype=np.float64, ensure_2d=False, order='F')
     else:
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=np.float64)
-        y = check_array(y, dtype='numeric', ensure_2d=False)
+                        dtype=_dtype)
+        y = check_array(y, dtype=X.dtype, ensure_2d=False)
     check_consistent_length(X, y)
 
     n_samples, n_features = X.shape
@@ -371,7 +373,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
             X, y = _rescale_data(X, y, sample_weight)
 
     # There should be either 1 or n_targets penalties
-    alpha = np.asarray(alpha).ravel()
+    alpha = np.asarray(alpha, dtype=X.dtype).ravel()
     if alpha.size not in [1, n_targets]:
         raise ValueError("Number of targets and number of penalties "
                          "do not correspond: %d != %d"
@@ -469,7 +471,14 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=np.float64,
+
+        if self.solver in ('sag', 'saga'):
+            _dtype = np.float64
+        else:
+            # all other solvers work at both float precision levels
+            _dtype = [np.float64, np.float32]
+
+        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=_dtype,
                          multi_output=True, y_numeric=True)
 
         if ((sample_weight is not None) and
@@ -966,7 +975,7 @@ class _RidgeGCV(LinearModel):
             Training data
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
-            Target values
+            Target values. Will be cast to X's dtype if necessary
 
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
@@ -1085,7 +1094,7 @@ class _BaseRidgeCV(LinearModel):
             Training data
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
-            Target values
+            Target values. Will be cast to X's dtype if necessary
 
         sample_weight : float or array-like of shape [n_samples]
             Sample weight
@@ -1327,7 +1336,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             and n_features is the number of features.
 
         y : array-like, shape (n_samples,)
-            Target values.
+            Target values. Will be cast to X's dtype if necessary
 
         sample_weight : float or numpy array of shape (n_samples,)
             Sample weight.

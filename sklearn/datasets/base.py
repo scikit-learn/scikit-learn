@@ -500,6 +500,9 @@ def load_digits(n_class=10, return_X_y=False):
 
         .. versionadded:: 0.18
 
+    This is a copy of the test set of the UCI ML hand-written digits datasets
+    http://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
+
     Examples
     --------
     To load the data and visualize the images::
@@ -569,14 +572,19 @@ def load_diabetes(return_X_y=False):
 
         .. versionadded:: 0.18
     """
-    base_dir = join(dirname(__file__), 'data')
+
+    module_path = dirname(__file__)
+    base_dir = join(module_path, 'data')
     data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
     target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
+
+    with open(join(module_path, 'descr', 'diabetes.rst')) as rst_file:
+        fdescr = rst_file.read()
 
     if return_X_y:
         return data, target
 
-    return Bunch(data=data, target=target,
+    return Bunch(data=data, target=target, DESCR=fdescr,
                  feature_names=['age', 'sex', 'bmi', 'bp',
                                 's1', 's2', 's3', 's4', 's5', 's6'])
 
@@ -584,10 +592,12 @@ def load_diabetes(return_X_y=False):
 def load_linnerud(return_X_y=False):
     """Load and return the linnerud dataset (multivariate regression).
 
-    Samples total: 20
-    Dimensionality: 3 for both data and targets
-    Features: integer
-    Targets: integer
+    ==============    ============================
+    Samples total     20
+    Dimensionality    3 (for both data and target)
+    Features          integer
+    Targets           integer
+    ==============    ============================
 
     Parameters
     ----------

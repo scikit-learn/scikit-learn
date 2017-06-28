@@ -15,14 +15,14 @@ of Gaussian Mixture Models.
 # - 'sklearn/mixture/dpgmm.py'
 # - 'sklearn/mixture/test_dpgmm.py'
 # - 'sklearn/mixture/test_gmm.py'
+from time import time
 
 import numpy as np
 from scipy import linalg
-from time import time
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, check_array, deprecated
-from ..utils.extmath import logsumexp
+from ..utils.fixes import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
 

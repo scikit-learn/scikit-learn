@@ -473,7 +473,7 @@ def _naive_lmvnpdf_diag(X, means, covars):
 def test_gaussian_mixture_log_probabilities():
     from sklearn.mixture.gaussian_mixture import _estimate_log_gaussian_prob
 
-    # test aginst with _naive_lmvnpdf_diag
+    # test against with _naive_lmvnpdf_diag
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
     n_samples = 500

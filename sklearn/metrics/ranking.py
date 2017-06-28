@@ -22,17 +22,16 @@ from __future__ import division
 import warnings
 import numpy as np
 from scipy.sparse import csr_matrix
+from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
-from ..utils import column_or_1d, check_array
+from ..utils import column_or_1d, check_array, check_X_y
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
-from ..utils.fixes import bincount
-from ..utils.fixes import array_equal
-from ..utils.stats import rankdata
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
+from ..preprocessing import LabelBinarizer
 
 from .base import _average_binary_score
 
@@ -47,10 +46,8 @@ def auc(x, y, reorder=False):
     ----------
     x : array, shape = [n]
         x coordinates.
-
     y : array, shape = [n]
         y coordinates.
-
     reorder : boolean, optional (default=False)
         If True, assume that the curve is ascending in the case of ties, as for
         an ROC curve. If the curve is non-ascending, the result will be wrong.
@@ -72,10 +69,8 @@ def auc(x, y, reorder=False):
     See also
     --------
     roc_auc_score : Computes the area under the ROC curve
-
     precision_recall_curve :
         Compute precision-recall pairs for different probability thresholds
-
     """
     check_consistent_length(x, y)
     x = column_or_1d(x)
@@ -112,8 +107,6 @@ def auc(x, y, reorder=False):
 def average_precision_score(y_true, y_score, average="macro",
                             sample_weight=None):
     """Compute average precision (AP) from prediction scores
-
-    This score corresponds to the area under the precision-recall curve.
 
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
@@ -156,7 +149,13 @@ def average_precision_score(y_true, y_score, average="macro",
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-           <https://en.wikipedia.org/wiki/Average_precision>`_
+           <http://en.wikipedia.org/wiki/Average_precision>`_
+    .. [2] `Stanford Information Retrieval book
+            <http://nlp.stanford.edu/IR-book/html/htmledition/
+            evaluation-of-ranked-retrieval-results-1.html>`_
+    .. [3] `The PASCAL Visual Object Classes (VOC) Challenge
+            <http://citeseerx.ist.psu.edu/viewdoc/
+            download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_
 
     See also
     --------
@@ -172,16 +171,22 @@ def average_precision_score(y_true, y_score, average="macro",
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
-    0.79...
+    0.83...
 
     """
-    def _binary_average_precision(y_true, y_score, sample_weight=None):
+    def _binary_uninterpolated_average_precision(
+            y_true, y_score, sample_weight=None):
         precision, recall, thresholds = precision_recall_curve(
             y_true, y_score, sample_weight=sample_weight)
-        return auc(recall, precision)
+        # Return the step function integral
+        # The following works because the last entry of precision is
+        # garantee to be 1, as returned by precision_recall_curve
+        return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
-    return _average_binary_score(_binary_average_precision, y_true, y_score,
-                                 average, sample_weight=sample_weight)
+    return _average_binary_score(_binary_uninterpolated_average_precision,
+                                 y_true, y_score, average,
+                                 sample_weight=sample_weight)
+
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
@@ -306,11 +311,11 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
     if (pos_label is None and
-        not (array_equal(classes, [0, 1]) or
-             array_equal(classes, [-1, 1]) or
-             array_equal(classes, [0]) or
-             array_equal(classes, [-1]) or
-             array_equal(classes, [1]))):
+        not (np.array_equal(classes, [0, 1]) or
+             np.array_equal(classes, [-1, 1]) or
+             np.array_equal(classes, [0]) or
+             np.array_equal(classes, [-1]) or
+             np.array_equal(classes, [1]))):
         raise ValueError("Data is not binary and pos_label is not specified")
     elif pos_label is None:
         pos_label = 1.
@@ -594,7 +599,7 @@ def label_ranking_average_precision_score(y_true, y_score):
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
 
-    # Handle badly formated array and the degenerate case with one label
+    # Handle badly formatted array and the degenerate case with one label
     y_type = type_of_target(y_true)
     if (y_type != "multilabel-indicator" and
             not (y_type == "binary" and y_true.ndim == 2)):
@@ -742,10 +747,10 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
         # Sort and bin the label scores
         unique_scores, unique_inverse = np.unique(y_score[i],
                                                   return_inverse=True)
-        true_at_reversed_rank = bincount(
+        true_at_reversed_rank = np.bincount(
             unique_inverse[y_true.indices[start:stop]],
             minlength=len(unique_scores))
-        all_at_reversed_rank = bincount(unique_inverse,
+        all_at_reversed_rank = np.bincount(unique_inverse,
                                         minlength=len(unique_scores))
         false_at_reversed_rank = all_at_reversed_rank - true_at_reversed_rank
 
@@ -765,3 +770,91 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
     loss[np.logical_or(n_positives == 0, n_positives == n_labels)] = 0.
 
     return np.average(loss, weights=sample_weight)
+
+
+def dcg_score(y_true, y_score, k=5):
+    """Discounted cumulative gain (DCG) at rank K.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        Ground truth (true relevance labels).
+    y_score : array, shape = [n_samples]
+        Predicted scores.
+    k : int
+        Rank.
+
+    Returns
+    -------
+    score : float
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Discounted Cumulative Gain
+           <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
+    """
+    order = np.argsort(y_score)[::-1]
+    y_true = np.take(y_true, order[:k])
+
+    gain = 2 ** y_true - 1
+
+    discounts = np.log2(np.arange(len(y_true)) + 2)
+    return np.sum(gain / discounts)
+
+
+def ndcg_score(y_true, y_score, k=5):
+    """Normalized discounted cumulative gain (NDCG) at rank K.
+
+    Normalized Discounted Cumulative Gain (NDCG) measures the performance of a
+    recommendation system based on the graded relevance of the recommended
+    entities. It varies from 0.0 to 1.0, with 1.0 representing the ideal
+    ranking of the entities.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        Ground truth (true labels represended as integers).
+    y_score : array, shape = [n_samples, n_classes]
+        Predicted probabilities.
+    k : int
+        Rank.
+
+    Returns
+    -------
+    score : float
+
+    Example
+    -------
+    >>> y_true = [1, 0, 2]
+    >>> y_score = [[0.15, 0.55, 0.2], [0.7, 0.2, 0.1], [0.06, 0.04, 0.9]]
+    >>> ndcg_score(y_true, y_score, k=2)
+    1.0
+    >>> y_score = [[0.9, 0.5, 0.8], [0.7, 0.2, 0.1], [0.06, 0.04, 0.9]]
+    >>> ndcg_score(y_true, y_score, k=2)
+    0.66666666666666663
+
+    References
+    ----------
+    .. [1] `Kaggle entry for the Normalized Discounted Cumulative Gain
+           <https://www.kaggle.com/wiki/NormalizedDiscountedCumulativeGain>`_
+    """
+    y_score, y_true = check_X_y(y_score, y_true)
+
+    # Make sure we use all the labels (max between the lenght and the higher
+    # number in the array)
+    lb = LabelBinarizer()
+    lb.fit(np.arange(max(np.max(y_true) + 1, len(y_true))))
+    binarized_y_true = lb.transform(y_true)
+
+    if binarized_y_true.shape != y_score.shape:
+        raise ValueError("y_true and y_score have different value ranges")
+
+    scores = []
+
+    # Iterate over each y_value_true and compute the DCG score
+    for y_value_true, y_value_score in zip(binarized_y_true, y_score):
+        actual = dcg_score(y_value_true, y_value_score, k)
+        best = dcg_score(y_value_true, y_value_true, k)
+        scores.append(actual / best)
+
+    return np.mean(scores)

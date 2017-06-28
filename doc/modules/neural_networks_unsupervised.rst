@@ -53,7 +53,7 @@ The graphical model of an RBM is a fully-connected bipartite graph.
 The nodes are random variables whose states depend on the state of the other
 nodes they are connected to. The model is therefore parameterized by the
 weights of the connections, as well as one intercept (bias) term for each
-visible and hidden unit, ommited from the image for simplicity.
+visible and hidden unit, omitted from the image for simplicity.
 
 The energy function measures the quality of a joint assignment:
 

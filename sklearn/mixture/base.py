@@ -18,7 +18,7 @@ from ..base import DensityMixin
 from ..externals import six
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
-from ..utils.extmath import logsumexp
+from ..utils.fixes import logsumexp
 
 
 def _check_shape(param, param_shape, name):
@@ -321,7 +321,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         """
         return self.score_samples(X).mean()
 
-    def predict(self, X, y=None):
+    def predict(self, X):
         """Predict the labels for the data samples in X using trained model.
 
         Parameters
@@ -340,7 +340,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         return self._estimate_weighted_log_prob(X).argmax(axis=1)
 
     def predict_proba(self, X):
-        """Predict posterior probability of data per each component.
+        """Predict posterior probability of each component given the data.
 
         Parameters
         ----------
@@ -351,8 +351,8 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         Returns
         -------
         resp : array, shape (n_samples, n_components)
-            Returns the probability of the sample for each Gaussian
-            (state) in the model.
+            Returns the probability of each Gaussian (state) in
+            the model given each sample.
         """
         self._check_is_fitted()
         X = _check_X(X, None, self.means_.shape[1])
@@ -417,7 +417,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         Returns
         -------
-        weighted_log_prob : array, shape (n_features, n_component)
+        weighted_log_prob : array, shape (n_samples, n_component)
         """
         return self._estimate_log_prob(X) + self._estimate_log_weights()
 
