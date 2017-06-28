@@ -874,15 +874,24 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
 
     param_names = []
     for name, type_definition, param_doc in doc['Parameters']:
-        if ':' in name or '*' not in name:
-            param_names.append(name.strip('` '))
+        if (type_definition.strip() == "" or
+                type_definition.strip().startswith(':')):
 
-        type_definition = type_definition.strip()
+            # If there was no space between name and the colon
+            # "verbose:" -> len(["verbose", ""][0]) -> 7
+            # If "verbose:"[7] == ":", then there was no space
+            param_name = name.lstrip()
 
-        if type_definition == "" or type_definition.startswith(':'):
-            incorrect += [func_name + ' incorrect type definition for param: '
-                          '%s (type definition was "%s")'
-                          % (name, type_definition)]
+            if param_name[len(param_name.split(':')[0].strip())] == ':':
+                incorrect += [func_name +
+                              'There was no space between the param name and '
+                              'colon ("%s")' % name]
+            else:
+                incorrect += [func_name + ' incorrect type definition for '
+                              'param: "%s" (type definition was "%s")'
+                              % (name.split(':')[0], type_definition)]
+        if '*' not in name:
+            param_names.append(name.split(':')[0].strip('` '))
 
     if ignore is not None:
         for p in ignore:
