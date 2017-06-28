@@ -434,11 +434,11 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     code_init : array of shape (n_samples, n_components),
         Initial value for the sparse code for warm restart scenarios.
 
-    callback :
-        Callable that gets invoked every five iterations.
+    callback : callable or None, optional (default: None)
+        callable that gets invoked every five iterations
 
-    verbose :
-        Degree of output the procedure will print.
+    verbose : bool, optional (default: False)
+        To control the verbosity of the procedure.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -599,14 +599,14 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     dict_init : array of shape (n_components, n_features),
         Initial value for the dictionary for warm restart scenarios.
 
-    callback :
-        Callable that gets invoked every five iterations.
+    callback : callable or None, optional (default: None)
+        callable that gets invoked every five iterations
 
     batch_size : int,
         The number of samples to take in each batch.
 
-    verbose :
-        Degree of output the procedure will print.
+    verbose : bool, optional (default: False)
+        To control the verbosity of the procedure.
 
     shuffle : boolean,
         Whether to shuffle the data before splitting it in batches.
@@ -1015,8 +1015,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     dict_init : array of shape (n_components, n_features),
         initial values for the dictionary, for warm restart
 
-    verbose :
-        degree of verbosity of the printed output
+    verbose : bool, optional (default: False)
+        To control the verbosity of the procedure.
 
     split_sign : bool, False by default
         Whether to split the sparse feature vector into the concatenation of
@@ -1178,8 +1178,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    verbose :
-        degree of verbosity of the printed output
+    verbose : bool, optional (default: False)
+        To control the verbosity of the procedure.
 
     split_sign : bool, False by default
         Whether to split the sparse feature vector into the concatenation of
