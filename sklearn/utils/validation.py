@@ -696,7 +696,8 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         estimator instance for which the check is performed.
 
     attributes : attribute name(s) given as string or a list/tuple of strings
-        Eg. : ["coef_", "estimator_", ...], "coef_"
+        Eg.:
+            ``["coef_", "estimator_", ...], "coef_"``
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
