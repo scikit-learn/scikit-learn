@@ -272,7 +272,7 @@ def test_singular_values():
     assert_array_almost_equal(np.sum(pca.singular_values_**2.0),
                               np.linalg.norm(X_pca, "fro")**2.0, 12)
     assert_array_almost_equal(np.sum(apca.singular_values_**2.0),
-                              np.linalg.norm(X_apca, "fro")**2.0, 12)
+                              np.linalg.norm(X_apca, "fro")**2.0, 9)
     assert_array_almost_equal(np.sum(rpca.singular_values_**2.0),
                               np.linalg.norm(X_rpca, "fro")**2.0, 0)
 
