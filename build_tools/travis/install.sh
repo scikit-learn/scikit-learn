@@ -116,5 +116,8 @@ else
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
-    conda install flake8
+    # flake8 version is temporarily set to 2.5.1 because the next
+    # version available on conda (3.3.0) has a bug that checks non
+    # python files and cause non meaningful flake8 errors
+    conda install --yes flake8=2.5.1
 fi
