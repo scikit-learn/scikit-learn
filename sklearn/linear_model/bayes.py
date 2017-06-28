@@ -148,7 +148,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         X : numpy array of shape [n_samples,n_features]
             Training data
         y : numpy array of shape [n_samples]
-            Target values
+            Target values. Will be cast to X's dtype if necessary
 
         Returns
         -------
@@ -420,7 +420,7 @@ class ARDRegression(LinearModel, RegressorMixin):
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
         y : array, shape = [n_samples]
-            Target values (integers)
+            Target values (integers). Will be cast to X's dtype if necessary
 
         Returns
         -------

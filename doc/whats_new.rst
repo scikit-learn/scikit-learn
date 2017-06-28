@@ -145,6 +145,15 @@ Enhancements
      do not set attributes on the estimator.
      :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
+   - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
+     :class:`linear_model.PassiveAggressiveClassifier`,
+     :class:`linear_model.PassiveAggressiveRegressor` and
+     :class:`linear_model.Perceptron` now expose a ``max_iter`` and
+     ``tol`` parameters, to handle convergence more precisely.
+     ``n_iter`` parameter is deprecated, and the fitted estimator exposes
+     a ``n_iter_`` attribute, with actual number of iterations before
+     convergence. By `Tom Dupre la Tour`_.
+
    - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
      will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
      norm 'max' the norms returned will be the same as for dense matrices.
@@ -264,7 +273,7 @@ Bug fixes
      ``max_iter`` if finds a large inlier group early. :issue:`8251` by :user:`aivision2020`.
 
    - Fixed a bug where :class:`sklearn.naive_bayes.MultinomialNB` and :class:`sklearn.naive_bayes.BernoulliNB`
-     failed when `alpha=0`. :issue:`5814` by :user:`Yichuan Liu <yl565>` and 
+     failed when `alpha=0`. :issue:`5814` by :user:`Yichuan Liu <yl565>` and
      :user:`Herilalaina Rakotoarison <herilalaina>`.
 
    - Fixed a bug where :func:`datasets.make_moons` gives an
@@ -416,6 +425,11 @@ Bug fixes
      hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
      by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
 
+  -  Fixed a bug in :class:`gaussian_process.GaussianProcessRegressor`
+     when the standard deviation and covariance predicted without fit
+     would fail with a unmeaningful error by default.
+     :issue:`6573` by :user:`Quazi Marufur Rahman <qmaruf>` and
+     `Manoj Kumar`_.
 
    - Fixed the implementation of `explained_variance_`
      in :class:`decomposition.PCA`,
@@ -1334,7 +1348,6 @@ Birodkar, Vikram, Villu Ruusmann, Vinayak Mehta, walter, waterponey, Wenhua
 Yang, Wenjian Huang, Will Welch, wyseguy7, xyguo, yanlend, Yaroslav Halchenko,
 yelite, Yen, YenChenLin, Yichuan Liu, Yoav Ram, Yoshiki, Zheng RuiFeng, zivori, Óscar Nájera
 
-
 .. currentmodule:: sklearn
 
 .. _changes_0_17_1:
@@ -1374,6 +1387,7 @@ Bug fixes
     - Fixed a joblib error when evaluating the perplexity of a
       :class:`decomposition.LatentDirichletAllocation` model. See :issue:`6258`
       By Chyi-Kwei Yau.
+
 
 .. _changes_0_17:
 

@@ -653,7 +653,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             Data
 
         y : ndarray, shape (n_samples,) or (n_samples, n_targets)
-            Target
+            Target. Will be cast to X's dtype if necessary
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
@@ -1680,7 +1680,7 @@ class MultiTaskElasticNet(Lasso):
         X : ndarray, shape (n_samples, n_features)
             Data
         y : ndarray, shape (n_samples, n_tasks)
-            Target
+            Target. Will be cast to X's dtype if necessary
 
         Notes
         -----
