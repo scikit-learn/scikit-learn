@@ -871,12 +871,18 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
                 return incorrect
         if len(w):
             raise RuntimeError('Error for %s:\n%s' % (func_name, w[0]))
-    # check set
-    param_names = [name for name, _, _ in doc['Parameters']]
 
-    # clean up some docscrape output:
-    param_names = [name.split(':')[0].strip('` ') for name in param_names]
-    param_names = [name for name in param_names if '*' not in name]
+    param_names = []
+    for name, type_definition, param_doc in doc['Parameters']:
+        if ':' in name or '*' not in name:
+            param_names.append(name.strip('` '))
+
+        type_definition = type_definition.strip()
+
+        if type_definition == "" or type_definition.startswith(':'):
+            incorrect += [func_name + ' incorrect type definition for param: '
+                          '%s (type definition was "%s")'
+                          % (name, type_definition)]
 
     if ignore is not None:
         for p in ignore:
