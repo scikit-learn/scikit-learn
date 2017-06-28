@@ -67,7 +67,7 @@ New features
      normalization based on quantiles.
      :issue:`8363` by :user:`Denis Engemann <dengemann>`,
      :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
-     :user:`Thierry Guillemot <tguillemot>`_, and `Gael Varoquaux`_.
+     :user:`Thierry Guillemot <tguillemot>`, and `Gael Varoquaux`_.
 
    - Added :func:`metrics.dcg_score` and :func:`metrics.ndcg_score`, which
      compute Discounted cumulative gain (DCG) and Normalized discounted
@@ -226,6 +226,9 @@ Enhancements
      :mod:`feature_extraction.text` by binding methods for loops and
      special-casing unigrams. :issue:`7567` by `Jaye Doepke <jtdoepke>`
 
+   - Speed improvements to :class:`model_selection.StratifiedShuffleSplit`.
+     :issue:`5991` by :user:`Arthur Mensch <arthurmensch>` and `Joel Nothman`_.
+
 Bug fixes
 .........
 
@@ -234,7 +237,7 @@ Bug fixes
      by the change in recall since the last operating point, as per the
      `Wikipedia entry <http://en.wikipedia.org/wiki/Average_precision>`_.
      (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
-     `Nick Dingwall`_ and `Gael Varoquaux`_.
+     :user:`Nick Dingwall <ndingwall>` and `Gael Varoquaux`_.
 
    - Fixed a bug in :class:`covariance.MinCovDet` where inputting data
      that produced a singular covariance matrix would cause the helper method
@@ -409,7 +412,7 @@ Bug fixes
    - Fixed a bug in :class:`linear_model.RandomizedLasso`,
      :class:`linear_model.Lars`, :class:`linear_model.LassoLars`,
      :class:`linear_model.LarsCV` and :class:`linear_model.LassoLarsCV`,
-     where the parameter ``precompute`` were not used consistently accross
+     where the parameter ``precompute`` were not used consistently across
      classes, and some values proposed in the docstring could raise errors.
      :issue:`5359` by `Tom Dupre la Tour`_.
 
@@ -1022,7 +1025,7 @@ Model evaluation and meta-estimators
 
 Metrics
 
-   - Added ``labels`` flag to :class:`metrics.log_loss` to to explicitly provide
+   - Added ``labels`` flag to :class:`metrics.log_loss` to explicitly provide
      the labels when the number of classes in ``y_true`` and ``y_pred`` differ.
      :issue:`7239` by :user:`Hong Guangguo <hongguangguo>` with help from
      :user:`Mads Jensen <indianajensen>` and :user:`Nelson Liu <nelson-liu>`.

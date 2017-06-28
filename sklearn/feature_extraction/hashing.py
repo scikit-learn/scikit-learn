@@ -58,10 +58,12 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
+
     non_negative : boolean, optional, default False
         When True, an absolute value is applied to the features matrix prior to
         returning it. When used in conjunction with alternate_sign=True, this
         significantly reduces the inner product preservation property.
+
         .. deprecated:: 0.19
             This option will be removed in 0.21.
 
@@ -80,7 +82,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     --------
     DictVectorizer : vectorizes string-valued features using a hash table.
     sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features
-      encoded as columns of integers.
+        encoded as columns of integers.
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
