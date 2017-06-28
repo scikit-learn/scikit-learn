@@ -49,16 +49,13 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     Parameters
     ----------
     estimator : object
-        A supervised learning estimator with a `fit` method
-        that provides information about feature importance
-        either through a `coef_` attribute
-        or through a `feature_importance_` attribute.
-        `coef_` attributes are usually provided by linear models,
-        while `feature_importance_` attributes
-        are usually provided by tree-based models.
-        Important features must correspond to
-        high absolute values in the `coef_` array
-        or `feature_importance_` array.
+        A supervised learning estimator with a `fit` method that provides
+        information about feature importance either through a `coef_`
+        attribute or through a `feature_importance_` attribute. `coef_`
+        attributes are usually provided by linear models, while
+        `feature_importance_` attributes are usually provided by tree-based
+        models. Important features must correspond to high absolute values
+        in the `coef_` array or `feature_importance_` array.
 
     n_features_to_select : int or None (default=None)
         The number of features to select. If `None`, half of the features
@@ -274,16 +271,13 @@ class RFECV(RFE, MetaEstimatorMixin):
     Parameters
     ----------
     estimator : object
-        A supervised learning estimator with a `fit` method
-        that provides information about feature importance
-        either through a `coef_` attribute
-        or through a `feature_importance_` attribute.
-        `coef_` attributes are usually provided by linear models,
-        while `feature_importance_` attributes
-        are usually provided by tree-based models.
-        Important features must correspond to
-        high absolute values in the `coef_` array
-        or `feature_importance_` array.
+        A supervised learning estimator with a `fit` method that provides
+        information about feature importance either through a `coef_`
+        attribute or through a `feature_importance_` attribute. `coef_`
+        attributes are usually provided by linear models, while
+        `feature_importance_` attributes are usually provided by tree-based
+        models. Important features must correspond to high absolute values
+        in the `coef_` array or `feature_importance_` array.
 
     step : int or float, optional (default=1)
         If greater than or equal to 1, then `step` corresponds to the (integer)
