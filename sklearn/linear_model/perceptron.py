@@ -23,13 +23,6 @@ class Perceptron(BaseSGDClassifier):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
@@ -79,6 +72,13 @@ class Perceptron(BaseSGDClassifier):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+
+    n_iter : int, optional
+        The number of passes over the training data (aka epochs).
+        Defaults to None. Deprecated, will be removed in 0.21.
+
+        .. versionchanged:: 0.19
+            Deprecated
 
     Attributes
     ----------
