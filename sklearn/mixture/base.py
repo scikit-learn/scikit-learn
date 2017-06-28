@@ -417,7 +417,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         Returns
         -------
-        weighted_log_prob : array, shape (n_features, n_component)
+        weighted_log_prob : array, shape (n_samples, n_component)
         """
         return self._estimate_log_prob(X) + self._estimate_log_weights()
 
