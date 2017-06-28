@@ -88,7 +88,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         The base estimator from which the transformer is built.
         This can be both a fitted (if ``prefit`` is set to True)
         or a non-fitted estimator. The estimator must have either a
-        ``feature_importances_`` or ``coef_`` attribute.
+        ``feature_importances_`` or ``coef_`` attribute after fitting.
 
     threshold : string, float, optional default None
         The threshold value to use for feature selection. Features whose
