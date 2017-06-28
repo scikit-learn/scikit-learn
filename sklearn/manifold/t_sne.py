@@ -794,7 +794,7 @@ class TSNE(BaseEstimator):
 
     @property
     @deprecated("Attribute n_iter_final was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use 'n_iter_' instead")
+                "will be removed in 0.21. Use ``n_iter_`` instead")
     def n_iter_final(self):
         return self.n_iter_
 

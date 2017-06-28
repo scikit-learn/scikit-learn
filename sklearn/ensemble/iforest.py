@@ -57,6 +57,7 @@ class IsolationForest(BaseBagging):
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
             - If "auto", then `max_samples=min(256, n_samples)`.
+
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
