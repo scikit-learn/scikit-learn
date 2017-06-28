@@ -33,6 +33,99 @@ __all__ = ['cross_val_score', 'cross_val_predict', 'permutation_test_score',
            'learning_curve', 'validation_curve']
 
 
+def _split_score(estimator, iterator, X, y=None, groups=None, scoring=None,
+                 n_jobs=1, verbose=0, fit_params=None,
+                 pre_dispatch='2*n_jobs'):
+    """Evaluate a score using an iterator
+
+    Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    iterator : an iterable
+        Determines the splitting strategy. Should implement the `split`
+        interface.
+
+    X : array-like
+        The data to fit. Can be, for example a list, or an array at least 2d.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    groups : array-like, with shape (n_samples,), optional
+        Group labels for the samples used while splitting the dataset into
+        train/test set.
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    n_jobs : integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'.
+
+    verbose : integer, optional
+        The verbosity level.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method of the estimator.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    Returns
+    -------
+    scores : array of float, shape=(len(list(cv)),)
+        Array of scores of the estimator for each run of the cross validation.
+
+    Examples
+    --------
+    >>> from sklearn import datasets, linear_model
+    >>> from sklearn.model_selection import cross_val_score
+    >>> diabetes = datasets.load_diabetes()
+    >>> X = diabetes.data[:150]
+    >>> y = diabetes.target[:150]
+    >>> lasso = linear_model.Lasso()
+    >>> print(cross_val_score(lasso, X, y))  # doctest: +ELLIPSIS
+    [ 0.33150734  0.08022311  0.03531764]
+
+    See Also
+    ---------
+    :func:`sklearn.metrics.make_scorer`:
+        Make a scorer from a performance metric or loss function.
+
+    """
+    scorer = check_scoring(estimator, scoring=scoring)
+    # We clone the estimator to make sure that all the folds are
+    # independent, and that it is pickle-able.
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
+                        pre_dispatch=pre_dispatch)
+    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
+                                              train, test, verbose, None,
+                                              fit_params)
+                      for train, test in iterator.split(X, y, groups))
+    return np.array(scores)[:, 0]
+
+
 def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
                     n_jobs=1, verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs'):
@@ -128,16 +221,9 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, scoring=scoring)
-    # We clone the estimator to make sure that all the folds are
-    # independent, and that it is pickle-able.
-    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
-                        pre_dispatch=pre_dispatch)
-    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
-                                              train, test, verbose, None,
-                                              fit_params)
-                      for train, test in cv.split(X, y, groups))
-    return np.array(scores)[:, 0]
+    return _split_score(estimator, cv, X, y=y, groups=groups,
+                        scoring=scoring, n_jobs=1, verbose=0,
+                        fit_params=fit_params, pre_dispatch=pre_dispatch)
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
@@ -298,6 +384,117 @@ def _score(estimator, X_test, y_test, scorer):
     return score
 
 
+def _split_predict(estimator, iterator, X, y=None, groups=None, n_jobs=1,
+                   verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
+                   method='predict'):
+    """Generate iteration estimates for each input data point
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit' and 'predict'
+        The object to use to fit the data.
+
+    iterator : an iterable
+        Determines the splitting strategy. Should implement the `split`
+        interface.
+
+    X : array-like
+        The data to fit. Can be, for example a list, or an array at least 2d.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    groups : array-like, with shape (n_samples,), optional
+        Group labels for the samples used while splitting the dataset into
+        train/test set.
+
+    n_jobs : integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'.
+
+    verbose : integer, optional
+        The verbosity level.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method of the estimator.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    method : string, optional, default: 'predict'
+        Invokes the passed method name of the passed estimator. For
+        method='predict_proba', the columns correspond to the classes
+        in sorted order.
+
+    Returns
+    -------
+    predictions : ndarray
+        This is the result of calling ``method``
+
+    Examples
+    --------
+    >>> from sklearn import datasets, linear_model
+    >>> from sklearn.model_selection import cross_val_predict
+    >>> diabetes = datasets.load_diabetes()
+    >>> X = diabetes.data[:150]
+    >>> y = diabetes.target[:150]
+    >>> lasso = linear_model.Lasso()
+    >>> y_pred = cross_val_predict(lasso, X, y)
+    """
+
+    X, y, groups = indexable(X, y, groups)
+
+    # Ensure the estimator has implemented the passed decision function
+    if not callable(getattr(estimator, method)):
+        raise AttributeError('{} not implemented in estimator'
+                             .format(method))
+
+    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        le = LabelEncoder()
+        y = le.fit_transform(y)
+
+    # We clone the estimator to make sure that all the folds are
+    # independent, and that it is pickle-able.
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
+                        pre_dispatch=pre_dispatch)
+    prediction_blocks = parallel(delayed(_fit_and_predict)(
+        clone(estimator), X, y, train, test, verbose, fit_params, method)
+        for train, test in iterator.split(X, y, groups))
+
+    # Concatenate the predictions
+    predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
+    test_indices = np.concatenate([indices_i
+                                   for _, indices_i in prediction_blocks])
+
+    if not _check_is_permutation(test_indices, _num_samples(X)):
+        raise ValueError('cross_val_predict only works for partitions')
+
+    inv_test_indices = np.empty(len(test_indices), dtype=int)
+    inv_test_indices[test_indices] = np.arange(len(test_indices))
+
+    # Check for sparse predictions
+    if sp.issparse(predictions[0]):
+        predictions = sp.vstack(predictions, format=predictions[0].format)
+    else:
+        predictions = np.concatenate(predictions)
+    return predictions[inv_test_indices]
+
+
 def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
                       verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
                       method='predict'):
@@ -383,44 +580,12 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     >>> lasso = linear_model.Lasso()
     >>> y_pred = cross_val_predict(lasso, X, y)
     """
-    X, y, groups = indexable(X, y, groups)
-
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
-    # Ensure the estimator has implemented the passed decision function
-    if not callable(getattr(estimator, method)):
-        raise AttributeError('{} not implemented in estimator'
-                             .format(method))
-
-    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
-        le = LabelEncoder()
-        y = le.fit_transform(y)
-
-    # We clone the estimator to make sure that all the folds are
-    # independent, and that it is pickle-able.
-    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
-                        pre_dispatch=pre_dispatch)
-    prediction_blocks = parallel(delayed(_fit_and_predict)(
-        clone(estimator), X, y, train, test, verbose, fit_params, method)
-        for train, test in cv.split(X, y, groups))
-
-    # Concatenate the predictions
-    predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
-    test_indices = np.concatenate([indices_i
-                                   for _, indices_i in prediction_blocks])
-
-    if not _check_is_permutation(test_indices, _num_samples(X)):
-        raise ValueError('cross_val_predict only works for partitions')
-
-    inv_test_indices = np.empty(len(test_indices), dtype=int)
-    inv_test_indices[test_indices] = np.arange(len(test_indices))
-
-    # Check for sparse predictions
-    if sp.issparse(predictions[0]):
-        predictions = sp.vstack(predictions, format=predictions[0].format)
-    else:
-        predictions = np.concatenate(predictions)
-    return predictions[inv_test_indices]
+    return _split_predict(estimator, cv, X, y=y, groups=groups,
+                          n_jobs=n_jobs, verbose=verbose,
+                          fit_params=fit_params, pre_dispatch=pre_dispatch,
+                          method=method)
 
 
 def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
