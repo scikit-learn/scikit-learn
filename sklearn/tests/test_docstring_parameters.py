@@ -21,6 +21,8 @@ _DOC_SPECIAL_MEMBERS = ('__contains__', '__getitem__', '__iter__', '__len__',
                         '__call__', '__add__', '__sub__', '__mul__', '__div__',
                         '__neg__', '__hash__')
 
+
+# TODO Uncomment all modules and fix doc inconsistencies everywhere
 PUBLIC_MODULES = [
     # the list of modules users need to access for all functionality
     # 'sklearn',

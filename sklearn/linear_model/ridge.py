@@ -265,8 +265,9 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
-        For 'sparse_cg' and 'lsqr' solvers, the default value is determined
-        by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
+        For the 'sparse_cg' and 'lsqr' solvers, the default value is determined
+        by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
+        1000.
 
     tol : float
         Precision of the solution.

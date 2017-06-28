@@ -426,7 +426,8 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
 def _check_solver_option(solver, multi_class, penalty, dual):
     if solver not in ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga']:
         raise ValueError("Logistic Regression supports only liblinear,"
-                         " newton-cg, lbfgs and sag solvers, got %s" % solver)
+                         " newton-cg, lbfgs, sag and saga solvers, got %s"
+                         % solver)
 
     if multi_class not in ['multinomial', 'ovr']:
         raise ValueError("multi_class should be either multinomial or "
@@ -1489,7 +1490,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         chosen is 'ovr', then a binary problem is fit for each label. Else
         the loss minimised is the multinomial loss fit across
         the entire probability distribution. Works only for the 'newton-cg',
-        'sag' and 'lbfgs' solver.
+        'sag', 'saga' and 'lbfgs' solver.
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
