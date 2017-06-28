@@ -884,10 +884,10 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
 
             if param_name[len(param_name.split(':')[0].strip())] == ':':
                 incorrect += [func_name +
-                              'There was no space between the param name and '
+                              ' There was no space between the param name and '
                               'colon ("%s")' % name]
             else:
-                incorrect += [func_name + ' incorrect type definition for '
+                incorrect += [func_name + ' Incorrect type definition for '
                               'param: "%s" (type definition was "%s")'
                               % (name.split(':')[0], type_definition)]
         if '*' not in name:

@@ -316,6 +316,23 @@ def f_missing(a, b):
     return c
 
 
+def f_check_param_definition(a, b, c, d):
+    """Function f
+
+    Parameters
+    ----------
+    a: int
+        Parameter a
+    b:
+        Parameter b
+    c :
+        Parameter c
+    d:int
+        Parameter d
+    """
+    return a + b + c + d
+
+
 class Klass(object):
     def f_missing(self, X, y):
         pass
@@ -364,3 +381,15 @@ def test_check_parameters_match():
         assert_true(len(incorrect) >= 1)
         assert_true(mess in incorrect[0],
                     '"%s" not in "%s"' % (mess, incorrect[0]))
+
+    incorrect = check_parameters_match(f_check_param_definition)
+    assert_equal(
+        incorrect,
+        ['sklearn.utils.tests.test_testing.f_check_param_definition There was '
+         'no space between the param name and colon ("a: int")',
+         'sklearn.utils.tests.test_testing.f_check_param_definition There was '
+         'no space between the param name and colon ("b:")',
+         'sklearn.utils.tests.test_testing.f_check_param_definition Incorrect '
+         'type definition for param: "c " (type definition was "")',
+         'sklearn.utils.tests.test_testing.f_check_param_definition There was '
+         'no space between the param name and colon ("d:int")'])
