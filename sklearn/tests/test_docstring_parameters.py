@@ -15,7 +15,9 @@ from inspect import getsource
 import sklearn
 from sklearn.base import signature
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import check_parameters_match, get_func_name
+from sklearn.utils.testing import check_parameters_match
+from sklearn.utils.testing import get_func_name
+from sklearn.utils.testing import ignore_warnings
 
 _DOC_SPECIAL_MEMBERS = ('__contains__', '__getitem__', '__iter__', '__len__',
                         '__call__', '__add__', '__sub__', '__mul__', '__div__',
@@ -150,13 +152,14 @@ def test_docstring_parameters():
         raise AssertionError(msg)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_tabs():
     """Test that there are no tabs in our source files"""
     ignore = _TAB_IGNORES[:]
 
     for importer, modname, ispkg in walk_packages(sklearn.__path__,
                                                   prefix='sklearn.'):
-        # because we don't import e.g. mne.tests w/mne
+        # because we don't import
         if not ispkg and modname not in ignore:
             mod = importlib.import_module(modname)
             try:
