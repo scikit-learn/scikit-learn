@@ -514,10 +514,13 @@ class ClassifierChain(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
 
         Returns
         -------
         Y_pred : array-like, shape (n_samples, n_classes)
+            The predicted values.
+
         """
         X = check_array(X, accept_sparse=True)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
@@ -541,6 +544,11 @@ class ClassifierChain(BaseEstimator):
     @if_delegate_has_method('base_estimator')
     def predict_proba(self, X):
         """Predict probability estimates.
+
+        By default the inputs to later models in a chain is the binary class
+        predictions not the class probabilities. To use class probabilities
+        as features in subsequent models set the cv property to be one of
+        the allowed values other than None.
 
         Parameters
         ----------

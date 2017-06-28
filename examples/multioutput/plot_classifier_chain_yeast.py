@@ -28,7 +28,7 @@ However we do not know that ordering a priori. Instead we can construct an
 voting ensemble of classifier chains by averaging the binary predictions of
 the chains and apply a threshold of 0.5. The Jaccard similarity score of the
 ensemble is greater than that of the independent models and tends to exceed
-the score of each chain in the ensemble (although this is not guarenteed
+the score of each chain in the ensemble (although this is not guaranteed
 with randomly ordered chains).
 """
 
