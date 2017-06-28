@@ -29,7 +29,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import skip_if_32bit
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
@@ -197,7 +196,11 @@ def test_probability():
         yield check_probability, name
 
 
-def check_importances(name, criterion, X, y):
+def check_importances(name, criterion, X, y, dtype):
+    # cast as dype
+    X = X.astype(dtype)
+    y = y.astype(dtype)
+
     ForestEstimator = FOREST_ESTIMATORS[name]
 
     est = ForestEstimator(n_estimators=20, criterion=criterion,
@@ -228,18 +231,20 @@ def check_importances(name, criterion, X, y):
         assert_less(np.abs(importances - importances_bis).mean(), 0.001)
 
 
-@skip_if_32bit
 def test_importances():
     X, y = datasets.make_classification(n_samples=500, n_features=10,
                                         n_informative=3, n_redundant=0,
                                         n_repeated=0, shuffle=False,
                                         random_state=0)
 
-    for name, criterion in product(FOREST_CLASSIFIERS, ["gini", "entropy"]):
-        yield check_importances, name, criterion, X, y
+    for dtype in (np.float64, np.float32):
+        for name, criterion in product(FOREST_CLASSIFIERS,
+                                       ["gini", "entropy"]):
+            yield check_importances, name, criterion, X, y, dtype
 
-    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse", "mae"]):
-        yield check_importances, name, criterion, X, y
+        for name, criterion in product(FOREST_REGRESSORS,
+                                       ["mse", "friedman_mse", "mae"]):
+            yield check_importances, name, criterion, X, y, dtype
 
 
 def test_importances_asymptotic():
