@@ -558,7 +558,7 @@ def test_sparse_multioutput_error_raise():
 
     knn_mo = neighbors.KNeighborsClassifier(weights=None,
                                             algorithm='auto')
-    # print(y_sparse.A)
+
     msg = 'Sparse y is only supported for multilabel'
     assert_raise_message(ValueError, msg, knn_mo.fit, X_train, y_train)
 
