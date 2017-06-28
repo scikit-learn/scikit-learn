@@ -566,7 +566,7 @@ class GraphLassoCV(GraphLasso):
 
     @property
     @deprecated("Attribute grid_scores was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use 'grid_scores_' instead")
+                "will be removed in 0.21. Use ``grid_scores_`` instead")
     def grid_scores(self):
         return self.grid_scores_
 

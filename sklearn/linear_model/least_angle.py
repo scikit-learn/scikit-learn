@@ -1161,14 +1161,14 @@ class LarsCV(Lars):
 
     @property
     @deprecated("Attribute alpha is deprecated in 0.19 and "
-                "will be removed in 0.21. See 'alpha_' instead")
+                "will be removed in 0.21. See ``alpha_`` instead")
     def alpha(self):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
 
     @property
-    @deprecated("Attribute cv_mse_path_ is deprecated in 0.18 and "
-                "will be removed in 0.20. Use 'mse_path_' instead")
+    @deprecated("Attribute ``cv_mse_path_`` is deprecated in 0.18 and "
+                "will be removed in 0.20. Use ``mse_path_`` instead")
     def cv_mse_path_(self):
         return self.mse_path_
 

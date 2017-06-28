@@ -67,7 +67,7 @@ New features
      normalization based on quantiles.
      :issue:`8363` by :user:`Denis Engemann <dengemann>`,
      :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
-     :user:`Thierry Guillemot <tguillemot>`_, and `Gael Varoquaux`_.
+     :user:`Thierry Guillemot <tguillemot>`, and `Gael Varoquaux`_.
 
    - Added :func:`metrics.dcg_score` and :func:`metrics.ndcg_score`, which
      compute Discounted cumulative gain (DCG) and Normalized discounted
@@ -237,7 +237,7 @@ Bug fixes
      by the change in recall since the last operating point, as per the
      `Wikipedia entry <http://en.wikipedia.org/wiki/Average_precision>`_.
      (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
-     `Nick Dingwall`_ and `Gael Varoquaux`_.
+     :user:`Nick Dingwall <ndingwall>` and `Gael Varoquaux`_.
 
    - Fixed a bug in :class:`covariance.MinCovDet` where inputting data
      that produced a singular covariance matrix would cause the helper method

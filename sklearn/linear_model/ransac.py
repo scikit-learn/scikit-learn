@@ -153,11 +153,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         If ``loss`` is a callable, then it should be a function that takes
         two arrays as inputs, the true and predicted value and returns a 1-D
-        array with the ``i``th value of the array corresponding to the loss
-        on `X[i]`.
+        array with the i-th value of the array corresponding to the loss
+        on ``X[i]``.
 
-        If the loss on a sample is greater than the ``residual_threshold``, then
-        this sample is classified as an outlier.
+        If the loss on a sample is greater than the ``residual_threshold``,
+        then this sample is classified as an outlier.
 
     random_state : int, RandomState instance or None, optional, default None
         The generator used to initialize the centers.  If int, random_state is

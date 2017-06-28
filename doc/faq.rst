@@ -25,7 +25,7 @@ How can I contribute to scikit-learn?
 -----------------------------------------
 See :ref:`contributing`. Before wanting to add a new algorithm, which is
 usually a major and lengthy undertaking, it is recommended to start with :ref:`known
-issues <easy_issues>`. Please do not contact the contributors of scikit-learn directly
+issues <easy_issues>`_. Please do not contact the contributors of scikit-learn directly
 regarding contributing to scikit-learn.
 
 What's the best way to get help on scikit-learn usage?

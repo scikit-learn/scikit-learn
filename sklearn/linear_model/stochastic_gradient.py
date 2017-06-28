@@ -353,7 +353,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     @property
     @deprecated("Attribute loss_function was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use 'loss_function_' instead")
+                "will be removed in 0.21. Use ``loss_function_`` instead")
     def loss_function(self):
         return self.loss_function_
 
