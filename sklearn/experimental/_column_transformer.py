@@ -54,7 +54,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         reference columns if the input is a DataFrame, integers are always
         interpreted as the positional columns.
         When passing a single column to a transformer that expects 2D input
-        data, the column should be specified a list of one element.
+        data, the column should be specified as a list of one element.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -69,10 +69,17 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         The collection of fitted transformers as tuples of
         (name, fitted_transformer, column).
 
-    named_transformers_ : bunch object, a dictionary with attribute access
+    named_transformers_ : Bunch object, a dictionary with attribute access
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
         objects.
+
+    Notes
+    -----
+    The order of the columns in the transformed feature matrix follows the
+    order of how the columns are specified in the `transformers` list.
+    Columns of the original feature matrix that are not specified are
+    dropped from the resulting transformed feature matrix.
 
     Examples
     --------
@@ -99,10 +106,11 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     def _transformers(self):
         """
         Internal list of transformer only containing the name and
-        transformers. This is for the implementation of get_params via
-        BaseComposition._get_params which expects lists of tuples of len 2.
+        transformers, dropping the columns. This is for the implementation
+        of get_params via BaseComposition._get_params which expects lists
+        of tuples of len 2.
         """
-        return [(name, trans) for name, trans, col in self.transformers]
+        return [(name, trans) for name, trans, _ in self.transformers]
 
     @_transformers.setter
     def _transformers(self, value):

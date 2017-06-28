@@ -111,16 +111,16 @@ ColumnTransformer for heterogeneous data
     The :class:`experimental.ColumnTransformer <sklearn.experimental.ColumnTransformer>`
     class is experimental and the API is subject to change.
 
-Many datasets contain features of different types, say text, floats and dates,
+Many datasets contain features of different types, say text, floats, and dates,
 where each type of feature requires separate preprocessing or feature extraction steps.
 Often it is easiest to preprocess data before applying scikit-learn methods,
 for example using `pandas <http://pandas.pydata.org/>`__.
 The :class:`~sklearn.experimental.ColumnTransformer` is a convenient way to perform heterogeneous
-preprocessing on data columns within a scikit-learn pipeline (for example,
-when you want to adjust preprocessing parameters within a grid search or to
-avoid leaking statistics from test data to training data).
-The :class:`~sklearn.experimental.ColumnTransformer` works on arrays, sparse matrices
-and pandas dataframes.
+preprocessing on data columns within a scikit-learn pipeline; e.g. when one wants
+to adjust preprocessing parameters within a grid search or to
+avoid leaking statistics from test data to training data.
+The :class:`~sklearn.experimental.ColumnTransformer` works on arrays, sparse matrices,
+and pandas DataFrames.
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::
@@ -131,7 +131,8 @@ preprocessing or a specific feature extraction method::
   ...      'title': ["His Last Bow", "How Watson Learned the Trick",
   ...                "A Moveable Feast", "The Great Gatsby"]})
 
-For this data, we might want to encode 'city' column as categorical variable, but apply a :class:`feature_extraction.text.CountVectorizer <sklearn.feature_extraction.text.CountVectorizer>`
+For this data, we might want to encode ``'city'`` column as a categorical variable,
+but apply a :class:`feature_extraction.text.CountVectorizer <sklearn.feature_extraction.text.CountVectorizer>`
 to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give each
 transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
@@ -160,13 +161,14 @@ transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
          [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
          [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]]...)
 
-In the above example, the ``CountVectorizer`` expects a 1D array as input and
-therefore the columns were specified as a scalar (``'city'``). Other transformers
-can expect 2D data, and in that case you need to specify the column as a list (``['city']``).
+In the above example, the :class:`~sklearn.feature_extraction.text.CountVectorizer`
+expects a 1D array as input and therefore the columns were specified as a scalar (``'city'``).
+However, other transformers generally expect 2D data, and in that case you need
+to specify the column as a list (``['city']``).
 
 Apart from a scalar or a single item list, the column selection can be specified
-as a list of multiple items, an integer array, a slice or a boolean mask.
-Strings can reference columns if the input is a DataFrame, integers are alway
+as a list of multiple items, an integer array, a slice, or a boolean mask.
+Strings can reference columns if the input is a DataFrame, integers are always
 interpreted as the positional columns.
 
 .. topic:: Examples:
