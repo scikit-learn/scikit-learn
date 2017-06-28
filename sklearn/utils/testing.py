@@ -525,8 +525,8 @@ META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel"]
 
-# some trange ones
-DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
+# some strange ones
+DONT_TEST = ['SparseCoder', 'DictVectorizer',
              'LabelBinarizer', 'LabelEncoder',
              'MultiLabelBinarizer', 'TfidfTransformer',
              'TfidfVectorizer', 'IsotonicRegression',
