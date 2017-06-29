@@ -570,13 +570,13 @@ class Lars(LinearModel, RegressorMixin):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> clf = linear_model.Lars(n_nonzero_coefs=1)
-    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
+    >>> reg = linear_model.Lars(n_nonzero_coefs=1)
+    >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     Lars(copy_X=True, eps=..., fit_intercept=True, fit_path=True,
        n_nonzero_coefs=1, normalize=True, positive=False, precompute='auto',
        verbose=False)
-    >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> print(reg.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0. -1.11...]
 
     See also
@@ -805,13 +805,13 @@ class LassoLars(Lars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> clf = linear_model.LassoLars(alpha=0.01)
-    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
+    >>> reg = linear_model.LassoLars(alpha=0.01)
+    >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLars(alpha=0.01, copy_X=True, eps=..., fit_intercept=True,
          fit_path=True, max_iter=500, normalize=True, positive=False,
          precompute='auto', verbose=False)
-    >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> print(reg.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.         -0.963257...]
 
     See also
@@ -1161,14 +1161,14 @@ class LarsCV(Lars):
 
     @property
     @deprecated("Attribute alpha is deprecated in 0.19 and "
-                "will be removed in 0.21. See 'alpha_' instead")
+                "will be removed in 0.21. See ``alpha_`` instead")
     def alpha(self):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
 
     @property
-    @deprecated("Attribute cv_mse_path_ is deprecated in 0.18 and "
-                "will be removed in 0.20. Use 'mse_path_' instead")
+    @deprecated("Attribute ``cv_mse_path_`` is deprecated in 0.18 and "
+                "will be removed in 0.20. Use ``mse_path_`` instead")
     def cv_mse_path_(self):
         return self.mse_path_
 
@@ -1408,13 +1408,13 @@ class LassoLarsIC(LassoLars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> clf = linear_model.LassoLarsIC(criterion='bic')
-    >>> clf.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
+    >>> reg = linear_model.LassoLarsIC(criterion='bic')
+    >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     LassoLarsIC(copy_X=True, criterion='bic', eps=..., fit_intercept=True,
           max_iter=500, normalize=True, positive=False, precompute='auto',
           verbose=False)
-    >>> print(clf.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    >>> print(reg.coef_) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     [ 0.  -1.11...]
 
     Notes
@@ -1455,7 +1455,7 @@ class LassoLarsIC(LassoLars):
             training data.
 
         y : array-like, shape (n_samples,)
-            target values.
+            target values. Will be cast to X's dtype if necessary
 
         copy_X : boolean, optional, default True
             If ``True``, X will be copied; else, it may be overwritten.

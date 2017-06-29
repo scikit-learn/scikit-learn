@@ -224,7 +224,7 @@ be placed in ``_build/html/`` and are viewable in a web browser. See the
 
 For building the documentation, you will need
 [sphinx](http://sphinx.pocoo.org/),
-[matplotlib](http://matplotlib.sourceforge.net/), and
+[matplotlib](http://matplotlib.org/), and
 [pillow](http://pillow.readthedocs.io/en/latest/).
 
 When you are writing documentation, it is important to keep a good

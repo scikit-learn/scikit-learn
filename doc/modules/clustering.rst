@@ -668,7 +668,7 @@ affinities), in particular Euclidean distance (*l2*), Manhattan distance
 matrix.
 
 * *l1* distance is often good for sparse features, or sparse noise: ie
-  many of the features are zero, as in text mining using occurences of
+  many of the features are zero, as in text mining using occurrences of
   rare words.
 
 * *cosine* distance is interesting because it is invariant to global

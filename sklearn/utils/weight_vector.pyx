@@ -20,7 +20,6 @@ cdef extern from "cblas.h":
     void daxpy "cblas_daxpy" (int, double, const double*,
                               int, double*, int) nogil
 
-
 np.import_array()
 
 

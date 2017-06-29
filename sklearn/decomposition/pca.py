@@ -356,7 +356,7 @@ class PCA(_BasePCA):
             raise TypeError('PCA does not support sparse input. See '
                             'TruncatedSVD for a possible alternative.')
 
-        X = check_array(X, dtype=[np.float64], ensure_2d=True,
+        X = check_array(X, dtype=[np.float64, np.float32], ensure_2d=True,
                         copy=self.copy)
 
         # Handle n_components==None
@@ -764,7 +764,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X = self._fit(X)
         return np.dot(X, self.components_.T)
 
-    def inverse_transform(self, X, y=None):
+    def inverse_transform(self, X):
         """Transform data back to its original space.
 
         Returns an array X_original whose transform would be X.

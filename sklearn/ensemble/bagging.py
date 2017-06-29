@@ -411,7 +411,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         """The subset of drawn samples for each base estimator.
 
         Returns a dynamically generated list of boolean masks identifying
-        the samples used for for fitting each member of the ensemble, i.e.,
+        the samples used for fitting each member of the ensemble, i.e.,
         the in-bag samples.
 
         Note: the list is re-created at each call to the property in order

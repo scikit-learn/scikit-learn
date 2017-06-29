@@ -136,6 +136,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         return self._fit(X, y)
 
     def _fit(self, X, y, step_score=None):
+        # Parameter step_score controls the calculation of self.scores_
+        # step_score is not exposed to users
+        # and is used when implementing RFECV
+        # self.scores_ will not be calculated when calling _fit through fit
+
         X, y = check_X_y(X, y, "csc")
         # Initialization
         n_features = X.shape[1]

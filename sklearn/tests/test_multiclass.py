@@ -98,13 +98,13 @@ def test_ovr_partial_fit():
     X = np.abs(np.random.randn(14, 2))
     y = [1, 1, 1, 1, 2, 3, 3, 0, 0, 2, 3, 1, 2, 3]
 
-    ovr = OneVsRestClassifier(SGDClassifier(n_iter=1, shuffle=False,
-                                            random_state=0))
+    ovr = OneVsRestClassifier(SGDClassifier(max_iter=1, tol=None,
+                                            shuffle=False, random_state=0))
     ovr.partial_fit(X[:7], y[:7], np.unique(y))
     ovr.partial_fit(X[7:], y[7:])
     pred = ovr.predict(X)
-    ovr1 = OneVsRestClassifier(SGDClassifier(n_iter=1, shuffle=False,
-                                             random_state=0))
+    ovr1 = OneVsRestClassifier(SGDClassifier(max_iter=1, tol=None,
+                                             shuffle=False, random_state=0))
     pred1 = ovr1.fit(X, y).predict(X)
     assert_equal(np.mean(pred == y), np.mean(pred1 == y))
 
@@ -607,7 +607,8 @@ def test_ovo_ties():
     # not defaulting to the smallest label
     X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
     y = np.array([2, 0, 1, 2])
-    multi_clf = OneVsOneClassifier(Perceptron(shuffle=False))
+    multi_clf = OneVsOneClassifier(Perceptron(shuffle=False, max_iter=4,
+                                              tol=None))
     ovo_prediction = multi_clf.fit(X, y).predict(X)
     ovo_decision = multi_clf.decision_function(X)
 
@@ -634,7 +635,8 @@ def test_ovo_ties2():
     # cycle through labels so that each label wins once
     for i in range(3):
         y = (y_ref + i) % 3
-        multi_clf = OneVsOneClassifier(Perceptron(shuffle=False))
+        multi_clf = OneVsOneClassifier(Perceptron(shuffle=False, max_iter=4,
+                                                  tol=None))
         ovo_prediction = multi_clf.fit(X, y).predict(X)
         assert_equal(ovo_prediction[0], i % 3)
 
