@@ -81,7 +81,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
 
 
 # separate function for each seed's iterative loop
-def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
+def _mean_shift_single_seed(my_mean, X, nbrs, max_iter, kernel):
     # For each seed, climb gradient until convergence or max_iter
     bandwidth = nbrs.get_params()['radius']
     stop_thresh = 1e-3 * bandwidth  # when mean has converged
@@ -93,8 +93,30 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         points_within = X[i_nbrs]
         if len(points_within) == 0:
             break  # Depending on seeding strategy this condition may occur
+
         my_old_mean = my_mean  # save the old mean
-        my_mean = np.mean(points_within, axis=0)
+
+        # check which kernel should be used, and calculate the mean shift
+        # using the according equation
+        if kernel is None or kernel.lower() == "linear":
+            my_mean = np.mean(points_within, axis=0)
+
+        elif kernel.lower() == "rbf":
+            my_mean_numerator = 0
+            my_mean_denominator = 0
+            for point in points_within:
+                rbf_distance = np.exp(((point - my_old_mean)/bandwidth)**2)
+                my_mean_numerator += rbf_distance * point
+                my_mean_denominator += rbf_distance
+            my_mean = my_mean_numerator/my_mean_denominator
+
+        else:
+            raise ValueError("The kernel type, %s, is invalid.  \
+                            Please choose either 'linear' or 'RBF', \
+                            or leave the kernel option empty \
+                            in which case the linear kernel will be\
+                             used." % kernel)
+
         # If converged or at max_iter, adds the cluster
         if (np.linalg.norm(my_mean - my_old_mean) < stop_thresh or
                 completed_iterations == max_iter):
@@ -102,7 +124,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         completed_iterations += 1
 
 
-def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
+def mean_shift(X, bandwidth=None, kernel=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iter=300,
                n_jobs=1):
     """Perform mean shift clustering of data using a flat kernel.
@@ -122,6 +144,11 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         the median of all pairwise distances. This will take quadratic time in
         the number of samples. The sklearn.cluster.estimate_bandwidth function
         can be used to do this more efficiently.
+
+    kernel : string, optional
+        Can be either "linear" or "RBF" ("RBF" means (Gaussian)radial basis
+        function)
+        If not giving, the default value is "linear"
 
     seeds : array-like, shape=[n_seeds, n_features] or None
         Point used as initial kernel locations. If None and bin_seeding=False,
@@ -194,7 +221,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     # execute iterations on all seeds in parallel
     all_res = Parallel(n_jobs=n_jobs)(
         delayed(_mean_shift_single_seed)
-        (seed, X, nbrs, max_iter) for seed in seeds)
+        (seed, X, nbrs, max_iter, kernel) for seed in seeds)
     # copy results in a dictionary
     for i in range(len(seeds)):
         if all_res[i] is not None:
@@ -301,11 +328,16 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Parameters
     ----------
     bandwidth : float, optional
-        Bandwidth used in the RBF kernel.
 
         If not given, the bandwidth is estimated using
         sklearn.cluster.estimate_bandwidth; see the documentation for that
         function for hints on scalability (see also the Notes, below).
+
+    kernel : string, optional
+        Can be either "linear" or "RBF" ("RBF" means (Gaussian)radial basis
+        function)
+        If not giving, the default value is "linear"
+
 
     seeds : array, shape=[n_samples, n_features], optional
         Seeds used to initialize kernels. If not set,
@@ -373,9 +405,11 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Machine Intelligence. 2002. pp. 603-619.
 
     """
-    def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
-                 min_bin_freq=1, cluster_all=True, n_jobs=1):
+    def __init__(self, bandwidth=None, kernel=None, seeds=None,
+                 bin_seeding=False, min_bin_freq=1, cluster_all=True,
+                 n_jobs=1):
         self.bandwidth = bandwidth
+        self.kernel = kernel
         self.seeds = seeds
         self.bin_seeding = bin_seeding
         self.cluster_all = cluster_all
@@ -392,7 +426,8 @@ class MeanShift(BaseEstimator, ClusterMixin):
         """
         X = check_array(X)
         self.cluster_centers_, self.labels_ = \
-            mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
+            mean_shift(X, bandwidth=self.bandwidth, kernel=self.kernel,
+                       seeds=self.seeds,
                        min_bin_freq=self.min_bin_freq,
                        bin_seeding=self.bin_seeding,
                        cluster_all=self.cluster_all, n_jobs=self.n_jobs)
