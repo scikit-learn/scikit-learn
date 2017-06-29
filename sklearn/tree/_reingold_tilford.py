@@ -175,9 +175,10 @@ def second_walk(v, m=0, depth=0, min=None):
 # my stuff
 
 class Tree(object):
-    def __init__(self, node="", *children):
+    def __init__(self, node="", node_id=-1, *children):
         self.node = node
         self.width = len(node)
+        self.node_id = node_id
         if children:
             self.children = children
         else:

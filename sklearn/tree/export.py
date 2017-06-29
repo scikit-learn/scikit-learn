@@ -454,37 +454,40 @@ class _MPLTreeExporter(_DOTTreeExporter):
         self.arrow_args = dict(arrowstyle="-")
 
     def _make_tree(self, node_id, et):
-        # traverses _tree.Tree recursively, builds intermediate "Tree" object
+        # traverses _tree.Tree recursively, builds intermediate
+        # "_reingold_tilford.Tree" object
         name = self.node_to_str(et, 0, criterion='entropy')
         if (et.children_left[node_id] != et.children_right[node_id]):
             children = [self._make_tree(et.children_left[node_id], et),
                         self._make_tree(et.children_right[node_id], et)]
         else:
-            return Tree(name)
-        return Tree(name, *children)
+            return Tree(name, node_id)
+        return Tree(name, node_id, *children)
 
     def export(self, decision_tree):
+        self.ax.set_axis_off()
         my_tree = self._make_tree(0, decision_tree.tree_)
         dt = buchheim(my_tree)
-        self.recurse(dt)
+        self.recurse(dt, decision_tree.tree_)
 
-    def recurse(self, node, zorder=0):
+    def recurse(self, node, tree, zorder=0):
         # 2 - is a hack to for not creating empty space. FIXME
+        kwargs = dict(bbox=self.bbox_args, ha='center', va='bottom',
+                      zorder=zorder, xycoords='axes points')
+        xy = (node.x * self.scale, (2 - node.y) * self.scale)
+        if self.filled:
+            kwargs['bbox']['fc'] = self.get_fill_color(tree,
+                                                       node.tree.node_id)
         if node.parent is None:
-            self.ax.annotate(
-                node.tree, (node.x * self.scale, (2 - node.y) * self.scale),
-                bbox=self.bbox_args, ha='center', va='bottom', zorder=zorder,
-                xycoords='axes points')
+            # root
+            self.ax.annotate(node.tree, xy, **kwargs)
         else:
-            self.ax.annotate(
-                node.tree, (node.parent.x * self.scale, (2 - node.parent.y) *
-                            self.scale), (node.x * self.scale, (2 - node.y) *
-                                          self.scale), bbox=self.bbox_args,
-                arrowprops=self.arrow_args, ha='center', va='bottom',
-                zorder=zorder,
-                xycoords='axes points')
+            xy_parent = (node.parent.x * self.scale, (2 - node.parent.y) *
+                         self.scale)
+            kwargs["arrowprops"] = self.arrow_args
+            self.ax.annotate(node.tree, xy_parent, xy, **kwargs)
         for child in node.children:
-            self.recurse(child, zorder=zorder - 1)
+            self.recurse(child, tree, zorder=zorder - 1)
 
 
 def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
