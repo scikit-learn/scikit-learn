@@ -77,7 +77,6 @@ class BayesianGaussianMixture(BaseMixture):
     The number of components actually used almost always depends on the data.
 
     .. versionadded:: 0.18
-    *BayesianGaussianMixture*.
 
     Read more in the :ref:`User Guide <bgmm>`.
 

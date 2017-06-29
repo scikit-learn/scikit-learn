@@ -54,33 +54,40 @@ the model and the data, like :func:`metrics.mean_squared_error`, are
 available as neg_mean_squared_error which return the negated value
 of the metric.
 
-
-============================    =========================================     ==================================
-Scoring                         Function                                      Comment
-============================    =========================================     ==================================
+==============================    =============================================     ==================================
+Scoring                           Function                                          Comment
+==============================    =============================================     ==================================
 **Classification**
-'accuracy'                      :func:`metrics.accuracy_score`
-'average_precision'             :func:`metrics.average_precision_score`
-'f1'                            :func:`metrics.f1_score`                      for binary targets
-'f1_micro'                      :func:`metrics.f1_score`                      micro-averaged
-'f1_macro'                      :func:`metrics.f1_score`                      macro-averaged
-'f1_weighted'                   :func:`metrics.f1_score`                      weighted average
-'f1_samples'                    :func:`metrics.f1_score`                      by multilabel sample
-'neg_log_loss'                  :func:`metrics.log_loss`                      requires ``predict_proba`` support
-'precision' etc.                :func:`metrics.precision_score`               suffixes apply as with 'f1'
-'recall' etc.                   :func:`metrics.recall_score`                  suffixes apply as with 'f1'
-'roc_auc'                       :func:`metrics.roc_auc_score`
+'accuracy'                        :func:`metrics.accuracy_score`
+'average_precision'               :func:`metrics.average_precision_score`
+'f1'                              :func:`metrics.f1_score`                          for binary targets
+'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
+'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
+'f1_weighted'                     :func:`metrics.f1_score`                          weighted average
+'f1_samples'                      :func:`metrics.f1_score`                          by multilabel sample
+'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
+'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
+'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
+'roc_auc'                         :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_rand_score'           :func:`metrics.adjusted_rand_score`
+'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
+'adjusted_rand_score'             :func:`metrics.adjusted_rand_score`
+'completeness_score'              :func:`metrics.completeness_score`
+'fowlkes_mallows_score'           :func:`metrics.fowlkes_mallows_score`
+'homogeneity_score'               :func:`metrics.homogeneity_score`
+'mutual_info_score'               :func:`metrics.mutual_info_score`
+'normalized_mutual_info_score'    :func:`metrics.normalized_mutual_info_score`
+'v_measure_score'                 :func:`metrics.v_measure_score`
 
 **Regression**
-'neg_mean_absolute_error'       :func:`metrics.mean_absolute_error`
-'neg_mean_squared_error'        :func:`metrics.mean_squared_error`
-'neg_mean_squared_log_error'    :func:`metrics.mean_squared_log_error`
-'neg_median_absolute_error'     :func:`metrics.median_absolute_error`
-'r2'                            :func:`metrics.r2_score`
-============================    =========================================     ==================================
+'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
+'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
+'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
+'r2'                              :func:`metrics.r2_score`
+==============================    =============================================     ==================================
+
 
 Usage examples:
 
@@ -110,7 +117,7 @@ Usage examples:
 Defining your scoring strategy from metric functions
 -----------------------------------------------------
 
-The module :mod:`sklearn.metric` also exposes a set of simple functions
+The module :mod:`sklearn.metrics` also exposes a set of simple functions
 measuring a prediction error given ground truth and prediction:
 
 - functions ending with ``_score`` return a value to
@@ -223,7 +230,6 @@ Some of these are restricted to the binary classification case:
 .. autosummary::
    :template: function.rst
 
-   matthews_corrcoef
    precision_recall_curve
    roc_curve
 
@@ -236,6 +242,7 @@ Others also work in the multiclass case:
    cohen_kappa_score
    confusion_matrix
    hinge_loss
+   matthews_corrcoef
 
 
 Some also work in the multilabel case:
@@ -909,13 +916,39 @@ for binary classes.  Quoting Wikipedia:
     prediction, 0 an average random prediction and -1 an inverse prediction.
     The statistic is also known as the phi coefficient."
 
-If :math:`tp`, :math:`tn`, :math:`fp` and :math:`fn` are respectively the
-number of true positives, true negatives, false positives and false negatives,
-the MCC coefficient is defined as
+
+In the binary (two-class) case, :math:`tp`, :math:`tn`, :math:`fp` and
+:math:`fn` are respectively the number of true positives, true negatives, false
+positives and false negatives, the MCC is defined as
 
 .. math::
 
   MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}.
+
+In the multiclass case, the Matthews correlation coefficient can be `defined
+<http://rk.kvl.dk/introduction/index.html>`_ in terms of a
+:func:`confusion_matrix` :math:`C` for :math:`K` classes.  To simplify the
+definition consider the following intermediate variables:
+
+* :math:`t_k=\sum_{i}^{K} C_{ik}` the number of times class :math:`k` truly occurred,
+* :math:`p_k=\sum_{i}^{K} C_{ki}` the number of times class :math:`k` was predicted,
+* :math:`c=\sum_{k}^{K} C_{kk}` the total number of samples correctly predicted,
+* :math:`s=\sum_{i}^{K} \sum_{j}^{K} C_{ij}` the total number of samples.
+
+Then the multiclass MCC is defined as:
+
+.. math::
+    MCC = \frac{
+        c \times s - \sum_{k}^{K} p_k \times t_k
+    }{\sqrt{
+        (s^2 - \sum_{k}^{K} p_k^2) \times
+        (s^2 - \sum_{k}^{K} t_k^2)
+    }}
+
+When there are more than two labels, the value of the MCC will no longer range
+between -1 and +1. Instead the minimum value will be somewhere between -1 and 0
+depending on the number and distribution of ground true labels. The maximum
+value is always +1.
 
 Here is a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:

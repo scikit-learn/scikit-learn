@@ -191,7 +191,7 @@ minimum. This is highly dependent on the initialization of the centroids.
 As a result, the computation is often done several times, with different
 initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
-(use the ``init='kmeans++'`` parameter). This initializes the centroids to be
+(use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
 random initialization, as shown in the reference.
 
@@ -668,7 +668,7 @@ affinities), in particular Euclidean distance (*l2*), Manhattan distance
 matrix.
 
 * *l1* distance is often good for sparse features, or sparse noise: ie
-  many of the features are zero, as in text mining using occurences of
+  many of the features are zero, as in text mining using occurrences of
   rare words.
 
 * *cosine* distance is interesting because it is invariant to global

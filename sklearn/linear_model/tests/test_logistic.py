@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import raises
 
 from sklearn.exceptions import ConvergenceWarning
@@ -82,6 +83,18 @@ def test_error():
         msg = "Maximum number of iteration must be positive"
         assert_raise_message(ValueError, msg, LR(max_iter=-1).fit, X, Y1)
         assert_raise_message(ValueError, msg, LR(max_iter="test").fit, X, Y1)
+
+
+def test_lr_liblinear_warning():
+    n_samples, n_features = iris.data.shape
+    target = iris.target_names[iris.target]
+
+    lr = LogisticRegression(solver='liblinear', n_jobs=2)
+    assert_warns_message(UserWarning,
+                         "'n_jobs' > 1 does not have any effect when"
+                         " 'solver' is set to 'liblinear'. Got 'n_jobs'"
+                         " = 2.",
+                         lr.fit, iris.data, target)
 
 
 def test_predict_3_classes():

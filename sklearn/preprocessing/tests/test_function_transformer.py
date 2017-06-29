@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.utils import testing
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils.testing import assert_equal, assert_array_equal
+from sklearn.utils.testing import assert_warns_message
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -23,8 +24,7 @@ def test_delegate_to_func():
     X = np.arange(10).reshape((5, 2))
     assert_array_equal(
         FunctionTransformer(_make_func(args_store, kwargs_store)).transform(X),
-        X,
-        'transform should have returned X unchanged',
+        X, 'transform should have returned X unchanged',
     )
 
     # The function should only have received X.
@@ -47,15 +47,14 @@ def test_delegate_to_func():
     args_store[:] = []  # python2 compatible inplace list clear.
     kwargs_store.clear()
     y = object()
-
-    assert_array_equal(
+    transformed = assert_warns_message(
+        DeprecationWarning, "pass_y is deprecated",
         FunctionTransformer(
             _make_func(args_store, kwargs_store),
-            pass_y=True,
-        ).transform(X, y),
-        X,
-        'transform should have returned X unchanged',
-    )
+            pass_y=True).transform, X, y)
+
+    assert_array_equal(transformed, X,
+                       err_msg='transform should have returned X unchanged')
 
     # The function should have received X and y.
     assert_equal(
