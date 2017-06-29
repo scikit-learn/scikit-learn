@@ -149,7 +149,7 @@ def test_binary_search_neighbors():
     assert_array_almost_equal(P_nn, P2, decimal=4)
 
     # Test that the highest P_ij are the same when few neighbors are used
-    for k in np.linspace(80, n_samples, 10):
+    for k in np.linspace(80, n_samples, 5):
         k = int(k)
         topn = k * 10  # check the top 10 *k entries out of k * k entries
         neighbors_nn = np.argsort(distances, axis=1)[:, :k].astype(np.int64)
@@ -247,10 +247,10 @@ def test_preserve_trustworthiness_approximately():
     # perplexity=5, so that the number of neighbors is 5%.
     n_components = 2
     methods = ['exact', 'barnes_hut']
-    X = random_state.randn(100, n_components).astype(np.float32)
+    X = random_state.randn(50, n_components).astype(np.float32)
     for init in ('random', 'pca'):
         for method in methods:
-            tsne = TSNE(n_components=n_components, perplexity=50,
+            tsne = TSNE(n_components=n_components, perplexity=25,
                         learning_rate=100.0, init=init, random_state=0,
                         method=method)
             X_embedded = tsne.fit_transform(X)
@@ -293,7 +293,7 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
         D = squareform(pdist(X), "sqeuclidean")
         tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
                     early_exaggeration=2.0, metric="precomputed",
-                    random_state=i, verbose=0, neighbors_method='brute')
+                    random_state=i, verbose=0)
         X_embedded = tsne.fit_transform(D)
         t = trustworthiness(D, X_embedded, n_neighbors=1,
                             precomputed=True)
@@ -341,16 +341,6 @@ def test_non_positive_computed_distances():
                          tsne.fit_transform, X)
 
 
-def test_not_available_neighbors_method():
-    # Computed distance matrices must be positive.
-    tsne = TSNE(neighbors_method='not available', method='barnes_hut')
-    assert_raises_regexp(ValueError, "unrecognized algorithm: 'not available'",
-                         tsne.fit_transform, np.array([[0.0, 1.0]]))
-    tsne = TSNE(neighbors_method=1, method='barnes_hut')
-    assert_raises_regexp(ValueError, "'neighbors_method' should be .*",
-                         tsne.fit_transform, np.array([[0.0, 1.0]]))
-
-
 def test_init_not_available():
     # 'init' must be 'pca', 'random', or numpy array.
     tsne = TSNE(init="not available")
@@ -369,8 +359,7 @@ def test_init_ndarray():
 def test_init_ndarray_precomputed():
     # Initialize TSNE with ndarray and metric 'precomputed'
     # Make sure no FutureWarning is thrown from _fit
-    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed",
-                neighbors_method='brute')
+    tsne = TSNE(init=np.zeros((100, 2)), metric="precomputed")
     tsne.fit(np.zeros((100, 100)))
 
 
@@ -557,7 +546,7 @@ def test_64bit():
     methods = ['barnes_hut', 'exact']
     for method in methods:
         for dt in [np.float32, np.float64]:
-            X = random_state.randn(100, 2).astype(dt)
+            X = random_state.randn(50, 2).astype(dt)
             tsne = TSNE(n_components=2, perplexity=2, learning_rate=100.0,
                         random_state=0, method=method, verbose=0)
             X_embedded = tsne.fit_transform(X)
