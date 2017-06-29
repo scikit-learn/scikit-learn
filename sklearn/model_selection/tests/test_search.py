@@ -1301,7 +1301,8 @@ def test_grid_search_cv_splits_consistency():
             cv_results.pop(key)
         return cv_results
 
-    # Check if generators as supported as cv and that the splits are consistent
+    # Check if generators are supported as cv and
+    # that the splits are consistent
     np.testing.assert_equal(_pop_time_keys(gs3.cv_results_),
                             _pop_time_keys(gs4.cv_results_))
 
