@@ -202,18 +202,16 @@ class _DOTTreeExporter(object):
             if len(sorted_values) == 1:
                 alpha = 0
             else:
-                alpha = int(np.round(255 * (sorted_values[0] -
-                                            sorted_values[1]) /
-                                           (1 - sorted_values[1]), 0))
+                alpha = ((sorted_values[0] - sorted_values[1])
+                         / (1 - sorted_values[1]))
         else:
             # Regression tree or multi-output
             color = list(self.colors['rgb'][0])
-            alpha = int(np.round(255 * ((value - self.colors['bounds'][0]) /
-                                        (self.colors['bounds'][1] -
-                                         self.colors['bounds'][0])), 0))
-
-        # Return html color code in #RRGGBBAA format
-        color.append(alpha)
+            alpha = ((value - self.colors['bounds'][0]) /
+                     (self.colors['bounds'][1] - self.colors['bounds'][0]))
+        # compute the color as alpha against white
+        color = [int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color]
+        # Return html color code in #RRGGBB format
         hex_codes = [str(i) for i in range(10)]
         hex_codes.extend(['a', 'b', 'c', 'd', 'e', 'f'])
         color = [hex_codes[c // 16] + hex_codes[c % 16] for c in color]
