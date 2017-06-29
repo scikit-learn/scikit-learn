@@ -566,20 +566,15 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             A dictionary containing the requested Gaussian Process model
             parameters:
 
-                sigma2
-                        Gaussian Process variance.
-                beta
-                        Generalized least-squares regression weights for
-                        Universal Kriging or given beta0 for Ordinary
-                        Kriging.
-                gamma
-                        Gaussian Process weights.
-                C
-                        Cholesky decomposition of the correlation matrix [R].
-                Ft
-                        Solution of the linear equation system : [R] x Ft = F
-                G
-                        QR decomposition of the matrix Ft.
+            - ``sigma2`` is the Gaussian Process variance.
+            - ``beta`` is the generalized least-squares regression weights for
+              Universal Kriging or given beta0 for Ordinary Kriging.
+            - ``gamma`` is the Gaussian Process weights.
+            - ``C`` is the Cholesky decomposition of the correlation
+              matrix [R].
+            - ``Ft`` is the solution of the linear equation system
+              [R] x Ft = F
+            - ``G`` is the QR decomposition of the matrix Ft.
         """
         check_is_fitted(self, "X")
 

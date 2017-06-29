@@ -58,7 +58,6 @@ import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
-from sklearn.cluster import DBSCAN
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
@@ -509,7 +508,7 @@ def uninstall_mldata_mock():
 META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "MultiOutputRegressor", "MultiOutputClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier",
-                   "RFE", "RFECV", "BaseEnsemble"]
+                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel"]

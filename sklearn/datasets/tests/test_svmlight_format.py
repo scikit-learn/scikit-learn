@@ -442,7 +442,7 @@ def test_load_with_offsets():
         mark_2 = 4 * size // 5
         length_1 = mark_2 - mark_1
 
-        # load the original sparse matrix into 3 independant CSR matrices
+        # load the original sparse matrix into 3 independent CSR matrices
         X_0, y_0 = load_svmlight_file(f, n_features=n_features,
                                       offset=mark_0, length=length_0)
         X_1, y_1 = load_svmlight_file(f, n_features=n_features,
