@@ -349,10 +349,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         threshold : float or None
             Threshold used in the binary and multi-label cases.
 
-            Use 0 when:
-                - Y contains the output of decision_function (classifier)
-            Use 0.5 when:
-                - Y contains the output of predict_proba
+            Use 0 when ``Y`` contains the output of decision_function
+            (classifier).
+            Use 0.5 when ``Y`` contains the output of predict_proba.
 
             If None, the threshold is assumed to be half way between
             neg_label and pos_label.
