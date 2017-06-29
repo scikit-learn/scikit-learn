@@ -342,10 +342,8 @@ class _DOTTreeExporter(object):
             node_string += class_name
 
         # Clean up any trailing newlines
-        if node_string[-2:] == '\\n':
-            node_string = node_string[:-2]
-        if node_string[-5:] == '<br/>':
-            node_string = node_string[:-5]
+        if node_string.endswith(characters[4]):
+            node_string = node_string[:-len(characters[4])]
 
         return node_string + characters[5]
 
