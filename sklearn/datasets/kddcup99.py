@@ -285,7 +285,7 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
 
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
-        URL_ = URL10 if percent10 else URL
+        URL_ = URL_10_PERCENT if percent10 else URL
         logger.info("Downloading %s" % URL_)
         _fetch_url(URL_, archive_path, expected_checksum)
         dt = [('duration', int),
