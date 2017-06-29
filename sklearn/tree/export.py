@@ -78,7 +78,8 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False,
               leaves_parallel=False, impurity=True, node_ids=False,
               proportion=False, rotate=False, rounded=False,
-              special_characters=False, precision=3, ax=None, scale=110):
+              special_characters=False, precision=3, ax=None, scalex=150,
+              scaley=1):
     import matplotlib.pyplot as plt
     if ax is None:
         ax = plt.gca()
@@ -89,7 +90,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
         leaves_parallel=leaves_parallel, impurity=impurity, node_ids=node_ids,
         proportion=proportion, rotate=rotate, rounded=rounded,
         special_characters=special_characters, precision=precision, ax=ax,
-        scale=scale)
+        scalex=scalex, scaley=scaley)
     exporter.export(decision_tree)
 
 
@@ -417,7 +418,7 @@ class _MPLTreeExporter(_DOTTreeExporter):
                  class_names=None, label='all', filled=False,
                  leaves_parallel=False, impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3, scale=110):
+                 special_characters=False, precision=3, scalex=150, scaley=1):
         self.max_depth = max_depth
         self.feature_names = feature_names
         self.class_names = class_names
@@ -431,7 +432,8 @@ class _MPLTreeExporter(_DOTTreeExporter):
         self.rounded = rounded
         self.special_characters = special_characters
         self.precision = precision
-        self.scale = scale
+        self.scalex = scalex
+        self.scaley = scaley
         self.ax = ax
 
         # validate
@@ -450,13 +452,15 @@ class _MPLTreeExporter(_DOTTreeExporter):
 
         self.characters = ['#', '[', ']', '<=', '\n', '', '']
 
-        self.bbox_args = dict(boxstyle="round", fc="0.8")
-        self.arrow_args = dict(arrowstyle="-")
+        self.bbox_args = dict(fc='w')
+        if self.rounded:
+            self.bbox_args['boxstyle'] = "round"
+        self.arrow_args = dict(arrowstyle="<-")
 
     def _make_tree(self, node_id, et):
         # traverses _tree.Tree recursively, builds intermediate
         # "_reingold_tilford.Tree" object
-        name = self.node_to_str(et, 0, criterion='entropy')
+        name = self.node_to_str(et, node_id, criterion='entropy')
         if (et.children_left[node_id] != et.children_right[node_id]):
             children = [self._make_tree(et.children_left[node_id], et),
                         self._make_tree(et.children_right[node_id], et)]
@@ -470,24 +474,24 @@ class _MPLTreeExporter(_DOTTreeExporter):
         dt = buchheim(my_tree)
         self.recurse(dt, decision_tree.tree_)
 
-    def recurse(self, node, tree, zorder=0):
+    def recurse(self, node, tree, zorder=100):
         # 2 - is a hack to for not creating empty space. FIXME
         kwargs = dict(bbox=self.bbox_args, ha='center', va='bottom',
                       zorder=zorder, xycoords='axes points')
-        xy = (node.x * self.scale, (2 - node.y) * self.scale)
+        xy = (node.x * self.scalex, (2 - node.y) * self.scaley)
         if self.filled:
             kwargs['bbox']['fc'] = self.get_fill_color(tree,
                                                        node.tree.node_id)
         if node.parent is None:
             # root
-            self.ax.annotate(node.tree, xy, **kwargs)
+            self.ax.annotate(node.tree.node, xy, **kwargs)
         else:
-            xy_parent = (node.parent.x * self.scale, (2 - node.parent.y) *
-                         self.scale)
+            xy_parent = (node.parent.x * self.scalex, (2 - node.parent.y) *
+                         self.scaley)
             kwargs["arrowprops"] = self.arrow_args
-            self.ax.annotate(node.tree, xy_parent, xy, **kwargs)
+            self.ax.annotate(node.tree.node, xy_parent, xy, **kwargs)
         for child in node.children:
-            self.recurse(child, tree, zorder=zorder - 1)
+            self.recurse(child, tree, zorder=zorder - 10)
 
 
 def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
