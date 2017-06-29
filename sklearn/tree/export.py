@@ -21,6 +21,7 @@ from ..utils.validation import check_is_fitted
 
 from . import _criterion
 from . import _tree
+from ._reingold_tilford import buchheim, Tree
 
 
 def _color_brew(n):
@@ -68,7 +69,166 @@ def _color_brew(n):
 class Sentinel(object):
     def __repr__():
         return '"tree.dot"'
+
+
 SENTINEL = Sentinel()
+
+
+def node_to_str(tree, node_id, criterion):
+    # stupid copy & paste with a few adjustments
+    label = 'all'
+    feature_names = None
+    class_names = None
+    label = 'all'
+    impurity = True
+    node_ids = False
+    proportion = False
+    special_characters = False
+    precision = 3
+    # Generate the node content string
+    if tree.n_outputs == 1:
+        value = tree.value[node_id][0, :]
+    else:
+        value = tree.value[node_id]
+    # Should labels be shown?
+    labels = (label == 'root' and node_id == 0) or label == 'all'
+
+    # PostScript compatibility for special characters
+    if special_characters:
+        characters = ['&#35;', '<SUB>', '</SUB>', '&le;', '<br/>', '>']
+        node_string = '<'
+    else:
+        characters = ['#', '[', ']', '<=', '\n', '']
+        node_string = ''
+
+    # Write node ID
+    if node_ids:
+        if labels:
+            node_string += 'node '
+        node_string += characters[0] + str(node_id) + characters[4]
+
+    # Write decision criteria
+    if tree.children_left[node_id] != _tree.TREE_LEAF:
+        # Always write node decision criteria, except for leaves
+        if feature_names is not None:
+            feature = feature_names[tree.feature[node_id]]
+        else:
+            feature = "X%s%s%s" % (characters[1],
+                                   tree.feature[node_id],
+                                   characters[2])
+        node_string += '%s %s %s%s' % (feature,
+                                       characters[3],
+                                       round(tree.threshold[node_id],
+                                             precision),
+                                       characters[4])
+
+    # Write impurity
+    if impurity:
+        if isinstance(criterion, _criterion.FriedmanMSE):
+            criterion = "friedman_mse"
+        elif not isinstance(criterion, six.string_types):
+            criterion = "impurity"
+        if labels:
+            node_string += '%s = ' % criterion
+        node_string += (str(round(tree.impurity[node_id], precision)) +
+                        characters[4])
+
+    # Write node sample count
+    if labels:
+        node_string += 'samples = '
+    if proportion:
+        percent = (100. * tree.n_node_samples[node_id] /
+                   float(tree.n_node_samples[0]))
+        node_string += (str(round(percent, 1)) + '%' +
+                        characters[4])
+    else:
+        node_string += (str(tree.n_node_samples[node_id]) +
+                        characters[4])
+
+    # Write node class distribution / regression value
+    if proportion and tree.n_classes[0] != 1:
+        # For classification this will show the proportion of samples
+        value = value / tree.weighted_n_node_samples[node_id]
+    if labels:
+        node_string += 'value = '
+    if tree.n_classes[0] == 1:
+        # Regression
+        value_text = np.around(value, precision)
+    elif proportion:
+        # Classification
+        value_text = np.around(value, precision)
+    elif np.all(np.equal(np.mod(value, 1), 0)):
+        # Classification without floating-point weights
+        value_text = value.astype(int)
+    else:
+        # Classification with floating-point weights
+        value_text = np.around(value, precision)
+    # Strip whitespace
+    value_text = str(value_text.astype('S32')).replace("b'", "'")
+    value_text = value_text.replace("' '", ", ").replace("'", "")
+    if tree.n_classes[0] == 1 and tree.n_outputs == 1:
+        value_text = value_text.replace("[", "").replace("]", "")
+    value_text = value_text.replace("\n ", characters[4])
+    node_string += value_text + characters[4]
+
+    # Write node majority class
+    if (class_names is not None and
+            tree.n_classes[0] != 1 and
+            tree.n_outputs == 1):
+        # Only done for single-output classification trees
+        if labels:
+            node_string += 'class = '
+        if class_names is not True:
+            class_name = class_names[np.argmax(value)]
+        else:
+            class_name = "y%s%s%s" % (characters[1],
+                                      np.argmax(value),
+                                      characters[2])
+        node_string += class_name
+
+    # Clean up any trailing newlines
+    if node_string[-2:] == '\n':
+        node_string = node_string[:-2]
+    if node_string[-5:] == '<br/>':
+        node_string = node_string[:-5]
+
+    return node_string + characters[5]
+
+
+def _make_tree(node_id, et):
+    # traverses _tree.Tree recursively, builds intermediate "Tree" object
+    name = node_to_str(et, 0, criterion='entropy')
+    if (et.children_left[node_id] != et.children_right[node_id]):
+        children = [_make_tree(et.children_left[node_id], et), _make_tree(
+            et.children_right[node_id], et)]
+    else:
+        return Tree(name)
+    return Tree(name, *children)
+
+
+def plot_tree(estimator):
+    import matplotlib.pyplot as plt
+    bbox_args = dict(boxstyle="round", fc="0.8")
+    arrow_args = dict(arrowstyle="-")
+
+    def draw_nodes(node, scale=1, zorder=0):
+        # 2 - is a hack to for not creating empty space. FIXME
+        if node.parent is None:
+            plt.annotate(node.tree, (node.x * scale, (2 - node.y) * scale),
+                         bbox=bbox_args, ha='center', va='bottom',
+                         zorder=zorder, xycoords='axes points')
+        else:
+            plt.annotate(node.tree, (node.parent.x * scale, (2 - node.parent.y)
+                                     * scale),
+                         (node.x * scale, (2 - node.y) * scale),
+                         bbox=bbox_args, arrowprops=arrow_args, ha='center',
+                         va='bottom', zorder=zorder, xycoords='axes points')
+        for child in node.children:
+            draw_nodes(child, scale=scale, zorder=zorder - 1)
+
+    my_tree = _make_tree(0, estimator.tree_)
+    dt = buchheim(my_tree)
+    draw_nodes(dt, scale=110)
 
 
 def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
