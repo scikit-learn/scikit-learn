@@ -78,8 +78,6 @@ def firstwalk(v, distance=1.):
 
         midpoint = (v.children[0].x + v.children[-1].x) / 2
 
-        ell = v.children[0]
-        arr = v.children[-1]
         w = v.lbrother()
         if w:
             v.x = w.x + distance
