@@ -78,7 +78,7 @@ def test_alpha_deprecation():
     assert_array_equal(lp_default_y, lp_0_y)
 
 
-def test_label_spreading():
+def test_label_spreading_closed_form():
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200,
                                random_state=0)
@@ -97,7 +97,7 @@ def test_label_spreading():
         assert_array_almost_equal(expected, clf.label_distributions_, 4)
 
 
-def test_label_propagation():
+def test_label_propagation_closed_form():
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200,
                                random_state=0)
@@ -109,6 +109,7 @@ def test_label_propagation():
 
     clf = label_propagation.LabelPropagation(max_iter=10000,
                                              gamma=0.1).fit(X, y)
+    # adopting notation from Zhu et al 2002
     T_bar = clf._build_graph()
     Tuu = T_bar[np.meshgrid(unlabelled_idx, unlabelled_idx, indexing='ij')]
     Tul = T_bar[np.meshgrid(unlabelled_idx, labelled_idx, indexing='ij')]
@@ -128,3 +129,14 @@ def test_valid_alpha():
     assert_raises(ValueError, label_propagation.LabelSpreading, alpha=0)
     assert_raises(ValueError, label_propagation.LabelSpreading, alpha=1)
     assert_raises(ValueError, label_propagation.LabelSpreading, alpha=1.1)
+
+
+def test_clamping():
+    X = np.array([[1., 0.], [0., 1.], [1., 2.5]])
+    y = np.array([0, 1, -1])
+    mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=5000)
+    mdl.fit(X, y)
+
+    # this should converge quickly:
+    assert mdl.n_iter_ < 10
+    assert_array_equal(mdl.predict(X), [0, 1, 1])
