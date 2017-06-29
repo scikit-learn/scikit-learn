@@ -1014,6 +1014,7 @@ See the :ref:`metrics` section of the user guide for further details.
 
     multioutput.MultiOutputRegressor
     multioutput.MultiOutputClassifier
+    multioutput.ClassifierChain
 
 .. _naive_bayes_ref:
 
