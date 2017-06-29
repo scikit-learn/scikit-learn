@@ -231,6 +231,320 @@ def plot_tree(estimator):
     draw_nodes(dt, scale=110)
 
 
+class _DOTTreeExporter(object):
+    def __init__(self, out_file=SENTINEL, max_depth=None,
+                 feature_names=None, class_names=None, label='all',
+                 filled=False, leaves_parallel=False, impurity=True,
+                 node_ids=False, proportion=False, rotate=False, rounded=False,
+                 special_characters=False, precision=3):
+        self.out_file = out_file
+        self.max_depth = max_depth
+        self.feature_names = feature_names
+        self.class_names = class_names
+        self.label = label
+        self.filled = filled
+        self.leaves_parallel = leaves_parallel
+        self.impurity = impurity
+        self.node_ids = node_ids
+        self.proportion = proportion
+        self.rotate = rotate
+        self.rounded = rounded
+        self.special_characters = special_characters
+        self.precision = precision
+
+        # validate
+        if isinstance(precision, Integral):
+            if precision < 0:
+                raise ValueError("'precision' should be greater or equal to 0."
+                                 " Got {} instead.".format(precision))
+        else:
+            raise ValueError("'precision' should be an integer. Got {}"
+                             " instead.".format(type(precision)))
+
+        # The depth of each node for plotting with 'leaf' option
+        self.ranks = {'leaves': []}
+        # The colors to render each node with
+        self.colors = {'bounds': None}
+
+    def export(self, decision_tree):
+        # Check length of feature_names before getting into the tree node
+        # Raise error if length of feature_names does not match
+        # n_features_ in the decision_tree
+        if self.feature_names is not None:
+            if len(self.feature_names) != decision_tree.n_features_:
+                raise ValueError("Length of feature_names, %d "
+                                 "does not match number of features, %d"
+                                 % (len(self.feature_names),
+                                    decision_tree.n_features_))
+        # each part writes to out_file
+        self.head()
+        # Now recurse the tree and add node & edge attributes
+        if isinstance(decision_tree, _tree.Tree):
+            self.recurse(decision_tree, 0, criterion="impurity")
+        else:
+            self.recurse(decision_tree.tree_, 0,
+                         criterion=decision_tree.criterion)
+
+        self.tail()
+
+    def tail(self):
+        # If required, draw leaf nodes at same depth as each other
+        if self.leaves_parallel:
+            for rank in sorted(self.ranks):
+                self.out_file.write(
+                    "{rank=same ; " +
+                    "; ".join(r for r in self.ranks[rank]) + "} ;\n")
+        self.out_file.write("}")
+
+    def head(self):
+        self.out_file.write('digraph Tree {\n')
+
+        # Specify node aesthetics
+        self.out_file.write('node [shape=box')
+        rounded_filled = []
+        if self.filled:
+            rounded_filled.append('filled')
+        if self.rounded:
+            rounded_filled.append('rounded')
+        if len(rounded_filled) > 0:
+            self.out_file.write(
+                ', style="%s", color="black"'
+                % ", ".join(rounded_filled))
+        if self.rounded:
+            self.out_file.write(', fontname=helvetica')
+        self.out_file.write('] ;\n')
+
+        # Specify graph & edge aesthetics
+        if self.leaves_parallel:
+            self.out_file.write(
+                'graph [ranksep=equally, splines=polyline] ;\n')
+        if self.rounded:
+            self.out_file.write('edge [fontname=helvetica] ;\n')
+        if self.rotate:
+            self.out_file.write('rankdir=LR ;\n')
+
+    def get_color(self, value):
+        # Find the appropriate color & intensity for a node
+        if self.colors['bounds'] is None:
+            # Classification tree
+            color = list(self.colors['rgb'][np.argmax(value)])
+            sorted_values = sorted(value, reverse=True)
+            if len(sorted_values) == 1:
+                alpha = 0
+            else:
+                alpha = int(np.round(255 * (sorted_values[0] -
+                                            sorted_values[1]) /
+                                           (1 - sorted_values[1]), 0))
+        else:
+            # Regression tree or multi-output
+            color = list(self.colors['rgb'][0])
+            alpha = int(np.round(255 * ((value - self.colors['bounds'][0]) /
+                                        (self.colors['bounds'][1] -
+                                         self.colors['bounds'][0])), 0))
+
+        # Return html color code in #RRGGBBAA format
+        color.append(alpha)
+        hex_codes = [str(i) for i in range(10)]
+        hex_codes.extend(['a', 'b', 'c', 'd', 'e', 'f'])
+        color = [hex_codes[c // 16] + hex_codes[c % 16] for c in color]
+
+        return '#' + ''.join(color)
+
+    def node_to_str(self, tree, node_id, criterion):
+        # Generate the node content string
+        if tree.n_outputs == 1:
+            value = tree.value[node_id][0, :]
+        else:
+            value = tree.value[node_id]
+
+        # Should labels be shown?
+        labels = (self.label == 'root' and node_id == 0) or self.label == 'all'
+
+        # PostScript compatibility for special characters
+        if self.special_characters:
+            characters = ['&#35;', '<SUB>', '</SUB>', '&le;', '<br/>', '>']
+            node_string = '<'
+        else:
+            characters = ['#', '[', ']', '<=', '\\n', '"']
+            node_string = '"'
+
+        # Write node ID
+        if self.node_ids:
+            if labels:
+                node_string += 'node '
+            node_string += characters[0] + str(node_id) + characters[4]
+
+        # Write decision criteria
+        if tree.children_left[node_id] != _tree.TREE_LEAF:
+            # Always write node decision criteria, except for leaves
+            if self.feature_names is not None:
+                feature = self.feature_names[tree.feature[node_id]]
+            else:
+                feature = "X%s%s%s" % (characters[1],
+                                       tree.feature[node_id],
+                                       characters[2])
+            node_string += '%s %s %s%s' % (feature,
+                                           characters[3],
+                                           round(tree.threshold[node_id],
+                                                 self.precision),
+                                           characters[4])
+
+        # Write impurity
+        if self.impurity:
+            if isinstance(criterion, _criterion.FriedmanMSE):
+                criterion = "friedman_mse"
+            elif not isinstance(criterion, six.string_types):
+                criterion = "impurity"
+            if labels:
+                node_string += '%s = ' % criterion
+            node_string += (str(round(tree.impurity[node_id], self.precision))
+                            + characters[4])
+
+        # Write node sample count
+        if labels:
+            node_string += 'samples = '
+        if self.proportion:
+            percent = (100. * tree.n_node_samples[node_id] /
+                       float(tree.n_node_samples[0]))
+            node_string += (str(round(percent, 1)) + '%' +
+                            characters[4])
+        else:
+            node_string += (str(tree.n_node_samples[node_id]) +
+                            characters[4])
+
+        # Write node class distribution / regression value
+        if self.proportion and tree.n_classes[0] != 1:
+            # For classification this will show the proportion of samples
+            value = value / tree.weighted_n_node_samples[node_id]
+        if labels:
+            node_string += 'value = '
+        if tree.n_classes[0] == 1:
+            # Regression
+            value_text = np.around(value, self.precision)
+        elif self.proportion:
+            # Classification
+            value_text = np.around(value, self.precision)
+        elif np.all(np.equal(np.mod(value, 1), 0)):
+            # Classification without floating-point weights
+            value_text = value.astype(int)
+        else:
+            # Classification with floating-point weights
+            value_text = np.around(value, self.precision)
+        # Strip whitespace
+        value_text = str(value_text.astype('S32')).replace("b'", "'")
+        value_text = value_text.replace("' '", ", ").replace("'", "")
+        if tree.n_classes[0] == 1 and tree.n_outputs == 1:
+            value_text = value_text.replace("[", "").replace("]", "")
+        value_text = value_text.replace("\n ", characters[4])
+        node_string += value_text + characters[4]
+
+        # Write node majority class
+        if (self.class_names is not None and
+                tree.n_classes[0] != 1 and
+                tree.n_outputs == 1):
+            # Only done for single-output classification trees
+            if labels:
+                node_string += 'class = '
+            if self.class_names is not True:
+                class_name = self.class_names[np.argmax(value)]
+            else:
+                class_name = "y%s%s%s" % (characters[1],
+                                          np.argmax(value),
+                                          characters[2])
+            node_string += class_name
+
+        # Clean up any trailing newlines
+        if node_string[-2:] == '\\n':
+            node_string = node_string[:-2]
+        if node_string[-5:] == '<br/>':
+            node_string = node_string[:-5]
+
+        return node_string + characters[5]
+
+    def recurse(self, tree, node_id, criterion, parent=None, depth=0):
+        if node_id == _tree.TREE_LEAF:
+            raise ValueError("Invalid node_id %s" % _tree.TREE_LEAF)
+
+        left_child = tree.children_left[node_id]
+        right_child = tree.children_right[node_id]
+
+        # Add node with description
+        if self.max_depth is None or depth <= self.max_depth:
+
+            # Collect ranks for 'leaf' option in plot_options
+            if left_child == _tree.TREE_LEAF:
+                self.ranks['leaves'].append(str(node_id))
+            elif str(depth) not in self.ranks:
+                self.ranks[str(depth)] = [str(node_id)]
+            else:
+                self.ranks[str(depth)].append(str(node_id))
+
+            self.out_file.write(
+                '%d [label=%s' % (node_id, self.node_to_str(tree, node_id,
+                                                            criterion)))
+
+            if self.filled:
+                # Fetch appropriate color for node
+                if 'rgb' not in self.colors:
+                    # Initialize colors and bounds if required
+                    self.colors['rgb'] = _color_brew(tree.n_classes[0])
+                    if tree.n_outputs != 1:
+                        # Find max and min impurities for multi-output
+                        self.colors['bounds'] = (np.min(-tree.impurity),
+                                                 np.max(-tree.impurity))
+                    elif (tree.n_classes[0] == 1 and
+                          len(np.unique(tree.value)) != 1):
+                        # Find max and min values in leaf nodes for regression
+                        self.colors['bounds'] = (np.min(tree.value),
+                                                 np.max(tree.value))
+                if tree.n_outputs == 1:
+                    node_val = (tree.value[node_id][0, :] /
+                                tree.weighted_n_node_samples[node_id])
+                    if tree.n_classes[0] == 1:
+                        # Regression
+                        node_val = tree.value[node_id][0, :]
+                else:
+                    # If multi-output color node by impurity
+                    node_val = -tree.impurity[node_id]
+                self.out_file.write(', fillcolor="%s"'
+                                    % self.get_color(node_val))
+            self.out_file.write('] ;\n')
+
+            if parent is not None:
+                # Add edge to parent
+                self.out_file.write('%d -> %d' % (parent, node_id))
+                if parent == 0:
+                    # Draw True/False labels if parent is root node
+                    angles = np.array([45, -45]) * ((self.rotate - .5) * -2)
+                    self.out_file.write(' [labeldistance=2.5, labelangle=')
+                    if node_id == 1:
+                        self.out_file.write('%d, headlabel="True"]' %
+                                            angles[0])
+                    else:
+                        self.out_file.write('%d, headlabel="False"]' %
+                                            angles[1])
+                self.out_file.write(' ;\n')
+
+            if left_child != _tree.TREE_LEAF:
+                self.recurse(tree, left_child, criterion=criterion,
+                             parent=node_id, depth=depth + 1)
+                self.recurse(tree, right_child, criterion=criterion,
+                             parent=node_id, depth=depth + 1)
+
+        else:
+            self.ranks['leaves'].append(str(node_id))
+
+            self.out_file.write('%d [label="(...)"' % node_id)
+            if self.filled:
+                # color cropped nodes grey
+                self.out_file.write(', fillcolor="#C0C0C0"')
+            self.out_file.write('] ;\n' % node_id)
+
+            if parent is not None:
+                # Add edge to parent
+                self.out_file.write('%d -> %d ;\n' % (parent, node_id))
+
+
 def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
                     feature_names=None, class_names=None, label='all',
                     filled=False, leaves_parallel=False, impurity=True,
@@ -331,224 +645,6 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
 
     """
 
-    def get_color(value):
-        # Find the appropriate color & intensity for a node
-        if colors['bounds'] is None:
-            # Classification tree
-            color = list(colors['rgb'][np.argmax(value)])
-            sorted_values = sorted(value, reverse=True)
-            if len(sorted_values) == 1:
-                alpha = 0
-            else:
-                alpha = int(np.round(255 * (sorted_values[0] -
-                                            sorted_values[1]) /
-                                           (1 - sorted_values[1]), 0))
-        else:
-            # Regression tree or multi-output
-            color = list(colors['rgb'][0])
-            alpha = int(np.round(255 * ((value - colors['bounds'][0]) /
-                                        (colors['bounds'][1] -
-                                         colors['bounds'][0])), 0))
-
-        # Return html color code in #RRGGBBAA format
-        color.append(alpha)
-        hex_codes = [str(i) for i in range(10)]
-        hex_codes.extend(['a', 'b', 'c', 'd', 'e', 'f'])
-        color = [hex_codes[c // 16] + hex_codes[c % 16] for c in color]
-
-        return '#' + ''.join(color)
-
-    def node_to_str(tree, node_id, criterion):
-        # Generate the node content string
-        if tree.n_outputs == 1:
-            value = tree.value[node_id][0, :]
-        else:
-            value = tree.value[node_id]
-
-        # Should labels be shown?
-        labels = (label == 'root' and node_id == 0) or label == 'all'
-
-        # PostScript compatibility for special characters
-        if special_characters:
-            characters = ['&#35;', '<SUB>', '</SUB>', '&le;', '<br/>', '>']
-            node_string = '<'
-        else:
-            characters = ['#', '[', ']', '<=', '\\n', '"']
-            node_string = '"'
-
-        # Write node ID
-        if node_ids:
-            if labels:
-                node_string += 'node '
-            node_string += characters[0] + str(node_id) + characters[4]
-
-        # Write decision criteria
-        if tree.children_left[node_id] != _tree.TREE_LEAF:
-            # Always write node decision criteria, except for leaves
-            if feature_names is not None:
-                feature = feature_names[tree.feature[node_id]]
-            else:
-                feature = "X%s%s%s" % (characters[1],
-                                       tree.feature[node_id],
-                                       characters[2])
-            node_string += '%s %s %s%s' % (feature,
-                                           characters[3],
-                                           round(tree.threshold[node_id],
-                                                 precision),
-                                           characters[4])
-
-        # Write impurity
-        if impurity:
-            if isinstance(criterion, _criterion.FriedmanMSE):
-                criterion = "friedman_mse"
-            elif not isinstance(criterion, six.string_types):
-                criterion = "impurity"
-            if labels:
-                node_string += '%s = ' % criterion
-            node_string += (str(round(tree.impurity[node_id], precision)) +
-                            characters[4])
-
-        # Write node sample count
-        if labels:
-            node_string += 'samples = '
-        if proportion:
-            percent = (100. * tree.n_node_samples[node_id] /
-                       float(tree.n_node_samples[0]))
-            node_string += (str(round(percent, 1)) + '%' +
-                            characters[4])
-        else:
-            node_string += (str(tree.n_node_samples[node_id]) +
-                            characters[4])
-
-        # Write node class distribution / regression value
-        if proportion and tree.n_classes[0] != 1:
-            # For classification this will show the proportion of samples
-            value = value / tree.weighted_n_node_samples[node_id]
-        if labels:
-            node_string += 'value = '
-        if tree.n_classes[0] == 1:
-            # Regression
-            value_text = np.around(value, precision)
-        elif proportion:
-            # Classification
-            value_text = np.around(value, precision)
-        elif np.all(np.equal(np.mod(value, 1), 0)):
-            # Classification without floating-point weights
-            value_text = value.astype(int)
-        else:
-            # Classification with floating-point weights
-            value_text = np.around(value, precision)
-        # Strip whitespace
-        value_text = str(value_text.astype('S32')).replace("b'", "'")
-        value_text = value_text.replace("' '", ", ").replace("'", "")
-        if tree.n_classes[0] == 1 and tree.n_outputs == 1:
-            value_text = value_text.replace("[", "").replace("]", "")
-        value_text = value_text.replace("\n ", characters[4])
-        node_string += value_text + characters[4]
-
-        # Write node majority class
-        if (class_names is not None and
-                tree.n_classes[0] != 1 and
-                tree.n_outputs == 1):
-            # Only done for single-output classification trees
-            if labels:
-                node_string += 'class = '
-            if class_names is not True:
-                class_name = class_names[np.argmax(value)]
-            else:
-                class_name = "y%s%s%s" % (characters[1],
-                                          np.argmax(value),
-                                          characters[2])
-            node_string += class_name
-
-        # Clean up any trailing newlines
-        if node_string[-2:] == '\\n':
-            node_string = node_string[:-2]
-        if node_string[-5:] == '<br/>':
-            node_string = node_string[:-5]
-
-        return node_string + characters[5]
-
-    def recurse(tree, node_id, criterion, parent=None, depth=0):
-        if node_id == _tree.TREE_LEAF:
-            raise ValueError("Invalid node_id %s" % _tree.TREE_LEAF)
-
-        left_child = tree.children_left[node_id]
-        right_child = tree.children_right[node_id]
-
-        # Add node with description
-        if max_depth is None or depth <= max_depth:
-
-            # Collect ranks for 'leaf' option in plot_options
-            if left_child == _tree.TREE_LEAF:
-                ranks['leaves'].append(str(node_id))
-            elif str(depth) not in ranks:
-                ranks[str(depth)] = [str(node_id)]
-            else:
-                ranks[str(depth)].append(str(node_id))
-
-            out_file.write('%d [label=%s'
-                           % (node_id,
-                              node_to_str(tree, node_id, criterion)))
-
-            if filled:
-                # Fetch appropriate color for node
-                if 'rgb' not in colors:
-                    # Initialize colors and bounds if required
-                    colors['rgb'] = _color_brew(tree.n_classes[0])
-                    if tree.n_outputs != 1:
-                        # Find max and min impurities for multi-output
-                        colors['bounds'] = (np.min(-tree.impurity),
-                                            np.max(-tree.impurity))
-                    elif (tree.n_classes[0] == 1 and
-                          len(np.unique(tree.value)) != 1):
-                        # Find max and min values in leaf nodes for regression
-                        colors['bounds'] = (np.min(tree.value),
-                                            np.max(tree.value))
-                if tree.n_outputs == 1:
-                    node_val = (tree.value[node_id][0, :] /
-                                tree.weighted_n_node_samples[node_id])
-                    if tree.n_classes[0] == 1:
-                        # Regression
-                        node_val = tree.value[node_id][0, :]
-                else:
-                    # If multi-output color node by impurity
-                    node_val = -tree.impurity[node_id]
-                out_file.write(', fillcolor="%s"' % get_color(node_val))
-            out_file.write('] ;\n')
-
-            if parent is not None:
-                # Add edge to parent
-                out_file.write('%d -> %d' % (parent, node_id))
-                if parent == 0:
-                    # Draw True/False labels if parent is root node
-                    angles = np.array([45, -45]) * ((rotate - .5) * -2)
-                    out_file.write(' [labeldistance=2.5, labelangle=')
-                    if node_id == 1:
-                        out_file.write('%d, headlabel="True"]' % angles[0])
-                    else:
-                        out_file.write('%d, headlabel="False"]' % angles[1])
-                out_file.write(' ;\n')
-
-            if left_child != _tree.TREE_LEAF:
-                recurse(tree, left_child, criterion=criterion, parent=node_id,
-                        depth=depth + 1)
-                recurse(tree, right_child, criterion=criterion, parent=node_id,
-                        depth=depth + 1)
-
-        else:
-            ranks['leaves'].append(str(node_id))
-
-            out_file.write('%d [label="(...)"' % node_id)
-            if filled:
-                # color cropped nodes grey
-                out_file.write(', fillcolor="#C0C0C0"')
-            out_file.write('] ;\n' % node_id)
-
-            if parent is not None:
-                # Add edge to parent
-                out_file.write('%d -> %d ;\n' % (parent, node_id))
-
     check_is_fitted(decision_tree, 'tree_')
     own_file = False
     return_string = False
@@ -570,68 +666,17 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
             return_string = True
             out_file = six.StringIO()
 
-        if isinstance(precision, Integral):
-            if precision < 0:
-                raise ValueError("'precision' should be greater or equal to 0."
-                                 " Got {} instead.".format(precision))
-        else:
-            raise ValueError("'precision' should be an integer. Got {}"
-                             " instead.".format(type(precision)))
-
-        # Check length of feature_names before getting into the tree node
-        # Raise error if length of feature_names does not match
-        # n_features_ in the decision_tree
-        if feature_names is not None:
-            if len(feature_names) != decision_tree.n_features_:
-                raise ValueError("Length of feature_names, %d "
-                                 "does not match number of features, %d"
-                                 % (len(feature_names),
-                                    decision_tree.n_features_))
-
-        # The depth of each node for plotting with 'leaf' option
-        ranks = {'leaves': []}
-        # The colors to render each node with
-        colors = {'bounds': None}
-
-        out_file.write('digraph Tree {\n')
-
-        # Specify node aesthetics
-        out_file.write('node [shape=box')
-        rounded_filled = []
-        if filled:
-            rounded_filled.append('filled')
-        if rounded:
-            rounded_filled.append('rounded')
-        if len(rounded_filled) > 0:
-            out_file.write(', style="%s", color="black"'
-                           % ", ".join(rounded_filled))
-        if rounded:
-            out_file.write(', fontname=helvetica')
-        out_file.write('] ;\n')
-
-        # Specify graph & edge aesthetics
-        if leaves_parallel:
-            out_file.write('graph [ranksep=equally, splines=polyline] ;\n')
-        if rounded:
-            out_file.write('edge [fontname=helvetica] ;\n')
-        if rotate:
-            out_file.write('rankdir=LR ;\n')
-
-        # Now recurse the tree and add node & edge attributes
-        if isinstance(decision_tree, _tree.Tree):
-            recurse(decision_tree, 0, criterion="impurity")
-        else:
-            recurse(decision_tree.tree_, 0, criterion=decision_tree.criterion)
-
-        # If required, draw leaf nodes at same depth as each other
-        if leaves_parallel:
-            for rank in sorted(ranks):
-                out_file.write("{rank=same ; " +
-                               "; ".join(r for r in ranks[rank]) + "} ;\n")
-        out_file.write("}")
+        exporter = _DOTTreeExporter(
+            out_file=out_file, max_depth=max_depth,
+            feature_names=feature_names, class_names=class_names, label=label,
+            filled=filled, leaves_parallel=leaves_parallel, impurity=impurity,
+            node_ids=node_ids, proportion=proportion, rotate=rotate,
+            rounded=rounded, special_characters=special_characters,
+            precision=precision)
+        exporter.export(decision_tree)
 
         if return_string:
-            return out_file.getvalue()
+            return exporter.out_file.getvalue()
 
     finally:
         if own_file:
