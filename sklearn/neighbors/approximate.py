@@ -85,7 +85,7 @@ class ProjectionToHashMixin(object):
         self.fit(X)
         return self.transform(X)
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         return self._to_hash(super(ProjectionToHashMixin, self).transform(X))
 
 

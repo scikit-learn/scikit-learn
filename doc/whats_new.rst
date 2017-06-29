@@ -31,6 +31,9 @@ Changelog
 New features
 ............
 
+   - Added :class:`multioutput.ClassifierChain` for multi-label
+     classification. By `Adam Kleczewski <adamklec>`_.
+
    - Validation that input data contains no NaN or inf can now be suppressed
      using :func:`config_context`, at your own risk. This will save on runtime,
      and may be particularly useful for prediction time. :issue:`7548` by
@@ -67,7 +70,7 @@ New features
      normalization based on quantiles.
      :issue:`8363` by :user:`Denis Engemann <dengemann>`,
      :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
-     :user:`Thierry Guillemot <tguillemot>`_, and `Gael Varoquaux`_.
+     :user:`Thierry Guillemot <tguillemot>`, and `Gael Varoquaux`_.
 
    - Added :func:`metrics.dcg_score` and :func:`metrics.ndcg_score`, which
      compute Discounted cumulative gain (DCG) and Normalized discounted
@@ -145,6 +148,15 @@ Enhancements
      do not set attributes on the estimator.
      :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
+   - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
+     :class:`linear_model.PassiveAggressiveClassifier`,
+     :class:`linear_model.PassiveAggressiveRegressor` and
+     :class:`linear_model.Perceptron` now expose a ``max_iter`` and
+     ``tol`` parameters, to handle convergence more precisely.
+     ``n_iter`` parameter is deprecated, and the fitted estimator exposes
+     a ``n_iter_`` attribute, with actual number of iterations before
+     convergence. By `Tom Dupre la Tour`_.
+
    - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
      will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
      norm 'max' the norms returned will be the same as for dense matrices.
@@ -213,6 +225,13 @@ Enhancements
      passing a range of bytes to :func:`datasets.load_svmlight_file`.
      :issue:`935` by :user:`Olivier Grisel <ogrisel>`.
 
+   - Small performance improvement to n-gram creation in
+     :mod:`feature_extraction.text` by binding methods for loops and
+     special-casing unigrams. :issue:`7567` by `Jaye Doepke <jtdoepke>`
+
+   - Speed improvements to :class:`model_selection.StratifiedShuffleSplit`.
+     :issue:`5991` by :user:`Arthur Mensch <arthurmensch>` and `Joel Nothman`_.
+
 Bug fixes
 .........
 
@@ -221,7 +240,7 @@ Bug fixes
      by the change in recall since the last operating point, as per the
      `Wikipedia entry <http://en.wikipedia.org/wiki/Average_precision>`_.
      (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
-     `Nick Dingwall`_ and `Gael Varoquaux`_.
+     :user:`Nick Dingwall <ndingwall>` and `Gael Varoquaux`_.
 
    - Fixed a bug in :class:`covariance.MinCovDet` where inputting data
      that produced a singular covariance matrix would cause the helper method
@@ -258,6 +277,10 @@ Bug fixes
 
    - Fixed a bug where :func:`linear_model.RANSACRegressor.fit` may run until
      ``max_iter`` if finds a large inlier group early. :issue:`8251` by :user:`aivision2020`.
+
+   - Fixed a bug where :class:`sklearn.naive_bayes.MultinomialNB` and :class:`sklearn.naive_bayes.BernoulliNB`
+     failed when `alpha=0`. :issue:`5814` by :user:`Yichuan Liu <yl565>` and
+     :user:`Herilalaina Rakotoarison <herilalaina>`.
 
    - Fixed a bug where :func:`datasets.make_moons` gives an
      incorrect result when ``n_samples`` is odd.
@@ -392,13 +415,17 @@ Bug fixes
    - Fixed a bug in :class:`linear_model.RandomizedLasso`,
      :class:`linear_model.Lars`, :class:`linear_model.LassoLars`,
      :class:`linear_model.LarsCV` and :class:`linear_model.LassoLarsCV`,
-     where the parameter ``precompute`` were not used consistently accross
+     where the parameter ``precompute`` were not used consistently across
      classes, and some values proposed in the docstring could raise errors.
      :issue:`5359` by `Tom Dupre la Tour`_.
 
    - Fixed a bug where :func:`model_selection.validation_curve`
      reused the same estimator for each parameter value.
      :issue:`7365` by :user:`Aleksandr Sandrovskii <Sundrique>`.
+
+   - :class:`multiclass.OneVsOneClassifier`'s ``partial_fit`` now ensures all
+     classes are provided up-front. :issue:`6250` by
+     :user:`Asish Panda <kaichogami>`.
 
    - Fixed an integer overflow bug in :func:`metrics.confusion_matrix` and
      hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
@@ -411,6 +438,17 @@ Bug fixes
      :func:`metrics.pairwise_kernels` :issue:`5211` by :user:`nrhine1`,
      :user:`mth4saurabh` and `Andreas Müller`_.
 
+  -  Fixed a bug in :class:`gaussian_process.GaussianProcessRegressor`
+     when the standard deviation and covariance predicted without fit
+     would fail with a unmeaningful error by default.
+     :issue:`6573` by :user:`Quazi Marufur Rahman <qmaruf>` and
+     `Manoj Kumar`_.
+
+   - Fixed the implementation of `explained_variance_`
+     in :class:`decomposition.PCA`,
+     :class:`decomposition.RandomizedPCA` and
+     :class:`decomposition.IncrementalPCA`.
+     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
 
 API changes summary
 -------------------
@@ -537,6 +575,12 @@ API changes summary
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
      - ``neighbors.approximate.LSHForest``
+
+    - Deprecate the ``y`` parameter in `transform` and `inverse_transform`.
+      The method  should not accept ``y`` parameter, as it's used at the prediction time.
+      :issue:`8174` by :user:`Tahar Zanouda <tzano>`, `Alexandre Gramfort`_
+      and `Raghav RV`_.
+
 
 .. _changes_0_18_1:
 
@@ -991,7 +1035,7 @@ Model evaluation and meta-estimators
 
 Metrics
 
-   - Added ``labels`` flag to :class:`metrics.log_loss` to to explicitly provide
+   - Added ``labels`` flag to :class:`metrics.log_loss` to explicitly provide
      the labels when the number of classes in ``y_true`` and ``y_pred`` differ.
      :issue:`7239` by :user:`Hong Guangguo <hongguangguo>` with help from
      :user:`Mads Jensen <indianajensen>` and :user:`Nelson Liu <nelson-liu>`.
@@ -1317,7 +1361,6 @@ Birodkar, Vikram, Villu Ruusmann, Vinayak Mehta, walter, waterponey, Wenhua
 Yang, Wenjian Huang, Will Welch, wyseguy7, xyguo, yanlend, Yaroslav Halchenko,
 yelite, Yen, YenChenLin, Yichuan Liu, Yoav Ram, Yoshiki, Zheng RuiFeng, zivori, Óscar Nájera
 
-
 .. currentmodule:: sklearn
 
 .. _changes_0_17_1:
@@ -1357,6 +1400,7 @@ Bug fixes
     - Fixed a joblib error when evaluating the perplexity of a
       :class:`decomposition.LatentDirichletAllocation` model. See :issue:`6258`
       By Chyi-Kwei Yau.
+
 
 .. _changes_0_17:
 
