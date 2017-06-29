@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import skip_if_32bit
@@ -241,10 +242,6 @@ def test_trustworthiness():
 def test_preserve_trustworthiness_approximately():
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
-    # The Barnes-Hut approximation uses a different method to estimate
-    # P_ij using only a number of nearest neighbors instead of all
-    # points (so that k = 3 * perplexity). As a result we set the
-    # perplexity=5, so that the number of neighbors is 5%.
     n_components = 2
     methods = ['exact', 'barnes_hut']
     X = random_state.randn(50, n_components).astype(np.float32)
@@ -254,8 +251,8 @@ def test_preserve_trustworthiness_approximately():
                         learning_rate=100.0, init=init, random_state=0,
                         method=method)
             X_embedded = tsne.fit_transform(X)
-            T = trustworthiness(X, X_embedded, n_neighbors=1)
-            assert_almost_equal(T, 1.0, decimal=1)
+            t = trustworthiness(X, X_embedded, n_neighbors=1)
+            assert_greater(t, 0.9)
 
 
 def test_optimization_minimizes_kl_divergence():
