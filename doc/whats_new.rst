@@ -404,6 +404,14 @@ Bug fixes
      hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
      by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
 
+   - Made default kernel parameters kernel-dependent in :class:`kernel_approximation.Nystroem`
+     :issue:`5229` by :user:`mth4saurabh` and `Andreas Müller`_.
+
+   - Fixed passing of ``gamma`` parameter to the ``chi2`` kernel in
+     :func:`metrics.pairwise_kernels` :issue:`5211` by :user:`nrhine1`,
+     :user:`mth4saurabh` and `Andreas Müller`_.
+
+
 API changes summary
 -------------------
 
