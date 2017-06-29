@@ -491,7 +491,8 @@ class LabelSpreading(BaseLabelPropagation):
                  max_iter=30, tol=1e-3, n_jobs=1):
 
         if alpha <= 0.0 or alpha >= 1.0:
-            raise ValueError('alpha must be inside the open interval (0, 1)')
+            raise ValueError('alpha=%s is invalid: it must be inside '
+                             'the open interval (0, 1)' % alpha)
 
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
