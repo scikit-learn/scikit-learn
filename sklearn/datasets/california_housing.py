@@ -28,14 +28,15 @@ import tarfile
 import numpy as np
 
 from .base import get_data_home
-from .base import _fetch_and_verify_dataset
+from .base import _fetch_url
 from .base import _pkl_filepath
 from ..utils import Bunch
 from ..externals import joblib
 
-
+#DATA_URL = "http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz"
 DATA_URL = "https://ndownloader.figshare.com/files/5976036"
 TARGET_FILENAME = "cal_housing.pkz"
+EXPECTED_CHECKSUM = "130d0eececf165046ec4dc621d121d80"
 
 # Grab the module-level docstring to use as a description of the
 # dataset
@@ -89,8 +90,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
 
         print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
         archive_path = join(data_home, "cal_housing.tgz")
-        expected_checksum = "130d0eececf165046ec4dc621d121d80"
-        _fetch_and_verify_dataset(DATA_URL, archive_path, expected_checksum)
+        _fetch_url(DATA_URL, archive_path, EXPECTED_CHECKSUM)
         fileobj = tarfile.open(
             mode="r:gz",
             name=archive_path).extractfile(

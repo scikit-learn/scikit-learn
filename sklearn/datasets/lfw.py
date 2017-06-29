@@ -29,7 +29,7 @@ from os.path import join, exists, isdir
 import logging
 import numpy as np
 
-from .base import get_data_home, _fetch_and_verify_dataset
+from .base import get_data_home, _fetch_url
 from ..utils import Bunch
 try:
     import urllib.request as urllib  # for backwards compatibility
@@ -89,15 +89,14 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     if not exists(lfw_home):
         makedirs(lfw_home)
 
-    for target_filename in TARGET_FILENAMES:
+    for target_filename, url, expected_checksum in zip(
+            TARGET_FILENAMES.keys(), TARGET_FILENAMES.values(),
+            TARGET_CHECKSUMS.values()):
         target_filepath = join(lfw_home, target_filename)
         if not exists(target_filepath):
             if download_if_missing:
-                url = TARGET_FILENAMES[target_filename]
                 logger.warning("Downloading LFW metadata: %s", url)
-                expected_checksum = TARGET_CHECKSUMS[target_filename]
-                _fetch_and_verify_dataset(url, target_filepath,
-                                          expected_checksum)
+                _fetch_url(url, target_filepath, expected_checksum)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
@@ -108,8 +107,8 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
                 logger.warning("Downloading LFW data (~200MB): %s",
                                archive_url)
 
-                _fetch_and_verify_dataset(archive_url, archive_path,
-                                          expected_archive_checksum)
+                _fetch_url(archive_url, archive_path,
+                           expected_archive_checksum)
             else:
                 raise IOError("%s is missing" % target_filepath)
 

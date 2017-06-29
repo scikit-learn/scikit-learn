@@ -15,7 +15,7 @@ import scipy.sparse as sp
 
 from .base import get_data_home
 from .base import _pkl_filepath
-from .base import _fetch_and_verify_dataset
+from .base import _fetch_url
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from .svmlight_format import load_svmlight_files
@@ -38,6 +38,7 @@ FILE_URLS = [
     'https://ndownloader.figshare.com/files/5976060',
     'https://ndownloader.figshare.com/files/5976057'
 ]
+
 FILE_CHECKSUMS = {
     "lyrl2004_vectors_test_pt0.dat.gz":
     'cc918f2d1b6d6c44c68693e99ff72f84',
@@ -146,12 +147,11 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     if download_if_missing and (not exists(samples_path) or
                                 not exists(sample_id_path)):
         files = []
-        for file_name, file_url in zip(FILE_NAMES, FILE_URLS):
+        for file_name, file_url, expected_archive_checksum in zip(
+                FILE_NAMES, FILE_URLS, FILE_CHECKSUMS.values()):
             logger.warning("Downloading %s" % file_url)
             archive_path = join(rcv1_dir, file_name)
-            expected_archive_checksum = FILE_CHECKSUMS[file_name]
-            _fetch_and_verify_dataset(file_url, archive_path,
-                                      expected_archive_checksum)
+            _fetch_url(file_url, archive_path, expected_archive_checksum)
             files.append(GzipFile(filename=archive_path))
 
         # delete archives
@@ -177,8 +177,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         logger.warning("Downloading %s" % URL_topics)
         topics_archive_path = join(rcv1_dir, "rcv1v2.topics.qrels.gz")
         expected_topics_checksum = "4b932c58566ebfd82065d3946e454a39"
-        _fetch_and_verify_dataset(URL_topics, topics_archive_path,
-                                  expected_topics_checksum)
+        _fetch_url(URL_topics, topics_archive_path, expected_topics_checksum)
 
         # parse the target file
         n_cat = -1

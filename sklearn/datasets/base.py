@@ -886,12 +886,12 @@ def _validate_file_md5(expected_checksum, path):
     if expected_checksum != _md5(path):
         # remove the corrupted file
         remove(path)
-        raise ValueError("{} has an MD5 hash differing "
-                         "from expected, file may be "
-                         "corrupted.".format(path))
+        raise IOError("{} has an MD5 hash differing "
+                      "from expected, file may be "
+                      "corrupted.".format(path))
 
 
-def _fetch_and_verify_dataset(URL, path, checksum):
+def _fetch_url(url, path, checksum):
     """
     Fetch a dataset from a URL and check the MD5 checksum to ensure
     fetch was completed and the correct file was downloaded
@@ -909,7 +909,6 @@ def _fetch_and_verify_dataset(URL, path, checksum):
 
     """
 
-    existing_size = 0
     resume_url_downloader = PartialURLOpener()
     path_temp = path + ".part"
     if exists(path_temp):
@@ -917,30 +916,32 @@ def _fetch_and_verify_dataset(URL, path, checksum):
         temp_file = open(path_temp, "ab")
         # get the amount of path_temp we've downloaded
         existing_size = getsize(path_temp)
-        print("Resuming download from previous temp file, "
-              "already have {} bytes".format(existing_size))
-        resume_url_downloader.addheader("Range", "bytes="
-                                        "{}-".format(existing_size))
+        request_range = 'bytes={}-'.format(existing_size)
+
+        print("Resuming download from {}, "
+              "already have {} bytes".format(url, existing_size),
+              file=sys.stderr)
+        resume_url_downloader.addheader("Range", request_range)
 
         try:
             # Try to download only the remainder of the file
-            dataset_url = resume_url_downloader.open(URL)
+            dataset_url = resume_url_downloader.open(url)
             # get the content range of the request
             content_range = dataset_url.info().get('Content-Range')
             if (content_range is None or
-                    not content_range.startswith("bytes="
-                                                 "{}-").format(existing_size)):
+                    not content_range.startswith(request_range)):
                 raise IOError("Server does not support the HTTP Range "
                               "header, cannot resume download.")
-        except:
+        except Exception:
             # delete the temp file and retry download of whole file
             remove(path_temp)
-            print("Attempting to re-download file.")
-            _fetch_and_verify_dataset(URL, path, checksum)
+            print("Attempting to re-download file after {!r}.".format(exec),
+                  file=sys.stderr)
+            _fetch_url(url, path, checksum)
     else:
         # no path_temp, so download from scratch
         temp_file = open(path_temp, "wb")
-        dataset_url = resume_url_downloader.open(URL)
+        dataset_url = resume_url_downloader.open(url)
     while 1:
         chunk = dataset_url.read(8192)
         if not chunk:
