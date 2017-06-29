@@ -474,7 +474,7 @@ class _MPLTreeExporter(_DOTTreeExporter):
 
     def recurse(self, node, tree, depth=0):
         # 2 - is a hack to for not creating empty space. FIXME
-        kwargs = dict(bbox=self.bbox_args, ha='center', va='bottom',
+        kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
                       zorder=100 - 10 * depth, xycoords='axes points')
         xy = (node.x * self.scalex, (2 - node.y) * self.scaley)
 
