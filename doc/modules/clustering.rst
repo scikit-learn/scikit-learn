@@ -1119,12 +1119,12 @@ Mathematical formulation
 Assume two label assignments (of the same N objects), :math:`U` and :math:`V`.
 Their entropy is the amount of uncertainty for a partition set, defined by:
 
-.. math:: H(U) = \sum_{i=1}^{|U|}P(i)\log(P(i))
+.. math:: H(U) = - \sum_{i=1}^{|U|}P(i)\log(P(i))
 
 where :math:`P(i) = |U_i| / N` is the probability that an object picked at
 random from :math:`U` falls into class :math:`U_i`. Likewise for :math:`V`:
 
-.. math:: H(V) = \sum_{j=1}^{|V|}P'(j)\log(P'(j))
+.. math:: H(V) = - \sum_{j=1}^{|V|}P'(j)\log(P'(j))
 
 With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U`
 and :math:`V` is calculated by:
