@@ -9,7 +9,6 @@
 #   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
 from time import time
-import warnings
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
@@ -17,7 +16,6 @@ from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix
 from ..neighbors import NearestNeighbors
-from ..neighbors.base import NeighborsBase
 from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
