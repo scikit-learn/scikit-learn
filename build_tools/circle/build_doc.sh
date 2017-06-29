@@ -74,7 +74,9 @@ fi
 
 if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
-    MAKE_TARGET=dist  # PDF linked into HTML
+    # nonstopmode is used to not wait for CI timeout in case of an error
+    # PDF linked into HTML
+    MAKE_TARGET="dist LATEXMKOPTS=--interaction=nonstopmode"
 elif [[ "$build_type" =~ ^QUICK ]]
 then
 	MAKE_TARGET=html-noplot
@@ -105,7 +107,7 @@ conda update --yes --quiet conda
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python numpy scipy \
-  cython nose coverage matplotlib sphinx=1.5 pillow
+  cython nose coverage matplotlib sphinx=1.6.2 pillow
 source activate testenv
 
 # Build and install scikit-learn in dev mode

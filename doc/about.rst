@@ -1,5 +1,3 @@
-
-
 About us
 ========
 
@@ -221,7 +219,7 @@ The 2013 Paris international sprint
    :width: 120pt
    :target: http://www.frs-fnrs.be/
 
-.. figure:: http://sites.uclouvain.be/dysco/pmwiki/uploads/Main/dysco.gif
+.. figure:: images/dysco.png
    :width: 120pt
    :target: http://sites.uclouvain.be/dysco/
 
