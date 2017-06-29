@@ -9,7 +9,6 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.semi_supervised import label_propagation
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.datasets import make_classification
-from sklearn.utils.testing import assert_warns, assert_no_warnings
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
