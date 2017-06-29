@@ -4,7 +4,6 @@
 
 from __future__ import print_function
 
-from nose.tools import assert_true
 import inspect
 import warnings
 import importlib
@@ -166,6 +165,6 @@ def test_tabs():
                 source = getsource(mod)
             except IOError:  # user probably should have run "make clean"
                 continue
-            assert_true('\t' not in source,
-                        '"%s" has tabs, please remove them or add it to the'
-                        'ignore list' % modname)
+            assert '\t' not in source, ('"%s" has tabs, please remove them ',
+                                        'or add it to theignore list'
+                                        % modname)
