@@ -441,12 +441,16 @@ Bug fixes
      in :class:`decomposition.PCA`,
      :class:`decomposition.RandomizedPCA` and
      :class:`decomposition.IncrementalPCA`.
-     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
-   - Fix :class:`semi_supervised.LabelPropagation` to always do hard clamping.
-     Its ``alpha`` parameter now defaults to 0 and the parameter is deprecated
-     to be removed in version 0.21. :issue:`6727` by
-     :user:`Andre Ambrosio Boechat <boechat107>` and `Joel Nothman`_.
+   - Fix :class:`semi_supervised.BaseLabelPropagation` to correctly implement
+     ``LabelPropagation`` and ``LabelSpreading`` as done in the referenced
+     papers. :class:`semi_supervised.LabelPropagation` now always does hard
+     clamping. Its ``alpha`` parameter now defaults to ``None`` and is
+     deprecated to be removed in 0.21. :issue:`6727` :issue:`3550` issue:`5770`
+     by :user:`Andre Ambrosio Boechat <boechat107>`, :user:`Utkarsh Upadhyay
+     <musically-ut>`, and `Joel Nothman`_.
+
 
 API changes summary
 -------------------
