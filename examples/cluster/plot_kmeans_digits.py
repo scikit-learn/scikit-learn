@@ -84,7 +84,7 @@ bench_k_means(KMeans(init=pca.components_, n_clusters=n_digits, n_init=1),
               data=data)
 print(82 * '_')
 
-###############################################################################
+# #############################################################################
 # Visualize the results on PCA-reduced data
 
 reduced_data = PCA(n_components=2).fit_transform(data)

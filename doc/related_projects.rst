@@ -4,6 +4,13 @@
 Related Projects
 =====================================
 
+Projects implementing the scikit-learn estimator API are encouraged to use
+the `scikit-learn-contrib template <https://github.com/scikit-learn-contrib/project-template>`_
+which facilitates best practices for testing and documenting estimators.
+The `scikit-learn-contrib GitHub organisation <https://github.com/scikit-learn-contrib/scikit-learn-contrib>`_
+also accepts high-quality contributions of repositories conforming to this
+template.
+
 Below is a list of sister-projects, extensions and domain specific packages.
 
 Interoperability and framework enhancements
@@ -18,6 +25,11 @@ enhance the functionality of scikit-learn's estimators.
   scikit-learn pipelines and pandas data frame with dedicated transformers.
 
 **Auto-ML**
+
+- `auto_ml <https://github.com/ClimbsRocks/auto_ml/>`_
+  Automated machine learning for production and analytics, built on scikit-learn
+  and related projects. Trains a pipeline wth all the standard machine learning 
+  steps. Tuned for prediction speed and ease of transfer to production environments. 
 
 - `auto-sklearn <https://github.com/automl/auto-sklearn/>`_
   An automated machine learning toolkit and a drop-in replacement for a
@@ -48,6 +60,11 @@ enhance the functionality of scikit-learn's estimators.
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
+- `Xcessiv <https://github.com/reiinakano/xcessiv>`_ is a notebook-like
+  application for quick, scalable, and automated hyperparameter tuning
+  and stacked ensembling. Provides a framework for keeping track of 
+  model-hyperparameter combinations.
+
 **Model inspection and visualisation**
 
 - `eli5 <https://github.com/TeamHG-Memex/eli5/>`_ A library for
@@ -56,6 +73,13 @@ enhance the functionality of scikit-learn's estimators.
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
   utilities.
+
+- `scikit-plot <https://github.com/reiinakano/scikit-plot>`_ A visualization library
+  for quick and easy generation of common plots in data analysis and machine learning.
+
+- `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
+  custom matplotlib visualizers for scikit-learn estimators to support visual feature
+  analysis, model selection, evaluation, and diagnostics.
 
 
 **Model export for production**
@@ -167,12 +191,22 @@ and tasks.
 - `kmodes <https://github.com/nicodv/kmodes>`_ k-modes clustering algorithm for
   categorical data, and several of its variations.
 
-- `hdbscan <https://github.com/lmcinnes/hdbscan>`_ HDBSCAN and Robust Single
+- `hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_ HDBSCAN and Robust Single
   Linkage clustering algorithms for robust variable density clustering.
 
 - `spherecluster <https://github.com/clara-labs/spherecluster>`_ Spherical
   K-means and mixture of von Mises Fisher clustering routines for data on the
   unit hypersphere.
+
+**Pre-processing**
+
+- `categorical-encoding
+  <https://github.com/scikit-learn-contrib/categorical-encoding>`_ A
+  library of sklearn compatible categorical variable encoders.
+
+- `imbalanced-learn
+  <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
+  methods to under- and over-sample datasets.
 
 Statistical learning with Python
 --------------------------------
@@ -184,7 +218,7 @@ Other packages useful for data analysis and machine learning.
 - `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
   processing framework geared towards deep learning research.
 
-- `statsmodels <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
+- `statsmodels <http://www.statsmodels.org>`_ Estimating and analysing
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 

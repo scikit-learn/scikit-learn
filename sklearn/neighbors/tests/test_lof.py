@@ -51,7 +51,6 @@ def test_lof_performance():
     # Generate train/test data
     rng = check_random_state(2)
     X = 0.3 * rng.randn(120, 2)
-    X_train = np.r_[X + 2, X - 2]
     X_train = X[:100]
 
     # Generate some abnormal novel observations

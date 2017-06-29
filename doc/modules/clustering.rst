@@ -191,7 +191,7 @@ minimum. This is highly dependent on the initialization of the centroids.
 As a result, the computation is often done several times, with different
 initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
-(use the ``init='kmeans++'`` parameter). This initializes the centroids to be
+(use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
 random initialization, as shown in the reference.
 
@@ -668,7 +668,7 @@ affinities), in particular Euclidean distance (*l2*), Manhattan distance
 matrix.
 
 * *l1* distance is often good for sparse features, or sparse noise: ie
-  many of the features are zero, as in text mining using occurences of
+  many of the features are zero, as in text mining using occurrences of
   rare words.
 
 * *cosine* distance is interesting because it is invariant to global
@@ -1130,9 +1130,13 @@ With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U`
 and :math:`V` is calculated by:
 
 .. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|}\sum_{j=1}^{|V|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
-
+ 
 where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object
 picked at random falls into both classes :math:`U_i` and :math:`V_j`.
+
+It also can be expressed in set cardinality formulation:
+
+.. math:: \text{MI}(U, V) = \sum_{i=1}^|U| \sum_{j=1}^|V| \frac{|U_i \cap V_j|}{N}\log\left(\frac{N|U_i \cap V_j|}{|U_i||V_j|}\right)
 
 The normalized mutual information is defined as
 

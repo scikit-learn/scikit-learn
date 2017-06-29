@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 r"""
-============================
 Parser for Jupyter notebooks
 ============================
 
@@ -17,14 +16,6 @@ import json
 import re
 import sys
 from .py_source_parser import split_code_and_text_blocks
-
-
-def text2string(content):
-    """Returns a string without the extra triple quotes"""
-    try:
-        return ast.literal_eval(content) + '\n'
-    except Exception:
-        return content + '\n'
 
 
 def jupyter_notebook_skeleton():
@@ -170,7 +161,7 @@ def fill_notebook(work_notebook, script_blocks):
         if blabel == 'code':
             add_code_cell(work_notebook, bcontent)
         else:
-            add_markdown_cell(work_notebook, text2string(bcontent))
+            add_markdown_cell(work_notebook, bcontent + '\n')
 
 
 def save_notebook(work_notebook, write_file):

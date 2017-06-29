@@ -15,10 +15,11 @@ returned probabilities using Brier's score
 
 Compared are the estimated probability using a Gaussian naive Bayes classifier
 without calibration, with a sigmoid calibration, and with a non-parametric
-isotonic calibration. One can observe that only the non-parametric model is able
-to provide a probability calibration that returns probabilities close to the
-expected 0.5 for most of the samples belonging to the middle cluster with
-heterogeneous labels. This results in a significantly improved Brier score.
+isotonic calibration. One can observe that only the non-parametric model is
+able to provide a probability calibration that returns probabilities close
+to the expected 0.5 for most of the samples belonging to the middle
+cluster with heterogeneous labels. This results in a significantly improved
+Brier score.
 """
 print(__doc__)
 
@@ -83,7 +84,7 @@ print("With isotonic calibration: %1.3f" % clf_isotonic_score)
 clf_sigmoid_score = brier_score_loss(y_test, prob_pos_sigmoid, sw_test)
 print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
 
-###############################################################################
+# #############################################################################
 # Plot the data and the predicted probabilities
 plt.figure()
 y_unique = np.unique(y)
@@ -91,7 +92,8 @@ colors = cm.rainbow(np.linspace(0.0, 1.0, y_unique.size))
 for this_y, color in zip(y_unique, colors):
     this_X = X_train[y_train == this_y]
     this_sw = sw_train[y_train == this_y]
-    plt.scatter(this_X[:, 0], this_X[:, 1], s=this_sw * 50, c=color, alpha=0.5,
+    plt.scatter(this_X[:, 0], this_X[:, 1], s=this_sw * 50, c=color,
+                alpha=0.5, edgecolor='k',
                 label="Class %s" % this_y)
 plt.legend(loc="best")
 plt.title("Data")
