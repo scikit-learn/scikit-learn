@@ -81,7 +81,8 @@ def test_alpha_deprecation():
 
 def test_label_spreading():
     n_classes = 2
-    X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
+    X, y = make_classification(n_classes=n_classes, n_samples=200,
+                               random_state=0)
     y[::3] = -1
     clf = label_propagation.LabelSpreading().fit(X, y)
     # adopting notation from Zhou et al (2004):
@@ -99,14 +100,16 @@ def test_label_spreading():
 
 def test_label_propagation():
     n_classes = 2
-    X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
+    X, y = make_classification(n_classes=n_classes, n_samples=200,
+                               random_state=0)
     y[::3] = -1
     Y = np.zeros((len(y), n_classes + 1))
     Y[np.arange(len(y)), y] = 1
     unlabelled_idx = Y[:, (-1,)].nonzero()[0]
     labelled_idx = (Y[:, (-1,)] == 0).nonzero()[0]
 
-    clf = label_propagation.LabelPropagation(max_iter=10000, gamma=0.1).fit(X, y)
+    clf = label_propagation.LabelPropagation(max_iter=10000,
+                                             gamma=0.1).fit(X, y)
     T_bar = clf._build_graph()
     Tuu = T_bar[np.meshgrid(unlabelled_idx, unlabelled_idx, indexing='ij')]
     Tul = T_bar[np.meshgrid(unlabelled_idx, labelled_idx, indexing='ij')]

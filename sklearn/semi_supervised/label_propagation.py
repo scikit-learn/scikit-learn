@@ -278,7 +278,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
             if alpha is None:
                 # LabelPropagation
-                normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
+                normalizer = np.sum(
+                    self.label_distributions_, axis=1)[:, np.newaxis]
                 self.label_distributions_ /= normalizer
 
             # clamp
