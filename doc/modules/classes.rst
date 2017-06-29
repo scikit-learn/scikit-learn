@@ -1404,7 +1404,7 @@ Low-level methods
 
 This module is experimental. Use at your own risk.
 Use of this module requires the matplotlib library,
-version 1.5 or later (preferably 2.0).
+version 1.5 or later.
 
 .. currentmodule:: sklearn.plot
 
