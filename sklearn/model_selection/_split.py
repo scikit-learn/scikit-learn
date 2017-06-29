@@ -579,10 +579,7 @@ class StratifiedKFold(_BaseKFold):
         super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
 
     def _make_test_folds(self, X, y=None, groups=None):
-        if self.shuffle:
-            rng = check_random_state(self.random_state)
-        else:
-            rng = self.random_state
+        rng = self.random_state
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_y, y_inversed = np.unique(y, return_inverse=True)
