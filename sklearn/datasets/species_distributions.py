@@ -46,7 +46,7 @@ import sys
 import numpy as np
 
 from .base import get_data_home
-from .base import _fetch_and_verify_dataset
+from .base import _fetch_url
 from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
@@ -232,7 +232,7 @@ def fetch_species_distributions(data_home=None,
                                                           data_home))
         expected_samples_checksum = "baa67cf5601507f07a37fdf240ea430c"
         samples_path = join(data_home, "samples.zip")
-        _fetch_and_verify_dataset(SAMPLES_URL, samples_path,
+        _fetch_url(SAMPLES_URL, samples_path,
                                   expected_samples_checksum)
         X = np.load(samples_path)
         remove(samples_path)
@@ -248,7 +248,7 @@ def fetch_species_distributions(data_home=None,
                                                            data_home))
         expected_coverages_checksum = "b3a8b24ec0390285a5f9e2528ad1013e"
         coverages_path = join(data_home, "coverages.zip")
-        _fetch_and_verify_dataset(COVERAGES_URL, coverages_path,
+        _fetch_url(COVERAGES_URL, coverages_path,
                                   expected_coverages_checksum)
         X = np.load(coverages_path)
         remove(coverages_path)

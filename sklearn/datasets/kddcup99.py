@@ -18,7 +18,7 @@ from os.path import exists, join
 import numpy as np
 
 
-from .base import _fetch_and_verify_dataset
+from .base import _fetch_url
 from .base import get_data_home
 from ..utils import Bunch
 from ..externals import joblib, six
@@ -287,7 +287,7 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
         _mkdirp(kddcup_dir)
         URL_ = URL10 if percent10 else URL
         logger.info("Downloading %s" % URL_)
-        _fetch_and_verify_dataset(URL_, archive_path, expected_checksum)
+        _fetch_url(URL_, archive_path, expected_checksum)
         dt = [('duration', int),
               ('protocol_type', 'S4'),
               ('service', 'S11'),

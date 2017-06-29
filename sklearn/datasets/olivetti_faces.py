@@ -29,7 +29,7 @@ import numpy as np
 from scipy.io.matlab import loadmat
 
 from .base import get_data_home
-from .base import _fetch_and_verify_dataset
+from .base import _fetch_url
 from .base import _pkl_filepath
 from ..utils import check_random_state, Bunch
 from ..externals import joblib
@@ -114,7 +114,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
               % (DATA_URL, data_home))
         mat_path = join(data_home, "olivettifaces.mat")
         expected_checksum = "aa1ffbd84a31962b418e672437ea28d3"
-        _fetch_and_verify_dataset(DATA_URL, mat_path, expected_checksum)
+        _fetch_url(DATA_URL, mat_path, expected_checksum)
 
         mfile = loadmat(file_name=mat_path)
         # delete raw .mat data
