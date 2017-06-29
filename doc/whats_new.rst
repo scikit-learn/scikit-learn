@@ -213,8 +213,9 @@ Enhancements
    - Make it possible to load a chunk of an svmlight formatted file by
      passing a range of bytes to :func:`datasets.load_svmlight_file`.
      :issue:`935` by :user:`Olivier Grisel <ogrisel>`.
+
    - Add support for sparse multilabel ``y`` in :class:`NeighborsBase`
-     :issue:`8057` by :user:`Aman Dalmia <dalmia>`.
+     :issue:`8057` by :user:`Aman Dalmia <dalmia>`, :user:`Joan Massich <massich>`.
 
 Bug fixes
 .........
