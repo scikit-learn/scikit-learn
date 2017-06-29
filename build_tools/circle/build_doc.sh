@@ -74,8 +74,9 @@ fi
 
 if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
-    # nonstopmode is used to not wait for CI timeout in case of an error
-    # PDF linked into HTML
+    # dist generates the pdf doc and adds the pdf to the website
+    # nonstopmode is used to prevent CI timeout when the LaTeX
+    # compilation fails
     MAKE_TARGET="dist LATEXMKOPTS=-interaction=nonstopmode"
 elif [[ "$build_type" =~ ^QUICK ]]
 then
