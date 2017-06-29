@@ -103,14 +103,14 @@ if __name__ == "__main__":
     if isinstance(args.n_jobs, int):
         tsne = TSNE(n_components=2, init='pca', perplexity=args.perplexity,
                     verbose=args.verbose, n_jobs=args.n_jobs, n_iter=1000)
-        methods += [("sklearn TSNE",
-                     lambda data: tsne_fit_transform(tsne, data))]
+        methods.append(("sklearn TSNE",
+                        lambda data: tsne_fit_transform(tsne, data)))
     elif isinstance(args.n_jobs, list):
         for n_jobs in args.n_jobs:
             tsne = TSNE(n_components=2, init='pca', perplexity=args.perplexity,
                         verbose=args.verbose, n_jobs=n_jobs)
-            methods += [("sklearn TSNE (n_jobs={})".format(n_jobs),
-                        lambda data: tsne_fit_transform(tsne, data))]
+            methods.append(("sklearn TSNE (n_jobs={})".format(n_jobs),
+                            lambda data: tsne_fit_transform(tsne, data)))
 
     if args.bhtsne:
         try:
@@ -134,7 +134,7 @@ $ cd ..
             n_iter = -1  # TODO find a way to report the number of iterations
             return run_bh_tsne(X, use_pca=False, perplexity=args.perplexity,
                                verbose=args.verbose > 0), n_iter
-        methods += [("lvdmaaten/bhtsne", bhtsne)]
+        methods.append(("lvdmaaten/bhtsne", bhtsne))
 
     if args.profile:
 
@@ -148,7 +148,7 @@ $ cd ..
 
     data_size = [100, 500, 1000, 5000, 10000]
     if args.all:
-        data_size += [70000]
+        data_size.append(70000)
 
     results = []
     basename, _ = os.path.splitext(__file__)

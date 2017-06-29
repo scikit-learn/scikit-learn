@@ -41,10 +41,10 @@ cdef extern from "time.h":
 
 
 cdef float compute_gradient(float[:] val_P,
-                            float[:,:] pos_reference,
+                            float[:, :] pos_reference,
                             np.int64_t[:] neighbors,
                             np.int64_t[:] indptr,
-                            float[:,:] tot_force,
+                            float[:, :] tot_force,
                             quad_tree._QuadTree qt,
                             float theta,
                             float dof,
@@ -93,7 +93,7 @@ cdef float compute_gradient(float[:] val_P,
 
 
 cdef float compute_gradient_positive(float[:] val_P,
-                                     float[:,:] pos_reference,
+                                     float[:, :] pos_reference,
                                      np.int64_t[:] neighbors,
                                      np.int64_t[:] indptr,
                                      float* pos_f,
@@ -144,7 +144,7 @@ cdef float compute_gradient_positive(float[:] val_P,
     return C
 
 
-cdef void compute_gradient_negative(float[:,:] pos_reference,
+cdef void compute_gradient_negative(float[:, :] pos_reference,
                                     float* neg_f,
                                     quad_tree._QuadTree qt,
                                     float* sum_Q,
@@ -226,10 +226,10 @@ def calculate_edge(pos_output):
 
 
 def gradient(float[:] val_P,
-             float[:,:] pos_output,
+             float[:, :] pos_output,
              np.int64_t[:] neighbors,
              np.int64_t[:] indptr,
-             float[:,:] forces,
+             float[:, :] forces,
              float theta,
              int n_dimensions,
              int verbose,

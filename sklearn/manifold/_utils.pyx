@@ -23,11 +23,11 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
 
     Parameters
     ----------
-    affinities : array-like, shape (n_samples, K)
-        Distances between training samples.
+    affinities : array-like, shape (n_samples, k)
+        Distances between training samples and its k nearest neighbors.
 
-    neighbors : array-like, shape (n_samples, K) or None
-        Each row contains the indices to the K nearest neigbors. If this
+    neighbors : array-like, shape (n_samples, k) or None
+        Each row contains the indices to the k nearest neigbors. If this
         array is None, then the perplexity is estimated over all data
         not just the nearest neighbors.
 
@@ -59,17 +59,17 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
     cdef float entropy
     cdef float sum_Pi
     cdef float sum_disti_Pi
-    cdef long i, j, k, l = 0
-    cdef long K = n_samples
+    cdef long i, j, k, l
+    cdef long n_neighbors = n_samples
     cdef int using_neighbors = neighbors is not None
 
     if using_neighbors:
-        K = neighbors.shape[1]
+        n_neighbors = neighbors.shape[1]
 
     # This array is later used as a 32bit array. It has multiple intermediate
     # floating point additions that benefit from the extra precision
-    cdef np.ndarray[np.float64_t, ndim=2] P = np.zeros((n_samples, K),
-                                                       dtype=np.float64)
+    cdef np.ndarray[np.float64_t, ndim=2] P = np.zeros(
+        (n_samples, n_neighbors), dtype=np.float64)
 
     for i in range(n_samples):
         beta_min = -NPY_INFINITY
@@ -82,7 +82,7 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
             # computed just over the nearest neighbors or over all data
             # if we're not using neighbors
             sum_Pi = 0.0
-            for j in range(K):
+            for j in range(n_neighbors):
                 if j != i or using_neighbors:
                     P[i, j] = math.exp(-affinities[i, j] * beta)
                     sum_Pi += P[i, j]
@@ -91,7 +91,7 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
                 sum_Pi = EPSILON_DBL
             sum_disti_Pi = 0.0
 
-            for j in range(K):
+            for j in range(n_neighbors):
                 P[i, j] /= sum_Pi
                 sum_disti_Pi += affinities[i, j] * P[i, j]
 

@@ -64,7 +64,7 @@ cdef class _QuadTree:
     """Array-based representation of a QuadTree.
 
     This class is currently working for indexing 2D data (regular QuadTree) and
-    for indexing 3D data (OcTree). It is planned to split the 2 implementation
+    for indexing 3D data (OcTree). It is planned to split the 2 implementations
     using `Cython.Tempita` to save some memory for QuadTree.
 
     Note that this code is currently internally used only by the Barnes-Hut
@@ -110,7 +110,8 @@ cdef class _QuadTree:
 
         capacity = 100
         self._resize(capacity)
-        m, M = np.min(X, axis=0) - 1e-3, np.max(X, axis=0) + 1e-3
+        m = np.min(X, axis=0) - 1e-3
+        M = np.max(X, axis=0) + 1e-3
         for i in range(self.n_dimensions):
             min_bounds[i] = m[i]
             max_bounds[i] = M[i]
@@ -311,29 +312,6 @@ cdef class _QuadTree:
         root.cell_id = 0
 
         self.cell_count += 1
-
-    def plot_tree(self):
-        """Plot the tree with cell boundaries and the points inserted in it."""
-        self._check_coherence()
-        import matplotlib.pyplot as plt
-
-        plt.figure()
-        for c in self.cells[:self.cell_count]:
-            if not c.is_leaf:
-                # Plot the cell division if the cell is an inner cell
-                plt.vlines(c.center[0], c.min_bounds[1], c.max_bounds[1])
-                plt.hlines(c.center[1], c.min_bounds[0], c.max_bounds[0])
-            else:
-                # If the cell is a leaf, display the point contained in it.
-                plt.scatter(c.barycenter[0], c.barycenter[1], c='b', marker='.')
-
-        # Print bounding box of the Tree
-        root = self.cells[0]
-        plt.vlines([root.min_bounds[0], root.max_bounds[0]], root.min_bounds[1],
-                    root.max_bounds[1])
-        plt.hlines([root.min_bounds[1], root.max_bounds[1]], root.min_bounds[0],
-                    root.max_bounds[0])
-        plt.show()
 
     cdef int check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
                                   ) nogil except -1:
