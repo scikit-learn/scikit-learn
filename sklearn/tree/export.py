@@ -474,24 +474,33 @@ class _MPLTreeExporter(_DOTTreeExporter):
         dt = buchheim(my_tree)
         self.recurse(dt, decision_tree.tree_)
 
-    def recurse(self, node, tree, zorder=100):
+    def recurse(self, node, tree, depth=0):
         # 2 - is a hack to for not creating empty space. FIXME
         kwargs = dict(bbox=self.bbox_args, ha='center', va='bottom',
-                      zorder=zorder, xycoords='axes points')
+                      zorder=100 - 10 * depth, xycoords='axes points')
         xy = (node.x * self.scalex, (2 - node.y) * self.scaley)
-        if self.filled:
-            kwargs['bbox']['fc'] = self.get_fill_color(tree,
-                                                       node.tree.node_id)
-        if node.parent is None:
-            # root
-            self.ax.annotate(node.tree.node, xy, **kwargs)
+
+        if self.max_depth is None or depth <= self.max_depth:
+            if self.filled:
+                kwargs['bbox']['fc'] = self.get_fill_color(tree,
+                                                           node.tree.node_id)
+            if node.parent is None:
+                # root
+                self.ax.annotate(node.tree.node, xy, **kwargs)
+            else:
+                xy_parent = (node.parent.x * self.scalex, (2 - node.parent.y) *
+                             self.scaley)
+                kwargs["arrowprops"] = self.arrow_args
+                self.ax.annotate(node.tree.node, xy_parent, xy, **kwargs)
+            for child in node.children:
+                self.recurse(child, tree, depth=depth + 1)
+
         else:
             xy_parent = (node.parent.x * self.scalex, (2 - node.parent.y) *
                          self.scaley)
             kwargs["arrowprops"] = self.arrow_args
-            self.ax.annotate(node.tree.node, xy_parent, xy, **kwargs)
-        for child in node.children:
-            self.recurse(child, tree, zorder=zorder - 10)
+            kwargs['bbox']['fc'] = 'grey'
+            self.ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 
 
 def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
