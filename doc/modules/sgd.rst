@@ -63,9 +63,9 @@ for the training samples::
     >>> clf.fit(X, y)
     SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
            eta0=0.0, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-           penalty='l2', power_t=0.5, random_state=None, shuffle=True,
-           verbose=0, warm_start=False)
+           learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
+           n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
+           shuffle=True, tol=None, verbose=0, warm_start=False)
 
 
 After being fitted, the model can then be used to predict new values::
@@ -279,7 +279,7 @@ Mathematical formulation
 ========================
 
 Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
-:math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{-1,1\}`, our goal is to
+:math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \{-1,1\}`, our goal is to
 learn a linear scoring function :math:`f(x) = w^T x + b` with model parameters
 :math:`w \in \mathbf{R}^m` and intercept :math:`b \in \mathbf{R}`. In order
 to make predictions, we simply look at the sign of :math:`f(x)`.

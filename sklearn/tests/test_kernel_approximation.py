@@ -84,6 +84,11 @@ def test_skewed_chi2_sampler():
 
     # compute exact kernel
     c = 0.03
+    # set on negative component but greater than c to ensure that the kernel
+    # approximation is valid on the group (-c; +\infty) endowed with the skewed
+    # multiplication.
+    Y[0, 0] = -c / 2.
+
     # abbreviations for easier formula
     X_c = (X + c)[:, np.newaxis, :]
     Y_c = (Y + c)[np.newaxis, :, :]
@@ -103,10 +108,14 @@ def test_skewed_chi2_sampler():
 
     kernel_approx = np.dot(X_trans, Y_trans.T)
     assert_array_almost_equal(kernel, kernel_approx, 1)
+    assert_true(np.isfinite(kernel).all(),
+                'NaNs found in the Gram matrix')
+    assert_true(np.isfinite(kernel_approx).all(),
+                'NaNs found in the approximate Gram matrix')
 
-    # test error is raised on negative input
+    # test error is raised on when inputs contains values smaller than -c
     Y_neg = Y.copy()
-    Y_neg[0, 0] = -1
+    Y_neg[0, 0] = -c * 2.
     assert_raises(ValueError, transform.transform, Y_neg)
 
 

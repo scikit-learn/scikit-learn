@@ -30,6 +30,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
         X_train, y_train, lambda estimator, features:
         _score(estimator, X_test[:, features], y_test, scorer)).scores_
 
+
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
 
@@ -135,6 +136,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         return self._fit(X, y)
 
     def _fit(self, X, y, step_score=None):
+        # Parameter step_score controls the calculation of self.scores_
+        # step_score is not exposed to users
+        # and is used when implementing RFECV
+        # self.scores_ will not be calculated when calling _fit through fit
+
         X, y = check_X_y(X, y, "csc")
         # Initialization
         n_features = X.shape[1]
@@ -293,8 +299,8 @@ class RFECV(RFE, MetaEstimatorMixin):
         - An iterable yielding train/test splits.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used. If the 
-        estimator is a classifier or if ``y`` is neither binary nor multiclass, 
+        :class:`sklearn.model_selection.StratifiedKFold` is used. If the
+        estimator is a classifier or if ``y`` is neither binary nor multiclass,
         :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various

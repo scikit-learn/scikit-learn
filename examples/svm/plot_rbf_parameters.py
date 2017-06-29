@@ -93,7 +93,7 @@ class MidpointNormalize(Normalize):
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
         return np.ma.masked_array(np.interp(value, x, y))
 
-##############################################################################
+# #############################################################################
 # Load and prepare data set
 #
 # dataset for grid search
@@ -120,7 +120,7 @@ scaler = StandardScaler()
 X = scaler.fit_transform(X)
 X_2d = scaler.fit_transform(X_2d)
 
-##############################################################################
+# #############################################################################
 # Train classifiers
 #
 # For an initial search, a logarithmic grid with basis
@@ -149,8 +149,8 @@ for C in C_2d_range:
         clf.fit(X_2d, y_2d)
         classifiers.append((C, gamma, clf))
 
-##############################################################################
-# visualization
+# #############################################################################
+# Visualization
 #
 # draw visualization of parameter effects
 
@@ -168,7 +168,8 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
 
     # visualize parameter's effect on decision function
     plt.pcolormesh(xx, yy, -Z, cmap=plt.cm.RdBu)
-    plt.scatter(X_2d[:, 0], X_2d[:, 1], c=y_2d, cmap=plt.cm.RdBu_r)
+    plt.scatter(X_2d[:, 0], X_2d[:, 1], c=y_2d, cmap=plt.cm.RdBu_r,
+                edgecolors='k')
     plt.xticks(())
     plt.yticks(())
     plt.axis('tight')

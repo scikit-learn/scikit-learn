@@ -178,7 +178,8 @@ def test_gridsearch_pipeline():
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
     kpca = KernelPCA(kernel="rbf", n_components=2)
-    pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron())])
+    pipeline = Pipeline([("kernel_pca", kpca),
+                         ("Perceptron", Perceptron(max_iter=5))])
     param_grid = dict(kernel_pca__gamma=2. ** np.arange(-2, 2))
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
     grid_search.fit(X, y)
@@ -191,8 +192,9 @@ def test_gridsearch_pipeline_precomputed():
     X, y = make_circles(n_samples=400, factor=.3, noise=.05,
                         random_state=0)
     kpca = KernelPCA(kernel="precomputed", n_components=2)
-    pipeline = Pipeline([("kernel_pca", kpca), ("Perceptron", Perceptron())])
-    param_grid = dict(Perceptron__n_iter=np.arange(1, 5))
+    pipeline = Pipeline([("kernel_pca", kpca),
+                         ("Perceptron", Perceptron(max_iter=5))])
+    param_grid = dict(Perceptron__max_iter=np.arange(1, 5))
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
     X_kernel = rbf_kernel(X, gamma=2.)
     grid_search.fit(X_kernel, y)
@@ -205,7 +207,7 @@ def test_nested_circles():
                         random_state=0)
 
     # 2D nested circles are not linearly separable
-    train_score = Perceptron().fit(X, y).score(X, y)
+    train_score = Perceptron(max_iter=5).fit(X, y).score(X, y)
     assert_less(train_score, 0.8)
 
     # Project the circles data into the first 2 components of a RBF Kernel
@@ -218,5 +220,5 @@ def test_nested_circles():
     X_kpca = kpca.fit_transform(X)
 
     # The data is perfectly linearly separable in that space
-    train_score = Perceptron().fit(X_kpca, y).score(X_kpca, y)
+    train_score = Perceptron(max_iter=5).fit(X_kpca, y).score(X_kpca, y)
     assert_equal(train_score, 1.0)

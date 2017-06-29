@@ -129,9 +129,9 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     target_variables = np.asarray(target_variables, dtype=np.int32,
                                   order='C').ravel()
 
-    if any([not (0 <= fx < gbrt.n_features) for fx in target_variables]):
+    if any([not (0 <= fx < gbrt.n_features_) for fx in target_variables]):
         raise ValueError('target_variables must be in [0, %d]'
-                         % (gbrt.n_features - 1))
+                         % (gbrt.n_features_ - 1))
 
     if X is not None:
         X = check_array(X, dtype=DTYPE, order='C')
@@ -258,8 +258,8 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         label_idx = 0
 
     X = check_array(X, dtype=DTYPE, order='C')
-    if gbrt.n_features != X.shape[1]:
-        raise ValueError('X.shape[1] does not match gbrt.n_features')
+    if gbrt.n_features_ != X.shape[1]:
+        raise ValueError('X.shape[1] does not match gbrt.n_features_')
 
     if line_kw is None:
         line_kw = {'color': 'green'}
@@ -269,7 +269,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert feature_names to list
     if feature_names is None:
         # if not feature_names use fx indices as name
-        feature_names = [str(i) for i in range(gbrt.n_features)]
+        feature_names = [str(i) for i in range(gbrt.n_features_)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
 
