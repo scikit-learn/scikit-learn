@@ -573,19 +573,6 @@ class TSNE(BaseEstimator):
         in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
         computation time and angle greater 0.8 has quickly increasing error.
 
-    n_jobs : integer (default: 1)
-        Only used if method='barnes_hut'
-        Number of CPU used to compute the nearest neighbors of each point.
-        If ``n_jobs=-1``, use all the CPUs.
-
-    neighbors_method : string or NeighborsBase object (default: 'ball_tree')
-        Only used if method='barnes_hut'
-        Method used to compute k nearest neighbors for Barnes-Hut T-SNE.
-        If it is a string, it should be compatible with the algorithm parameter
-        of `NearestNeighbors`. If it is an object, it should implement a
-        `kneighbors` method returning distances_nn and neighbors_nn.
-
-
     Attributes
     ----------
     embedding_ : array-like, shape (n_samples, n_components)
@@ -627,8 +614,7 @@ class TSNE(BaseEstimator):
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
-                 random_state=None, method='barnes_hut', angle=0.5, n_jobs=1,
-                 neighbors_method='ball_tree'):
+                 random_state=None, method='barnes_hut', angle=0.5):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -642,8 +628,6 @@ class TSNE(BaseEstimator):
         self.random_state = random_state
         self.method = method
         self.angle = angle
-        self.n_jobs = n_jobs
-        self.neighbors_method = neighbors_method
 
     def _fit(self, X, skip_num_points=0):
         """Fit the model using X as training data.
@@ -744,23 +728,11 @@ class TSNE(BaseEstimator):
                 print("[t-SNE] Computing {} nearest neighbors...".format(k))
 
             # Find the nearest neighbors for every point
-            if isinstance(self.neighbors_method, string_types):
-                if (self.metric == 'precomputed' and
-                        self.neighbors_method == "ball_tree"):
-                    warnings.warn("Cannot use neighbors_method='ball_tree' "
-                                  "with metric='precomputed'. Switching to "
-                                  "neighbors_method='brute'.", RuntimeWarning)
-                    self.neighbors_method = "brute"
-                knn = NearestNeighbors(algorithm=self.neighbors_method,
-                                       n_neighbors=k, metric=self.metric,
-                                       n_jobs=self.n_jobs)
-            elif isinstance(self.neighbors_method, NeighborsBase):
-                knn = self.neighbors_method
-            else:
-                raise ValueError("'neighbors_method' should be either a "
-                                 "string or a subclass of NeighborsBase. {} "
-                                 "is not valid.".format(self.neighbors_method))
-
+            neighbors_method = 'ball_tree'
+            if (self.metric == 'precomputed'):
+                neighbors_method = 'brute'
+            knn = NearestNeighbors(algorithm=neighbors_method, n_neighbors=k,
+                                   metric=self.metric)
             t0 = time()
             knn.fit(X)
             duration = time() - t0
