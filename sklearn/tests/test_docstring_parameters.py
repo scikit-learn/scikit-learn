@@ -22,11 +22,9 @@ _DOC_SPECIAL_MEMBERS = ('__contains__', '__getitem__', '__iter__', '__len__',
                         '__call__', '__add__', '__sub__', '__mul__', '__div__',
                         '__neg__', '__hash__')
 
-
 PUBLIC_MODULES = set(['sklearn.' + pckg[1]
                       for pckg in walk_packages('sklearn.*')
                       if not pckg[1].startswith('_')])
-
 
 # TODO Uncomment all modules and fix doc inconsistencies everywhere
 # The list of modules that are not tested for now
@@ -48,21 +46,12 @@ PUBLIC_MODULES -= set([
     'sklearn.learning_curve',
 ])
 
-
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
     'sklearn.utils.deprecation.load_mlcomp',
     'sklearn.pipeline.make_pipeline',
     'sklearn.pipeline.make_union',
     'sklearn.utils.extmath.safe_sparse_dot',
-    # Deprecated classes and functions
-    'RandomizedPCA',
-    'GaussianProcess',
-    'VBGMM',
-    'DPGMM',
-    'GMM',
-    'log_multivariate_normal_density',
-    'sample_gaussian',
 ]
 
 # Methods to test for, in any class
@@ -74,6 +63,15 @@ _METHODS_IGNORE_NONE_Y = [
         'partial_fit',
         'predict'
 ]
+
+
+def _is_deprecated(func):
+    closures = getattr(func, '__closure__', [])
+    if closures is None:
+        closures = []
+
+    return 'deprecated' in ''.join([c.cell_contents for c in closures
+                                    if isinstance(c.cell_contents, str)])
 
 
 def test_docstring_parameters():
@@ -104,12 +102,19 @@ def test_docstring_parameters():
             if len(w):
                 raise RuntimeError('Error for __init__ of %s in %s:\n%s'
                                    % (cls, name, w[0]))
-            if hasattr(cls, '__init__'):
+
+            cls_init = getattr(cls, '__init__', None)
+
+            if _is_deprecated(cls_init):
+                continue
+
+            elif cls_init is not None:
                 this_incorrect += check_parameters_match(cls.__init__, cdoc,
                                                          class_name=cname)
-
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
+                if _is_deprecated(method):
+                    continue
                 param_ignore = None
                 # Now skip docstring test for y when y is None
                 # by default for API reason
@@ -122,7 +127,7 @@ def test_docstring_parameters():
                                                 class_name=cname)
                 this_incorrect += result
 
-            if hasattr(cls, '__call__'):
+            if hasattr(cls, '__call__') and not _is_deprecated(cls.__call__):
                 this_incorrect += check_parameters_match(cls.__call__,
                                                          class_name=cname)
 
@@ -134,8 +139,8 @@ def test_docstring_parameters():
             if fname.startswith('_'):
                 continue
             name_ = get_func_name(func)
-            if not any(d in name_ for d in _DOCSTRING_IGNORES) and \
-                    'deprecation_wrapped' not in func.__code__.co_name:
+            if (not any(d in name_ for d in _DOCSTRING_IGNORES) and
+                    not _is_deprecated(func)):
                 incorrect += check_parameters_match(func)
     msg = '\n' + '\n'.join(sorted(list(set(incorrect))))
     if len(incorrect) > 0:
