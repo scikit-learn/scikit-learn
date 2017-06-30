@@ -292,7 +292,7 @@ def test_cross_validate_invalid_scoring_param():
                         cross_validate, estimator, X, y, scoring=())
 
     # So should duplicated entries
-    assert_raises_regex(ValueError, error_message_regexp + "Duplicated.*",
+    assert_raises_regex(ValueError, error_message_regexp + "Duplicate.*",
                         cross_validate, estimator, X, y,
                         scoring=('f1_micro', 'f1_micro'))
 

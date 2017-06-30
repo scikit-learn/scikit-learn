@@ -590,14 +590,14 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
-        scorer, self.multimetric_ = _check_multimetric_scoring(
+        scorers, self.multimetric_ = _check_multimetric_scoring(
             self.estimator, scoring=self.scoring)
 
         if self.multimetric_:
             if self.refit is not False and (
                     not isinstance(self.refit, six.string_types) or
                     # This will work for both dict / list (tuple)
-                    self.refit not in scorer):
+                    self.refit not in scorers):
                 raise ValueError("For multi-metric scoring, the parameter "
                                  "refit must be set to a scorer key "
                                  "to refit an estimator with the best "
@@ -627,7 +627,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch
-        )(delayed(_fit_and_score)(clone(base_estimator), X, y, scorer, train,
+        )(delayed(_fit_and_score)(clone(base_estimator), X, y, scorers, train,
                                   test, self.verbose, parameters,
                                   fit_params=fit_params,
                                   return_train_score=self.return_train_score,
@@ -700,7 +700,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         # NOTE test_sample counts (weights) remain the same for all candidates
         test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
-        for scorer_name in scorer.keys():
+        for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
             _store('test_%s' % scorer_name, test_scores[scorer_name],
                    splits=True, rank=True,
@@ -727,7 +727,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 self.best_estimator_.fit(X, **fit_params)
 
         # Store the only scorer not as a dict for single metric evaluation
-        self.scorer_ = scorer if self.multimetric_ else scorer['score']
+        self.scorer_ = scorers if self.multimetric_ else scorers['score']
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
@@ -858,16 +858,17 @@ class GridSearchCV(BaseSearchCV):
         dataset.
 
         For multiple metric evaluation, this needs to be a string denoting the
-        scorer that would be used to find the best parameters for refitting
-        the estimator at the end.
+        scorer is used to find the best parameters for refitting the estimator
+        at the end.
 
-        The refit estimator is made available at the ``best_estimator_``
+        The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``GridSearchCV`` instance.
 
         Also for multiple metric evaluation, the attributes ``best_index_``,
         ``best_score_`` and ``best_parameters_`` will only be available if
-        ``refit`` is set and all of them will be for that specified scorer.
+        ``refit`` is set and all of them will be determined w.r.t this specific
+        scorer.
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
@@ -1170,14 +1171,14 @@ class RandomizedSearchCV(BaseSearchCV):
         scorer that would be used to find the best parameters for refitting
         the estimator at the end.
 
-        The refit estimator is made available at the ``best_estimator_``
+        The refitted estimator is made available at the ``best_estimator_``
         attribute and permits using ``predict`` directly on this
         ``RandomizedSearchCV`` instance.
 
-        Also for the multiple metric evaluation, the attributes
-        ``best_index_``, ``best_score_`` and ``best_parameters_`` will only be
-        available if ``refit`` is set and all of them will be for that
-        specified scorer.
+        Also for multiple metric evaluation, the attributes ``best_index_``,
+        ``best_score_`` and ``best_parameters_`` will only be available if
+        ``refit`` is set and all of them will be determined w.r.t this specific
+        scorer.
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.

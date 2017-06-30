@@ -320,9 +320,6 @@ def _check_multimetric_scoring(estimator, scoring=None):
     scorers_dict : dict
         A dict mapping each scorer name to its validated scorer.
 
-        The validated scorer will be None if ``allow_none`` is ``True`` in
-        which case  the return is (``{'score': None}``).
-
     is_multimetric : bool
         True if scorer is a list/tuple or dict of callables
         False if scorer is None/str/callable
@@ -351,7 +348,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
                 raise ValueError(err_msg)
 
             if len(keys) != len(scoring):
-                raise ValueError(err_msg + "Duplicated elements were found in"
+                raise ValueError(err_msg + "Duplicate elements were found in"
                                  " the given list. %r" % repr(scoring))
             elif len(keys) > 0:
                 if not all(isinstance(k, six.string_types) for k in keys):
