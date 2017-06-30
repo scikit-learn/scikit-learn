@@ -23,37 +23,31 @@ _DOC_SPECIAL_MEMBERS = ('__contains__', '__getitem__', '__iter__', '__len__',
                         '__neg__', '__hash__')
 
 
+PUBLIC_MODULES = set(['sklearn.' + pckg[1]
+                      for pckg in walk_packages('sklearn.*')
+                      if not pckg[1].startswith('_')])
+
+
 # TODO Uncomment all modules and fix doc inconsistencies everywhere
-PUBLIC_MODULES = [
-    # the list of modules users need to access for all functionality
-    # 'sklearn',
-    'sklearn.base',
-    'sklearn.calibration',
-    'sklearn.cluster',
-    'sklearn.covariance',
-    # 'sklearn.cross_decomposition',
-    'sklearn.datasets',
-    'sklearn.decomposition',
-    # 'sklearn.ensemble',
-    'sklearn.feature_extraction',
-    # 'sklearn.feature_selection',
-    'sklearn.gaussian_process',
-    'sklearn.isotonic',
-    'sklearn.linear_model',
-    'sklearn.manifold',
-    'sklearn.multiclass',
-    'sklearn.metrics',
-    'sklearn.naive_bayes',
-    'sklearn.mixture',
-    # 'sklearn.model_selection',
-    'sklearn.neighbors',
-    'sklearn.neural_network',
-    'sklearn.preprocessing',
-    'sklearn.pipeline',
-    'sklearn.semi_supervised',
-    'sklearn.tree',
-    # 'sklearn.utils',
-]
+# The list of modules that are not tested for now
+PUBLIC_MODULES -= set([
+    'sklearn.cross_decomposition',
+    'sklearn.discriminant_analysis',
+    'sklearn.ensemble',
+    'sklearn.feature_selection',
+    'sklearn.kernel_approximation',
+    'sklearn.model_selection',
+    'sklearn.multioutput',
+    'sklearn.random_projection',
+    'sklearn.setup',
+    'sklearn.svm',
+    'sklearn.utils',
+    # Deprecated modules
+    'sklearn.cross_validation',
+    'sklearn.grid_search',
+    'sklearn.learning_curve',
+])
+
 
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
@@ -69,9 +63,6 @@ _DOCSTRING_IGNORES = [
     'GMM',
     'log_multivariate_normal_density',
     'sample_gaussian',
-]
-
-_TAB_IGNORES = [
 ]
 
 # Methods to test for, in any class
@@ -154,17 +145,14 @@ def test_docstring_parameters():
 @ignore_warnings(category=DeprecationWarning)
 def test_tabs():
     """Test that there are no tabs in our source files"""
-    ignore = _TAB_IGNORES[:]
-
     for importer, modname, ispkg in walk_packages(sklearn.__path__,
                                                   prefix='sklearn.'):
         # because we don't import
-        if not ispkg and modname not in ignore:
-            mod = importlib.import_module(modname)
-            try:
-                source = getsource(mod)
-            except IOError:  # user probably should have run "make clean"
-                continue
-            assert '\t' not in source, ('"%s" has tabs, please remove them ',
-                                        'or add it to theignore list'
-                                        % modname)
+        mod = importlib.import_module(modname)
+        try:
+            source = getsource(mod)
+        except IOError:  # user probably should have run "make clean"
+            continue
+        assert '\t' not in source, ('"%s" has tabs, please remove them ',
+                                    'or add it to theignore list'
+                                    % modname)
