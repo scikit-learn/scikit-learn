@@ -79,9 +79,7 @@ def test_docstring_parameters():
     incorrect = []
     for name in PUBLIC_MODULES:
         with warnings.catch_warnings(record=True):
-            module = __import__(name, globals())
-        for submod in name.split('.')[1:]:
-            module = getattr(module, submod)
+            module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)
         for cname, cls in classes:
             this_incorrect = []
@@ -141,7 +139,7 @@ def test_docstring_parameters():
 
 @ignore_warnings(category=DeprecationWarning)
 def test_tabs():
-    """Test that there are no tabs in our source files"""
+    # Test that there are no tabs in our source files
     for importer, modname, ispkg in walk_packages(sklearn.__path__,
                                                   prefix='sklearn.'):
         # because we don't import
