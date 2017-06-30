@@ -575,6 +575,7 @@ API changes summary
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
      - ``neighbors.approximate.LSHForest``
+     - ``linear_model.randomized_l1``
 
     - Deprecate the ``y`` parameter in `transform` and `inverse_transform`.
       The method  should not accept ``y`` parameter, as it's used at the prediction time.
@@ -1305,6 +1306,9 @@ Model evaluation and meta-estimators
      ``groups``. Additionally in :class:`model_selection.LeavePGroupsOut`,
      the parameter ``n_labels`` is renamed to ``n_groups``.
      :issue:`6660` by `Raghav RV`_.
+
+   - The :mod:`sklearn.linear_model.randomized_l1` is deprecated.
+     :issue: `8995` by :user:`Ramana.S <sentient07>`.
 
 Code Contributors
 -----------------
