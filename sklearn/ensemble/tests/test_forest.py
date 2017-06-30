@@ -196,7 +196,7 @@ def test_probability():
         yield check_probability, name
 
 
-def check_importances(name, criterion, X, y, dtype):
+def check_importances(name, criterion, X, y, dtype, tolerance):
     # cast as dype
     X = X.astype(dtype)
     y = y.astype(dtype)
@@ -228,7 +228,7 @@ def check_importances(name, criterion, X, y, dtype):
         est = ForestEstimator(n_estimators=20, random_state=0, criterion=criterion)
         est.fit(X, y, sample_weight=scale * sample_weight)
         importances_bis = est.feature_importances_
-        assert_less(np.abs(importances - importances_bis).mean(), 0.001)
+        assert_less(np.abs(importances - importances_bis).mean(), tolerance)
 
 
 def test_importances():
@@ -238,13 +238,15 @@ def test_importances():
                                         random_state=0)
 
     for dtype in (np.float64, np.float32):
+        tolerance = 0.001
         for name, criterion in product(FOREST_CLASSIFIERS,
                                        ["gini", "entropy"]):
-            yield check_importances, name, criterion, X, y, dtype
+            yield check_importances, name, criterion, X, y, dtype, tolerance
 
         for name, criterion in product(FOREST_REGRESSORS,
                                        ["mse", "friedman_mse", "mae"]):
-            yield check_importances, name, criterion, X, y, dtype
+            tolerance = 0.01 if criterion == "mae" else 0.001
+            yield check_importances, name, criterion, X, y, dtype, tolerance
 
 
 def test_importances_asymptotic():
