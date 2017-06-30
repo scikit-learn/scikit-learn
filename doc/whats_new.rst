@@ -423,7 +423,6 @@ Preprocessing and feature selection
      pipeline with  :class:`feature_extraction.text.TfidfTransformer`.
      :issue:`7513` by :user:`Roman Yurchak <rth>`.
 
-
 Model evaluation and meta-estimators
 
    - Fixed a bug where :func:`model_selection.BaseSearchCV.inverse_transform`
@@ -455,7 +454,6 @@ Model evaluation and meta-estimators
      different target columns had different numbers of classes, a `ValueError`
      would be raised on trying to stack matrices with different dimensions.
      :issue:`8093` by :user:`Peter Bull <pjbull>`.
-
 
 Metrics
 
@@ -509,21 +507,23 @@ Miscellaneous
 API changes summary
 -------------------
 
-   - The ``non_negative`` parameter in :class:`feature_extraction.FeatureHasher`
-     has been deprecated, and replaced with a more principled alternative,
-     ``alternate_sign``.
-     :issue:`7565` by :user:`Roman Yurchak <rth>`.
+Trees and ensembles
 
-   - Ensure that estimators' attributes ending with ``_`` are not set
-     in the constructor but only in the ``fit`` method. Most notably,
-     ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
-     now only have ``self.estimators_`` available after ``fit``.
-     :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
+   - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
 
-   - All checks in ``utils.estimator_checks``, in particular
-     :func:`utils.estimator_checks.check_estimator` now accept estimator
-     instances. Most other checks do not accept
-     estimator classes any more. :issue:`9019` by `Andreas Müller`_.
+   - All tree based estimators now accept a ``min_impurity_decrease``
+     parameter in lieu of the ``min_impurity_split``, which is now deprecated.
+     The ``min_impurity_decrease`` helps stop splitting the nodes in which
+     the weighted impurity decrease from splitting is no longer alteast
+     ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV`_.
+
+Linear, kernelized and related models
+
+   - :class:`neighbors.LSHForest` has been deprecated and will be
+     removed in 0.21 due to poor performance.
+     :issue:`8996` by `Andreas Müller`_.
+
+Decomposition, manifold learning and clustering
 
    - Deprecate the ``doc_topic_distr`` argument of the ``perplexity`` method
      in :class:`decomposition.LatentDirichletAllocation` because the
@@ -531,20 +531,30 @@ API changes summary
      needed for the perplexity calculation. :issue:`7954` by
      :user:`Gary Foreman <garyForeman>`.
 
-   - Replace attribute ``named_steps`` ``dict`` to :class:`utils.Bunch`
-     in :class:`pipeline.Pipeline` to enable tab completion in interactive
-     environment. In the case conflict value on ``named_steps`` and ``dict``
-     attribute, ``dict`` behavior will be prioritized.
-     :issue:`8481` by :user:`Herilalaina Rakotoarison <herilalaina>`.
+   - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation`
+     has been renamed to ``n_components`` and will be removed in version 0.21.
+     :issue:`8922` by :user:`Attractadore`.
 
-   - The :func:`multioutput.MultiOutputClassifier.predict_proba`
-     function used to return a 3d array (``n_samples``, ``n_classes``,
-     ``n_outputs``). In the case where different target columns had different
-     numbers of classes, a `ValueError` would be raised on trying to stack
-     matrices with different dimensions. This function now returns a list of
-     arrays where the length of the list is ``n_outputs``, and each array is
-     (``n_samples``, ``n_classes``) for that particular output.
-     :issue:`8093` by :user:`Peter Bull <pjbull>`.
+   - :class:`cluster.bicluster.SpectralCoclustering` and
+     :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
+     :issue:`6126` by :user:`Laurent Direr <ldirer>`.
+
+Preprocessing and feature selection
+
+   - :class:`feature_selection.SelectFromModel` now has a ``partial_fit``
+     method only if the underlying estimator does. By `Andreas Müller`_.
+
+   - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
+     parameter and sets the ``threshold_`` attribute during the call to
+     ``fit``, and no longer during the call to ``transform```, by `Andreas
+     Müller`_.
+
+   - The ``non_negative`` parameter in :class:`feature_extraction.FeatureHasher`
+     has been deprecated, and replaced with a more principled alternative,
+     ``alternate_sign``.
+     :issue:`7565` by :user:`Roman Yurchak <rth>`.
+
+Model evaluation and meta-estimators
 
    - Deprecate the ``fit_params`` constructor input to the
      :class:`model_selection.GridSearchCV` and
@@ -557,52 +567,42 @@ API changes summary
      :func:`model_selection.cross_val_predict`.
      :issue:`2879` by :user:`Stephen Hoover <stephen-hoover>`.
 
-   - The ``decision_function`` output shape for binary classification in
-     :class:`multiclass.OneVsRestClassifier` and
-     :class:`multiclass.OneVsOneClassifier` is now ``(n_samples,)`` to conform
-     to scikit-learn conventions. :issue:`9100` by `Andreas Müller`_.
-
-   - Gradient boosting base models are no longer estimators. By `Andreas Müller`_.
-
-   - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
-     parameter and sets the ``threshold_`` attribute during the call to
-     ``fit``, and no longer during the call to ``transform```, by `Andreas
-     Müller`_.
-
-   - :class:`feature_selection.SelectFromModel` now has a ``partial_fit``
-     method only if the underlying estimator does. By `Andreas Müller`_.
-
-   - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method
-     only if the underlying estimator does.  By `Andreas Müller`_.
-
-   - Estimators with both methods ``decision_function`` and ``predict_proba``
-     are now required to have a monotonic relation between them. The
-     method ``check_decision_proba_consistency`` has been added in
-     **sklearn.utils.estimator_checks** to check their consistency.
-     :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
-
    - In version 0.21, the default behavior of splitters that use the
      ``test_size`` and ``train_size`` parameter will change, such that
      specifying ``train_size`` alone will cause ``test_size`` to be the
      remainder. :issue:`7459` by :user:`Nelson Liu <nelson-liu>`.
 
-   - All tree based estimators now accept a ``min_impurity_decrease``
-     parameter in lieu of the ``min_impurity_split``, which is now deprecated.
-     The ``min_impurity_decrease`` helps stop splitting the nodes in which
-     the weighted impurity decrease from splitting is no longer alteast
-     ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV`_.
+   - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method
+     only if the underlying estimator does.  By `Andreas Müller`_.
 
-   - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation`
-     has been renamed to ``n_components`` and will be removed in version 0.21.
-     :issue:`8922` by :user:`Attractadore`.
+   - The ``decision_function`` output shape for binary classification in
+     :class:`multiclass.OneVsRestClassifier` and
+     :class:`multiclass.OneVsOneClassifier` is now ``(n_samples,)`` to conform
+     to scikit-learn conventions. :issue:`9100` by `Andreas Müller`_.
 
-   - :class:`cluster.bicluster.SpectralCoclustering` and
-     :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
-     :issue:`6126` by :user:`Laurent Direr <ldirer>`.
+   - The :func:`multioutput.MultiOutputClassifier.predict_proba`
+     function used to return a 3d array (``n_samples``, ``n_classes``,
+     ``n_outputs``). In the case where different target columns had different
+     numbers of classes, a `ValueError` would be raised on trying to stack
+     matrices with different dimensions. This function now returns a list of
+     arrays where the length of the list is ``n_outputs``, and each array is
+     (``n_samples``, ``n_classes``) for that particular output.
+     :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
-   - :class:`neighbors.LSHForest` has been deprecated and will be
-     removed in 0.21 due to poor performance.
-     :issue:`8996` by `Andreas Müller`_.
+   - Replace attribute ``named_steps`` ``dict`` to :class:`utils.Bunch`
+     in :class:`pipeline.Pipeline` to enable tab completion in interactive
+     environment. In the case conflict value on ``named_steps`` and ``dict``
+     attribute, ``dict`` behavior will be prioritized.
+     :issue:`8481` by :user:`Herilalaina Rakotoarison <herilalaina>`.
+
+Metrics
+
+Miscellaneous
+
+   - Deprecate the ``y`` parameter in `transform` and `inverse_transform`.
+     The method  should not accept ``y`` parameter, as it's used at the prediction time.
+     :issue:`8174` by :user:`Tahar Zanouda <tzano>`, `Alexandre Gramfort`_
+     and `Raghav RV`_.
 
    - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
      for scikit-learn. The following backported functions in
@@ -637,18 +637,22 @@ API changes summary
      - ``utils.stats.rankdata``
      - ``neighbors.approximate.LSHForest``
 
-    - Deprecate the ``y`` parameter in `transform` and `inverse_transform`.
-      The method  should not accept ``y`` parameter, as it's used at the prediction time.
-      :issue:`8174` by :user:`Tahar Zanouda <tzano>`, `Alexandre Gramfort`_
-      and `Raghav RV`_.
+   - Estimators with both methods ``decision_function`` and ``predict_proba``
+     are now required to have a monotonic relation between them. The
+     method ``check_decision_proba_consistency`` has been added in
+     **sklearn.utils.estimator_checks** to check their consistency.
+     :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
 
-Trees and ensembles
-Linear, kernelized and related models
-Decomposition, manifold learning and clustering
-Preprocessing and feature selection
-Model evaluation and meta-estimators
-Metrics
-Miscellaneous
+   - All checks in ``utils.estimator_checks``, in particular
+     :func:`utils.estimator_checks.check_estimator` now accept estimator
+     instances. Most other checks do not accept
+     estimator classes any more. :issue:`9019` by `Andreas Müller`_.
+
+   - Ensure that estimators' attributes ending with ``_`` are not set
+     in the constructor but only in the ``fit`` method. Most notably,
+     ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
+     now only have ``self.estimators_`` available after ``fit``.
+     :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
 
 
 .. _changes_0_18_1:
