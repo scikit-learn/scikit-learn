@@ -497,6 +497,12 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
 class TSNE(BaseEstimator):
     """t-distributed Stochastic Neighbor Embedding.
 
+    .. warning::
+        There are a number of known issues with this implementation. While
+        it may be effective for visualisation, it is not as memory efficient
+        or as close to reference implementations as it should be.
+        See :issue:`9032` which should resolve these issues soon.
+
     t-SNE [1] is a tool to visualize high-dimensional data. It converts
     similarities between data points to joint probabilities and tries
     to minimize the Kullback-Leibler divergence between the joint
