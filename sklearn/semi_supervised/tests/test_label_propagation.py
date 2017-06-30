@@ -131,7 +131,8 @@ def test_valid_alpha():
     assert_raises(ValueError, label_propagation.LabelSpreading, alpha=1.1)
 
 
-def test_clamping():
+def test_convergence_speed():
+    # This is a non-regression test for #5774
     X = np.array([[1., 0.], [0., 1.], [1., 2.5]])
     y = np.array([0, 1, -1])
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=5000)
