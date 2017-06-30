@@ -18,7 +18,7 @@ from .base import TransformerMixin
 from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
-from .metrics.pairwise import pairwise_kernels
+from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 
 
 class RBFSampler(BaseEstimator, TransformerMixin):
@@ -389,10 +389,10 @@ class Nystroem(BaseEstimator, TransformerMixin):
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
-    degree : float, default=3
+    degree : float, default=None
         Degree of the polynomial kernel. Ignored by other kernels.
 
-    coef0 : float, default=1
+    coef0 : float, default=None
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
@@ -438,7 +438,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
-    def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
+    def __init__(self, kernel="rbf", gamma=None, coef0=None, degree=None,
                  kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
         self.gamma = gamma
@@ -521,8 +521,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
         if params is None:
             params = {}
         if not callable(self.kernel):
-            params['gamma'] = self.gamma
-            params['degree'] = self.degree
-            params['coef0'] = self.coef0
+            for param in (KERNEL_PARAMS[self.kernel]):
+                if getattr(self, param) is not None:
+                    params[param] = getattr(self, param)
 
         return params
