@@ -10,6 +10,28 @@ Version 0.19
 
 **In Development**
 
+Highlights
+----------
+
+TODO:
+
+This release includes a number of great new features including Local Outlier Factor for anomaly detection, QuantileTransformer for robust feature transformation, and ClassifierChain to simply account for dependencies between classes in multilabel problems.
+
+Pipeline caching makes grid search over pipelines including slow transformations much more efficient.
+
+Multinomial logistic regression with L1 loss.
+
+?Rewrite of TSNE
+
+Multi-metric grid search and cross validation
+
+Major deprecations
+------------------
+
+TODO
+
+We have deprecated RandomizedLasso and RandomizedLogisticRegression and LSHForest because they weren't appropriate or up to standards. We have deprecated a number of utilities no longer necessary now that we require Scipy 0.13.3 and Numpy 1.8.2 at a minimum.
+
 Changed models
 --------------
 
@@ -19,6 +41,7 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
    * :class:`sklearn.ensemble.IsolationForest` (bug fix)
+   * TODO
 
 Details are listed in the changelog below.
 
@@ -31,32 +54,17 @@ Changelog
 New features
 ............
 
-   - Added :class:`multioutput.ClassifierChain` for multi-label
-     classification. By `Adam Kleczewski <adamklec>`_.
+Configuration
 
    - Validation that input data contains no NaN or inf can now be suppressed
      using :func:`config_context`, at your own risk. This will save on runtime,
      and may be particularly useful for prediction time. :issue:`7548` by
      `Joel Nothman`_.
 
-   - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
-     detection based on nearest neighbors.
-     :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
+Classifiers and regressors
 
-   - The new solver ``'mu'`` implements a Multiplicate Update in
-     :class:`decomposition.NMF`, allowing the optimization of all
-     beta-divergences, including the Frobenius norm, the generalized
-     Kullback-Leibler divergence and the Itakura-Saito divergence.
-     :issue:`5295` by `Tom Dupre la Tour`_.
-
-   - Added the :class:`model_selection.RepeatedKFold` and
-     :class:`model_selection.RepeatedStratifiedKFold`.
-     :issue:`8120` by `Neeraj Gangwar`_.
-
-   - Added :func:`metrics.mean_squared_log_error`, which computes
-     the mean square error of the logarithmic transformation of targets,
-     particularly useful for targets with an exponential trend.
-     :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
+   - Added :class:`multioutput.ClassifierChain` for multi-label
+     classification. By `Adam Kleczewski <adamklec>`_.
 
    - Added solver ``'saga'`` that implements the improved version of Stochastic
      Average Gradient, in :class:`linear_model.LogisticRegression` and
@@ -65,6 +73,12 @@ New features
      during the first epochs of ridge and logistic regression.
      :issue:`8446` by `Arthur Mensch`_.
 
+Other estimators
+
+   - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
+     detection based on nearest neighbors.
+     :issue:`5279` by `Nicolas Goix`_ and `Alexandre Gramfort`_.
+
    - Added :class:`preprocessing.QuantileTransformer` class and
      :func:`preprocessing.quantile_transform` function for features
      normalization based on quantiles.
@@ -72,47 +86,33 @@ New features
      :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
      :user:`Thierry Guillemot <tguillemot>`, and `Gael Varoquaux`_.
 
+   - The new solver ``'mu'`` implements a Multiplicate Update in
+     :class:`decomposition.NMF`, allowing the optimization of all
+     beta-divergences, including the Frobenius norm, the generalized
+     Kullback-Leibler divergence and the Itakura-Saito divergence.
+     :issue:`5295` by `Tom Dupre la Tour`_.
+
+Model selection and evaluation
+
+   - Added :func:`metrics.mean_squared_log_error`, which computes
+     the mean square error of the logarithmic transformation of targets,
+     particularly useful for targets with an exponential trend.
+     :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
+
    - Added :func:`metrics.dcg_score` and :func:`metrics.ndcg_score`, which
      compute Discounted cumulative gain (DCG) and Normalized discounted
      cumulative gain (NDCG).
      :issue:`7739` by :user:`David Gasquez <davidgasquez>`.
 
+   - Added the :class:`model_selection.RepeatedKFold` and
+     :class:`model_selection.RepeatedStratifiedKFold`.
+     :issue:`8120` by `Neeraj Gangwar`_.
+
+
 Enhancements
 ............
 
-   - :func:`metrics.matthews_corrcoef` now support multiclass classification.
-     :issue:`8094` by :user:`Jon Crall <Erotemic>`.
-   - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
-     documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986` by
-     :user:`Oscar Najera <Titan-C>`
-   - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
-     now support online learning using `partial_fit`.
-     issue: `8053` by :user:`Peng Yu <yupbank>`.
-   - :class:`pipeline.Pipeline` allows to cache transformers
-     within a pipeline by using the ``memory`` constructor parameter.
-     :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-   - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
-     :class:`decomposition.TruncatedSVD` now expose the singular values
-     from the underlying SVD. They are stored in the attribute
-     ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
-
-   - :class:`cluster.MiniBatchKMeans` and :class:`cluster.KMeans`
-     now uses significantly less memory when assigning data points to their
-     nearest cluster center. :issue:`7721` by :user:`Jon Crall <Erotemic>`.
-
-   - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`,
-     :class:`model_selection.RandomizedSearchCV`,  :class:`grid_search.GridSearchCV`,
-     and  :class:`grid_search.RandomizedSearchCV` that matches the ``classes_``
-     attribute of ``best_estimator_``. :issue:`7661` and :issue:`8295`
-     by :user:`Alyssa Batula <abatula>`, :user:`Dylan Werner-Meier <unautre>`,
-     and :user:`Stephen Hoover <stephen-hoover>`.
-
-   - Relax assumption on the data for the
-     :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
-     kernel is defined on the open interval :math:`(-skewedness; +\infty)^d`,
-     the transform function should not check whether ``X < 0`` but whether ``X <
-     -self.skewedness``. :issue:`7573` by :user:`Romain Brault <RomainBrault>`.
+Trees and ensembles
 
    - The ``min_weight_fraction_leaf`` constraint in tree construction is now
      more efficient, taking a fast path to declare a node a leaf if its weight
@@ -120,33 +120,16 @@ Enhancements
      different from previous versions where ``min_weight_fraction_leaf`` is
      used. :issue:`7441` by :user:`Nelson Liu <nelson-liu>`.
 
-   - Added ``average`` parameter to perform weights averaging in
-     :class:`linear_model.PassiveAggressiveClassifier`. :issue:`4939`
-     by :user:`Andrea Esuli <aesuli>`.
-
-   - Custom metrics for the :mod:`sklearn.neighbors` binary trees now have
-     fewer constraints: they must take two 1d-arrays and return a float.
-     :issue:`6288` by `Jake Vanderplas`_.
-
    - :class:`ensemble.GradientBoostingClassifier` and :class:`ensemble.GradientBoostingRegressor`
      now support sparse input for prediction.
      :issue:`6101` by :user:`Ibraim Ganiev <olologin>`.
 
-   - Added ``shuffle`` and ``random_state`` parameters to shuffle training
-     data before taking prefixes of it based on training sizes in
-     :func:`model_selection.learning_curve`.
-     :issue:`7506` by :user:`Narine Kokhlikyan <NarineK>`.
+   - :class:`ensemble.VotingClassifier` now allow changing estimators by using
+     :meth:`ensemble.VotingClassifier.set_params`. Estimators can also be
+     removed by setting it to `None`.
+     :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
-   - Added ``norm_order`` parameter to :class:`feature_selection.SelectFromModel`
-     to enable selection of the norm order when ``coef_`` is more than 1D.
-     :issue:`6181` by :user:`Antoine Wendlinger <antoinewdg>`.
-
-   - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
-     :issue:`7723` by :user:`Mikhail Korobov <kmike>`.
-
-   - ``check_estimator`` now attempts to ensure that methods transform, predict, etc.
-     do not set attributes on the estimator.
-     :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
+Linear, kernelized and related models
 
    - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
      :class:`linear_model.PassiveAggressiveClassifier`,
@@ -157,10 +140,9 @@ Enhancements
      a ``n_iter_`` attribute, with actual number of iterations before
      convergence. By `Tom Dupre la Tour`_.
 
-   - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
-     will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
-     norm 'max' the norms returned will be the same as for dense matrices.
-     :issue:`7771` by `Ang Lu <https://github.com/luang008>`_.
+   - Added ``average`` parameter to perform weight averaging in
+     :class:`linear_model.PassiveAggressiveClassifier`. :issue:`4939`
+     by :user:`Andrea Esuli <aesuli>`.
 
    - :class:`linear_model.RANSACRegressor` no longer throws an error
      when calling ``fit`` if no inliers are found in its first iteration.
@@ -168,18 +150,102 @@ Enhancements
      attributes, ``n_skips_*``.
      :issue:`7914` by :user:`Michael Horrell <mthorrell>`.
 
-   - :func:`model_selection.cross_val_predict` now returns output of the
-     correct shape for all values of the argument ``method``.
-     :issue:`7863` by :user:`Aman Dalmia <dalmia>`.
+   - Relax assumption on the data for the
+     :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
+     kernel is defined on the open interval :math:`(-skewedness; +\infty)^d`,
+     the transform function should not check whether ``X < 0`` but whether ``X <
+     -self.skewedness``. :issue:`7573` by :user:`Romain Brault <RomainBrault>`.
 
-   - Fix a bug where :class:`feature_selection.SelectFdr` did not
-     exactly implement Benjamini-Hochberg procedure. It formerly may have
-     selected fewer features than it should.
-     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
+   - Custom metrics for the :mod:`neighbors` binary trees now have
+     fewer constraints: they must take two 1d-arrays and return a float.
+     :issue:`6288` by `Jake Vanderplas`_.
+
+   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
+     is a lot faster with ``return_std=True``. :issue:`8591` by
+     :user:`Hadrien Bertrand <hbertrand>`.
+
+   - Memory usage enhancement: Prevent cast from float32 to float64 in
+     :class:`linear_model.LogisticRegression` when using newton-cg
+     solver. :issue:`8835` by :user:`Joan Massich <massich>`.
+
+   - Memory usage enhancement: Prevent cast from float32 to float64 in
+     :class:`linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
+     :class:`sklearn.linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
+     by :user:`Joan Massich <massich>`, :user:`Nicolas Cordier <ncordier>`
+
+Decomposition, manifold learning and clustering
+
+   - :class:`cluster.MiniBatchKMeans` and :class:`cluster.KMeans`
+     now use significantly less memory when assigning data points to their
+     nearest cluster center. :issue:`7721` by :user:`Jon Crall <Erotemic>`.
+
+   - :class:`decomposition.PCA`, :class:`decomposition.IncrementalPCA` and
+     :class:`decomposition.TruncatedSVD` now expose the singular values
+     from the underlying SVD. They are stored in the attribute
+     ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
+
+Preprocessing and feature selection
+
+   - Added ``norm_order`` parameter to :class:`feature_selection.SelectFromModel`
+     to enable selection of the norm order when ``coef_`` is more than 1D.
+     :issue:`6181` by :user:`Antoine Wendlinger <antoinewdg>`.
+
+   - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
+     with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
+
+   - Small performance improvement to n-gram creation in
+     :mod:`feature_extraction.text` by binding methods for loops and
+     special-casing unigrams. :issue:`7567` by `Jaye Doepke <jtdoepke>`
+
+Model evaluation and meta-estimators
+
+   - :class:`pipeline.Pipeline` allows to cache transformers
+     within a pipeline by using the ``memory`` constructor parameter.
+     :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+   - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
+     :issue:`7723` by :user:`Mikhail Korobov <kmike>`.
 
    - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
      A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
+
+   - :class:`model_selection.GridSearchCV`, :class:`model_selection.RandomizedSearchCV`
+     and :func:`model_selection.cross_val_score` now allow estimators with callable
+     kernels which were previously prohibited. :issue:`8005` by `Andreas Müller`_ .
+
+   - :func:`model_selection.cross_val_predict` now returns output of the
+     correct shape for all values of the argument ``method``.
+     :issue:`7863` by :user:`Aman Dalmia <dalmia>`.
+
+   - Added ``shuffle`` and ``random_state`` parameters to shuffle training
+     data before taking prefixes of it based on training sizes in
+     :func:`model_selection.learning_curve`.
+     :issue:`7506` by :user:`Narine Kokhlikyan <NarineK>`.
+
+   - Speed improvements to :class:`model_selection.StratifiedShuffleSplit`.
+     :issue:`5991` by :user:`Arthur Mensch <arthurmensch>` and `Joel Nothman`_.
+
+   - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
+     now support online learning using `partial_fit`.
+     issue: `8053` by :user:`Peng Yu <yupbank>`.
+
+   - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
+     :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
+
+Metrics
+
+   - :func:`metrics.matthews_corrcoef` now support multiclass classification.
+     :issue:`8094` by :user:`Jon Crall <Erotemic>`.
+
+   - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score`.
+     :issue:`8335` by :user:`Victor Poughon <vpoughon>`.
+
+Miscellaneous
+
+   - :func:`utils.check_estimator` now attempts to ensure that methods transform, predict, etc.
+     do not set attributes on the estimator.
+     :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
    - Added type checking to the ``accept_sparse`` parameter in
      :mod:`sklearn.utils.validation` methods. This parameter now accepts only
@@ -187,53 +253,14 @@ Enhancements
      and should be replaced by ``accept_sparse=False``.
      :issue:`7880` by :user:`Josh Karnofsky <jkarno>`.
 
-   - :class:`model_selection.GridSearchCV`, :class:`model_selection.RandomizedSearchCV`
-     and :func:`model_selection.cross_val_score` now allow estimators with callable
-     kernels which were previously prohibited. :issue:`8005` by `Andreas Müller`_ .
-
-   - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
-     with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
-
-   - Add ``sample_weight`` parameter to :func:`metrics.cohen_kappa_score`.
-     :issue:`8335` by :user:`Victor Poughon <vpoughon>`.
-
-   - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
-     is a lot faster with ``return_std=True``. :issue:`8591` by
-     :user:`Hadrien Bertrand <hbertrand>`.
-
-   - Added ability to use sparse matrices in :func:`feature_selection.f_regression`
-     with ``center=True``. :issue:`8065` by :user:`Daniel LeJeune <acadiansith>`.
-
-   - :class:`ensemble.VotingClassifier` now allow changing estimators by using
-     :meth:`ensemble.VotingClassifier.set_params`. Estimators can also be
-     removed by setting it to `None`.
-     :issue:`7674` by :user:`Yichuan Liu <yl565>`.
-
-   - Prevent cast from float32 to float64 in
-     :class:`linear_model.LogisticRegression` when using newton-cg
-     solver. :issue:`8835` by :user:`Joan Massich <massich>`.
-
-   - Prevent cast from float32 to float64 in
-     :class:`linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
-     :class:`sklearn.linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
-     by :user:`Joan Massich <massich>`, :user:`Nicolas Cordier <ncordier>`
-
-   - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
-     :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
-
    - Make it possible to load a chunk of an svmlight formatted file by
      passing a range of bytes to :func:`datasets.load_svmlight_file`.
      :issue:`935` by :user:`Olivier Grisel <ogrisel>`.
 
-   - Small performance improvement to n-gram creation in
-     :mod:`feature_extraction.text` by binding methods for loops and
-     special-casing unigrams. :issue:`7567` by `Jaye Doepke <jtdoepke>`
-
-   - Speed improvements to :class:`model_selection.StratifiedShuffleSplit`.
-     :issue:`5991` by :user:`Arthur Mensch <arthurmensch>` and `Joel Nothman`_.
-
 Bug fixes
 .........
+
+TODO
 
    - :func:`metrics.average_precision_score` no longer linearly
      interpolates between operating points, and instead weighs precisions
@@ -443,6 +470,38 @@ Bug fixes
      :class:`decomposition.IncrementalPCA`.
      :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
 
+Trees and ensembles
+Linear, kernelized and related models
+Decomposition, manifold learning and clustering
+Preprocessing and feature selection
+
+   - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
+     will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
+     norm 'max' the norms returned will be the same as for dense matrices.
+     :issue:`7771` by `Ang Lu <https://github.com/luang008>`_.
+
+   - Fix a bug where :class:`feature_selection.SelectFdr` did not
+     exactly implement Benjamini-Hochberg procedure. It formerly may have
+     selected fewer features than it should.
+     :issue:`7490` by :user:`Peng Meng <mpjlu>`.
+
+
+Model evaluation and meta-estimators
+Metrics
+Miscellaneous
+
+   - Added ``classes_`` attribute to :class:`model_selection.GridSearchCV`,
+     :class:`model_selection.RandomizedSearchCV`,  :class:`grid_search.GridSearchCV`,
+     and  :class:`grid_search.RandomizedSearchCV` that matches the ``classes_``
+     attribute of ``best_estimator_``. :issue:`7661` and :issue:`8295`
+     by :user:`Alyssa Batula <abatula>`, :user:`Dylan Werner-Meier <unautre>`,
+     and :user:`Stephen Hoover <stephen-hoover>`.
+
+   - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
+     documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986` by
+     :user:`Oscar Najera <Titan-C>`
+
+
 API changes summary
 -------------------
 
@@ -526,11 +585,11 @@ API changes summary
 
    - The ``n_topics`` parameter of :class:`decomposition.LatentDirichletAllocation`
      has been renamed to ``n_components`` and will be removed in version 0.21.
-     :issue:`8922` by :user:`Attractadore`
+     :issue:`8922` by :user:`Attractadore`.
 
    - :class:`cluster.bicluster.SpectralCoclustering` and
      :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
-     :issue:`6126` by :user:ldirer
+     :issue:`6126` by :user:`Laurent Direr <ldirer>`.
 
    - :class:`neighbors.LSHForest` has been deprecated and will be
      removed in 0.21 due to poor performance.
@@ -573,6 +632,14 @@ API changes summary
       The method  should not accept ``y`` parameter, as it's used at the prediction time.
       :issue:`8174` by :user:`Tahar Zanouda <tzano>`, `Alexandre Gramfort`_
       and `Raghav RV`_.
+
+Trees and ensembles
+Linear, kernelized and related models
+Decomposition, manifold learning and clustering
+Preprocessing and feature selection
+Model evaluation and meta-estimators
+Metrics
+Miscellaneous
 
 
 .. _changes_0_18_1:
