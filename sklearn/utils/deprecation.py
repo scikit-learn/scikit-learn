@@ -87,3 +87,13 @@ class deprecated(object):
         if olddoc:
             newdoc = "%s\n\n%s" % (newdoc, olddoc)
         return newdoc
+
+
+def _is_deprecated(func):
+    """Helper to check if func is wraped by our deprecated decorator"""
+    closures = getattr(func, '__closure__', [])
+    if closures is None:
+        closures = []
+
+    return 'deprecated' in ''.join([c.cell_contents for c in closures
+                                    if isinstance(c.cell_contents, str)])

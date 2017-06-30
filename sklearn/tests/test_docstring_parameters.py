@@ -17,6 +17,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import check_parameters_match
 from sklearn.utils.testing import get_func_name
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.deprecation import _is_deprecated
 
 _DOC_SPECIAL_MEMBERS = ('__contains__', '__getitem__', '__iter__', '__len__',
                         '__call__', '__add__', '__sub__', '__mul__', '__div__',
@@ -54,7 +55,7 @@ _DOCSTRING_IGNORES = [
     'sklearn.utils.extmath.safe_sparse_dot',
 ]
 
-# Methods to test for, in any class
+# Methods where y param should be ignored if y=None by default
 _METHODS_IGNORE_NONE_Y = [
         'fit',
         'score',
@@ -65,17 +66,8 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
-def _is_deprecated(func):
-    closures = getattr(func, '__closure__', [])
-    if closures is None:
-        closures = []
-
-    return 'deprecated' in ''.join([c.cell_contents for c in closures
-                                    if isinstance(c.cell_contents, str)])
-
-
 def test_docstring_parameters():
-    """Test module docstring formatting."""
+    # Test module docstring formatting
     try:
         import numpydoc  # noqa
     except ImportError:
@@ -86,7 +78,7 @@ def test_docstring_parameters():
 
     incorrect = []
     for name in PUBLIC_MODULES:
-        with warnings.catch_warnings(record=True):  # traits warnings
+        with warnings.catch_warnings(record=True):
             module = __import__(name, globals())
         for submod in name.split('.')[1:]:
             module = getattr(module, submod)
