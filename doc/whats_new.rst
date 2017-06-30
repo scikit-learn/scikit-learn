@@ -412,6 +412,11 @@ Bug fixes
      :class:`linear_model.LassoCV`. :issue:`8973` by
      :user:`Paulo Haddad <paulochf>`.
 
+   - Fix :class:`semi_supervised.LabelPropagation` to always do hard clamping.
+     Its ``alpha`` parameter now defaults to 0 and the parameter is deprecated
+     to be removed in version 0.21. :issue:`6727` by
+     :user:`Andre Ambrosio Boechat <boechat107>` and `Joel Nothman`_.
+     
    - Fixed a bug in :class:`linear_model.RandomizedLasso`,
      :class:`linear_model.Lars`, :class:`linear_model.LassoLars`,
      :class:`linear_model.LarsCV` and :class:`linear_model.LassoLarsCV`,

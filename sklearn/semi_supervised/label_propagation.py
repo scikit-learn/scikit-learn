@@ -55,6 +55,7 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 # License: BSD
 from abc import ABCMeta, abstractmethod
 
+import warnings
 import numpy as np
 from scipy import sparse
 
@@ -239,10 +240,13 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
         n_samples, n_classes = len(y), len(classes)
 
+        alpha = self.alpha
+        if alpha is None:
+            alpha = 0
         y = np.asarray(y)
         unlabeled = y == -1
         clamp_weights = np.ones((n_samples, 1))
-        clamp_weights[unlabeled, 0] = self.alpha
+        clamp_weights[~unlabeled, 0] = alpha
 
         # initialize distributions
         self.label_distributions_ = np.zeros((n_samples, n_classes))
@@ -250,8 +254,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             self.label_distributions_[y == label, classes == label] = 1
 
         y_static = np.copy(self.label_distributions_)
-        if self.alpha > 0.:
-            y_static *= 1 - self.alpha
+        if alpha > 0.:
+            y_static *= 1 - alpha
         y_static[unlabeled] = 0
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
@@ -299,7 +303,11 @@ class LabelPropagation(BaseLabelPropagation):
         Parameter for knn kernel
 
     alpha : float
-        Clamping factor
+        Clamping factor.
+
+        .. deprecated:: 0.19
+        This parameter will be removed in 0.21.
+        'alpha' is fixed to zero in 'LabelPropagation'.
 
     max_iter : float
         Change maximum number of iterations allowed
@@ -349,6 +357,11 @@ class LabelPropagation(BaseLabelPropagation):
     --------
     LabelSpreading : Alternate label propagation strategy more robust to noise
     """
+    def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
+                 alpha=None, max_iter=30, tol=1e-3, n_jobs=1):
+        super(LabelPropagation, self).__init__(
+            kernel=kernel, gamma=gamma, n_neighbors=n_neighbors, alpha=alpha,
+            max_iter=max_iter, tol=tol, n_jobs=n_jobs)
 
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
@@ -365,6 +378,14 @@ class LabelPropagation(BaseLabelPropagation):
         else:
             affinity_matrix /= normalizer[:, np.newaxis]
         return affinity_matrix
+
+    def fit(self, X, y):
+        if self.alpha is not None:
+            warnings.warn(
+                "alpha is deprecated since 0.19 and will be removed in 0.21.",
+                DeprecationWarning
+            )
+        return super(LabelPropagation, self).fit(X, y)
 
 
 class LabelSpreading(BaseLabelPropagation):
@@ -391,7 +412,10 @@ class LabelSpreading(BaseLabelPropagation):
       parameter for knn kernel
 
     alpha : float
-      clamping factor
+      Clamping factor [0, 1], it specifies the relative amount of the
+      information from its neighbors and its initial label information.
+      alpha=0 means keeping the initial label information; alpha=1 means
+      replacing all initial information.
 
     max_iter : float
       maximum number of iterations allowed
