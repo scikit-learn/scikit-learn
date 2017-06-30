@@ -791,8 +791,8 @@ class GridSearchCV(BaseSearchCV):
         of parameter settings.
 
     scoring : string, callable, list/tuple, dict or None, default: None
-        A single string (see :ref:`_scoring_parameter`) or a callable
-        (see :ref:`_scoring`) to evaluate the predictions on the test set.
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
 
         For evaluating multiple metrics, either give a list of (unique) strings
         or a dict with names as keys and callables as values.
@@ -801,7 +801,7 @@ class GridSearchCV(BaseSearchCV):
         value. Metric functions returning a list/array of values can be wrapped
         into multiple scorers that return one value each.
 
-        See :ref:`_multivalued_scorer_wrapping` for an example.
+        See :ref:`multivalued_scorer_wrapping` for an example.
 
         If None, the estimator's default scorer (if available) is used.
 
@@ -1101,8 +1101,8 @@ class RandomizedSearchCV(BaseSearchCV):
         off runtime vs quality of the solution.
 
     scoring : string, callable, list/tuple, dict or None, default: None
-        A single string (see :ref:`_scoring_parameter`) or a callable
-        (see :ref:`_scoring`) to evaluate the predictions on the test set.
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
 
         For evaluating multiple metrics, either give a list of (unique) strings
         or a dict with names as keys and callables as values.
@@ -1111,7 +1111,7 @@ class RandomizedSearchCV(BaseSearchCV):
         value. Metric functions returning a list/array of values can be wrapped
         into multiple scorers that return one value each.
 
-        See :ref:`_multivalued_scorer_wrapping` for an example.
+        See :ref:`multivalued_scorer_wrapping` for an example.
 
         If None, the estimator's default scorer (if available) is used.
 
