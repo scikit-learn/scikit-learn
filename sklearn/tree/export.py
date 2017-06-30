@@ -78,8 +78,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False,
               leaves_parallel=False, impurity=True, node_ids=False,
               proportion=False, rotate=False, rounded=False,
-              special_characters=False, precision=3, ax=None, scalex=150,
-              scaley=1):
+              special_characters=False, precision=3, ax=None, scalex=150):
     import matplotlib.pyplot as plt
     if ax is None:
         ax = plt.gca()
@@ -90,7 +89,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
         leaves_parallel=leaves_parallel, impurity=impurity, node_ids=node_ids,
         proportion=proportion, rotate=rotate, rounded=rounded,
         special_characters=special_characters, precision=precision, ax=ax,
-        scalex=scalex, scaley=scaley)
+        scalex=scalex)
     exporter.export(decision_tree)
 
 
@@ -429,8 +428,8 @@ class _MPLTreeExporter(_DOTTreeExporter):
         self.special_characters = special_characters
         self.precision = precision
         self.scalex = scalex
-        self.scaley = scaley
         self.ax = ax
+        self.scaley = 80 if class_names is None else 100
 
         # validate
         if isinstance(precision, Integral):
@@ -464,9 +463,17 @@ class _MPLTreeExporter(_DOTTreeExporter):
             return Tree(name, node_id)
         return Tree(name, node_id, *children)
 
+    def _find_longest(self, my_tree, max_length):
+        child_length = [_find_longest(c, max_length) for c 
+                        in my_cildren]
+        return max(child_length + [max_length])
+        
+
     def export(self, decision_tree):
         self.ax.set_axis_off()
         my_tree = self._make_tree(0, decision_tree.tree_)
+        # find longest string:
+        self._find_longest(my_tree, len(my_tree.node)))
         dt = buchheim(my_tree)
         self.recurse(dt, decision_tree.tree_)
 

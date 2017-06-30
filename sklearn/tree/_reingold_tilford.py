@@ -170,8 +170,6 @@ def second_walk(v, m=0, depth=0, min=None):
     return min
 
 
-# my stuff
-
 class Tree(object):
     def __init__(self, node="", node_id=-1, *children):
         self.node = node
@@ -181,23 +179,3 @@ class Tree(object):
             self.children = children
         else:
             self.children = []
-
-    def __str__(self):
-        return "%s" % (self.node)
-
-    def __repr__(self):
-        return "%s" % (self.node)
-
-    def __getitem__(self, key):
-        if isinstance(key, int) or isinstance(key, slice):
-            return self.children[key]
-        if isinstance(key, str):
-            for child in self.children:
-                if child.node == key:
-                    return child
-
-    def __iter__(self):
-        return self.children.__iter__()
-
-    def __len__(self):
-        return len(self.children)
