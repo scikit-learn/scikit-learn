@@ -14,7 +14,7 @@ perplexity values and does not always convey a meaning.
 As shown below, t-SNE for higher perplexities finds meaningful topology of
 two concentric circles, however the size and the distance of the circles varies
 slightly from the original. Contrary to the two circles dataset, the shapes
-visually diverge from S-curve topology on the S-curve dateset even for
+visually diverge from S-curve topology on the S-curve dataset even for
 larger perplexity values.
 
 For further details, "How to Use t-SNE Effectively"
@@ -37,7 +37,7 @@ from time import time
 n_samples = 500
 n_components = 2
 (fig, subplots) = plt.subplots(2, 5, figsize=(15, 8))
-perplexities = [5, 50, 100, 150]
+perplexities = [5, 30, 50, 100]
 
 X, y = datasets.make_circles(n_samples=n_samples, factor=.5, noise=.05)
 
