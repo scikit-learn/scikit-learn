@@ -207,9 +207,13 @@ def check_importances(name, criterion, X, y, dtype, tolerance):
                           random_state=0)
     est.fit(X, y)
     importances = est.feature_importances_
+
+    # The forest estimator can detect that only the first 3 features of the
+    # dataset are informative:
     n_important = np.sum(importances > 0.1)
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
+    assert np.all(importances[:3] > 0.1)
 
     # Check with parallel
     importances = est.feature_importances_
@@ -225,7 +229,8 @@ def check_importances(name, criterion, X, y, dtype, tolerance):
     assert_true(np.all(importances >= 0.0))
 
     for scale in [0.5, 10, 100]:
-        est = ForestEstimator(n_estimators=20, random_state=0, criterion=criterion)
+        est = ForestEstimator(n_estimators=20, random_state=0,
+                              criterion=criterion)
         est.fit(X, y, sample_weight=scale * sample_weight)
         importances_bis = est.feature_importances_
         assert_less(np.abs(importances - importances_bis).mean(), tolerance)
