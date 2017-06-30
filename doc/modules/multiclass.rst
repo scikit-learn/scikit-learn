@@ -375,3 +375,10 @@ averaged together.
 .. topic:: References:
     Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
         "Classifier Chains for Multi-label Classification", 2009.
+        
+Regressor Chain
+================
+
+Regressor chains (see :class:`RegressorChain`) are a way of combining a
+number of regressions into a single multi-label model that is capable
+ of exploiting correlations among targets.
