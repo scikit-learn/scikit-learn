@@ -356,7 +356,8 @@ def generate_multilabel_dataset_with_correlations():
     X, y = make_classification(n_samples=1000,
                                n_features=100,
                                n_classes=16,
-                               n_informative=10)
+                               n_informative=10,
+                               random_state=0)
 
     Y_multi = np.array([[int(yyy) for yyy in format(yy, '#06b')[2:]]
                         for yy in y])
@@ -470,17 +471,11 @@ def test_classifier_chain_vs_independent_models():
     # Verify that an ensemble of classifier chains (each of length
     # N) can achieve a higher Jaccard similarity score than N independent
     # models
-    X, y = make_classification(n_samples=1000,
-                               n_features=100,
-                               n_classes=16,
-                               n_informative=10,
-                               random_state=0)
-    Y_multi = np.array([[int(yyy) for yyy in format(yy, '#06b')[2:]]
-                        for yy in y])
+    X, Y = generate_multilabel_dataset_with_correlations()
     X_train = X[:600, :]
     X_test = X[600:, :]
-    Y_train = Y_multi[:600, :]
-    Y_test = Y_multi[600:, :]
+    Y_train = Y[:600, :]
+    Y_test = Y[600:, :]
 
     ovr = OneVsRestClassifier(LogisticRegression())
     ovr.fit(X_train, Y_train)
