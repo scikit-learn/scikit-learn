@@ -6,8 +6,8 @@
 Model evaluation: quantifying the quality of predictions
 ========================================================
 
-There are 3 different approaches to evaluate the quality of predictions of a
-model:
+There are 3 different APIs for evaluating the quality of of a model's
+predictions:
 
 * **Estimator score method**: Estimators have a ``score`` method providing a
   default evaluation criterion for the problem they are designed to solve.
