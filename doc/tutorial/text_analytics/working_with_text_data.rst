@@ -324,7 +324,7 @@ The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We shall see their use in the section on grid search, below.
 We can now train the model with a single command::
 
-  >>> nb_clf = nb_pipe.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> nb_pipe.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
   Pipeline(...)
 
 
@@ -336,7 +336,7 @@ Evaluating the predictive accuracy of the model is equally easy::
   >>> import numpy as np
   >>> twenty_test = fetch_20newsgroups(subset='test',
   ...     categories=categories, shuffle=True, random_state=42)
-  >>> nb_pred = text_clf.predict(twenty_test.data)
+  >>> nb_pred = nb_pipe.predict(twenty_test.data)
   >>> np.mean(nb_pred == twenty_test.target)            # doctest: +ELLIPSIS
   0.834...
 
