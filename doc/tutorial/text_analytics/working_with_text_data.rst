@@ -348,16 +348,16 @@ than naïve Bayes). We can change the learner by just plugging a different
 classifier object into our pipeline::
 
   >>> from sklearn.linear_model import SGDClassifier
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
+  >>> svm_pipe = Pipeline([('vect', CountVectorizer()),
   ...                      ('tfidf', TfidfTransformer()),
   ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
   ...                                            alpha=1e-3, random_state=42,
   ...                                            max_iter=5, tol=None)),
   ... ])
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> svm_pipe.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
   Pipeline(...)
-  >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
+  >>> svm_pred = svm_pipe.predict(docs_test)
+  >>> np.mean(svm_pred == twenty_test.target)            # doctest: +ELLIPSIS
   0.912...
 
 ``scikit-learn`` further provides utilities for more detailed performance
