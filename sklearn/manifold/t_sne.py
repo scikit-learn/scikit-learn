@@ -297,7 +297,7 @@ def _kl_divergence_bh(params, P, neighbors, degrees_of_freedom, n_samples,
 
 def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
                       n_iter_check=1, n_iter_without_progress=50,
-                      momentum=0.5, learning_rate=1000.0, min_gain=0.01,
+                      momentum=0.5, learning_rate=200.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
                       args=None, kwargs=None):
     """Batch gradient descent with momentum and individual gains.
@@ -336,9 +336,12 @@ def _gradient_descent(objective, p0, it, n_iter, objective_error=None,
         The momentum generates a weight for previous gradients that decays
         exponentially.
 
-    learning_rate : float, optional (default: 1000.0)
-        The learning rate should be extremely high for t-SNE! Values in the
-        range [100.0, 1000.0] are common.
+    learning_rate : float, optional (default: 200.0)
+        The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
+        the learning rate is too high, the data may look like a 'ball' with any
+        point approximately equidistant from its nearest neighbours. If the
+        learning rate is too low, most points may look compressed in a dense
+        cloud with few outliers.
 
     min_gain : float, optional (default: 0.01)
         Minimum individual gain for each parameter.
@@ -534,12 +537,13 @@ class TSNE(BaseEstimator):
         optimization, the early exaggeration factor or the learning rate
         might be too high.
 
-    learning_rate : float, optional (default: 1000)
-        The learning rate can be a critical parameter. It should be
-        between 100 and 1000. If the cost function increases during initial
-        optimization, the early exaggeration factor or the learning rate
-        might be too high. If the cost function gets stuck in a bad local
-        minimum increasing the learning rate helps sometimes.
+    learning_rate : float, optional (default: 200.0)
+        The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
+        the learning rate is too high, the data may look like a 'ball' with any
+        point approximately equidistant from its nearest neighbours. If the
+        learning rate is too low, most points may look compressed in a dense
+        cloud with few outliers. If the cost function gets stuck in a bad local
+        minimum increasing the learning rate may help.
 
     n_iter : int, optional (default: 1000)
         Maximum number of iterations for the optimization. Should be at
@@ -630,10 +634,10 @@ class TSNE(BaseEstimator):
     >>> model = TSNE(n_components=2, random_state=0)
     >>> np.set_printoptions(suppress=True)
     >>> model.fit_transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([[ 0.00017619,  0.00004014],
-           [ 0.00010268,  0.00020546],
-           [ 0.00018298, -0.00008335],
-           [ 0.00009501, -0.00001388]])
+    array([[ 0.00017633,  0.00004009],
+           [ 0.00009872,  0.00022012],
+           [ 0.00018615, -0.0000944 ],
+           [ 0.00009506, -0.00001478]])
 
     References
     ----------
@@ -650,8 +654,9 @@ class TSNE(BaseEstimator):
     """
 
     def __init__(self, n_components=2, perplexity=30.0,
-                 early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
-                 n_iter_without_progress=30, min_grad_norm=1e-7,
+                 early_exaggeration=4.0,
+                 learning_rate="200 (new default in 0.19)",
+                 n_iter=1000, n_iter_without_progress=30, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
         if not ((isinstance(init, string_types) and
@@ -807,9 +812,21 @@ class TSNE(BaseEstimator):
         # * early exaggeration with momentum 0.5
         # * early exaggeration with momentum 0.8
         # * final optimization with momentum 0.8
+
+        # TODO sklearn 0.21: remove this warning
+        if self.learning_rate == "200 (new default in 0.19)":
+            import warnings
+            warnings.warn(
+                "The default learning rate of TSNE has changed from 1000 "
+                "to 200 in sklearn 0.19. Set the learning rate explicitely "
+                "to avoid this message. This warning will be removed in "
+                "version 0.21")
+            learning_rate = 200.0
+        else:
+            learning_rate = self.learning_rate
+
         # The embedding is initialized with iid samples from Gaussians with
         # standard deviation 1e-4.
-
         if X_embedded is None:
             # Initialize embedding randomly
             X_embedded = 1e-4 * random_state.randn(n_samples,
@@ -817,7 +834,7 @@ class TSNE(BaseEstimator):
         params = X_embedded.ravel()
 
         opt_args = {"n_iter": 50, "momentum": 0.5, "it": 0,
-                    "learning_rate": self.learning_rate,
+                    "learning_rate": learning_rate,
                     "n_iter_without_progress": self.n_iter_without_progress,
                     "verbose": self.verbose, "n_iter_check": 25,
                     "kwargs": dict(skip_num_points=skip_num_points)}
