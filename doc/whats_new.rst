@@ -152,12 +152,6 @@ Linear, kernelized and related models
      attributes, ``n_skips_*``.
      :issue:`7914` by :user:`Michael Horrell <mthorrell>`.
 
-   - Relax assumption on the data for the
-     :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
-     kernel is defined on the open interval :math:`(-skewedness; +\infty)^d`,
-     the transform function should not check whether ``X < 0`` but whether ``X <
-     -self.skewedness``. :issue:`7573` by :user:`Romain Brault <RomainBrault>`.
-
    - Custom metrics for the :mod:`neighbors` binary trees now have
      fewer constraints: they must take two 1d-arrays and return a float.
      :issue:`6288` by `Jake Vanderplas`_.
@@ -198,6 +192,16 @@ Preprocessing and feature selection
    - Small performance improvement to n-gram creation in
      :mod:`feature_extraction.text` by binding methods for loops and
      special-casing unigrams. :issue:`7567` by `Jaye Doepke <jtdoepke>`
+
+   - Relax assumption on the data for the
+     :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
+     kernel is defined on the open interval :math:`(-skewedness; +\infty)^d`,
+     the transform function should not check whether ``X < 0`` but whether ``X <
+     -self.skewedness``. :issue:`7573` by :user:`Romain Brault <RomainBrault>`.
+
+   - Made default kernel parameters kernel-dependent in
+     :class:`kernel_approximation.Nystroem`.
+     :issue:`5229` by :user:`mth4saurabh` and `Andreas Müller`_.
 
 Model evaluation and meta-estimators
 
@@ -472,6 +476,10 @@ Metrics
      hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
      by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
 
+   - Fixed passing of ``gamma`` parameter to the ``chi2`` kernel in
+     :func:`metrics.pairwise_kernels` :issue:`5211` by :user:`nrhine1`,
+     :user:`mth4saurabh` and `Andreas Müller`_.
+
 Miscellaneous
 
    - Fixed a bug when :func:`datasets.make_classification` fails
@@ -501,18 +509,6 @@ Miscellaneous
    - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
      documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986` by
      :user:`Oscar Najera <Titan-C>`
-   - Made default kernel parameters kernel-dependent in :class:`kernel_approximation.Nystroem`
-     :issue:`5229` by :user:`mth4saurabh` and `Andreas Müller`_.
-
-   - Fixed passing of ``gamma`` parameter to the ``chi2`` kernel in
-     :func:`metrics.pairwise_kernels` :issue:`5211` by :user:`nrhine1`,
-     :user:`mth4saurabh` and `Andreas Müller`_.
-
-  -  Fixed a bug in :class:`gaussian_process.GaussianProcessRegressor`
-     when the standard deviation and covariance predicted without fit
-     would fail with a unmeaningful error by default.
-     :issue:`6573` by :user:`Quazi Marufur Rahman <qmaruf>` and
-     `Manoj Kumar`_.
 
 
 API changes summary
@@ -564,6 +560,11 @@ Preprocessing and feature selection
      has been deprecated, and replaced with a more principled alternative,
      ``alternate_sign``.
      :issue:`7565` by :user:`Roman Yurchak <rth>`.
+
+   - :class:`linear_model.RandomizedLogisticRegression`,
+     and :class:`linear_model.RandomizedLasso` have been deprecated and will
+     be removed in version 0.21.
+     :issue: `8995` by :user:`Ramana.S <sentient07>`.
 
 Model evaluation and meta-estimators
 
@@ -646,8 +647,6 @@ Miscellaneous
      - ``utils.random.choice``
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
-     - ``neighbors.approximate.LSHForest``
-     - ``linear_model.randomized_l1``
 
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The
@@ -1390,9 +1389,6 @@ Model evaluation and meta-estimators
      ``groups``. Additionally in :class:`model_selection.LeavePGroupsOut`,
      the parameter ``n_labels`` is renamed to ``n_groups``.
      :issue:`6660` by `Raghav RV`_.
-
-   - The :mod:`sklearn.linear_model.randomized_l1` is deprecated.
-     :issue: `8995` by :user:`Ramana.S <sentient07>`.
 
 Code Contributors
 -----------------
