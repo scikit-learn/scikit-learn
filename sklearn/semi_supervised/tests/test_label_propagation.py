@@ -125,10 +125,14 @@ def test_label_propagation_closed_form():
 
 
 def test_valid_alpha():
-    assert_raises(ValueError, label_propagation.LabelSpreading, alpha=-0.1)
-    assert_raises(ValueError, label_propagation.LabelSpreading, alpha=0)
-    assert_raises(ValueError, label_propagation.LabelSpreading, alpha=1)
-    assert_raises(ValueError, label_propagation.LabelSpreading, alpha=1.1)
+    n_classes = 2
+    X, y = make_classification(n_classes=n_classes, n_samples=200,
+                               random_state=0)
+    for alpha in [-0.1, 0, 1, 1.1]:
+        assert_raises(ValueError,
+                      lambda **kwargs:
+                        label_propagation.LabelSpreading(**kwargs).fit(X, y),
+                      alpha=alpha)
 
 
 def test_convergence_speed():

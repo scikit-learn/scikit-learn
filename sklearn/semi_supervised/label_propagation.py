@@ -242,6 +242,9 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         n_samples, n_classes = len(y), len(classes)
 
         alpha = self.alpha
+        if alpha is not None and (alpha <= 0.0 or alpha >= 1.0):
+            raise ValueError('alpha=%s is invalid: it must be inside '
+                             'the open interval (0, 1)' % alpha)
         y = np.asarray(y)
         unlabeled = y == -1
 
@@ -490,10 +493,6 @@ class LabelSpreading(BaseLabelPropagation):
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
                  max_iter=30, tol=1e-3, n_jobs=1):
-
-        if alpha <= 0.0 or alpha >= 1.0:
-            raise ValueError('alpha=%s is invalid: it must be inside '
-                             'the open interval (0, 1)' % alpha)
 
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
