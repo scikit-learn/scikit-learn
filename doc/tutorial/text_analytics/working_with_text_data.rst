@@ -361,10 +361,10 @@ classifier object into our pipeline::
   0.912...
 
 ``scikit-learn`` further provides utilities for more detailed performance
-analysis of the results::
+analysis of the results. Two useful functions are :func:`sklearn.metrics.classification_report` and :func:`sklearn.metrics.confusion_matrix`, which are as follows::
 
   >>> from sklearn import metrics
-  >>> print(metrics.classification_report(twenty_test.target, predicted,
+  >>> print(metrics.classification_report(twenty_test.target, svm_pred,
   ...     target_names=twenty_test.target_names))
   ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
@@ -377,7 +377,7 @@ analysis of the results::
              avg / total       0.92      0.91      0.91      1502
   <BLANKLINE>
 
-  >>> metrics.confusion_matrix(twenty_test.target, predicted)
+  >>> metrics.confusion_matrix(twenty_test.target, svm_pred)
   array([[258,  11,  15,  35],
          [  4, 379,   3,   3],
          [  5,  33, 355,   3],
