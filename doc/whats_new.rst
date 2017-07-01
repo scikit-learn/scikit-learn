@@ -1,4 +1,4 @@
-.. currentmodule:: sklearn
+ ..currentmodule:: sklearn
 
 
 ===============
@@ -28,12 +28,11 @@ Fix longstanding implementation erorr in average_precision_score
 
 Multi-metric grid search and cross validation
 
-Major deprecations
-------------------
-
-TODO
-
-We have deprecated RandomizedLasso and RandomizedLogisticRegression and LSHForest because they weren't appropriate or up to standards. We have deprecated a number of utilities no longer necessary now that we require Scipy 0.13.3 and Numpy 1.8.2 at a minimum.
+Note also that we have deprecated RandomizedLasso,
+RandomizedLogisticRegression and LSHForest because they weren't
+appropriate or up to standards. We have deprecated a number of
+utilities no longer necessary now that we require Scipy 0.13.3 and
+Numpy 1.8.2 at a minimum.
 
 Changed models
 --------------
