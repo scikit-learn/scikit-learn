@@ -501,6 +501,18 @@ Miscellaneous
    - Update Sphinx-Gallery from 0.1.4 to 0.1.7 for resolving links in
      documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986` by
      :user:`Oscar Najera <Titan-C>`
+   - Made default kernel parameters kernel-dependent in :class:`kernel_approximation.Nystroem`
+     :issue:`5229` by :user:`mth4saurabh` and `Andreas Müller`_.
+
+   - Fixed passing of ``gamma`` parameter to the ``chi2`` kernel in
+     :func:`metrics.pairwise_kernels` :issue:`5211` by :user:`nrhine1`,
+     :user:`mth4saurabh` and `Andreas Müller`_.
+
+  -  Fixed a bug in :class:`gaussian_process.GaussianProcessRegressor`
+     when the standard deviation and covariance predicted without fit
+     would fail with a unmeaningful error by default.
+     :issue:`6573` by :user:`Quazi Marufur Rahman <qmaruf>` and
+     `Manoj Kumar`_.
 
 
 API changes summary
@@ -635,6 +647,7 @@ Miscellaneous
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
      - ``neighbors.approximate.LSHForest``
+     - ``linear_model.randomized_l1``
 
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The
@@ -1377,6 +1390,9 @@ Model evaluation and meta-estimators
      ``groups``. Additionally in :class:`model_selection.LeavePGroupsOut`,
      the parameter ``n_labels`` is renamed to ``n_groups``.
      :issue:`6660` by `Raghav RV`_.
+
+   - The :mod:`sklearn.linear_model.randomized_l1` is deprecated.
+     :issue: `8995` by :user:`Ramana.S <sentient07>`.
 
 Code Contributors
 -----------------

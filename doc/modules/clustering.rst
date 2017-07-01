@@ -1136,7 +1136,7 @@ picked at random falls into both classes :math:`U_i` and :math:`V_j`.
 
 It also can be expressed in set cardinality formulation:
 
-.. math:: \text{MI}(U, V) = \sum_{i=1}^|U| \sum_{j=1}^|V| \frac{|U_i \cap V_j|}{N}\log\left(\frac{N|U_i \cap V_j|}{|U_i||V_j|}\right)
+.. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \frac{|U_i \cap V_j|}{N}\log\left(\frac{N|U_i \cap V_j|}{|U_i||V_j|}\right)
 
 The normalized mutual information is defined as
 
