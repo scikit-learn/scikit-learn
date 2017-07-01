@@ -315,16 +315,16 @@ to work with, ``scikit-learn`` provides a ``Pipeline`` class that behaves
 like a compound classifier::
 
   >>> from sklearn.pipeline import Pipeline
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
+  >>> nb_pipe = Pipeline([('vect', CountVectorizer()),
   ...                      ('tfidf', TfidfTransformer()),
-  ...                      ('clf', MultinomialNB()),
+  ...                      ('clf', MultinomialNB())
   ... ])
 
 The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We shall see their use in the section on grid search, below.
 We can now train the model with a single command::
 
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> nb_clf = nb_pipe.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
   Pipeline(...)
 
 
@@ -336,9 +336,8 @@ Evaluating the predictive accuracy of the model is equally easy::
   >>> import numpy as np
   >>> twenty_test = fetch_20newsgroups(subset='test',
   ...     categories=categories, shuffle=True, random_state=42)
-  >>> docs_test = twenty_test.data
-  >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
+  >>> nb_pred = text_clf.predict(twenty_test.data)
+  >>> np.mean(nb_pred == twenty_test.target)            # doctest: +ELLIPSIS
   0.834...
 
 I.e., we achieved 83.4% accuracy. Let's see if we can do better with a
