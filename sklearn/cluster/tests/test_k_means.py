@@ -27,7 +27,6 @@ from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics.cluster import homogeneity_score
 
 

@@ -11,7 +11,6 @@ from sklearn import svm
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize
-from sklearn.utils.fixes import np_version
 from sklearn.utils.validation import check_random_state
 
 from sklearn.utils.testing import assert_raises, clean_warning_registry
