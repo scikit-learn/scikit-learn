@@ -425,7 +425,7 @@ parameter of either 0.01 or 0.001 for the linear SVM::
   >>> from sklearn.model_selection import GridSearchCV
   >>> parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
   ...               'tfidf__use_idf': (True, False),
-  ...               'clf__alpha': (1e-2, 1e-3),
+  ...               'clf__alpha': (1e-2, 1e-3)
   ... }
 
 Obviously, such an exhaustive search can be expensive. If we have multiple
