@@ -142,8 +142,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             lambda dy: np.sum(np.abs(dy), axis=1)
 
-        NOTE: residual_metric is deprecated from 0.18 and will be removed in 0.20
-        Use ``loss`` instead.
+        .. deprecated:: 0.18
+           ``residual_metric`` is deprecated from 0.18 and will be removed in
+           0.20. Use ``loss`` instead.
 
     loss : string, callable, optional, default "absolute_loss"
         String inputs, "absolute_loss" and "squared_loss" are supported which
@@ -152,11 +153,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         If ``loss`` is a callable, then it should be a function that takes
         two arrays as inputs, the true and predicted value and returns a 1-D
-        array with the ``i``th value of the array corresponding to the loss
-        on `X[i]`.
+        array with the i-th value of the array corresponding to the loss
+        on ``X[i]``.
 
-        If the loss on a sample is greater than the ``residual_threshold``, then
-        this sample is classified as an outlier.
+        If the loss on a sample is greater than the ``residual_threshold``,
+        then this sample is classified as an outlier.
 
     random_state : int, RandomState instance or None, optional, default None
         The generator used to initialize the centers.  If int, random_state is

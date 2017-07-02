@@ -84,38 +84,6 @@ C/C++ generated files are embedded in distributed stable packages. The goal is
 to make it possible to install scikit-learn stable version
 on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
-Fast matrix multiplications
-===========================
-
-Matrix multiplications (matrix-matrix and matrix-vector) are usually handled
-using the NumPy function ``np.dot``, but in versions of NumPy before 1.7.2
-this function is suboptimal when the inputs are not both in the C (row-major)
-layout; in that case, the inputs may be implicitly copied to obtain the right
-layout. This obviously consumes memory and takes time.
-
-The function ``fast_dot`` in ``sklearn.utils.extmath`` offers a fast
-replacement for ``np.dot`` that prevents copies from being made in some cases.
-In all other cases, it dispatches to ``np.dot`` and when the NumPy version is
-new enough, it is in fact an alias for that function, making it a drop-in
-replacement. Example usage of ``fast_dot``::
-
-  >>> import numpy as np
-  >>> from sklearn.utils.extmath import fast_dot
-  >>> X = np.random.random_sample([2, 10])
-  >>> np.allclose(np.dot(X, X.T), fast_dot(X, X.T))
-  True
-
-This function operates optimally on 2-dimensional arrays, both of the same
-dtype, which should be either single or double precision float. If these
-requirements aren't met or the BLAS package is not available, the call is
-silently dispatched to ``numpy.dot``. If you want to be sure when the original
-``numpy.dot`` has been invoked in a situation where it is suboptimal, you can
-activate the related warning::
-
-  >>> import warnings
-  >>> from sklearn.exceptions import NonBLASDotWarning
-  >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
-
 .. _profiling-python-code:
 
 Profiling Python code
@@ -211,41 +179,19 @@ It is however still interesting to check what's happening inside the
 ``_nls_subproblem`` function which is the hotspot if we only consider
 Python code: it takes around 100% of the accumulated time of the module. In
 order to better understand the profile of this specific function, let
-us install ``line-prof`` and wire it to IPython::
+us install ``line_profiler`` and wire it to IPython::
 
-  $ pip install line-profiler
+  $ pip install line_profiler
 
-- **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
-  ensure the following lines are present::
-
-    import IPython.ipapi
-    ip = IPython.ipapi.get()
-
-  Towards the end of the file, define the ``%lprun`` magic::
-
-    import line_profiler
-    ip.expose_magic('lprun', line_profiler.magic_lprun)
-
-- **Under IPython 0.11+**, first create a configuration profile::
+- **Under IPython 0.13+**, first create a configuration profile::
 
     $ ipython profile create
 
-  Then create a file named ``~/.ipython/extensions/line_profiler_ext.py`` with
-  the following content::
+  Then register the line_profiler extension in
+  ``~/.ipython/profile_default/ipython_config.py``::
 
-    import line_profiler
-
-    def load_ipython_extension(ip):
-        ip.define_magic('lprun', line_profiler.magic_lprun)
-
-  Then register it in ``~/.ipython/profile_default/ipython_config.py``::
-
-    c.TerminalIPythonApp.extensions = [
-        'line_profiler_ext',
-    ]
-    c.InteractiveShellApp.extensions = [
-        'line_profiler_ext',
-    ]
+    c.TerminalIPythonApp.extensions.append('line_profiler')
+    c.InteractiveShellApp.extensions.append('line_profiler')
 
   This will register the ``%lprun`` magic command in the IPython terminal
   application and the other frontends such as qtconsole and notebook.
@@ -311,39 +257,16 @@ install the latest version::
 
 Then, setup the magics in a manner similar to ``line_profiler``.
 
-- **Under IPython <= 0.10**, edit ``~/.ipython/ipy_user_conf.py`` and
-  ensure the following lines are present::
-
-    import IPython.ipapi
-    ip = IPython.ipapi.get()
-
-  Towards the end of the file, define the ``%memit`` and ``%mprun`` magics::
-
-    import memory_profiler
-    ip.expose_magic('memit', memory_profiler.magic_memit)
-    ip.expose_magic('mprun', memory_profiler.magic_mprun)
-
 - **Under IPython 0.11+**, first create a configuration profile::
 
     $ ipython profile create
 
-  Then create a file named ``~/.ipython/extensions/memory_profiler_ext.py``
-  with the following content::
+  Then register the extension in
+  ``~/.ipython/profile_default/ipython_config.py``
+  alongside the line profiler::
 
-    import memory_profiler
-
-    def load_ipython_extension(ip):
-        ip.define_magic('memit', memory_profiler.magic_memit)
-        ip.define_magic('mprun', memory_profiler.magic_mprun)
-
-  Then register it in ``~/.ipython/profile_default/ipython_config.py``::
-
-    c.TerminalIPythonApp.extensions = [
-        'memory_profiler_ext',
-    ]
-    c.InteractiveShellApp.extensions = [
-        'memory_profiler_ext',
-    ]
+    c.TerminalIPythonApp.extensions.append('memory_profiler')
+    c.InteractiveShellApp.extensions.append('memory_profiler')
 
   This will register the ``%memit`` and ``%mprun`` magic commands in the
   IPython terminal application and the other frontends such as qtconsole and
@@ -470,4 +393,3 @@ A sample algorithmic trick: warm restarts for cross validation
 
 TODO: demonstrate the warm restart tricks for cross validation of linear
 regression with Coordinate Descent.
-

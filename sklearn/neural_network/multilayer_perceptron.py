@@ -557,10 +557,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                     break
 
                 if self.n_iter_ == self.max_iter:
-                    warnings.warn('Stochastic Optimizer: Maximum iterations'
-                                  ' reached and the optimization hasn\'t '
-                                  'converged yet.'
-                                  % (), ConvergenceWarning)
+                    warnings.warn(
+                        "Stochastic Optimizer: Maximum iterations (%d) "
+                        "reached and the optimization hasn't converged yet."
+                        % self.max_iter, ConvergenceWarning)
         except KeyboardInterrupt:
             warnings.warn("Training interrupted by user.")
 
@@ -753,7 +753,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     max_iter : int, optional, default 200
         Maximum number of iterations. The solver iterates until convergence
-        (determined by 'tol') or this number of iterations.
+        (determined by 'tol') or this number of iterations. For stochastic
+        solvers ('sgd', 'adam'), note that this determines the number of epochs
+        (how many times each data point will be used), not the number of
+        gradient steps.
 
     random_state : int, RandomState instance or None, optional, default None
         If int, random_state is the seed used by the random number generator;
@@ -1127,7 +1130,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     max_iter : int, optional, default 200
         Maximum number of iterations. The solver iterates until convergence
-        (determined by 'tol') or this number of iterations.
+        (determined by 'tol') or this number of iterations. For stochastic
+        solvers ('sgd', 'adam'), note that this determines the number of epochs
+        (how many times each data point will be used), not the number of
+        gradient steps.
 
     random_state : int, RandomState instance or None, optional, default None
         If int, random_state is the seed used by the random number generator;

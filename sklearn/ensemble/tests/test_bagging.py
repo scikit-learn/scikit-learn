@@ -65,7 +65,7 @@ def test_classification():
 
     for base_estimator in [None,
                            DummyClassifier(),
-                           Perceptron(),
+                           Perceptron(tol=1e-3),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),
                            SVC()]:
@@ -519,7 +519,7 @@ def test_base_estimator():
 
     assert_true(isinstance(ensemble.base_estimator_, DecisionTreeClassifier))
 
-    ensemble = BaggingClassifier(Perceptron(),
+    ensemble = BaggingClassifier(Perceptron(tol=1e-3),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
@@ -668,7 +668,7 @@ def test_oob_score_removed_on_warm_start():
 
 
 def test_oob_score_consistency():
-    # Make sure OOB scores are identical when random_state, estimator, and 
+    # Make sure OOB scores are identical when random_state, estimator, and
     # training data are fixed and fitting is done twice
     X, y = make_hastie_10_2(n_samples=200, random_state=1)
     bagging = BaggingClassifier(KNeighborsClassifier(), max_samples=0.5,
@@ -723,3 +723,20 @@ def test_max_samples_consistency():
                                 max_features=0.5, random_state=1)
     bagging.fit(X, y)
     assert_equal(bagging._max_samples, max_samples)
+
+
+def test_set_oob_score_label_encoding():
+    # Make sure the oob_score doesn't change when the labels change
+    # See: https://github.com/scikit-learn/scikit-learn/issues/8933
+    random_state = 5
+    X = [[-1], [0], [1]] * 5
+    Y1 = ['A', 'B', 'C'] * 5
+    Y2 = [-1, 0, 1] * 5
+    Y3 = [0, 1, 2] * 5
+    x1 = BaggingClassifier(oob_score=True,
+                           random_state=random_state).fit(X, Y1).oob_score_
+    x2 = BaggingClassifier(oob_score=True,
+                           random_state=random_state).fit(X, Y2).oob_score_
+    x3 = BaggingClassifier(oob_score=True,
+                           random_state=random_state).fit(X, Y3).oob_score_
+    assert_equal([x1, x2], [x3, x3])

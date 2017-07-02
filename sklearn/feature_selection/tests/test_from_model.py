@@ -1,6 +1,7 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
@@ -16,7 +17,6 @@ from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.utils.fixes import norm
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
@@ -24,7 +24,8 @@ rng = np.random.RandomState(0)
 
 
 def test_invalid_input():
-    clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=None)
+    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
+                        random_state=None, tol=None)
     for threshold in ["gobbledigook", ".5 * gobbledigook"]:
         model = SelectFromModel(clf, threshold=threshold)
         model.fit(data, y)
@@ -32,9 +33,7 @@ def test_invalid_input():
 
 
 def test_input_estimator_unchanged():
-    """
-    Test that SelectFromModel fits on a clone of the estimator.
-    """
+    # Test that SelectFromModel fits on a clone of the estimator.
     est = RandomForestClassifier()
     transformer = SelectFromModel(estimator=est)
     transformer.fit(data, y)
@@ -100,13 +99,14 @@ def test_feature_importances_2d_coef():
 
             # Manually check that the norm is correctly performed
             est.fit(X, y)
-            importances = norm(est.coef_, axis=0, ord=order)
+            importances = np.linalg.norm(est.coef_, axis=0, ord=order)
             feature_mask = importances > func(importances)
             assert_array_equal(X_new, X[:, feature_mask])
 
 
 def test_partial_fit():
-    est = PassiveAggressiveClassifier(random_state=0, shuffle=False)
+    est = PassiveAggressiveClassifier(random_state=0, shuffle=False,
+                                      max_iter=5, tol=None)
     transformer = SelectFromModel(estimator=est)
     transformer.partial_fit(data, y,
                             classes=np.unique(y))
@@ -120,6 +120,10 @@ def test_partial_fit():
     transformer.fit(np.vstack((data, data)), np.concatenate((y, y)))
     assert_array_equal(X_transform, transformer.transform(data))
 
+    # check that if est doesn't have partial_fit, neither does SelectFromModel
+    transformer = SelectFromModel(estimator=RandomForestClassifier())
+    assert_false(hasattr(transformer, "partial_fit"))
+
 
 def test_calling_fit_reinitializes():
     est = LinearSVC(random_state=0)
@@ -131,12 +135,12 @@ def test_calling_fit_reinitializes():
 
 
 def test_prefit():
-    """
-    Test all possible combinations of the prefit parameter.
-    """
+    # Test all possible combinations of the prefit parameter.
+
     # Passing a prefit parameter with the selected model
     # and fitting a unfit model with prefit=False should give same results.
-    clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=0)
+    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
+                        random_state=0, tol=None)
     model = SelectFromModel(clf)
     model.fit(data, y)
     X_transform = model.transform(data)
@@ -169,12 +173,13 @@ def test_threshold_string():
 
 
 def test_threshold_without_refitting():
-    """Test that the threshold can be set without refitting the model."""
-    clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=0)
-    model = SelectFromModel(clf, threshold=0.1)
+    # Test that the threshold can be set without refitting the model.
+    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
+                        random_state=0, tol=None)
+    model = SelectFromModel(clf, threshold="0.1 * mean")
     model.fit(data, y)
     X_transform = model.transform(data)
 
     # Set a higher threshold to filter out more features.
-    model.threshold = 1.0
+    model.threshold = "1.0 * mean"
     assert_greater(X_transform.shape[1], model.transform(data).shape[1])

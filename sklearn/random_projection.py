@@ -392,7 +392,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Project the data by using matrix product with the random matrix
 
         Parameters
@@ -400,13 +400,10 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         X : numpy array or scipy.sparse of shape [n_samples, n_features]
             The input data to project into a smaller dimensional space.
 
-        y : is not used: placeholder to allow for usage in a Pipeline.
-
         Returns
         -------
         X_new : numpy array or scipy sparse of shape [n_samples, n_components]
             Projected array.
-
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
 

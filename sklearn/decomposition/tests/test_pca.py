@@ -174,7 +174,8 @@ def test_whitening():
         X_whitened2 = pca.transform(X_)
         assert_array_almost_equal(X_whitened, X_whitened2)
 
-        assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components),
+        assert_almost_equal(X_whitened.std(ddof=1, axis=0),
+                            np.ones(n_components),
                             decimal=6)
         assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
 
@@ -213,17 +214,25 @@ def test_explained_variance():
                               rpca.explained_variance_ratio_, 1)
 
     # compare to empirical variances
+    expected_result = np.linalg.eig(np.cov(X, rowvar=False))[0]
+    expected_result = sorted(expected_result, reverse=True)[:2]
+
     X_pca = pca.transform(X)
     assert_array_almost_equal(pca.explained_variance_,
-                              np.var(X_pca, axis=0))
+                              np.var(X_pca, ddof=1, axis=0))
+    assert_array_almost_equal(pca.explained_variance_, expected_result)
 
     X_pca = apca.transform(X)
     assert_array_almost_equal(apca.explained_variance_,
-                              np.var(X_pca, axis=0))
+                              np.var(X_pca, ddof=1, axis=0))
+    assert_array_almost_equal(apca.explained_variance_, expected_result)
 
     X_rpca = rpca.transform(X)
-    assert_array_almost_equal(rpca.explained_variance_, np.var(X_rpca, axis=0),
+    assert_array_almost_equal(rpca.explained_variance_,
+                              np.var(X_rpca, ddof=1, axis=0),
                               decimal=1)
+    assert_array_almost_equal(rpca.explained_variance_,
+                              expected_result, decimal=1)
 
     # Same with correlated data
     X = datasets.make_classification(n_samples, n_features,
@@ -263,7 +272,7 @@ def test_singular_values():
     assert_array_almost_equal(np.sum(pca.singular_values_**2.0),
                               np.linalg.norm(X_pca, "fro")**2.0, 12)
     assert_array_almost_equal(np.sum(apca.singular_values_**2.0),
-                              np.linalg.norm(X_apca, "fro")**2.0, 12)
+                              np.linalg.norm(X_apca, "fro")**2.0, 9)
     assert_array_almost_equal(np.sum(rpca.singular_values_**2.0),
                               np.linalg.norm(X_rpca, "fro")**2.0, 0)
 
@@ -574,8 +583,7 @@ def test_deprecation_randomized_pca():
     assert_array_almost_equal(Y, Y_pca)
 
 
-def test_pca_spase_input():
-
+def test_pca_sparse_input():
     X = np.random.RandomState(0).rand(5, 4)
     X = sp.sparse.csr_matrix(X)
     assert(sp.sparse.issparse(X))
@@ -590,3 +598,48 @@ def test_pca_bad_solver():
     X = np.random.RandomState(0).rand(5, 4)
     pca = PCA(n_components=3, svd_solver='bad_argument')
     assert_raises(ValueError, pca.fit, X)
+
+
+def test_pca_dtype_preservation():
+    for svd_solver in solver_list:
+        yield check_pca_float_dtype_preservation, svd_solver
+        yield check_pca_int_dtype_upcast_to_double, svd_solver
+
+
+def check_pca_float_dtype_preservation(svd_solver):
+    # Ensure that PCA does not upscale the dtype when input is float32
+    X_64 = np.random.RandomState(0).rand(1000, 4).astype(np.float64)
+    X_32 = X_64.astype(np.float32)
+
+    pca_64 = PCA(n_components=3, svd_solver=svd_solver,
+                 random_state=0).fit(X_64)
+    pca_32 = PCA(n_components=3, svd_solver=svd_solver,
+                 random_state=0).fit(X_32)
+
+    assert pca_64.components_.dtype == np.float64
+    assert pca_32.components_.dtype == np.float32
+    assert pca_64.transform(X_64).dtype == np.float64
+    assert pca_32.transform(X_32).dtype == np.float32
+
+    assert_array_almost_equal(pca_64.components_, pca_32.components_,
+                              decimal=5)
+
+
+def check_pca_int_dtype_upcast_to_double(svd_solver):
+    # Ensure that all int types will be upcast to float64
+    X_i64 = np.random.RandomState(0).randint(0, 1000, (1000, 4))
+    X_i64 = X_i64.astype(np.int64)
+    X_i32 = X_i64.astype(np.int32)
+
+    pca_64 = PCA(n_components=3, svd_solver=svd_solver,
+                 random_state=0).fit(X_i64)
+    pca_32 = PCA(n_components=3, svd_solver=svd_solver,
+                 random_state=0).fit(X_i32)
+
+    assert pca_64.components_.dtype == np.float64
+    assert pca_32.components_.dtype == np.float64
+    assert pca_64.transform(X_i64).dtype == np.float64
+    assert pca_32.transform(X_i32).dtype == np.float64
+
+    assert_array_almost_equal(pca_64.components_, pca_32.components_,
+                              decimal=5)

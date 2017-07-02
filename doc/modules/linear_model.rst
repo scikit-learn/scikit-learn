@@ -205,11 +205,6 @@ computes the coefficients along the full path of possible values.
       thus be used to perform feature selection, as detailed in
       :ref:`l1_feature_selection`.
 
-.. note:: **Randomized sparsity**
-
-      For feature selection or sparse recovery, it may be interesting to
-      use :ref:`randomized_l1`.
-
 
 Setting regularization parameter
 --------------------------------
@@ -544,8 +539,8 @@ This can be done by introducing `uninformative priors
 <https://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
 over the hyper parameters of the model.
 The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
-to finding a maximum a-postiori solution under a Gaussian prior over the
-parameters :math:`w` with precision :math:`\lambda^-1`.  Instead of setting
+to finding a maximum a posteriori estimation under a Gaussian prior over the
+parameters :math:`w` with precision :math:`\lambda^{-1}`.  Instead of setting
 `\lambda` manually, it is possible to treat it as a random variable to be
 estimated from the data.
 
@@ -601,7 +596,7 @@ remaining hyperparameters are the parameters of the gamma priors over
 *non-informative*.  The parameters are estimated by maximizing the *marginal
 log likelihood*.
 
-By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 1.e^{-6}`.
+By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
 
 .. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_bayesian_ridge_001.png
@@ -1265,7 +1260,8 @@ This way, we can solve the XOR problem with a linear classifier::
            [1, 0, 1, 0],
            [1, 1, 0, 0],
            [1, 1, 1, 1]])
-    >>> clf = Perceptron(fit_intercept=False, n_iter=10, shuffle=False).fit(X, y)
+    >>> clf = Perceptron(fit_intercept=False, max_iter=10, tol=None,
+    ...                  shuffle=False).fit(X, y)
 
 And the classifier "predictions" are perfect::
 
