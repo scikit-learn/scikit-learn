@@ -242,13 +242,14 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         n_samples, n_classes = len(y), len(classes)
 
         alpha = self.alpha
-        if alpha is not None and (alpha <= 0.0 or alpha >= 1.0):
+        if self.variant == 'spreading' and \
+                (alpha is None or alpha <= 0.0 or alpha >= 1.0):
             raise ValueError('alpha=%s is invalid: it must be inside '
                              'the open interval (0, 1)' % alpha)
         y = np.asarray(y)
         unlabeled = y == -1
 
-        if alpha is None:
+        if self.variant == 'propagation':
             # LabelPropagation
             clamp_weights = np.ones((n_samples, 1))
             clamp_weights[~unlabeled, 0] = 0.0
@@ -262,7 +263,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             self.label_distributions_[y == label, classes == label] = 1
 
         y_static = np.copy(self.label_distributions_)
-        if alpha is None:
+        if self.variant == 'propagation':
             # LabelPropagation
             y_static[unlabeled] = 0
         else:
@@ -280,7 +281,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             self.label_distributions_ = safe_sparse_dot(
                 graph_matrix, self.label_distributions_)
 
-            if alpha is None:
+            if alpha == 'propagation':
                 # LabelPropagation
                 normalizer = np.sum(
                     self.label_distributions_, axis=1)[:, np.newaxis]
@@ -376,6 +377,9 @@ class LabelPropagation(BaseLabelPropagation):
     --------
     LabelSpreading : Alternate label propagation strategy more robust to noise
     """
+
+    variant = 'propagation'
+
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
                  alpha=None, max_iter=30, tol=1e-3, n_jobs=1):
         super(LabelPropagation, self).__init__(
@@ -490,6 +494,8 @@ class LabelSpreading(BaseLabelPropagation):
     --------
     LabelPropagation : Unregularized graph based semi-supervised learning
     """
+
+    variant = 'spreading'
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
                  max_iter=30, tol=1e-3, n_jobs=1):
