@@ -249,14 +249,6 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         y = np.asarray(y)
         unlabeled = y == -1
 
-        if self.variant == 'propagation':
-            # LabelPropagation
-            clamp_weights = np.ones((n_samples, 1))
-            clamp_weights[~unlabeled, 0] = 0.0
-        else:
-            # LabelSpreading
-            clamp_weights = alpha * np.ones((n_samples, 1))
-
         # initialize distributions
         self.label_distributions_ = np.zeros((n_samples, n_classes))
         for label in classes:
@@ -273,6 +265,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
         remaining_iter = self.max_iter
+        unlabeled = unlabeled[:, np.newaxis]
         if sparse.isspmatrix(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
         while (_not_converged(self.label_distributions_, l_previous, self.tol)
@@ -285,10 +278,13 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 normalizer = np.sum(
                     self.label_distributions_, axis=1)[:, np.newaxis]
                 self.label_distributions_ /= normalizer
-
-            # clamp
-            self.label_distributions_ = np.multiply(
-                clamp_weights, self.label_distributions_) + y_static
+                self.label_distributions_ = np.where(unlabeled,
+                                                     self.label_distributions_,
+                                                     y_static)
+            else:
+                # clamp
+                self.label_distributions_ = np.multiply(
+                    alpha, self.label_distributions_) + y_static
             remaining_iter -= 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
