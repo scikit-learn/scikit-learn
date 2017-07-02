@@ -446,7 +446,7 @@ Bug fixes
    - Fix :class:`semi_supervised.BaseLabelPropagation` to correctly implement
      ``LabelPropagation`` and ``LabelSpreading`` as done in the referenced
      papers. :class:`semi_supervised.LabelPropagation` now always does hard
-     clamping. Its ``alpha`` parameter now defaults to ``None`` and is
+     clamping. Its ``alpha`` parameter has no effect and is
      deprecated to be removed in 0.21. :issue:`6727` :issue:`3550` issue:`5770`
      by :user:`Andre Ambrosio Boechat <boechat107>`, :user:`Utkarsh Upadhyay
      <musically-ut>`, and `Joel Nothman`_.
