@@ -115,16 +115,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         X = check_array(X, dtype='numeric')
 
         n_features = X.shape[1]
-        ignored = self._check_ignored_features(self.ignored_features,
-                                               n_features)
+        ignored = self._validate_ignored_features(n_features)
         self.transformed_features_ = np.delete(np.arange(n_features), ignored)
 
         offset = np.min(X, axis=0)
         offset[ignored] = 0
         self.offset_ = offset
-
-        n_bins = self._check_n_bins(self.n_bins, n_features, ignored)
-        self.n_bins_ = n_bins
+        self.n_bins_ = self._validate_n_bins(n_features, ignored)
 
         ptp = np.ptp(X, axis=0)
         same_min_max = np.where(ptp == 0)[0]
@@ -138,26 +135,32 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         self.bin_width_ = bin_widths
         return self
 
-    @staticmethod
-    def _check_n_bins(n_bins, n_features, ignored):
+    def _validate_n_bins(self, n_features, ignored):
         """Returns n_bins_, the number of bins per feature.
 
         Also ensures that ignored bins are zero.
         """
-        if isinstance(n_bins, numbers.Number):
-            if n_bins < 2:
+        orig_bins = self.n_bins
+        if isinstance(orig_bins, numbers.Number):
+            if not isinstance(orig_bins, np.int):
+                raise ValueError("{} received an invalid n_bins type. "
+                                 "Received {}, expected int."
+                                 .format(KBinsDiscretizer.__name__,
+                                         type(orig_bins).__name__))
+            if orig_bins < 2:
                 raise ValueError("{} received an invalid number "
                                  "of bins. Received {}, expected at least 2."
-                                 .format(KBinsDiscretizer.__name__, n_bins))
-            return np.ones(n_features) * n_bins
+                                 .format(KBinsDiscretizer.__name__, orig_bins))
+            return np.ones(n_features) * orig_bins
 
-        n_bins = check_array(n_bins, dtype=int, copy=True, ensure_2d=False)
+        n_bins = check_array(orig_bins, dtype=np.int, copy=True,
+                             ensure_2d=False)
 
         if n_bins.ndim > 1 or n_bins.shape[0] != n_features:
             raise ValueError("n_bins must be a scalar or array "
                              "of shape (n_features,).")
 
-        bad_nbins_value = n_bins < 2
+        bad_nbins_value = (n_bins < 2) | (n_bins != orig_bins)
         bad_nbins_value[ignored] = False
 
         violating_indices = np.where(bad_nbins_value)[0]
@@ -165,13 +168,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             indices = ", ".join(str(i) for i in violating_indices)
             raise ValueError("{} received an invalid number "
                              "of bins at indices {}. Number of bins "
-                             "must be at least 2."
+                             "must be at least 2, and must be an int."
                              .format(KBinsDiscretizer.__name__, indices))
         n_bins[ignored] = 0
         return n_bins
 
-    @staticmethod
-    def _check_ignored_features(ignored, n_features):
+    def _validate_ignored_features(self, n_features):
+        ignored = self.ignored_features
         if ignored is None:
             return np.array([], dtype='int64')
 
@@ -199,11 +202,21 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xt : numeric array-like, shape (n_samples, n_features)
             Data in the binned space.
         """
-        X = self._check_post_fit(X)
+        check_is_fitted(self, ["offset_", "bin_width_"])
+        X = self._validate_X_post_fit(X)
 
         return _transform_selected(X, self._transform,
                                    self.transformed_features_, copy=True,
                                    retain_order=True)
+
+    def _validate_X_post_fit(self, X):
+        X = check_array(X, dtype='numeric')
+
+        n_features = self.n_bins_.shape[0]
+        if X.shape[1] != n_features:
+            raise ValueError("Incorrect number of features. Expecting {}, "
+                             "received {}.".format(n_features, X.shape[1]))
+        return X
 
     def _transform(self, X):
         """Performs transformation on X, with no ignored features."""
@@ -245,7 +258,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xinv : numeric array-like
             Data in the original feature space.
         """
-        Xt = self._check_post_fit(Xt)
+        check_is_fitted(self, ["offset_", "bin_width_"])
+        Xt = self._validate_X_post_fit(Xt)
         trans = self.transformed_features_
         Xinv = Xt.copy()
         Xinv_sel = Xinv[:, trans]
@@ -256,13 +270,3 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         Xinv[:, trans] = Xinv_sel
         return Xinv
-
-    def _check_post_fit(self, X):
-        check_is_fitted(self, ["offset_", "bin_width_"])
-        X = check_array(X, dtype='numeric')
-
-        n_features = self.n_bins_.shape[0]
-        if X.shape[1] != n_features:
-            raise ValueError("Incorrect number of features. Expecting {}, "
-                             "received {}.".format(n_features, X.shape[1]))
-        return X

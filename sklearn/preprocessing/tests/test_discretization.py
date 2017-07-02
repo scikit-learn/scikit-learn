@@ -33,6 +33,11 @@ def test_invalid_n_bins():
                          "number of bins. Received 1, expected at least 2.",
                          est.fit_transform, X)
 
+    est = KBinsDiscretizer(n_bins=1.1)
+    assert_raise_message(ValueError, "KBinsDiscretizer received an invalid "
+                         "n_bins type. Received float, expected int.",
+                         est.fit_transform, X)
+
 
 def test_invalid_n_bins_array():
     # Bad shape
@@ -54,7 +59,17 @@ def test_invalid_n_bins_array():
     est = KBinsDiscretizer(n_bins=n_bins)
     assert_raise_message(ValueError,
                          "KBinsDiscretizer received an invalid number of bins "
-                         "at indices 0, 3. Number of bins must be at least 2.",
+                         "at indices 0, 3. Number of bins must be at least 2, "
+                         "and must be an int.",
+                         est.fit_transform, X)
+
+    # Float bin values
+    n_bins = [2.1, 2, 2.1, 2]
+    est = KBinsDiscretizer(n_bins=n_bins)
+    assert_raise_message(ValueError,
+                         "KBinsDiscretizer received an invalid number of bins "
+                         "at indices 0, 2. Number of bins must be at least 2, "
+                         "and must be an int.",
                          est.fit_transform, X)
 
 

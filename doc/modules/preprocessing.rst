@@ -457,7 +457,7 @@ K-bins discretization
   ...               [  6., 3., 11 ]])
   >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 3, 2]).fit(X)
   >>> est.bin_width_
-  array([ 3., 1., 2.,]) # doctest: +NORMALIZE_WHITESPACE
+  array([ 3., 1., 2.]) # doctest: +NORMALIZE_WHITESPACE
 
 For each feature, the bin width is computed during ``fit`` and together with
 the number of bins, they will define the intervals. Therefore, for the current
