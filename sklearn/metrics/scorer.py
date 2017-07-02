@@ -413,7 +413,7 @@ normalized_mutual_info_scorer = make_scorer(normalized_mutual_info_score)
 fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
 
-SCORERS = dict(explained_variance_score=explained_variance_scorer,
+SCORERS = dict(explained_variance=explained_variance_scorer,
                r2=r2_scorer,
                neg_median_absolute_error=neg_median_absolute_error_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
