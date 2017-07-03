@@ -4,6 +4,8 @@ import sys
 import numpy as np
 from scipy import sparse
 
+from sklearn.utils.deprecation import deprecated
+from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.testing import (
     assert_true,
     assert_raises,
@@ -355,6 +357,81 @@ class Klass(object):
         pass
 
 
+class MockEst(object):
+    def __init__(self):
+        """MockEstimator"""
+    def fit(self, X, y):
+        return X
+    def predict(self, X):
+        return X
+    def predict_proba(self, X):
+        return X
+    def score(self, X):
+        return 1.
+
+
+class MockMetaEstimator(object):
+    def __init__(self, delegate):
+        """MetaEstimator to check if doctest on delegated methods work.
+
+        Parameters
+        ---------
+        delegate : estimator
+            Delegated estimator.
+        """
+        self.delegate = delegate
+
+    @if_delegate_has_method(delegate=('delegate'))
+    def predict(self, X):
+        """This is available only if delegate has predict.
+
+        Parameters
+        ----------
+        y : ndarray
+            Parameter y
+        """
+        return self.delegate.predict(X)
+
+    @deprecated("Testing a deprecated delegated method")
+    @if_delegate_has_method(delegate=('delegate'))
+    def score(self, X):
+        """This is available only if delegate has score.
+
+        Parameters
+        ---------
+        y : ndarray
+            Parameter y
+        """
+
+    @if_delegate_has_method(delegate=('delegate'))
+    def predict_proba(self, X):
+        """This is available only if delegate has predict_proba.
+
+        Parameters
+        ---------
+        X : ndarray
+            Parameter X
+        """
+        return X
+
+    @deprecated('Testing deprecated function with correct params')
+    @if_delegate_has_method(delegate=('delegate'))
+    def predict_proba(self, X):
+        """This is available only if delegate has predict_proba.
+
+        Parameters
+        ---------
+        X : ndarray
+            Parameter X
+        """
+        return X
+
+    @deprecated('Testing deprecated function with wrong params')
+    @if_delegate_has_method(delegate=('delegate'))
+    def fit(self, X, y):
+        """Incorrect docstring but should not be tested"""
+
+
 def test_check_parameters_match():
     try:
         import numpydoc  # noqa
@@ -373,10 +450,18 @@ def test_check_parameters_match():
     assert_raise_message(RuntimeError, 'Unknown section Parameter',
                          check_parameters_match, Klass.f_bad_sections)
 
-    messages = ['a != b']
-    messages += ["arg mismatch: ['b']"]
-    messages += ["arg mismatch: ['X', 'y']"]
-    for mess, f in zip(messages, [f_bad_order, f_missing, Klass.f_missing]):
+    messages = ["a != b", "arg mismatch: ['b']", "arg mismatch: ['X', 'y']",
+                "predict y != X",
+                "predict_proba arg mismatch: ['X']",
+                "score arg mismatch: ['X']",
+                ".fit arg mismatch: ['X', 'y']"]
+
+    mock_meta = MockMetaEstimator(delegate=MockEst())
+
+    for mess, f in zip(messages,
+                       [f_bad_order, f_missing, Klass.f_missing,
+                        mock_meta.predict, mock_meta.predict_proba,
+                        mock_meta.score, mock_meta.fit]):
         incorrect = check_parameters_match(f)
         assert_true(len(incorrect) >= 1)
         assert_true(mess in incorrect[0],

@@ -856,7 +856,7 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
     # Don't check docstring for property-functions
     if inspect.isdatadescriptor(func):
         return incorrect
-    args = list(filter(lambda x: x in ignore, _get_args(func)))
+    args = list(filter(lambda x: x not in ignore, _get_args(func)))
     # drop self
     if len(args) > 0 and args[0] == 'self':
         args.remove('self')
@@ -892,10 +892,10 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
         if '*' not in name:
             param_names.append(name.split(':')[0].strip('` '))
 
-    param_names = list(filter(lambda x: x in ignore, param_names))
+    param_names = list(filter(lambda x: x not in ignore, param_names))
 
     if len(param_names) != len(args):
-        bad = str(sorted(list(set(param_names) ^ set(args)))
+        bad = str(sorted(list(set(param_names) ^ set(args))))
         incorrect += [func_name + ' arg mismatch: ' + bad]
     else:
         for n1, n2 in zip(param_names, args):
