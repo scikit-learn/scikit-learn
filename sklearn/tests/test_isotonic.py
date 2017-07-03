@@ -470,10 +470,12 @@ def test_isotonic_dtype():
     for dtype in (np.int32, np.int64, np.float32, np.float64):
         for sample_weight in (None, weights.astype(np.float32), weights):
             y_np = np.array(y, dtype=dtype)
+            expected_dtype = as_float_array(y_np).dtype
+
             res = isotonic_regression(y_np, sample_weight=sample_weight)
-            assert_equal(res.dtype, as_float_array(res).dtype)
+            assert_equal(res.dtype, expected_dtype)
 
             X = np.arange(len(y)).astype(dtype)
             reg.fit(X, y_np, sample_weight=sample_weight)
-            reg.predict(X)
-            assert_equal(res.dtype, as_float_array(res).dtype)
+            res = reg.predict(X)
+            assert_equal(res.dtype, expected_dtype)
