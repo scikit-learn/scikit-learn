@@ -464,6 +464,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             x0=packed_coef_inter,
             func=self._loss_grad_lbfgs,
             maxfun=self.max_iter,
+            maxiter=self.max_iter,
             iprint=iprint,
             pgtol=self.tol,
             args=(X, y, activations, deltas, coef_grads, intercept_grads))
