@@ -296,7 +296,7 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
     return patches
 
 
-def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
+def extract_patches_2d(image, patch_size, max_patches=None, random_state=None, extraction_step=1):
     """Reshape a 2D image into a collection of patches
 
     The resulting patches are allocated in a dedicated array.
