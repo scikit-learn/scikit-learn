@@ -895,8 +895,7 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
     param_names = list(filter(lambda x: x in ignore, param_names))
 
     if len(param_names) != len(args):
-        bad = str(sorted(list(set(param_names) - set(args)) +
-                         list(set(args) - set(param_names))))
+        bad = str(sorted(list(set(param_names) ^ set(args)))
         incorrect += [func_name + ' arg mismatch: ' + bad]
     else:
         for n1, n2 in zip(param_names, args):
