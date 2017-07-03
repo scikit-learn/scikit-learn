@@ -6,7 +6,7 @@
 Model evaluation: quantifying the quality of predictions
 ========================================================
 
-There are 3 different APIs for evaluating the quality of of a model's
+There are 3 different APIs for evaluating the quality of a model's
 predictions:
 
 * **Estimator score method**: Estimators have a ``score`` method providing a
@@ -1121,7 +1121,7 @@ predictions.
    BS = \frac{1}{N} \sum_{t=1}^{N}(f_t - o_t)^2
 
 where : :math:`N` is the total number of predictions, :math:`f_t` is the
-predicted probablity of the actual outcome :math:`o_t`.
+predicted probability of the actual outcome :math:`o_t`.
 
 Here is a small example of usage of this function:::
 
