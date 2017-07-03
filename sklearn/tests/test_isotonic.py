@@ -464,11 +464,16 @@ def test_isotonic_copy_before_fit():
 
 def test_isotonic_dtype():
     y = [2, 1, 4, 3, 5]
-    for dtype in (np.int32, np.int64, np.float32, np.float64):
-        y_np = np.array(y, dtype=np.int32)
-        res = isotonic_regression(y_np)
-        assert_equal(res.dtype, as_float_array(res).dtype)
+    weights = np.array([.9, .9, .9, .9, .9], dtype=np.float64)
+    reg = IsotonicRegression()
 
-        X = np.arange(len(y)).astype(dtype)
-        res = IsotonicRegression().fit(X, y_np).predict(X)
-        assert_equal(res.dtype, as_float_array(res).dtype)
+    for dtype in (np.int32, np.int64, np.float32, np.float64):
+        for sample_weight in (None, weights.astype(np.float32), weights):
+            y_np = np.array(y, dtype=dtype)
+            res = isotonic_regression(y_np, sample_weight=sample_weight)
+            assert_equal(res.dtype, as_float_array(res).dtype)
+
+            X = np.arange(len(y)).astype(dtype)
+            reg.fit(X, y_np, sample_weight=sample_weight)
+            reg.predict(X)
+            assert_equal(res.dtype, as_float_array(res).dtype)

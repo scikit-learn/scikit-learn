@@ -124,7 +124,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     if sample_weight is None:
         sample_weight = np.ones(len(y), dtype=y.dtype)
     else:
-        sample_weight = np.array(sample_weight[order])
+        sample_weight = np.array(sample_weight[order], dtype=y.dtype)
 
     _inplace_contiguous_isotonic_regression(y, sample_weight)
     if y_min is not None or y_max is not None:
@@ -240,11 +240,9 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
+        X = check_array(X, dtype=[np.float64, np.float32], ensure_2d=False)
+        y = check_array(y, dtype=X.dtype, ensure_2d=False)
         check_consistent_length(X, y, sample_weight)
-        X, y = [check_array(x, ensure_2d=False) for x in [X, y]]
-
-        X = as_float_array(X)
-        y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
 
         # Determine increasing if auto-determination requested
@@ -256,15 +254,15 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         # If sample_weights is passed, removed zero-weight values and clean
         # order
         if sample_weight is not None:
-            sample_weight = check_array(sample_weight, ensure_2d=False)
+            sample_weight = check_array(sample_weight, ensure_2d=False,
+                                        dtype=X.dtype)
             mask = sample_weight > 0
             X, y, sample_weight = X[mask], y[mask], sample_weight[mask]
         else:
-            sample_weight = np.ones(len(y))
+            sample_weight = np.ones(len(y)).astype(X.dtype, copy=False)
 
         order = np.lexsort((y, X))
-        X, y, sample_weight = [array[order].astype(X.dtype, copy=False)
-                               for array in [X, y, sample_weight]]
+        X, y, sample_weight = [array[order] for array in [X, y, sample_weight]]
         unique_X, unique_y, unique_sample_weight = _make_unique(
             X, y, sample_weight)
 
@@ -329,7 +327,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         # the pickle module as the object built by scipy.interp1d is not
         # picklable directly.
         self._necessary_X_, self._necessary_y_ = X, y
-        self._dtype = X.dtype
 
         # Build the interpolation function
         self._build_f(X, y)
@@ -348,9 +345,13 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         T_ : array, shape=(n_samples,)
             The transformed data
         """
-        T = as_float_array(T)
-        if hasattr(self, '_dtype'):
-            T = T.astype(self._dtype, copy=False)
+
+        if hasattr(self, '_necessary_X_'):
+            dtype = self._necessary_X_.dtype
+        else:
+            dtype = np.float64
+
+        T = check_array(T, dtype=dtype, ensure_2d=False)
 
         if len(T.shape) != 1:
             raise ValueError("Isotonic regression input should be a 1d array")
@@ -363,6 +364,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         if self.out_of_bounds == "clip":
             T = np.clip(T, self.X_min_, self.X_max_)
+
         return self.f_(T)
 
     def predict(self, T):
