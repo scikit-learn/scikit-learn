@@ -242,7 +242,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         n_samples, n_classes = len(y), len(classes)
 
         alpha = self.alpha
-        if self.variant == 'spreading' and \
+        if self._variant == 'spreading' and \
                 (alpha is None or alpha <= 0.0 or alpha >= 1.0):
             raise ValueError('alpha=%s is invalid: it must be inside '
                              'the open interval (0, 1)' % alpha)
@@ -255,7 +255,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             self.label_distributions_[y == label, classes == label] = 1
 
         y_static = np.copy(self.label_distributions_)
-        if self.variant == 'propagation':
+        if self._variant == 'propagation':
             # LabelPropagation
             y_static[unlabeled] = 0
         else:
@@ -274,7 +274,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
             self.label_distributions_ = safe_sparse_dot(
                 graph_matrix, self.label_distributions_)
 
-            if self.variant == 'propagation':
+            if self._variant == 'propagation':
                 normalizer = np.sum(
                     self.label_distributions_, axis=1)[:, np.newaxis]
                 self.label_distributions_ /= normalizer
@@ -373,7 +373,7 @@ class LabelPropagation(BaseLabelPropagation):
     LabelSpreading : Alternate label propagation strategy more robust to noise
     """
 
-    variant = 'propagation'
+    _variant = 'propagation'
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
                  alpha=None, max_iter=30, tol=1e-3, n_jobs=1):
@@ -490,7 +490,7 @@ class LabelSpreading(BaseLabelPropagation):
     LabelPropagation : Unregularized graph based semi-supervised learning
     """
 
-    variant = 'spreading'
+    _variant = 'spreading'
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
                  max_iter=30, tol=1e-3, n_jobs=1):
