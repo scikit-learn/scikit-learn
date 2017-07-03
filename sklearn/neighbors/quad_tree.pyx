@@ -140,7 +140,7 @@ cdef class _QuadTree:
 
         # Assert that the point is in the right range
         if DEBUGFLAG:
-            self.check_point_in_cell(point, cell)
+            self._check_point_in_cell(point, cell)
 
         # If the cell is an empty leaf, insert the point in it
         if cell.cumulative_size == 0:
@@ -165,18 +165,18 @@ cdef class _QuadTree:
             cell.cumulative_size += 1
 
             # Insert child in the correct subtree
-            selected_child = self.select_child(point, cell)
+            selected_child = self._select_child(point, cell)
             if self.verbose >= 10:
                 printf("[QuadTree] selected child %li\n", selected_child)
             if selected_child == -1:
                 self.n_points += 1
-                return self.insert_point_in_new_child(point, cell, point_index)
+                return self._insert_point_in_new_child(point, cell, point_index)
             return self.insert_point(point, point_index, selected_child)
 
         # Finally, if the cell is a leaf with a point already inserted,
         # split the cell in n_cells_per_cell if the point is not a duplicate.
         # If it is a duplicate, increase the size of the leaf and return.
-        if self.is_duplicate(point, cell.barycenter):
+        if self._is_duplicate(point, cell.barycenter):
             if self.verbose >= 10:
                 printf("[QuadTree] found a duplicate!\n")
             cell.cumulative_size += 1
@@ -185,12 +185,12 @@ cdef class _QuadTree:
 
         # In a leaf, the barycenter correspond to the only point included
         # in it.
-        self.insert_point_in_new_child(cell.barycenter, cell, cell.point_index,
+        self._insert_point_in_new_child(cell.barycenter, cell, cell.point_index,
                                        cell.cumulative_size)
         return self.insert_point(point, point_index, cell_id)
 
     # XXX: This operation is not Thread safe
-    cdef SIZE_t insert_point_in_new_child(self, DTYPE_t[3] point, Cell* cell,
+    cdef SIZE_t _insert_point_in_new_child(self, DTYPE_t[3] point, Cell* cell,
                                           SIZE_t point_index, SIZE_t size=1
                                           ) nogil:
         """Create a child of cell which will contain point."""
@@ -253,7 +253,7 @@ cdef class _QuadTree:
 
         if DEBUGFLAG:
             # Assert that the point is in the right range
-            self.check_point_in_cell(point, child)
+            self._check_point_in_cell(point, child)
         if self.verbose >= 10:
             printf("[QuadTree] inserted point %li in new child %li\n",
                    point_index, cell_id)
@@ -261,7 +261,7 @@ cdef class _QuadTree:
         return cell_id
 
 
-    cdef bint is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) nogil:
+    cdef bint _is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) nogil:
         """Check if the two given points are equals."""
         cdef int i
         cdef bint res = True
@@ -270,7 +270,7 @@ cdef class _QuadTree:
         return res
 
 
-    cdef SIZE_t select_child(self, DTYPE_t[3] point, Cell* cell) nogil:
+    cdef SIZE_t _select_child(self, DTYPE_t[3] point, Cell* cell) nogil:
         """Select the child of cell which contains the given query point."""
         cdef:
             int i
@@ -313,7 +313,7 @@ cdef class _QuadTree:
 
         self.cell_count += 1
 
-    cdef int check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
+    cdef int _check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
                                   ) nogil except -1:
         """Check that the given point is in the cell boundaries."""
 
@@ -345,7 +345,7 @@ cdef class _QuadTree:
         for cell in self.cells[:self.cell_count]:
             # Check that the barycenter of inserted point is within the cell
             # boundaries
-            self.check_point_in_cell(cell.barycenter, &cell)
+            self._check_point_in_cell(cell.barycenter, &cell)
 
             if not cell.is_leaf:
                 # Compute the number of point in children and compare with
@@ -468,7 +468,7 @@ cdef class _QuadTree:
             Cell* cell = &self.cells[cell_id]
 
         if cell.is_leaf:
-            if self.is_duplicate(cell.barycenter, point):
+            if self._is_duplicate(cell.barycenter, point):
                 if self.verbose > 99:
                     printf("[QuadTree] Found point in cell: %li\n",
                            cell.cell_id)
@@ -476,7 +476,7 @@ cdef class _QuadTree:
             with gil:
                 raise ValueError("Query point not in the Tree.")
 
-        selected_child = self.select_child(point, cell)
+        selected_child = self._select_child(point, cell)
         if selected_child > 0:
             if self.verbose > 99:
                 printf("[QuadTree] Selected_child: %li\n", selected_child)
