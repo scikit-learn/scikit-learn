@@ -124,6 +124,7 @@ cdef class _QuadTree:
                 pt[j] = X[i, j]
             self.insert_point(pt, i)
 
+        # Shrink the cells array to reduce memory usage
         self._resize(capacity=self.cell_count)
 
     cdef int insert_point(self, DTYPE_t[3] point, SIZE_t point_index,
@@ -266,6 +267,7 @@ cdef class _QuadTree:
         cdef int i
         cdef bint res = True
         for i in range(self.n_dimensions):
+            # Use EPSILON to avoid numerical error that would overgrow the tree
             res &= fabsf(point1[i] - point2[i]) <= EPSILON
         return res
 
@@ -380,18 +382,18 @@ cdef class _QuadTree:
 
         Input arguments
         ---------------
-        point: array (n_dimensions)
+        point : array (n_dimensions)
              query point to construct the summary.
-        cell_id: integer, optional (default: 0)
+        cell_id : integer, optional (default: 0)
             current cell of the tree summarized. This should be set to 0 for
             external calls.
-        idx: integer, optional (default: 0)
+        idx : integer, optional (default: 0)
             current index in the result array. This should be set to 0 for
             external calls
 
         Output arguments
         ----------------
-        result: array (n_samples * (n_dimensions+2))
+        results : array (n_samples * (n_dimensions+2))
             result will contain a summary of the tree information compared to
             the query point:
             - results[idx:idx+n_dimensions] contains the coordinate-wise
@@ -404,7 +406,7 @@ cdef class _QuadTree:
 
         Return
         ------
-        idx: integer
+        idx : integer
             number of elements in the results array.
         """
         cdef:

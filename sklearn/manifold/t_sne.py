@@ -746,6 +746,9 @@ class TSNE(BaseEstimator):
                 print("[t-SNE] Computed neighbors for {} samples in {:.3f}s..."
                       .format(n_samples, duration))
 
+            # Free the memory used by the ball_tree
+            del knn
+
             if self.metric == "euclidean":
                 # knn return the euclidean distance but we need it squared
                 # to be consistent with the 'exact' method. Note that the
