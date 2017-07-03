@@ -847,20 +847,19 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
     """
     from numpydoc import docscrape
     incorrect = []
+    ignore = [] if ignore is None else ignore
+
     func_name = get_func_name(func, class_name=class_name)
     if (not func_name.startswith('sklearn.') or
             func_name.startswith('sklearn.externals')):
         return incorrect
+    # Don't check docstring for property-functions
     if inspect.isdatadescriptor(func):
         return incorrect
-    args = _get_args(func)
+    args = list(filter(lambda x: x in ignore, _get_args(func)))
     # drop self
     if len(args) > 0 and args[0] == 'self':
         args.remove('self')
-
-    if ignore is not None:
-        for p in ignore:
-            args.remove(p)
 
     if doc is None:
         with warnings.catch_warnings(record=True) as w:
@@ -877,11 +876,11 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
         if (type_definition.strip() == "" or
                 type_definition.strip().startswith(':')):
 
+            param_name = name.lstrip()
+
             # If there was no space between name and the colon
             # "verbose:" -> len(["verbose", ""][0]) -> 7
             # If "verbose:"[7] == ":", then there was no space
-            param_name = name.lstrip()
-
             if param_name[len(param_name.split(':')[0].strip())] == ':':
                 incorrect += [func_name +
                               ' There was no space between the param name and '
@@ -893,10 +892,7 @@ def check_parameters_match(func, doc=None, ignore=None, class_name=None):
         if '*' not in name:
             param_names.append(name.split(':')[0].strip('` '))
 
-    if ignore is not None:
-        for p in ignore:
-            if p in param_names:
-                param_names.remove(p)
+    param_names = list(filter(lambda x: x in ignore, param_names))
 
     if len(param_names) != len(args):
         bad = str(sorted(list(set(param_names) - set(args)) +
