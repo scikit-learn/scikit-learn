@@ -233,7 +233,7 @@ def fetch_species_distributions(data_home=None,
         expected_samples_checksum = "baa67cf5601507f07a37fdf240ea430c"
         samples_path = join(data_home, "samples.zip")
         _fetch_url(SAMPLES_URL, samples_path,
-                                  expected_samples_checksum)
+                   expected_samples_checksum)
         X = np.load(samples_path)
         remove(samples_path)
 
@@ -249,7 +249,7 @@ def fetch_species_distributions(data_home=None,
         expected_coverages_checksum = "b3a8b24ec0390285a5f9e2528ad1013e"
         coverages_path = join(data_home, "coverages.zip")
         _fetch_url(COVERAGES_URL, coverages_path,
-                                  expected_coverages_checksum)
+                   expected_coverages_checksum)
         X = np.load(coverages_path)
         remove(coverages_path)
 
