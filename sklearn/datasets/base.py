@@ -15,6 +15,7 @@ import shutil
 from os import environ, listdir, makedirs, rename, remove
 from os.path import dirname, exists, expanduser, getsize, isdir, join, splitext
 import hashlib
+import warnings
 
 try:
     import urllib.request as urllib  # for backwards compatibility
@@ -918,9 +919,9 @@ def _fetch_url(url, path, checksum):
         existing_size = getsize(path_temp)
         request_range = 'bytes={}-'.format(existing_size)
 
-        sys.stderr.write("Resuming download from " +
-                         "{}, already have {} bytes\n".format(
-                             url, existing_size))
+        warnings.warn(
+            "Resuming download from {}, already have {} bytes.\n".format(
+                url, existing_size))
         resume_url_downloader.addheader("Range", request_range)
 
         try:
@@ -932,11 +933,11 @@ def _fetch_url(url, path, checksum):
                     not content_range.startswith(request_range)):
                 raise IOError("Server does not support the HTTP Range "
                               "header, cannot resume download.")
-        except Exception:
+        except Exception as exc:
             # delete the temp file and retry download of whole file
             remove(path_temp)
-            sys.stderr.write(
-                "Attempting to re-download file after {!r}.\n".format(exec))
+            warnings.warn(
+                "Attempting to re-download file after {!r}.\n".format(exc))
             _fetch_url(url, path, checksum)
     else:
         # no path_temp, so download from scratch
