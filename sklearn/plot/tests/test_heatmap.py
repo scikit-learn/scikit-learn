@@ -1,7 +1,7 @@
 from sklearn.plot import plot_heatmap
 from sklearn.plot import plot_confusion_matrix
 from sklearn.plot import plot_gridsearch_results
-from sklearn.datasets import load_iris
+from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
 from sklearn.utils.testing import SkipTest
@@ -43,7 +43,7 @@ def test_confusion_matrix():
         cnf_matrix = np.random.randomint(1, 10, size=(2, 2))
 
         # plot un-normalized matrix
-        plot_confusion_matrix(cnf_matrix, classes=["dummay1", "dummy2"],
+        plot_confusion_matrix(cnf_matrix, classes=["dummy1", "dummy2"],
                               cmap="Paired", ax=plt.gca())
 
         # plot normalized matrix
@@ -55,7 +55,7 @@ def test_confusion_matrix():
         plt.close()
 
 
-def test_gridsearch_results():
+def test_gridsearch_results_1d():
     try:
         import matplotlib
     except ImportError:
@@ -63,25 +63,14 @@ def test_gridsearch_results():
 
     import matplotlib.pyplot as plt
 
-    iris = load_iris()
-    X = iris.data
-    y = iris.target
-
-    # We only keep the first two features in X and sub-sample the dataset to
-    # keep only 2 classes and make it a binary classification problem.
-
-    X_2d = X[:, :2]
-    X_2d = X_2d[y > 0]
-    y_2d = y[y > 0]
-    y_2d -= 1
+    X, y = make_blobs(n_samples=20, centers=2, n_features=3,
+                      random_state=0)
 
     # Define parameters:
     C_range = np.logspace(-2, 10, 2)
-    gamma_range = np.logspace(-9, 3, 2)
-    tol_range = [1e-3, 1e-4]
 
     # Test 1D case:
-    param_grid = dict(gamma=gamma_range)
+    param_grid = dict(C=C_range)
     grid = GridSearchCV(SVC(), param_grid=param_grid, cv=3)
     grid.fit(X, y)
 
@@ -91,7 +80,23 @@ def test_gridsearch_results():
         plt.draw()
         plt.close()
 
-    # Test 2D case:
+
+def test_gridsearch_results_2d():
+    try:
+        import matplotlib
+    except ImportError:
+        raise SkipTest("Not testing plot_heatmap, matplotlib not installed.")
+
+    import matplotlib.pyplot as plt
+
+    X, y = make_blobs(n_samples=20, centers=2, n_features=3,
+                      random_state=0)
+
+    # Define parameters:
+    C_range = np.logspace(-2, 10, 2)
+    gamma_range = np.logspace(-9, 3, 2)
+
+    # Test 1D case:
     param_grid = dict(gamma=gamma_range, C=C_range)
     grid = GridSearchCV(SVC(), param_grid=param_grid, cv=3)
     grid.fit(X, y)
@@ -102,7 +107,24 @@ def test_gridsearch_results():
         plt.draw()
         plt.close()
 
-    # Test 3D case:
+
+def test_gridsearch_results_3d():
+    try:
+        import matplotlib
+    except ImportError:
+        raise SkipTest("Not testing plot_heatmap, matplotlib not installed.")
+
+    import matplotlib.pyplot as plt
+
+    X, y = make_blobs(n_samples=20, centers=2, n_features=3,
+                      random_state=0)
+
+    # Define parameters:
+    C_range = np.logspace(-2, 10, 2)
+    gamma_range = np.logspace(-9, 3, 2)
+    tol_range = [1e-3, 1e-4]
+
+    # Test 1D case:
     param_grid = dict(gamma=gamma_range, C=C_range, tol=tol_range)
     grid = GridSearchCV(SVC(), param_grid=param_grid, cv=3)
     grid.fit(X, y)
