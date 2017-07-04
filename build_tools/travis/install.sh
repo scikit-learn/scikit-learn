@@ -43,8 +43,20 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
         TO_INSTALL="$TO_INSTALL mkl"
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
+            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+            matplotlib=$MATPLOTLIB_VERSION \
+            mkl cython=$CYTHON_VERSION \
+            ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
+            
     else
         TO_INSTALL="$TO_INSTALL nomkl"
+        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
+            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+            matplotlib=$MATPLOTLIB_VERSION \
+            nomkl cython=$CYTHON_VERSION \
+            ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
+
     fi
 
     if [[ -n "$PANDAS_VERSION" ]]; then

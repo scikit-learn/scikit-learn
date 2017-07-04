@@ -43,8 +43,18 @@ matrix:
     - env: DISTRIB="conda" PYTHON_VERSION="3.6.2" INSTALL_MKL="true"
            NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1" PANDAS_VERSION="0.20.3"
            CYTHON_VERSION="0.26.1" PYAMG_VERSION="3.3.2" COVERAGE=true
-           CHECK_PYTEST_SOFT_DEPENDENCY="true"
-      if: type != cron
+           CHECK_PYTEST_SOFT_DEPENDENCY="true" MATPLOTLIB_VERSION="2.0.2"
+    # This environment use pytest to run the tests. It uses the newest
+    # supported Anaconda release (4.4.0). It also runs tests requiring Pandas.
+    - env: USE_PYTEST="true" DISTRIB="conda" PYTHON_VERSION="3.6.1"
+           INSTALL_MKL="true" NUMPY_VERSION="1.12.1" SCIPY_VERSION="0.19.0"
+           PANDAS_VERSION="0.20.1" CYTHON_VERSION="0.25.2"
+           MATPLOTLIB_VERSION="2.0.2"
+    # This environment tests the newest supported Anaconda release (4.4.0)
+    # It also runs tests requiring Pandas.
+    - env: DISTRIB="conda" PYTHON_VERSION="3.6.1" INSTALL_MKL="true"
+           NUMPY_VERSION="1.12.1" SCIPY_VERSION="0.19.0" PANDAS_VERSION="0.20.1"
+           CYTHON_VERSION="0.25.2" MATPLOTLIB_VERSION="2.0.2" COVERAGE=true
     # flake8 linting on diff wrt common ancestor with upstream/master
     - env: RUN_FLAKE8="true" SKIP_TESTS="true"
            DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
