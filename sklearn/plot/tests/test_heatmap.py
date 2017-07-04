@@ -7,6 +7,8 @@ from sklearn.svm import SVC
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_raises
 import numpy as np
+from numpy.random import (RandomState,
+                          randomint)
 
 
 def test_heatmap():
@@ -19,7 +21,7 @@ def test_heatmap():
 
     with matplotlib.rc_context(rc={'backend': 'Agg', 'interactive': False}):
         plt.figure()
-        rng = np.random.RandomState(0)
+        rng = RandomState(0)
         X = rng.normal(size=(10, 5))
         # use mixture of default values and keyword args
         plot_heatmap(X, ylabel="y-axis",
@@ -40,7 +42,7 @@ def test_confusion_matrix():
 
     with matplotlib.rc_context(rc={'backend': 'Agg', 'interactive': False}):
         plt.figure()
-        cnf_matrix = np.random.randomint(1, 10, size=(2, 2))
+        cnf_matrix = randomint(1, 10, size=(2, 2))
 
         # plot un-normalized matrix
         plot_confusion_matrix(cnf_matrix, classes=["dummy1", "dummy2"],
