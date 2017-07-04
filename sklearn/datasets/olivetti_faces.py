@@ -113,7 +113,8 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
         print('downloading Olivetti faces from %s to %s'
               % (DATA_URL, data_home))
         mat_path = join(data_home, "olivettifaces.mat")
-        expected_checksum = "aa1ffbd84a31962b418e672437ea28d3"
+        expected_checksum = ("b612fb967f2dc77c9c62d3e1266e0c73d5fca46a4"
+                             "b8906c18e454d41af987794")
         _fetch_url(DATA_URL, mat_path, expected_checksum)
 
         mfile = loadmat(file_name=mat_path)

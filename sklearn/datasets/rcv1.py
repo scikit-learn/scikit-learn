@@ -41,15 +41,15 @@ FILE_URLS = [
 
 FILE_CHECKSUMS = {
     "lyrl2004_vectors_test_pt0.dat.gz":
-    'cc918f2d1b6d6c44c68693e99ff72f84',
+    'ed40f7e418d10484091b059703eeb95ae3199fe042891dcec4be6696b9968374',
     "lyrl2004_vectors_test_pt1.dat.gz":
-    '904a9e58fff311e888871fa20860bd72',
+    '87700668ae45d45d5ca1ef6ae9bd81ab0f5ec88cc95dcef9ae7838f727a13aa6',
     "lyrl2004_vectors_test_pt2.dat.gz":
-    '94175b6c28f5a25e345911aaebbb1eef',
+    '48143ac703cbe33299f7ae9f4995db49a258690f60e5debbff8995c34841c7f5',
     "lyrl2004_vectors_test_pt3.dat.gz":
-    'b68c8406241a9a7b530840faa99ad0ff',
+    'dfcb0d658311481523c6e6ca0c3f5a3e1d3d12cde5d7a8ce629a9006ec7dbb39',
     "lyrl2004_vectors_train.dat.gz":
-    '9fabc46abbdd6fd84a0803d837b10bde'
+    '5468f656d0ba7a83afc7ad44841cf9a53048a5c083eedc005dcdb5cc768924ae'
 }
 
 URL_topics = 'https://ndownloader.figshare.com/files/5976048'

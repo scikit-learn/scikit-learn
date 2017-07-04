@@ -843,58 +843,58 @@ class PartialURLOpener(urllib.FancyURLopener):
         pass
 
 
-def _md5(path):
-    """Calculate the md5 hash of the file at path.
+def _sha256(path):
+    """Calculate the sha256 hash of the file at path.
 
     Parameters
     -----------
     path: String
-        Path of file to calculate MD5 hash of.
+        Path of file to calculate SHA256 hash of.
 
     Returns
     -------
-    md5hash : String
-        MD5 hash of the file at the provided path.
+    sha256hash : String
+        SHA256 hash of the file at the provided path.
 
     """
 
-    md5hash = hashlib.md5()
+    sha256hash = hashlib.sha256()
     chunk_size = 8192
     with open(path, "rb") as f:
         while 1:
             buffer = f.read(chunk_size)
             if not buffer:
                 break
-            md5hash.update(buffer)
-    return md5hash.hexdigest()
+            sha256hash.update(buffer)
+    return sha256hash.hexdigest()
 
 
-def _validate_file_md5(expected_checksum, path):
-    """Compare the MD5 checksum of a file at a path with
-    an expected MD5 checksum. If they do not match,
-    remove the file at path and throw a ValueError.
+def _validate_file_sha256(expected_checksum, path):
+    """Compare the SHA256 checksum of a file at a path with
+    an expected SHA256 checksum. If they do not match,
+    remove the file at path and throw a IOError.
 
     Parameters
     -----------
     expected_checksum: String
-        Expected MD5 checksum of file at path.
+        Expected SHA256 checksum of file at path.
 
     path: String
-        Path of file to compare MD5 hash of.
+        Path of file to compare SHA256 hash of.
 
     """
 
-    if expected_checksum != _md5(path):
+    if expected_checksum != _sha256(path):
         # remove the corrupted file
         remove(path)
-        raise IOError("{} has an MD5 hash differing "
+        raise IOError("{} has an SHA256 hash differing "
                       "from expected, file may be "
                       "corrupted.".format(path))
 
 
 def _fetch_url(url, path, checksum):
     """
-    Fetch a dataset from a URL and check the MD5 checksum to ensure
+    Fetch a dataset from a URL and check the SHA256 checksum to ensure
     fetch was completed and the correct file was downloaded
 
     Parameters
@@ -906,7 +906,7 @@ def _fetch_url(url, path, checksum):
         Path to save the file to.
 
     checksum: String
-        MD5 checksum to verify against the data
+        SHA256 checksum to verify against the data
 
     """
 
@@ -952,7 +952,7 @@ def _fetch_url(url, path, checksum):
     dataset_url.close()
     temp_file.close()
     # verify checksum of downloaded temp file
-    _validate_file_md5(checksum, path_temp)
+    _validate_file_sha256(checksum, path_temp)
 
     # move temporary file to the expected location
     rename(path_temp, path)

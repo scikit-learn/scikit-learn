@@ -89,7 +89,8 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         logger.info("Downloading %s" % URL)
 
         archive_path = join(covtype_dir, "covtype.data.gz")
-        expected_checksum = "99670d8d942f09d459c7d4486fca8af5"
+        expected_checksum = ("614360d0257557dd1792834a85a1cdeb"
+                             "fadc3c4f30b011d56afee7ffb5b15771")
         _fetch_url(URL, archive_path, expected_checksum)
         Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=',')
         # delete archive

@@ -273,11 +273,13 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
     if percent10:
         kddcup_dir = join(data_home, "kddcup99_10" + dir_suffix)
         archive_path = join(kddcup_dir, "kddcup99_10_data")
-        expected_checksum = "c421989ff187d340c1265ac3080a3229"
+        expected_checksum = ("8045aca0d84e70e622d1148d7df78249"
+                             "6f6333bf6eb979a1b0837c42a9fd9561")
     else:
         kddcup_dir = join(data_home, "kddcup99" + dir_suffix)
         archive_path = join(kddcup_dir, "kddcup99_data")
-        expected_checksum = "3745289f84bdd907c03baca24f9f81bc"
+        expected_checksum = ("3b6c942aa0356c0ca35b7b595a26c89d"
+                             "343652c9db428893e7494f837b274292")
 
     samples_path = join(kddcup_dir, "samples")
     targets_path = join(kddcup_dir, "targets")

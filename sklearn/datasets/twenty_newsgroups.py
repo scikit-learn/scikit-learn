@@ -75,7 +75,8 @@ def download_20newsgroups(target_dir, cache_path):
         os.makedirs(target_dir)
 
     logger.warning("Downloading dataset from %s (14 MB)", URL)
-    expected_checksum = "d6e9e45cb8cb77ec5276dfa6dfc14318"
+    expected_checksum = ("8f1b2514ca22a5ade8fbb9cfa5727df95fa5"
+                         "87f4c87b786e15c759fa66d95610")
     _fetch_url(URL, archive_path, expected_checksum)
 
     logger.info("Decompressing %s", archive_path)

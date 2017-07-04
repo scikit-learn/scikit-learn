@@ -36,7 +36,8 @@ from ..externals import joblib
 # DATA_URL = "http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz"
 DATA_URL = "https://ndownloader.figshare.com/files/5976036"
 TARGET_FILENAME = "cal_housing.pkz"
-EXPECTED_CHECKSUM = "130d0eececf165046ec4dc621d121d80"
+EXPECTED_CHECKSUM = ("aaa5c9a6afe2225cc2aed2723682ae40"
+                     "3280c4a3695a2ddda4ffb5d8215ea681")
 
 # Grab the module-level docstring to use as a description of the
 # dataset

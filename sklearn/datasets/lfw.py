@@ -51,9 +51,12 @@ TARGET_FILENAMES = {
     'pairs.txt': "https://ndownloader.figshare.com/files/5976006",
 }
 TARGET_CHECKSUMS = {
-    'pairsDevTrain.txt': "4f27cbf15b2da4a85c1907eb4181ad21",
-    'pairsDevTest.txt': "5132f7440eb68cf58910c8a45a2ac10b",
-    'pairs.txt': "9f1ba174e4e1c508ff7cdf10ac338a7d",
+    'pairsDevTrain.txt': ("1d454dada7dfeca0e7eab6f65dc4e97a"
+                          "6312d44cf142207be28d688be92aabfa"),
+    'pairsDevTest.txt': ("7cb06600ea8b2814ac26e946201cdb30"
+                         "4296262aad67d046a16a7ec85d0ff87c"),
+    'pairs.txt': ("ea42330c62c92989f9d7c03237ed5d59"
+                  "1365e89b3e649747777b70e692dc1592"),
 }
 
 
@@ -79,7 +82,8 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         data_folder_path = join(lfw_home, "lfw_funneled")
         archive_path = join(lfw_home, FUNNELED_ARCHIVE_NAME)
         archive_url = FUNNELED_ARCHIVE_URL
-        expected_archive_checksum = "1b42dfed7d15c9b2dd63d5e5840c86ad"
+        expected_archive_checksum = ("b47c8422c8cded889dc5a13418c4bc2a"
+                                     "bbda121092b3533a83306f90d900100a")
     else:
         data_folder_path = join(lfw_home, "lfw")
         archive_path = join(lfw_home, ARCHIVE_NAME)

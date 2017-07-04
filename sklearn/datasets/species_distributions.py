@@ -230,7 +230,8 @@ def fetch_species_distributions(data_home=None,
 
         print('Downloading species data from %s to %s' % (SAMPLES_URL,
                                                           data_home))
-        expected_samples_checksum = "baa67cf5601507f07a37fdf240ea430c"
+        expected_samples_checksum = ("abb07ad284ac50d9e6d20f1c4211e0fd3c098f7f"
+                                     "85955e89d321ee8efe37ac28")
         samples_path = join(data_home, "samples.zip")
         _fetch_url(SAMPLES_URL, samples_path,
                    expected_samples_checksum)
@@ -246,7 +247,8 @@ def fetch_species_distributions(data_home=None,
 
         print('Downloading coverage data from %s to %s' % (COVERAGES_URL,
                                                            data_home))
-        expected_coverages_checksum = "b3a8b24ec0390285a5f9e2528ad1013e"
+        expected_coverages_checksum = ("4d862674d72e79d6cee77e63b98651ec792604"
+                                       "3ba7d39dcb31329cf3f6073807")
         coverages_path = join(data_home, "coverages.zip")
         _fetch_url(COVERAGES_URL, coverages_path,
                    expected_coverages_checksum)
