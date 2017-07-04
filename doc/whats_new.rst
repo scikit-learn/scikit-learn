@@ -1,4 +1,4 @@
- ..currentmodule:: sklearn
+.. currentmodule:: sklearn
 
 
 ===============
@@ -23,6 +23,11 @@ Multinomial logistic regression with L1 loss.
 
 ?Rewrite of TSNE
 
+:class:`semi_supervised.LabelSpreading` and
+:class:`semi_supervised.LabelPropagation` have had substantial fixes.
+Propagation was previously broekn. Spreading should now function better
+with respect to parameters.
+
 Fix longstanding implementation erorr in average_precision_score
 
 
@@ -42,7 +47,9 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-   * :class:`sklearn.ensemble.IsolationForest` (bug fix)
+   * :class:`ensemble.IsolationForest` (bug fix)
+   * :class:`semi_supervised.LabelSpreading` (bug fix)
+   * :class:`semi_supervised.LabelPropagation` (bug fix)
    * TODO
 
 Details are listed in the changelog below.
@@ -312,6 +319,12 @@ Trees and ensembles
 
 Linear, kernelized and related models
 
+   - Fix :class:`semi_supervised.BaseLabelPropagation` to correctly implement
+     ``LabelPropagation`` and ``LabelSpreading`` as done in the referenced
+     papers. :issue:`9239`
+     by :user:`Andre Ambrosio Boechat <boechat107>`, :user:`Utkarsh Upadhyay
+     <musically-ut>`, and `Joel Nothman`_.
+
    - Fixed a bug where :func:`linear_model.RANSACRegressor.fit` may run until
      ``max_iter`` if it finds a large inlier group early. :issue:`8251` by :user:`aivision2020`.
 
@@ -523,26 +536,17 @@ Trees and ensembles
      The ``min_impurity_decrease`` helps stop splitting the nodes in which
      the weighted impurity decrease from splitting is no longer alteast
      ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV`_.
-   - Fixed the implementation of `explained_variance_`
-     in :class:`decomposition.PCA`,
-     :class:`decomposition.RandomizedPCA` and
-     :class:`decomposition.IncrementalPCA`.
-     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
-
-   - Fix :class:`semi_supervised.BaseLabelPropagation` to correctly implement
-     ``LabelPropagation`` and ``LabelSpreading`` as done in the referenced
-     papers. :class:`semi_supervised.LabelPropagation` now always does hard
-     clamping. Its ``alpha`` parameter has no effect and is
-     deprecated to be removed in 0.21. :issue:`6727` :issue:`3550` issue:`5770`
-     by :user:`Andre Ambrosio Boechat <boechat107>`, :user:`Utkarsh Upadhyay
-     <musically-ut>`, and `Joel Nothman`_.
-
 
 Linear, kernelized and related models
 
    - :class:`neighbors.LSHForest` has been deprecated and will be
      removed in 0.21 due to poor performance.
      :issue:`8996` by `Andreas Müller`_.
+
+   - The ``alpha`` parameter of :class:`semi_supervised.LabelPropagation` now
+     has no effect and is deprecated to be removed in 0.21. :issue:`9239`
+     by :user:`Andre Ambrosio Boechat <boechat107>`, :user:`Utkarsh Upadhyay
+     <musically-ut>`, and `Joel Nothman`_.
 
 Decomposition, manifold learning and clustering
 
