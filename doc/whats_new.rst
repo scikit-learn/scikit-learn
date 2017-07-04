@@ -523,6 +523,20 @@ Trees and ensembles
      The ``min_impurity_decrease`` helps stop splitting the nodes in which
      the weighted impurity decrease from splitting is no longer alteast
      ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV`_.
+   - Fixed the implementation of `explained_variance_`
+     in :class:`decomposition.PCA`,
+     :class:`decomposition.RandomizedPCA` and
+     :class:`decomposition.IncrementalPCA`.
+     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
+
+   - Fix :class:`semi_supervised.BaseLabelPropagation` to correctly implement
+     ``LabelPropagation`` and ``LabelSpreading`` as done in the referenced
+     papers. :class:`semi_supervised.LabelPropagation` now always does hard
+     clamping. Its ``alpha`` parameter has no effect and is
+     deprecated to be removed in 0.21. :issue:`6727` :issue:`3550` issue:`5770`
+     by :user:`Andre Ambrosio Boechat <boechat107>`, :user:`Utkarsh Upadhyay
+     <musically-ut>`, and `Joel Nothman`_.
+
 
 Linear, kernelized and related models
 

@@ -1,6 +1,5 @@
 import numpy as np
 
-from sklearn.utils import testing
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils.testing import assert_equal, assert_array_equal
 from sklearn.utils.testing import assert_warns_message
