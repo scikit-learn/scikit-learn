@@ -104,6 +104,8 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
         cal_housing = cal_housing[:, columns_index]
         joblib.dump(cal_housing, filepath, compress=6)
+    else:
+        cal_housing = joblib.load(filepath)
 
     feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",
                      "Population", "AveOccup", "Latitude", "Longitude"]
