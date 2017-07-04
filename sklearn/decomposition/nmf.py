@@ -546,8 +546,8 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
         elif beta_loss == 0:
-            WH_safe_X_data *= WH_safe_X_data
-            WH_safe_X_data = 1 / WH_safe_X_data
+            WH_safe_X_data **= -1
+            WH_safe_X_data **= 2
             # element-wise multiplication
             WH_safe_X_data *= X_data
         else:
@@ -625,8 +625,8 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
         if beta_loss == 1:
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
         elif beta_loss == 0:
-            WH_safe_X_data *= WH_safe_X_data
-            WH_safe_X_data = 1 / WH_safe_X_data
+            WH_safe_X_data **= -1
+            WH_safe_X_data **= 2
             # element-wise multiplication
             WH_safe_X_data *= X_data
         else:
