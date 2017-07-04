@@ -626,7 +626,7 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
             np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
         elif beta_loss == 0:
             WH_safe_X_data *= WH_safe_X_data
-            WH_safe_X_data *= 1 / WH_safe_X_data
+            WH_safe_X_data = 1 / WH_safe_X_data
             # element-wise multiplication
             WH_safe_X_data *= X_data
         else:
