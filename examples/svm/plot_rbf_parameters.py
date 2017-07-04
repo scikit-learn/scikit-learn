@@ -185,7 +185,7 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
 
 plt.figure(figsize=(10, 10))
 plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
-plot_gridsearch_results(grid.cv_results_, param_grid=param_grid,
-                        title="Validation accuracy", cmap=plt.cm.hot,
+plot_gridsearch_results(grid.cv_results_, title="Validation accuracy",
+                        cmap=plt.cm.hot,
                         norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
 plt.show()
