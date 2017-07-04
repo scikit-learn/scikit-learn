@@ -9,6 +9,7 @@
 import numpy as np
 from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
+from ..utils.validation import check_is_fitted
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -251,6 +252,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         return self.estimator_.score(self.transform(X), y)
 
     def _get_support_mask(self):
+        check_is_fitted(self, 'support_')  # will raise NotFittedError if not fitted
         return self.support_
 
     @if_delegate_has_method(delegate='estimator')
