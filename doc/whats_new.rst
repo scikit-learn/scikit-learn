@@ -431,6 +431,13 @@ Bug fixes
      hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
      by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
 
+   - Made default kernel parameters kernel-dependent in :class:`kernel_approximation.Nystroem`
+     :issue:`5229` by :user:`mth4saurabh` and `Andreas Müller`_.
+
+   - Fixed passing of ``gamma`` parameter to the ``chi2`` kernel in
+     :func:`metrics.pairwise_kernels` :issue:`5211` by :user:`nrhine1`,
+     :user:`mth4saurabh` and `Andreas Müller`_.
+
   -  Fixed a bug in :class:`gaussian_process.GaussianProcessRegressor`
      when the standard deviation and covariance predicted without fit
      would fail with a unmeaningful error by default.
@@ -441,7 +448,16 @@ Bug fixes
      in :class:`decomposition.PCA`,
      :class:`decomposition.RandomizedPCA` and
      :class:`decomposition.IncrementalPCA`.
-     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
+
+   - Fix :class:`semi_supervised.BaseLabelPropagation` to correctly implement
+     ``LabelPropagation`` and ``LabelSpreading`` as done in the referenced
+     papers. :class:`semi_supervised.LabelPropagation` now always does hard
+     clamping. Its ``alpha`` parameter has no effect and is
+     deprecated to be removed in 0.21. :issue:`6727` :issue:`3550` issue:`5770`
+     by :user:`Andre Ambrosio Boechat <boechat107>`, :user:`Utkarsh Upadhyay
+     <musically-ut>`, and `Joel Nothman`_.
+
 
 API changes summary
 -------------------
@@ -568,6 +584,7 @@ API changes summary
      - ``utils.sparsetools.connected_components``
      - ``utils.stats.rankdata``
      - ``neighbors.approximate.LSHForest``
+     - ``linear_model.randomized_l1``
 
     - Deprecate the ``y`` parameter in `transform` and `inverse_transform`.
       The method  should not accept ``y`` parameter, as it's used at the prediction time.
@@ -1298,6 +1315,9 @@ Model evaluation and meta-estimators
      ``groups``. Additionally in :class:`model_selection.LeavePGroupsOut`,
      the parameter ``n_labels`` is renamed to ``n_groups``.
      :issue:`6660` by `Raghav RV`_.
+
+   - The :mod:`sklearn.linear_model.randomized_l1` is deprecated.
+     :issue: `8995` by :user:`Ramana.S <sentient07>`.
 
 Code Contributors
 -----------------

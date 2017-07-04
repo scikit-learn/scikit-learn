@@ -65,7 +65,7 @@ def test_spectral_amg_mode():
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
     try:
-        from pyamg import smoothed_aggregation_solver
+        from pyamg import smoothed_aggregation_solver  # noqa
 
         amg_loaded = True
     except ImportError:
