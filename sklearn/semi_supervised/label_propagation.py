@@ -98,7 +98,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     alpha : float
         Clamping factor
 
-    max_iter : float
+    max_iter : integer
         Change maximum number of iterations allowed
 
     tol : float
@@ -331,7 +331,7 @@ class LabelPropagation(BaseLabelPropagation):
             This parameter will be removed in 0.21.
             'alpha' is fixed to zero in 'LabelPropagation'.
 
-    max_iter : float
+    max_iter : integer
         Change maximum number of iterations allowed
 
     tol : float
@@ -448,7 +448,7 @@ class LabelSpreading(BaseLabelPropagation):
       alpha=0 means keeping the initial label information; alpha=1 means
       replacing all initial information.
 
-    max_iter : float
+    max_iter : integer
       maximum number of iterations allowed
 
     tol : float
