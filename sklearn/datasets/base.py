@@ -918,9 +918,9 @@ def _fetch_url(url, path, checksum):
         existing_size = getsize(path_temp)
         request_range = 'bytes={}-'.format(existing_size)
 
-        print("Resuming download from {}, "
-              "already have {} bytes".format(url, existing_size),
-              file=sys.stderr)
+        sys.stderr.write("Resuming download from " +
+                         "{}, already have {} bytes\n".format(
+                             url, existing_size))
         resume_url_downloader.addheader("Range", request_range)
 
         try:
@@ -935,8 +935,8 @@ def _fetch_url(url, path, checksum):
         except Exception:
             # delete the temp file and retry download of whole file
             remove(path_temp)
-            print("Attempting to re-download file after {!r}.".format(exec),
-                  file=sys.stderr)
+            sys.stderr.write(
+                "Attempting to re-download file after {!r}.\n".format(exec))
             _fetch_url(url, path, checksum)
     else:
         # no path_temp, so download from scratch
