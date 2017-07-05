@@ -62,6 +62,7 @@ from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
+from sklearn.model_selection import GridSearchCV
 
 
 try:
@@ -130,6 +131,21 @@ class MockEstimatorWithParameter(BaseEstimator):
 
     def _is_training_data(self, X):
         return X is self.X_subset
+
+
+class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
+    """Dummy classifier that disallows repeated calls of fit method"""
+
+    def fit(self, X_subset, y_subset):
+        assert_false(
+            hasattr(self, 'fit_called_'),
+            'fit is called the second time'
+        )
+        self.fit_called_ = True
+        return super(type(self), self).fit(X_subset, y_subset)
+
+    def predict(self, X):
+        raise NotImplementedError
 
 
 class MockClassifier(object):
@@ -258,10 +274,10 @@ def test_cross_val_score_predict_groups():
                  GroupShuffleSplit()]
     for cv in group_cvs:
         assert_raise_message(ValueError,
-                             "The groups parameter should not be None",
+                             "The 'groups' parameter should not be None.",
                              cross_val_score, estimator=clf, X=X, y=y, cv=cv)
         assert_raise_message(ValueError,
-                             "The groups parameter should not be None",
+                             "The 'groups' parameter should not be None.",
                              cross_val_predict, estimator=clf, X=X, y=y, cv=cv)
 
 
@@ -740,7 +756,8 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     train_sizes = np.linspace(0.2, 1.0, 5)
-    estimator = PassiveAggressiveClassifier(n_iter=1, shuffle=False)
+    estimator = PassiveAggressiveClassifier(max_iter=1, tol=None,
+                                            shuffle=False)
 
     train_sizes_inc, train_scores_inc, test_scores_inc = \
         learning_curve(
@@ -811,7 +828,8 @@ def test_learning_curve_with_shuffle():
     groups = np.array([1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 4, 4, 4, 4])
     # Splits on these groups fail without shuffle as the first iteration
     # of the learning curve doesn't contain label 4 in the training set.
-    estimator = PassiveAggressiveClassifier(shuffle=False)
+    estimator = PassiveAggressiveClassifier(max_iter=5, tol=None,
+                                            shuffle=False)
 
     cv = GroupKFold(n_splits=2)
     train_sizes_batch, train_scores_batch, test_scores_batch = learning_curve(
@@ -849,6 +867,18 @@ def test_validation_curve():
 
     assert_array_almost_equal(train_scores.mean(axis=1), param_range)
     assert_array_almost_equal(test_scores.mean(axis=1), 1 - param_range)
+
+
+def test_validation_curve_clone_estimator():
+    X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+
+    param_range = np.linspace(1, 0, 10)
+    _, _ = validation_curve(
+        MockEstimatorWithSingleFitCallAllowed(), X, y,
+        param_name="param", param_range=param_range, cv=2
+    )
 
 
 def test_validation_curve_cv_splits_consistency():
@@ -914,18 +944,16 @@ def test_cross_val_predict_sparse_prediction():
     assert_array_almost_equal(preds_sparse, preds)
 
 
-def test_cross_val_predict_with_method():
+def check_cross_val_predict_with_method(est):
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
     classes = len(set(y))
 
-    kfold = KFold(len(iris.target))
+    kfold = KFold()
 
     methods = ['decision_function', 'predict_proba', 'predict_log_proba']
     for method in methods:
-        est = LogisticRegression()
-
         predictions = cross_val_predict(est, X, y, method=method)
         assert_equal(len(predictions), len(y))
 
@@ -953,6 +981,17 @@ def test_cross_val_predict_with_method():
         predictions_ystr = cross_val_predict(est, X, y.astype('str'),
                                              method=method, cv=kfold)
         assert_array_equal(predictions, predictions_ystr)
+
+
+def test_cross_val_predict_with_method():
+    check_cross_val_predict_with_method(LogisticRegression())
+
+
+def test_gridsearchcv_cross_val_predict_with_method():
+    est = GridSearchCV(LogisticRegression(random_state=42),
+                       {'C': [0.1, 1]},
+                       cv=2)
+    check_cross_val_predict_with_method(est)
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):

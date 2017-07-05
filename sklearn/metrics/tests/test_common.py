@@ -217,7 +217,6 @@ METRIC_UNDEFINED_BINARY = [
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = [
     "brier_score_loss",
-    "matthews_corrcoef_score",
 
     # with default average='binary', multiclass is prohibited
     "precision_score",
@@ -369,7 +368,6 @@ NOT_SYMMETRIC_METRICS = [
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
-    "cohen_kappa_score",
     "confusion_matrix", # Left this one here because the tests in this file do
                         # not work for confusion_matrix, as its output is a
                         # matrix instead of a number. Testing of
@@ -773,7 +771,7 @@ def test_normalize_option_binary_classification(n_samples=20):
                             / n_samples, measure)
 
 
-def test_normalize_option_multiclasss_classification():
+def test_normalize_option_multiclass_classification():
     # Test in the multiclass case
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 4, size=(20, ))
@@ -1014,6 +1012,17 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
 def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
+    # regression
+    y_true = random_state.random_sample(size=(n_samples,))
+    y_pred = random_state.random_sample(size=(n_samples,))
+    for name in ALL_METRICS:
+        if name not in REGRESSION_METRICS:
+            continue
+        if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
+            continue
+        metric = ALL_METRICS[name]
+        yield _named_check(check_sample_weight_invariance, name), name,\
+            metric, y_true, y_pred
 
     # binary
     random_state = check_random_state(0)
@@ -1021,6 +1030,8 @@ def test_sample_weight_invariance(n_samples=50):
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples,))
     for name in ALL_METRICS:
+        if name in REGRESSION_METRICS:
+            continue
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_BINARY):
             continue
@@ -1038,6 +1049,8 @@ def test_sample_weight_invariance(n_samples=50):
     y_pred = random_state.randint(0, 5, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples, 5))
     for name in ALL_METRICS:
+        if name in REGRESSION_METRICS:
+            continue
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_BINARY_MULTICLASS):
             continue

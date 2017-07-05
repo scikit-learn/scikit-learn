@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities
 from sklearn.manifold.t_sne import _joint_probabilities_nn
@@ -563,12 +564,13 @@ def test_index_offset():
     assert_equal(_barnes_hut_tsne.test_index_offset(), 1)
 
 
+@skip_if_32bit
 def test_n_iter_without_progress():
-    # Make sure that the parameter n_iter_without_progress is used correctly
+    # Use a dummy negative n_iter_without_progress and check output on stdout
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
-    tsne = TSNE(n_iter_without_progress=2, verbose=2,
-                random_state=0, method='exact')
+    tsne = TSNE(n_iter_without_progress=-1, verbose=2,
+                random_state=1, method='exact')
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -581,7 +583,7 @@ def test_n_iter_without_progress():
 
     # The output needs to contain the value of n_iter_without_progress
     assert_in("did not make any progress during the "
-              "last 2 episodes. Finished.", out)
+              "last -1 episodes. Finished.", out)
 
 
 def test_min_grad_norm():
@@ -625,3 +627,30 @@ def test_min_grad_norm():
     # The gradient norm can be smaller than min_grad_norm at most once,
     # because in the moment it becomes smaller the optimization stops
     assert_less_equal(n_smaller_gradient_norms, 1)
+
+
+def test_accessible_kl_divergence():
+    # Ensures that the accessible kl_divergence matches the computed value
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    tsne = TSNE(n_iter_without_progress=2, verbose=2,
+                random_state=0, method='exact')
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        tsne.fit_transform(X)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    # The output needs to contain the accessible kl_divergence as the error at
+    # the last iteration
+    for line in out.split('\n')[::-1]:
+        if 'Iteration' in line:
+            _, _, error = line.partition('error = ')
+            if error:
+                error, _, _ = error.partition(',')
+                break
+    assert_almost_equal(tsne.kl_divergence_, float(error), decimal=5)

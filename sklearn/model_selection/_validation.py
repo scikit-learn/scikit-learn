@@ -21,7 +21,6 @@ import scipy.sparse as sp
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, safe_indexing
-from ..utils.fixes import astype
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
@@ -65,10 +64,11 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 3-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -325,10 +325,11 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 3-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -561,10 +562,11 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 3-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -580,9 +582,11 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
 
-    random_state : RandomState or an int seed (0 by default)
-        A random number generator instance to define the state of the
-        random permutations generator.
+    random_state : int, RandomState instance or None, optional (default=0)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     verbose : integer, optional
         The verbosity level.
@@ -596,11 +600,14 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         The scores obtained for each permutations.
 
     pvalue : float
-        The returned value equals p-value if `scoring` returns bigger
-        numbers for better scores (e.g., accuracy_score). If `scoring` is
-        rather a loss function (i.e. when lower is better such as with
-        `mean_squared_error`) then this is actually the complement of the
-        p-value:  1 - p-value.
+        The p-value, which approximates the probability that the score would
+        be obtained by chance. This is calculated as:
+
+        `(C + 1) / (n_permutations + 1)`
+
+        Where C is the number of permutations whose score >= the true score.
+
+        The best possible p-value is 1/(n_permutations + 1), the worst is 1.0.
 
     Notes
     -----
@@ -704,10 +711,11 @@ def learning_curve(estimator, X, y, groups=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 3-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -740,9 +748,11 @@ def learning_curve(estimator, X, y, groups=None,
         Whether to shuffle training data before taking prefixes of it
         based on``train_sizes``.
 
-    random_state : None, int or RandomState
-        When shuffle=True, pseudo-random number generator state used for
-        shuffling. If None, use default numpy RNG for shuffling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``shuffle`` == 'True'.
 
     -------
     train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
@@ -848,8 +858,8 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
                              "must be within (0, 1], but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
-        train_sizes_abs = astype(train_sizes_abs * n_max_training_samples,
-                                 dtype=np.int, copy=False)
+        train_sizes_abs = (train_sizes_abs * n_max_training_samples).astype(
+                             dtype=np.int, copy=False)
         train_sizes_abs = np.clip(train_sizes_abs, 1,
                                   n_max_training_samples)
     else:
@@ -933,10 +943,11 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross validation,
-          - integer, to specify the number of folds in a `(Stratified)KFold`,
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train, test splits.
+
+        - None, to use the default 3-fold cross validation,
+        - integer, to specify the number of folds in a `(Stratified)KFold`,
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
@@ -982,7 +993,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
-        estimator, X, y, scorer, train, test, verbose,
+        clone(estimator), X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)

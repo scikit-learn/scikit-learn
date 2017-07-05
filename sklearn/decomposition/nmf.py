@@ -20,7 +20,7 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.extmath import fast_dot, safe_min
+from ..utils.extmath import safe_min
 from ..utils.validation import check_is_fitted, check_non_negative
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
@@ -109,7 +109,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         WH_data = _special_sparse_dot(W, H, X).data
         X_data = X.data
     else:
-        WH = fast_dot(W, H)
+        WH = np.dot(W, H)
         WH_data = WH.ravel()
         X_data = X.ravel()
 
@@ -142,7 +142,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
             # np.sum(np.dot(W, H) ** beta)
             sum_WH_beta = 0
             for i in range(X.shape[1]):
-                sum_WH_beta += np.sum(fast_dot(W, H[:, i]) ** beta)
+                sum_WH_beta += np.sum(np.dot(W, H[:, i]) ** beta)
 
         else:
             sum_WH_beta = np.sum(WH ** beta)
@@ -166,7 +166,7 @@ def _special_sparse_dot(W, H, X):
         WH = sp.coo_matrix((dot_vals, (ii, jj)), shape=X.shape)
         return WH.tocsr()
     else:
-        return fast_dot(W, H)
+        return np.dot(W, H)
 
 
 def _compute_regularization(alpha, l1_ratio, regularization):
@@ -268,9 +268,11 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
     eps : float
         Truncate all values less then this in output to zero.
 
-    random_state : int seed, RandomState instance, or None (default)
-        Random number generator seed control, used in 'nndsvdar' and
-        'random' modes.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``random`` == 'nndsvdar' or 'random'.
 
     Returns
     -------
@@ -377,7 +379,7 @@ def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
     """
     n_components = Ht.shape[1]
 
-    HHt = fast_dot(Ht.T, Ht)
+    HHt = np.dot(Ht.T, Ht)
     XHt = safe_sparse_dot(X, Ht)
 
     # L2 regularization corresponds to increase of the diagonal of HHt
@@ -445,8 +447,11 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     shuffle : boolean, default: False
         If true, randomize the order of coordinates in the CD solver.
 
-    random_state : integer seed, RandomState instance, or None (default)
-        Random number generator seed control.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -516,8 +521,8 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
         # Denominator
         if HHt is None:
-            HHt = fast_dot(H, H.T)
-        denominator = fast_dot(W, HHt)
+            HHt = np.dot(H, H.T)
+        denominator = np.dot(W, HHt)
 
     else:
         # Numerator
@@ -561,14 +566,14 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
                 # (compute row by row, avoiding the dense matrix WH)
                 WHHt = np.empty(W.shape)
                 for i in range(X.shape[0]):
-                    WHi = fast_dot(W[i, :], H)
+                    WHi = np.dot(W[i, :], H)
                     if beta_loss - 1 < 0:
                         WHi[WHi == 0] = EPSILON
                     WHi **= beta_loss - 1
-                    WHHt[i, :] = fast_dot(WHi, H.T)
+                    WHHt[i, :] = np.dot(WHi, H.T)
             else:
                 WH **= beta_loss - 1
-                WHHt = fast_dot(WH, H.T)
+                WHHt = np.dot(WH, H.T)
             denominator = WHHt
 
     # Add L1 and L2 regularization
@@ -592,7 +597,7 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
     """update H in Multiplicative Update NMF"""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
-        denominator = fast_dot(fast_dot(W.T, W), H)
+        denominator = np.dot(np.dot(W.T, W), H)
 
     else:
         # Numerator
@@ -636,14 +641,14 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
                 # (compute column by column, avoiding the dense matrix WH)
                 WtWH = np.empty(H.shape)
                 for i in range(X.shape[1]):
-                    WHi = fast_dot(W, H[:, i])
+                    WHi = np.dot(W, H[:, i])
                     if beta_loss - 1 < 0:
                         WHi[WHi == 0] = EPSILON
                     WHi **= beta_loss - 1
-                    WtWH[:, i] = fast_dot(W.T, WHi)
+                    WtWH[:, i] = np.dot(W.T, WHi)
             else:
                 WH **= beta_loss - 1
-                WtWH = fast_dot(W.T, WH)
+                WtWH = np.dot(W.T, WH)
             denominator = WtWH
 
     # Add L1 and L2 regularization
@@ -910,8 +915,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
 
-    random_state : integer seed, RandomState instance, or None (default)
-        Random number generator seed control.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     verbose : integer, default: 0
         The verbosity level.
@@ -949,7 +957,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
 
-    X = check_array(X, accept_sparse=('csr', 'csc'))
+    X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
@@ -1097,8 +1105,11 @@ class NMF(BaseEstimator, TransformerMixin):
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
 
-    random_state : integer seed, RandomState instance, or None (default)
-        Random number generator seed control.
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     alpha : double, default: 0.
         Constant that multiplies the regularization terms. Set it to zero to
@@ -1193,7 +1204,7 @@ class NMF(BaseEstimator, TransformerMixin):
         W : array, shape (n_samples, n_components)
             Transformed data.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'))
+        X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float)
 
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,

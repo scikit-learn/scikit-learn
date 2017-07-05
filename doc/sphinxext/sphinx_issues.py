@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""A Sphinx extension for linking to your project's issue tracker."""
-"""
+"""A Sphinx extension for linking to your project's issue tracker.
+
 Copyright 2014 Steven Loria
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,12 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
-try:
-    from docutils import nodes, utils
-    from sphinx.util.nodes import split_explicit_title
-except ImportError:
-    # Load lazily so that test-sphinxext does not require docutils dependency
-    pass
+from docutils import nodes, utils
+from sphinx.util.nodes import split_explicit_title
 
 __version__ = '0.2.0'
 __author__ = 'Steven Loria'

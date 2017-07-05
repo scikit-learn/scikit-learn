@@ -213,6 +213,13 @@ When using bootstrap sampling the generalization accuracy can be estimated
 on the left out or out-of-bag samples. This can be enabled by
 setting ``oob_score=True``.
 
+.. note::
+
+    The size of the model with the default parameters is :math:`O( M * N * log (N) )`,
+    where :math:`M` is the number of trees and :math:`N` is the number of samples.
+    In order to reduce the size of the model, you can change these parameters:
+    ``min_samples_split``, ``min_samples_leaf``, ``max_leaf_nodes`` and ``max_depth``.
+
 Parallelization
 ---------------
 

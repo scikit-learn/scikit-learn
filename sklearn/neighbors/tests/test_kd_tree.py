@@ -4,9 +4,11 @@ from sklearn.neighbors.kd_tree import (KDTree, NeighborsHeap,
                                        simultaneous_sort, kernel_norm,
                                        nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
+from sklearn.utils import check_random_state
 from sklearn.utils.testing import SkipTest, assert_allclose
 
-V = np.random.random((3, 3))
+rng = np.random.RandomState(42)
+V = rng.random_sample((3, 3))
 V = np.dot(V, V.T)
 
 DIMENSION = 3
@@ -24,20 +26,21 @@ def brute_force_neighbors(X, Y, k, metric, **kwargs):
     return dist, ind
 
 
+def check_neighbors(dualtree, breadth_first, k, metric, X, Y, kwargs):
+    kdt = KDTree(X, leaf_size=1, metric=metric, **kwargs)
+    dist1, ind1 = kdt.query(Y, k, dualtree=dualtree,
+                            breadth_first=breadth_first)
+    dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
+
+    # don't check indices here: if there are any duplicate distances,
+    # the indices may not match.  Distances should not have this problem.
+    assert_array_almost_equal(dist1, dist2)
+
+
 def test_kd_tree_query():
-    np.random.seed(0)
-    X = np.random.random((40, DIMENSION))
-    Y = np.random.random((10, DIMENSION))
-
-    def check_neighbors(dualtree, breadth_first, k, metric, kwargs):
-        kdt = KDTree(X, leaf_size=1, metric=metric, **kwargs)
-        dist1, ind1 = kdt.query(Y, k, dualtree=dualtree,
-                                breadth_first=breadth_first)
-        dist2, ind2 = brute_force_neighbors(X, Y, k, metric, **kwargs)
-
-        # don't check indices here: if there are any duplicate distances,
-        # the indices may not match.  Distances should not have this problem.
-        assert_array_almost_equal(dist1, dist2)
+    rng = check_random_state(0)
+    X = rng.random_sample((40, DIMENSION))
+    Y = rng.random_sample((10, DIMENSION))
 
     for (metric, kwargs) in METRICS.items():
         for k in (1, 3, 5):
@@ -45,12 +48,12 @@ def test_kd_tree_query():
                 for breadth_first in (True, False):
                     yield (check_neighbors,
                            dualtree, breadth_first,
-                           k, metric, kwargs)
+                           k, metric, X, Y, kwargs)
 
 
 def test_kd_tree_query_radius(n_samples=100, n_features=10):
-    np.random.seed(0)
-    X = 2 * np.random.random(size=(n_samples, n_features)) - 1
+    rng = check_random_state(0)
+    X = 2 * rng.random_sample(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
 
     eps = 1E-15  # roundoff error can cause test to fail
@@ -68,8 +71,8 @@ def test_kd_tree_query_radius(n_samples=100, n_features=10):
 
 
 def test_kd_tree_query_radius_distance(n_samples=100, n_features=10):
-    np.random.seed(0)
-    X = 2 * np.random.random(size=(n_samples, n_features)) - 1
+    rng = check_random_state(0)
+    X = 2 * rng.random_sample(size=(n_samples, n_features)) - 1
     query_pt = np.zeros(n_features, dtype=float)
 
     eps = 1E-15  # roundoff error can cause test to fail
@@ -107,10 +110,18 @@ def compute_kernel_slow(Y, X, kernel, h):
         raise ValueError('kernel not recognized')
 
 
+def check_results(kernel, h, atol, rtol, breadth_first, Y, kdt, dens_true):
+    dens = kdt.kernel_density(Y, h, atol=atol, rtol=rtol,
+                              kernel=kernel,
+                              breadth_first=breadth_first)
+    assert_allclose(dens, dens_true, atol=atol,
+                    rtol=max(rtol, 1e-7))
+
+
 def test_kd_tree_kde(n_samples=100, n_features=3):
-    np.random.seed(0)
-    X = np.random.random((n_samples, n_features))
-    Y = np.random.random((n_samples, n_features))
+    rng = check_random_state(0)
+    X = rng.random_sample((n_samples, n_features))
+    Y = rng.random_sample((n_samples, n_features))
     kdt = KDTree(X, leaf_size=10)
 
     for kernel in ['gaussian', 'tophat', 'epanechnikov',
@@ -118,25 +129,18 @@ def test_kd_tree_kde(n_samples=100, n_features=3):
         for h in [0.01, 0.1, 1]:
             dens_true = compute_kernel_slow(Y, X, kernel, h)
 
-            def check_results(kernel, h, atol, rtol, breadth_first):
-                dens = kdt.kernel_density(Y, h, atol=atol, rtol=rtol,
-                                          kernel=kernel,
-                                          breadth_first=breadth_first)
-                assert_allclose(dens, dens_true, atol=atol,
-                                rtol=max(rtol, 1e-7))
-
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:
                     for breadth_first in (True, False):
                         yield (check_results, kernel, h, atol, rtol,
-                               breadth_first)
+                               breadth_first, Y, kdt, dens_true)
 
 
 def test_gaussian_kde(n_samples=1000):
     # Compare gaussian KDE results to scipy.stats.gaussian_kde
     from scipy.stats import gaussian_kde
-    np.random.seed(0)
-    x_in = np.random.normal(0, 1, n_samples)
+    rng = check_random_state(0)
+    x_in = rng.normal(0, 1, n_samples)
     x_out = np.linspace(-5, 5, 30)
 
     for h in [0.01, 0.1, 1]:
@@ -153,9 +157,9 @@ def test_gaussian_kde(n_samples=1000):
 
 
 def test_kd_tree_two_point(n_samples=100, n_features=3):
-    np.random.seed(0)
-    X = np.random.random((n_samples, n_features))
-    Y = np.random.random((n_samples, n_features))
+    rng = check_random_state(0)
+    X = rng.random_sample((n_samples, n_features))
+    Y = rng.random_sample((n_samples, n_features))
     r = np.linspace(0, 1, 10)
     kdt = KDTree(X, leaf_size=10)
 
@@ -172,8 +176,8 @@ def test_kd_tree_two_point(n_samples=100, n_features=3):
 
 def test_kd_tree_pickle():
     import pickle
-    np.random.seed(0)
-    X = np.random.random((10, 3))
+    rng = check_random_state(0)
+    X = rng.random_sample((10, 3))
     kdt1 = KDTree(X, leaf_size=1)
     ind1, dist1 = kdt1.query(X)
 
@@ -192,7 +196,7 @@ def test_neighbors_heap(n_pts=5, n_nbrs=10):
     heap = NeighborsHeap(n_pts, n_nbrs)
 
     for row in range(n_pts):
-        d_in = np.random.random(2 * n_nbrs).astype(DTYPE)
+        d_in = rng.random_sample(2 * n_nbrs).astype(DTYPE)
         i_in = np.arange(2 * n_nbrs, dtype=ITYPE)
         for d, i in zip(d_in, i_in):
             heap.push(row, d, i)
@@ -208,7 +212,7 @@ def test_neighbors_heap(n_pts=5, n_nbrs=10):
 
 
 def test_node_heap(n_nodes=50):
-    vals = np.random.random(n_nodes).astype(DTYPE)
+    vals = rng.random_sample(n_nodes).astype(DTYPE)
 
     i1 = np.argsort(vals)
     vals2, i2 = nodeheap_sort(vals)
@@ -218,7 +222,7 @@ def test_node_heap(n_nodes=50):
 
 
 def test_simultaneous_sort(n_rows=10, n_pts=201):
-    dist = np.random.random((n_rows, n_pts)).astype(DTYPE)
+    dist = rng.random_sample((n_rows, n_pts)).astype(DTYPE)
     ind = (np.arange(n_pts) + np.zeros((n_rows, 1))).astype(ITYPE)
 
     dist2 = dist.copy()

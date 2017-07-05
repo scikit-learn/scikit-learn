@@ -17,7 +17,6 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
                                     log_likelihood)
 
 from ..exceptions import ConvergenceWarning
-from ..utils.extmath import pinvh
 from ..utils.validation import check_random_state, check_array
 from ..utils import deprecated
 from ..linear_model import lars_path
@@ -191,7 +190,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     covariance_ *= 0.95
     diagonal = emp_cov.flat[::n_features + 1]
     covariance_.flat[::n_features + 1] = diagonal
-    precision_ = pinvh(covariance_)
+    precision_ = linalg.pinvh(covariance_)
 
     indices = np.arange(n_features)
     costs = list()
@@ -567,7 +566,7 @@ class GraphLassoCV(GraphLasso):
 
     @property
     @deprecated("Attribute grid_scores was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use 'grid_scores_' instead")
+                "will be removed in 0.21. Use ``grid_scores_`` instead")
     def grid_scores(self):
         return self.grid_scores_
 

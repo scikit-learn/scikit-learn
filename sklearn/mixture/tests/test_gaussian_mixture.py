@@ -473,7 +473,7 @@ def _naive_lmvnpdf_diag(X, means, covars):
 def test_gaussian_mixture_log_probabilities():
     from sklearn.mixture.gaussian_mixture import _estimate_log_gaussian_prob
 
-    # test aginst with _naive_lmvnpdf_diag
+    # test against with _naive_lmvnpdf_diag
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
     n_samples = 500
@@ -649,7 +649,7 @@ def test_gaussian_mixture_fit_convergence_warning():
                             max_iter=max_iter, reg_covar=0, random_state=rng,
                             covariance_type=covar_type)
         assert_warns_message(ConvergenceWarning,
-                             'Initialization %d did not converged. '
+                             'Initialization %d did not converge. '
                              'Try different init parameters, '
                              'or increase max_iter, tol '
                              'or check for degenerate data.'
