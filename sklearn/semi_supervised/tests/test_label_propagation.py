@@ -9,6 +9,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.semi_supervised import label_propagation
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.datasets import make_classification
+from sklearn.exceptions import ConvergenceWarning
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
@@ -145,3 +146,11 @@ def test_convergence_speed():
     # this should converge quickly:
     assert mdl.n_iter_ < 10
     assert_array_equal(mdl.predict(X), [0, 1, 1])
+
+
+def test_convergence_warning():
+    # This is a non-regression test for #5774
+    X = np.array([[1., 0.], [0., 1.], [1., 2.5]])
+    y = np.array([0, 1, -1])
+    mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=5)
+    assert_warns(ConvergenceWarning, mdl.fit, X, y)
