@@ -26,7 +26,10 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array, check_consistent_length
+from .utils import (check_X_y,
+                    check_array,
+                    check_consistent_length,
+                    check_y_classes)
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
@@ -187,6 +190,14 @@ class GaussianNB(BaseNB):
             Returns self.
         """
         X, y = check_X_y(X, y)
+
+        # check if classes were defined, set the classes_ attribute
+        if self.classes is not None:
+            self.classes_ = self.classes
+        else:
+            self.classes_ = np.unique(y).sorted()
+
+        check_y_classes(y, self.classes_)
         return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
 
@@ -392,15 +403,9 @@ class GaussianNB(BaseNB):
 
         classes = self.classes_
 
-        unique_y = np.unique(y)
-        unique_y_in_classes = np.in1d(unique_y, classes)
+        check_y_classes(y, classes)
 
-        if not np.all(unique_y_in_classes):
-            raise ValueError("The target label(s) %s in y do not exist in the "
-                             "initial classes %s" %
-                             (unique_y[~unique_y_in_classes], classes))
-
-        for y_i in unique_y:
+        for y_i in np.unique(y):
             i = classes.searchsorted(y_i)
             X_i = X[y == y_i, :]
 

@@ -763,7 +763,10 @@ def check_y_classes(y, classes):
     classes : array-like, shape (n_classes,)
             List of all the classes that can possibly appear in the y vector.
     """
-    y_values = set(np.unique(y))
-    if not y_values.issubset(set(classes)):
-        raise ValueError('Unique vales in y are not a subset of the defined'
-                         'classes.')
+    unique_y = np.unique(y)
+    unique_y_in_classes = np.in1d(unique_y, classes)
+
+    if not np.all(unique_y_in_classes):
+        raise ValueError("The target label(s) %s in y do not exist in the "
+                         "initial classes %s" %
+                         (unique_y[~unique_y_in_classes], classes))
