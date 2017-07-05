@@ -7,7 +7,9 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.externals.six import iterkeys
 from sklearn.datasets import make_classification
+
 from sklearn.utils.testing import assert_true, assert_false, assert_raises
+from sklearn.utils.validation import check_is_fitted
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_selection import RFE, RFECV
@@ -65,8 +67,7 @@ def test_metaestimator_delegation():
             return True
 
         def _check_fit(self):
-            if not hasattr(self, 'coef_'):
-                raise NotFittedError
+            check_is_fitted(self, 'coef_')
 
         @hides
         def inverse_transform(self, X, *args, **kwargs):
@@ -103,6 +104,8 @@ def test_metaestimator_delegation():
             self._check_fit()
             return 1.0
 
+
+
     methods = [k for k in iterkeys(SubEstimator.__dict__)
                if not k.startswith('_') and not k.startswith('fit')]
     methods.sort()
@@ -111,14 +114,13 @@ def test_metaestimator_delegation():
         delegate = SubEstimator()
         delegator = delegator_data.construct(delegate)
         for method in methods:
-            print method
             if method in delegator_data.skip_methods:
                 continue
             assert_true(hasattr(delegate, method))
             assert_true(hasattr(delegator, method),
                         msg="%s does not have method %r when its delegate does"
                             % (delegator_data.name, method))
-            # delegation before fit raises an exception
+            # delegation before fit raises a NotFittedError
             assert_raises(NotFittedError, getattr(delegator, method),
                           delegator_data.fit_args[0])
 
