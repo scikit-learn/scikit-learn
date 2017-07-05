@@ -13,8 +13,6 @@ Version 0.19
 Highlights
 ----------
 
-TODO:
-
 This release includes a number of great new features including
 :class:`neighbors.LocalOutlierFactor` for anomaly detection,
 :class:`preprocessing.QuantileTransformer` for robust feature
@@ -24,12 +22,12 @@ have some new algorithms in existing estimators, such as
 multiplicative update in :class:`decomposition.NMF` and multinomial
 :class:`linear_model.LogisticRegression` with L1 loss.
 
-You can learn faster.  The new option to cache transformations in
-:class:`pipeline.Pipeline` makes grid search over pipelines including
-slow transformations much more efficient.
-
+You can learn faster.  The :ref:`new option to cache transformations
+<pipeline_cache>` in :class:`pipeline.Pipeline` makes grid search over
+pipelines including slow transformations much more efficient.
 And you can predict faster. If you're sure you know what you're doing,
-you can turn off some validation using :func:`config_context`.
+you can turn off validating that the input is finite using
+:func:`config_context`.
 
 Multi-metric grid search and cross validation
 
@@ -38,9 +36,8 @@ TODO: ?Rewrite of TSNE
 We've fixed a longstanding implementation erorr in :func:`metrics.average_precision_score`.
 :class:`semi_supervised.LabelSpreading` and
 :class:`semi_supervised.LabelPropagation` have had substantial fixes.
-Propagation was previously broekn. Spreading should now function better
-with respect to parameters.
-
+Propagation was previously broken. Spreading should now correctly
+respect its alpha parameter.
 
 Changed models
 --------------
@@ -53,7 +50,18 @@ random sampling procedures.
    * :class:`ensemble.IsolationForest` (bug fix)
    * :class:`semi_supervised.LabelSpreading` (bug fix)
    * :class:`semi_supervised.LabelPropagation` (bug fix)
-   * TODO
+   * tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
+   * :class:`ensemble.GradientBoostingClassifier` and
+     :class:`ensemble.GradientBoostingRegressor` where ``min_impurity_split`` is used (bug fix)
+   * gradient boosting with :class:`ensemble.gradient_boosting.QuantileLossFunction` (bug fix)
+   * :class:`linear_model.RANSACRegressor` (bug fix)
+   * :class:`linear_model.LassoLars` (bug fix)
+   * :class:`linear_model.LassoLarsIC` (bug fix)
+   * :class:`cluster.KMeans` with sparse X and initial centroids given (bug fix)
+   * :class:`manifold.TSNE` (bug fix)
+   * :class:`cross_decomposition.PLSRegression`
+     with ``scale=True`` (bug fix)
+   * :class:`feature_selection.SelectFdr` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -136,8 +144,8 @@ Trees and ensembles
      now support sparse input for prediction.
      :issue:`6101` by :user:`Ibraim Ganiev <olologin>`.
 
-   - :class:`ensemble.VotingClassifier` now allow changing estimators by using
-     :meth:`ensemble.VotingClassifier.set_params`. Estimators can also be
+   - :class:`ensemble.VotingClassifier` now allows changing estimators by using
+     :meth:`ensemble.VotingClassifier.set_params`. An estimator can also be
      removed by setting it to `None`.
      :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
@@ -146,7 +154,7 @@ Linear, kernelized and related models
    - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
      :class:`linear_model.PassiveAggressiveClassifier`,
      :class:`linear_model.PassiveAggressiveRegressor` and
-     :class:`linear_model.Perceptron` now expose a ``max_iter`` and
+     :class:`linear_model.Perceptron` now expose ``max_iter`` and
      ``tol`` parameters, to handle convergence more precisely.
      ``n_iter`` parameter is deprecated, and the fitted estimator exposes
      a ``n_iter_`` attribute, with actual number of iterations before
@@ -213,11 +221,11 @@ Preprocessing and feature selection
 
    - Made default kernel parameters kernel-dependent in
      :class:`kernel_approximation.Nystroem`.
-     :issue:`5229` by :user:`mth4saurabh` and `Andreas Müller`_.
+     :issue:`5229` by :user:`Saurabh Bansod <mth4saurabh>` and `Andreas Müller`_.
 
 Model evaluation and meta-estimators
 
-   - :class:`pipeline.Pipeline` allows to cache transformers
+   - :class:`pipeline.Pipeline` is now able to cache transformers
      within a pipeline by using the ``memory`` constructor parameter.
      :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -301,7 +309,7 @@ Trees and ensembles
      ``min_impurity_split`` parameter.
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
 
-   - Fixed oob_score in :class:`ensemble.BaggingClassifier`.
+   - Fixed ``oob_score`` in :class:`ensemble.BaggingClassifier`.
      :issue:`8936` by :user:`mlewis1729 <mlewis1729>`
 
    - Fixed a bug where :class:`ensemble.IsolationForest` fails when
@@ -444,7 +452,7 @@ Preprocessing and feature selection
      preventing the use of
      :class:`feature_extraction.text.HashingVectorizer` in a
      pipeline with  :class:`feature_extraction.text.TfidfTransformer`.
-     :issue:`7513` by :user:`Roman Yurchak <rth>`.
+     :issue:`7565` by :user:`Roman Yurchak <rth>`.
 
 Model evaluation and meta-estimators
 
@@ -497,8 +505,9 @@ Metrics
      by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
 
    - Fixed passing of ``gamma`` parameter to the ``chi2`` kernel in
-     :func:`metrics.pairwise_kernels` :issue:`5211` by :user:`nrhine1`,
-     :user:`mth4saurabh` and `Andreas Müller`_.
+     :func:`metrics.pairwise_kernels` :issue:`5211` by
+     :user:`Nick Rhinehart <nrhine1>`,
+     :user:`Saurabh Bansod <mth4saurabh>` and `Andreas Müller`_.
 
 Miscellaneous
 
