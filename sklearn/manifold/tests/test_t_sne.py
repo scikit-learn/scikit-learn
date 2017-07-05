@@ -401,6 +401,41 @@ def test_n_components_range():
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
+def test_early_exaggeration_used():
+    # check that the ``early_exaggeration`` parameter has an effect
+    random_state = check_random_state(0)
+    n_components = 2
+    methods = ['exact', 'barnes_hut']
+    X = random_state.randn(25, n_components).astype(np.float32)
+    for method in methods:
+        tsne = TSNE(n_components=n_components, perplexity=1,
+                    learning_rate=100.0, init="pca", random_state=0,
+                    method=method, early_exaggeration=1.0)
+        X_embedded1 = tsne.fit_transform(X)
+        tsne = TSNE(n_components=n_components, perplexity=1,
+                    learning_rate=100.0, init="pca", random_state=0,
+                    method=method, early_exaggeration=10.0)
+        X_embedded2 = tsne.fit_transform(X)
+
+        assert not np.allclose(X_embedded1, X_embedded2)
+
+
+def test_n_iter_used():
+    # check that the ``early_exaggeration`` parameter has an effect
+    random_state = check_random_state(0)
+    n_components = 2
+    methods = ['exact', 'barnes_hut']
+    X = random_state.randn(25, n_components).astype(np.float32)
+    for method in methods:
+        for n_iter in [251, 500, 1000]:
+            tsne = TSNE(n_components=n_components, perplexity=1,
+                        learning_rate=1.0, init="pca", random_state=0,
+                        method=method, early_exaggeration=1.0, n_iter=n_iter)
+            tsne.fit_transform(X)
+
+            assert tsne.n_iter_final == n_iter - 1
+
+
 def test_answer_gradient_two_points():
     # Test the tree with only a single set of children.
     #
