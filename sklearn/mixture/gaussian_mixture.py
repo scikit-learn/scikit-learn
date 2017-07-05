@@ -92,7 +92,7 @@ def _check_precision_matrix(precision, covariance_type):
 def _check_precisions_full(precisions, covariance_type):
     """Check the precision matrices are symmetric and positive-definite."""
     for k, prec in enumerate(precisions):
-        prec = _check_precision_matrix(prec, covariance_type)
+        _check_precision_matrix(prec, covariance_type)
 
 
 def _check_precisions(precisions, covariance_type, n_components, n_features):
