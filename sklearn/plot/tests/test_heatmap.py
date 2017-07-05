@@ -42,14 +42,15 @@ def test_confusion_matrix():
 
     with matplotlib.rc_context(rc={'backend': 'Agg', 'interactive': False}):
         plt.figure()
-        cnf_matrix = randint(1, 10, size=(2, 2))
+        array1 = randint(1, 3, size=20)
+        array2 = randint(1, 3, size=20)
 
         # plot un-normalized matrix
-        plot_confusion_matrix(cnf_matrix, classes=["dummy1", "dummy2"],
+        plot_confusion_matrix(array1, array2, classes=["dummy1", "dummy2"],
                               cmap="Paired", ax=plt.gca())
 
         # plot normalized matrix
-        plot_confusion_matrix(cnf_matrix, normalize=True,
+        plot_confusion_matrix(array1, array2, normalize=True,
                               classes=["dummay1", "dummy2"],
                               cmap="Paired", ax=plt.gca())
 

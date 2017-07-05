@@ -1,22 +1,31 @@
 import numpy as np
+from sklearn.metrics import confusion_matrix
 from sklearn.plot import plot_heatmap
 
 
-def plot_confusion_matrix(values, classes, normalize=False,
+def plot_confusion_matrix(y_true, y_pred, classes, sample_weights=None,
+                          normalize=False,
                           xlabel="Predicted Label", ylabel="True Label",
                           title='Confusion matrix', cmap=None, vmin=None,
                           vmax=None, ax=None, fmt="{:.2f}",
                           xtickrotation=45, norm=None):
-    """Plot the confusion matrix as a heatmap. Normalization can be
-    applied by setting `normalize=True`.
+    """Plot the confusion matrix as a heatmap. A confusion matrix is computed
+    using `y_true`, `y_pred` and `sample_weights` arguments. Normalization
+    can be applied by setting `normalize=True`.
 
     Parameters
     ----------
-    values : ndarray
-        Two-dimensional array to visualize.
+    y_true : array, shape = [n_samples]
+        Ground truth (correct) target values.
+
+    y_pred : array, shape = [n_samples]
+        Estimated targets as returned by a classifier.
 
     classes : list of strings
         The list of classes represented in the two-dimensional input array.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights used to calculate the confusion matrix
 
     normalize : boolean, default=False
         If True, the confusion matrix will be normalized by row.
@@ -58,6 +67,8 @@ def plot_confusion_matrix(values, classes, normalize=False,
     """
 
     import matplotlib.pyplot as plt
+
+    values = confusion_matrix(y_true, y_pred, sample_weights=sample_weights)
 
     if normalize:
         values = values.astype('float') / values.sum(axis=1)[:, np.newaxis]
