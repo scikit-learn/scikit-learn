@@ -262,7 +262,7 @@ class MiniBatchSparsePCA(SparsePCA):
             ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
             random_state=random_state)
         self.n_iter = n_iter
-        self.callback = callback    
+        self.callback = callback
         self.batch_size = batch_size
         self.shuffle = shuffle
 
