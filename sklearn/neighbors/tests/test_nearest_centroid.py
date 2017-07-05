@@ -99,7 +99,7 @@ def test_pickle():
 
 def test_shrinkage_correct():
     # Ensure that the shrinking is correct.
-    # The corrent result is calculated by R (pamr),
+    # The expected result is calculated by R (pamr),
     # which is implemented by the author of the original paper.
     # (One need to modify the code to output the new centroid in pamr.predict)
 
