@@ -15,29 +15,32 @@ Highlights
 
 TODO:
 
-This release includes a number of great new features including Local Outlier Factor for anomaly detection, QuantileTransformer for robust feature transformation, and ClassifierChain to simply account for dependencies between classes in multilabel problems.
+This release includes a number of great new features including
+:class:`neighbors.LocalOutlierFactor` for anomaly detection,
+:class:`preprocessing.QuantileTransformer` for robust feature
+transformation, and :class:`multioutput.ClassifierChain` to simply
+account for dependencies between classes in multilabel problems. We
+have some new algorithms in existing estimators, such as
+multiplicative update in :class:`decomposition.NMF` and multinomial
+:class:`linear_model.LogisticRegression` with L1 loss.
 
-Pipeline caching makes grid search over pipelines including slow transformations much more efficient.
+You can learn faster.  The new option to cache transformations in
+:class:`pipeline.Pipeline` makes grid search over pipelines including
+slow transformations much more efficient.
 
-Multinomial logistic regression with L1 loss.
+And you can predict faster. If you're sure you know what you're doing,
+you can turn off some validation using :func:`config_context`.
 
-?Rewrite of TSNE
+Multi-metric grid search and cross validation
 
+We've made some important fixes too.
+TODO: ?Rewrite of TSNE
+We've fixed a longstanding implementation erorr in :func:`metrics.average_precision_score`.
 :class:`semi_supervised.LabelSpreading` and
 :class:`semi_supervised.LabelPropagation` have had substantial fixes.
 Propagation was previously broekn. Spreading should now function better
 with respect to parameters.
 
-Fix longstanding implementation erorr in average_precision_score
-
-
-Multi-metric grid search and cross validation
-
-Note also that we have deprecated RandomizedLasso,
-RandomizedLogisticRegression and LSHForest because they weren't
-appropriate or up to standards. We have deprecated a number of
-utilities no longer necessary now that we require Scipy 0.13.3 and
-Numpy 1.8.2 at a minimum.
 
 Changed models
 --------------
@@ -159,10 +162,6 @@ Linear, kernelized and related models
      attributes, ``n_skips_*``.
      :issue:`7914` by :user:`Michael Horrell <mthorrell>`.
 
-   - Custom metrics for the :mod:`neighbors` binary trees now have
-     fewer constraints: they must take two 1d-arrays and return a float.
-     :issue:`6288` by `Jake Vanderplas`_.
-
    - In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
      is a lot faster with ``return_std=True``. :issue:`8591` by
      :user:`Hadrien Bertrand <hbertrand>`.
@@ -173,8 +172,14 @@ Linear, kernelized and related models
 
    - Memory usage enhancement: Prevent cast from float32 to float64 in
      :class:`linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
-     :class:`sklearn.linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
+     :class:`linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
      by :user:`Joan Massich <massich>`, :user:`Nicolas Cordier <ncordier>`
+
+Other predictors
+
+   - Custom metrics for the :mod:`neighbors` binary trees now have
+     fewer constraints: they must take two 1d-arrays and return a float.
+     :issue:`6288` by `Jake Vanderplas`_.
 
 Decomposition, manifold learning and clustering
 
@@ -264,7 +269,7 @@ Miscellaneous
      :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
    - Added type checking to the ``accept_sparse`` parameter in
-     :mod:`sklearn.utils.validation` methods. This parameter now accepts only
+     :mod:`utils.validation` methods. This parameter now accepts only
      boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
      and should be replaced by ``accept_sparse=False``.
      :issue:`7880` by :user:`Josh Karnofsky <jkarno>`.
@@ -319,16 +324,10 @@ Trees and ensembles
 
 Linear, kernelized and related models
 
-   - Fix :class:`semi_supervised.BaseLabelPropagation` to correctly implement
-     ``LabelPropagation`` and ``LabelSpreading`` as done in the referenced
-     papers. :issue:`9239`
-     by :user:`Andre Ambrosio Boechat <boechat107>`, :user:`Utkarsh Upadhyay
-     <musically-ut>`, and `Joel Nothman`_.
-
    - Fixed a bug where :func:`linear_model.RANSACRegressor.fit` may run until
      ``max_iter`` if it finds a large inlier group early. :issue:`8251` by :user:`aivision2020`.
 
-   - Fixed a bug where :class:`sklearn.naive_bayes.MultinomialNB` and :class:`sklearn.naive_bayes.BernoulliNB`
+   - Fixed a bug where :class:`naive_bayes.MultinomialNB` and :class:`naive_bayes.BernoulliNB`
      failed when `alpha=0`. :issue:`5814` by :user:`Yichuan Liu <yl565>` and
      :user:`Herilalaina Rakotoarison <herilalaina>`.
 
@@ -370,6 +369,14 @@ Linear, kernelized and related models
      would fail with a unmeaningful error by default.
      :issue:`6573` by :user:`Quazi Marufur Rahman <qmaruf>` and
      `Manoj Kumar`_.
+
+Other predictors
+
+   - Fix :class:`semi_supervised.BaseLabelPropagation` to correctly implement
+     ``LabelPropagation`` and ``LabelSpreading`` as done in the referenced
+     papers. :issue:`9239`
+     by :user:`Andre Ambrosio Boechat <boechat107>`, :user:`Utkarsh Upadhyay
+     <musically-ut>`, and `Joel Nothman`_.
 
 Decomposition, manifold learning and clustering
 
@@ -503,7 +510,7 @@ Miscellaneous
      incorrect result when ``n_samples`` is odd.
      :issue:`8198` by :user:`Josh Levy <levy5674>`.
 
-   - Some ``fetch_`` functions in :mod:`sklearn.datasets` were ignoring the
+   - Some ``fetch_`` functions in :mod:`datasets` were ignoring the
      ``download_if_missing`` keyword. :issue:`7944` by :user:`Ralf Gommers <rgommers>`.
 
    - Fix estimators to accept a ``sample_weight`` parameter of type
@@ -537,7 +544,7 @@ Trees and ensembles
      the weighted impurity decrease from splitting is no longer alteast
      ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV`_.
 
-Linear, kernelized and related models
+Other predictors
 
    - :class:`neighbors.LSHForest` has been deprecated and will be
      removed in 0.21 due to poor performance.
@@ -636,7 +643,7 @@ Miscellaneous
 
    - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
      for scikit-learn. The following backported functions in
-     :mod:`sklearn.utils` have been removed or deprecated accordingly.
+     :mod:`utils` have been removed or deprecated accordingly.
      :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
 
      Removed in 0.19:
@@ -669,7 +676,7 @@ Miscellaneous
    - Estimators with both methods ``decision_function`` and ``predict_proba``
      are now required to have a monotonic relation between them. The
      method ``check_decision_proba_consistency`` has been added in
-     **sklearn.utils.estimator_checks** to check their consistency.
+     **utils.estimator_checks** to check their consistency.
      :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
 
    - All checks in ``utils.estimator_checks``, in particular
