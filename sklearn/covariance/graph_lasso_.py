@@ -549,8 +549,9 @@ class GraphLassoCV(GraphLasso):
     def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
                  enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=1,
                  verbose=False, assume_centered=False):
-        super(GraphLassoCV, self).__init__(mode=mode, tol=tol, verbose=verbose,
-        enet_tol=enet_tol, max_iter=max_iter, assume_centered=assume_centered)
+        super(GraphLassoCV, self).__init__(
+            mode=mode, tol=tol, verbose=verbose, enet_tol=enet_tol,
+            max_iter=max_iter, assume_centered=assume_centered)
         self.alphas = alphas
         self.n_refinements = n_refinements
         self.cv = cv
