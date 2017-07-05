@@ -302,9 +302,9 @@ def inplace_swap_row(X, m, n):
         Index of the row of X to be swapped.
     """
     if isinstance(X, sp.csc_matrix):
-        return inplace_swap_row_csc(X, m, n)
+        inplace_swap_row_csc(X, m, n)
     elif isinstance(X, sp.csr_matrix):
-        return inplace_swap_row_csr(X, m, n)
+        inplace_swap_row_csr(X, m, n)
     else:
         _raise_typeerror(X)
 
@@ -329,9 +329,9 @@ def inplace_swap_column(X, m, n):
     if n < 0:
         n += X.shape[1]
     if isinstance(X, sp.csc_matrix):
-        return inplace_swap_row_csr(X, m, n)
+        inplace_swap_row_csr(X, m, n)
     elif isinstance(X, sp.csr_matrix):
-        return inplace_swap_row_csc(X, m, n)
+        inplace_swap_row_csc(X, m, n)
     else:
         _raise_typeerror(X)
 
