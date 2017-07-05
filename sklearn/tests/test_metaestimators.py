@@ -12,7 +12,6 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.ensemble import BaggingClassifier
-from sklearn.exceptions import NotFittedError
 
 
 class DelegatorData(object):
@@ -66,7 +65,7 @@ def test_metaestimator_delegation():
 
         def _check_fit(self):
             if not hasattr(self, 'coef_'):
-                raise NotFittedError
+                raise RuntimeError('Estimator is not fit')
 
         @hides
         def inverse_transform(self, X, *args, **kwargs):
@@ -111,7 +110,6 @@ def test_metaestimator_delegation():
         delegate = SubEstimator()
         delegator = delegator_data.construct(delegate)
         for method in methods:
-            print method
             if method in delegator_data.skip_methods:
                 continue
             assert_true(hasattr(delegate, method))
@@ -119,7 +117,7 @@ def test_metaestimator_delegation():
                         msg="%s does not have method %r when its delegate does"
                             % (delegator_data.name, method))
             # delegation before fit raises an exception
-            assert_raises(NotFittedError, getattr(delegator, method),
+            assert_raises(Exception, getattr(delegator, method),
                           delegator_data.fit_args[0])
 
         delegator.fit(*delegator_data.fit_args)
