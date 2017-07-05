@@ -749,3 +749,21 @@ def check_non_negative(X, whom):
     X = X.data if sp.issparse(X) else X
     if (X < 0).any():
         raise ValueError("Negative values in data passed to %s" % whom)
+
+
+def check_y_classes(y, classes):
+    """
+    Chech if y has a subset of classes as set in the classes argument.
+
+    Parameters
+    ----------
+    y : array, shape (n_samples,)
+            Target values passed into a fit-like function.
+
+    classes : array-like, shape (n_classes,)
+            List of all the classes that can possibly appear in the y vector.
+    """
+    y_values = set(np.unique(y))
+    if not y_values.issubset(set(classes)):
+        raise ValueError('Unique vales in y are not a subset of the defined'
+                         'classes.')
