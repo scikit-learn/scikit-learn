@@ -8,7 +8,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_raises
 import numpy as np
 from numpy.random import (RandomState,
-                          randomint)
+                          randint)
 
 
 def test_heatmap():
@@ -42,7 +42,7 @@ def test_confusion_matrix():
 
     with matplotlib.rc_context(rc={'backend': 'Agg', 'interactive': False}):
         plt.figure()
-        cnf_matrix = randomint(1, 10, size=(2, 2))
+        cnf_matrix = randint(1, 10, size=(2, 2))
 
         # plot un-normalized matrix
         plot_confusion_matrix(cnf_matrix, classes=["dummy1", "dummy2"],
