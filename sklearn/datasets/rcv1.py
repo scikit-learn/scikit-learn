@@ -114,7 +114,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     data_home = get_data_home(data_home=data_home)
     rcv1_dir = join(data_home, "RCV1")
     if download_if_missing:
-        makedirs(rcv1_dir, exist_ok=True)
+        if not exists(rcv1_dir):
+            makedirs(rcv1_dir)
 
     samples_path = _pkl_filepath(rcv1_dir, "samples.pkl")
     sample_id_path = _pkl_filepath(rcv1_dir, "sample_id.pkl")
