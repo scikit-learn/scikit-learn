@@ -4,6 +4,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.neighbors import BallTree
+from sklearn.neighbors import NearestNeighbors
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -29,6 +30,14 @@ from scipy.optimize import check_grad
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from sklearn.metrics.pairwise import pairwise_distances
+
+
+x = np.linspace(0, 1, 10)
+xx, yy = np.meshgrid(x, x)
+X_2d_grid = np.hstack([
+    xx.ravel().reshape(-1, 1),
+    yy.ravel().reshape(-1, 1),
+])
 
 
 def test_gradient_descent_stops():
@@ -717,3 +726,35 @@ def test_accessible_kl_divergence():
                 error, _, _ = error.partition(',')
                 break
     assert_almost_equal(tsne.kl_divergence_, float(error), decimal=5)
+
+
+def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
+    """Make sure that TSNE can approximately recover a uniform 2D grid"""
+    for seed in seeds:
+        tsne = TSNE(n_components=2, init='random', random_state=seed,
+                    perplexity=10, n_iter=n_iter)
+        Y = tsne.fit_transform(X_2d_grid)
+
+        # Ensure that the convergence criterion has been triggered
+        assert tsne.n_iter_ < n_iter
+
+        # Ensure that the resulting embedding leads to approximately
+        # uniformly spaced points: the distance to the closest neighbors
+        # should be approximately be non-zero and constant.
+        nn = NearestNeighbors(n_neighbors=2).fit(Y)
+        dist_to_nn, _ = nn.kneighbors(Y, return_distance=True)
+
+        # the first neighbor is the query vector it-self
+        dist_to_nn = dist_to_nn[:, 1]
+        assert dist_to_nn.min() > 0.1
+
+        smallest_to_mean = dist_to_nn.min() / np.mean(dist_to_nn)
+        largest_to_mean = dist_to_nn.max() / np.mean(dist_to_nn)
+
+        assert 0.5 < smallest_to_mean
+        assert largest_to_mean < 2
+
+
+def test_uniform_grid():
+    for method in ['barnes_hut', 'exact']:
+        yield check_uniform_grid, method
