@@ -476,7 +476,7 @@ class _MPLTreeExporter(_DOTTreeExporter):
         bbox_widths = [ann.get_bbox_patch().get_width() for ann in
                        ax_phantom.get_children()
                        if isinstance(ann, Annotation)]
-        self._scalex = max(bbox_widths)
+        self._scalex = max(bbox_widths) + 2  # some margin
         ax_phantom.set_visible(False)
         self.recurse(dt, decision_tree.tree_, ax)
 
