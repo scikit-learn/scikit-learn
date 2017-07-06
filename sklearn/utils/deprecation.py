@@ -1,3 +1,4 @@
+import sys
 import warnings
 
 __all__ = ["deprecated", ]
@@ -91,12 +92,14 @@ class deprecated(object):
 
 def _is_deprecated(func):
     """Helper to check if func is wraped by our deprecated decorator"""
+    if sys.version_info < (3, 5):
+        raise NotImplementedError("This is only available for python3.5 "
+                                  "or above")
     closures = getattr(func, '__closure__', [])
     if closures is None:
         closures = []
     func_coname = getattr(getattr(func, '__code__', ''), 'co_name', '')
-    is_deprecated = 'deprecation_wrapped' in func_coname
-    is_deprecated |= ('deprecated' in ''.join([c.cell_contents
-                                               for c in closures
-                      if isinstance(c.cell_contents, str)]))
+    is_deprecated = ('deprecated' in ''.join([c.cell_contents
+                                              for c in closures
+                     if isinstance(c.cell_contents, str)]))
     return is_deprecated
