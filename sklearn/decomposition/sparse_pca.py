@@ -257,18 +257,14 @@ class MiniBatchSparsePCA(SparsePCA):
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
                  shuffle=True, n_jobs=1, method='lars', random_state=None):
-
-        self.n_components = n_components
-        self.alpha = alpha
-        self.ridge_alpha = ridge_alpha
+        super(MiniBatchSparsePCA, self).__init__(
+            n_components=n_components, alpha=alpha, verbose=verbose,
+            ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
+            random_state=random_state)
         self.n_iter = n_iter
         self.callback = callback
         self.batch_size = batch_size
-        self.verbose = verbose
         self.shuffle = shuffle
-        self.n_jobs = n_jobs
-        self.method = method
-        self.random_state = random_state
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
