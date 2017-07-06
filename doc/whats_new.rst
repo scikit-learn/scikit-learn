@@ -43,6 +43,7 @@ New features
      score times.
      Refer to :ref:`multimetric_cross_validation` section of the userguide
      for more information. :issue:`7388` by `Raghav RV`_
+     
    - Added :class:`multioutput.ClassifierChain` for multi-label
      classification. By `Adam Kleczewski <adamklec>`_.
 
