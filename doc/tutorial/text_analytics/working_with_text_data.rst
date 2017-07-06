@@ -315,16 +315,16 @@ to work with, ``scikit-learn`` provides a ``Pipeline`` class that behaves
 like a compound classifier::
 
   >>> from sklearn.pipeline import Pipeline
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
+  >>> nb_pipe = Pipeline([('vect', CountVectorizer()),
   ...                      ('tfidf', TfidfTransformer()),
-  ...                      ('clf', MultinomialNB()),
+  ...                      ('clf', MultinomialNB())
   ... ])
 
 The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We shall see their use in the section on grid search, below.
 We can now train the model with a single command::
 
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> nb_pipe.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
   Pipeline(...)
 
 
@@ -336,9 +336,8 @@ Evaluating the predictive accuracy of the model is equally easy::
   >>> import numpy as np
   >>> twenty_test = fetch_20newsgroups(subset='test',
   ...     categories=categories, shuffle=True, random_state=42)
-  >>> docs_test = twenty_test.data
-  >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
+  >>> nb_pred = nb_pipe.predict(twenty_test.data)
+  >>> np.mean(nb_pred == twenty_test.target)            # doctest: +ELLIPSIS
   0.834...
 
 I.e., we achieved 83.4% accuracy. Let's see if we can do better with a
@@ -349,23 +348,23 @@ than naïve Bayes). We can change the learner by just plugging a different
 classifier object into our pipeline::
 
   >>> from sklearn.linear_model import SGDClassifier
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
+  >>> svm_pipe = Pipeline([('vect', CountVectorizer()),
   ...                      ('tfidf', TfidfTransformer()),
   ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
   ...                                            alpha=1e-3, random_state=42,
   ...                                            max_iter=5, tol=None)),
   ... ])
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> svm_pipe.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
   Pipeline(...)
-  >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
+  >>> svm_pred = svm_pipe.predict(docs_test)
+  >>> np.mean(svm_pred == twenty_test.target)            # doctest: +ELLIPSIS
   0.912...
 
 ``scikit-learn`` further provides utilities for more detailed performance
-analysis of the results::
+analysis of the results. Two useful functions are :func:`sklearn.metrics.classification_report` and :func:`sklearn.metrics.confusion_matrix`, which are as follows::
 
   >>> from sklearn import metrics
-  >>> print(metrics.classification_report(twenty_test.target, predicted,
+  >>> print(metrics.classification_report(twenty_test.target, svm_pred,
   ...     target_names=twenty_test.target_names))
   ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
@@ -378,7 +377,7 @@ analysis of the results::
              avg / total       0.92      0.91      0.91      1502
   <BLANKLINE>
 
-  >>> metrics.confusion_matrix(twenty_test.target, predicted)
+  >>> metrics.confusion_matrix(twenty_test.target, svm_pred)
   array([[258,  11,  15,  35],
          [  4, 379,   3,   3],
          [  5,  33, 355,   3],
@@ -426,7 +425,7 @@ parameter of either 0.01 or 0.001 for the linear SVM::
   >>> from sklearn.model_selection import GridSearchCV
   >>> parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
   ...               'tfidf__use_idf': (True, False),
-  ...               'clf__alpha': (1e-2, 1e-3),
+  ...               'clf__alpha': (1e-2, 1e-3)
   ... }
 
 Obviously, such an exhaustive search can be expensive. If we have multiple
