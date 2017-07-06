@@ -740,7 +740,7 @@ def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
 
         # Ensure that the resulting embedding leads to approximately
         # uniformly spaced points: the distance to the closest neighbors
-        # should be approximately be non-zero and constant.
+        # should be non-zero and approximately constant.
         nn = NearestNeighbors(n_neighbors=1).fit(Y)
         dist_to_nn = nn.kneighbors(return_distance=True)[0].ravel()
         assert dist_to_nn.min() > 0.1
