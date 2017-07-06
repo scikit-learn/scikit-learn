@@ -20,10 +20,6 @@ from sklearn.utils.testing import get_func_name
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
 
-_DOC_SPECIAL_MEMBERS = ('__contains__', '__getitem__', '__iter__', '__len__',
-                        '__call__', '__add__', '__sub__', '__mul__', '__div__',
-                        '__neg__', '__hash__')
-
 PUBLIC_MODULES = set(['sklearn.' + pckg[1]
                       for pckg in walk_packages('sklearn.*')
                       if not pckg[1].startswith('_')])
