@@ -89,7 +89,7 @@ def test_docstring_parameters():
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES:
                 continue
-            if cname.startswith('_') and cname not in _DOC_SPECIAL_MEMBERS:
+            if cname.startswith('_'):
                 continue
             with warnings.catch_warnings(record=True) as w:
                 cdoc = docscrape.ClassDoc(cls)
@@ -120,10 +120,6 @@ def test_docstring_parameters():
                 result = check_parameters_match(method, ignore=param_ignore,
                                                 class_name=cname)
                 this_incorrect += result
-
-            if hasattr(cls, '__call__') and not _is_deprecated(cls.__call__):
-                this_incorrect += check_parameters_match(cls.__call__,
-                                                         class_name=cname)
 
             incorrect += this_incorrect
 
