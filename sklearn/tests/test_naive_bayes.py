@@ -34,24 +34,25 @@ y1 = (rng.normal(size=(10)) > 0).astype(np.int)
 X2 = rng.randint(5, size=(6, 100))
 y2 = np.array([1, 1, 2, 2, 3, 3])
 
+# Test not needed if we remove the classes parameter in partial fit
+# def test_gnb():
+#     # Gaussian Naive Bayes classification.
+#     # This checks that GaussianNB implements fit and predict and returns
+#     # correct values for a simple toy dataset.
 
-def test_gnb():
-    # Gaussian Naive Bayes classification.
-    # This checks that GaussianNB implements fit and predict and returns
-    # correct values for a simple toy dataset.
+#     clf = GaussianNB()
+#     y_pred = clf.fit(X, y).predict(X)
+#     assert_array_equal(y_pred, y)
 
-    clf = GaussianNB()
-    y_pred = clf.fit(X, y).predict(X)
-    assert_array_equal(y_pred, y)
+#     y_pred_proba = clf.predict_proba(X)
+#     y_pred_log_proba = clf.predict_log_proba(X)
+#     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
 
-    y_pred_proba = clf.predict_proba(X)
-    y_pred_log_proba = clf.predict_log_proba(X)
-    assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
-
-    # Test whether label mismatch between target y and classes raises
-    # an Error
-    # FIXME Remove this test once the more general partial_fit tests are merged
-    assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
+#     # Test whether label mismatch between target y and classes raises
+#     # an Error
+#     # FIXME Remove this test once the more general partial_fit tests are
+# merged
+#     assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
 
 
 def test_gnb_prior():
@@ -152,6 +153,31 @@ def test_gnb_pfit_wrong_nb_features():
     clf.fit(X, y)
     # Partial fit a second time with an incoherent X
     assert_raises(ValueError, clf.partial_fit, np.hstack((X, X)), y)
+
+
+def test_gnb_extra_classes():
+    """Test whether adding extra classes doesn't change the prediction of the
+    existing classes just adds 0 value columns for new classes"""
+    clf1 = GaussianNB(classes=[1, 2]).fit(X, y)
+    pred1 = clf1.predict_proba(X)
+
+    clf2 = GaussianNB(classes=[1, 2, 3, 4]).fit(X, y)
+    pred2 = clf2.predict_proba(X)
+
+    clf3 = GaussianNB(classes=[0, 1, 2, 3]).fit(X, y)
+    pred3 = clf3.predict_proba(X)
+
+    zero_array = np.zeros(X.shape[0])
+
+    # check same columns are equal:
+    assert_array_almost_equal(pred1[:, 0], pred2[:, 0])
+    assert_array_almost_equal(pred1[:, 0], pred3[:, 1])
+    assert_array_almost_equal(pred1[:, 1], pred2[:, 1])
+    assert_array_almost_equal(pred1[:, 1], pred3[:, 2])
+    assert_array_almost_equal(pred2[:, 2], zero_array)
+    assert_array_almost_equal(pred2[:, 3], zero_array)
+    assert_array_almost_equal(pred3[:, 0], zero_array)
+    assert_array_almost_equal(pred3[:, 3], zero_array)
 
 
 def test_discrete_prior():
