@@ -246,13 +246,13 @@ Enhancements
    - Speed improvements to :class:`model_selection.StratifiedShuffleSplit`.
      :issue:`5991` by :user:`Arthur Mensch <arthurmensch>` and `Joel Nothman`_.
 
-   - Memory improvements to :class:`manifold.TSNE`
-     :issue:`7089` by :user:`Thomas Moreau <tomMoral> and :user:`Olivier Grisel <ogrisel>`.
+   - Memory improvements for method barnes_hut in :class:`manifold.TSNE`
+     :issue:`7089` by :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
 
    - Optimization schedule improvements for so the results are closer to the
      one from the reference implementation
-     `lvdmaaten/bhtsne<https://github.com/lvdmaaten/bhtsne>`_, by
-     :user:`Thomas Moreau <tomMoral> and :user:`Olivier Grisel <ogrisel>`.
+     `lvdmaaten/bhtsne <https://github.com/lvdmaaten/bhtsne>`_ by
+     :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
 
 Bug fixes
 .........
@@ -492,8 +492,8 @@ Bug fixes
         first 250 optimization iterations.
       - Fixed the ``InsersionError`` reported in :issue:`8992`.
       - Improve the learning schedule to match the one from the reference
-        implementation `lvdmaaten/bhtsne<https://github.com/lvdmaaten/bhtsne>`_.
-     by :user:`Thomas Moreau <tomMoral> and :user:`Olivier Grisel <ogrisel>`.
+        implementation `lvdmaaten/bhtsne <https://github.com/lvdmaaten/bhtsne>`_.
+     by :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
 
 API changes summary
 -------------------
