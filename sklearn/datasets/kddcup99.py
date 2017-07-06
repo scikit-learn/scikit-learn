@@ -39,7 +39,8 @@ URL = ('http://archive.ics.uci.edu/ml/'
 logger = logging.getLogger()
 
 
-def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
+def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
+                   random_state=None,
                    percent10=True, download_if_missing=True):
     """Load and return the kddcup 99 dataset (classification).
 
@@ -124,6 +125,11 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
         To return the corresponding classical subsets of kddcup 99.
         If None, return the entire kddcup 99 dataset.
 
+    data_home : string, optional
+        Specify another download and cache folder for the datasets. By default
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+        .. versionadded:: 0.19
+
     random_state : int, RandomState instance or None, optional (default=None)
         Random state for shuffling the dataset.
         If int, random_state is the seed used by the random number generator;
@@ -162,7 +168,9 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
            and data mining, pages 320-324. ACM Press, 2000.
 
     """
-    kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10,
+    data_home = get_data_home(data_home=data_home)
+    kddcup99 = _fetch_brute_kddcup99(data_home=data_home, shuffle=shuffle,
+                                     percent10=percent10,
                                      download_if_missing=download_if_missing)
 
     data = kddcup99.data
