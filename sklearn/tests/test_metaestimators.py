@@ -104,8 +104,6 @@ def test_metaestimator_delegation():
             self._check_fit()
             return 1.0
 
-
-
     methods = [k for k in iterkeys(SubEstimator.__dict__)
                if not k.startswith('_') and not k.startswith('fit')]
     methods.sort()
