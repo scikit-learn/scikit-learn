@@ -78,19 +78,14 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False,
               leaves_parallel=False, impurity=True, node_ids=False,
               proportion=False, rotate=False, rounded=False,
-              special_characters=False, precision=3, ax=None, scalex=150):
-    import matplotlib.pyplot as plt
-    if ax is None:
-        ax = plt.gca()
-
+              special_characters=False, precision=3, ax=None):
     exporter = _MPLTreeExporter(
         max_depth=max_depth, feature_names=feature_names,
         class_names=class_names, label=label, filled=filled,
         leaves_parallel=leaves_parallel, impurity=impurity, node_ids=node_ids,
         proportion=proportion, rotate=rotate, rounded=rounded,
-        special_characters=special_characters, precision=precision, ax=ax,
-        scalex=scalex)
-    exporter.export(decision_tree)
+        special_characters=special_characters, precision=precision)
+    exporter.export(decision_tree, ax=ax)
 
 
 class _DOTTreeExporter(object):
@@ -411,11 +406,11 @@ class _DOTTreeExporter(object):
 
 
 class _MPLTreeExporter(_DOTTreeExporter):
-    def __init__(self, ax, max_depth=None, feature_names=None,
+    def __init__(self, max_depth=None, feature_names=None,
                  class_names=None, label='all', filled=False,
                  leaves_parallel=False, impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3, scalex=150, scaley=1):
+                 special_characters=False, precision=3):
         self.max_depth = max_depth
         self.feature_names = feature_names
         self.class_names = class_names
@@ -429,9 +424,7 @@ class _MPLTreeExporter(_DOTTreeExporter):
         self.rounded = rounded
         self.special_characters = special_characters
         self.precision = precision
-        self.scalex = scalex
-        self.ax = ax
-        self.scaley = 80 if class_names is None else 100
+        self._scaley = 80 if class_names is None else 100
 
         # validate
         if isinstance(precision, Integral):
@@ -465,24 +458,33 @@ class _MPLTreeExporter(_DOTTreeExporter):
             return Tree(name, node_id)
         return Tree(name, node_id, *children)
 
-    # def _find_longest(self, my_tree, max_length):
-        # child_length = [_find_longest(c, max_length) for c
-                        # in my_cildren]
-        # return max(child_length + [max_length])
-
-    def export(self, decision_tree):
-        self.ax.set_axis_off()
+    def export(self, decision_tree, ax=None):
+        import matplotlib.pyplot as plt
+        from matplotlib.text import Annotation
+        if ax is None:
+            ax = plt.gca()
+        ax.set_axis_off()
         my_tree = self._make_tree(0, decision_tree.tree_)
         # find longest string:
-        # self._find_longest(my_tree, len(my_tree.node)))
+        # print(my_tree._longest_str())
         dt = buchheim(my_tree)
-        self.recurse(dt, decision_tree.tree_)
+        # plot once with phantom axis to get sizes:
+        ax_phantom = plt.gcf().add_axes((0, 0, 1, 1))
+        self._scalex = 1
+        self.recurse(dt, decision_tree.tree_, ax_phantom)
+        plt.draw()
+        bbox_widths = [ann.get_bbox_patch().get_width() for ann in
+                       ax_phantom.get_children()
+                       if isinstance(ann, Annotation)]
+        self._scalex = max(bbox_widths)
+        ax_phantom.set_visible(False)
+        self.recurse(dt, decision_tree.tree_, ax)
 
-    def recurse(self, node, tree, depth=0):
+    def recurse(self, node, tree, ax, depth=0):
         # 2 - is a hack to for not creating empty space. FIXME
         kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
                       zorder=100 - 10 * depth, xycoords='axes points')
-        xy = (node.x * self.scalex, (2 - node.y) * self.scaley)
+        xy = (node.x * self._scalex, (2 - node.y) * self._scaley)
 
         if self.max_depth is None or depth <= self.max_depth:
             if self.filled:
@@ -490,21 +492,21 @@ class _MPLTreeExporter(_DOTTreeExporter):
                                                            node.tree.node_id)
             if node.parent is None:
                 # root
-                self.ax.annotate(node.tree.node, xy, **kwargs)
+                ax.annotate(node.tree.node, xy, **kwargs)
             else:
-                xy_parent = (node.parent.x * self.scalex, (2 - node.parent.y) *
-                             self.scaley)
+                xy_parent = (node.parent.x * self._scalex,
+                             (2 - node.parent.y) * self._scaley)
                 kwargs["arrowprops"] = self.arrow_args
-                self.ax.annotate(node.tree.node, xy_parent, xy, **kwargs)
+                ax.annotate(node.tree.node, xy_parent, xy, **kwargs)
             for child in node.children:
-                self.recurse(child, tree, depth=depth + 1)
+                self.recurse(child, tree, ax, depth=depth + 1)
 
         else:
-            xy_parent = (node.parent.x * self.scalex, (2 - node.parent.y) *
-                         self.scaley)
+            xy_parent = (node.parent.x * self._scalex, (2 - node.parent.y) *
+                         self._scaley)
             kwargs["arrowprops"] = self.arrow_args
             kwargs['bbox']['fc'] = 'grey'
-            self.ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
+            ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 
 
 def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
