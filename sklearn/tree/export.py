@@ -208,6 +208,8 @@ class _DOTTreeExporter(object):
             color = list(self.colors['rgb'][0])
             alpha = ((value - self.colors['bounds'][0]) /
                      (self.colors['bounds'][1] - self.colors['bounds'][0]))
+        # unpack numpy scalars
+        alpha = float(alpha)
         # compute the color as alpha against white
         color = [int(round(alpha * c + (1 - alpha) * 255, 0)) for c in color]
         # Return html color code in #RRGGBB format
@@ -463,17 +465,16 @@ class _MPLTreeExporter(_DOTTreeExporter):
             return Tree(name, node_id)
         return Tree(name, node_id, *children)
 
-    def _find_longest(self, my_tree, max_length):
-        child_length = [_find_longest(c, max_length) for c 
-                        in my_cildren]
-        return max(child_length + [max_length])
-        
+    # def _find_longest(self, my_tree, max_length):
+        # child_length = [_find_longest(c, max_length) for c
+                        # in my_cildren]
+        # return max(child_length + [max_length])
 
     def export(self, decision_tree):
         self.ax.set_axis_off()
         my_tree = self._make_tree(0, decision_tree.tree_)
         # find longest string:
-        self._find_longest(my_tree, len(my_tree.node)))
+        # self._find_longest(my_tree, len(my_tree.node)))
         dt = buchheim(my_tree)
         self.recurse(dt, decision_tree.tree_)
 
