@@ -13,7 +13,7 @@ Version 0.19
 Highlights
 ----------
 
-This release includes a number of great new features including
+We are excited to release a number of great new features including
 :class:`neighbors.LocalOutlierFactor` for anomaly detection,
 :class:`preprocessing.QuantileTransformer` for robust feature
 transformation, and :class:`multioutput.ClassifierChain` to simply
@@ -22,22 +22,26 @@ have some new algorithms in existing estimators, such as
 multiplicative update in :class:`decomposition.NMF` and multinomial
 :class:`linear_model.LogisticRegression` with L1 loss.
 
-You can learn faster.  The :ref:`new option to cache transformations
-<pipeline_cache>` in :class:`pipeline.Pipeline` makes grid search over
-pipelines including slow transformations much more efficient.
-And you can predict faster. If you're sure you know what you're doing,
-you can turn off validating that the input is finite using
-:func:`config_context`.
+You can also learn faster.  For instance, the :ref:`new option to cache
+transformations <pipeline_cache>` in :class:`pipeline.Pipeline` makes grid
+search over pipelines including slow transformations much more efficient.  And
+you can predict faster: if you're sure you know what you're doing, you can turn
+off validating that the input is finite using :func:`config_context`.
 
-Multi-metric grid search and cross validation
+Cross validation is now able to return the results from multiple metric
+evaluations. The new :func:`model_selection.cross_validate` can return many
+scores on the test data as well as training set performance and timings, and we
+have extended the ``scoring`` and ``refit`` parameters for grid/randomized
+search :ref:`to handle multiple metrics <multimetric_grid_search>`.
 
-We've made some important fixes too.
-TODO: ?Rewrite of TSNE
-We've fixed a longstanding implementation erorr in :func:`metrics.average_precision_score`.
-:class:`semi_supervised.LabelSpreading` and
+We've made some important fixes too.  We've fixed a longstanding implementation
+erorr in :func:`metrics.average_precision_score`, so please be cautious with
+prior results reported from that function.  A number of errors in the
+:class:`manifold.TSNE` implementation have been fixed, particularly in the
+default Barnes-Hut approximation.  :class:`semi_supervised.LabelSpreading` and
 :class:`semi_supervised.LabelPropagation` have had substantial fixes.
-Propagation was previously broken. Spreading should now correctly
-respect its alpha parameter.
+Propagation was previously broken. Spreading should now correctly respect its
+alpha parameter.
 
 Changed models
 --------------
