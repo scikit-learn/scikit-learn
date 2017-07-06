@@ -3,7 +3,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.plot import plot_heatmap
 
 
-def plot_confusion_matrix(y_true, y_pred, classes, sample_weights=None,
+def plot_confusion_matrix(y_true, y_pred, classes, sample_weight=None,
                           normalize=False,
                           xlabel="Predicted Label", ylabel="True Label",
                           title='Confusion matrix', cmap=None, vmin=None,
@@ -68,7 +68,7 @@ def plot_confusion_matrix(y_true, y_pred, classes, sample_weights=None,
 
     import matplotlib.pyplot as plt
 
-    values = confusion_matrix(y_true, y_pred, sample_weights=sample_weights)
+    values = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
 
     if normalize:
         values = values.astype('float') / values.sum(axis=1)[:, np.newaxis]
