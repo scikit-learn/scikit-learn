@@ -215,7 +215,7 @@ Preprocessing and feature selection
 
    - Small performance improvement to n-gram creation in
      :mod:`feature_extraction.text` by binding methods for loops and
-     special-casing unigrams. :issue:`7567` by `Jaye Doepke <jtdoepke>`
+     special-casing unigrams. :issue:`7567` by :user:`Jaye Doepke <jtdoepke>`
 
    - Relax assumption on the data for the
      :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
