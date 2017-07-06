@@ -376,7 +376,7 @@ Linear, kernelized and related models
      :class:`linear_model.LassoCV`. :issue:`8973` by
      :user:`Paulo Haddad <paulochf>`.
 
-  -  Fixed a bug in :class:`gaussian_process.GaussianProcessRegressor`
+   - Fixed a bug in :class:`gaussian_process.GaussianProcessRegressor`
      when the standard deviation and covariance predicted without fit
      would fail with a unmeaningful error by default.
      :issue:`6573` by :user:`Quazi Marufur Rahman <qmaruf>` and
