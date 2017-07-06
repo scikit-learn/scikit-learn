@@ -362,10 +362,13 @@ class MockEst(object):
         """MockEstimator"""
     def fit(self, X, y):
         return X
+
     def predict(self, X):
         return X
+
     def predict_proba(self, X):
         return X
+
     def score(self, X):
         return 1.
 
@@ -414,14 +417,14 @@ class MockMetaEstimator(object):
         """
         return X
 
-    @deprecated('Testing deprecated function with correct params')
+    @deprecated('Testing deprecated function with incorrect params')
     @if_delegate_has_method(delegate=('delegate'))
-    def predict_proba(self, X):
+    def predict_log_proba(self, X):
         """This is available only if delegate has predict_proba.
 
         Parameters
         ---------
-        X : ndarray
+        y : ndarray
             Parameter X
         """
         return X
@@ -454,6 +457,7 @@ def test_check_parameters_match():
     messages = ["a != b", "arg mismatch: ['b']", "arg mismatch: ['X', 'y']",
                 "predict y != X",
                 "predict_proba arg mismatch: ['X']",
+                "predict_log_proba arg mismatch: ['X']",
                 "score arg mismatch: ['X']",
                 ".fit arg mismatch: ['X', 'y']"]
 
@@ -462,6 +466,7 @@ def test_check_parameters_match():
     for mess, f in zip(messages,
                        [f_bad_order, f_missing, Klass.f_missing,
                         mock_meta.predict, mock_meta.predict_proba,
+                        mock_meta.predict_log_proba,
                         mock_meta.score, mock_meta.fit]):
         incorrect = check_parameters_match(f)
         assert_true(len(incorrect) >= 1)
