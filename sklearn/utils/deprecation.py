@@ -98,7 +98,6 @@ def _is_deprecated(func):
     closures = getattr(func, '__closure__', [])
     if closures is None:
         closures = []
-    func_coname = getattr(getattr(func, '__code__', ''), 'co_name', '')
     is_deprecated = ('deprecated' in ''.join([c.cell_contents
                                               for c in closures
                      if isinstance(c.cell_contents, str)]))
