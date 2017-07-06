@@ -834,6 +834,7 @@ def test_random_search_cv_results():
         check_cv_results_grid_scores_consistency(search)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_search_iid_param():
     # Test the IID parameter
     # noise-free simple 2d-data
@@ -855,7 +856,7 @@ def test_search_iid_param():
                                        cv=cv)
     for search in (grid_search, random_search):
         search.fit(X, y)
-        assert_true(search.iid)
+        assert_true(search.iid or search.iid is None)
 
         test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
                                                           % s_i][0]
@@ -1317,3 +1318,10 @@ def test_transform_inverse_transform_round_trip():
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
     assert_array_equal(X, X_round_trip)
+
+
+def test_deprecated_grid_search_idd():
+    depr_message = ("The `iid` parameter has been deprecated in version 0.19 "
+                    "and will be removed in 0.21.")
+    assert_warns_message(DeprecationWarning, depr_message, GridSearchCV,
+                         SVC(), [], iid=False)

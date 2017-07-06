@@ -379,7 +379,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     @abstractmethod
     def __init__(self, estimator, scoring=None,
-                 fit_params=None, n_jobs=1, iid=True,
+                 fit_params=None, n_jobs=1, iid=None,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  error_score='raise', return_train_score=True):
 
@@ -394,6 +394,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
         self.return_train_score = return_train_score
+
+        if self.iid is not None:
+            warnings.warn("The `iid` parameter has been deprecated "
+                          "in version 0.19 and will be removed in 0.21.",
+                          DeprecationWarning)
 
     @property
     def _estimator_type(self):
@@ -640,7 +645,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       dtype=np.int)
 
         _store('test_score', test_scores, splits=True, rank=True,
-               weights=test_sample_counts if self.iid else None)
+               weights=test_sample_counts if (self.iid or self.iid is None)
+               else None)
         if self.return_train_score:
             _store('train_score', train_scores, splits=True)
         _store('fit_time', fit_time)
@@ -781,10 +787,15 @@ class GridSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default=True
+    iid : boolean, default=None
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
+
+        ..deprecated:: 0.19
+            Parameter ``iid`` has been deprecated in version 0.19 and
+            will be removed in 0.21.
+            Future (and default) behavior is equivalent to `iid=true`.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -954,7 +965,7 @@ class GridSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
-                 n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
+                 n_jobs=1, iid=None, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
                  return_train_score=True):
         super(GridSearchCV, self).__init__(
@@ -1046,10 +1057,15 @@ class RandomizedSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default=True
+    iid : boolean, default=None
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
+
+        ..deprecated:: 0.19
+            Parameter ``iid`` has been deprecated in version 0.19 and
+            will be removed in 0.21.
+            Future (and default) behavior is equivalent to `iid=true`.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -1189,7 +1205,7 @@ class RandomizedSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
+                 fit_params=None, n_jobs=1, iid=None, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=True):
         self.param_distributions = param_distributions
