@@ -421,15 +421,15 @@ def test_early_exaggeration_used():
 
 
 def test_n_iter_used():
-    # check that the ``early_exaggeration`` parameter has an effect
+    # check that the ``n_iter`` parameter has an effect
     random_state = check_random_state(0)
     n_components = 2
     methods = ['exact', 'barnes_hut']
     X = random_state.randn(25, n_components).astype(np.float32)
     for method in methods:
-        for n_iter in [251, 500, 1000]:
+        for n_iter in [251, 500]:
             tsne = TSNE(n_components=n_components, perplexity=1,
-                        learning_rate=1.0, init="pca", random_state=0,
+                        learning_rate=0.5, init="random", random_state=0,
                         method=method, early_exaggeration=1.0, n_iter=n_iter)
             tsne.fit_transform(X)
 
