@@ -1445,6 +1445,11 @@ Model evaluation and meta-estimators
      the parameter ``n_labels`` is renamed to ``n_groups``.
      :issue:`6660` by `Raghav RV`_.
 
+   - Error and loss names for ``scoring`` parameters are now prefixed by
+     ``'neg_'``, such as ``neg_mean_squared_error``. The unprefixed versions
+     are deprecated and will be removed in version 0.20.
+     :issue:`7261` by :user:`Tim Head <betatim>`.
+
 Code Contributors
 -----------------
 Aditya Joshi, Alejandro, Alexander Fabisch, Alexander Loginov, Alexander
