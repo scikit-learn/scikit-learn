@@ -126,6 +126,8 @@ class GaussianNB(BaseNB):
             If not specified, this will be set as per the classes present in
             the training data.
 
+            It is recommended to set this parameter while initialization.
+
     priors : array-like, shape (n_classes,), optional (default=None)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
@@ -166,6 +168,13 @@ class GaussianNB(BaseNB):
         self.classes = classes
         self.priors = priors
 
+        # initialize additional parameter:
+        self.classes_ = None
+
+        # initialize a flag which checks whether fit or partial fit was called
+        # once or not
+        self.fit_called = False
+
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
 
@@ -189,16 +198,15 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
+        # check if classes were defined, set the classes_ attribute every time
+        if self.classes is not None:
+            self.classes_ = np.asarray(self.classes)
+        else:
+            self.classes_ = np.sort(np.unique(y))
+
         X, y = check_X_y(X, y)
 
-        # check if classes were defined, set the classes_ attribute
-        if self.classes is not None:
-            self.classes_ = self.classes
-        else:
-            self.classes_ = np.unique(y).sorted()
-
-        check_y_classes(y, self.classes_)
-        return self._partial_fit(X, y, np.unique(y), _refit=True,
+        return self._partial_fit(X, y, _refit=True,
                                  sample_weight=sample_weight)
 
     @staticmethod
@@ -302,9 +310,14 @@ class GaussianNB(BaseNB):
 
         classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
+            If classes argument was set in initialization, then this will be
+            ignored.
 
-            Must be provided at the first call to partial_fit, can be omitted
-            in subsequent calls.
+            Must be provided at the first call to partial_fit or during class
+            initialization. It will be ignored in subsequent calls.
+
+            Note: Now this argument is redundant. We should remove this. But
+            this will affect backward compatibility
 
         sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
@@ -316,10 +329,18 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
-        return self._partial_fit(X, y, classes, _refit=False,
+        # check if classes were defined, set the classes_ attribute only for
+        # first time
+        if self.classes_ is None:
+            if self.classes is not None:
+                self.classes_ = np.asarray(self.classes)
+            else:
+                self.classes_ = np.sort(np.unique(y))
+
+        return self._partial_fit(X, y, _refit=False,
                                  sample_weight=sample_weight)
 
-    def _partial_fit(self, X, y, classes=None, _refit=False,
+    def _partial_fit(self, X, y, _refit=False,
                      sample_weight=None):
         """Actual implementation of Gaussian NB fitting.
 
@@ -332,13 +353,7 @@ class GaussianNB(BaseNB):
         y : array-like, shape (n_samples,)
             Target values.
 
-        classes : array-like, shape (n_classes,), optional (default=None)
-            List of all the classes that can possibly appear in the y vector.
-
-            Must be provided at the first call to partial_fit, can be omitted
-            in subsequent calls.
-
-        _refit: bool, optional (default=False)
+        _refit : bool, optional (default=False)
             If true, act as though this were the first time we called
             _partial_fit (ie, throw away any past fitting and start over).
 
@@ -351,6 +366,8 @@ class GaussianNB(BaseNB):
             Returns self.
         """
         X, y = check_X_y(X, y)
+        check_y_classes(y, self.classes_)
+
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             check_consistent_length(y, sample_weight)
@@ -361,10 +378,14 @@ class GaussianNB(BaseNB):
         # deviation of the largest dimension.
         epsilon = 1e-9 * np.var(X, axis=0).max()
 
+        # reset flag if refit called
         if _refit:
-            self.classes_ = None
+            self.fit_called = False
 
-        if _check_partial_fit_first_call(self, classes):
+        if not self.fit_called:
+            # Set flag to positive:
+            self.fit_called = True
+
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_features = X.shape[1]
@@ -403,10 +424,9 @@ class GaussianNB(BaseNB):
 
         classes = self.classes_
 
-        check_y_classes(y, classes)
-
         for y_i in np.unique(y):
-            i = classes.searchsorted(y_i)
+            # classes need not be sorted because user input
+            i = np.where(classes == y_i)[0][0]
             X_i = X[y == y_i, :]
 
             if sample_weight is not None:
