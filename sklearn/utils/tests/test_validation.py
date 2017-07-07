@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import SkipTest
 from sklearn.utils import as_float_array, check_array, check_symmetric
-from sklearn.utils import check_X_y
+from sklearn.utils import check_X_y, _check_y_classes
 from sklearn.utils.mocking import MockDataFrame
 from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.random_projection import sparse_random_matrix
@@ -38,6 +38,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
+
 
 def test_as_float_array():
     # Test function for as_float_array
@@ -539,3 +540,9 @@ def test_suppress_validation():
     assert_all_finite(X)
     sklearn.set_config(assume_finite=False)
     assert_raises(ValueError, assert_all_finite, X)
+
+
+def test_check_y_classes():
+    y = [1, 2, 3, 1, 2]
+    classes = [1, 2]
+    assert_raises(ValueError, _check_y_classes, y, classes)

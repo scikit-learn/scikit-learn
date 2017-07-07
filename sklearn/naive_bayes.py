@@ -29,7 +29,7 @@ from .preprocessing import label_binarize
 from .utils import (check_X_y,
                     check_array,
                     check_consistent_length,
-                    check_y_classes)
+                    _check_y_classes)
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
@@ -168,9 +168,6 @@ class GaussianNB(BaseNB):
         self.classes = classes
         self.priors = priors
 
-        # initialize additional parameter:
-        self.classes_ = None
-
         # initialize a flag which checks whether fit or partial fit was called
         # once or not
         self.fit_called = False
@@ -199,11 +196,6 @@ class GaussianNB(BaseNB):
             Returns self.
         """
         # check if classes were defined, set the classes_ attribute every time
-        if self.classes is not None:
-            self.classes_ = np.asarray(self.classes)
-        else:
-            self.classes_ = np.sort(np.unique(y))
-
         X, y = check_X_y(X, y)
 
         return self._partial_fit(X, y, _refit=True,
@@ -331,12 +323,6 @@ class GaussianNB(BaseNB):
         """
         # check if classes were defined, set the classes_ attribute only for
         # first time
-        if self.classes_ is None:
-            if self.classes is not None:
-                self.classes_ = np.asarray(self.classes)
-            else:
-                self.classes_ = np.sort(np.unique(y))
-
         return self._partial_fit(X, y, _refit=False,
                                  sample_weight=sample_weight)
 
@@ -366,7 +352,6 @@ class GaussianNB(BaseNB):
             Returns self.
         """
         X, y = check_X_y(X, y)
-        check_y_classes(y, self.classes_)
 
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
@@ -385,6 +370,12 @@ class GaussianNB(BaseNB):
         if not self.fit_called:
             # Set flag to positive:
             self.fit_called = True
+
+            # set the classes because first call or refit
+            if self.classes is not None:
+                self.classes_ = np.asarray(self.classes)
+            else:
+                self.classes_ = np.sort(np.unique(y))
 
             # This is the first call to partial_fit:
             # initialize various cumulative counters
@@ -422,6 +413,7 @@ class GaussianNB(BaseNB):
             # Put epsilon back in each time
             self.sigma_[:, :] -= epsilon
 
+        _check_y_classes(y, self.classes_)
         classes = self.classes_
 
         for y_i in np.unique(y):

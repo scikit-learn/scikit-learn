@@ -751,9 +751,9 @@ def check_non_negative(X, whom):
         raise ValueError("Negative values in data passed to %s" % whom)
 
 
-def check_y_classes(y, classes):
+def _check_y_classes(y, classes):
     """
-    Chech if y has a subset of classes as set in the classes argument.
+    Check if y has a subset of classes as set in the classes argument.
 
     Parameters
     ----------
