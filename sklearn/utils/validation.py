@@ -770,3 +770,24 @@ def _check_y_classes(y, classes):
         raise ValueError("The target label(s) %s in y do not exist in the "
                          "initial classes %s" %
                          (unique_y[~unique_y_in_classes], classes))
+
+
+def _check_unique_values(array, name=None):
+    """
+    Check if there are duplicates in an array
+
+    Parameters
+    ----------
+    array : array-like
+        Input data.
+
+    name : string, default=None
+        The string to be used argument to be used for error message
+    """
+    if name is None:
+        name = "input"
+    unq, counts = np.unique(array, return_counts=True)
+    duplicates = unq[np.where(counts > 1)]
+    if duplicates:
+        raise ValueError("%s should contain all unique values"
+                         "%x values are duplicated" % duplicates)

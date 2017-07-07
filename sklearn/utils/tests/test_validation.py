@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import SkipTest
 from sklearn.utils import as_float_array, check_array, check_symmetric
-from sklearn.utils import check_X_y, _check_y_classes
+from sklearn.utils import check_X_y, _check_y_classes, _check_unique_values
 from sklearn.utils.mocking import MockDataFrame
 from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.random_projection import sparse_random_matrix
@@ -546,3 +546,8 @@ def test_check_y_classes():
     y = [1, 2, 3, 1, 2]
     classes = [1, 2]
     assert_raises(ValueError, _check_y_classes, y, classes)
+
+
+def test_check_unique_values():
+    array = [1, 2, 1, 2, 2, 3, 4]
+    assert_raises(ValueError, _check_unique_values, array)
