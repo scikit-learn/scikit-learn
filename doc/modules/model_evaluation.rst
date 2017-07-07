@@ -210,6 +210,51 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
+.. _multimetric_scoring:
+
+Using mutiple metric evaluation
+-------------------------------
+
+Scikit-learn also permits evaluation of multiple metrics in ``GridSearchCV``,
+``RandomizedSearchCV`` and ``cross_validate``.
+
+There are two ways to specify multiple scoring metrics for the ``scoring``
+parameter:
+
+- As an iterable of string metrics::
+      >>> scoring = ['accuracy', 'precision']
+
+- As a ``dict`` mapping the scorer name to the scoring function::
+      >>> from sklearn.metrics import accuracy_score
+      >>> from sklearn.metrics import make_scorer
+      >>> scoring = {'accuracy': make_scorer(accuracy_score),
+      ...            'prec': 'precision'}
+
+Note that the dict values can either be scorer functions or one of the
+predefined metric strings.
+
+Currently only those scorer functions that return a single score can be passed
+inside the dict. Scorer functions that return multiple values are not
+permitted and will require a wrapper to return a single metric::
+
+    >>> from sklearn.model_selection import cross_validate
+    >>> from sklearn.metrics import confusion_matrix
+    >>> # A sample toy binary classification dataset
+    >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
+    >>> svm = LinearSVC(random_state=0)
+    >>> tp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
+    >>> tn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
+    >>> fp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[1, 0]
+    >>> fn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 1]
+    >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
+    ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
+    >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
+    >>> # Getting the test set false positive scores
+    >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
+    [12 13 15]
+    >>> # Getting the test set false negative scores
+    >>> print(cv_results['test_fn'])          # doctest: +NORMALIZE_WHITESPACE
+    [5 4 1]
 
 .. _classification_metrics:
 
