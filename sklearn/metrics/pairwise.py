@@ -11,6 +11,7 @@
 
 import itertools
 from functools import partial
+import warnings
 
 import numpy as np
 from scipy.spatial import distance
@@ -465,7 +466,7 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True,
-                        size_threshold=5e8):
+                        size_threshold=None):
     """ Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -518,6 +519,10 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     array([[ 1.,  1.],
            [ 1.,  1.]]...)
     """
+    if size_threshold is not None:
+        warnings.warn('Use of the "size_threshold" is deprecated '
+                      'and it will be removed in the future '
+                      'versions of scikit learn.', DeprecationWarning)
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
