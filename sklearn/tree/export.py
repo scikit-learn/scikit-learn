@@ -78,7 +78,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
               class_names=None, label='all', filled=False,
               leaves_parallel=False, impurity=True, node_ids=False,
               proportion=False, rotate=False, rounded=False,
-              special_characters=False, precision=3, ax=None):
+              special_characters=False, precision=3, ax=None, fontsize=None):
     """Plot a decision tree.
 
     The sample counts that are shown are weighted with any sample_weights that
@@ -161,7 +161,8 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
         class_names=class_names, label=label, filled=filled,
         leaves_parallel=leaves_parallel, impurity=impurity, node_ids=node_ids,
         proportion=proportion, rotate=rotate, rounded=rounded,
-        special_characters=special_characters, precision=precision)
+        special_characters=special_characters, precision=precision,
+        fontsize=fontsize)
     exporter.export(decision_tree, ax=ax)
 
 
@@ -489,7 +490,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
                  class_names=None, label='all', filled=False,
                  leaves_parallel=False, impurity=True, node_ids=False,
                  proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3):
+                 special_characters=False, precision=3, fontsize=None):
         self.max_depth = max_depth
         self.feature_names = feature_names
         self.class_names = class_names
@@ -503,7 +504,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
         self.rounded = rounded
         self.special_characters = special_characters
         self.precision = precision
-        self._scaley = 80 if class_names is None else 100
+        self.fontsize = fontsize
+        self._scaley = 1
 
         # validate
         if isinstance(precision, Integral):
@@ -524,6 +526,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         self.bbox_args = dict(fc='w')
         if self.rounded:
             self.bbox_args['boxstyle'] = "round"
+
         self.arrow_args = dict(arrowstyle="<-")
 
     def _make_tree(self, node_id, et):
@@ -544,26 +547,29 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ax = plt.gca()
         ax.set_axis_off()
         my_tree = self._make_tree(0, decision_tree.tree_)
-        # find longest string:
-        # print(my_tree._longest_str())
         dt = buchheim(my_tree)
-        # plot once with phantom axis to get sizes:
-        ax_phantom = plt.gcf().add_axes((0, 0, 1, 1))
         self._scalex = 1
-        self.recurse(dt, decision_tree.tree_, ax_phantom)
-        plt.draw()
-        bbox_widths = [ann.get_bbox_patch().get_width() for ann in
-                       ax_phantom.get_children()
-                       if isinstance(ann, Annotation)]
-        self._scalex = max(bbox_widths) + 2  # some margin
-        ax_phantom.set_visible(False)
         self.recurse(dt, decision_tree.tree_, ax)
 
+        # get all the annotated points
+        xys = [ann.xyann for ann in ax.get_children()
+               if isinstance(ann, Annotation)]
+
+        # set axis limits with slight margin of .5
+        mins = np.min(xys, axis=0) - .5
+        maxs = np.max(xys, axis=0) + .5
+
+        ax.set_xlim(mins[0], maxs[0])
+        ax.set_ylim(maxs[1], mins[1])
+
     def recurse(self, node, tree, ax, depth=0):
-        # 2 - is a hack to for not creating empty space. FIXME
         kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
-                      zorder=100 - 10 * depth, xycoords='axes points')
-        xy = (node.x * self._scalex, (2 - node.y) * self._scaley)
+                      zorder=100 - 10 * depth)
+
+        if self.fontsize is not None:
+            kwargs['fontsize'] = self.fontsize
+
+        xy = (node.x * self._scalex, node.y * self._scaley)
 
         if self.max_depth is None or depth <= self.max_depth:
             if self.filled:
@@ -574,14 +580,14 @@ class _MPLTreeExporter(_BaseTreeExporter):
                 ax.annotate(node.tree.node, xy, **kwargs)
             else:
                 xy_parent = (node.parent.x * self._scalex,
-                             (2 - node.parent.y) * self._scaley)
+                             node.parent.y * self._scaley)
                 kwargs["arrowprops"] = self.arrow_args
                 ax.annotate(node.tree.node, xy_parent, xy, **kwargs)
             for child in node.children:
                 self.recurse(child, tree, ax, depth=depth + 1)
 
         else:
-            xy_parent = (node.parent.x * self._scalex, (2 - node.parent.y) *
+            xy_parent = (node.parent.x * self._scalex, node.parent.y *
                          self._scaley)
             kwargs["arrowprops"] = self.arrow_args
             kwargs['bbox']['fc'] = 'grey'
