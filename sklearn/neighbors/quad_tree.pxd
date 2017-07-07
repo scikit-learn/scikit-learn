@@ -37,7 +37,7 @@ cdef struct Cell:
     SIZE_t point_index         # Index of the point at this cell (only defined
                                # in non empty leaf)
     bint is_leaf               # Does this cell have children?
-    DTYPE_t max_width          # The value of the maximum width w
+    DTYPE_t squared_max_width  # Squared value of the maximum width w
     SIZE_t depth               # Depth of the cell in the tree
     SIZE_t cumulative_size     # Number of points included in the subtree with
                                # this cell as a root.

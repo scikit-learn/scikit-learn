@@ -47,7 +47,7 @@ CELL_DTYPE = np.dtype({
         <Py_ssize_t> &(<Cell*> NULL).cell_id,
         <Py_ssize_t> &(<Cell*> NULL).point_index,
         <Py_ssize_t> &(<Cell*> NULL).is_leaf,
-        <Py_ssize_t> &(<Cell*> NULL).max_width,
+        <Py_ssize_t> &(<Cell*> NULL).squared_max_width,
         <Py_ssize_t> &(<Cell*> NULL).depth,
         <Py_ssize_t> &(<Cell*> NULL).cumulative_size,
         <Py_ssize_t> &(<Cell*> NULL).center,
@@ -243,7 +243,7 @@ cdef class _QuadTree:
             width = child.max_bounds[i] - child.min_bounds[i]
 
             child.barycenter[i] = point[i]
-            child.max_width = max(child.max_width, width*width)
+            child.squared_max_width = max(child.squared_max_width, width*width)
 
         # Store the point info and the size to account for duplicated points
         child.point_index = point_index
@@ -291,7 +291,7 @@ cdef class _QuadTree:
         cell.parent = parent
         cell.is_leaf = True
         cell.depth = depth
-        cell.max_width = 0
+        cell.squared_max_width = 0
         cell.cumulative_size = 0
         for i in range(self.n_cells_per_cell):
             cell.children[i] = DEFAULT
@@ -310,7 +310,7 @@ cdef class _QuadTree:
             root.max_bounds[i] = max_bounds[i]
             root.center[i] = (max_bounds[i] + min_bounds[i]) / 2.
             width = max_bounds[i] - min_bounds[i]
-            root.max_width = max(root.max_width, width*width)
+            root.squared_max_width = max(root.squared_max_width, width*width)
         root.cell_id = 0
 
         self.cell_count += 1
@@ -390,6 +390,13 @@ cdef class _QuadTree:
         idx : integer, optional (default: 0)
             current index in the result array. This should be set to 0 for
             external calls
+        squared_theta: float, optional (default: .5)
+            threshold to decide whether the node is sufficiently far
+            from the query point to be a good summary. The formula is such that
+            the node is a summary if
+                node_width^2 / dist_node_point^2 < squared_theta.
+            Note that the argument should be passed as theta^2 to avoid
+            computing square roots of the distances.
 
         Output arguments
         ----------------
@@ -430,7 +437,8 @@ cdef class _QuadTree:
         # is relatively small (w.r.t. to theta) or if it is a leaf node.
         # If it can be summarized, we use the cell center of mass
         # Otherwise, we go a higher level of resolution and into the leaves.
-        if cell.is_leaf or ((cell.max_width / results[idx_d]) < squared_theta):
+        if cell.is_leaf or (
+                (cell.squared_max_width / results[idx_d]) < squared_theta):
             results[idx_d + 1] = <DTYPE_t> cell.cumulative_size
             return idx + 2 + self.n_dimensions
 
