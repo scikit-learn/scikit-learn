@@ -88,105 +88,7 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     exporter.export(decision_tree, ax=ax)
 
 
-class _DOTTreeExporter(object):
-    def __init__(self, out_file=SENTINEL, max_depth=None,
-                 feature_names=None, class_names=None, label='all',
-                 filled=False, leaves_parallel=False, impurity=True,
-                 node_ids=False, proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3):
-        self.out_file = out_file
-        self.max_depth = max_depth
-        self.feature_names = feature_names
-        self.class_names = class_names
-        self.label = label
-        self.filled = filled
-        self.leaves_parallel = leaves_parallel
-        self.impurity = impurity
-        self.node_ids = node_ids
-        self.proportion = proportion
-        self.rotate = rotate
-        self.rounded = rounded
-        self.special_characters = special_characters
-        self.precision = precision
-
-        # PostScript compatibility for special characters
-        if special_characters:
-            self.characters = ['&#35;', '<SUB>', '</SUB>', '&le;', '<br/>',
-                               '>', '<']
-        else:
-            self.characters = ['#', '[', ']', '<=', '\\n', '"', '"']
-
-        # validate
-        if isinstance(precision, Integral):
-            if precision < 0:
-                raise ValueError("'precision' should be greater or equal to 0."
-                                 " Got {} instead.".format(precision))
-        else:
-            raise ValueError("'precision' should be an integer. Got {}"
-                             " instead.".format(type(precision)))
-
-        # The depth of each node for plotting with 'leaf' option
-        self.ranks = {'leaves': []}
-        # The colors to render each node with
-        self.colors = {'bounds': None}
-
-    def export(self, decision_tree):
-        # Check length of feature_names before getting into the tree node
-        # Raise error if length of feature_names does not match
-        # n_features_ in the decision_tree
-        if self.feature_names is not None:
-            if len(self.feature_names) != decision_tree.n_features_:
-                raise ValueError("Length of feature_names, %d "
-                                 "does not match number of features, %d"
-                                 % (len(self.feature_names),
-                                    decision_tree.n_features_))
-        # each part writes to out_file
-        self.head()
-        # Now recurse the tree and add node & edge attributes
-        if isinstance(decision_tree, _tree.Tree):
-            self.recurse(decision_tree, 0, criterion="impurity")
-        else:
-            self.recurse(decision_tree.tree_, 0,
-                         criterion=decision_tree.criterion)
-
-        self.tail()
-
-    def tail(self):
-        # If required, draw leaf nodes at same depth as each other
-        if self.leaves_parallel:
-            for rank in sorted(self.ranks):
-                self.out_file.write(
-                    "{rank=same ; " +
-                    "; ".join(r for r in self.ranks[rank]) + "} ;\n")
-        self.out_file.write("}")
-
-    def head(self):
-        self.out_file.write('digraph Tree {\n')
-
-        # Specify node aesthetics
-        self.out_file.write('node [shape=box')
-        rounded_filled = []
-        if self.filled:
-            rounded_filled.append('filled')
-        if self.rounded:
-            rounded_filled.append('rounded')
-        if len(rounded_filled) > 0:
-            self.out_file.write(
-                ', style="%s", color="black"'
-                % ", ".join(rounded_filled))
-        if self.rounded:
-            self.out_file.write(', fontname=helvetica')
-        self.out_file.write('] ;\n')
-
-        # Specify graph & edge aesthetics
-        if self.leaves_parallel:
-            self.out_file.write(
-                'graph [ranksep=equally, splines=polyline] ;\n')
-        if self.rounded:
-            self.out_file.write('edge [fontname=helvetica] ;\n')
-        if self.rotate:
-            self.out_file.write('rankdir=LR ;\n')
-
+class _BaseTreeExporter(object):
     def get_color(self, value):
         # Find the appropriate color & intensity for a node
         if self.colors['bounds'] is None:
@@ -343,6 +245,106 @@ class _DOTTreeExporter(object):
 
         return node_string + characters[5]
 
+
+class _DOTTreeExporter(_BaseTreeExporter):
+    def __init__(self, out_file=SENTINEL, max_depth=None,
+                 feature_names=None, class_names=None, label='all',
+                 filled=False, leaves_parallel=False, impurity=True,
+                 node_ids=False, proportion=False, rotate=False, rounded=False,
+                 special_characters=False, precision=3):
+        self.out_file = out_file
+        self.max_depth = max_depth
+        self.feature_names = feature_names
+        self.class_names = class_names
+        self.label = label
+        self.filled = filled
+        self.leaves_parallel = leaves_parallel
+        self.impurity = impurity
+        self.node_ids = node_ids
+        self.proportion = proportion
+        self.rotate = rotate
+        self.rounded = rounded
+        self.special_characters = special_characters
+        self.precision = precision
+
+        # PostScript compatibility for special characters
+        if special_characters:
+            self.characters = ['&#35;', '<SUB>', '</SUB>', '&le;', '<br/>',
+                               '>', '<']
+        else:
+            self.characters = ['#', '[', ']', '<=', '\\n', '"', '"']
+
+        # validate
+        if isinstance(precision, Integral):
+            if precision < 0:
+                raise ValueError("'precision' should be greater or equal to 0."
+                                 " Got {} instead.".format(precision))
+        else:
+            raise ValueError("'precision' should be an integer. Got {}"
+                             " instead.".format(type(precision)))
+
+        # The depth of each node for plotting with 'leaf' option
+        self.ranks = {'leaves': []}
+        # The colors to render each node with
+        self.colors = {'bounds': None}
+
+    def export(self, decision_tree):
+        # Check length of feature_names before getting into the tree node
+        # Raise error if length of feature_names does not match
+        # n_features_ in the decision_tree
+        if self.feature_names is not None:
+            if len(self.feature_names) != decision_tree.n_features_:
+                raise ValueError("Length of feature_names, %d "
+                                 "does not match number of features, %d"
+                                 % (len(self.feature_names),
+                                    decision_tree.n_features_))
+        # each part writes to out_file
+        self.head()
+        # Now recurse the tree and add node & edge attributes
+        if isinstance(decision_tree, _tree.Tree):
+            self.recurse(decision_tree, 0, criterion="impurity")
+        else:
+            self.recurse(decision_tree.tree_, 0,
+                         criterion=decision_tree.criterion)
+
+        self.tail()
+
+    def tail(self):
+        # If required, draw leaf nodes at same depth as each other
+        if self.leaves_parallel:
+            for rank in sorted(self.ranks):
+                self.out_file.write(
+                    "{rank=same ; " +
+                    "; ".join(r for r in self.ranks[rank]) + "} ;\n")
+        self.out_file.write("}")
+
+    def head(self):
+        self.out_file.write('digraph Tree {\n')
+
+        # Specify node aesthetics
+        self.out_file.write('node [shape=box')
+        rounded_filled = []
+        if self.filled:
+            rounded_filled.append('filled')
+        if self.rounded:
+            rounded_filled.append('rounded')
+        if len(rounded_filled) > 0:
+            self.out_file.write(
+                ', style="%s", color="black"'
+                % ", ".join(rounded_filled))
+        if self.rounded:
+            self.out_file.write(', fontname=helvetica')
+        self.out_file.write('] ;\n')
+
+        # Specify graph & edge aesthetics
+        if self.leaves_parallel:
+            self.out_file.write(
+                'graph [ranksep=equally, splines=polyline] ;\n')
+        if self.rounded:
+            self.out_file.write('edge [fontname=helvetica] ;\n')
+        if self.rotate:
+            self.out_file.write('rankdir=LR ;\n')
+
     def recurse(self, tree, node_id, criterion, parent=None, depth=0):
         if node_id == _tree.TREE_LEAF:
             raise ValueError("Invalid node_id %s" % _tree.TREE_LEAF)
@@ -405,7 +407,7 @@ class _DOTTreeExporter(object):
                 self.out_file.write('%d -> %d ;\n' % (parent, node_id))
 
 
-class _MPLTreeExporter(_DOTTreeExporter):
+class _MPLTreeExporter(_BaseTreeExporter):
     def __init__(self, max_depth=None, feature_names=None,
                  class_names=None, label='all', filled=False,
                  leaves_parallel=False, impurity=True, node_ids=False,
