@@ -209,12 +209,15 @@ class _ThresholdScorer(_BaseScorer):
 
 
 def get_scorer(scoring):
+    valid = True
     if isinstance(scoring, six.string_types):
         try:
             scorer = SCORERS[scoring]
         except KeyError:
             scorers = [scorer for scorer in SCORERS
                        if SCORERS[scorer]._deprecation_msg is None]
+            valid = False  # Don't raise here to make the error message elegant
+        if not valid:
             raise ValueError('%r is not a valid scoring value. '
                              'Valid options are %s'
                              % (scoring, sorted(scorers)))
@@ -253,13 +256,12 @@ def check_scoring(estimator, scoring=None, allow_none=False):
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
     """
-    has_scoring = scoring is not None
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
     if isinstance(scoring, six.string_types):
         return get_scorer(scoring)
-    elif has_scoring:
+    elif callable(scoring):
         # Heuristic to ensure user has not passed a metric
         module = getattr(scoring, '__module__', None)
         if hasattr(module, 'startswith') and \
@@ -272,14 +274,114 @@ def check_scoring(estimator, scoring=None, allow_none=False):
                              'Please use `make_scorer` to convert a metric '
                              'to a scorer.' % scoring)
         return get_scorer(scoring)
-    elif hasattr(estimator, 'score'):
-        return _passthrough_scorer
-    elif allow_none:
-        return None
+    elif scoring is None:
+        if hasattr(estimator, 'score'):
+            return _passthrough_scorer
+        elif allow_none:
+            return None
+        else:
+            raise TypeError(
+                "If no scoring is specified, the estimator passed should "
+                "have a 'score' method. The estimator %r does not."
+                % estimator)
     else:
-        raise TypeError(
-            "If no scoring is specified, the estimator passed should "
-            "have a 'score' method. The estimator %r does not." % estimator)
+        raise ValueError("scoring value should either be a callable, string or"
+                         " None. %r was passed" % scoring)
+
+
+def _check_multimetric_scoring(estimator, scoring=None):
+    """Check the scoring parameter in cases when multiple metrics are allowed
+
+    Parameters
+    ----------
+    estimator : sklearn estimator instance
+        The estimator for which the scoring will be applied.
+
+    scoring : string, callable, list/tuple, dict or None, default: None
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+
+        For evaluating multiple metrics, either give a list of (unique) strings
+        or a dict with names as keys and callables as values.
+
+        NOTE that when using custom scorers, each scorer should return a single
+        value. Metric functions returning a list/array of values can be wrapped
+        into multiple scorers that return one value each.
+
+        See :ref:`multivalued_scorer_wrapping` for an example.
+
+        If None the estimator's default scorer (if available) is used.
+        The return value in that case will be ``{'score': <default_scorer>}``.
+        If the estimator's default scorer is not available, a ``TypeError``
+        is raised.
+
+    Returns
+    -------
+    scorers_dict : dict
+        A dict mapping each scorer name to its validated scorer.
+
+    is_multimetric : bool
+        True if scorer is a list/tuple or dict of callables
+        False if scorer is None/str/callable
+    """
+    if callable(scoring) or scoring is None or isinstance(scoring,
+                                                          six.string_types):
+        scorers = {"score": check_scoring(estimator, scoring=scoring)}
+        return scorers, False
+    else:
+        err_msg_generic = ("scoring should either be a single string or "
+                           "callable for single metric evaluation or a "
+                           "list/tuple of strings or a dict of scorer name "
+                           "mapped to the callable for multiple metric "
+                           "evaluation. Got %s of type %s"
+                           % (repr(scoring), type(scoring)))
+
+        if isinstance(scoring, (list, tuple, set)):
+            err_msg = ("The list/tuple elements must be unique "
+                       "strings of predefined scorers. ")
+            invalid = False
+            try:
+                keys = set(scoring)
+            except TypeError:
+                invalid = True
+            if invalid:
+                raise ValueError(err_msg)
+
+            if len(keys) != len(scoring):
+                raise ValueError(err_msg + "Duplicate elements were found in"
+                                 " the given list. %r" % repr(scoring))
+            elif len(keys) > 0:
+                if not all(isinstance(k, six.string_types) for k in keys):
+                    if any(callable(k) for k in keys):
+                        raise ValueError(err_msg +
+                                         "One or more of the elements were "
+                                         "callables. Use a dict of score name "
+                                         "mapped to the scorer callable. "
+                                         "Got %r" % repr(scoring))
+                    else:
+                        raise ValueError(err_msg +
+                                         "Non-string types were found in "
+                                         "the given list. Got %r"
+                                         % repr(scoring))
+                scorers = {scorer: check_scoring(estimator, scoring=scorer)
+                           for scorer in scoring}
+            else:
+                raise ValueError(err_msg +
+                                 "Empty list was given. %r" % repr(scoring))
+
+        elif isinstance(scoring, dict):
+            keys = set(scoring)
+            if not all(isinstance(k, six.string_types) for k in keys):
+                raise ValueError("Non-string types were found in the keys of "
+                                 "the given dict. scoring=%r" % repr(scoring))
+            if len(keys) == 0:
+                raise ValueError("An empty dict was passed. %r"
+                                 % repr(scoring))
+            scorers = {key: check_scoring(estimator, scoring=scorer)
+                       for key, scorer in scoring.items()}
+        else:
+            raise ValueError(err_msg_generic)
+        return scorers, True
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
