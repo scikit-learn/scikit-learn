@@ -29,7 +29,6 @@ import matplotlib.pyplot as plt
 
 from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix
 from sklearn.plot import plot_confusion_matrix
 
 # import some data to play with
@@ -46,19 +45,17 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 classifier = svm.SVC(kernel='linear', C=0.01)
 y_pred = classifier.fit(X_train, y_train).predict(X_test)
 
-# Compute confusion matrix
-cnf_matrix = confusion_matrix(y_test, y_pred)
 np.set_printoptions(precision=2)
 
 # Plot non-normalized confusion matrix
 plt.figure()
-plot_confusion_matrix(cnf_matrix, classes=class_names,
+plot_confusion_matrix(y_test, y_pred, classes=class_names,
                       title='Confusion matrix, without normalization',
                       cmap=plt.cm.Blues)
 
 # Plot normalized confusion matrix
 plt.figure()
-plot_confusion_matrix(cnf_matrix, classes=class_names, normalize=True,
+plot_confusion_matrix(y_test, y_pred, classes=class_names, normalize=True,
                       title='Normalized confusion matrix',
                       cmap=plt.cm.Blues)
 
