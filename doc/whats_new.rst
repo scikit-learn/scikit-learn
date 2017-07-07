@@ -15,12 +15,12 @@ Highlights
 
 We are excited to release a number of great new features including
 :class:`neighbors.LocalOutlierFactor` for anomaly detection,
-:class:`preprocessing.QuantileTransformer` for robust feature
-transformation, and :class:`multioutput.ClassifierChain` to simply
-account for dependencies between classes in multilabel problems. We
-have some new algorithms in existing estimators, such as
-multiplicative update in :class:`decomposition.NMF` and multinomial
-:class:`linear_model.LogisticRegression` with L1 loss.
+:class:`preprocessing.QuantileTransformer` for robust feature transformation,
+and the :class:`multioutput.ClassifierChain` meta-estimator to simply account
+for dependencies between classes in multilabel problems. We have some new
+algorithms in existing estimators, such as multiplicative update in
+:class:`decomposition.NMF` and multinomial
+:class:`linear_model.LogisticRegression` with L1 loss (use ``solver='saga'``).
 
 You can also learn faster.  For instance, the :ref:`new option to cache
 transformations <pipeline_cache>` in :class:`pipeline.Pipeline` makes grid
@@ -40,8 +40,8 @@ prior results reported from that function.  A number of errors in the
 :class:`manifold.TSNE` implementation have been fixed, particularly in the
 default Barnes-Hut approximation.  :class:`semi_supervised.LabelSpreading` and
 :class:`semi_supervised.LabelPropagation` have had substantial fixes.
-Propagation was previously broken. Spreading should now correctly respect its
-alpha parameter.
+LabelPropagation was previously broken. LabelSpreading should now correctly
+respect its alpha parameter.
 
 Changed models
 --------------
@@ -150,7 +150,7 @@ Trees and ensembles
 
    - :class:`ensemble.VotingClassifier` now allows changing estimators by using
      :meth:`ensemble.VotingClassifier.set_params`. An estimator can also be
-     removed by setting it to `None`.
+     removed by setting it to ``None``.
      :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
 Linear, kernelized and related models
@@ -260,7 +260,7 @@ Model evaluation and meta-estimators
      :issue:`8845` by  :user:`themrmax <themrmax>`
 
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
-     now support online learning using `partial_fit`.
+     now support online learning using ``partial_fit``.
      issue: `8053` by :user:`Peng Yu <yupbank>`.
 
    - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
@@ -340,7 +340,7 @@ Linear, kernelized and related models
      ``max_iter`` if it finds a large inlier group early. :issue:`8251` by :user:`aivision2020`.
 
    - Fixed a bug where :class:`naive_bayes.MultinomialNB` and :class:`naive_bayes.BernoulliNB`
-     failed when `alpha=0`. :issue:`5814` by :user:`Yichuan Liu <yl565>` and
+     failed when ``alpha=0``. :issue:`5814` by :user:`Yichuan Liu <yl565>` and
      :user:`Herilalaina Rakotoarison <herilalaina>`.
 
    - Fixed a bug where :class:`linear_model.LassoLars` does not give
@@ -350,17 +350,17 @@ Linear, kernelized and related models
    - Fixed a bug in :class:`linear_model.RandomizedLasso`,
      :class:`linear_model.Lars`, :class:`linear_model.LassoLars`,
      :class:`linear_model.LarsCV` and :class:`linear_model.LassoLarsCV`,
-     where the parameter ``precompute`` were not used consistently across
+     where the parameter ``precompute`` was not used consistently across
      classes, and some values proposed in the docstring could raise errors.
      :issue:`5359` by `Tom Dupre la Tour`_.
 
    - Fix a bug where :func:`linear_model.LassoLars.fit` sometimes
-     left `coef_` as a list, rather than an ndarray.
+     left ``coef_`` as a list, rather than an ndarray.
      :issue:`8160` by :user:`CJ Carey <perimosocordiae>`.
 
    - Fix :func:`linear_model.BayesianRidge.fit` to return
-     ridge parameter `alpha_` and `lambda_` consistent with calculated
-     coefficients `coef_` and `intercept_`.
+     ridge parameter ``alpha_`` and ``lambda_`` consistent with calculated
+     coefficients ``coef_`` and ``intercept_``.
      :issue:`8224` by :user:`Peter Gedeck <gedeck>`.
 
    - Fixed a bug in :class:`svm.OneClassSVM` where it returned floats instead of
@@ -404,7 +404,7 @@ Decomposition, manifold learning and clustering
      This also impacts the output shape of :class:`decomposition.DictionaryLearning`.
      :issue:`8086` by `Andreas Müller`_.
 
-   - Fixed the implementation of `explained_variance_`
+   - Fixed the implementation of ``explained_variance_``
      in :class:`decomposition.PCA`,
      :class:`decomposition.RandomizedPCA` and
      :class:`decomposition.IncrementalPCA`.
@@ -484,10 +484,10 @@ Model evaluation and meta-estimators
      classes are provided up-front. :issue:`6250` by
      :user:`Asish Panda <kaichogami>`.
 
-   - Fix :func:`multioutput.MultiOutputClassifier.predict_proba` to
-     return a list of 2d arrays, rather than a 3d array. In the case where
-     different target columns had different numbers of classes, a `ValueError`
-     would be raised on trying to stack matrices with different dimensions.
+   - Fix :func:`multioutput.MultiOutputClassifier.predict_proba` to return a
+     list of 2d arrays, rather than a 3d array. In the case where different
+     target columns had different numbers of classes, a ``ValueError`` would be
+     raised on trying to stack matrices with different dimensions.
      :issue:`8093` by :user:`Peter Bull <pjbull>`.
 
 Metrics
@@ -561,7 +561,7 @@ Other predictors
 
    - :class:`neighbors.LSHForest` has been deprecated and will be
      removed in 0.21 due to poor performance.
-     :issue:`8996` by `Andreas Müller`_.
+     :issue:`9078` by :user:`Laurent Direr <ldirer>`.
 
    - The ``alpha`` parameter of :class:`semi_supervised.LabelPropagation` now
      has no effect and is deprecated to be removed in 0.21. :issue:`9239`
@@ -602,7 +602,7 @@ Preprocessing and feature selection
    - :class:`linear_model.RandomizedLogisticRegression`,
      and :class:`linear_model.RandomizedLasso` have been deprecated and will
      be removed in version 0.21.
-     :issue: `8995` by :user:`Ramana.S <sentient07>`.
+     :issue:`8995` by :user:`Ramana.S <sentient07>`.
 
 Model evaluation and meta-estimators
 
@@ -633,7 +633,7 @@ Model evaluation and meta-estimators
    - The :func:`multioutput.MultiOutputClassifier.predict_proba`
      function used to return a 3d array (``n_samples``, ``n_classes``,
      ``n_outputs``). In the case where different target columns had different
-     numbers of classes, a `ValueError` would be raised on trying to stack
+     numbers of classes, a ``ValueError`` would be raised on trying to stack
      matrices with different dimensions. This function now returns a list of
      arrays where the length of the list is ``n_outputs``, and each array is
      (``n_samples``, ``n_classes``) for that particular output.
@@ -645,11 +645,9 @@ Model evaluation and meta-estimators
      attribute, ``dict`` behavior will be prioritized.
      :issue:`8481` by :user:`Herilalaina Rakotoarison <herilalaina>`.
 
-Metrics
-
 Miscellaneous
 
-   - Deprecate the ``y`` parameter in `transform` and `inverse_transform`.
+   - Deprecate the ``y`` parameter in ``transform`` and ``inverse_transform``.
      The method  should not accept ``y`` parameter, as it's used at the prediction time.
      :issue:`8174` by :user:`Tahar Zanouda <tzano>`, `Alexandre Gramfort`_
      and `Raghav RV`_.
