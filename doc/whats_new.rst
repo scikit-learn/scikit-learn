@@ -204,6 +204,9 @@ Decomposition, manifold learning and clustering
      from the underlying SVD. They are stored in the attribute
      ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
 
+   - :class:`decomposition.NMF` now faster when ``beta_loss=0``.
+     :issue:`9277` by :user:`hongkahjun`.
+
 Preprocessing and feature selection
 
    - Added ``norm_order`` parameter to :class:`feature_selection.SelectFromModel`
