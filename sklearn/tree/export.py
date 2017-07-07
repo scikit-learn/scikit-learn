@@ -79,6 +79,83 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
               leaves_parallel=False, impurity=True, node_ids=False,
               proportion=False, rotate=False, rounded=False,
               special_characters=False, precision=3, ax=None):
+    """Plot a decision tree.
+
+    The sample counts that are shown are weighted with any sample_weights that
+    might be present.
+
+    Read more in the :ref:`User Guide <tree>`.
+
+    Parameters
+    ----------
+    decision_tree : decision tree classifier
+        The decision tree to be exported to GraphViz.
+
+    max_depth : int, optional (default=None)
+        The maximum depth of the representation. If None, the tree is fully
+        generated.
+
+    feature_names : list of strings, optional (default=None)
+        Names of each of the features.
+
+    class_names : list of strings, bool or None, optional (default=None)
+        Names of each of the target classes in ascending numerical order.
+        Only relevant for classification and not supported for multi-output.
+        If ``True``, shows a symbolic representation of the class name.
+
+    label : {'all', 'root', 'none'}, optional (default='all')
+        Whether to show informative labels for impurity, etc.
+        Options include 'all' to show at every node, 'root' to show only at
+        the top root node, or 'none' to not show at any node.
+
+    filled : bool, optional (default=False)
+        When set to ``True``, paint nodes to indicate majority class for
+        classification, extremity of values for regression, or purity of node
+        for multi-output.
+
+    leaves_parallel : bool, optional (default=False)
+        When set to ``True``, draw all leaf nodes at the bottom of the tree.
+
+    impurity : bool, optional (default=True)
+        When set to ``True``, show the impurity at each node.
+
+    node_ids : bool, optional (default=False)
+        When set to ``True``, show the ID number on each node.
+
+    proportion : bool, optional (default=False)
+        When set to ``True``, change the display of 'values' and/or 'samples'
+        to be proportions and percentages respectively.
+
+    rotate : bool, optional (default=False)
+        When set to ``True``, orient tree left to right rather than top-down.
+
+    rounded : bool, optional (default=False)
+        When set to ``True``, draw node boxes with rounded corners and use
+        Helvetica fonts instead of Times-Roman.
+
+    special_characters : bool, optional (default=False)
+        When set to ``False``, ignore special characters for PostScript
+        compatibility.
+
+    precision : int, optional (default=3)
+        Number of digits of precision for floating point in the values of
+        impurity, threshold and value attributes of each node.
+
+    ax : matplotlib axis, optional (default=None)
+        Axes to plot to. If None, use current axis.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn import tree
+
+    >>> clf = tree.DecisionTreeClassifier()
+    >>> iris = load_iris()
+
+    >>> clf = clf.fit(iris.data, iris.target)
+    >>> tree.plot_tree(clf)                # doctest: +SKIP
+
+    """
     exporter = _MPLTreeExporter(
         max_depth=max_depth, feature_names=feature_names,
         class_names=class_names, label=label, filled=filled,
