@@ -218,7 +218,7 @@ Preprocessing and feature selection
 
    - Small performance improvement to n-gram creation in
      :mod:`feature_extraction.text` by binding methods for loops and
-     special-casing unigrams. :issue:`7567` by `Jaye Doepke <jtdoepke>`
+     special-casing unigrams. :issue:`7567` by :user:`Jaye Doepke <jtdoepke>`
 
    - Relax assumption on the data for the
      :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
@@ -379,7 +379,7 @@ Linear, kernelized and related models
      :class:`linear_model.LassoCV`. :issue:`8973` by
      :user:`Paulo Haddad <paulochf>`.
 
-  -  Fixed a bug in :class:`gaussian_process.GaussianProcessRegressor`
+   - Fixed a bug in :class:`gaussian_process.GaussianProcessRegressor`
      when the standard deviation and covariance predicted without fit
      would fail with a unmeaningful error by default.
      :issue:`6573` by :user:`Quazi Marufur Rahman <qmaruf>` and
