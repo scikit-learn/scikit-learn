@@ -121,16 +121,16 @@ class GaussianNB(BaseNB):
 
     Parameters
     ----------
+    priors : array-like, shape (n_classes,), optional (default=None)
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
+
     classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
             If not specified, this will be set as per the classes present in
             the training data.
 
             It is recommended to set this parameter while initialization.
-
-    priors : array-like, shape (n_classes,), optional (default=None)
-        Prior probabilities of the classes. If specified the priors are not
-        adjusted according to the data.
 
     Attributes
     ----------
@@ -164,7 +164,7 @@ class GaussianNB(BaseNB):
     [1]
     """
 
-    def __init__(self, classes=None, priors=None):
+    def __init__(self, priors=None, classes=None):
         self.classes = classes
         self.priors = priors
 
