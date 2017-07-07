@@ -544,6 +544,9 @@ Miscellaneous
      :user:`Oscar Najera <Titan-C>`
 
 
+   - Add ``data_home`` parameter to
+     :func:`sklearn.datasets.fetch_kddcup99` by `Loic Esteve`_.
+
 API changes summary
 -------------------
 
