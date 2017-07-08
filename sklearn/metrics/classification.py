@@ -1911,11 +1911,12 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
 
-    y_true_max = y_true.max()
-    if pos_label is None and y_true_max != 0:
-        pos_label = y_true_max
-    else:
-        pos_label = 1
+    if pos_label is None:
+        y_true_max = y_true.max()
+        if y_true_max != 0:
+            pos_label = y_true_max
+        else:
+            pos_label = 1
 
     y_true = np.array(y_true == pos_label, int)
     _check_binary_probabilistic_predictions(y_true, y_prob)

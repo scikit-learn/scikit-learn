@@ -1608,3 +1608,11 @@ def test_brier_score_loss():
     # test for when y_true is not 0s and 1s
     assert_almost_equal(brier_score_loss(np.array([3, 0, 3]), np.array([1, 0, 1])), 0)
     assert_almost_equal(brier_score_loss(np.array([3, 2, 3]), np.array([1, 0, 1])), 0)
+
+    # categorical test
+    assert_almost_equal(
+        brier_score_loss(np.array(["foo", "foo", "foo"]), np.array([1, 1, 1]), pos_label="foo"), 0)
+    assert_almost_equal(
+        brier_score_loss(np.array(["foo", "bar", "foo"]), np.array([1, 0, 1]), pos_label="foo"), 0)
+    assert_almost_equal(
+        brier_score_loss(np.array(["foo", "bar", "foo"]), np.array([0, 1, 0]), pos_label="foo"), 1)
