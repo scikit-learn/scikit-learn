@@ -77,6 +77,10 @@ def test_incremental_pca_validation():
     for n_components in [-1, 0, .99, 3]:
         assert_raises(ValueError, IncrementalPCA(n_components,
                                                  batch_size=10).fit, X)
+    X = [[0, 1], [1, 0]]
+    for n_components in [-1, 0, .99, 3]:
+        assert_raises(ValueError, IncrementalPCA(n_components,
+                                                 batch_size=1).fit, X)
 
 
 def test_incremental_pca_set_params():
