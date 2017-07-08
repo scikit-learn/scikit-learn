@@ -297,12 +297,17 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         X = check_array(X)
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
+            if self.kernel is None:
+                kernel = (C(1.0, constant_value_bounds="fixed") *
+                          RBF(1.0, length_scale_bounds="fixed"))
+            else:
+                kernel = self.kernel
             y_mean = np.zeros(X.shape[0])
             if return_cov:
-                y_cov = self.kernel(X)
+                y_cov = kernel(X)
                 return y_mean, y_cov
             elif return_std:
-                y_var = self.kernel.diag(X)
+                y_var = kernel.diag(X)
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean

@@ -11,7 +11,6 @@ from sklearn import svm
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize
-from sklearn.utils.fixes import np_version
 from sklearn.utils.validation import check_random_state
 
 from sklearn.utils.testing import assert_raises, clean_warning_registry
@@ -1199,7 +1198,7 @@ def test_prf_warnings():
     my_assert(w, msg, f, np.array([[0, 0], [0, 0]]),
               np.array([[1, 1], [1, 1]]), average='micro')
 
-    # single postive label
+    # single positive label
     msg = ('Precision and F-score are ill-defined and '
            'being set to 0.0 due to no predicted samples.')
     my_assert(w, msg, f, [1, 1], [-1, -1], average='binary')

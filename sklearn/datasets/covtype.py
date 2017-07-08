@@ -89,7 +89,8 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     available = exists(samples_path)
 
     if download_if_missing and not available:
-        makedirs(covtype_dir, exist_ok=True)
+        if not exists(covtype_dir):
+            makedirs(covtype_dir)
         logger.warning("Downloading %s" % URL)
         f = BytesIO(urlopen(URL).read())
         Xy = np.genfromtxt(GzipFile(fileobj=f), delimiter=',')

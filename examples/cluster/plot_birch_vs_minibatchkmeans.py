@@ -39,7 +39,6 @@ n_centres = np.hstack((np.ravel(xx)[:, np.newaxis],
 
 # Generate blobs to do a comparison between MiniBatchKMeans and Birch.
 X, y = make_blobs(n_samples=100000, centers=n_centres, random_state=0)
-   
 
 # Use all colors that matplotlib provides by default.
 colors_ = cycle(colors.cnames.keys())
@@ -69,11 +68,11 @@ for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
     ax = fig.add_subplot(1, 3, ind + 1)
     for this_centroid, k, col in zip(centroids, range(n_clusters), colors_):
         mask = labels == k
-        ax.plot(X[mask, 0], X[mask, 1], 'w',
-                markerfacecolor=col, marker='.')
+        ax.scatter(X[mask, 0], X[mask, 1],
+                   c='w', edgecolor=col, marker='.', alpha=0.5)
         if birch_model.n_clusters is None:
-            ax.plot(this_centroid[0], this_centroid[1], '+', markerfacecolor=col,
-                    markeredgecolor='k', markersize=5)
+            ax.scatter(this_centroid[0], this_centroid[1], marker='+',
+                       c='k', s=25)
     ax.set_ylim([-25, 25])
     ax.set_xlim([-25, 25])
     ax.set_autoscaley_on(False)
@@ -93,9 +92,10 @@ ax = fig.add_subplot(1, 3, 3)
 for this_centroid, k, col in zip(mbk.cluster_centers_,
                                  range(n_clusters), colors_):
     mask = mbk.labels_ == k
-    ax.plot(X[mask, 0], X[mask, 1], 'w', markerfacecolor=col, marker='.')
-    ax.plot(this_centroid[0], this_centroid[1], '+', markeredgecolor='k',
-            markersize=5)
+    ax.scatter(X[mask, 0], X[mask, 1], marker='.',
+               c='w', edgecolor=col, alpha=0.5)
+    ax.scatter(this_centroid[0], this_centroid[1], marker='+',
+               c='k', s=25)
 ax.set_xlim([-25, 25])
 ax.set_ylim([-25, 25])
 ax.set_title("MiniBatchKMeans")
