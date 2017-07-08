@@ -1877,7 +1877,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
 
     pos_label : int or str, default=None
         Label of the positive class. If None, the maximum label is used as
-        positive class
+        positive class. If all values are 0/False, then 1 is used as pos_label.
 
     Returns
     -------
@@ -1911,8 +1911,12 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
 
-    if pos_label is None:
-        pos_label = y_true.max()
+    y_true_max = y_true.max()
+    if pos_label is None and y_true_max != 0:
+        pos_label = y_true_max
+    else:
+        pos_label = 1
+
     y_true = np.array(y_true == pos_label, int)
-    y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
+    _check_binary_probabilistic_predictions(y_true, y_prob)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
