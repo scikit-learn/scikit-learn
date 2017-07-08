@@ -1578,3 +1578,33 @@ def test_brier_score_loss():
     # calculate even if only single class in y_true (#6980)
     assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
+
+
+def test_brier_score_loss():
+    # Check brier_score_loss function
+    y_true = np.array([0, 1, 1, 0, 1, 1])
+    y_pred = np.array([0.1, 0.8, 0.9, 0.3, 1., 0.95])
+    true_score = linalg.norm(y_true - y_pred) ** 2 / len(y_true)
+
+    assert_almost_equal(brier_score_loss(y_true, y_true), 0.0)
+    assert_almost_equal(brier_score_loss(y_true, y_pred), true_score)
+    assert_almost_equal(brier_score_loss(1. + y_true, y_pred),
+                        true_score)
+    assert_almost_equal(brier_score_loss(2 * y_true - 1, y_pred),
+                        true_score)
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred[1:])
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred + 1.)
+    assert_raises(ValueError, brier_score_loss, y_true, y_pred - 1.)
+    # calculate even if only single class in y_true (#6980)
+    assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
+    assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
+
+    # brier_score_loss should work when all inputs are the same
+    assert_almost_equal(brier_score_loss(np.array([0, 0, 0]), np.array([0, 0, 0])), 0)
+    assert_almost_equal(brier_score_loss(np.array([0, 0, 0]), np.array([1, 1, 1])), 1)
+    assert_almost_equal(brier_score_loss(np.array([1, 1, 1]), np.array([1, 1, 1])), 0)
+    assert_almost_equal(brier_score_loss(np.array([1, 1, 1]), np.array([0, 0, 0])), 1)
+
+    # test for when y_true is not 0s and 1s
+    assert_almost_equal(brier_score_loss(np.array([3, 0, 3]), np.array([1, 0, 1])), 0)
+    assert_almost_equal(brier_score_loss(np.array([3, 2, 3]), np.array([1, 0, 1])), 0)
