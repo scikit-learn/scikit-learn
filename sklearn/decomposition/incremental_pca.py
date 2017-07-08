@@ -208,7 +208,10 @@ class IncrementalPCA(_BasePCA):
             self.components_ = None
 
         if self.n_components is None:
-            self.n_components_ = min(n_samples, n_features)
+            if self.components_ is None:
+                self.n_components_ = min(n_samples, n_features)
+            else:
+                self.n_components_ = self.components_.shape[0]
         elif not 1 <= self.n_components <= n_features:
             raise ValueError("n_components=%r invalid for n_features=%d, need "
                              "more rows than columns for IncrementalPCA "

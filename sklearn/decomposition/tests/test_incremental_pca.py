@@ -74,17 +74,20 @@ def test_incremental_pca_inverse():
 
 def test_incremental_pca_validation():
     # Test that n_components is >=1 and <= n_features.
-    X = [[0, 1], [1, 0]]
-    for n_components in [-1, 0, .99, 3]:
-        assert_raises(ValueError, IncrementalPCA(n_components,
-                                                 batch_size=10).fit, X)
-    for n_components in [-1, 0, .99, 3]:
-        X2 = [[0, 1, 0], [1, 0, 0]]
+    X = [[0, 1, 0], [1, 0, 0]]
+    for n_components in [-1, 0, .99, 4]:
         assert_raises_regex(ValueError,
-                            "n_components\=.* be less or equal to "
-                            "the batch number of samples .*\. You can change "
-                            "either one depending on what you want\.",
-                            IncrementalPCA(n_components).partial_fit, X2)
+                            "n_components\=.* invalid for n_features\=.*, need"
+                            " more rows than columns for IncrementalPCA "
+                            "processing",
+                            IncrementalPCA(n_components, batch_size=10).fit, X)
+
+    # Tests that n_components is also <= n_samples.
+    assert_raises_regex(ValueError,
+                        "n_components\=.* be less or equal to "
+                        "the batch number of samples .*\. You can change "
+                        "either one depending on what you want\.",
+                        IncrementalPCA(n_components=3).partial_fit, X)
 
 
 def test_incremental_pca_set_params():
