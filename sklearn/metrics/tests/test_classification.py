@@ -49,6 +49,7 @@ from sklearn.exceptions import UndefinedMetricWarning
 
 from scipy.spatial.distance import hamming as sp_hamming
 
+
 ###############################################################################
 # Utilities for testing
 
@@ -810,7 +811,7 @@ avg / total       0.51      0.53      0.47        75
 def test_classification_report_multiclass_with_long_string_label():
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    labels = np.array(["blue", "green"*5, "red"])
+    labels = np.array(["blue", "green" * 5, "red"])
     y_true = labels[y_true]
     y_pred = labels[y_pred]
 
@@ -897,7 +898,7 @@ def test_multilabel_hamming_loss():
     assert_equal(hamming_loss(y1, np.zeros(y1.shape)), 4 / 6)
     assert_equal(hamming_loss(y2, np.zeros(y1.shape)), 0.5)
     assert_equal(hamming_loss(y1, y2, sample_weight=w), 1. / 12)
-    assert_equal(hamming_loss(y1, 1-y2, sample_weight=w), 11. / 12)
+    assert_equal(hamming_loss(y1, 1 - y2, sample_weight=w), 11. / 12)
     assert_equal(hamming_loss(y1, np.zeros_like(y1), sample_weight=w), 2. / 3)
     # sp_hamming only works with 1-D arrays
     assert_equal(hamming_loss(y1[0], y2[0]), sp_hamming(y1[0], y2[0]))
@@ -1580,19 +1581,28 @@ def test_brier_score_loss():
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
 
     # brier_score_loss should work when all inputs are the same
-    assert_almost_equal(brier_score_loss(np.array([0, 0, 0]), np.array([0, 0, 0])), 0)
-    assert_almost_equal(brier_score_loss(np.array([0, 0, 0]), np.array([1, 1, 1])), 1)
-    assert_almost_equal(brier_score_loss(np.array([1, 1, 1]), np.array([1, 1, 1])), 0)
-    assert_almost_equal(brier_score_loss(np.array([1, 1, 1]), np.array([0, 0, 0])), 1)
+    assert_almost_equal(
+        brier_score_loss(np.array([0, 0, 0]), np.array([0, 0, 0])), 0)
+    assert_almost_equal(
+        brier_score_loss(np.array([0, 0, 0]), np.array([1, 1, 1])), 1)
+    assert_almost_equal(
+        brier_score_loss(np.array([1, 1, 1]), np.array([1, 1, 1])), 0)
+    assert_almost_equal(
+        brier_score_loss(np.array([1, 1, 1]), np.array([0, 0, 0])), 1)
 
     # test for when y_true is not 0s and 1s
-    assert_almost_equal(brier_score_loss(np.array([3, 0, 3]), np.array([1, 0, 1])), 0)
-    assert_almost_equal(brier_score_loss(np.array([3, 2, 3]), np.array([1, 0, 1])), 0)
+    assert_almost_equal(
+        brier_score_loss(np.array([3, 0, 3]), np.array([1, 0, 1])), 0)
+    assert_almost_equal(
+        brier_score_loss(np.array([3, 2, 3]), np.array([1, 0, 1])), 0)
 
     # categorical test
-    assert_almost_equal(
-        brier_score_loss(np.array(["foo", "foo", "foo"]), np.array([1, 1, 1]), pos_label="foo"), 0)
-    assert_almost_equal(
-        brier_score_loss(np.array(["foo", "bar", "foo"]), np.array([1, 0, 1]), pos_label="foo"), 0)
-    assert_almost_equal(
-        brier_score_loss(np.array(["foo", "bar", "foo"]), np.array([0, 1, 0]), pos_label="foo"), 1)
+    assert_almost_equal(brier_score_loss(
+        np.array(["foo", "foo", "foo"]), np.array([1, 1, 1]),
+        pos_label="foo"), 0)
+    assert_almost_equal(brier_score_loss(
+        np.array(["foo", "bar", "foo"]), np.array([1, 0, 1]),
+        pos_label="foo"), 0)
+    assert_almost_equal(brier_score_loss(
+        np.array(["foo", "bar", "foo"]), np.array([0, 1, 0]),
+        pos_label="foo"), 1)
