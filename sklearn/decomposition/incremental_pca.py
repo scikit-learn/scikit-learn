@@ -213,7 +213,7 @@ class IncrementalPCA(_BasePCA):
             raise ValueError("n_components=%r invalid for n_features=%d, need "
                              "more rows than columns for IncrementalPCA "
                              "processing" % (self.n_components, n_features))
-        elif not 1 <= self.n_components <= n_samples:
+        elif not self.n_components <= n_samples:
             raise ValueError("n_components=%r must be less or equal to "
                              "the batch number of samples %d. You can change "
                              "either one depending on what you "

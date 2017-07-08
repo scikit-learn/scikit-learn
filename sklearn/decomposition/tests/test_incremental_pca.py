@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
@@ -77,10 +78,13 @@ def test_incremental_pca_validation():
     for n_components in [-1, 0, .99, 3]:
         assert_raises(ValueError, IncrementalPCA(n_components,
                                                  batch_size=10).fit, X)
-    X = [[0, 1], [1, 0]]
     for n_components in [-1, 0, .99, 3]:
-        assert_raises(ValueError, IncrementalPCA(n_components,
-                                                 batch_size=1).fit, X)
+        X2 = [[0, 1, 0], [1, 0, 0]]
+        assert_raises_regex(ValueError,
+                            "n_components\=.* be less or equal to "
+                            "the batch number of samples .*\. You can change "
+                            "either one depending on what you want\.",
+                            IncrementalPCA(n_components).partial_fit, X2)
 
 
 def test_incremental_pca_set_params():
