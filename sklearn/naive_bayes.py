@@ -129,10 +129,12 @@ class GaussianNB(BaseNB):
 
     classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
-            If not specified, this will be set as per the classes present in
-            the training data.
+            The list will be sorted internally. Use the classes_ attribute to
+            refer to the final order of classes.
 
-            It is recommended to set this parameter while initialization.
+            If not specified, this will be set as per the classes present in
+            the training data. It is recommended to set this parameter while
+            initialization.
 
             .. versionadded:: 0.19
 
@@ -389,7 +391,10 @@ class GaussianNB(BaseNB):
                 self.classes_ = np.asarray(classes)
             # not set in either so infering from y
             else:
-                self.classes_ = np.sort(np.unique(y))
+                self.classes_ = np.unique(y)
+
+            # sort classes:
+            self.classes_.sort()
 
             # This is the first call to partial_fit:
             # initialize various cumulative counters
@@ -432,7 +437,7 @@ class GaussianNB(BaseNB):
 
         for y_i in np.unique(y):
             # classes need not be sorted because user input
-            i = np.where(classes == y_i)[0][0]
+            i = classes.searchsorted(y_i)
             X_i = X[y == y_i, :]
 
             if sample_weight is not None:
