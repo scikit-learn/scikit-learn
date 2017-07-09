@@ -29,7 +29,8 @@ from .preprocessing import label_binarize
 from .utils import (check_X_y,
                     check_array,
                     check_consistent_length,
-                    _check_y_classes)
+                    _check_y_classes,
+                    _check_unique_values)
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
@@ -167,10 +168,6 @@ class GaussianNB(BaseNB):
     def __init__(self, priors=None, classes=None):
         self.classes = classes
         self.priors = priors
-
-        # initialize a flag which checks whether fit or partial fit was called
-        # once or not
-        self.fit_called = False
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -373,6 +370,7 @@ class GaussianNB(BaseNB):
 
             # set the classes because first call or refit
             if self.classes is not None:
+                _check_unique_values(self.classes, "classes")
                 self.classes_ = np.asarray(self.classes)
             else:
                 self.classes_ = np.sort(np.unique(y))
