@@ -784,8 +784,9 @@ def _check_unique_values(array, name=None):
     name : string, default=None
         The string to be used argument to be used for error message
     """
-    if name is None:
-        name = "input"
-    unq = np.unique(array)
-    if len(unq) != len(array):
-        raise ValueError("Duplicate values found in %s" % name)
+    if array is not None:
+        if name is None:
+            name = "input"
+        unq = np.unique(array)
+        if len(unq) != len(array):
+            raise ValueError("Duplicate values found in %s" % name)
