@@ -385,7 +385,7 @@ class GaussianNB(BaseNB):
                 classes = np.sort(np.unique(y))
             # case when set at intialization
             else:
-                _check_unique_values(classes, "classes")
+                _check_unique_values(self.classes, "classes")
                 classes = np.sort(self.classes)
         # case when passed in partial_fit
         else:

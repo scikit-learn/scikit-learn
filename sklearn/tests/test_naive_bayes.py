@@ -207,6 +207,13 @@ def test_gnb_extra_classes():
     assert_array_almost_equal(pred3[:, 3], 0)
 
 
+def test_gnb_duplicate_classes():
+    "Test whether duplicate classes result in error"
+    assert_raises(ValueError, GaussianNB(classes=[1, 1, 2]).fit, X, y)
+    assert_raises(ValueError,
+                  GaussianNB().partial_fit, X, y, classes=[1, 1, 2])
+
+
 def test_discrete_prior():
     # Test whether class priors are properly set.
     for cls in [BernoulliNB, MultinomialNB]:
