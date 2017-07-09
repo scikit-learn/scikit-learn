@@ -265,10 +265,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
     @covariance_.setter
     def covariance_(self, value):
-        if hasattr(self, '_covariance_') and not self.store_covariance:
-            warnings.warn("from version 0.21 'covariance_' will be stored "
-                          "only if 'store_covariance' is True",
-                          FutureWarning)
         self._covariance_ = value
 
     def _solve_lsqr(self, X, y, shrinkage):
