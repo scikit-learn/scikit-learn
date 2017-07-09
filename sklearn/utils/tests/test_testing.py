@@ -19,7 +19,7 @@ from sklearn.utils.testing import (
     set_random_state,
     assert_raise_message,
     ignore_warnings,
-    check_parameters_match,
+    check_docstring_parameters,
     assert_allclose_dense_sparse)
 
 from sklearn.utils.testing import SkipTest
@@ -435,7 +435,7 @@ class MockMetaEstimator(object):
         """Incorrect docstring but should not be tested"""
 
 
-def test_check_parameters_match():
+def test_check_docstring_parameters():
     try:
         import numpydoc  # noqa
         assert sys.version_info >= (3, 5)
@@ -443,16 +443,16 @@ def test_check_parameters_match():
         raise SkipTest(
             "numpydoc is required to test the docstrings")
 
-    incorrect = check_parameters_match(f_ok)
+    incorrect = check_docstring_parameters(f_ok)
     assert_equal(incorrect, [])
-    incorrect = check_parameters_match(f_ok, ignore=['b'])
+    incorrect = check_docstring_parameters(f_ok, ignore=['b'])
     assert_equal(incorrect, [])
-    incorrect = check_parameters_match(f_missing, ignore=['b'])
+    incorrect = check_docstring_parameters(f_missing, ignore=['b'])
     assert_equal(incorrect, [])
     assert_raise_message(RuntimeError, 'Unknown section Results',
-                         check_parameters_match, f_bad_sections)
+                         check_docstring_parameters, f_bad_sections)
     assert_raise_message(RuntimeError, 'Unknown section Parameter',
-                         check_parameters_match, Klass.f_bad_sections)
+                         check_docstring_parameters, Klass.f_bad_sections)
 
     messages = ["a != b", "arg mismatch: ['b']", "arg mismatch: ['X', 'y']",
                 "predict y != X",
@@ -468,12 +468,12 @@ def test_check_parameters_match():
                         mock_meta.predict, mock_meta.predict_proba,
                         mock_meta.predict_log_proba,
                         mock_meta.score, mock_meta.fit]):
-        incorrect = check_parameters_match(f)
+        incorrect = check_docstring_parameters(f)
         assert_true(len(incorrect) >= 1)
         assert_true(mess in incorrect[0],
                     '"%s" not in "%s"' % (mess, incorrect[0]))
 
-    incorrect = check_parameters_match(f_check_param_definition)
+    incorrect = check_docstring_parameters(f_check_param_definition)
     assert_equal(
         incorrect,
         ['sklearn.utils.tests.test_testing.f_check_param_definition There was '

@@ -435,7 +435,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         Initial value for the sparse code for warm restart scenarios.
 
     callback : callable or None, optional (default: None)
-        callable that gets invoked every five iterations
+        Callable that gets invoked every five iterations
 
     verbose : bool, optional (default: False)
         To control the verbosity of the procedure.

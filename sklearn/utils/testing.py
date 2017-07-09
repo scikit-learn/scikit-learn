@@ -796,7 +796,7 @@ def _get_args(function, varargs=False):
         return args
 
 
-def get_func_name(func, class_name=None):
+def _get_func_name(func, class_name=None):
     """Get function full name
 
     Parameters
@@ -825,7 +825,7 @@ def get_func_name(func, class_name=None):
     return '.'.join(parts)
 
 
-def check_parameters_match(func, doc=None, ignore=None, class_name=None):
+def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     """Helper to check docstring
 
     Parameters

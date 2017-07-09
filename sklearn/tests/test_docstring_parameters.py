@@ -15,8 +15,8 @@ from inspect import getsource
 import sklearn
 from sklearn.base import signature
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import check_parameters_match
-from sklearn.utils.testing import get_func_name
+from sklearn.utils.testing import check_docstring_parameters
+from sklearn.utils.testing import _get_func_name
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
 
@@ -99,8 +99,8 @@ def test_docstring_parameters():
                 continue
 
             elif cls_init is not None:
-                this_incorrect += check_parameters_match(cls.__init__, cdoc,
-                                                         class_name=cname)
+                this_incorrect += check_docstring_parameters(
+                    cls.__init__, cdoc, class_name=cname)
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
                 if _is_deprecated(method):
@@ -113,8 +113,8 @@ def test_docstring_parameters():
                     if ('y' in sig.parameters and
                             sig.parameters['y'].default is None):
                         param_ignore = ['y']  # ignore y for fit and score
-                result = check_parameters_match(method, ignore=param_ignore,
-                                                class_name=cname)
+                result = check_docstring_parameters(
+                    method, ignore=param_ignore, class_name=cname)
                 this_incorrect += result
 
             incorrect += this_incorrect
@@ -127,7 +127,7 @@ def test_docstring_parameters():
             name_ = get_func_name(func)
             if (not any(d in name_ for d in _DOCSTRING_IGNORES) and
                     not _is_deprecated(func)):
-                incorrect += check_parameters_match(func)
+                incorrect += check_docstring_parameters(func)
     msg = '\n' + '\n'.join(sorted(list(set(incorrect))))
     if len(incorrect) > 0:
         raise AssertionError(msg)
