@@ -35,7 +35,6 @@ X2 = rng.randint(5, size=(6, 100))
 y2 = np.array([1, 1, 2, 2, 3, 3])
 
 
-# To be removed when the classes parameter in partial fit is deprecated
 def test_gnb():
     # Gaussian Naive Bayes classification.
     # This checks that GaussianNB implements fit and predict and returns
@@ -53,6 +52,31 @@ def test_gnb():
     # an Error
     # FIXME Remove this test once the more general partial_fit tests are merged
     assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
+
+    # Test label mismatch at time of initialization:
+    assert_raises(ValueError, GaussianNB(classes=[0, 1]).partial_fit, X, y)
+    assert_raises(ValueError, GaussianNB(classes=[0, 1]).fit, X, y)
+
+
+def test_gnb_classes_init_partial_fit():
+    # check if setting classes in both init and partial fit results in an error
+    # to be deprecated when partial fit's classes argument removed
+    assert_raises(ValueError,
+                  GaussianNB(classes=[0, 1]).partial_fit,
+                  X, y, classes=[0, 1])
+
+
+def test_gnb_classes_init_partial_fit_same_result():
+    # check if setting classes during initialization or partial_fit gives the
+    # same results
+    # to be deprecated when partial fit's classes argument removed
+    y_pred1 = GaussianNB(classes=[0, 1, 2, 3]).fit(X, y).predict_proba(X)
+    y_pred2 = GaussianNB().partial_fit(X, y,
+                                       classes=[0, 1, 2, 3]).predict_proba(X)
+
+    # check same results:
+    for i in range(y_pred1.shape[1]):
+        assert_array_almost_equal(y_pred1[:, i], y_pred2[:, i], 8)
 
 
 def test_gnb_prior():
@@ -167,17 +191,20 @@ def test_gnb_extra_classes():
     clf3 = GaussianNB(classes=[0, 1, 2, 3]).fit(X, y)
     pred3 = clf3.predict_proba(X)
 
-    zero_array = np.zeros(X.shape[0])
+    # check shapes:
+    assert_equal(pred1.shape, (X.shape[0], 2))
+    assert_equal(pred2.shape, (X.shape[0], 4))
+    assert_equal(pred3.shape, (X.shape[0], 4))
 
     # check same columns are equal:
     assert_array_almost_equal(pred1[:, 0], pred2[:, 0])
     assert_array_almost_equal(pred1[:, 0], pred3[:, 1])
     assert_array_almost_equal(pred1[:, 1], pred2[:, 1])
     assert_array_almost_equal(pred1[:, 1], pred3[:, 2])
-    assert_array_almost_equal(pred2[:, 2], zero_array)
-    assert_array_almost_equal(pred2[:, 3], zero_array)
-    assert_array_almost_equal(pred3[:, 0], zero_array)
-    assert_array_almost_equal(pred3[:, 3], zero_array)
+    assert_array_almost_equal(pred2[:, 2], 0)
+    assert_array_almost_equal(pred2[:, 3], 0)
+    assert_array_almost_equal(pred3[:, 0], 0)
+    assert_array_almost_equal(pred3[:, 3], 0)
 
 
 def test_discrete_prior():
