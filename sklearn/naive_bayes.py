@@ -30,7 +30,8 @@ from .utils import (check_X_y,
                     check_array,
                     check_consistent_length,
                     _check_y_classes,
-                    _check_unique_values)
+                    _check_unique_values,
+                    deprecated)
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
@@ -133,6 +134,8 @@ class GaussianNB(BaseNB):
 
             It is recommended to set this parameter while initialization.
 
+            .. versionadded:: 0.19
+
     Attributes
     ----------
     class_prior_ : array, shape (n_classes,)
@@ -166,8 +169,8 @@ class GaussianNB(BaseNB):
     """
 
     def __init__(self, priors=None, classes=None):
-        self.classes = classes
         self.priors = priors
+        self.classes = classes
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -273,6 +276,10 @@ class GaussianNB(BaseNB):
 
         return total_mu, total_var
 
+    @property
+    @deprecated("The classes argument will be removed in version 0.21."
+                "A new classes argument has been added as a class parameter"
+                "since version 0.19 which is recommended to be used now.")
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
 
@@ -299,14 +306,12 @@ class GaussianNB(BaseNB):
 
         classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
-            If classes argument was set in initialization, then this will be
-            ignored.
+            You can only set this argument in call to partial_fit or while
+            initialization. Setting in both is erroneous.
 
-            Must be provided at the first call to partial_fit or during class
-            initialization. It will be ignored in subsequent calls.
-
-            Note: Now this argument is redundant. We should remove this. But
-            this will affect backward compatibility
+            The parameter will only be considered in first call to fit or
+            partial_fit unless refit parameter of partial_fit is set to True.
+            It will be ignored in subsequent fit calls.
 
         sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
@@ -318,12 +323,16 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
-        # check if classes were defined, set the classes_ attribute only for
-        # first time
+        # Raise error if classes set in both initialization and in partial_fit
+        if (self.classes is not None) & (classes is not None):
+            raise ValueError("The classes argument was already set in"
+                             "initialization. Resetting it in call to"
+                             "partial_fit is not allowed as this argument"
+                             "will be deprecated in version 0.21")
         return self._partial_fit(X, y, _refit=False,
                                  sample_weight=sample_weight)
 
-    def _partial_fit(self, X, y, _refit=False,
+    def _partial_fit(self, X, y, classes=None, _refit=False,
                      sample_weight=None):
         """Actual implementation of Gaussian NB fitting.
 
@@ -335,6 +344,10 @@ class GaussianNB(BaseNB):
 
         y : array-like, shape (n_samples,)
             Target values.
+
+        classes : array-like, shape (n_classes,), optional (default=None)
+            classes argument being passed on from partial_fit call. This will
+            be deprecated in later versions.
 
         _refit : bool, optional (default=False)
             If true, act as though this were the first time we called
@@ -362,16 +375,19 @@ class GaussianNB(BaseNB):
 
         # reset flag if refit called
         if _refit:
-            self.fit_called = False
+            self.classes_ = None
 
-        if not self.fit_called:
-            # Set flag to positive:
-            self.fit_called = True
-
+        if _check_partial_fit_first_call(self, classes):
             # set the classes because first call or refit
+            # check if classes set during intialization:
             if self.classes is not None:
                 _check_unique_values(self.classes, "classes")
                 self.classes_ = np.asarray(self.classes)
+            # check if classes passed on from partial_fit:
+            if classes is not None:
+                _check_unique_values(classes, "classes")
+                self.classes_ = np.asarray(classes)
+            # not set in either so infering from y
             else:
                 self.classes_ = np.sort(np.unique(y))
 
