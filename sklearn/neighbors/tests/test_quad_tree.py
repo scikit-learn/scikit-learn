@@ -83,3 +83,7 @@ def test_qt_insert_duplicate():
 
     for n_dimensions in (2, 3):
         yield check_insert_duplicate, n_dimensions
+
+
+def test_summarize():
+    _QuadTree.test_summarize()
