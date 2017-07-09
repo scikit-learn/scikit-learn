@@ -732,7 +732,8 @@ def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
     """Make sure that TSNE can approximately recover a uniform 2D grid"""
     for seed in seeds:
         tsne = TSNE(n_components=2, init='random', random_state=seed,
-                    perplexity=10, n_iter=n_iter)
+                    perplexity=10, n_iter=n_iter, method=method,
+                    n_iter_without_progress=60)
         Y = tsne.fit_transform(X_2d_grid)
 
         # Ensure that the convergence criterion has been triggered

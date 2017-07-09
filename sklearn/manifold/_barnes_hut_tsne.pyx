@@ -85,7 +85,7 @@ cdef float compute_gradient(float[:] val_P,
     for i in range(start, n_samples):
         for ax in range(n_dimensions):
             coord = i * n_dimensions + ax
-            tot_force[i, ax] = pos_f[coord] - (neg_f[coord] / sum_Q[0])
+            tot_force[i, ax] = pos_f[coord] - (neg_f[coord] / sQ)
 
     free(neg_f)
     free(pos_f)
@@ -119,12 +119,12 @@ cdef float compute_gradient_positive(float[:] val_P,
 
     t1 = clock()
     for i in range(start, n_samples):
+        # Init the gradient vector
         for ax in range(n_dimensions):
             pos_f[i * n_dimensions + ax] = 0.0
+        # Compute the positive interaction for the nearest neighbors
         for k in range(indptr[i], indptr[i+1]):
             j = neighbors[k]
-            # we don't need to exclude the i==j case since we've
-            # already thrown it out from the list of neighbors
             dij = 0.0
             pij = val_P[k]
             for ax in range(n_dimensions):
@@ -205,24 +205,9 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
         printf("[t-SNE] Tree: %li clock ticks | ", dta)
         printf("Force computation: %li clock ticks\n", dtb)
 
+    # Put sum_Q to machine EPSILON to avoid 0 divisions
+    sum_Q[0] = max(sum_Q[0], EPSILON)
     free(summary)
-
-
-def calculate_edge(pos_output):
-    # Make the boundaries slightly outside of the data
-    # to avoid floating point error near the edge
-    left_edge = np.min(pos_output, axis=0)
-    right_edge = np.max(pos_output, axis=0)
-    center = (right_edge + left_edge) * 0.5
-    width = np.maximum(np.subtract(right_edge, left_edge), EPSILON)
-    # Exagerate width to avoid boundary edge
-    printf("WIDTH %f, %f\n", float(width[0]), float(width[1]))
-    width = width.astype(np.float32) * 1.001
-    left_edge = center - width / 2.0
-    right_edge = center + width / 2.0
-    printf("ROOT_x %f, %f\n", float(left_edge[0]), float(right_edge[0]))
-    printf("ROOT_y %f, %f\n", float(left_edge[1]), float(right_edge[1]))
-    return left_edge, right_edge, width
 
 
 def gradient(float[:] val_P,
