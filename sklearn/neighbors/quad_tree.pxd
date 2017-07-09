@@ -80,8 +80,9 @@ cdef class _QuadTree:
     cdef bint _is_duplicate(self, DTYPE_t[3] point1, DTYPE_t[3] point2) nogil
 
     # Create a summary of the Tree compare to a query point
-    cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results, int cell_id=*,
-                        long idx=*, float squared_theta=*) nogil
+    cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results,
+                        float squared_theta=*, int cell_id=*, long idx=*
+                        ) nogil
 
     # Internal cell initialization methods
     cdef void _init_cell(self, Cell* cell, SIZE_t parent, SIZE_t depth) nogil

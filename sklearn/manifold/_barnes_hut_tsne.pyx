@@ -180,7 +180,7 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
         # Find which nodes are summarizing and collect their centers of mass
         # deltas, and sizes, into vectorized arrays
         t1 = clock()
-        idx = qt.summarize(pos, summary, 0, 0, theta*theta)
+        idx = qt.summarize(pos, summary, theta*theta)
         t2 = clock()
         # Compute the t-SNE negative force
         # for the digits dataset, walking the tree

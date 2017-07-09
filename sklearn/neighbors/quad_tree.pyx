@@ -110,8 +110,9 @@ cdef class _QuadTree:
 
         capacity = 100
         self._resize(capacity)
-        m = np.min(X, axis=0) - 1e-3
-        M = np.max(X, axis=0) + 1e-3
+        m = np.min(X, axis=0)
+        M = np.max(X, axis=0)
+        M = np.maximum(M * 1.001, M + 1e-3)
         for i in range(self.n_dimensions):
             min_bounds[i] = m[i]
             max_bounds[i] = M[i]
@@ -187,7 +188,7 @@ cdef class _QuadTree:
         # In a leaf, the barycenter correspond to the only point included
         # in it.
         self._insert_point_in_new_child(cell.barycenter, cell, cell.point_index,
-                                       cell.cumulative_size)
+                                        cell.cumulative_size)
         return self.insert_point(point, point_index, cell_id)
 
     # XXX: This operation is not Thread safe
@@ -376,7 +377,7 @@ cdef class _QuadTree:
                 .format(self.n_points, self.cells[0].cumulative_size))
 
     cdef long summarize(self, DTYPE_t[3] point, DTYPE_t* results,
-                        SIZE_t cell_id=0, long idx=0, float squared_theta=.5
+                        float squared_theta=.5, SIZE_t cell_id=0, long idx=0
                         ) nogil:
         """Summarize the tree compared to a query point.
 
@@ -421,12 +422,11 @@ cdef class _QuadTree:
             bint duplicate = True
             Cell* cell = &self.cells[cell_id]
 
-        idx_d = idx + self.n_dimensions
         results[idx_d] = 0.
         for i in range(self.n_dimensions):
             results[idx + i] = point[i] - cell.barycenter[i]
             results[idx_d] += results[idx + i] * results[idx + i]
-            duplicate &= fabsf(results[idx + i]) < EPSILON
+            duplicate &= fabsf(results[idx + i]) <= EPSILON
 
         # Do not compute self interactions
         if duplicate and cell.is_leaf:
@@ -440,14 +440,15 @@ cdef class _QuadTree:
         if cell.is_leaf or (
                 (cell.squared_max_width / results[idx_d]) < squared_theta):
             results[idx_d + 1] = <DTYPE_t> cell.cumulative_size
-            return idx + 2 + self.n_dimensions
+            return idx + self.n_dimensions + 2
 
         else:
             # Recursively compute the summary in nodes
             for c in range(self.n_cells_per_cell):
                 child_id = cell.children[c]
                 if child_id != -1:
-                    idx = self.summarize(point, results, child_id, idx)
+                    idx = self.summarize(point, results, squared_theta,
+                                         child_id, idx)
 
         return idx
 
