@@ -786,8 +786,6 @@ def _check_unique_values(array, name=None):
     """
     if name is None:
         name = "input"
-    unq, counts = np.unique(array, return_counts=True)
-    duplicates = unq[np.where(counts > 1)]
-    if duplicates:
-        raise ValueError("%s should contain all unique values"
-                         "%x values are duplicated" % duplicates)
+    unq = np.unique(array)
+    if len(unq) != len(array):
+        raise ValueError("Duplicate values found in %s" % name)
