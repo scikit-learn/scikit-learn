@@ -30,6 +30,7 @@ from .utils import (check_X_y,
                     check_array,
                     check_consistent_length,
                     _check_y_classes,
+                    _check_unique_values,
                     deprecated)
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
@@ -385,9 +386,11 @@ class GaussianNB(BaseNB):
                 classes = np.sort(np.unique(y))
             # case when set at intialization
             else:
+                _check_unique_values(classes, "classes")
                 classes = np.sort(self.classes)
         # case when passed in partial_fit
         else:
+            _check_unique_values(classes, "classes")
             classes = np.sort(np.asarray(classes))
 
         if _check_partial_fit_first_call(self, classes):

@@ -34,25 +34,25 @@ y1 = (rng.normal(size=(10)) > 0).astype(np.int)
 X2 = rng.randint(5, size=(6, 100))
 y2 = np.array([1, 1, 2, 2, 3, 3])
 
-# Test not needed if we remove the classes parameter in partial fit
-# def test_gnb():
-#     # Gaussian Naive Bayes classification.
-#     # This checks that GaussianNB implements fit and predict and returns
-#     # correct values for a simple toy dataset.
 
-#     clf = GaussianNB()
-#     y_pred = clf.fit(X, y).predict(X)
-#     assert_array_equal(y_pred, y)
+# To be removed when the classes parameter in partial fit is deprecated
+def test_gnb():
+    # Gaussian Naive Bayes classification.
+    # This checks that GaussianNB implements fit and predict and returns
+    # correct values for a simple toy dataset.
 
-#     y_pred_proba = clf.predict_proba(X)
-#     y_pred_log_proba = clf.predict_log_proba(X)
-#     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
+    clf = GaussianNB()
+    y_pred = clf.fit(X, y).predict(X)
+    assert_array_equal(y_pred, y)
 
-#     # Test whether label mismatch between target y and classes raises
-#     # an Error
-#     # FIXME Remove this test once the more general partial_fit tests are
-# merged
-#     assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
+    y_pred_proba = clf.predict_proba(X)
+    y_pred_log_proba = clf.predict_log_proba(X)
+    assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
+
+    # Test whether label mismatch between target y and classes raises
+    # an Error
+    # FIXME Remove this test once the more general partial_fit tests are merged
+    assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
 
 
 def test_gnb_prior():
@@ -66,7 +66,7 @@ def test_gnb_prior():
 
 
 def test_gnb_sample_weight():
-    """Test whether sample weights are properly used in GNB. """
+    "Test whether sample weights are properly used in GNB. "
     # Sample weights all being 1 should not change results
     sw = np.ones(6)
     clf = GaussianNB().fit(X, y)
@@ -98,13 +98,13 @@ def test_gnb_sample_weight():
 
 
 def test_gnb_neg_priors():
-    """Test whether an error is raised in case of negative priors"""
+    "Test whether an error is raised in case of negative priors"
     clf = GaussianNB(priors=np.array([-1., 2.]))
     assert_raises(ValueError, clf.fit, X, y)
 
 
 def test_gnb_priors():
-    """Test whether the class prior override is properly used"""
+    "Test whether the class prior override is properly used"
     clf = GaussianNB(priors=np.array([0.3, 0.7])).fit(X, y)
     assert_array_almost_equal(clf.predict_proba([[-0.1, -0.1]]),
                               np.array([[0.825303662161683,
@@ -113,27 +113,27 @@ def test_gnb_priors():
 
 
 def test_gnb_wrong_nb_priors():
-    """ Test whether an error is raised if the number of prior is different
-    from the number of class"""
+    "Test whether an error is raised if the number of prior is different"
+    "from the number of class"
     clf = GaussianNB(priors=np.array([.25, .25, .25, .25]))
     assert_raises(ValueError, clf.fit, X, y)
 
 
 def test_gnb_prior_greater_one():
-    """Test if an error is raised if the sum of prior greater than one"""
+    "Test if an error is raised if the sum of prior greater than one"
     clf = GaussianNB(priors=np.array([2., 1.]))
     assert_raises(ValueError, clf.fit, X, y)
 
 
 def test_gnb_prior_large_bias():
-    """Test if good prediction when class prior favor largely one class"""
+    "Test if good prediction when class prior favor largely one class"
     clf = GaussianNB(priors=np.array([0.01, 0.99]))
     clf.fit(X, y)
     assert_equal(clf.predict([[-0.1, -0.1]]), np.array([2]))
 
 
 def test_check_update_with_no_data():
-    """ Test when the partial fit is called without any data"""
+    "Test when the partial fit is called without any data"
     # Create an empty array
     prev_points = 100
     mean = 0.
@@ -146,8 +146,8 @@ def test_check_update_with_no_data():
 
 
 def test_gnb_pfit_wrong_nb_features():
-    """Test whether an error is raised when the number of feature changes
-    between two partial fit"""
+    "Test whether an error is raised when the number of feature changes"
+    "between two partial fit"
     clf = GaussianNB()
     # Fit for the first time the GNB
     clf.fit(X, y)
@@ -156,8 +156,8 @@ def test_gnb_pfit_wrong_nb_features():
 
 
 def test_gnb_extra_classes():
-    """Test whether adding extra classes doesn't change the prediction of the
-    existing classes just adds 0 value columns for new classes"""
+    "Test whether adding extra classes doesn't change the prediction of the"
+    "existing classes just adds 0 value columns for new classes"
     clf1 = GaussianNB(classes=[1, 2]).fit(X, y)
     pred1 = clf1.predict_proba(X)
 
