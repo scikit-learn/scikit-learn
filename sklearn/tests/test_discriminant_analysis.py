@@ -272,6 +272,7 @@ def test_lda_deprecation():
         clf = LinearDiscriminantAnalysis(solver=solver)
 
         # Test the deprecation
+        assert_warns(FutureWarning, clf.fit, X, y)
         assert_warns_message(FutureWarning, "from version 0.21 "
                              "'covariance_' will be stored only if "
                              "'store_covariance' is True",
