@@ -156,6 +156,10 @@ Model evaluation and meta-estimators
   group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
   and `Andreas Müller`_.
 
+- A paramenter `predict_params` was added to :class:`pipeline.Pipeline` allowing
+  that parameters passed to `predict` propagate to the very last estimator of 
+  the pipeline. :issue:`9304` by :user:`Breno Freitas <brenolf>`.
+
 Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
