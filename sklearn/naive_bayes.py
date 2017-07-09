@@ -30,7 +30,6 @@ from .utils import (check_X_y,
                     check_array,
                     check_consistent_length,
                     _check_y_classes,
-                    _check_unique_values,
                     deprecated)
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
@@ -379,23 +378,19 @@ class GaussianNB(BaseNB):
         if _refit:
             self.classes_ = None
 
-        # set the classes to initialized values if not passed in partial_fit.
-        # To be removed on deprecation of classes parameter
+        # set classes- initialized values/passed in partial_fit/infer from y
         if classes is None:
-            classes = self.classes
+            # case when not set, infer from y
+            if self.classes is None:
+                classes = np.sort(np.unique(y))
+            # case when set at intialization
+            else:
+                classes = np.sort(self.classes)
+        # case when passed in partial_fit
+        else:
+            classes = np.sort(np.asarray(classes))
 
         if _check_partial_fit_first_call(self, classes):
-            # set the classes because first call or refit
-            if classes is not None:
-                _check_unique_values(classes, "classes")
-                self.classes_ = np.asarray(classes)
-            # not set explicitly so infer from y
-            else:
-                self.classes_ = np.unique(y)
-
-            # sort classes:
-            self.classes_.sort()
-
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_features = X.shape[1]
