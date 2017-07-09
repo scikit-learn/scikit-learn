@@ -278,7 +278,6 @@ class GaussianNB(BaseNB):
 
         return total_mu, total_var
 
-    @property
     @deprecated("The classes argument will be removed in version 0.21."
                 "A new classes argument has been added as a class parameter"
                 "since version 0.19 which is recommended to be used now.")
@@ -331,7 +330,7 @@ class GaussianNB(BaseNB):
                              "initialization. Resetting it in call to"
                              "partial_fit is not allowed as this argument"
                              "will be deprecated in version 0.21")
-        return self._partial_fit(X, y, _refit=False,
+        return self._partial_fit(X, y, classes=classes, _refit=False,
                                  sample_weight=sample_weight)
 
     def _partial_fit(self, X, y, classes=None, _refit=False,
