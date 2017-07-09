@@ -379,17 +379,17 @@ class GaussianNB(BaseNB):
         if _refit:
             self.classes_ = None
 
+        # set the classes to initialized values if not passed in partial_fit.
+        # To be removed on deprecation of classes parameter
+        if classes is None:
+            classes = self.classes
+
         if _check_partial_fit_first_call(self, classes):
             # set the classes because first call or refit
-            # check if classes set during intialization:
-            if self.classes is not None:
-                _check_unique_values(self.classes, "classes")
-                self.classes_ = np.asarray(self.classes)
-            # check if classes passed on from partial_fit:
             if classes is not None:
                 _check_unique_values(classes, "classes")
                 self.classes_ = np.asarray(classes)
-            # not set in either so infering from y
+            # not set explicitly so infer from y
             else:
                 self.classes_ = np.unique(y)
 
