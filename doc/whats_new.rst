@@ -471,9 +471,12 @@ Bug fixes
      by :user:`Andre Ambrosio Boechat <boechat107>`, :user:`Utkarsh Upadhyay
      <musically-ut>`, and `Joel Nothman`_.
 
-
    - Add ``data_home`` parameter to
      :func:`sklearn.datasets.fetch_kddcup99` by `Loic Esteve`_.
+
+   - Fix inconsistent results between :class:`linear_model.RidgeCV`
+     and :class:`linear_model.Ridge` when using ``normalize=True``
+     by `Alexandre Gramfort`_.
 
 API changes summary
 -------------------
