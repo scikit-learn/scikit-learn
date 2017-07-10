@@ -249,7 +249,7 @@ permitted and will require a wrapper to return a single metric::
     >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
     ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
     >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
-    >>> # Getting the test set false positive scores
+    >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
     [12 13 15]
     >>> # Getting the test set false negative scores
