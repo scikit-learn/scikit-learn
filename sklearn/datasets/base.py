@@ -32,15 +32,15 @@ from ..utils import check_random_state
 def get_data_home(data_home=None):
     """Return the path of the scikit-learn data dir.
 
-    This folder is used by some large dataset loaders to avoid
-    downloading the data several times.
+    This folder is used by some large dataset loaders to avoid downloading the
+    data several times.
 
-    By default the data dir is set to a folder named 'scikit_learn_data'
-    in the user home folder.
+    By default the data dir is set to a folder named 'scikit_learn_data' in the
+    user home folder.
 
-    Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
-    variable or programmatically by giving an explicit folder path. The
-    '~' symbol is expanded to the user home folder.
+    " "lternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
+    variable or programmatically by giving an explicit folder path. The '~'
+    symbol is expanded to the user home folder.
 
     If the folder does not already exist, it is automatically created.
     """
@@ -78,23 +78,22 @@ def load_files(container_path, description=None, categories=None,
                 file_44.txt
                 ...
 
-    The folder names are used as supervised signal label names. The
-    individual file names are not important.
+    The folder names are used as supervised signal label names. The individual
+    file names are not important.
 
-    This function does not try to extract features into a numpy array or
-    scipy sparse matrix. In addition, if load_content is false it
-    does not try to load the files in memory.
+    This function does not try to extract features into a numpy array or scipy
+    sparse matrix. In addition, if load_content is false it does not try to
+    load the files in memory.
 
-    To use text files in a scikit-learn classification or clustering
-    algorithm, you will need to use the `sklearn.feature_extraction.text`
-    module to build a feature extraction transformer that suits your
-    problem.
+    To use text files in a scikit-learn classification or clustering algorithm,
+    you will need to use the `sklearn.feature_extraction.text` module to build
+    a feature extraction transformer that suits your problem.
 
-    If you set load_content=True, you should also specify the encoding of
-    the text using the 'encoding' parameter. For many modern text files,
-    'utf-8' will be the correct encoding. If you leave encoding equal to None,
-    then the content will be made of bytes instead of Unicode, and you will
-    not be able to use most functions in `sklearn.feature_extraction.text`.
+    If you set load_content=True, you should also specify the encoding of the
+    text using the 'encoding' parameter. For many modern text files, 'utf-8'
+    will be the correct encoding. If you leave encoding equal to None, then the
+    content will be made of bytes instead of Unicode, and you will not be able
+    to use most functions in `sklearn.feature_extraction.text`.
 
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
@@ -111,20 +110,19 @@ def load_files(container_path, description=None, categories=None,
         reference, etc.
 
     categories : A collection of strings or None, optional (default=None)
-        If None (default), load all the categories.
-        If not None, list of category names to load (other categories ignored).
+        If None (default), load all the categories. If not None, list of
+        category names to load (other categories ignored).
 
     load_content : boolean, optional (default=True)
-        Whether to load or not the content of the different files. If
-        true a 'data' attribute containing the text information is present
-        in the data structure returned. If not, a filenames attribute
-        gives the path to the files.
+        Whether to load or not the content of the different files. If true a
+        'data' attribute containing the text information is present in the data
+        structure returned. If not, a filenames attribute gives the path to the
+        files.
 
     encoding : string or None (default is None)
-        If None, do not try to decode the content of the files (e.g. for
-        images or other non-text content).
-        If not None, encoding to use to decode text files to Unicode if
-        load_content is True.
+        If None, do not try to decode the content of the files (e.g. for images
+        or other non-text content). If not None, encoding to use to decode text
+        files to Unicode if load_content is True.
 
     decode_error : {'strict', 'ignore', 'replace'}, optional
         Instruction on what to do if a byte sequence is given to analyze that
@@ -264,16 +262,15 @@ def load_wine(return_X_y=False):
     Returns
     -------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the classification labels,
-        'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, and 'DESCR', the
-        full description of the dataset.
+        Dictionary-like object, the interesting attributes are: 'data', the
+        data to learn, 'target', the classification labels, 'target_names', the
+        meaning of the labels, 'feature_names', the meaning of the features,
+        and 'DESCR', the full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
-    The copy of UCI ML Wine Data Set dataset is
-    downloaded and modified to fit standard format from:
+    The copy of UCI ML Wine Data Set dataset is downloaded and modified to fit
+    standard format from:
     https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
 
     Examples
@@ -334,8 +331,8 @@ def load_iris(return_X_y=False):
     Parameters
     ----------
     return_X_y : boolean, default=False.
-        If True, returns ``(data, target)`` instead of a Bunch object.
-        See below for more information about the `data` and `target` object.
+        If True, returns ``(data, target)`` instead of a Bunch object. See
+        below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
 
@@ -711,15 +708,15 @@ def load_boston(return_X_y=False):
 
 def load_sample_images():
     """Load sample images for image manipulation.
+
     Loads both, ``china`` and ``flower``.
 
     Returns
     -------
     data : Bunch
-        Dictionary-like object with the following attributes :
-        'images', the two sample images, 'filenames', the file
-        names for the images, and 'DESCR'
-        the full description of the dataset.
+        Dictionary-like object with the following attributes : 'images', the
+        two sample images, 'filenames', the file names for the images, and
+        'DESCR' the full description of the dataset.
 
     Examples
     --------
@@ -801,18 +798,18 @@ def load_sample_image(image_name):
 def _pkl_filepath(*args, **kwargs):
     """Ensure different filenames for Python 2 and Python 3 pickles
 
-    An object pickled under Python 3 cannot be loaded under Python 2.
-    An object pickled under Python 2 can sometimes not be loaded
-    correctly under Python 3 because some Python 2 strings are decoded as
-    Python 3 strings which can be problematic for objects that use Python 2
-    strings as byte buffers for numerical data instead of "real" strings.
+    An object pickled under Python 3 cannot be loaded under Python 2. An object
+    pickled under Python 2 can sometimes not be loaded correctly under Python 3
+    because some Python 2 strings are decoded as Python 3 strings which can be
+    problematic for objects that use Python 2 strings as byte buffers for
+    numerical data instead of "real" strings.
 
     Therefore, dataset loaders in scikit-learn use different files for pickles
-    manages by Python 2 and Python 3 in the same SCIKIT_LEARN_DATA folder so
-    as to avoid conflicts.
+    manages by Python 2 and Python 3 in the same SCIKIT_LEARN_DATA folder so as
+    to avoid conflicts.
 
-    args[-1] is expected to be the ".pkl" filename. Under Python 3, a
-    suffix is inserted before the extension to s
+    args[-1] is expected to be the ".pkl" filename. Under Python 3, a suffix is
+    inserted before the extension to s
 
     _pkl_filepath('/path/to/folder', 'filename.pkl') returns:
       - /path/to/folder/filename.pkl under Python 2
@@ -828,14 +825,16 @@ def _pkl_filepath(*args, **kwargs):
 
 
 class PartialURLOpener(urllib.FancyURLopener):
-    """A class to override urllib.FancyURLopener and
-    ignore HTTP error 206 (partial file being sent), since
-    that is what we expect when we resume the download
-    of a partial file
+    """A helper class to download files by chunks
+
+    A class to override urllib.FancyURLopener and ignore HTTP error 206
+    (partial file being sent), since that is what we expect when we resume the
+    download of a partial file
     """
 
     def http_error_206(self, url, fp, errcode, errmsg, headers, data=None):
-        """
+        """Override HTTP Error 206
+
         Override HTTP Error 206 (partial file being sent). This error
         indicates that the Range header is supported
         """
@@ -887,15 +886,15 @@ def _validate_file_sha256(expected_checksum, path):
 
     if expected_checksum != _sha256(path):
         # remove the corrupted file
-        raise IOError("{} has an SHA256 hash differing "
-                      "from expected, file may be "
-                      "corrupted.".format(path))
+        raise IOError("{} has an SHA256 hash differing from expected, "
+                      "file may be corrupted.".format(path))
 
 
 def _fetch_url(url, path, checksum):
-    """
-    Fetch a dataset from a URL and check the SHA256 checksum to ensure
-    fetch was completed and the correct file was downloaded
+    """Fetch a dataset and check the SHA256 checksum
+
+    Fetch a dataset pointed by url, save into path and ensure its integrity
+    based on the SHA256 Checksum of the downloaded file.
 
     Parameters
     -----------
