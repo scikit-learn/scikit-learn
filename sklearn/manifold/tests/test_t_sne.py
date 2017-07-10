@@ -442,7 +442,7 @@ def test_n_iter_used():
                         method=method, early_exaggeration=1.0, n_iter=n_iter)
             tsne.fit_transform(X)
 
-            assert tsne.n_iter_final == n_iter - 1
+            assert tsne.n_iter_ == n_iter - 1
 
 
 def test_answer_gradient_two_points():
@@ -640,22 +640,23 @@ def test_barnes_hut_angle():
 def test_n_iter_without_progress():
     # Use a dummy negative n_iter_without_progress and check output on stdout
     random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
-    tsne = TSNE(n_iter_without_progress=-1, verbose=2, learning_rate=1e8,
-                random_state=1, method='exact', n_iter=300)
+    X = random_state.randn(100, 10)
+    for method in ["barnes_hut", "exact"]:
+        tsne = TSNE(n_iter_without_progress=-1, verbose=2, learning_rate=1e8,
+                    random_state=1, method='barnes_hut', n_iter=351)
 
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        tsne.fit_transform(X)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            tsne.fit_transform(X)
+        finally:
+            out = sys.stdout.getvalue()
+            sys.stdout.close()
+            sys.stdout = old_stdout
 
-    # The output needs to contain the value of n_iter_without_progress
-    assert_in("did not make any progress during the "
-              "last -1 episodes. Finished.", out)
+        # The output needs to contain the value of n_iter_without_progress
+        assert_in("did not make any progress during the "
+                "last -1 episodes. Finished.", out)
 
 
 def test_min_grad_norm():

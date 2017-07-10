@@ -205,7 +205,7 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
         printf("[t-SNE] Tree: %li clock ticks | ", dta)
         printf("Force computation: %li clock ticks\n", dtb)
 
-    # Put sum_Q to machine EPSILON to avoid 0 divisions
+    # Put sum_Q to machine EPSILON to avoid divisions by 0
     sum_Q[0] = max(sum_Q[0], EPSILON)
     free(summary)
 

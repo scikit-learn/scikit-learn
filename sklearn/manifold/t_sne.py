@@ -389,7 +389,6 @@ def _gradient_descent(objective, p0, it, n_iter,
 
         if new_error is not None:
             error = new_error
-
     return p, error, i
 
 
@@ -766,6 +765,8 @@ class TSNE(BaseEstimator):
                       random_state=random_state)
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
         elif self.init == 'random':
+            # The embedding is initialized with iid samples from Gaussians with
+            # standard deviation 1e-4.
             X_embedded = 1e-4 * random_state.randn(
                 n_samples, self.n_components).astype(np.float32)
         else:
@@ -797,32 +798,20 @@ class TSNE(BaseEstimator):
         # we use is batch gradient descent with two stages:
         # * initial optimization with early exaggeration and momentum at 0.5
         # * final optimization with momentum at 0.8
-        # The embedding is initialized with iid samples from Gaussians with
-        # standard deviation 1e-4.
         params = X_embedded.ravel()
 
-        opt_args = {"it": 0,
+        opt_args = {"it": 0, "n_iter_without_progress": EXPLORATION_N_ITER,
                     "learning_rate": self.learning_rate,
                     "verbose": self.verbose, "n_iter_check": 50,
-                    "kwargs": dict(skip_num_points=skip_num_points)}
+                    "kwargs": dict(skip_num_points=skip_num_points),
+                    "min_grad_norm": self.min_grad_norm}
+        opt_args['args'] = [P, degrees_of_freedom, n_samples,
+                            self.n_components]
         if self.method == 'barnes_hut':
             obj_func = _kl_divergence_bh
-            args = [P, degrees_of_freedom, n_samples,
-                    self.n_components]
-
-            opt_args['args'] = args
-            opt_args['n_iter_without_progress'] = EXPLORATION_N_ITER
-            # Don't always calculate the cost since that calculation
-            # can be nearly as expensive as the gradient
             opt_args['kwargs']['angle'] = self.angle
-            opt_args['kwargs']['verbose'] = self.verbose
         else:
             obj_func = _kl_divergence
-            opt_args['args'] = [P, degrees_of_freedom, n_samples,
-                                self.n_components]
-            opt_args['n_iter_without_progress'] = self.n_iter_without_progress
-            opt_args['min_error_diff'] = 0.0
-            opt_args['min_grad_norm'] = self.min_grad_norm
 
         # Learning schedule (part 1): do 250 iteration with lower momentum but
         # higher learning rate controlled via the early exageration parameter
