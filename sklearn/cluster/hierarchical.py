@@ -415,7 +415,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
             return children_, 1, n_samples, None, distances
         return children_, 1, n_samples, None
 
-    connectivity, n_components = _fix_connectivity(X, connectivity)
+    connectivity, n_components = _fix_connectivity(X, connectivity, affinity=affinity)
 
     connectivity = connectivity.tocoo()
     # Put the diagonal to zero
