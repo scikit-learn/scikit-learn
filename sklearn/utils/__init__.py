@@ -463,7 +463,18 @@ def _get_n_jobs(n_jobs):
 
 
 def tosequence(x):
-    """Cast iterable x to a Sequence, avoiding a copy if possible."""
+    """Cast iterable x to a Sequence, avoiding a copy if possible.
+
+    Parameters
+    ----------
+    x : iterable
+        The input to make a sequence from
+
+    Return
+    ------
+    x_seq : iterable
+        The sequence.
+    """
     if isinstance(x, np.ndarray):
         return np.asarray(x)
     elif isinstance(x, Sequence):
