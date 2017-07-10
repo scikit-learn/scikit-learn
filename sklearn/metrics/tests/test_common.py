@@ -636,7 +636,8 @@ def test_inf_nan_input():
     for metric in CLASSIFICATION_METRICS.values():
         for y_true, y_score in invalids:
             assert_raise_message(ValueError,
-                                 "Can't handle mix of binary and continuous",
+                                 "Classification metrics can't handle a mix "
+                                 "of binary and continuous targets",
                                  metric, y_true, y_score)
 
 
