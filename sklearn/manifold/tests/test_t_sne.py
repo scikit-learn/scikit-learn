@@ -256,8 +256,7 @@ def test_preserve_trustworthiness_approximately():
     X = random_state.randn(50, n_components).astype(np.float32)
     for init in ('random', 'pca'):
         for method in methods:
-            tsne = TSNE(n_components=n_components, perplexity=25,
-                        learning_rate=100.0, init=init, random_state=0,
+            tsne = TSNE(n_components=n_components, init=init, random_state=0,
                         method=method)
             X_embedded = tsne.fit_transform(X)
             t = trustworthiness(X, X_embedded, n_neighbors=1)
@@ -643,7 +642,7 @@ def test_n_iter_without_progress():
     X = random_state.randn(100, 10)
     for method in ["barnes_hut", "exact"]:
         tsne = TSNE(n_iter_without_progress=-1, verbose=2, learning_rate=1e8,
-                    random_state=1, method='barnes_hut', n_iter=351)
+                    random_state=0, method=method, n_iter=351, init="random")
 
         old_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -653,10 +652,11 @@ def test_n_iter_without_progress():
             out = sys.stdout.getvalue()
             sys.stdout.close()
             sys.stdout = old_stdout
+        print(out)
 
         # The output needs to contain the value of n_iter_without_progress
         assert_in("did not make any progress during the "
-                "last -1 episodes. Finished.", out)
+                  "last -1 episodes. Finished.", out)
 
 
 def test_min_grad_norm():
@@ -734,7 +734,7 @@ def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
     for seed in seeds:
         tsne = TSNE(n_components=2, init='random', random_state=seed,
                     perplexity=10, n_iter=n_iter, method=method,
-                    n_iter_without_progress=60)
+                    n_iter_without_progress=60, verbose=10)
         Y = tsne.fit_transform(X_2d_grid)
 
         # Ensure that the convergence criterion has been triggered
@@ -750,8 +750,9 @@ def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
         smallest_to_mean = dist_to_nn.min() / np.mean(dist_to_nn)
         largest_to_mean = dist_to_nn.max() / np.mean(dist_to_nn)
 
-        assert 0.5 < smallest_to_mean
-        assert largest_to_mean < 2
+        try_name = "{}_{}".format(method, seed)
+        assert_greater(smallest_to_mean, .5, msg=try_name)
+        assert_less(largest_to_mean, 2, msg=try_name)
 
 
 def test_uniform_grid():

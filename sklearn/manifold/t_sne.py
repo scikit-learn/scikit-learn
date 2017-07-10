@@ -800,11 +800,13 @@ class TSNE(BaseEstimator):
         # * final optimization with momentum at 0.8
         params = X_embedded.ravel()
 
-        opt_args = {"it": 0, "n_iter_without_progress": EXPLORATION_N_ITER,
+        opt_args = {"it": 0,
+                    "n_iter_check": 50,
+                    "n_iter_without_progress": EXPLORATION_N_ITER,
+                    "min_grad_norm": self.min_grad_norm,
                     "learning_rate": self.learning_rate,
-                    "verbose": self.verbose, "n_iter_check": 50,
-                    "kwargs": dict(skip_num_points=skip_num_points),
-                    "min_grad_norm": self.min_grad_norm}
+                    "verbose": self.verbose,
+                    "kwargs": dict(skip_num_points=skip_num_points)}
         opt_args['args'] = [P, degrees_of_freedom, n_samples,
                             self.n_components]
         if self.method == 'barnes_hut':
