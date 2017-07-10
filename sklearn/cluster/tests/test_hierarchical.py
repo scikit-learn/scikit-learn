@@ -35,7 +35,7 @@ from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 
-def test_deprecation_of_linkage_tree():
+def test_deprecation_of_n_components_in_linkage_tree():
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
