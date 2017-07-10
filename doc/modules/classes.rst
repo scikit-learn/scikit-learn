@@ -223,6 +223,7 @@ Model validation
    :toctree: generated/
    :template: function.rst
 
+   model_selection.cross_validate
    model_selection.cross_val_score
    model_selection.cross_val_predict
    model_selection.permutation_test_score
