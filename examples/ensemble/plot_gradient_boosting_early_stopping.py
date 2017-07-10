@@ -100,7 +100,7 @@ def autolabel(rects, n_estimators):
     """
     for i, rect in enumerate(rects):
         plt.text(rect.get_x() + rect.get_width()/2., 1.05*rect.get_height(),
-                 '%d' % n_estimators[i], ha='center', va='bottom')
+                 'n_est=%d' % n_estimators[i], ha='center', va='bottom')
 
 autolabel(bar1, n_gb)
 autolabel(bar2, n_gbes)
