@@ -435,11 +435,12 @@ class ClassifierChain(BaseEstimator):
     Chains for Multi-label Classification", 2009.
 
     """
-    def __init__(self, base_estimator, order=None, cv=None, random_state=None):
+    def __init__(self, base_estimator, order=None, cv=None, random_state=None, chain_method="predict"):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
         self.random_state = random_state
+        self.chain_method = chain_method
 
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
@@ -568,7 +569,12 @@ class ClassifierChain(BaseEstimator):
             else:
                 X_aug = np.hstack((X, previous_predictions))
             Y_prob_chain[:, chain_idx] = estimator.predict_proba(X_aug)[:, 1]
-            Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
+            if self.chain_method == "predict":
+                Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
+            elif self.chain_method == "predict_proba":
+                Y_pred_chain[:, chain_idx] = estimator.predict_proba(X_aug)
+            elif self.chain_method == "decision_function":
+                Y_pred_chain[:, chain_idx] = estimator.decision_function(X_aug)
         inv_order = np.empty_like(self.order_)
         inv_order[self.order_] = np.arange(len(self.order_))
         Y_prob = Y_prob_chain[:, inv_order]
@@ -598,7 +604,12 @@ class ClassifierChain(BaseEstimator):
             else:
                 X_aug = np.hstack((X, previous_predictions))
             Y_decision_chain[:, chain_idx] = estimator.decision_function(X_aug)
-            Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
+            if self.chain_method == "predict":
+                Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
+            elif self.chain_method == "predict_proba":
+                Y_pred_chain[:, chain_idx] = estimator.predict_proba(X_aug)
+            elif self.chain_method == "decision_function":
+                Y_pred_chain[:, chain_idx] = estimator.decision_function(X_aug)
 
         inv_order = np.empty_like(self.order_)
         inv_order[self.order_] = np.arange(len(self.order_))
