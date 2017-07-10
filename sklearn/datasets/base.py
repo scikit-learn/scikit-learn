@@ -12,15 +12,20 @@ import os
 import csv
 import sys
 import shutil
-from os import environ, listdir, makedirs, rename, remove
-from os.path import dirname, exists, expanduser, getsize, isdir, join, splitext
+from os import environ, listdir, makedirs
+from os.path import dirname, exists, expanduser, isdir, join, splitext
 import hashlib
-import warnings
 
-try:
-    import urllib.request as urllib  # for backwards compatibility
-except ImportError:
-    import urllib
+# try:
+#     import urllib.request as urllib  # for backwards compatibility
+#     from urllib.request import urlretrieve as download
+# except ImportError:
+#     import urllib
+
+from urllib.request import urlretrieve as download
+
+# from io import BytesIO
+from contextlib import closing
 
 from ..utils import Bunch
 
@@ -824,24 +829,6 @@ def _pkl_filepath(*args, **kwargs):
     return join(*new_args)
 
 
-class PartialURLOpener(urllib.FancyURLopener):
-    """A helper class to download files by chunks
-
-    A class to override urllib.FancyURLopener and ignore HTTP error 206
-    (partial file being sent), since that is what we expect when we resume the
-    download of a partial file
-    """
-
-    def http_error_206(self, url, fp, errcode, errmsg, headers, data=None):
-        """Override HTTP Error 206
-
-        Override HTTP Error 206 (partial file being sent). This error
-        indicates that the Range header is supported
-        """
-        # Ignore the expected "error" code
-        pass
-
-
 def _sha256(path):
     """Calculate the sha256 hash of the file at path.
 
@@ -909,49 +896,5 @@ def _fetch_url(url, path, checksum):
 
     """
 
-    resume_url_downloader = PartialURLOpener()
-    path_temp = path + ".part"
-    if exists(path_temp):
-        # since path_temp exists, resume download
-        temp_file = open(path_temp, "ab")
-        # get the amount of path_temp we've downloaded
-        existing_size = getsize(path_temp)
-        request_range = 'bytes={}-'.format(existing_size)
-
-        warnings.warn(
-            "Resuming download from {}, already have {} bytes.\n".format(
-                url, existing_size))
-        resume_url_downloader.addheader("Range", request_range)
-
-        try:
-            # Try to download only the remainder of the file
-            dataset_url = resume_url_downloader.open(url)
-            # get the content range of the request
-            content_range = dataset_url.info().get('Content-Range')
-            if (content_range is None or
-                    not content_range.startswith(request_range)):
-                raise IOError("Server does not support the HTTP Range "
-                              "header, cannot resume download.")
-        except Exception as exc:
-            # delete the temp file and retry download of whole file
-            remove(path_temp)
-            warnings.warn(
-                "Attempting to re-download file after {!r}.\n".format(exc))
-            _fetch_url(url, path, checksum)
-    else:
-        # no path_temp, so download from scratch
-        temp_file = open(path_temp, "wb")
-        dataset_url = resume_url_downloader.open(url)
-    while 1:
-        chunk = dataset_url.read(8192)
-        if not chunk:
-            break
-        temp_file.write(chunk)
-
-    dataset_url.close()
-    temp_file.close()
-    # verify checksum of downloaded temp file
-    _validate_file_sha256(checksum, path_temp)
-
-    # move temporary file to the expected location
-    rename(path_temp, path)
+    download(url, path)
+    _validate_file_sha256(checksum, path)
