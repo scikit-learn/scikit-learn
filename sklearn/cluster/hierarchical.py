@@ -366,10 +366,9 @@ def linkage_tree(X, connectivity=None, n_components=None,
     ward_tree : hierarchical clustering with ward linkage
     """
     if n_components is not None:
-        warnings.warn("n_components was depreciated in 0.18"
+        warnings.warn("n_components was deprecated in 0.18"
                       "will be removed in 0.21", DeprecationWarning)
-    
-    
+
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
