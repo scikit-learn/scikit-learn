@@ -45,15 +45,8 @@ def test_linkage_misc():
     assert_raises(ValueError, linkage_tree, X, connectivity=np.ones((4, 4)))
 
     # Test for warning of deprecation of n_components in linkage_tree
-    rng = np.random.RandomState(0)
-    X = rng.randn(50, 100)
-    for tree_builder in _TREE_BUILDERS.values():
-        for this_X in (X, X[0]):
-            with ignore_warnings():
-                children, n_nodes, n_leaves, parent = assert_warns(
-                    UserWarning, tree_builder, this_X.T, n_components=10)
-    
-    
+    children, n_nodes, n_leaves, parent = assert_warns(UserWarning, linkage_tree, n_components=10)
+
     # Smoke test FeatureAgglomeration
     FeatureAgglomeration().fit(X)
 
