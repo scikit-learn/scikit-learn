@@ -1119,7 +1119,8 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
-            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
+            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
+                                    normalize=self.normalize),
                               parameters, cv=self.cv, scoring=self.scoring)
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_

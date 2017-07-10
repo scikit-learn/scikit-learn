@@ -383,6 +383,16 @@ def _test_ridge_loo(filter_):
     return ret
 
 
+def _test_ridge_cv_normalize(filter_):
+    ridge_cv = RidgeCV(normalize=True, cv=3)
+    ridge_cv.fit(filter_(10. * X_diabetes), y_diabetes)
+
+    gs = GridSearchCV(Ridge(normalize=True), cv=3,
+                      param_grid={'alpha': ridge_cv.alphas})
+    gs.fit(filter_(10. * X_diabetes), y_diabetes)
+    assert_equal(gs.best_estimator_.alpha, ridge_cv.alpha_)
+
+
 def _test_ridge_cv(filter_):
     ridge_cv = RidgeCV()
     ridge_cv.fit(filter_(X_diabetes), y_diabetes)
@@ -462,6 +472,7 @@ def check_dense_sparse(test_func):
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
                       _test_ridge_cv,
+                      _test_ridge_cv_normalize,
                       _test_ridge_diabetes,
                       _test_multi_ridge_diabetes,
                       _test_ridge_classifiers,
