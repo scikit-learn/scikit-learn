@@ -79,6 +79,21 @@ New features
 ............
 
 Configuration
+   - :class:`model_selection.GridSearchCV` and
+     :class:`model_selection.RandomizedSearchCV` now support simultaneous
+     evaluation of multiple metrics. Refer to the
+     :ref:`multimetric_grid_search` section of the user guide for more
+     information. :issue:`7388` by `Raghav RV`_
+
+   - Added the :func:`model_selection.cross_validate` which allows evaluation
+     of multiple metrics. This function returns a dict with more useful
+     information from cross-validation such as the train scores, fit times and
+     score times.
+     Refer to :ref:`multimetric_cross_validation` section of the userguide
+     for more information. :issue:`7388` by `Raghav RV`_
+     
+   - Added :class:`multioutput.ClassifierChain` for multi-label
+     classification. By `Adam Kleczewski <adamklec>`_.
 
    - Validation that input data contains no NaN or inf can now be suppressed
      using :func:`config_context`, at your own risk. This will save on runtime,
@@ -546,9 +561,12 @@ Miscellaneous
      documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986` by
      :user:`Oscar Najera <Titan-C>`
 
-
    - Add ``data_home`` parameter to
      :func:`sklearn.datasets.fetch_kddcup99` by `Loic Esteve`_.
+
+   - Fix inconsistent results between :class:`linear_model.RidgeCV`
+     and :class:`linear_model.Ridge` when using ``normalize=True``
+     by `Alexandre Gramfort`_.
 
 API changes summary
 -------------------
