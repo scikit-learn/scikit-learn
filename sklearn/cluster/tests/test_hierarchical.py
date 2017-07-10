@@ -39,16 +39,8 @@ def test_deprecation_of_n_components_in_linkage_tree():
 
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
-            with ignore_warnings():
-                    # Test for warning of deprecation of n_components in linkage_tree
-                    children, n_nodes, n_leaves, parent = assert_warns(DeprecationWarning, linkage_tree,this_X.T, n_components=10)
-                    children1, n_nodes1, n_leaves1, parent1 = linkage_tree(this_X.T, n_components=10)
-                    children2, n_nodes2, n_leaves2, parent2 = linkage_tree(this_X.T)
-                    # Test is to see if n_components is making any difference
-                    assert_array_equal(children1,children2)
-                    assert_equal(n_nodes1,n_nodes2)
-                    assert_equal(n_leaves1,n_leaves2)
-                    assert_equal(parent1,parent2)
+            # Test for warning of deprecation of n_components in linkage_tree
+            children, n_nodes, n_leaves, parent = assert_warns(DeprecationWarning, linkage_tree,this_X.T, n_components=10)
 
 def test_linkage_misc():
     # Misc tests on linkage
