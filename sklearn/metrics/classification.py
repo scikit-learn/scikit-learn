@@ -77,8 +77,8 @@ def _check_targets(y_true, y_pred):
         y_type = set(["multiclass"])
 
     if len(y_type) > 1:
-        raise ValueError("Can't handle mix of {0} and {1}"
-                         "".format(type_true, type_pred))
+        raise ValueError("Classification metrics can't handle a mix of {0} "
+                         "and {1} targets".format(type_true, type_pred))
 
     # We can't have more than one value on y_type => The set is no more needed
     y_type = y_type.pop()
