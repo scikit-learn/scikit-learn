@@ -124,7 +124,7 @@ def test_docstring_parameters():
             # Don't test private methods / functions
             if fname.startswith('_'):
                 continue
-            name_ = get_func_name(func)
+            name_ = _get_func_name(func)
             if (not any(d in name_ for d in _DOCSTRING_IGNORES) and
                     not _is_deprecated(func)):
                 incorrect += check_docstring_parameters(func)

@@ -849,7 +849,7 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     incorrect = []
     ignore = [] if ignore is None else ignore
 
-    func_name = get_func_name(func, class_name=class_name)
+    func_name = _get_func_name(func, class_name=class_name)
     if (not func_name.startswith('sklearn.') or
             func_name.startswith('sklearn.externals')):
         return incorrect
