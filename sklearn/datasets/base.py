@@ -870,9 +870,10 @@ def _sha256(path):
 
 
 def _validate_file_sha256(expected_checksum, path):
-    """Compare the SHA256 checksum of a file at a path with
-    an expected SHA256 checksum. If they do not match,
-    remove the file at path and throw a IOError.
+    """Compare the SHA256 checksum of file in path with expected_checksum
+
+    Compare the SHA256 checksum of a file at path with an expected SHA256
+    checksum. If they do not match throw a IOError.
 
     Parameters
     -----------
@@ -886,7 +887,6 @@ def _validate_file_sha256(expected_checksum, path):
 
     if expected_checksum != _sha256(path):
         # remove the corrupted file
-        remove(path)
         raise IOError("{} has an SHA256 hash differing "
                       "from expected, file may be "
                       "corrupted.".format(path))
