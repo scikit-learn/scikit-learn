@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from lvq.gmlvq import GmlvqModel
-from lvq.grlvq import GrlvqModel
-from lvq.lgmlvq import LgmlvqModel
+from sklearn.glvq.gmlvq import GmlvqModel
+from sklearn.glvq.grlvq import GrlvqModel
+from sklearn.glvq.lgmlvq import LgmlvqModel
 
-from lvq.glvq import GlvqModel
+from sklearn.glvq.glvq import GlvqModel
 
 nb_ppc = 100
 toy_data = np.append(np.random.multivariate_normal([0, 0], np.eye(2)/2, size=nb_ppc),

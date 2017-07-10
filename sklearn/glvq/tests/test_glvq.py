@@ -1,12 +1,10 @@
-import numpy as np
-
-from lvq.gmlvq import GmlvqModel
-from lvq.grlvq import GrlvqModel
-from lvq.lgmlvq import LgmlvqModel
+from sklearn.glvq.glvq import GlvqModel
+from sklearn.glvq.gmlvq import GmlvqModel
+from sklearn.glvq.grlvq import GrlvqModel
+from sklearn.glvq.lgmlvq import LgmlvqModel
 from sklearn.utils.testing import assert_greater, assert_raise_message
 
 from sklearn import datasets
-from sklearn.lvq.glvq import GlvqModel
 from sklearn.utils import check_random_state
 
 # also load the iris dataset

@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
 
-from lvq.glvq import GlvqModel
+from sklearn.glvq.glvq import GlvqModel
 from sklearn.utils.multiclass import unique_labels, check_classification_targets
 
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -14,13 +14,18 @@ from sklearn.utils.validation import check_is_fitted
 import matplotlib.pyplot as plt
 
 
-class GrlvqModel(GlvqModel):
+class GmlvqModel(GlvqModel):
     def __init__(self, random_state=None, initial_prototypes=None, initial_rototype_labels=None, prototypes_per_class=1,
-                 display=False, max_iter=2500, gtol=1e-5, regularization=0, initial_relevances=None):
+                 display=False, max_iter=2500, gtol=1e-5, regularization=0, initial_matrix=None, dim=None,
+                 nb_reiterations=100):
         super().__init__(random_state, initial_prototypes, initial_rototype_labels, prototypes_per_class,
                          display, max_iter, gtol)
+        if not isinstance(regularization, int):
+            raise ValueError("nb_reiterations must be a int")
         self.regularization = regularization
-        self.initial_relevances = initial_relevances
+        self.initial_matrix = initial_matrix
+        self.initialdim = dim
+        self.nb_reiterations = nb_reiterations
 
     def optfun(self, variables, training_data, label_equals_prototype, random_state, lr_relevances=0,
                lr_prototypes=1, calc_gradient=True):
@@ -29,8 +34,7 @@ class GrlvqModel(GlvqModel):
         nb_prototypes = self.c_w_.shape[0]
         omegaT = variables[nb_prototypes:]
 
-        dist = self._compute_distance(training_data, variables[:nb_prototypes],
-                                      np.diag(omegaT))  # change dist function ?
+        dist = self._compute_distance(training_data, variables[:nb_prototypes], omegaT)  # change dist function ?
         # dist = cdist(training_data, prototypes, 'sqeuclidean')
         d_wrong = dist.copy()
         d_wrong[label_equals_prototype] = np.inf
@@ -68,8 +72,8 @@ class GrlvqModel(GlvqModel):
             if lr_relevances > 0:
                 difc = training_data[idxc] - variables[i]
                 difw = training_data[idxw] - variables[i]
-                Gw -= np.dot(difw * dcd[np.newaxis].T, omegaT).T.dot(difw) + np.dot(difc * dwd[np.newaxis].T,
-                                                                                    omegaT).T.dot(difc)
+                Gw -= np.dot(difw * dcd[np.newaxis].T, omegaT).T.dot(difw) + \
+                      np.dot(difc * dwd[np.newaxis].T, omegaT).T.dot(difc)
                 if lr_prototypes > 0:
                     G[i] = dcd.dot(difw) - dwd.dot(difc)
             elif lr_prototypes > 0:
@@ -88,11 +92,26 @@ class GrlvqModel(GlvqModel):
 
     def _optimize(self, X, y, random_state):
         nb_prototypes, nb_features = self.w_.shape
-        if self.initial_relevances is None:
-            self.lambda_ = np.ones([nb_features])
+        if self.initialdim is None:
+            self.dim_ = nb_features
+        elif not isinstance(self.initialdim, int) or self.initialdim <= 0:
+            raise ValueError("dim must be an int above 0")
         else:
-            self.lambda_ = validation.column_or_1d(self.initial_relevances)
-        variables = np.append(self.w_, np.diag(self.lambda_), axis=0)
+            self.dim_ = self.initialdim
+
+        if not isinstance(self.nb_reiterations, int):
+            raise ValueError("nb_reiterations must be a int")
+        elif self.nb_reiterations < 1:
+            raise ValueError("nb_reiterations must be above 0")
+
+        if self.initial_matrix is None:
+            if self.dim_ == nb_features:
+                self.omega_ = np.eye(nb_features)
+            else:
+                self.omega_ = random_state.rand(self.dim_, nb_features) * 2 - 1
+        else:
+            self.omega_ = validation.check_array(self.initial_matrix)
+        variables = np.append(self.w_, self.omega_, axis=0)
         label_equals_prototype = y[np.newaxis].T == self.c_w_
         res = minimize(
             lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
@@ -108,18 +127,17 @@ class GrlvqModel(GlvqModel):
         n_iter = max(n_iter, res.nit)
         out = res.x.reshape(res.x.size // nb_features, nb_features)
         self.w_ = out[:nb_prototypes]
-        self.lambda_ = np.diag(out[nb_prototypes:])
+        self.omega_ = out[nb_prototypes:]
         return n_iter
 
-    def _compute_distance(self, X, w=None, lambda_=None):
+    def _compute_distance(self, X, w=None, omega=None):  # catch case where omega is not initialized
         if w is None:
             w = self.w_
-        if lambda_ is None:
-            lambda_ = self.lambda_
+        if omega is None:
+            omega = self.omega_
         nb_samples = X.shape[0]
         nb_prototypes = w.shape[0]
         distance = np.zeros([nb_prototypes, nb_samples])
         for i in range(nb_prototypes):
-            delta = X - w[i]
-            distance[i] = np.sum(delta ** 2 * lambda_, 1)
+            distance[i] = np.sum(np.dot(X - w[i], omega.conj().T) ** 2, 1)
         return np.transpose(distance)

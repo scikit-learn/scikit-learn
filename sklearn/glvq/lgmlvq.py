@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
 
-from lvq.glvq import GlvqModel
+from sklearn.glvq.glvq import GlvqModel
 from sklearn.utils.multiclass import unique_labels, check_classification_targets
 
 from sklearn.base import BaseEstimator, ClassifierMixin
