@@ -1096,7 +1096,7 @@ cdef class PyFuncDistance(DistanceMetric):
     # in cython < 0.26, GIL was required to be acquired during definition of
     # the function and inside the body of the function. This behaviour is not
     # allowed in cython >= 0.26 since it is a redundant GIL acquisition. The
-    # only way to be back compatible is to inherate `dist` from the base class
+    # only way to be back compatible is to inherit `dist` from the base class
     # without GIL and called an inline `_dist` which acquire GIL.
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:
