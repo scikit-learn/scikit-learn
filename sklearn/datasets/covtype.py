@@ -29,7 +29,8 @@ from ..utils.fixes import makedirs
 from ..externals import joblib
 from ..utils import check_random_state
 
-
+# URL = ('http://archive.ics.uci.edu/ml/'
+#        'machine-learning-databases/covtype/covtype.data.gz')
 URL = 'https://ndownloader.figshare.com/files/5976039'
 
 logger = logging.getLogger(__name__)
