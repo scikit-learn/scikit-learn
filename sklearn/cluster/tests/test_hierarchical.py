@@ -56,7 +56,6 @@ def test_linkage_misc():
     assert_raises(ValueError, linkage_tree, X, linkage='foo')
     assert_raises(ValueError, linkage_tree, X, connectivity=np.ones((4, 4)))
 
-
     # Smoke test FeatureAgglomeration
     FeatureAgglomeration().fit(X)
 
