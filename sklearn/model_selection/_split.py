@@ -566,7 +566,7 @@ class StratifiedKFold(_BaseKFold):
     def __init__(self, n_splits=3, shuffle=False, random_state=None):
         super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
 
-    def _make_test_folds(self, X, y=None, groups=None):
+    def _make_test_folds(self, X, y=None):
         if self.shuffle:
             rng = check_random_state(self.random_state)
         else:
