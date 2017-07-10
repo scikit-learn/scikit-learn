@@ -83,34 +83,27 @@ n = len(data_list)
 index = np.arange(0, n*bar_width, bar_width)*2.5
 index = index[0:n]
 
-plt.subplot(121)
+bar1 = plt.bar(index, score_gb, bar_width, label='Without early stopping',
+               color='crimson')
+bar2 = plt.bar(index + bar_width, score_gbes, bar_width,
+               label='With early stopping', color='coral')
 
-plt.bar(index, n_gb, bar_width, label='Without early stopping' , color='teal')
-plt.bar(index + bar_width, n_gbes, bar_width,
-        label='With early stopping', color='cyan')
-
-max_y = np.amax(np.maximum(n_gb, n_gbes))
-
-plt.xticks(index + bar_width, names)
-plt.yticks(np.arange(0, 530, 50))
-
-plt.ylim([0, 630])
-plt.legend(loc='best')
-plt.grid(True)
-
-plt.xlabel('Datasets')
-plt.ylabel('Number of Estimators')
-
-plt.subplot(122)
-
-plt.bar(index, score_gb, bar_width, label='Without early stopping',
-        color='crimson')
-plt.bar(index + bar_width, score_gbes, bar_width,
-        label='With early stopping', color='coral')
 max_y = np.amax(np.maximum(score_gb, score_gbes))
 
 plt.xticks(index + bar_width, names)
 plt.yticks(np.arange(0, 1.3, 0.1))
+
+
+def autolabel(rects, n_estimators):
+    """
+    Attach a text label above each bar displaying n_estimators of each model
+    """
+    for i, rect in enumerate(rects):
+        plt.text(rect.get_x() + rect.get_width()/2., 1.05*rect.get_height(),
+                 '%d' % n_estimators[i], ha='center', va='bottom')
+
+autolabel(bar1, n_gb)
+autolabel(bar2, n_gbes)
 
 plt.ylim([0, 1.3])
 plt.legend(loc='best')
