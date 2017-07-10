@@ -316,11 +316,11 @@ def test_cross_validate_invalid_scoring_param():
 
     # Multiclass Scorers that return multiple values are not supported yet
     assert_raises_regex(ValueError,
-                        "can't handle mix of binary and continuous",
+                        "can't handle a mix of binary and continuous",
                         cross_validate, estimator, X, y,
                         scoring=multiclass_scorer)
     assert_raises_regex(ValueError,
-                        "can't handle mix of binary and continuous",
+                        "can't handle a mix of binary and continuous",
                         cross_validate, estimator, X, y,
                         scoring={"foo": multiclass_scorer})
 
