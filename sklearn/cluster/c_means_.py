@@ -197,6 +197,7 @@ class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         return X
 
     def _check_test_data(self, X):
+        """Verify that the number of features in the data is appropriate"""
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES)
         n_samples, n_features = X.shape
         expected_n_features = self.centers_.shape[1]
@@ -214,6 +215,14 @@ class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 class ProbabilisticCMeans(CMeans):
 
     def fit(self, X, y=None):
+        """Compute c-means clustering.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training samples to cluster.
+
+        """
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
 
