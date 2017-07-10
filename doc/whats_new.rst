@@ -78,28 +78,6 @@ Changelog
 New features
 ............
 
-Configuration
-   - :class:`model_selection.GridSearchCV` and
-     :class:`model_selection.RandomizedSearchCV` now support simultaneous
-     evaluation of multiple metrics. Refer to the
-     :ref:`multimetric_grid_search` section of the user guide for more
-     information. :issue:`7388` by `Raghav RV`_
-
-   - Added the :func:`model_selection.cross_validate` which allows evaluation
-     of multiple metrics. This function returns a dict with more useful
-     information from cross-validation such as the train scores, fit times and
-     score times.
-     Refer to :ref:`multimetric_cross_validation` section of the userguide
-     for more information. :issue:`7388` by `Raghav RV`_
-     
-   - Added :class:`multioutput.ClassifierChain` for multi-label
-     classification. By `Adam Kleczewski <adamklec>`_.
-
-   - Validation that input data contains no NaN or inf can now be suppressed
-     using :func:`config_context`, at your own risk. This will save on runtime,
-     and may be particularly useful for prediction time. :issue:`7548` by
-     `Joel Nothman`_.
-
 Classifiers and regressors
 
    - Added :class:`multioutput.ClassifierChain` for multi-label
@@ -133,6 +111,19 @@ Other estimators
 
 Model selection and evaluation
 
+   - :class:`model_selection.GridSearchCV` and
+     :class:`model_selection.RandomizedSearchCV` now support simultaneous
+     evaluation of multiple metrics. Refer to the
+     :ref:`multimetric_grid_search` section of the user guide for more
+     information. :issue:`7388` by `Raghav RV`_
+
+   - Added the :func:`model_selection.cross_validate` which allows evaluation
+     of multiple metrics. This function returns a dict with more useful
+     information from cross-validation such as the train scores, fit times and
+     score times.
+     Refer to :ref:`multimetric_cross_validation` section of the userguide
+     for more information. :issue:`7388` by `Raghav RV`_
+
    - Added :func:`metrics.mean_squared_log_error`, which computes
      the mean square error of the logarithmic transformation of targets,
      particularly useful for targets with an exponential trend.
@@ -147,6 +138,12 @@ Model selection and evaluation
      :class:`model_selection.RepeatedStratifiedKFold`.
      :issue:`8120` by `Neeraj Gangwar`_.
 
+Miscellaneous
+
+   - Validation that input data contains no NaN or inf can now be suppressed
+     using :func:`config_context`, at your own risk. This will save on runtime,
+     and may be particularly useful for prediction time. :issue:`7548` by
+     `Joel Nothman`_.
 
 Enhancements
 ............
@@ -372,6 +369,10 @@ Linear, kernelized and related models
      classes, and some values proposed in the docstring could raise errors.
      :issue:`5359` by `Tom Dupre la Tour`_.
 
+   - Fix inconsistent results between :class:`linear_model.RidgeCV`
+     and :class:`linear_model.Ridge` when using ``normalize=True``
+     by `Alexandre Gramfort`_.
+
    - Fix a bug where :func:`linear_model.LassoLars.fit` sometimes
      left ``coef_`` as a list, rather than an ndarray.
      :issue:`8160` by :user:`CJ Carey <perimosocordiae>`.
@@ -564,9 +565,9 @@ Miscellaneous
    - Add ``data_home`` parameter to
      :func:`sklearn.datasets.fetch_kddcup99` by `Loic Esteve`_.
 
-   - Fix inconsistent results between :class:`linear_model.RidgeCV`
-     and :class:`linear_model.Ridge` when using ``normalize=True``
-     by `Alexandre Gramfort`_.
+   - Several minor issues were fixed with thanks to the alerts of
+     [lgtm.com](http://lgtm.com). :issue:`9278` by :user:`Jean Helie <jhelie>`,
+     among others.
 
 API changes summary
 -------------------
