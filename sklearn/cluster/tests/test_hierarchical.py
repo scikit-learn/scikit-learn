@@ -35,13 +35,18 @@ from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 
+
 def test_deprecation_of_n_components_in_linkage_tree():
     rng = np.random.RandomState(0)
     X = rng.randn(50, 100)
     for tree_builder in _TREE_BUILDERS.values():
         for this_X in (X, X[0]):
             # Test for warning of deprecation of n_components in linkage_tree
-            children, n_nodes, n_leaves, parent = assert_warns(DeprecationWarning, linkage_tree,this_X.T, n_components=10)
+            children, n_nodes, n_leaves, parent = assert_warns(
+                                                DeprecationWarning,
+                                                linkage_tree,
+                                                this_X.T,
+                                                n_components=10)
 
 def test_linkage_misc():
     # Misc tests on linkage
