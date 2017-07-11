@@ -12,6 +12,8 @@ from scipy.sparse import coo_matrix
 
 from sklearn import datasets
 from sklearn.base import clone
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_regression
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
@@ -1117,12 +1119,12 @@ def test_sparse_input():
 
 
 def test_gradient_boosting_early_stopping():
-    X_clf, y_clf = iris.data, iris.target
-    X_reg, y_reg = boston.data, boston.target
+    X_clf, y_clf = make_classification(n_samples=1000, random_state=0)
+    X_reg, y_reg = X_clf, y_clf
 
     # Check if early_stopping works as expected
-    for (tol, final_n_est_clf, final_n_est_reg) in ((1e-4, 49, 77),
-                                                    (1e-1, 48, 61)):
+    for (tol, final_n_est_clf, final_n_est_reg) in ((1e-1, 24, 13),
+                                                    (1e-3, 36, 28)):
         X_train, X_test, y_train, y_test = train_test_split(X_clf, y_clf,
                                                             random_state=42)
         gbc = GradientBoostingClassifier(n_estimators=1000,
@@ -1140,7 +1142,7 @@ def test_gradient_boosting_early_stopping():
                                         random_state=42, tol=tol)
         gbr.fit(X_train, y_train)
         assert_equal(gbr.n_estimators_, final_n_est_reg)
-        assert gbr.score(X_test, y_test) > 0.80
+        assert gbr.score(X_test, y_test) > 0.7
 
         # Without early stopping
         gbc = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1,
