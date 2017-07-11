@@ -595,8 +595,8 @@ def test_barnes_hut_angle():
         np.fill_diagonal(distances, 0.0)
         params = random_state.randn(n_samples, n_components)
         P = _joint_probabilities(distances, perplexity, verbose=0)
-        kl, gradex = _kl_divergence(params, P, degrees_of_freedom, n_samples,
-                                    n_components)
+        kl_exact, grad_exact = _kl_divergence(params, P, degrees_of_freedom,
+                                              n_samples, n_components)
 
         k = n_samples - 1
         bt = BallTree(distances)
@@ -606,15 +606,17 @@ def test_barnes_hut_angle():
                                  for i in range(n_samples)])
         assert np.all(distances[0, neighbors_nn[0]] == distances_nn[0]),\
             abs(distances[0, neighbors_nn[0]] - distances_nn[0])
-        Pbh = _joint_probabilities_nn(distances_nn, neighbors_nn,
-                                      perplexity, verbose=0)
-        kl, gradbh = _kl_divergence_bh(params, Pbh, degrees_of_freedom,
-                                       n_samples, n_components, angle=angle,
-                                       skip_num_points=0, verbose=0)
+        P_bh = _joint_probabilities_nn(distances_nn, neighbors_nn,
+                                       perplexity, verbose=0)
+        kl_bh, grad_bh = _kl_divergence_bh(params, P_bh, degrees_of_freedom,
+                                           n_samples, n_components,
+                                           angle=angle, skip_num_points=0,
+                                           verbose=0)
 
         P = squareform(P)
-        Pbh = Pbh.toarray()
-        assert_array_almost_equal(Pbh, P, decimal=5)
+        P_bh = P_bh.toarray()
+        assert_array_almost_equal(P_bh, P, decimal=5)
+        assert_almost_equal(kl_exact, kl_bh, decimal=3)
 
 
 @skip_if_32bit
