@@ -4,6 +4,25 @@ from sklearn.neighbors.quad_tree import _QuadTree
 from sklearn.utils import check_random_state
 
 
+def test_quadtree_boundary_computation():
+    # Introduce a point into a quad tree with boundaries not easy to compute.
+    Xs = []
+
+    # check a random case
+    Xs.append(np.array([[-1, 1], [-4, -1]], dtype=np.float32))
+    # check the case where only 0 are inserted
+    Xs.append(np.array([[0, 0], [0, 0]], dtype=np.float32))
+    # check the case where only negative are inserted
+    Xs.append(np.array([[-1, -2], [-4, 0]], dtype=np.float32))
+    # check the case where only small numbers are inserted
+    Xs.append(np.array([[-1e-6, 1e-6], [-4e-6, -1e-6]], dtype=np.float32))
+
+    for X in Xs:
+        tree = _QuadTree(n_dimensions=2, verbose=0)
+        tree.build_tree(X)
+        tree._check_coherence()
+
+
 def test_quadtree_similar_point():
     # Introduce a point into a quad tree where a similar point already exists.
     # Test will hang if it doesn't complete.

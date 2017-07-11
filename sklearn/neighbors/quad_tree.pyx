@@ -112,7 +112,9 @@ cdef class _QuadTree:
         self._resize(capacity)
         m = np.min(X, axis=0)
         M = np.max(X, axis=0)
-        M = np.maximum(M * 1.001, M + 1e-3)
+        # Scale the maximum to get all points strictly in the tree bounding box
+        # The 3 bounds are for positive, negative and small values
+        M = np.maximum(M * (1. + 1e-3 * np.sign(M)), M + 1e-3)
         for i in range(self.n_dimensions):
             min_bounds[i] = m[i]
             max_bounds[i] = M[i]
