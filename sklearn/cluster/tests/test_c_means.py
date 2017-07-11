@@ -167,19 +167,3 @@ def test_possibilistic_results():
     _check_fitted_model(cm)
 
 
-def test_probabilistic_predict():
-    cm = ProbabilisticCMeans(n_clusters=3, algorithm="probabilistic", random_state=4)
-    cm.fit(X)
-    pred = cm.predict(centers)
-    assert_equal(pred.shape, (n_clusters, n_clusters))
-    assert_equal(v_measure_score(np.arange(n_clusters), np.argmax(pred, axis=1)), 1.0)
-
-
-def test_possibilistic_predict():
-    cm = PossibilisticCMeans(n_clusters=3, algorithm="possibilistic", random_state=4)
-    cm.fit(X)
-    pred = cm.predict(centers)
-    assert_equal(pred.shape, (n_clusters, n_clusters))
-    assert_equal(v_measure_score(np.arange(n_clusters), np.argmax(pred, axis=1)), 1.0)
-
-

@@ -2,7 +2,6 @@ import numpy as np
 
 
 class Probabilistic:
-
     @staticmethod
     def memberships(distances, m=2.):
         """Calculate probabilistic memberships based on distances.
@@ -23,7 +22,8 @@ class Probabilistic:
         distance_ratio = np.divide(distances[:, :, np.newaxis],
                                    distances[:, np.newaxis, :])
         distance_ratio[np.isnan(distance_ratio)] = 1.
-        memberships = np.sum(np.power(distance_ratio, 2 / (m - 1)), axis=2) ** -1
+        memberships = np.sum(np.power(distance_ratio, 2 / (m - 1)),
+                             axis=2) ** -1
         return memberships
 
     @staticmethod
@@ -46,12 +46,11 @@ class Probabilistic:
 
         """
         centers = np.dot(memberships.T ** m, X) / \
-                  np.sum(memberships.T ** m, axis=1)[..., np.newaxis]
+            np.sum(memberships.T ** m, axis=1)[..., np.newaxis]
         return centers
 
 
 class Possibilistic:
-
     @staticmethod
     def memberships(distances, weights, m=2.):
         """Calculate possibilistic memberships based on distances.
@@ -95,5 +94,3 @@ class Possibilistic:
         """
         return np.divide(np.dot((memberships ** m).T, X),
                          np.sum(memberships ** m, axis=0)[..., np.newaxis])
-
-
