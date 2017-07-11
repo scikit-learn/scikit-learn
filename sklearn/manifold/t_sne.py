@@ -254,7 +254,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
 
 
 def _gradient_descent(objective, p0, it, n_iter,
-                      n_iter_check=1, n_iter_without_progress=51,
+                      n_iter_check=1, n_iter_without_progress=300,
                       momentum=0.8, learning_rate=200.0, min_gain=0.01,
                       min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
                       args=None, kwargs=None):
@@ -282,7 +282,7 @@ def _gradient_descent(objective, p0, it, n_iter,
         Number of iterations before evaluating the global error. If the error
         is sufficiently low, we abort the optimization.
 
-    n_iter_without_progress : int, optional (default: 51)
+    n_iter_without_progress : int, optional (default: 300)
         Maximum number of iterations without progress before we abort the
         optimization.
 
@@ -506,7 +506,7 @@ class TSNE(BaseEstimator):
         Maximum number of iterations for the optimization. Should be at
         least 250.
 
-    n_iter_without_progress : int, optional (default: 30)
+    n_iter_without_progress : int, optional (default: 300)
         Maximum number of iterations without progress before we abort the
         optimization, used after 250 initial iterations with early
         exaggeration. Note that progress is only checked every 50 iterations so
@@ -612,7 +612,7 @@ class TSNE(BaseEstimator):
 
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
-                 n_iter_without_progress=30, min_grad_norm=1e-7,
+                 n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5):
         self.n_components = n_components
