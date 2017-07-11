@@ -44,8 +44,11 @@ def test_deprecation_of_n_components_in_linkage_tree():
                                                        linkage_tree,
                                                        X.T,
                                                        n_components=10)
-    assert_array_equal([children, n_nodes, n_leaves, parent],
-                        linkage_tree(X.T))
+    children_t, n_nodes_t, n_leaves_t, parent_t = linkage_tree(X.T)
+    assert_array_equal(children, children_t)
+    assert_equal(n_nodes, n_nodes_t)
+    assert_equal(n_leaves, n_leaves_t)
+    assert_equal(parent, parent_t)
 
 def test_linkage_misc():
     # Misc tests on linkage
