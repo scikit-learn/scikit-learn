@@ -245,6 +245,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         K[np.diag_indices_from(K)] += self.alpha
         try:
             self.L_ = cholesky(K, lower=True)  # Line 2
+            # self.L_ changed, delete self._K_inv
+            self._K_inv = None
         except np.linalg.LinAlgError as exc:
             exc.args = ("The kernel, %s, is not returning a "
                         "positive definite matrix. Try gradually "
@@ -321,7 +323,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 return y_mean, y_cov
             elif return_std:
                 # cache result of K_inv computation
-                if not hasattr(self, '_K_inv'):
+                if self._K_inv is None:
                     # compute inverse K_inv of K based on its Cholesky
                     # decomposition L and its inverse L_inv
                     L_inv = solve_triangular(self.L_.T,
