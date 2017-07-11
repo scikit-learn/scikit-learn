@@ -8,8 +8,12 @@ from ..metrics.pairwise import pairwise_distances
 from collections import defaultdict
 
 
+def hash_list_of_ints(ints):
+    return ",".join(map(str, sorted(ints)))
+    
+    
 class MarkovClustering:
-    def __init__(self, metric="cosine", bias=1, inflation_power=2, 
+    def __init__(self, metric="cosine", bias=1, inflation_power=2,
                  inflation_threshold=1e-10, self_loops_weight=0.01,
                  expansion_power=2, iteration_limit=100):
         """
@@ -73,8 +77,7 @@ class MarkovClustering:
             if d == 0:
                 continue
             rows[M.row[i]].add(M.col[i])
-        hash_row = lambda l: ",".join(map(str, sorted(l)))
-        row_hashes = [hash_row(rows[i]) for i in range(M.shape[0])]
+        row_hashes = [hash_list_of_ints(rows[i]) for i in range(M.shape[0])]
         d = dict([(l, i) for i, l in enumerate(set(row_hashes))])
         labels = [d[row_hashes[i]] for i in range(M.shape[0])]
         return labels
