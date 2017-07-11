@@ -95,7 +95,7 @@ for i in range(max_iterations):
         # for more than 5 iterations, visualize the gain only on the first 5
         if i < 5:
             sub = f.add_subplot(5, 5, index + 1 + (5 * i))
-            sub.imshow(image, cmap=plt.cm.gray_r)
+            sub.imshow(image, cmap=plt.cm.gray_r, interpolation='none', extent=[0,1,0,0.5])
             sub.set_title("predict: %i\ntrue: %i" % (
                 lp_model.transduction_[image_index], y[image_index]), size=10)
             sub.axis('off')
@@ -109,5 +109,5 @@ for i in range(max_iterations):
 
 f.suptitle("Active learning with Label Propagation.\nRows show 5 most "
            "uncertain labels to learn with the next model.")
-plt.subplots_adjust(0.12, 0.03, 0.9, 0.8, 0.2, 0.45)
+plt.subplots_adjust(0.2, 0.03, 0.9, 0.9, 0.2, 0.45)
 plt.show()
