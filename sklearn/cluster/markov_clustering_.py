@@ -10,8 +10,8 @@ from collections import defaultdict
 
 def hash_list_of_ints(ints):
     return ",".join(map(str, sorted(ints)))
-    
-    
+
+
 class MarkovClustering:
     def __init__(self, metric="cosine", bias=1, inflation_power=2,
                  inflation_threshold=1e-10, self_loops_weight=0.01,
