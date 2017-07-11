@@ -82,8 +82,6 @@ if __name__ == "__main__":
                         help="if set, run the benchmark with a memory "
                              "profiler.")
     parser.add_argument('--verbose', type=int, default=0)
-    parser.add_argument('--n_jobs', type=int, nargs="+", default=2,
-                        help="Number of CPU used to fit sklearn.TSNE")
     parser.add_argument('--pca-components', type=int, default=50,
                         help="Number of principal components for "
                              "preprocessing.")
@@ -100,17 +98,10 @@ if __name__ == "__main__":
     methods = []
 
     # Put TSNE in methods
-    if isinstance(args.n_jobs, int):
-        tsne = TSNE(n_components=2, init='pca', perplexity=args.perplexity,
-                    verbose=args.verbose, n_jobs=args.n_jobs, n_iter=1000)
-        methods.append(("sklearn TSNE",
-                        lambda data: tsne_fit_transform(tsne, data)))
-    elif isinstance(args.n_jobs, list):
-        for n_jobs in args.n_jobs:
-            tsne = TSNE(n_components=2, init='pca', perplexity=args.perplexity,
-                        verbose=args.verbose, n_jobs=n_jobs)
-            methods.append(("sklearn TSNE (n_jobs={})".format(n_jobs),
-                            lambda data: tsne_fit_transform(tsne, data)))
+    tsne = TSNE(n_components=2, init='pca', perplexity=args.perplexity,
+                verbose=args.verbose, n_iter=1000)
+    methods.append(("sklearn TSNE",
+                    lambda data: tsne_fit_transform(tsne, data)))
 
     if args.bhtsne:
         try:
