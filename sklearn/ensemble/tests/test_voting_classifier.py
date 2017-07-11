@@ -392,4 +392,4 @@ def test_transform():
     warn_msg = ("'flatten_transform' is changed to False."
                 " Setting it explicitly will silence this warning")
     assert_warns_message(DeprecationWarning, warn_msg,
-                         eclf.fit(X, y))
+                         eclf.fit, X, y)
