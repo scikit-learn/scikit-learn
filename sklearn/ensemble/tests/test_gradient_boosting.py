@@ -1130,8 +1130,8 @@ def test_gradient_boosting_early_stopping():
                                          learning_rate=0.1, max_depth=3,
                                          random_state=42, tol=tol)
         gbc.fit(X_train, y_train)
-        assert gbc.n_estimators_ == final_n_est_clf
-        assert gbc.score(X_test, y_test) > 0.9
+        assert_equal(gbc.n_estimators_, final_n_est_clf)
+        assert gbc.score(X_test, y_test) > 0.80
 
         X_train, X_test, y_train, y_test = train_test_split(X_reg, y_reg,
                                                             random_state=42)
@@ -1139,7 +1139,7 @@ def test_gradient_boosting_early_stopping():
                                         learning_rate=0.1, max_depth=3,
                                         random_state=42, tol=tol)
         gbr.fit(X_train, y_train)
-        assert gbr.n_estimators_ == final_n_est_reg
+        assert_equal(gbr.n_estimators_, final_n_est_reg)
         assert gbr.score(X_test, y_test) > 0.80
 
         # Without early stopping
