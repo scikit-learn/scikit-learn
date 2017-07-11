@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_equal, assert_true, assert_false
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns_message
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
@@ -386,3 +387,9 @@ def test_transform():
     assert_array_equal(eclf2.transform(X).shape, (4, 6))
     assert_array_equal(eclf1.transform(X).swapaxes(0, 1).reshape((4, 6)),
                        eclf2.transform(X))
+
+    warn_msg = ("'flatten_transform' is changed to False."
+                " Setting it explicitly will silence this warning")
+    assert_warns_message(DeprecationWarning, warn_msg,
+                         VotingClassifier(estimators=[('lr', clf1),
+                                                      ('rf', clf2)]))

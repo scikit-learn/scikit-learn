@@ -62,7 +62,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         The number of jobs to run in parallel for ``fit``.
         If -1, then the number of jobs is set to the number of cores.
 
-    flatten_transform : bool, optional (default=False)
+    flatten_transform : bool, optional (default='default')
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
         matrix with shape (n_samples, n_classifiers * n_classes) instead of
@@ -112,7 +112,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     """
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=1,
-                 flatten_transform=False):
+                 flatten_transform='default'):
         self.estimators = estimators
         self.voting = voting
         self.weights = weights
@@ -176,9 +176,14 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             raise ValueError('All estimators are None. At least one is '
                              'required to be a classifier!')
 
-        if not self.flatten_transform and self.voting is 'soft':
-            warnings.warn("'flatten_transform' default value will be changed "
-                          "to True in 0.21.", DeprecationWarning)
+        if self.flatten_transform == 'default':
+            warnings.warn("'flatten_transform' is changed to False."
+                          " Setting it explicitly will silence this warning",
+                          DeprecationWarning)
+            warnings.warn("'flatten_transform' default value will be "
+                          "changed to True in 0.21.", DeprecationWarning)
+            self.flatten_transform = False
+
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         self.estimators_ = []
@@ -283,8 +288,6 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         if self.voting == 'soft':
             probas = self._collect_probas(X)
             if not self.flatten_transform:
-                warnings.warn("'flatten_transform' default value will be"
-                              " changed to True in 0.21.", DeprecationWarning)
                 return probas
             else:
                 return np.hstack(probas)
