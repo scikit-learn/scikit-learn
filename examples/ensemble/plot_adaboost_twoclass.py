@@ -70,6 +70,7 @@ for i, n, c in zip(range(2), class_names, plot_colors):
     idx = np.where(y == i)
     plt.scatter(X[idx, 0], X[idx, 1],
                 c=c, cmap=plt.cm.Paired,
+                s=20, edgecolor='k',
                 label="Class %s" % n)
 plt.xlim(x_min, x_max)
 plt.ylim(y_min, y_max)
@@ -88,7 +89,8 @@ for i, n, c in zip(range(2), class_names, plot_colors):
              range=plot_range,
              facecolor=c,
              label='Class %s' % n,
-             alpha=.5)
+             alpha=.5,
+             edgecolor='k')
 x1, x2, y1, y2 = plt.axis()
 plt.axis((x1, x2, y1, y2 * 1.2))
 plt.legend(loc='upper right')

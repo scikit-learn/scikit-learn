@@ -223,6 +223,7 @@ Model validation
    :toctree: generated/
    :template: function.rst
 
+   model_selection.cross_validate
    model_selection.cross_val_score
    model_selection.cross_val_predict
    model_selection.permutation_test_score
@@ -738,6 +739,7 @@ Kernels:
    :toctree: generated/
    :template: function.rst
 
+   linear_model.enet_path
    linear_model.lars_path
    linear_model.lasso_path
    linear_model.lasso_stability_path
@@ -1013,6 +1015,7 @@ See the :ref:`metrics` section of the user guide for further details.
 
     multioutput.MultiOutputRegressor
     multioutput.MultiOutputClassifier
+    multioutput.ClassifierChain
 
 .. _naive_bayes_ref:
 
