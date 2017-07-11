@@ -174,6 +174,7 @@ for n, (name, estimator) in enumerate(estimators):
     plt.plot(X_test, y_bias, "b", label="$bias^2(x)$"),
     plt.plot(X_test, y_var, "g", label="$variance(x)$"),
     plt.plot(X_test, y_noise, "c", label="$noise(x)$")
+    plt.rcParams["figure.figsize"] = [10, 8]
 
     plt.xlim([-5, 5])
     plt.ylim([0, 0.1])

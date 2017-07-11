@@ -95,7 +95,8 @@ for i in range(max_iterations):
         # for more than 5 iterations, visualize the gain only on the first 5
         if i < 5:
             sub = f.add_subplot(5, 5, index + 1 + (5 * i))
-            sub.imshow(image, cmap=plt.cm.gray_r, interpolation='none', extent=[0,1,0,0.5])
+            sub.imshow(image, cmap=plt.cm.gray_r, interpolation='none',
+                       extent=[0, 1, 0, 0.5])
             sub.set_title("predict: %i\ntrue: %i" % (
                 lp_model.transduction_[image_index], y[image_index]), size=10)
             sub.axis('off')
