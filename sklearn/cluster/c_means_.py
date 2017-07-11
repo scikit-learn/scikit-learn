@@ -176,14 +176,15 @@ def _init_centroids(X, k, init, random_state=None):
 
 class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
-    def __init__(self, n_clusters=8, m=2, n_init=10, max_iter=300, init='random',
-                 tol=1e-4, random_state=None, algorithm='auto', copy_x=True):
+    def __init__(self, n_clusters=8, m=2, n_init=10, max_iter=300,
+                 init='random', tol=1e-4, random_state=None, algorithm='auto',
+                 copy_x=True):
         self.n_clusters = n_clusters
         self.m = m
+        self.n_init = n_init
         self.max_iter = max_iter
         self.init = init
         self.tol = tol
-        self.n_init = n_init
         self.random_state = random_state
         self.algorithm = algorithm
         self.copy_x = copy_x
@@ -215,7 +216,7 @@ class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 class ProbabilisticCMeans(CMeans):
 
     def fit(self, X, y=None):
-        """Compute c-means clustering.
+        """Compute c-means clustering using the probabilistic algorithm.
 
         Parameters
         ----------
@@ -237,13 +238,15 @@ class ProbabilisticCMeans(CMeans):
         self.n_iter_ = results['n_iter']
         return self
 
-    def predict(self, X):
-        """Predict the memberships for each sample in X.
+    def transform(self, X):
+        """Transform X to cluster membership space.
+
+        In the new space, each dimension is the membership to the clusters.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Data to predict
+            Data to transform
 
         Returns
         -------
@@ -256,10 +259,36 @@ class ProbabilisticCMeans(CMeans):
         distances = euclidean_distances(X, self.centers_)
         return Probabilistic.memberships(distances, m=self.m)
 
+    def predict(self, X):
+        """Predict the closest cluster each sample in X belongs to.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            New Data to predict.
+
+        Returns
+        -------
+
+        """
+        check_is_fitted(self, 'centers_')
+        X = self._check_test_data(X)
+        distances = euclidean_distances(X, self.centers_)
+        memberships = Probabilistic.memberships(distances, m=self.m)
+        return np.argmax(memberships, axis=1)
+
 
 class PossibilisticCMeans(CMeans):
 
     def fit(self, X, y=None):
+        """Compute c-means clustering using the possibilistic algorithm.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training samples to cluster.
+
+        """
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
 
@@ -275,8 +304,10 @@ class PossibilisticCMeans(CMeans):
         self.weights_ = results['weights']
         return self
 
-    def predict(self, X):
-        """Predict the memberships for each sample in X.
+    def transform(self, X):
+        """Transform X to cluster membership space.
+
+        In the new space, each dimension is the membership to the clusters.
 
         Parameters
         ----------
@@ -293,3 +324,21 @@ class PossibilisticCMeans(CMeans):
         X = self._check_test_data(X)
         distances = euclidean_distances(X, self.centers_)
         return Possibilistic.memberships(distances, self.weights_, m=self.m)
+
+    def predict(self, X):
+        """Predict the closest cluster each sample in X belongs to.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            New Data to predict.
+
+        Returns
+        -------
+
+        """
+        check_is_fitted(self, 'centers_')
+        X = self._check_test_data(X)
+        distances = euclidean_distances(X, self.centers_)
+        memberships = Possibilistic.memberships(distances, m=self.m)
+        return np.argmax(memberships, axis=1)
