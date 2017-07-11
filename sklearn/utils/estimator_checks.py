@@ -123,6 +123,7 @@ def _yield_classifier_checks(name, classifier):
             # the column y interface is used by the forests.
 
         yield check_supervised_y_2d
+    yield check_supervised_y_no_nan
     # test if NotFittedError is raised
     yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
