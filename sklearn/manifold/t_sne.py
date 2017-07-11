@@ -28,7 +28,6 @@ from ..utils import deprecated
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
-EXPLORATION_N_ITER = 250
 
 
 def _joint_probabilities(distances, desired_perplexity, verbose):
@@ -256,8 +255,7 @@ def _kl_divergence_bh(params, P, degrees_of_freedom, n_samples, n_components,
 def _gradient_descent(objective, p0, it, n_iter,
                       n_iter_check=1, n_iter_without_progress=300,
                       momentum=0.8, learning_rate=200.0, min_gain=0.01,
-                      min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
-                      args=None, kwargs=None):
+                      min_grad_norm=1e-7, verbose=0, args=None, kwargs=None):
     """Batch gradient descent with momentum and individual gains.
 
     Parameters
@@ -304,10 +302,6 @@ def _gradient_descent(objective, p0, it, n_iter,
         If the gradient norm is below this threshold, the optimization will
         be aborted.
 
-    min_error_diff : float, optional (default: 1e-7)
-        If the absolute difference of two successive cost function values
-        is below this threshold, the optimization will be aborted.
-
     verbose : int, optional (default: 0)
         Verbosity level.
 
@@ -342,7 +336,7 @@ def _gradient_descent(objective, p0, it, n_iter,
 
     tic = time()
     for i in range(it, n_iter):
-        new_error, grad = objective(p, *args, **kwargs)
+        error, grad = objective(p, *args, **kwargs)
         grad_norm = linalg.norm(grad)
 
         inc = update * grad < 0.0
@@ -358,8 +352,6 @@ def _gradient_descent(objective, p0, it, n_iter,
             toc = time()
             duration = toc - tic
             tic = toc
-            error_diff = np.abs(new_error - error)
-            error = new_error
 
             if verbose >= 2:
                 print("[t-SNE] Iteration %d: error = %.7f,"
@@ -381,14 +373,7 @@ def _gradient_descent(objective, p0, it, n_iter,
                     print("[t-SNE] Iteration %d: gradient norm %f. Finished."
                           % (i + 1, grad_norm))
                 break
-            if error_diff <= min_error_diff:
-                if verbose >= 2:
-                    m = "[t-SNE] Iteration %d: error difference %f. Finished."
-                    print(m % (i + 1, error_diff))
-                break
 
-        if new_error is not None:
-            error = new_error
     return p, error, i
 
 
@@ -516,10 +501,8 @@ class TSNE(BaseEstimator):
            parameter *n_iter_without_progress* to control stopping criteria.
 
     min_grad_norm : float, optional (default: 1e-7)
-        Only used if method='exact'
         If the gradient norm is below this threshold, the optimization will
-        be aborted. If method='barnes_hut' this parameter is fixed to a value
-        of 1e-3 and cannot be changed.
+        be stopped.
 
     metric : string or callable, optional
         The metric to use when calculating distance between instances in a
@@ -805,15 +788,18 @@ class TSNE(BaseEstimator):
         # * final optimization with momentum at 0.8
         params = X_embedded.ravel()
 
-        opt_args = {"it": 0,
-                    "n_iter_check": self._N_ITER_CHECK,
-                    "n_iter_without_progress": self._EXPLORATION_N_ITER,
-                    "min_grad_norm": self.min_grad_norm,
-                    "learning_rate": self.learning_rate,
-                    "verbose": self.verbose,
-                    "kwargs": dict(skip_num_points=skip_num_points)}
-        opt_args['args'] = [P, degrees_of_freedom, n_samples,
-                            self.n_components]
+        opt_args = {
+            "it": 0,
+            "n_iter_check": self._N_ITER_CHECK,
+            "min_grad_norm": self.min_grad_norm,
+            "learning_rate": self.learning_rate,
+            "verbose": self.verbose,
+            "kwargs": dict(skip_num_points=skip_num_points),
+            "args": [P, degrees_of_freedom, n_samples, self.n_components],
+            "n_iter_without_progress": self._EXPLORATION_N_ITER,
+            "n_iter": self._EXPLORATION_N_ITER,
+            "momentum": 0.5,
+        }
         if self.method == 'barnes_hut':
             obj_func = _kl_divergence_bh
             opt_args['kwargs']['angle'] = self.angle
@@ -822,10 +808,7 @@ class TSNE(BaseEstimator):
 
         # Learning schedule (part 1): do 250 iteration with lower momentum but
         # higher learning rate controlled via the early exageration parameter
-        opt_args['n_iter'] = self._EXPLORATION_N_ITER
-        opt_args['momentum'] = 0.5
         P *= self.early_exaggeration
-
         params, kl_divergence, it = _gradient_descent(obj_func, params,
                                                       **opt_args)
         if self.verbose:
@@ -835,8 +818,8 @@ class TSNE(BaseEstimator):
         # Learning schedule (part 2): disable early exaggeration and finish
         # optimization with a higher momentum at 0.8
         P /= self.early_exaggeration
-        remaining = self.n_iter - EXPLORATION_N_ITER
-        if it < EXPLORATION_N_ITER or remaining > 0:
+        remaining = self.n_iter - self._EXPLORATION_N_ITER
+        if it < self._EXPLORATION_N_ITER or remaining > 0:
             opt_args['n_iter'] = self.n_iter
             opt_args['it'] = it + 1
             opt_args['momentum'] = 0.8

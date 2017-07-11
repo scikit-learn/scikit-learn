@@ -60,7 +60,7 @@ def test_gradient_descent_stops():
         _, error, it = _gradient_descent(
             ObjectiveSmallGradient(), np.zeros(1), 0, n_iter=100,
             n_iter_without_progress=100, momentum=0.0, learning_rate=0.0,
-            min_gain=0.0, min_grad_norm=1e-5, min_error_diff=0.0, verbose=2)
+            min_gain=0.0, min_grad_norm=1e-5, verbose=2)
     finally:
         out = sys.stdout.getvalue()
         sys.stdout.close()
@@ -69,22 +69,6 @@ def test_gradient_descent_stops():
     assert_equal(it, 0)
     assert("gradient norm" in out)
 
-    # Error difference
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        _, error, it = _gradient_descent(
-            ObjectiveSmallGradient(), np.zeros(1), 0, n_iter=100,
-            n_iter_without_progress=100, momentum=0.0, learning_rate=0.0,
-            min_gain=0.0, min_grad_norm=0.0, min_error_diff=0.2, verbose=2)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
-    assert_equal(error, 0.9)
-    assert_equal(it, 1)
-    assert("error difference" in out)
-
     # Maximum number of iterations without improvement
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -92,7 +76,7 @@ def test_gradient_descent_stops():
         _, error, it = _gradient_descent(
             flat_function, np.zeros(1), 0, n_iter=100,
             n_iter_without_progress=10, momentum=0.0, learning_rate=0.0,
-            min_gain=0.0, min_grad_norm=0.0, min_error_diff=-1.0, verbose=2)
+            min_gain=0.0, min_grad_norm=0.0, verbose=2)
     finally:
         out = sys.stdout.getvalue()
         sys.stdout.close()
@@ -108,7 +92,7 @@ def test_gradient_descent_stops():
         _, error, it = _gradient_descent(
             ObjectiveSmallGradient(), np.zeros(1), 0, n_iter=11,
             n_iter_without_progress=100, momentum=0.0, learning_rate=0.0,
-            min_gain=0.0, min_grad_norm=0.0, min_error_diff=0.0, verbose=2)
+            min_gain=0.0, min_grad_norm=0.0, verbose=2)
     finally:
         out = sys.stdout.getvalue()
         sys.stdout.close()
