@@ -26,18 +26,15 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+    penalty : string, 'l1' or 'l2' (default='l2')
+        Specifies the norm used in the penalization. The 'l2'
+        penalty is the standard used in SVC. The 'l1' leads to ``coef_``
+        vectors that are sparse.
 
     loss : string, 'hinge' or 'squared_hinge' (default='squared_hinge')
         Specifies the loss function. 'hinge' is the standard SVM loss
         (used e.g. by the SVC class) while 'squared_hinge' is the
         square of the hinge loss.
-
-    penalty : string, 'l1' or 'l2' (default='l2')
-        Specifies the norm used in the penalization. The 'l2'
-        penalty is the standard used in SVC. The 'l1' leads to ``coef_``
-        vectors that are sparse.
 
     dual : bool, (default=True)
         Select the algorithm to either solve the dual or primal
@@ -45,6 +42,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     tol : float, optional (default=1e-4)
         Tolerance for stopping criteria.
+
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
 
     multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
