@@ -643,6 +643,8 @@ def test_n_iter_without_progress():
     for method in ["barnes_hut", "exact"]:
         tsne = TSNE(n_iter_without_progress=-1, verbose=2, learning_rate=1e8,
                     random_state=0, method=method, n_iter=351, init="random")
+        tsne._N_ITER_CHECK = 1
+        tsne._EXPLORATION_N_ITER = 0
 
         old_stdout = sys.stdout
         sys.stdout = StringIO()
@@ -734,7 +736,7 @@ def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
     for seed in seeds:
         tsne = TSNE(n_components=2, init='random', random_state=seed,
                     perplexity=10, n_iter=n_iter, method=method,
-                    n_iter_without_progress=60, verbose=10)
+                    n_iter_without_progress=101, verbose=10)
         Y = tsne.fit_transform(X_2d_grid)
 
         # Ensure that the convergence criterion has been triggered
@@ -758,3 +760,25 @@ def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
 def test_uniform_grid():
     for method in ['barnes_hut', 'exact']:
         yield check_uniform_grid, method
+
+
+def test_bh_match_exact():
+    # check that the ``barnes_hut`` method match the exact one when
+    # ``angle = 0`` and ``perplexity > n_samples / 3``
+    random_state = check_random_state(0)
+    n_features = 10
+    X = random_state.randn(30, n_features).astype(np.float32)
+    X_embeddeds = {}
+    n_iter = {}
+    for method in ['exact', 'barnes_hut']:
+        tsne = TSNE(n_components=2, method=method, learning_rate=1.0,
+                    init="random", random_state=0, n_iter=251,
+                    perplexity=30.0, angle=0)
+        # Kill the early_exaggeration
+        tsne._EXPLORATION_N_ITER = 0
+        X_embeddeds[method] = tsne.fit_transform(X)
+        n_iter[method] = tsne.n_iter_
+
+    assert n_iter['exact'] == n_iter['barnes_hut']
+    assert_array_almost_equal(X_embeddeds['exact'], X_embeddeds['barnes_hut'],
+                              decimal=3)

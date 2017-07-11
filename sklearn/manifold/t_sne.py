@@ -168,7 +168,7 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
     # np.sum(x * y) because it calls BLAS
 
     # Objective: C (Kullback-Leibler divergence of P and Q)
-    kl_divergence = 2.0 * np.dot(P, np.log(P / Q))
+    kl_divergence = 2.0 * np.dot(P, np.log(np.maximum(P, MACHINE_EPSILON) / Q))
 
     # Gradient: dC/dY
     # pdist always returns double precision distances. Thus we need to take
@@ -507,10 +507,10 @@ class TSNE(BaseEstimator):
         least 250.
 
     n_iter_without_progress : int, optional (default: 30)
-        Only used if method='exact'
         Maximum number of iterations without progress before we abort the
-        optimization. If method='barnes_hut' this parameter is fixed to
-        a value of 30 and cannot be changed.
+        optimization, used after 250 initial iterations with early
+        exaggeration. Note that progress is only checked every 50 iterations so
+        this value is rounded to the next multiple of 50.
 
         .. versionadded:: 0.17
            parameter *n_iter_without_progress* to control stopping criteria.
@@ -604,6 +604,11 @@ class TSNE(BaseEstimator):
         Journal of Machine Learning Research 15(Oct):3221-3245, 2014.
         http://lvdmaaten.github.io/publications/papers/JMLR_2014.pdf
     """
+    # Control the number of exploration iterations with early_exaggeration on
+    _EXPLORATION_N_ITER = 250
+
+    # Control the number of iterations between progress checks
+    _N_ITER_CHECK = 50
 
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
@@ -801,8 +806,8 @@ class TSNE(BaseEstimator):
         params = X_embedded.ravel()
 
         opt_args = {"it": 0,
-                    "n_iter_check": 50,
-                    "n_iter_without_progress": EXPLORATION_N_ITER,
+                    "n_iter_check": self._N_ITER_CHECK,
+                    "n_iter_without_progress": self._EXPLORATION_N_ITER,
                     "min_grad_norm": self.min_grad_norm,
                     "learning_rate": self.learning_rate,
                     "verbose": self.verbose,
@@ -817,7 +822,7 @@ class TSNE(BaseEstimator):
 
         # Learning schedule (part 1): do 250 iteration with lower momentum but
         # higher learning rate controlled via the early exageration parameter
-        opt_args['n_iter'] = EXPLORATION_N_ITER
+        opt_args['n_iter'] = self._EXPLORATION_N_ITER
         opt_args['momentum'] = 0.5
         P *= self.early_exaggeration
 
