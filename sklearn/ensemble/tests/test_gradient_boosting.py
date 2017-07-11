@@ -13,7 +13,6 @@ from scipy.sparse import coo_matrix
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.datasets import make_classification
-from sklearn.datasets import make_regression
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
