@@ -1121,9 +1121,6 @@ def check_classifiers_train(name, classifier_orig):
                     assert_equal(decision.shape, (n_samples, n_classes))
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
 
-                # raises error on malformed input
-                assert_raises(ValueError,
-                              classifier.decision_function, X.T)
                 # raises error on malformed input for decision_function
                 assert_raises(ValueError,
                               classifier.decision_function, X.T)
@@ -1136,8 +1133,6 @@ def check_classifiers_train(name, classifier_orig):
             assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
             # check that probas for all classes sum to one
             assert_allclose(np.sum(y_prob, axis=1), np.ones(n_samples))
-            # raises error on malformed input
-            assert_raises(ValueError, classifier.predict_proba, X.T)
             # raises error on malformed input for predict_proba
             assert_raises(ValueError, classifier.predict_proba, X.T)
             if hasattr(classifier, "predict_log_proba"):
