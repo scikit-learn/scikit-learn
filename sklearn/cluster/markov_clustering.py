@@ -2,15 +2,15 @@
 
 # Author: Uri Goren, uri@goren4u.com
 
-from scipy.sparse import linalg, eye, csr_matrix
+from scipy.sparse import eye, csr_matrix
 from ..preprocessing import normalize
 from ..metrics.pairwise import pairwise_distances
 from collections import defaultdict
 
 
-
 class MarkovClustering:
-    def __init__(self, metric="cosine", bias=1, inflation_power=2, inflation_threshold=1e-10, self_loops_weight=0.01,
+    def __init__(self, metric="cosine", bias=1, inflation_power=2, 
+                 inflation_threshold=1e-10, self_loops_weight=0.01,
                  expansion_power=2, iteration_limit=100):
         """
         Initializing similarity matrix
@@ -18,14 +18,13 @@ class MarkovClustering:
         Or by deriving it from a distance function (similarity = bias-distance)
         """
         self.labels_ = None
-        self.metric=metric
+        self.metric = metric
         self.bias = bias
-        self.inflation_power=inflation_power
-        self.inflation_threshold=inflation_threshold
-        self.self_loops_weight=self_loops_weight
-        self.expansion_power=expansion_power
-        self.iteration_limit=iteration_limit
-
+        self.inflation_power = inflation_power
+        self.inflation_threshold = inflation_threshold
+        self.self_loops_weight = self_loops_weight
+        self.expansion_power = expansion_power
+        self.iteration_limit = iteration_limit
 
     def normalize(self, T):
         return normalize(T, norm='l1', axis=1)
@@ -35,7 +34,7 @@ class MarkovClustering:
 
     def expansion(self, T):
         ret = T
-        for _ in range(1,self.expansion_power):
+        for _ in range(1, self.expansion_power):
             ret = ret * T
         return ret
 
@@ -62,7 +61,7 @@ class MarkovClustering:
             T = self.expansion(T)
             T = self.inflation(T)
             if verbose:
-                print ("========Iteration #{i}=======".format(i=iterations))
+                print("========Iteration #{i}=======".format(i=iterations))
                 print(T.toarray())
         self.labels_ = self.extract_labels(T)
         return self
@@ -74,15 +73,15 @@ class MarkovClustering:
             if d == 0:
                 continue
             rows[M.row[i]].add(M.col[i])
-        hash_row = lambda l: ",".join(map(str,sorted(l)))
+        hash_row = lambda l: ",".join(map(str, sorted(l)))
         row_hashes = [hash_row(rows[i]) for i in range(M.shape[0])]
-        d = dict([(l,i) for i,l in enumerate(set(row_hashes))])
+        d = dict([(l, i) for i, l in enumerate(set(row_hashes))])
         labels = [d[row_hashes[i]] for i in range(M.shape[0])]
         return labels
 
     def clusters(self, labels=None):
         ret = defaultdict(set)
-        for i,c in enumerate(self.labels_):
+        for i, c in enumerate(self.labels_):
             if labels is None:
                 ret[c].add(i)
             else:
@@ -90,6 +89,6 @@ class MarkovClustering:
         return ret
 
 if __name__ == "__main__":
-    A = [[1,2,0],[2,1,0],[0,0,4],[0,0,9]]
+    A = [[1, 2, 0], [2, 1, 0], [0, 0, 4], [0, 0, 9]]
     clusters = MarkovClustering().fit(A, verbose=True).clusters()
-    print (clusters)
+    print(clusters)
