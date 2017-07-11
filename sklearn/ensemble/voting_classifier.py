@@ -131,7 +131,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
     @property
     def named_estimators(self):
-        return dict(self.estimators)
+        return Bunch(**dict(self.estimators))
 
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
