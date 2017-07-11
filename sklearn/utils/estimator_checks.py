@@ -577,7 +577,7 @@ def check_fit2d_predict1d(name, estimator_orig):
 
 @ignore_warnings
 def check_fit2d_1sample(name, estimator_orig):
-    # check by fitting a 2d array and prediting with a 1d array
+    # check by fitting a 2d array with only one sample
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
     y = X[:, 0].astype(np.int)
@@ -598,7 +598,7 @@ def check_fit2d_1sample(name, estimator_orig):
 
 @ignore_warnings
 def check_fit2d_1feature(name, estimator_orig):
-    # check by fitting a 2d array and prediting with a 1d array
+    # check by fitting a 2d array with only one feature
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
     y = X[:, 0].astype(np.int)
@@ -641,7 +641,7 @@ def check_fit1d_1feature(name, estimator_orig):
 
 @ignore_warnings
 def check_fit1d_1sample(name, estimator_orig):
-    # check fitting 1d array with 1 feature
+    # check fitting 1d array with 1 sample
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20))
     y = np.array([1])
