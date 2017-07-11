@@ -388,8 +388,8 @@ def test_transform():
     assert_array_equal(eclf1.transform(X).swapaxes(0, 1).reshape((4, 6)),
                        eclf2.transform(X))
 
+    eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)])
     warn_msg = ("'flatten_transform' is changed to False."
                 " Setting it explicitly will silence this warning")
     assert_warns_message(DeprecationWarning, warn_msg,
-                         VotingClassifier(estimators=[('lr', clf1),
-                                                      ('rf', clf2)]))
+                         eclf.fit(X, y))
