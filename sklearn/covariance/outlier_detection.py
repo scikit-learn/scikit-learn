@@ -47,6 +47,13 @@ class EllipticEnvelope(MinCovDet):
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set.
 
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
+
     Attributes
     ----------
     location_ : array-like, shape (n_features,)
@@ -90,6 +97,14 @@ class EllipticEnvelope(MinCovDet):
         self.contamination = contamination
 
     def fit(self, X, y=None):
+        """Fit the EllipticEnvelope model with X.
+
+        Parameters
+        ----------
+        X : numpy array or sparse matrix of shape [n_samples, n_features]
+            Training data
+        y : (ignored)
+        """
         super(EllipticEnvelope, self).fit(X)
         self.threshold_ = sp.stats.scoreatpercentile(
             self.dist_, 100. * (1. - self.contamination))

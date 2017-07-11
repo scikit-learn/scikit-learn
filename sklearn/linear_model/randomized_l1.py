@@ -253,15 +253,15 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
-    n_jobs : integer, optional
-        Number of CPUs to use during the resampling. If '-1', use
-        all the CPUs
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the resampling. If '-1', use
+        all the CPUs
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -433,6 +433,9 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     selection_threshold : float, optional, default=0.25
         The score above which features should be selected.
 
+    tol : float, optional, default=1e-3
+         tolerance for stopping criteria of LogisticRegression
+
     fit_intercept : boolean, optional, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -451,18 +454,15 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         `preprocessing.StandardScaler` before calling `fit` on an estimator
         with `normalize=False`.
 
-    tol : float, optional, default=1e-3
-         tolerance for stopping criteria of LogisticRegression
-
-    n_jobs : integer, optional
-        Number of CPUs to use during the resampling. If '-1', use
-        all the CPUs
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the resampling. If '-1', use
+        all the CPUs
 
     pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel

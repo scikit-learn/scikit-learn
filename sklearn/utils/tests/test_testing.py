@@ -4,7 +4,10 @@ import sys
 import numpy as np
 from scipy import sparse
 
+from sklearn.utils.deprecation import deprecated
+from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils.testing import (
+    assert_true,
     assert_raises,
     assert_less,
     assert_greater,
@@ -15,9 +18,11 @@ from sklearn.utils.testing import (
     assert_equal,
     set_random_state,
     assert_raise_message,
-    assert_allclose_dense_sparse,
-    ignore_warnings)
+    ignore_warnings,
+    check_docstring_parameters,
+    assert_allclose_dense_sparse)
 
+from sklearn.utils.testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
@@ -235,3 +240,247 @@ class TestWarns(unittest.TestCase):
 
         if failed:
             raise AssertionError("wrong warning caught by assert_warn")
+
+
+# Tests for docstrings:
+
+def f_ok(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_bad_sections(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Results
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_bad_order(b, a):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+    b : float
+        Parameter b
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_missing(a, b):
+    """Function f
+
+    Parameters
+    ----------
+    a : int
+        Parameter a
+
+    Returns
+    -------
+    c : list
+        Parameter c
+    """
+    c = a + b
+    return c
+
+
+def f_check_param_definition(a, b, c, d):
+    """Function f
+
+    Parameters
+    ----------
+    a: int
+        Parameter a
+    b:
+        Parameter b
+    c :
+        Parameter c
+    d:int
+        Parameter d
+    """
+    return a + b + c + d
+
+
+class Klass(object):
+    def f_missing(self, X, y):
+        pass
+
+    def f_bad_sections(self, X, y):
+        """Function f
+
+        Parameter
+        ----------
+        a : int
+            Parameter a
+        b : float
+            Parameter b
+
+        Results
+        -------
+        c : list
+            Parameter c
+        """
+        pass
+
+
+class MockEst(object):
+    def __init__(self):
+        """MockEstimator"""
+    def fit(self, X, y):
+        return X
+
+    def predict(self, X):
+        return X
+
+    def predict_proba(self, X):
+        return X
+
+    def score(self, X):
+        return 1.
+
+
+class MockMetaEstimator(object):
+    def __init__(self, delegate):
+        """MetaEstimator to check if doctest on delegated methods work.
+
+        Parameters
+        ---------
+        delegate : estimator
+            Delegated estimator.
+        """
+        self.delegate = delegate
+
+    @if_delegate_has_method(delegate=('delegate'))
+    def predict(self, X):
+        """This is available only if delegate has predict.
+
+        Parameters
+        ----------
+        y : ndarray
+            Parameter y
+        """
+        return self.delegate.predict(X)
+
+    @deprecated("Testing a deprecated delegated method")
+    @if_delegate_has_method(delegate=('delegate'))
+    def score(self, X):
+        """This is available only if delegate has score.
+
+        Parameters
+        ---------
+        y : ndarray
+            Parameter y
+        """
+
+    @if_delegate_has_method(delegate=('delegate'))
+    def predict_proba(self, X):
+        """This is available only if delegate has predict_proba.
+
+        Parameters
+        ---------
+        X : ndarray
+            Parameter X
+        """
+        return X
+
+    @deprecated('Testing deprecated function with incorrect params')
+    @if_delegate_has_method(delegate=('delegate'))
+    def predict_log_proba(self, X):
+        """This is available only if delegate has predict_proba.
+
+        Parameters
+        ---------
+        y : ndarray
+            Parameter X
+        """
+        return X
+
+    @deprecated('Testing deprecated function with wrong params')
+    @if_delegate_has_method(delegate=('delegate'))
+    def fit(self, X, y):
+        """Incorrect docstring but should not be tested"""
+
+
+def test_check_docstring_parameters():
+    try:
+        import numpydoc  # noqa
+        assert sys.version_info >= (3, 5)
+    except (ImportError, AssertionError):
+        raise SkipTest(
+            "numpydoc is required to test the docstrings")
+
+    incorrect = check_docstring_parameters(f_ok)
+    assert_equal(incorrect, [])
+    incorrect = check_docstring_parameters(f_ok, ignore=['b'])
+    assert_equal(incorrect, [])
+    incorrect = check_docstring_parameters(f_missing, ignore=['b'])
+    assert_equal(incorrect, [])
+    assert_raise_message(RuntimeError, 'Unknown section Results',
+                         check_docstring_parameters, f_bad_sections)
+    assert_raise_message(RuntimeError, 'Unknown section Parameter',
+                         check_docstring_parameters, Klass.f_bad_sections)
+
+    messages = ["a != b", "arg mismatch: ['b']", "arg mismatch: ['X', 'y']",
+                "predict y != X",
+                "predict_proba arg mismatch: ['X']",
+                "predict_log_proba arg mismatch: ['X']",
+                "score arg mismatch: ['X']",
+                ".fit arg mismatch: ['X', 'y']"]
+
+    mock_meta = MockMetaEstimator(delegate=MockEst())
+
+    for mess, f in zip(messages,
+                       [f_bad_order, f_missing, Klass.f_missing,
+                        mock_meta.predict, mock_meta.predict_proba,
+                        mock_meta.predict_log_proba,
+                        mock_meta.score, mock_meta.fit]):
+        incorrect = check_docstring_parameters(f)
+        assert_true(len(incorrect) >= 1)
+        assert_true(mess in incorrect[0],
+                    '"%s" not in "%s"' % (mess, incorrect[0]))
+
+    incorrect = check_docstring_parameters(f_check_param_definition)
+    assert_equal(
+        incorrect,
+        ['sklearn.utils.tests.test_testing.f_check_param_definition There was '
+         'no space between the param name and colon ("a: int")',
+         'sklearn.utils.tests.test_testing.f_check_param_definition There was '
+         'no space between the param name and colon ("b:")',
+         'sklearn.utils.tests.test_testing.f_check_param_definition Incorrect '
+         'type definition for param: "c " (type definition was "")',
+         'sklearn.utils.tests.test_testing.f_check_param_definition There was '
+         'no space between the param name and colon ("d:int")'])
