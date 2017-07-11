@@ -333,7 +333,14 @@ class GraphLasso(EmpiricalCovariance):
         self.verbose = verbose
 
     def fit(self, X, y=None):
+        """Fits the GraphLasso model to X.
 
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Data from which to compute the covariance estimate
+        y : (ignored)
+        """
         # Covariance does not make sense for a single feature
         X = check_array(X, ensure_min_features=2, ensure_min_samples=2,
                         estimator=self)
@@ -570,6 +577,7 @@ class GraphLassoCV(GraphLasso):
         ----------
         X : ndarray, shape (n_samples, n_features)
             Data from which to compute the covariance estimate
+        y : (ignored)
         """
         # Covariance does not make sense for a single feature
         X = check_array(X, ensure_min_features=2, estimator=self)
