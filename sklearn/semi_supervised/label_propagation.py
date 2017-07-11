@@ -91,6 +91,9 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     gamma : float
         Parameter for rbf kernel
 
+    n_neighbors : integer > 0
+        Parameter for knn kernel
+
     alpha : float
         Clamping factor
 
@@ -100,9 +103,6 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     tol : float
         Convergence tolerance: threshold to consider the system at steady
         state
-
-    n_neighbors : integer > 0
-        Parameter for knn kernel
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run.
@@ -330,6 +330,10 @@ class LabelPropagation(BaseLabelPropagation):
     tol : float
         Convergence tolerance: threshold to consider the system at steady
         state
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     Attributes
     ----------

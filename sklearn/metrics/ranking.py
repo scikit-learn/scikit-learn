@@ -870,8 +870,8 @@ def ndcg_score(y_true, y_score, k=5):
     -------
     score : float
 
-    Example
-    -------
+    Examples
+    --------
     >>> y_true = [1, 0, 2]
     >>> y_score = [[0.15, 0.55, 0.2], [0.7, 0.2, 0.1], [0.06, 0.04, 0.9]]
     >>> ndcg_score(y_true, y_score, k=2)

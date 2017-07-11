@@ -811,7 +811,6 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
-
     multi_class : str, {'ovr', 'crammer_singer'}
         `ovr` trains n_classes one-vs-rest classifiers, while `crammer_singer`
         optimizes a joint objective over all classes.

@@ -130,15 +130,15 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
         .. versionadded:: 0.19
 
+    shuffle : bool, default=False
+        Whether to shuffle dataset.
+
     random_state : int, RandomState instance or None, optional (default=None)
         Random state for shuffling the dataset.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    shuffle : bool, default=False
-        Whether to shuffle dataset.
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.

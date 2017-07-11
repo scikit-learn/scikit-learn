@@ -181,14 +181,6 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    max_iter : int, optional, default 300
-        Maximum number of iterations of the k-means algorithm to run.
-
-    n_init : int, optional, default: 10
-        Number of time the k-means algorithm will be run with different
-        centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
-
     init : {'k-means++', 'random', or ndarray, or a callable}, optional
         Method for initialization, default to 'k-means++':
 
@@ -205,12 +197,6 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
 
-    algorithm : "auto", "full" or "elkan", default="auto"
-        K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient by using the triangle
-        inequality, but currently doesn't support sparse data. "auto" chooses
-        "elkan" for dense data and "full" for sparse data.
-
     precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
 
@@ -222,11 +208,19 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
 
         False : never precompute distances
 
-    tol : float, optional
-        The relative increment in the results before declaring convergence.
+    n_init : int, optional, default: 10
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
+
+    max_iter : int, optional, default 300
+        Maximum number of iterations of the k-means algorithm to run.
 
     verbose : boolean, optional
         Verbosity mode.
+
+    tol : float, optional
+        The relative increment in the results before declaring convergence.
 
     random_state : int, RandomState instance or None, optional, default: None
         If int, random_state is the seed used by the random number generator;
@@ -249,6 +243,12 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
+
+    algorithm : "auto", "full" or "elkan", default="auto"
+        K-means algorithm to use. The classical EM-style algorithm is "full".
+        The "elkan" variation is more efficient by using the triangle
+        inequality, but currently doesn't support sparse data. "auto" chooses
+        "elkan" for dense data and "full" for sparse data.
 
     return_n_iter : bool, optional
         Whether or not to return the number of iterations.
@@ -716,15 +716,6 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    max_iter : int, default: 300
-        Maximum number of iterations of the k-means algorithm for a
-        single run.
-
-    n_init : int, default: 10
-        Number of time the k-means algorithm will be run with different
-        centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
-
     init : {'k-means++', 'random' or an ndarray}
         Method for initialization, defaults to 'k-means++':
 
@@ -738,11 +729,17 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    algorithm : "auto", "full" or "elkan", default="auto"
-        K-means algorithm to use. The classical EM-style algorithm is "full".
-        The "elkan" variation is more efficient by using the triangle
-        inequality, but currently doesn't support sparse data. "auto" chooses
-        "elkan" for dense data and "full" for sparse data.
+    n_init : int, default: 10
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
+
+    max_iter : int, default: 300
+        Maximum number of iterations of the k-means algorithm for a
+        single run.
+
+    tol : float, default: 1e-4
+        Relative tolerance with regards to inertia to declare convergence
 
     precompute_distances : {'auto', True, False}
         Precompute distances (faster but takes more memory).
@@ -755,8 +752,21 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         False : never precompute distances
 
-    tol : float, default: 1e-4
-        Relative tolerance with regards to inertia to declare convergence
+    verbose : int, default 0
+        Verbosity mode.
+
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    copy_x : boolean, default True
+        When pre-computing distances it is more numerically accurate to center
+        the data first.  If copy_x is True, then the original data is not
+        modified.  If False, the original data is modified, and put back before
+        the function returns, but small numerical differences may be introduced
+        by subtracting and then adding the data mean.
 
     n_jobs : int
         The number of jobs to use for the computation. This works by computing
@@ -767,21 +777,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    verbose : int, default 0
-        Verbosity mode.
-
-    copy_x : boolean, default True
-        When pre-computing distances it is more numerically accurate to center
-        the data first.  If copy_x is True, then the original data is not
-        modified.  If False, the original data is modified, and put back before
-        the function returns, but small numerical differences may be introduced
-        by subtracting and then adding the data mean.
+    algorithm : "auto", "full" or "elkan", default="auto"
+        K-means algorithm to use. The classical EM-style algorithm is "full".
+        The "elkan" variation is more efficient by using the triangle
+        inequality, but currently doesn't support sparse data. "auto" chooses
+        "elkan" for dense data and "full" for sparse data.
 
     Attributes
     ----------
@@ -898,6 +898,16 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Convenience method; equivalent to calling fit(X) followed by
         predict(X).
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to transform.
+
+        Returns
+        -------
+        labels : array, shape [n_samples,]
+            Index of the cluster each sample belongs to.
         """
         return self.fit(X).labels_
 
@@ -905,6 +915,16 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         """Compute clustering and transform X to cluster-distance space.
 
         Equivalent to fit(X).transform(X), but more efficiently implemented.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to transform.
+
+        Returns
+        -------
+        X_new : array, shape [n_samples, k]
+            X transformed in the new space.
         """
         # Currently, this just skips a copy of the data if it is not in
         # np.array or CSR format already.
@@ -1196,37 +1216,6 @@ class MiniBatchKMeans(KMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    max_iter : int, optional
-        Maximum number of iterations over the complete dataset before
-        stopping independently of any early stopping criterion heuristics.
-
-    max_no_improvement : int, default: 10
-        Control early stopping based on the consecutive number of mini
-        batches that does not yield an improvement on the smoothed inertia.
-
-        To disable convergence detection based on inertia, set
-        max_no_improvement to None.
-
-    tol : float, default: 0.0
-        Control early stopping based on the relative center changes as
-        measured by a smoothed, variance-normalized of the mean center
-        squared position changes. This early stopping heuristics is
-        closer to the one used for the batch variant of the algorithms
-        but induces a slight computational and memory overhead over the
-        inertia heuristic.
-
-        To disable convergence detection based on normalized center
-        change, set tol to 0.0 (default).
-
-    batch_size : int, optional, default: 100
-        Size of the mini batches.
-
-    init_size : int, optional, default: 3 * batch_size
-        Number of samples to randomly sample for speeding up the
-        initialization (sometimes at the expense of accuracy): the
-        only algorithm is initialized by running a batch KMeans on a
-        random subset of the data. This needs to be larger than n_clusters.
-
     init : {'k-means++', 'random' or an ndarray}, default: 'k-means++'
         Method for initialization, defaults to 'k-means++':
 
@@ -1240,10 +1229,15 @@ class MiniBatchKMeans(KMeans):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    n_init : int, default=3
-        Number of random initializations that are tried.
-        In contrast to KMeans, the algorithm is only run once, using the
-        best of the ``n_init`` initializations as measured by inertia.
+    max_iter : int, optional
+        Maximum number of iterations over the complete dataset before
+        stopping independently of any early stopping criterion heuristics.
+
+    batch_size : int, optional, default: 100
+        Size of the mini batches.
+
+    verbose : boolean, optional
+        Verbosity mode.
 
     compute_labels : boolean, default=True
         Compute label assignment and inertia for the complete dataset
@@ -1255,15 +1249,41 @@ class MiniBatchKMeans(KMeans):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    tol : float, default: 0.0
+        Control early stopping based on the relative center changes as
+        measured by a smoothed, variance-normalized of the mean center
+        squared position changes. This early stopping heuristics is
+        closer to the one used for the batch variant of the algorithms
+        but induces a slight computational and memory overhead over the
+        inertia heuristic.
+
+        To disable convergence detection based on normalized center
+        change, set tol to 0.0 (default).
+
+    max_no_improvement : int, default: 10
+        Control early stopping based on the consecutive number of mini
+        batches that does not yield an improvement on the smoothed inertia.
+
+        To disable convergence detection based on inertia, set
+        max_no_improvement to None.
+
+    init_size : int, optional, default: 3 * batch_size
+        Number of samples to randomly sample for speeding up the
+        initialization (sometimes at the expense of accuracy): the
+        only algorithm is initialized by running a batch KMeans on a
+        random subset of the data. This needs to be larger than n_clusters.
+
+    n_init : int, default=3
+        Number of random initializations that are tried.
+        In contrast to KMeans, the algorithm is only run once, using the
+        best of the ``n_init`` initializations as measured by inertia.
+
     reassignment_ratio : float, default: 0.01
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more easily reassigned, which means that the
         model will take longer to converge, but should converge in a
         better clustering.
-
-    verbose : boolean, optional
-        Verbosity mode.
 
     Attributes
     ----------

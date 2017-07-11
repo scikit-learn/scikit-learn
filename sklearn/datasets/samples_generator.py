@@ -589,6 +589,12 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
     factor : double < 1 (default=.8)
         Scale factor between inner and outer circle.
 
@@ -642,6 +648,12 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -1199,21 +1211,21 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
         The probability that a coefficient is zero (see notes). Larger values
         enforce more sparsity.
 
+    norm_diag : boolean, optional (default=False)
+        Whether to normalize the output matrix to make the leading diagonal
+        elements all 1
+
+    smallest_coef : float between 0 and 1, optional (default=0.1)
+        The value of the smallest coefficient.
+
+    largest_coef : float between 0 and 1, optional (default=0.9)
+        The value of the largest coefficient.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    largest_coef : float between 0 and 1, optional (default=0.9)
-        The value of the largest coefficient.
-
-    smallest_coef : float between 0 and 1, optional (default=0.1)
-        The value of the smallest coefficient.
-
-    norm_diag : boolean, optional (default=False)
-        Whether to normalize the output matrix to make the leading diagonal
-        elements all 1
 
     Returns
     -------

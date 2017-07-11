@@ -209,6 +209,18 @@ class _ThresholdScorer(_BaseScorer):
 
 
 def get_scorer(scoring):
+    """Get a scorer from string
+
+    Parameters
+    ----------
+    scoring : str | callable
+        scoring method as string. If callable it is returned as is.
+
+    Returns
+    -------
+    scorer : callable
+        The scorer.
+    """
     valid = True
     if isinstance(scoring, six.string_types):
         try:

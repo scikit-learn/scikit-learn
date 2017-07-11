@@ -39,12 +39,6 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : integer, optional (default = 2)
-        Parameter for the Minkowski metric from
-        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-
     metric : string or callable, default 'minkowski'
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
@@ -70,6 +64,12 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
+
+    p : integer, optional (default = 2)
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.

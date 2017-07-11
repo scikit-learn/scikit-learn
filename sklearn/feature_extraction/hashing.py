@@ -41,12 +41,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
-
-    dtype : numpy type, optional, default np.float64
-        The type of feature values. Passed to scipy.sparse matrix constructors
-        as the dtype argument. Do not set this to bool, np.boolean or any
-        unsigned integer type.
-
     input_type : string, optional, default "dict"
         Either "dict" (the default) to accept dictionaries over
         (feature_name, value); "pair" to accept pairs of (feature_name, value);
@@ -56,7 +50,10 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The feature_name is hashed to find the appropriate column for the
         feature. The value's sign might be flipped in the output (but see
         non_negative, below).
-
+    dtype : numpy type, optional, default np.float64
+        The type of feature values. Passed to scipy.sparse matrix constructors
+        as the dtype argument. Do not set this to bool, np.boolean or any
+        unsigned integer type.
     alternate_sign : boolean, optional, default True
         When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
@@ -121,6 +118,10 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
 
         This method doesn't do anything. It exists purely for compatibility
         with the scikit-learn transformer API.
+
+        Parameters
+        ----------
+        X : array-like
 
         Returns
         -------
