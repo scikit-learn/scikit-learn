@@ -31,12 +31,12 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     kernel : "linear" | "poly" | "rbf" | "sigmoid" | "cosine" | "precomputed"
         Kernel. Default="linear".
 
-    degree : int, default=3
-        Degree for poly kernels. Ignored by other kernels.
-
     gamma : float, default=1/n_features
         Kernel coefficient for rbf, poly and sigmoid kernels. Ignored by other
         kernels.
+
+    degree : int, default=3
+        Degree for poly kernels. Ignored by other kernels.
 
     coef0 : float, default=1
         Independent term in poly and sigmoid kernels.
@@ -82,16 +82,16 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.18
 
-    n_jobs : int, default=1
-        The number of parallel jobs to run.
-        If `-1`, then the number of jobs is set to the number of CPU cores.
-
-        .. versionadded:: 0.18
-
     copy_X : boolean, default=True
         If True, input X is copied and stored by the model in the `X_fit_`
         attribute. If no further changes will be done to X, setting
         `copy_X=False` saves memory by storing a reference.
+
+        .. versionadded:: 0.18
+
+    n_jobs : int, default=1
+        The number of parallel jobs to run.
+        If `-1`, then the number of jobs is set to the number of CPU cores.
 
         .. versionadded:: 0.18
 

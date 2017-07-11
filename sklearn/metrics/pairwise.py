@@ -273,16 +273,14 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
     Parameters
     ----------
-    X, Y : {array-like, sparse matrix}
-        Arrays containing points. Respective shapes (n_samples1, n_features)
-        and (n_samples2, n_features)
+    X : {array-like, sparse matrix}, shape (n_samples1, n_features)
+        Array containing points.
 
-    batch_size : integer
-        To reduce memory consumption over the naive solution, data are
-        processed in batches, comprising batch_size rows of X and
-        batch_size rows of Y. The default value is quite conservative, but
-        can be changed for fine-tuning. The larger the number, the larger the
-        memory usage.
+    Y : {array-like, sparse matrix}, shape (n_samples2, n_features)
+        Arrays containing points.
+
+    axis : int, optional, default 1
+        Axis along which the argmin and distances are to be computed.
 
     metric : string or callable, default 'euclidean'
         metric to use for distance computation. Any metric from scikit-learn
@@ -310,11 +308,15 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
+    batch_size : integer
+        To reduce memory consumption over the naive solution, data are
+        processed in batches, comprising batch_size rows of X and
+        batch_size rows of Y. The default value is quite conservative, but
+        can be changed for fine-tuning. The larger the number, the larger the
+        memory usage.
+
     metric_kwargs : dict, optional
         Keyword arguments to pass to specified metric function.
-
-    axis : int, optional, default 1
-        Axis along which the argmin and distances are to be computed.
 
     Returns
     -------
@@ -408,12 +410,8 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         Arrays containing points. Respective shapes (n_samples1, n_features)
         and (n_samples2, n_features)
 
-    batch_size : integer
-        To reduce memory consumption over the naive solution, data are
-        processed in batches, comprising batch_size rows of X and
-        batch_size rows of Y. The default value is quite conservative, but
-        can be changed for fine-tuning. The larger the number, the larger the
-        memory usage.
+    axis : int, optional, default 1
+        Axis along which the argmin and distances are to be computed.
 
     metric : string or callable
         metric to use for distance computation. Any metric from scikit-learn
@@ -441,11 +439,15 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
+    batch_size : integer
+        To reduce memory consumption over the naive solution, data are
+        processed in batches, comprising batch_size rows of X and
+        batch_size rows of Y. The default value is quite conservative, but
+        can be changed for fine-tuning. The larger the number, the larger the
+        memory usage.
+
     metric_kwargs : dict
         keyword arguments to pass to specified metric function.
-
-    axis : int, optional, default 1
-        Axis along which the argmin and distances are to be computed.
 
     Returns
     -------
@@ -1348,6 +1350,9 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
+    filter_params : boolean
+        Whether to filter invalid parameters or not.
+
     n_jobs : int
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
@@ -1357,9 +1362,6 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
-
-    filter_params : boolean
-        Whether to filter invalid parameters or not.
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the kernel function.

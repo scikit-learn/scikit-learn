@@ -57,8 +57,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     V_init : array of shape (n_components, n_features),
         Initial values for the components for warm restart scenarios.
 
-    verbose :
-        Degree of verbosity of the printed output.
+    verbose : int
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -151,7 +151,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
-        ridge_alpha: float, default: 0.01
+        ridge_alpha : float, default: 0.01
             Amount of ridge shrinkage to apply in order to improve
             conditioning.
 
@@ -209,14 +209,14 @@ class MiniBatchSparsePCA(SparsePCA):
     n_iter : int,
         number of iterations to perform for each mini batch
 
-    callback : callable,
+    callback : callable or None, optional (default: None)
         callable that gets invoked every five iterations
 
     batch_size : int,
         the number of features to take in each mini batch
 
-    verbose :
-        degree of output the procedure will print
+    verbose : int
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
 
     shuffle : boolean,
         whether to shuffle the data before splitting it in batches

@@ -586,10 +586,13 @@ def column_or_1d(y, warn=False):
 def check_random_state(seed):
     """Turn seed into a np.random.RandomState instance
 
-    If seed is None, return the RandomState singleton used by np.random.
-    If seed is an int, return a new RandomState instance seeded with seed.
-    If seed is already a RandomState instance, return it.
-    Otherwise raise ValueError.
+    Parameters
+    ----------
+    seed : None | int | instance of RandomState
+        If seed is None, return the RandomState singleton used by np.random.
+        If seed is an int, return a new RandomState instance seeded with seed.
+        If seed is already a RandomState instance, return it.
+        Otherwise raise ValueError.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand

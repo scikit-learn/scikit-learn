@@ -145,8 +145,8 @@ def test_check_solver_option():
     X, y = iris.data, iris.target
     for LR in [LogisticRegression, LogisticRegressionCV]:
 
-        msg = ("Logistic Regression supports only liblinear, newton-cg, lbfgs"
-               " and sag solvers, got wrong_name")
+        msg = ('Logistic Regression supports only liblinear, newton-cg, '
+               'lbfgs, sag and saga solvers, got wrong_name')
         lr = LR(solver="wrong_name")
         assert_raise_message(ValueError, msg, lr.fit, X, y)
 

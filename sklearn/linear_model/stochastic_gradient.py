@@ -605,11 +605,14 @@ class SGDClassifier(BaseSGDClassifier):
 
     Parameters
     ----------
-    loss : str, 'hinge', 'log', 'modified_huber', 'squared_hinge',\
-                'perceptron', or a regression loss: 'squared_loss', 'huber',\
-                'epsilon_insensitive', or 'squared_epsilon_insensitive'
+    loss : str, default: 'hinge'
         The loss function to be used. Defaults to 'hinge', which gives a
         linear SVM.
+
+        The possible options are 'hinge', 'log', 'modified_huber',
+        'squared_hinge', 'perceptron', or a regression loss: 'squared_loss',
+        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
+
         The 'log' loss gives logistic regression, a probabilistic classifier.
         'modified_huber' is another smooth loss that brings tolerance to
         outliers as well as probability estimates.
@@ -637,13 +640,6 @@ class SGDClassifier(BaseSGDClassifier):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
@@ -663,13 +659,6 @@ class SGDClassifier(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
-
     verbose : integer, optional
         The verbosity level
 
@@ -685,6 +674,13 @@ class SGDClassifier(BaseSGDClassifier):
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     learning_rate : string, optional
         The learning rate schedule:
@@ -723,6 +719,13 @@ class SGDClassifier(BaseSGDClassifier):
         averaging will begin once the total number of samples seen reaches
         average. So ``average=10`` will begin averaging after seeing 10
         samples.
+
+    n_iter : int, optional
+        The number of passes over the training data (aka epochs).
+        Defaults to None. Deprecated, will be removed in 0.21.
+
+        .. versionchanged:: 0.19
+            Deprecated
 
     Attributes
     ----------
@@ -1172,15 +1175,17 @@ class SGDRegressor(BaseSGDRegressor):
 
     Parameters
     ----------
-    loss : str, 'squared_loss', 'huber', 'epsilon_insensitive', \
-                or 'squared_epsilon_insensitive'
-        The loss function to be used. Defaults to 'squared_loss' which refers
-        to the ordinary least squares fit. 'huber' modifies 'squared_loss' to
-        focus less on getting outliers correct by switching from squared to
-        linear loss past a distance of epsilon. 'epsilon_insensitive' ignores
-        errors less than epsilon and is linear past that; this is the loss
-        function used in SVR. 'squared_epsilon_insensitive' is the same but
-        becomes squared loss past a tolerance of epsilon.
+    loss : str, default: 'squared_loss'
+        The loss function to be used. The possible values are 'squared_loss',
+        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'
+
+        The 'squared_loss' refers to the ordinary least squares fit.
+        'huber' modifies 'squared_loss' to focus less on getting outliers
+        correct by switching from squared to linear loss past a distance of
+        epsilon. 'epsilon_insensitive' ignores errors less than epsilon and is
+        linear past that; this is the loss function used in SVR.
+        'squared_epsilon_insensitive' is the same but becomes squared loss past
+        a tolerance of epsilon.
 
     penalty : str, 'none', 'l2', 'l1', or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -1201,13 +1206,6 @@ class SGDRegressor(BaseSGDRegressor):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
@@ -1227,13 +1225,6 @@ class SGDRegressor(BaseSGDRegressor):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
-
     verbose : integer, optional
         The verbosity level.
 
@@ -1244,6 +1235,13 @@ class SGDRegressor(BaseSGDRegressor):
         important to get the prediction exactly right.
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     learning_rate : string, optional
         The learning rate schedule:
@@ -1270,6 +1268,13 @@ class SGDRegressor(BaseSGDRegressor):
         averaging will begin once the total number of samples seen reaches
         average. So ``average=10`` will begin averaging after seeing 10
         samples.
+
+    n_iter : int, optional
+        The number of passes over the training data (aka epochs).
+        Defaults to None. Deprecated, will be removed in 0.21.
+
+        .. versionchanged:: 0.19
+            Deprecated
 
     Attributes
     ----------

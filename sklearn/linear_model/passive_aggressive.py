@@ -21,13 +21,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
@@ -46,25 +39,25 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
-
     verbose : integer, optional
         The verbosity level
+
+    loss : string, optional
+        The loss function to be used:
+        hinge: equivalent to PA-I in the reference paper.
+        squared_hinge: equivalent to PA-II in the reference paper.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
 
-    loss : string, optional
-        The loss function to be used:
-        hinge: equivalent to PA-I in the reference paper.
-        squared_hinge: equivalent to PA-II in the reference paper.
+    random_state : int, RandomState instance or None, optional, default=None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -91,6 +84,13 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
         .. versionadded:: 0.19
            parameter *average* to use weights averaging in SGD
+
+    n_iter : int, optional
+        The number of passes over the training data (aka epochs).
+        Defaults to None. Deprecated, will be removed in 0.21.
+
+        .. versionchanged:: 0.19
+            Deprecated
 
     Attributes
     ----------
@@ -217,20 +217,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     C : float
         Maximum step size (regularization). Defaults to 1.0.
 
-    epsilon : float
-        If the difference between the current prediction and the correct label
-        is below this threshold, the model is not updated.
-
     fit_intercept : bool
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
-
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
 
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
@@ -250,13 +239,6 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     shuffle : bool, default=True
         Whether or not the training data should be shuffled after each epoch.
 
-    random_state : int, RandomState instance or None, optional, default=None
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
-
     verbose : integer, optional
         The verbosity level
 
@@ -265,6 +247,17 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         epsilon_insensitive: equivalent to PA-I in the reference paper.
         squared_epsilon_insensitive: equivalent to PA-II in the reference
         paper.
+
+    epsilon : float
+        If the difference between the current prediction and the correct label
+        is below this threshold, the model is not updated.
+
+    random_state : int, RandomState instance or None, optional, default=None
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
@@ -278,6 +271,13 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
         .. versionadded:: 0.19
            parameter *average* to use weights averaging in SGD
+
+    n_iter : int, optional
+        The number of passes over the training data (aka epochs).
+        Defaults to None. Deprecated, will be removed in 0.21.
+
+        .. versionchanged:: 0.19
+            Deprecated
 
     Attributes
     ----------

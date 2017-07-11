@@ -199,12 +199,12 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     damping : float, optional, default: 0.5
         Damping factor between 0.5 and 1.
 
+    max_iter : int, optional, default: 200
+        Maximum number of iterations.
+
     convergence_iter : int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
-
-    max_iter : int, optional, default: 200
-        Maximum number of iterations.
 
     copy : boolean, optional, default: True
         Make a copy of input data.
