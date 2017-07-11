@@ -531,9 +531,7 @@ def test_verbose():
     assert("nearest neighbors..." in out)
     assert("Computed conditional probabilities" in out)
     assert("Mean sigma" in out)
-    assert("Finished" in out)
     assert("early exaggeration" in out)
-    assert("Finished" in out)
 
 
 def test_chebyshev_metric():
