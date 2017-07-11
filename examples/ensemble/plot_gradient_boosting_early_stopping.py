@@ -87,7 +87,7 @@ for X, y in data_list:
 
 bar_width = 0.2
 n = len(data_list)
-index = np.arange(0, n*bar_width, bar_width)*2.5
+index = np.arange(0, n * bar_width, bar_width) * 2.5
 index = index[0:n]
 
 #######################################################################
@@ -112,8 +112,9 @@ def autolabel(rects, n_estimators):
     Attach a text label above each bar displaying n_estimators of each model
     """
     for i, rect in enumerate(rects):
-        plt.text(rect.get_x() + rect.get_width()/2., 1.05*rect.get_height(),
-                 'n_est=%d' % n_estimators[i], ha='center', va='bottom')
+        plt.text(rect.get_x() + rect.get_width() / 2.,
+                 1.05 * rect.get_height(), 'n_est=%d' % n_estimators[i],
+                 ha='center', va='bottom')
 
 
 autolabel(bar1, n_gb)
