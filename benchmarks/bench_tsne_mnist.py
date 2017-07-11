@@ -138,7 +138,6 @@ $ cd ..
         methods = [(n, profile(m)) for n, m in methods]
 
     data_size = [100, 500, 1000, 5000, 10000]
-    data_size = []
     if args.all:
         data_size.append(70000)
 
