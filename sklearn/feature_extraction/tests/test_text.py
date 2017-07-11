@@ -227,11 +227,38 @@ def test_char_wb_ngram_analyzer():
     expected = [' a ', ' te', 'tes', 'est', 'st ', ' tes']
     assert_equal(cnga(text)[:6], expected)
 
-    cnga = CountVectorizer(input='char_wb', analyzer='char_wb',
+    cnga = CountVectorizer(input='char', analyzer='char_wb',
                            ngram_range=(2, 2)).build_analyzer()
     text = "Hello sklearn!"
     expected = [' h', 'he', 'el', 'll', 'lo']
     assert_equal(cnga(text)[:5], expected)
+
+
+def test_word_ngram_analyzer():
+    cnga = CountVectorizer(analyzer='word', strip_accents='unicode',
+                           ngram_range=(3, 6)).build_analyzer()
+
+    text = "This \n\tis a test, really.\n\n I met Harry yesterday"
+    expected = ['this is test', 'is test really', 'test really met']
+    assert_equal(cnga(text)[:3], expected)
+
+    expected = ['test really met harry yesterday',
+                'this is test really met harry',
+                'is test really met harry yesterday']
+    assert_equal(cnga(text)[-3:], expected)
+
+    cnga = CountVectorizer(input='file', analyzer='word',
+                           ngram_range=(3, 6)).build_analyzer()
+    text = StringIO("A test with a file-like object!")
+    expected = ['test with file', 'with file like',
+                'file like object', 'test with file like']
+    assert_equal(cnga(text)[:4], expected)
+
+    cnga = CountVectorizer(input='char', analyzer='word',
+                           ngram_range=(2, 2)).build_analyzer()
+    text = "Hello sklearn developer!"
+    expected = ['hello sklearn', 'sklearn developer']
+    assert_equal(cnga(text), expected)
 
 
 def test_countvectorizer_custom_vocabulary():
