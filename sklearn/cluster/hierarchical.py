@@ -289,7 +289,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
 
 
 # average and complete linkage
-def linkage_tree(X, connectivity=None, n_components=None,
+def linkage_tree(X, connectivity=None, n_components='deprecated',
                  n_clusters=None, linkage='complete', affinity="euclidean",
                  return_distance=False):
     """Linkage agglomerative clustering based on a Feature matrix.
@@ -365,7 +365,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
     --------
     ward_tree : hierarchical clustering with ward linkage
     """
-    if n_components is not None:
+    if n_components != 'deprecated':
         warnings.warn("n_components was deprecated in 0.18"
                       "will be removed in 0.21", DeprecationWarning)
 
