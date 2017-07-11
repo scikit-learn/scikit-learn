@@ -26,6 +26,7 @@ cdef extern from "math.h":
 # effectively ignoring differences near the 32bit
 # floating point precision
 cdef float EPSILON = 1e-6
+cdef float DBL_EPSILON = 1e-16
 
 # This is effectively an ifdef statement in Cython
 # It allows us to write printf debugging lines
@@ -57,7 +58,7 @@ cdef float compute_gradient(float[:] val_P,
         int ax
         long n_samples = pos_reference.shape[0]
         int n_dimensions = qt.n_dimensions
-        float[1] sum_Q
+        double[1] sum_Q
         clock_t t1, t2
         float sQ, error
 
@@ -99,7 +100,7 @@ cdef float compute_gradient_positive(float[:] val_P,
                                      float* pos_f,
                                      int n_dimensions,
                                      float dof,
-                                     float sum_Q,
+                                     double sum_Q,
                                      np.int64_t start,
                                      int verbose) nogil:
     # Sum over the following expression for i not equal to j
@@ -133,7 +134,7 @@ cdef float compute_gradient_positive(float[:] val_P,
             qij = (((1.0 + dij) / dof) ** exponent)
             dij = pij * qij
             qij /= sum_Q
-            C += pij * log((pij + EPSILON) / (qij + EPSILON))
+            C += pij * log(max(pij, EPSILON) / max(qij, EPSILON))
             for ax in range(n_dimensions):
                 pos_f[i * n_dimensions + ax] += dij * buff[ax]
     t2 = clock()
@@ -147,7 +148,7 @@ cdef float compute_gradient_positive(float[:] val_P,
 cdef void compute_gradient_negative(float[:, :] pos_reference,
                                     float* neg_f,
                                     quad_tree._QuadTree qt,
-                                    float* sum_Q,
+                                    double* sum_Q,
                                     float dof,
                                     float theta,
                                     long start,
@@ -163,7 +164,8 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
         long dtb = 0
         long offset = n_dimensions + 2
         long* l
-        float size, dist2s, qijZ, mult
+        float size, dist2s, mult
+        double qijZ
         float[1] iQ
         float[3] force, neg_force, pos
         clock_t t1, t2, t3
@@ -206,7 +208,7 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
         printf("Force computation: %li clock ticks\n", dtb)
 
     # Put sum_Q to machine EPSILON to avoid divisions by 0
-    sum_Q[0] = max(sum_Q[0], EPSILON)
+    sum_Q[0] = max(sum_Q[0], DBL_EPSILON)
     free(summary)
 
 
