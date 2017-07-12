@@ -22,11 +22,13 @@ cdef char* EMPTY_STRING = ""
 cdef extern from "math.h":
     float fabsf(float x) nogil
 
-# Round points differing by less than this amount
-# effectively ignoring differences near the 32bit
-# floating point precision
-cdef float EPSILON = 1e-6
-cdef float DBL_EPSILON = 1e-16
+# Smallest strictly positive value that can be represented by floating
+# point numbers for different precision levels. This is useful to avoid
+# taking the log of zero when computing the KL divergence.
+cdef float FLOAT32_TINY = np.finfo(np.float32).tiny
+
+# Useful to void division by zero or divergence to +inf.
+cdef float FLOAT64_EPS = np.finfo(np.float64).eps
 
 # This is effectively an ifdef statement in Cython
 # It allows us to write printf debugging lines
@@ -134,14 +136,14 @@ cdef float compute_gradient_positive(float[:] val_P,
             qij = (((1.0 + dij) / dof) ** exponent)
             dij = pij * qij
             qij /= sum_Q
-            C += pij * log(max(pij, EPSILON) / max(qij, EPSILON))
+            C += pij * log(max(pij, FLOAT32_TINY)
+                           / max(qij, FLOAT32_TINY))
             for ax in range(n_dimensions):
                 pos_f[i * n_dimensions + ax] += dij * buff[ax]
     t2 = clock()
     dt = ((float) (t2 - t1))
     if verbose > 10:
         printf("[t-SNE] Computed error=%1.4f in %1.1e ticks\n", C, dt)
-
     return C
 
 
@@ -208,7 +210,7 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
         printf("Force computation: %li clock ticks\n", dtb)
 
     # Put sum_Q to machine EPSILON to avoid divisions by 0
-    sum_Q[0] = max(sum_Q[0], DBL_EPSILON)
+    sum_Q[0] = max(sum_Q[0], FLOAT64_EPS)
     free(summary)
 
 
