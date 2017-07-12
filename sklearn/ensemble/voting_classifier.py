@@ -283,10 +283,10 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             if isinstance(self.flatten_transform,
                           str) and self.flatten_transform == 'default':
                 warnings.warn("To silence this warning you may"
-                              " explicitly set flatten_transform=False",
+                              " explicitly set flatten_transform=False. "
+                              "'flatten_transform' default value will be "
+                              "changed to True in 0.21.",
                               DeprecationWarning)
-                warnings.warn("'flatten_transform' default value will be "
-                              "changed to True in 0.21.", DeprecationWarning)
                 return probas
             elif not self.flatten_transform:
                 return probas
