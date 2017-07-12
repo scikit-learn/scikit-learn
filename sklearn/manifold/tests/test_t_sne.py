@@ -4,6 +4,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.neighbors import BallTree
+from sklearn.neighbors import NearestNeighbors
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -31,6 +32,14 @@ from scipy.spatial.distance import squareform
 from sklearn.metrics.pairwise import pairwise_distances
 
 
+x = np.linspace(0, 1, 10)
+xx, yy = np.meshgrid(x, x)
+X_2d_grid = np.hstack([
+    xx.ravel().reshape(-1, 1),
+    yy.ravel().reshape(-1, 1),
+])
+
+
 def test_gradient_descent_stops():
     # Test stopping conditions of gradient descent.
     class ObjectiveSmallGradient:
@@ -51,7 +60,7 @@ def test_gradient_descent_stops():
         _, error, it = _gradient_descent(
             ObjectiveSmallGradient(), np.zeros(1), 0, n_iter=100,
             n_iter_without_progress=100, momentum=0.0, learning_rate=0.0,
-            min_gain=0.0, min_grad_norm=1e-5, min_error_diff=0.0, verbose=2)
+            min_gain=0.0, min_grad_norm=1e-5, verbose=2)
     finally:
         out = sys.stdout.getvalue()
         sys.stdout.close()
@@ -60,22 +69,6 @@ def test_gradient_descent_stops():
     assert_equal(it, 0)
     assert("gradient norm" in out)
 
-    # Error difference
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        _, error, it = _gradient_descent(
-            ObjectiveSmallGradient(), np.zeros(1), 0, n_iter=100,
-            n_iter_without_progress=100, momentum=0.0, learning_rate=0.0,
-            min_gain=0.0, min_grad_norm=0.0, min_error_diff=0.2, verbose=2)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
-    assert_equal(error, 0.9)
-    assert_equal(it, 1)
-    assert("error difference" in out)
-
     # Maximum number of iterations without improvement
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -83,7 +76,7 @@ def test_gradient_descent_stops():
         _, error, it = _gradient_descent(
             flat_function, np.zeros(1), 0, n_iter=100,
             n_iter_without_progress=10, momentum=0.0, learning_rate=0.0,
-            min_gain=0.0, min_grad_norm=0.0, min_error_diff=-1.0, verbose=2)
+            min_gain=0.0, min_grad_norm=0.0, verbose=2)
     finally:
         out = sys.stdout.getvalue()
         sys.stdout.close()
@@ -99,7 +92,7 @@ def test_gradient_descent_stops():
         _, error, it = _gradient_descent(
             ObjectiveSmallGradient(), np.zeros(1), 0, n_iter=11,
             n_iter_without_progress=100, momentum=0.0, learning_rate=0.0,
-            min_gain=0.0, min_grad_norm=0.0, min_error_diff=0.0, verbose=2)
+            min_gain=0.0, min_grad_norm=0.0, verbose=2)
     finally:
         out = sys.stdout.getvalue()
         sys.stdout.close()
@@ -247,8 +240,7 @@ def test_preserve_trustworthiness_approximately():
     X = random_state.randn(50, n_components).astype(np.float32)
     for init in ('random', 'pca'):
         for method in methods:
-            tsne = TSNE(n_components=n_components, perplexity=25,
-                        learning_rate=100.0, init=init, random_state=0,
+            tsne = TSNE(n_components=n_components, init=init, random_state=0,
                         method=method)
             X_embedded = tsne.fit_transform(X)
             t = trustworthiness(X, X_embedded, n_neighbors=1)
@@ -433,7 +425,7 @@ def test_n_iter_used():
                         method=method, early_exaggeration=1.0, n_iter=n_iter)
             tsne.fit_transform(X)
 
-            assert tsne.n_iter_final == n_iter - 1
+            assert tsne.n_iter_ == n_iter - 1
 
 
 def test_answer_gradient_two_points():
@@ -539,9 +531,7 @@ def test_verbose():
     assert("nearest neighbors..." in out)
     assert("Computed conditional probabilities" in out)
     assert("Mean sigma" in out)
-    assert("Finished" in out)
     assert("early exaggeration" in out)
-    assert("Finished" in out)
 
 
 def test_chebyshev_metric():
@@ -605,8 +595,8 @@ def test_barnes_hut_angle():
         np.fill_diagonal(distances, 0.0)
         params = random_state.randn(n_samples, n_components)
         P = _joint_probabilities(distances, perplexity, verbose=0)
-        kl, gradex = _kl_divergence(params, P, degrees_of_freedom, n_samples,
-                                    n_components)
+        kl_exact, grad_exact = _kl_divergence(params, P, degrees_of_freedom,
+                                              n_samples, n_components)
 
         k = n_samples - 1
         bt = BallTree(distances)
@@ -616,37 +606,42 @@ def test_barnes_hut_angle():
                                  for i in range(n_samples)])
         assert np.all(distances[0, neighbors_nn[0]] == distances_nn[0]),\
             abs(distances[0, neighbors_nn[0]] - distances_nn[0])
-        Pbh = _joint_probabilities_nn(distances_nn, neighbors_nn,
-                                      perplexity, verbose=0)
-        kl, gradbh = _kl_divergence_bh(params, Pbh, degrees_of_freedom,
-                                       n_samples, n_components, angle=angle,
-                                       skip_num_points=0, verbose=0)
+        P_bh = _joint_probabilities_nn(distances_nn, neighbors_nn,
+                                       perplexity, verbose=0)
+        kl_bh, grad_bh = _kl_divergence_bh(params, P_bh, degrees_of_freedom,
+                                           n_samples, n_components,
+                                           angle=angle, skip_num_points=0,
+                                           verbose=0)
 
         P = squareform(P)
-        Pbh = Pbh.toarray()
-        assert_array_almost_equal(Pbh, P, decimal=5)
+        P_bh = P_bh.toarray()
+        assert_array_almost_equal(P_bh, P, decimal=5)
+        assert_almost_equal(kl_exact, kl_bh, decimal=3)
 
 
 @skip_if_32bit
 def test_n_iter_without_progress():
     # Use a dummy negative n_iter_without_progress and check output on stdout
     random_state = check_random_state(0)
-    X = random_state.randn(100, 2)
-    tsne = TSNE(n_iter_without_progress=-1, verbose=2, learning_rate=1e8,
-                random_state=1, method='exact', n_iter=300)
+    X = random_state.randn(100, 10)
+    for method in ["barnes_hut", "exact"]:
+        tsne = TSNE(n_iter_without_progress=-1, verbose=2, learning_rate=1e8,
+                    random_state=0, method=method, n_iter=351, init="random")
+        tsne._N_ITER_CHECK = 1
+        tsne._EXPLORATION_N_ITER = 0
 
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        tsne.fit_transform(X)
-    finally:
-        out = sys.stdout.getvalue()
-        sys.stdout.close()
-        sys.stdout = old_stdout
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        try:
+            tsne.fit_transform(X)
+        finally:
+            out = sys.stdout.getvalue()
+            sys.stdout.close()
+            sys.stdout = old_stdout
 
-    # The output needs to contain the value of n_iter_without_progress
-    assert_in("did not make any progress during the "
-              "last -1 episodes. Finished.", out)
+        # The output needs to contain the value of n_iter_without_progress
+        assert_in("did not make any progress during the "
+                  "last -1 episodes. Finished.", out)
 
 
 def test_min_grad_norm():
@@ -717,3 +712,55 @@ def test_accessible_kl_divergence():
                 error, _, _ = error.partition(',')
                 break
     assert_almost_equal(tsne.kl_divergence_, float(error), decimal=5)
+
+
+def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
+    """Make sure that TSNE can approximately recover a uniform 2D grid"""
+    for seed in seeds:
+        tsne = TSNE(n_components=2, init='random', random_state=seed,
+                    perplexity=10, n_iter=n_iter, method=method)
+        Y = tsne.fit_transform(X_2d_grid)
+
+        # Ensure that the convergence criterion has been triggered
+        assert tsne.n_iter_ < n_iter
+
+        # Ensure that the resulting embedding leads to approximately
+        # uniformly spaced points: the distance to the closest neighbors
+        # should be non-zero and approximately constant.
+        nn = NearestNeighbors(n_neighbors=1).fit(Y)
+        dist_to_nn = nn.kneighbors(return_distance=True)[0].ravel()
+        assert dist_to_nn.min() > 0.1
+
+        smallest_to_mean = dist_to_nn.min() / np.mean(dist_to_nn)
+        largest_to_mean = dist_to_nn.max() / np.mean(dist_to_nn)
+
+        try_name = "{}_{}".format(method, seed)
+        assert_greater(smallest_to_mean, .5, msg=try_name)
+        assert_less(largest_to_mean, 2, msg=try_name)
+
+
+def test_uniform_grid():
+    for method in ['barnes_hut', 'exact']:
+        yield check_uniform_grid, method
+
+
+def test_bh_match_exact():
+    # check that the ``barnes_hut`` method match the exact one when
+    # ``angle = 0`` and ``perplexity > n_samples / 3``
+    random_state = check_random_state(0)
+    n_features = 10
+    X = random_state.randn(30, n_features).astype(np.float32)
+    X_embeddeds = {}
+    n_iter = {}
+    for method in ['exact', 'barnes_hut']:
+        tsne = TSNE(n_components=2, method=method, learning_rate=1.0,
+                    init="random", random_state=0, n_iter=251,
+                    perplexity=30.0, angle=0)
+        # Kill the early_exaggeration
+        tsne._EXPLORATION_N_ITER = 0
+        X_embeddeds[method] = tsne.fit_transform(X)
+        n_iter[method] = tsne.n_iter_
+
+    assert n_iter['exact'] == n_iter['barnes_hut']
+    assert_array_almost_equal(X_embeddeds['exact'], X_embeddeds['barnes_hut'],
+                              decimal=3)

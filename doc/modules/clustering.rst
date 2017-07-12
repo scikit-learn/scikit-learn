@@ -338,7 +338,7 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    r(i, k) \leftarrow s(i, k) - max [ a(i, \acute{k}) + s(i, \acute{k}) \forall \acute{k} \neq k ]
+    r(i, k) \leftarrow s(i, k) - max [ a(i, k') + s(i, k') \forall k' \neq k ]
 
 Where :math:`s(i, k)` is the similarity between samples :math:`i` and :math:`k`.
 The availability of sample :math:`k`
@@ -346,7 +346,7 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    a(i, k) \leftarrow min [0, r(k, k) + \sum_{\acute{i}~s.t.~\acute{i} \notin \{i, k\}}{r(\acute{i}, k)}]
+    a(i, k) \leftarrow min [0, r(k, k) + \sum_{i'~s.t.~i' \notin \{i, k\}}{r(i', k)}]
 
 To begin with, all values for :math:`r` and :math:`a` are set to zero,
 and the calculation of each iterates until convergence.

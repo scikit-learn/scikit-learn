@@ -66,6 +66,8 @@ random sampling procedures.
    * :class:`semi_supervised.LabelSpreading` (bug fix)
    * :class:`semi_supervised.LabelPropagation` (bug fix)
    * tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
+   * :class:`sklearn.ensemble.IsolationForest` (bug fix)
+   * :class:`sklearn.manifold.TSNE` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -304,6 +306,21 @@ Miscellaneous
    - Make it possible to load a chunk of an svmlight formatted file by
      passing a range of bytes to :func:`datasets.load_svmlight_file`.
      :issue:`935` by :user:`Olivier Grisel <ogrisel>`.
+
+   - Small performance improvement to n-gram creation in
+     :mod:`feature_extraction.text` by binding methods for loops and
+     special-casing unigrams. :issue:`7567` by `Jaye Doepke <jtdoepke>`
+
+   - Speed improvements to :class:`model_selection.StratifiedShuffleSplit`.
+     :issue:`5991` by :user:`Arthur Mensch <arthurmensch>` and `Joel Nothman`_.
+
+   - Memory improvements for method barnes_hut in :class:`manifold.TSNE`
+     :issue:`7089` by :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
+
+   - Optimization schedule improvements for so the results are closer to the
+     one from the reference implementation
+     `lvdmaaten/bhtsne <https://github.com/lvdmaaten/bhtsne>`_ by
+     :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
 
 Bug fixes
 .........
@@ -568,6 +585,14 @@ Miscellaneous
    - Several minor issues were fixed with thanks to the alerts of
      [lgtm.com](http://lgtm.com). :issue:`9278` by :user:`Jean Helie <jhelie>`,
      among others.
+
+   - Fixed the implementation of :class:`manifold.TSNE`:
+      - ``early_exageration`` parameter had no effect and is now used for the
+        first 250 optimization iterations.
+      - Fixed the ``InsersionError`` reported in :issue:`8992`.
+      - Improve the learning schedule to match the one from the reference
+        implementation `lvdmaaten/bhtsne <https://github.com/lvdmaaten/bhtsne>`_.
+     by :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
 
 API changes summary
 -------------------
