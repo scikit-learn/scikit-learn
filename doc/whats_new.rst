@@ -298,8 +298,8 @@ Model evaluation and meta-estimators
 
    - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
      to change output shape of `transform` method to 2 dimensional.
-     :issue:`7794` by `Ibraim Ganiev <olologin>` and
-     `Herilalaina Rakotoarison <herilalaina>`.
+     :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
+     :user:`Herilalaina Rakotoarison <herilalaina>`.
 
 Bug fixes
 .........

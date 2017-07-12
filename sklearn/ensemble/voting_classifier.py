@@ -176,14 +176,6 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             raise ValueError('All estimators are None. At least one is '
                              'required to be a classifier!')
 
-        if self.flatten_transform == 'default':
-            warnings.warn("'flatten_transform' is changed to False."
-                          " Setting it explicitly will silence this warning",
-                          DeprecationWarning)
-            warnings.warn("'flatten_transform' default value will be "
-                          "changed to True in 0.21.", DeprecationWarning)
-            self.flatten_transform = False
-
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         self.estimators_ = []
@@ -285,12 +277,20 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             Class labels predicted by each classifier.
         """
         check_is_fitted(self, 'estimators_')
+
         if self.voting == 'soft':
             probas = self._collect_probas(X)
-            if not self.flatten_transform:
+            if isinstance(self.flatten_transform,
+                          str) and self.flatten_transform == 'default':
+                warnings.warn("To silence this warning you may"
+                              " explicitly set flatten_transform=False",
+                              DeprecationWarning)
+                return probas
+            elif not self.flatten_transform:
                 return probas
             else:
                 return np.hstack(probas)
+
         else:
             return self._predict(X)
 
