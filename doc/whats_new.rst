@@ -138,6 +138,11 @@ Enhancements
      :class:`linear_model.PassiveAggressiveClassifier`. :issue:`4939`
      by :user:`Andrea Esuli <aesuli>`.
 
+   - Added an expanded version of english stop words for english contracted forms.
+     It can be used in `sklearn.feature_extraction.text` module by setting
+     `stop_words="english-expanded"` :issue:`8687` by
+     :user:`Herilalaina Rakotoarison <herilalaina>`.
+
    - Custom metrics for the :mod:`sklearn.neighbors` binary trees now have
      fewer constraints: they must take two 1d-arrays and return a float.
      :issue:`6288` by `Jake Vanderplas`_.
