@@ -301,7 +301,9 @@ is given.
 Affinity Propagation can be interesting as it chooses the number of
 clusters based on the data provided. For this purpose, the two important
 parameters are the *preference*, which controls how many exemplars are
-used, and the *damping factor*.
+used, and the *damping factor* which damps the responsibility and 
+availability messages to avoid numerical oscillations when updating these
+messages.
 
 The main drawback of Affinity Propagation is its complexity. The
 algorithm has a time complexity of the order :math:`O(N^2 T)`, where :math:`N`
