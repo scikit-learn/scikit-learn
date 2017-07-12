@@ -212,8 +212,8 @@ the following two rules:
 
 .. _multimetric_scoring:
 
-Using mutiple metric evaluation
--------------------------------
+Using multiple metric evaluation
+--------------------------------
 
 Scikit-learn also permits evaluation of multiple metrics in ``GridSearchCV``,
 ``RandomizedSearchCV`` and ``cross_validate``.
