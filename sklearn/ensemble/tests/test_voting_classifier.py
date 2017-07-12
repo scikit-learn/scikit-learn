@@ -382,15 +382,26 @@ def test_transform():
         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
         voting='soft',
         flatten_transform=True).fit(X, y)
+    eclf3 = VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft',
+        flatten_transform=False).fit(X, y)
 
     assert_array_equal(eclf1.transform(X).shape, (3, 4, 2))
     assert_array_equal(eclf2.transform(X).shape, (4, 6))
+    assert_array_equal(eclf3.transform(X).shape, (3, 4, 2))
     assert_array_equal(eclf1.transform(X).swapaxes(0, 1).reshape((4, 6)),
+                       eclf2.transform(X))
+    assert_array_equal(eclf3.transform(X).swapaxes(0, 1).reshape((4, 6)),
                        eclf2.transform(X))
 
     eclf = VotingClassifier(estimators=[('lr', clf1), ('rf', clf2)],
                             voting='soft').fit(X, y)
-    warn_msg = ("To silence this warning you may"
+    warn_msg1 = ("To silence this warning you may"
                 " explicitly set flatten_transform=False")
-    assert_warns_message(DeprecationWarning, warn_msg,
+    assert_warns_message(DeprecationWarning, warn_msg1,
+                         eclf.transform, X)
+    warn_msg2 = ("'flatten_transform' default value will be "
+                 "changed to True in 0.21.")
+    assert_warns_message(DeprecationWarning, warn_msg2,
                          eclf.transform, X)
