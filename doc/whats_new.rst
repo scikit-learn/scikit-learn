@@ -19,6 +19,7 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
    * :class:`sklearn.ensemble.IsolationForest` (bug fix)
+   * :class:`sklearn.manifold.TSNE` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -244,6 +245,14 @@ Enhancements
 
    - Speed improvements to :class:`model_selection.StratifiedShuffleSplit`.
      :issue:`5991` by :user:`Arthur Mensch <arthurmensch>` and `Joel Nothman`_.
+
+   - Memory improvements for method barnes_hut in :class:`manifold.TSNE`
+     :issue:`7089` by :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
+
+   - Optimization schedule improvements for so the results are closer to the
+     one from the reference implementation
+     `lvdmaaten/bhtsne <https://github.com/lvdmaaten/bhtsne>`_ by
+     :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
 
 Bug fixes
 .........
@@ -477,6 +486,14 @@ Bug fixes
    - Fix inconsistent results between :class:`linear_model.RidgeCV`
      and :class:`linear_model.Ridge` when using ``normalize=True``
      by `Alexandre Gramfort`_.
+
+   - Fixed the implementation of :class:`manifold.TSNE`:
+      - ``early_exageration`` parameter had no effect and is now used for the
+        first 250 optimization iterations.
+      - Fixed the ``InsersionError`` reported in :issue:`8992`.
+      - Improve the learning schedule to match the one from the reference
+        implementation `lvdmaaten/bhtsne <https://github.com/lvdmaaten/bhtsne>`_.
+     by :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
 
 API changes summary
 -------------------
