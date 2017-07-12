@@ -1709,8 +1709,12 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.ones((n_samples, 1)) * value, X))
 
 
-def _transform_selected(X, transform, selected="all", copy=True):
-    """Apply a transform function to portion of selected features
+def _transform_selected(X, transform, selected="all", copy=True,
+                        retain_order=False):
+    """Apply a transform function to portion of selected features.
+
+    Returns an array Xt, where the non-selected features appear on the right
+    side (largest column indices) of Xt.
 
     Parameters
     ----------
@@ -1720,17 +1724,27 @@ def _transform_selected(X, transform, selected="all", copy=True):
     transform : callable
         A callable transform(X) -> X_transformed
 
-    copy : boolean, optional
+    copy : boolean, default=True
         Copy X even if it could be avoided.
 
-    selected: "all" or array of indices or mask
+    selected : "all" or array of indices or mask
         Specify which features to apply the transform to.
+
+    retain_order : boolean, default=False
+        If True, the non-selected features will not be displaced to the right
+        side of the transformed array. The number of features in Xt must
+        match the number of features in X. Furthermore, X and Xt cannot be
+        sparse.
 
     Returns
     -------
-    X : array or sparse matrix, shape=(n_samples, n_features_new)
+    Xt : array or sparse matrix, shape=(n_samples, n_features_new)
     """
     X = check_array(X, accept_sparse='csc', copy=copy, dtype=FLOAT_DTYPES)
+
+    if sparse.issparse(X) and retain_order:
+        raise ValueError("The retain_order option can only be set to True "
+                         "for dense matrices.")
 
     if isinstance(selected, six.string_types) and selected == "all":
         return transform(X)
@@ -1751,14 +1765,24 @@ def _transform_selected(X, transform, selected="all", copy=True):
     elif n_selected == n_features:
         # All features selected.
         return transform(X)
-    else:
-        X_sel = transform(X[:, ind[sel]])
-        X_not_sel = X[:, ind[not_sel]]
 
-        if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
-            return sparse.hstack((X_sel, X_not_sel))
-        else:
-            return np.hstack((X_sel, X_not_sel))
+    X_sel = transform(X[:, ind[sel]])
+    X_not_sel = X[:, ind[not_sel]]
+
+    if retain_order:
+        if X_sel.shape[1] + X_not_sel.shape[1] != n_features:
+            raise ValueError("The retain_order option can only be set to True "
+                             "if the dimensions of the input array match the "
+                             "dimensions of the transformed array.")
+
+        # Fancy indexing not supported for sparse matrices
+        X[:, ind[sel]] = X_sel
+        return X
+
+    if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
+        return sparse.hstack((X_sel, X_not_sel))
+    else:
+        return np.hstack((X_sel, X_not_sel))
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):

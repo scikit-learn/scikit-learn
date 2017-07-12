@@ -24,6 +24,7 @@ from .data import quantile_transform
 from .data import OneHotEncoder
 
 from .data import PolynomialFeatures
+from .discretization import KBinsDiscretizer
 
 from .label import label_binarize
 from .label import LabelBinarizer
@@ -37,6 +38,7 @@ __all__ = [
     'Binarizer',
     'FunctionTransformer',
     'Imputer',
+    'KBinsDiscretizer',
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',

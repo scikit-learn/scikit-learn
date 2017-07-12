@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less_equal
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_true
@@ -1871,6 +1872,38 @@ def test_transform_selected():
 
     _check_transform_selected(X, X, [])
     _check_transform_selected(X, X, [False, False, False])
+
+
+def test_transform_selected_retain_order():
+
+    X = [[-1, 1], [2, -2]]
+
+    assert_raise_message(ValueError,
+                         "The retain_order option can only be set to True "
+                         "for dense matrices.",
+                         _transform_selected, sparse.csr_matrix(X),
+                         Binarizer().transform, selected=[0],
+                         retain_order=True)
+
+    def transform(X):
+        return np.hstack((X, [[0], [0]]))
+
+    assert_raise_message(ValueError,
+                         "The retain_order option can only be set to True "
+                         "if the dimensions of the input array match the "
+                         "dimensions of the transformed array.",
+                         _transform_selected, X, transform,
+                         selected=[0], retain_order=True)
+
+    X_expected = [[-1, 1], [2, 0]]
+    Xtr = _transform_selected(X, Binarizer().transform, selected=[1],
+                              retain_order=True)
+    assert_array_equal(toarray(Xtr), X_expected)
+
+    X_expected = [[0, 1], [1, -2]]
+    Xtr = _transform_selected(X, Binarizer().transform, selected=[0],
+                              retain_order=True)
+    assert_array_equal(toarray(Xtr), X_expected)
 
 
 def test_transform_selected_copy_arg():
