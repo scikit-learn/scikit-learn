@@ -86,9 +86,9 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
 
         Note
         ----
-        Multiple calls to the ``split`` method will not return identical
-        training or testing sets if ``random_state`` parameter exists and is
-        not explicitly set to an integer value.
+        Randomized CV splitters may return different results for each call of
+        split. This can be avoided (and identical results returned for each
+        split) by setting ``random_state`` to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         indices = np.arange(_num_samples(X))
@@ -317,9 +317,9 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
 
         Note
         ----
-        Multiple calls to the ``split`` method will not return identical
-        training or testing sets if ``random_state`` parameter exists and is
-        not explicitly set to an integer value.
+        Randomized CV splitters may return different results for each call of
+        split. This can be avoided (and identical results returned for each
+        split) by setting ``random_state`` to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -657,9 +657,9 @@ class StratifiedKFold(_BaseKFold):
 
         Note
         ----
-        Multiple calls to the ``split`` method will not return identical
-        training or testing sets unless ``random_state`` is set to an integer
-        value, if ``shuffle=True``.
+        Randomized CV splitters may return different results for each call of
+        split. This can be avoided (and identical results returned for each
+        split) by setting random_state to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
         return super(StratifiedKFold, self).split(X, y, groups)
@@ -744,9 +744,9 @@ class TimeSeriesSplit(_BaseKFold):
 
         Note
         ----
-        Multiple calls to the ``split`` method will not return identical
-        training or testing sets unless ``random_state`` is set to an integer
-        value, if ``shuffle=True``.
+        Randomized CV splitters may return different results for each call of
+        split. This can be avoided (and identical results returned for each
+        split) by setting random_state to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -1188,9 +1188,9 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
         Note
         ----
-        Multiple calls to the ``split`` method will not return identical
-        training or testing sets unless ``random_state`` is set to an integer
-        value.
+        Randomized CV splitters may return different results for each call of
+        split. This can be avoided (and identical results returned for each
+        split) by setting random_state to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         for train, test in self._iter_indices(X, y, groups):
@@ -1608,9 +1608,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
         Note
         ----
-        Multiple calls to the ``split`` method will not return identical
-        training or testing sets unless ``random_state`` is set to an integer
-        value.
+        Randomized CV splitters may return different results for each call of
+        split. This can be avoided (and identical results returned for each
+        split) by setting random_state to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
         return super(StratifiedShuffleSplit, self).split(X, y, groups)
