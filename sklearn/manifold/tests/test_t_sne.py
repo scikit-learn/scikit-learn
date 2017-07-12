@@ -638,7 +638,6 @@ def test_n_iter_without_progress():
             out = sys.stdout.getvalue()
             sys.stdout.close()
             sys.stdout = old_stdout
-        print(out)
 
         # The output needs to contain the value of n_iter_without_progress
         assert_in("did not make any progress during the "
