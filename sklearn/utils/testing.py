@@ -268,7 +268,7 @@ class _IgnoreWarnings(object):
 
     Parameters
     ----------
-    category : tuple of warning class, defaut to Warning
+    category : tuple of warning class, default to Warning
         The category to filter. By default, all the categories will be muted.
 
     """
