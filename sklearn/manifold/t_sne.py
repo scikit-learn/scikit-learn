@@ -803,6 +803,8 @@ class TSNE(BaseEstimator):
         if self.method == 'barnes_hut':
             obj_func = _kl_divergence_bh
             opt_args['kwargs']['angle'] = self.angle
+            # Repeat verbose argument for _kl_divergence_bh
+            opt_args['kwargs']['verbose'] = self.verbose
         else:
             obj_func = _kl_divergence
 

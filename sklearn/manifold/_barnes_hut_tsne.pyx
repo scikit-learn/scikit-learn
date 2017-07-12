@@ -236,7 +236,8 @@ def gradient(float[:] val_P,
     assert n == indptr.shape[0] - 1, m
     if verbose > 10:
         printf("[t-SNE] Initializing tree of n_dimensions %i\n", n_dimensions)
-    cdef quad_tree._QuadTree qt = quad_tree._QuadTree(pos_output.shape[1], 0)
+    cdef quad_tree._QuadTree qt = quad_tree._QuadTree(pos_output.shape[1],
+                                                      verbose)
     if verbose > 10:
         printf("[t-SNE] Inserting %li points\n", pos_output.shape[0])
     qt.build_tree(pos_output)

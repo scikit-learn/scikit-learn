@@ -18,7 +18,7 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 # It allows us to write printf debugging lines
 # and remove them at compile time
 cdef enum:
-    DEBUGFLAG = 1
+    DEBUGFLAG = 0
 
 cdef float EPSILON = 1e-6
 

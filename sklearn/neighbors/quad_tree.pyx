@@ -101,8 +101,10 @@ cdef class _QuadTree:
 
     def build_tree(self, X):
         """Build a tree from an arary of points X."""
-        cdef DTYPE_t[3] pt
-        cdef DTYPE_t[3] min_bounds, max_bounds
+        cdef:
+            int i
+            DTYPE_t[3] pt
+            DTYPE_t[3] min_bounds, max_bounds
 
         # validate X and prepare for query
         # X = check_array(X, dtype=DTYPE_t, order='C')
@@ -118,6 +120,10 @@ cdef class _QuadTree:
         for i in range(self.n_dimensions):
             min_bounds[i] = m[i]
             max_bounds[i] = M[i]
+
+            if self.verbose > 10:
+                printf("[QuadTree] bounding box axis %i : [%f, %f]\n",
+                       i, min_bounds[i], max_bounds[i])
 
         # Create the initial node with boundaries from the dataset
         self._init_root(min_bounds, max_bounds)
@@ -139,7 +145,7 @@ cdef class _QuadTree:
         cdef Cell* cell = &self.cells[cell_id]
         cdef SIZE_t n_point = cell.cumulative_size
 
-        if self.verbose >= 10:
+        if self.verbose > 10:
             printf("[QuadTree] Inserting depth %li\n", cell.depth)
 
         # Assert that the point is in the right range
@@ -153,8 +159,9 @@ cdef class _QuadTree:
             for i in range(self.n_dimensions):
                 cell.barycenter[i] = point[i]
             cell.point_index = point_index
-            if self.verbose >= 10:
-                printf("[QuadTree] inserted point in cell %li\n", cell_id)
+            if self.verbose > 10:
+                printf("[QuadTree] inserted point %li in cell %li\n",
+                       point_index, cell_id)
             return cell_id
 
         # If the cell is not a leaf, update cell internals and
@@ -170,7 +177,7 @@ cdef class _QuadTree:
 
             # Insert child in the correct subtree
             selected_child = self._select_child(point, cell)
-            if self.verbose >= 10:
+            if self.verbose > 49:
                 printf("[QuadTree] selected child %li\n", selected_child)
             if selected_child == -1:
                 self.n_points += 1
@@ -181,7 +188,7 @@ cdef class _QuadTree:
         # split the cell in n_cells_per_cell if the point is not a duplicate.
         # If it is a duplicate, increase the size of the leaf and return.
         if self._is_duplicate(point, cell.barycenter):
-            if self.verbose >= 10:
+            if self.verbose > 10:
                 printf("[QuadTree] found a duplicate!\n")
             cell.cumulative_size += 1
             self.n_points += 1
@@ -258,7 +265,7 @@ cdef class _QuadTree:
         if DEBUGFLAG:
             # Assert that the point is in the right range
             self._check_point_in_cell(point, child)
-        if self.verbose >= 10:
+        if self.verbose > 10:
             printf("[QuadTree] inserted point %li in new child %li\n",
                    point_index, cell_id)
 
@@ -322,13 +329,20 @@ cdef class _QuadTree:
                                   ) nogil except -1:
         """Check that the given point is in the cell boundaries."""
 
-        if self.verbose >= 10:
-            printf("[QuadTree] Checking point (%f, %f, %f) in cell %li "
-                    "([%f/%f, %f/%f, %f/%f], size %li)\n",
-                    point[0], point[1], point[2], cell.cell_id,
-                    cell.min_bounds[0], cell.max_bounds[0], cell.min_bounds[1],
-                    cell.max_bounds[1], cell.min_bounds[2], cell.max_bounds[2],
-                    cell.cumulative_size)
+        if self.verbose >= 50:
+            if self.n_dimensions == 3:
+                printf("[QuadTree] Checking point (%f, %f, %f) in cell %li "
+                        "([%f/%f, %f/%f, %f/%f], size %li)\n",
+                        point[0], point[1], point[2], cell.cell_id,
+                        cell.min_bounds[0], cell.max_bounds[0], cell.min_bounds[1],
+                        cell.max_bounds[1], cell.min_bounds[2], cell.max_bounds[2],
+                        cell.cumulative_size)
+            else:
+                printf("[QuadTree] Checking point (%f, %f) in cell %li "
+                        "([%f/%f, %f/%f], size %li)\n",
+                        point[0], point[1],cell.cell_id, cell.min_bounds[0],
+                        cell.max_bounds[0], cell.min_bounds[1],
+                        cell.max_bounds[1], cell.cumulative_size)
 
         for i in range(self.n_dimensions):
             if (cell.min_bounds[i] > point[i] or
