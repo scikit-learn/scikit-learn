@@ -63,6 +63,7 @@ Here is a list of incremental estimators for different tasks:
       + :class:`sklearn.linear_model.SGDClassifier`
       + :class:`sklearn.linear_model.PassiveAggressiveClassifier`
       + :class:`sklearn.neural_network.MLPClassifier`
+      + :class:'sklearn.mixture.BayesianGaussianMixture'
   - Regression
       + :class:`sklearn.linear_model.SGDRegressor`
       + :class:`sklearn.linear_model.PassiveAggressiveRegressor`
@@ -70,6 +71,7 @@ Here is a list of incremental estimators for different tasks:
   - Clustering
       + :class:`sklearn.cluster.MiniBatchKMeans`
       + :class:`sklearn.cluster.Birch`
+      + :class:'sklearn.mixture.BayesianGaussianMixture'
   - Decomposition / feature Extraction
       + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
       + :class:`sklearn.decomposition.IncrementalPCA`

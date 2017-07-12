@@ -235,6 +235,9 @@ from the two resulting mixtures.
       plotting the confidence ellipsoids for both :class:`GaussianMixture`
       and :class:`BayesianGaussianMixture`.
 
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_partial_fit.py` shows using
+      the `partial_fit` method to fit a large dataset using :class:`BayesianGaussianMixture`
+
     * :ref:`sphx_glr_auto_examples_mixture_plot_gmm_sin.py` shows using
       :class:`GaussianMixture` and :class:`BayesianGaussianMixture` to fit a
       sine wave.
@@ -272,6 +275,9 @@ Pros
    variational solutions have less pathological special cases than
    expectation-maximization solutions.
 
+:Online inference: using the ``partial_fit()`` method, variational Bayesian
+     mixture models streaming data or large datasets split into minibatches.
+
 
 Cons
 .....
@@ -285,7 +291,7 @@ Cons
 :Bias: there are many implicit biases in the inference algorithms (and also in
    the Dirichlet process if used), and whenever there is a mismatch between
    these biases and the data it might be possible to fit better models using a
-   finite mixture.
+   finite mixture.  In particular, variational methods are known to underestimate variance.
 
 
 .. _dirichlet_process:
