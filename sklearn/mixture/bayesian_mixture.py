@@ -1,6 +1,7 @@
 """Bayesian Gaussian Mixture Model."""
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
+#         Joshua Engelman <j.aaron.engelman@gmail.com>
 # License: BSD 3 clause
 
 import math
@@ -77,6 +78,7 @@ class BayesianGaussianMixture(BaseMixture):
     The number of components actually used almost always depends on the data.
 
     .. versionadded:: 0.18
+    *BayesianGaussianMixture*.
 
     Read more in the :ref:`User Guide <bgmm>`.
 
@@ -162,11 +164,8 @@ class BayesianGaussianMixture(BaseMixture):
                 (n_features)             if 'diag',
                 float                    if 'spherical'
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state: RandomState or an int seed, defaults to None.
+        A random number generator instance.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
@@ -544,7 +543,6 @@ class BayesianGaussianMixture(BaseMixture):
 
         self.covariances_ = np.empty((self.n_components, n_features,
                                       n_features))
-
         for k in range(self.n_components):
             diff = xk[k] - self.mean_prior_
             self.covariances_[k] = (self.covariance_prior_ + nk[k] * sk[k] +
@@ -781,3 +779,34 @@ class BayesianGaussianMixture(BaseMixture):
                                       self.precisions_cholesky_.T)
         else:
             self.precisions_ = self.precisions_cholesky_ ** 2
+
+    def partial_fit(self, X, y=None):
+        """Estimate model parameters with the EM algorithm using the posteriors
+        of previous fits as priors.
+
+        The method fit the model `n_init` times and set the parameters with
+        which the model has the largest likelihood or lower bound. Within each
+        trial, the method iterates between E-step and M-step for `max_iter`
+        times until the change of likelihood or lower bound is less than
+        `tol`, otherwise, a `ConvergenceWarning` is raised.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            List of n_features-dimensional data points. Each row
+            corresponds to a single data point.
+
+        Returns
+        -------
+        self
+        """
+        if hasattr(self, 'converged_'):
+            self.covariance_prior = self.covariances_[0]
+            self.mean_prior = self.mean_prior_
+            self.mean_precision_prior = self.mean_precision_prior_
+            self.weight_concentration_prior = self.weight_concentration_prior_
+            self.degrees_of_freedom_prior = self.degrees_of_freedom_prior_
+
+        self.fit(X)
+
+        return self
