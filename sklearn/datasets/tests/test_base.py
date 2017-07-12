@@ -158,7 +158,7 @@ def test_load_missing_sample_image_error():
         try:
             from scipy.misc import imread
         except ImportError:
-            from scipy.misc.pilutil import imread
+            from scipy.misc.pilutil import imread  # noqa
     except ImportError:
         have_PIL = False
     if have_PIL:

@@ -268,7 +268,7 @@ class _IgnoreWarnings(object):
 
     Parameters
     ----------
-    category : tuple of warning class, defaut to Warning
+    category : tuple of warning class, default to Warning
         The category to filter. By default, all the categories will be muted.
 
     """
@@ -773,3 +773,132 @@ class _named_check(object):
 
     def __call__(self, *args, **kwargs):
         return self.check(*args, **kwargs)
+
+# Utils to test docstrings
+
+
+def _get_args(function, varargs=False):
+    """Helper to get function arguments"""
+    # NOTE this works only in python3.5
+    if sys.version_info < (3, 5):
+        NotImplementedError("_get_args is not available for python < 3.5")
+
+    params = inspect.signature(function).parameters
+    args = [key for key, param in params.items()
+            if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
+    if varargs:
+        varargs = [param.name for param in params.values()
+                   if param.kind == param.VAR_POSITIONAL]
+        if len(varargs) == 0:
+            varargs = None
+        return args, varargs
+    else:
+        return args
+
+
+def _get_func_name(func, class_name=None):
+    """Get function full name
+
+    Parameters
+    ----------
+    func : callable
+        The function object.
+    class_name : string, optional (default: None)
+       If ``func`` is a class method and the class name is known specify
+       class_name for the error message.
+
+    Returns
+    -------
+    name : str
+        The function name.
+    """
+    parts = []
+    module = inspect.getmodule(func)
+    if module:
+        parts.append(module.__name__)
+    if class_name is not None:
+        parts.append(class_name)
+    elif hasattr(func, 'im_class'):
+        parts.append(func.im_class.__name__)
+
+    parts.append(func.__name__)
+    return '.'.join(parts)
+
+
+def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
+    """Helper to check docstring
+
+    Parameters
+    ----------
+    func : callable
+        The function object to test.
+    doc : str, optional (default: None)
+        Docstring if it is passed manually to the test.
+    ignore : None | list
+        Parameters to ignore.
+    class_name : string, optional (default: None)
+       If ``func`` is a class method and the class name is known specify
+       class_name for the error message.
+
+    Returns
+    -------
+    incorrect : list
+        A list of string describing the incorrect results.
+    """
+    from numpydoc import docscrape
+    incorrect = []
+    ignore = [] if ignore is None else ignore
+
+    func_name = _get_func_name(func, class_name=class_name)
+    if (not func_name.startswith('sklearn.') or
+            func_name.startswith('sklearn.externals')):
+        return incorrect
+    # Don't check docstring for property-functions
+    if inspect.isdatadescriptor(func):
+        return incorrect
+    args = list(filter(lambda x: x not in ignore, _get_args(func)))
+    # drop self
+    if len(args) > 0 and args[0] == 'self':
+        args.remove('self')
+
+    if doc is None:
+        with warnings.catch_warnings(record=True) as w:
+            try:
+                doc = docscrape.FunctionDoc(func)
+            except Exception as exp:
+                incorrect += [func_name + ' parsing error: ' + str(exp)]
+                return incorrect
+        if len(w):
+            raise RuntimeError('Error for %s:\n%s' % (func_name, w[0]))
+
+    param_names = []
+    for name, type_definition, param_doc in doc['Parameters']:
+        if (type_definition.strip() == "" or
+                type_definition.strip().startswith(':')):
+
+            param_name = name.lstrip()
+
+            # If there was no space between name and the colon
+            # "verbose:" -> len(["verbose", ""][0]) -> 7
+            # If "verbose:"[7] == ":", then there was no space
+            if param_name[len(param_name.split(':')[0].strip())] == ':':
+                incorrect += [func_name +
+                              ' There was no space between the param name and '
+                              'colon ("%s")' % name]
+            else:
+                incorrect += [func_name + ' Incorrect type definition for '
+                              'param: "%s" (type definition was "%s")'
+                              % (name.split(':')[0], type_definition)]
+        if '*' not in name:
+            param_names.append(name.split(':')[0].strip('` '))
+
+    param_names = list(filter(lambda x: x not in ignore, param_names))
+
+    if len(param_names) != len(args):
+        bad = str(sorted(list(set(param_names) ^ set(args))))
+        incorrect += [func_name + ' arg mismatch: ' + bad]
+    else:
+        for n1, n2 in zip(param_names, args):
+            if n1 != n2:
+                incorrect += [func_name + ' ' + n1 + ' != ' + n2]
+    return incorrect

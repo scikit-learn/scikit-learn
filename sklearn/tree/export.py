@@ -67,7 +67,7 @@ def _color_brew(n):
 
 
 class Sentinel(object):
-    def __repr__():
+    def __repr__(self):
         return '"tree.dot"'
 
 

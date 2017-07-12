@@ -308,7 +308,6 @@ def test_base_estimator():
 
 
 def test_sample_weight_missing():
-    from sklearn.linear_model import LogisticRegression
     from sklearn.cluster import KMeans
 
     clf = AdaBoostClassifier(KMeans(), algorithm="SAMME")

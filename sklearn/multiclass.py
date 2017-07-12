@@ -267,9 +267,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         columns = (col.toarray().ravel() for col in Y.T)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_partial_fit_binary)(self.estimators_[i], X,
-                                         next(columns))
-            for i in range(self.n_classes_))
+            delayed(_partial_fit_binary)(estimator, X, column)
+            for estimator, column in izip(self.estimators_, columns))
 
         return self
 
