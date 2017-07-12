@@ -16,22 +16,21 @@ from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
 import hashlib
 
-# try:
-#     import urllib.request as urllib  # for backwards compatibility
-#     from urllib.request import urlretrieve as download
-# except ImportError:
-#     import urllib
-
-from urllib.request import urlretrieve as download
-
-# from io import BytesIO
-from contextlib import closing
-
 from ..utils import Bunch
 
 import numpy as np
 
 from ..utils import check_random_state
+
+try:
+    from urllib.request import urlretrieve as download
+except ImportError:
+    from urllib import urlopen
+    from shutil import copyfileobj
+
+    def download(url, path):
+        with open(path, 'wb') as out_file:
+            copyfileobj(urlopen(url), out_file)
 
 
 def get_data_home(data_home=None):
