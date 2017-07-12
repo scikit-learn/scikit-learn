@@ -4,12 +4,14 @@ Bayesian Gaussian Mixture Model Ellipsoids
 ===========================================
 
 Plot the confidence ellipsoids of a mixture of two Gaussians
-obtained with Variational Inference (``BayesianGaussianMixture`` class models with
-a Dirichlet process prior), using the ``fit()`` and ``partial_fit()`` methods. 
+obtained with Variational Inference (``BayesianGaussianMixture`` class models
+with a Dirichlet process prior), using the ``fit()`` and ``partial_fit()``
+methods.
 
-The ``fit()`` method uses the entire dataset, while ``partial_fit()`` can be used 
-for either the full dataset or minibatches.  For streaming data or datasets too large
-to fit into memory, ```partial_fit()``` gives a similar or better fit much faster. 
+The ``fit()`` method uses the entire dataset, while ``partial_fit()`` can be
+used for either the full dataset or minibatches.  For streaming data or
+datasets too large to fit into memory, ```partial_fit()``` gives a similar or
+better fit much faster.
 """
 
 import itertools
