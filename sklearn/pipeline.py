@@ -558,7 +558,7 @@ def make_pipeline(*steps, **kwargs):
     Pipeline(memory=None,
              steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb', GaussianNB(priors=None, classes=None))])
+                    ('gaussiannb', GaussianNB(classes=None, priors=None))])
 
     Returns
     -------
