@@ -406,6 +406,37 @@ def test_euclidean_distances():
                                   Y_norm_squared=np.zeros_like(Y_norm_sq))
     assert_greater(np.max(np.abs(wrong_D - D1)), .01)
 
+def test_euclidean_distances_with_missing():
+    # first check that we get right answer with missing values for X
+    X = np.array([[1.,   5.,   7.,   5.,  10.],
+                  [8., 2., 4., np.nan, 8.],
+                  [5., np.nan, 5., np.nan, 1.],
+                  [8., np.nan, np.nan, np.nan, np.nan]])
+    D1 = euclidean_distances(X, kill_missing=False, missing_values="NaN")
+
+    D2 = np.array([[0.,   9.42072184,  12.97433364,  15.65247584],
+                  [9.42072184,   0.,   9.91631652,   0.],
+                  [12.97433364,   9.91631652,   0.,   6.70820393],
+                  [15.65247584,   0.,   6.70820393,   0.]])
+
+    assert_array_almost_equal(D1, D2)
+
+    # check with pairs of matrices with missing values
+    X = np.array([[1., np.nan, 3., 4., 2.],
+                  [np.nan, 4., 6., 1., np.nan],
+                  [3., np.nan, np.nan, np.nan, 1.]])
+
+    Y = np.array([[np.nan, 7., 7., np.nan, 2.],
+                  [np.nan, np.nan, 5., 4., 7.],
+                  [np.nan, np.nan, np.nan, 4., 5.]])
+
+    D3 = np.array([[6.32455532, 6.95221787, 4.74341649],
+                   [5., 5., 6.70820393],
+                   [2.23606798, 13.41640786, 8.94427191]])
+
+    D4 = euclidean_distances(X, Y, kill_missing=False, missing_values="NaN")
+
+    assert_array_almost_equal(D3, D4)
 
 def test_cosine_distances():
     # Check the pairwise Cosine distances computation

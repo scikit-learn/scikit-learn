@@ -157,7 +157,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._tree = None
         self._fit_method = None
 
-    def _fit(self, X):
+    def _fit(self, X, kill_missing=True):
         if self.metric_params is None:
             self.effective_metric_params_ = {}
         else:
@@ -201,7 +201,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = check_array(X, accept_sparse='csr')
+        # # copy=True if missing accepted as they will be replaced by 0
+        # copy = True if kill_missing is False else False
+        X = check_array(X, accept_sparse='csr', force_all_finite=kill_missing)
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -270,7 +272,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
 
-    def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
+    def kneighbors(self, X=None, n_neighbors=None, return_distance=True,
+                   kill_missing=True, missing_values="NaN", copy=None):
         """Finds the K-neighbors of a point.
 
         Returns indices of and distances to the neighbors of each point.
@@ -289,6 +292,15 @@ class KNeighborsMixin(object):
 
         return_distance : boolean, optional. Defaults to True.
             If False, distances will not be returned
+
+        kill_missing : boolean, optional
+            Allow missing values (e.g., NaN)
+
+        missing_values : String, optional
+            String representation of missing value
+
+        copy : boolean, optional
+            Make and use a deep copy of X
 
         Returns
         -------
@@ -331,7 +343,9 @@ class KNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            X = check_array(X, accept_sparse='csr')
+            # copy=True if missing accepted as they will be replaced by 0
+            # copy = True if kill_missing is False else False
+            X = check_array(X, accept_sparse='csr', force_all_finite=kill_missing)
         else:
             query_is_train = True
             X = self._fit_X
@@ -349,12 +363,19 @@ class KNeighborsMixin(object):
         n_samples, _ = X.shape
         sample_range = np.arange(n_samples)[:, None]
 
+        # copy=True if missing accepted and copy is None
+        if copy is None:
+            copy = True if kill_missing is False else False
+
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          n_jobs=n_jobs, squared=True)
+                                          n_jobs=n_jobs, squared=True,
+                                          kill_missing=kill_missing,
+                                          missing_values=missing_values,
+                                          copy=copy)
             else:
                 dist = pairwise_distances(
                     X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
@@ -791,7 +812,7 @@ class SupervisedIntegerMixin(object):
 
 
 class UnsupervisedMixin(object):
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, kill_missing=True):
         """Fit the model using X as training data
 
         Parameters
@@ -800,4 +821,4 @@ class UnsupervisedMixin(object):
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
         """
-        return self._fit(X)
+        return self._fit(X, kill_missing)
