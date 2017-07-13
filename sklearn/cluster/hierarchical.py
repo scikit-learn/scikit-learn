@@ -312,6 +312,9 @@ def linkage_tree(X, connectivity=None, n_components=None,
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
 
+    n_components : int (optional)
+        The number of connected components in the graph.
+
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
         useful to decrease computation time if the number of clusters is
@@ -596,14 +599,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_clusters : int, default=2
         The number of clusters to find.
 
-    connectivity : array-like or callable, optional
-        Connectivity matrix. Defines for each sample the neighboring
-        samples following a given structure of the data.
-        This can be a connectivity matrix itself or a callable that transforms
-        the data into a connectivity matrix, such as derived from
-        kneighbors_graph. Default is None, i.e, the
-        hierarchical clustering algorithm is unstructured.
-
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or 'precomputed'.
@@ -614,6 +609,14 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
+
+    connectivity : array-like or callable, optional
+        Connectivity matrix. Defines for each sample the neighboring
+        samples following a given structure of the data.
+        This can be a connectivity matrix itself or a callable that transforms
+        the data into a connectivity matrix, such as derived from
+        kneighbors_graph. Default is None, i.e, the
+        hierarchical clustering algorithm is unstructured.
 
     compute_full_tree : bool or 'auto' (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -766,14 +769,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     n_clusters : int, default 2
         The number of clusters to find.
 
-    connectivity : array-like or callable, optional
-        Connectivity matrix. Defines for each feature the neighboring
-        features following a given structure of the data.
-        This can be a connectivity matrix itself or a callable that transforms
-        the data into a connectivity matrix, such as derived from
-        kneighbors_graph. Default is None, i.e, the
-        hierarchical clustering algorithm is unstructured.
-
     affinity : string or callable, default "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or 'precomputed'.
@@ -784,6 +779,14 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
+
+    connectivity : array-like or callable, optional
+        Connectivity matrix. Defines for each feature the neighboring
+        features following a given structure of the data.
+        This can be a connectivity matrix itself or a callable that transforms
+        the data into a connectivity matrix, such as derived from
+        kneighbors_graph. Default is None, i.e, the
+        hierarchical clustering algorithm is unstructured.
 
     compute_full_tree : bool or 'auto', optional, default "auto"
         Stop early the construction of the tree at n_clusters. This is
