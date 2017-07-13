@@ -338,7 +338,7 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    r(i, k) \leftarrow s(i, k) - max [ a(i, \acute{k}) + s(i, \acute{k}) \forall \acute{k} \neq k ]
+    r(i, k) \leftarrow s(i, k) - max [ a(i, k') + s(i, k') \forall k' \neq k ]
 
 Where :math:`s(i, k)` is the similarity between samples :math:`i` and :math:`k`.
 The availability of sample :math:`k`
@@ -346,7 +346,7 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    a(i, k) \leftarrow min [0, r(k, k) + \sum_{\acute{i}~s.t.~\acute{i} \notin \{i, k\}}{r(\acute{i}, k)}]
+    a(i, k) \leftarrow min [0, r(k, k) + \sum_{i'~s.t.~i' \notin \{i, k\}}{r(i', k)}]
 
 To begin with, all values for :math:`r` and :math:`a` are set to zero,
 and the calculation of each iterates until convergence.
@@ -1119,12 +1119,12 @@ Mathematical formulation
 Assume two label assignments (of the same N objects), :math:`U` and :math:`V`.
 Their entropy is the amount of uncertainty for a partition set, defined by:
 
-.. math:: H(U) = \sum_{i=1}^{|U|}P(i)\log(P(i))
+.. math:: H(U) = - \sum_{i=1}^{|U|}P(i)\log(P(i))
 
 where :math:`P(i) = |U_i| / N` is the probability that an object picked at
 random from :math:`U` falls into class :math:`U_i`. Likewise for :math:`V`:
 
-.. math:: H(V) = \sum_{j=1}^{|V|}P'(j)\log(P'(j))
+.. math:: H(V) = - \sum_{j=1}^{|V|}P'(j)\log(P'(j))
 
 With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U`
 and :math:`V` is calculated by:
@@ -1136,7 +1136,7 @@ picked at random falls into both classes :math:`U_i` and :math:`V_j`.
 
 It also can be expressed in set cardinality formulation:
 
-.. math:: \text{MI}(U, V) = \sum_{i=1}^|U| \sum_{j=1}^|V| \frac{|U_i \cap V_j|}{N}\log\left(\frac{N|U_i \cap V_j|}{|U_i||V_j|}\right)
+.. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \frac{|U_i \cap V_j|}{N}\log\left(\frac{N|U_i \cap V_j|}{|U_i||V_j|}\right)
 
 The normalized mutual information is defined as
 

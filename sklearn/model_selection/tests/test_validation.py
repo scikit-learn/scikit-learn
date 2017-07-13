@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
@@ -25,6 +26,7 @@ from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import cross_validate
 from sklearn.model_selection import permutation_test_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
@@ -42,7 +44,12 @@ from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
+from sklearn.metrics import r2_score
+from sklearn.metrics.scorer import check_scoring
 
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.linear_model import PassiveAggressiveClassifier
@@ -56,6 +63,7 @@ from sklearn.pipeline import Pipeline
 
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.base import BaseEstimator
+from sklearn.base import clone
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.utils import shuffle
 from sklearn.datasets import make_classification
@@ -262,6 +270,198 @@ def test_cross_val_score():
     assert_raises(ValueError, cross_val_score, clf, X_3d, y2)
 
 
+def test_cross_validate_invalid_scoring_param():
+    X, y = make_classification(random_state=0)
+    estimator = MockClassifier()
+
+    # Test the errors
+    error_message_regexp = ".*must be unique strings.*"
+
+    # List/tuple of callables should raise a message advising users to use
+    # dict of names to callables mapping
+    assert_raises_regex(ValueError, error_message_regexp,
+                        cross_validate, estimator, X, y,
+                        scoring=(make_scorer(precision_score),
+                                 make_scorer(accuracy_score)))
+    assert_raises_regex(ValueError, error_message_regexp,
+                        cross_validate, estimator, X, y,
+                        scoring=(make_scorer(precision_score),))
+
+    # So should empty lists/tuples
+    assert_raises_regex(ValueError, error_message_regexp + "Empty list.*",
+                        cross_validate, estimator, X, y, scoring=())
+
+    # So should duplicated entries
+    assert_raises_regex(ValueError, error_message_regexp + "Duplicate.*",
+                        cross_validate, estimator, X, y,
+                        scoring=('f1_micro', 'f1_micro'))
+
+    # Nested Lists should raise a generic error message
+    assert_raises_regex(ValueError, error_message_regexp,
+                        cross_validate, estimator, X, y,
+                        scoring=[[make_scorer(precision_score)]])
+
+    error_message_regexp = (".*should either be.*string or callable.*for "
+                            "single.*.*dict.*for multi.*")
+
+    # Empty dict should raise invalid scoring error
+    assert_raises_regex(ValueError, "An empty dict",
+                        cross_validate, estimator, X, y, scoring=(dict()))
+
+    # And so should any other invalid entry
+    assert_raises_regex(ValueError, error_message_regexp,
+                        cross_validate, estimator, X, y, scoring=5)
+
+    multiclass_scorer = make_scorer(precision_recall_fscore_support)
+
+    # Multiclass Scorers that return multiple values are not supported yet
+    assert_raises_regex(ValueError,
+                        "Classification metrics can't handle a mix of "
+                        "binary and continuous targets",
+                        cross_validate, estimator, X, y,
+                        scoring=multiclass_scorer)
+    assert_raises_regex(ValueError,
+                        "Classification metrics can't handle a mix of "
+                        "binary and continuous targets",
+                        cross_validate, estimator, X, y,
+                        scoring={"foo": multiclass_scorer})
+
+    multivalued_scorer = make_scorer(confusion_matrix)
+
+    # Multiclass Scorers that return multiple values are not supported yet
+    assert_raises_regex(ValueError, "scoring must return a number, got",
+                        cross_validate, SVC(), X, y,
+                        scoring=multivalued_scorer)
+    assert_raises_regex(ValueError, "scoring must return a number, got",
+                        cross_validate, SVC(), X, y,
+                        scoring={"foo": multivalued_scorer})
+
+    assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
+                        cross_validate, SVC(), X, y, scoring="mse")
+
+
+def test_cross_validate():
+    # Compute train and test mse/r2 scores
+    cv = KFold(n_splits=5)
+
+    # Regression
+    X_reg, y_reg = make_regression(n_samples=30, random_state=0)
+    reg = Ridge(random_state=0)
+
+    # Classification
+    X_clf, y_clf = make_classification(n_samples=30, random_state=0)
+    clf = SVC(kernel="linear", random_state=0)
+
+    for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
+        # It's okay to evaluate regression metrics on classification too
+        mse_scorer = check_scoring(est, 'neg_mean_squared_error')
+        r2_scorer = check_scoring(est, 'r2')
+        train_mse_scores = []
+        test_mse_scores = []
+        train_r2_scores = []
+        test_r2_scores = []
+        for train, test in cv.split(X, y):
+            est = clone(reg).fit(X[train], y[train])
+            train_mse_scores.append(mse_scorer(est, X[train], y[train]))
+            train_r2_scores.append(r2_scorer(est, X[train], y[train]))
+            test_mse_scores.append(mse_scorer(est, X[test], y[test]))
+            test_r2_scores.append(r2_scorer(est, X[test], y[test]))
+
+        train_mse_scores = np.array(train_mse_scores)
+        test_mse_scores = np.array(test_mse_scores)
+        train_r2_scores = np.array(train_r2_scores)
+        test_r2_scores = np.array(test_r2_scores)
+
+        scores = (train_mse_scores, test_mse_scores, train_r2_scores,
+                  test_r2_scores)
+
+        yield check_cross_validate_single_metric, est, X, y, scores
+        yield check_cross_validate_multi_metric, est, X, y, scores
+
+
+def check_cross_validate_single_metric(clf, X, y, scores):
+    (train_mse_scores, test_mse_scores, train_r2_scores,
+     test_r2_scores) = scores
+    # Test single metric evaluation when scoring is string or singleton list
+    for (return_train_score, dict_len) in ((True, 4), (False, 3)):
+        # Single metric passed as a string
+        if return_train_score:
+            # It must be True by default
+            mse_scores_dict = cross_validate(clf, X, y, cv=5,
+                                             scoring='neg_mean_squared_error')
+            assert_array_almost_equal(mse_scores_dict['train_score'],
+                                      train_mse_scores)
+        else:
+            mse_scores_dict = cross_validate(clf, X, y, cv=5,
+                                             scoring='neg_mean_squared_error',
+                                             return_train_score=False)
+        assert_true(isinstance(mse_scores_dict, dict))
+        assert_equal(len(mse_scores_dict), dict_len)
+        assert_array_almost_equal(mse_scores_dict['test_score'],
+                                  test_mse_scores)
+
+        # Single metric passed as a list
+        if return_train_score:
+            # It must be True by default
+            r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'])
+            assert_array_almost_equal(r2_scores_dict['train_r2'],
+                                      train_r2_scores)
+        else:
+            r2_scores_dict = cross_validate(clf, X, y, cv=5, scoring=['r2'],
+                                            return_train_score=False)
+        assert_true(isinstance(r2_scores_dict, dict))
+        assert_equal(len(r2_scores_dict), dict_len)
+        assert_array_almost_equal(r2_scores_dict['test_r2'], test_r2_scores)
+
+
+def check_cross_validate_multi_metric(clf, X, y, scores):
+    # Test multimetric evaluation when scoring is a list / dict
+    (train_mse_scores, test_mse_scores, train_r2_scores,
+     test_r2_scores) = scores
+    all_scoring = (('r2', 'neg_mean_squared_error'),
+                   {'r2': make_scorer(r2_score),
+                    'neg_mean_squared_error': 'neg_mean_squared_error'})
+
+    keys_sans_train = set(('test_r2', 'test_neg_mean_squared_error',
+                           'fit_time', 'score_time'))
+    keys_with_train = keys_sans_train.union(
+        set(('train_r2', 'train_neg_mean_squared_error')))
+
+    for return_train_score in (True, False):
+        for scoring in all_scoring:
+            if return_train_score:
+                # return_train_score must be True by default
+                cv_results = cross_validate(clf, X, y, cv=5, scoring=scoring)
+                assert_array_almost_equal(cv_results['train_r2'],
+                                          train_r2_scores)
+                assert_array_almost_equal(
+                    cv_results['train_neg_mean_squared_error'],
+                    train_mse_scores)
+            else:
+                cv_results = cross_validate(clf, X, y, cv=5, scoring=scoring,
+                                            return_train_score=False)
+            assert_true(isinstance(cv_results, dict))
+            assert_equal(set(cv_results.keys()),
+                         keys_with_train if return_train_score
+                         else keys_sans_train)
+            assert_array_almost_equal(cv_results['test_r2'], test_r2_scores)
+            assert_array_almost_equal(
+                cv_results['test_neg_mean_squared_error'], test_mse_scores)
+
+            # Make sure all the arrays are of np.ndarray type
+            assert type(cv_results['test_r2']) == np.ndarray
+            assert (type(cv_results['test_neg_mean_squared_error']) ==
+                    np.ndarray)
+            assert type(cv_results['fit_time'] == np.ndarray)
+            assert type(cv_results['score_time'] == np.ndarray)
+
+            # Ensure all the times are within sane limits
+            assert np.all(cv_results['fit_time'] >= 0)
+            assert np.all(cv_results['fit_time'] < 10)
+            assert np.all(cv_results['score_time'] >= 0)
+            assert np.all(cv_results['score_time'] < 10)
+
+
 def test_cross_val_score_predict_groups():
     # Check if ValueError (when groups is None) propagates to cross_val_score
     # and cross_val_predict
@@ -386,8 +586,9 @@ def test_cross_val_score_score_func():
 
     with warnings.catch_warnings(record=True):
         scoring = make_scorer(score_func)
-        score = cross_val_score(clf, X, y, scoring=scoring)
+        score = cross_val_score(clf, X, y, scoring=scoring, cv=3)
     assert_array_equal(score, [1.0, 1.0, 1.0])
+    # Test that score function is called only 3 times (for cv=3)
     assert len(_score_func_args) == 3
 
 

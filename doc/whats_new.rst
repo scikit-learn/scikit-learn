@@ -287,6 +287,30 @@ Model evaluation and meta-estimators
    - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
      :issue:`7723` by :user:`Mikhail Korobov <kmike>`.
 
+
+   - Relax assumption on the data for the
+     :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
+     kernel is defined on the open interval :math:`(-skewedness; +\infty)^d`,
+     the transform function should not check whether ``X < 0`` but whether ``X <
+     -self.skewedness``. :issue:`7573` by :user:`Romain Brault <RomainBrault>`.
+
+   - Made default kernel parameters kernel-dependent in
+     :class:`kernel_approximation.Nystroem`.
+     :issue:`5229` by :user:`Saurabh Bansod <mth4saurabh>` and `Andreas Müller`_.
+
+Model evaluation and meta-estimators
+
+   - :class:`pipeline.Pipeline` is now able to cache transformers
+     within a pipeline by using the ``memory`` constructor parameter.
+     :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+   - :class:`pipeline.Pipeline` steps can now be accessed as attributes of its
+     ``named_steps`` attribute. :issue:`8586` by :user:`Herilalaina
+     Rakotoarison <herilalaina>`.
+
+   - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
+     :issue:`7723` by :user:`Mikhail Korobov <kmike>`.
+
    - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
      A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
