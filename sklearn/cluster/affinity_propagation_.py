@@ -197,10 +197,11 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     Parameters
     ----------
     damping : float, optional, default: 0.5
-        Damping factor (between 0.5 and 1) damps the
-        responsibility and availability messages to
-        avoid numerical oscillations when updating these
-        messages.
+        Damping factor (between 0.5 and 1) is the extent to
+        which the current value is maintained relative to
+        incoming values (weighted 1 - damping). This in order
+        to avoid numerical oscillations when updating these
+        values (messages).
 
     max_iter : int, optional, default: 200
         Maximum number of iterations.
