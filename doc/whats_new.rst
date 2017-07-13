@@ -109,9 +109,6 @@ Other estimators
      Kullback-Leibler divergence and the Itakura-Saito divergence.
      :issue:`5295` by `Tom Dupre la Tour`_.
 
-   - Add support for sparse multilabel ``y`` in :class:`NeighborsBase`
-     :issue:`8057` by :user:`Aman Dalmia <dalmia>`, :user:`Joan Massich <massich>`.
-
 Model selection and evaluation
 
    - :class:`model_selection.GridSearchCV` and
@@ -263,30 +260,6 @@ Preprocessing and feature selection
    - Small performance improvement to n-gram creation in
      :mod:`feature_extraction.text` by binding methods for loops and
      special-casing unigrams. :issue:`7567` by :user:`Jaye Doepke <jtdoepke>`
-
-   - Relax assumption on the data for the
-     :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
-     kernel is defined on the open interval :math:`(-skewedness; +\infty)^d`,
-     the transform function should not check whether ``X < 0`` but whether ``X <
-     -self.skewedness``. :issue:`7573` by :user:`Romain Brault <RomainBrault>`.
-
-   - Made default kernel parameters kernel-dependent in
-     :class:`kernel_approximation.Nystroem`.
-     :issue:`5229` by :user:`Saurabh Bansod <mth4saurabh>` and `Andreas Müller`_.
-
-Model evaluation and meta-estimators
-
-   - :class:`pipeline.Pipeline` is now able to cache transformers
-     within a pipeline by using the ``memory`` constructor parameter.
-     :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
-
-   - :class:`pipeline.Pipeline` steps can now be accessed as attributes of its
-     ``named_steps`` attribute. :issue:`8586` by :user:`Herilalaina
-     Rakotoarison <herilalaina>`.
-
-   - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
-     :issue:`7723` by :user:`Mikhail Korobov <kmike>`.
-
 
    - Relax assumption on the data for the
      :class:`kernel_approximation.SkewedChi2Sampler`. Since the Skewed-Chi2
