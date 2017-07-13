@@ -129,20 +129,6 @@ Model selection and evaluation
      particularly useful for targets with an exponential trend.
      :issue:`7655` by :user:`Karan Desai <karandesai-96>`.
 
-   - Added solver ``'saga'`` that implements the improved version of Stochastic
-     Average Gradient, in :class:`linear_model.LogisticRegression` and
-     :class:`linear_model.Ridge`. It allows the use of L1 penalty with
-     multinomial logistic loss, and behaves marginally better than 'sag'
-     during the first epochs of ridge and logistic regression.
-     :issue:`8446` by `Arthur Mensch`_.
-
-   - Added :class:`preprocessing.QuantileTransformer` class and
-     :func:`preprocessing.quantile_transform` function for features
-     normalization based on quantiles.
-     :issue:`8363` by :user:`Denis Engemann <dengemann>`,
-     :user:`Guillaume Lemaitre <glemaitre>`, `Olivier Grisel`_, `Raghav RV`_,
-     :user:`Thierry Guillemot <tguillemot>`_, and `Gael Varoquaux`_.
-
    - Added :class:`experimental.ColumnTransformer`, which allows to apply
      different transformers to different columns of arrays or or pandas
      dataframes. By `Andreas Müller`_ and `Joris Van den Bossche`_.
@@ -5616,6 +5602,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Vincent Pham: https://github.com/vincentpham1991
 
 .. _Denis Engemann: http://denis-engemann.de
+
 .. _Anish Shah: https://github.com/AnishShah
 
 .. _Neeraj Gangwar: http://neerajgangwar.in
