@@ -20,6 +20,8 @@ from sklearn.utils.testing \
 
 def f(x):
     return x * np.sin(x)
+
+
 X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
 X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
@@ -344,3 +346,11 @@ def test_no_fit_default_predict():
 
     assert_array_almost_equal(y_std1, y_std2)
     assert_array_almost_equal(y_cov1, y_cov2)
+
+
+def test_K_inv_reset():
+    # Test that self._K_inv is reset after a new fit
+    for kernel in kernels:
+        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        assert_true(hasattr(gpr, '_K_inv'))
+        assert_true(gpr._K_inv is None)
