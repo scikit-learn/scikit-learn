@@ -544,7 +544,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         from matplotlib.text import Annotation
         if ax is None:
             ax = plt.gca()
-        # ax.set_axis_off()
+        ax.set_axis_off()
         my_tree = self._make_tree(0, decision_tree.tree_)
         dt = buchheim(my_tree)
         self.recurse(dt, decision_tree.tree_, ax)
@@ -557,10 +557,19 @@ class _MPLTreeExporter(_BaseTreeExporter):
         for ann in anns:
             ann.update_bbox_position_size(renderer)
 
-        # get figure to data transform
-        inv = ax.transData.inverted()
+        # get all the annotated points
+        xys = [ann.xyann for ann in anns]
+
+        # set axis limits
+        mins = np.min(xys, axis=0)
+        maxs = np.max(xys, axis=0)
+
+        ax.set_xlim(mins[0], maxs[0])
+        ax.set_ylim(maxs[1], mins[1])
 
         if self.fontsize is None:
+            # get figure to data transform
+            inv = ax.transData.inverted()
             # adjust fontsize to avoid overlap
             # get max box width
             widths = [inv.get_matrix()[0, 0]
@@ -572,17 +581,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
             size = anns[0].get_fontsize() / max_width
             for ann in anns:
                 ann.set_fontsize(size)
-
-        # bboxes = [inv.transform(ann.get_bbox_patch().get_bbox()) for ann in anns]
-        # get all the annotated points
-        xys = [ann.xyann for ann in anns]
-
-        # set axis limits with slight margin of .5
-        mins = np.min(xys, axis=0)
-        maxs = np.max(xys, axis=0)
-
-        ax.set_xlim(mins[0], maxs[0])
-        ax.set_ylim(maxs[1], mins[1])
 
     def recurse(self, node, tree, ax, depth=0):
         kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
