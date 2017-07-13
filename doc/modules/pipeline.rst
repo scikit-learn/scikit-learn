@@ -124,6 +124,8 @@ i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
 pipeline.
 
+.. _pipeline_cache:
+
 Caching transformers: avoid repeated computation
 -------------------------------------------------
 

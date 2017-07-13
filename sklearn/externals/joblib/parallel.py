@@ -48,7 +48,7 @@ BACKENDS = {
 DEFAULT_BACKEND = 'multiprocessing'
 DEFAULT_N_JOBS = 1
 
-# Thread local value that can be overriden by the ``parallel_backend`` context
+# Thread local value that can be overridden by the ``parallel_backend`` context
 # manager
 _backend = threading.local()
 

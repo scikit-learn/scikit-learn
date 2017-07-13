@@ -160,13 +160,13 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     Parameters
     ----------
-    subset : 'train' or 'test', 'all', optional
-        Select the dataset to load: 'train' for the training set, 'test'
-        for the test set, 'all' for both, with shuffled ordering.
-
     data_home : optional, default: None
         Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+
+    subset : 'train' or 'test', 'all', optional
+        Select the dataset to load: 'train' for the training set, 'test'
+        for the test set, 'all' for both, with shuffled ordering.
 
     categories : None or collection of string or unicode
         If None (default), load all the categories.
@@ -181,10 +181,6 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     random_state : numpy random number generator or seed integer
         Used to shuffle the dataset.
 
-    download_if_missing : optional, True by default
-        If False, raise an IOError if the data is not locally available
-        instead of trying to download the data from the source site.
-
     remove : tuple
         May contain any subset of ('headers', 'footers', 'quotes'). Each of
         these are kinds of text that will be detected and removed from the
@@ -197,6 +193,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
         'headers' follows an exact standard; the other filters are not always
         correct.
+
+    download_if_missing : optional, True by default
+        If False, raise an IOError if the data is not locally available
+        instead of trying to download the data from the source site.
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -295,14 +295,9 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
 
     Parameters
     ----------
-
     subset : 'train' or 'test', 'all', optional
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
-
-    data_home : optional, default: None
-        Specify an download and cache folder for the datasets. If None,
-        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     remove : tuple
         May contain any subset of ('headers', 'footers', 'quotes'). Each of
@@ -314,9 +309,12 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
         ends of posts that look like signatures, and 'quotes' removes lines
         that appear to be quoting another post.
 
+    data_home : optional, default: None
+        Specify an download and cache folder for the datasets. If None,
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+
     Returns
     -------
-
     bunch : Bunch object
         bunch.data: sparse matrix, shape [n_samples, n_features]
         bunch.target: array, shape [n_samples]
