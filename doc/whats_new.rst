@@ -35,7 +35,7 @@ have extended the ``scoring`` and ``refit`` parameters for grid/randomized
 search :ref:`to handle multiple metrics <multimetric_grid_search>`.
 
 We've made some important fixes too.  We've fixed a longstanding implementation
-erorr in :func:`metrics.average_precision_score`, so please be cautious with
+error in :func:`metrics.average_precision_score`, so please be cautious with
 prior results reported from that function.  A number of errors in the
 :class:`manifold.TSNE` implementation have been fixed, particularly in the
 default Barnes-Hut approximation.  :class:`semi_supervised.LabelSpreading` and
@@ -207,7 +207,7 @@ Linear, kernelized and related models
      :class:`linear_model.LogisticRegression` when using newton-cg solver; and
      :class:`linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr
      solvers. :issue:`8835`, :issue:`8061` by :user:`Joan Massich <massich>` and :user:`Nicolas
-     Cordier <ncordier>` and :user:`Thierry Guillemot`.
+     Cordier <ncordier>` and :user:`Thierry Guillemot <tguillemot>`.
 
 Other predictors
 
@@ -468,7 +468,8 @@ Decomposition, manifold learning and clustering
    - Fixed the implementation of :class:`manifold.TSNE`:
       - ``early_exageration`` parameter had no effect and is now used for the
         first 250 optimization iterations.
-      - Fixed the ``InsersionError`` reported in :issue:`8992`.
+      - Fixed the ``AssertionError: Tree consistency failed`` exception
+        reported in :issue:`8992`.
       - Improve the learning schedule to match the one from the reference
         implementation `lvdmaaten/bhtsne <https://github.com/lvdmaaten/bhtsne>`_.
      by :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
