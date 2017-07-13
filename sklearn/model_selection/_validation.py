@@ -492,6 +492,31 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
+def _score_single_metric(estimator, X_test, y_test, scorer):
+    """Copmute the score of an estimator given a test set and a single metric.
+    This function will also check whether the estimator has a classes attribute
+    and pass that into the labels attribute of the scorer if available.
+    """
+    if y_test is None:
+        score = scorer(estimator, X_test)
+    else:
+        score = scorer(estimator, X_test, y_test)
+
+    if hasattr(score, 'item'):
+        try:
+            # e.g. unwrap memmapped scalars
+            score = score.item()
+        except ValueError:
+            # non-scalar?
+            pass
+
+    if not isinstance(score, numbers.Number):
+        raise ValueError("scoring must return a number, got %s (%s) "
+                         "instead. (scorer=%r)"
+                         % (str(score), type(score), scorer))
+    return score
+
+
 def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
     """Compute the score(s) of an estimator on a given test set.
 
@@ -501,23 +526,7 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
     if is_multimetric:
         return _multimetric_score(estimator, X_test, y_test, scorer)
     else:
-        if y_test is None:
-            score = scorer(estimator, X_test)
-        else:
-            score = scorer(estimator, X_test, y_test)
-
-        if hasattr(score, 'item'):
-            try:
-                # e.g. unwrap memmapped scalars
-                score = score.item()
-            except ValueError:
-                # non-scalar?
-                pass
-
-        if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s) "
-                             "instead. (scorer=%r)"
-                             % (str(score), type(score), scorer))
+        score = _score_single_metric(estimator, X_test, y_test, scorer)
     return score
 
 
@@ -526,24 +535,8 @@ def _multimetric_score(estimator, X_test, y_test, scorers):
     scores = {}
 
     for name, scorer in scorers.items():
-        if y_test is None:
-            score = scorer(estimator, X_test)
-        else:
-            score = scorer(estimator, X_test, y_test)
-
-        if hasattr(score, 'item'):
-            try:
-                # e.g. unwrap memmapped scalars
-                score = score.item()
-            except ValueError:
-                # non-scalar?
-                pass
+        score = _score_single_metric(estimator, X_test, y_test, scorer)
         scores[name] = score
-
-        if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s) "
-                             "instead. (scorer=%s)"
-                             % (str(score), type(score), name))
     return scores
 
 
