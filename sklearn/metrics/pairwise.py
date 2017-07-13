@@ -523,8 +523,8 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     """
     if size_threshold is not None:
         warnings.warn('Use of the "size_threshold" is deprecated '
-                      'and it will be removed in the future '
-                      'versions of scikit learn.', DeprecationWarning)
+                      'in 0.19 and it will be removed version '
+                      '0.21 of scikit-learn', DeprecationWarning)
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
