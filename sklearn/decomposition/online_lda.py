@@ -187,9 +187,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     max_iter : integer, optional (default=10)
         The maximum number of iterations.
 
-    total_samples : int, optional (default=1e6)
-        Total number of documents. Only used in the `partial_fit` method.
-
     batch_size : int, optional (default=128)
         Number of documents to use in each EM iteration. Only used in online
         learning.
@@ -201,6 +198,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         in training process, but it will also increase total training time.
         Evaluating perplexity in every iteration might increase training time
         up to two-fold.
+
+    total_samples : int, optional (default=1e6)
+        Total number of documents. Only used in the `partial_fit` method.
 
     perp_tol : float, optional (default=1e-1)
         Perplexity tolerance in batch learning. Only used when
@@ -794,6 +794,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             This argument is deprecated and is currently being ignored.
 
             .. deprecated:: 0.19
+
+        sub_sampling : bool
+            Do sub-sampling or not.
 
         Returns
         -------
