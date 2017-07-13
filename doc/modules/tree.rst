@@ -127,7 +127,7 @@ Using the Iris dataset, we can construct a tree as follows::
 Once trained, you can plot the tree with the plot_tree function::
 
 
-    >>> tree.plot_tree(clf.fit(iris.data, iris.target))
+    >>> tree.plot_tree(clf.fit(iris.data, iris.target)) # doctest: +SKIP
 
 .. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_002.png
    :target: ../auto_examples/tree/plot_iris.html
