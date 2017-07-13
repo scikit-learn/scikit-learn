@@ -448,6 +448,14 @@ def test_parallel_classification():
     ensemble.set_params(n_jobs=2)
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
+    try:
+      X_err = np.hstack((X_test, np.zeros((X_test.shape[0], 1))))
+      decisionerr = ensemble.decision_function(X_err)
+    except ValueError:
+      print('ok')
+    except:
+      print("Unexpected error")
+      raise
 
     ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
