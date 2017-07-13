@@ -523,7 +523,7 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
         precompute = False
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, fit_intercept=fit_intercept, normalize=normalize,
-            copy=copy, return_mean=True)
+            copy=False, return_mean=True)
     else:
         # copy was done in fit if necessary
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
