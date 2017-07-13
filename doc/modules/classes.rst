@@ -724,8 +724,6 @@ Kernels:
    linear_model.PassiveAggressiveClassifier
    linear_model.PassiveAggressiveRegressor
    linear_model.Perceptron
-   linear_model.RandomizedLasso
-   linear_model.RandomizedLogisticRegression
    linear_model.RANSACRegressor
    linear_model.Ridge
    linear_model.RidgeClassifier
@@ -1390,6 +1388,18 @@ Low-level methods
 
 Recently deprecated
 ===================
+
+
+To be removed in 0.21
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
+
+   linear_model.RandomizedLasso
+   linear_model.RandomizedLogisticRegression
+   neighbors.LSHForest
 
 
 To be removed in 0.20
