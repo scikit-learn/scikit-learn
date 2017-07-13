@@ -250,7 +250,7 @@ def type_of_target(y):
         if not issparse(y):
             y = np.asarray(y)
         else:
-            y = y.A
+            return 'unknown'
     except ValueError:
         # Known to fail in numpy 1.3 for array of arrays
         return 'unknown'

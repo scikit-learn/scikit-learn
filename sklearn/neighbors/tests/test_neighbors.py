@@ -546,7 +546,7 @@ def test_sparse_multioutput_error_raise():
     # Test k-NN classifier on multioutput data
     rng = check_random_state(0)
     n_features = 5
-    n_samples = 50
+    n_samples = 10
     n_output = 3
 
     X = rng.rand(n_samples, n_features)

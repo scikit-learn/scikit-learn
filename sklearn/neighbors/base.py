@@ -776,7 +776,14 @@ class SupervisedIntegerMixin(object):
         else:
             self.outputs_2d_ = True
 
-        check_classification_targets(y)
+        try:
+            check_classification_targets(y)
+        except ValueError as e:
+            if issparse(y) and self.outputs_2d_:
+                raise ValueError("Sparse y is only supported for multilabel"
+                                 "case (multioutput is not supported)")
+            else:
+                raise e
 
         self.classes_ = []
 
@@ -785,9 +792,6 @@ class SupervisedIntegerMixin(object):
             self._y = y
             if np.all(np.union1d(y.data, [0, 1]) == [0, 1]):
                 self.classes_ = [np.array([0, 1], dtype=np.int)] * y.shape[1]
-            else:
-                raise ValueError("Sparse y is only supported for multilabel"
-                                 "case (multioutput is not supported)")
 
         else:
             self._y = np.empty(y.shape, dtype=np.int)
