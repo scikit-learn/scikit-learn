@@ -90,6 +90,9 @@ Classifiers and regressors
      during the first epochs of ridge and logistic regression.
      :issue:`8446` by `Arthur Mensch`_.
 
+   - Add support for sparse multilabel ``y`` in :class:`NeighborsBase`
+     :issue:`8057` by :user:`Aman Dalmia <dalmia>`, :user:`Joan Massich <massich>`.
+
 Other estimators
 
    - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
