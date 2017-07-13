@@ -235,7 +235,7 @@ def fetch_species_distributions(data_home=None,
         samples_path = join(data_home, "samples.zip")
         _fetch_url(SAMPLES_URL, samples_path,
                    expected_samples_checksum)
-        X = np.load(samples_path)
+        X = np.load(samples_path)  # samples.zip is a valid npz
         remove(samples_path)
 
         for f in X.files:
@@ -252,7 +252,7 @@ def fetch_species_distributions(data_home=None,
         coverages_path = join(data_home, "coverages.zip")
         _fetch_url(COVERAGES_URL, coverages_path,
                    expected_coverages_checksum)
-        X = np.load(coverages_path)
+        X = np.load(coverages_path)  # coverages.zip is a valid npz
         remove(coverages_path)
 
         coverages = []
