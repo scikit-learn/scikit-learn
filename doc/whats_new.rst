@@ -56,7 +56,7 @@ random sampling procedures.
      with ``scale=True`` (bug fix)
    * :class:`ensemble.GradientBoostingClassifier` and
      :class:`ensemble.GradientBoostingRegressor` where ``min_impurity_split`` is used (bug fix)
-   * gradient boosting with :class:`ensemble.gradient_boosting.QuantileLossFunction` (bug fix)
+   * gradient boosting ``loss='quantile'`` (bug fix)
    * :class:`ensemble.IsolationForest` (bug fix)
    * :class:`feature_selection.SelectFdr` (bug fix)
    * :class:`linear_model.RANSACRegressor` (bug fix)
@@ -145,6 +145,10 @@ Miscellaneous
      and may be particularly useful for prediction time. :issue:`7548` by
      `Joel Nothman`_.
 
+   - Added a test to ensure parameter listing in docstrings match the
+     function/class signature. :issue:`9206` by `Alexandre Gramfort`_ and
+     `Raghav RV`_.
+
 Enhancements
 ............
 
@@ -165,6 +169,9 @@ Trees and ensembles
      removed by setting it to ``None``.
      :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
+   - :func:`tree.export_graphviz` now shows configurable number of decimal
+     places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Linear, kernelized and related models
 
    - :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
@@ -174,7 +181,7 @@ Linear, kernelized and related models
      ``tol`` parameters, to handle convergence more precisely.
      ``n_iter`` parameter is deprecated, and the fitted estimator exposes
      a ``n_iter_`` attribute, with actual number of iterations before
-     convergence. By `Tom Dupre la Tour`_.
+     convergence. :issue:`5036` by `Tom Dupre la Tour`_.
 
    - Added ``average`` parameter to perform weight averaging in
      :class:`linear_model.PassiveAggressiveClassifier`. :issue:`4939`
@@ -190,20 +197,28 @@ Linear, kernelized and related models
      is a lot faster with ``return_std=True``. :issue:`8591` by
      :user:`Hadrien Bertrand <hbertrand>`.
 
-   - Memory usage enhancement: Prevent cast from float32 to float64 in
-     :class:`linear_model.LogisticRegression` when using newton-cg
-     solver. :issue:`8835` by :user:`Joan Massich <massich>`.
+   - Added ``return_std`` to ``predict`` method of
+     :class:`linear_model.ARDRegression` and
+     :class:`linear_model.BayesianRidge`.
+     :issue:`7838` by :user:`Sergey Feldman <sergeyf>`.
 
-   - Memory usage enhancement: Prevent cast from float32 to float64 in
-     :class:`linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
-     :class:`linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr solvers
-     by :user:`Joan Massich <massich>`, :user:`Nicolas Cordier <ncordier>`
+   - Memory usage enhancements: Prevent cast from float32 to float64 in:
+     :class:`linear_model.MultiTaskElasticNet`;
+     :class:`linear_model.LogisticRegression` when using newton-cg solver; and
+     :class:`linear_model.Ridge` when using svd, sparse_cg, cholesky or lsqr
+     solvers. :issue:`8835`, :issue:`8061` by :user:`Joan Massich <massich>` and :user:`Nicolas
+     Cordier <ncordier>` and :user:`Thierry Guillemot`.
 
 Other predictors
 
    - Custom metrics for the :mod:`neighbors` binary trees now have
      fewer constraints: they must take two 1d-arrays and return a float.
      :issue:`6288` by `Jake Vanderplas`_.
+
+   - ``algorithm='auto`` in :mod:`neighbors` estimators now chooses the most
+     appropriate algorithm for all input types and metrics. :issue:`9145` by
+     :user:`Herilalaina Rakotoarison <herilalaina>` and :user:`Reddy Chinthala
+     <preddy5Pradyumna>`.
 
 Decomposition, manifold learning and clustering
 
@@ -215,6 +230,7 @@ Decomposition, manifold learning and clustering
      :class:`decomposition.TruncatedSVD` now expose the singular values
      from the underlying SVD. They are stored in the attribute
      ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
+     :issue:`7685` by :user:`Tommy Löfstedt <tomlof>`
 
    - :class:`decomposition.NMF` now faster when ``beta_loss=0``.
      :issue:`9277` by :user:`hongkahjun`.
@@ -227,6 +243,10 @@ Decomposition, manifold learning and clustering
      `lvdmaaten/bhtsne <https://github.com/lvdmaaten/bhtsne>`_ by :user:`Thomas
      Moreau <tomMoral>` and `Olivier Grisel`_.
 
+   - Memory usage enhancements: Prevent cast from float32 to float64 in
+     :class:`decomposition.PCA` and
+     :func:`decomposition.randomized_svd_low_rank`.
+     :issue:`9067` by `Raghav RV`_.
 
 Preprocessing and feature selection
 
@@ -257,6 +277,10 @@ Model evaluation and meta-estimators
      within a pipeline by using the ``memory`` constructor parameter.
      :issue:`7990` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+   - :class:`pipeline.Pipeline` steps can now be accessed as attributes of its
+     ``named_steps`` attribute. :issue:`8586` by :user:`Herilalaina
+     Rakotoarison <herilalaina>`.
+
    - Added ``sample_weight`` parameter to :meth:`pipeline.Pipeline.score`.
      :issue:`7723` by :user:`Mikhail Korobov <kmike>`.
 
@@ -264,9 +288,11 @@ Model evaluation and meta-estimators
      A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
 
-   - :class:`model_selection.GridSearchCV`, :class:`model_selection.RandomizedSearchCV`
-     and :func:`model_selection.cross_val_score` now allow estimators with callable
-     kernels which were previously prohibited. :issue:`8005` by `Andreas Müller`_ .
+   - :class:`model_selection.GridSearchCV`,
+     :class:`model_selection.RandomizedSearchCV` and
+     :func:`model_selection.cross_val_score` now allow estimators with callable
+     kernels which were previously prohibited.
+     :issue:`8005` by `Andreas Müller`_ .
 
    - :func:`model_selection.cross_val_predict` now returns output of the
      correct shape for all values of the argument ``method``.
@@ -277,6 +303,9 @@ Model evaluation and meta-estimators
      :func:`model_selection.learning_curve`.
      :issue:`7506` by :user:`Narine Kokhlikyan <NarineK>`.
 
+   - :class:`model_selection.StratifiedShuffleSplit` now works with multioutput
+     multiclass (or multilabel) data.  :issue:`9044` by `Vlad Niculae`_.
+
    - Speed improvements to :class:`model_selection.StratifiedShuffleSplit`.
      :issue:`5991` by :user:`Arthur Mensch <arthurmensch>` and `Joel Nothman`_.
 
@@ -285,10 +314,13 @@ Model evaluation and meta-estimators
 
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using ``partial_fit``.
-     issue: `8053` by :user:`Peng Yu <yupbank>`.
+     :issue: `8053` by :user:`Peng Yu <yupbank>`.
 
    - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
      :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
+
+   - More clustering metrics are now available through :func:`metrics.get_scorer`
+     and ``scoring`` parameters. :issue:`8117` by `Raghav RV`_.
 
 Metrics
 
@@ -300,24 +332,30 @@ Metrics
 
 Miscellaneous
 
-   - :func:`utils.check_estimator` now attempts to ensure that methods transform, predict, etc.
-     do not set attributes on the estimator.
+   - :func:`utils.check_estimator` now attempts to ensure that methods
+     transform, predict, etc.  do not set attributes on the estimator.
      :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
 
    - Added type checking to the ``accept_sparse`` parameter in
-     :mod:`utils.validation` methods. This parameter now accepts only
-     boolean, string, or list/tuple of strings. ``accept_sparse=None`` is deprecated
-     and should be replaced by ``accept_sparse=False``.
+     :mod:`utils.validation` methods. This parameter now accepts only boolean,
+     string, or list/tuple of strings. ``accept_sparse=None`` is deprecated and
+     should be replaced by ``accept_sparse=False``.
      :issue:`7880` by :user:`Josh Karnofsky <jkarno>`.
 
    - Make it possible to load a chunk of an svmlight formatted file by
      passing a range of bytes to :func:`datasets.load_svmlight_file`.
      :issue:`935` by :user:`Olivier Grisel <ogrisel>`.
 
+   - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`
+     now accept non-finite features. :issue:`8931` by :user:`Attractadore`.
+
 Bug fixes
 .........
 
 Trees and ensembles
+
+   - Fixed a memory leak in trees when using trees with ``criterion='mae'``.
+     :issue:`8002` by `Raghav RV`_.
 
    - Fixed a bug where :class:`ensemble.IsolationForest` uses an
      an incorrect formula for the average path length
@@ -327,10 +365,10 @@ Trees and ensembles
      ``ZeroDivisionError`` while fitting data with single class labels.
      :issue:`7501` by :user:`Dominik Krzeminski <dokato>`.
 
-   - Fixed a bug in :class:`ensemble.GradientBoostingClassifier`
-     and :class:`ensemble.GradientBoostingRegressor`
-     where a float being compared to ``0.0`` using ``==`` caused a divide by zero
-     error. issue:`7970` by :user:`He Chen <chenhe95>`.
+   - Fixed a bug in :class:`ensemble.GradientBoostingClassifier` and
+     :class:`ensemble.GradientBoostingRegressor` where a float being compared
+     to ``0.0`` using ``==`` caused a divide by zero error. :issue:`7970` by
+     :user:`He Chen <chenhe95>`.
 
    - Fix a bug where :class:`ensemble.GradientBoostingClassifier` and
      :class:`ensemble.GradientBoostingRegressor` ignored the
@@ -338,16 +376,21 @@ Trees and ensembles
      :issue:`8006` by :user:`Sebastian Pölsterl <sebp>`.
 
    - Fixed ``oob_score`` in :class:`ensemble.BaggingClassifier`.
-     :issue:`8936` by :user:`mlewis1729 <mlewis1729>`
+     :issue:`8936` by :user:`Michael Lewis <mlewis1729>`
+
+   - Fixed excessive memory usage in prediction for random forests estimators.
+     :issue:`8672` by :user:`Mike Benfield <mikebenfield>`.
+
+   - Fixed a bug where ``sample_weight`` as a list broke random forests in Python 2
+     :issue:`8068` by :user:`xor`.
 
    - Fixed a bug where :class:`ensemble.IsolationForest` fails when
      ``max_features`` is less than 1.
      :issue:`5732` by :user:`Ishank Gulati <IshankGulati>`.
 
-   - Fix a bug where
-     :class:`ensemble.gradient_boosting.QuantileLossFunction` computed
-     negative errors for negative values of ``ytrue - ypred`` leading to
-     wrong values when calling ``__call__``.
+   - Fix a bug where gradient boosting with ``loss='quantile'`` computed
+     negative errors for negative values of ``ytrue - ypred`` leading to wrong
+     values when calling ``__call__``.
      :issue:`8087` by :user:`Alexis Mignon <AlexisMignon>`
 
    - Fix a bug where :class:`ensemble.VotingClassifier` raises an error
@@ -361,11 +404,13 @@ Trees and ensembles
 Linear, kernelized and related models
 
    - Fixed a bug where :func:`linear_model.RANSACRegressor.fit` may run until
-     ``max_iter`` if it finds a large inlier group early. :issue:`8251` by :user:`aivision2020`.
+     ``max_iter`` if it finds a large inlier group early. :issue:`8251` by
+     :user:`aivision2020`.
 
-   - Fixed a bug where :class:`naive_bayes.MultinomialNB` and :class:`naive_bayes.BernoulliNB`
-     failed when ``alpha=0``. :issue:`5814` by :user:`Yichuan Liu <yl565>` and
-     :user:`Herilalaina Rakotoarison <herilalaina>`.
+   - Fixed a bug where :class:`naive_bayes.MultinomialNB` and
+     :class:`naive_bayes.BernoulliNB` failed when ``alpha=0``. :issue:`5814` by
+     :user:`Yichuan Liu <yl565>` and :user:`Herilalaina Rakotoarison
+     <herilalaina>`.
 
    - Fixed a bug where :class:`linear_model.LassoLars` does not give
      the same result as the LassoLars implementation available
@@ -378,8 +423,8 @@ Linear, kernelized and related models
      classes, and some values proposed in the docstring could raise errors.
      :issue:`5359` by `Tom Dupre la Tour`_.
 
-   - Fix inconsistent results between :class:`linear_model.RidgeCV`
-     and :class:`linear_model.Ridge` when using ``normalize=True``
+   - Fix inconsistent results between :class:`linear_model.RidgeCV` and
+     :class:`linear_model.Ridge` when using ``normalize=True``. :issue:`9302`
      by `Alexandre Gramfort`_.
 
    - Fix a bug where :func:`linear_model.LassoLars.fit` sometimes
@@ -471,6 +516,15 @@ Decomposition, manifold learning and clustering
    - Fixed improper scaling in :class:`cross_decomposition.PLSRegression`
      with ``scale=True``. :issue:`7819` by :user:`jayzed82 <jayzed82>`.
 
+   - :class:`cluster.bicluster.SpectralCoclustering` and
+     :class:`cluster.bicluster.SpectralBiclustering` ``fit`` method conforms
+     with API by accepting ``y`` and returning the object.  :issue:`6126`,
+     :issue:`7814` by :user:`Laurent Direr <ldirer>` and :user:`Maniteja
+     Nandana <maniteja123>`.
+
+   - Fix bug where :mod:`mixture` ``sample`` methods did not return as many
+     samples as requested. :issue:`7702` by :user:`Levi John Wolf <ljwolf>`.
+
 Preprocessing and feature selection
 
    - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
@@ -494,6 +548,10 @@ Preprocessing and feature selection
      pipeline with  :class:`feature_extraction.text.TfidfTransformer`.
      :issue:`7565` by :user:`Roman Yurchak <rth>`.
 
+   - Fix a bug where :class:`feature_selection.mutual_info_regression` did not
+     correctly use ``n_neighbors``. :issue:`8181` by :user:`Guillaume Lemaitre
+     <glemaitre>`.
+
 Model evaluation and meta-estimators
 
    - Fixed a bug where :func:`model_selection.BaseSearchCV.inverse_transform`
@@ -511,6 +569,9 @@ Model evaluation and meta-estimators
    - Fixed a bug where :func:`model_selection.validation_curve`
      reused the same estimator for each parameter value.
      :issue:`7365` by :user:`Aleksandr Sandrovskii <Sundrique>`.
+
+   - :func:`model_selection.permutation_test_score` now works with Pandas
+     types. :issue:`5697` by :user:`Stijn Tonk <equialgo>`.
 
    - Several fixes to input validation in
      :class:`multiclass.OutputCodeClassifier`
@@ -545,7 +606,7 @@ Metrics
      by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
 
    - Fixed passing of ``gamma`` parameter to the ``chi2`` kernel in
-     :func:`metrics.pairwise_kernels` :issue:`5211` by
+     :func:`metrics.pairwise.pairwise_kernels` :issue:`5211` by
      :user:`Nick Rhinehart <nrhine1>`,
      :user:`Saurabh Bansod <mth4saurabh>` and `Andreas Müller`_.
 
@@ -579,8 +640,11 @@ Miscellaneous
      documentation build with Sphinx>1.5 :issue:`8010`, :issue:`7986` by
      :user:`Oscar Najera <Titan-C>`
 
-   - Add ``data_home`` parameter to
-     :func:`sklearn.datasets.fetch_kddcup99` by `Loic Esteve`_.
+   - Add ``data_home`` parameter to :func:`sklearn.datasets.fetch_kddcup99`.
+     :issue:`9289` by `Loic Esteve`_.
+
+   - Fix dataset loaders using Python 3 version of makedirs to also work in
+     Python 2. :issue:`9284` by :user:`Sebastin Santy <SebastinSanty>`.
 
    - Several minor issues were fixed with thanks to the alerts of
      [lgtm.com](http://lgtm.com). :issue:`9278` by :user:`Jean Helie <jhelie>`,
@@ -599,11 +663,23 @@ Trees and ensembles
      the weighted impurity decrease from splitting is no longer alteast
      ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV`_.
 
+Linear, kernelized and related models
+
+   - ``n_iter`` parameter is deprecated in :class:`linear_model.SGDClassifier`,
+     :class:`linear_model.SGDRegressor`,
+     :class:`linear_model.PassiveAggressiveClassifier`,
+     :class:`linear_model.PassiveAggressiveRegressor` and
+     :class:`linear_model.Perceptron`. By `Tom Dupre la Tour`_.
+
 Other predictors
 
    - :class:`neighbors.LSHForest` has been deprecated and will be
      removed in 0.21 due to poor performance.
      :issue:`9078` by :user:`Laurent Direr <ldirer>`.
+
+   - :class:`neighbors.NearestCentroid` no longer purports to support
+     ``metric='precomputed'`` which now raises an error. :issue:`8515` by
+     :user:`Sergul Aydore <sergulaydore>`.
 
    - The ``alpha`` parameter of :class:`semi_supervised.LabelPropagation` now
      has no effect and is deprecated to be removed in 0.21. :issue:`9239`
@@ -622,9 +698,12 @@ Decomposition, manifold learning and clustering
      has been renamed to ``n_components`` and will be removed in version 0.21.
      :issue:`8922` by :user:`Attractadore`.
 
-   - :class:`cluster.bicluster.SpectralCoclustering` and
-     :class:`cluster.bicluster.SpectralBiclustering` now accept ``y`` in fit.
-     :issue:`6126` by :user:`Laurent Direr <ldirer>`.
+   - :meth:`decomposition.SparsePCA.transform`'s ``ridge_alpha`` parameter is
+     deprecated in preference for class parameter.
+     :issue:`8137` by :user:`Naoya Kanai <naoyak>`.
+
+   - :class:`cluster.DBSCAN` now has a ``metric_params`` parameter.
+     :issue:`8139` by :user:`Naoya Kanai <naoyak>`.
 
 Preprocessing and feature selection
 
@@ -633,7 +712,7 @@ Preprocessing and feature selection
 
    - :class:`feature_selection.SelectFromModel` now validates the ``threshold``
      parameter and sets the ``threshold_`` attribute during the call to
-     ``fit``, and no longer during the call to ``transform```, by `Andreas
+     ``fit``, and no longer during the call to ``transform```. By `Andreas
      Müller`_.
 
    - The ``non_negative`` parameter in :class:`feature_extraction.FeatureHasher`
@@ -663,6 +742,11 @@ Model evaluation and meta-estimators
      ``test_size`` and ``train_size`` parameter will change, such that
      specifying ``train_size`` alone will cause ``test_size`` to be the
      remainder. :issue:`7459` by :user:`Nelson Liu <nelson-liu>`.
+
+   - :class:`multiclass.OneVsRestClassifier` now has ``partial_fit``,
+     ``decision_function`` and ``predict_proba`` methods only when the
+     underlying estimator does.  :issue:`7812` by `Andreas Müller`_ and
+     :user:`Mikhail Korobov <kmike>`.
 
    - :class:`multiclass.OneVsRestClassifier` now has a ``partial_fit`` method
      only if the underlying estimator does.  By `Andreas Müller`_.
@@ -877,6 +961,13 @@ Bug fixes
      The :class:`sklearn.model_selection.GridSearchCV` will cross-validate each
      parameter setting on the split produced by the first ``split`` call
      to the cross-validation splitter.  :issue:`7660` by `Raghav RV`_.
+
+   - Fix bug where :meth:`preprocessing.MultiLabelBinarizer.fit_transform`
+     returned an invalid CSR matrix.
+     :issue:`7750` by :user:`CJ Carey <perimosocordiae>`.
+
+   - Fixed a bug where :func:`metrics.pairwise.cosine_distances` could return a
+     small negative distance. :issue:`7732` by :user:`Artsion <asanakoy>`.
 
 API changes summary
 -------------------
