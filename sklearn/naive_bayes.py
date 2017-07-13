@@ -30,8 +30,7 @@ from .utils import (check_X_y,
                     check_array,
                     check_consistent_length,
                     _check_y_classes,
-                    _check_unique_values,
-                    deprecated)
+                    _check_unique_values)
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
@@ -278,9 +277,6 @@ class GaussianNB(BaseNB):
 
         return total_mu, total_var
 
-    @deprecated("The classes argument will be removed in version 0.21."
-                "A new classes argument has been added as a class parameter"
-                "since version 0.19 which is recommended to be used now.")
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
 
@@ -324,6 +320,13 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
+        # deprecation warning if classes passed:
+        if classes is not None:
+            warnings.warn("The classes argument will be removed in version"
+                          "0.21. A new classes argument has been added as a"
+                          "class parameter since version 0.19 which is"
+                          "recommended to be used now.", DeprecationWarning)
+
         # Raise error if classes set in both initialization and in partial_fit
         if (self.classes is not None) & (classes is not None):
             raise ValueError("The classes argument was already set in"
