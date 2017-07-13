@@ -124,7 +124,17 @@ Using the Iris dataset, we can construct a tree as follows::
     >>> clf = tree.DecisionTreeClassifier()
     >>> clf = clf.fit(iris.data, iris.target)
 
-Once trained, we can export the tree in `Graphviz
+Once trained, you can plot the tree with the plot_tree function::
+
+
+    >>> tree.plot_tree(clf.fit(iris.data, iris.target))
+
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_002.png
+   :target: ../auto_examples/tree/plot_iris.html
+   :scale: 75
+   :align: center
+
+We can also export the tree in `Graphviz
 <http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
 exporter. If you use the `conda <http://conda.io>`_ package manager, the graphviz binaries  
 and the python package can be installed with 
