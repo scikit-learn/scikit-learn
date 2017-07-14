@@ -10,45 +10,47 @@ from time import sleep
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
 
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import (assert_true,
+                                   assert_false,
+                                   assert_equal,
+                                   assert_almost_equal,
+                                   assert_raises,
+                                   assert_raise_message,
+                                   assert_raises_regex,
+                                   assert_greater,
+                                   assert_less,
+                                   assert_array_almost_equal,
+                                   assert_array_equal,
+                                   assert_warns)
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import cross_val_predict
-from sklearn.model_selection import cross_validate
-from sklearn.model_selection import permutation_test_score
-from sklearn.model_selection import KFold
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import LeaveOneOut
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import learning_curve
-from sklearn.model_selection import validation_curve
+from sklearn.model_selection import (cross_val_score,
+                                     cross_val_predict,
+                                     cross_validate,
+                                     permutation_test_score,
+                                     KFold,
+                                     StratifiedKFold,
+                                     LeaveOneOut,
+                                     LeaveOneGroupOut,
+                                     LeavePGroupsOut,
+                                     GroupKFold,
+                                     GroupShuffleSplit,
+                                     learning_curve,
+                                     validation_curve)
 from sklearn.model_selection._validation import _check_is_permutation
 
-from sklearn.datasets import make_regression
-from sklearn.datasets import load_boston
-from sklearn.datasets import load_iris
-from sklearn.metrics import explained_variance_score
-from sklearn.metrics import make_scorer
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import precision_score
-from sklearn.metrics import r2_score
+from sklearn.datasets import (make_regression,
+                              load_boston,
+                              load_iris,
+                              make_blobs)
+
+from sklearn.metrics import (explained_variance_score,
+                             make_scorer,
+                             accuracy_score,
+                             confusion_matrix,
+                             precision_recall_fscore_support,
+                             precision_score,
+                             r2_score)
 from sklearn.metrics.scorer import check_scoring
 
 from sklearn.linear_model import Ridge, LogisticRegression
@@ -56,6 +58,7 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
+from sklearn.naive_bayes import GaussianNB
 
 from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import LabelEncoder
@@ -1299,3 +1302,19 @@ def test_permutation_test_score_pandas():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
         permutation_test_score(clf, X_df, y_ser)
+
+
+def test_cross_val_score_labels_paramter():
+    # check if adding a classes argument to estimator passes it to the scorer
+    X, y = make_blobs(n_samples=90, n_features=2, centers=3, shuffle=False)
+    clf1 = GaussianNB()
+    clf2 = GaussianNB(classes=[0, 1, 2], priors=[0.33, 0.33, 0.34])
+
+    scores1 = cross_val_score(clf1, X, y,
+                              cv=KFold(n_splits=2, shuffle=False),
+                              scoring='f1_macro')
+    scores2 = cross_val_score(clf2, X, y,
+                              cv=KFold(n_splits=2, shuffle=False),
+                              scoring='f1_macro')
+    assert_greater(scores1[0], scores2[0])
+    assert_greater(scores1[1], scores2[1])
