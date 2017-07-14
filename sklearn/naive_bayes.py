@@ -816,6 +816,17 @@ class BernoulliNB(BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
+    classes : array-like, shape (n_classes,), optional (default=None)
+            List of all the classes that can possibly appear in the y vector.
+            The list will be sorted internally. Use the classes_ attribute to
+            refer to the final order of classes.
+
+            If not specified, this will be set as per the classes present in
+            the training data. It is recommended to set this parameter while
+            initialization.
+
+            .. versionadded:: 0.19
+
     Attributes
     ----------
     class_log_prior_ : array, shape = [n_classes]
@@ -861,11 +872,12 @@ class BernoulliNB(BaseDiscreteNB):
     """
 
     def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
-                 class_prior=None):
+                 class_prior=None, classes=None):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+        self.classes = None
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
