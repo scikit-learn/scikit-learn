@@ -90,4 +90,3 @@ class MarkovClustering:
             else:
                 ret[c].add(labels[i])
         return ret
-
