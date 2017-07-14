@@ -15,6 +15,7 @@ from __future__ import division
 import warnings
 import numbers
 import time
+from inspect import signature
 
 import numpy as np
 import scipy.sparse as sp
@@ -497,6 +498,18 @@ def _score_single_metric(estimator, X_test, y_test, scorer):
     This function will also check whether the estimator has a classes attribute
     and pass that into the labels attribute of the scorer if available.
     """
+    # check if estimator has a classes_ attribute and scorer has labels attr:
+    est_has_classes = hasattr(estimator, "classes_")
+    if hasattr(scorer, "_score_func"):
+        scorer_has_labels = "labels" in signature(
+                                        scorer._score_func).parameters
+    else:
+        scorer_has_labels = False
+
+    if est_has_classes & scorer_has_labels:
+        labels = getattr(estimator, "classes_", None)
+        scorer._set_score_func_parameters(labels=labels)
+
     if y_test is None:
         score = scorer(estimator, X_test)
     else:
