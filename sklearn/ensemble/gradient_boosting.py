@@ -1101,6 +1101,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if self.n_iter_no_change is not None:
             n_iter_losses = np.ones(self.n_iter_no_change) * np.inf
+            # We create a generator to get the predictions for X_val after
+            # the addition of each successive stage
             y_val_pred = self._staged_decision_function(X_val)
 
         # perform boosting iterations
@@ -1147,6 +1149,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if self.n_iter_no_change is None:
                 continue
 
+            # By calling next(y_val_pred), we get the predictions for X_val
+            # after the addition of the current stage
             validation_loss = loss_(y_val, next(y_val_pred),
                                     sample_weight_val)
 
