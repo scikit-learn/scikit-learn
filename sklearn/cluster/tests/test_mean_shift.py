@@ -124,7 +124,7 @@ def test_bin_seeds():
 
 
 def test_custom_metrics():
-    X = np.array([1,2,3,5,6,7]).reshape((-1,1))
+    X = np.array([1, 2, 3, 5, 6, 7]).reshape((-1, 1))
     def custom_metric(data1, data2):
         if abs(data1 - data2) > 1:
             return 10
@@ -133,4 +133,4 @@ def test_custom_metrics():
 
     ms =  MeanShift(bandwidth=3, metric=custom_metric)
     ms.fit(X)
-    assert_array_equal(ms.cluster_centers_.flatten(), [2,6])
+    assert_true(set(ms.cluster_centers_.flatten()) == set([2,6]))
