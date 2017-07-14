@@ -66,6 +66,11 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
+    def _set_score_func_parameters(self, **kwargs):
+        """This function will replace the values of kwargs if already set"""
+        for key, value in kwargs.items():
+            self._kwargs[key] = value
+
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
         return ""
