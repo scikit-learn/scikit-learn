@@ -528,13 +528,16 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         self.arrow_args = dict(arrowstyle="<-")
 
-    def _make_tree(self, node_id, et):
+    def _make_tree(self, node_id, et, depth=0):
         # traverses _tree.Tree recursively, builds intermediate
         # "_reingold_tilford.Tree" object
         name = self.node_to_str(et, node_id, criterion='entropy')
-        if (et.children_left[node_id] != et.children_right[node_id]):
-            children = [self._make_tree(et.children_left[node_id], et),
-                        self._make_tree(et.children_right[node_id], et)]
+        if (et.children_left[node_id] != et.children_right[node_id]
+                and depth <= self.max_depth):
+            children = [self._make_tree(et.children_left[node_id], et,
+                                        depth=depth + 1),
+                        self._make_tree(et.children_right[node_id], et,
+                                        depth=depth + 1)]
         else:
             return Tree(name, node_id)
         return Tree(name, node_id, *children)
@@ -609,7 +612,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
                              depth=depth + 1)
 
         else:
-            xy_parent = (node.parent.x, node.parent.y)
+            xy_parent = ((node.parent.x + .5) * scale_x,
+                         height - (node.parent.y + .5) * scale_y)
             kwargs["arrowprops"] = self.arrow_args
             kwargs['bbox']['fc'] = 'grey'
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
