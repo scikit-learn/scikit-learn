@@ -575,13 +575,14 @@ class _MPLTreeExporter(_BaseTreeExporter):
         if self.fontsize is None:
             # get figure to data transform
             # adjust fontsize to avoid overlap
-            # get max box width
-            widths = [ann.get_bbox_patch().get_window_extent().width
-                      for ann in anns]
-            # get minimum max size to not be too big.
-            max_width = max(widths)
+            # get max box width and height
+            extents = [ann.get_bbox_patch().get_window_extent()
+                       for ann in anns]
+            max_width = max([extent.width for extent in extents])
+            max_height = max([extent.height for extent in extents])
             # width should be around scale_x in axis coordinates
-            size = anns[0].get_fontsize() / max_width * scale_x
+            size = anns[0].get_fontsize() * min(scale_x / max_width,
+                                                scale_y / max_height)
             for ann in anns:
                 ann.set_fontsize(size)
 
