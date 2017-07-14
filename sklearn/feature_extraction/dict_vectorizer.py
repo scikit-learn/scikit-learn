@@ -48,18 +48,20 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    dtype : callable, optional
+    dtype : callable, default=np.float64
         The type of feature values. Passed to Numpy array/scipy.sparse matrix
         constructors as the dtype argument.
-    separator : string, optional
+    separator : string, default='='
         Separator string used when constructing new features for one-hot
         coding.
-    sparse : boolean, optional.
+    sparse : boolean, default=True
         Whether transform should produce scipy.sparse matrices.
-        True by default.
-    sort : boolean, optional.
-        Whether ``feature_names_`` and ``vocabulary_`` should be sorted when fitting.
-        True by default.
+    sort : boolean, default=True
+        Whether ``feature_names_`` and ``vocabulary_`` should be sorted when
+        fitting.
+    drop_first_category: boolean, default=False
+        Whether the first level of each categorical feature (string valued)
+        should be excluded to avoid multicollinearity.
 
     Attributes
     ----------
@@ -93,11 +95,12 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, dtype=np.float64, separator="=", sparse=True,
-                 sort=True):
+                 sort=True, drop_first_category=False):
         self.dtype = dtype
         self.separator = separator
         self.sparse = sparse
         self.sort = sort
+        self.drop_first_category = drop_first_category
 
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
@@ -162,9 +165,14 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         # collect all the possible feature names and build sparse matrix at
         # same time
+        if self.drop_first_category:
+            to_drop = {}
         for x in X:
             for f, v in six.iteritems(x):
                 if isinstance(v, six.string_types):
+                    if self.drop_first_category and f not in to_drop:
+                        # categorical feature seen for first time
+                        to_drop[f] = "%s%s%s" % (f, self.separator, v)
                     f = "%s%s%s" % (f, self.separator, v)
                     v = 1
                 if f in vocab:
@@ -185,9 +193,14 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         indices = np.frombuffer(indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
         shape = (len(indptr) - 1, len(vocab))
-
         result_matrix = sp.csr_matrix((values, indices, indptr),
                                       shape=shape, dtype=dtype)
+
+        if self.drop_first_category:
+            vocab = {k: v for k, v in vocab.items()
+                     if k not in to_drop.values()}
+            feature_names = [feature for feature in feature_names
+                             if feature in vocab]
 
         # Sort everything if asked
         if fitting and self.sort:
@@ -344,8 +357,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         >>> v.get_feature_names()
         ['bar', 'baz', 'foo']
         >>> v.restrict(support.get_support()) # doctest: +ELLIPSIS
-        DictVectorizer(dtype=..., separator='=', sort=True,
-                sparse=True)
+        DictVectorizer(drop_first_category=False, dtype=<...>,
+                separator='=', sort=True, sparse=True)
         >>> v.get_feature_names()
         ['bar', 'foo']
         """

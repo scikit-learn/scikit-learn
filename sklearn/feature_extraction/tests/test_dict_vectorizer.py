@@ -111,3 +111,23 @@ def test_deterministic_vocabulary():
     v_2 = DictVectorizer().fit([d_shuffled])
 
     assert_equal(v_1.vocabulary_, v_2.vocabulary_)
+
+
+def test_drop_first_level_categorical_feature():
+    raw_data = [{"name": "luca", "country": "italy", "age": 30},
+                {"name": "davide", "country": "italy"},
+                {"name": "yeray", "country": "spain"},
+                {"name": "karol", "country": "poland"}]
+
+    v = DictVectorizer(drop_first_category=True, sparse=False)
+    X = v.fit_transform(raw_data)
+
+    assert_equal(v.feature_names_, ["age", "country=poland", "country=spain",
+                                    "name=davide", "name=karol", "name=yeray"])
+
+    assert_array_equal(
+        X, np.array([[30, 0, 0, 0, 0, 0],
+                     [0, 0, 0, 1, 0, 0],
+                     [0, 0, 1, 0, 0, 1],
+                     [0, 1, 0, 0, 1, 0]])
+    )
