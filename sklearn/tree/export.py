@@ -547,7 +547,19 @@ class _MPLTreeExporter(_BaseTreeExporter):
         ax.set_axis_off()
         my_tree = self._make_tree(0, decision_tree.tree_)
         dt = buchheim(my_tree)
-        self.recurse(dt, decision_tree.tree_, ax)
+
+        # important to make sure we're still
+        # inside the axis after drawing the box
+        # this makes sense because the width of a box
+        # is about the same as the distance between boxes
+        max_x, max_y = dt.max_extents() + 1
+        ax_width = ax.get_window_extent().width
+        ax_height = ax.get_window_extent().height
+
+        scale_x = ax_width / max_x
+        scale_y = ax_height / max_y
+
+        self.recurse(dt, decision_tree.tree_, ax, scale_x, scale_y, ax_height)
 
         anns = [ann for ann in ax.get_children()
                 if isinstance(ann, Annotation)]
@@ -557,39 +569,28 @@ class _MPLTreeExporter(_BaseTreeExporter):
         for ann in anns:
             ann.update_bbox_position_size(renderer)
 
-        # get all the annotated points
-        xys = [ann.xyann for ann in anns]
-
-        # set axis limits
-        mins = np.min(xys, axis=0)
-        maxs = np.max(xys, axis=0)
-
-        ax.set_xlim(mins[0], maxs[0])
-        ax.set_ylim(maxs[1], mins[1])
-
         if self.fontsize is None:
             # get figure to data transform
-            inv = ax.transData.inverted()
             # adjust fontsize to avoid overlap
             # get max box width
-            widths = [inv.get_matrix()[0, 0]
-                      * ann.get_bbox_patch().get_window_extent().width
+            widths = [ann.get_bbox_patch().get_window_extent().width
                       for ann in anns]
             # get minimum max size to not be too big.
             max_width = max(widths)
-            # width should be around 1 in data coordinates
-            size = anns[0].get_fontsize() / max_width
+            # width should be around scale_x in axis coordinates
+            size = anns[0].get_fontsize() / max_width * scale_x
             for ann in anns:
                 ann.set_fontsize(size)
 
-    def recurse(self, node, tree, ax, depth=0):
+    def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
         kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
-                      zorder=100 - 10 * depth)
+                      zorder=100 - 10 * depth, xycoords='axes pixels')
 
         if self.fontsize is not None:
             kwargs['fontsize'] = self.fontsize
 
-        xy = (node.x, node.y)
+        # offset things by .5 to center them in plot
+        xy = ((node.x + .5) * scale_x, height - (node.y + .5) * scale_y)
 
         if self.max_depth is None or depth <= self.max_depth:
             if self.filled:
@@ -599,11 +600,13 @@ class _MPLTreeExporter(_BaseTreeExporter):
                 # root
                 ax.annotate(node.tree.node, xy, **kwargs)
             else:
-                xy_parent = (node.parent.x, node.parent.y)
+                xy_parent = ((node.parent.x + .5) * scale_x,
+                             height - (node.parent.y + .5) * scale_y)
                 kwargs["arrowprops"] = self.arrow_args
                 ax.annotate(node.tree.node, xy_parent, xy, **kwargs)
             for child in node.children:
-                self.recurse(child, tree, ax, depth=depth + 1)
+                self.recurse(child, tree, ax, scale_x, scale_y, height,
+                             depth=depth + 1)
 
         else:
             xy_parent = (node.parent.x, node.parent.y)

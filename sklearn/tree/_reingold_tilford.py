@@ -1,5 +1,7 @@
 # taken from https://github.com/llimllib/pymag-trees/blob/master/buchheim.py
 
+import numpy as np
+
 
 class DrawTree(object):
     def __init__(self, tree, parent=None, depth=0, number=1):
@@ -46,6 +48,11 @@ class DrawTree(object):
 
     def __repr__(self):
         return self.__str__()
+
+    def max_extents(self):
+        extents = [c.max_extents() for c in self. children]
+        extents.append((self.x, self.y))
+        return np.max(extents, axis=0)
 
 
 def buchheim(tree):
