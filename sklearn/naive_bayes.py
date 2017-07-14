@@ -543,6 +543,20 @@ class BaseDiscreteNB(BaseNB):
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         _, n_features = X.shape
 
+        # set classes- initialized values/passed in partial_fit/infer from y
+        if classes is None:
+            # case when not set, infer from y
+            if self.classes is None:
+                classes = np.sort(np.unique(y))
+            # case when set at intialization
+            else:
+                _check_unique_values(self.classes, "classes")
+                classes = np.sort(self.classes)
+        # case when passed in partial_fit
+        else:
+            _check_unique_values(classes, "classes")
+            classes = np.sort(np.asarray(classes))
+
         if _check_partial_fit_first_call(self, classes):
             # This is the first call to partial_fit:
             # initialize various cumulative counters
@@ -609,9 +623,15 @@ class BaseDiscreteNB(BaseNB):
         X, y = check_X_y(X, y, 'csr')
         _, n_features = X.shape
 
-        labelbin = LabelBinarizer()
-        Y = labelbin.fit_transform(y)
-        self.classes_ = labelbin.classes_
+        # case when not set, infer from y
+        if self.classes is None:
+            self.classes_ = np.sort(np.unique(y))
+        # case when set at intialization
+        else:
+            _check_unique_values(self.classes, "classes")
+            self.classes_ = np.sort(self.classes)
+
+        Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
@@ -743,6 +763,7 @@ class MultinomialNB(BaseDiscreteNB):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+        self.classes = None
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
