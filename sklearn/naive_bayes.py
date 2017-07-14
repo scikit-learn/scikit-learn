@@ -676,6 +676,17 @@ class MultinomialNB(BaseDiscreteNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
+    classes : array-like, shape (n_classes,), optional (default=None)
+            List of all the classes that can possibly appear in the y vector.
+            The list will be sorted internally. Use the classes_ attribute to
+            refer to the final order of classes.
+
+            If not specified, this will be set as per the classes present in
+            the training data. It is recommended to set this parameter while
+            initialization.
+
+            .. versionadded:: 0.19
+
     Attributes
     ----------
     class_log_prior_ : array, shape (n_classes, )
@@ -727,7 +738,8 @@ class MultinomialNB(BaseDiscreteNB):
     http://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
+                 classes=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
