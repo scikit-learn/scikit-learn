@@ -241,7 +241,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             seeds = X
     n_samples, n_features = X.shape
     center_intensity_dict = {}
-    nbrs = NearestNeighbors(radius=bandwidth, metric=metric, n_jobs=n_jobs).fit(X)
+    nbrs = NearestNeighbors(radius=bandwidth, 
+                            metric=metric, n_jobs=n_jobs).fit(X)
 
     # execute iterations on all seeds in parallel
     all_res = Parallel(n_jobs=n_jobs)(
