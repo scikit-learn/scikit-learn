@@ -15,7 +15,6 @@ from __future__ import division
 import warnings
 import numbers
 import time
-from inspect import signature
 
 import numpy as np
 import scipy.sparse as sp
@@ -26,6 +25,7 @@ from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
 from ..externals.six.moves import zip
+from ..externals.funcsigs import signature
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
