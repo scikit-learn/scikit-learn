@@ -91,7 +91,3 @@ class MarkovClustering:
                 ret[c].add(labels[i])
         return ret
 
-if __name__ == "__main__":
-    A = [[1, 2, 0], [2, 1, 0], [0, 0, 4], [0, 0, 9]]
-    clusters = MarkovClustering().fit(A, verbose=True).clusters()
-    print(clusters)
