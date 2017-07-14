@@ -19,7 +19,7 @@ def test_feature_hasher_dicts():
     X2 = FeatureHasher(n_features=16, input_type="pair").transform(gen)
     assert_array_equal(X1.toarray(), X2.toarray())
 
-
+@ignore_warnings(category=DeprecationWarning)
 def test_feature_hasher_strings():
     # mix byte and Unicode strings; note that "foo" is a duplicate in row 0
     raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
