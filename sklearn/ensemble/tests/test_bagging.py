@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import GridSearchCV, ParameterGrid
@@ -448,6 +449,13 @@ def test_parallel_classification():
     ensemble.set_params(n_jobs=2)
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
+
+    X_err = np.hstack((X_test, np.zeros((X_test.shape[0], 1))))
+    assert_raise_message(ValueError, "Number of features of the model "
+                         "must match the input. Model n_features is {0} "
+                         "and input n_features is {1} "
+                         "".format(X_test.shape[1], X_err.shape[1]),
+                         ensemble.decision_function, X_err)
 
     ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
