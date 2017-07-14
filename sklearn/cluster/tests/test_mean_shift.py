@@ -121,3 +121,16 @@ def test_bin_seeds():
                       cluster_std=0.1, random_state=0)
     test_bins = get_bin_seeds(X, 1)
     assert_array_equal(test_bins, [[0, 0], [1, 1]])
+
+
+def test_custom_metrics():
+    X = np.array([1,2,3,5,6,7]).reshape((-1,1))
+    def custom_metric(data1, data2):
+        if abs(data1 - data2) > 1:
+            return 10
+        else:
+            return abs(data1 - data2)
+
+    ms =  MeanShift(bandwidth=3, metric=custom_metric)
+    ms.fit(X)
+    assert_array_equal(ms.cluster_centers_.flatten(), [2,6])
