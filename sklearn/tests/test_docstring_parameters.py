@@ -20,10 +20,11 @@ from sklearn.utils.testing import _get_func_name
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
 
-PUBLIC_MODULES = set(['sklearn.' + modname
-                      for _, modname, _ in walk_packages(sklearn.__path__)
-                      if not modname.startswith('_') and
-                      '.tests.' not in modname])
+PUBLIC_MODULES = set([pckg[1]
+                      for pckg in walk_packages(prefix='sklearn.',
+                                                path=sklearn.__path__)
+                      if not ("._" in pckg[1]
+                              or ".tests." in pckg[1])])
 
 # TODO Uncomment all modules and fix doc inconsistencies everywhere
 # The list of modules that are not tested for now
