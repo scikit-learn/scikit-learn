@@ -1,36 +1,39 @@
+
 """
-===========================================
-Bayesian Gaussian Mixture Model Ellipsoids
-===========================================
+===============================================
+Bayesian Gaussian Mixture Model Fitting Methods
+===============================================
 
 Plot the confidence ellipsoids of a mixture of two Gaussians
 obtained with Variational Inference (``BayesianGaussianMixture`` class models
 with a Dirichlet process prior), using the ``fit()`` and ``partial_fit()``
 methods.
 
-The ``fit()`` method uses the entire dataset, while ``partial_fit()`` can be
-used for either the full dataset or minibatches.  For streaming data or
-datasets too large to fit into memory, ```partial_fit()``` gives a similar or
-better fit much faster.
+The ``fit()`` method uses the entire dataset, either all at once or in
+minibatches, while ``partial_fit()`` can be used for any number of points
+equal to or greater than the number of componentsIn this case, we use
+partial_fit each update on the minimum number of points necessary for fitting,
+to simulate online learning
 """
+# Authors: Joshua Engelman <j.aaron.engelman@gmail.com>
+# License: BSD 3 clause
 
 import itertools
-
 import numpy as np
 from scipy import linalg
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-from sklearn import mixture
+from sklearn.mixture import BayesianGaussianMixture
 
-import time
+print(__doc__)
 
 color_iter = itertools.cycle(['navy', 'c', 'cornflowerblue', 'gold',
                               'darkorange'])
 
 
 def plot_results(X, Y_, means, covariances, index, title):
-    splot = plt.subplot(2, 1, 1 + index)
+    splot = plt.subplot(3, 1, 1 + index)
     for i, (mean, covar, color) in enumerate(zip(
             means, covariances, color_iter)):
         v, w = linalg.eigh(covar)
@@ -59,40 +62,60 @@ def plot_results(X, Y_, means, covariances, index, title):
 
 
 # Number of samples per component
-n_samples = 10000
+n_samples = 5000
+n_components = 5
 
 # Generate random sample, two components
+np.random.seed(0)
+X = np.zeros((n_samples, 2))
+step = 4. * np.pi / n_samples
+
 np.random.seed(0)
 C = np.array([[0., -0.1], [1.7, .4]])
 X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
           .7 * np.random.randn(n_samples, 2) + np.array([-6, 3])]
 
-# Fit a Dirichlet process Gaussian mixture using five components
-dpgmm = mixture.BayesianGaussianMixture(n_components=5,
-                                        covariance_type='full',
-                                        max_iter=200)
-start = time.time()
-dpgmm.fit(X)
-full_runtime = time.time() - start
+plt.figure(figsize=(10, 10))
+plt.subplots_adjust(bottom=.04, top=0.95, hspace=.2, wspace=.05,
+                    left=.03, right=.97)
 
+# Fit a Dirichlet process Gaussian mixture using the whole dataset
+dpgmm = BayesianGaussianMixture(n_components=n_components,
+                                random_state=1)
+
+dpgmm.fit(X)
 plot_results(X, dpgmm.predict(X), dpgmm.means_, dpgmm.covariances_, 0,
              'Fitting using full data')
 
-dpgmm2 = mixture.BayesianGaussianMixture(n_components=5,
-                                         covariance_type='full',
-                                         max_iter=200, warm_start=True)
-n_batches = 10
-minibatches = np.array_split(X, n_batches)
+# Fit a Dirichlet process Gaussian mixture using the whole dataset
+dpgmm_minibatches = BayesianGaussianMixture(n_components=n_components,
+                                            random_state=1,
+                                            batch_size=100,
+                                            n_jobs=-1)
 
-start2 = time.time()
-for batch in minibatches:
-    dpgmm2.partial_fit(batch)
+dpgmm_minibatches.fit(X)
+plot_results(X, dpgmm_minibatches.predict(X), dpgmm_minibatches.means_,
+             dpgmm_minibatches.covariances_, 1,
+             'Fitting using minibatches')
 
-partial_runtime = (time.time() - start2)
+# Fit a Dirichlet process Gaussian mixture "online"
 
-plot_results(X, dpgmm2.predict(X), dpgmm2.means_, dpgmm2.covariances_, 1,
-             'Fitting using batches')
+np.random.shuffle(X)
+updates = np.array_split(X, np.floor(n_samples/n_components))
+dpgmm_online = BayesianGaussianMixture(n_components=n_components,
+                                       mean_precision_prior=1e-8,
+                                       covariance_prior=1e1*np.eye(2),
+                                       random_state=1)
 
-print "fit() runtime: ", full_runtime
-print "partial_fit() runtime: ", partial_runtime
+scores = []
+timestep = 0
+for update in updates:
+    timestep += 1
+    dpgmm_online.partial_fit(update, lr=1./(timestep*1e-3))
+    scores.append([timestep, dpgmm_online.score(X)])
+
+plot_results(X, dpgmm_online.predict(X), dpgmm_online.means_,
+             dpgmm_online.covariances_, 2,
+             'Fitting online using partial_fit')
+
 plt.show()
