@@ -87,8 +87,8 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
         Note
         ----
         Randomized CV splitters may return different results for each call of
-        split. This can be avoided (and identical results returned for each
-        split) by setting ``random_state`` to an integer.
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         indices = np.arange(_num_samples(X))
@@ -318,8 +318,8 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         Note
         ----
         Randomized CV splitters may return different results for each call of
-        split. This can be avoided (and identical results returned for each
-        split) by setting ``random_state`` to an integer.
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -658,8 +658,8 @@ class StratifiedKFold(_BaseKFold):
         Note
         ----
         Randomized CV splitters may return different results for each call of
-        split. This can be avoided (and identical results returned for each
-        split) by setting random_state to an integer.
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
         return super(StratifiedKFold, self).split(X, y, groups)
@@ -745,8 +745,8 @@ class TimeSeriesSplit(_BaseKFold):
         Note
         ----
         Randomized CV splitters may return different results for each call of
-        split. This can be avoided (and identical results returned for each
-        split) by setting random_state to an integer.
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -1189,8 +1189,8 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         Note
         ----
         Randomized CV splitters may return different results for each call of
-        split. This can be avoided (and identical results returned for each
-        split) by setting random_state to an integer.
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         for train, test in self._iter_indices(X, y, groups):
@@ -1609,8 +1609,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         Note
         ----
         Randomized CV splitters may return different results for each call of
-        split. This can be avoided (and identical results returned for each
-        split) by setting random_state to an integer.
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
         return super(StratifiedShuffleSplit, self).split(X, y, groups)
