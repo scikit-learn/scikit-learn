@@ -466,14 +466,14 @@ def linkage_tree(X, connectivity=None, n_components=None,
         children_ = single_linkage_tree[:, :2].astype(np.int)
 
         # Compute parents
-        parent = np.zeros(n_nodes, dtype=np.intp)
-        for i, (left, right) in enumerate(children_):
-            if n_clusters is not None and i >= n_samples - n_clusters:
+        parent = np.arange(n_nodes, dtype=np.intp)
+        for i, (left, right) in enumerate(children_, n_samples):
+            if n_clusters is not None and i >= n_nodes:
                 break
             if left < n_nodes:
-                parent[left] = i + n_samples
+                parent[left] = i
             if right < n_nodes:
-                parent[right] = i + n_samples
+                parent[right] = i
 
         if return_distance:
             distances = single_linkage_tree[:, 2]
@@ -787,8 +787,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                                        n_clusters=n_clusters,
                                        **kwargs)
         # Cut the tree
+        # if compute_full_tree or self.linkage == 'single':
         if compute_full_tree:
-            self.labels_ = _hc_cut(self.n_clusters, self.children_,
+                self.labels_ = _hc_cut(self.n_clusters, self.children_,
                                    self.n_leaves_)
         else:
             labels = _hierarchical.hc_get_heads(parents, copy=False)
