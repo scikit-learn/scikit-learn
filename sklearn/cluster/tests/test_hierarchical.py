@@ -34,6 +34,7 @@ from sklearn.cluster._hierarchical import average_merge, max_merge
 from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.datasets import make_moons, make_circles
 
 
 def test_linkage_misc():
@@ -232,6 +233,21 @@ def test_ward_agglomeration():
 
     # Check that fitting with no samples raises a ValueError
     assert_raises(ValueError, agglo.fit, X[:0])
+
+def test_single_linkage_clustering():
+    # Check that we get the correct result in two emblematic cases
+    moons, moon_labels = make_moons(noise=0.05, random_state=42)
+    clustering = AgglomerativeClustering(n_clusters=2, linkage='single')
+    clustering.fit(moons)
+    assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
+                                                     moon_labels), 1)
+
+    circles, circle_labels = make_circles(factor=0.5, noise=0.025,
+                                          random_state=42)
+    clustering = AgglomerativeClustering(n_clusters=2, linkage='single')
+    clustering.fit(circles)
+    assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
+                                                     circle_labels), 1)
 
 
 def assess_same_labelling(cut1, cut2):
