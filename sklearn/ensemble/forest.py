@@ -925,17 +925,21 @@ class RandomForestClassifier(ForestClassifier):
     Examples
     --------
     >>> from sklearn.ensemble import RandomForestClassifier
-    >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
-    >>> clf.fit([[0,0], [1, 1], [0, 1], [1,0]], [0, 0, 1, 1])
+    >>> from sklearn.datasets import make_classification
+    >>>
+    >>> X, y = make_classification(n_features=4, n_informative=2,
+    ...                            n_redundant=0, random_state=0)
+    >>> clf = RandomForestClassifier(max_depth=5, random_state=0)
+    >>> clf.fit(X, y)
     RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
-                max_depth=2, max_features='auto', max_leaf_nodes=None,
+                max_depth=5, max_features='auto', max_leaf_nodes=None,
                 min_impurity_decrease=0.0, min_impurity_split=None,
                 min_samples_leaf=1, min_samples_split=2,
                 min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
                 oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(clf.feature_importances_)
-    [ 0.46666667  0.33333333]
-    >>> print(clf.predict([[0.5, 1]]))
+    [ 0.08740388  0.11898963  0.68215616  0.11145033]
+    >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
     Notes
