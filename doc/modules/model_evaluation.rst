@@ -663,10 +663,6 @@ binary classification and multilabel indicator format.
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
 
-  * See :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py`
-    for an example of :func:`precision_recall_curve` usage to select
-    features for sparse linear models.
-
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
 
