@@ -9,39 +9,50 @@ Authors: Shane Grigsby <refuge@rocktalus.com>
 License: BSD 3 clause
 """
 
-import scipy as sp
+import warnings
+
 import numpy as np
+from scipy import iterable
+
 from ..utils import check_array
+from ..utils.validation import check_is_fitted
 from ..neighbors import BallTree
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import pairwise_distances
 from ._optics_inner import quick_scan
 
 
-class SetOfObjects(BallTree):
+class _SetOfObjects(BallTree):
+    """Build balltree data structure with processing index.
 
-    """Build balltree data structure with processing index from given data
-    in preparation for OPTICS Algorithm
+    It's built from given data in preparation for OPTICS Algorithm
 
     Parameters
     ----------
-    data_points: array [n_samples, n_features]"""
+    X: array, shape (n_samples, n_features)
+        Input data.
 
-    def __init__(self, data_points, metric, **kwargs):
+    metric : str
+        The metric used.
 
-        super(SetOfObjects, self).__init__(data_points,
-                                           metric=metric, **kwargs)
+    **kwargs:
+        kwargs passed to BallTree init.
+    """
+
+    def __init__(self, X, metric, **kwargs):
+
+        super(_SetOfObjects, self).__init__(X,
+                                            metric=metric, **kwargs)
 
         self._n = len(self.data)
         self.metric = metric
         # Start all points as 'unprocessed' ##
-        self._processed = sp.zeros((self._n, 1), dtype=bool)
-        self.reachability_ = sp.ones(self._n) * sp.inf
-        self.core_dists_ = sp.ones(self._n) * sp.nan
-        self._index = sp.array(range(self._n))
+        self._processed = np.zeros((self._n, 1), dtype=bool)
+        self.reachability_ = np.ones(self._n) * np.inf
+        self.core_dists_ = np.ones(self._n) * np.nan
         # Start all points as noise ##
-        self._cluster_id = -sp.ones(self._n, dtype=int)
-        self._is_core = sp.zeros(self._n, dtype=bool)
+        self._cluster_id = -np.ones(self._n, dtype=int)
+        self._is_core = np.zeros(self._n, dtype=bool)
         self.ordering_ = []
 
 
@@ -54,12 +65,12 @@ def _prep_optics(self, min_samples):
 def _build_optics(setofobjects, epsilon):
     # Main OPTICS loop. Not parallelizable. The order that entries are
     # written to the 'ordering_' list is important!
-    for point in setofobjects._index:
+    for point in range(setofobjects._n):
         if not setofobjects._processed[point]:
-            _expandClusterOrder(setofobjects, point, epsilon)
+            _expand_cluster_order(setofobjects, point, epsilon)
 
 
-def _expandClusterOrder(setofobjects, point, epsilon):
+def _expand_cluster_order(setofobjects, point, epsilon):
     # As above, not parallelizable. Parallelizing would allow items in
     # the 'unprocessed' list to switch to 'processed'
     if setofobjects.core_dists_[point] <= epsilon:
@@ -80,7 +91,7 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
                                         sort_results=False)[0]
 
     # Checks to see if there more than one member in the neighborhood
-    if sp.iterable(indices):
+    if iterable(indices):
         # Masking processed values; n_pr is 'not processed'
         n_pr = np.compress((np.take(setofobjects._processed,
                                     indices, axis=0) < 1).ravel(),
@@ -93,8 +104,8 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
                                                axis=0),
                                        setofobjects.metric, n_jobs=1).ravel()
 
-            rdists = sp.maximum(dists, setofobjects.core_dists_[point_index])
-            new_reach = sp.minimum(np.take(setofobjects.reachability_,
+            rdists = np.maximum(dists, setofobjects.core_dists_[point_index])
+            new_reach = np.minimum(np.take(setofobjects.reachability_,
                                            n_pr, axis=0),
                                    rdists)
             setofobjects.reachability_[n_pr] = new_reach
@@ -121,34 +132,40 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Parameters
     ----------
     eps : float, optional
-    The maximum distance between two samples for them to be considered
-    as in the same neighborhood. This is also the largest object size
-    expected within the dataset. Lower eps values can be used after
-    OPTICS is run the first time, with fast returns of labels. Default
-    value of "np.inf" will identify clusters across all scales; reducing
-    eps will result in shorter run times.
+        The maximum distance between two samples for them to be considered
+        as in the same neighborhood. This is also the largest object size
+        expected within the dataset. Lower eps values can be used after
+        OPTICS is run the first time, with fast returns of labels. Default
+        value of "np.inf" will identify clusters across all scales; reducing
+        eps will result in shorter run times.
+
     min_samples : int, optional
-    The number of samples in a neighborhood for a point to be considered
-    as a core point.
+        The number of samples in a neighborhood for a point to be considered
+        as a core point.
+
     metric : string or callable, optional
-    The distance metric to use for neighborhood lookups. Default is
-    "minkowski". Other options include “euclidean”, “manhattan”,
-    “chebyshev”, “haversine”, “seuclidean”, “hamming”, “canberra”,
-    and “braycurtis”. The “wminkowski” and “mahalanobis” metrics are
-    also valid with an additional argument.
+        The distance metric to use for neighborhood lookups. Default is
+        "minkowski". Other options include “euclidean”, “manhattan”,
+        “chebyshev”, “haversine”, “seuclidean”, “hamming”, “canberra”,
+        and “braycurtis”. The “wminkowski” and “mahalanobis” metrics are
+        also valid with an additional argument.
 
     Attributes
     ----------
-    `core_sample_indices_` : array, shape = [n_core_samples]
+    `core_sample_indices_` : array, shape (n_core_samples,)
         Indices of core samples.
-    `labels_` : array, shape = [n_samples]
+
+    `labels_` : array, shape (n_samples,)
         Cluster labels for each point in the dataset given to fit().
         Noisy samples are given the label -1.
-    `reachability_` : array, shape = [n_samples]
-        Reachability distances per sample
-    `ordering_` : array, shape = [n_samples]
+
+    `reachability_` : array, shape (n_samples,)
+        Reachability distances per sample.
+
+    `ordering_` : array, shape (n_samples,)
         The cluster ordered list of sample indices
-    `core_dists_` : array, shape = [n_samples]
+
+    `core_dists_` : array, shape (n_samples,)
         Distance at which each sample becomes a core point.
         Points which will never be core have a distance of inf.
 
@@ -159,12 +176,10 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Record 28, no. 2 (1999): 49-60.
     """
 
-    def __init__(self, eps=np.inf, min_samples=5,
-                 metric='euclidean', **kwargs):
+    def __init__(self, eps=np.inf, min_samples=5, metric='euclidean'):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
-        self.processed = False
 
     def fit(self, X, y=None):
         """Perform OPTICS clustering
@@ -175,96 +190,108 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         Parameters
         ----------
-        X : array [n_samples, n_features]"""
-
-        X = check_array(X)
-
-        # Check for valid n_samples relative to min_samples
-        if self.min_samples > len(X):
-            print("Number of training samples must be greater than")
-            print("min_samples used for clustering")
-            return
-
-        self.tree = SetOfObjects(X, self.metric)
-        _prep_optics(self.tree, self.min_samples)
-        _build_optics(self.tree, self.eps * 5.0)
-        self._index = self.tree._index[:]
-        self.reachability_ = self.tree.reachability_[:]
-        self.core_dists_ = self.tree.core_dists_[:]
-        self._cluster_id = self.tree._cluster_id[:]
-        self._is_core = self.tree._is_core[:]
-        self.ordering_ = self.tree.ordering_[:]
-        self.extract_auto()
-        self.labels_ = self._cluster_id[:]
-        self.core_sample_indices_ = self._index[self._is_core[:]]
-        self.n_clusters = max(self._cluster_id)
-        self.processed = True
-        return self
-
-    def filter(self, X, distance_threshold, index_type='bool'):
-        """Density based filter function
-        Returns index of which points will be core at given epsilon.
-        Can be run before 'fit' is called for reduced computation.
-        Note: distance_threshold is not limited to <= epsilon for this method.
-
-        Parameters
-        ----------
-        X : array [n_samples, n_features]
-        distance_threshold: float or int, required
-        index_type: 'bool' or 'idx', optional
+        X : array, shape (n_samples, n_features)
+            The data.
 
         Returns
-        Either boolean or indexed array of core / not core points
+        -------
+        self : instance of OPTICS
+            The instance.
         """
-        if self.processed is False:
-            X = check_array(X)
-            self.tree = SetOfObjects(X, self.metric)
-            _prep_optics(self.tree, self.min_samples)
-        filtered_pts_bool = self.tree.core_dists_[:] < distance_threshold
-        if index_type == 'bool':
-            return filtered_pts_bool
-        elif index_type == 'idx':
-            return self.tree._index[filtered_pts_bool]
+        X = check_array(X)
+
+        n_samples = len(X)
+
+        # Check for valid n_samples relative to min_samples
+        if self.min_samples > n_samples:
+            raise ValueError("Number of training samples (%d) must be greater "
+                             "than min_samples (%d) used for clustering." %
+                             (n_samples, self.min_samples))
+
+        self.tree_ = _SetOfObjects(X, self.metric)
+        _prep_optics(self.tree_, self.min_samples)
+        _build_optics(self.tree_, self.eps * 5.0)
+        self.extract_auto()
+        self.core_sample_indices_ = np.arange(self._is_core)
+        self.n_clusters_ = max(self._cluster_id)
+        return self
+
+    @property
+    def reachability_(self):
+        return self.tree_.reachability_[:]
+
+    @property
+    def core_dists_(self):
+        return self.tree_.core_dists_[:]
+
+    @property
+    def _cluster_id(self):
+        return self.tree_._cluster_id[:]
+
+    @property
+    def _is_core(self):
+        return self.tree_._is_core[:]
+
+    @property
+    def _index(self):
+        return self.tree_._index[:]
+
+    @property
+    def ordering_(self):
+        return self.tree_.ordering_[:]
+
+    @property
+    def labels_(self):
+        return self._cluster_id[:]
 
     def extract(self, epsilon_prime, clustering='auto', **kwargs):
-        """Performs Automatic or DBSCAN equivalent extraction for an
-        arbitrary epsilon. Can be run multiple times.
+        """Performs Automatic extraction for an arbitrary epsilon.
+
+        It can also do DBSCAN equivalent and it can be run multiple times.
 
         See extract_auto() for full description of parameters
 
         Parameters
         ----------
         epsilon_prime: float or int, optional
-        Used for 'dbscan' clustering. Must be less than or equal to what
-        was used for prep and build steps
-        clustering: {'auto', 'dbscan' }, optional
-        Type of cluster extraction to perform; defaults to 'auto'.
+            Used for 'dbscan' clustering. Must be less than or equal to what
+            was used for prep and build steps
+
+        clustering: {'auto', 'dbscan'}, optional
+            Type of cluster extraction to perform; defaults to 'auto'.
 
         Returns
         -------
-        New core_sample_indices_ and labels_ arrays. Modifies OPTICS object
-        and stores core_sample_indices_ and lables_ as attributes."""
+        core_sample_indices_: array, shape (n_core_samples,)
+            The indices of the core samples.
 
-        if self.processed is True:
-            if epsilon_prime > self.eps * 5.0:
-                print('Specify an epsilon smaller than ' + str(self.eps * 5))
-            else:
-                if clustering == 'dbscan':
-                    self.eps_prime = epsilon_prime
-                    _extract_DBSCAN(self, epsilon_prime)
-                elif clustering == 'auto':
-                    self.extract_auto(**kwargs)
-                # else:
-                #    print(clustering + " is not a valid clustering method")
-                self.labels_ = self._cluster_id[:]
-                self.core_sample_indices_ = self._index[self._is_core[:] == 1]
-                self.n_clusters = max(self._cluster_id)
-                if epsilon_prime > (self.eps * 1.05):
-                    print("Warning, eps is close to epsilon_prime:")
-                    print("Output may be unstable")
-                return self.core_sample_indices_, self.labels_
-        else:
-            print("Run fit method first")
+        labels_ : array, shape (n_samples,)
+            The estimated labels.
+        """
+        check_is_fitted(self, 'reachability_')
+
+        if epsilon_prime > self.eps * 5.0:
+            raise ValueError('Specify an epsilon smaller than %s. Got %s.'
+                             % (self.eps * 5, epsilon_prime))
+
+        if clustering == 'dbscan':
+            self.eps_prime = epsilon_prime
+            _extract_DBSCAN(self, epsilon_prime)
+        elif clustering == 'auto':
+            self.extract_auto(**kwargs)
+
+        self.core_sample_indices_ = \
+            np.arange(len(self.reachability_))[self._is_core == 1]
+        self.n_clusters = max(self._cluster_id)
+
+        if epsilon_prime > (self.eps * 1.05):
+            warnings.warn(
+                "Warning, eps (%s) is close to epsilon_prime (%s): "
+                "Output may be unstable." % (self.eps, epsilon_prime),
+                RuntimeWarning, stacklevel=2)
+            # XXX explain 5% thing
+
+        return self.core_sample_indices_, self.labels_
 
     def extract_auto(self,
                      maxima_ratio=.75,
@@ -273,41 +300,43 @@ class OPTICS(BaseEstimator, ClusterMixin):
                      significant_min=.003,
                      min_cluster_size_ratio=.005,
                      min_maxima_ratio=0.001):
-
         """Performs automatic cluster extraction for variable density data.
+
         Can be run multiple times with adjusted parameters. Only returns
         core and noise labels.
 
         Parameters
         ----------
         maxima_ratio: float, optional
-        The maximum ratio we allow of average height of clusters on the right
-        and left to the local maxima in question. The higher the ratio,
-        the more generous the algorithm is to preserving local minimums,
-        and the more cuts the resulting tree will have.
-        rejection_ratio: float, optional
-        Adjusts the fitness of the clustering. When the maxima_ratio is
-        exceeded, determine which of the clusters to the left and right to
-        reject based on rejection_ratio
-        similarity_threshold: float, optional
-        Used to check if nodes can be moved up one level, that is, if the
-        new cluster created is too "similar" to its parent, given the
-        similarity threshold. Similarity can be determined by 1) the size
-        of the new cluster relative to the size of the parent node or
-        2) the average of the reachability values of the new cluster relative
-        to the average of the reachability values of the parent node. A lower
-        value for the similarity threshold means less levels in the tree.
-        significant_min: float, optional
-        Sets a lower threshold on how small a significant maxima can be
-        min_cluster_size_ratio: float, optional
-        Minimum percentage of dataset expected for cluster membership.
-        min_maxima_ratio: float, optional
-        Used to determine neighborhood size for minimum cluster membership.
+            The maximum ratio we allow of average height of clusters on the
+            right and left to the local maxima in question. The higher the
+            ratio, the more generous the algorithm is to preserving local
+            minimums, and the more cuts the resulting tree will have.
 
-        Returns
-        -------
-        New core_sample_indices_ and labels_ arrays. Modifies OPTICS object
-        and stores core_sample_indices_ and lables_ as attributes."""
+        rejection_ratio: float, optional
+            Adjusts the fitness of the clustering. When the maxima_ratio is
+            exceeded, determine which of the clusters to the left and right to
+            reject based on rejection_ratio
+
+        similarity_threshold: float, optional
+            Used to check if nodes can be moved up one level, that is, if the
+            new cluster created is too "similar" to its parent, given the
+            similarity threshold. Similarity can be determined by 1) the size
+            of the new cluster relative to the size of the parent node or
+            2) the average of the reachability values of the new cluster
+            relative to the average of the reachability values of the parent
+            node. A lower value for the similarity threshold means less levels
+            in the tree.
+
+        significant_min: float, optional
+            Sets a lower threshold on how small a significant maxima can be
+            min_cluster_size_ratio: float, optional
+            Minimum percentage of dataset expected for cluster membership.
+
+        min_maxima_ratio: float, optional
+            Used to determine neighborhood size for minimum cluster membership.
+        """
+        check_is_fitted(self, 'reachability_')
 
         # Extraction wrapper
         RPlot = self.reachability_[self.ordering_].tolist()
@@ -335,7 +364,7 @@ def _automatic_cluster(RPlot, RPoints, maxima_ratio, rejection_ratio,
 
     min_neighborhood_size = 2
     min_cluster_size = int(min_cluster_size_ratio * len(RPoints))
-    neighborhood_size = int(min_maxima_ratio*len(RPoints))
+    neighborhood_size = int(min_maxima_ratio * len(RPoints))
 
     # Should this check for < min_samples? Should this be public?
     if min_cluster_size < 5:
@@ -346,7 +375,7 @@ def _automatic_cluster(RPlot, RPoints, maxima_ratio, rejection_ratio,
         neighborhood_size = min_neighborhood_size
 
     local_maxima_points = _find_local_maxima(RPlot, RPoints, neighborhood_size)
-    root_node = TreeNode(RPoints, 0, len(RPoints), None)
+    root_node = _TreeNode(RPoints, 0, len(RPoints), None)
     _cluster_tree(root_node, None, local_maxima_points,
                   RPlot, RPoints, min_cluster_size,
                   maxima_ratio, rejection_ratio,
@@ -355,7 +384,7 @@ def _automatic_cluster(RPlot, RPoints, maxima_ratio, rejection_ratio,
     return root_node
 
 
-class TreeNode(object):
+class _TreeNode(object):
     # automatic cluster helper classes and functions
     def __init__(self, points, start, end, parent_node):
         self.points = points
@@ -375,14 +404,14 @@ class TreeNode(object):
 def _is_local_maxima(index, RPlot, RPoints, neighborhood_size):
     # 0 = point at index is not local maxima
     # 1 = point at index is local maxima
-    for i in range(1, neighborhood_size+1):
+    for i in range(1, neighborhood_size + 1):
         # process objects to the right of index
         if index + i < len(RPlot):
-            if (RPlot[index] < RPlot[index+i]):
+            if (RPlot[index] < RPlot[index + i]):
                 return 0
         # process objects to the left of index
         if index - i >= 0:
-            if (RPlot[index] < RPlot[index-i]):
+            if (RPlot[index] < RPlot[index - i]):
                 return 0
     return 1
 
@@ -391,11 +420,11 @@ def _find_local_maxima(RPlot, RPoints, neighborhood_size):
     local_maxima_points = {}
     # 1st and last points on Reachability Plot are not taken
     # as local maxima points
-    for i in range(1, len(RPoints)-1):
+    for i in range(1, len(RPoints) - 1):
         # if the point is a local maxima on the reachability plot with
         # regard to neighborhood_size, insert it into priority queue and
         # maxima list
-        if (RPlot[i] > RPlot[i-1] and RPlot[i] >= RPlot[i+1] and
+        if (RPlot[i] > RPlot[i - 1] and RPlot[i] >= RPlot[i + 1] and
                 _is_local_maxima(i, RPlot, RPoints, neighborhood_size) == 1):
             local_maxima_points[i] = RPlot[i]
 
@@ -419,8 +448,8 @@ def _cluster_tree(node, parent_node, local_maxima_points, RPlot, RPoints,
     local_maxima_points = local_maxima_points[1:]
 
     # create two new nodes and add to list of nodes
-    node_1 = TreeNode(RPoints[node.start:s], node.start, s, node)
-    node_2 = TreeNode(RPoints[s+1:node.end], s+1, node.end, node)
+    node_1 = _TreeNode(RPoints[node.start:s], node.start, s, node)
+    node_2 = _TreeNode(RPoints[s + 1:node.end], s + 1, node.end, node)
     local_max_1 = []
     local_max_2 = []
 
@@ -446,8 +475,8 @@ def _cluster_tree(node, parent_node, local_maxima_points, RPlot, RPoints,
     # nodes formed to the left and right of the maxima
     # ...should check_ratio be a user settable parameter?
     check_ratio = .8
-    check_value_1 = int(np.round(check_ratio*len(node_1.points)))
-    check_value_2 = int(np.round(check_ratio*len(node_2.points)))
+    check_value_1 = int(np.round(check_ratio * len(node_1.points)))
+    check_value_2 = int(np.round(check_ratio * len(node_2.points)))
     if check_value_2 == 0:
         check_value_2 = 1
     avg_reach_value_1 = float(np.average(RPlot[(node_1.end -
@@ -495,8 +524,8 @@ def _cluster_tree(node, parent_node, local_maxima_points, RPlot, RPoints,
     # is too "similar" to its parent, given the similarity threshold.
     bypass_node = 0
     if parent_node is not None:
-        if (float(float(node.end-node.start) /
-                  float(parent_node.end-parent_node.start)) >
+        if (float(float(node.end - node.start) /
+                  float(parent_node.end - parent_node.start)) >
                 similarity_threshold):
 
             parent_node.children.remove(node)

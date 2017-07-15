@@ -4,6 +4,8 @@ Demo of OPTICS clustering algorithm
 ===================================
 
 Finds core samples of high density and expands clusters from them.
+The key specificity of this example is that the data is generated
+so that the clusters have different densities.
 """
 
 # Authors: Shane Grigsby <refuge@rocktalus.com>
@@ -31,7 +33,7 @@ X = np.r_[X, [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)]
 
 # Plot scatterplot of points
 
-plt.figure(figsize=(10, 10))
+plt.figure(figsize=(7, 7))
 
 plt.subplot(221)
 plt.plot(X[:, 0], X[:, 1], 'b.', ms=2)
@@ -140,4 +142,5 @@ for k, col in zip(unique_labels, colors):
 plt.title('DBSCAN with epsilon of 0.40 \n Estimated number of clusters: %d'
           % clust.n_clusters)
 
+plt.tight_layout()
 plt.show()

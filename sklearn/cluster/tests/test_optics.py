@@ -1,9 +1,16 @@
+# Authors: Shane Grigsby <refuge@rocktalus.com>
+#          Amy X. Zhang <axz@mit.edu>
+# License: BSD 3 clause
+
+import numpy as np
+
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.cluster.optics_ import OPTICS
-from sklearn.utils.testing import assert_equal, assert_greater_equal
+from sklearn.utils.testing import assert_equal, assert_warns
 from sklearn.utils.testing import assert_array_almost_equal
-from .common import generate_clustered_data
-import numpy as np
+from sklearn.utils.testing import assert_raises
+
+from sklearn.cluster.tests.common import generate_clustered_data
 
 
 def test_optics():
@@ -22,29 +29,6 @@ def test_optics():
     assert_equal(n_clusters_1, n_clusters)
 
 
-def test_filter():
-    # Tests the filter function.
-
-    n_clusters = 3
-    X = generate_clustered_data(n_clusters=n_clusters)
-    # Parameters chosen specifically for this task.
-    clust = OPTICS(eps=6.0, min_samples=4, metric='euclidean')
-    # Run filter (before computing OPTICS)
-    bool_memb = clust.filter(X, 0.5)
-    idx_memb = clust.filter(X, 0.5, index_type='idx')
-    # Test for equivalence between 'idx' and 'bool' extraction
-    assert_equal(sum(bool_memb), len(idx_memb))
-    # Compute OPTICS
-    clust.fit(X)
-    clust.extract(0.5, clustering='dbscan')
-    # core points from filter and extract should be the same within 1 point,
-    # with extract occasionally underestimating due to start point of the
-    # OPTICS algorithm. Here we test for at least 95% similarity in
-    # classification of core/not core
-    agree = sum(clust._is_core == bool_memb)
-    assert_greater_equal(float(agree)/len(X), 0.95)
-
-
 def test_optics2():
     # Tests the optics clustering method and all functions inside it
     # 'dbscan' mode
@@ -54,36 +38,25 @@ def test_optics2():
     clust = OPTICS(eps=0.3, min_samples=10)
 
     # Run the fit
-
-    clust2 = clust.fit(X)
-
-    assert clust2 is None
-    # samples, labels = clust2.extract(0.4, 'dbscan')
-
-    # assert samples.size == 0
-    # assert labels[0] == -1
+    assert_raises(ValueError, clust.fit, X)
 
 
 def test_empty_extract():
     # Test extract where fit() has not yet been run.
-
     clust = OPTICS(eps=0.3, min_samples=10)
-    assert clust.extract(0.01, clustering='auto') is None
+    assert_raises(ValueError, clust.extract, 0.01, clustering='auto')
 
 
 def test_bad_extract():
     # Test an extraction of eps too close to original eps
-
     centers = [[1, 1], [-1, -1], [1, -1]]
     X, labels_true = make_blobs(n_samples=750, centers=centers,
                                 cluster_std=0.4, random_state=0)
 
-    ##########################################################################
     # Compute OPTICS
-
     clust = OPTICS(eps=0.003, min_samples=10)
     clust2 = clust.fit(X)
-    assert clust2.extract(0.3) is None
+    assert_raises(ValueError, clust2.extract, 0.3)
 
 
 def test_close_extract():
@@ -94,11 +67,11 @@ def test_close_extract():
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-
     clust = OPTICS(eps=0.2, min_samples=10)
     clust3 = clust.fit(X)
-    clust3.extract(0.3, clustering='dbscan')
-    assert max(clust3.labels_) == 3
+    # check warning when centers are passed
+    assert_warns(RuntimeWarning, clust3.extract, 0.3, clustering='dbscan')
+    assert_equal(max(clust3.labels_), 3)
 
 
 def test_auto_extract_hier():
