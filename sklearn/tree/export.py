@@ -533,7 +533,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         # "_reingold_tilford.Tree" object
         name = self.node_to_str(et, node_id, criterion='entropy')
         if (et.children_left[node_id] != et.children_right[node_id]
-                and depth <= self.max_depth):
+                and (self.max_depth is None or depth <= self.max_depth)):
             children = [self._make_tree(et.children_left[node_id], et,
                                         depth=depth + 1),
                         self._make_tree(et.children_right[node_id], et,
