@@ -31,6 +31,11 @@ Changelog
 New features
 ............
 
+   - :class:`ensemble.GradientBoostingClassifier` and
+     :class:`ensemble.GradientBoostingRegressor` now support early stopping
+     via `n_iter_no_change`, `validation_fraction` and `tol`. :issue:`7071` by
+     `Raghav RV`_
+
    - :class:`model_selection.GridSearchCV` and
      :class:`model_selection.RandomizedSearchCV` now support simultaneous
      evaluation of multiple metrics. Refer to the
