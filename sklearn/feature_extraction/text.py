@@ -1023,10 +1023,11 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     Tf is "n" (natural) by default, "l" (logarithmic) when
     ``sublinear_tf=True``.
     Idf is "t" when use_idf is given, "n" (none) otherwise.
+    The "norm" parameter provides the "how" of how each input vector is
+    scaled during normalization: the default value is "l2."
+
     Normalization is "c" (cosine) when ``norm='l2'``, "n" (none)
     when ``norm=None``.
-
-    By default, the l2 norm is used.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
@@ -1165,7 +1166,42 @@ class TfidfVectorizer(CountVectorizer):
     * Inverse-document-frequency (idf): 1 / (# of docs a term appears in)
 
 
+    The formula that is used to compute the tf-idf of term t is
+
+    tf-idf(d, t, D) = tf(t, d) * idf(t, D)
+
+    Where `d` represents a document, `t` represents a term, `D` is the
+    collection of documents, `tf(t, d)` is the frequency of term `t` in
+    document `d`, and `idf(t, D)` is the inverse of the frequency of term `t`
+    in the corpus `D`.
+
+    The idf is computed as:
+
+    idf(d, t) = log(n/df(D, t)) + 1
+
+    If ``smooth_idf=True`` (the default), the constant "1" is added to the
+    numerator and denominator of the idf as if an extra document was seen
+    containing every term in the collection exactly once, which prevents
+    zero divisions:
+
+    idf(d, t) = log [ (1 + n) / (1 + df(d, t)) ] + 1.
+
+    Furthermore, the formulas used to compute tf and idf depend
+    on parameter settings that correspond to the SMART notation used in IR
+    as follows:
+
+    Tf is "n" (natural) by default, "l" (logarithmic) when
+    ``sublinear_tf=True``.
+    Idf is "t" when use_idf is given, "n" (none) otherwise.
+
+    The "norm" parameter provides the "how" of how each input vector is
+    scaled during normalization: the default value is "l2."
+
+    Normalization is "c" (cosine) when ``norm='l2'``, "n" (none)
+    when ``norm=None``.
+
     Read more in the :py:class:`TfidfTransformer` docs.
+
 
     Parameters
     ----------
