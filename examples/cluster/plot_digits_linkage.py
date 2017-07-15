@@ -79,7 +79,7 @@ print("Done.")
 
 from sklearn.cluster import AgglomerativeClustering
 
-for linkage in ('ward', 'average', 'complete'):
+for linkage in ('ward', 'average', 'complete', 'single'):
     clustering = AgglomerativeClustering(linkage=linkage, n_clusters=10)
     t0 = time()
     clustering.fit(X_red)
