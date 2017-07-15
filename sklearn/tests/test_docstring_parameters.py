@@ -2,7 +2,7 @@
 #          Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import print_function
+from copy import copy
 
 import inspect
 import sys
@@ -20,15 +20,15 @@ from sklearn.utils.testing import _get_func_name
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
 
-PUBLIC_MODULES = set([pckg[1]
-                      for pckg in walk_packages(prefix='sklearn.',
-                                                path=sklearn.__path__)
-                      if not ("._" in pckg[1]
-                              or ".tests." in pckg[1])])
+PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
+                                                        path=sklearn.__path__)
+                      if not ("._" in pckg[1] or ".tests." in pckg[1])])
 
 # TODO Uncomment all modules and fix doc inconsistencies everywhere
 # The list of modules that are not tested for now
-PUBLIC_MODULES -= set([
+IGNORED_MODULES = (
+    'sklearn.cross_decomposition',
+    'sklearn.discriminant_analysis',
     'sklearn.ensemble',
     'sklearn.feature_selection',
     'sklearn.kernel_approximation',
@@ -42,7 +42,12 @@ PUBLIC_MODULES -= set([
     'sklearn.cross_validation',
     'sklearn.grid_search',
     'sklearn.learning_curve',
-])
+)
+
+for ignored in IGNORED_MODULES:
+    for pckg in copy(PUBLIC_MODULES):
+        if ignored in pckg:
+            PUBLIC_MODULES.remove(pckg)
 
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
@@ -78,9 +83,13 @@ def test_docstring_parameters():
 
     incorrect = []
     for name in PUBLIC_MODULES:
+        if name.startswith('_'):
+            continue
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
         classes = inspect.getmembers(module, inspect.isclass)
+        # Exclude imported classes
+        classes = [cls for cls in classes if cls[1].__module__ == name]
         for cname, cls in classes:
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES:
@@ -120,6 +129,8 @@ def test_docstring_parameters():
             incorrect += this_incorrect
 
         functions = inspect.getmembers(module, inspect.isfunction)
+        # Exclude imported functions
+        functions = [fn for fn in functions if fn[1].__module__ == name]
         for fname, func in functions:
             # Don't test private methods / functions
             if fname.startswith('_'):
