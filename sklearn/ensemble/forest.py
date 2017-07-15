@@ -922,6 +922,22 @@ class RandomForestClassifier(ForestClassifier):
         was never left out during the bootstrap. In this case,
         `oob_decision_function_` might contain NaN.
 
+    Examples
+    --------
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
+    >>> clf.fit([[0,0], [1, 1], [0, 1], [1,0]], [0, 0, 1, 1])
+    RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
+                max_depth=2, max_features='auto', max_leaf_nodes=None,
+                min_impurity_decrease=0.0, min_impurity_split=None,
+                min_samples_leaf=1, min_samples_split=2,
+                min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
+                oob_score=False, random_state=0, verbose=0, warm_start=False)
+    >>> print(clf.feature_importances_)
+    [ 0.46666667  0.33333333]
+    >>> print(clf.predict([[0.5, 1]]))
+    [1]
+
     Notes
     -----
     The default values for the parameters controlling the size of the trees
@@ -1141,6 +1157,22 @@ class RandomForestRegressor(ForestRegressor):
 
     oob_prediction_ : array of shape = [n_samples]
         Prediction computed with out-of-bag estimate on the training set.
+
+    Examples
+    --------
+    >>> from sklearn.ensemble import RandomForestRegressor
+    >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
+    >>> regr.fit([[0,0], [1, 1], [0, 1], [1,0]], [1, 1, 2, 2])
+    RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=2,
+               max_features='auto', max_leaf_nodes=None,
+               min_impurity_decrease=0.0, min_impurity_split=None,
+               min_samples_leaf=1, min_samples_split=2,
+               min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
+               oob_score=False, random_state=0, verbose=0, warm_start=False)
+    >>> print(regr.feature_importances_)
+    [ 0.46666667  0.33333333]
+    >>> print(regr.predict([[0.5, 1]]))
+    [ 1.6]
 
     Notes
     -----
