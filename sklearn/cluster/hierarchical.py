@@ -439,6 +439,12 @@ def linkage_tree(X, connectivity=None, n_components=None,
                                      metric=affinity)
     connectivity.data = distances
 
+    if n_clusters is None:
+        n_nodes = 2 * n_samples - 1
+    else:
+        assert n_clusters <= n_samples
+        n_nodes = 2 * n_samples - n_clusters
+
     if linkage == 'single':
         from scipy.sparse.csgraph import minimum_spanning_tree
 
@@ -451,22 +457,26 @@ def linkage_tree(X, connectivity=None, n_components=None,
         mst_array = np.vstack(nonzeros + (nonzero_vals,)).T
 
         # Sort edges of the min_spanning_tree by weight
-        mst_array = mst_array[np.argsort(mst_array.T[2]),:][0]
+        mst_array = mst_array[np.argsort(mst_array.T[2]),:]
 
         # Convert edge list into standard hierarchical clustering format
         single_linkage_tree = _hierarchical.single_linkage_label(mst_array)
         children_ = single_linkage_tree[:, :2].astype(np.int)
 
+        # Compute parents
+        parent = np.zeros(n_nodes, dtype=np.intp)
+        for i, (left, right) in enumerate(children_):
+            if n_clusters is not None and i >= n_samples - n_clusters:
+                break
+            if left < n_nodes:
+                parent[left] = i + n_samples
+            if right < n_nodes:
+                parent[right] = i + n_samples
+
         if return_distance:
             distances = single_linkage_tree[:, 2]
-            return children_, 1, n_samples, None, distances
-        return children_, 1, n_samples, None
-
-    if n_clusters is None:
-        n_nodes = 2 * n_samples - 1
-    else:
-        assert n_clusters <= n_samples
-        n_nodes = 2 * n_samples - n_clusters
+            return children_, 1, n_samples, parent, distances
+        return children_, 1, n_samples, parent
 
     if return_distance:
         distances = np.empty(n_nodes - n_samples)
