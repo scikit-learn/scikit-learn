@@ -4350,7 +4350,7 @@ Highlights
    - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
      by `Andreas Müller`_.
 
-   - :ref:`randomized_l1`: Randomized sparse linear models for feature
+   - Randomized sparse linear models for feature
      selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_
 
    - :ref:`label_propagation` for semi-supervised learning, by Clay
@@ -4811,7 +4811,7 @@ Changelog
      `Mathieu Blondel`_ and `Lars Buitinck`_
 
    - Documentation improvements: thumbnails in
-     :ref:`example gallery <examples-index>` by `Fabian Pedregosa`_.
+     example gallery by `Fabian Pedregosa`_.
 
    - Important bugfixes in :ref:`svm` module (segfaults, bad
      performance) by `Fabian Pedregosa`_.
