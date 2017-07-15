@@ -1023,8 +1023,6 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     Tf is "n" (natural) by default, "l" (logarithmic) when
     ``sublinear_tf=True``.
     Idf is "t" when use_idf is given, "n" (none) otherwise.
-    The "norm" parameter provides the "how" of how each input vector is
-    scaled during normalization: the default value is "l2."
 
     Normalization is "c" (cosine) when ``norm='l2'``, "n" (none)
     when ``norm=None``.
@@ -1033,7 +1031,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    norm : 'l1', 'l2' or None, optional
+    norm : 'l1', 'l2' or None, optional, default = 'l2'
         Norm used to normalize term vectors. None for no normalization.
 
     use_idf : boolean, default=True
@@ -1194,9 +1192,6 @@ class TfidfVectorizer(CountVectorizer):
     ``sublinear_tf=True``.
     Idf is "t" when use_idf is given, "n" (none) otherwise.
 
-    The "norm" parameter provides the "how" of how each input vector is
-    scaled during normalization: the default value is "l2."
-
     Normalization is "c" (cosine) when ``norm='l2'``, "n" (none)
     when ``norm=None``.
 
@@ -1310,7 +1305,7 @@ class TfidfVectorizer(CountVectorizer):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    norm : 'l1', 'l2' or None, optional
+    norm : 'l1', 'l2' or None, optional, default = 'l2'
         Norm used to normalize term vectors. None for no normalization.
 
     use_idf : boolean, default=True
