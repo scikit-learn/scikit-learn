@@ -971,24 +971,40 @@ def _make_int_array():
 class TfidfTransformer(BaseEstimator, TransformerMixin):
     """Transform a count matrix to a normalized tf or tf-idf representation
 
-    Tf means term-frequency while tf-idf means term-frequency times inverse
-    document-frequency. This is a common term weighting scheme in information
-    retrieval, that has also found good use in document classification.
+    Definitions:
 
-    The goal of using tf-idf instead of the raw frequencies of occurrence of a
-    token in a given document is to scale down the impact of tokens that occur
-    very frequently in a given corpus and that are hence empirically less
-    informative than features that occur in a small fraction of the training
-    corpus.
+    Term-frequency (tf) = the frequency of a term in a document.
+
+    Inverse-document-frequency (idf) = 1 / (# of docs a term appears in)
+
+    This is a common term weighting scheme in information
+    retrieval, also commonly used in document classification.
+
+    Using the tf-idf transformed frequencies allows the raw term counts of
+    a term occurring in a document to be weighted by the frequency of the
+    term occurring in other documents in the corpus. Thus, terms that occur in
+    many documents in a corpus will be down-weighted, and terms that occur in
+    few documents in a corpus will be up-weighted. Frequently occurring terms
+    are empirically less informative than features that occur in a small
+    fraction of the training corpus.
 
     The formula that is used to compute the tf-idf of term t is
-    tf-idf(d, t) = tf(t) * idf(d, t), and the idf is computed as
-    idf(d, t) = log [ n / df(d, t) ] + 1 (if ``smooth_idf=False``),
-    where n is the total number of documents and df(d, t) is the
-    document frequency; the document frequency is the number of documents d
-    that contain term t. The effect of adding "1" to the idf in the equation
-    above is that terms with zero idf, i.e., terms  that occur in all documents
+
+    tf-idf(d, t, D) = tf(t, d) * idf(t, D)
+
+    Where `d` represents a document, `t` represents a term, `D` is the
+    collection of documents, `tf(t, d)` is the frequency of term `t` in
+    document `d`, and `idf(t, D)` is the inverse of the frequency of term `t`
+    in the corpus `D`.
+
+    The idf is computed as:
+
+    idf(d, t) = log(n/df(D, t)) + 1
+
+    The effect of adding "1" to the idf in the equation
+    above is that terms with an idf=1, i.e., terms  that occur in all documents
     in a training set, will not be entirely ignored.
+
     (Note that the idf formula above differs from the standard
     textbook notation that defines the idf as
     idf(d, t) = log [ n / (df(d, t) + 1) ]).
@@ -996,7 +1012,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     If ``smooth_idf=True`` (the default), the constant "1" is added to the
     numerator and denominator of the idf as if an extra document was seen
     containing every term in the collection exactly once, which prevents
-    zero divisions: idf(d, t) = log [ (1 + n) / (1 + df(d, t)) ] + 1.
+    zero divisions:
+
+    idf(d, t) = log [ (1 + n) / (1 + df(d, t)) ] + 1.
 
     Furthermore, the formulas used to compute tf and idf depend
     on parameter settings that correspond to the SMART notation used in IR
@@ -1007,6 +1025,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     Idf is "t" when use_idf is given, "n" (none) otherwise.
     Normalization is "c" (cosine) when ``norm='l2'``, "n" (none)
     when ``norm=None``.
+
+    By default, the l2 norm is used.
 
     Read more in the :ref:`User Guide <text_feature_extraction>`.
 
@@ -1126,8 +1146,26 @@ class TfidfVectorizer(CountVectorizer):
     """Convert a collection of raw documents to a matrix of TF-IDF features.
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
+    CountVectorizer takes a collection of raw documents
+    and transforms it into a term_document matrix with the shape
+    [n_samples, n_features], or more intuitively, the shape [n_docs, n_terms],
+    and each item of the matrix is the count of a word in a given documnet.
 
-    Read more in the :ref:`User Guide <text_feature_extraction>`.
+    Using the tf-idf transformed frequencies allows the raw term counts of
+    a term occurring in a document to be weighted by the frequency of the
+    term occurring in other documents in the corpus. Thus, terms that occur in
+    many documents in a corpus will be down-weighted, and terms that occur in
+    few documents in a corpus will be up-weighted. Frequently occurring terms
+    are empirically less informative than features that occur in a small
+    fraction of the training corpus.
+
+    Definitions:
+
+    * Term-frequency (tf): the frequency of a term in a document.
+    * Inverse-document-frequency (idf): 1 / (# of docs a term appears in)
+
+
+    Read more in the :py:class:`TfidfTransformer` docs.
 
     Parameters
     ----------
