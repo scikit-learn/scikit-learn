@@ -212,7 +212,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         _prep_optics(self.tree_, self.min_samples)
         _build_optics(self.tree_, self.eps * 5.0)
         self.extract_auto()
-        self.core_sample_indices_ = np.arange(self._is_core)
+        self.core_sample_indices_ = np.arange(n_samples)[self._is_core]
         self.n_clusters_ = max(self._cluster_id)
         return self
 
