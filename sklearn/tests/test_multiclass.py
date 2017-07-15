@@ -1,7 +1,9 @@
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import assert_array_equal, assert_raises_regex
+from re import escape
+
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
@@ -10,6 +12,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
@@ -95,13 +98,13 @@ def test_ovr_partial_fit():
     X = np.abs(np.random.randn(14, 2))
     y = [1, 1, 1, 1, 2, 3, 3, 0, 0, 2, 3, 1, 2, 3]
 
-    ovr = OneVsRestClassifier(SGDClassifier(n_iter=1, shuffle=False,
-                                            random_state=0))
+    ovr = OneVsRestClassifier(SGDClassifier(max_iter=1, tol=None,
+                                            shuffle=False, random_state=0))
     ovr.partial_fit(X[:7], y[:7], np.unique(y))
     ovr.partial_fit(X[7:], y[7:])
     pred = ovr.predict(X)
-    ovr1 = OneVsRestClassifier(SGDClassifier(n_iter=1, shuffle=False,
-                                             random_state=0))
+    ovr1 = OneVsRestClassifier(SGDClassifier(max_iter=1, tol=None,
+                                             shuffle=False, random_state=0))
     pred1 = ovr1.fit(X, y).predict(X)
     assert_equal(np.mean(pred == y), np.mean(pred1 == y))
 
@@ -118,9 +121,9 @@ def test_ovr_partial_fit_exceptions():
     # A new class value which was not in the first call of partial_fit
     # It should raise ValueError
     y1 = [5] + y[7:-1]
-    assert_raises_regex(ValueError, "Mini-batch contains \[.+\] while classes"
-                                    " must be subset of \[.+\]",
-                        ovr.partial_fit, X=X[7:], y=y1)
+    assert_raises_regexp(ValueError, "Mini-batch contains \[.+\] while classes"
+                                     " must be subset of \[.+\]",
+                         ovr.partial_fit, X=X[7:], y=y1)
 
 
 def test_ovr_ovo_regressor():
@@ -493,7 +496,8 @@ def test_ovo_fit_predict():
 
 
 def test_ovo_partial_fit_predict():
-    X, y = shuffle(iris.data, iris.target)
+    temp = datasets.load_iris()
+    X, y = temp.data, temp.target
     ovo1 = OneVsOneClassifier(MultinomialNB())
     ovo1.partial_fit(X[:100], y[:100], np.unique(y))
     ovo1.partial_fit(X[100:], y[100:])
@@ -506,17 +510,36 @@ def test_ovo_partial_fit_predict():
     assert_greater(np.mean(y == pred1), 0.65)
     assert_almost_equal(pred1, pred2)
 
-    # Test when mini-batches don't have all target classes
+    # Test when mini-batches have binary target classes
     ovo1 = OneVsOneClassifier(MultinomialNB())
-    ovo1.partial_fit(iris.data[:60], iris.target[:60], np.unique(iris.target))
-    ovo1.partial_fit(iris.data[60:], iris.target[60:])
-    pred1 = ovo1.predict(iris.data)
+    ovo1.partial_fit(X[:60], y[:60], np.unique(y))
+    ovo1.partial_fit(X[60:], y[60:])
+    pred1 = ovo1.predict(X)
     ovo2 = OneVsOneClassifier(MultinomialNB())
-    pred2 = ovo2.fit(iris.data, iris.target).predict(iris.data)
+    pred2 = ovo2.fit(X, y).predict(X)
 
     assert_almost_equal(pred1, pred2)
-    assert_equal(len(ovo1.estimators_), len(np.unique(iris.target)))
-    assert_greater(np.mean(iris.target == pred1), 0.65)
+    assert_equal(len(ovo1.estimators_), len(np.unique(y)))
+    assert_greater(np.mean(y == pred1), 0.65)
+
+    ovo = OneVsOneClassifier(MultinomialNB())
+    X = np.random.rand(14, 2)
+    y = [1, 1, 2, 3, 3, 0, 0, 4, 4, 4, 4, 4, 2, 2]
+    ovo.partial_fit(X[:7], y[:7], [0, 1, 2, 3, 4])
+    ovo.partial_fit(X[7:], y[7:])
+    pred = ovo.predict(X)
+    ovo2 = OneVsOneClassifier(MultinomialNB())
+    pred2 = ovo2.fit(X, y).predict(X)
+    assert_almost_equal(pred, pred2)
+
+    # raises error when mini-batch does not have classes from all_classes
+    ovo = OneVsOneClassifier(MultinomialNB())
+    error_y = [0, 1, 2, 3, 4, 5, 2]
+    message_re = escape("Mini-batch contains {0} while "
+                        "it must be subset of {1}".format(np.unique(error_y),
+                                                          np.unique(y)))
+    assert_raises_regexp(ValueError, message_re, ovo.partial_fit, X[:7],
+                         error_y, np.unique(y))
 
     # test partial_fit only exists if estimator has it:
     ovr = OneVsOneClassifier(SVC())
@@ -584,7 +607,8 @@ def test_ovo_ties():
     # not defaulting to the smallest label
     X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
     y = np.array([2, 0, 1, 2])
-    multi_clf = OneVsOneClassifier(Perceptron(shuffle=False))
+    multi_clf = OneVsOneClassifier(Perceptron(shuffle=False, max_iter=4,
+                                              tol=None))
     ovo_prediction = multi_clf.fit(X, y).predict(X)
     ovo_decision = multi_clf.decision_function(X)
 
@@ -611,7 +635,8 @@ def test_ovo_ties2():
     # cycle through labels so that each label wins once
     for i in range(3):
         y = (y_ref + i) % 3
-        multi_clf = OneVsOneClassifier(Perceptron(shuffle=False))
+        multi_clf = OneVsOneClassifier(Perceptron(shuffle=False, max_iter=4,
+                                                  tol=None))
         ovo_prediction = multi_clf.fit(X, y).predict(X)
         assert_equal(ovo_prediction[0], i % 3)
 
@@ -679,6 +704,9 @@ def test_ecoc_float_y():
 
     ovo = OutputCodeClassifier(LinearSVC())
     assert_raise_message(ValueError, "Unknown label type", ovo.fit, X, y)
+    ovo = OutputCodeClassifier(LinearSVC(), code_size=-1)
+    assert_raise_message(ValueError, "code_size should be greater than 0,"
+                         " got -1", ovo.fit, X, y)
 
 
 def test_pairwise_indices():

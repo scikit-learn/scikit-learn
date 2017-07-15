@@ -257,7 +257,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             self.label_binarizer_ = LabelBinarizer(sparse_output=True)
             self.label_binarizer_.fit(self.classes_)
 
-        if np.setdiff1d(y, self.classes_):
+        if len(np.setdiff1d(y, self.classes_)):
             raise ValueError(("Mini-batch contains {0} while classes " +
                              "must be subset of {1}").format(np.unique(y),
                                                              self.classes_))
@@ -267,9 +267,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         columns = (col.toarray().ravel() for col in Y.T)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_partial_fit_binary)(self.estimators_[i], X,
-                                         next(columns))
-            for i in range(self.n_classes_))
+            delayed(_partial_fit_binary)(estimator, X, column)
+            for estimator, column in izip(self.estimators_, columns))
 
         return self
 
@@ -429,9 +428,11 @@ def _partial_fit_ovo_binary(estimator, X, y, i, j):
 
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
-    y_binary = np.zeros_like(y)
-    y_binary[y == j] = 1
-    return _partial_fit_binary(estimator, X[cond], y_binary)
+    if len(y) != 0:
+        y_binary = np.zeros_like(y)
+        y_binary[y == j] = 1
+        return _partial_fit_binary(estimator, X[cond], y_binary)
+    return estimator
 
 
 class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
@@ -543,6 +544,11 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             self.estimators_ = [clone(self.estimator) for i in
                                 range(self.n_classes_ *
                                       (self.n_classes_ - 1) // 2)]
+
+        if len(np.setdiff1d(y, self.classes_)):
+            raise ValueError("Mini-batch contains {0} while it "
+                             "must be subset of {1}".format(np.unique(y),
+                                                            self.classes_))
 
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
         check_classification_targets(y)
@@ -715,7 +721,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         X, y = check_X_y(X, y)
         if self.code_size <= 0:
-            raise ValueError("code_size should be greater than 0, got {1}"
+            raise ValueError("code_size should be greater than 0, got {0}"
                              "".format(self.code_size))
 
         _check_estimator(self.estimator)

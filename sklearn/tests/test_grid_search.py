@@ -44,7 +44,6 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.linear_model import Ridge
 
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.exceptions import FitFailedWarning
 
 with warnings.catch_warnings():

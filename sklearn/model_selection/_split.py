@@ -566,7 +566,7 @@ class StratifiedKFold(_BaseKFold):
     def __init__(self, n_splits=3, shuffle=False, random_state=None):
         super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
 
-    def _make_test_folds(self, X, y=None, groups=None):
+    def _make_test_folds(self, X, y=None):
         if self.shuffle:
             rng = check_random_state(self.random_state)
         else:
@@ -1521,6 +1521,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              'equal to the number of classes = %d' %
                              (n_test, n_classes))
 
+        # Find the sorted list of instances for each class:
+        # (np.unique above performs a sort, so code is O(n logn) already)
+        class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
+                                 np.cumsum(class_counts)[:-1])
+
         rng = check_random_state(self.random_state)
 
         for _ in range(self.n_splits):
@@ -1533,12 +1538,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             train = []
             test = []
 
-            for i, class_i in enumerate(classes):
+            for i in range(n_classes):
                 permutation = rng.permutation(class_counts[i])
-                perm_indices_class_i = np.where((y == class_i))[0][permutation]
+                perm_indices_class_i = class_indices[i].take(permutation,
+                                                             mode='clip')
 
                 train.extend(perm_indices_class_i[:n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
+
             train = rng.permutation(train)
             test = rng.permutation(test)
 
@@ -1815,10 +1822,11 @@ def check_cv(cv=3, y=None, classifier=False):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other
