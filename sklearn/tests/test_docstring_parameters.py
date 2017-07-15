@@ -44,8 +44,8 @@ IGNORED_MODULES = (
     'sklearn.learning_curve',
 )
 
-for ignored in IGNORED_MODULES:
-    for pckg in copy(PUBLIC_MODULES):
+for pckg in copy(PUBLIC_MODULES):
+    for ignored in IGNORED_MODULES:
         if ignored in pckg:
             PUBLIC_MODULES.remove(pckg)
 
