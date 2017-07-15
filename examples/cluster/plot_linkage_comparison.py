@@ -8,13 +8,14 @@ methods for hierarchical clustering on datasets that are
 "interesting" but still in 2D.
 
 The main observations to make are:
-* single linkage is fast, and can perform well on
-non-globular data, but it performs poorly in the
-presence of noise.
-* average and complete linkage perform well on
-cleanly separated globular clusters, but have mixed
-results otherwise.
-* Ward is the most effective method for noisy data.
+
+- single linkage is fast, and can perform well on
+  non-globular data, but it performs poorly in the
+  presence of noise.
+- average and complete linkage perform well on
+  cleanly separated globular clusters, but have mixed
+  results otherwise.
+- Ward is the most effective method for noisy data.
 
 While these examples give some intuition about the
 algorithms, this intuition might not apply to very high
