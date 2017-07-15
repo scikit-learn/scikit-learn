@@ -562,26 +562,18 @@ Different linkage type: Ward, complete, average and single linkage
 :class:`AgglomerativeClustering` supports Ward, single, average, and complete
 linkage strategies.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_001.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_linkage_comparison_001.png
+    :target: ../auto_examples/cluster/plot_linkage_comparison.html
     :scale: 43
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_002.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
-    :scale: 43
-
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_003.png
-    :target: ../auto_examples/cluster/plot_digits_linkage.html
-    :scale: 43
-
 
 Agglomerative cluster has a "rich get richer" behavior that leads to
-uneven cluster sizes. In this regard, complete linkage is the worst
+uneven cluster sizes. In this regard, single linkage is the worst
 strategy, and Ward gives the most regular sizes. However, the affinity
 (or distance used in clustering) cannot be varied with Ward, thus for non
 Euclidean metrics, average linkage is a good alternative. Single linkage,
 while not robust to noisy data, can be computed very efficiently and can
 therefore be useful to provide hierarchical clustering of larger datasets.
+Single linkage can also perform well on non-globular data.
 
 .. topic:: Examples:
 
