@@ -57,35 +57,35 @@ class _SetOfObjects(BallTree):
 
 
 # OPTICS helper functions; these should not be public #
-def _prep_optics(self, min_samples):
-    self.core_dists_[:] = self.query(self.get_arrays()[0],
-                                     k=min_samples)[0][:, -1]
+def _prep_optics(objects_tree, min_samples):
+    objects_tree.core_dists_[:] = objects_tree.query(
+        objects_tree.get_arrays()[0], k=min_samples)[0][:, -1]
 
 
-def _build_optics(setofobjects, epsilon):
+def _build_optics(objects_tree, epsilon):
     # Main OPTICS loop. Not parallelizable. The order that entries are
     # written to the 'ordering_' list is important!
-    for point in range(setofobjects._n):
-        if not setofobjects._processed[point]:
-            _expand_cluster_order(setofobjects, point, epsilon)
+    for point in range(objects_tree._n):
+        if not objects_tree._processed[point]:
+            _expand_cluster_order(objects_tree, point, epsilon)
 
 
-def _expand_cluster_order(setofobjects, point, epsilon):
+def _expand_cluster_order(objects_tree, point, epsilon):
     # As above, not parallelizable. Parallelizing would allow items in
     # the 'unprocessed' list to switch to 'processed'
-    if setofobjects.core_dists_[point] <= epsilon:
-        while not setofobjects._processed[point]:
-            setofobjects._processed[point] = True
-            setofobjects.ordering_.append(point)
-            point = _set_reach_dist(setofobjects, point, epsilon)
+    if objects_tree.core_dists_[point] <= epsilon:
+        while not objects_tree._processed[point]:
+            objects_tree._processed[point] = True
+            objects_tree.ordering_.append(point)
+            point = _set_reach_dist(objects_tree, point, epsilon)
     else:
-        setofobjects.ordering_.append(point)  # For very noisy points
-        setofobjects._processed[point] = True
+        objects_tree.ordering_.append(point)  # For very noisy points
+        objects_tree._processed[point] = True
 
 
-def _set_reach_dist(setofobjects, point_index, epsilon):
-    X = np.array(setofobjects.data[point_index]).reshape(1, -1)
-    indices = setofobjects.query_radius(X, r=epsilon,
+def _set_reach_dist(objects_tree, point_index, epsilon):
+    X = np.array(objects_tree.data[point_index]).reshape(1, -1)
+    indices = objects_tree.query_radius(X, r=epsilon,
                                         return_distance=False,
                                         count_only=False,
                                         sort_results=False)[0]
@@ -93,35 +93,34 @@ def _set_reach_dist(setofobjects, point_index, epsilon):
     # Checks to see if there more than one member in the neighborhood
     if iterable(indices):
         # Masking processed values; n_pr is 'not processed'
-        n_pr = np.compress((np.take(setofobjects._processed,
+        n_pr = np.compress((np.take(objects_tree._processed,
                                     indices, axis=0) < 1).ravel(),
                            indices, axis=0)
-        # n_pr = indices[(setofobjects._processed[indices] < 1).ravel()]
+        # n_pr = indices[(objects_tree._processed[indices] < 1).ravel()]
         if len(n_pr) > 0:
             dists = pairwise_distances(X,
-                                       np.take(setofobjects.get_arrays()[0],
+                                       np.take(objects_tree.get_arrays()[0],
                                                n_pr,
                                                axis=0),
-                                       setofobjects.metric, n_jobs=1).ravel()
+                                       objects_tree.metric, n_jobs=1).ravel()
 
-            rdists = np.maximum(dists, setofobjects.core_dists_[point_index])
-            new_reach = np.minimum(np.take(setofobjects.reachability_,
+            rdists = np.maximum(dists, objects_tree.core_dists_[point_index])
+            new_reach = np.minimum(np.take(objects_tree.reachability_,
                                            n_pr, axis=0),
                                    rdists)
-            setofobjects.reachability_[n_pr] = new_reach
+            objects_tree.reachability_[n_pr] = new_reach
 
         # Checks to see if everything is already processed;
         # if so, return control to main loop
         if n_pr.size > 0:
             # Define return order based on reachability distance
-            return(n_pr[quick_scan(np.take(setofobjects.reachability_,
+            return(n_pr[quick_scan(np.take(objects_tree.reachability_,
                                            n_pr, axis=0), dists)])
         else:
             return point_index
 
 
 class OPTICS(BaseEstimator, ClusterMixin):
-
     """Estimate clustering structure from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
@@ -211,9 +210,9 @@ class OPTICS(BaseEstimator, ClusterMixin):
         self.tree_ = _SetOfObjects(X, self.metric)
         _prep_optics(self.tree_, self.min_samples)
         _build_optics(self.tree_, self.eps * 5.0)
-        self.extract_auto()
+        self._extract_auto()
         self.core_sample_indices_ = np.arange(n_samples)[self._is_core]
-        self.n_clusters_ = max(self._cluster_id)
+        self.n_clusters_ = np.max(self._cluster_id)
         return self
 
     @property
@@ -244,7 +243,21 @@ class OPTICS(BaseEstimator, ClusterMixin):
     def labels_(self):
         return self._cluster_id[:]
 
-    def extract(self, epsilon_prime, clustering='auto', **kwargs):
+    def fit_predict(self, X, y=None):
+        """Performs clustering on X and returns cluster labels.
+        Parameters
+        ----------
+        X : array of shape (n_samples, n_samples)
+
+        Returns
+        -------
+        y : ndarray, shape (n_samples,)
+            cluster labels
+        """
+        self.fit(X)
+        return self.labels_
+
+    def _extract(self, epsilon_prime, clustering='auto', **kwargs):
         """Performs Automatic extraction for an arbitrary epsilon.
 
         It can also do DBSCAN equivalent and it can be run multiple times.
@@ -278,11 +291,11 @@ class OPTICS(BaseEstimator, ClusterMixin):
             self.eps_prime = epsilon_prime
             _extract_DBSCAN(self, epsilon_prime)
         elif clustering == 'auto':
-            self.extract_auto(**kwargs)
+            self._extract_auto(**kwargs)
 
         self.core_sample_indices_ = \
             np.arange(len(self.reachability_))[self._is_core == 1]
-        self.n_clusters = max(self._cluster_id)
+        self.n_clusters = np.max(self._cluster_id)
 
         if epsilon_prime > (self.eps * 1.05):
             warnings.warn(
@@ -293,13 +306,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
         return self.core_sample_indices_, self.labels_
 
-    def extract_auto(self,
-                     maxima_ratio=.75,
-                     rejection_ratio=.7,
-                     similarity_threshold=0.4,
-                     significant_min=.003,
-                     min_cluster_size_ratio=.005,
-                     min_maxima_ratio=0.001):
+    def _extract_auto(self,
+                      maxima_ratio=.75,
+                      rejection_ratio=.7,
+                      similarity_threshold=0.4,
+                      significant_min=.003,
+                      min_cluster_size_ratio=.005,
+                      min_maxima_ratio=0.001):
         """Performs automatic cluster extraction for variable density data.
 
         Can be run multiple times with adjusted parameters. Only returns
@@ -553,22 +566,22 @@ def _get_leaves(node, arr):
     return arr
 
 
-def _extract_DBSCAN(setofobjects, epsilon_prime):
+def _extract_DBSCAN(objects_tree, epsilon_prime):
     # Extract DBSCAN Equivalent cluster structure
     # Important: Epsilon prime should be less than epsilon used in OPTICS
     cluster_id = 0
-    for entry in setofobjects.ordering_:
-        if setofobjects.reachability_[entry] > epsilon_prime:
-            if setofobjects.core_dists_[entry] <= epsilon_prime:
+    for entry in objects_tree.ordering_:
+        if objects_tree.reachability_[entry] > epsilon_prime:
+            if objects_tree.core_dists_[entry] <= epsilon_prime:
                 cluster_id += 1
-                setofobjects._cluster_id[entry] = cluster_id
+                objects_tree._cluster_id[entry] = cluster_id
             else:
                 # This is only needed for compatibility for repeated scans.
-                setofobjects._cluster_id[entry] = -1   # Noise points
-                setofobjects._is_core[entry] = 0
+                objects_tree._cluster_id[entry] = -1   # Noise points
+                objects_tree._is_core[entry] = 0
         else:
-            setofobjects._cluster_id[entry] = cluster_id
-            if setofobjects.core_dists_[entry] <= epsilon_prime:
-                setofobjects._is_core[entry] = 1   # True
+            objects_tree._cluster_id[entry] = cluster_id
+            if objects_tree.core_dists_[entry] <= epsilon_prime:
+                objects_tree._is_core[entry] = 1   # True
             else:
-                setofobjects._is_core[entry] = 0   # False
+                objects_tree._is_core[entry] = 0   # False

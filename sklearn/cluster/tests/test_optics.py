@@ -44,7 +44,7 @@ def test_optics2():
 def test_empty_extract():
     # Test extract where fit() has not yet been run.
     clust = OPTICS(eps=0.3, min_samples=10)
-    assert_raises(ValueError, clust.extract, 0.01, clustering='auto')
+    assert_raises(ValueError, clust._extract, 0.01, clustering='auto')
 
 
 def test_bad_extract():
@@ -56,7 +56,7 @@ def test_bad_extract():
     # Compute OPTICS
     clust = OPTICS(eps=0.003, min_samples=10)
     clust2 = clust.fit(X)
-    assert_raises(ValueError, clust2.extract, 0.3)
+    assert_raises(ValueError, clust2._extract, 0.3)
 
 
 def test_close_extract():
@@ -70,7 +70,7 @@ def test_close_extract():
     clust = OPTICS(eps=0.2, min_samples=10)
     clust3 = clust.fit(X)
     # check warning when centers are passed
-    assert_warns(RuntimeWarning, clust3.extract, 0.3, clustering='dbscan')
+    assert_warns(RuntimeWarning, clust3._extract, 0.3, clustering='dbscan')
     assert_equal(max(clust3.labels_), 3)
 
 
@@ -97,7 +97,7 @@ def test_auto_extract_hier():
 
     # Extract the result
     # eps not used for 'auto' extract
-    clust.extract(0.0, 'auto')
+    clust._extract(0.0, 'auto')
 
     assert_equal(len(set(clust.labels_)), 6)
 
