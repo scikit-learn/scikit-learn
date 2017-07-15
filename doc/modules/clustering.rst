@@ -556,10 +556,10 @@ considers at each step all the possible merges.
    number of features. It is a dimensionality reduction tool, see
    :ref:`data_reduction`.
 
-Different linkage type: Ward, complete and average linkage
+Different linkage type: Ward, complete, average and single linkage
 -----------------------------------------------------------
 
-:class:`AgglomerativeClustering` supports Ward, average, and complete
+:class:`AgglomerativeClustering` supports Ward, single, average, and complete
 linkage strategies.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_001.png
@@ -579,7 +579,9 @@ Agglomerative cluster has a "rich get richer" behavior that leads to
 uneven cluster sizes. In this regard, complete linkage is the worst
 strategy, and Ward gives the most regular sizes. However, the affinity
 (or distance used in clustering) cannot be varied with Ward, thus for non
-Euclidean metrics, average linkage is a good alternative.
+Euclidean metrics, average linkage is a good alternative. Single linkage,
+while not robust to noisy data, can computed very efficiently and can
+therefore be useful to provide hierarchical clustering of larger datasets.
 
 .. topic:: Examples:
 
@@ -671,7 +673,7 @@ enable only merging of neighboring pixels on an image, as in the
 Varying the metric
 -------------------
 
-Average and complete linkage can be used with a variety of distances (or
+Single, average and complete linkage can be used with a variety of distances (or
 affinities), in particular Euclidean distance (*l2*), Manhattan distance
 (or Cityblock, or *l1*), cosine distance, or any precomputed affinity
 matrix.
