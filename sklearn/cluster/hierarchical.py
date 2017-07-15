@@ -550,11 +550,16 @@ def _average_linkage(*args, **kwargs):
     kwargs['linkage'] = 'average'
     return linkage_tree(*args, **kwargs)
 
+def _single_linkage(*args, **kwargs):
+    kwargs['linkage'] = 'single'
+    return linkage_tree(*args, **kwargs)
+
 
 _TREE_BUILDERS = dict(
     ward=ward_tree,
     complete=_complete_linkage,
-    average=_average_linkage)
+    average=_average_linkage,
+    single=_single_linkage)
 
 
 ###############################################################################

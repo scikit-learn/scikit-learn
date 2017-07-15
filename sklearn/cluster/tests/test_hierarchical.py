@@ -134,7 +134,7 @@ def test_agglomerative_clustering():
     n_samples = 100
     X = rng.randn(n_samples, 50)
     connectivity = grid_to_graph(*mask.shape)
-    for linkage in ("ward", "complete", "average"):
+    for linkage in ("ward", "complete", "average", "single"):
         clustering = AgglomerativeClustering(n_clusters=10,
                                              connectivity=connectivity,
                                              linkage=linkage)
@@ -340,7 +340,7 @@ def test_ward_linkage_tree_return_distance():
 
         assert_array_almost_equal(dist_unstructured, dist_structured)
 
-        for linkage in ['average', 'complete']:
+        for linkage in ['average', 'complete', 'single']:
             structured_items = linkage_tree(
                 X, connectivity=connectivity, linkage=linkage,
                 return_distance=True)[-1]
@@ -398,7 +398,7 @@ def test_ward_linkage_tree_return_distance():
     assert_array_almost_equal(linkage_X_ward[:, 2], out_X_unstructured[4])
     assert_array_almost_equal(linkage_X_ward[:, 2], out_X_structured[4])
 
-    linkage_options = ['complete', 'average']
+    linkage_options = ['complete', 'average', 'single']
     X_linkage_truth = [linkage_X_complete, linkage_X_average]
     for (linkage, X_truth) in zip(linkage_options, X_linkage_truth):
         out_X_unstructured = linkage_tree(
