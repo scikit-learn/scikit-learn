@@ -183,7 +183,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
 
             if self.n_features_to_select[0] > self.n_features_to_select[1]:
                 raise ValueError('The min n_features_to_select value must be'
-                                 ' larger than the max'
+                                 ' smaller than the max'
                                  ' n_features_to_select value.')
 
         if isinstance(self.n_features_to_select, tuple):
@@ -211,7 +211,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
             self.subsets_[k] = {
                 'feature_subset_idx': k_idx,
                 'cv_scores': k_score,
-                'avg_score': k_score.mean()
+                'avg_score': np.nanmean(k_score)
                 }
 
         best_subset = None
@@ -245,6 +245,8 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         if select_in_range:
             max_score = float('-inf')
             for k in self.subsets_:
+                if k < self.n_features_to_select[0] or k > self.n_features_to_select[1]:
+                    continue
                 if self.subsets_[k]['avg_score'] > max_score:
                     max_score = self.subsets_[k]['avg_score']
                     best_subset = k
@@ -279,7 +281,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
             for feature in remaining:
                 new_subset = tuple(subset | {feature})
                 cv_scores = self._calc_score(X, y, new_subset)
-                all_avg_scores.append(cv_scores.mean())
+                all_avg_scores.append(np.nanmean(cv_scores))
                 all_cv_scores.append(cv_scores)
                 all_subsets.append(new_subset)
             best = np.argmax(all_avg_scores)
@@ -299,7 +301,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
                 if fixed_feature and fixed_feature not in set(p):
                     continue
                 cv_scores = self._calc_score(X, y, p)
-                all_avg_scores.append(cv_scores.mean())
+                all_avg_scores.append(np.nanmean(cv_scores))
                 all_cv_scores.append(cv_scores)
                 all_subsets.append(p)
             best = np.argmax(all_avg_scores)

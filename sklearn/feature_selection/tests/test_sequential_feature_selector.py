@@ -93,7 +93,7 @@ def test_kfeatures_type_5():
     y = iris.target
     knn = KNeighborsClassifier()
     expect = ('he min n_features_to_select value must be'
-              ' larger than the max n_features_to_select value.')
+              ' smaller than the max n_features_to_select value.')
     sfs = SFS(estimator=knn,
               n_features_to_select=(3, 1))
     assert_raise_message(ValueError, expect, sfs.fit, X, y)
@@ -221,7 +221,10 @@ def test_regression():
     assert round(sfs_r.score_, 4) == 0.2001
 
 
-def test_regression_in_tuplerange():
+def test_regression_in_tuplerange_forward():
+    """Test if selected features are within
+    the selected tuple range when running forward selection
+    """
     boston = load_boston()
     X, y = boston.data, boston.target
     lr = LinearRegression()
@@ -232,6 +235,24 @@ def test_regression_in_tuplerange():
     sfs_r = sfs_r.fit(X, y)
     assert len(sfs_r.feature_subset_idx_) == 9
     assert round(sfs_r.score_, 4) == 0.2991, sfs_r.score_
+
+
+def test_regression_in_tuplerange_backward():
+    """Test if selected features are within
+    the selected tuple range when running backward selection
+    """
+    boston = load_boston()
+    X, y = boston.data, boston.target
+    lr = LinearRegression()
+
+    sfs_r = SFS(lr,
+                n_features_to_select=(1, 5),
+                forward=False,
+                scoring='neg_mean_squared_error',
+                cv=10)
+
+    sfs_r = sfs_r.fit(X, y)
+    assert len(sfs_r.feature_subset_idx_) == 5
 
 
 def test_transform_not_fitted():
