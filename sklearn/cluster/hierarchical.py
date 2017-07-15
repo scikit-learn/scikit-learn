@@ -475,8 +475,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
         if return_distance:
             distances = single_linkage_tree[:, 2]
-            return children_, 1, n_samples, parent, distances
-        return children_, 1, n_samples, parent
+            return children_, n_components, n_samples, parent, distances
+        return children_, n_components, n_samples, parent
 
     if return_distance:
         distances = np.empty(n_nodes - n_samples)
