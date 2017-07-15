@@ -927,18 +927,19 @@ class RandomForestClassifier(ForestClassifier):
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.datasets import make_classification
     >>>
-    >>> X, y = make_classification(n_features=4, n_informative=2,
-    ...                            n_redundant=0, random_state=0)
-    >>> clf = RandomForestClassifier(max_depth=5, random_state=0)
+    >>> X, y = make_classification(n_samples=1000, n_features=4,
+    ...                            n_informative=2, n_redundant=0,
+    ...                            random_state=0, shuffle=False)
+    >>> clf = RandomForestClassifier(max_depth=2, random_state=0)
     >>> clf.fit(X, y)
     RandomForestClassifier(bootstrap=True, class_weight=None, criterion='gini',
-                max_depth=5, max_features='auto', max_leaf_nodes=None,
+                max_depth=2, max_features='auto', max_leaf_nodes=None,
                 min_impurity_decrease=0.0, min_impurity_split=None,
                 min_samples_leaf=1, min_samples_split=2,
                 min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
                 oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(clf.feature_importances_)
-    [ 0.08740388  0.11898963  0.68215616  0.11145033]
+    [ 0.17287856  0.80608704  0.01884792  0.00218648]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -1167,19 +1168,20 @@ class RandomForestRegressor(ForestRegressor):
     >>> from sklearn.ensemble import RandomForestRegressor
     >>> from sklearn.datasets import make_regression
     >>>
-    >>> X, y = make_regression(n_features=4, n_informative=2, random_state=0)
-    >>> regr = RandomForestRegressor(max_depth=5, random_state=0)
+    >>> X, y = make_regression(n_features=4, n_informative=2,
+    ...                        random_state=0, shuffle=False)
+    >>> regr = RandomForestRegressor(max_depth=2, random_state=0)
     >>> regr.fit(X, y)
-    RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=5,
+    RandomForestRegressor(bootstrap=True, criterion='mse', max_depth=2,
                max_features='auto', max_leaf_nodes=None,
                min_impurity_decrease=0.0, min_impurity_split=None,
                min_samples_leaf=1, min_samples_split=2,
                min_weight_fraction_leaf=0.0, n_estimators=10, n_jobs=1,
                oob_score=False, random_state=0, verbose=0, warm_start=False)
     >>> print(regr.feature_importances_)
-    [ 0.24051502  0.74652696  0.00636629  0.00659173]
+    [ 0.17339552  0.81594114  0.          0.01066333]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [ 5.67871752]
+    [-2.50699856]
 
     Notes
     -----
