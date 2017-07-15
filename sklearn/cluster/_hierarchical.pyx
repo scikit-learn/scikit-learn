@@ -336,7 +336,7 @@ cdef class WeightedEdge:
 ################################################################################
 # Efficient labelling/conversion of MSTs to single linkage hierarchies
 
-cdef class UnionFind (object):
+cdef class UnionFind(object):
 
     cdef np.ndarray parent_arr
     cdef np.ndarray size_arr
