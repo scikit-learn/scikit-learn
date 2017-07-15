@@ -26,6 +26,7 @@ from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
 from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
+from ..metrics.scorer import _passthrough_scorer
 from ..exceptions import FitFailedWarning
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
@@ -521,9 +522,33 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
     return score
 
 
+class _MemoizedPredictEstimator:
+    def __init__(self, estimator):
+        self.estimator = estimator
+    def fit(self, X, y):
+        self.estimator.fit(X, y)
+    @if_delegate_has_method(delegate='estimator')
+    def predict(self, X):
+        if not hasattr(self, '_predictions'):
+            self._predictions = self.estimator.predict(X)
+        return self._predictions
+    @if_delegate_has_method(delegate='estimator')
+    def decision_function(self, X):
+        if not hasattr(self, '_decisions'):
+            self._decisions = self.estimator.decision_function(X)
+        return self._decisions
+
+
 def _multimetric_score(estimator, X_test, y_test, scorers):
     """Return a dict of score for multimetric scoring"""
     scores = {}
+
+    # Try wrapping the estimator in _MemoizedPredictEstimator if we don't use
+    # the pass-through scorer
+    uses_score_method = any([scorer is _passthrough_scorer
+                             for _, scorer in scorers.items()])
+    if not uses_score_method:
+        estimator = _MemoizedPredictEstimator(estimator)
 
     for name, scorer in scorers.items():
         if y_test is None:
