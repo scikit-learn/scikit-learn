@@ -83,11 +83,6 @@ New features
      via `n_iter_no_change`, `validation_fraction` and `tol`. :issue:`7071` by
      `Raghav RV`_
 
-   - :class:`model_selection.GridSearchCV` and
-     :class:`model_selection.RandomizedSearchCV` now support simultaneous
-     evaluation of multiple metrics. Refer to the
-     :ref:`multimetric_grid_search` section of the user guide for more
-     information. :issue:`7388` by `Raghav RV`_
 Classifiers and regressors
 
    - Added :class:`multioutput.ClassifierChain` for multi-label
