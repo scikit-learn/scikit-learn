@@ -288,7 +288,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         return children, n_components, n_leaves, parent
 
 
-# average and complete linkage
+# single, average and complete linkage
 def linkage_tree(X, connectivity=None, n_components=None,
                  n_clusters=None, linkage='complete', affinity="euclidean",
                  return_distance=False):
@@ -323,13 +323,15 @@ def linkage_tree(X, connectivity=None, n_components=None,
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
-    linkage : {"average", "complete"}, optional, default: "complete"
+    linkage : {"average", "complete", "single"}, optional, default: "complete"
         Which linkage criteria to use. The linkage criterion determines which
         distance to use between sets of observation.
             - average uses the average of the distances of each observation of
               the two sets
             - complete or maximum linkage uses the maximum distances between
               all observations of the two sets.
+            - single uses the minimum of the distances between all observations
+              of the two sets.
 
     affinity : string or callable, optional, default: "euclidean".
         which metric to use. Can be "euclidean", "manhattan", or any
@@ -665,7 +667,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         when varying the number of clusters and using caching, it may
         be advantageous to compute the full tree.
 
-    linkage : {"ward", "complete", "average"}, optional, default: "ward"
+    linkage : {"ward", "complete", "average", "single"}, optional, default: "ward"
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of observation. The algorithm will merge
         the pairs of cluster that minimize this criterion.
@@ -675,6 +677,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
           the two sets.
         - complete or maximum linkage uses the maximum distances between
           all observations of the two sets.
+        - single uses the minimum of the distances between all observations
+          of the two sets.
 
     pooling_func : callable, default=np.mean
         This combines the values of agglomerated features into a single
@@ -835,7 +839,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         when varying the number of clusters and using caching, it may
         be advantageous to compute the full tree.
 
-    linkage : {"ward", "complete", "average"}, optional, default "ward"
+    linkage : {"ward", "complete", "average", "single"}, optional, default "ward"
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of features. The algorithm will merge
         the pairs of cluster that minimize this criterion.
@@ -845,6 +849,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
           the two sets.
         - complete or maximum linkage uses the maximum distances between
           all features of the two sets.
+        - single uses the minimum of the distances between all observations
+          of the two sets.
 
     pooling_func : callable, default np.mean
         This combines the values of agglomerated features into a single
