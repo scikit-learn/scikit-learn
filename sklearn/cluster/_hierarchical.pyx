@@ -332,3 +332,79 @@ cdef class WeightedEdge:
                                               self.weight,
                                               self.a, self.b)
 
+
+################################################################################
+# Efficient labelling/conversion of MSTs to single linkage hierarchies
+
+cdef class UnionFind (object):
+
+    cdef np.ndarray parent_arr
+    cdef np.ndarray size_arr
+    cdef ITYPE_t next_label
+    cdef ITYPE_t *parent
+    cdef ITYPE_t *size
+
+    def __init__(self, N):
+        self.parent_arr = -1 * np.ones(2 * N - 1, dtype=ITYPE, order='C')
+        self.next_label = N
+        self.size_arr = np.hstack((np.ones(N, dtype=ITYPE),
+                                   np.zeros(N-1, dtype=ITYPE)))
+        self.parent = (<ITYPE_t *> self.parent_arr.data)
+        self.size = (<ITYPE_t *> self.size_arr.data)
+
+    @cython.boundscheck(False)
+    @cython.nonecheck(False)
+    cdef void union(self, ITYPE_t m, ITYPE_t n):
+        self.size[self.next_label] = self.size[m] + self.size[n]
+        self.parent[m] = self.next_label
+        self.parent[n] = self.next_label
+        self.size[self.next_label] = self.size[m] + self.size[n]
+        self.next_label += 1
+
+        return
+
+    @cython.boundscheck(False)
+    @cython.nonecheck(False)
+    cdef ITYPE_t fast_find(self, ITYPE_t n):
+        cdef ITYPE_t p
+        p = n
+        while self.parent_arr[n] != -1:
+            n = self.parent_arr[n]
+        # label up to the root
+        while self.parent_arr[p] != n:
+            p, self.parent_arr[p] = self.parent_arr[p], n
+        return n
+
+
+@cython.boundscheck(False)
+@cython.nonecheck(False)
+cpdef np.ndarray[DTYPE_t, ndim=2] label(np.ndarray[DTYPE_t, ndim=2] L):
+
+    cdef np.ndarray[DTYPE_t, ndim=2] result_arr
+    cdef DTYPE_t[:, ::1] result
+
+    cdef ITYPE_t N, a, aa, b, bb, index
+    cdef DTYPE_t delta
+
+    result_arr = np.zeros((L.shape[0], L.shape[1] + 1), dtype=DTYPE)
+    result = (<DTYPE_t[:L.shape[0], :4:1]> (
+        <DTYPE_t *> result_arr.data))
+    N = L.shape[0] + 1
+    U = UnionFind(N)
+
+    for index in range(L.shape[0]):
+
+        a = <ITYPE_t> L[index, 0]
+        b = <ITYPE_t> L[index, 1]
+        delta = L[index, 2]
+
+        aa, bb = U.fast_find(a), U.fast_find(b)
+
+        result[index][0] = aa
+        result[index][1] = bb
+        result[index][2] = delta
+        result[index][3] = U.size[aa] + U.size[bb]
+
+        U.union(aa, bb)
+
+    return result_arr
