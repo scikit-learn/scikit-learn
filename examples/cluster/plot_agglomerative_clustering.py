@@ -52,7 +52,10 @@ knn_graph = kneighbors_graph(X, 30, include_self=False)
 for connectivity in (None, knn_graph):
     for n_clusters in (30, 3):
         plt.figure(figsize=(10, 4))
-        for index, linkage in enumerate(('average', 'complete', 'ward')):
+        for index, linkage in enumerate(('average',
+                                         'complete',
+                                         'ward',
+                                         'single')):
             plt.subplot(1, 3, index + 1)
             model = AgglomerativeClustering(linkage=linkage,
                                             connectivity=connectivity,
