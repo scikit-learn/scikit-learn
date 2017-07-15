@@ -9,7 +9,7 @@ cimport numpy as np
 
 from libc.float cimport DBL_MAX
 
-from dist_metrics cimport DistanceMetric
+from .neighbors.dist_metrics cimport DistanceMetric
 
 
 cpdef np.ndarray[np.double_t, ndim=2] mst_linkage_core(
