@@ -618,7 +618,7 @@ def has_fit_parameter(estimator, parameter):
     Returns
     -------
     is_parameter: bool
-        Whether the parameter was found to be a a named parameter of the
+        Whether the parameter was found to be a named parameter of the
         estimator's fit method.
 
     Examples
