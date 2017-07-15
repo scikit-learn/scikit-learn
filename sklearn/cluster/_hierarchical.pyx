@@ -378,7 +378,8 @@ cdef class UnionFind (object):
 
 @cython.boundscheck(False)
 @cython.nonecheck(False)
-cpdef np.ndarray[DTYPE_t, ndim=2] label(np.ndarray[DTYPE_t, ndim=2] L):
+cpdef np.ndarray[DTYPE_t, ndim=2] single_linkage_label(
+    np.ndarray[DTYPE_t, ndim=2] L):
 
     cdef np.ndarray[DTYPE_t, ndim=2] result_arr
     cdef DTYPE_t[:, ::1] result
