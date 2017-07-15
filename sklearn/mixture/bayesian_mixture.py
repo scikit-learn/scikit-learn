@@ -430,7 +430,7 @@ class BayesianGaussianMixture(BaseMixture):
         elif self.mean_precision_prior > 0.:
             self.mean_precision_prior_ = self.mean_precision_prior
         else:
-            raise ValueError("The parameter 'mean_precision_prior' should"
+            raise ValueError("The parameter 'mean_precision_prior' should "
                              "be greater than 0., but got %.3f."
                              % self.mean_precision_prior)
 
@@ -933,3 +933,5 @@ class BayesianGaussianMixture(BaseMixture):
                                          for result in results], axis=0)
         else:
             super(BayesianGaussianMixture, self).fit(X)
+
+        return self
