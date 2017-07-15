@@ -580,7 +580,7 @@ uneven cluster sizes. In this regard, complete linkage is the worst
 strategy, and Ward gives the most regular sizes. However, the affinity
 (or distance used in clustering) cannot be varied with Ward, thus for non
 Euclidean metrics, average linkage is a good alternative. Single linkage,
-while not robust to noisy data, can computed very efficiently and can
+while not robust to noisy data, can be computed very efficiently and can
 therefore be useful to provide hierarchical clustering of larger datasets.
 
 .. topic:: Examples:
