@@ -282,6 +282,12 @@ def test_scikit_vs_scipy():
             children_ = out[:, :2].astype(np.int)
             children, _, n_leaves, _ = _TREE_BUILDERS[linkage](X, connectivity)
 
+            # Sort the order of of child nodes per row to match scipy
+            children.sort(axis=1)
+            assert_array_equal(children, children_, 'linkage tree differs'
+                                                    ' from scipy impl for'
+                                                    ' linkage: ' + linkage)
+
             cut = _hc_cut(k, children, n_leaves)
             cut_ = _hc_cut(k, children_, n_leaves)
             assess_same_labelling(cut, cut_)
