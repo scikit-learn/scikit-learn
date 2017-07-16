@@ -245,7 +245,8 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         if select_in_range:
             max_score = float('-inf')
             for k in self.subsets_:
-                if k < self.n_features_to_select[0] or k > self.n_features_to_select[1]:
+                if (k < self.n_features_to_select[0] or
+                        k > self.n_features_to_select[1]):
                     continue
                 if self.subsets_[k]['avg_score'] > max_score:
                     max_score = self.subsets_[k]['avg_score']
