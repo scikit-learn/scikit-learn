@@ -16,14 +16,15 @@ from scipy import iterable
 
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
-from ..base import BaseEstimator, NeighborsBase
-from ..base import ClusterMixin, KNeighborsMixin, RadiusNeighborsMixin
+from ..neighbors.base import NeighborsBase
+from ..neighbors.base import KNeighborsMixin, RadiusNeighborsMixin
+from ..base import ClusterMixin, UnsupervisedMixin
 from ..metrics.pairwise import pairwise_distances
 from ._optics_inner import quick_scan
 
 
 class OPTICS(NeighborsBase, KNeighborsMixin,
-             RadiusNeighborsMixin, ClusterMixin):
+             RadiusNeighborsMixin, ClusterMixin, UnsupervisedMixin):
     """Estimate clustering structure from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
@@ -67,6 +68,15 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         affect the speed of the construction and query, as well as the memory
         required to store the tree. The optimal value depends on the
         nature of the problem.
+
+    p : integer, optional (default=2)
+        Parameter for the Minkowski metric from
+        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric_params : dict, optional (default=None)
+        Additional keyword arguments for the metric function.
 
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
@@ -129,29 +139,27 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
     """
 
     def __init__(self, min_samples=5, eps=np.inf, metric='euclidean',
-                 algorithm='auto', leaf_size=30, n_jobs=1, maxima_ratio=.75,
+                 algorithm='ball_tree', leaf_size=30, p=2,
+                 metric_params=None, maxima_ratio=.75,
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size_ratio=.005,
-                 min_maxima_ratio=0.001):
+                 min_maxima_ratio=0.001, n_jobs=1):
 
-#        self._init_params(n_neighbors=n_neighbors,
-#                          algorithm=algorithm,
-#                          leaf_size=leaf_size, metric=metric, p=p,
-#                          metric_params=metric_params, n_jobs=n_jobs)
+        self._init_params(n_neighbors=min_samples,
+                          algorithm=algorithm,
+                          leaf_size=leaf_size, metric=metric, p=p,
+                          metric_params=metric_params, n_jobs=n_jobs)
 
+        # Set by init_params, but not needed
+        del self.n_neighbors
         self.eps = eps
         self.min_samples = min_samples
-
-        self._n = len(self.data)
-        self.metric = metric
-        # Start all points as 'unprocessed' ##
-        self._processed = np.zeros((self._n, 1), dtype=bool)
-        self.reachability_ = np.ones(self._n) * np.inf
-        self.core_dists_ = np.ones(self._n) * np.nan
-        # Start all points as noise ##
-        self.labels_ = -np.ones(self._n, dtype=int)
-        self._is_core = np.zeros(self._n, dtype=bool)
-        self.ordering_ = []
+        self.maxima_ratio = maxima_ratio
+        self.rejection_ratio = rejection_ratio
+        self.similarity_threshold = similarity_threshold
+        self.significant_min = significant_min
+        self.min_cluster_size_ratio = min_cluster_size_ratio
+        self.min_maxima_ratio = min_maxima_ratio
 
     def fit(self, X, y=None):
         """Perform OPTICS clustering
@@ -173,7 +181,14 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         X = check_array(X)
 
         n_samples = len(X)
-        self.data = X
+        # Start all points as 'unprocessed' ##
+        self._processed = np.zeros((n_samples, 1), dtype=bool)
+        self.reachability_ = np.ones(n_samples) * np.inf
+        self.core_dists_ = np.ones(n_samples) * np.nan
+        # Start all points as noise ##
+        self.labels_ = -np.ones(n_samples, dtype=int)
+        self._is_core = np.zeros(n_samples, dtype=bool)
+        self.ordering_ = []
 
         # Check for valid n_samples relative to min_samples
         if self.min_samples > n_samples:
@@ -181,11 +196,13 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
                              "than min_samples (%d) used for clustering." %
                              (n_samples, self.min_samples))
 
+        super(OPTICS, self).fit(X)
+
         self.core_dists_[:] = self.kneighbors(X, self.min_samples)[0][:, -1]
 
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
-        for point in range(self._n):
+        for point in range(n_samples):
             if not self._processed[point]:
                 self._expand_cluster_order(self, point, self.eps * 5.0)
 
@@ -194,36 +211,22 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         self.n_clusters_ = np.max(self.labels_)
         return self
 
-    def fit_predict(self, X, y=None):
-        """Performs clustering on X and returns cluster labels.
-        Parameters
-        ----------
-        X : array of shape (n_samples, n_samples)
-
-        Returns
-        -------
-        y : ndarray, shape (n_samples,)
-            cluster labels
-        """
-        self.fit(X)
-        return self.labels_
-
     # OPTICS helper functions; these should not be public #
 
-    def _expand_cluster_order(self, point, epsilon):
+    def _expand_cluster_order(self, point, epsilon, X):
         # As above, not parallelizable. Parallelizing would allow items in
         # the 'unprocessed' list to switch to 'processed'
         if self.core_dists_[point] <= epsilon:
             while not self._processed[point]:
                 self._processed[point] = True
                 self.ordering_.append(point)
-                point = self._set_reach_dist(self, point, epsilon)
+                point = self._set_reach_dist(self, point, epsilon, X)
         else:
             self.ordering_.append(point)  # For very noisy points
             self._processed[point] = True
 
-    def _set_reach_dist(self, point_index, epsilon):
-        P = np.array(self.data[point_index]).reshape(1, -1)
+    def _set_reach_dist(self, point_index, epsilon, X):
+        P = np.array(X[point_index]).reshape(1, -1)
         indices = self.radius_neighbors(P, radius=epsilon,
                                         return_distance=False)[0]
 
@@ -285,7 +288,7 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
 
         if clustering == 'dbscan':
             self.eps_prime = epsilon_prime
-            _extract_dbscan(self, epsilon_prime)
+            self.extract_dbscan(self, epsilon_prime)
         elif clustering == 'auto':
             self._extract_auto(**kwargs)
 
@@ -302,13 +305,27 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
 
         return self.core_sample_indices_, self.labels_
 
-    def _extract_auto(self,
-                      maxima_ratio=.75,
-                      rejection_ratio=.7,
-                      similarity_threshold=0.4,
-                      significant_min=.003,
-                      min_cluster_size_ratio=.005,
-                      min_maxima_ratio=0.001):
+    def extract_dbscan(self, epsilon_prime):
+        # Extract DBSCAN Equivalent cluster structure
+        # Important: Epsilon prime should be less than epsilon used in OPTICS
+        cluster_id = 0
+        for entry in self.ordering_:
+            if self.reachability_[entry] > epsilon_prime:
+                if self.core_dists_[entry] <= epsilon_prime:
+                    cluster_id += 1
+                    self.labels_[entry] = cluster_id
+                else:
+                    # This is only needed for compatibility for repeated scans.
+                    self.labels_[entry] = -1   # Noise points
+                    self._is_core[entry] = 0
+            else:
+                self.labels_[entry] = cluster_id
+                if self.core_dists_[entry] <= epsilon_prime:
+                    self._is_core[entry] = 1   # True
+                else:
+                    self._is_core[entry] = 0   # False
+
+    def _extract_auto(self):
         """Performs automatic cluster extraction for variable density data.
 
         Can be run multiple times with adjusted parameters. Only returns
@@ -323,10 +340,13 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         reachability_plot = self.reachability_[self.ordering_].tolist()
         reachability_ordering = self.ordering_
         root_node = _automatic_cluster(reachability_plot,
-                                       reachability_ordering, maxima_ratio,
-                                       rejection_ratio, similarity_threshold,
-                                       significant_min, min_cluster_size_ratio,
-                                       min_maxima_ratio)
+                                       reachability_ordering,
+                                       self.maxima_ratio,
+                                       self.rejection_ratio,
+                                       self.similarity_threshold,
+                                       self.significant_min,
+                                       self.min_cluster_size_ratio,
+                                       self.min_maxima_ratio)
         leaves = _get_leaves(root_node, [])
         # Start cluster id's at 1
         clustid = 1
@@ -551,24 +571,3 @@ def _get_leaves(node, arr):
         for n in node.children:
             _get_leaves(n, arr)
     return arr
-
-
-def _extract_dbscan(self, epsilon_prime):
-    # Extract DBSCAN Equivalent cluster structure
-    # Important: Epsilon prime should be less than epsilon used in OPTICS
-    cluster_id = 0
-    for entry in self.ordering_:
-        if self.reachability_[entry] > epsilon_prime:
-            if self.core_dists_[entry] <= epsilon_prime:
-                cluster_id += 1
-                self.labels_[entry] = cluster_id
-            else:
-                # This is only needed for compatibility for repeated scans.
-                self.labels_[entry] = -1   # Noise points
-                self._is_core[entry] = 0
-        else:
-            self.labels_[entry] = cluster_id
-            if self.core_dists_[entry] <= epsilon_prime:
-                self._is_core[entry] = 1   # True
-            else:
-                self._is_core[entry] = 0   # False
