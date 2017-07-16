@@ -5,7 +5,8 @@ The complete list of supported OpenCV models is below:
 * Random Forest model created by cv2.ml.RTrees_create()
 * SVM model created by cv2.ml.SVM_create()
 * KNN model created by cv2.ml.KNearest_create()
-* Normal Bayesian Classifer created by cv2.ml.NormalBayesClassifier_create()
+Unfortunately, neither of Opencv's ANN MLP and Normal Bayesian Classifier works.
+That returns Nan or Inf as the predicted values permanently, so no support.
 
 Note, no prior assumptions about classifier's algorithm behind is made.
 
@@ -34,7 +35,7 @@ option due the reasons listed below:
 * Use command one-liner below to run the unit tests:
     python opencv_sklearn_wrapper.py -v
 
-* [07/14/2017] Tested for sklearn 0.18.1 + Opencv 3.1.0 + both of Python 2.7.12 and Python 3.5.2.
+* [07/14/2016] Tested for sklearn 0.18.1 + Opencv 3.1.0 + both of Python 2.7.12 and Python 3.5.2.
 '''
 
 import cv2
@@ -82,12 +83,8 @@ class Opencv_binary_predictor:
          Technically, it must utilizy the classifier's "raw" output like listed below:
          * Random Forest: votes portion casted for the positive category.
          * SVM: oriented distance to the separating hyperplane.
-           See http://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html#sklearn.svm.SVC.decision_function.
          * Boosted: the weighted sum of the weak decisions (-1 for negative category, +1 for positive one).
          * KNN: neighbour's votes portion casted for the positive category.
-         * Logistic Regression: the approximated posterior.
-           See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html#sklearn.linear_model.LogisticRegression.decision_function.
-         * Normal Bayes:
 
         Parameters
         ----------
@@ -204,26 +201,6 @@ class Opencv_sklearn_wrapper__knn(Opencv_sklearn_wrapper):
     pass
 
 
-class Opencv_sklearn_wrapper__nbc(Opencv_sklearn_wrapper):
-    '''Opencv-to-sklearn wrapper for Normal Bayesian classifier.'''
-    _force_hard_decision__flags = True
-    _force_soft_decision__flags = False
-
-    def __init__(self, model_class='ml_NormalBayesClassifier', **kwargs):
-        super(Opencv_sklearn_wrapper__nbc, self).__init__(model_class=model_class, **kwargs)
-        return
-
-
-    def _estimate(self, features, flags=None):
-        if flags:
-            _, outputs = self.opencv_model.predict(features)
-        else:
-            _, _, outputs = self.opencv_model.predictProb(features)
-            outputs = outputs[:, self._positive_class_idx]
-        return outputs.ravel()
-    pass
-
-
 def make_sklearn_wrapper(model=None, class_name=None):
     '''Constructs the wrapper for the Opencv's binary classifiers.
     Technically, this implements a simple dispatcher over the Opencv's entire classifier set.
@@ -240,8 +217,6 @@ def make_sklearn_wrapper(model=None, class_name=None):
         wrapper = Opencv_sklearn_wrapper__svm(model_class=name)
     elif name == 'ml_KNearest':
         wrapper = Opencv_sklearn_wrapper__knn()
-    elif name == 'ml_NormalBayesClassifier':
-        wrapper = Opencv_sklearn_wrapper__nbc()
     else:
         raise RuntimeError('For make_sklearn_wrapper, both of keyword arguments "model" and "class_name" are None or \
 the model is unsupported')
