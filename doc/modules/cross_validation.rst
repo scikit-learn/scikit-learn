@@ -725,8 +725,7 @@ to shuffle the data indices before splitting them. Note that:
   shuffling will be different every time ``KFold(..., shuffle=True)`` is
   iterated. However, ``GridSearchCV`` will use the same shuffling for each set
   of parameters validated by a single call to its ``fit`` method.
-* To ensure results are repeatable (*on the same platform*), use a fixed value
-  for ``random_state``.
+* To get identical results for each split, set ``random_state`` to an integer.
 
 Cross validation and model selection
 ====================================
