@@ -292,6 +292,20 @@ def test_scikit_vs_scipy():
             cut_ = _hc_cut(k, children_, n_leaves)
             assess_same_labelling(cut, cut_)
 
+            # Now verify that the low memory dense routines also give
+            # Identical answers to scipy.cluster.hierarchy
+            children, _, n_leaves, _ = _TREE_BUILDERS[linkage](X)
+
+            # Sort the order of of child nodes per row for consistency
+            children.sort(axis=1)
+            assert_array_equal(children, children_, 'linkage tree differs'
+                                                    ' from scipy impl for'
+                                                    ' linkage: ' + linkage)
+
+            cut = _hc_cut(k, children, n_leaves)
+            cut_ = _hc_cut(k, children_, n_leaves)
+            assess_same_labelling(cut, cut_)
+
     # Test error management in _hc_cut
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
 

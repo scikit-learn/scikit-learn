@@ -14,6 +14,7 @@ ctypedef np.int8_t INT8
 np.import_array()
 
 from sklearn.utils.fast_dict cimport IntFloatDict
+from sklearn.neighbors.dist_metrics cimport DistanceMetric
 
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc
@@ -24,6 +25,8 @@ ctypedef np.float64_t DTYPE_t
 
 ITYPE = np.intp
 ctypedef np.intp_t ITYPE_t
+
+from libc.float cimport DBL_MAX
 
 # Reimplementation for MSVC support
 cdef inline double fmax(double a, double b):
@@ -407,5 +410,91 @@ cpdef np.ndarray[DTYPE_t, ndim=2] single_linkage_label(
         result[index][3] = U.size[aa] + U.size[bb]
 
         U.union(aa, bb)
+
+    return result_arr
+
+# Implements MST-LINKAGE-CORE from https://arxiv.org/abs/1109.2378
+@cython.boundscheck(False)
+@cython.nonecheck(False)
+cpdef np.ndarray[DTYPE_t, ndim=2] mst_linkage_core(
+        np.ndarray[DTYPE_t, ndim=2, mode='c'] raw_data,
+        DistanceMetric dist_metric):
+
+    cdef np.ndarray[DTYPE_t, ndim=1] current_distances_arr
+    cdef np.ndarray[np.int8_t, ndim=1] in_tree_arr
+    cdef np.ndarray[DTYPE_t, ndim=2] result_arr
+
+    cdef DTYPE_t * current_distances
+    cdef DTYPE_t * raw_data_ptr
+    cdef np.int8_t * in_tree
+    cdef DTYPE_t[:, ::1] raw_data_view
+    cdef DTYPE_t[:, ::1] result
+
+    cdef np.ndarray label_filter
+
+    cdef ITYPE_t current_node
+    cdef ITYPE_t new_node
+    cdef ITYPE_t i
+    cdef ITYPE_t j
+    cdef ITYPE_t dim
+    cdef ITYPE_t num_features
+
+    cdef DTYPE_t right_value
+    cdef DTYPE_t left_value
+    cdef DTYPE_t new_distance
+
+    dim = raw_data.shape[0]
+    num_features = raw_data.shape[1]
+
+    raw_data_view = (<DTYPE_t[:raw_data.shape[0], :raw_data.shape[1]:1]> (
+        <DTYPE_t *> raw_data.data))
+    raw_data_ptr = (<DTYPE_t *> &raw_data_view[0, 0])
+
+    result_arr = np.zeros((dim - 1, 3))
+    in_tree_arr = np.zeros(dim, dtype=np.int8)
+    current_node = 0
+    current_distances_arr = np.infty * np.ones(dim)
+
+    result = (<DTYPE_t[:dim - 1, :3:1]> (<DTYPE_t *> result_arr.data))
+    in_tree = (<np.int8_t *> in_tree_arr.data)
+    current_distances = (<DTYPE_t *> current_distances_arr.data)
+
+    for i in range(1, dim):
+
+        in_tree[current_node] = 1
+
+        new_distance = DBL_MAX
+        new_node = 0
+
+        for j in range(dim):
+            if in_tree[j]:
+                continue
+
+            right_value = current_distances[j]
+            left_value = dist_metric.dist(&raw_data_ptr[num_features *
+                                                        current_node],
+                                          &raw_data_ptr[num_features * j],
+                                          num_features)
+
+            if left_value > right_value:
+                if right_value < new_distance:
+                    new_distance = right_value
+                    new_node = j
+                continue
+
+            if left_value < right_value:
+                current_distances[j] = left_value
+                if left_value < new_distance:
+                    new_distance = left_value
+                    new_node = j
+            else:
+                if right_value < new_distance:
+                    new_distance = right_value
+                    new_node = j
+
+        result[i - 1, 0] = <double> current_node
+        result[i - 1, 1] = <double> new_node
+        result[i - 1, 2] = new_distance
+        current_node = new_node
 
     return result_arr

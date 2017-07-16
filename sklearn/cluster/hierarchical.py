@@ -19,6 +19,7 @@ from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
+from ..neighbors import DistanceMetric
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -413,7 +414,24 @@ def linkage_tree(X, connectivity=None, n_components=None,
             X = affinity(X)
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
-        out = hierarchy.linkage(X, method=linkage, metric=affinity)
+        if (linkage == 'single'
+            and affinity != 'precomputed'
+            and not callable(affinity)):
+            # We need the fast cythonized metric from neighbors
+            dist_metric = DistanceMetric.get_metric(affinity)
+
+            # The Cython routines used require contiguous arrays
+            if not X.flags['C_CONTIGUOUS']:
+                X = np.array(X, dtype=np.double, order='C')
+
+            mst = _hierarchical.mst_linkage_core(X, dist_metric)
+            # Sort edges of the min_spanning_tree by weight
+            mst = mst[np.argsort(mst.T[2]), :]
+
+            # Convert edge list into standard hierarchical clustering format
+            out = _hierarchical.single_linkage_label(mst)
+        else:
+            out = hierarchy.linkage(X, method=linkage, metric=affinity)
         children_ = out[:, :2].astype(np.int)
 
         if return_distance:
