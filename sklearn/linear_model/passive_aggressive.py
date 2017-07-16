@@ -105,6 +105,25 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import PassiveAggressiveClassifier
+    >>> from sklearn.datasets import make_classification
+    >>>
+    >>> X, y = make_classification(n_features=4, random_state=0)
+    >>> clf = PassiveAggressiveClassifier(random_state=0)
+    >>> clf.fit(X, y)
+    PassiveAggressiveClassifier(C=1.0, average=False, class_weight=None,
+                  fit_intercept=True, loss='hinge', max_iter=5, n_iter=None,
+                  n_jobs=1, random_state=0, shuffle=True, tol=None, verbose=0,
+                  warm_start=False)
+    >>> print(clf.coef_)
+    [[ 0.49324685  1.0552176   1.49519589  1.33798314]]
+    >>> print(clf.intercept_)
+    [ 2.18438388]
+    >>> print(clf.predict([[0, 0, 0, 0]]))
+    [1]
+
     See also
     --------
 
@@ -290,6 +309,25 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import PassiveAggressiveRegressor
+    >>> from sklearn.datasets import make_regression
+    >>>
+    >>> X, y = make_regression(n_features=4, random_state=0)
+    >>> regr = PassiveAggressiveRegressor(random_state=0)
+    >>> regr.fit(X, y)
+    PassiveAggressiveRegressor(C=1.0, average=False, epsilon=0.1,
+                  fit_intercept=True, loss='epsilon_insensitive', max_iter=5,
+                  n_iter=None, random_state=0, shuffle=True, tol=None,
+                  verbose=0, warm_start=False)
+    >>> print(regr.coef_)
+    [ 20.48736655  34.18818427  67.59122734  87.94731329]
+    >>> print(regr.intercept_)
+    [-0.02306214]
+    >>> print(regr.predict([[0, 0, 0, 0]]))
+    [-0.02306214]
 
     See also
     --------
