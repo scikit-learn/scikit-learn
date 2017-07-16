@@ -1436,6 +1436,13 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         .. versionadded:: 0.17
            *presort* parameter.
 
+    validation_fraction : float, optional, default 0.1
+        The proportion of training data to set aside as validation set for
+        early stopping. Must be between 0 and 1.
+        Only used if ``n_iter_no_change`` is set to an integer.
+
+        .. versionadded:: 0.19
+
     n_iter_no_change : int, default None
         ``n_iter_no_change`` is used to decide if early stopping will be used
         to terminate training when validation score is not improving. By
@@ -1444,13 +1451,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         data as validation and terminate training when validation score is not
         improving in all of the previous ``n_iter_no_change`` numbers of
         iterations.
-
-        .. versionadded:: 0.19
-
-    validation_fraction : float, optional, default 0.1
-        The proportion of training data to set aside as validation set for
-        early stopping. Must be between 0 and 1.
-        Only used if early_stopping is True
 
         .. versionadded:: 0.19
 
@@ -1465,7 +1465,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     ----------
     n_estimators_ : int
         The number of estimators as selected by early stopping (if
-        ``n_iter_no_change``). Otherwise it is set to ``n_estimators``.
+        ``n_iter_no_change`` is specified). Otherwise it is set to
+        ``n_estimators``.
 
     feature_importances_ : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
@@ -1884,6 +1885,24 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         .. versionadded:: 0.17
            optional parameter *presort*.
+
+    validation_fraction : float, optional, default 0.1
+        The proportion of training data to set aside as validation set for
+        early stopping. Must be between 0 and 1.
+        Only used if early_stopping is True
+
+        .. versionadded:: 0.19
+
+    n_iter_no_change : int, default None
+        ``n_iter_no_change`` is used to decide if early stopping will be used
+        to terminate training when validation score is not improving. By
+        default it is set to None to disable early stopping. If set to a
+        number, it will set aside ``validation_fraction`` size of the training
+        data as validation and terminate training when validation score is not
+        improving in all of the previous ``n_iter_no_change`` numbers of
+        iterations.
+
+        .. versionadded:: 0.19
 
     tol : float, optional, default 1e-4
         Tolerance for the early stopping. When the loss is not improving
