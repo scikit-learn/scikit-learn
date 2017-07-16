@@ -5,6 +5,7 @@ The complete list of supported OpenCV models is below:
 * Random Forest model created by cv2.ml.RTrees_create()
 * SVM model created by cv2.ml.SVM_create()
 * KNN model created by cv2.ml.KNearest_create()
+* Normal Bayesian Classifer created by cv2.ml.NormalBayesClassifier_create()
 
 Note, no prior assumptions about classifier's algorithm behind is made.
 
@@ -203,52 +204,23 @@ class Opencv_sklearn_wrapper__knn(Opencv_sklearn_wrapper):
     pass
 
 
-class Opencv_sklearn_wrapper__ann(Opencv_sklearn_wrapper):
-    '''Opencv-to-sklearn wrapper for the neural networks.'''
-    _force_hard_decision__flags = True
-    _force_soft_decision__flags = False
-
-    def __init__(self, model_class='ml_ANN_MLP', **kwargs):
-        super(Opencv_sklearn_wrapper__ann, self).__init__(model_class=model_class, **kwargs)
-        return
-
-
-    def fit(self, features, labels, sample_weight=None):
-        n = len(labels)
-        m = np.zeros(n * 2, np.float32)
-        index_set = np.uint(labels + np.arange(n) * 2)
-        m[index_set] = 1.0
-        self.opencv_model.train(features,
-                                cv2.ml.ROW_SAMPLE,
-                                m.reshape(-1, 2))
-        return self
-#        return super(Opencv_sklearn_wrapper__ann, self).fit(features,
-#                                                            labels.reshape(-1, 1).astype(np.float32),
-#                                                            sample_weight)
-
-    def _estimate(self, features, flags=None):
-        _, outputs = self.opencv_model.predict(features)
-        print(outputs)
-        # if flags:
-        #     outputs = np.apply_along_axis(lambda rs: rs.argmax(-1),
-        #                                   1,
-        #                                   outputs)
-        # else:
-        #     outputs = outputs[:, self._positive_class_idx]
-        # return outputs.ravel()
-    pass
-
-
-class Opencv_sklearn_wrapper_nbc(Opencv_sklearn_wrapper):
+class Opencv_sklearn_wrapper__nbc(Opencv_sklearn_wrapper):
     '''Opencv-to-sklearn wrapper for Normal Bayesian classifier.'''
     _force_hard_decision__flags = True
     _force_soft_decision__flags = False
-    pass
+
+    def __init__(self, model_class='ml_NormalBayesClassifier', **kwargs):
+        super(Opencv_sklearn_wrapper__nbc, self).__init__(model_class=model_class, **kwargs)
+        return
 
 
-    def predict_proba(self, features):
-        _, results, _, _ = self.opencv_model.findNearest(features, k=self.opencv_model.getDefaultK())
-        pass
+    def _estimate(self, features, flags=None):
+        if flags:
+            _, outputs = self.opencv_model.predict(features)
+        else:
+            _, _, outputs = self.opencv_model.predictProb(features)
+            outputs = outputs[:, self._positive_class_idx]
+        return outputs.ravel()
     pass
 
 
@@ -268,8 +240,8 @@ def make_sklearn_wrapper(model=None, class_name=None):
         wrapper = Opencv_sklearn_wrapper__svm(model_class=name)
     elif name == 'ml_KNearest':
         wrapper = Opencv_sklearn_wrapper__knn()
-    elif name == 'ml_ANN_MLP':
-        wrapper = Opencv_sklearn_wrapper__ann()
+    elif name == 'ml_NormalBayesClassifier':
+        wrapper = Opencv_sklearn_wrapper__nbc()
     else:
         raise RuntimeError('For make_sklearn_wrapper, both of keyword arguments "model" and "class_name" are None or \
 the model is unsupported')
