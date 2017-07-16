@@ -404,11 +404,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.error_score = error_score
         self.return_train_score = return_train_score
 
-        if self.iid is not None:
-            warnings.warn("The `iid` parameter has been deprecated "
-                          "in version 0.19 and will be removed in 0.21.",
-                          DeprecationWarning)
-
     @property
     def _estimator_type(self):
         return self.estimator._estimator_type
@@ -581,6 +576,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
         """
+
+        if self.iid is not None:
+            warnings.warn("The default of the `iid` parameter will change from"
+                          " True to False in version 0.21 and will be removed "
+                          "in 0.23. This will change numeric results for many "
+                          "metrics.", DeprecationWarning)
+
         if self.fit_params is not None:
             warnings.warn('"fit_params" as a constructor argument was '
                           'deprecated in version 0.19 and will be removed '
@@ -841,12 +843,12 @@ class GridSearchCV(BaseSearchCV):
     iid : boolean, default=None
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds.
+        and not the mean loss across the folds. Default is True,
+        but will change to False in version 0.21.
 
-        ..deprecated:: 0.19
-            Parameter ``iid`` has been deprecated in version 0.19 and
-            will be removed in 0.21.
-            Future (and default) behavior is equivalent to `iid=true`.
+        ..versionchanged:: 0.19
+            Parameter ``iid`` will change from True to False by default in
+            version 0.21, and will be removed in 0.23.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -1347,10 +1349,10 @@ class RandomizedSearchCV(BaseSearchCV):
         self.n_iter = n_iter
         self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
-             estimator=estimator, scoring=scoring, fit_params=fit_params,
-             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
-             pre_dispatch=pre_dispatch, error_score=error_score,
-             return_train_score=return_train_score)
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch, error_score=error_score,
+            return_train_score=return_train_score)
 
     def _get_param_iterator(self):
         """Return ParameterSampler instance for the given distributions"""
