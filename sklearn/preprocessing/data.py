@@ -250,15 +250,17 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     >>>
     >>> data = [[-1, -1], [-1, -1], [1, 1], [1, 1]]
     >>> scaler = MinMaxScaler()
-    >>> print(scaler.fit_transform(data))
+    >>> print(scaler.fit(data))
+    MinMaxScaler(copy=True, feature_range=(0, 1))
+    >>> print(scaler.data_max_)
+    [ 1.  1.]
+    >>> print(scaler.transform(data))
     [[ 0.  0.]
      [ 0.  0.]
      [ 1.  1.]
      [ 1.  1.]]
-    >>> print(scaler.data_min_)
-    [-1. -1.]
-    >>> print(scaler.data_max_)
-    [ 1.  1.]
+    >>> print(scaler.transform([[2, 2]]))
+    [[ 1.5  1.5]]
 
     See also
     --------
@@ -526,15 +528,17 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     >>>
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler()
-    >>> print(scaler.fit_transform(data))
+    >>> print(scaler.fit(data))
+    StandardScaler(copy=True, with_mean=True, with_std=True)
+    >>> print(scaler.mean_)
+    [ 0.5  0.5]
+    >>> print(scaler.transform(data))
     [[-1. -1.]
      [-1. -1.]
      [ 1.  1.]
      [ 1.  1.]]
-    >>> print(scaler.mean_)
-    [ 0.5  0.5]
-    >>> print(scaler.scale_)
-    [ 0.5  0.5]
+    >>> print(scaler.transform([[2, 2]]))
+    [[ 3.  3.]]
 
     See also
     --------
