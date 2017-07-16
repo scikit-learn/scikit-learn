@@ -113,6 +113,7 @@ class LinearSVCNoScore(LinearSVC):
     def score(self):
         raise AttributeError
 
+
 X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
 y = np.array([1, 1, 2, 2])
 
@@ -1465,8 +1466,8 @@ def test_transform_inverse_transform_round_trip():
     assert_array_equal(X, X_round_trip)
 
 
-def test_deprecated_grid_search_idd():
-    depr_message = ("The `iid` parameter has been deprecated in version 0.19 "
-                    "and will be removed in 0.21.")
-    assert_warns_message(DeprecationWarning, depr_message, GridSearchCV,
-                         SVC(), [], iid=False)
+def test_deprecated_grid_search_iid():
+    depr_message = ("The default of the `iid` parameter will change from True "
+                    "to False in version 0.21")
+    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=2)
+    assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
