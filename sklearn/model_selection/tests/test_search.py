@@ -1416,11 +1416,10 @@ def test_grid_search_cv_splits_consistency():
                        cv=KFold(n_splits=n_splits))
     gs2.fit(X, y)
 
+    # Give generator as a cv parameter
     assert_true(isinstance(KFold(n_splits=n_splits,
                                  shuffle=True, random_state=0).split(X, y),
                            GeneratorType))
-
-    # Give generator as a cv parameter
     gs3 = GridSearchCV(LinearSVC(random_state=0),
                        param_grid={'C': [0.1, 0.2, 0.3]},
                        cv=KFold(n_splits=n_splits, shuffle=True,
