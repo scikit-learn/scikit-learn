@@ -162,22 +162,88 @@ class Opencv_sklearn_wrapper(BaseEstimator, Opencv_binary_predictor):
 
 
 class Opencv_sklearn_wrapper__dtree(Opencv_sklearn_wrapper):
-    '''Opencv-to-sklearn wrapper for Random Forest/Boosted decision trees.'''
-    _predict__flags = cv2.ml.DTREES_PREDICT_MAX_VOTE
-    _predict_proba__flags = cv2.ml.DTREES_PREDICT_SUM
+    '''Wraps the Random Forest/Boosted decision trees.'''
+    _force_hard_decision__flags = cv2.ml.DTREES_PREDICT_MAX_VOTE
+    _force_soft_decision__flags = cv2.ml.DTREES_PREDICT_SUM
+    pass
+
+
+class Opencv_sklearn_wrapper__svm(Opencv_sklearn_wrapper):
+    '''Wraps the SVM.'''
+    _force_hard_decision__flags = False
+    _force_soft_decision__flags = True
+
+
+    def __init__(self, model_class='ml_SVM', **kwargs):
+        super(Opencv_sklearn_wrapper__svm, self).__init__(model_class=model_class, **kwargs)
+        return
     pass
 
 
 class Opencv_sklearn_wrapper__knn(Opencv_sklearn_wrapper):
     '''Opencv-to-sklearn wrapper for KNN.'''
+    _force_hard_decision__flags = True
+    _force_soft_decision__flags = False
+
     def __init__(self, model_class='ml_KNearest', **kwargs):
         super(Opencv_sklearn_wrapper__knn, self).__init__(model_class=model_class, **kwargs)
         return
 
 
-    def predict(self, features):
-        _, results, _, _ = self.opencv_model.findNearest(features, k=self.opencv_model.getDefaultK())
-        return results.ravel()
+    def _estimate(self, features, flags=None):
+        if flags:
+            _, outputs = self.opencv_model.predict(features)
+        else:
+            _, _, neighbour_responses, _ = self.opencv_model.findNearest(features,
+                                                                         k=self.opencv_model.getDefaultK())
+            outputs = np.apply_along_axis(lambda rs: len(rs[rs == self._positive_class_idx]) / np.float32(len(rs)),
+                                          1,
+                                          neighbour_responses.astype(np.uint32))
+        return outputs.ravel()
+    pass
+
+
+class Opencv_sklearn_wrapper__ann(Opencv_sklearn_wrapper):
+    '''Opencv-to-sklearn wrapper for the neural networks.'''
+    _force_hard_decision__flags = True
+    _force_soft_decision__flags = False
+
+    def __init__(self, model_class='ml_ANN_MLP', **kwargs):
+        super(Opencv_sklearn_wrapper__ann, self).__init__(model_class=model_class, **kwargs)
+        return
+
+
+    def fit(self, features, labels, sample_weight=None):
+        n = len(labels)
+        m = np.zeros(n * 2, np.float32)
+        index_set = np.uint(labels + np.arange(n) * 2)
+        m[index_set] = 1.0
+        self.opencv_model.train(features,
+                                cv2.ml.ROW_SAMPLE,
+                                m.reshape(-1, 2))
+        return self
+#        return super(Opencv_sklearn_wrapper__ann, self).fit(features,
+#                                                            labels.reshape(-1, 1).astype(np.float32),
+#                                                            sample_weight)
+
+    def _estimate(self, features, flags=None):
+        _, outputs = self.opencv_model.predict(features)
+        print(outputs)
+        # if flags:
+        #     outputs = np.apply_along_axis(lambda rs: rs.argmax(-1),
+        #                                   1,
+        #                                   outputs)
+        # else:
+        #     outputs = outputs[:, self._positive_class_idx]
+        # return outputs.ravel()
+    pass
+
+
+class Opencv_sklearn_wrapper_nbc(Opencv_sklearn_wrapper):
+    '''Opencv-to-sklearn wrapper for Normal Bayesian classifier.'''
+    _force_hard_decision__flags = True
+    _force_soft_decision__flags = False
+    pass
 
 
     def predict_proba(self, features):
@@ -202,6 +268,8 @@ def make_sklearn_wrapper(model=None, class_name=None):
         wrapper = Opencv_sklearn_wrapper__svm(model_class=name)
     elif name == 'ml_KNearest':
         wrapper = Opencv_sklearn_wrapper__knn()
+    elif name == 'ml_ANN_MLP':
+        wrapper = Opencv_sklearn_wrapper__ann()
     else:
         raise RuntimeError('For make_sklearn_wrapper, both of keyword arguments "model" and "class_name" are None or \
 the model is unsupported')
