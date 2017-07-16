@@ -56,7 +56,7 @@ for connectivity in (None, knn_graph):
                                          'complete',
                                          'ward',
                                          'single')):
-            plt.subplot(1, 3, index + 1)
+            plt.subplot(1, 4, index + 1)
             model = AgglomerativeClustering(linkage=linkage,
                                             connectivity=connectivity,
                                             n_clusters=n_clusters)
