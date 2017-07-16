@@ -377,7 +377,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     linkage_choices = {'complete': _hierarchical.max_merge,
                        'average': _hierarchical.average_merge,
-                       'single' : None} # Single linkage is handled differently
+                       'single': None}  # Single linkage is handled differently
     try:
         join_func = linkage_choices[linkage]
     except KeyError:
@@ -459,7 +459,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
         mst_array = np.vstack(nonzeros + (nonzero_vals,)).T
 
         # Sort edges of the min_spanning_tree by weight
-        mst_array = mst_array[np.argsort(mst_array.T[2]),:]
+        mst_array = mst_array[np.argsort(mst_array.T[2]), :]
 
         # Convert edge list into standard hierarchical clustering format
         single_linkage_tree = _hierarchical.single_linkage_label(mst_array)
@@ -561,6 +561,7 @@ def _complete_linkage(*args, **kwargs):
 def _average_linkage(*args, **kwargs):
     kwargs['linkage'] = 'average'
     return linkage_tree(*args, **kwargs)
+
 
 def _single_linkage(*args, **kwargs):
     kwargs['linkage'] = 'single'
@@ -667,7 +668,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         when varying the number of clusters and using caching, it may
         be advantageous to compute the full tree.
 
-    linkage : {"ward", "complete", "average", "single"}, optional, default: "ward"
+    linkage : {"ward", "complete", "average", "single"}, optional \
+            (default="ward")
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of observation. The algorithm will merge
         the pairs of cluster that minimize this criterion.

@@ -234,6 +234,7 @@ def test_ward_agglomeration():
     # Check that fitting with no samples raises a ValueError
     assert_raises(ValueError, agglo.fit, X[:0])
 
+
 def test_single_linkage_clustering():
     # Check that we get the correct result in two emblematic cases
     moons, moon_labels = make_moons(noise=0.05, random_state=42)
