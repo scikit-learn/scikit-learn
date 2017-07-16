@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
@@ -61,7 +62,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import Imputer
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.linear_model import Ridge, SGDClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
@@ -1470,4 +1471,17 @@ def test_deprecated_grid_search_iid():
     depr_message = ("The default of the `iid` parameter will change from True "
                     "to False in version 0.21")
     grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=2)
+    # no warning with default accuracy of SVC
+    assert_no_warnings(grid.fit, X, y)
+
+    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=2, scoring='accuracy')
+    # no warning with accuracy explicit accuracy
+    assert_no_warnings(grid.fit, X, y)
+
+    # no warning with default accuracy of SVC in pipeline
+    grid = GridSearchCV(make_pipeline(SVC()), param_grid={'C': [1]}, cv=2)
+    assert_no_warnings(grid.fit, X, y)
+
+    # warning with roc_auc
+    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=2, scoring='roc_auc')
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
