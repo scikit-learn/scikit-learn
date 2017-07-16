@@ -38,6 +38,7 @@ from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
 from sklearn.model_selection._validation import _check_is_permutation
+from sklearn.model_selection._validation import _multimetric_score
 
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
@@ -50,6 +51,7 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics.scorer import check_scoring
+from sklearn.metrics.scorer import _check_multimetric_scoring
 
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.linear_model import PassiveAggressiveClassifier
@@ -217,6 +219,17 @@ class MockClassifier(object):
 
     def get_params(self, deep=False):
         return {'a': self.a, 'allow_nd': self.allow_nd}
+
+
+class CountCallPredictedEstimator:
+    def __init__(self):
+        self._n_predict_calls = 0
+        self._rng = np.random.RandomState(0)
+    def fit(self, X, y):
+        return self
+    def predict(self, X):
+        self._n_predict_calls += 1
+        return self._rng.randint(0, 2, size=X.shape[0])
 
 
 # XXX: use 2D array, since 1D X is being detected as a single sample in
@@ -1299,3 +1312,14 @@ def test_permutation_test_score_pandas():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
         permutation_test_score(clf, X_df, y_ser)
+
+
+def test_multiscore_memoizing():
+    # Check if memoizing works as expected in _multimetric_score
+    X, y = make_classification(n_samples=1000, random_state=0)
+    estimator = CountCallPredictedEstimator()
+    scorers, _ = _check_multimetric_scoring(estimator,
+                                            ['neg_mean_squared_error',
+                                             'neg_median_absolute_error'])
+    scores = _multimetric_score(estimator, X, y, scorers=scorers)
+    assert estimator._n_predict_calls == 1

@@ -23,6 +23,7 @@ from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
+from ..utils.metaestimators import if_delegate_has_method
 from ..externals.joblib import Parallel, delayed, logger
 from ..externals.six.moves import zip
 from ..metrics.scorer import check_scoring, _check_multimetric_scoring
