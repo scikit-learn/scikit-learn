@@ -73,14 +73,14 @@ for k, col in zip(unique_labels, colors):
              markeredgecolor='k', markersize=2, alpha=0.5)
 
 plt.title("Automatic Clustering \n Estimated number of clusters: %d"
-          % clust.n_clusters)
+          % clust.n_clusters_)
 
 # (Re)-extract clustering structure, using a single eps to show comparison
 # with DBSCAN. This can be run for any clustering distance, and can be run
 # multiple times without rerunning OPTICS. OPTICS does need to be re-run to c
 # hange the min-pts parameter.
 
-clust.extract(.15, 'dbscan')
+clust._extract(.15, 'dbscan')
 
 core_samples_mask = np.zeros_like(clust.labels_, dtype=bool)
 core_samples_mask[clust.core_sample_indices_] = True
@@ -107,12 +107,12 @@ for k, col in zip(unique_labels, colors):
              markeredgecolor='k', markersize=2, alpha=0.5)
 
 plt.title('DBSCAN with epsilon of 0.15 \n Estimated number of clusters: %d'
-          % clust.n_clusters)
+          % clust.n_clusters_)
 
 # Try with different eps to highlight the problem
 
 
-clust.extract(.4, 'dbscan')
+clust._extract(.4, 'dbscan')
 
 
 core_samples_mask = np.zeros_like(clust.labels_, dtype=bool)
@@ -140,7 +140,7 @@ for k, col in zip(unique_labels, colors):
              markeredgecolor='k', markersize=2, alpha=0.5)
 
 plt.title('DBSCAN with epsilon of 0.40 \n Estimated number of clusters: %d'
-          % clust.n_clusters)
+          % clust.n_clusters_)
 
 plt.tight_layout()
 plt.show()
