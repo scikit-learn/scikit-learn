@@ -1,10 +1,22 @@
 '''\
-A thin wrapper for OpenCV classifiers to sklearn.
+A thin wrapper for Opencv classifiers to scikit-learn.
 The complete list of supported OpenCV models is below:
-* Boosted random forest (see cv2.ml.Boost_create function)
-* Random forest (see cv2.ml.RTrees_create function)
-* SVM (see cv2.ml.SVM_create function)
-* KNN (see cv2.ml.KNearest_create function)
+* Boosted Random Forest model created by cv2.ml.Boost_create()
+* Random Forest model created by cv2.ml.RTrees_create()
+* SVM model created by cv2.ml.SVM_create()
+* KNN model created by cv2.ml.KNearest_create()
+
+Note, no prior assumptions about classifier's algorithm behind is made.
+
+== MOTIVATION ==
+Want to get the mix of scikit-learn framework power (e.g. cross-validation, posterior calibration) and
+the efortless deploy to C++ for the trained Opencv models.
+
+Unfortunately, the inheritance from scikit-learn models (like KNeighborsClassifier) is not an
+option due the reasons listed below:
+* A huge number of methods to override.
+* Method-set to override distinguishes from a model to a model.
+
 
 == EXAMPLE ==
     import opencv_sklearn_wrapper
@@ -21,11 +33,10 @@ The complete list of supported OpenCV models is below:
 * Use command one-liner below to run the unit tests:
     python opencv_sklearn_wrapper.py -v
 
-* [07/14/2017] Tested for sklearn 0.18.1 + both of Python 2.7.12 and Python 3.5.2.
+* [07/14/2017] Tested for sklearn 0.18.1 + Opencv 3.1.0 + both of Python 2.7.12 and Python 3.5.2.
 '''
 
 import cv2
-import math
 import numpy as np
 
 import unittest
@@ -34,35 +45,58 @@ import warnings
 from sklearn.base import BaseEstimator
 
 
-class Opencv_basic_predictor:
-    '''Provides the basic prediction logics (valid for Opencv Boost/Random Forest/SVM).'''
-    _predict__flags = None
-    _predict_proba__flags = None
+class Opencv_binary_predictor:
+    '''Provides the hard/soft decisions from the Opencv's binary classifiers.
+
+    Technical Notes
+    ---------------
+    * Scikit-learn assumption: positive category is assumed to be at index 1 among the probabilities
+    delivered from predictor for the input sample.
+    Proof: https://github.com/scikit-learn/scikit-learn/blob/8570622a4450fe1ee3c683601454a7189dcccc14/sklearn/calibration.py#L293.
+    '''
+    _positive_class_idx = 1
 
 
-    def _to_posteriors(self, output):
-        p = 1.0 / (1.0 + math.exp(-2.0 * output))
-        return [1.0 - p, p]
+    def _estimate(self, features, flags=None):
+        '''Provides the basic prediction logics (valid for Opencv's (Boosted) Random Forest/SVM).'''
+        if flags is None:
+            raise RuntimeError('No flags provided to distinguish the hard/soft decision mode.')
+
+        _, outputs = self.opencv_model.predict(features, flags=flags)
+        return outputs.ravel()
+
 
     def predict(self, features):
-        if self._predict__flags:
-            _, predictions = self.opencv_model.predict(features, flags=self._predict__flags)
-        else:
-            _, predictions = self.opencv_model.predict(features)
-        return predictions.ravel()
+        '''Returns the hard classification decision (aka class label).
 
-    def predict_proba(self, features):
-        if self._predict_proba__flags:
-            _, predictions = self.opencv_model.predict(features, flags=self._predict_proba__flags)
-        else:
-            _, predictions = self.opencv_model.predict(features)
-        predictions = np.array(map(self._to_posteriors, predictions), np.float32)
-        return predictions
+        Parameters
+        ----------
+        features: the samples to classify. Type: numpy.ndarray of shape (n, m).
+        '''
+        return self._estimate(features, self._force_hard_decision__flags)
 
+
+    def decision_function(self, features):
+        '''Returns the soft classification decision.
+         Technically, it must utilizy the classifier's "raw" output like listed below:
+         * Random Forest: votes portion casted for the positive category.
+         * SVM: oriented distance to the separating hyperplane.
+           See http://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html#sklearn.svm.SVC.decision_function.
+         * Boosted: the weighted sum of the weak decisions (-1 for negative category, +1 for positive one).
+         * KNN: neighbour's votes portion casted for the positive category.
+         * Logistic Regression: the approximated posterior.
+           See http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html#sklearn.linear_model.LogisticRegression.decision_function.
+         * Normal Bayes:
+
+        Parameters
+        ----------
+        features: the samples to classify. Type: numpy.ndarray of shape (n, m).
+        '''
+        return self._estimate(features, self._force_soft_decision__flags)
     pass
 
 
-class Opencv_sklearn_wrapper(BaseEstimator, Opencv_basic_predictor):
+class Opencv_sklearn_wrapper(BaseEstimator, Opencv_binary_predictor):
     '''Base class for all Opencv wrapper to scikit-learn.
     Any wrapper implementations for Opencv models must be derived.
 
@@ -104,7 +138,7 @@ class Opencv_sklearn_wrapper(BaseEstimator, Opencv_basic_predictor):
                                      sampleWeights=sample_weight,
                                      varType=var_types)
         self.opencv_model.train(td)
-        self.classes_ =  np.unique(labels)
+        self.classes_ = np.unique(labels)
         return self
 
 
@@ -165,11 +199,11 @@ def make_sklearn_wrapper(model=None, class_name=None):
     if name in ['ml_Boost', 'ml_RTrees']:
         wrapper = Opencv_sklearn_wrapper__dtree(model_class=name)
     elif name == 'ml_SVM':
-        wrapper = Opencv_sklearn_wrapper(model_class=name)
+        wrapper = Opencv_sklearn_wrapper__svm(model_class=name)
     elif name == 'ml_KNearest':
         wrapper = Opencv_sklearn_wrapper__knn()
     else:
-        raise RuntimeError('make_sklearn_wrapper: both of keyword arguments "model" and "class_name" are None or \
+        raise RuntimeError('For make_sklearn_wrapper, both of keyword arguments "model" and "class_name" are None or \
 the model is unsupported')
 
     wrapper.opencv_model = model
