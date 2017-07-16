@@ -520,10 +520,11 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
     n_samples, n_features = X.shape
 
     if sparse.isspmatrix(X):
+        # copy was not done as X is not modified inplace when X is sparse
         precompute = False
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, fit_intercept=fit_intercept, normalize=normalize,
-            return_mean=True)
+            copy=False, return_mean=True)
     else:
         # copy was done in fit if necessary
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
