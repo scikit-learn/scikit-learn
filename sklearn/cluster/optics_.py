@@ -16,9 +16,9 @@ from scipy import iterable
 
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
-from ..neighbors.base import NeighborsBase
+from ..neighbors.base import NeighborsBase, UnsupervisedMixin
 from ..neighbors.base import KNeighborsMixin, RadiusNeighborsMixin
-from ..base import ClusterMixin, UnsupervisedMixin
+from ..base import ClusterMixin
 from ..metrics.pairwise import pairwise_distances
 from ._optics_inner import quick_scan
 
@@ -150,10 +150,8 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
                           leaf_size=leaf_size, metric=metric, p=p,
                           metric_params=metric_params, n_jobs=n_jobs)
 
-        # Set by init_params, but not needed
-        del self.n_neighbors
         self.eps = eps
-        self.min_samples = min_samples
+        # min_samples is set via n_neighbors attribute in init params
         self.maxima_ratio = maxima_ratio
         self.rejection_ratio = rejection_ratio
         self.similarity_threshold = similarity_threshold
@@ -161,6 +159,13 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         self.min_cluster_size_ratio = min_cluster_size_ratio
         self.min_maxima_ratio = min_maxima_ratio
 
+    @property
+    def n_neighbors(self):
+        return self.min_samples
+    @n_neighbors.setter
+    def n_neighbors(self, value):
+        self.min_samples = value
+    
     def fit(self, X, y=None):
         """Perform OPTICS clustering
 
@@ -200,11 +205,12 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
 
         self.core_dists_[:] = self.kneighbors(X, self.min_samples)[0][:, -1]
 
+        epsilon = self.eps * 5.0
         # Main OPTICS loop. Not parallelizable. The order that entries are
         # written to the 'ordering_' list is important!
         for point in range(n_samples):
             if not self._processed[point]:
-                self._expand_cluster_order(self, point, self.eps * 5.0)
+                self._expand_cluster_order(point, epsilon, X)
 
         self._extract_auto()
         self.core_sample_indices_ = np.arange(n_samples)[self._is_core]
@@ -220,7 +226,7 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
             while not self._processed[point]:
                 self._processed[point] = True
                 self.ordering_.append(point)
-                point = self._set_reach_dist(self, point, epsilon, X)
+                point = self._set_reach_dist(point, epsilon, X)
         else:
             self.ordering_.append(point)  # For very noisy points
             self._processed[point] = True
@@ -238,8 +244,7 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
                                indices, axis=0)
             # n_pr = indices[(self._processed[indices] < 1).ravel()]
             if len(n_pr) > 0:
-                dists = pairwise_distances(P, np.take(self.get_arrays()[0],
-                                                      n_pr, axis=0),
+                dists = pairwise_distances(P, np.take(X, n_pr, axis=0),
                                            self.metric, n_jobs=1).ravel()
 
                 rdists = np.maximum(dists, self.core_dists_[point_index])
@@ -288,7 +293,7 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
 
         if clustering == 'dbscan':
             self.eps_prime = epsilon_prime
-            self.extract_dbscan(self, epsilon_prime)
+            self.extract_dbscan(epsilon_prime)
         elif clustering == 'auto':
             self._extract_auto(**kwargs)
 
