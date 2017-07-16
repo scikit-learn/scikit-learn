@@ -282,7 +282,7 @@ def test_scikit_vs_scipy():
             children_ = out[:, :2].astype(np.int)
             children, _, n_leaves, _ = _TREE_BUILDERS[linkage](X, connectivity)
 
-            # Sort the order of of child nodes per row to match scipy
+            # Sort the order of of child nodes per row for consistency
             children.sort(axis=1)
             assert_array_equal(children, children_, 'linkage tree differs'
                                                     ' from scipy impl for'
