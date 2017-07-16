@@ -576,13 +576,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
         """
-        iid = self.iid
-        if self.iid is None:
-            warnings.warn("The default of the `iid` parameter will change from"
-                          " True to False in version 0.21 and will be removed "
-                          "in 0.23. This will change numeric results for many "
-                          "metrics.", DeprecationWarning)
-            iid = True
 
         if self.fit_params is not None:
             warnings.warn('"fit_params" as a constructor argument was '
@@ -708,6 +701,16 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         # NOTE test_sample counts (weights) remain the same for all candidates
         test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
+        iid = self.iid
+        if self.iid is None:
+            if len(np.unique(test_sample_counts)) > 1:
+                warnings.warn("The default of the `iid` parameter will change "
+                              "from True to False in version 0.21 and will be"
+                              " removed in 0.23. This will change numeric"
+                              " results when test-set sizes are unequal.",
+                              DeprecationWarning)
+            iid = True
+
         for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
             _store('test_%s' % scorer_name, test_scores[scorer_name],

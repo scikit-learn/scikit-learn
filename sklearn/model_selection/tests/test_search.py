@@ -37,6 +37,7 @@ from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection import fit_grid_point
+from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import StratifiedShuffleSplit
@@ -62,7 +63,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import Imputer
-from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
@@ -907,6 +908,8 @@ def test_search_iid_param():
                                     2)
         assert_almost_equal(test_mean, expected_test_mean)
         assert_almost_equal(test_std, expected_test_std)
+        assert_array_almost_equal(test_cv_scores,
+                                  cross_val_score(SVC(C=1), X, y, cv=cv))
 
         # For the train scores, we do not take a weighted mean irrespective of
         # i.i.d. or not
@@ -1470,18 +1473,19 @@ def test_transform_inverse_transform_round_trip():
 def test_deprecated_grid_search_iid():
     depr_message = ("The default of the `iid` parameter will change from True "
                     "to False in version 0.21")
-    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=2)
-    # no warning with default accuracy of SVC
+    X, y = make_blobs(n_samples=54, random_state=0, centers=2)
+    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=3)
+    # no warning with equally sized test sets
     assert_no_warnings(grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=2, scoring='accuracy')
-    # no warning with accuracy explicit accuracy
-    assert_no_warnings(grid.fit, X, y)
-
-    # no warning with default accuracy of SVC in pipeline
-    grid = GridSearchCV(make_pipeline(SVC()), param_grid={'C': [1]}, cv=2)
-    assert_no_warnings(grid.fit, X, y)
-
-    # warning with roc_auc
-    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=2, scoring='roc_auc')
+    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=5)
+    # warning because 54 % 5 != 0
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
+
+    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=2)
+    # warning because stratification into two classes and 27 % 2 != 0
+    assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
+
+    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=KFold(2))
+    # no warning because no stratification and 54 % 2 == 0
+    assert_no_warnings(grid.fit, X, y)
