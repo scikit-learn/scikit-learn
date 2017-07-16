@@ -842,7 +842,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         when varying the number of clusters and using caching, it may
         be advantageous to compute the full tree.
 
-    linkage : {"ward", "complete", "average", "single"}, optional, default "ward"
+    linkage : {"ward", "complete", "average", "single"}, optional\
+            (default="ward")
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of features. The algorithm will merge
         the pairs of cluster that minimize this criterion.
