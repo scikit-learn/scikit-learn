@@ -1,7 +1,10 @@
 '''\
 A thin wrapper for OpenCV classifiers to sklearn.
 The complete list of supported OpenCV models is below:
-* Boosted random forest (created by cv2.ml.Boost_create function)
+* Boosted random forest (see cv2.ml.Boost_create function)
+* Random forest (see cv2.ml.RTrees_create function)
+* SVM (see cv2.ml.SVM_create function)
+* KNN (see cv2.ml.KNearest_create function)
 
 == EXAMPLE ==
     import opencv_sklearn_wrapper
@@ -31,7 +34,35 @@ import warnings
 from sklearn.base import BaseEstimator
 
 
-class Opencv_sklearn_wrapper__base(BaseEstimator):
+class Opencv_basic_predictor:
+    '''Provides the basic prediction logics (valid for Opencv Boost/Random Forest/SVM).'''
+    _predict__flags = None
+    _predict_proba__flags = None
+
+
+    def _to_posteriors(self, output):
+        p = 1.0 / (1.0 + math.exp(-2.0 * output))
+        return [1.0 - p, p]
+
+    def predict(self, features):
+        if self._predict__flags:
+            _, predictions = self.opencv_model.predict(features, flags=self._predict__flags)
+        else:
+            _, predictions = self.opencv_model.predict(features)
+        return predictions.ravel()
+
+    def predict_proba(self, features):
+        if self._predict_proba__flags:
+            _, predictions = self.opencv_model.predict(features, flags=self._predict_proba__flags)
+        else:
+            _, predictions = self.opencv_model.predict(features)
+        predictions = np.array(map(self._to_posteriors, predictions), np.float32)
+        return predictions
+
+    pass
+
+
+class Opencv_sklearn_wrapper(BaseEstimator, Opencv_basic_predictor):
     '''Base class for all Opencv wrapper to scikit-learn.
     Any wrapper implementations for Opencv models must be derived.
 
@@ -92,47 +123,54 @@ class Opencv_sklearn_wrapper__base(BaseEstimator):
 
         params.update(self.__params)
         return params
-
-
-    def predict(self, features):
-        raise Exception('No base predict method is defined to work for all Opencv models. Define yours own.')
-
-
-    def predict_proba(self, features):
-        raise Exception('No base predict_proba method is defined to work for all Opencv models. Define yours own.')
     pass
 
 
-class Opencv_sklearn_wrapper__boost(Opencv_sklearn_wrapper__base):
-    '''Opencv-to-sklearn wrapper for Boosted random forest.'''
-    def _output_to_posteriors(self, sum):
-        p = 1.0 / (1.0 + math.exp(-2.0 * sum))
-        return [1.0 - p, p]
 
-
-    def predict(self, features):
-        _, predictions = self.opencv_model.predict(features, flags=cv2.ml.DTREES_PREDICT_MAX_VOTE)
-        return np.squeeze(np.array(predictions, np.uint32))
-
-
-    def predict_proba(self, features):
-        _, predictions = self.opencv_model.predict(features, flags=cv2.ml.DTREES_PREDICT_SUM)
-        predictions = np.array(map(self._output_to_posteriors, predictions), np.float32)
-        return predictions
+class Opencv_sklearn_wrapper__dtree(Opencv_sklearn_wrapper):
+    '''Opencv-to-sklearn wrapper for Random Forest/Boosted decision trees.'''
+    _predict__flags = cv2.ml.DTREES_PREDICT_MAX_VOTE
+    _predict_proba__flags = cv2.ml.DTREES_PREDICT_SUM
     pass
 
 
-def make_sklearn_wrapper(model):
+class Opencv_sklearn_wrapper__knn(Opencv_sklearn_wrapper):
+    '''Opencv-to-sklearn wrapper for KNN.'''
+    def __init__(self, model_class='ml_KNearest', **kwargs):
+        super(Opencv_sklearn_wrapper__knn, self).__init__(model_class=model_class, **kwargs)
+        return
+
+
+    def predict(self, features):
+        _, results, _, _ = self.opencv_model.findNearest(features, k=self.opencv_model.getDefaultK())
+        return results.ravel()
+
+
+    def predict_proba(self, features):
+        _, results, _, _ = self.opencv_model.findNearest(features, k=self.opencv_model.getDefaultK())
+        pass
+    pass
+
+
+def make_sklearn_wrapper(model=None, class_name=None):
     '''Constructs the wrapper for the Opencv's binary classifiers.
     Technically, this implements a simple dispatcher over the Opencv's entire classifier set.
 
     Parameters
     ----------
-    model: the instance of any Opencv's binary classifier.
+    model: the instance of any instance of Opencv's binary classifier.
+    class_name: the class name of Opencv's model.
     '''
-    model_class = model.__class__.__name__
-    if model_class == 'ml_Boost':
-        wrapper = Opencv_sklearn_wrapper__boost(model_class=model_class)
+    name = model.__class__.__name__ if model else class_name
+    if name in ['ml_Boost', 'ml_RTrees']:
+        wrapper = Opencv_sklearn_wrapper__dtree(model_class=name)
+    elif name == 'ml_SVM':
+        wrapper = Opencv_sklearn_wrapper(model_class=name)
+    elif name == 'ml_KNearest':
+        wrapper = Opencv_sklearn_wrapper__knn()
+    else:
+        raise RuntimeError('make_sklearn_wrapper: both of keyword arguments "model" and "class_name" are None or \
+the model is unsupported')
 
     wrapper.opencv_model = model
     return wrapper
@@ -140,14 +178,14 @@ def make_sklearn_wrapper(model):
 
 
 class _Opencv_sklearn_wrapper__tests(unittest.TestCase):
-    _supported_models = ['ml_Boost']
+    _supported_models = ['ml_Boost', 'ml_RTrees', 'ml_SVM', 'ml_KNearest']
 
 
     def test__sklearn_base(self):
         from sklearn.base import clone, is_classifier
 
         for model in self._supported_models:
-            wrapper = Opencv_sklearn_wrapper__base(model_class=model)
+            wrapper = Opencv_sklearn_wrapper(model_class=model)
 
             self.assertTrue(issubclass(wrapper.__class__, BaseEstimator))
             self.assertTrue(is_classifier(wrapper))
@@ -162,6 +200,26 @@ class _Opencv_sklearn_wrapper__tests(unittest.TestCase):
                 self.assertFalse(any([issubclass(w.category, DeprecationWarning) for w in raised_warnings]),
                                  msg='sklearn.base.* raises the DeprecationWarnings')
         return
+
+
+    def test_sklearn_model_selection(self):
+        from sklearn import datasets
+        from sklearn.metrics import classification_report
+        from sklearn.model_selection import cross_val_predict
+
+        iris = datasets.load_iris()
+        samples, labels = np.array(iris.data[:, :2], np.float32), iris.target
+
+        warnings.filterwarnings('ignore')
+        try:
+            for model in self._supported_models:
+                wrapper = Opencv_sklearn_wrapper(model_class=model)
+
+                predictions = cross_val_predict(wrapper, samples, labels)
+                report = classification_report(labels, predictions)
+        except RuntimeError:
+            self.fail('Opencv_sklearn_wrapper crashes for sklearn.metrics.* and sklearn.model_selection.*')
+
     pass
 
 
