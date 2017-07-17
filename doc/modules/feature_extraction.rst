@@ -115,21 +115,26 @@ Many datasets contain features of different types, say text, floats, and dates,
 where each type of feature requires separate preprocessing or feature extraction steps.
 Often it is easiest to preprocess data before applying scikit-learn methods,
 for example using `pandas <http://pandas.pydata.org/>`__.
-The :class:`~sklearn.experimental.ColumnTransformer` is a convenient way to perform heterogeneous
-preprocessing on data columns within a scikit-learn pipeline; e.g. when one wants
-to adjust preprocessing parameters within a grid search or to
-avoid leaking statistics from test data to training data.
-The :class:`~sklearn.experimental.ColumnTransformer` works on arrays, sparse matrices,
-and pandas DataFrames.
+Processing your data before passing it to scikit-learn might be problematic for
+one of the following reasons:
+1. Incorporating statistics from test data into the preprocessors makes
+   cross-validation scores unreliable (known as *data leakage*).
+2. You may want to include the parameters of the preprocessors in a
+   :ref:`parameter search <grid_search>`.
+:class:`~sklearn.experimental.ColumnTransformer` helps performing different
+transformations for different columns of the data, within a
+:class:`~sklearn.pipeline.Pipeline` that is safe from data leakage and that can
+be parametrised. ColumnTransformer works on arrays, sparse matrices, and pandas
+DataFrames.
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::
 
   >>> import pandas as pd
   >>> X = pd.DataFrame(
-  ...     {'city': ['London', 'London', 'Paris', 'New York'],
+  ...     {'city': ['London', 'London', 'Paris', 'Sallisaw'],
   ...      'title': ["His Last Bow", "How Watson Learned the Trick",
-  ...                "A Moveable Feast", "The Great Gatsby"]})
+  ...                "A Moveable Feast", "The Grapes of Wrath"]})
 
 For this data, we might want to encode ``'city'`` column as a categorical variable,
 but apply a :class:`feature_extraction.text.CountVectorizer <sklearn.feature_extraction.text.CountVectorizer>`
@@ -161,10 +166,11 @@ transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
          [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
          [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]]...)
 
-In the above example, the :class:`~sklearn.feature_extraction.text.CountVectorizer`
-expects a 1D array as input and therefore the columns were specified as a scalar (``'city'``).
+In the above example, the
+:class:`~sklearn.feature_extraction.text.CountVectorizer` expects a 1D array as
+input and therefore the columns were specified as a string (``'city'``).
 However, other transformers generally expect 2D data, and in that case you need
-to specify the column as a list (``['city']``).
+to specify the column as a list of string (``['city']``).
 
 Apart from a scalar or a single item list, the column selection can be specified
 as a list of multiple items, an integer array, a slice, or a boolean mask.
@@ -991,7 +997,7 @@ Some tips and tricks:
     (Note that this will not filter out punctuation.)
 
 
-    The following example will, for instance, transform some British spelling 
+    The following example will, for instance, transform some British spelling
     to American spelling::
 
         >>> import re

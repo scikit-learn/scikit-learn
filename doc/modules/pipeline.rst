@@ -218,8 +218,8 @@ a list of transformer objects. During fitting, each of these
 is fit to the data independently. The transformers are applied in parallel,
 and the feature matrices they output are concatenated side-by-side into a
 larger matrix.
+
 When you want to apply different transformations to each field of the data,
-producing a homogeneous feature matrix from a heterogeneous data source,
 see the related class :class:`sklearn.experimental.ColumnTransformer`
 (see :ref:`user guide <column_transformer>`).
 

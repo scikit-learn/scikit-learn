@@ -48,20 +48,29 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     transformers : list of tuples
         List of (name, transformer, column) tuples specifying the transformer
         objects to be applied to subsets of the data.
-        Specifying the column as a scalar will pass a 1d array or pandas Series
-        to the transformer. Specifying the columns as a list, int array, slice
-        or boolean mask will pass a 2d array or DataFrame. Strings can
-        reference columns if the input is a DataFrame, integers are always
-        interpreted as the positional columns.
-        When passing a single column to a transformer that expects 2D input
-        data, the column should be specified as a list of one element.
+
+        name : string
+            Like in FeatureUnion and Pipeline, this allows the transformer and
+            its parameters to be set using ``set_params`` and searched in grid
+            search.
+        transformer : estimator or None
+            If None, nothing is output for this triple. Estimator must support
+            `fit` and `transform`.
+        column : string or int, array-like of string or int, slice or boolean \
+ mask array
+            Indexes the data on its second axis. Integers are interpreted as
+            positional columns, while strings can reference DataFrame columns
+            by name.  A string or int should be used where ``transformer``
+            expects X to be a 1d array-like (vector), otherwise a 2d array will
+            be passed to the transformer.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
     transformer_weights : dict, optional
-        Multiplicative weights for features per transformer.
-        Keys are transformer names, values the weights.
+        Multiplicative weights for features per transformer. The output of the
+        transformer is multiplied by these weights. Keys are transformer names,
+        values the weights.
 
     Attributes
     ----------
@@ -90,6 +99,9 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     ...      ("norm2", Normalizer(norm='l1'), slice(2, 4))])
     >>> X = np.array([[0., 1., 2., 2.],
     ...               [1., 1., 0., 1.]])
+    >>> # Normalizer scales each row of X to unit norm. Therefore, a separate
+    ... # scaling is applied for the two first and two last elements of each
+    ... # row independently.
     >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
     array([[ 0. ,  1. ,  0.5,  0.5],
            [ 0.5,  0.5,  0. ,  1. ]])
@@ -175,9 +187,10 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
 
-    @ property
+    @property
     def named_transformers_(self):
-        """
+        """Access the fitted transformer by name.
+
         Read-only attribute to access any transformer by given name.
         Keys are transformer names and values are the fitted transformer
         objects.
@@ -213,6 +226,45 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             for name, old, column in self.transformers
         ]
 
+    def _fit(self, X, y, transform, **fit_params):
+        """Private function to fit and transform on demand."""
+        self._validate_transformers()
+
+        if transform:
+            func = _fit_transform_one
+        else:
+            # we need to wrap the same argument in both _fit_* functions to
+            # simplify the later call
+            func = _wrap_fit_one_transfomer
+
+        try:
+            result = Parallel(n_jobs=self.n_jobs)(
+                delayed(func)(clone(trans), weight, X_sel, y,
+                              **fit_params)
+                for name, trans, X_sel, weight in self._iter(X=X))
+        except ValueError as e:
+            if "Expected 2D array, got 1D array instead" in str(e):
+                raise ValueError(_ERR_MSG_1DCOLUMN)
+            else:
+                raise
+
+        if transform:
+            if not result:
+                # All transformers are None
+                return np.zeros((X.shape[0], 0))
+            Xs, transformers = zip(*result)
+        else:
+            transformers = result
+
+        self._update_fitted_transformers(transformers)
+        if not transform:
+            return self
+        if any(sparse.issparse(f) for f in Xs):
+            Xs = sparse.hstack(Xs).tocsr()
+        else:
+            Xs = np.hstack(Xs)
+        return Xs
+
     def fit(self, X, y=None):
         """Fit all transformers using X.
 
@@ -231,18 +283,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             This estimator
 
         """
-        self._validate_transformers()
-        try:
-            transformers = Parallel(n_jobs=self.n_jobs)(
-                delayed(_fit_one_transformer)(clone(trans), X_sel, y)
-                for _, trans, X_sel, _ in self._iter(X=X))
-        except ValueError as e:
-            if "Expected 2D array, got 1D array instead" in str(e):
-                raise ValueError(_ERR_MSG_1DCOLUMN)
-            else:
-                raise
-        self._update_fitted_transformers(transformers)
-        return self
+        return self._fit(X, y, transform=False)
 
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all transformers, transform the data and concatenate results.
@@ -261,32 +302,11 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
-            one result is a sparse matrix, everything will be converted to
+            any result is a sparse matrix, everything will be converted to
             sparse matrices.
 
         """
-        self._validate_transformers()
-        try:
-            result = Parallel(n_jobs=self.n_jobs)(
-                delayed(_fit_transform_one)(clone(trans), weight, X_sel, y,
-                                            **fit_params)
-                for name, trans, X_sel, weight in self._iter(X=X))
-        except ValueError as e:
-            if "Expected 2D array, got 1D array instead" in str(e):
-                raise ValueError(_ERR_MSG_1DCOLUMN)
-            else:
-                raise
-
-        if not result:
-            # All transformers are None
-            return np.zeros((X.shape[0], 0))
-        Xs, transformers = zip(*result)
-        self._update_fitted_transformers(transformers)
-        if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
-        else:
-            Xs = np.hstack(Xs)
-        return Xs
+        return self._fit(X, y, transform=True, **fit_params)
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -325,6 +345,10 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         else:
             Xs = np.hstack(Xs)
         return Xs
+
+
+def _wrap_fit_one_transfomer(transformer, weight, X, y, **fit_params):
+                return _fit_one_transformer(transformer, X, y)
 
 
 def _check_key_type(key, superclass):
