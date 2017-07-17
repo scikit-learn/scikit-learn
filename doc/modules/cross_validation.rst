@@ -275,7 +275,7 @@ validation strategies.
 Cross-validation iterators for i.i.d. data
 ==========================================
 
-Assuming that some data is Independent Identically Distributed (i.i.d.) is
+Assuming that some data is Independent and Identically Distributed (i.i.d.) is
 making the assumption that all samples stem from the same generative process
 and that the generative process is assumed to have no memory of past generated
 samples.
@@ -287,10 +287,10 @@ The following cross-validators can be used in such cases.
 While i.i.d. data is a common assumption in machine learning theory, it rarely
 holds in practice. If one knows that the samples have been generated using a
 time-dependent process, it's safer to
-use a `time-series aware cross-validation scheme <time_series_cv>`
+use a :ref:`time-series aware cross-validation scheme <time_series_cv>`
 Similarly if we know that the generative process has a group structure
 (samples from collected from different subjects, experiments, measurement
-devices) it safer to use `group-wise cross-validation <group_cv>`.
+devices) it safer to use :ref:`group-wise cross-validation <group_cv>`.
 
 
 K-fold
@@ -612,8 +612,6 @@ Example of Leave-2-Group Out::
 
 Group Shuffle Split
 -------------------
-
-:class:`GroupShuffleSplit`
 
 The :class:`GroupShuffleSplit` iterator behaves as a combination of
 :class:`ShuffleSplit` and :class:`LeavePGroupsOut`, and generates a
