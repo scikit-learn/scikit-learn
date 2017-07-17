@@ -112,7 +112,6 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         self.transformers = tosequence(transformers)
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
-        self._validate_transformers()
 
     @property
     def _transformers(self):
