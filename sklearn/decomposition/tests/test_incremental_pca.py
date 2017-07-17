@@ -103,18 +103,12 @@ def test_n_components_none():
             if not hasattr(ipca, 'components_'):  # first call to partial_fit
 
                 ipca.partial_fit(X)
-                if not ipca.n_components_ == min(X.shape):
-                    raise AssertionError('n_components=None did default to'
-                                         ' the choice of the minimum between '
-                                         'the batch number of samples and the '
-                                         'number of features.')
+                assert ipca.n_components_ == min(X.shape)
+
             else:
 
                 ipca.partial_fit(X)
-                if not ipca.n_components_ == ipca.components_.shape[0]:
-                    raise AssertionError('For n_components=None, the value'
-                                         ' assigned has changed between calls '
-                                         'to partial_fit.')
+                assert ipca.n_components_ == ipca.components_.shape[0]
 
 
 def test_incremental_pca_set_params():
