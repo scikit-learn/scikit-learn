@@ -3,8 +3,8 @@
 import numpy as np
 
 from ._c_means import Probabilistic, Possibilistic, GustafsonKessel
+from .k_means_ import _init_centroids
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
-from ..externals.six import string_types
 from ..utils import as_float_array
 from ..utils import check_array
 from ..utils import check_random_state
@@ -27,7 +27,7 @@ def _validate_center_shape(X, n_centers, centers):
             % (centers.shape[1], X.shape[1]))
 
 
-def c_means(X, n_clusters, m=2, n_init=10, max_iter=300, init='random',
+def c_means(X, n_clusters, m=2, n_init=10, max_iter=300, init='k-means++',
             verbose=False, tol=1e-4, random_state=None, algorithm="auto",
             return_n_iter=False, copy_x=True):
     if n_init <= 0:
@@ -76,7 +76,7 @@ def c_means(X, n_clusters, m=2, n_init=10, max_iter=300, init='random',
 
 
 def probabilistic_single(X, n_clusters, m=2., max_iter=300,
-                         init='random', random_state=None, tol=1e-4):
+                         init='k-means++', random_state=None, tol=1e-4):
     random_state = check_random_state(random_state)
 
     centers = _init_centroids(X, n_clusters, init, random_state=random_state)
@@ -109,6 +109,7 @@ def possibilistic_single(X, n_clusters, m=2., max_iter=300,
     random_state = check_random_state(random_state)
 
     # Initialize using a probabilistic run
+    # TODO: make this optional
     results_init = c_means(
         X, n_clusters=n_clusters, algorithm="probabilistic",
         random_state=random_state)
@@ -143,11 +144,12 @@ def possibilistic_single(X, n_clusters, m=2., max_iter=300,
     return results
 
 
-def gustafson_kessel_single(X, n_clusters, m=2., max_iter=300, init='random',
-                            random_state=None, tol=1e-4):
+def gustafson_kessel_single(X, n_clusters, m=2., max_iter=300,
+                            init='probabilistic', random_state=None, tol=1e-4):
     random_state = check_random_state(random_state)
 
     # Initialize using a probabilistic run
+    # TODO: make this optional
     results_init = c_means(
         X, n_clusters=n_clusters, algorithm="probabilistic",
         random_state=random_state)
@@ -177,28 +179,6 @@ def gustafson_kessel_single(X, n_clusters, m=2., max_iter=300, init='random',
     }
 
     return results
-
-
-def _init_centroids(X, k, init, random_state=None):
-    random_state = check_random_state(random_state)
-    n_samples = X.shape[0]
-
-    if n_samples < k:
-        raise ValueError(
-            "`n_samples={:d} should be larger than n_clusters={:d}".format(
-                n_samples, k
-            )
-        )
-
-    if isinstance(init, string_types) and init == 'random':
-        seeds = random_state.permutation(n_samples)[:k]
-        centers = X[seeds]
-    else:
-        raise ValueError("`init` should be 'random'. '{}' (type '{}') "
-                         "was passed.".format(init, type(init)))
-
-    _validate_center_shape(X, k, centers)
-    return centers
 
 
 class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
