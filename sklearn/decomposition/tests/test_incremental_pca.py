@@ -90,6 +90,33 @@ def test_incremental_pca_validation():
                         IncrementalPCA(n_components=3).partial_fit, X)
 
 
+def test_n_components_none():
+    # Ensures that n_components == None is handled correctly
+    rng = np.random.RandomState(1999)
+    for n_samples, n_features in [(50, 10), (10, 50)]:
+
+        ipca = IncrementalPCA(n_components=None)
+
+        for partial_fit_call in [1, 2]:
+            X = rng.rand(n_samples, n_features)
+
+            if not hasattr(ipca, 'components_'):  # first call to partial_fit
+
+                ipca.partial_fit(X)
+                if not ipca.n_components_ == min(X.shape):
+                    raise AssertionError('n_components=None did default to'
+                                         ' the choice of the minimum between '
+                                         'the batch number of samples and the '
+                                         'number of features.')
+            else:
+
+                ipca.partial_fit(X)
+                if not ipca.n_components_ == ipca.components_.shape[0]:
+                    raise AssertionError('For n_components=None, the value'
+                                         ' assigned has changed between calls '
+                                         'to partial_fit.')
+
+
 def test_incremental_pca_set_params():
     # Test that components_ sign is stable over batch sizes.
     rng = np.random.RandomState(1999)
