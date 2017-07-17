@@ -1,7 +1,13 @@
 import numpy as np
+from sklearn.metrics.pairwise import euclidean_distances, check_pairwise_arrays
 
 
 class Probabilistic:
+
+    @staticmethod
+    def distances(X, Y=None,  **kwargs):
+        return euclidean_distances(X, Y, **kwargs)
+
     @staticmethod
     def memberships(distances, m=2.):
         """Calculate probabilistic memberships based on distances.
@@ -51,8 +57,15 @@ class Probabilistic:
 
 
 class Possibilistic:
+
+    def __init__(self, weights):
+        self.weights = weights
+
     @staticmethod
-    def memberships(distances, weights, m=2.):
+    def distances(X, Y=None, **kwargs):
+        return euclidean_distances(X, Y, **kwargs)
+
+    def memberships(self, distances, m=2.):
         """Calculate possibilistic memberships based on distances.
 
         Parameters
@@ -70,7 +83,7 @@ class Possibilistic:
             Updated memberships
 
         """
-        memberships = (1. + (distances / weights) ** (1. / (m - 1))) ** -1.
+        memberships = (1. + (distances / self.weights) ** (1. / (m - 1))) ** -1.
         return memberships
 
     @staticmethod
@@ -94,3 +107,27 @@ class Possibilistic:
         """
         return np.divide(np.dot((memberships ** m).T, X),
                          np.sum(memberships ** m, axis=0)[..., np.newaxis])
+
+
+class GustafsonKessel(Probabilistic):
+
+    def __init__(self, covariances=None):
+        self.covariances_ = covariances
+
+    def distances(self, X, Y, **kwargs):
+        if self.covariances_ is None:
+            raise ValueError('Cannot compute Gustafson-Kessel'
+                             ' distance without covariance matrices')
+        v = X - Y[:, np.newaxis]
+        m_inv = (np.linalg.det(self.covariances_) ** (-1 / X.shape[1]))[
+                    ..., np.newaxis, np.newaxis] * self.covariances_
+        m = np.linalg.inv(m_inv)
+        return np.einsum('...ki,...ij,...kj->...k', v, m, v).T
+
+    @staticmethod
+    def covariances(X, centers, memberships, m=2.):
+        v = X - centers[:, np.newaxis]
+        numerator = np.einsum('k...,...ki,...kj->...ij', memberships ** m, v, v)
+        dnominator = np.sum(memberships ** m, axis=0)[..., np.newaxis, np.newaxis]
+        return numerator / dnominator
+

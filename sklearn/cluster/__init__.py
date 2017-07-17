@@ -10,7 +10,7 @@ from .affinity_propagation_ import affinity_propagation, AffinityPropagation
 from .hierarchical import (ward_tree, AgglomerativeClustering, linkage_tree,
                            FeatureAgglomeration)
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
-from .c_means_ import c_means, ProbabilisticCMeans, PossibilisticCMeans
+from .c_means_ import c_means, CMeans
 from .dbscan_ import dbscan, DBSCAN
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 from .birch import Birch
@@ -20,8 +20,7 @@ __all__ = ['AffinityPropagation',
            'Birch',
            'DBSCAN',
            'KMeans',
-           'ProbabilisticCMeans',
-           'PossibilisticCMeans',
+           'CMeans',
            'FeatureAgglomeration',
            'MeanShift',
            'MiniBatchKMeans',
