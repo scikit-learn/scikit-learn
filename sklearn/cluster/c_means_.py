@@ -122,12 +122,14 @@ def possibilistic_single(X, n_clusters, m=2., max_iter=300,
     weights = np.sum(memberships ** m * distances,
                      axis=0) / np.sum(memberships ** m, axis=0)
 
+    possibilistic = Possibilistic(weights=weights)
+
     for i in range(max_iter):
         inertia_old = inertia
-        distances = Possibilistic.distances(X, centers)
-        memberships = Possibilistic.memberships(distances, m)
+        distances = possibilistic.distances(X, centers)
+        memberships = possibilistic.memberships(distances, m)
         inertia = np.sum(memberships ** m * distances)
-        centers = Possibilistic.centers(X, memberships, m)
+        centers = possibilistic.centers(X, memberships, m)
 
         if abs(inertia - inertia_old) < tol:
             break
@@ -138,7 +140,7 @@ def possibilistic_single(X, n_clusters, m=2., max_iter=300,
         'centers': centers,
         'weights': weights,
         'n_iter': i + 1,
-        'algorithm': Possibilistic
+        'algorithm': possibilistic
     }
 
     return results
