@@ -141,7 +141,7 @@ EXAMPLES = {
         # 3d
         np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]]),
 
-        # sparse multilabel-multioutput
+        # sparse multiclass-multioutput
         csr_matrix(np.random.RandomState(42).randint(0, 3, size=(10, 10))),
     ]
 }

@@ -534,6 +534,7 @@ def check_classifier_sparse_multilabel_y(name):
                                                         random_state=0)
     clf.fit(X_train, y_train)
     y_sparse_pred = clf.predict(X_test)
+    assert_equal('csc', y_sparse_pred.getformat())
     assert_array_equal(y_pred, y_sparse_pred.toarray())
 
 

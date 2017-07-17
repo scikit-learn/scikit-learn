@@ -21,7 +21,6 @@ from ..externals.six import string_types
 from .validation import check_array
 
 
-
 def _unique_multiclass(y):
     if hasattr(y, '__array__'):
         return np.unique(np.asarray(y))
@@ -250,7 +249,7 @@ def type_of_target(y):
         if not issparse(y):
             y = np.asarray(y)
         else:
-            return 'unknown'
+            return 'sparse-multiclass-multioutput'
     except ValueError:
         # Known to fail in numpy 1.3 for array of arrays
         return 'unknown'
