@@ -721,7 +721,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         X, y = check_X_y(X, y)
         if self.code_size <= 0:
-            raise ValueError("code_size should be greater than 0, got {1}"
+            raise ValueError("code_size should be greater than 0, got {0}"
                              "".format(self.code_size))
 
         _check_estimator(self.estimator)

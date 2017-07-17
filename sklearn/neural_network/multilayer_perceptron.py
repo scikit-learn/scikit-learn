@@ -640,7 +640,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  % self.solver)
         return self._partial_fit
 
-    def _partial_fit(self, X, y, classes=None):
+    def _partial_fit(self, X, y):
         return self._fit(X, y, incremental=True)
 
     def _predict(self, X):
@@ -751,29 +751,6 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
         Only used when ``solver='sgd'``.
 
-    max_iter : int, optional, default 200
-        Maximum number of iterations. The solver iterates until convergence
-        (determined by 'tol') or this number of iterations. For stochastic
-        solvers ('sgd', 'adam'), note that this determines the number of epochs
-        (how many times each data point will be used), not the number of
-        gradient steps.
-
-    random_state : int, RandomState instance or None, optional, default None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    shuffle : bool, optional, default True
-        Whether to shuffle samples in each iteration. Only used when
-        solver='sgd' or 'adam'.
-
-    tol : float, optional, default 1e-4
-        Tolerance for the optimization. When the loss or score is not improving
-        by at least tol for two consecutive iterations, unless `learning_rate`
-        is set to 'adaptive', convergence is considered to be reached and
-        training stops.
-
     learning_rate_init : double, optional, default 0.001
         The initial learning rate used. It controls the step-size
         in updating the weights. Only used when solver='sgd' or 'adam'.
@@ -782,6 +759,29 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
         is set to 'invscaling'. Only used when solver='sgd'.
+
+    max_iter : int, optional, default 200
+        Maximum number of iterations. The solver iterates until convergence
+        (determined by 'tol') or this number of iterations. For stochastic
+        solvers ('sgd', 'adam'), note that this determines the number of epochs
+        (how many times each data point will be used), not the number of
+        gradient steps.
+
+    shuffle : bool, optional, default True
+        Whether to shuffle samples in each iteration. Only used when
+        solver='sgd' or 'adam'.
+
+    random_state : int, RandomState instance or None, optional, default None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    tol : float, optional, default 1e-4
+        Tolerance for the optimization. When the loss or score is not improving
+        by at least tol for two consecutive iterations, unless `learning_rate`
+        is set to 'adaptive', convergence is considered to be reached and
+        training stops.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
@@ -1128,29 +1128,6 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
         Only used when solver='sgd'.
 
-    max_iter : int, optional, default 200
-        Maximum number of iterations. The solver iterates until convergence
-        (determined by 'tol') or this number of iterations. For stochastic
-        solvers ('sgd', 'adam'), note that this determines the number of epochs
-        (how many times each data point will be used), not the number of
-        gradient steps.
-
-    random_state : int, RandomState instance or None, optional, default None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    shuffle : bool, optional, default True
-        Whether to shuffle samples in each iteration. Only used when
-        solver='sgd' or 'adam'.
-
-    tol : float, optional, default 1e-4
-        Tolerance for the optimization. When the loss or score is not improving
-        by at least tol for two consecutive iterations, unless `learning_rate`
-        is set to 'adaptive', convergence is considered to be reached and
-        training stops.
-
     learning_rate_init : double, optional, default 0.001
         The initial learning rate used. It controls the step-size
         in updating the weights. Only used when solver='sgd' or 'adam'.
@@ -1159,6 +1136,29 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
         is set to 'invscaling'. Only used when solver='sgd'.
+
+    max_iter : int, optional, default 200
+        Maximum number of iterations. The solver iterates until convergence
+        (determined by 'tol') or this number of iterations. For stochastic
+        solvers ('sgd', 'adam'), note that this determines the number of epochs
+        (how many times each data point will be used), not the number of
+        gradient steps.
+
+    shuffle : bool, optional, default True
+        Whether to shuffle samples in each iteration. Only used when
+        solver='sgd' or 'adam'.
+
+    random_state : int, RandomState instance or None, optional, default None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    tol : float, optional, default 1e-4
+        Tolerance for the optimization. When the loss or score is not improving
+        by at least tol for two consecutive iterations, unless `learning_rate`
+        is set to 'adaptive', convergence is considered to be reached and
+        training stops.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.

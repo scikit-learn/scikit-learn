@@ -218,11 +218,6 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
-    max_iter : int, optional
-        Maximum number of iterations for conjugate gradient solver.
-        For 'sparse_cg' and 'lsqr' solvers, the default value is determined
-        by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
-
     sample_weight : float or numpy array of shape [n_samples]
         Individual weights for each sample. If sample_weight is not None and
         solver='auto', the solver will be set to 'cholesky'.
@@ -267,6 +262,12 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
+
+    max_iter : int, optional
+        Maximum number of iterations for conjugate gradient solver.
+        For the 'sparse_cg' and 'lsqr' solvers, the default value is determined
+        by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
+        1000.
 
     tol : float
         Precision of the solution.
@@ -530,18 +531,10 @@ class Ridge(_BaseRidge, RegressorMixin):
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
-    copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
-
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
-
-    max_iter : int, optional
-        Maximum number of iterations for conjugate gradient solver.
-        For 'sparse_cg' and 'lsqr' solvers, the default value is determined
-        by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -550,6 +543,17 @@ class Ridge(_BaseRidge, RegressorMixin):
         If you wish to standardize, please use
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
+    max_iter : int, optional
+        Maximum number of iterations for conjugate gradient solver.
+        For 'sparse_cg' and 'lsqr' solvers, the default value is determined
+        by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
+
+    tol : float
+        Precision of the solution.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
         Solver to use in the computational routines:
@@ -588,9 +592,6 @@ class Ridge(_BaseRidge, RegressorMixin):
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
-
-    tol : float
-        Precision of the solution.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -678,25 +679,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Alpha corresponds to ``C^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
-    class_weight : dict or 'balanced', optional
-        Weights associated with classes in the form ``{class_label: weight}``.
-        If not given, all classes are supposed to have weight one.
-
-        The "balanced" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
-
-    copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
-
     fit_intercept : boolean
         Whether to calculate the intercept for this model. If set to false, no
         intercept will be used in calculations (e.g. data is expected to be
         already centered).
-
-    max_iter : int, optional
-        Maximum number of iterations for conjugate gradient solver.
-        The default value is determined by scipy.sparse.linalg.
 
     normalize : boolean, optional, default False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -705,6 +691,24 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         If you wish to standardize, please use
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+
+    max_iter : int, optional
+        Maximum number of iterations for conjugate gradient solver.
+        The default value is determined by scipy.sparse.linalg.
+
+    tol : float
+        Precision of the solution.
+
+    class_weight : dict or 'balanced', optional
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one.
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', 'sag', 'saga'}
         Solver to use in the computational routines:
@@ -739,9 +743,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
              Stochastic Average Gradient descent solver.
           .. versionadded:: 0.19
            SAGA solver.
-
-    tol : float
-        Precision of the solution.
 
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator to use when shuffling
@@ -1119,7 +1120,8 @@ class _BaseRidgeCV(LinearModel):
                 raise ValueError("cv!=None and store_cv_values=True "
                                  " are incompatible")
             parameters = {'alpha': self.alphas}
-            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
+            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
+                                    normalize=self.normalize),
                               parameters, cv=self.cv, scoring=self.scoring)
             gs.fit(X, y, sample_weight=sample_weight)
             estimator = gs.best_estimator_

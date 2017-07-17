@@ -151,6 +151,9 @@ class IsolationForest(BaseBagging):
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
 
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
+
         Returns
         -------
         self : object
