@@ -29,7 +29,7 @@ def _validate_center_shape(X, n_centers, centers):
 
 def c_means(X, n_clusters, m=2, n_init=10, max_iter=300, init='k-means++',
             verbose=False, tol=1e-4, random_state=None, algorithm="auto",
-            return_n_iter=False, copy_x=True):
+            return_n_iter=False, copy_x=True, eps=1e-6):
     if n_init <= 0:
         raise ValueError('Number of initializations should be a positive'
                          ' number, got {:d} instead.'.format(n_init))
@@ -63,7 +63,7 @@ def c_means(X, n_clusters, m=2, n_init=10, max_iter=300, init='k-means++',
     for it in range(n_init):
         results = single(
             X, n_clusters, max_iter=max_iter, init=init, tol=tol,
-            random_state=random_state, m=m)
+            random_state=random_state, m=m, eps=eps)
         inertia = results['inertia']
         if inertia_best is None or inertia < inertia_best:
             results_best = results
@@ -76,10 +76,11 @@ def c_means(X, n_clusters, m=2, n_init=10, max_iter=300, init='k-means++',
 
 
 def probabilistic_single(X, n_clusters, m=2., max_iter=300,
-                         init='k-means++', random_state=None, tol=1e-4):
+                         init='k-means++', random_state=None, tol=1e-4,
+                         eps=1e-6):
     random_state = check_random_state(random_state)
 
-    centers = _init_centroids(X, n_clusters, init, random_state=random_state)
+    centers = _init_centroids(X, n_clusters, init, random_state=random_state) + eps
     inertia = np.infty
 
     for i in range(max_iter):
@@ -105,7 +106,7 @@ def probabilistic_single(X, n_clusters, m=2., max_iter=300,
 
 def possibilistic_single(X, n_clusters, m=2., max_iter=300,
                          init='probabilistic', random_state=None,
-                         tol=1e-4):
+                         tol=1e-4, eps=1e-6):
     random_state = check_random_state(random_state)
 
     # Initialize using a probabilistic run
@@ -147,7 +148,8 @@ def possibilistic_single(X, n_clusters, m=2., max_iter=300,
 
 
 def gustafson_kessel_single(X, n_clusters, m=2., max_iter=300,
-                            init='probabilistic', random_state=None, tol=1e-4):
+                            init='probabilistic', random_state=None, tol=1e-4,
+                            eps=1e-6):
     random_state = check_random_state(random_state)
 
     # Initialize using a probabilistic run
@@ -186,8 +188,8 @@ def gustafson_kessel_single(X, n_clusters, m=2., max_iter=300,
 class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def __init__(self, n_clusters=8, m=2, n_init=10, max_iter=300,
-                 init='random', tol=1e-4, random_state=None, algorithm='auto',
-                 copy_x=True):
+                 init='k-means++', tol=1e-4, random_state=None, algorithm='auto',
+                 copy_x=True, eps=1e-6):
         self.n_clusters = n_clusters
         self.m = m
         self.n_init = n_init
@@ -197,6 +199,7 @@ class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.random_state = random_state
         self.algorithm = algorithm
         self.copy_x = copy_x
+        self.eps = eps
 
     def fit(self, X, y=None):
         """Compute c-means clustering using the probabilistic algorithm.
@@ -215,7 +218,7 @@ class CMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             X, n_clusters=self.n_clusters, m=self.m, n_init=self.n_init,
             max_iter=self.max_iter, init=self.init, tol=self.tol,
             random_state=random_state, algorithm=self.algorithm,
-            copy_x=self.copy_x)
+            copy_x=self.copy_x, eps=self.eps)
         self.memberships_ = results['memberships']
         self.centers_ = results['centers']
         self.inertia_ = results['inertia']
