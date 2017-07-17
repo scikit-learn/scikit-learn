@@ -781,7 +781,7 @@ def _validate_covars(covars, covariance_type, n_components):
                          "'spherical', 'tied', 'diag', 'full'")
 
 
-@deprecated("The functon distribute_covar_matrix_to_match_covariance_type"
+@deprecated("The function distribute_covar_matrix_to_match_covariance_type"
             "is deprecated in 0.18 and will be removed in 0.20.")
 def distribute_covar_matrix_to_match_covariance_type(
         tied_cv, covariance_type, n_components):

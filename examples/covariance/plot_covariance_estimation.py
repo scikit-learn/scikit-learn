@@ -98,7 +98,7 @@ loglik_oa = oa.fit(X_train).score(X_test)
 # Plot results
 fig = plt.figure()
 plt.title("Regularized covariance: likelihood and shrinkage coefficient")
-plt.xlabel('Regularizaton parameter: shrinkage coefficient')
+plt.xlabel('Regularization parameter: shrinkage coefficient')
 plt.ylabel('Error: negative log-likelihood on test data')
 # range shrinkage curve
 plt.loglog(shrinkages, negative_logliks, label="Negative log-likelihood")
