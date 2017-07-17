@@ -109,7 +109,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     """
 
     def __init__(self, transformers, n_jobs=1, transformer_weights=None):
-        self.transformers = tosequence(transformers)
+        self.transformers = transformers
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
 
