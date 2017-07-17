@@ -614,7 +614,7 @@ cdef void lagged_update(double* weights, double wscale, int xnnz,
                         last_update_ind = sample_itr - 1
                     for lagged_ind in range(sample_itr - 1,
                                    last_update_ind - 1, -1):
-                        if lagged_ind > 1:
+                        if lagged_ind > 0:
                             grad_step = (cumulative_sums[lagged_ind]
                                - cumulative_sums[lagged_ind - 1])
                             prox_step = (cumulative_sums_prox[lagged_ind]
