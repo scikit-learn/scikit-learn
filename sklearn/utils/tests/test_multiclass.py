@@ -90,6 +90,9 @@ EXAMPLES = {
         np.array([[1, 0, 2]]),
         NotAnArray(np.array([[1, 0, 2]])),
     ],
+    'sparse-multiclass-multioutput': [
+        csr_matrix(np.random.RandomState(42).randint(0, 3, size=(10, 10))),
+    ],
     'binary': [
         [0, 1],
         [1, 1],
@@ -140,9 +143,6 @@ EXAMPLES = {
 
         # 3d
         np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]]),
-
-        # sparse multiclass-multioutput
-        csr_matrix(np.random.RandomState(42).randint(0, 3, size=(10, 10))),
     ]
 }
 
@@ -269,9 +269,11 @@ def test_is_multilabel():
                           msg='is_multilabel(%r) should be %s'
                           % (example, dense_exp))
 
+
 def test_check_classification_targets():
     for y_type in EXAMPLES.keys():
-        if y_type in ["unknown", "continuous", 'continuous-multioutput']:
+        if y_type in ["unknown", "continuous", 'continuous-multioutput',
+                      "sparse-multiclass-multioutput"]:
             for example in EXAMPLES[y_type]:
                 msg = 'Unknown label type: '
                 assert_raises_regex(ValueError, msg,
@@ -279,6 +281,7 @@ def test_check_classification_targets():
         else:
             for example in EXAMPLES[y_type]:
                 check_classification_targets(example)
+
 
 # @ignore_warnings
 def test_type_of_target():
