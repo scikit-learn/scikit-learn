@@ -43,9 +43,6 @@ enhance the functionality of scikit-learn's estimators.
 
 **Experimentation frameworks**
 
-- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
-  fitting algorithms.
-
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
   research in a consistent and reproducible way
 
@@ -222,17 +219,18 @@ Other packages useful for data analysis and machine learning.
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
+- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
+  fitting algorithms.
+
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
   organize, log and reproduce experiments
-
-- `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
-  document indexing and similarity retrieval
 
 - `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
   software libraries.
+
 
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -242,6 +240,9 @@ Domain specific packages
 
 - `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natural language
   processing and some machine learning.
+
+- `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
+  document indexing and similarity retrieval
 
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 
