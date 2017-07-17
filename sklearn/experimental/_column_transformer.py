@@ -100,8 +100,8 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     >>> X = np.array([[0., 1., 2., 2.],
     ...               [1., 1., 0., 1.]])
     >>> # Normalizer scales each row of X to unit norm. Therefore, a separate
-    ... # scaling is applied for the two first and two last elements of each
-    ... # row independently.
+    >>> # scaling is applied for the two first and two last elements of each
+    >>> # row independently.
     >>> union.fit_transform(X)    # doctest: +NORMALIZE_WHITESPACE
     array([[ 0. ,  1. ,  0.5,  0.5],
            [ 0.5,  0.5,  0. ,  1. ]])
