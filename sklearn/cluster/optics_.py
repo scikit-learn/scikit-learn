@@ -87,12 +87,12 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
         ratio, the more generous the algorithm is to preserving local
-        minimums, and the more cuts the resulting tree will have.
+        minima, and the more cuts the resulting tree will have.
 
     rejection_ratio: float, optional
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
-        reject based on rejection_ratio
+        reject based on rejection_ratio.
 
     similarity_threshold: float, optional
         Used to check if nodes can be moved up one level, that is, if the
@@ -162,10 +162,11 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
     @property
     def n_neighbors(self):
         return self.min_samples
+
     @n_neighbors.setter
     def n_neighbors(self, value):
         self.min_samples = value
-    
+
     def fit(self, X, y=None):
         """Perform OPTICS clustering
 
@@ -243,6 +244,7 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
                                         indices, axis=0) < 1).ravel(),
                                indices, axis=0)
             # n_pr = indices[(self._processed[indices] < 1).ravel()]
+            # Keep n_jobs = 1 in the following lines...please
             if len(n_pr) > 0:
                 dists = pairwise_distances(P, np.take(X, n_pr, axis=0),
                                            self.metric, n_jobs=1).ravel()
@@ -257,7 +259,8 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
             if n_pr.size > 0:
                 # Define return order based on reachability distance
                 return(n_pr[quick_scan(np.take(self.reachability_,
-                                               n_pr, axis=0), dists)])
+                                               n_pr, axis=0),
+                                               dists.astype(np.float))])
             else:
                 return point_index
 
