@@ -1,12 +1,12 @@
 import numpy as np
-from sklearn.metrics.pairwise import euclidean_distances, check_pairwise_arrays
+from scipy.spatial.distance import cdist
 
 
 class Probabilistic:
 
     @staticmethod
     def distances(X, Y=None,  **kwargs):
-        return euclidean_distances(X, Y, **kwargs)
+        return cdist(X, Y, **kwargs)
 
     @staticmethod
     def memberships(distances, m=2.):
@@ -63,7 +63,7 @@ class Possibilistic:
 
     @staticmethod
     def distances(X, Y=None, **kwargs):
-        return euclidean_distances(X, Y, **kwargs)
+        return cdist(X, Y, **kwargs)
 
     def memberships(self, distances, m=2.):
         """Calculate possibilistic memberships based on distances.
