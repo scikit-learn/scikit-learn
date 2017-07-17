@@ -5,6 +5,7 @@ import numpy
 
 from sklearn._build_utils import get_blas_info
 
+from Cython import Tempita
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
@@ -34,6 +35,20 @@ def configuration(parent_package='', top_path=None):
                                                           []),
                          **blas_info)
 
+    # generate sag_fast from template
+    sag_template = 'sklearn/linear_model/sag_fast.pyx.tp'
+    sag_file = sag_template[:-3]
+
+    if not (os.path.exists(sag_file) and
+            os.stat(sag_template).st_mtime < os.stat(sag_file).st_mtime):
+
+        with open(sag_template, "r") as f:
+            tmpl = f.read()
+        tmpl_ = Tempita.sub(tmpl)
+
+        with open(sag_file, "w") as f:
+            f.write(tmpl_)
+
     config.add_extension('sag_fast',
                          sources=['sag_fast.pyx'],
                          include_dirs=numpy.get_include())
@@ -42,6 +57,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('tests')
 
     return config
+
 
 if __name__ == '__main__':
     from numpy.distutils.core import setup

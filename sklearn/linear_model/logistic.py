@@ -737,7 +737,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
         elif solver in ['sag', 'saga']:
             if multi_class == 'multinomial':
-                target = target.astype(np.float64)
+                target = target.astype(X.dtype, copy=False)
                 loss = 'multinomial'
             else:
                 loss = 'log'
@@ -1207,10 +1207,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        if self.solver in ['newton-cg']:
-            _dtype = [np.float64, np.float32]
-        else:
+        if self.solver in ['lbfgs', 'liblinear']:
             _dtype = np.float64
+        else:
+            _dtype = [np.float64, np.float32]
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
                          order="C")
