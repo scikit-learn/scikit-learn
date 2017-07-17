@@ -441,12 +441,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Training vectors, where n_samples in the number of samples and
             p is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, q], optional
+        y : array-like of response, shape = [n_samples, q], optional
             Training vectors, where n_samples in the number of samples and
             q is the number of response variables.
-
-        copy : boolean, default True
-            Whether to copy X and Y, or perform in-place normalization.
 
         Returns
         -------
@@ -607,6 +604,8 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
+    n_components : int, number of components to keep. (default 2).
+
     scale : boolean, scale data? (default True)
 
     algorithm : string, "nipals" or "svd"
@@ -623,8 +622,6 @@ class PLSCanonical(_PLS):
     copy : boolean, default True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
-
-    n_components : int, number of components to keep. (default 2).
 
     Attributes
     ----------
@@ -784,6 +781,18 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, Y):
+        """Fit model to data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples in the number of samples and
+            n_features is the number of predictors.
+
+        Y : array-like of response, shape = [n_samples, n_targets]
+            Target vectors, where n_samples in the number of samples and
+            n_targets is the number of response variables.
+        """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
         X = check_array(X, dtype=np.float64, copy=self.copy)
@@ -820,7 +829,20 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, Y=None):
-        """Apply the dimension reduction learned on the train data."""
+        """
+        Apply the dimension reduction learned on the train data.
+
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vectors, where n_samples in the number of samples and
+            p is the number of predictors.
+
+        Y : array-like of response, shape = [n_samples, q], optional
+            Training vectors, where n_samples in the number of samples and
+            q is the number of response variables.
+
+        """
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
@@ -842,7 +864,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             Training vectors, where n_samples in the number of samples and
             p is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, q], optional
+        y : array-like of response, shape = [n_samples, q], optional
             Training vectors, where n_samples in the number of samples and
             q is the number of response variables.
 
