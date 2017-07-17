@@ -4,7 +4,7 @@
 This script converts a subset of SVG into an HTML imagemap
 
 Note *subset*.  It only handles <path> elements, for which it only pays
-attention to the M and L commands.  Futher, it only notices the "translate"
+attention to the M and L commands.  Further, it only notices the "translate"
 transform.
 
 It was written to generate the examples in the documentation for maphilight,
