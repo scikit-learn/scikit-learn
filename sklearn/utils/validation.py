@@ -276,10 +276,10 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     return spmatrix
 
 
-def check_array(array, accept_sparse=False, dtype="numeric", order=None,
-                copy=False, force_all_finite=True, ensure_2d=True,
-                allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
-                warn_on_dtype=False, estimator=None):
+def check_array(array, accept_sparse=False, accept_masked=False, 
+                dtype="numeric", order=None, copy=False, force_all_finite=True, 
+                ensure_2d=True, allow_nd=False, ensure_min_samples=1, 
+                ensure_min_features=1, warn_on_dtype=False, estimator=None):
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is converted to an at least 2D numpy array.
@@ -353,6 +353,13 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         The converted and validated X.
 
     """
+
+    # accept masked check
+    masked = hasattr(array,'mask')
+    if not accept_masked and masked:
+        raise TypeError('Masked arrays are not supported.')
+    mask = False if not masked else array.mask
+
     # accept_sparse 'None' deprecation check
     if accept_sparse is None:
         warnings.warn(
@@ -399,7 +406,8 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
     else:
-        array = np.array(array, dtype=dtype, order=order, copy=copy)
+        array = np.ma.array(array, dtype=dtype, order=order, 
+                                   copy=copy, mask=mask)
 
         if ensure_2d:
             if array.ndim == 1:
@@ -408,9 +416,10 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                     "Reshape your data either using array.reshape(-1, 1) if "
                     "your data has a single feature or array.reshape(1, -1) "
                     "if it contains a single sample.".format(array))
-            array = np.atleast_2d(array)
+            array = np.ma.atleast_2d(array)
             # To ensure that array flags are maintained
-            array = np.array(array, dtype=dtype, order=order, copy=copy)
+            array = np.ma.array(array, dtype=dtype, order=order, 
+                                       copy=copy, mask=mask)
 
         # make sure we actually converted to numeric:
         if dtype_numeric and array.dtype.kind == "O":
@@ -442,10 +451,12 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         msg = ("Data with input dtype %s was converted to %s%s."
                % (dtype_orig, array.dtype, context))
         warnings.warn(msg, DataConversionWarning)
+    if not masked:
+        array = np.ma.getdata(array)
     return array
 
 
-def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
+def check_X_y(X, y, accept_sparse=False, accept_masked=True, dtype="numeric", order=None,
               copy=False, force_all_finite=True, ensure_2d=True,
               allow_nd=False, multi_output=False, ensure_min_samples=1,
               ensure_min_features=1, y_numeric=False,
@@ -537,7 +548,7 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
     y_converted : object
         The converted and validated y.
     """
-    X = check_array(X, accept_sparse, dtype, order, copy, force_all_finite,
+    X = check_array(X, accept_sparse, accept_masked, dtype, order, copy, force_all_finite,
                     ensure_2d, allow_nd, ensure_min_samples,
                     ensure_min_features, warn_on_dtype, estimator)
     if multi_output:

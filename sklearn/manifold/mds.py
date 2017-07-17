@@ -72,8 +72,9 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
     n_samples = dissimilarities.shape[0]
     random_state = check_random_state(random_state)
 
-    sim_flat = ((1 - np.tri(n_samples)) * dissimilarities).ravel()
-    sim_flat_w = sim_flat[sim_flat != 0]
+    if not metric:
+        sim_flat = ((1 - np.tri(n_samples)) * dissimilarities).ravel()
+        sim_flat_w = sim_flat[sim_flat != 0]
     if init is None:
         # Randomly choose initial configuration
         X = random_state.rand(n_samples * n_components)
@@ -88,6 +89,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 
     old_stress = None
     ir = IsotonicRegression()
+    masked = hasattr(dissimilarities,'mask')
     for it in range(max_iter):
         # Compute distance and monotonic regression
         dis = euclidean_distances(X)
@@ -108,14 +110,21 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
                                    (disparities ** 2).sum())
 
         # Compute stress
-        stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
+        if masked:
+            stress = ((dis - disparities).compressed() ** 2).sum() / 2
+        else:
+            stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
 
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
         ratio = disparities / dis
+        if masked:
+            ratio[ratio.mask] = 1
         B = - ratio
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
-        X = 1. / n_samples * np.dot(B, X)
+        X = 1. / n_samples * np.ma.dot(B, X)
+        if hasattr(X,'mask'):
+            X = np.ma.getdata(X)
 
         dis = np.sqrt((X ** 2).sum(axis=1)).sum()
         if verbose >= 2:
@@ -231,7 +240,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
     """
 
-    dissimilarities = check_array(dissimilarities)
+    dissimilarities = check_array(dissimilarities, accept_masked=metric)
     random_state = check_random_state(random_state)
 
     if hasattr(init, '__array__'):
@@ -402,7 +411,8 @@ class MDS(BaseEstimator):
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
         """
-        X = check_array(X)
+        X = check_array(X, 
+            accept_masked=(self.dissimilarity == "precomputed" and self.metric))
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
                           " dissimilarity matrix from data. To use a custom "
