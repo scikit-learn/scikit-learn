@@ -51,21 +51,21 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-   * :class:`cluster.KMeans` with sparse X and initial centroids given (bug fix)
-   * :class:`cross_decomposition.PLSRegression`
+   - :class:`cluster.KMeans` with sparse X and initial centroids given (bug fix)
+   - :class:`cross_decomposition.PLSRegression`
      with ``scale=True`` (bug fix)
-   * :class:`ensemble.GradientBoostingClassifier` and
+   - :class:`ensemble.GradientBoostingClassifier` and
      :class:`ensemble.GradientBoostingRegressor` where ``min_impurity_split`` is used (bug fix)
-   * gradient boosting ``loss='quantile'`` (bug fix)
-   * :class:`ensemble.IsolationForest` (bug fix)
-   * :class:`feature_selection.SelectFdr` (bug fix)
-   * :class:`linear_model.RANSACRegressor` (bug fix)
-   * :class:`linear_model.LassoLars` (bug fix)
-   * :class:`linear_model.LassoLarsIC` (bug fix)
-   * :class:`manifold.TSNE` (bug fix)
-   * :class:`semi_supervised.LabelSpreading` (bug fix)
-   * :class:`semi_supervised.LabelPropagation` (bug fix)
-   * tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
+   - gradient boosting ``loss='quantile'`` (bug fix)
+   - :class:`ensemble.IsolationForest` (bug fix)
+   - :class:`feature_selection.SelectFdr` (bug fix)
+   - :class:`linear_model.RANSACRegressor` (bug fix)
+   - :class:`linear_model.LassoLars` (bug fix)
+   - :class:`linear_model.LassoLarsIC` (bug fix)
+   - :class:`manifold.TSNE` (bug fix)
+   - :class:`semi_supervised.LabelSpreading` (bug fix)
+   - :class:`semi_supervised.LabelPropagation` (bug fix)
+   - tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
 
 Details are listed in the changelog below.
 
