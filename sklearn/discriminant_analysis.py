@@ -554,6 +554,13 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Regularizes the covariance estimate as
         ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
 
+    store_covariances : boolean, (default False)
+        Option to store covariances
+
+    tol : non-negative real, (default 1e-06)
+        Tolerance used in the iterative algorithm
+
+
     Attributes
     ----------
     covariances_ : list of array-like, shape = [n_features, n_features]

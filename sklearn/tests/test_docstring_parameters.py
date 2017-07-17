@@ -27,7 +27,6 @@ PUBLIC_MODULES = set(['sklearn.' + modname
 # TODO Uncomment all modules and fix doc inconsistencies everywhere
 # The list of modules that are not tested for now
 PUBLIC_MODULES -= set([
-    'sklearn.discriminant_analysis',
     'sklearn.ensemble',
     'sklearn.feature_selection',
     'sklearn.kernel_approximation',
