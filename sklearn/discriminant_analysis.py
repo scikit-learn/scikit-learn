@@ -174,7 +174,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         .. versionadded:: 0.17
 
-    tol : float, optional
+    tol : float, optional, (default 1.0e-4)
         Threshold used for rank estimation in SVD solver.
 
         .. versionadded:: 0.17
@@ -557,8 +557,8 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     store_covariances : boolean, (default False)
         Option to store covariances
 
-    tol : non-negative real, (default 1e-06)
-        Tolerance used in the iterative algorithm
+    tol : float, optional, (default 1.0e-4)
+        Threshold used for rank estimation.
 
 
     Attributes
