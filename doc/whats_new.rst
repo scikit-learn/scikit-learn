@@ -171,6 +171,11 @@ Trees and ensembles
 
    - :func:`tree.export_graphviz` now shows configurable number of decimal
      places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
+     
+   - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
+     to change output shape of `transform` method to 2 dimensional.
+     :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
+     :user:`Herilalaina Rakotoarison <herilalaina>`.
 
 Linear, kernelized and related models
 
@@ -295,11 +300,6 @@ Model evaluation and meta-estimators
      will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
      norm 'max' the norms returned will be the same as for dense matrices.
      :issue:`7771` by `Ang Lu <https://github.com/luang008>`.
-
-   - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
-     to change output shape of `transform` method to 2 dimensional.
-     :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
-     :user:`Herilalaina Rakotoarison <herilalaina>`.
 
 Bug fixes
 .........
