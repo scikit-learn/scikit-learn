@@ -1,7 +1,9 @@
 import numpy as np
+from scipy import sparse
 
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils.testing import assert_equal, assert_array_equal
+from sklearn.utils.testing import (assert_equal, assert_array_equal,
+                                   assert_allclose_dense_sparse)
 from sklearn.utils.testing import assert_warns_message, assert_raises_regex
 
 
@@ -129,17 +131,30 @@ def test_inverse_transform():
 
 
 def test_check_inverse():
-    X = np.array([1, 4, 9, 16]).reshape((2, 2))
+    X_dense = np.array([1, 4, 9, 16], dtype=np.float64).reshape((2, 2))
 
-    trans = FunctionTransformer(func=np.sqrt,
-                                inverse_func=np.around,
-                                check_inverse=True)
-    assert_raises_regex(ValueError, "The provided functions are not strictly"
-                        " inverse of each other. If you are sure you want to"
-                        " proceed regardless, set 'check_inverse=False'",
-                        trans.fit, X)
-    trans = FunctionTransformer(func=np.exp,
-                                inverse_func=np.log,
-                                check_inverse=True)
-    Xt = trans.fit_transform(X)
-    assert_array_equal(X, trans.inverse_transform(Xt))
+    X_list = [X_dense,
+              sparse.csr_matrix(X_dense),
+              sparse.csc_matrix(X_dense),
+              sparse.coo_matrix(X_dense)]
+
+    for X in X_list:
+        if sparse.issparse(X):
+            accept_sparse = True
+        else:
+            accept_sparse = False
+        trans = FunctionTransformer(func=np.sqrt,
+                                    inverse_func=np.around,
+                                    accept_sparse=accept_sparse,
+                                    check_inverse=True)
+        assert_raises_regex(ValueError, "The provided functions are not"
+                            " strictly inverse of each other. If you are sure"
+                            " you want to proceed regardless, set"
+                            " 'check_inverse=False'",
+                            trans.fit, X)
+        trans = FunctionTransformer(func=np.expm1,
+                                    inverse_func=np.log1p,
+                                    accept_sparse=accept_sparse,
+                                    check_inverse=True)
+        Xt = trans.fit_transform(X)
+        assert_allclose_dense_sparse(X, trans.inverse_transform(Xt))

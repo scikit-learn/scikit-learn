@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
@@ -98,14 +99,18 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     def _validate_inverse(self, X):
         """Check that func and inverse_func are the inverse."""
         # Apply the transform and inverse_transform on few samples.
+        X = check_array(X, accept_sparse='csr')
         random_state = check_random_state(self.random_state)
-        n_subsample = min(10, X.shape[0])
+        n_subsample = min(100, X.shape[0])
         subsample_idx = random_state.choice(range(X.shape[0]),
                                             size=n_subsample,
                                             replace=False)
-        if not np.allclose(X[subsample_idx],
-                           self.inverse_transform(
-                               self.transform(X[subsample_idx])),
+        if sparse.issparse(X):
+            X_sel = X[subsample_idx].A
+        else:
+            X_sel = X[subsample_idx]
+        if not np.allclose(X_sel,
+                           self.inverse_transform(self.transform(X_sel)),
                            atol=1e-7):
             raise ValueError("The provided functions are not strictly"
                              " inverse of each other. If you are sure you"
