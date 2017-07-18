@@ -293,9 +293,6 @@ Model evaluation and meta-estimators
      A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
 
-Bug fixes
-.........
-
    - :class:`model_selection.GridSearchCV`,
      :class:`model_selection.RandomizedSearchCV` and
      :func:`model_selection.cross_val_score` now allow estimators with callable
