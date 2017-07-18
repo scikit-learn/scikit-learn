@@ -532,11 +532,11 @@ parameter.
 Group k-fold
 ------------
 
-class:GroupKFold is a variation of k-fold which ensures that the same group is
+:class:`GroupKFold` is a variation of k-fold which ensures that the same group is
 not represented in both testing and training sets. For example if the data is
 obtained from different subjects with several samples per-subject and if the
 model is flexible enough to learn from highly person specific features it
-could fail to generalize to new subjects. class:GroupKFold makes it possible
+could fail to generalize to new subjects. :class:`GroupKFold` makes it possible
 to detect this kind of overfitting situations.
 
 Imagine you have three subjects, each with an associated number from 1 to 3::
