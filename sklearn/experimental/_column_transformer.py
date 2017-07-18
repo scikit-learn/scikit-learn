@@ -16,7 +16,6 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..pipeline import (
     _fit_one_transformer, _fit_transform_one, _transform_one, _name_estimators)
-from ..utils import tosequence
 from ..utils import Bunch
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_is_fitted
@@ -232,13 +231,11 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         if transform:
             func = _fit_transform_one
         else:
-            # we need to wrap the same argument in both _fit_* functions to
-            # simplify the later call
-            func = _wrap_fit_one_transfomer
+            func = _fit_one_transformer
 
         try:
             result = Parallel(n_jobs=self.n_jobs)(
-                delayed(func)(clone(trans), weight, X_sel, y,
+                delayed(func)(clone(trans), X_sel, y, weight,
                               **fit_params)
                 for name, trans, X_sel, weight in self._iter(X=X))
         except ValueError as e:
@@ -328,7 +325,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         check_is_fitted(self, 'transformers_')
         try:
             Xs = Parallel(n_jobs=self.n_jobs)(
-                delayed(_transform_one)(trans, weight, X_sel)
+                delayed(_transform_one)(trans, X_sel, weight)
                 for name, trans, X_sel, weight in self._iter(X=X, fitted=True))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
@@ -344,10 +341,6 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         else:
             Xs = np.hstack(Xs)
         return Xs
-
-
-def _wrap_fit_one_transfomer(transformer, weight, X, y, **fit_params):
-                return _fit_one_transformer(transformer, X, y)
 
 
 def _check_key_type(key, superclass):

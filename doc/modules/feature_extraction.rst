@@ -112,9 +112,9 @@ ColumnTransformer for heterogeneous data
     class is experimental and the API is subject to change.
 
 Many datasets contain features of different types, say text, floats, and dates,
-where each type of feature requires separate preprocessing or feature extraction steps.
-Often it is easiest to preprocess data before applying scikit-learn methods,
-for example using `pandas <http://pandas.pydata.org/>`__.
+where each type of feature requires separate preprocessing or feature
+extraction steps.  Often it is easiest to preprocess data before applying
+scikit-learn methods, for example using `pandas <http://pandas.pydata.org/>`__.
 Processing your data before passing it to scikit-learn might be problematic for
 one of the following reasons:
 1. Incorporating statistics from test data into the preprocessors makes
@@ -136,11 +136,11 @@ preprocessing or a specific feature extraction method::
   ...      'title': ["His Last Bow", "How Watson Learned the Trick",
   ...                "A Moveable Feast", "The Grapes of Wrath"]})
 
-For this data, we might want to encode ``'city'`` column as a categorical variable,
-but apply a :class:`feature_extraction.text.CountVectorizer <sklearn.feature_extraction.text.CountVectorizer>`
-to the ``'title'`` column.
-As we might use multiple feature extraction methods on the same column, we give each
-transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
+For this data, we might want to encode ``'city'`` column as a categorical
+variable, but apply a :class:`feature_extraction.text.CountVectorizer
+<sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
+As we might use multiple feature extraction methods on the same column, we give
+each transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
 
   >>> from sklearn.experimental import ColumnTransformer
   >>> from sklearn.feature_extraction.text import CountVectorizer
@@ -152,19 +152,20 @@ transformer a unique name, say ``'city_category'`` and ``'title_bow'``::
   ColumnTransformer(n_jobs=1, transformer_weights=None,
       transformers=...)
 
-  >>> column_trans.get_feature_names() == [
-  ...    'city_category__London', 'city_category__New York', 'city_category__Paris',
-  ...    'title_bow__bow', 'title_bow__feast', 'title_bow__gatsby',
-  ...    'title_bow__great', 'title_bow__his', 'title_bow__how', 'title_bow__last',
-  ...    'title_bow__learned', 'title_bow__moveable', 'title_bow__the',
-  ...    'title_bow__trick', 'title_bow__watson']
-  True
+  >>> column_trans.get_feature_names()
+  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  ['city_category__London', 'city_category__Paris', 'city_category__Sallisaw',
+  'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
+  'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
+  'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
+  'title_bow__wrath']
 
-  >>> column_trans.transform(X).toarray() # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  array([[1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
-         [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1],
-         [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-         [0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0]]...)
+  >>> column_trans.transform(X).toarray()
+  ... # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+         [1, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0],
+         [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+         [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1]]...)
 
 In the above example, the
 :class:`~sklearn.feature_extraction.text.CountVectorizer` expects a 1D array as
