@@ -26,11 +26,10 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import (check_X_y,
-                    check_array,
-                    check_consistent_length,
-                    _check_y_classes,
-                    _check_unique_values)
+from .utils import check_X_y
+from .utils import check_array
+from .utils import check_consistent_length
+from .utils import _check_y_classes
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
@@ -198,8 +197,8 @@ class GaussianNB(BaseNB):
         """
         # check if classes were defined, set the classes_ attribute every time
         X, y = check_X_y(X, y)
-
-        return self._partial_fit(X, y, np.unique(y), _refit=True,
+        classes = self.classes if self.classes is not None else np.unique(y)
+        return self._partial_fit(X, y, classes, _refit=True,
                                  sample_weight=sample_weight)
 
     @staticmethod

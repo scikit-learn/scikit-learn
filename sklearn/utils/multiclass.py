@@ -17,6 +17,7 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
+from ..utils import _check_unique_values
 from ..externals.six import string_types
 from .validation import check_array
 
@@ -308,26 +309,29 @@ def _check_partial_fit_first_call(clf, classes=None):
                          "to partial_fit or set during initialization"
                          "if the class has a classes parameter.")
 
-    elif classes is not None:
+    if (classes is not None
+            and getattr(clf, 'classes', None) is not None):
+        if not np.array_equal(clf.classes, unique_labels(classes)):
+            raise ValueError(
+                "`classes=%r` is not the same as the value set duing "
+                "initialization, which was: %r" % (classes, clf.classes))
+
+    if (classes is not None
+            and getattr(clf, 'classes_', None) is not None):
+        if not np.array_equal(clf.classes_, unique_labels(classes)):
+            raise ValueError(
+                "`classes=%r` is not the same as on last call "
+                "to partial_fit, was: %r" % (classes, clf.classes_))
+
+    if getattr(clf, 'classes_', None) is None:
+        # This is the first call to partial_fit
         if getattr(clf, 'classes', None) is not None:
-            if not np.array_equal(clf.classes, unique_labels(classes)):
-                raise ValueError(
-                    "`classes=%r` is not the same as the value set duing "
-                    "initialization, which was: %r" % (classes, clf.classes))
-
-        if getattr(clf, 'classes_', None) is not None:
-            if not np.array_equal(clf.classes_, unique_labels(classes)):
-                raise ValueError(
-                    "`classes=%r` is not the same as on last call "
-                    "to partial_fit, was: %r" % (classes, clf.classes_))
-
+            _check_unique_values(classes, "classes")
+            clf.classes_ = np.sort(clf.classes)
         else:
-            # This is the first call to partial_fit
-            if getattr(clf, 'classes', None) is not None:
-                clf.classes_ = clf.classes
-            else:
-                clf.classes_ = unique_labels(classes)
-            return True
+            _check_unique_values(classes, classes)
+            clf.classes_ = unique_labels(classes)
+        return True
 
     # classes is None and clf.classes_ has already previously been set:
     # nothing to do
