@@ -345,7 +345,8 @@ class KNeighborsMixin(object):
             query_is_train = False
             # copy=True if missing accepted as they will be replaced by 0
             # copy = True if kill_missing is False else False
-            X = check_array(X, accept_sparse='csr', force_all_finite=kill_missing)
+            X = check_array(X, accept_sparse='csr',
+                            force_all_finite=kill_missing)
         else:
             query_is_train = True
             X = self._fit_X

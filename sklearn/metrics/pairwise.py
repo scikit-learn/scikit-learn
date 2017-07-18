@@ -28,6 +28,7 @@ from ..externals.joblib import cpu_count
 
 from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
+
 # Get mask for missing values
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
@@ -35,6 +36,7 @@ def _get_mask(X, value_to_mask):
         return np.isnan(X)
     else:
         return X == value_to_mask
+
 
 # Utility Functions
 def _return_float_dtype(X, Y):
@@ -254,10 +256,12 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     paired_distances : distances betweens pairs of elements of X and Y.
     """
 
-    #NOTE: force_all_finite=False allows not only NaN but also inf/-inf
-    X, Y = check_pairwise_arrays(X, Y, force_all_finite=kill_missing, copy=copy)
+    # NOTE: force_all_finite=False allows not only NaN but also inf/-inf
+    X, Y = check_pairwise_arrays(X, Y,
+                                 force_all_finite=kill_missing, copy=copy)
     if kill_missing is False and \
-            (np.any(np.isinf(X.data)) or (Y is not None and np.any(np.isinf(Y.data)))):
+            (np.any(np.isinf(X.data)) or
+                (Y is not None and np.any(np.isinf(Y.data)))):
         raise ValueError(
             "+/- Infinite values are not allowed.")
 
@@ -290,10 +294,12 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         np.maximum(distances, 0, out=distances)
 
     else:
-        if missing_values!="NaN" and \
-                (np.any(_get_mask(X.data, "NaN")) or np.any(_get_mask(Y.data, "NaN"))):
+        if missing_values != "NaN" and \
+                (np.any(_get_mask(X.data, "NaN")) or
+                    np.any(_get_mask(Y.data, "NaN"))):
             raise ValueError(
-                "NaN values present but missing_value = {0}".format(missing_values))
+                "NaN values present but missing_value = {0}".
+                format(missing_values))
 
         # ValueError if X and Y have incompatible dimensions
         # if X.shape[1] != Y.shape[1]:
@@ -316,17 +322,19 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         # NX = (~mask_X)
         X[mask_X] = 0
 
-        # Matrix formula to calculate pair-wise distance between all vectors in a
-        # matrix X to vectors in matrix Y. It zero-weights coordinates with missing value
-        # in either vector in the pair and up-weights the remaining coordinates.
-        # Matrix formula derived by: Shreya Bhattarai <shreya.bhattarai@gmail.com>
+        # Matrix formula to calculate pair-wise distance between all vectors
+        # in a matrix X to vectors in matrix Y. It zero-weights coordinates
+        # with missing value in either vector in the pair and up-weights the
+        # remaining coordinates.
+        # Formula derived by: Shreya Bhattarai <shreya.bhattarai@gmail.com>
 
         # distances = (X.shape[1] * 1 / ((np.dot(NX, NYT)))) * \
         #             (np.dot((X * X), NYT) - 2 * (np.dot(X, YT)) +
         #              np.dot(NX, (YT * YT)))
 
         # Above is faster but following for Python 2.x support
-        distances = np.multiply(np.multiply(X.shape[1], (1.0 / np.dot(NX, NYT))),
+        distances = np.multiply(np.multiply(X.shape[1],
+                                            (1.0 / np.dot(NX, NYT))),
                                 (np.dot(np.multiply(X, X), NYT) -
                                 (2.0 * (np.dot(X, YT))) +
                                 np.dot(NX, (np.multiply(YT, YT)))))
@@ -1215,6 +1223,7 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
 
 _MISSING_SUPPORTED_METRICS = ['euclidean']
 
+
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
@@ -1311,8 +1320,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
                 "Missing value support for sparse matrices not added yet")
         if (kwds.get("missing_values") is None):
             raise ValueError("Missing value is not defined")
-        if(np.any(_get_mask(X.data, kwds.get("missing_values")).
-                   sum(axis=1) == X.data.shape[1])):
+        if(np.any(_get_mask(X.data, kwds.get("missing_values")).sum(
+                axis=1) == X.data.shape[1])):
             raise ValueError(
                 "One or more samples(s) only have missing values.")
 

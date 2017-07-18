@@ -406,6 +406,7 @@ def test_euclidean_distances():
                                   Y_norm_squared=np.zeros_like(Y_norm_sq))
     assert_greater(np.max(np.abs(wrong_D - D1)), .01)
 
+
 def test_euclidean_distances_with_missing():
     # first check that we get right answer with missing values for X
     X = np.array([[1.,   5.,   7.,   5.,  10.],
@@ -437,6 +438,7 @@ def test_euclidean_distances_with_missing():
     D4 = euclidean_distances(X, Y, kill_missing=False, missing_values="NaN")
 
     assert_array_almost_equal(D3, D4)
+
 
 def test_cosine_distances():
     # Check the pairwise Cosine distances computation
