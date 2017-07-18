@@ -132,7 +132,7 @@ class GaussianNB(BaseNB):
             refer to the final order of classes.
 
             If not specified, this will be set as per the classes present in
-            the training data. It is recommended to set this parameter while
+            the training data. It is recommended to set this parameter during
             initialization.
 
             .. versionadded:: 0.19

@@ -506,7 +506,7 @@ def _score_single_metric(estimator, X_test, y_test, scorer):
     else:
         scorer_has_labels = False
 
-    if est_has_classes & scorer_has_labels:
+    if est_has_classes and scorer_has_labels:
         labels = getattr(estimator, "classes_", None)
         scorer._set_score_func_parameters(labels=labels)
 
