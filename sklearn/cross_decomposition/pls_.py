@@ -234,11 +234,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples in the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, n_targets]
+        Y : array-like, shape = [n_samples, n_targets]
             Target vectors, where n_samples in the number of samples and
             n_targets is the number of response variables.
         """
@@ -374,11 +374,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples in the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, n_targets]
+        Y : array-like, shape = [n_samples, n_targets]
             Target vectors, where n_samples in the number of samples and
             n_targets is the number of response variables.
 
@@ -412,7 +412,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples in the number of samples and
             n_features is the number of predictors.
 
@@ -437,11 +437,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples in the number of samples and
             n_features is the number of predictors.
 
-        y : array-like of response, shape = [n_samples, n_targets]
+        y : array-like, shape = [n_samples, n_targets]
             Target vectors, where n_samples in the number of samples and
             n_targets is the number of response variables.
 
@@ -789,7 +789,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             Training vectors, where n_samples in the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, n_targets]
+        Y : array-like, shape = [n_samples, n_targets]
             Target vectors, where n_samples in the number of samples and
             n_targets is the number of response variables.
         """
@@ -834,11 +834,11 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples in the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, n_targets]
+        Y : array-like, shape = [n_samples, n_targets]
             Target vectors, where n_samples in the number of samples and
             n_targets is the number of response variables.
         """
@@ -859,11 +859,11 @@ class PLSSVD(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples in the number of samples and
             n_features is the number of predictors.
 
-        y : array-like of response, shape = [n_samples, n_targets]
+        y : array-like, shape = [n_samples, n_targets]
             Target vectors, where n_samples in the number of samples and
             n_targets is the number of response variables.
 
