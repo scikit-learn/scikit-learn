@@ -744,11 +744,10 @@ Model evaluation and meta-estimators
      specifying ``train_size`` alone will cause ``test_size`` to be the
      remainder. :issue:`7459` by :user:`Nelson Liu <nelson-liu>`.
 
-   - The ``iid`` parameter of :class:`model_selection.GridSearchCV` and
-     :class:`model_selection.RandomizedSearchCV` has been deprecated and will
-     be removed in version 0.21. Future behavior will be the current default
-     behavior (equivalent to ``iid=True``).
-     :issue:`#9085` by :user:`Laurent Direr<ldirer>`.
+   - The default of the ``iid`` parameter of :class:`model_selection.GridSearchCV` and
+     :class:`model_selection.RandomizedSearchCV` will change from ``True`` to ``False``
+     in version 0.21, and will be removed in version 0.23.
+     :issue:`#9085` by :user:`Laurent Direr<ldirer>` and `Andreas Müller`_.
 
    - :class:`multiclass.OneVsRestClassifier` now has ``partial_fit``,
      ``decision_function`` and ``predict_proba`` methods only when the
