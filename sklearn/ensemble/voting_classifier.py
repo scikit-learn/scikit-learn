@@ -62,10 +62,11 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         The number of jobs to run in parallel for ``fit``.
         If -1, then the number of jobs is set to the number of cores.
 
-    flatten_transform : bool, optional (default='default')
+    flatten_transform : bool, optional (default=None)
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
-        matrix with shape (n_samples, n_classifiers * n_classes) instead of
+        matrix with shape (n_samples, n_classifiers * n_classes). If
+        flatten_transform=False, it returns
         (n_classifiers, n_samples, n_classes).
 
     Attributes
@@ -112,7 +113,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     """
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=1,
-                 flatten_transform='default'):
+                 flatten_transform=None):
         self.estimators = estimators
         self.voting = voting
         self.weights = weights
@@ -269,8 +270,9 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Returns
         -------
-        If `voting='soft'` and `flatten_transform=False`:
-          array-like = (n_classifiers, n_samples, n_classes)
+        If `voting='soft'` and `flatten_transform=True`:
+          array-like = (n_classifiers, n_samples * n_classes)
+          otherwise array-like = (n_classifiers, n_samples, n_classes)
             Class probabilities calculated by each classifier.
         If `voting='hard'`:
           array-like = [n_samples, n_classifiers]
@@ -280,8 +282,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         if self.voting == 'soft':
             probas = self._collect_probas(X)
-            if isinstance(self.flatten_transform,
-                          str) and self.flatten_transform == 'default':
+            if self.flatten_transform is None:
                 warnings.warn("'flatten_transform' default value will be "
                               "changed to True in 0.21."
                               "To silence this warning you may"

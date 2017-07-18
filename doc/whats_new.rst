@@ -292,14 +292,6 @@ Model evaluation and meta-estimators
    - Added ability to set ``n_jobs`` parameter to :func:`pipeline.make_union`.
      A ``TypeError`` will be raised for any other kwargs. :issue:`8028`
      by :user:`Alexander Booth <alexandercbooth>`.
-   - ``check_estimator`` now attempts to ensure that methods transform, predict, etc.
-     do not set attributes on the estimator.
-     :issue:`7533` by :user:`Ekaterina Krivich <kiote>`.
-
-   - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
-     will now raise a ``NotImplementedError`` with 'l1' or 'l2' norm and with
-     norm 'max' the norms returned will be the same as for dense matrices.
-     :issue:`7771` by `Ang Lu <https://github.com/luang008>`.
 
 Bug fixes
 .........
