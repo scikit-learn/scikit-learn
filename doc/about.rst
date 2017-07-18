@@ -114,7 +114,7 @@ work on scikit-learn.
 Andreas Müller also received a grant to improve scikit-learn from the `Alfred P. Sloan Foundation <https://sloan.org>`_ in 2017.
 
 .. image:: images/sloan_banner.png
-   :width: 100pt
+   :width: 200pt
    :align: center
    :target: https://sloan.org/
 
