@@ -314,7 +314,7 @@ Model evaluation and meta-estimators
 
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using ``partial_fit``.
-     :issue: `8053` by :user:`Peng Yu <yupbank>`.
+     :issue:`8053` by :user:`Peng Yu <yupbank>`.
 
    - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
      :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
