@@ -201,8 +201,7 @@ def fetch_species_distributions(data_home=None,
       also known as the Forest Small Rice Rat, a rodent that lives in Peru,
       Colombia, Ecuador, Peru, and Venezuela.
 
-
-    * For an example of using this dataset with scikit-learn, see
+    - For an example of using this dataset with scikit-learn, see
       :ref:`examples/applications/plot_species_distribution_modeling.py
       <sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py>`.
     """

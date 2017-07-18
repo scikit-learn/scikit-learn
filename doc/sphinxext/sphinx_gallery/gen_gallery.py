@@ -293,7 +293,6 @@ def setup(app):
         app.add_config_value(key, get_default_config_value(key), 'html')
 
     app.add_stylesheet('gallery.css')
-
     # Sphinx < 1.6 calls it `_extensions`, >= 1.6 is `extensions`.
     extensions_attr = '_extensions' if hasattr(app, '_extensions') else 'extensions'
     if 'sphinx.ext.autodoc' in getattr(app, extensions_attr):
