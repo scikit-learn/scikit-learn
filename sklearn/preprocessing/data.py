@@ -244,6 +244,24 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.17
            *data_range_*
 
+    Examples
+    --------
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>>
+    >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
+    >>> scaler = MinMaxScaler()
+    >>> print(scaler.fit(data))
+    MinMaxScaler(copy=True, feature_range=(0, 1))
+    >>> print(scaler.data_max_)
+    [  1.  18.]
+    >>> print(scaler.transform(data))
+    [[ 0.    0.  ]
+     [ 0.25  0.25]
+     [ 0.5   0.5 ]
+     [ 1.    1.  ]]
+    >>> print(scaler.transform([[2, 2]]))
+    [[ 1.5  0. ]]
+
     See also
     --------
     minmax_scale: Equivalent function without the estimator API.
@@ -503,6 +521,24 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     n_samples_seen_ : int
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import StandardScaler
+    >>>
+    >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
+    >>> scaler = StandardScaler()
+    >>> print(scaler.fit(data))
+    StandardScaler(copy=True, with_mean=True, with_std=True)
+    >>> print(scaler.mean_)
+    [ 0.5  0.5]
+    >>> print(scaler.transform(data))
+    [[-1. -1.]
+     [-1. -1.]
+     [ 1.  1.]
+     [ 1.  1.]]
+    >>> print(scaler.transform([[2, 2]]))
+    [[ 3.  3.]]
 
     See also
     --------
