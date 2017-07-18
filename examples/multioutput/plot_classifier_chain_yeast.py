@@ -10,7 +10,7 @@ contains 2417 datapoints each with 103 features and 14 possible labels. Each
 datapoint has at least one label. As a baseline we first train a logistic
 regression classifier for each of the 14 labels. To evaluate the performance
 of these classifiers we predict on a held-out test set and calculate the
-:ref:`User Guide <jaccard_similarity_score>`.
+:ref:`jaccard similarity score <jaccard_similarity_score>`.
 
 Next we create 10 classifier chains. Each classifier chain contains a
 logistic regression model for each of the 14 labels. The models in each
