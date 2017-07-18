@@ -30,8 +30,7 @@ from ..externals.six.moves import xrange
 # For non fully-connected graphs
 
 
-def _fix_connectivity(X, connectivity, n_components=None,
-                      affinity="euclidean"):
+def _fix_connectivity(X, connectivity, affinity):
     """
     Fixes the connectivity matrix
 
@@ -190,7 +189,8 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         else:
             return children_, 1, n_samples, None
 
-    connectivity, n_components = _fix_connectivity(X, connectivity)
+    connectivity, n_components = _fix_connectivity(X, connectivity,
+                                                   affinity='euclidean')
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
     else:
@@ -422,7 +422,8 @@ def linkage_tree(X, connectivity=None, n_components='deprecated',
             return children_, 1, n_samples, None, distances
         return children_, 1, n_samples, None
 
-    connectivity, n_components = _fix_connectivity(X, connectivity)
+    connectivity, n_components = _fix_connectivity(X, connectivity,
+                                                   affinity=affinity)
 
     connectivity = connectivity.tocoo()
     # Put the diagonal to zero
