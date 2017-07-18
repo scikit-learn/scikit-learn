@@ -199,7 +199,7 @@ class GaussianNB(BaseNB):
         # check if classes were defined, set the classes_ attribute every time
         X, y = check_X_y(X, y)
 
-        return self._partial_fit(X, y, _refit=True,
+        return self._partial_fit(X, y, np.unique(y), _refit=True,
                                  sample_weight=sample_weight)
 
     @staticmethod
@@ -380,20 +380,6 @@ class GaussianNB(BaseNB):
         # reset flag if refit called
         if _refit:
             self.classes_ = None
-
-        # set classes- initialized values/passed in partial_fit/infer from y
-        if classes is None:
-            # case when not set, infer from y
-            if self.classes is None:
-                classes = np.sort(np.unique(y))
-            # case when set at intialization
-            else:
-                _check_unique_values(self.classes, "classes")
-                classes = np.sort(self.classes)
-        # case when passed in partial_fit
-        else:
-            _check_unique_values(classes, "classes")
-            classes = np.sort(np.asarray(classes))
 
         if _check_partial_fit_first_call(self, classes):
             # This is the first call to partial_fit:

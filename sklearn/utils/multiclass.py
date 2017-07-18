@@ -21,7 +21,6 @@ from ..externals.six import string_types
 from .validation import check_array
 
 
-
 def _unique_multiclass(y):
     if hasattr(y, '__array__'):
         return np.unique(np.asarray(y))
@@ -301,11 +300,21 @@ def _check_partial_fit_first_call(clf, classes=None):
     set on ``clf``.
 
     """
-    if getattr(clf, 'classes_', None) is None and classes is None:
+    if (getattr(clf, 'classes_', None) is None
+            and getattr(clf, 'classes', None) is None
+            and classes is None):
+
         raise ValueError("classes must be passed on the first call "
-                         "to partial_fit.")
+                         "to partial_fit or set during initialization"
+                         "if the class has a classes parameter.")
 
     elif classes is not None:
+        if getattr(clf, 'classes', None) is not None:
+            if not np.array_equal(clf.classes, unique_labels(classes)):
+                raise ValueError(
+                    "`classes=%r` is not the same as the value set duing "
+                    "initialization, which was: %r" % (classes, clf.classes))
+
         if getattr(clf, 'classes_', None) is not None:
             if not np.array_equal(clf.classes_, unique_labels(classes)):
                 raise ValueError(
@@ -314,7 +323,10 @@ def _check_partial_fit_first_call(clf, classes=None):
 
         else:
             # This is the first call to partial_fit
-            clf.classes_ = unique_labels(classes)
+            if getattr(clf, 'classes', None) is not None:
+                clf.classes_ = clf.classes
+            else:
+                clf.classes_ = unique_labels(classes)
             return True
 
     # classes is None and clf.classes_ has already previously been set:
