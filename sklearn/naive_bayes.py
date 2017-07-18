@@ -568,6 +568,7 @@ class BaseDiscreteNB(BaseNB):
             msg = "Number of features %d does not match previous data %d."
             raise ValueError(msg % (n_features, self.coef_.shape[-1]))
 
+        _check_y_classes(y, self.classes_)
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
@@ -631,6 +632,7 @@ class BaseDiscreteNB(BaseNB):
             _check_unique_values(self.classes, "classes")
             self.classes_ = np.sort(self.classes)
 
+        _check_y_classes(y, self.classes_)
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
