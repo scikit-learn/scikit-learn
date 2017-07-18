@@ -40,6 +40,7 @@ from .cluster import fowlkes_mallows_score
 from ..utils.multiclass import type_of_target
 from ..externals import six
 from ..base import is_regressor
+from ..externals.funcsigs import signature
 
 
 class _BaseScorer(six.with_metaclass(ABCMeta, object)):
@@ -65,6 +66,31 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
                 % (self._score_func.__name__,
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
+
+    def _get_labels_from_estimator(self, estimator):
+        """Check if estimator has a classes argument and if scorer has a
+        labels argument and return new kwargs for scorer if label not already
+        set in make score initialization"""
+        est_has_classes = hasattr(estimator, "classes_")
+        scorer_has_labels = "labels" in signature(
+                                            self._score_func).parameters
+
+        if est_has_classes and scorer_has_labels:
+            classes = getattr(estimator, "classes_", None)
+            # if labels passed as kwargs, return kwargs as is
+            if 'labels' in self._kwargs:
+                if est_has_classes:
+                    if not np.array_equal(classes, self._kwargs['labels']):
+                        raise ValueError("`estimator classes=%r` is not the"
+                                         "same as scorer labels=%r" %
+                                         (classes, self._kwargs['labels']))
+                return self._kwargs
+            else:
+                kwargs = self._kwargs.copy()
+                kwargs['labels'] = classes
+                return kwargs
+        else:
+            return self._kwargs
 
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
@@ -98,13 +124,15 @@ class _PredictScorer(_BaseScorer):
         super(_PredictScorer, self).__call__(estimator, X, y_true,
                                              sample_weight=sample_weight)
         y_pred = estimator.predict(X)
+        kwargs = self._get_labels_from_estimator(estimator)
+
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
-                                                 **self._kwargs)
+                                                 **kwargs)
         else:
             return self._sign * self._score_func(y_true, y_pred,
-                                                 **self._kwargs)
+                                                 **kwargs)
 
 
 class _ProbaScorer(_BaseScorer):
@@ -135,12 +163,14 @@ class _ProbaScorer(_BaseScorer):
         super(_ProbaScorer, self).__call__(clf, X, y,
                                            sample_weight=sample_weight)
         y_pred = clf.predict_proba(X)
+        kwargs = self._get_labels_from_estimator(clf)
+
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
-                                                 **self._kwargs)
+                                                 **kwargs)
         else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+            return self._sign * self._score_func(y, y_pred, **kwargs)
 
     def _factory_args(self):
         return ", needs_proba=True"
@@ -197,12 +227,13 @@ class _ThresholdScorer(_BaseScorer):
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
+        kwargs = self._get_labels_from_estimator(clf)
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
-                                                 **self._kwargs)
+                                                 **kwargs)
         else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+            return self._sign * self._score_func(y, y_pred, **kwargs)
 
     def _factory_args(self):
         return ", needs_threshold=True"
