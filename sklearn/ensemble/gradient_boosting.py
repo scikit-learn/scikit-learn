@@ -1100,10 +1100,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         X_csr = csr_matrix(X) if issparse(X) else None
 
         if self.n_iter_no_change is not None:
-            n_iter_losses = np.ones(self.n_iter_no_change) * np.inf
+            loss_history = np.ones(self.n_iter_no_change) * np.inf
             # We create a generator to get the predictions for X_val after
             # the addition of each successive stage
-            y_val_pred = self._staged_decision_function(X_val)
+            y_val_pred_iter = self._staged_decision_function(X_val)
 
         # perform boosting iterations
         i = begin_at_stage
@@ -1144,23 +1144,22 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 if early_stopping:
                     break
 
-            # We also provide a default early stopping based on the score from
+            # We also provide an early stopping based on the score from
             # validation set (X_val, y_val), if n_iter_no_change is set
             if self.n_iter_no_change is None:
                 continue
 
-            # By calling next(y_val_pred), we get the predictions for X_val
-            # after the addition of the current stage
-            validation_loss = loss_(y_val, next(y_val_pred),
+            # By calling next(y_val_pred_iter), we get the predictions
+            # for X_val after the addition of the current stage
+            validation_loss = loss_(y_val, next(y_val_pred_iter),
                                     sample_weight_val)
 
-            # Check if the validation_score is less than the last
-            # ``n_iter_no_change`` losses
-            if np.all((n_iter_losses - validation_loss) <= self.tol):
-                break
+            # Require validation_score to be better (less) than at least one
+            # of the last n_iter_no_change evaluations
+            if np.any(validation_loss + self.tol < loss_history):
+                loss_history[i % len(loss_history)] = validation_loss
             else:
-                n_iter_losses = np.roll(n_iter_losses, -1)
-                n_iter_losses[-1] = validation_loss
+                break
 
         return i + 1
 
