@@ -235,12 +235,10 @@ def test_word_ngram_analyzer():
                 'is test really met harry yesterday']
     assert_equal(cnga(text)[-3:], expected)
 
-    cnga = CountVectorizer(input='file', analyzer='word',
-                           ngram_range=(3, 6)).build_analyzer()
-    text = StringIO("A test with a file-like object!")
-    expected = ['test with file', 'with file like',
-                'file like object', 'test with file like']
-    assert_equal(cnga(text)[:4], expected)
+    cnga_file = CountVectorizer(input='file', analyzer='word',
+                                ngram_range=(3, 6)).build_analyzer()
+    file = StringIO(text)
+    assert_equal(cnga_file(file)[:4], cnga(text)[:4])
 
 
 def test_countvectorizer_custom_vocabulary():
