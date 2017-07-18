@@ -5,11 +5,11 @@ Classifier Chain
 Example of using classifier chain on a multilabel dataset.
 
 For this example we will use the `yeast
-<http://mldata.org/repository/data/viewslug/yeast>`_ dataset which
-contains 2417 datapoints each with 103 features and 14 possible labels. Each
-datapoint has at least one label. As a baseline we first train a logistic
-regression classifier for each of the 14 labels. To evaluate the performance
-of these classifiers we predict on a held-out test set and calculate the
+<http://mldata.org/repository/data/viewslug/yeast>`_ dataset which contains
+2417 datapoints each with 103 features and 14 possible labels. Each
+data point has at least one label. As a baseline we first train a logistic
+regression classifier for each of the 14 labels. To evaluate the performance of
+these classifiers we predict on a held-out test set and calculate the
 :ref:`jaccard similarity score <jaccard_similarity_score>`.
 
 Next we create 10 classifier chains. Each classifier chain contains a
@@ -18,7 +18,7 @@ chain are ordered randomly. In addition to the 103 features in the dataset,
 each model gets the predictions of the preceding models in the chain as
 features (note that by default at training time each model gets the true
 labels as features). These additional features allow each chain to exploit
-correlations among the classes. The Jaccard similarity score for each chain
+correlations among the classes. The Jaccard similarity score for each chain 
 tends to be greater than that of the set independent logistic models.
 
 Because the models in each chain are arranged randomly there is significant
@@ -112,6 +112,7 @@ width = .8
 ax.set_xlim([-width, x_pos[-1]+width])
 colors = ['r'] + ['b'] * len(chain_jaccard_scores) + ['g']
 ax.bar(x_pos, model_scores, width=width, alpha=0.5, color=colors)
-ax.plot([-width, x_pos[-1] + width], [model_scores[-1], model_scores[-1]], "k--")
+ax.plot([-width, x_pos[-1] + width],
+        [model_scores[-1], model_scores[-1]], "k--")
 plt.tight_layout()
 plt.show()
