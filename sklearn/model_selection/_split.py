@@ -583,7 +583,7 @@ class StratifiedKFold(_BaseKFold):
         if self.n_splits > min_groups:
             warnings.warn(("The least populated class in y has only %d"
                            " members, which is too few. The minimum"
-                           " number of groups for any class cannot"
+                           " number of members in any class cannot"
                            " be less than n_splits=%d."
                            % (min_groups, self.n_splits)), Warning)
 
