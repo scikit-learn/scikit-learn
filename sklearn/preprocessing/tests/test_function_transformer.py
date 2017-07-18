@@ -2,7 +2,7 @@ import numpy as np
 
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils.testing import assert_equal, assert_array_equal
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_warns_message, assert_raises_regex
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -126,3 +126,20 @@ def test_inverse_transform():
         F.inverse_transform(F.transform(X)),
         np.around(np.sqrt(X), decimals=3),
     )
+
+
+def test_check_inverse():
+    X = np.array([1, 4, 9, 16]).reshape((2, 2))
+
+    trans = FunctionTransformer(func=np.sqrt,
+                                inverse_func=np.around,
+                                check_inverse=True)
+    assert_raises_regex(ValueError, "The provided functions are not strictly"
+                        " inverse of each other. If you are sure you want to"
+                        " proceed regardless, set 'check_inverse=False'",
+                        trans.fit, X)
+    trans = FunctionTransformer(func=np.exp,
+                                inverse_func=np.log,
+                                check_inverse=True)
+    Xt = trans.fit_transform(X)
+    assert_array_equal(X, trans.inverse_transform(Xt))

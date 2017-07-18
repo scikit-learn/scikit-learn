@@ -1,7 +1,9 @@
 import warnings
 
+import numpy as np
+
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
+from ..utils import check_array, check_random_state
 from ..externals.six import string_types
 
 
@@ -59,23 +61,56 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
         .. deprecated::0.19
 
+    check_inverse : bool, (default=False)
+       Whether to check that ``transform`` followed by ``inverse_transform``
+       or ``func`` followed by ``inverse_func`` leads to the original targets.
+
+       .. versionadded:: 0.20
+
     kw_args : dict, optional
         Dictionary of additional keyword arguments to pass to func.
 
     inv_kw_args : dict, optional
         Dictionary of additional keyword arguments to pass to inverse_func.
 
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by np.random. Note that this is used to compute if func and
+        inverse_func are the inverse of each other.
+
+
     """
     def __init__(self, func=None, inverse_func=None, validate=True,
-                 accept_sparse=False, pass_y='deprecated',
-                 kw_args=None, inv_kw_args=None):
+                 accept_sparse=False, pass_y='deprecated', check_inverse=False,
+                 kw_args=None, inv_kw_args=None, random_state=None):
         self.func = func
         self.inverse_func = inverse_func
         self.validate = validate
         self.accept_sparse = accept_sparse
         self.pass_y = pass_y
+        self.check_inverse = check_inverse
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
+        self.random_state = random_state
+
+    def _validate_inverse(self, X):
+        """Check that func and inverse_func are the inverse."""
+        # Apply the transform and inverse_transform on few samples.
+        random_state = check_random_state(self.random_state)
+        n_subsample = min(10, X.shape[0])
+        subsample_idx = random_state.choice(range(X.shape[0]),
+                                            size=n_subsample,
+                                            replace=False)
+        if not np.allclose(X[subsample_idx],
+                           self.inverse_transform(
+                               self.transform(X[subsample_idx])),
+                           atol=1e-7):
+            raise ValueError("The provided functions are not strictly"
+                             " inverse of each other. If you are sure you"
+                             " want to proceed regardless, set"
+                             " 'check_inverse=False'")
 
     def fit(self, X, y=None):
         """Fit transformer by checking X.
@@ -93,6 +128,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         """
         if self.validate:
             check_array(X, self.accept_sparse)
+        if self.check_inverse:
+            self._validate_inverse(X)
         return self
 
     def transform(self, X, y='deprecated'):
