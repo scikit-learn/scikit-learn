@@ -22,17 +22,17 @@ algorithms in existing estimators, such as multiplicative update in
 :class:`decomposition.NMF` and multinomial
 :class:`linear_model.LogisticRegression` with L1 loss (use ``solver='saga'``).
 
-You can also learn faster.  For instance, the :ref:`new option to cache
-transformations <pipeline_cache>` in :class:`pipeline.Pipeline` makes grid
-search over pipelines including slow transformations much more efficient.  And
-you can predict faster: if you're sure you know what you're doing, you can turn
-off validating that the input is finite using :func:`config_context`.
-
 Cross validation is now able to return the results from multiple metric
 evaluations. The new :func:`model_selection.cross_validate` can return many
 scores on the test data as well as training set performance and timings, and we
 have extended the ``scoring`` and ``refit`` parameters for grid/randomized
 search :ref:`to handle multiple metrics <multimetric_grid_search>`.
+
+You can also learn faster.  For instance, the :ref:`new option to cache
+transformations <pipeline_cache>` in :class:`pipeline.Pipeline` makes grid
+search over pipelines including slow transformations much more efficient.  And
+you can predict faster: if you're sure you know what you're doing, you can turn
+off validating that the input is finite using :func:`config_context`.
 
 We've made some important fixes too.  We've fixed a longstanding implementation
 error in :func:`metrics.average_precision_score`, so please be cautious with
