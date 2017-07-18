@@ -532,3 +532,30 @@ def test_agg_n_clusters():
         msg = ("n_clusters should be an integer greater than 0."
                " %s was provided." % str(agc.n_clusters))
         assert_raise_message(ValueError, msg, agc.fit, X)
+
+
+def test_affinity_passed_to_fix_connectivity():
+    # Test that the affinity parameter is actually passed to the pairwise
+    # function
+
+    size = 2
+    rng = np.random.RandomState(0)
+    X = rng.randn(size, size)
+    mask = np.array([True, False, False, True])
+
+    connectivity = grid_to_graph(n_x=size, n_y=size,
+                                 mask=mask, return_as=np.ndarray)
+
+    class FakeAffinity:
+        def __init__(self):
+            self.counter = 0
+
+        def increment(self, *args, **kwargs):
+            self.counter += 1
+            return self.counter
+
+    fa = FakeAffinity()
+
+    linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
+
+    assert_equal(fa.counter, 3)
