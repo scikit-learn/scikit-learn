@@ -326,7 +326,7 @@ def test_clone_pandas_dataframe():
         def fit(self, X, y=None):
             pass
 
-        def transform(self, X, y=None):
+        def transform(self, X):
             pass
 
     # build and clone estimator

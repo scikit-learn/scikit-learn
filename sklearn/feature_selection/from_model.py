@@ -10,7 +10,6 @@ from ..base import BaseEstimator, clone, MetaEstimatorMixin, frozen_fit
 from ..externals import six
 
 from ..exceptions import NotFittedError
-from ..utils.fixes import norm
 from ..utils.metaestimators import if_delegate_has_method
 
 
@@ -23,7 +22,8 @@ def _get_feature_importances(estimator, norm_order=1):
             importances = np.abs(estimator.coef_)
 
         else:
-            importances = norm(estimator.coef_, axis=0, ord=norm_order)
+            importances = np.linalg.norm(estimator.coef_, axis=0,
+                                         ord=norm_order)
 
     elif importances is None:
         raise ValueError(
@@ -88,6 +88,8 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
     ----------
     estimator : object
         The base estimator from which the transformer is built.
+        The estimator must have either a ``feature_importances_``
+        or ``coef_`` attribute after fitting.
 
         This estimator may be frozen (see :ref:`frozen`).
 

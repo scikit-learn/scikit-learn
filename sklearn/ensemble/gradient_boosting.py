@@ -27,7 +27,6 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 from .base import BaseEnsemble
-from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..externals import six
@@ -40,7 +39,6 @@ import numbers
 import numpy as np
 
 from scipy import stats
-from scipy.misc import logsumexp
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -56,8 +54,8 @@ from ..utils import check_array
 from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
-from ..utils.fixes import bincount
 from ..utils import deprecated
+from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
@@ -139,7 +137,7 @@ class PriorProbabilityEstimator(object):
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=np.float64)
-        class_counts = bincount(y, weights=sample_weight)
+        class_counts = np.bincount(y, weights=sample_weight)
         self.priors = class_counts / class_counts.sum()
 
     def predict(self, X):
@@ -1528,7 +1526,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        y : array of shape = ["n_samples]
+        y : array of shape = [n_samples]
             The predicted values.
         """
         score = self.decision_function(X)
