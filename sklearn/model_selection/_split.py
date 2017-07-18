@@ -577,8 +577,8 @@ class StratifiedKFold(_BaseKFold):
         y_counts = np.bincount(y_inversed)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
-            raise ValueError("All the n_groups for individual classes"
-                             " are less than n_splits=%d."
+            raise ValueError("n_splits=%d cannot be greater than the"
+                             " number of members in each class."
                              % (self.n_splits))
         if self.n_splits > min_groups:
             warnings.warn(("The least populated class in y has only %d"
