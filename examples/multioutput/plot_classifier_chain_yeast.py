@@ -92,19 +92,26 @@ model_names = ('Independent Models',
                'Chain 10',
                'Ensemble Average')
 
-y_pos = np.arange(len(model_names))
-y_pos[1:] += 1
-y_pos[-1] += 1
+x_pos = np.arange(len(model_names))
+x_pos[1:] += 1
+x_pos[-1] += 1
 
 # Plot the Jaccard similarity scores for the independent model, each of the
 # chains, and the ensemble (note that the vertical axis on this plot does
 # not begin at 0).
 
-fig = plt.figure(figsize=(7, 4))
-plt.title('Classifier Chain Ensemble')
-plt.xticks(y_pos, model_names, rotation='vertical')
-plt.ylabel('Jaccard Similarity Score')
-plt.ylim([min(model_scores) * .9, max(model_scores) * 1.1])
+fig, ax = plt.subplots()
+fig.set_figheight(7)
+fig.set_figwidth(7)
+ax.set_title('Classifier Chain Ensemble')
+ax.set_xticks(x_pos)
+ax.set_xticklabels(model_names, rotation='vertical')
+ax.set_ylabel('Jaccard Similarity Score')
+ax.set_ylim([min(model_scores) * .9, max(model_scores) * 1.1])
+width = .8
+ax.set_xlim([-width, x_pos[-1]+width])
 colors = ['r'] + ['b'] * len(chain_jaccard_scores) + ['g']
-plt.bar(y_pos, model_scores, align='center', alpha=0.5, color=colors)
+ax.bar(x_pos, model_scores, width=width, alpha=0.5, color=colors)
+ax.plot([-width, x_pos[-1] + width], [model_scores[-1], model_scores[-1]], "k--")
+plt.tight_layout()
 plt.show()
