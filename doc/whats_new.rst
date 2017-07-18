@@ -5,10 +5,24 @@
 Release history
 ===============
 
-Version 0.19
+Version 0.20
 ============
 
 **In Development**
+
+Changelog
+---------
+
+Enhancements
+............
+
+    - A parameter ``check_inverse`` was added to :class:`FunctionTransformer`
+      to ensure that ``func`` and ``inverse_func`` are the inverse of each
+      other.
+      :issue:`9399` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+Version 0.19
+============
 
 Highlights
 ----------
@@ -490,7 +504,7 @@ Decomposition, manifold learning and clustering
      in :class:`decomposition.PCA`,
      :class:`decomposition.RandomizedPCA` and
      :class:`decomposition.IncrementalPCA`.
-     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+     :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
    - Fixed a bug where :class:`cluster.DBSCAN` gives incorrect
      result when input is a precomputed sparse matrix with initial
