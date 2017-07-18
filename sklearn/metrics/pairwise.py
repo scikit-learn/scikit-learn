@@ -307,11 +307,13 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         # Get Y.T mask and anti-mask and set Y.T's missing to zero
         YT = Y.T
         mask_YT = _get_mask(YT, missing_values)
-        NYT = (~mask_YT).astype("int")
+        NYT = (~mask_YT).astype(np.int8)
+        # NYT = (~mask_YT)
         YT[mask_YT] = 0
 
-        #Get X anti-mask and set X's missing to zero
-        NX = (~mask_X).astype("int")
+        # Get X anti-mask and set X's missing to zero
+        NX = (~mask_X).astype(np.int8)
+        # NX = (~mask_X)
         X[mask_X] = 0
 
         # Matrix formula to calculate pair-wise distance between all vectors in a
@@ -319,9 +321,15 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
         # in either vector in the pair and up-weights the remaining coordinates.
         # Matrix formula derived by: Shreya Bhattarai <shreya.bhattarai@gmail.com>
 
-        distances = (X.shape[1] * 1 / ((np.dot(NX, NYT)))) * \
-                    (np.dot((X * X), NYT) - 2 * (np.dot(X, YT)) +
-                     np.dot(NX, (YT * YT)))
+        # distances = (X.shape[1] * 1 / ((np.dot(NX, NYT)))) * \
+        #             (np.dot((X * X), NYT) - 2 * (np.dot(X, YT)) +
+        #              np.dot(NX, (YT * YT)))
+
+        # Above is faster but following for Python 2.x support
+        distances = np.multiply(np.multiply(X.shape[1], (1.0 / np.dot(NX, NYT))),
+                                (np.dot(np.multiply(X, X), NYT) -
+                                (2.0 * (np.dot(X, YT))) +
+                                np.dot(NX, (np.multiply(YT, YT)))))
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
