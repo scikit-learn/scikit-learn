@@ -568,7 +568,8 @@ Imagine you have three subjects, each with an associated number from 1 to 3::
 
 Each subject is in a different testing fold, and the same subject is never in
 both testing and training. Notice that the folds do not have exactly the same
-size due to the imbalance in the data.
+size due to the imbalance in the data. Also note that, :class:`GroupKFold` is
+not randomized at all.
 
 
 Leave One Group Out
@@ -731,10 +732,11 @@ to shuffle the data indices before splitting them. Note that:
   validation performed by specifying ``cv=some_integer`` to
   :func:`cross_val_score`, grid search, etc. Keep in mind that
   :func:`train_test_split` still returns a random split.
-* The ``random_state`` parameter defaults to ``None``, meaning that the
-  shuffling will be different every time ``KFold(..., shuffle=True)`` is
-  iterated. However, ``GridSearchCV`` will use the same shuffling for each set
-  of parameters validated by a single call to its ``fit`` method.
+* The ``random_state`` parameter defaults to ``None`` and ``shuffle`` to
+  ``True``, meaning that the shuffling will be different every time
+  ``KFold(..., shuffle=True)`` is iterated. However, ``GridSearchCV`` will use
+  the same shuffling for each set of parameters validated by a single call to
+  its``fit`` method.
 * To get identical results for each split, set ``random_state`` to an integer.
 
 Cross validation and model selection
