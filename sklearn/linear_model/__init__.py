@@ -18,6 +18,12 @@ from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
                                  lasso_path, enet_path, MultiTaskLasso,
                                  MultiTaskElasticNet, MultiTaskElasticNetCV,
                                  MultiTaskLassoCV)
+from .glm import (Link, IdentityLink, LogLink,
+                 ExponentialDispersionModel, TweedieDistribution,
+                 NormalDistribution, GaussianDistribution,
+                 PoissonDistribution, GammaDistribution,
+                 InverseGaussianDistribution, GeneralizedHyperbolicSecand,
+                 GeneralizedLinearModel)
 from .huber import HuberRegressor
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
@@ -38,6 +44,7 @@ __all__ = ['ARDRegression',
            'BayesianRidge',
            'ElasticNet',
            'ElasticNetCV',
+           'GeneralizedLinearModel',
            'Hinge',
            'Huber',
            'HuberRegressor',
