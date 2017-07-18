@@ -1094,7 +1094,7 @@ cdef class PyFuncDistance(DistanceMetric):
         self.kwargs = kwargs
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
-                             ITYPE_t size) except -1 with gil:
+                             ITYPE_t size) nogil except -1:
         cdef np.ndarray x1arr
         cdef np.ndarray x2arr
         with gil:
