@@ -554,12 +554,16 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Regularizes the covariance estimate as
         ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
 
-    store_covariances : boolean, (default False)
-        Option to store covariances
+    store_covariances : boolean
+        If True the covariance matrices are computed and stored in the
+        `self.covariances_` attribute.
 
-    tol : float, optional, (default 1.0e-4)
+        .. versionadded:: 0.17
+
+    tol : float, optional, default 1.0e-4
         Threshold used for rank estimation.
 
+        .. versionadded:: 0.17
 
     Attributes
     ----------
@@ -582,17 +586,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         For each class k an array of shape [n_k]. It contains the scaling
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
-
-    store_covariances : boolean
-        If True the covariance matrices are computed and stored in the
-        `self.covariances_` attribute.
-
-        .. versionadded:: 0.17
-
-    tol : float, optional, default 1.0e-4
-        Threshold used for rank estimation.
-
-        .. versionadded:: 0.17
 
     Examples
     --------
