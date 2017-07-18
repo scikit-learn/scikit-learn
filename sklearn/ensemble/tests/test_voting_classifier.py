@@ -396,7 +396,7 @@ def test_transform():
     assert_array_equal(res.shape, (3, 4, 2))
     assert_array_equal(eclf2.transform(X).shape, (4, 6))
     assert_array_equal(eclf3.transform(X).shape, (3, 4, 2))
-    assert_array_equal(eclf1.transform(X).swapaxes(0, 1).reshape((4, 6)),
+    assert_array_equal(res.swapaxes(0, 1).reshape((4, 6)),
                        eclf2.transform(X))
     assert_array_equal(eclf3.transform(X).swapaxes(0, 1).reshape((4, 6)),
                        eclf2.transform(X))
