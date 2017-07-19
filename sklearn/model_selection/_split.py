@@ -84,8 +84,8 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
         test : ndarray
             The testing set indices for that split.
 
-        Note
-        ----
+        Notes
+        -----
         Randomized CV splitters may return different results for each call of
         split. You can make the results identical by setting ``random_state``
         to an integer.
@@ -315,8 +315,8 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         test : ndarray
             The testing set indices for that split.
 
-        Note
-        ----
+        Notes
+        -----
         Randomized CV splitters may return different results for each call of
         split. You can make the results identical by setting ``random_state``
         to an integer.
@@ -655,8 +655,8 @@ class StratifiedKFold(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
 
-        Note
-        ----
+        Notes
+        -----
         Randomized CV splitters may return different results for each call of
         split. You can make the results identical by setting ``random_state``
         to an integer.
@@ -742,8 +742,8 @@ class TimeSeriesSplit(_BaseKFold):
         test : ndarray
             The testing set indices for that split.
 
-        Note
-        ----
+        Notes
+        -----
         Randomized CV splitters may return different results for each call of
         split. You can make the results identical by setting ``random_state``
         to an integer.
@@ -1186,8 +1186,8 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         test : ndarray
             The testing set indices for that split.
 
-        Note
-        ----
+        Notes
+        -----
         Randomized CV splitters may return different results for each call of
         split. You can make the results identical by setting ``random_state``
         to an integer.
@@ -1606,8 +1606,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         test : ndarray
             The testing set indices for that split.
 
-        Note
-        ----
+        Notes
+        -----
         Randomized CV splitters may return different results for each call of
         split. You can make the results identical by setting ``random_state``
         to an integer.
