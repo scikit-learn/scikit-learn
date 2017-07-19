@@ -502,12 +502,15 @@ class KNeighborsMixin(object):
         NearestNeighbors(algorithm='auto', leaf_size=30,...)
         >>> N = neigh.masked_kneighbors(n_neighbors=2, return_distance=False)
         >>> print(N) # doctest: +ELLIPSIS
-        (array([[3, 1], [3, 2], [3, 1], [2, 1]])...)
+        [[3 1]
+        [3 2]
+        [3 1]
+        [2 1]]
 
         >>> X = [[0, nan, 1]]
         >>> N2 = neigh.masked_kneighbors(X, 2, return_distance=False)
         >>> print(N2) # doctest: +ELLIPSIS
-        (array([[1, 3]])...)
+        [[1 3]]
 
         """
         if self._fit_method is None:
