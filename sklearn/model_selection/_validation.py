@@ -526,30 +526,42 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
 class _MemoizedPredictEstimator:
     def __init__(self, estimator):
         self.estimator = estimator
+
     def fit(self, X, y):
         self.estimator.fit(X, y)
+
     @if_delegate_has_method(delegate='estimator')
     def predict(self, X):
         if not hasattr(self, '_predictions'):
             self._predictions = self.estimator.predict(X)
         return self._predictions
+
     @if_delegate_has_method(delegate='estimator')
     def decision_function(self, X):
         if not hasattr(self, '_decisions'):
             self._decisions = self.estimator.decision_function(X)
         return self._decisions
 
+    @if_delegate_has_method(delegate='estimator')
+    def predict_proba(self, X):
+        if not hasattr(self, '_probs'):
+            self._probs = self.estimator.predict_proba(X)
+        return self._probs
+
+    @if_delegate_has_method(delegate='estimator')
+    def predict_log_proba(self, X):
+        if not hasattr(self, '_log_probs'):
+            self._log_probs = self.estimator.predict_log_proba(X)
+        return self._log_probs
+
 
 def _multimetric_score(estimator, X_test, y_test, scorers):
     """Return a dict of score for multimetric scoring"""
     scores = {}
 
-    # Try wrapping the estimator in _MemoizedPredictEstimator if we don't use
-    # the pass-through scorer
-    uses_score_method = any([scorer is _passthrough_scorer
-                             for _, scorer in scorers.items()])
-    if not uses_score_method:
-        estimator = _MemoizedPredictEstimator(estimator)
+    # Try wrapping the estimator in _MemoizedPredictEstimator
+    # If the estimator has a score, wrapping it will not do any harm
+    estimator = _MemoizedPredictEstimator(estimator)
 
     for name, scorer in scorers.items():
         if y_test is None:
