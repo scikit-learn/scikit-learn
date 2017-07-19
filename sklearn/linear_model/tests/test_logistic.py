@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import raises
 
 from sklearn.exceptions import ConvergenceWarning
@@ -84,6 +85,18 @@ def test_error():
         assert_raise_message(ValueError, msg, LR(max_iter="test").fit, X, Y1)
 
 
+def test_lr_liblinear_warning():
+    n_samples, n_features = iris.data.shape
+    target = iris.target_names[iris.target]
+
+    lr = LogisticRegression(solver='liblinear', n_jobs=2)
+    assert_warns_message(UserWarning,
+                         "'n_jobs' > 1 does not have any effect when"
+                         " 'solver' is set to 'liblinear'. Got 'n_jobs'"
+                         " = 2.",
+                         lr.fit, iris.data, target)
+
+
 def test_predict_3_classes():
     check_predictions(LogisticRegression(C=10), X, Y2)
     check_predictions(LogisticRegression(C=10), X_sp, Y2)
@@ -132,8 +145,8 @@ def test_check_solver_option():
     X, y = iris.data, iris.target
     for LR in [LogisticRegression, LogisticRegressionCV]:
 
-        msg = ("Logistic Regression supports only liblinear, newton-cg, lbfgs"
-               " and sag solvers, got wrong_name")
+        msg = ('Logistic Regression supports only liblinear, newton-cg, '
+               'lbfgs, sag and saga solvers, got wrong_name')
         lr = LR(solver="wrong_name")
         assert_raise_message(ValueError, msg, lr.fit, X, y)
 
@@ -1129,3 +1142,33 @@ def test_saga_vs_liblinear():
                 liblinear.fit(X, y)
                 # Convergence for alpha=1e-3 is very slow
                 assert_array_almost_equal(saga.coef_, liblinear.coef_, 3)
+
+
+def test_dtype_match():
+    # Test that np.float32 input data is not cast to np.float64 when possible
+
+    X_32 = np.array(X).astype(np.float32)
+    y_32 = np.array(Y1).astype(np.float32)
+    X_64 = np.array(X).astype(np.float64)
+    y_64 = np.array(Y1).astype(np.float64)
+    X_sparse_32 = sp.csr_matrix(X, dtype=np.float32)
+
+    for solver in ['newton-cg']:
+        for multi_class in ['ovr', 'multinomial']:
+
+            # Check type consistency
+            lr_32 = LogisticRegression(solver=solver, multi_class=multi_class)
+            lr_32.fit(X_32, y_32)
+            assert_equal(lr_32.coef_.dtype, X_32.dtype)
+
+            # check consistency with sparsity
+            lr_32_sparse = LogisticRegression(solver=solver,
+                                              multi_class=multi_class)
+            lr_32_sparse.fit(X_sparse_32, y_32)
+            assert_equal(lr_32_sparse.coef_.dtype, X_sparse_32.dtype)
+
+            # Check accuracy consistency
+            lr_64 = LogisticRegression(solver=solver, multi_class=multi_class)
+            lr_64.fit(X_64, y_64)
+            assert_equal(lr_64.coef_.dtype, X_64.dtype)
+            assert_almost_equal(lr_32.coef_, lr_64.coef_.astype(np.float32))

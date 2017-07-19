@@ -12,24 +12,22 @@ Extended math utilities.
 # License: BSD 3 clause
 
 from __future__ import division
-from functools import partial
 import warnings
 
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse, csr_matrix
-from scipy.misc import logsumexp as scipy_logsumexp
 
 from . import check_random_state, deprecated
 from .fixes import np_version
+from .fixes import logsumexp as scipy_logsumexp
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from ..exceptions import NonBLASDotWarning
 
 
-@deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19"
+@deprecated("sklearn.utils.extmath.norm was deprecated in version 0.19 "
             "and will be removed in 0.21. Use scipy.linalg.norm instead.")
 def norm(x):
     """Compute the Euclidean or Frobenius norm of x.
@@ -40,20 +38,13 @@ def norm(x):
     return linalg.norm(x)
 
 
-# Newer NumPy has a ravel that needs less copying.
-if np_version < (1, 7, 1):
-    _ravel = np.ravel
-else:
-    _ravel = partial(np.ravel, order='K')
-
-
 def squared_norm(x):
     """Squared Euclidean or Frobenius norm of x.
 
     Returns the Euclidean norm when x is a vector, the Frobenius norm when x
     is a matrix (2-d array). Faster than norm(x) ** 2.
     """
-    x = _ravel(x)
+    x = np.ravel(x, order='K')
     if np.issubdtype(x.dtype, np.integer):
         warnings.warn('Array type is integer, np.dot may overflow. '
                       'Data should be float type to avoid this issue',
@@ -103,68 +94,10 @@ def _impose_f_order(X):
         return check_array(X, copy=False, order='F'), False
 
 
-def _fast_dot(A, B):
-    if B.shape[0] != A.shape[A.ndim - 1]:  # check adopted from '_dotblas.c'
-        raise ValueError
-
-    if A.dtype != B.dtype or any(x.dtype not in (np.float32, np.float64)
-                                 for x in [A, B]):
-        warnings.warn('Falling back to np.dot. '
-                      'Data must be of same type of either '
-                      '32 or 64 bit float for the BLAS function, gemm, to be '
-                      'used for an efficient dot operation. ',
-                      NonBLASDotWarning)
-        raise ValueError
-
-    if min(A.shape) == 1 or min(B.shape) == 1 or A.ndim != 2 or B.ndim != 2:
-        raise ValueError
-
-    # scipy 0.9 compliant API
-    dot = linalg.get_blas_funcs(['gemm'], (A, B))[0]
-    A, trans_a = _impose_f_order(A)
-    B, trans_b = _impose_f_order(B)
-    return dot(alpha=1.0, a=A, b=B, trans_a=trans_a, trans_b=trans_b)
-
-
-def _have_blas_gemm():
-    try:
-        linalg.get_blas_funcs(['gemm'])
-        return True
-    except (AttributeError, ValueError):
-        warnings.warn('Could not import BLAS, falling back to np.dot')
-        return False
-
-
-# Only use fast_dot for older NumPy; newer ones have tackled the speed issue.
-if np_version < (1, 7, 2) and _have_blas_gemm():
-    def fast_dot(A, B):
-        """Compute fast dot products directly calling BLAS.
-
-        This function calls BLAS directly while warranting Fortran contiguity.
-        This helps avoiding extra copies `np.dot` would have created.
-        For details see section `Linear Algebra on large Arrays`:
-        http://wiki.scipy.org/PerformanceTips
-
-        Parameters
-        ----------
-        A, B: instance of np.ndarray
-            Input arrays. Arrays are supposed to be of the same dtype and to
-            have exactly 2 dimensions. Currently only floats are supported.
-            In case these requirements aren't met np.dot(A, B) is returned
-            instead. To activate the related warning issued in this case
-            execute the following lines of code:
-
-            >> import warnings
-            >> from sklearn.exceptions import NonBLASDotWarning
-            >> warnings.simplefilter('always', NonBLASDotWarning)
-        """
-        try:
-            return _fast_dot(A, B)
-        except ValueError:
-            # Maltyped or malformed data.
-            return np.dot(A, B)
-else:
-    fast_dot = np.dot
+@deprecated("sklearn.utils.extmath.fast_dot was deprecated in version 0.19 "
+            "and will be removed in 0.21. Use the equivalent np.dot instead.")
+def fast_dot(a, b, out=None):
+    return np.dot(a, b, out)
 
 
 def density(w, **kwargs):
@@ -184,6 +117,19 @@ def safe_sparse_dot(a, b, dense_output=False):
 
     Uses BLAS GEMM as replacement for numpy.dot where possible
     to avoid unnecessary copies.
+
+    Parameters
+    ----------
+    a : array or sparse matrix
+    b : array or sparse matrix
+    dense_output : boolean, default False
+        When False, either ``a`` or ``b`` being sparse will yield sparse
+        output. When True, output will always be an array.
+
+    Returns
+    -------
+    dot_product : array or sparse matrix
+        sparse if ``a`` or ``b`` is sparse and ``dense_output=False``.
     """
     if issparse(a) or issparse(b):
         ret = a * b
@@ -191,7 +137,7 @@ def safe_sparse_dot(a, b, dense_output=False):
             ret = ret.toarray()
         return ret
     else:
-        return fast_dot(a, b)
+        return np.dot(a, b)
 
 
 def randomized_range_finder(A, size, n_iter,
@@ -249,6 +195,9 @@ def randomized_range_finder(A, size, n_iter,
 
     # Generating normal random vectors with shape: (A.shape[1], size)
     Q = random_state.normal(size=(A.shape[1], size))
+    if A.dtype.kind == 'f':
+        # Ensure f32 is preserved as f32
+        Q = Q.astype(A.dtype, copy=False)
 
     # Deal with "auto" mode
     if power_iteration_normalizer == 'auto':
@@ -381,6 +330,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     # compute the SVD on the thin matrix: (k + p) wide
     Uhat, s, V = linalg.svd(B, full_matrices=False)
+
     del B
     U = np.dot(Q, Uhat)
 
@@ -399,7 +349,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], V[:n_components, :]
 
 
-@deprecated("sklearn.utils.extmath.logsumexp was deprecated in version 0.19"
+@deprecated("sklearn.utils.extmath.logsumexp was deprecated in version 0.19 "
             "and will be removed in 0.21. Use scipy.misc.logsumexp instead.")
 def logsumexp(arr, axis=0):
     """Computes the sum of arr assuming arr is in the log domain.
@@ -492,7 +442,7 @@ def weighted_mode(a, w, axis=0):
     return mostfrequent, oldcounts
 
 
-@deprecated("sklearn.utils.extmath.pinvh was deprecated in version 0.19"
+@deprecated("sklearn.utils.extmath.pinvh was deprecated in version 0.19 "
             "and will be removed in 0.21. Use scipy.linalg.pinvh instead.")
 def pinvh(a, cond=None, rcond=None, lower=True):
     return linalg.pinvh(a, cond, rcond, lower)

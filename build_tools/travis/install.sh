@@ -13,15 +13,16 @@
 
 set -e
 
-# Fix the compilers to workaround avoid having the Python 3.4 build
-# lookup for g++44 unexpectedly.
-export CC=gcc
-export CXX=g++
-
 echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
 
+export CC=/usr/lib/ccache/gcc
+export CXX=/usr/lib/ccache/g++
+# Useful for debugging how ccache is used
+# export CCACHE_LOGFILE=/tmp/ccache.log
+# ~60M is used by .ccache when compiling from scratch at the time of writing
+ccache --max-size 100M --show-stats
 
 if [[ "$DISTRIB" == "conda" ]]; then
     # Deactivate the travis-provided virtual environment and setup a
@@ -84,6 +85,10 @@ if [[ "$COVERAGE" == "true" ]]; then
     pip install coverage codecov
 fi
 
+if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
+    pip install sphinx numpydoc  # numpydoc requires sphinx
+fi
+
 if [[ "$SKIP_TESTS" == "true" ]]; then
     echo "No need to build scikit-learn when not running the tests"
 else
@@ -99,8 +104,10 @@ try:
 except ImportError:
     pass
 "
-
     python setup.py develop
+    ccache --show-stats
+    # Useful for debugging how ccache is used
+    # cat $CCACHE_LOGFILE
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then

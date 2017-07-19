@@ -30,13 +30,14 @@ from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
     check_consistent_length,
+    assert_all_finite,
 )
+import sklearn
 
 from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
-
 
 def test_as_float_array():
     # Test function for as_float_array
@@ -134,9 +135,12 @@ def test_check_array():
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
     assert_raises(TypeError, check_array, X_csr)
-    # ensure_2d
+    # ensure_2d=False
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert_equal(X_array.ndim, 1)
+    # ensure_2d=True
+    assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
+                         check_array, [0, 1, 2], ensure_2d=True)
     # don't allow ndim > 3
     X_ndim = np.arange(8).reshape(2, 2, 2)
     assert_raises(ValueError, check_array, X_ndim)
@@ -526,3 +530,12 @@ def test_check_dataframe_fit_attribute():
         check_consistent_length(X_df)
     except ImportError:
         raise SkipTest("Pandas not found")
+
+
+def test_suppress_validation():
+    X = np.array([0, np.inf])
+    assert_raises(ValueError, assert_all_finite, X)
+    sklearn.set_config(assume_finite=True)
+    assert_all_finite(X)
+    sklearn.set_config(assume_finite=False)
+    assert_raises(ValueError, assert_all_finite, X)

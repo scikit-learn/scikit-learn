@@ -24,12 +24,12 @@ import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
-from sklearn.utils.random import choice
 from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_not_equal, assert_almost_equal,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
-                                   clean_warning_registry, SkipTest)
+                                   clean_warning_registry, ignore_warnings,
+                                   SkipTest)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -481,6 +481,7 @@ def test_tfidf_vectorizer_setters():
     assert_true(tv._tfidf.sublinear_tf)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_hashing_vectorizer():
     v = HashingVectorizer()
     X = v.transform(ALL_FOOD_DOCS)
@@ -652,6 +653,7 @@ def test_count_binary_occurrences():
     assert_equal(X_sparse.dtype, np.float32)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_hashed_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = ['aaabc', 'abbde']
@@ -785,6 +787,7 @@ def test_vectorizer_pipeline_cross_validation():
     assert_array_equal(cv_scores, [1., 1., 1.])
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
     document = (
@@ -863,8 +866,7 @@ def test_countvectorizer_vocab_sets_when_pickling():
     vocab_words = np.array(['beer', 'burger', 'celeri', 'coke', 'pizza',
                             'salad', 'sparkling', 'tomato', 'water'])
     for x in range(0, 100):
-        vocab_set = set(choice(vocab_words, size=5, replace=False,
-                               random_state=rng))
+        vocab_set = set(rng.choice(vocab_words, size=5, replace=False))
         cv = CountVectorizer(vocabulary=vocab_set)
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
@@ -878,7 +880,7 @@ def test_countvectorizer_vocab_dicts_when_pickling():
                             'salad', 'sparkling', 'tomato', 'water'])
     for x in range(0, 100):
         vocab_dict = dict()
-        words = choice(vocab_words, size=5, replace=False, random_state=rng)
+        words = rng.choice(vocab_words, size=5, replace=False)
         for y in range(0, 5):
             vocab_dict[words[y]] = y
         cv = CountVectorizer(vocabulary=vocab_dict)

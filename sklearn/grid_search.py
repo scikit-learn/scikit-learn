@@ -30,7 +30,6 @@ from .utils.random import sample_without_replacement
 from .utils.validation import _num_samples, indexable
 from .utils.metaestimators import if_delegate_has_method
 from .metrics.scorer import check_scoring
-from .exceptions import ChangedBehaviorWarning
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -438,12 +437,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        if self.scoring is not None and hasattr(self.best_estimator_, 'score'):
-            warnings.warn("The long-standing behavior to use the estimator's "
-                          "score function in {0}.score has changed. The "
-                          "scoring parameter is now used."
-                          "".format(self.__class__.__name__),
-                          ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
