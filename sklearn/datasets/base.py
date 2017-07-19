@@ -12,6 +12,7 @@ import os
 import csv
 import sys
 import shutil
+from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
 import hashlib
@@ -864,3 +865,7 @@ def _fetch_url(url, path, checksum):
     if checksum != _sha256(path):
         raise IOError("{} has an SHA256 hash differing from expected, "
                       "file may be corrupted.".format(path))
+
+
+RemoteFileMetadata = namedtuple('RemoteFileMetadata',
+                                ['path', 'url', 'checksum'])

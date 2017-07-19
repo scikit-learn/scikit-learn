@@ -29,35 +29,40 @@ from os.path import join, exists, isdir
 import logging
 import numpy as np
 
-from .base import get_data_home, _fetch_url
+from .base import get_data_home, _fetch_url, RemoteFileMetadata
 from ..utils import Bunch
-try:
-    import urllib.request as urllib  # for backwards compatibility
-except ImportError:
-    import urllib
 from ..externals.joblib import Memory
 
 from ..externals.six import b
 
 logger = logging.getLogger(__name__)
 
-ARCHIVE_NAME = "lfw.tgz"
-ARCHIVE_URL = "https://ndownloader.figshare.com/files/5976018"
-FUNNELED_ARCHIVE_NAME = "lfw-funneled.tgz"
-FUNNELED_ARCHIVE_URL = "https://ndownloader.figshare.com/files/5976015"
-TARGET_FILENAMES = {
-    'pairsDevTrain.txt': "https://ndownloader.figshare.com/files/5976012",
-    'pairsDevTest.txt': "https://ndownloader.figshare.com/files/5976009",
-    'pairs.txt': "https://ndownloader.figshare.com/files/5976006",
-}
-TARGET_CHECKSUMS = {
-    'pairsDevTrain.txt': ("1d454dada7dfeca0e7eab6f65dc4e97a"
-                          "6312d44cf142207be28d688be92aabfa"),
-    'pairsDevTest.txt': ("7cb06600ea8b2814ac26e946201cdb30"
-                         "4296262aad67d046a16a7ec85d0ff87c"),
-    'pairs.txt': ("ea42330c62c92989f9d7c03237ed5d59"
-                  "1365e89b3e649747777b70e692dc1592"),
-}
+ARCHIVE = RemoteFileMetadata(
+    "lfw.tgz",
+    "https://ndownloader.figshare.com/files/5976018",
+    "000000000000000000")
+
+FUNNELED_ARCHIVE = RemoteFileMetadata(
+    "lfw-funneled.tgz",
+    "https://ndownloader.figshare.com/files/5976015",
+    "b47c8422c8cded889dc5a13418c4bc2abbda121092b3533a83306f90d900100a")
+
+TARGETS = [
+    RemoteFileMetadata(
+        'pairsDevTrain.txt',
+        "https://ndownloader.figshare.com/files/5976012",
+        "1d454dada7dfeca0e7eab6f65dc4e97a6312d44cf142207be28d688be92aabfa"),
+
+    RemoteFileMetadata(
+        'pairsDevTest.txt',
+        "https://ndownloader.figshare.com/files/5976009",
+        "7cb06600ea8b2814ac26e946201cdb304296262aad67d046a16a7ec85d0ff87c"),
+
+    RemoteFileMetadata(
+        'pairs.txt',
+        "https://ndownloader.figshare.com/files/5976006",
+        "ea42330c62c92989f9d7c03237ed5d591365e89b3e649747777b70e692dc1592"),
+]
 
 
 def scale_face(face):
@@ -80,27 +85,24 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
     if funneled:
         data_folder_path = join(lfw_home, "lfw_funneled")
-        archive_path = join(lfw_home, FUNNELED_ARCHIVE_NAME)
-        archive_url = FUNNELED_ARCHIVE_URL
-        expected_archive_checksum = ("b47c8422c8cded889dc5a13418c4bc2a"
-                                     "bbda121092b3533a83306f90d900100a")
+        archive_path = join(lfw_home, FUNNELED_ARCHIVE.path)
+        archive_url = FUNNELED_ARCHIVE.url
+        expected_archive_checksum = FUNNELED_ARCHIVE.checksum
     else:
         data_folder_path = join(lfw_home, "lfw")
-        archive_path = join(lfw_home, ARCHIVE_NAME)
-        archive_url = ARCHIVE_URL
-        expected_archive_checksum = "a17d05bd522c52d84eca14327a23d494"
+        archive_path = join(lfw_home, ARCHIVE.path)
+        archive_url = ARCHIVE.url
+        expected_archive_checksum = ARCHIVE.checksum
 
     if not exists(lfw_home):
         makedirs(lfw_home)
 
-    for target_filename, url, expected_checksum in zip(
-            TARGET_FILENAMES.keys(), TARGET_FILENAMES.values(),
-            TARGET_CHECKSUMS.values()):
-        target_filepath = join(lfw_home, target_filename)
+    for target in TARGETS:
+        target_filepath = join(lfw_home, target.path)
         if not exists(target_filepath):
             if download_if_missing:
-                logger.warning("Downloading LFW metadata: %s", url)
-                _fetch_url(url, target_filepath, expected_checksum)
+                logger.warning("Downloading LFW metadata: %s", target.url)
+                _fetch_url(target.url, target_filepath, target.checksum)
             else:
                 raise IOError("%s is missing" % target_filepath)
 
