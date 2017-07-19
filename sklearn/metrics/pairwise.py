@@ -222,9 +222,10 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     >>> euclidean_distances(X, [[0, 0]])
     array([[ 1.        ],
            [ 1.41421356]])
+
     See also
     --------
-    paired_distances : distances betweens pairs of elements of X and Y.
+    paired_distances : distances between pairs of elements of X and Y.
     """
     X, Y = check_pairwise_arrays(X, Y)
 
@@ -324,6 +325,7 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     >>> masked_euclidean_distances(X, X)
     array([[ 0.,  1.41421356],
            [ 1.41421356,  0.]])
+
     >>> # get distance to origin
     >>> masked_euclidean_distances(X, [[0, 0]])
     array([[ 1.        ],

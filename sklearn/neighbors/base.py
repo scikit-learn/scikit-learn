@@ -500,14 +500,15 @@ class KNeighborsMixin(object):
         >>> neigh = NearestNeighbors(n_neighbors=2, metric="euclidean")
         >>> neigh.fit(samples, kill_missing=False) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30,...)
-        >>> print(neigh.masked_kneighbors(n_neighbors=2,
-        >>>                    return_distance=False)) # doctest: +ELLIPSIS
+        >>> N = neigh.masked_kneighbors(n_neighbors=2, return_distance=False)
+        >>> print(N) # doctest: +ELLIPSIS
         (array([[3, 1], [3, 2], [3, 1], [2, 1]])...)
 
         >>> X = [[0, nan, 1]]
-        >>> neigh.masked_kneighbors([[0, nan, 1]], 2,
-        >>>                return_distance=False)  # doctest: +ELLIPSIS
+        >>> N2 = neigh.masked_kneighbors(X, 2, return_distance=False)
+        >>> print(N2) # doctest: +ELLIPSIS
         (array([[1, 3]])...)
+
         """
         if self._fit_method is None:
             raise NotFittedError("Must fit neighbors before querying.")
