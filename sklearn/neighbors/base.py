@@ -17,6 +17,7 @@ from .kd_tree import KDTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..metrics.pairwise import _MASKED_SUPPORTED_METRICS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
@@ -158,6 +159,25 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._fit_method = None
 
     def _fit(self, X, kill_missing=True):
+        if not kill_missing:
+            if self.metric not in _MASKED_SUPPORTED_METRICS:
+                raise ValueError(
+                    "Metric {0} is currently not supported for "
+                    "data containing missing values.".format(self.metric)
+                )
+
+            _MASKED_SUPPORTED_ALGORITHMS = ["brute"]
+            if self.algorithm not in _MASKED_SUPPORTED_ALGORITHMS:
+                if self.algorithm == "auto":
+                    pass
+                else:
+                    warnings.warn(
+                        "{0} algorithm is currently not supported for "
+                        "data containing missing values. "
+                        "Reverting to a supported algorithm.".
+                        format(self.algorithm))
+                    self.algorithm = _MASKED_SUPPORTED_ALGORITHMS[0]
+
         if self.metric_params is None:
             self.effective_metric_params_ = {}
         else:
@@ -203,23 +223,30 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # # copy=True if missing accepted as they will be replaced by 0
         # copy = True if kill_missing is False else False
-        X = check_array(X, accept_sparse='csr', force_all_finite=kill_missing)
+        X = check_array(X, accept_sparse='csr',
+                        force_all_finite=kill_missing)
 
         n_samples = X.shape[0]
         if n_samples == 0:
             raise ValueError("n_samples must be greater than 0")
 
         if issparse(X):
-            if self.algorithm not in ('auto', 'brute'):
-                warnings.warn("cannot use tree with sparse input: "
-                              "using brute force")
-            if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
-                raise ValueError("metric '%s' not valid for sparse input"
-                                 % self.effective_metric_)
-            self._fit_X = X.copy()
-            self._tree = None
-            self._fit_method = 'brute'
-            return self
+            if not kill_missing:
+                raise ValueError(
+                    "Nearest neighbor algorithm does not currently support"
+                    "the use of sparse matrices."
+                )
+            else:
+                if self.algorithm not in ('auto', 'brute'):
+                    warnings.warn("cannot use tree with sparse input: "
+                                  "using brute force")
+                if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
+                    raise ValueError("metric '%s' not valid for sparse input"
+                                     % self.effective_metric_)
+                self._fit_X = X.copy()
+                self._tree = None
+                self._fit_method = 'brute'
+                return self
 
         self._fit_method = self.algorithm
         self._fit_X = X
@@ -272,8 +299,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
 
-    def kneighbors(self, X=None, n_neighbors=None, return_distance=True,
-                   kill_missing=True, missing_values="NaN", copy=None):
+    def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
         """Finds the K-neighbors of a point.
 
         Returns indices of and distances to the neighbors of each point.
@@ -292,15 +318,6 @@ class KNeighborsMixin(object):
 
         return_distance : boolean, optional. Defaults to True.
             If False, distances will not be returned
-
-        kill_missing : boolean, optional
-            Allow missing values (e.g., NaN)
-
-        missing_values : String, optional
-            String representation of missing value
-
-        copy : boolean, optional
-            Make and use a deep copy of X
 
         Returns
         -------
@@ -345,8 +362,7 @@ class KNeighborsMixin(object):
             query_is_train = False
             # copy=True if missing accepted as they will be replaced by 0
             # copy = True if kill_missing is False else False
-            X = check_array(X, accept_sparse='csr',
-                            force_all_finite=kill_missing)
+            X = check_array(X, accept_sparse='csr')
         else:
             query_is_train = True
             X = self._fit_X
@@ -364,19 +380,12 @@ class KNeighborsMixin(object):
         n_samples, _ = X.shape
         sample_range = np.arange(n_samples)[:, None]
 
-        # copy=True if missing accepted and copy is None
-        if copy is None:
-            copy = True if kill_missing is False else False
-
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          n_jobs=n_jobs, squared=True,
-                                          kill_missing=kill_missing,
-                                          missing_values=missing_values,
-                                          copy=copy)
+                                          n_jobs=n_jobs, squared=True)
             else:
                 dist = pairwise_distances(
                     X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
@@ -413,6 +422,171 @@ class KNeighborsMixin(object):
                 result = np.vstack(result)
         else:
             raise ValueError("internal: _fit_method not recognized")
+
+        if not query_is_train:
+            return result
+        else:
+            # If the query data is the same as the indexed data, we would like
+            # to ignore the first nearest neighbor of every sample, i.e
+            # the sample itself.
+            if return_distance:
+                dist, neigh_ind = result
+            else:
+                neigh_ind = result
+
+            sample_mask = neigh_ind != sample_range
+
+            # Corner case: When the number of duplicates are more
+            # than the number of neighbors, the first NN will not
+            # be the sample, but a duplicate.
+            # In that case mask the first duplicate.
+            dup_gr_nbrs = np.all(sample_mask, axis=1)
+            sample_mask[:, 0][dup_gr_nbrs] = False
+
+            neigh_ind = np.reshape(
+                neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
+
+            if return_distance:
+                dist = np.reshape(
+                    dist[sample_mask], (n_samples, n_neighbors - 1))
+                return dist, neigh_ind
+            return neigh_ind
+
+    def masked_kneighbors(self, X=None, n_neighbors=None, return_distance=True,
+                          missing_values="NaN", copy=True):
+        """Finds the K-neighbors of a point, even when they contain NaN values.
+
+        Returns indices of and distances to the neighbors of each point.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
+
+        n_neighbors : int
+            Number of neighbors to get (default is the value
+            passed to the constructor).
+
+        return_distance : boolean, optional. Defaults to True.
+            If False, distances will not be returned
+
+        missing_values : "NaN" or integer, optional. Default is "NaN".
+            Representation of missing value
+
+        copy : boolean, optional. Default is True.
+            Create and use a deep copy of X
+
+        Returns
+        -------
+        dist : array
+            Array representing the lengths to points, only present if
+            return_distance=True
+
+        ind : array
+            Indices of the nearest points in the population matrix.
+
+        Examples
+        --------
+        In the following example, we construct a NeighborsClassifier
+        class from an array representing our data set and ask who's
+        the closest point to [0, nan, 1], where "nan" represents a
+        missing value.
+        >>> nan = float("nan")
+        >>> samples = [[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]]
+        >>> from sklearn.neighbors import NearestNeighbors
+        >>> neigh = NearestNeighbors(n_neighbors=2, metric="euclidean")
+        >>> neigh.fit(samples, kill_missing=False) # doctest: +ELLIPSIS
+        NearestNeighbors(algorithm='auto', leaf_size=30,...)
+        >>> print(neigh.masked_kneighbors(n_neighbors=2,
+        >>>                    return_distance=False)) # doctest: +ELLIPSIS
+        (array([[3, 1], [3, 2], [3, 1], [2, 1]])...)
+
+        >>> X = [[0, nan, 1]]
+        >>> neigh.masked_kneighbors([[0, nan, 1]], 2,
+        >>>                return_distance=False)  # doctest: +ELLIPSIS
+        (array([[1, 3]])...)
+        """
+        if self._fit_method is None:
+            raise NotFittedError("Must fit neighbors before querying.")
+
+        if n_neighbors is None:
+            n_neighbors = self.n_neighbors
+
+        if X is not None:
+            query_is_train = False
+            X = check_array(X, accept_sparse='csr',
+                            force_all_finite=False, copy=copy)
+        else:
+            query_is_train = True
+            X = self._fit_X
+            # Include an extra neighbor to account for the sample itself being
+            # returned, which is removed later
+            n_neighbors += 1
+
+        train_size = self._fit_X.shape[0]
+        if n_neighbors > train_size:
+            raise ValueError(
+                "Expected n_neighbors <= n_samples, "
+                " but n_samples = %d, n_neighbors = %d" %
+                (train_size, n_neighbors)
+            )
+        n_samples, _ = X.shape
+        sample_range = np.arange(n_samples)[:, None]
+
+        n_jobs = _get_n_jobs(self.n_jobs)
+        if self._fit_method == 'brute':
+            # for efficiency, use squared euclidean distances
+            if self.effective_metric_ == 'euclidean':
+                dist = pairwise_distances(X, self._fit_X, 'euclidean',
+                                          n_jobs=n_jobs, squared=True,
+                                          kill_missing=False,
+                                          missing_values=missing_values,
+                                          copy=copy)
+            else:
+                # dist = pairwise_distances(
+                #     X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
+                #     **self.effective_metric_params_)
+                raise ValueError(
+                    "Only the following metrics are currently supported for "
+                    "data with missing values:{0}".
+                    format(_MASKED_SUPPORTED_METRICS)
+                )
+            neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
+            neigh_ind = neigh_ind[:, :n_neighbors]
+            # argpartition doesn't guarantee sorted order, so we sort again
+            neigh_ind = neigh_ind[
+                sample_range, np.argsort(dist[sample_range, neigh_ind])]
+
+            if return_distance:
+                if self.effective_metric_ == 'euclidean':
+                    result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
+                else:
+                    result = dist[sample_range, neigh_ind], neigh_ind
+            else:
+                result = neigh_ind
+
+        # elif self._fit_method in ['ball_tree', 'kd_tree']:
+        #     if issparse(X):
+        #         raise ValueError(
+        #             "%s does not work with sparse matrices."
+        #             "Densify the data, "
+        #             "or set algorithm='brute'" % self._fit_method)
+        #     result = Parallel(n_jobs, backend='threading')(
+        #         delayed(self._tree.query, check_pickle=False)(
+        #             X[s], n_neighbors, return_distance)
+        #         for s in gen_even_slices(X.shape[0], n_jobs)
+        #     )
+        #     if return_distance:
+        #         dist, neigh_ind = tuple(zip(*result))
+        #         result = np.vstack(dist), np.vstack(neigh_ind)
+        #     else:
+        #         result = np.vstack(result)
+        else:
+            raise ValueError("internal: _fit_method not recognized for data "
+                             "containing missing")
 
         if not query_is_train:
             return result

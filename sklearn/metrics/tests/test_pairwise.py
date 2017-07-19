@@ -17,6 +17,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.externals.six import iteritems
 
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import masked_euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
@@ -55,6 +56,17 @@ def test_pairwise_distances():
     Y = rng.random_sample((2, 4))
     S = pairwise_distances(X, Y, metric="euclidean")
     S2 = euclidean_distances(X, Y)
+    assert_array_almost_equal(S, S2)
+    # Euclidean dist. (masked) should be equivalent to calling the function.
+    X = rng.random_sample((5, 4))
+    S = pairwise_distances(X, metric="euclidean", kill_missing=False)
+    S2 = masked_euclidean_distances(X)
+    assert_array_almost_equal(S, S2)
+    # Euclidean distance, with Y != X.
+    Y = rng.random_sample((2, 4))
+    S = pairwise_distances(X, Y, metric="euclidean",
+                           kill_missing=False)
+    S2 = masked_euclidean_distances(X, Y)
     assert_array_almost_equal(S, S2)
     # Test with tuples as X and Y
     X_tuples = tuple([tuple([v for v in row]) for row in X])
@@ -407,13 +419,13 @@ def test_euclidean_distances():
     assert_greater(np.max(np.abs(wrong_D - D1)), .01)
 
 
-def test_euclidean_distances_with_missing():
+def test_masked_euclidean_distances():
     # first check that we get right answer with missing values for X
     X = np.array([[1.,   5.,   7.,   5.,  10.],
                   [8., 2., 4., np.nan, 8.],
                   [5., np.nan, 5., np.nan, 1.],
                   [8., np.nan, np.nan, np.nan, np.nan]])
-    D1 = euclidean_distances(X, kill_missing=False, missing_values="NaN")
+    D1 = masked_euclidean_distances(X, missing_values="NaN")
 
     D2 = np.array([[0.,   9.42072184,  12.97433364,  15.65247584],
                   [9.42072184,   0.,   9.91631652,   0.],
@@ -435,7 +447,7 @@ def test_euclidean_distances_with_missing():
                    [5., 5., 6.70820393],
                    [2.23606798, 13.41640786, 8.94427191]])
 
-    D4 = euclidean_distances(X, Y, kill_missing=False, missing_values="NaN")
+    D4 = masked_euclidean_distances(X, Y,  missing_values="NaN")
 
     assert_array_almost_equal(D3, D4)
 

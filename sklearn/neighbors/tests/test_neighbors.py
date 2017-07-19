@@ -88,6 +88,66 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
             assert_array_almost_equal(results[i][1], results[i + 1][1])
 
 
+def test_masked_unsupervised_kneighbors():
+    # Test 1
+    X = np.array([[np.nan, 3., 7., np.nan],
+                  [6., 3., 7., 2.],
+                  [7., 3., 4., 4.],
+                  [2., 7., 7., 1.],
+                  [np.nan, 2., np.nan, 4.]], dtype=np.float32)
+
+    Y = np.array([[3., 1., 7., np.nan],
+                  [1., 3., 1., 6.],
+                  [np.nan, 1., np.nan, 5.],
+                  [3., 1., 3., 3.],
+                  [2., 3., 1., 9.]], dtype=np.float32)
+
+    neigh = neighbors.NearestNeighbors(2, metric="euclidean")
+    neigh.fit(X,  kill_missing=False)
+    X_neigh = neigh.masked_kneighbors(n_neighbors=2, return_distance=False)
+    XY_neigh = neigh.masked_kneighbors(Y, 2, return_distance=False)
+
+    # Expected outcome
+    N1 = np.array(
+        [[1, 4],
+            [0, 4],
+            [4, 1],
+            [0, 1],
+            [2, 0]])
+
+    N2 = np.array(
+        [[4, 0],
+            [4, 2],
+            [4, 2],
+            [4, 2],
+            [4, 2]])
+
+    assert_array_equal(X_neigh, N1)
+    assert_array_equal(XY_neigh, N2)
+
+    # Test 2
+    nan = float("nan")
+    samples = [[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]]
+    neigh = neighbors.NearestNeighbors(n_neighbors=2, metric="euclidean")
+
+    neigh.fit(samples, kill_missing=False)
+    X2_neigh = neigh.masked_kneighbors(n_neighbors=2, return_distance=False)
+
+    XY2_neigh = neigh.masked_kneighbors([[0, nan, 1]], 2,
+                                        return_distance=False)
+
+    # Expected outcome
+    N3 = np.array(
+        [[3, 1],
+         [3, 2],
+         [3, 1],
+         [2, 1]])
+    N4 = np.array([[1, 3]])
+
+    assert_array_equal(X2_neigh, N3)
+    assert_array_equal(XY2_neigh, N4)
+
+
 def test_unsupervised_inputs():
     # test the types of valid input into NearestNeighbors
     X = rng.random_sample((10, 3))
