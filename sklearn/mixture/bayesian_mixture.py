@@ -19,9 +19,8 @@ from .gaussian_mixture import _compute_precision_cholesky
 from .gaussian_mixture import _estimate_gaussian_parameters
 from .gaussian_mixture import _estimate_log_gaussian_prob
 from ..exceptions import ConvergenceWarning
-from ..utils import check_array, check_random_state, gen_batches
+from ..utils import check_array, check_random_state
 from ..utils.validation import check_is_fitted
-from ..externals.joblib import Parallel, delayed
 
 
 def _log_dirichlet_norm(dirichlet_concentration):
@@ -357,7 +356,7 @@ class BayesianGaussianMixture(BaseMixture):
                  mean_precision_prior=None, mean_prior=None,
                  degrees_of_freedom_prior=None, covariance_prior=None,
                  random_state=None, warm_start=False, verbose=0,
-                 verbose_interval=10, n_jobs=1, batch_size=0, learning_rate=1):
+                 verbose_interval=10):
         super(BayesianGaussianMixture, self).__init__(
             n_components=n_components, tol=tol, reg_covar=reg_covar,
             max_iter=max_iter, n_init=n_init, init_params=init_params,
@@ -371,8 +370,6 @@ class BayesianGaussianMixture(BaseMixture):
         self.mean_prior = mean_prior
         self.degrees_of_freedom_prior = degrees_of_freedom_prior
         self.covariance_prior = covariance_prior
-        self.n_jobs = n_jobs
-        self.batch_size = batch_size
 
     def _check_parameters(self, X):
         """Check that the parameters are well defined.

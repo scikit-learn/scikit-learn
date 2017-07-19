@@ -30,6 +30,7 @@ import matplotlib as mpl
 
 from sklearn.datasets import make_blobs
 from sklearn.mixture import BayesianGaussianMixture
+from sklearn.externals.six.moves import xrange
 
 print(__doc__)
 
