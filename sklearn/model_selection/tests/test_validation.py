@@ -1306,15 +1306,13 @@ def test_permutation_test_score_pandas():
 
 def test_cross_val_score_labels_paramter():
     # check if adding a classes argument to estimator passes it to the scorer
-    X, y = make_blobs(n_samples=90, n_features=2, centers=3, shuffle=False)
-    clf1 = GaussianNB()
-    clf2 = GaussianNB(classes=[0, 1, 2], priors=[0.33, 0.33, 0.34])
+    X, y = make_blobs(n_samples=20, n_features=2, centers=2, shuffle=False)
+    clf = GaussianNB()
+    scores = cross_val_score(clf, X, y, scoring='f1_macro')
 
-    scores1 = cross_val_score(clf1, X, y,
-                              cv=KFold(n_splits=2, shuffle=False),
-                              scoring='f1_macro')
-    scores2 = cross_val_score(clf2, X, y,
-                              cv=KFold(n_splits=2, shuffle=False),
-                              scoring='f1_macro')
-    assert_greater(scores1[0], scores2[0])
-    assert_greater(scores1[1], scores2[1])
+    # iterate over 2 - 5 classes and see that the scores are multiplied by
+    # right factor
+    for num_classes in range(2, 6):
+        clf = GaussianNB(classes=list(range(num_classes)))
+        scores2 = cross_val_score(clf, X, y, scoring='f1_macro')
+        assert_array_almost_equal(scores*2/num_classes, scores2)
