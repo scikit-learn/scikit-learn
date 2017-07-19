@@ -84,7 +84,7 @@ evaluated and the best combination is retained.
       dataset. This is the best practice for evaluating the performance of a
       model with grid search.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation`
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
       for an example of :class:`GridSearchCV` being used to evaluate multiple
       metrics simultaneously.
 
@@ -183,7 +183,7 @@ the ``best_estimator_`` on the whole dataset. If the search should not be
 refit, set ``refit=False``. Leaving refit to the default value ``None`` will
 result in an error when using multiple metrics.
 
-See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation`
+See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
 for an example usage.
 
 Composite estimators and parameter spaces
