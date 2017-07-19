@@ -47,7 +47,7 @@ class Opencv_binary_predictor:
         ----------
         features: the samples to classify. Type: numpy.ndarray of shape (n, m).
         '''
-        return self._estimate(features, self._force_hard_decision__flags)
+        return self._estimate(features, flags=self._force_hard_decision__flags)
 
 
     def decision_function(self, features):
@@ -173,7 +173,7 @@ class Opencv_sklearn_wrapper__knn(Opencv_sklearn_wrapper):
     pass
 
 
-def make_sklearn_wrapper(model=None, class_name=None):
+def wrap(model=None, class_name=None):
     '''Constructs the wrapper for the Opencv's binary classifiers.
     Technically, this implements a simple dispatcher over the Opencv's entire classifier set.
 
@@ -234,7 +234,7 @@ class _Opencv_sklearn_wrapper__tests(unittest.TestCase):
         warnings.filterwarnings('ignore')
         try:
             for model in self._supported_models:
-                wrapper = Opencv_sklearn_wrapper(model_class=model)
+                wrapper = wrap(class_name=model)
 
                 predictions = cross_val_predict(wrapper, samples, labels)
                 report = classification_report(labels, predictions)
