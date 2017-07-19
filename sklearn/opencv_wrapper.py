@@ -21,83 +21,44 @@ from sklearn.base import BaseEstimator
 
 __all__ = ['wrap']
 
-class Opencv_binary_predictor:
-    """Hard/soft decisions of opencv binary classifiers.
-
-    Notes
-    ---------------
-    Positive category is assumed to be at index 1.
-    """
-
+class _Opencv_predictor_base:
+    """Base class for scikit-learn compatible opencv models."""
     _positive_class_idx = 1
 
-
     def _estimate(self, features, flags=None):
-        if flags is None:
-            raise RuntimeError('No flags provided to distinguish the hard/soft decision mode.')
-
         _, outputs = self.opencv_model.predict(features, flags=flags)
+
         return outputs.ravel()
 
-
     def predict(self, features):
-        '''Returns the hard classification decision (aka class label).
+        """Returns the hard prediction."""
 
-        Parameters
-        ----------
-        features: the samples to classify. Type: numpy.ndarray of shape (n, m).
-        '''
-        return self._estimate(features, flags=self._force_hard_decision__flags)
-
+        return self._estimate(features, flags=self._force_hard_decision)
 
     def decision_function(self, features):
-        '''Returns the soft classification decision.
-         Technically, it must utilizy the classifier's "raw" output like listed below:
-         * Random Forest: votes portion casted for the positive category.
-         * SVM: oriented distance to the separating hyperplane.
-         * Boosted: the weighted sum of the weak decisions (-1 for negative category, +1 for positive one).
-         * KNN: neighbour's votes portion casted for the positive category.
+        """Returns the soft decision."""
 
-        Parameters
-        ----------
-        features: the samples to classify. Type: numpy.ndarray of shape (n, m).
-        '''
-        return self._estimate(features, self._force_soft_decision__flags)
-    pass
+        return self._estimate(features, flags=self._force_soft_decision)
 
 
-class Opencv_sklearn_wrapper(BaseEstimator, Opencv_binary_predictor):
-    '''Base class for all Opencv wrapper to scikit-learn.
-    Any wrapper implementations for Opencv models must be derived.
-
-    Technical Notes
-    ---------------
-    * Member classes_ and method predict_proba are required by sklearn.calibration.CalibratedClassifierCV.
-    * This __init__ is required by sklearn.base.clone function to reconstruct the estimator by its parameters passed as
-      explicit keyword arguments. As well, it has to store the input model parameters (including model_class) because
-      the sklearn.base.clone checks not for parameter equivalence but for object exactness.
-    '''
-
+class _Opencv_predictor(BaseEstimator, _Opencv_predictor_base):
+    """Scikit-learn compatible wrapper for opencv models."""
     __slots__ = ['opencv_model', 'classes_']
-    _estimator_type = 'classifier'  # To pass sklearn.base.is_classifier check.
+    _estimator_type = 'classifier'
 
-
-    def __init__(self, trained_model=None, model_class=None, **kwargs):
-        if not model_class and not trained_model:
-            raise RuntimeError('Cannot create a wrapper for null model.')
+    def __init__(self, model=None, class_name=None, **kwargs):
+        assert model or class_name
 
         self.__params = kwargs
-        self.__class_of_opencv_model = trained_model.__class__.__name__ if not model_class else model_class
-        self.opencv_model = trained_model
+        self.__class_of_opencv_model = model.__class__.__name__ if not class_name else class_name
+        self.opencv_model = model
 
         if not self.opencv_model:
-            _, name = model_class.split('ml_', 1)
+            _, name = class_name.split('ml_', 1)
             self.opencv_model = getattr(cv2.ml, name + '_create')()
         for k, v in self.__params.items():
-            if k != 'model_class':
+            if k != 'class_name':
                 getattr(self.opencv_model, 'set' + k)(v)
-        return
-
 
     def fit(self, features, labels, sample_weight=None):
         _, dim = features.shape
@@ -111,9 +72,8 @@ class Opencv_sklearn_wrapper(BaseEstimator, Opencv_binary_predictor):
         self.classes_ = np.unique(labels)
         return self
 
-
     def get_params(self, deep=True):
-        params = {'model_class': self.__class_of_opencv_model}
+        params = {'class_name': self.__class_of_opencv_model}
         if not self.__params:
             self.__params = {}
 
@@ -127,38 +87,27 @@ class Opencv_sklearn_wrapper(BaseEstimator, Opencv_binary_predictor):
 
         params.update(self.__params)
         return params
-    pass
 
 
-
-class Opencv_sklearn_wrapper__dtree(Opencv_sklearn_wrapper):
-    '''Wraps the Random Forest/Boosted decision trees.'''
-    _force_hard_decision__flags = cv2.ml.DTREES_PREDICT_MAX_VOTE
-    _force_soft_decision__flags = cv2.ml.DTREES_PREDICT_SUM
-    pass
+class _Opencv_dtree(_Opencv_predictor):
+    _force_hard_decision = cv2.ml.DTREES_PREDICT_MAX_VOTE
+    _force_soft_decision = cv2.ml.DTREES_PREDICT_SUM
 
 
-class Opencv_sklearn_wrapper__svm(Opencv_sklearn_wrapper):
-    '''Wraps the SVM.'''
-    _force_hard_decision__flags = False
-    _force_soft_decision__flags = True
+class _Opencv_svm(_Opencv_predictor):
+    _force_hard_decision = False
+    _force_soft_decision = True
+
+    def __init__(self, class_name='ml_SVM', **kwargs):
+        super(_Opencv_svm, self).__init__(class_name='ml_SVM', **kwargs)
 
 
-    def __init__(self, model_class='ml_SVM', **kwargs):
-        super(Opencv_sklearn_wrapper__svm, self).__init__(model_class=model_class, **kwargs)
-        return
-    pass
+class _Opencv_knn(_Opencv_predictor):
+    _force_hard_decision = True
+    _force_soft_decision = False
 
-
-class Opencv_sklearn_wrapper__knn(Opencv_sklearn_wrapper):
-    '''Opencv-to-sklearn wrapper for KNN.'''
-    _force_hard_decision__flags = True
-    _force_soft_decision__flags = False
-
-    def __init__(self, model_class='ml_KNearest', **kwargs):
-        super(Opencv_sklearn_wrapper__knn, self).__init__(model_class=model_class, **kwargs)
-        return
-
+    def __init__(self, class_name='ml_KNearest', **kwargs):
+        super(_Opencv_knn, self).__init__(class_name='ml_KNearest', **kwargs)
 
     def _estimate(self, features, flags=None):
         if flags:
@@ -170,43 +119,35 @@ class Opencv_sklearn_wrapper__knn(Opencv_sklearn_wrapper):
                                           1,
                                           neighbour_responses.astype(np.uint32))
         return outputs.ravel()
-    pass
 
 
 def wrap(model=None, class_name=None):
-    '''Constructs the wrapper for the Opencv's binary classifiers.
-    Technically, this implements a simple dispatcher over the Opencv's entire classifier set.
-
-    Parameters
-    ----------
-    model: the instance of any instance of Opencv's binary classifier.
-    class_name: the class name of Opencv's model.
-    '''
+    """Wraps the Opencv's classifiers."""
     name = model.__class__.__name__ if model else class_name
+
     if name in ['ml_Boost', 'ml_RTrees']:
-        wrapper = Opencv_sklearn_wrapper__dtree(model_class=name)
+        wrapper = _Opencv_dtree(class_name=name)
     elif name == 'ml_SVM':
-        wrapper = Opencv_sklearn_wrapper__svm(model_class=name)
+        wrapper = _Opencv_svm()
     elif name == 'ml_KNearest':
-        wrapper = Opencv_sklearn_wrapper__knn()
+        wrapper = _Opencv_knn()
     else:
-        raise RuntimeError('Both of keyword arguments "model" and "class_name" are None or \
-the model is unsupported')
+        raise AssertionError('{} is not supported.'.format(name))
 
     wrapper.opencv_model = model
     return wrapper
 
 
 
-class _Opencv_sklearn_wrapper__tests(unittest.TestCase):
+class _Opencv_predictor_tests(unittest.TestCase):
     _supported_models = ['ml_Boost', 'ml_RTrees', 'ml_SVM', 'ml_KNearest']
 
 
-    def test__sklearn_base(self):
+    def test_sklearn_base_functions(self):
         from sklearn.base import clone, is_classifier
 
         for model in self._supported_models:
-            wrapper = Opencv_sklearn_wrapper(model_class=model)
+            wrapper = wrap(class_name=model)
 
             self.assertTrue(issubclass(wrapper.__class__, BaseEstimator))
             self.assertTrue(is_classifier(wrapper))
@@ -246,34 +187,3 @@ class _Opencv_sklearn_wrapper__tests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-"""
-Note, no prior assumptions about classifier's algorithm behind is made.
-
-== MOTIVATION ==
-Want to get the mix of scikit-learn framework power (e.g. cross-validation, posterior calibration) and
-the efortless deploy to C++ for the trained Opencv models.
-
-Unfortunately, the inheritance from scikit-learn models (like KNeighborsClassifier) is not an
-option due the reasons listed below:
-* A huge number of methods to override.
-* Method-set to override distinguishes from a model to a model.
-
-
-== EXAMPLE ==
-    import opencv_sklearn_wrapper
-    from sklearn.metrics import classification_report
-    from sklearn.model_selection import class_val_predict
-
-    model = cv2.ml.Boost_create()
-    classifier = wrap(model)
-    ...
-    predictions = cross_val_predict(classifier, dataset, labels, cv=5)
-    print(classification_report(labels, predictions))
-
-== TESTING ==
-* Use command one-liner below to run the unit tests:
-    python opencv_sklearn_wrapper.py -v
-
-* [07/14/2017] Tested for sklearn 0.18.1 + Opencv 3.1.0 + both of Python 2.7.12 and Python 3.5.2.
-"""
