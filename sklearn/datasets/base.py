@@ -42,7 +42,7 @@ def get_data_home(data_home=None):
     By default the data dir is set to a folder named 'scikit_learn_data' in the
     user home folder.
 
-    " "lternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
+    Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
     variable or programmatically by giving an explicit folder path. The '~'
     symbol is expanded to the user home folder.
 
