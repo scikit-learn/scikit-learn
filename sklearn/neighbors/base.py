@@ -503,9 +503,9 @@ class KNeighborsMixin(object):
         >>> N = neigh.masked_kneighbors(n_neighbors=2, return_distance=False)
         >>> print(N) # doctest: +ELLIPSIS
         [[3 1]
-        [3 2]
-        [3 1]
-        [2 1]]
+         [3 2]
+         [3 1]
+         [2 1]]
 
         >>> X = [[0, nan, 1]]
         >>> N2 = neigh.masked_kneighbors(X, 2, return_distance=False)
