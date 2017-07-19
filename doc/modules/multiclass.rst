@@ -64,20 +64,60 @@ Below is a summary of the classifiers supported by scikit-learn
 grouped by strategy; you don't need the meta-estimators in this class
 if you're using one of these, unless you want custom multiclass behavior:
 
-  - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
-    :ref:`LDA and QDA <lda_qda>`,
-    :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-    :ref:`Nearest Neighbors <neighbors>`,
-    setting ``multi_class='multinomial'`` in
-    :class:`sklearn.linear_model.LogisticRegression`.
-  - Support multilabel: :ref:`Decision Trees <tree>`,
-    :ref:`Random Forests <forest>`, :ref:`Nearest Neighbors <neighbors>`.
-  - One-Vs-One: :class:`sklearn.svm.SVC`.
-  - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
+  - Inherently multiclass:
+    * :class: `AdaBoostClassifier`
+    * :class: `BaggingClassifier`
+    * :class: `BernoulliNB`
+    * :class: `CalibratedClassifierCV`
+    * :class: `DecisionTreeClassifier`
+    * :class: `ExtraTreeClassifier`
+    * :class: `ExtraTreesClassifier`
+    * :class: `GaussianNB`
+    * :class: `GaussianProcessClassifier`
+    * :class: `GradientBoostingClassifier`
+    * :class: `KNeighborsClassifier`
+    * :class: `LabelPropagation`
+    * :class: `LabelSpreading`
+    * :class: `LinearDiscriminantAnalysis`
+    * :class: `LinearSVC`
+    * :class: `LogisticRegression`
+    * :class: `LogisticRegressionCV`
+    * :class: `MLPClassifier`
+    * :class: `NearestCentroid`
+    * :class: `NuSVC`
+    * :class: `PassiveAggressiveClassifier`
+    * :class: `Perceptron`
+    * :class: `QuadraticDiscriminantAnalysis`
+    * :class: `RadiusNeighborsClassifier`
+    * :class: `RandomForestClassifier`
+    * :class: `RidgeClassifier`
+    * :class: `RidgeClassifierCV`
+    * :class: `SGDClassifier`
+    * :class: `SVC`
 
-Some estimators also support multioutput-multiclass classification
-tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-:ref:`Nearest Neighbors <neighbors>`.
+  - Support multilabel:
+    * :class: `DecisionTreeClassifier`
+    * :class: `ExtraTreeClassifier`
+    * :class: `ExtraTreesClassifier`
+    * :class: `KNeighborsClassifier`
+    * :class: `MLPClassifier`
+    * :class: `RadiusNeighborsClassifier`
+    * :class: `RandomForestClassifier`
+    * :class: `RidgeClassifierCV`
+
+  - Support multiclass-multioutput:
+    * :class: `DecisionTreeClassifier`
+    * :class: `ExtraTreeClassifier`
+    * :class: `ExtraTreesClassifier`
+    * :class: `KNeighborsClassifier`
+    * :class: `RadiusNeighborsClassifier`
+    * :class: `RandomForestClassifier`
+
+  - One-Vs-One:
+    * :class:`sklearn.svm.SVC`.
+
+  - One-Vs-All:
+    * all linear models except :class:`sklearn.svm.SVC`.
 
 .. warning::
 
