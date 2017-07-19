@@ -53,12 +53,12 @@ _DOCSTRING_IGNORES = [
 
 # Methods where y param should be ignored if y=None by default
 _METHODS_IGNORE_NONE_Y = [
-        'fit',
-        'score',
-        'fit_predict',
-        'fit_transform',
-        'partial_fit',
-        'predict'
+    'fit',
+    'score',
+    'fit_predict',
+    'fit_transform',
+    'partial_fit',
+    'predict'
 ]
 
 
@@ -70,9 +70,8 @@ def test_docstring_parameters():
         import numpydoc  # noqa
         assert sys.version_info >= (3, 5)
     except (ImportError, AssertionError):
-        raise SkipTest(
-            """numpydoc is required to test the docstrings,
-            as well as python version >= 3.5""")
+        raise SkipTest("numpydoc is required to test the docstrings, "
+                       "as well as python version >= 3.5")
 
     from numpydoc import docscrape
 
