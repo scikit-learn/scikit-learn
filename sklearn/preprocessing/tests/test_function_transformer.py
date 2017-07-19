@@ -135,10 +135,10 @@ def test_check_inverse():
 
     X_list = [X_dense,
               sparse.csr_matrix(X_dense),
-              sparse.csc_matrix(X_dense),
-              sparse.coo_matrix(X_dense)]
+              sparse.csc_matrix(X_dense)]
 
     for X in X_list:
+        print(X)
         if sparse.issparse(X):
             accept_sparse = True
         else:
