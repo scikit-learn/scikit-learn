@@ -235,11 +235,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples in the number of samples and
+            Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
         Y : array-like, shape = [n_samples, n_targets]
-            Target vectors, where n_samples in the number of samples and
+            Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
 
@@ -375,11 +375,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples in the number of samples and
+            Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
         Y : array-like, shape = [n_samples, n_targets]
-            Target vectors, where n_samples in the number of samples and
+            Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 
         copy : boolean, default True
@@ -413,7 +413,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples in the number of samples and
+            Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
         copy : boolean, default True
@@ -438,11 +438,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples in the number of samples and
+            Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
         y : array-like, shape = [n_samples, n_targets]
-            Target vectors, where n_samples in the number of samples and
+            Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 
         Returns
@@ -604,9 +604,11 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    n_components : int, number of components to keep. (default 2).
+    n_components : int, (default 2).
+        Number of components to keep
 
-    scale : boolean, scale data? (default True)
+    scale : boolean, (default True)
+        Option to scale data
 
     algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
@@ -786,11 +788,11 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples in the number of samples and
+            Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
         Y : array-like, shape = [n_samples, n_targets]
-            Target vectors, where n_samples in the number of samples and
+            Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
         # copy since this will contains the centered data
@@ -835,11 +837,11 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples in the number of samples and
+            Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
         Y : array-like, shape = [n_samples, n_targets]
-            Target vectors, where n_samples in the number of samples and
+            Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
         check_is_fitted(self, 'x_mean_')
@@ -860,11 +862,11 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples in the number of samples and
+            Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
         y : array-like, shape = [n_samples, n_targets]
-            Target vectors, where n_samples in the number of samples and
+            Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 
         Returns
