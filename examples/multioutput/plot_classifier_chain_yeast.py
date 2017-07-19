@@ -18,7 +18,7 @@ chain are ordered randomly. In addition to the 103 features in the dataset,
 each model gets the predictions of the preceding models in the chain as
 features (note that by default at training time each model gets the true
 labels as features). These additional features allow each chain to exploit
-correlations among the classes. The Jaccard similarity score for each chain 
+correlations among the classes. The Jaccard similarity score for each chain
 tends to be greater than that of the set independent logistic models.
 
 Because the models in each chain are arranged randomly there is significant
@@ -109,7 +109,7 @@ ax.set_xticklabels(model_names, rotation='vertical')
 ax.set_ylabel('Jaccard Similarity Score')
 ax.set_ylim([min(model_scores) * .9, max(model_scores) * 1.1])
 width = .8
-ax.set_xlim([-width, x_pos[-1]+width])
+ax.set_xlim([-width, x_pos[-1] + width])
 colors = ['r'] + ['b'] * len(chain_jaccard_scores) + ['g']
 ax.bar(x_pos, model_scores, width=width, alpha=0.5, color=colors)
 ax.plot([-width, x_pos[-1] + width],
