@@ -1,42 +1,14 @@
-'''\
-A thin wrapper for Opencv classifiers to scikit-learn.
-The complete list of supported OpenCV models is below:
-* Boosted Random Forest model created by cv2.ml.Boost_create()
-* Random Forest model created by cv2.ml.RTrees_create()
-* SVM model created by cv2.ml.SVM_create()
-* KNN model created by cv2.ml.KNearest_create()
-Unfortunately, neither of Opencv's ANN MLP and Normal Bayesian Classifier works.
-That returns Nan or Inf as the predicted values permanently, so no support.
+# -*- coding: utf-8 -*-
 
-Note, no prior assumptions about classifier's algorithm behind is made.
+"""
+The :mod:`sklearn.opencv_wrapper` module implements a thin wrapper for OpenCV classifiers listed below:
+* (Boosted) random forest model
+* SVM
+* KNN
+"""
 
-== MOTIVATION ==
-Want to get the mix of scikit-learn framework power (e.g. cross-validation, posterior calibration) and
-the efortless deploy to C++ for the trained Opencv models.
-
-Unfortunately, the inheritance from scikit-learn models (like KNeighborsClassifier) is not an
-option due the reasons listed below:
-* A huge number of methods to override.
-* Method-set to override distinguishes from a model to a model.
-
-
-== EXAMPLE ==
-    import opencv_sklearn_wrapper
-    from sklearn.metrics import classification_report
-    from sklearn.model_selection import class_val_predict
-
-    model = cv2.ml.Boost_create()
-    classifier = make_sklearn_wrapper(model)
-    ...
-    predictions = cross_val_predict(classifier, dataset, labels, cv=5)
-    print(classification_report(labels, predictions))
-
-== TESTING ==
-* Use command one-liner below to run the unit tests:
-    python opencv_sklearn_wrapper.py -v
-
-* [07/14/2016] Tested for sklearn 0.18.1 + Opencv 3.1.0 + both of Python 2.7.12 and Python 3.5.2.
-'''
+# Author: Piotr Semenov <piotr@dropoutlabs.com>
+# License: BSD 3 clause
 
 import cv2
 import numpy as np
@@ -47,20 +19,20 @@ import warnings
 from sklearn.base import BaseEstimator
 
 
-class Opencv_binary_predictor:
-    '''Provides the hard/soft decisions from the Opencv's binary classifiers.
+__all__ = ['wrap']
 
-    Technical Notes
+class Opencv_binary_predictor:
+    """Hard/soft decisions of opencv binary classifiers.
+
+    Notes
     ---------------
-    * Scikit-learn assumption: positive category is assumed to be at index 1 among the probabilities
-    delivered from predictor for the input sample.
-    Proof: https://github.com/scikit-learn/scikit-learn/blob/8570622a4450fe1ee3c683601454a7189dcccc14/sklearn/calibration.py#L293.
-    '''
+    Positive category is assumed to be at index 1.
+    """
+
     _positive_class_idx = 1
 
 
     def _estimate(self, features, flags=None):
-        '''Provides the basic prediction logics (valid for Opencv's (Boosted) Random Forest/SVM).'''
         if flags is None:
             raise RuntimeError('No flags provided to distinguish the hard/soft decision mode.')
 
@@ -218,7 +190,7 @@ def make_sklearn_wrapper(model=None, class_name=None):
     elif name == 'ml_KNearest':
         wrapper = Opencv_sklearn_wrapper__knn()
     else:
-        raise RuntimeError('For make_sklearn_wrapper, both of keyword arguments "model" and "class_name" are None or \
+        raise RuntimeError('Both of keyword arguments "model" and "class_name" are None or \
 the model is unsupported')
 
     wrapper.opencv_model = model
@@ -274,3 +246,34 @@ class _Opencv_sklearn_wrapper__tests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+"""
+Note, no prior assumptions about classifier's algorithm behind is made.
+
+== MOTIVATION ==
+Want to get the mix of scikit-learn framework power (e.g. cross-validation, posterior calibration) and
+the efortless deploy to C++ for the trained Opencv models.
+
+Unfortunately, the inheritance from scikit-learn models (like KNeighborsClassifier) is not an
+option due the reasons listed below:
+* A huge number of methods to override.
+* Method-set to override distinguishes from a model to a model.
+
+
+== EXAMPLE ==
+    import opencv_sklearn_wrapper
+    from sklearn.metrics import classification_report
+    from sklearn.model_selection import class_val_predict
+
+    model = cv2.ml.Boost_create()
+    classifier = wrap(model)
+    ...
+    predictions = cross_val_predict(classifier, dataset, labels, cv=5)
+    print(classification_report(labels, predictions))
+
+== TESTING ==
+* Use command one-liner below to run the unit tests:
+    python opencv_sklearn_wrapper.py -v
+
+* [07/14/2017] Tested for sklearn 0.18.1 + Opencv 3.1.0 + both of Python 2.7.12 and Python 3.5.2.
+"""
