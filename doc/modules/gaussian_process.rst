@@ -65,7 +65,7 @@ alternative to specifying the noise level explicitly is to include a
 WhiteKernel component into the kernel, which can estimate the global noise
 level from the data (see example below).
 
-The implementation is based on Algorithm 2.1 of [RW2006]_. In addition to
+The implementation is based on Algorithm 2.1 of [RW2006](http://www.gaussianprocess.org/gpml/chapters/RW.pdf). In addition to
 the API of standard scikit-learn estimators, GaussianProcessRegressor:
 
 * allows prediction without prior fitting (based on the GP prior)
@@ -164,7 +164,7 @@ than just predicting the mean.
 GPR on Mauna Loa CO2 data
 -------------------------
 
-This example is based on Section 5.4.3 of [RW2006]_.
+This example is based on Section 5.4.3 of [RW2006](http://www.gaussianprocess.org/gpml/chapters/RW.pdf).
 It illustrates an example of complex kernel engineering and
 hyperparameter optimization using gradient ascent on the
 log-marginal-likelihood. The data consists of the monthly average atmospheric
@@ -190,7 +190,7 @@ different properties of the signal:
 - smaller, medium term irregularities are to be explained by a
   RationalQuadratic kernel component, whose length-scale and alpha parameter,
   which determines the diffuseness of the length-scales, are to be determined.
-  According to [RW2006]_, these irregularities can better be explained by
+  According to [RW2006](http://www.gaussianprocess.org/gpml/chapters/RW.pdf), these irregularities can better be explained by
   a RationalQuadratic than an RBF kernel component, probably because it can
   accommodate several length-scales.
 
@@ -249,7 +249,7 @@ inappropriate for discrete class labels. Rather, a non-Gaussian likelihood
 corresponding to the logistic link function (logit) is used.
 GaussianProcessClassifier approximates the non-Gaussian posterior with a
 Gaussian based on the Laplace approximation. More details can be found in
-Chapter 3 of [RW2006]_.
+Chapter 3 of [RW2006](http://www.gaussianprocess.org/gpml/chapters/RW.pdf).
 
 The GP prior mean is assumed to be zero. The prior's
 covariance is specified by a passing a :ref:`kernel <gp_kernels>` object. The
@@ -364,7 +364,7 @@ translations in the input space, while non-stationary kernels
 depend also on the specific values of the datapoints. Stationary kernels can further
 be subdivided into isotropic and anisotropic kernels, where isotropic kernels are
 also invariant to rotations in the input space. For more details, we refer to
-Chapter 4 of [RW2006]_.
+Chapter 4 of [RW2006](http://www.gaussianprocess.org/gpml/chapters/RW.pdf).
 
 Gaussian Process Kernel API
 ---------------------------
@@ -538,7 +538,7 @@ the following figure:
    :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
    :align: center
 
-See [RW2006]_, pp84 for further details regarding the
+See [RW2006](http://www.gaussianprocess.org/gpml/chapters/RW.pdf), pp84 for further details regarding the
 different variants of the Matérn kernel.
 
 Rational quadratic kernel
