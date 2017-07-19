@@ -270,7 +270,7 @@ The following sections list utilities to generate indices
 that can be used to generate dataset splits according to different cross
 validation strategies.
 
-.. _iid_cv
+.. _iid_cv:
 
 Cross-validation iterators for i.i.d. data
 ==========================================
@@ -506,7 +506,7 @@ Stratified Shuffle Split
 stratified splits, *i.e* which creates splits by preserving the same
 percentage for each target class as in the complete set.
 
-.. _group_cv
+.. _group_cv:
 
 Cross-validation iterators for grouped data.
 ============================================
@@ -653,7 +653,7 @@ e.g. when searching for hyperparameters.
 For example, when using a validation set, set the ``test_fold`` to 0 for all
 samples that are part of the validation set, and to -1 for all other samples.
 
-.. _timeseries_cv
+.. _timeseries_cv:
 
 Cross validation of time series data
 ====================================
