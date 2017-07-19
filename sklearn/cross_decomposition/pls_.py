@@ -14,6 +14,7 @@ from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..utils import check_array, check_consistent_length
+from ..utils.deprecation import deprecated
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..externals import six
@@ -189,6 +190,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
+        .. deprecated:: 0.19
+
     coef_ : array, [p, q]
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
@@ -275,9 +278,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         self.x_scores_ = np.zeros((n, self.n_components))
         self.y_scores_ = np.zeros((n, self.n_components))
         self.x_weights_ = np.zeros((p, self.n_components))
-        self.y_weights_ = np.zeros((q, self.n_components))
+        self._y_weights_ = np.zeros((q, self.n_components))
         self.x_loadings_ = np.zeros((p, self.n_components))
-        self.y_loadings_ = np.zeros((q, self.n_components))
+        self._y_loadings_ = np.zeros((q, self.n_components))
         self.n_iter_ = []
 
         # NIPALS algo: outer loop, over components
@@ -337,25 +340,25 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             self.x_scores_[:, k] = x_scores.ravel()  # T
             self.y_scores_[:, k] = y_scores.ravel()  # U
             self.x_weights_[:, k] = x_weights.ravel()  # W
-            self.y_weights_[:, k] = y_weights.ravel()  # C
+            self._y_weights_[:, k] = y_weights.ravel()  # C
             self.x_loadings_[:, k] = x_loadings.ravel()  # P
-            self.y_loadings_[:, k] = y_loadings.ravel()  # Q
+            self._y_loadings_[:, k] = y_loadings.ravel()  # Q
         # Such that: X = TP' + Err and Y = UQ' + Err
 
         # 4) rotations from input space to transformed space (scores)
         # T = X W(P'W)^-1 = XW* (W* : p x k matrix)
-        # U = Y C(Q'C)^-1 = YC* (W* : q x k matrix)
         self.x_rotations_ = np.dot(
             self.x_weights_,
             pinv2(np.dot(self.x_loadings_.T, self.x_weights_),
                   check_finite=False))
+        # TODO Remove in 0.21
         if Y.shape[1] > 1:
-            self.y_rotations_ = np.dot(
-                self.y_weights_,
-                pinv2(np.dot(self.y_loadings_.T, self.y_weights_),
+            self._y_rotations_ = np.dot(
+                self._y_weights_,
+                pinv2(np.dot(self._y_loadings_.T, self._y_weights_),
                       check_finite=False))
         else:
-            self.y_rotations_ = np.ones(1)
+            self._y_rotations_ = np.ones(1)
 
         if True or self.deflation_mode == "regression":
             # FIXME what's with the if?
@@ -365,7 +368,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             # Then express in function of X
             # Y = X W(P'W)^-1Q' + Err = XB + Err
             # => B = W*Q' (p x q)
-            self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+            self.coef_ = np.dot(self.x_rotations_, self._y_loadings_.T)
             self.coef_ = self.coef_ * self.y_std_
         return self
 
@@ -382,6 +385,8 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
             Training vectors, where n_samples in the number of samples and
             q is the number of response variables.
 
+            .. deprecated :: 0.19
+
         copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
 
@@ -389,6 +394,13 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
+        # TODO Remove Y parameter in 0.21
+        if not isinstance(Y, six.string_types) or Y != 'deprecated':
+            warnings.warn("The parameter Y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
+        else:
+            Y = None
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         # Normalize
@@ -402,7 +414,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
                 Y = Y.reshape(-1, 1)
             Y -= self.y_mean_
             Y /= self.y_std_
-            y_scores = np.dot(Y, self.y_rotations_)
+            y_scores = np.dot(Y, self._y_rotations_)
             return x_scores, y_scores
 
         return x_scores
@@ -453,6 +465,24 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         return self.fit(X, y, **fit_params).transform(X, y)
+
+    @property
+    @deprecated("Attribute y_rotations_ is deprecated from version 0.19 and "
+                "will be removed in 0.21.")
+    def y_rotations_(self):
+        return self._y_rotations_
+
+    @property
+    @deprecated("Attribute y_loadings_ is deprecated from version 0.19 and "
+                "will be removed in 0.21.")
+    def y_loadings_(self):
+        return self._y_loadings_
+
+    @property
+    @deprecated("Attribute y_weights_ is deprecated from version 0.19 and "
+                "will be removed in 0.21.")
+    def y_weights_(self):
+        return self._y_weights_
 
 
 class PLSRegression(_PLS):
@@ -510,6 +540,8 @@ class PLSRegression(_PLS):
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
 
+        .. deprecated:: 0.19
+
     coef_ : array, [p, q]
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
@@ -524,9 +556,7 @@ class PLSRegression(_PLS):
         T: x_scores_
         U: y_scores_
         W: x_weights_
-        C: y_weights_
         P: x_loadings_
-        Q: y_loadings__
 
     Are computed such that::
 
@@ -534,7 +564,6 @@ class PLSRegression(_PLS):
         T[:, k] = Xk W[:, k] for k in range(n_components)
         U[:, k] = Yk C[:, k] for k in range(n_components)
         x_rotations_ = W (P.T W)^(-1)
-        y_rotations_ = C (Q.T C)^(-1)
 
     where Xk and Yk are residual matrices at iteration k.
 
@@ -652,6 +681,8 @@ class PLSCanonical(_PLS):
     y_rotations_ : array, shape = [q, n_components]
         Y block to latents rotations.
 
+        .. deprecated:: 0.19
+
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
         component. Not useful if the algorithm provided is "svd".
@@ -663,9 +694,7 @@ class PLSCanonical(_PLS):
         T: x_scores_
         U: y_scores_
         W: x_weights_
-        C: y_weights_
         P: x_loadings_
-        Q: y_loadings__
 
     Are computed such that::
 
@@ -673,7 +702,6 @@ class PLSCanonical(_PLS):
         T[:, k] = Xk W[:, k] for k in range(n_components)
         U[:, k] = Yk C[:, k] for k in range(n_components)
         x_rotations_ = W (P.T W)^(-1)
-        y_rotations_ = C (Q.T C)^(-1)
 
     where Xk and Yk are residual matrices at iteration k.
 
@@ -816,11 +844,18 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         self.x_scores_ = np.dot(X, U)
         self.y_scores_ = np.dot(Y, V)
         self.x_weights_ = U
-        self.y_weights_ = V
+        self._y_weights_ = V
         return self
 
     def transform(self, X, Y=None):
         """Apply the dimension reduction learned on the train data."""
+        # TODO Remove Y parameter in 0.21
+        if not isinstance(Y, six.string_types) or Y != 'deprecated':
+            warnings.warn("The parameter Y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
+        else:
+            Y = None
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
@@ -829,7 +864,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Yr = (Y - self.y_mean_) / self.y_std_
-            y_scores = np.dot(Yr, self.y_weights_)
+            y_scores = np.dot(Yr, self._y_weights_)
             return x_scores, y_scores
         return x_scores
 

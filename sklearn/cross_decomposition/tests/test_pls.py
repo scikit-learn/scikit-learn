@@ -4,6 +4,8 @@ from numpy.testing import assert_approx_equal
 from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
                                    assert_array_equal, assert_true,
                                    assert_raise_message)
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_, CCA
 from sklearn.preprocessing import StandardScaler
@@ -42,7 +44,7 @@ def test_pls():
     Wx = plsca.x_weights_
     U = plsca.y_scores_
     Q = plsca.y_loadings_
-    Wy = plsca.y_weights_
+    Wy = assert_warns(DeprecationWarning, getattr, plsca, 'y_weights_')
 
     def check_ortho(M, err_msg):
         K = np.dot(M.T, M)
@@ -71,7 +73,7 @@ def test_pls():
     Xr = plsca.transform(X)
     assert_array_almost_equal(Xr, plsca.x_scores_,
                               err_msg="rotation on X failed")
-    Xr, Yr = plsca.transform(X, Y)
+    Xr, Yr = assert_warns(DeprecationWarning, plsca.transform, X, Y)
     assert_array_almost_equal(Xr, plsca.x_scores_,
                               err_msg="rotation on X failed")
     assert_array_almost_equal(Yr, plsca.y_scores_,
@@ -107,7 +109,11 @@ def test_pls():
         [[+0.58989127,  0.7168115,  0.30665872],
          [+0.77134053, -0.70791757,  0.19786539],
          [-0.23887670, -0.00343595,  0.94162826]])
-    y_rotations_sign_flip = pls_ca.y_rotations_ / y_rotations
+
+    pls_y_rotations = assert_warns_message(DeprecationWarning,
+                                           "y_rotations_ is deprecated",
+                                           getattr, pls_ca, 'y_rotations_')
+    y_rotations_sign_flip = pls_y_rotations / y_rotations
 
     # x_weights = X.dot(x_rotation)
     # Hence R/python sign flip should be the same in x_weight and x_rotation
@@ -300,8 +306,15 @@ def test_predict_transform_copy():
     assert_array_almost_equal(clf.transform(X), clf.transform(X.copy(), copy=False))
 
     # check also if passing Y
-    assert_array_almost_equal(clf.transform(X, Y),
-                              clf.transform(X.copy(), Y.copy(), copy=False))
+    transform = assert_warns_message(DeprecationWarning,
+                                     "parameter Y on transform() is "
+                                     "deprecated", clf.transform, X, Y)
+    transform2 = assert_warns_message(DeprecationWarning,
+                                      "parameter Y on transform() is "
+                                      "deprecated", clf.transform,
+                                      X.copy(), Y.copy())
+    assert_array_almost_equal(transform, transform2)
+
     # check that copy doesn't destroy
     # we do want to check exact equality here
     assert_array_equal(X_copy, X)
@@ -344,14 +357,17 @@ def test_scale_and_stability():
         for clf in [CCA(), pls_.PLSCanonical(), pls_.PLSRegression(),
                     pls_.PLSSVD()]:
             clf.set_params(scale=True)
-            X_score, Y_score = clf.fit_transform(X, Y)
+            X_score, Y_score = assert_warns(DeprecationWarning,
+                                            clf.fit_transform, X, Y)
             clf.set_params(scale=False)
-            X_s_score, Y_s_score = clf.fit_transform(X_s, Y_s)
+            X_s_score, Y_s_score = assert_warns(DeprecationWarning,
+                                                clf.fit_transform, X_s, Y_s)
             assert_array_almost_equal(X_s_score, X_score)
             assert_array_almost_equal(Y_s_score, Y_score)
             # Scaling should be idempotent
             clf.set_params(scale=True)
-            X_score, Y_score = clf.fit_transform(X_s, Y_s)
+            X_score, Y_score = assert_warns(DeprecationWarning,
+                                            clf.fit_transform, X_s, Y_s)
             assert_array_almost_equal(X_s_score, X_score)
             assert_array_almost_equal(Y_s_score, Y_score)
 

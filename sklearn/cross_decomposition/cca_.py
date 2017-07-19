@@ -36,6 +36,8 @@ class CCA(_PLS):
     y_weights_ : array, [q, n_components]
         Y block weights vectors.
 
+        .. deprecated:: 0.19
+
     x_loadings_ : array, [p, n_components]
         X block loadings vectors.
 
@@ -53,6 +55,8 @@ class CCA(_PLS):
 
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
+
+        .. deprecated:: 0.19
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
@@ -80,7 +84,7 @@ class CCA(_PLS):
     >>> cca.fit(X, Y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     CCA(copy=True, max_iter=500, n_components=1, scale=True, tol=1e-06)
-    >>> X_c, Y_c = cca.transform(X, Y)
+    >>> X_c = cca.transform(X)
 
     References
     ----------
