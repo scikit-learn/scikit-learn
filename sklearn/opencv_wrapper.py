@@ -13,9 +13,6 @@ The :mod:`sklearn.opencv_wrapper` module implements a thin wrapper for OpenCV cl
 import cv2
 import numpy as np
 
-import unittest
-import warnings
-
 from sklearn.base import BaseEstimator
 
 
@@ -136,54 +133,3 @@ def wrap(model=None, class_name=None):
 
     wrapper.opencv_model = model
     return wrapper
-
-
-
-class _Opencv_predictor_tests(unittest.TestCase):
-    _supported_models = ['ml_Boost', 'ml_RTrees', 'ml_SVM', 'ml_KNearest']
-
-
-    def test_sklearn_base_functions(self):
-        from sklearn.base import clone, is_classifier
-
-        for model in self._supported_models:
-            wrapper = wrap(class_name=model)
-
-            self.assertTrue(issubclass(wrapper.__class__, BaseEstimator))
-            self.assertTrue(is_classifier(wrapper))
-            with warnings.catch_warnings(record=True) as raised_warnings:
-                warnings.simplefilter('always')
-
-                try:
-                    clone(wrapper)
-                except RuntimeError:
-                    self.fail('Opencv_sklearn_wrapper does not meet the sklearn.base.* requirements')
-
-                self.assertFalse(any([issubclass(w.category, DeprecationWarning) for w in raised_warnings]),
-                                 msg='sklearn.base.* raises the DeprecationWarnings')
-        return
-
-
-    def test_sklearn_model_selection(self):
-        from sklearn import datasets
-        from sklearn.metrics import classification_report
-        from sklearn.model_selection import cross_val_predict
-
-        iris = datasets.load_iris()
-        samples, labels = np.array(iris.data[:, :2], np.float32), iris.target
-
-        warnings.filterwarnings('ignore')
-        try:
-            for model in self._supported_models:
-                wrapper = wrap(class_name=model)
-
-                predictions = cross_val_predict(wrapper, samples, labels)
-                report = classification_report(labels, predictions)
-        except RuntimeError:
-            self.fail('Opencv_sklearn_wrapper crashes for sklearn.metrics.* and sklearn.model_selection.*')
-
-    pass
-
-
-if __name__ == '__main__':
-    unittest.main()
