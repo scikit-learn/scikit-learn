@@ -67,7 +67,7 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
-    def _get_labels_from_estimator(self, estimator):
+    def _get_labels_from_estimator(self, estimator, target_type):
         """Check if estimator has a classes argument and if scorer has a
         labels argument and return new kwargs for scorer if label not already
         set in make score initialization"""
@@ -87,7 +87,11 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
                 return self._kwargs
             else:
                 kwargs = self._kwargs.copy()
-                kwargs['labels'] = classes
+                if target_type == 'multilabel-indicator':
+                    pass
+                else:
+                    kwargs['labels'] = classes
+                print('labels passed from estimator to scorer=%r'%classes)
                 return kwargs
         else:
             return self._kwargs
@@ -124,7 +128,8 @@ class _PredictScorer(_BaseScorer):
         super(_PredictScorer, self).__call__(estimator, X, y_true,
                                              sample_weight=sample_weight)
         y_pred = estimator.predict(X)
-        kwargs = self._get_labels_from_estimator(estimator)
+        kwargs = self._get_labels_from_estimator(estimator,
+                                                 type_of_target(y_true))
 
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
@@ -163,7 +168,8 @@ class _ProbaScorer(_BaseScorer):
         super(_ProbaScorer, self).__call__(clf, X, y,
                                            sample_weight=sample_weight)
         y_pred = clf.predict_proba(X)
-        kwargs = self._get_labels_from_estimator(clf)
+        kwargs = self._get_labels_from_estimator(clf,
+                                                 type_of_target(y))
 
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
@@ -227,7 +233,7 @@ class _ThresholdScorer(_BaseScorer):
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
-        kwargs = self._get_labels_from_estimator(clf)
+        kwargs = self._get_labels_from_estimator(clf, y_type)
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
