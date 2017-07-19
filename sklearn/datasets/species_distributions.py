@@ -68,17 +68,14 @@ def _load_coverage(F, header_length=6, dtype=np.int16):
     This will return a numpy array of the given dtype
     """
     header = [F.readline() for i in range(header_length)]
-    header = dict([_make_tuple(line) for line in header])
+    make_tuple = lambda t: (t.split()[0], float(t.split()[1]))
+    header = dict([make_tuple(line) for line in header])
 
     M = np.loadtxt(F, dtype=dtype)
     nodata = int(header[b'NODATA_value'])
     if nodata != -9999:
         M[nodata] = -9999
     return M
-
-
-def _make_tuple(line):
-    return (line.split()[0], float(line.split()[1]))
 
 
 def _load_csv(F):
