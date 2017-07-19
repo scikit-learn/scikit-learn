@@ -792,7 +792,7 @@ def _check_unique_sorted_classes(array):
         unq = np.unique(array)
         if unq.size != np.asarray(array).size:
             raise ValueError("Classses parameter should contain all unique"
-                             "values, duplicates found")
+                             "values, duplicates found in %r" % array)
         if not np.array_equal(unq, array):
-            raise ValueError("Classses parameter should contain all unique"
-                             "values, duplicates found")
+            raise ValueError("Classses parameter should contain sorted values"
+                             ", unsorted values found in %r" % array)
