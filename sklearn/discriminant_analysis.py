@@ -174,7 +174,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
         .. versionadded:: 0.17
 
-    tol : float, optional
+    tol : float, optional, (default 1.0e-4)
         Threshold used for rank estimation in SVD solver.
 
         .. versionadded:: 0.17
@@ -554,6 +554,17 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Regularizes the covariance estimate as
         ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
 
+    store_covariances : boolean
+        If True the covariance matrices are computed and stored in the
+        `self.covariances_` attribute.
+
+        .. versionadded:: 0.17
+
+    tol : float, optional, default 1.0e-4
+        Threshold used for rank estimation.
+
+        .. versionadded:: 0.17
+
     Attributes
     ----------
     covariances_ : list of array-like, shape = [n_features, n_features]
@@ -575,17 +586,6 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         For each class k an array of shape [n_k]. It contains the scaling
         of the Gaussian distributions along its principal axes, i.e. the
         variance in the rotated coordinate system.
-
-    store_covariances : boolean
-        If True the covariance matrices are computed and stored in the
-        `self.covariances_` attribute.
-
-        .. versionadded:: 0.17
-
-    tol : float, optional, default 1.0e-4
-        Threshold used for rank estimation.
-
-        .. versionadded:: 0.17
 
     Examples
     --------
@@ -626,7 +626,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
         y : array, shape = [n_samples]
