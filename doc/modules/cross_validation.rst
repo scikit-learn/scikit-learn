@@ -287,7 +287,7 @@ The following cross-validators can be used in such cases.
 While i.i.d. data is a common assumption in machine learning theory, it rarely
 holds in practice. If one knows that the samples have been generated using a
 time-dependent process, it's safer to
-use a :ref:`time-series aware cross-validation scheme <time_series_cv>`
+use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`
 Similarly if we know that the generative process has a group structure
 (samples from collected from different subjects, experiments, measurement
 devices) it safer to use :ref:`group-wise cross-validation <group_cv>`.
