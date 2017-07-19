@@ -912,26 +912,3 @@ class BayesianGaussianMixture(BaseMixture):
         self.n_iter_ = best_n_iter
 
         return self
-
-    def fit(self, X, y=None):
-        if self.batch_size:
-            slices = gen_batches(X.shape[0], self.batch_size)
-            batches = [X[s] for s in slices]
-            results = Parallel(n_jobs=self.n_jobs)(
-                delayed(_partial_fit)(self, batch) for batch in batches)
-
-            parameters = ['weight_concentration_', 'mean_precision_',
-                          'means_', 'degrees_of_freedom_',
-                          'covariances_', 'precisions_cholesky_']
-
-            params = [np.mean([getattr(result, param)
-                               for result in results], axis=0)
-                      for param in parameters]
-
-            self._set_parameters(params)
-            self.lower_bound_ = np.mean([result.lower_bound_
-                                         for result in results], axis=0)
-        else:
-            super(BayesianGaussianMixture, self).fit(X)
-
-        return self
