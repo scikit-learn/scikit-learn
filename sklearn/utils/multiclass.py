@@ -17,7 +17,7 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
-from ..utils import _check_unique_values
+from ..utils import _check_unique_sorted_classes
 from ..externals.six import string_types
 from .validation import check_array
 
@@ -326,10 +326,10 @@ def _check_partial_fit_first_call(clf, classes=None):
     if getattr(clf, 'classes_', None) is None:
         # This is the first call to partial_fit
         if getattr(clf, 'classes', None) is not None:
-            _check_unique_values(classes, "classes")
+            _check_unique_sorted_classes(classes)
             clf.classes_ = np.sort(clf.classes)
         else:
-            _check_unique_values(classes, classes)
+            _check_unique_sorted_classes(classes)
             clf.classes_ = unique_labels(classes)
         return True
 

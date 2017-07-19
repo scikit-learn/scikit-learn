@@ -775,9 +775,10 @@ def _check_y_classes(y, classes):
                          (unique_y[~unique_y_in_classes], classes))
 
 
-def _check_unique_values(array, name=None):
+def _check_unique_sorted_classes(array):
     """
-    Check if there are duplicates in an array
+    A helper to check the classes argument of classifiers. This will check
+    that the input is sorted and unique.
 
     Parameters
     ----------
@@ -788,8 +789,10 @@ def _check_unique_values(array, name=None):
         The string to be used argument to be used for error message
     """
     if array is not None:
-        if name is None:
-            name = "input"
         unq = np.unique(array)
-        if len(unq) != len(array):
-            raise ValueError("Duplicate values found in %s" % name)
+        if unq.size != np.asarray(array).size:
+            raise ValueError("Classses parameter should contain all unique"
+                             "values, duplicates found")
+        if not np.array_equal(unq, array):
+            raise ValueError("Classses parameter should contain all unique"
+                             "values, duplicates found")
