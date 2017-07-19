@@ -829,20 +829,7 @@ def _pkl_filepath(*args, **kwargs):
 
 
 def _sha256(path):
-    """Calculate the sha256 hash of the file at path.
-
-    Parameters
-    -----------
-    path: String
-        Path of file to calculate SHA256 hash of.
-
-    Returns
-    -------
-    sha256hash : String
-        SHA256 hash of the file at the provided path.
-
-    """
-
+    """Calculate the sha256 hash of the file at path."""
     sha256hash = hashlib.sha256()
     chunk_size = 8192
     with open(path, "rb") as f:
@@ -854,28 +841,6 @@ def _sha256(path):
     return sha256hash.hexdigest()
 
 
-def _validate_file_sha256(expected_checksum, path):
-    """Compare the SHA256 checksum of file in path with expected_checksum
-
-    Compare the SHA256 checksum of a file at path with an expected SHA256
-    checksum. If they do not match throw a IOError.
-
-    Parameters
-    -----------
-    expected_checksum: String
-        Expected SHA256 checksum of file at path.
-
-    path: String
-        Path of file to compare SHA256 hash of.
-
-    """
-
-    if expected_checksum != _sha256(path):
-        # remove the corrupted file
-        raise IOError("{} has an SHA256 hash differing from expected, "
-                      "file may be corrupted.".format(path))
-
-
 def _fetch_url(url, path, checksum):
     """Fetch a dataset and check the SHA256 checksum
 
@@ -884,16 +849,18 @@ def _fetch_url(url, path, checksum):
 
     Parameters
     -----------
-    URL: String
+    URL : string
         URL to fetch the download from.
 
-    path: String
+    path : string
         Path to save the file to.
 
-    checksum: String
+    checksum : string
         SHA256 checksum to verify against the data
 
     """
 
     download(url, path)
-    _validate_file_sha256(checksum, path)
+    if checksum != _sha256(path):
+        raise IOError("{} has an SHA256 hash differing from expected, "
+                      "file may be corrupted.".format(path))
