@@ -16,6 +16,7 @@ import scipy.sparse as sp
 from .base import get_data_home
 from .base import _pkl_filepath
 from .base import _fetch_url
+from .base import RemoteFileMetadata
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from .svmlight_format import load_svmlight_files
@@ -23,36 +24,38 @@ from ..utils import shuffle as shuffle_
 from ..utils import Bunch
 
 
-FILE_NAMES = [
-    "lyrl2004_vectors_test_pt0.dat.gz",
-    "lyrl2004_vectors_test_pt1.dat.gz",
-    "lyrl2004_vectors_test_pt2.dat.gz",
-    "lyrl2004_vectors_test_pt3.dat.gz",
-    "lyrl2004_vectors_train.dat.gz"
-]
+XY_METADATA = [
+    RemoteFileMetadata(
+        url='https://ndownloader.figshare.com/files/5976069',
+        checksum=('ed40f7e418d10484091b059703eeb95a'
+                  'e3199fe042891dcec4be6696b9968374'),
+        filename='lyrl2004_vectors_test_pt0.dat.gz'),
+    RemoteFileMetadata(
+        url='https://ndownloader.figshare.com/files/5976066',
+        checksum=('87700668ae45d45d5ca1ef6ae9bd81ab'
+                  '0f5ec88cc95dcef9ae7838f727a13aa6'),
+        filename='lyrl2004_vectors_test_pt1.dat.gz'),
+    RemoteFileMetadata(
+        url='https://ndownloader.figshare.com/files/5976063',
+        checksum=('48143ac703cbe33299f7ae9f4995db4'
+                  '9a258690f60e5debbff8995c34841c7f5'),
+        filename='lyrl2004_vectors_test_pt2.dat.gz'),
+    RemoteFileMetadata(
+        url='https://ndownloader.figshare.com/files/5976060',
+        checksum=('dfcb0d658311481523c6e6ca0c3f5a3'
+                  'e1d3d12cde5d7a8ce629a9006ec7dbb39'),
+        filename='lyrl2004_vectors_test_pt3.dat.gz'),
+    RemoteFileMetadata(
+        url='https://ndownloader.figshare.com/files/5976057',
+        checksum=('5468f656d0ba7a83afc7ad44841cf9a5'
+                  '3048a5c083eedc005dcdb5cc768924ae'),
+        filename='lyrl2004_vectors_train.dat.gz')]
 
-FILE_URLS = [
-    'https://ndownloader.figshare.com/files/5976069',
-    'https://ndownloader.figshare.com/files/5976066',
-    'https://ndownloader.figshare.com/files/5976063',
-    'https://ndownloader.figshare.com/files/5976060',
-    'https://ndownloader.figshare.com/files/5976057'
-]
-
-FILE_CHECKSUMS = {
-    "lyrl2004_vectors_test_pt0.dat.gz":
-    'ed40f7e418d10484091b059703eeb95ae3199fe042891dcec4be6696b9968374',
-    "lyrl2004_vectors_test_pt1.dat.gz":
-    '87700668ae45d45d5ca1ef6ae9bd81ab0f5ec88cc95dcef9ae7838f727a13aa6',
-    "lyrl2004_vectors_test_pt2.dat.gz":
-    '48143ac703cbe33299f7ae9f4995db49a258690f60e5debbff8995c34841c7f5',
-    "lyrl2004_vectors_test_pt3.dat.gz":
-    'dfcb0d658311481523c6e6ca0c3f5a3e1d3d12cde5d7a8ce629a9006ec7dbb39',
-    "lyrl2004_vectors_train.dat.gz":
-    '5468f656d0ba7a83afc7ad44841cf9a53048a5c083eedc005dcdb5cc768924ae'
-}
-
-URL_topics = 'https://ndownloader.figshare.com/files/5976048'
+TOPICS_METADATA = RemoteFileMetadata(
+    url='https://ndownloader.figshare.com/files/5976048',
+    checksum=('2a98e5e5d8b770bded93afc8930d882'
+              '99474317fe14181aee1466cc754d0d1c1'),
+    filename='rcv1v2.topics.qrels.gz')
 
 logger = logging.getLogger()
 
@@ -147,18 +150,17 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     if download_if_missing and (not exists(samples_path) or
                                 not exists(sample_id_path)):
         files = []
-        for file_name, file_url, expected_archive_checksum in zip(
-                FILE_NAMES, FILE_URLS, FILE_CHECKSUMS.values()):
-            logger.warning("Downloading %s" % file_url)
-            archive_path = join(rcv1_dir, file_name)
-            _fetch_url(file_url, archive_path, expected_archive_checksum)
+        for each in XY_METADATA:
+            logger.warning("Downloading %s" % each.url)
+            archive_path = join(rcv1_dir, each.filename)
+            _fetch_url(each.url, archive_path, each.checksum)
             files.append(GzipFile(filename=archive_path))
 
-        # delete archives
-        for file_name in FILE_NAMES:
-            remove(join(rcv1_dir, file_name))
-
         Xy = load_svmlight_files(files, n_features=N_FEATURES)
+
+        # delete archives
+        for each in XY_METADATA:
+            remove(join(rcv1_dir, each.filename))
 
         # Training data is before testing data
         X = sp.vstack([Xy[8], Xy[0], Xy[2], Xy[4], Xy[6]]).tocsr()
@@ -174,10 +176,10 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
                                 not exists(topics_path)):
-        logger.warning("Downloading %s" % URL_topics)
-        topics_archive_path = join(rcv1_dir, "rcv1v2.topics.qrels.gz")
-        expected_topics_checksum = "4b932c58566ebfd82065d3946e454a39"
-        _fetch_url(URL_topics, topics_archive_path, expected_topics_checksum)
+        logger.warning("Downloading %s" % TOPICS_METADATA.url)
+        topics_archive_path = join(rcv1_dir, TOPICS_METADATA.filename)
+        _fetch_url(TOPICS_METADATA.url, topics_archive_path,
+                   TOPICS_METADATA.checksum)
 
         # parse the target file
         n_cat = -1

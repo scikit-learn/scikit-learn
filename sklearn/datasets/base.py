@@ -868,4 +868,4 @@ def _fetch_url(url, path, checksum):
 
 
 RemoteFileMetadata = namedtuple('RemoteFileMetadata',
-                                ['path', 'url', 'checksum'])
+                                ['filename', 'url', 'checksum'])
