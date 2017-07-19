@@ -398,6 +398,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         If True, transform will raise an error when there are features with
         missing values in transform but have no missing values in fit
 
+        This is applicable only when ``features`` = "train"
+
     Example
     -------
     >>> from sklearn.preprocessing import MissingIndicator
