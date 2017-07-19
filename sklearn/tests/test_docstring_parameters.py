@@ -20,15 +20,14 @@ from sklearn.utils.testing import _get_func_name
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.deprecation import _is_deprecated
 
-PUBLIC_MODULES = set(['sklearn.' + pckg[1]
-                      for pckg in walk_packages('sklearn.*')
-                      if not pckg[1].startswith('_')])
+PUBLIC_MODULES = set(['sklearn.' + modname
+                      for _, modname, _ in walk_packages(sklearn.__path__)
+                      if not modname.startswith('_') and
+                      '.tests.' not in modname])
 
 # TODO Uncomment all modules and fix doc inconsistencies everywhere
 # The list of modules that are not tested for now
 PUBLIC_MODULES -= set([
-    'sklearn.cross_decomposition',
-    'sklearn.discriminant_analysis',
     'sklearn.ensemble',
     'sklearn.feature_selection',
     'sklearn.kernel_approximation',
@@ -54,12 +53,12 @@ _DOCSTRING_IGNORES = [
 
 # Methods where y param should be ignored if y=None by default
 _METHODS_IGNORE_NONE_Y = [
-        'fit',
-        'score',
-        'fit_predict',
-        'fit_transform',
-        'partial_fit',
-        'predict'
+    'fit',
+    'score',
+    'fit_predict',
+    'fit_transform',
+    'partial_fit',
+    'predict'
 ]
 
 
@@ -71,8 +70,8 @@ def test_docstring_parameters():
         import numpydoc  # noqa
         assert sys.version_info >= (3, 5)
     except (ImportError, AssertionError):
-        raise SkipTest(
-            "numpydoc is required to test the docstrings")
+        raise SkipTest("numpydoc is required to test the docstrings, "
+                       "as well as python version >= 3.5")
 
     from numpydoc import docscrape
 
