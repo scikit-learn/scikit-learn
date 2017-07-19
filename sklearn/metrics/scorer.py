@@ -88,7 +88,8 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
             else:
                 kwargs = self._kwargs.copy()
                 if target_type == 'multilabel-indicator':
-                    pass
+                    kwargs['labels'] = list(range(len(classes)))
+                    print(kwargs['labels'])
                 else:
                     kwargs['labels'] = classes
                 print('labels passed from estimator to scorer=%r'%classes)
