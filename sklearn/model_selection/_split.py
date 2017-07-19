@@ -440,13 +440,16 @@ class GroupKFold(_BaseKFold):
     The same group will not appear in two different folds (the number of
     distinct groups has to be at least equal to the number of folds).
 
-    The folds are approximately balanced in the sense that the number of
-    distinct groups is approximately the same in each fold.
-
     Parameters
     ----------
     n_splits : int, default=3
         Number of folds. Must be at least 2.
+    method: string, default='balance'
+        One of 'balance', 'stratify', 'shuffle'.
+        By default, try to equalize the sizes of the resulting folds.
+        If 'stratify', sort groups according to ``y`` variable and distribute
+        evenly across folds.
+        If 'shuffle', shuffle the groups to randomize their assignments to folds.
 
     Examples
     --------
@@ -480,7 +483,11 @@ class GroupKFold(_BaseKFold):
         For splitting the data according to explicit domain-specific
         stratification of the dataset.
     """
-    def __init__(self, n_splits=3):
+    def __init__(self, n_splits=3, method='balance'):
+        if method not in ('balance', 'stratify', 'shuffle'):
+            raise ValueError("The 'method' parameter should be in "
+                    "('balance', 'stratify', 'shuffle')")
+        self.method = method
         super(GroupKFold, self).__init__(n_splits, shuffle=False,
                                          random_state=None)
 
@@ -489,7 +496,8 @@ class GroupKFold(_BaseKFold):
             raise ValueError("The 'groups' parameter should not be None.")
         groups = check_array(groups, ensure_2d=False, dtype=None)
 
-        unique_groups, groups = np.unique(groups, return_inverse=True)
+        unique_groups, unique_indices, groups = np.unique(
+                groups, return_index=True, return_inverse=True)
         n_groups = len(unique_groups)
 
         if self.n_splits > n_groups:
@@ -500,17 +508,31 @@ class GroupKFold(_BaseKFold):
         # Weight groups by their number of occurrences
         n_samples_per_group = np.bincount(groups)
 
-        # Distribute the most frequent groups first
-        indices = np.argsort(n_samples_per_group)[::-1]
+        if self.method == 'balance':
+            # Distribute the most frequent groups first
+            indices = np.argsort(n_samples_per_group)[::-1]
+        elif self.method == 'stratify':
+            # Distribute according to y values
+            if y is None:
+                raise ValueError("The 'y' parameter should not be None.")
+            y = check_array(y, ensure_2d=False, dtype=None)
+            indices = np.argsort(y[unique_indices])
+        elif self.method == 'shuffle':
+            # Shuffle the groups
+            rng = check_random_state(self.random_state)
+            indices = np.arange(n_groups)
+            rng.shuffle(indices)
+        else:
+            raise ValueError
         n_samples_per_group = n_samples_per_group[indices]
 
         # Total weight of each fold
         n_samples_per_fold = np.zeros(self.n_splits)
 
         # Mapping from group index to fold index
-        group_to_fold = np.zeros(len(unique_groups))
+        group_to_fold = np.zeros(n_groups)
 
-        # Distribute samples by adding the largest weight to the lightest fold
+        # Distribute samples by adding groups to the lightest fold
         for group_index, weight in enumerate(n_samples_per_group):
             lightest_fold = np.argmin(n_samples_per_fold)
             n_samples_per_fold[lightest_fold] += weight

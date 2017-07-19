@@ -1220,28 +1220,30 @@ def test_group_kfold():
 
     ideal_n_groups_per_fold = n_samples // n_splits
 
-    len(np.unique(groups))
-    # Get the test fold indices from the test set indices of each fold
-    folds = np.zeros(n_samples)
-    lkf = GroupKFold(n_splits=n_splits)
-    for i, (_, test) in enumerate(lkf.split(X, y, groups)):
-        folds[test] = i
+    for method in ('balance', 'stratify', 'shuffle'):
+        # Get the test fold indices from the test set indices of each fold
+        folds = np.zeros(n_samples)
+        lkf = GroupKFold(n_splits=n_splits, method=method)
+        for i, (_, test) in enumerate(lkf.split(X, y, groups)):
+            folds[test] = i
 
-    # Check that folds have approximately the same size
-    assert_equal(len(folds), len(groups))
-    for i in np.unique(folds):
-        assert_greater_equal(tolerance,
-                             abs(sum(folds == i) - ideal_n_groups_per_fold))
+        # Check that folds have approximately the same size
+        if method == 'balance':
+            assert_equal(len(folds), len(groups))
+            for i in np.unique(folds):
+                assert_greater_equal(tolerance,
+                        abs(sum(folds == i) - ideal_n_groups_per_fold))
 
-    # Check that each group appears only in 1 fold
-    for group in np.unique(groups):
-        assert_equal(len(np.unique(folds[groups == group])), 1)
+        # Check that each group appears only in 1 fold
+        for group in np.unique(groups):
+            assert_equal(len(np.unique(folds[groups == group])), 1)
 
-    # Check that no group is on both sides of the split
-    groups = np.asarray(groups, dtype=object)
-    for train, test in lkf.split(X, y, groups):
-        assert_equal(len(np.intersect1d(groups[train], groups[test])), 0)
+        # Check that no group is on both sides of the split
+        groups = np.asarray(groups, dtype=object)
+        for train, test in lkf.split(X, y, groups):
+            assert_equal(len(np.intersect1d(groups[train], groups[test])), 0)
 
+    lkf = GroupKFold(n_splits=n_splits, method='balance')
     # Construct the test data
     groups = np.array(['Albert', 'Jean', 'Bertrand', 'Michel', 'Jean',
                        'Francis', 'Robert', 'Michel', 'Rachel', 'Lois',

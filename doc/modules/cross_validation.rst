@@ -532,11 +532,11 @@ parameter.
 Group k-fold
 ------------
 
-class:GroupKFold is a variation of k-fold which ensures that the same group is
+:class:`GroupKFold` is a variation of k-fold which ensures that the same group is
 not represented in both testing and training sets. For example if the data is
 obtained from different subjects with several samples per-subject and if the
 model is flexible enough to learn from highly person specific features it
-could fail to generalize to new subjects. class:GroupKFold makes it possible
+could fail to generalize to new subjects. :class:`GroupKFold` makes it possible
 to detect this kind of overfitting situations.
 
 Imagine you have three subjects, each with an associated number from 1 to 3::
@@ -557,6 +557,21 @@ Imagine you have three subjects, each with an associated number from 1 to 3::
 Each subject is in a different testing fold, and the same subject is never in
 both testing and training. Notice that the folds do not have exactly the same
 size due to the imbalance in the data.
+
+The same group will not appear in two different folds;
+this is a hard constraint. After this constraint is enforced,
+there are still multiple ways to divide groups across folds.
+
+The default, ``method='balance'``, will balance the sizes of the folds,
+such that each has approximately the same amount of items, as far as possible.
+With ``method='stratify'``, items are spread across the folds by stratifying on
+the ``y`` variable, as far as possible. Since this is done by sorting, it works
+for continuous variables as well.
+Finally, ``method='shuffle'`` distributes groups across folds randomly.
+
+The latter two options work best when groups are relatively small, to avoid
+folds of uneven sizes. The stratification relies on the ``y``-value of the
+first item of a group being representative of its group.
 
 
 Leave One Group Out
