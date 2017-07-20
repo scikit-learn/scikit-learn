@@ -24,12 +24,12 @@ from scipy.sparse import issparse
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
-from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils import check_X_y
 from .utils import check_array
 from .utils import check_consistent_length
 from .utils import _check_y_classes
+from .utils import _check_unique_sorted_classes
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
@@ -547,20 +547,6 @@ class BaseDiscreteNB(BaseNB):
         X = check_array(X, accept_sparse='csr', dtype=np.float64)
         _, n_features = X.shape
 
-        # set classes- initialized values/passed in partial_fit/infer from y
-        if classes is None:
-            # case when not set, infer from y
-            if self.classes is None:
-                classes = np.sort(np.unique(y))
-            # case when set at intialization
-            else:
-                _check_unique_values(self.classes, "classes")
-                classes = np.sort(self.classes)
-        # case when passed in partial_fit
-        else:
-            _check_unique_values(classes, "classes")
-            classes = np.sort(np.asarray(classes))
-
         if _check_partial_fit_first_call(self, classes):
             # This is the first call to partial_fit:
             # initialize various cumulative counters
@@ -630,11 +616,11 @@ class BaseDiscreteNB(BaseNB):
 
         # case when not set, infer from y
         if self.classes is None:
-            self.classes_ = np.sort(np.unique(y))
+            self.classes_ = np.unique(y)
         # case when set at intialization
         else:
-            _check_unique_values(self.classes, "classes")
-            self.classes_ = np.sort(self.classes)
+            _check_unique_sorted_classes(self.classes)
+            self.classes_ = self.classes
 
         _check_y_classes(y, self.classes_)
         Y = label_binarize(y, classes=self.classes_)
