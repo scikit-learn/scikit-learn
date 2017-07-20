@@ -532,6 +532,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         report : string
             Text summary of all the rules in the decision tree.
         """
+        check_is_fitted(self, 'tree_')
         if feature_names:
             feature_names_ = [feature_names[i] for i in self.tree_.feature]
         else:
