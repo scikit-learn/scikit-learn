@@ -79,13 +79,13 @@ batch_size = 500
 # Generate random sample, two components
 np.random.seed(0)
 
-point = 5*np.sqrt(2)/2.
+point = 5 * np.sqrt(2) / 2.
 centers = [[-5, 0], [-point, point], [5, 0], [point, point], [0, 0],
            [5, 0], [point, -point], [0, -5], [-point, -point], [0, 5]]
 X, labels = make_blobs(n_samples=n_samples, centers=centers,
                        cluster_std=1.1)
 
-updates = np.array_split(X, np.ceil(n_samples/(batch_size)))
+updates = np.array_split(X, np.ceil(n_samples / (batch_size)))
 
 
 f, axarr = plt.subplots(2, 2, figsize=(10, 10))

@@ -227,6 +227,16 @@ from the two resulting mixtures.
    :align: center
    :scale: 65%
 
+In the following example, we fit a large dataset using the `partial_fit` method.
+As we can see, it converges to approximately the same posterior in significantly
+less time than fitting on the full set, regardless of the number of initial clusters.
+
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_partial_fit_001.png
+   :target: ../auto_examples/mixture/plot_partial_fit.html
+   :align: center
+   :scale: 65%
+
+
 
 
 .. topic:: Examples:
@@ -248,6 +258,9 @@ from the two resulting mixtures.
       ``weight_concentration_prior_type`` for different values of the parameter
       ``weight_concentration_prior``.
 
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_partial_fit.py` for an
+      example of fitting the :class:`BayesianGaussianMixture` with batches using
+      `partial_fit`
 
 Pros and cons of variational inference with :class:`BayesianGaussianMixture`
 ----------------------------------------------------------------------------
