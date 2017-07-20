@@ -135,6 +135,11 @@ def safe_indexing(X, indices):
     -------
     subset
         Subset of X on first axis
+
+    Notes
+    -----
+    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    not supported.
     """
     if hasattr(X, "iloc"):
         # Pandas Dataframes and Series
