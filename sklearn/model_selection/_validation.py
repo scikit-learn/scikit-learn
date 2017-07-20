@@ -69,7 +69,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         value. Metric functions returning a list/array of values can be wrapped
         into multiple scorers that return one value each.
 
-        See :ref:`multivalued_scorer_wrapping` for an example.
+        See :ref:`multimetric_grid_search` for an example.
 
         If None, the estimator's default scorer (if available) is used.
 
