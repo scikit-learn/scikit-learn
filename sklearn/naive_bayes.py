@@ -620,7 +620,7 @@ class BaseDiscreteNB(BaseNB):
         # case when set at intialization
         else:
             _check_unique_sorted_classes(self.classes)
-            self.classes_ = self.classes
+            self.classes_ = np.asarray(self.classes)
 
         _check_y_classes(y, self.classes_)
         Y = label_binarize(y, classes=self.classes_)
