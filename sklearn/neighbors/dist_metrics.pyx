@@ -114,7 +114,7 @@ cdef class DistanceMetric:
 
     >>> dist = DistanceMetric.get_metric('euclidean')
     >>> X = [[0, 1, 2],
-             [3, 4, 5]])
+             [3, 4, 5]]
     >>> dist.pairwise(X)
     array([[ 0.        ,  5.19615242],
            [ 5.19615242,  0.        ]])
