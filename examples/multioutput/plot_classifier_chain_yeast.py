@@ -99,6 +99,7 @@ x_pos = np.arange(len(model_names))
 # not begin at 0).
 
 fig, ax = plt.subplots(figsize=(7, 4))
+ax.grid(True)
 ax.set_title('Classifier Chain Ensemble Performance Comparison')
 ax.set_xticks(x_pos)
 ax.set_xticklabels(model_names, rotation='vertical')
