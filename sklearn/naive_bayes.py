@@ -137,6 +137,10 @@ class GaussianNB(BaseNB):
 
     Attributes
     ----------
+    classes_ : array, shape (n_classes, )
+        The classes stored in the estimator. These are either passed during
+        initialization/fit or infered from training data.
+
     class_prior_ : array, shape (n_classes,)
         probability of each class.
 
@@ -704,13 +708,17 @@ class MultinomialNB(BaseDiscreteNB):
             refer to the final order of classes.
 
             If not specified, this will be set as per the classes present in
-            the training data. It is recommended to set this parameter while
+            the training data. It is recommended to set this parameter during
             initialization.
 
             .. versionadded:: 0.19
 
     Attributes
     ----------
+    classes_ : array, shape (n_classes, )
+        The classes stored in the estimator. These are either passed during
+        initialization/fit or infered from training data.
+
     class_log_prior_ : array, shape (n_classes, )
         Smoothed empirical log probability for each class.
 
@@ -824,13 +832,17 @@ class BernoulliNB(BaseDiscreteNB):
             refer to the final order of classes.
 
             If not specified, this will be set as per the classes present in
-            the training data. It is recommended to set this parameter while
+            the training data. It is recommended to set this parameter during
             initialization.
 
             .. versionadded:: 0.19
 
     Attributes
     ----------
+    classes_ : array, shape (n_classes, )
+        The classes stored in the estimator. These are either passed during
+        initialization/fit or infered from training data.
+
     class_log_prior_ : array, shape = [n_classes]
         Log probability of each class (smoothed).
 
