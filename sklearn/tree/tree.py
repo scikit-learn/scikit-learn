@@ -512,12 +512,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         Example:
 
         ```
-            |---feature_ <= 0.80
+            |---feature_1 <= 0.80
             |   |---: [ 50.   0.   0.]
-            |---feature_ >  0.80
-            |   |---feature_ <= 1.75
+            |---feature_1 >  0.80
+            |   |---feature_2 <= 1.75
             |   |   |---: [  0.  49.   5.]
-            |       |---feature_ >  1.75
+            |       |---feature_2 >  1.75
             |   |   |---: [  0.   1.  45.]
         ```
 
