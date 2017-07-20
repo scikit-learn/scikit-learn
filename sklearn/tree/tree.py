@@ -506,6 +506,63 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return self.tree_.compute_feature_importances()
 
+    def print_tree(self, feature_names=None):
+        """Build a text report showing rules in the tree.
+
+        Example:
+
+        ```
+            |---feature_ <= 0.80
+            |   |---: [ 50.   0.   0.]
+            |---feature_ >  0.80
+            |   |---feature_ <= 1.75
+            |   |   |---: [  0.  49.   5.]
+            |       |---feature_ >  1.75
+            |   |   |---: [  0.   1.  45.]
+        ```
+
+        Parameters
+        ----------
+        feature_names : list, optional (default=None)
+            A list of length n_features containing the feature names.
+            If None generic names will be used ("feature_1", "feature_2", ...).
+
+        Returns
+        -------
+        report : string
+            Text summary of all the rules in the decision tree.
+        """
+        if feature_names:
+            feature_names_ = [feature_names[i] for i in self.tree_.feature]
+        else:
+            feature_names_ = []
+            for i in self.tree_.feature:
+                feature_names_.append('feature_'+str(i))
+
+        self.report = ''
+
+        def print_tree_recurse(node, depth):
+            indent = "|   " * depth
+            indent = indent[:-3] + '---'
+            if self.tree_.feature[node] != _tree.TREE_UNDEFINED:
+                name = feature_names_[node]
+                threshold = self.tree_.threshold[node]
+                self.report += "{}{} <= {:.2f}\n".format(indent,
+                                                         name,
+                                                         threshold)
+                print_tree_recurse(self.tree_.children_left[node], depth + 1)
+                self.report += "{}{} >  {:.2f}\n".format(indent,
+                                                         name,
+
+                                                         threshold)
+                print_tree_recurse(self.tree_.children_right[node], depth + 1)
+            else:  # leaf
+                self.report += "{}: {}\n".format(indent,
+                                                 self.tree_.value[node][0])
+
+        print_tree_recurse(0, 1)
+        return self.report
+
 
 # =============================================================================
 # Public estimators

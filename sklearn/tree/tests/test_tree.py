@@ -271,6 +271,43 @@ def test_iris():
                        "".format(name, criterion, score))
 
 
+def test_print_tree():
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(iris.data, iris.target)
+    expected_report = """\
+|---feature_3 <= 0.80
+|   |---: [ 50.   0.   0.]
+|---feature_3 >  0.80
+|   |---feature_3 <= 1.75
+|   |   |---: [  0.  49.   5.]
+|   |---feature_3 >  1.75
+|   |   |---: [  0.   1.  45.]
+"""
+    assert_equal(clf.print_tree(), expected_report)
+    expected_report = """\
+|---d <= 0.80
+|   |---: [ 50.   0.   0.]
+|---d >  0.80
+|   |---d <= 1.75
+|   |   |---: [  0.  49.   5.]
+|   |---d >  1.75
+|   |   |---: [  0.   1.  45.]
+"""
+    assert_equal(clf.print_tree(['a', 'b', 'c', 'd']), expected_report)
+    clf = DecisionTreeRegressor(max_depth=2, random_state=0)
+    clf.fit(iris.data, iris.target)
+    expected_report = """\
+|---feature_3 <= 0.80
+|   |---: [ 0.]
+|---feature_3 >  0.80
+|   |---feature_3 <= 1.75
+|   |   |---: [ 1.09259259]
+|   |---feature_3 >  1.75
+|   |   |---: [ 1.97826087]
+"""
+    assert_equal(clf.print_tree(), expected_report)
+
+
 def test_boston():
     # Check consistency on dataset boston house prices.
 
