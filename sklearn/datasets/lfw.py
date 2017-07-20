@@ -40,7 +40,8 @@ logger = logging.getLogger(__name__)
 ARCHIVE = RemoteFileMetadata(
     filename='lfw.tgz',
     url='https://ndownloader.figshare.com/files/5976018',
-    checksum='000000000000000000')
+    checksum=('b47c8422c8cded889dc5a13418c4bc2a'
+              'bbda121092b3533a83306f90d900100a'))
 
 FUNNELED_ARCHIVE = RemoteFileMetadata(
     filename='lfw-funneled.tgz',
