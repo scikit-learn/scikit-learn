@@ -553,7 +553,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 print_tree_recurse(self.tree_.children_left[node], depth + 1)
                 self.report += "{}{} >  {:.2f}\n".format(indent,
                                                          name,
-
                                                          threshold)
                 print_tree_recurse(self.tree_.children_right[node], depth + 1)
             else:  # leaf
