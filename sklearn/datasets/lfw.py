@@ -29,7 +29,7 @@ from os.path import join, exists, isdir
 import logging
 import numpy as np
 
-from .base import get_data_home, _fetch_url, RemoteFileMetadata
+from .base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
 from ..externals.joblib import Memory
 
@@ -88,40 +88,34 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     data_home = get_data_home(data_home=data_home)
     lfw_home = join(data_home, "lfw_home")
 
-    if funneled:
-        data_folder_path = join(lfw_home, "lfw_funneled")
-        archive_path = join(lfw_home, FUNNELED_ARCHIVE.filename)
-        archive_url = FUNNELED_ARCHIVE.url
-        expected_archive_checksum = FUNNELED_ARCHIVE.checksum
-    else:
-        data_folder_path = join(lfw_home, "lfw")
-        archive_path = join(lfw_home, ARCHIVE.filename)
-        archive_url = ARCHIVE.url
-        expected_archive_checksum = ARCHIVE.checksum
-
     if not exists(lfw_home):
         makedirs(lfw_home)
 
     for target in TARGETS:
-        target_filepath = join(lfw_home, target.filename)
-        if not exists(target_filepath):
+        if not exists(join(lfw_home, target.filename)):
             if download_if_missing:
                 logger.warning("Downloading LFW metadata: %s", target.url)
-                _fetch_url(target.url, target_filepath, target.checksum)
+                _fetch_remote(target, path=lfw_home)
             else:
-                raise IOError("%s is missing" % target_filepath)
+                raise IOError("%s is missing"
+                              % join(lfw_home, target.filename))
+
+    if funneled:
+        data_folder_path = join(lfw_home, "lfw_funneled")
+        archive = FUNNELED_ARCHIVE
+    else:
+        data_folder_path = join(lfw_home, "lfw")
+        archive = ARCHIVE
 
     if not exists(data_folder_path):
-
+        archive_path = join(data_folder_path, ARCHIVE.filename)
         if not exists(archive_path):
             if download_if_missing:
                 logger.warning("Downloading LFW data (~200MB): %s",
-                               archive_url)
-
-                _fetch_url(archive_url, archive_path,
-                           expected_archive_checksum)
+                               ARCHIVE.url)
+                _fetch_remote(archive, path=data_folder_path)
             else:
-                raise IOError("%s is missing" % target_filepath)
+                raise IOError("%s is missing" % archive_path)
 
         import tarfile
         logger.info("Decompressing the data archive to %s", data_folder_path)

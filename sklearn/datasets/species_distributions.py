@@ -46,7 +46,8 @@ import sys
 import numpy as np
 
 from .base import get_data_home
-from .base import _fetch_url
+from .base import _fetch_remote
+from .base import RemoteFileMetadata
 from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
@@ -56,11 +57,19 @@ if sys.version_info[0] < 3:
 else:
     PY2 = False
 
-SAMPLES_URL = "https://ndownloader.figshare.com/files/5976075"
-COVERAGES_URL = "https://ndownloader.figshare.com/files/5976078"
+SAMPLES = RemoteFileMetadata(
+    filename='samples.zip',
+    url='https://ndownloader.figshare.com/files/5976075',
+    checksum=('abb07ad284ac50d9e6d20f1c4211e0fd'
+              '3c098f7f85955e89d321ee8efe37ac28'))
+
+COVERAGES = RemoteFileMetadata(
+    filename='coverages.zip',
+    url='https://ndownloader.figshare.com/files/5976078',
+    checksum=('4d862674d72e79d6cee77e63b98651ec'
+              '7926043ba7d39dcb31329cf3f6073807'))
 
 DATA_ARCHIVE_NAME = "species_coverage.pkz"
-
 
 def _load_coverage(F, header_length=6, dtype=np.int16):
     """Load a coverage file from an open file object.
@@ -225,13 +234,10 @@ def fetch_species_distributions(data_home=None,
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
 
-        print('Downloading species data from %s to %s' % (SAMPLES_URL,
+        print('Downloading species data from %s to %s' % (SAMPLES.url,
                                                           data_home))
-        expected_samples_checksum = ("abb07ad284ac50d9e6d20f1c4211e0fd3c098f7f"
-                                     "85955e89d321ee8efe37ac28")
+        _fetch_remote(SAMPLES, path=data_home)
         samples_path = join(data_home, "samples.zip")
-        _fetch_url(SAMPLES_URL, samples_path,
-                   expected_samples_checksum)
         X = np.load(samples_path)  # samples.zip is a valid npz
         remove(samples_path)
 
@@ -242,13 +248,10 @@ def fetch_species_distributions(data_home=None,
             if 'test' in f:
                 test = _load_csv(fhandle)
 
-        print('Downloading coverage data from %s to %s' % (COVERAGES_URL,
+        print('Downloading coverage data from %s to %s' % (COVERAGES.url,
                                                            data_home))
-        expected_coverages_checksum = ("4d862674d72e79d6cee77e63b98651ec792604"
-                                       "3ba7d39dcb31329cf3f6073807")
+        _fetch_remote(COVERAGES, path=data_home)
         coverages_path = join(data_home, "coverages.zip")
-        _fetch_url(COVERAGES_URL, coverages_path,
-                   expected_coverages_checksum)
         X = np.load(coverages_path)  # coverages.zip is a valid npz
         remove(coverages_path)
 

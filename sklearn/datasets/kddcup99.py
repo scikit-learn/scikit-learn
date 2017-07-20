@@ -20,14 +20,24 @@ import numpy as np
 
 from .base import _fetch_url
 from .base import get_data_home
+from .base import RemoteFileMetadata
 from ..utils import Bunch
 from ..externals import joblib, six
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
 
-URL_10_PERCENT = 'https://ndownloader.figshare.com/files/5976042'
-URL = 'https://ndownloader.figshare.com/files/5976045'
+ARCHIVE = RemoteFileMetadata(
+    filename='kddcup99_data',
+    url='https://ndownloader.figshare.com/files/5976045',
+    checksum=('3b6c942aa0356c0ca35b7b595a26c89d'
+              '343652c9db428893e7494f837b274292'))
+
+ARCHIVE_10_PERCENT = RemoteFileMetadata(
+    filename='kddcup99_10_data',
+    url='https://ndownloader.figshare.com/files/5976042',
+    checksum=('8045aca0d84e70e622d1148d7df78249'
+              '6f6333bf6eb979a1b0837c42a9fd9561'))
 
 logger = logging.getLogger(__name__)
 
@@ -266,16 +276,17 @@ def _fetch_brute_kddcup99(data_home=None,
     else:
         # Backward compat for Python 2 users
         dir_suffix = ""
+
     if percent10:
         kddcup_dir = join(data_home, "kddcup99_10" + dir_suffix)
-        archive_path = join(kddcup_dir, "kddcup99_10_data")
-        expected_checksum = ("8045aca0d84e70e622d1148d7df78249"
-                             "6f6333bf6eb979a1b0837c42a9fd9561")
+        archive_path = join(kddcup_dir, ARCHIVE_10_PERCENT.filename)
+        expected_checksum = ARCHIVE_10_PERCENT.checksum
+        URL_ = ARCHIVE_10_PERCENT.url
     else:
         kddcup_dir = join(data_home, "kddcup99" + dir_suffix)
-        archive_path = join(kddcup_dir, "kddcup99_data")
-        expected_checksum = ("3b6c942aa0356c0ca35b7b595a26c89d"
-                             "343652c9db428893e7494f837b274292")
+        archive_path = join(kddcup_dir, ARCHIVE.filename)
+        expected_checksum = ARCHIVE.checksum
+        URL_ = ARCHIVE.url
 
     samples_path = join(kddcup_dir, "samples")
     targets_path = join(kddcup_dir, "targets")
@@ -283,7 +294,6 @@ def _fetch_brute_kddcup99(data_home=None,
 
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
-        URL_ = URL_10_PERCENT if percent10 else URL
         logger.info("Downloading %s" % URL_)
         _fetch_url(URL_, archive_path, expected_checksum)
         dt = [('duration', int),

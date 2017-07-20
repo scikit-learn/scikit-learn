@@ -22,16 +22,21 @@ from os import remove
 import numpy as np
 
 from .base import get_data_home
-from .base import _fetch_url
+from .base import _fetch_remote
+from .base import RemoteFileMetadata
 from ..utils import Bunch
 from .base import _pkl_filepath
 from ..utils.fixes import makedirs
 from ..externals import joblib
 from ..utils import check_random_state
 
-# URL = ('http://archive.ics.uci.edu/ml/'
-#        'machine-learning-databases/covtype/covtype.data.gz')
-URL = 'https://ndownloader.figshare.com/files/5976039'
+# The original data can be found in:
+# http://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
+ARCHIVE = RemoteFileMetadata(
+    filename='covtype.data.gz',
+    url='https://ndownloader.figshare.com/files/5976039',
+    checksum=('614360d0257557dd1792834a85a1cdeb'
+              'fadc3c4f30b011d56afee7ffb5b15771'))
 
 logger = logging.getLogger(__name__)
 
@@ -87,12 +92,10 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     if download_if_missing and not available:
         if not exists(covtype_dir):
             makedirs(covtype_dir)
-        logger.info("Downloading %s" % URL)
+        logger.info("Downloading %s" % ARCHIVE.url)
 
+        _fetch_remote(ARCHIVE, covtype_dir)
         archive_path = join(covtype_dir, "covtype.data.gz")
-        expected_checksum = ("614360d0257557dd1792834a85a1cdeb"
-                             "fadc3c4f30b011d56afee7ffb5b15771")
-        _fetch_url(URL, archive_path, expected_checksum)
         Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=',')
         # delete archive
         remove(archive_path)

@@ -29,13 +29,19 @@ import numpy as np
 from scipy.io.matlab import loadmat
 
 from .base import get_data_home
-from .base import _fetch_url
+from .base import _fetch_remote
+from .base import RemoteFileMetadata
 from .base import _pkl_filepath
 from ..utils import check_random_state, Bunch
 from ..externals import joblib
 
 
-DATA_URL = "https://ndownloader.figshare.com/files/5976027"
+ARCHIVE = RemoteFileMetadata(
+    filename='olivettifaces.mat',
+    url='https://ndownloader.figshare.com/files/5976027',
+    checksum=('b612fb967f2dc77c9c62d3e1266e0c73'
+              'd5fca46a4b8906c18e454d41af987794'))
+
 TARGET_FILENAME = "olivetti.pkz"
 
 # Grab the module-level docstring to use as a description of the
@@ -111,12 +117,10 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
             raise IOError("Data not found and `download_if_missing` is False")
 
         print('downloading Olivetti faces from %s to %s'
-              % (DATA_URL, data_home))
-        mat_path = join(data_home, "olivettifaces.mat")
-        expected_checksum = ("b612fb967f2dc77c9c62d3e1266e0c73d5fca46a4"
-                             "b8906c18e454d41af987794")
-        _fetch_url(DATA_URL, mat_path, expected_checksum)
+              % (ARCHIVE.url, data_home))
+        _fetch_remote(ARCHIVE, path=data_home)
 
+        mat_path = join(data_home, ARCHIVE.filename)
         mfile = loadmat(file_name=mat_path)
         # delete raw .mat data
         remove(mat_path)

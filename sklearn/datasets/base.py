@@ -33,6 +33,9 @@ except ImportError:
         with open(path, 'wb') as out_file:
             copyfileobj(urlopen(url), out_file)
 
+RemoteFileMetadata = namedtuple('RemoteFileMetadata',
+                                ['filename', 'url', 'checksum'])
+
 
 def get_data_home(data_home=None):
     """Return the path of the scikit-learn data dir.
@@ -867,5 +870,19 @@ def _fetch_url(url, path, checksum):
                       "file may be corrupted.".format(path))
 
 
-RemoteFileMetadata = namedtuple('RemoteFileMetadata',
-                                ['filename', 'url', 'checksum'])
+def _fetch_remote(remote, path=None):
+    """Helper function to download a remote dataset into path
+
+
+    Parameters
+    -----------
+    remote : RemoteFileMetadata
+        Object containing remote dataset meta information: url, filename
+        and checksum
+
+    path : string
+        Path to save the file to.
+    """
+
+    filename = remote.filename if path is None else join(path, remote.filename)
+    _fetch_url(remote.url, filename, remote.checksum)

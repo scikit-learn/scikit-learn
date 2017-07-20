@@ -30,14 +30,16 @@ import numpy as np
 from .base import get_data_home
 from .base import _fetch_url
 from .base import _pkl_filepath
+from .base import RemoteFileMetadata
 from ..utils import Bunch
 from ..externals import joblib
 
 # DATA_URL = "http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz"
-DATA_URL = "https://ndownloader.figshare.com/files/5976036"
-TARGET_FILENAME = "cal_housing.pkz"
-EXPECTED_CHECKSUM = ("aaa5c9a6afe2225cc2aed2723682ae40"
-                     "3280c4a3695a2ddda4ffb5d8215ea681")
+ARCHIVE = RemoteFileMetadata(
+    filename='cal_housing.pkz',
+    url='https://ndownloader.figshare.com/files/5976036',
+    checksum=('aaa5c9a6afe2225cc2aed2723682ae40'
+              '3280c4a3695a2ddda4ffb5d8215ea681'))
 
 # Grab the module-level docstring to use as a description of the
 # dataset
@@ -84,14 +86,17 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     if not exists(data_home):
         makedirs(data_home)
 
-    filepath = _pkl_filepath(data_home, TARGET_FILENAME)
+    filepath = _pkl_filepath(data_home, ARCHIVE.filename)
     if not exists(filepath):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
 
-        print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
+        print('downloading Cal. housing from {} to {}'.format(
+            ARCHIVE.url, data_home))
+
         archive_path = join(data_home, "cal_housing.tgz")
-        _fetch_url(DATA_URL, archive_path, EXPECTED_CHECKSUM)
+        _fetch_url(ARCHIVE.url, archive_path, ARCHIVE.checksum)
+
         fileobj = tarfile.open(
             mode="r:gz",
             name=archive_path).extractfile(

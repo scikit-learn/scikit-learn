@@ -50,6 +50,7 @@ from .base import get_data_home
 from .base import load_files
 from .base import _pkl_filepath
 from .base import _fetch_url
+from .base import RemoteFileMetadata
 from ..utils import check_random_state, Bunch
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
@@ -57,9 +58,12 @@ from ..externals import joblib
 
 logger = logging.getLogger(__name__)
 
+ARCHIVE = RemoteFileMetadata(
+    filename='20news-bydate.tar.gz',
+    url='https://ndownloader.figshare.com/files/5975967',
+    checksum=('8f1b2514ca22a5ade8fbb9cfa5727df9'
+              '5fa587f4c87b786e15c759fa66d95610'))
 
-URL = "https://ndownloader.figshare.com/files/5975967"
-ARCHIVE_NAME = "20news-bydate.tar.gz"
 CACHE_NAME = "20news-bydate.pkz"
 TRAIN_FOLDER = "20news-bydate-train"
 TEST_FOLDER = "20news-bydate-test"
@@ -67,17 +71,15 @@ TEST_FOLDER = "20news-bydate-test"
 
 def download_20newsgroups(target_dir, cache_path):
     """Download the 20 newsgroups data and stored it as a zipped pickle."""
-    archive_path = os.path.join(target_dir, ARCHIVE_NAME)
+    archive_path = os.path.join(target_dir, ARCHIVE.filename)
     train_path = os.path.join(target_dir, TRAIN_FOLDER)
     test_path = os.path.join(target_dir, TEST_FOLDER)
 
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    logger.warning("Downloading dataset from %s (14 MB)", URL)
-    expected_checksum = ("8f1b2514ca22a5ade8fbb9cfa5727df95fa5"
-                         "87f4c87b786e15c759fa66d95610")
-    _fetch_url(URL, archive_path, expected_checksum)
+    logger.warning("Downloading dataset from %s (14 MB)", ARCHIVE.url)
+    _fetch_url(ARCHIVE.url, archive_path, ARCHIVE.checksum)
 
     logger.info("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
