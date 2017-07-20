@@ -65,53 +65,53 @@ grouped by strategy; you don't need the meta-estimators in this class
 if you're using one of these, unless you want custom multiclass behavior:
 
   - Inherently multiclass:
-    * :class: `AdaBoostClassifier`
-    * :class: `BaggingClassifier`
-    * :class: `BernoulliNB`
-    * :class: `CalibratedClassifierCV`
-    * :class: `DecisionTreeClassifier`
-    * :class: `ExtraTreeClassifier`
-    * :class: `ExtraTreesClassifier`
-    * :class: `GaussianNB`
-    * :class: `GaussianProcessClassifier`
-    * :class: `GradientBoostingClassifier`
-    * :class: `KNeighborsClassifier`
-    * :class: `LabelPropagation`
-    * :class: `LabelSpreading`
-    * :class: `LinearDiscriminantAnalysis`
-    * :class: `LinearSVC`
-    * :class: `LogisticRegression`
-    * :class: `LogisticRegressionCV`
-    * :class: `MLPClassifier`
-    * :class: `NearestCentroid`
-    * :class: `NuSVC`
-    * :class: `PassiveAggressiveClassifier`
-    * :class: `Perceptron`
-    * :class: `QuadraticDiscriminantAnalysis`
-    * :class: `RadiusNeighborsClassifier`
-    * :class: `RandomForestClassifier`
-    * :class: `RidgeClassifier`
-    * :class: `RidgeClassifierCV`
-    * :class: `SGDClassifier`
-    * :class: `SVC`
+    - :class: `sklearn.ensemble.weight_boosting.AdaBoostClassifier`
+    - :class: `sklearn.ensemble.bagging.BaggingClassifier`
+    - :class: `sklearn.naive_bayes.BernoulliNB`
+    - :class: `sklearn.calibration.CalibratedClassifierCV`
+    - :class: `sklearn.tree.tree.DecisionTreeClassifier`
+    - :class: `sklearn.tree.tree.ExtraTreeClassifier`
+    - :class: `sklearn.ensemble.forest.ExtraTreesClassifier`
+    - :class: `sklearn.naive_bayes.GaussianNB`
+    - :class: `sklearn.gaussian_process.gpc.GaussianProcessClassifier`
+    - :class: `sklearn.ensemble.gradient_boosting.GradientBoostingClassifier`
+    - :class: `sklearn.neighbors.classification.KNeighborsClassifier`
+    - :class: `sklearn.semi_supervised.label_propagation.LabelPropagation`
+    - :class: `sklearn.semi_supervised.label_propagation.LabelSpreading`
+    - :class: `sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+    - :class: `sklearn.svm.classes.LinearSVC`
+    - :class: `sklearn.linear_model.logistic.LogisticRegression`
+    - :class: `sklearn.linear_model.logistic.LogisticRegressionCV`
+    - :class: `sklearn.neural_network.multilayer_perceptron.MLPClassifier`
+    - :class: `sklearn.neighbors.nearest_centroid.NearestCentroid`
+    - :class: `sklearn.svm.classes.NuSVC`
+    - :class: `sklearn.linear_model.passive_aggressive.PassiveAggressiveClassifier`
+    - :class: `sklearn.linear_model.perceptron.Perceptron`
+    - :class: `sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+    - :class: `sklearn.neighbors.classification.RadiusNeighborsClassifier`
+    - :class: `sklearn.ensemble.forest.RandomForestClassifier`
+    - :class: `sklearn.linear_model.ridge.RidgeClassifier`
+    - :class: `sklearn.linear_model.ridge.RidgeClassifierCV`
+    - :class: `sklearn.linear_model.stochastic_gradient.SGDClassifier`
+    - :class: `sklearn.svm.classes.SVC`
 
   - Support multilabel:
-    * :class: `DecisionTreeClassifier`
-    * :class: `ExtraTreeClassifier`
-    * :class: `ExtraTreesClassifier`
-    * :class: `KNeighborsClassifier`
-    * :class: `MLPClassifier`
-    * :class: `RadiusNeighborsClassifier`
-    * :class: `RandomForestClassifier`
-    * :class: `RidgeClassifierCV`
+    - :class: `sklearn.tree.tree.DecisionTreeClassifier`
+    - :class: `sklearn.tree.tree.ExtraTreeClassifier`
+    - :class: `sklearn.ensemble.forest.ExtraTreesClassifier`
+    - :class: `sklearn.neighbors.classification.KNeighborsClassifier`
+    - :class: `sklearn.neural_network.multilayer_perceptron.MLPClassifier`
+    - :class: `sklearn.neighbors.classification.RadiusNeighborsClassifier`
+    - :class: `sklearn.ensemble.forest.RandomForestClassifier`
+    - :class: `sklearn.linear_model.ridge.RidgeClassifierCV`
 
   - Support multiclass-multioutput:
-    * :class: `DecisionTreeClassifier`
-    * :class: `ExtraTreeClassifier`
-    * :class: `ExtraTreesClassifier`
-    * :class: `KNeighborsClassifier`
-    * :class: `RadiusNeighborsClassifier`
-    * :class: `RandomForestClassifier`
+    - :class: `sklearn.tree.tree.DecisionTreeClassifier`
+    - :class: `sklearn.tree.tree.ExtraTreeClassifier`
+    - :class: `sklearn.ensemble.forest.ExtraTreesClassifier`
+    - :class: `sklearn.neighbors.classification.KNeighborsClassifier`
+    - :class: `sklearn.neighbors.classification.RadiusNeighborsClassifier`
+    - :class: `sklearn.ensemble.forest.RandomForestClassifier`
 
   - One-Vs-One:
     * :class:`sklearn.svm.SVC`.
