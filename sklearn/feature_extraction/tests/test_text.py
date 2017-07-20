@@ -238,7 +238,7 @@ def test_word_ngram_analyzer():
     cnga_file = CountVectorizer(input='file', analyzer='word',
                                 ngram_range=(3, 6)).build_analyzer()
     file = StringIO(text)
-    assert_equal(cnga_file(file)[:3], cnga(text)[:3])
+    assert_equal(cnga_file(file), cnga(text))
 
 
 def test_countvectorizer_custom_vocabulary():
