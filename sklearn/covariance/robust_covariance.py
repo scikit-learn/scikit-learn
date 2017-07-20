@@ -662,9 +662,9 @@ class MinCovDet(EmpiricalCovariance):
         References
         ----------
 
-        .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance Determinant
-        Estimator, 1999, American Statistical Association and the American
-        Society for Quality, TECHNOMETRICS`
+        .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance
+        Determinant Estimator, 1999, American Statistical Association and
+        the American Society for Quality, TECHNOMETRICS`
 
         Returns
         -------
@@ -682,7 +682,8 @@ class MinCovDet(EmpiricalCovariance):
 
         Re-weight observations using Rousseeuw's method (equivalent to
         deleting outlying observations from the data set before
-        computing location and covariance estimates) described in [Rouseeuw1999]_.
+        computing location and covariance estimates) described
+        in [Rouseeuw1999]_.
 
         Parameters
         ----------
@@ -694,9 +695,9 @@ class MinCovDet(EmpiricalCovariance):
         References
         ----------
 
-        .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance Determinant
-        Estimator, 1999, American Statistical Association and the American
-        Society for Quality, TECHNOMETRICS`
+        .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance
+        Determinant Estimator, 1999, American Statistical Association and
+        the American Society for Quality, TECHNOMETRICS`
 
         Returns
         -------
