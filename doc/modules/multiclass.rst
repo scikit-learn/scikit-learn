@@ -66,55 +66,55 @@ if you're using one of these, unless you want custom multiclass behavior:
 
   - Inherently multiclass:
 
-    - :class:`sklearn.ensemble.weight_boosting.AdaBoostClassifier`
-    - :class:`sklearn.ensemble.bagging.BaggingClassifier`
+    - :class:`sklearn.ensemble.AdaBoostClassifier`
+    - :class:`sklearn.ensemble.BaggingClassifier`
     - :class:`sklearn.naive_bayes.BernoulliNB`
     - :class:`sklearn.calibration.CalibratedClassifierCV`
-    - :class:`sklearn.tree.tree.DecisionTreeClassifier`
-    - :class:`sklearn.tree.tree.ExtraTreeClassifier`
-    - :class:`sklearn.ensemble.forest.ExtraTreesClassifier`
+    - :class:`sklearn.tree.DecisionTreeClassifier`
+    - :class:`sklearn.tree.ExtraTreeClassifier`
+    - :class:`sklearn.ensemble.ExtraTreesClassifier`
     - :class:`sklearn.naive_bayes.GaussianNB`
-    - :class:`sklearn.gaussian_process.gpc.GaussianProcessClassifier`
-    - :class:`sklearn.ensemble.gradient_boosting.GradientBoostingClassifier`
-    - :class:`sklearn.neighbors.classification.KNeighborsClassifier`
-    - :class:`sklearn.semi_supervised.label_propagation.LabelPropagation`
-    - :class:`sklearn.semi_supervised.label_propagation.LabelSpreading`
+    - :class:`sklearn.gaussian_process.GaussianProcessClassifier`
+    - :class:`sklearn.ensemble.GradientBoostingClassifier`
+    - :class:`sklearn.neighbors.KNeighborsClassifier`
+    - :class:`sklearn.semi_supervised.LabelPropagation`
+    - :class:`sklearn.semi_supervised.LabelSpreading`
     - :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
-    - :class:`sklearn.svm.classes.LinearSVC`
-    - :class:`sklearn.linear_model.logistic.LogisticRegression`
-    - :class:`sklearn.linear_model.logistic.LogisticRegressionCV`
-    - :class:`sklearn.neural_network.multilayer_perceptron.MLPClassifier`
-    - :class:`sklearn.neighbors.nearest_centroid.NearestCentroid`
-    - :class:`sklearn.svm.classes.NuSVC`
+    - :class:`sklearn.svm.LinearSVC`
+    - :class:`sklearn.linear_model.LogisticRegression`
+    - :class:`sklearn.linear_model.LogisticRegressionCV`
+    - :class:`sklearn.neural_network.MLPClassifier`
+    - :class:`sklearn.neighbors.NearestCentroid`
+    - :class:`sklearn.svm.NuSVC`
     - :class:`sklearn.linear_model.passive_aggressive.PassiveAggressiveClassifier`
-    - :class:`sklearn.linear_model.perceptron.Perceptron`
+    - :class:`sklearn.linear_model.Perceptron`
     - :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
-    - :class:`sklearn.neighbors.classification.RadiusNeighborsClassifier`
-    - :class:`sklearn.ensemble.forest.RandomForestClassifier`
-    - :class:`sklearn.linear_model.ridge.RidgeClassifier`
-    - :class:`sklearn.linear_model.ridge.RidgeClassifierCV`
-    - :class:`sklearn.linear_model.stochastic_gradient.SGDClassifier`
-    - :class:`sklearn.svm.classes.SVC`
+    - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+    - :class:`sklearn.ensemble.RandomForestClassifier`
+    - :class:`sklearn.linear_model.RidgeClassifier`
+    - :class:`sklearn.linear_model.RidgeClassifierCV`
+    - :class:`sklearn.linear_model.SGDClassifier`
+    - :class:`sklearn.svm.SVC`
 
   - Support multilabel:
 
-    - :class:`sklearn.tree.tree.DecisionTreeClassifier`
-    - :class:`sklearn.tree.tree.ExtraTreeClassifier`
-    - :class:`sklearn.ensemble.forest.ExtraTreesClassifier`
-    - :class:`sklearn.neighbors.classification.KNeighborsClassifier`
-    - :class:`sklearn.neural_network.multilayer_perceptron.MLPClassifier`
-    - :class:`sklearn.neighbors.classification.RadiusNeighborsClassifier`
-    - :class:`sklearn.ensemble.forest.RandomForestClassifier`
-    - :class:`sklearn.linear_model.ridge.RidgeClassifierCV`
+    - :class:`sklearn.tree.DecisionTreeClassifier`
+    - :class:`sklearn.tree.ExtraTreeClassifier`
+    - :class:`sklearn.ensemble.ExtraTreesClassifier`
+    - :class:`sklearn.neighbors.KNeighborsClassifier`
+    - :class:`sklearn.neural_network.MLPClassifier`
+    - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+    - :class:`sklearn.ensemble.RandomForestClassifier`
+    - :class:`sklearn.linear_model.RidgeClassifierCV`
 
   - Support multiclass-multioutput:
 
-    - :class:`sklearn.tree.tree.DecisionTreeClassifier`
-    - :class:`sklearn.tree.tree.ExtraTreeClassifier`
-    - :class:`sklearn.ensemble.forest.ExtraTreesClassifier`
-    - :class:`sklearn.neighbors.classification.KNeighborsClassifier`
-    - :class:`sklearn.neighbors.classification.RadiusNeighborsClassifier`
-    - :class:`sklearn.ensemble.forest.RandomForestClassifier`
+    - :class:`sklearn.tree.DecisionTreeClassifier`
+    - :class:`sklearn.tree.ExtraTreeClassifier`
+    - :class:`sklearn.ensemble.ExtraTreesClassifier`
+    - :class:`sklearn.neighbors.KNeighborsClassifier`
+    - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+    - :class:`sklearn.ensemble.RandomForestClassifier`
 
   - One-Vs-One:
 
