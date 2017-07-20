@@ -834,7 +834,7 @@ def _sha256(path):
     sha256hash = hashlib.sha256()
     chunk_size = 8192
     with open(path, "rb") as f:
-        while 1:
+        while True:
             buffer = f.read(chunk_size)
             if not buffer:
                 break
