@@ -573,6 +573,10 @@ The latter two options work best when groups are relatively small, to avoid
 folds of uneven sizes. The stratification relies on the ``y``-value of the
 first item of a group being representative of its group.
 
+.. topic:: Examples
+
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_groupkfold.py`,
+
 
 Leave One Group Out
 -------------------
