@@ -18,6 +18,7 @@ A more traditional (and possibly better) way to predict on a sparse subset of
 input features would be to use univariate feature selection followed by a
 traditional (l2-penalised) logistic regression model.
 """
+from __future__ import division
 import time
 
 import matplotlib.pyplot as plt

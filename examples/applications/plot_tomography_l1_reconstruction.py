@@ -39,6 +39,7 @@ print(__doc__)
 
 # Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
 # License: BSD 3 clause
+from __future__ import division
 
 import numpy as np
 from scipy import sparse
