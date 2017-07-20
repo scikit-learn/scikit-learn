@@ -32,10 +32,9 @@ Examples
 --------
 >>> from sklearn import datasets
 >>> from sklearn.semi_supervised import LabelPropagation
->>> label_prop_model = LabelPropagation(max_iter=1000)
+>>> label_prop_model = LabelPropagation()
 >>> iris = datasets.load_iris()
->>> random_unlabeled_points = np.where(np.random.randint(0, 2,
-...        size=len(iris.target)))
+>>> random_unlabeled_points = np.random.rand(len(iris.target)) < 0.3
 >>> labels = np.copy(iris.target)
 >>> labels[random_unlabeled_points] = -1
 >>> label_prop_model.fit(iris.data, labels)
@@ -363,10 +362,9 @@ class LabelPropagation(BaseLabelPropagation):
     --------
     >>> from sklearn import datasets
     >>> from sklearn.semi_supervised import LabelPropagation
-    >>> label_prop_model = LabelPropagation(max_iter=1000)
+    >>> label_prop_model = LabelPropagation()
     >>> iris = datasets.load_iris()
-    >>> random_unlabeled_points = np.where(np.random.randint(0, 2,
-    ...    size=len(iris.target)))
+    >>> random_unlabeled_points = np.random.rand(len(iris.target)) < 0.3
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
@@ -480,10 +478,9 @@ class LabelSpreading(BaseLabelPropagation):
     --------
     >>> from sklearn import datasets
     >>> from sklearn.semi_supervised import LabelSpreading
-    >>> label_prop_model = LabelSpreading(max_iter=1000)
+    >>> label_prop_model = LabelSpreading()
     >>> iris = datasets.load_iris()
-    >>> random_unlabeled_points = np.where(np.random.randint(0, 2,
-    ...    size=len(iris.target)))
+    >>> random_unlabeled_points = np.random.rand(len(iris.target)) < 0.3
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)

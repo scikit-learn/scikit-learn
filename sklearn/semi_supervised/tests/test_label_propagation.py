@@ -140,7 +140,8 @@ def test_convergence_speed():
     # This is a non-regression test for #5774
     X = np.array([[1., 0.], [0., 1.], [1., 2.5]])
     y = np.array([0, 1, -1])
-    mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=5000)
+    mdl = assert_no_warnings(label_propagation.LabelSpreading, kernel='rbf',
+                             max_iter=5000)
     mdl.fit(X, y)
 
     # this should converge quickly:
