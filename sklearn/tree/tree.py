@@ -536,19 +536,19 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         >>> y = iris['target']
         >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
         >>> decision_tree.fit(X, y)
-        >>> print decision_tree.print_tree(max_depth=10,
-        ...                                class_names=iris['target_names'],
+        >>> print decision_tree.print_tree(class_names=iris['target_names'],
+        ...                                feature_names=iris['feature_names'],
         ...                                show_value=True)
         ...
-        |---feature_3 <= 0.80
+        |---petal width (cm) <= 0.80
         |   | (value: setosa)
         |   |---* value: setosa
-        |---feature_3 >  0.80
+        |---petal width (cm) >  0.80
         |   | (value: setosa)
-        |   |---feature_3 <= 1.75
+        |   |---petal width (cm) <= 1.75
         |   |   | (value: versicolor)
         |   |   |---* value: versicolor
-        |   |---feature_3 >  1.75
+        |   |---petal width (cm) >  1.75
         |   |   | (value: versicolor)
         |   |   |---* value: virginica
 
