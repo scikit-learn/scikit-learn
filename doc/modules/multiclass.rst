@@ -80,8 +80,6 @@ if you're using one of these, unless you want custom multiclass behavior:
     - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
     - :class:`sklearn.neural_network.MLPClassifier`
     - :class:`sklearn.neighbors.NearestCentroid`
-    - :class:`sklearn.linear_model.PassiveAggressiveClassifier`
-    - :class:`sklearn.linear_model.Perceptron`
     - :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
     - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
     - :class:`sklearn.ensemble.RandomForestClassifier`
@@ -104,6 +102,8 @@ if you're using one of these, unless you want custom multiclass behavior:
     - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="ovr")
     - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="ovr")
     - :class:`sklearn.linear_model.SGDClassifier`
+    - :class:`sklearn.linear_model.Perceptron`
+    - :class:`sklearn.linear_model.PassiveAggressiveClassifier`
 
 
   - Support multilabel:
