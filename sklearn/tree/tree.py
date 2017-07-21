@@ -510,18 +510,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                    max_depth=10, show_value=False):
         """Build a text report showing the rules in the tree.
 
-        Example:
-
-        ```
-            |---feature_1 <= 0.80
-            |   |---: [ 50.   0.   0.]
-            |---feature_1 >  0.80
-            |   |---feature_2 <= 1.75
-            |   |   |---: [  0.  49.   5.]
-            |       |---feature_2 >  1.75
-            |   |   |---: [  0.   1.  45.]
-        ```
-
         Parameters
         ----------
         feature_names : list, optional (default=None)
@@ -538,6 +526,31 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         show_value : bool, optional (default=False)
             If True the value of each internal node is printed.
             Otherwise the value will be reported only for leaves.
+
+        Examples
+        --------
+        >>> from sklearn.datasets import load_iris
+        >>> from sklearn.tree import DecisionTreeClassifier
+        >>> iris = load_iris()
+        >>> X = iris['data']
+        >>> y = iris['target']
+        >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
+        >>> decision_tree.fit(X, y)
+        >>> print decision_tree.print_tree(max_depth=10,
+        ...                                class_names=iris['target_names'],
+        ...                                show_value=True)
+        ...
+        |---feature_3 <= 0.80
+        |   | (value: setosa)
+        |   |---* value: setosa
+        |---feature_3 >  0.80
+        |   | (value: setosa)
+        |   |---feature_3 <= 1.75
+        |   |   | (value: versicolor)
+        |   |   |---* value: versicolor
+        |   |---feature_3 >  1.75
+        |   |   | (value: versicolor)
+        |   |   |---* value: virginica
 
 
         Returns
