@@ -14,6 +14,14 @@ from sklearn.utils.validation import check_is_fitted
 import matplotlib.pyplot as plt
 
 
+def _squared_euclidean(A, B=None):
+    if B is None:
+        d = np.sum(A ** 2, 1)[np.newaxis].T + np.sum(A ** 2, 1) - 2 * A.dot(A.T)
+    else:
+        d = np.sum(A ** 2, 1)[np.newaxis].T + np.sum(B ** 2, 1) - 2 * A.dot(B.T)
+    return np.maximum(d, 0)
+
+
 class LgmlvqModel(GlvqModel):
     def __init__(self, random_state=None, initial_prototypes=None, initial_rototype_labels=None, prototypes_per_class=1,
                  display=False, max_iter=2500, gtol=1e-5, regularization=0, initial_matrices=None, classwise=False,
@@ -29,17 +37,16 @@ class LgmlvqModel(GlvqModel):
         self.initialdim = dim
         self.nb_reiterations = nb_reiterations
 
-    def optfun(self, variables, training_data, label_equals_prototype, random_state, lr_relevances=0,
-               lr_prototypes=1, calc_gradient=True):
+    def g(self, variables, training_data, label_equals_prototype, random_state, lr_relevances=0,
+          lr_prototypes=1):
         nb_samples, nb_features = training_data.shape
-        variables = variables.reshape(variables.size // nb_features, nb_features)
         nb_prototypes = self.c_w_.shape[0]
-        classwise = self.c_w_.shape[0] != len(self.dim_)
+        variables = variables.reshape(variables.size // nb_features, nb_features)
         # dim to indices
         indices = []
         for i in range(len(self.dim_)):
             indices.append(sum(self.dim_[:i + 1]))
-        psis = np.split(variables[nb_prototypes:], indices[:-1])
+        psis = np.split(variables[nb_prototypes:], indices[:-1])#.conj().T
 
         dist = self._compute_distance(training_data, variables[:nb_prototypes], psis)  # change dist function ?
         # dist = cdist(training_data, prototypes, 'sqeuclidean')
@@ -54,21 +61,9 @@ class LgmlvqModel(GlvqModel):
         pidxcorrect = d_correct.argmin(1)
 
         distcorrectpluswrong = distcorrect + distwrong
-        distcorectminuswrong = distcorrect - distwrong
-        mu = distcorectminuswrong / distcorrectpluswrong
-
-        if sum(self.regularization) > 0:
-            func = np.vectorize(lambda x: np.log(np.linalg.det(x * x.conj().T)))
-            regTerm = self.regularization * func(psis)
-            f = mu - 1 / nb_samples * regTerm(pidxcorrect) - 1 / nb_samples * regTerm(pidxwrong)
-        else:
-            f = mu.sum(0)
-
-        if not calc_gradient:
-            return f
 
         G = np.zeros(variables.shape)
-        distcorrectpluswrong = 4 / distcorrectpluswrong ** 2
+        normfactors = 4 / distcorrectpluswrong ** 2
 
         if lr_relevances > 0:
             Gw = []
@@ -77,20 +72,20 @@ class LgmlvqModel(GlvqModel):
         for i in range(nb_prototypes):
             idxc = i == pidxcorrect
             idxw = i == pidxwrong
-            if classwise:
+            if self.classwise:
                 rightIdx = np.where((self.c_w_(i) == self.classes_) == 1)[0]  # test if works
             else:
                 rightIdx = i
-            dcd = distcorrect[idxw] * distcorrectpluswrong[idxw]
-            dwd = distwrong[idxc] * distcorrectpluswrong[idxc]
+            dcd = distcorrect[idxw] * normfactors[idxw]
+            dwd = distwrong[idxc] * normfactors[idxc]
 
             difc = training_data[idxc] - variables[i]
             difw = training_data[idxw] - variables[i]
             if lr_prototypes > 0:
                 G[i] = (dcd.dot(difw) - dwd.dot(difc)).dot(psis[rightIdx].conj().T).dot(psis[rightIdx])
             if lr_relevances > 0:
-                Gw[rightIdx] -= (difw * dcd[np.newaxis].T).dot(psis[rightIdx]).T.dot(difw) + \
-                                (difc * dwd[np.newaxis].T).dot(psis[rightIdx]).T.dot(difc)
+                Gw[rightIdx] = Gw[rightIdx] - (difw * dcd[np.newaxis].T).dot(psis[rightIdx].conj().T).T.dot(difw) + \
+                               (difc * dwd[np.newaxis].T).dot(psis[rightIdx].conj().T).T.dot(difc)
         if lr_relevances > 0:
             if sum(self.regularization) > 0:
                 regmatrices = np.zeros(sum(self.dim_), nb_features)
@@ -104,7 +99,37 @@ class LgmlvqModel(GlvqModel):
         if lr_prototypes > 0:
             G[:nb_prototypes] = 1 / nb_samples * lr_prototypes * G[:nb_prototypes]
         G = G * (1 + 0.0001 * random_state.rand(*G.shape) - 0.5)
-        return f, G.ravel()
+        return G.ravel()
+
+    def f(self, variables, training_data, label_equals_prototype):
+        nb_samples, nb_features = training_data.shape
+        nb_prototypes = self.c_w_.shape[0]
+        variables = variables.reshape(variables.size // nb_features, nb_features)
+        # dim to indices
+        indices = []
+        for i in range(len(self.dim_)):
+            indices.append(sum(self.dim_[:i + 1]))
+        psis = np.split(variables[nb_prototypes:], indices[:-1])#.conj().T
+
+        dist = self._compute_distance(training_data, variables[:nb_prototypes], psis)  # change dist function ?
+        # dist = cdist(training_data, prototypes, 'sqeuclidean')
+        d_wrong = dist.copy()
+        d_wrong[label_equals_prototype] = np.inf
+        distwrong = d_wrong.min(1)
+
+        d_correct = dist
+        d_correct[np.invert(label_equals_prototype)] = np.inf
+        distcorrect = d_correct.min(1)
+
+        distcorrectpluswrong = distcorrect + distwrong
+        distcorectminuswrong = distcorrect - distwrong
+        mu = distcorectminuswrong / distcorrectpluswrong
+
+        if sum(self.regularization) > 0:
+            func = np.vectorize(lambda x: np.log(np.linalg.det(x * x.conj().T)))
+            regTerm = self.regularization * func(psis)
+            return mu - 1 / nb_samples * regTerm(pidxcorrect) - 1 / nb_samples * regTerm(pidxwrong)
+        return mu.sum(0)
 
     def _optimize(self, X, y, random_state):
         nb_prototypes, nb_features = self.w_.shape
@@ -158,7 +183,7 @@ class LgmlvqModel(GlvqModel):
                 raise ValueError("Length of matrices wrong\n"
                                  "found=%d\n"
                                  "expected=%d" % (len(self.initial_matrices), nb_classes))
-            elif np.sum(map(lambda x: x.shape[1], self.initial_matrices)) != nb_features * len(self.initial_matrices):
+            elif np.sum([x.shape[1] for x in self.initial_matrices]) != nb_features * len(self.initial_matrices):
                 raise ValueError("Each matrix should have %d columns" % nb_features)
             self.psis_ = list(map(lambda x: validation.check_array(x), self.initial_matrices))
 
@@ -176,23 +201,29 @@ class LgmlvqModel(GlvqModel):
         variables = np.append(self.w_, np.concatenate(self.psis_), axis=0)
         label_equals_prototype = y[np.newaxis].T == self.c_w_
         res = minimize(
-            lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
-                                  lr_prototypes=1, lr_relevances=0),
-            x0=variables, jac=True,
-            options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            fun=lambda x: self.f(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self.g(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
+                                       lr_relevances=0, random_state=random_state),
+            x0=variables, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = res.nit
         res = minimize(
-            lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
-                                  lr_prototypes=0, lr_relevances=1),
-            x0=res.x, jac=True,
-            options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            fun=lambda x: self.f(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self.g(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=0,
+                                       lr_relevances=1, random_state=random_state),
+            x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+        n_iter = max(n_iter, res.nit)
+        res = minimize(
+            fun=lambda x: self.f(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self.g(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
+                                       lr_relevances=1, random_state=random_state),
+            x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         out = res.x.reshape(res.x.size // nb_features, nb_features)
         self.w_ = out[:nb_prototypes]
         indices = []
         for i in range(len(self.dim_)):
             indices.append(sum(self.dim_[:i + 1]))
-        self.psis_ = np.split(variables[nb_prototypes:], indices[:-1])
+        self.psis_ = np.split(variables[nb_prototypes:], indices[:-1])#.conj().T
         return n_iter
 
     def _compute_distance(self, X, w=None, psis=None):  # catch case where omega is not initialized

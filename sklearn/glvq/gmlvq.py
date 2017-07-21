@@ -1,5 +1,6 @@
 from math import log
 
+import math
 import numpy as np
 from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
@@ -12,6 +13,14 @@ from sklearn.utils import validation
 from sklearn.utils.validation import check_is_fitted
 
 import matplotlib.pyplot as plt
+
+
+def _squared_euclidean(A, B=None):
+    if B is None:
+        d = np.sum(A ** 2, 1)[np.newaxis].T + np.sum(A ** 2, 1) - 2 * A.dot(A.T)
+    else:
+        d = np.sum(A ** 2, 1)[np.newaxis].T + np.sum(B ** 2, 1) - 2 * A.dot(B.T)
+    return np.maximum(d, 0)
 
 
 class GmlvqModel(GlvqModel):
@@ -27,15 +36,12 @@ class GmlvqModel(GlvqModel):
         self.initialdim = dim
         self.nb_reiterations = nb_reiterations
 
-    def optfun(self, variables, training_data, label_equals_prototype, random_state, lr_relevances=0,
-               lr_prototypes=1, calc_gradient=True):
+    def optgrad(self, variables, training_data, label_equals_prototype, random_state, lr_relevances=0, lr_prototypes=1):
         n_data, n_dim = training_data.shape
         variables = variables.reshape(variables.size // n_dim, n_dim)
         nb_prototypes = self.c_w_.shape[0]
-        omegaT = variables[nb_prototypes:]
-
-        dist = self._compute_distance(training_data, variables[:nb_prototypes], omegaT)  # change dist function ?
-        # dist = cdist(training_data, prototypes, 'sqeuclidean')
+        omegaT = variables[nb_prototypes:].conj().T
+        dist = _squared_euclidean(training_data.dot(omegaT), variables[:nb_prototypes].dot(omegaT))
         d_wrong = dist.copy()
         d_wrong[label_equals_prototype] = np.inf
         distwrong = d_wrong.min(1)
@@ -47,15 +53,6 @@ class GmlvqModel(GlvqModel):
         pidxcorrect = d_correct.argmin(1)
 
         distcorrectpluswrong = distcorrect + distwrong
-        distcorectminuswrong = distcorrect - distwrong
-        mu = distcorectminuswrong / distcorrectpluswrong
-
-        regTerm = self.regularization * log(np.linalg.det(omegaT.conj().T.dot(omegaT)))
-
-        f = mu.sum(0) - regTerm
-
-        if not calc_gradient:
-            return f
 
         G = np.zeros(variables.shape)
         distcorrectpluswrong = 4 / distcorrectpluswrong ** 2
@@ -72,8 +69,8 @@ class GmlvqModel(GlvqModel):
             if lr_relevances > 0:
                 difc = training_data[idxc] - variables[i]
                 difw = training_data[idxw] - variables[i]
-                Gw -= np.dot(difw * dcd[np.newaxis].T, omegaT).T.dot(difw) + \
-                      np.dot(difc * dwd[np.newaxis].T, omegaT).T.dot(difc)
+                Gw = Gw - np.dot(difw * dcd[np.newaxis].T, omegaT).T.dot(difw) + \
+                     np.dot(difc * dwd[np.newaxis].T, omegaT).T.dot(difc)
                 if lr_prototypes > 0:
                     G[i] = dcd.dot(difw) - dwd.dot(difc)
             elif lr_prototypes > 0:
@@ -88,7 +85,33 @@ class GmlvqModel(GlvqModel):
         if lr_prototypes > 0:
             G[:nb_prototypes] = 1 / n_data * lr_prototypes * G[:nb_prototypes].dot(omegaT.dot(omegaT.T))
         G = G * (1 + 0.0001 * random_state.rand(*G.shape) - 0.5)
-        return f, G.ravel()
+        return G.ravel()
+
+    def optfun(self, variables, training_data, label_equals_prototype):
+        n_data, n_dim = training_data.shape
+        variables = variables.reshape(variables.size // n_dim, n_dim)
+        nb_prototypes = self.c_w_.shape[0]
+        omegaT = variables[nb_prototypes:]  # .conj().T
+
+        # dist = self._compute_distance(training_data, variables[:nb_prototypes],
+        #                          np.diag(omegaT))  # change dist function ?
+        dist = _squared_euclidean(training_data.dot(omegaT), variables[:nb_prototypes].dot(omegaT))
+        d_wrong = dist.copy()
+        d_wrong[label_equals_prototype] = np.inf
+        distwrong = d_wrong.min(1)
+
+        d_correct = dist
+        d_correct[np.invert(label_equals_prototype)] = np.inf
+        distcorrect = d_correct.min(1)
+
+        distcorrectpluswrong = distcorrect + distwrong
+        distcorectminuswrong = distcorrect - distwrong
+        mu = distcorectminuswrong / distcorrectpluswrong
+
+        if self.regularization > 0:
+            regTerm = self.regularization * log(np.linalg.det(omegaT.conj().T.dot(omegaT)))
+            return mu.sum(0) - regTerm  # f
+        return mu.sum(0)
 
     def _optimize(self, X, y, random_state):
         nb_prototypes, nb_features = self.w_.shape
@@ -114,20 +137,27 @@ class GmlvqModel(GlvqModel):
         variables = np.append(self.w_, self.omega_, axis=0)
         label_equals_prototype = y[np.newaxis].T == self.c_w_
         res = minimize(
-            lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
-                                  lr_prototypes=1, lr_relevances=0),
-            x0=variables, jac=True,
-            options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
+                                       lr_prototypes=1, lr_relevances=0),
+            x0=variables, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = res.nit
         res = minimize(
-            lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
-                                  lr_prototypes=0, lr_relevances=1),
-            x0=res.x, jac=True,
-            options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
+                                       lr_prototypes=0, lr_relevances=1),
+            x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+        n_iter = max(n_iter, res.nit)
+        res = minimize(
+            fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
+                                       lr_prototypes=1, lr_relevances=1),
+            x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         out = res.x.reshape(res.x.size // nb_features, nb_features)
         self.w_ = out[:nb_prototypes]
         self.omega_ = out[nb_prototypes:]
+        self.omega_ /= math.sqrt(np.sum(np.diag(self.omega_.T.dot(self.omega_))))
         return n_iter
 
     def _compute_distance(self, X, w=None, omega=None):  # catch case where omega is not initialized
@@ -139,5 +169,5 @@ class GmlvqModel(GlvqModel):
         nb_prototypes = w.shape[0]
         distance = np.zeros([nb_prototypes, nb_samples])
         for i in range(nb_prototypes):
-            distance[i] = np.sum(np.dot(X - w[i], omega.conj().T) ** 2, 1)
-        return np.transpose(distance)
+            distance[i] = np.sum((X - w[i]).dot(omega.T) ** 2, 1)
+        return distance.T

@@ -12,15 +12,12 @@ from sklearn.utils.validation import check_is_fitted
 import matplotlib.pyplot as plt
 
 
-def foo(X, y, shape):
-    def callback(xk):
-        w = xk.reshape(shape)
-        plt.scatter(X[:, 0], X[:, 1], c=y)
-        plt.scatter(w[:, 0], w[:, 1], c='r')
-        plt.axis('equal')
-        plt.show()
-
-    return callback
+def _squared_euclidean(A, B=None):
+    if B is None:
+        d = np.sum(A ** 2, 1)[np.newaxis].T + np.sum(A ** 2, 1) - 2 * A.dot(A.T)
+    else:
+        d = np.sum(A ** 2, 1)[np.newaxis].T + np.sum(B ** 2, 1) - 2 * A.dot(B.T)
+    return np.maximum(d, 0)
 
 
 class GlvqModel(BaseEstimator, ClassifierMixin):
@@ -34,13 +31,12 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         self.max_iter = max_iter
         self.gtol = gtol
 
-    def optfun(self, variables, training_data, label_equals_prototype, random_state, calc_gradient=True):
+    def optgrad(self, variables, training_data, label_equals_prototype, random_state):
         n_data, n_dim = training_data.shape
         nb_prototypes = self.c_w_.size
         prototypes = variables.reshape(nb_prototypes, n_dim)
 
-        dist = self._compute_distance(training_data, prototypes)
-        # dist = cdist(training_data, prototypes, 'sqeuclidean')
+        dist = _squared_euclidean(training_data, prototypes)
         d_wrong = dist.copy()
         d_wrong[label_equals_prototype] = np.inf
         distwrong = d_wrong.min(1)
@@ -52,13 +48,6 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         pidxcorrect = d_correct.argmin(1)
 
         distcorrectpluswrong = distcorrect + distwrong
-        distcorectminuswrong = distcorrect - distwrong
-        mu = distcorectminuswrong / distcorrectpluswrong
-
-        f = mu.sum(0)
-
-        if not calc_gradient:
-            return f
 
         G = np.zeros(prototypes.shape)
         distcorrectpluswrong = 4 / distcorrectpluswrong ** 2
@@ -72,10 +61,31 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
             G[i] = dcd.dot(training_data[idxw]) - \
                    dwd.dot(training_data[idxc]) + \
                    (dwd.sum(0) - dcd.sum(0)) * prototypes[i]
-
         G[:nb_prototypes] = 1 / n_data * G[:nb_prototypes]
         G = G * (1 + 0.0001 * random_state.rand(*G.shape) - 0.5)
-        return f, G.ravel()
+        return G.ravel()
+
+    def optfun(self, variables, training_data, label_equals_prototype):
+        n_data, n_dim = training_data.shape
+        nb_prototypes = self.c_w_.size
+        prototypes = variables.reshape(nb_prototypes, n_dim)
+
+        # dist = self._compute_distance(training_data, variables[:nb_prototypes],
+        #                          np.diag(omegaT))  # change dist function ?
+        dist = _squared_euclidean(training_data, prototypes)
+        d_wrong = dist.copy()
+        d_wrong[label_equals_prototype] = np.inf
+        distwrong = d_wrong.min(1)
+
+        d_correct = dist
+        d_correct[np.invert(label_equals_prototype)] = np.inf
+        distcorrect = d_correct.min(1)
+
+        distcorrectpluswrong = distcorrect + distwrong
+        distcorectminuswrong = distcorrect - distwrong
+        mu = distcorectminuswrong / distcorrectpluswrong
+
+        return mu.sum(0)
 
     def _validate_train_parms(self, train_set, train_lab):
         random_state = validation.check_random_state(self.random_state)
@@ -139,11 +149,10 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
     def _optimize(self, X, y, random_state):
         label_equals_prototype = y[np.newaxis].T == self.c_w_
         res = minimize(
-            lambda x: self.optfun(variables=x, training_data=X, label_equals_prototype=label_equals_prototype,
-                                  random_state=random_state),
-            # callback=foo(X,y,self.w_.shape),
-            x0=self.w_, jac=True,
-            options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            fun=lambda x: self.optfun(variables=x, training_data=X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self.optgrad(variables=x, training_data=X, label_equals_prototype=label_equals_prototype,
+                                       random_state=random_state),
+            x0=self.w_, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         self.w_ = res.x.reshape(self.w_.shape)
         return res.nit
 
