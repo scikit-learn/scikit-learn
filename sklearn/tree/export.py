@@ -480,10 +480,13 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
 
 def export_ascii(decision_tree, feature_names=None, class_names=None,
                  max_depth=10, show_value=False, show_class=False):
-    """Build a text report showing the rules in the tree.
+    """Build a text report showing the rules a decision tree.
 
     Parameters
     ----------
+    decision_tree : decision tree
+        The decision tree to be exported.
+
     feature_names : list, optional (default=None)
         A list of length n_features containing the feature names.
         If None generic names will be used ("feature_1", "feature_2", ...).
