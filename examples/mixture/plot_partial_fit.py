@@ -93,6 +93,7 @@ f, axarr = plt.subplots(2, 2, figsize=(10, 10))
 n_components = [20, 12]
 
 for i in xrange(len(n_components)):
+    # Fit a Dirichlet process Gaussian Mixture using the full dataset
     dpgmm = BayesianGaussianMixture(n_components=n_components[i],
                                     random_state=1,
                                     max_iter=500)
@@ -105,8 +106,7 @@ for i in xrange(len(n_components)):
                 runtime %.3f s''' % (n_components[i], runtime)
     plot_results(X, dpgmm, title, axarr[0, i])
 
-    # Fit a Dirichlet process Gaussian mixture "online"
-
+    # Fit a Dirichlet process Gaussian mixture using minibatches
     dpgmm_online = BayesianGaussianMixture(n_components=n_components[i],
                                            random_state=1,
                                            max_iter=10)

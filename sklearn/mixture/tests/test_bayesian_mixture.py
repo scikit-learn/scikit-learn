@@ -1,5 +1,6 @@
 # Author: Wei Xue <xuewei4d@gmail.com>
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
+#         Joshua Engelman <j.aaron.engelman@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np
@@ -81,7 +82,6 @@ def test_bayesian_mixture_weight_concentration_prior_type():
                          " %s 'weight_concentration_prior_type' should be in "
                          "['dirichlet_process', 'dirichlet_distribution']"
                          % bad_prior_type, bgmm.fit, X)
-
 
 def test_bayesian_mixture_weights_prior_initialisation():
     rng = np.random.RandomState(0)
@@ -417,5 +417,28 @@ def test_invariant_translation():
                 tol=1e-3, reg_covar=0).fit(X + 100)
 
             assert_almost_equal(bgmm1.means_, bgmm2.means_ - 100)
+            assert_almost_equal(bgmm1.weights_, bgmm2.weights_)
+            assert_almost_equal(bgmm1.covariances_, bgmm2.covariances_)
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_partial_fit():
+    # Test that calling partial_fit once is equivalent to fit
+    rng = np.random.RandomState(0)
+    rand_data = RandomData(rng, scale=100)
+    n_components = 2 * rand_data.n_components
+
+    for prior_type in PRIOR_TYPE:
+        for covar_type in COVARIANCE_TYPE:
+            X = rand_data.X[covar_type]
+            bgmm1 = BayesianGaussianMixture(
+                weight_concentration_prior_type=prior_type,
+                n_components=n_components, max_iter=100, random_state=0,
+                tol=1e-3, reg_covar=0).fit(X)
+            bgmm2 = BayesianGaussianMixture(
+                weight_concentration_prior_type=prior_type,
+                n_components=n_components, max_iter=100, random_state=0,
+                tol=1e-3, reg_covar=0).partial_fit(X)
+
+            assert_almost_equal(bgmm1.means_, bgmm2.means_)
             assert_almost_equal(bgmm1.weights_, bgmm2.weights_)
             assert_almost_equal(bgmm1.covariances_, bgmm2.covariances_)

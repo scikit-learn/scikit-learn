@@ -18,7 +18,6 @@ from .gaussian_mixture import _compute_log_det_cholesky
 from .gaussian_mixture import _compute_precision_cholesky
 from .gaussian_mixture import _estimate_gaussian_parameters
 from .gaussian_mixture import _estimate_log_gaussian_prob
-from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
 from ..utils.validation import check_is_fitted
 
@@ -90,11 +89,6 @@ def _check_X(X, n_components=None, n_features=None):
                          "but got %d features"
                          % (n_features, X.shape[1]))
     return X
-
-
-def _partial_fit(model, X):
-    model.partial_fit(X)
-    return model
 
 
 class BayesianGaussianMixture(BaseMixture):
@@ -399,19 +393,18 @@ class BayesianGaussianMixture(BaseMixture):
                 "['dirichlet_process', 'dirichlet_distribution']"
                 % self.weight_concentration_prior_type)
 
-    def _check_weights_parameters(self, partial_fit=False):
+    def _check_weights_parameters(self):
         """Check the parameter of the Dirichlet distribution."""
 
-        if not(partial_fit and hasattr(self, 'converged_')):
-            if self.weight_concentration_prior is None:
-                self.weight_concentration_prior_ = 1. / self.n_components
-            elif self.weight_concentration_prior > 0.:
-                self.weight_concentration_prior_ = (
-                    self.weight_concentration_prior)
-            else:
-                raise ValueError("The parameter 'weight_concentration_prior' "
-                                 "should be greater than 0., but got %.3f."
-                                 % self.weight_concentration_prior)
+        if self.weight_concentration_prior is None:
+            self.weight_concentration_prior_ = 1. / self.n_components
+        elif self.weight_concentration_prior > 0.:
+            self.weight_concentration_prior_ = (
+                self.weight_concentration_prior)
+        else:
+            raise ValueError("The parameter 'weight_concentration_prior' "
+                             "should be greater than 0., but got %.3f."
+                             % self.weight_concentration_prior)
 
     def _check_means_parameters(self, X):
         """Check the parameters of the Gaussian distribution.
@@ -831,7 +824,7 @@ class BayesianGaussianMixture(BaseMixture):
         else:
             self.precisions_ = self.precisions_cholesky_ ** 2
 
-    def partial_fit(self, X, y=None, lr=1):
+    def partial_fit(self, X, y=None):
         """Estimate model parameters with the EM algorithm using the posteriors
         of previous fits as priors.
 
@@ -894,16 +887,7 @@ class BayesianGaussianMixture(BaseMixture):
             if self.lower_bound_ > max_lower_bound:
                 max_lower_bound = self.lower_bound_
                 best_params = self._get_parameters()
-                best_params = np.array([np.array(param)*lr
-                                        for param in best_params])
                 best_n_iter = n_iter
-
-        if not self.converged_:
-            warnings.warn('Initialization %d did not converge. '
-                          'Try different init parameters, '
-                          'or increase max_iter, tol '
-                          'or check for degenerate data.'
-                          % (init + 1), ConvergenceWarning)
 
         self._set_parameters(best_params)
         self.n_iter_ = best_n_iter
