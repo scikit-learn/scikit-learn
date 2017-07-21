@@ -1315,4 +1315,4 @@ def test_cross_val_score_labels_paramter():
     for num_classes in range(2, 6):
         clf = GaussianNB(classes=list(range(num_classes)))
         scores2 = cross_val_score(clf, X, y, scoring='f1_macro')
-        assert_array_almost_equal(scores*2/num_classes, scores2)
+        assert_array_almost_equal(scores*2./num_classes, scores2)

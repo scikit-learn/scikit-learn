@@ -134,7 +134,7 @@ class GaussianNB(BaseNB):
             the training data. It is recommended to set this parameter during
             initialization.
 
-            .. versionadded:: 0.19
+            .. versionadded:: 0.20
 
     Attributes
     ----------
@@ -309,6 +309,10 @@ class GaussianNB(BaseNB):
             partial_fit unless refit parameter of partial_fit is set to True.
             It will be ignored in subsequent fit calls.
 
+            ..deprecated:: 0.20
+                This parameter has been deprecated in version 0.20 and will be
+                removed in 0.22. Use the argument classes to __init__ instead.
+
         sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
 
@@ -321,13 +325,13 @@ class GaussianNB(BaseNB):
         """
         # deprecation warning if classes passed:
         if classes is not None:
-            warnings.warn("The classes argument will be removed in version"
-                          "0.21. A new classes argument has been added as a"
-                          "class parameter since version 0.19 which is"
-                          "recommended to be used now.", DeprecationWarning)
+            warnings.warn("The classes argument to partial_fit has been"
+                          "deprecated in version 0.20 and will be removed in"
+                          "0.22. Use the argument classes to __init__"
+                          " instead.", DeprecationWarning)
 
         # Raise error if classes set in both initialization and in partial_fit
-        if (self.classes is not None) & (classes is not None):
+        if (self.classes is not None) and (classes is not None):
             raise ValueError("The classes argument was already set in"
                              "initialization. Resetting it in call to"
                              "partial_fit is not allowed as this argument"
