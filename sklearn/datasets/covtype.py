@@ -92,7 +92,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     if download_if_missing and not available:
         if not exists(covtype_dir):
             makedirs(covtype_dir)
-        logger.info("Downloading %s" % ARCHIVE.url)
+        logger.warning("Downloading %s" % ARCHIVE.url)
 
         _fetch_remote(ARCHIVE, covtype_dir)
         archive_path = join(covtype_dir, "covtype.data.gz")
