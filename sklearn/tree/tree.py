@@ -506,7 +506,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return self.tree_.compute_feature_importances()
 
-    def print_tree(self, feature_names=None, max_depth=10):
+    def print_tree(self, feature_names=None, class_names=None, max_depth=10):
         """Build a text report showing the rules in the tree.
 
         Example:
@@ -530,6 +530,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         max_depth : int, optional (default=10)
             Only the first max_depth levels of the tree are printed.
 
+        class_names : list of strings, bool or None, optional (default=None)
+            Names of each of the target classes in ascending numerical order.
+            Only relevant for classification and not supported for multi-output.
+
         Returns
         -------
         report : string
@@ -552,6 +556,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             indent = indent[:-3] + '---'
             if depth <= max_depth:
                 value = self.tree_.value[node][0]
+                if (class_names is not None and
+                    self.tree_.n_classes[0] != 1 and
+                    self.tree_.n_outputs == 1):
+                    value = class_names[np.argmax(value)]
                 if self.tree_.feature[node] != _tree.TREE_UNDEFINED:
                     name = feature_names_[node]
                     threshold = self.tree_.threshold[node]
