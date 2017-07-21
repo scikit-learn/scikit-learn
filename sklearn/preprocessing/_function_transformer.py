@@ -1,7 +1,7 @@
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, check_random_state, safe_indexing
+from ..utils import check_array, check_random_state, resample
 from ..utils.testing import assert_allclose_dense_sparse
 from ..externals.six import string_types
 
@@ -96,14 +96,9 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
     def _validate_inverse(self, X):
         """Check that func and inverse_func are the inverse."""
-        random_state = check_random_state(self.random_state)
         n_subsample = min(100, X.shape[0])
-        subsample_idx = random_state.choice(range(X.shape[0]),
-                                            size=n_subsample,
-                                            replace=False)
-
-        X_sel = safe_indexing(X, subsample_idx)
-        print(subsample_idx)
+        X_sel = resample(X, replace=False, n_samples=n_subsample,
+                         random_state=self.random_state)
         try:
             assert_allclose_dense_sparse(
                 X_sel, self.inverse_transform(self.transform(X_sel)),

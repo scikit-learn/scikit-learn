@@ -138,7 +138,6 @@ def test_check_inverse():
               sparse.csc_matrix(X_dense)]
 
     for X in X_list:
-        print(X)
         if sparse.issparse(X):
             accept_sparse = True
         else:
