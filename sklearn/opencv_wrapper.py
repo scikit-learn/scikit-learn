@@ -133,5 +133,4 @@ def wrap(model=None, class_name=None):
     else:
         raise AssertionError('{} is not supported.'.format(name))
 
-    wrapper.opencv_model = model
     return wrapper
