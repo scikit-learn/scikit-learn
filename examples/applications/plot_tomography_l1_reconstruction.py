@@ -39,7 +39,6 @@ print(__doc__)
 
 # Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
 # License: BSD 3 clause
-from __future__ import division
 
 import numpy as np
 from scipy import sparse
@@ -102,7 +101,7 @@ def generate_synthetic_data():
     rs = np.random.RandomState(0)
     n_pts = 36
     x, y = np.ogrid[0:l, 0:l]
-    mask_outer = (x - l / 2) ** 2 + (y - l / 2) ** 2 < (l / 2) ** 2
+    mask_outer = (x - (l*1.0) / 2) ** 2 + (y - (l*1.0) / 2) ** 2 < ((l*1.0) / 2) ** 2
     mask = np.zeros((l, l))
     points = l * rs.rand(2, n_pts)
     mask[(points[0]).astype(np.int), (points[1]).astype(np.int)] = 1
