@@ -420,6 +420,7 @@ def test_invariant_translation():
             assert_almost_equal(bgmm1.weights_, bgmm2.weights_)
             assert_almost_equal(bgmm1.covariances_, bgmm2.covariances_)
 
+
 @ignore_warnings(category=ConvergenceWarning)
 def test_partial_fit():
     # Test that calling partial_fit once is equivalent to fit
