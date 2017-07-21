@@ -318,16 +318,24 @@ def test_print_tree():
 
     expected_report = """\
 |---feature_3 <= 0.80
-|   |---* value: setosa
+|   | (class: setosa)
+|   |---* value: [ 50.   0.   0.]
+|   |   | (class: setosa)
 |---feature_3 >  0.80
+|   | (class: setosa)
 |   |---feature_3 <= 1.75
-|   |   |---* value: versicolor
+|   |   | (class: versicolor)
+|   |   |---* value: [  0.  49.   5.]
+|   |   |   | (class: versicolor)
 |   |---feature_3 >  1.75
-|   |   |---* value: virginica
+|   |   | (class: versicolor)
+|   |   |---* value: [  0.   1.  45.]
+|   |   |   | (class: virginica)
 """
     assert_equal(clf.print_tree(class_names=['setosa',
                                              'versicolor',
-                                             'virginica']),
+                                             'virginica'],
+                                show_class=True),
                  expected_report)
 
     clf = DecisionTreeRegressor(max_depth=2, random_state=0)

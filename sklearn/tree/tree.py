@@ -507,7 +507,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         return self.tree_.compute_feature_importances()
 
     def print_tree(self, feature_names=None, class_names=None,
-                   max_depth=10, show_value=False):
+                   max_depth=10, show_value=False, show_class=False):
         """Build a text report showing the rules in the tree.
 
         Parameters
@@ -522,36 +522,34 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         class_names : list of strings, bool or None, optional (default=None)
             Names of each of the target classes in ascending numerical order.
             Only relevant for classification, not supported for multi-output.
+            Ignored if show_class is False.
 
         show_value : bool, optional (default=False)
             If True the value of each internal node is printed.
             Otherwise the value will be reported only for leaves.
 
-        Examples
-        --------
-        >>> from sklearn.datasets import load_iris
-        >>> from sklearn.tree import DecisionTreeClassifier
-        >>> iris = load_iris()
-        >>> X = iris['data']
-        >>> y = iris['target']
-        >>> decision_tree = DecisionTreeClassifier(random_state=0, max_depth=2)
-        >>> decision_tree.fit(X, y)
-        >>> print decision_tree.print_tree(class_names=iris['target_names'],
-        ...                                feature_names=iris['feature_names'],
-        ...                                show_value=True)
-        ...
-        |---petal width (cm) <= 0.80
-        |   | (value: setosa)
-        |   |---* value: setosa
-        |---petal width (cm) >  0.80
-        |   | (value: setosa)
-        |   |---petal width (cm) <= 1.75
-        |   |   | (value: versicolor)
-        |   |   |---* value: versicolor
-        |   |---petal width (cm) >  1.75
-        |   |   | (value: versicolor)
-        |   |   |---* value: virginica
+        show_class : bool, optional (default=False)
+            If True the class label is printed for each node.
+            Only relevant for classification.
 
+        Sample output:
+
+        ```
+        |---petal width (cm) <= 0.80
+        |   | (class: setosa)
+        |   |---* value: [ 50.   0.   0.]
+        |   |   | (class: setosa)
+        |---petal width (cm) >  0.80
+        |   | (class: setosa)
+        |   |---petal width (cm) <= 1.75
+        |   |   | (class: versicolor)
+        |   |   |---* value: [  0.  49.   5.]
+        |   |   |   | (class: versicolor)
+        |   |---petal width (cm) >  1.75
+        |   |   | (class: versicolor)
+        |   |   |---* value: [  0.   1.  45.]
+        |   |   |   | (class: virginica)
+        ```
 
         Returns
         -------
@@ -561,28 +559,28 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         check_is_fitted(self, 'tree_')
 
         if max_depth <= 0:
-            raise ValueError('max_depth bust be > 10, given %d' % max_depth)
+            raise ValueError("max_depth bust be > 10, given %d" % max_depth)
 
-        if (class_names is not None and 
+        if (class_names is not None and
                 len(class_names) != self.tree_.n_classes[0]):
-            error = 'class_names must contain %d elements, got %d'
-            raise ValueError(error % (self.tree_.n_classes[0],
-                                      len(class_names)))
+            raise ValueError("class_names must contain "
+                             "%d elements, got %d" % (self.tree_.n_classes[0],
+                                                      len(class_names)))
 
-        if (feature_names is not None and 
-                len(feature_names) != len(self.tree_.feature)-1):
-            error = 'feature_names must contain %d elements, got %d'
-            raise ValueError(error % (len(self.tree_.feature)-1,
-                                      len(feature_names)))
+        if (feature_names is not None and
+                len(feature_names) != self.tree_.n_features):
+            raise ValueError("feature_names must contain "
+                             "%d elements, got %d" % (self.tree_.n_features,
+                                                      len(feature_names)))
 
         if feature_names:
             feature_names_ = [feature_names[i] for i in self.tree_.feature]
         else:
             feature_names_ = []
             for i in self.tree_.feature:
-                feature_names_.append('feature_'+str(i))
+                feature_names_.append("feature_"+str(i))
 
-        self.report = ''
+        self.report = ""
 
         def print_tree_recurse(node, depth):
             indent = "|   " * depth
@@ -590,14 +588,18 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             info_indent = indent.replace('---', '   ')
             if depth <= max_depth:
                 value = self.tree_.value[node][0]
+                class_name = np.argmax(value)
                 if (class_names is not None and
                         self.tree_.n_classes[0] != 1 and
                         self.tree_.n_outputs == 1):
-                    value = class_names[np.argmax(value)]
+                    class_name = class_names[class_name]
 
-                info_line = ''
+                info_line = ""
                 if show_value:
-                    info_line = "{}| (value: {})\n".format(info_indent, value)
+                    info_line += "{}| (value: {})\n".format(info_indent, value)
+                if show_class:
+                    info_line += "{}| (class: {})\n".format(info_indent,
+                                                            class_name)
 
                 if self.tree_.feature[node] != _tree.TREE_UNDEFINED:
                     name = feature_names_[node]
@@ -619,6 +621,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                        depth+1)
                 else:  # leaf
                     self.report += "{}* value: {}\n".format(indent, value)
+                    if show_class:
+                        self.report += "{}| (class: {})\n".format(info_indent,
+                                                                  class_name)
 
         print_tree_recurse(0, 1)
 
