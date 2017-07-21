@@ -447,9 +447,10 @@ class GroupKFold(_BaseKFold):
     method: string, default='balance'
         One of 'balance', 'stratify', 'shuffle'.
         By default, try to equalize the sizes of the resulting folds.
-        If 'stratify', sort groups according to ``y`` variable and distribute
-        evenly across folds.
-        If 'shuffle', shuffle the groups to randomize their assignments to folds.
+        If 'stratify', sort groups according to their median ``y`` values
+        and distribute evenly across folds.
+        If 'shuffle', shuffle the groups to randomize their assignments to
+        folds.
 
     Examples
     --------
@@ -512,11 +513,18 @@ class GroupKFold(_BaseKFold):
             # Distribute the most frequent groups first
             indices = np.argsort(n_samples_per_group)[::-1]
         elif self.method == 'stratify':
-            # Distribute according to y values
+            # Distribute according to median y value per group
             if y is None:
                 raise ValueError("The 'y' parameter should not be None.")
             y = check_array(y, ensure_2d=False, dtype=None)
-            indices = np.argsort(y[unique_indices])
+            y_by_group = dict.fromkeys(unique_groups, [])
+            for group, y_value in zip(groups, y):
+                y_by_group[group].append(y_value)
+            # manual median; np.median doesn't work when groups are strings.
+            median_by_group = [
+                    sorted(y_by_group[group])[len(y_by_group[group]) // 2]
+                    for group in unique_groups]
+            indices = np.argsort(median_by_group)
         elif self.method == 'shuffle':
             # Shuffle the groups
             rng = check_random_state(self.random_state)

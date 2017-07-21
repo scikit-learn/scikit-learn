@@ -569,9 +569,9 @@ the ``y`` variable, as far as possible. Since this is done by sorting, it works
 for continuous variables as well.
 Finally, ``method='shuffle'`` distributes groups across folds randomly.
 
-The latter two options work best when groups are relatively small, to avoid
-folds of uneven sizes. The stratification relies on the ``y``-value of the
-first item of a group being representative of its group.
+The latter two options work best when groups are relatively small (i.e., there
+are many groups), to avoid folds of uneven sizes. The stratification relies on
+the median ``y``-value of each group being representative of its group.
 
 .. topic:: Examples
 
