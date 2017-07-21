@@ -563,6 +563,18 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         if max_depth <= 0:
             raise ValueError('max_depth bust be > 10, given %d' % max_depth)
 
+        if (class_names is not None and 
+                len(class_names) != self.tree_.n_classes[0]):
+            error = 'class_names must contain %d elements, got %d'
+            raise ValueError(error % (self.tree_.n_classes[0],
+                                      len(class_names)))
+
+        if (feature_names is not None and 
+                len(feature_names) != len(self.tree_.feature)-1):
+            error = 'feature_names must contain %d elements, got %d'
+            raise ValueError(error % (len(self.tree_.feature)-1,
+                                      len(feature_names)))
+
         if feature_names:
             feature_names_ = [feature_names[i] for i in self.tree_.feature]
         else:

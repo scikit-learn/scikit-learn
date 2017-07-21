@@ -274,6 +274,11 @@ def test_iris():
 def test_print_tree():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(iris.data, iris.target)
+
+    assert_raises(ValueError, clf.print_tree, max_depth=0)
+    assert_raises(ValueError, clf.print_tree, feature_names=['a'])
+    assert_raises(ValueError, clf.print_tree, class_names=['a'])
+
     expected_report = """\
 |---feature_3 <= 0.80
 |   |---* value: [ 50.   0.   0.]
