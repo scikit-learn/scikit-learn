@@ -540,8 +540,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             Text summary of all the rules in the decision tree.
         """
         check_is_fitted(self, 'tree_')
+
         if max_depth <= 0:
             raise ValueError('max_depth bust be > 10, given %d' % max_depth)
+
         if feature_names:
             feature_names_ = [feature_names[i] for i in self.tree_.feature]
         else:
@@ -560,6 +562,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                     self.tree_.n_classes[0] != 1 and
                     self.tree_.n_outputs == 1):
                     value = class_names[np.argmax(value)]
+
                 if self.tree_.feature[node] != _tree.TREE_UNDEFINED:
                     name = feature_names_[node]
                     threshold = self.tree_.threshold[node]
@@ -569,6 +572,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                                              threshold,
                                                              value)
                     print_tree_recurse(self.tree_.children_left[node], depth+1)
+
                     left_child_string = "{}{} >  {:.2f} (value: {})\n"
                     self.report += left_child_string.format(indent,
                                                             name,
@@ -579,6 +583,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                     self.report += "{}: value {}\n".format(indent, value)
 
         print_tree_recurse(0, 1)
+
         return self.report
 
 
