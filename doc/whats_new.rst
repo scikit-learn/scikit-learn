@@ -171,6 +171,11 @@ Trees and ensembles
 
    - :func:`tree.export_graphviz` now shows configurable number of decimal
      places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
+     
+   - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
+     to change output shape of `transform` method to 2 dimensional.
+     :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
+     :user:`Herilalaina Rakotoarison <herilalaina>`.
 
 Linear, kernelized and related models
 
