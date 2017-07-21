@@ -275,35 +275,50 @@ def test_print_tree():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(iris.data, iris.target)
     expected_report = """\
-|---feature_3 <= 0.80 (value: [ 50.  50.  50.])
-|   |---: value [ 50.   0.   0.]
-|---feature_3 >  0.80 (value: [ 50.  50.  50.])
-|   |---feature_3 <= 1.75 (value: [  0.  50.  50.])
-|   |   |---: value [  0.  49.   5.]
-|   |---feature_3 >  1.75 (value: [  0.  50.  50.])
-|   |   |---: value [  0.   1.  45.]
+|---feature_3 <= 0.80
+|   |---* value: [ 50.   0.   0.]
+|---feature_3 >  0.80
+|   |---feature_3 <= 1.75
+|   |   |---* value: [  0.  49.   5.]
+|   |---feature_3 >  1.75
+|   |   |---* value: [  0.   1.  45.]
 """
     assert_equal(clf.print_tree(), expected_report)
 
     expected_report = """\
-|---d <= 0.80 (value: [ 50.  50.  50.])
-|   |---: value [ 50.   0.   0.]
-|---d >  0.80 (value: [ 50.  50.  50.])
-|   |---d <= 1.75 (value: [  0.  50.  50.])
-|   |   |---: value [  0.  49.   5.]
-|   |---d >  1.75 (value: [  0.  50.  50.])
-|   |   |---: value [  0.   1.  45.]
+|---feature_3 <= 0.80
+|   | (value: [ 50.  50.  50.])
+|   |---* value: [ 50.   0.   0.]
+|---feature_3 >  0.80
+|   | (value: [ 50.  50.  50.])
+|   |---feature_3 <= 1.75
+|   |   | (value: [  0.  50.  50.])
+|   |   |---* value: [  0.  49.   5.]
+|   |---feature_3 >  1.75
+|   |   | (value: [  0.  50.  50.])
+|   |   |---* value: [  0.   1.  45.]
+"""
+    assert_equal(clf.print_tree(show_value=True), expected_report)
+
+    expected_report = """\
+|---d <= 0.80
+|   |---* value: [ 50.   0.   0.]
+|---d >  0.80
+|   |---d <= 1.75
+|   |   |---* value: [  0.  49.   5.]
+|   |---d >  1.75
+|   |   |---* value: [  0.   1.  45.]
 """
     assert_equal(clf.print_tree(['a', 'b', 'c', 'd']), expected_report)
 
     expected_report = """\
-|---feature_3 <= 0.80 (value: setosa)
-|   |---: value setosa
-|---feature_3 >  0.80 (value: setosa)
-|   |---feature_3 <= 1.75 (value: versicolor)
-|   |   |---: value versicolor
-|   |---feature_3 >  1.75 (value: versicolor)
-|   |   |---: value virginica
+|---feature_3 <= 0.80
+|   |---* value: setosa
+|---feature_3 >  0.80
+|   |---feature_3 <= 1.75
+|   |   |---* value: versicolor
+|   |---feature_3 >  1.75
+|   |   |---* value: virginica
 """
     assert_equal(clf.print_tree(class_names=['setosa',
                                              'versicolor',
@@ -313,19 +328,19 @@ def test_print_tree():
     clf = DecisionTreeRegressor(max_depth=2, random_state=0)
     clf.fit(iris.data, iris.target)
     expected_report = """\
-|---feature_3 <= 0.80 (value: [ 1.])
-|   |---: value [ 0.]
-|---feature_3 >  0.80 (value: [ 1.])
-|   |---feature_3 <= 1.75 (value: [ 1.5])
-|   |   |---: value [ 1.09259259]
-|   |---feature_3 >  1.75 (value: [ 1.5])
-|   |   |---: value [ 1.97826087]
+|---feature_3 <= 0.80
+|   |---* value: [ 0.]
+|---feature_3 >  0.80
+|   |---feature_3 <= 1.75
+|   |   |---* value: [ 1.09259259]
+|   |---feature_3 >  1.75
+|   |   |---* value: [ 1.97826087]
 """
     assert_equal(clf.print_tree(), expected_report)
 
     expected_report = """\
-|---feature_3 <= 0.80 (value: [ 1.])
-|---feature_3 >  0.80 (value: [ 1.])
+|---feature_3 <= 0.80
+|---feature_3 >  0.80
 """
     assert_equal(clf.print_tree(max_depth=1), expected_report)
 

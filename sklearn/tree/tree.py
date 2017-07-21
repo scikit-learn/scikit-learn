@@ -506,7 +506,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return self.tree_.compute_feature_importances()
 
-    def print_tree(self, feature_names=None, class_names=None, max_depth=10):
+    def print_tree(self, feature_names=None, class_names=None,
+                   max_depth=10, show_value=False):
         """Build a text report showing the rules in the tree.
 
         Example:
@@ -534,6 +535,11 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             Names of each of the target classes in ascending numerical order.
             Only relevant for classification, not supported for multi-output.
 
+        show_value : bool, optional (default=False)
+            If True the value of each internal node is printed.
+            Otherwise the value will be reported only for leaves.
+
+
         Returns
         -------
         report : string
@@ -556,33 +562,38 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         def print_tree_recurse(node, depth):
             indent = "|   " * depth
             indent = indent[:-3] + '---'
+            info_indent = indent.replace('---', '   ')
             if depth <= max_depth:
                 value = self.tree_.value[node][0]
                 if (class_names is not None and
                         self.tree_.n_classes[0] != 1 and
-                        min_samples_leaf.tree_.n_outputs == 1):
+                        self.tree_.n_outputs == 1):
                     value = class_names[np.argmax(value)]
+
+                info_line = ''
+                if show_value:
+                    info_line = "{}| (value: {})\n".format(info_indent, value)
 
                 if self.tree_.feature[node] != _tree.TREE_UNDEFINED:
                     name = feature_names_[node]
                     threshold = self.tree_.threshold[node]
-                    right_child_string = "{}{} <= {:.2f} (value: {})\n"
+                    right_child_string = "{}{} <= {:.2f}\n"
                     self.report += right_child_string.format(indent,
                                                              name,
-                                                             threshold,
-                                                             value)
+                                                             threshold)
+                    self.report += info_line
                     print_tree_recurse(self.tree_.children_left[node],
                                        depth+1)
 
-                    left_child_string = "{}{} >  {:.2f} (value: {})\n"
+                    left_child_string = "{}{} >  {:.2f}\n"
                     self.report += left_child_string.format(indent,
                                                             name,
-                                                            threshold,
-                                                            value)
+                                                            threshold)
+                    self.report += info_line
                     print_tree_recurse(self.tree_.children_right[node],
                                        depth+1)
                 else:  # leaf
-                    self.report += "{}: value {}\n".format(indent, value)
+                    self.report += "{}* value: {}\n".format(indent, value)
 
         print_tree_recurse(0, 1)
 
