@@ -85,7 +85,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
     p : integer, optional (default=2)
         Parameter for the Minkowski metric from
-        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
+        :ref:`metrics`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
