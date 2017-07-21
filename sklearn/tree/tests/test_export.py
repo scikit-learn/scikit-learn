@@ -9,7 +9,7 @@ from numpy.random import RandomState
 from sklearn.base import ClassifierMixin
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.tree import export_graphviz
+from sklearn.tree import export_graphviz, export_ascii
 from sklearn.externals.six import StringIO
 from sklearn.utils.testing import (assert_in, assert_equal, assert_raises,
                                    assert_less_equal, assert_raises_regex,
@@ -305,3 +305,79 @@ def test_precision():
             for finding in finditer("<= \d+\.\d+", dot_data):
                 assert_equal(len(search("\.\d+", finding.group()).group()),
                              precision + 1)
+
+
+def test_export_ascii_errors():
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X, y)
+
+    assert_raise_message(ValueError,
+                         'max_depth bust be > 0, given 0',
+                         export_ascii, clf, max_depth=0)
+    assert_raise_message(ValueError,
+                         'feature_names must contain 2 elements, got 1',
+                         export_ascii, clf, feature_names=['a'])
+    assert_raise_message(ValueError,
+                         'class_names must contain 2 elements, got 1',
+                         export_ascii, clf, class_names=['a'])
+
+
+def test_export_ascii():
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X, y)
+
+    expected_report = """\
+|---feature_1 <= 0.00
+|   |---* value: [ 3.  0.]
+|---feature_1 >  0.00
+|   |---* value: [ 0.  3.]
+"""
+    assert_equal(export_ascii(clf), expected_report)
+
+    expected_report = """\
+|---feature_1 <= 0.00
+|   | (value: [ 3.  3.])
+|   |---* value: [ 3.  0.]
+|---feature_1 >  0.00
+|   | (value: [ 3.  3.])
+|   |---* value: [ 0.  3.]
+"""
+    assert_equal(clf.print_tree(show_value=True), expected_report)
+
+    expected_report = """\
+|---b <= 0.00
+|   |---* value: [ 3.  0.]
+|---b >  0.00
+|   |---* value: [ 0.  3.]
+"""
+    assert_equal(clf.print_tree(['a', 'b']), expected_report)
+
+    expected_report = """\
+|---feature_1 <= 0.00
+|   | (class: c1)
+|   |---* value: [ 3.  0.]
+|   |   | (class: c1)
+|---feature_1 >  0.00
+|   | (class: c1)
+|   |---* value: [ 0.  3.]
+|   |   | (class: c2)
+"""
+    assert_equal(export_ascii(clf, class_names=['c1', 'c2'],
+                              show_class=True),
+                 expected_report)
+
+    clf = DecisionTreeRegressor(max_depth=2, random_state=0)
+    clf.fit(X, y)
+    expected_report = """\
+|---feature_1 <= 0.00
+|   |---* value: [-1.]
+|---feature_1 >  0.00
+|   |---* value: [ 1.]
+"""
+    assert_equal(export_ascii(clf), expected_report)
+
+    expected_report = """\
+|---feature_1 <= 0.00
+|---feature_1 >  0.00
+"""
+    assert_equal(export_ascii(clf, max_depth=1), expected_report)

@@ -476,3 +476,129 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
     finally:
         if own_file:
             out_file.close()
+
+
+def export_ascii(decision_tree, feature_names=None, class_names=None,
+                 max_depth=10, show_value=False, show_class=False):
+    """Build a text report showing the rules in the tree.
+
+    Parameters
+    ----------
+    feature_names : list, optional (default=None)
+        A list of length n_features containing the feature names.
+        If None generic names will be used ("feature_1", "feature_2", ...).
+
+    max_depth : int, optional (default=10)
+        Only the first max_depth levels of the tree are printed.
+
+    class_names : list of strings, bool or None, optional (default=None)
+        Names of each of the target classes in ascending numerical order.
+        Only relevant for classification, not supported for multi-output.
+        Ignored if show_class is False.
+
+    show_value : bool, optional (default=False)
+        If True the value of each internal node is printed.
+        Otherwise the value will be reported only for leaves.
+
+    show_class : bool, optional (default=False)
+        If True the class label is printed for each node.
+        Only relevant for classification.
+
+    Sample output:
+
+    ```
+    |---petal width (cm) <= 0.80
+    |   | (class: setosa)
+    |   |---* value: [ 50.   0.   0.]
+    |   |   | (class: setosa)
+    |---petal width (cm) >  0.80
+    |   | (class: setosa)
+    |   |---petal width (cm) <= 1.75
+    |   |   | (class: versicolor)
+    |   |   |---* value: [  0.  49.   5.]
+    |   |   |   | (class: versicolor)
+    |   |---petal width (cm) >  1.75
+    |   |   | (class: versicolor)
+    |   |   |---* value: [  0.   1.  45.]
+    |   |   |   | (class: virginica)
+    ```
+
+    Returns
+    -------
+    report : string
+        Text summary of all the rules in the decision tree.
+    """
+    check_is_fitted(decision_tree, 'tree_')
+    tree_ = decision_tree.tree_
+
+    if max_depth <= 0:
+        raise ValueError("max_depth bust be > 0, given %d" % max_depth)
+
+    if (class_names is not None and
+            len(class_names) != tree_.n_classes[0]):
+        raise ValueError("class_names must contain "
+                         "%d elements, got %d" % (tree_.n_classes[0],
+                                                  len(class_names)))
+
+    if (feature_names is not None and
+            len(feature_names) != tree_.n_features):
+        raise ValueError("feature_names must contain "
+                         "%d elements, got %d" % (tree_.n_features,
+                                                  len(feature_names)))
+
+    if feature_names:
+        feature_names_ = [feature_names[i] for i in tree_.feature]
+    else:
+        feature_names_ = []
+        for i in tree_.feature:
+            feature_names_.append("feature_"+str(i))
+
+    export_ascii.report = ""
+
+    def print_tree_recurse(node, depth):
+        indent = "|   " * depth
+        indent = indent[:-3] + '---'
+        info_indent = indent.replace('---', '   ')
+        if depth <= max_depth:
+            value = tree_.value[node][0]
+            class_name = np.argmax(value)
+            if (class_names is not None and
+                    tree_.n_classes[0] != 1 and
+                    tree_.n_outputs == 1):
+                class_name = class_names[class_name]
+
+            info_line = ""
+            if show_value:
+                info_line += "{}| (value: {})\n".format(info_indent, value)
+            if show_class:
+                info_line += "{}| (class: {})\n".format(info_indent,
+                                                        class_name)
+
+            if tree_.feature[node] != _tree.TREE_UNDEFINED:
+                name = feature_names_[node]
+                threshold = tree_.threshold[node]
+                right_child_string = "{}{} <= {:.2f}\n"
+                export_ascii.report += right_child_string.format(indent,
+                                                                 name,
+                                                                 threshold)
+                export_ascii.report += info_line
+                print_tree_recurse(tree_.children_left[node],
+                                   depth+1)
+
+                left_child_string = "{}{} >  {:.2f}\n"
+                export_ascii.report += left_child_string.format(indent,
+                                                                name,
+                                                                threshold)
+                export_ascii.report += info_line
+                print_tree_recurse(tree_.children_right[node],
+                                   depth+1)
+            else:  # leaf
+                export_ascii.report += "{}* value: {}\n".format(indent, value)
+                if show_class:
+                    class_string = "{}| (class: {})\n"
+                    export_ascii.report += class_string.format(info_indent,
+                                                               class_name)
+
+    print_tree_recurse(0, 1)
+
+    return export_ascii.report
