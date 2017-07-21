@@ -532,7 +532,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         class_names : list of strings, bool or None, optional (default=None)
             Names of each of the target classes in ascending numerical order.
-            Only relevant for classification and not supported for multi-output.
+            Only relevant for classification, not supported for multi-output.
 
         Returns
         -------
@@ -559,26 +559,28 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             if depth <= max_depth:
                 value = self.tree_.value[node][0]
                 if (class_names is not None and
-                    self.tree_.n_classes[0] != 1 and
-                    self.tree_.n_outputs == 1):
+                        self.tree_.n_classes[0] != 1 and
+                        min_samples_leaf.tree_.n_outputs == 1):
                     value = class_names[np.argmax(value)]
 
                 if self.tree_.feature[node] != _tree.TREE_UNDEFINED:
                     name = feature_names_[node]
                     threshold = self.tree_.threshold[node]
-                    right_child_string = "{}{} <= {:.2f} (value: {})\n"                    
+                    right_child_string = "{}{} <= {:.2f} (value: {})\n"
                     self.report += right_child_string.format(indent,
                                                              name,
                                                              threshold,
                                                              value)
-                    print_tree_recurse(self.tree_.children_left[node], depth+1)
+                    print_tree_recurse(self.tree_.children_left[node],
+                                       depth+1)
 
                     left_child_string = "{}{} >  {:.2f} (value: {})\n"
                     self.report += left_child_string.format(indent,
                                                             name,
                                                             threshold,
                                                             value)
-                    print_tree_recurse(self.tree_.children_right[node], depth+1)
+                    print_tree_recurse(self.tree_.children_right[node],
+                                       depth+1)
                 else:  # leaf
                     self.report += "{}: value {}\n".format(indent, value)
 

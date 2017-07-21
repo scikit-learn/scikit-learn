@@ -305,9 +305,9 @@ def test_print_tree():
 |   |---feature_3 >  1.75 (value: versicolor)
 |   |   |---: value virginica
 """
-    assert_equal(clf.print_tree(class_names=['setosa', 
+    assert_equal(clf.print_tree(class_names=['setosa',
                                              'versicolor',
-                                             'virginica']), 
+                                             'virginica']),
                  expected_report)
 
     clf = DecisionTreeRegressor(max_depth=2, random_state=0)
