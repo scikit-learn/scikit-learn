@@ -33,7 +33,7 @@ class _Opencv_predictor_base:
         return self._estimate(features, flags=self._force_hard_decision)
 
     def decision_function(self, features):
-        """Returns the soft decision."""
+        """Returns the unnormalized soft decision."""
 
         return self._estimate(features, flags=self._force_soft_decision)
 
