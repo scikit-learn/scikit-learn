@@ -61,6 +61,8 @@ class _Opencv_predictor(BaseEstimator, _Opencv_predictor_base):
         _, dim = features.shape
         var_types = np.array([cv2.ml.VAR_NUMERICAL] * dim + [cv2.ml.VAR_CATEGORICAL],
                              np.uint8)
+        if not sample_weight is None:
+            sample_weight = np.array(sample_weight, np.float32)
         td = cv2.ml.TrainData_create(np.array(features, np.float32),
                                      cv2.ml.ROW_SAMPLE, labels,
                                      sampleWeights=sample_weight,
