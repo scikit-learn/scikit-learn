@@ -506,8 +506,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return self.tree_.compute_feature_importances()
 
-    def print_tree(self, feature_names=None):
-        """Build a text report showing rules in the tree.
+    def print_tree(self, feature_names=None, max_depth=10):
+        """Build a text report showing the rules in the tree.
 
         Example:
 
@@ -527,12 +527,17 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             A list of length n_features containing the feature names.
             If None generic names will be used ("feature_1", "feature_2", ...).
 
+        max_depth : int, optional (default=10)
+            Only the first max_depth levels of the tree are printed.
+
         Returns
         -------
         report : string
             Text summary of all the rules in the decision tree.
         """
         check_is_fitted(self, 'tree_')
+        if max_depth <= 0:
+            raise ValueError('max_depth bust be > 10, given %d' % max_depth)
         if feature_names:
             feature_names_ = [feature_names[i] for i in self.tree_.feature]
         else:
@@ -545,20 +550,25 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         def print_tree_recurse(node, depth):
             indent = "|   " * depth
             indent = indent[:-3] + '---'
-            if self.tree_.feature[node] != _tree.TREE_UNDEFINED:
-                name = feature_names_[node]
-                threshold = self.tree_.threshold[node]
-                self.report += "{}{} <= {:.2f}\n".format(indent,
-                                                         name,
-                                                         threshold)
-                print_tree_recurse(self.tree_.children_left[node], depth + 1)
-                self.report += "{}{} >  {:.2f}\n".format(indent,
-                                                         name,
-                                                         threshold)
-                print_tree_recurse(self.tree_.children_right[node], depth + 1)
-            else:  # leaf
-                self.report += "{}: {}\n".format(indent,
-                                                 self.tree_.value[node][0])
+            if depth <= max_depth:
+                value = self.tree_.value[node][0]
+                if self.tree_.feature[node] != _tree.TREE_UNDEFINED:
+                    name = feature_names_[node]
+                    threshold = self.tree_.threshold[node]
+                    right_child_string = "{}{} <= {:.2f} (value: {})\n"                    
+                    self.report += right_child_string.format(indent,
+                                                             name,
+                                                             threshold,
+                                                             value)
+                    print_tree_recurse(self.tree_.children_left[node], depth+1)
+                    left_child_string = "{}{} >  {:.2f} (value: {})\n"
+                    self.report += left_child_string.format(indent,
+                                                            name,
+                                                            threshold,
+                                                            value)
+                    print_tree_recurse(self.tree_.children_right[node], depth+1)
+                else:  # leaf
+                    self.report += "{}: value {}\n".format(indent, value)
 
         print_tree_recurse(0, 1)
         return self.report
