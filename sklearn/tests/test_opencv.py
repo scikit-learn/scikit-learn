@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_true, assert_false
 
 _supported_models = ['ml_Boost', 'ml_RTrees', 'ml_SVM', 'ml_KNearest']
 
+
 def test_sklearn_base_functions():
     for model in _supported_models:
         wrapper = wrap(class_name=model)
@@ -30,15 +31,20 @@ def test_sklearn_base_functions():
             try:
                 clone(wrapper)
             except RuntimeError:
-                assert_true(False, msg="sklearn.opencv_wrapper does not meet the sklearn.base.clone requirements.")
+                assert_true(False,
+                            msg="sklearn.base.clone is failed.")
 
-                assert_false(any([issubclass(w.category, DeprecationWarning) for w in raised_warnings]),
-                             msg="sklearn.base.* raises the DeprecationWarnings")
+                assert_false(
+                    any([issubclass(w.category, DeprecationWarning)
+                        for w in raised_warnings]),
+                    msg="sklearn.base.clone raises the DeprecationWarnings")
+
 
 def test_sklearn_adaptors():
     iris = datasets.load_iris()
     samples, labels = np.array(iris.data[:, :2], np.float32), iris.target
-    X_train, X_test, y_train, y_test = train_test_split(samples, labels, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(samples, labels,
+                                                        test_size=0.2)
 
     try:
         for model in _supported_models:
@@ -54,12 +60,15 @@ def test_sklearn_adaptors():
             predictions = clf.predict(X_test)
 
     except RuntimeError:
-        assert_true(False, msg="Opencv_sklearn_wrapper crashes for sklearn.ensemble.*.")
+        assert_true(False,
+                    msg="sklearn.ensemble.* is failed.")
+
 
 def test_sklearn_cv():
     iris = datasets.load_iris()
     samples, labels = np.array(iris.data[:, :2], np.float32), iris.target
-    X_train, X_test, y_train, y_test = train_test_split(samples, labels, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(samples, labels,
+                                                        test_size=0.2)
 
     try:
         for model in _supported_models:
@@ -70,4 +79,5 @@ def test_sklearn_cv():
             report = classification_report(y_train, predictions)
 
     except RuntimeError:
-        assert_true(False, msg="Opencv_sklearn_wrapper crashes for sklearn.model_selection.*.")
+        assert_true(False,
+                    msg="sklearn.model_selection.cross_val_predict is failed.")

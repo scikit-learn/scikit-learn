@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 
 """
-The :mod:`sklearn.opencv_wrapper` module implements a thin wrapper for OpenCV classifiers listed below:
+The :mod:`sklearn.opencv_wrapper` module implements a thin wrapper for OpenCV
+classifiers listed below:
 * (Boosted) random forest model
 * SVM
 * KNN
@@ -17,6 +18,7 @@ from sklearn.base import BaseEstimator
 
 
 __all__ = ['wrap']
+
 
 class _Opencv_predictor_base:
     """Base class for scikit-learn compatible opencv models."""
@@ -47,7 +49,10 @@ class _Opencv_predictor(BaseEstimator, _Opencv_predictor_base):
         assert model or class_name
 
         self.__params = kwargs
-        self.__class_of_opencv_model = model.__class__.__name__ if not class_name else class_name
+        if not class_name:
+            self.__class_of_opencv_model = model.__class__.__name__
+        else:
+            self.__class_of_opencv_model = class_name
         self.opencv_model = model
 
         if not self.opencv_model:
@@ -59,9 +64,9 @@ class _Opencv_predictor(BaseEstimator, _Opencv_predictor_base):
 
     def fit(self, features, labels, sample_weight=None):
         _, dim = features.shape
-        var_types = np.array([cv2.ml.VAR_NUMERICAL] * dim + [cv2.ml.VAR_CATEGORICAL],
-                             np.uint8)
-        if not sample_weight is None:
+        var_types = np.array([cv2.ml.VAR_NUMERICAL] * dim +
+                             [cv2.ml.VAR_CATEGORICAL], np.uint8)
+        if sample_weight is not None:
             sample_weight = np.array(sample_weight, np.float32)
         td = cv2.ml.TrainData_create(np.array(features, np.float32),
                                      cv2.ml.ROW_SAMPLE, labels,
@@ -82,7 +87,8 @@ class _Opencv_predictor(BaseEstimator, _Opencv_predictor_base):
             model_parameters = set(getter_names).intersection(setter_names)
 
             for name in model_parameters:
-                self.__params.update({name: getattr(self.opencv_model, 'get' + name)()})
+                self.__params.update({name: getattr(self.opencv_model,
+                                                    'get' + name)()})
 
         params.update(self.__params)
         return params
@@ -112,11 +118,15 @@ class _Opencv_knn(_Opencv_predictor):
         if flags:
             _, outputs = self.opencv_model.predict(features)
         else:
-            _, _, neighbour_responses, _ = self.opencv_model.findNearest(features,
-                                                                         k=self.opencv_model.getDefaultK())
-            outputs = np.apply_along_axis(lambda rs: len(rs[rs == self._positive_class_idx]) / np.float32(len(rs)),
-                                          1,
-                                          neighbour_responses.astype(np.uint32))
+            _, _, neighbour_responses, _ = \
+                self.opencv_model.findNearest(
+                    features,
+                    k=self.opencv_model.getDefaultK())
+            outputs = np.apply_along_axis(
+                lambda rs: len(rs[rs == self._positive_class_idx]) /
+                np.float32(len(rs)),
+                1,
+                neighbour_responses.astype(np.uint32))
         return outputs.ravel()
 
 
