@@ -66,35 +66,45 @@ if you're using one of these, unless you want custom multiclass behavior:
 
   - Inherently multiclass:
 
-    - :class:`sklearn.ensemble.AdaBoostClassifier`
-    - :class:`sklearn.ensemble.BaggingClassifier`
     - :class:`sklearn.naive_bayes.BernoulliNB`
-    - :class:`sklearn.calibration.CalibratedClassifierCV`
     - :class:`sklearn.tree.DecisionTreeClassifier`
     - :class:`sklearn.tree.ExtraTreeClassifier`
     - :class:`sklearn.ensemble.ExtraTreesClassifier`
     - :class:`sklearn.naive_bayes.GaussianNB`
-    - :class:`sklearn.gaussian_process.GaussianProcessClassifier`
-    - :class:`sklearn.ensemble.GradientBoostingClassifier`
     - :class:`sklearn.neighbors.KNeighborsClassifier`
     - :class:`sklearn.semi_supervised.LabelPropagation`
     - :class:`sklearn.semi_supervised.LabelSpreading`
     - :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
-    - :class:`sklearn.svm.LinearSVC`
-    - :class:`sklearn.linear_model.LogisticRegression`
-    - :class:`sklearn.linear_model.LogisticRegressionCV`
+    - :class:`sklearn.svm.LinearSVC` (setting multi_class="crammer_singer")
+    - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="multinomial")
+    - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
     - :class:`sklearn.neural_network.MLPClassifier`
     - :class:`sklearn.neighbors.NearestCentroid`
-    - :class:`sklearn.svm.NuSVC`
-    - :class:`sklearn.linear_model.passive_aggressive.PassiveAggressiveClassifier`
+    - :class:`sklearn.linear_model.PassiveAggressiveClassifier`
     - :class:`sklearn.linear_model.Perceptron`
     - :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
     - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
     - :class:`sklearn.ensemble.RandomForestClassifier`
     - :class:`sklearn.linear_model.RidgeClassifier`
     - :class:`sklearn.linear_model.RidgeClassifierCV`
+
+
+  - Multiclass as One-Vs-One:
+
+    - :class:`sklearn.svm.NuSVC`
+    - :class:`sklearn.svm.SVC`.
+    - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_one")
+
+
+  - Multiclass as One-Vs-All:
+
+    - :class:`sklearn.ensemble.GradientBoostingClassifier`
+    - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
+    - :class:`sklearn.svm.LinearSVC` (setting multi_class="ovr")
+    - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="ovr")
+    - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="ovr")
     - :class:`sklearn.linear_model.SGDClassifier`
-    - :class:`sklearn.svm.SVC`
+
 
   - Support multilabel:
 
@@ -107,6 +117,7 @@ if you're using one of these, unless you want custom multiclass behavior:
     - :class:`sklearn.ensemble.RandomForestClassifier`
     - :class:`sklearn.linear_model.RidgeClassifierCV`
 
+
   - Support multiclass-multioutput:
 
     - :class:`sklearn.tree.DecisionTreeClassifier`
@@ -116,13 +127,6 @@ if you're using one of these, unless you want custom multiclass behavior:
     - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
     - :class:`sklearn.ensemble.RandomForestClassifier`
 
-  - One-Vs-One:
-
-    * :class:`sklearn.svm.SVC`.
-
-  - One-Vs-All:
-
-    * all linear models except :class:`sklearn.svm.SVC`.
 
 .. warning::
 
