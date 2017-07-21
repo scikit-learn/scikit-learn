@@ -1,7 +1,7 @@
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, check_random_state, resample
+from ..utils import check_array, resample
 from ..utils.testing import assert_allclose_dense_sparse
 from ..externals.six import string_types
 
