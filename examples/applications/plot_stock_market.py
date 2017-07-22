@@ -77,7 +77,34 @@ from sklearn import cluster, covariance, manifold
 # #############################################################################
 # Retrieve the data from Internet
 
+def retry(f, n_retry=3):
+    """Define wrapper function to retry function calls in case of Exceptions
 
+    Parameters
+    -----------
+    f: function
+        Function that will be wrapped
+    n_retry: int
+        Number of retries of function call
+
+    Returns
+    -------
+    f : function
+        Wrapped input function
+
+    """
+    def wrapper(*args, **kwargs):
+        exception = None
+        for i in range(n_retry):
+            try:
+                return f(*args, **kwargs)
+            except Exception as e:
+                exception = e
+        raise exception
+    return wrapper
+
+
+@retry
 def quotes_historical_google(symbol, date1, date2):
     """Get the historical data from Google finance.
 
