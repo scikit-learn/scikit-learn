@@ -20,6 +20,7 @@ from .tree._tree import DTYPE
 from .ensemble._gradient_boosting import _partial_dependence_tree
 from .ensemble.gradient_boosting import BaseGradientBoosting
 from .ensemble.forest import ForestRegressor
+from .exceptions import NotFittedError
 
 
 __all__ = ['partial_dependence', 'plot_partial_dependence']
@@ -111,7 +112,7 @@ def _exact_partial_dependence(est, target_variables, grid, X, output=None):
         if est._estimator_type == 'regressor':
             try:
                 pdp_row = est.predict(X_eval)
-            except:
+            except NotFittedError:
                 raise ValueError('Call %s.fit before partial_dependence' %
                                  est.__class__.__name__)
             if pdp_row.ndim != 1 and pdp_row.shape[1] != 1:
@@ -124,7 +125,7 @@ def _exact_partial_dependence(est, target_variables, grid, X, output=None):
         elif est._estimator_type == 'classifier':
             try:
                 pdp_row = est.predict_proba(X_eval)
-            except:
+            except NotFittedError:
                 raise ValueError('Call %s.fit before partial_dependence' %
                                  est.__class__.__name__)
             if isinstance(pdp_row, list):
@@ -186,7 +187,7 @@ def _estimated_partial_dependence(est, target_variables, grid, X, output=None):
     if est._estimator_type == 'regressor':
         try:
             pdp = est.predict(X_eval)
-        except:
+        except NotFittedError:
             raise ValueError('Call %s.fit before partial_dependence' %
                              est.__class__.__name__)
         if pdp.ndim != 1 and pdp.shape[1] == 1:
@@ -202,7 +203,7 @@ def _estimated_partial_dependence(est, target_variables, grid, X, output=None):
     elif est._estimator_type == 'classifier':
         try:
             pdp = est.predict_proba(X_eval)
-        except:
+        except NotFittedError:
             raise ValueError('Call %s.fit before partial_dependence' %
                              est.__class__.__name__)
         if isinstance(pdp, list):
@@ -252,7 +253,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
     output : int, optional (default=None)
         The output index to use for multi-output estimators.
     percentiles : (low, high), default=(0.05, 0.95)
-        The lower and upper percentile used create the extreme values
+        The lower and upper percentile used to create the extreme values
         for the ``grid``. Only if ``X`` is not None.
     grid_resolution : int, default=100
         The number of equally spaced points on the ``grid``.
@@ -312,10 +313,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         if len(est.estimators_) == 0:
             raise ValueError('Call %s.fit before partial_dependence' %
                              est.__class__.__name__)
-        if isinstance(est, BaseGradientBoosting):
-            n_features = est.n_features
-        else:
-            n_features = est.n_features_
+        n_features = est.n_features_
     elif X is None:
         raise ValueError('X is required for method="exact" or "estimated".')
     else:
@@ -399,10 +397,14 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         A fitted gradient boosting model.
     X : array-like, shape=(n_samples, n_features)
         The data on which ``gbrt`` was trained.
-    features : seq of tuples or ints
+    features : seq of ints, strings, or tuples of ints or strings
         If seq[i] is an int or a tuple with one int value, a one-way
         PDP is created; if seq[i] is a tuple of two ints, a two-way
         PDP is created.
+        If feature_names is specified and seq[i] is an int, seq[i]
+        must be < len(feature_names).
+        If seq[i] is a string, feature_names must be specified, and
+        seq[i] must be in feature_names.
     feature_names : seq of str
         Name of each feature; feature_names[i] holds
         the name of the feature with index i.
@@ -424,10 +426,10 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     ax : Matplotlib axis object, default None
         An axis object onto which the plots will be drawn.
     line_kw : dict
-        Dict with keywords passed to the ``pylab.plot`` call.
+        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
     contour_kw : dict
-        Dict with keywords passed to the ``pylab.plot`` call.
+        Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For two-way partial dependence plots.
     fig_kw : dict
         Dict with keywords passed to the figure() call.
@@ -473,8 +475,8 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         label_idx = 0
 
     X = check_array(X, dtype=DTYPE, order='C')
-    if gbrt.n_features != X.shape[1]:
-        raise ValueError('X.shape[1] does not match gbrt.n_features')
+    if gbrt.n_features_ != X.shape[1]:
+        raise ValueError('X.shape[1] does not match gbrt.n_features_')
 
     if line_kw is None:
         line_kw = {'color': 'green'}
@@ -484,7 +486,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert feature_names to list
     if feature_names is None:
         # if not feature_names use fx indices as name
-        feature_names = [str(i) for i in range(gbrt.n_features)]
+        feature_names = [str(i) for i in range(gbrt.n_features_)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
 
@@ -522,8 +524,9 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
                 l.append(feature_names[i])
             names.append(l)
     except IndexError:
-        raise ValueError('features[i] must be in [0, n_features) '
-                         'but was %d' % i)
+        raise ValueError('All entries of features must be less than '
+                         'len(feature_names) = {0}, got {1}.'
+                         .format(len(feature_names), i))
 
     # compute PD functions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
