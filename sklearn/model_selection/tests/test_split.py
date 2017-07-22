@@ -1231,7 +1231,8 @@ def test_group_kfold():
         if method == 'balance':
             assert_equal(len(folds), len(groups))
             for i in np.unique(folds):
-                assert_greater_equal(tolerance,
+                assert_greater_equal(
+                        tolerance,
                         abs(sum(folds == i) - ideal_n_groups_per_fold))
 
         # Check that each group appears only in 1 fold

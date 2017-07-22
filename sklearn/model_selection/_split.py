@@ -487,7 +487,7 @@ class GroupKFold(_BaseKFold):
     def __init__(self, n_splits=3, method='balance'):
         if method not in ('balance', 'stratify', 'shuffle'):
             raise ValueError("The 'method' parameter should be in "
-                    "('balance', 'stratify', 'shuffle')")
+                             "('balance', 'stratify', 'shuffle')")
         self.method = method
         super(GroupKFold, self).__init__(n_splits, shuffle=False,
                                          random_state=None)
