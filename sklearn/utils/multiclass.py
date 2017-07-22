@@ -301,27 +301,20 @@ def _check_partial_fit_first_call(clf, classes=None):
     set on ``clf``.
 
     """
-    if (getattr(clf, 'classes_', None) is None
-            and getattr(clf, 'classes', None) is None
-            and classes is None):
+    if ((getattr(clf, 'classes_', None) is None)
+            and (getattr(clf, 'classes', None) is None)
+            and (classes is None)):
 
         raise ValueError("classes must be passed on the first call "
                          "to partial_fit or set during initialization"
                          "if the class has a classes parameter.")
 
-    if (classes is not None
-            and getattr(clf, 'classes', None) is not None):
-        if not np.array_equal(clf.classes, unique_labels(classes)):
-            raise ValueError(
-                "`classes=%r` is not the same as the value set duing "
-                "initialization, which was: %r" % (classes, clf.classes))
-
-    if (classes is not None
-            and getattr(clf, 'classes_', None) is not None):
+    if ((classes is not None)
+            and (getattr(clf, 'classes_', None) is not None)):
         if not np.array_equal(clf.classes_, unique_labels(classes)):
             raise ValueError(
-                "`classes=%r` is not the same as on last call "
-                "to partial_fit, was: %r" % (classes, clf.classes_))
+                "`classes=%s` is not the same as on last call "
+                "to partial_fit, was: %s" % (classes, clf.classes_))
 
     if getattr(clf, 'classes_', None) is None:
         # This is the first call to partial_fit

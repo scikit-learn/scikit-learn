@@ -335,7 +335,7 @@ class GaussianNB(BaseNB):
             raise ValueError("The classes argument was already set in"
                              "initialization. Resetting it in call to"
                              "partial_fit is not allowed as this argument"
-                             "will be deprecated in version 0.21")
+                             "will be deprecated in version 0.22")
         return self._partial_fit(X, y, classes=classes, _refit=False,
                                  sample_weight=sample_weight)
 

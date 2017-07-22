@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 
@@ -35,6 +36,7 @@ X2 = rng.randint(5, size=(6, 100))
 y2 = np.array([1, 1, 2, 2, 3, 3])
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def test_gnb():
     # Gaussian Naive Bayes classification.
     # This checks that GaussianNB implements fit and predict and returns
@@ -54,18 +56,28 @@ def test_gnb():
     assert_raises(ValueError, GaussianNB().partial_fit, X, y, classes=[0, 1])
 
     # Test label mismatch at time of initialization:
-    assert_raises(ValueError, GaussianNB(classes=[0, 1]).partial_fit, X, y)
-    assert_raises(ValueError, GaussianNB(classes=[0, 1]).fit, X, y)
+    expected_msg = ("The target label(s) [2] in y do not exist in the "
+                    "initial classes [0 1]")
+    assert_raise_message(ValueError, expected_msg,
+                         GaussianNB(classes=[0, 1]).partial_fit, X, y)
+    assert_raise_message(ValueError, expected_msg,
+                         GaussianNB(classes=[0, 1]).fit, X, y)
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def test_gnb_classes_init_partial_fit():
     # check if setting classes in both init and partial fit results in an error
     # to be deprecated when partial fit's classes argument removed
-    assert_raises(ValueError,
-                  GaussianNB(classes=[0, 1]).partial_fit,
-                  X, y, classes=[0, 1])
+    expected_msg = ("The classes argument was already set in"
+                    "initialization. Resetting it in call to"
+                    "partial_fit is not allowed as this argument"
+                    "will be deprecated in version 0.22")
+    assert_raise_message(ValueError, expected_msg,
+                         GaussianNB(classes=[0, 1]).partial_fit,
+                         X, y, classes=[0, 1])
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def test_gnb_classes_init_partial_fit_same_result():
     # check if setting classes during initialization or partial_fit gives the
     # same results
@@ -89,6 +101,7 @@ def test_gnb_prior():
     assert_array_almost_equal(clf.class_prior_.sum(), 1)
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def test_gnb_sample_weight():
     "Test whether sample weights are properly used in GNB. "
     # Sample weights all being 1 should not change results
@@ -207,11 +220,19 @@ def test_gnb_extra_classes():
     assert_array_almost_equal(pred3[:, 3], 0)
 
 
-def test_gnb_duplicate_classes():
+@ignore_warnings(category=(DeprecationWarning))
+def test_gnb_duplicate_unsorted_lasses():
     "Test whether duplicate classes result in error"
-    assert_raises(ValueError, GaussianNB(classes=[1, 1, 2]).fit, X, y)
-    assert_raises(ValueError,
-                  GaussianNB().partial_fit, X, y, classes=[1, 1, 2])
+    expected_msg = ("Classses parameter should contain all unique"
+                    " values, duplicates found in [1, 1, 2]")
+    expected_msg2 = ("Classses parameter should contain sorted values"
+                     ", unsorted values found in [1, 3, 2]")
+    assert_raise_message(ValueError, expected_msg,
+                         GaussianNB(classes=[1, 1, 2]).fit, X, y)
+    assert_raise_message(ValueError, expected_msg,
+                         GaussianNB().partial_fit, X, y, classes=[1, 1, 2])
+    assert_raise_message(ValueError, expected_msg2,
+                         GaussianNB().partial_fit, X, y, classes=[1, 3, 2])
 
 
 def test_discrete_prior():
@@ -222,6 +243,7 @@ def test_discrete_prior():
                                   clf.class_log_prior_, 8)
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def test_mnnb():
     # Test Multinomial Naive Bayes classification.
     # This checks that MultinomialNB implements fit and predict and returns
@@ -269,6 +291,7 @@ def test_mnnb():
         assert_array_almost_equal(y_pred_log_proba3, y_pred_log_proba)
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def check_partial_fit(cls):
     clf1 = cls()
     clf1.fit([[0, 1], [1, 0]], [0, 1])
@@ -290,6 +313,7 @@ def test_discretenb_partial_fit():
         yield check_partial_fit, cls
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def test_gnb_partial_fit():
     clf = GaussianNB().fit(X, y)
     clf_pf = GaussianNB().partial_fit(X, y, np.unique(y))
@@ -304,6 +328,7 @@ def test_gnb_partial_fit():
     assert_array_almost_equal(clf.class_prior_, clf_pf2.class_prior_)
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def test_discretenb_pickle():
     # Test picklability of discrete naive Bayes classifiers
 
@@ -340,6 +365,7 @@ def test_input_check_fit():
         assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def test_input_check_partial_fit():
     for cls in [BernoulliNB, MultinomialNB]:
         # check shape consistency
@@ -405,6 +431,7 @@ def test_discretenb_uniform_prior():
         assert_array_equal(prior, np.array([.5, .5]))
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def test_discretenb_provide_prior():
     # Test whether discrete NB classes use provided prior
 
@@ -420,6 +447,7 @@ def test_discretenb_provide_prior():
                       classes=[0, 1, 1])
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def test_discretenb_provide_prior_with_partial_fit():
     # Test whether discrete NB classes use provided prior
     # when using partial_fit
@@ -446,6 +474,7 @@ def test_sample_weight_multiclass():
         yield check_sample_weight_multiclass, cls
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def check_sample_weight_multiclass(cls):
     X = [
         [0, 0, 1],
@@ -600,6 +629,7 @@ def test_naive_bayes_scale_invariance():
     assert_array_equal(labels[1], labels[2])
 
 
+@ignore_warnings(category=(DeprecationWarning))
 def test_alpha():
     # Setting alpha=0 should not output nan results when p(x_i|y_j)=0 is a case
     X = np.array([[1, 0], [1, 1]])
