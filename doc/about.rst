@@ -104,12 +104,19 @@ work on scikit-learn.
    :target: http://www.telecom-paristech.fr/
 
 
-`Columbia University <http://columbia.edu>`_ funds Andreas Mueller since 2016.
+`Columbia University <http://columbia.edu>`_ funds Andreas Müller since 2016.
 
 .. image:: themes/scikit-learn/static/img/columbia.png
    :width: 100pt
    :align: center
    :target: http://www.columbia.edu/
+
+Andreas Müller also received a grant to improve scikit-learn from the `Alfred P. Sloan Foundation <https://sloan.org>`_ in 2017.
+
+.. image:: images/sloan_banner.png
+   :width: 200pt
+   :align: center
+   :target: https://sloan.org/
 
 The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
 to work on scikit-learn through the
