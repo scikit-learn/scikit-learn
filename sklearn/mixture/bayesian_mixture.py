@@ -5,7 +5,6 @@
 # License: BSD 3 clause
 
 import math
-import warnings
 
 import numpy as np
 
