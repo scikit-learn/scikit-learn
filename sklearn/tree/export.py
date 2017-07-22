@@ -489,7 +489,7 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
 
     feature_names : list, optional (default=None)
         A list of length n_features containing the feature names.
-        If None generic names will be used ("feature_1", "feature_2", ...).
+        If None generic names will be used ("feature_0", "feature_1", ...).
 
     max_depth : int, optional (default=10)
         Only the first max_depth levels of the tree are printed.
@@ -507,7 +507,7 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
         If True the class label is printed for each node.
         Only relevant for classification.
 
-    spacing : int, optional (defaul=3)
+    spacing : int, optional (default=3)
         Number of spaces between edges. The higher it is, the wider the result.
 
     Sample output:
