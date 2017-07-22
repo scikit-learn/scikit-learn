@@ -550,7 +550,13 @@ def test_check_y_classes():
 
 
 def test_check_unique_sorted_classes():
+    expected_msg = ("Classses parameter should contain all unique"
+                    " values, duplicates found in [1, 2, 1, 2, 2, 3, 4]")
+    expected_msg2 = ("Classses parameter should contain sorted values"
+                     ", unsorted values found in [1, 2, 4, 3]")
     array = [1, 2, 1, 2, 2, 3, 4]
-    assert_raises(ValueError, _check_unique_sorted_classes, array)
+    assert_raise_message(ValueError, expected_msg,
+                         _check_unique_sorted_classes, array)
     array = [1, 2, 4, 3]
-    assert_raises(ValueError, _check_unique_sorted_classes, array)
+    assert_raise_message(ValueError, expected_msg2,
+                         _check_unique_sorted_classes, array)
