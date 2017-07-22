@@ -342,7 +342,7 @@ def test_export_ascii():
 |   | (value: [ 3.  3.])
 |   |---* value: [ 0.  3.]
 """
-    assert_equal(clf.print_tree(show_value=True), expected_report)
+    assert_equal(export_ascii(clf, show_value=True), expected_report)
 
     expected_report = """\
 |---b <= 0.00
@@ -350,7 +350,7 @@ def test_export_ascii():
 |---b >  0.00
 |   |---* value: [ 0.  3.]
 """
-    assert_equal(clf.print_tree(['a', 'b']), expected_report)
+    assert_equal(export_ascii(clf, ['a', 'b']), expected_report)
 
     expected_report = """\
 |---feature_1 <= 0.00
