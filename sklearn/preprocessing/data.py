@@ -244,6 +244,24 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         .. versionadded:: 0.17
            *data_range_*
 
+    Examples
+    --------
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>>
+    >>> data = [[-1, 2], [-0.5, 6], [0, 10], [1, 18]]
+    >>> scaler = MinMaxScaler()
+    >>> print(scaler.fit(data))
+    MinMaxScaler(copy=True, feature_range=(0, 1))
+    >>> print(scaler.data_max_)
+    [  1.  18.]
+    >>> print(scaler.transform(data))
+    [[ 0.    0.  ]
+     [ 0.25  0.25]
+     [ 0.5   0.5 ]
+     [ 1.    1.  ]]
+    >>> print(scaler.transform([[2, 2]]))
+    [[ 1.5  0. ]]
+
     See also
     --------
     minmax_scale: Equivalent function without the estimator API.
@@ -394,6 +412,9 @@ def minmax_scale(X, feature_range=(0, 1), axis=0, copy=True):
 
     Parameters
     ----------
+    X : array-like, shape (n_samples, n_features)
+        The data.
+
     feature_range : tuple (min, max), default=(0, 1)
         Desired range of transformed data.
 
@@ -465,6 +486,12 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
+    copy : boolean, optional, default True
+        If False, try to avoid a copy and do inplace scaling instead.
+        This is not guaranteed to always work inplace; e.g. if the data is
+        not a NumPy array or scipy.sparse CSR matrix, a copy may still be
+        returned.
+
     with_mean : boolean, True by default
         If True, center the data before scaling.
         This does not work (and will raise an exception) when attempted on
@@ -475,12 +502,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     with_std : boolean, True by default
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
-
-    copy : boolean, optional, default True
-        If False, try to avoid a copy and do inplace scaling instead.
-        This is not guaranteed to always work inplace; e.g. if the data is
-        not a NumPy array or scipy.sparse CSR matrix, a copy may still be
-        returned.
 
     Attributes
     ----------
@@ -500,6 +521,24 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     n_samples_seen_ : int
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import StandardScaler
+    >>>
+    >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
+    >>> scaler = StandardScaler()
+    >>> print(scaler.fit(data))
+    StandardScaler(copy=True, with_mean=True, with_std=True)
+    >>> print(scaler.mean_)
+    [ 0.5  0.5]
+    >>> print(scaler.transform(data))
+    [[-1. -1.]
+     [-1. -1.]
+     [ 1.  1.]
+     [ 1.  1.]]
+    >>> print(scaler.transform([[2, 2]]))
+    [[ 3.  3.]]
 
     See also
     --------
@@ -627,6 +666,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         y : (ignored)
             .. deprecated:: 0.19
                This parameter will be removed in 0.21.
+        copy : bool, optional (default: None)
+            Copy the input X or not.
         """
         if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
@@ -660,6 +701,13 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data used to scale along the features axis.
+        copy : bool, optional (default: None)
+            Copy the input X or not.
+
+        Returns
+        -------
+        X_tr : array-like, shape [n_samples, n_features]
+            Transformed array.
         """
         check_is_fitted(self, 'scale_')
 
@@ -844,6 +892,9 @@ def maxabs_scale(X, axis=0, copy=True):
 
     Parameters
     ----------
+    X : array-like, shape (n_samples, n_features)
+        The data.
+
     axis : int (0 by default)
         axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
@@ -1241,6 +1292,16 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """
         Compute number of output features.
+
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data.
+
+        Returns
+        -------
+        self : instance
         """
         n_samples, n_features = check_array(X).shape
         combinations = self._combinations(n_features, self.degree,
@@ -1435,6 +1496,10 @@ class Normalizer(BaseEstimator, TransformerMixin):
 
         This method is just there to implement the usual API and hence
         work in pipelines.
+
+        Parameters
+        ----------
+        X : array-like
         """
         X = check_array(X, accept_sparse='csr')
         return self
@@ -1450,6 +1515,8 @@ class Normalizer(BaseEstimator, TransformerMixin):
         y : (ignored)
             .. deprecated:: 0.19
                This parameter will be removed in 0.21.
+        copy : bool, optional (default: None)
+            Copy the input X or not.
         """
         if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
@@ -1554,6 +1621,10 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
         This method is just there to implement the usual API and hence
         work in pipelines.
+
+        Parameters
+        ----------
+        X : array-like
         """
         check_array(X, accept_sparse='csr')
         return self
@@ -1570,6 +1641,8 @@ class Binarizer(BaseEstimator, TransformerMixin):
         y : (ignored)
             .. deprecated:: 0.19
                This parameter will be removed in 0.21.
+        copy : bool
+            Copy the input X or not.
         """
         if not isinstance(y, string_types) or y != 'deprecated':
             warnings.warn("The parameter y on transform() is "
@@ -1933,6 +2006,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         Equivalent to self.fit(X).transform(X), but more convenient and more
         efficient. See fit for the parameters, transform for the return value.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_feature]
+            Input array of type int.
         """
         return _transform_selected(X, self._fit_transform,
                                    self.categorical_features, copy=True)
@@ -2347,6 +2425,8 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     def inverse_transform(self, X):
         """Back-projection to the original space.
 
+        Parameters
+        ----------
         X : ndarray or sparse matrix, shape (n_samples, n_features)
             The data used to scale along the features axis. If a sparse
             matrix is provided, it will be converted into a sparse

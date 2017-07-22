@@ -14,8 +14,6 @@ extends single output estimators to multioutput estimators.
 #
 # License: BSD 3 clause
 
-from abc import ABCMeta
-
 import numpy as np
 import scipy.sparse as sp
 from abc import ABCMeta, abstractmethod
@@ -252,8 +250,8 @@ class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 
-        The coefficient R^2 is defined as (1 - u/v), where u is the regression
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the residual
+        The coefficient R^2 is defined as (1 - u/v), where u is the residual
+        sum of squares ((y_true - y_pred) ** 2).sum() and v is the regression
         sum of squares ((y_true - y_true.mean()) ** 2).sum().
         Best possible score is 1.0 and it can be negative (because the
         model can be arbitrarily worse). A constant model that always
@@ -309,7 +307,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    estimators_ : list of `n_output` estimators
+    estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
     """
 
@@ -420,7 +418,7 @@ class ClassifierChain(BaseEstimator):
     Attributes
     ----------
     classes_ : list
-        A list of arrays of length len(estimators_) containing the
+        A list of arrays of length ``len(estimators_)`` containing the
         class labels for each estimator in the chain.
 
     estimators_ : list
@@ -456,7 +454,7 @@ class ClassifierChain(BaseEstimator):
         self : object
             Returns self.
         """
-        X, Y = check_X_y(X, Y,  multi_output=True, accept_sparse=True)
+        X, Y = check_X_y(X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
         check_array(X, accept_sparse=True)

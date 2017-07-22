@@ -221,7 +221,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                         _, _, coefs = lars_path(
                             sub_covariance, row, Xy=row, Gram=sub_covariance,
                             alpha_min=alpha / (n_features - 1), copy_Gram=True,
-                            method='lars', return_path=False)
+                            eps=eps, method='lars', return_path=False)
                 # Update the precision matrix
                 precision_[idx, idx] = (
                     1. / (covariance_[idx, idx]
@@ -333,7 +333,14 @@ class GraphLasso(EmpiricalCovariance):
         self.verbose = verbose
 
     def fit(self, X, y=None):
+        """Fits the GraphLasso model to X.
 
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Data from which to compute the covariance estimate
+        y : (ignored)
+        """
         # Covariance does not make sense for a single feature
         X = check_array(X, ensure_min_features=2, ensure_min_samples=2,
                         estimator=self)
@@ -570,6 +577,7 @@ class GraphLassoCV(GraphLasso):
         ----------
         X : ndarray, shape (n_samples, n_features)
             Data from which to compute the covariance estimate
+        y : (ignored)
         """
         # Covariance does not make sense for a single feature
         X = check_array(X, ensure_min_features=2, estimator=self)
