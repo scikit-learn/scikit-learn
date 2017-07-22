@@ -11,4 +11,5 @@ from .export import export_graphviz
 from .export import export_ascii
 
 __all__ = ["DecisionTreeClassifier", "DecisionTreeRegressor",
-           "ExtraTreeClassifier", "ExtraTreeRegressor", "export_graphviz"]
+           "ExtraTreeClassifier", "ExtraTreeRegressor", 
+           "export_graphviz", "export_ascii"]
