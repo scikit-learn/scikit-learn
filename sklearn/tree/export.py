@@ -479,7 +479,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
 
 
 def export_ascii(decision_tree, feature_names=None, class_names=None,
-                 max_depth=10, show_value=False, show_class=False):
+                 max_depth=10, show_value=False, show_class=False, spacing=3):
     """Build a text report showing the rules a decision tree.
 
     Parameters
@@ -506,6 +506,9 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     show_class : bool, optional (default=False)
         If True the class label is printed for each node.
         Only relevant for classification.
+
+    spacing : int, optional (defaul=3)
+        Number of spaces between edges. The higher it is, the wider the result.
 
     Sample output:
 
@@ -549,6 +552,9 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
                          "%d elements, got %d" % (tree_.n_features,
                                                   len(feature_names)))
 
+    if spacing <= 0:
+        raise ValueError("spacing must be > 0, given %d" % spacing)
+
     if feature_names:
         feature_names_ = [feature_names[i] for i in tree_.feature]
     else:
@@ -559,9 +565,15 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
     export_ascii.report = ""
 
     def print_tree_recurse(node, depth):
-        indent = "|   " * depth
-        indent = indent[:-3] + '---'
-        info_indent = indent.replace('---', '   ')
+        indent = ("|" + (" " * spacing)) * depth
+        indent = indent[:-spacing] + "-" * spacing
+        info_indent = indent.replace("-" * spacing, " " * spacing)
+
+        right_child_string = "{}{} <= {:.2f}\n"
+        left_child_string = "{}{} >  {:.2f}\n"
+        class_string = "{}| (class: {})\n"
+        value_string = "{}{} (value: {})\n"
+
         if depth <= max_depth:
             value = tree_.value[node][0]
             class_name = np.argmax(value)
@@ -570,35 +582,33 @@ def export_ascii(decision_tree, feature_names=None, class_names=None,
                     tree_.n_outputs == 1):
                 class_name = class_names[class_name]
 
-            info_line = ""
+            info_string = ""
             if show_value:
-                info_line += "{}| (value: {})\n".format(info_indent, value)
+                info_string += value_string.format(info_indent, '|', value)
             if show_class:
-                info_line += "{}| (class: {})\n".format(info_indent,
-                                                        class_name)
+                info_string += class_string.format(info_indent,
+                                                   class_name)
 
             if tree_.feature[node] != _tree.TREE_UNDEFINED:
                 name = feature_names_[node]
                 threshold = tree_.threshold[node]
-                right_child_string = "{}{} <= {:.2f}\n"
                 export_ascii.report += right_child_string.format(indent,
                                                                  name,
                                                                  threshold)
-                export_ascii.report += info_line
+                export_ascii.report += info_string
                 print_tree_recurse(tree_.children_left[node],
                                    depth+1)
 
-                left_child_string = "{}{} >  {:.2f}\n"
                 export_ascii.report += left_child_string.format(indent,
                                                                 name,
                                                                 threshold)
-                export_ascii.report += info_line
+                export_ascii.report += info_string
                 print_tree_recurse(tree_.children_right[node],
                                    depth+1)
             else:  # leaf
-                export_ascii.report += "{}* value: {}\n".format(indent, value)
+                # value always meaningful for classification and regression
+                export_ascii.report += value_string.format(indent, '*', value)
                 if show_class:
-                    class_string = "{}| (class: {})\n"
                     export_ascii.report += class_string.format(info_indent,
                                                                class_name)
 
