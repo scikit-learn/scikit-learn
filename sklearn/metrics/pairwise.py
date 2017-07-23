@@ -8,7 +8,7 @@
 #          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
-
+from __future__ import division
 import itertools
 from functools import partial
 
@@ -64,7 +64,8 @@ def _return_float_dtype(X, Y):
 
 
 def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
-                          copy=False, force_all_finite=True):
+                          accept_sparse='csr', force_all_finite=True,
+                          copy=False):
     """ Set X and Y appropriately and checks inputs
 
     If Y is None, it is set as a pointer to X (i.e. not a copy).
@@ -94,12 +95,24 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
 
         .. versionadded:: 0.18
 
-    copy : bool
-        Create and return a deep copy of X and Y (if Y exists)
+    accept_sparse : string, boolean or list/tuple of strings
+        String[s] representing allowed sparse matrix formats, such as 'csc',
+        'csr', etc. If the input is sparse but not in the allowed format,
+        it will be converted to the first listed format. True allows the input
+        to be any format. False means that a sparse matrix input will
+        raise an error.
+
+        .. deprecated:: 0.19
+           Passing 'None' to parameter ``accept_sparse`` in methods is
+           deprecated in version 0.19 "and will be removed in 0.21. Use
+           ``accept_sparse=False`` instead.
 
     force_all_finite : bool
-        Throw a ValueError exception if either X or Y (if Y exists)
-        contains any NaN or +/- inf values
+        Whether to raise an error on np.inf and np.nan in X (or Y if it exists)
+
+    copy : bool
+        Whether a forced copy will be triggered. If copy=False, a copy might
+        be triggered by a conversion.
 
     Returns
     -------
@@ -119,14 +132,14 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
         dtype = dtype_float
 
     if Y is X or Y is None:
-        X = Y = check_array(X, accept_sparse='csr', dtype=dtype,
+        X = Y = check_array(X, accept_sparse=accept_sparse, dtype=dtype,
                             copy=copy, force_all_finite=force_all_finite,
                             warn_on_dtype=warn_on_dtype, estimator=estimator)
     else:
-        X = check_array(X, accept_sparse='csr', dtype=dtype,
+        X = check_array(X, accept_sparse=accept_sparse, dtype=dtype,
                         copy=copy, force_all_finite=force_all_finite,
                         warn_on_dtype=warn_on_dtype, estimator=estimator)
-        Y = check_array(Y, accept_sparse='csr', dtype=dtype,
+        Y = check_array(Y, accept_sparse=accept_sparse, dtype=dtype,
                         copy=copy, force_all_finite=force_all_finite,
                         warn_on_dtype=warn_on_dtype, estimator=estimator)
 
@@ -266,8 +279,9 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
 
 # Pairwise distances in the presence of missing values
 def masked_euclidean_distances(X, Y=None, squared=False,
-                               missing_values="NaN", copy=True, **kwargs):
-    """
+                               missing_values="NaN", copy=True):
+    """Calculates euclidean distances in the presence of missing values
+
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors. Similarly, if
     Y is not X, then compute the distance matrix between each
@@ -275,25 +289,47 @@ def masked_euclidean_distances(X, Y=None, squared=False,
 
     This function computes pairwise euclidean distance for vectors
     in dense matrices X and Y with missing values in arbitrary
-    coordinates. The following formula is used for this:
+    coordinates.
 
-        dist(X, Y) = (X.shape[1] * 1 / ((dot(NX, NYT)))) *
+    The following formula is used for this:
+
+        dist(X, Y) = (X.shape[1] / ((dot(NX, NYT)))) *
                     (dot((X * X), NYT) - 2 * (dot(X, Y.T)) +
                     dot(NX, (Y.T * Y.T)))
 
     where NX and NYT represent the logical-not of the missing masks of
-    X and Y.T, respectively.This formulation zero-weights feature coordinates
-    with missing value in either vector in the pair and up-weights the
-    remaining coordinates.
-    Formula derived by: Shreya Bhattarai <shreya.bhattarai@gmail.com>
+    X and Y.T, respectively.
+    Formula in matrix form derived by:
+    Shreya Bhattarai <shreya.bhattarai@gmail.com>
+
+    This formulation zero-weights feature coordinates with missing value in
+    either vector in the pair and up-weights the remaining coordinates.
+    For instance, say we have two sample points (x1, y1) and (x2, NaN):
+
+    To calculate the euclidean distance between these, first the square
+    "distance" is calculated based only on the first feature coordinate
+    as the second coordinate is missing in one of the samples,
+    i.e., we have (x2-x1)**2. This squared distance is scaled-up by the ratio
+    of total number of coordinates to the number of available coordinates,
+    which in this case is 2/1 = 2. Now, we are left with 2*((x2-x1)**2).
+    Finally, if squared=False then the square root of this is evaluated
+    and returned otherwise the value is returned as is.
 
     Breakdown of euclidean distance calculation between a vector pair x,y:
 
         weight = Total # of coordinates / # of non-missing coordinates
         dist(x,y) = sqrt(weight * sq. distance from non-missing coordinates)
 
-    This of course implies that if all coordinates are missing in either
-    vector in the pair then NaN is returned for that pair.
+    This formulation implies that if all coordinates are missing in either
+    vector in the pair or if there are no common non-missing coordinates then
+    NaN is returned for that pair.
+
+    References
+    ----------
+    John K. Dixon, "Pattern Recognition with Partly Missing Data",
+    IEEE Transactions on Systems, Man, and Cybernetics, Volume: 9, Issue:
+    10, pp. 617 - 621, Oct. 1979.
+    http://ieeexplore.ieee.org/abstract/document/4310090/
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -306,7 +342,7 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     squared : boolean, optional
         Return squared Euclidean distances.
 
-    missing_values : "NaN" or integer, optional (default=”NaN”)
+    missing_values : "NaN" or integer, optional
         Representation of missing value
 
     copy : boolean, optional
@@ -335,13 +371,9 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     --------
     paired_distances : distances betweens pairs of elements of X and Y.
     """
-    # Check and except sparse matrices
-    if issparse(X) or (Y is not None and issparse(Y)):
-        raise ValueError(
-            "Missing value support for sparse matrices not added yet")
 
-    # NOTE: force_all_finite=False allows not only NaN but also inf/-inf
-    X, Y = check_pairwise_arrays(X, Y,
+    # NOTE: force_all_finite=False allows not only NaN but also +/- inf
+    X, Y = check_pairwise_arrays(X, Y, accept_sparse=False,
                                  force_all_finite=False, copy=copy)
     if (np.any(np.isinf(X.data)) or
             (Y is not None and np.any(np.isinf(Y.data)))):
@@ -353,34 +385,6 @@ def masked_euclidean_distances(X, Y=None, squared=False,
             or (Y is not None and np.any(_get_mask(Y, missing_values).sum(
                 axis=1) == Y.shape[1])):
         raise ValueError("One or more rows only contain missing values.")
-    #
-    # if kill_missing:
-    #     if X_norm_squared is not None:
-    #         XX = check_array(X_norm_squared)
-    #         if XX.shape == (1, X.shape[0]):
-    #             XX = XX.T
-    #         elif XX.shape != (X.shape[0], 1):
-    #             raise ValueError(
-    #                 "Incompatible dimensions for X and X_norm_squared")
-    #     else:
-    #         XX = row_norms(X, squared=True)[:, np.newaxis]
-    #
-    #     if X is Y:  # shortcut in the common case euclidean_distances(X, X)
-    #         YY = XX.T
-    #     elif Y_norm_squared is not None:
-    #         YY = np.atleast_2d(Y_norm_squared)
-    #
-    #         if YY.shape != (1, Y.shape[0]):
-    #             raise ValueError(
-    #                 "Incompatible dimensions for Y and Y_norm_squared")
-    #     else:
-    #         YY = row_norms(Y, squared=True)[np.newaxis, :]
-    #
-    #     distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    #     distances *= -2
-    #     distances += XX
-    #     distances += YY
-    #     np.maximum(distances, 0, out=distances)
 
     # else:
     if missing_values != "NaN" and \
@@ -405,16 +409,9 @@ def masked_euclidean_distances(X, Y=None, squared=False,
 
     # Calculate distances
 
-    # distances = (X.shape[1] * 1 / ((np.dot(NX, NYT)))) * \
-    #             (np.dot((X * X), NYT) - 2 * (np.dot(X, YT)) +
-    #              np.dot(NX, (YT * YT)))
-
-    # Above is faster but following for Python 2.x support
-    distances = np.multiply(np.multiply(X.shape[1],
-                                        (1.0 / np.dot(NX, NYT))),
-                            (np.dot(np.multiply(X, X), NYT) -
-                            (2.0 * (np.dot(X, YT))) +
-                            np.dot(NX, (np.multiply(YT, YT)))))
+    distances = (X.shape[1] / ((np.dot(NX, NYT)))) * \
+                (np.dot((X * X), NYT) - 2 * (np.dot(X, YT)) +
+                 np.dot(NX, (YT * YT)))
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
@@ -1208,12 +1205,13 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
     'precomputed': None,  # HACK: precomputed is always allowed, never called
+    'masked_euclidean': masked_euclidean_distances,
 }
 
 # Helper functions with missing value support - distance
-MASKED_PAIRWISE_DISTANCE_FUNCTIONS = {
-    'euclidean': masked_euclidean_distances,
-}
+# MASKED_PAIRWISE_DISTANCE_FUNCTIONS = {
+#     'euclidean': masked_euclidean_distances,
+# }
 
 
 def distance_metrics():
@@ -1225,16 +1223,17 @@ def distance_metrics():
 
     The valid distance metrics, and the function they map to, are:
 
-    ============     ====================================
-    metric           Function
-    ============     ====================================
-    'cityblock'      metrics.pairwise.manhattan_distances
-    'cosine'         metrics.pairwise.cosine_distances
-    'euclidean'      metrics.pairwise.euclidean_distances
-    'l1'             metrics.pairwise.manhattan_distances
-    'l2'             metrics.pairwise.euclidean_distances
-    'manhattan'      metrics.pairwise.manhattan_distances
-    ============     ====================================
+    ============            ====================================
+    metric                  Function
+    ============            ====================================
+    'cityblock'             metrics.pairwise.manhattan_distances
+    'cosine'                metrics.pairwise.cosine_distances
+    'euclidean'             metrics.pairwise.euclidean_distances
+    'l1'                    metrics.pairwise.manhattan_distances
+    'l2'                    metrics.pairwise.euclidean_distances
+    'manhattan'             metrics.pairwise.manhattan_distances
+    'masked_euclidean'      metrics.pairwise.masked_euclidean_distances
+    ============            ====================================
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1301,9 +1300,10 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
                   'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
                   'russellrao', 'seuclidean', 'sokalmichener',
-                  'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
+                  'sokalsneath', 'sqeuclidean', 'yule', "wminkowski",
+                  'masked_euclidean']
 
-_MASKED_SUPPORTED_METRICS = ['euclidean']
+_MASKED_SUPPORTED_METRICS = ['masked_euclidean']
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
@@ -1323,7 +1323,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     Valid values for metric are:
 
     - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-      'manhattan']. These metrics support sparse matrix inputs.
+      'manhattan']. These metrics support sparse matrix
+      inputs.
+      Also, ['masked_euclidean'] but it does not yet support sparse matrices.
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
@@ -1392,33 +1394,27 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
                          "callable" % (metric, _VALID_METRICS))
 
     # To handle kill_missing = False
-    kill_missing = kwds.get("kill_missing")
-    if not kill_missing and kill_missing is not None:
+    # kill_missing = kwds.get("kill_missing")
+    # if not kill_missing and kill_missing is not None:
+    if metric in _MASKED_SUPPORTED_METRICS:
         missing_values = kwds.get("missing_values") if kwds.get(
             "missing_values") is not None else np.nan
 
-        if (metric not in _MASKED_SUPPORTED_METRICS):
-            raise ValueError(
-                "Metric {0} does not have missing value support ".format(
-                    metric)
-            )
-        if issparse(X) or (Y is not None and issparse(Y)):
-            raise ValueError(
-                "Missing value support for sparse matrices not added yet")
-        # if (kwds.get("missing_values") is None):
-        #     raise ValueError("Missing value is not defined")
+        # if (metric not in _MASKED_SUPPORTED_METRICS):
+        #     raise ValueError(
+        #         "Metric {0} does not have missing value support ".format(
+        #             metric)
+        #     )
         if(np.any(_get_mask(X, missing_values).sum(axis=1) == X.shape[1])):
             raise ValueError(
                 "One or more samples(s) only have missing values.")
-        # if type(metric) is str:
-        #     metric = "masked_" + metric
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
         return X
-    elif kill_missing is False and metric in \
-            MASKED_PAIRWISE_DISTANCE_FUNCTIONS:
-            func = MASKED_PAIRWISE_DISTANCE_FUNCTIONS[metric]
+    # elif kill_missing is False and metric in \
+    #         MASKED_PAIRWISE_DISTANCE_FUNCTIONS:
+    #         func = MASKED_PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
             func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):

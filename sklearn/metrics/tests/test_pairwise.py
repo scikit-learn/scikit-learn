@@ -59,13 +59,12 @@ def test_pairwise_distances():
     assert_array_almost_equal(S, S2)
     # Euclidean dist. (masked) should be equivalent to calling the function.
     X = rng.random_sample((5, 4))
-    S = pairwise_distances(X, metric="euclidean", kill_missing=False)
+    S = pairwise_distances(X, metric="masked_euclidean")
     S2 = masked_euclidean_distances(X)
     assert_array_almost_equal(S, S2)
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((2, 4))
-    S = pairwise_distances(X, Y, metric="euclidean",
-                           kill_missing=False)
+    S = pairwise_distances(X, Y, metric="masked_euclidean")
     S2 = masked_euclidean_distances(X, Y)
     assert_array_almost_equal(S, S2)
     # Test with tuples as X and Y

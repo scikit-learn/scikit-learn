@@ -158,25 +158,29 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._tree = None
         self._fit_method = None
 
-    def _fit(self, X, kill_missing=True):
-        if not kill_missing:
-            if self.metric not in _MASKED_SUPPORTED_METRICS:
-                raise ValueError(
-                    "Metric {0} is currently not supported for "
-                    "data containing missing values.".format(self.metric)
-                )
-
-            _MASKED_SUPPORTED_ALGORITHMS = ["brute"]
-            if self.algorithm not in _MASKED_SUPPORTED_ALGORITHMS:
-                if self.algorithm == "auto":
-                    pass
-                else:
-                    warnings.warn(
-                        "{0} algorithm is currently not supported for "
-                        "data containing missing values. "
-                        "Reverting to a supported algorithm.".
-                        format(self.algorithm))
-                    self.algorithm = _MASKED_SUPPORTED_ALGORITHMS[0]
+    def _fit(self, X):
+        if self.metric in _MASKED_SUPPORTED_METRICS:
+            kill_missing = False
+        # if not kill_missing:
+        #     if self.metric not in _MASKED_SUPPORTED_METRICS:
+        #         raise ValueError(
+        #             "Metric {0} is currently not supported for "
+        #             "data containing missing values.".format(self.metric)
+        #         )
+        #
+        #     _MASKED_SUPPORTED_ALGORITHMS = ["brute"]
+        #     if self.algorithm not in _MASKED_SUPPORTED_ALGORITHMS:
+        #         if self.algorithm == "auto":
+        #             pass
+        #         else:
+        #             warnings.warn(
+        #                 "{0} algorithm is currently not supported for "
+        #                 "data containing missing values. "
+        #                 "Reverting to a supported algorithm.".
+        #                 format(self.algorithm))
+        #             self.algorithm = _MASKED_SUPPORTED_ALGORITHMS[0]
+        else:
+            kill_missing = True
 
         if self.metric_params is None:
             self.effective_metric_params_ = {}
@@ -360,8 +364,6 @@ class KNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            # copy=True if missing accepted as they will be replaced by 0
-            # copy = True if kill_missing is False else False
             X = check_array(X, accept_sparse='csr')
         else:
             query_is_train = True
@@ -497,8 +499,8 @@ class KNeighborsMixin(object):
         >>> nan = float("nan")
         >>> samples = [[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]]
         >>> from sklearn.neighbors import NearestNeighbors
-        >>> neigh = NearestNeighbors(n_neighbors=2, metric="euclidean")
-        >>> neigh.fit(samples, kill_missing=False) # doctest: +ELLIPSIS
+        >>> neigh = NearestNeighbors(n_neighbors=2, metric="masked_euclidean")
+        >>> neigh.fit(samples) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30,...)
         >>> N = neigh.masked_kneighbors(n_neighbors=2, return_distance=False)
         >>> print(N) # doctest: +ELLIPSIS
@@ -543,10 +545,9 @@ class KNeighborsMixin(object):
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
-            if self.effective_metric_ == 'euclidean':
-                dist = pairwise_distances(X, self._fit_X, 'euclidean',
+            if self.effective_metric_ == 'masked_euclidean':
+                dist = pairwise_distances(X, self._fit_X, 'masked_euclidean',
                                           n_jobs=n_jobs, squared=True,
-                                          kill_missing=False,
                                           missing_values=missing_values,
                                           copy=copy)
             else:
@@ -565,7 +566,7 @@ class KNeighborsMixin(object):
                 sample_range, np.argsort(dist[sample_range, neigh_ind])]
 
             if return_distance:
-                if self.effective_metric_ == 'euclidean':
+                if self.effective_metric_ == 'masked_euclidean':
                     result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
                 else:
                     result = dist[sample_range, neigh_ind], neigh_ind
@@ -991,7 +992,8 @@ class SupervisedIntegerMixin(object):
 
 
 class UnsupervisedMixin(object):
-    def fit(self, X, y=None, kill_missing=True):
+    # def fit(self, X, y=None, kill_missing=True):
+    def fit(self, X, y=None):
         """Fit the model using X as training data
 
         Parameters
@@ -1000,4 +1002,5 @@ class UnsupervisedMixin(object):
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
         """
-        return self._fit(X, kill_missing)
+        # return self._fit(X, kill_missing)
+        return self._fit(X)

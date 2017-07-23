@@ -102,8 +102,8 @@ def test_masked_unsupervised_kneighbors():
                   [3., 1., 3., 3.],
                   [2., 3., 1., 9.]], dtype=np.float32)
 
-    neigh = neighbors.NearestNeighbors(2, metric="euclidean")
-    neigh.fit(X,  kill_missing=False)
+    neigh = neighbors.NearestNeighbors(2, metric="masked_euclidean")
+    neigh.fit(X)
     X_neigh = neigh.masked_kneighbors(n_neighbors=2, return_distance=False)
     XY_neigh = neigh.masked_kneighbors(Y, 2, return_distance=False)
 
@@ -128,9 +128,10 @@ def test_masked_unsupervised_kneighbors():
     # Test 2
     nan = float("nan")
     samples = [[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]]
-    neigh = neighbors.NearestNeighbors(n_neighbors=2, metric="euclidean")
+    neigh = neighbors.NearestNeighbors(n_neighbors=2,
+                                       metric="masked_euclidean")
 
-    neigh.fit(samples, kill_missing=False)
+    neigh.fit(samples)
     X2_neigh = neigh.masked_kneighbors(n_neighbors=2, return_distance=False)
 
     XY2_neigh = neigh.masked_kneighbors([[0, nan, 1]], 2,
@@ -1079,6 +1080,9 @@ def test_valid_brute_metric_for_auto_algorithm():
             nb_p.kneighbors(DYX)
 
     for metric in VALID_METRICS_SPARSE['brute']:
+        # TODO: Remove after adding sparse support for masked_euclidean
+        if metric == "masked_euclidean":
+            continue
         if metric != 'precomputed' and metric not in require_params:
             nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                             metric=metric).fit(Xcsr)
