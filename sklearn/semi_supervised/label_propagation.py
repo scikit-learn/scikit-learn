@@ -136,9 +136,16 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 self.nn_fit = NearestNeighbors(self.n_neighbors,
                                                n_jobs=self.n_jobs).fit(X)
             if y is None:
-                return self.nn_fit.kneighbors_graph(self.nn_fit._fit_X,
-                                                    self.n_neighbors,
-                                                    mode='connectivity')
+                # Nearest neighbors returns a directed matrix.
+                dir_graph = self.nn_fit.kneighbors_graph(self.nn_fit._fit_X,
+                                                         self.n_neighbors,
+                                                         mode='connectivity')
+                # Making the matrix symmetric
+                un_graph = dir_graph + dir_graph.T
+                # Since it is a connectivity matrix, all values should be
+                # either 0 or 1
+                un_graph[un_graph > 1] = 1
+                return un_graph
             else:
                 return self.nn_fit.kneighbors(y, return_distance=False)
         elif callable(self.kernel):

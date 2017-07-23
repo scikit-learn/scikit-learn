@@ -39,13 +39,8 @@ def test_distribution():
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
-        if parameters['kernel'] == 'knn':
-            continue    # unstable test; changes in k-NN ordering break it
-            assert_array_almost_equal(clf.predict_proba([[1., 0.0]]),
-                                      np.array([[1., 0.]]), 2)
-        else:
-            assert_array_almost_equal(np.asarray(clf.label_distributions_[2]),
-                                      np.array([.5, .5]), 2)
+        assert_array_almost_equal(np.asarray(clf.label_distributions_[2]),
+                                  np.array([.5, .5]), decimal=3)
 
 
 def test_predict():
@@ -62,20 +57,23 @@ def test_predict_proba():
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
         assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
-                                  np.array([[0.5, 0.5]]))
+                                  np.array([[0.5, 0.5]]), decimal=3)
 
 
 def test_alpha_deprecation():
     X, y = make_classification(n_samples=100)
     y[::3] = -1
 
-    lp_default = label_propagation.LabelPropagation(kernel='rbf', gamma=0.1)
-    lp_default_y = assert_no_warnings(lp_default.fit, X, y).transduction_
+    for kernel in ['rbf', 'knn']:
+        lp_default = label_propagation.LabelPropagation(kernel=kernel,
+                                                        gamma=0.1)
+        lp_default_y = assert_no_warnings(lp_default.fit, X, y).transduction_
 
-    lp_0 = label_propagation.LabelPropagation(alpha=0, kernel='rbf', gamma=0.1)
-    lp_0_y = assert_warns(DeprecationWarning, lp_0.fit, X, y).transduction_
+        lp_0 = label_propagation.LabelPropagation(alpha=0, kernel=kernel,
+                                                  gamma=0.1)
+        lp_0_y = assert_warns(DeprecationWarning, lp_0.fit, X, y).transduction_
 
-    assert_array_equal(lp_default_y, lp_0_y)
+        assert_array_equal(lp_default_y, lp_0_y)
 
 
 def test_label_spreading_closed_form():
@@ -94,7 +92,8 @@ def test_label_spreading_closed_form():
         expected /= expected.sum(axis=1)[:, np.newaxis]
         clf = label_propagation.LabelSpreading(max_iter=10000, alpha=alpha)
         clf.fit(X, y)
-        assert_array_almost_equal(expected, clf.label_distributions_, 4)
+        assert_array_almost_equal(expected, clf.label_distributions_,
+                                  decimal=4)
 
 
 def test_label_propagation_closed_form():
@@ -139,9 +138,12 @@ def test_convergence_speed():
     # This is a non-regression test for #5774
     X = np.array([[1., 0.], [0., 1.], [1., 2.5]])
     y = np.array([0, 1, -1])
-    mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=5000)
-    mdl.fit(X, y)
 
-    # this should converge quickly:
-    assert mdl.n_iter_ < 10
-    assert_array_equal(mdl.predict(X), [0, 1, 1])
+    for kernel in ['rbf', 'knn']:
+        mdl = label_propagation.LabelSpreading(kernel=kernel, max_iter=5000,
+                                               n_neighbors=2)
+        mdl.fit(X, y)
+
+        # this should converge quickly:
+        assert mdl.n_iter_ < 10
+        assert_array_almost_equal(mdl.predict_proba([[0.5, 0.5]]), [[0.5, 0.5]], decimal=3)
