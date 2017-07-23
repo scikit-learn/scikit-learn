@@ -400,11 +400,11 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     # Get Y.T mask and anti-mask and set Y.T's missing to zero
     YT = Y.T
     mask_YT = _get_mask(YT, missing_values)
-    NYT = (~mask_YT).astype(np.int8)
+    NYT = (~mask_YT).astype(np.int32)
     YT[mask_YT] = 0
 
     # Get X anti-mask and set X's missing to zero
-    NX = (~mask_X).astype(np.int8)
+    NX = (~mask_X).astype(np.int32)
     X[mask_X] = 0
 
     # Calculate distances
