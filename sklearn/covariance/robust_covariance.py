@@ -663,8 +663,8 @@ class MinCovDet(EmpiricalCovariance):
         ----------
 
         .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance
-        Determinant Estimator, 1999, American Statistical Association and
-        the American Society for Quality, TECHNOMETRICS`
+            Determinant Estimator, 1999, American Statistical Association
+            and the American Society for Quality, TECHNOMETRICS`
 
         Returns
         -------
@@ -696,8 +696,8 @@ class MinCovDet(EmpiricalCovariance):
         ----------
 
         .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance
-        Determinant Estimator, 1999, American Statistical Association and
-        the American Society for Quality, TECHNOMETRICS`
+            Determinant Estimator, 1999, American Statistical Association
+            and the American Society for Quality, TECHNOMETRICS`
 
         Returns
         -------
