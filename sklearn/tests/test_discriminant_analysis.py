@@ -246,8 +246,8 @@ def test_lda_store_covariance():
             np.array([0.088889, 0.533333])
         )
 
-    # Test for slover svd, the default is to not set the covariances_ attribute
-    clf = LinearDiscriminantAnalysis(solver='svd').fit(X, y)
+    # Test for SVD slover, the default is to not set the covariances_ attribute
+    clf = LinearDiscriminantAnalysis(solver='svd').fit(X6, y6)
     assert_false(hasattr(clf, 'covariance_'))
 
     # Test the actual attribute:
