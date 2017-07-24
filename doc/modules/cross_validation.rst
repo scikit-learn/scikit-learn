@@ -270,7 +270,7 @@ The following sections list utilities to generate indices
 that can be used to generate dataset splits according to different cross
 validation strategies.
 
-.. _iid_cv
+.. _iid_cv:
 
 Cross-validation iterators for i.i.d. data
 ==========================================
@@ -287,7 +287,7 @@ The following cross-validators can be used in such cases.
 While i.i.d. data is a common assumption in machine learning theory, it rarely
 holds in practice. If one knows that the samples have been generated using a
 time-dependent process, it's safer to
-use a :ref:`time-series aware cross-validation scheme <time_series_cv>`
+use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`
 Similarly if we know that the generative process has a group structure
 (samples from collected from different subjects, experiments, measurement
 devices) it safer to use :ref:`group-wise cross-validation <group_cv>`.
@@ -506,7 +506,7 @@ Stratified Shuffle Split
 stratified splits, *i.e* which creates splits by preserving the same
 percentage for each target class as in the complete set.
 
-.. _group_cv
+.. _group_cv:
 
 Cross-validation iterators for grouped data.
 ============================================
@@ -532,11 +532,11 @@ parameter.
 Group k-fold
 ------------
 
-class:GroupKFold is a variation of k-fold which ensures that the same group is
+:class:`GroupKFold` is a variation of k-fold which ensures that the same group is
 not represented in both testing and training sets. For example if the data is
 obtained from different subjects with several samples per-subject and if the
 model is flexible enough to learn from highly person specific features it
-could fail to generalize to new subjects. class:GroupKFold makes it possible
+could fail to generalize to new subjects. :class:`GroupKFold` makes it possible
 to detect this kind of overfitting situations.
 
 Imagine you have three subjects, each with an associated number from 1 to 3::
@@ -653,7 +653,7 @@ e.g. when searching for hyperparameters.
 For example, when using a validation set, set the ``test_fold`` to 0 for all
 samples that are part of the validation set, and to -1 for all other samples.
 
-.. _timeseries_cv
+.. _timeseries_cv:
 
 Cross validation of time series data
 ====================================

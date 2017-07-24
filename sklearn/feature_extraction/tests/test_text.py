@@ -223,6 +223,25 @@ def test_char_wb_ngram_analyzer():
     assert_equal(cnga(text)[:6], expected)
 
 
+def test_word_ngram_analyzer():
+    cnga = CountVectorizer(analyzer='word', strip_accents='unicode',
+                           ngram_range=(3, 6)).build_analyzer()
+
+    text = "This \n\tis a test, really.\n\n I met Harry yesterday"
+    expected = ['this is test', 'is test really', 'test really met']
+    assert_equal(cnga(text)[:3], expected)
+
+    expected = ['test really met harry yesterday',
+                'this is test really met harry',
+                'is test really met harry yesterday']
+    assert_equal(cnga(text)[-3:], expected)
+
+    cnga_file = CountVectorizer(input='file', analyzer='word',
+                                ngram_range=(3, 6)).build_analyzer()
+    file = StringIO(text)
+    assert_equal(cnga_file(file), cnga(text))
+
+
 def test_countvectorizer_custom_vocabulary():
     vocab = {"pizza": 0, "beer": 1}
     terms = set(vocab.keys())
