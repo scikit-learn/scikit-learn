@@ -842,6 +842,64 @@ Miscellaneous
   ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
   now only have ``self.estimators_`` available after ``fit``.
   :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
+   - Deprecate the ``y`` parameter in ``transform`` and ``inverse_transform``.
+     The method  should not accept ``y`` parameter, as it's used at the prediction time.
+     :issue:`8174` by :user:`Tahar Zanouda <tzano>`, `Alexandre Gramfort`_
+     and `Raghav RV`_.
+
+   - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
+     for scikit-learn. The following backported functions in
+     :mod:`utils` have been removed or deprecated accordingly.
+     :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
+
+   - The ``store_covariances`` and ``covariances_`` parameters of
+     :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
+     has been renamed to ``store_covariance`` and ``covariance_``. They will be
+     removed in version 0.21. :issue:`7998` by :user:`Jiacheng <mrbeann>`
+
+     Removed in 0.19:
+
+     - ``utils.fixes.argpartition``
+     - ``utils.fixes.array_equal``
+     - ``utils.fixes.astype``
+     - ``utils.fixes.bincount``
+     - ``utils.fixes.expit``
+     - ``utils.fixes.frombuffer_empty``
+     - ``utils.fixes.in1d``
+     - ``utils.fixes.norm``
+     - ``utils.fixes.rankdata``
+     - ``utils.fixes.safe_copy``
+
+     Deprecated in 0.19, to be removed in 0.21:
+
+     - ``utils.arpack.eigs``
+     - ``utils.arpack.eigsh``
+     - ``utils.arpack.svds``
+     - ``utils.extmath.fast_dot``
+     - ``utils.extmath.logsumexp``
+     - ``utils.extmath.norm``
+     - ``utils.extmath.pinvh``
+     - ``utils.graph.graph_laplacian``
+     - ``utils.random.choice``
+     - ``utils.sparsetools.connected_components``
+     - ``utils.stats.rankdata``
+
+   - Estimators with both methods ``decision_function`` and ``predict_proba``
+     are now required to have a monotonic relation between them. The
+     method ``check_decision_proba_consistency`` has been added in
+     **utils.estimator_checks** to check their consistency.
+     :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
+
+   - All checks in ``utils.estimator_checks``, in particular
+     :func:`utils.estimator_checks.check_estimator` now accept estimator
+     instances. Most other checks do not accept
+     estimator classes any more. :issue:`9019` by `Andreas Müller`_.
+
+   - Ensure that estimators' attributes ending with ``_`` are not set
+     in the constructor but only in the ``fit`` method. Most notably,
+     ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
+     now only have ``self.estimators_`` available after ``fit``.
+     :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
 
 .. _changes_0_18_2:
 
