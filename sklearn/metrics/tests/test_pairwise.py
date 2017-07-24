@@ -62,7 +62,8 @@ def test_pairwise_distances():
     Y_masked = rng.random_sample((2, 4))
     X_masked[0, 0] = np.nan
     Y_masked[0, 0] = np.nan
-    S_masked = pairwise_distances(X_masked, Y_masked, metric="masked_euclidean")
+    S_masked = pairwise_distances(X_masked, Y_masked,
+                                  metric="masked_euclidean")
     S2_masked = masked_euclidean_distances(X_masked, Y_masked)
     assert_array_almost_equal(S_masked, S2_masked)
     # Test with tuples as X and Y
