@@ -1146,20 +1146,18 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
             # We also provide an early stopping based on the score from
             # validation set (X_val, y_val), if n_iter_no_change is set
-            if self.n_iter_no_change is None:
-                continue
+            if self.n_iter_no_change is not None:
+                # By calling next(y_val_pred_iter), we get the predictions
+                # for X_val after the addition of the current stage
+                validation_loss = loss_(y_val, next(y_val_pred_iter),
+                                        sample_weight_val)
 
-            # By calling next(y_val_pred_iter), we get the predictions
-            # for X_val after the addition of the current stage
-            validation_loss = loss_(y_val, next(y_val_pred_iter),
-                                    sample_weight_val)
-
-            # Require validation_score to be better (less) than at least one
-            # of the last n_iter_no_change evaluations
-            if np.any(validation_loss + self.tol < loss_history):
-                loss_history[i % len(loss_history)] = validation_loss
-            else:
-                break
+                # Require validation_score to be better (less) than at least one
+                # of the last n_iter_no_change evaluations
+                if np.any(validation_loss + self.tol < loss_history):
+                    loss_history[i % len(loss_history)] = validation_loss
+                else:
+                    break
 
         return i + 1
 
