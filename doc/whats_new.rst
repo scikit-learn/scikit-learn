@@ -526,6 +526,11 @@ Decomposition, manifold learning and clustering
    - Fix bug where :mod:`mixture` ``sample`` methods did not return as many
      samples as requested. :issue:`7702` by :user:`Levi John Wolf <ljwolf>`.
 
+   - Fix for uninformative error in :class:`decomposition.incremental_pca`:
+     now an error is raised if the number of components is larger than the
+     chosen batch size. The ``n_components=None`` case was adapted accordingly.
+     :issue:`6452`. By :user:`Wally Gauze <wallygauze>`.
+     
 Preprocessing and feature selection
 
    - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
