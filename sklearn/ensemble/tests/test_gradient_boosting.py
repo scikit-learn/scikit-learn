@@ -1150,3 +1150,53 @@ def test_gradient_boosting_early_stopping():
 
     assert gbc.n_estimators_ == 100
     assert gbr.n_estimators_ == 200
+
+
+def test_gradient_boosting_validation_fraction():
+    X, y = make_classification(n_samples=1000, random_state=0)
+
+    gbc = GradientBoostingClassifier(n_estimators=100,
+                                     n_iter_no_change=10,
+                                     validation_fraction=0.1,
+                                     learning_rate=0.1, max_depth=3,
+                                     random_state=42)
+    gbc2 = GradientBoostingClassifier(n_estimators=100,
+                                      n_iter_no_change=10,
+                                      validation_fraction=0.3,
+                                      learning_rate=0.1, max_depth=3,
+                                      random_state=42)
+    gbc3 = GradientBoostingClassifier(n_estimators=100,
+                                      n_iter_no_change=20,
+                                      validation_fraction=0.1,
+                                      learning_rate=0.1, max_depth=3,
+                                      random_state=42)
+
+    gbr = GradientBoostingRegressor(n_estimators=100, n_iter_no_change=10,
+                                    learning_rate=0.1, max_depth=3,
+                                    validation_fraction=0.1,
+                                    random_state=42)
+    gbr2 = GradientBoostingRegressor(n_estimators=100, n_iter_no_change=10,
+                                     learning_rate=0.1, max_depth=3,
+                                     validation_fraction=0.3,
+                                     random_state=42)
+    gbr3 = GradientBoostingRegressor(n_estimators=100, n_iter_no_change=20,
+                                     learning_rate=0.1, max_depth=3,
+                                     validation_fraction=0.1,
+                                     random_state=42)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+    # Check if validation_fraction has an effect
+    gbc.fit(X_train, y_train)
+    gbc2.fit(X_train, y_train)
+    assert gbc.n_estimators_ != gbc2.n_estimators_
+
+    gbr.fit(X_train, y_train)
+    gbr2.fit(X_train, y_train)
+    assert gbr.n_estimators_ != gbr2.n_estimators_
+
+    # Check if n_estimators_ increase monotonically with n_iter_no_change
+    # Set validation
+    gbc3.fit(X_train, y_train)
+    gbr3.fit(X_train, y_train)
+    assert gbr.n_estimators_ < gbr3.n_estimators_
+    assert gbc.n_estimators_ < gbc3.n_estimators_
