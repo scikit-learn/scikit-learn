@@ -625,12 +625,13 @@ class ElasticNet(LinearModel, RegressorMixin):
     ElasticNet(alpha=1.0, copy_X=True, fit_intercept=True, l1_ratio=0.5,
           max_iter=1000, normalize=False, positive=False, precompute=False,
           random_state=0, selection='cyclic', tol=0.0001, warm_start=False)
-    >>> regr.coef_.round(3)
-    array([ 18.838,  64.56 ])
-    >>> regr.intercept_.round(3)
-    1.4510000000000001
-    >>> regr.predict([[0, 0]]).round(3)
-    array([ 1.451])
+    >>> print(regr.coef_) # doctest: +ELLIPSIS
+    [ 18.83816048  64.55968825]
+    >>> print(regr.intercept_) # doctest: +ELLIPSIS
+    1.45126075617
+    >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
+    [ 1.45126076]
+
 
     Notes
     -----
@@ -1516,12 +1517,13 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
            l1_ratio=0.5, max_iter=1000, n_alphas=100, n_jobs=1,
            normalize=False, positive=False, precompute='auto', random_state=0,
            selection='cyclic', tol=0.0001, verbose=0)
-    >>> regr.alpha_.round(3)
-    0.19900000000000001
-    >>> regr.intercept_.round(3)
-    0.39900000000000002
-    >>> regr.predict([[0, 0]]).round(3)
-    array([ 0.399])
+    >>> print(regr.alpha_) # doctest: +ELLIPSIS
+    0.19947279427
+    >>> print(regr.intercept_) # doctest: +ELLIPSIS
+    0.398882965428
+    >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
+    [ 0.39888297]
+
 
     Notes
     -----
