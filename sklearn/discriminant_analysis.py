@@ -257,10 +257,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
     @property
     def covariance_(self):
-        if hasattr(self, '_covariance_') and not self.store_covariance:
-            warnings.warn("from version 0.21 'covariance_' will be stored "
-                          "only if 'store_covariance' is True",
-                          FutureWarning)
         return self._covariance_
 
     @covariance_.setter
