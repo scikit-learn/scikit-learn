@@ -104,7 +104,6 @@ def retry(f, n_retry=3):
     return wrapper
 
 
-@retry
 def quotes_historical_google(symbol, date1, date2):
     """Get the historical data from Google finance.
 
@@ -206,8 +205,10 @@ symbol_dict = {
 
 symbols, names = np.array(list(symbol_dict.items())).T
 
+# Function for downloading stock data is decorated with retry() because download
+# can temporary fail for various reasons (e.g. empty result from Google API).
 quotes = [
-    quotes_historical_google(symbol, d1, d2) for symbol in symbols
+    retry(quotes_historical_google)(symbol, d1, d2) for symbol in symbols
 ]
 
 close_prices = np.vstack([q['close'] for q in quotes])
