@@ -18,7 +18,7 @@ from os.path import exists, join
 import numpy as np
 
 
-from .base import _fetch_url
+from .base import _fetch_remote
 from .base import get_data_home
 from .base import RemoteFileMetadata
 from ..utils import Bunch
@@ -284,14 +284,10 @@ def _fetch_brute_kddcup99(data_home=None,
 
     if percent10:
         kddcup_dir = join(data_home, "kddcup99_10" + dir_suffix)
-        archive_path = join(kddcup_dir, ARCHIVE_10_PERCENT.filename)
-        expected_checksum = ARCHIVE_10_PERCENT.checksum
-        URL_ = ARCHIVE_10_PERCENT.url
+        archive = ARCHIVE_10_PERCENT
     else:
         kddcup_dir = join(data_home, "kddcup99" + dir_suffix)
-        archive_path = join(kddcup_dir, ARCHIVE.filename)
-        expected_checksum = ARCHIVE.checksum
-        URL_ = ARCHIVE.url
+        archive = ARCHIVE
 
     samples_path = join(kddcup_dir, "samples")
     targets_path = join(kddcup_dir, "targets")
@@ -299,8 +295,8 @@ def _fetch_brute_kddcup99(data_home=None,
 
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
-        logger.warning("Downloading %s" % URL_)
-        _fetch_url(URL_, archive_path, expected_checksum)
+        logger.warning("Downloading %s" % archive.url)
+        _fetch_remote(archive, path=kddcup_dir)
         dt = [('duration', int),
               ('protocol_type', 'S4'),
               ('service', 'S11'),
@@ -345,6 +341,7 @@ def _fetch_brute_kddcup99(data_home=None,
               ('labels', 'S16')]
         DT = np.dtype(dt)
         logger.info("extracting archive")
+        archive_path = join(kddcup_dir, archive.filename)
         file_ = GzipFile(filename=archive_path, mode='r')
         Xy = []
         for line in file_.readlines():

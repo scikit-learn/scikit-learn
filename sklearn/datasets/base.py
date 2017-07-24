@@ -836,39 +836,17 @@ def _sha256(path):
     return sha256hash.hexdigest()
 
 
-def _fetch_url(url, path, checksum):
-    """Fetch a dataset and check the SHA256 checksum
-
-    Fetch a dataset pointed by url, save into path and ensure its integrity
-    based on the SHA256 Checksum of the downloaded file.
-
-    Parameters
-    -----------
-    URL : string
-        URL to fetch the download from.
-
-    path : string
-        Path to save the file to.
-
-    checksum : string
-        SHA256 checksum to verify against the data
-
-    """
-
-    urlretrieve(url, path)
-    if checksum != _sha256(path):
-        raise IOError("{} has an SHA256 hash differing from expected, "
-                      "file may be corrupted.".format(path))
-
-
 def _fetch_remote(remote, path=None):
     """Helper function to download a remote dataset into path
 
+    Fetch a dataset pointed by remote's url, save into path using remote's
+    filename and ensure its integrity based on the SHA256 Checksum of the
+    downloaded file.
 
     Parameters
     -----------
     remote : RemoteFileMetadata
-        Object containing remote dataset meta information: url, filename
+        Named tuple containing remote dataset meta information: url, filename
         and checksum
 
     path : string
@@ -876,4 +854,7 @@ def _fetch_remote(remote, path=None):
     """
 
     filename = remote.filename if path is None else join(path, remote.filename)
-    _fetch_url(remote.url, filename, remote.checksum)
+    urlretrieve(remote.url, filename)
+    if remote.checksum != _sha256(filename):
+        raise IOError("{} has an SHA256 hash differing from expected, "
+                      "file may be corrupted.".format(filename))

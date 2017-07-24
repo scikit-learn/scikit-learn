@@ -15,7 +15,7 @@ import scipy.sparse as sp
 
 from .base import get_data_home
 from .base import _pkl_filepath
-from .base import _fetch_url
+from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils.fixes import makedirs
 from ..externals import joblib
@@ -158,9 +158,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         files = []
         for each in XY_METADATA:
             logger.warning("Downloading %s" % each.url)
-            archive_path = join(rcv1_dir, each.filename)
-            _fetch_url(each.url, archive_path, each.checksum)
-            files.append(GzipFile(filename=archive_path))
+            _fetch_remote(each, path=rcv1_dir)
+            files.append(GzipFile(filename=join(rcv1_dir, each.filename)))
 
         Xy = load_svmlight_files(files, n_features=N_FEATURES)
 
@@ -183,9 +182,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     if download_if_missing and (not exists(sample_topics_path) or
                                 not exists(topics_path)):
         logger.warning("Downloading %s" % TOPICS_METADATA.url)
-        topics_archive_path = join(rcv1_dir, TOPICS_METADATA.filename)
-        _fetch_url(TOPICS_METADATA.url, topics_archive_path,
-                   TOPICS_METADATA.checksum)
+        _fetch_remote(TOPICS_METADATA, path=rcv1_dir)
 
         # parse the target file
         n_cat = -1
@@ -194,6 +191,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         y = np.zeros((N_SAMPLES, N_CATEGORIES), dtype=np.uint8)
         sample_id_bis = np.zeros(N_SAMPLES, dtype=np.int32)
         category_names = {}
+        topics_archive_path = join(rcv1_dir, TOPICS_METADATA.filename)
         for line in GzipFile(filename=topics_archive_path, mode='rb'):
             line_components = line.decode("ascii").split(u" ")
             if len(line_components) == 3:

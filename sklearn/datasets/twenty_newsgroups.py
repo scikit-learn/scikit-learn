@@ -49,7 +49,7 @@ import scipy.sparse as sp
 from .base import get_data_home
 from .base import load_files
 from .base import _pkl_filepath
-from .base import _fetch_url
+from .base import _fetch_remote
 from .base import RemoteFileMetadata
 from ..utils import check_random_state, Bunch
 from ..feature_extraction.text import CountVectorizer
@@ -82,7 +82,7 @@ def download_20newsgroups(target_dir, cache_path):
         os.makedirs(target_dir)
 
     logger.warning("Downloading dataset from %s (14 MB)", ARCHIVE.url)
-    _fetch_url(ARCHIVE.url, archive_path, ARCHIVE.checksum)
+    _fetch_remote(ARCHIVE, path=target_dir)
 
     logger.info("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
