@@ -80,8 +80,8 @@ New features
 
    - :class:`ensemble.GradientBoostingClassifier` and
      :class:`ensemble.GradientBoostingRegressor` now support early stopping
-     via `n_iter_no_change`, `validation_fraction` and `tol`. :issue:`7071` by
-     `Raghav RV`_
+     via ``n_iter_no_change``, ``validation_fraction`` and `tol`. :issue:`7071`
+     by `Raghav RV`_
 
 Classifiers and regressors
 
