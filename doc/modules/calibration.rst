@@ -190,18 +190,18 @@ a similar decrease in log-loss.
 
 .. topic:: References:
 
-    .. [1] Obtaining calibrated probability estimates from decision trees
-           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+    * Obtaining calibrated probability estimates from decision trees
+      and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
 
-    .. [2] Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+    * Transforming Classifier Scores into Accurate Multiclass
+      Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
 
-    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons to
-           Regularized Likelihood Methods, J. Platt, (1999)
+    * Probabilistic Outputs for Support Vector Machines and Comparisons to
+      Regularized Likelihood Methods, J. Platt, (1999)
 
-    .. [4] Predicting Good Probabilities with Supervised Learning,
-           A. Niculescu-Mizil & R. Caruana, ICML 2005
+    * Predicting Good Probabilities with Supervised Learning,
+      A. Niculescu-Mizil & R. Caruana, ICML 2005
 
-    .. [5] On the combination of forecast probabilities for
-           consecutive precipitation periods. Wea. Forecasting, 5, 640–650.,
-           Wilks, D. S., 1990a
+    * On the combination of forecast probabilities for
+      consecutive precipitation periods. Wea. Forecasting, 5, 640–650.,
+      Wilks, D. S., 1990a
