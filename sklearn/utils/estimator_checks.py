@@ -1657,8 +1657,8 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                 'should not be initialized in the constructor of an '
                 'estimator but in the fit method. Attribute {!r} '
                 'was found in estimator {}'.format(attr, name))
-        if attr not in init_params:
-            assert_equal(getattr(estimator, attr), None)
+            if attr not in init_params:
+                assert_equal(getattr(estimator, attr), None)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
