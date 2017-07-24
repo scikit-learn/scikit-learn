@@ -13,7 +13,7 @@ import struct
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
@@ -1644,6 +1644,7 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
     """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
     # this check works on classes, not instances
     estimator = Estimator()
+    init_params = _get_args(estimator.__init__)
     for attr in dir(estimator):
         if attr.endswith("_") and not attr.startswith("__"):
             # This check is for properties, they can be listed in dir
@@ -1656,6 +1657,8 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                 'should not be initialized in the constructor of an '
                 'estimator but in the fit method. Attribute {!r} '
                 'was found in estimator {}'.format(attr, name))
+        if attr not in init_params:
+            assert_equal(getattr(estimator, attr), None)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
