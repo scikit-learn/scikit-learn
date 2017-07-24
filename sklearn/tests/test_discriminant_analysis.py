@@ -228,9 +228,8 @@ def test_lda_scaling():
 def test_lda_store_covariance():
     # Test for slover 'lsqr' and 'eigen'
     for solver in ('lsqr', 'eigen'):
-        clf = LinearDiscriminantAnalysis(solver=solver)
-        # The deprecated test will be asserted once the deprecation
-        # is complete.
+        clf = LinearDiscriminantAnalysis(solver=solver).fit(X6, y6)
+        assert_true(hasattr(clf, 'covariance_'))
 
         # Test the actual attribute:
         clf = LinearDiscriminantAnalysis(solver=solver,
@@ -265,16 +264,6 @@ def test_lda_store_covariance():
         clf.covariance_[1],
         np.array([0.088889, 0.533333])
     )
-
-
-# def test_lda_deprecation():
-#     clf = LinearDiscriminantAnalysis(solver='svd')
-
-#     # Test the deprecation
-#     assert_warns_message(DeprecationWarning, "from version 0.21 "
-#                          "'covariance_' will be stored only if "
-#                          "'store_covariance' is True",
-#                          clf.fit, X, y)
 
 
 def test_qda():

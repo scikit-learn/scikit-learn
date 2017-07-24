@@ -255,14 +255,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.store_covariance = store_covariance  # used only in svd solver
         self.tol = tol  # used only in svd solver
 
-    @property
-    def covariance_(self):
-        return self._covariance_
-
-    @covariance_.setter
-    def covariance_(self, value):
-        self._covariance_ = value
-
     def _solve_lsqr(self, X, y, shrinkage):
         """Least squares solver.
 
