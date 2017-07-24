@@ -18,20 +18,11 @@ from os.path import dirname, exists, expanduser, isdir, join, splitext
 import hashlib
 
 from ..utils import Bunch
+from ..utils import check_random_state
 
 import numpy as np
 
-from ..utils import check_random_state
-
-try:
-    from urllib.request import urlretrieve as download
-except ImportError:
-    from urllib import urlopen
-    from shutil import copyfileobj
-
-    def download(url, path):
-        with open(path, 'wb') as out_file:
-            copyfileobj(urlopen(url), out_file)
+from sklearn.externals.six.moves.urllib.request import urlretrieve
 
 RemoteFileMetadata = namedtuple('RemoteFileMetadata',
                                 ['filename', 'url', 'checksum'])
@@ -864,7 +855,7 @@ def _fetch_url(url, path, checksum):
 
     """
 
-    download(url, path)
+    urlretrieve(url, path)
     if checksum != _sha256(path):
         raise IOError("{} has an SHA256 hash differing from expected, "
                       "file may be corrupted.".format(path))
