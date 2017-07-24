@@ -269,14 +269,14 @@ perform outlier detection and discard/downweight some observations
 according to further processing of the data.
 
 The ``sklearn.covariance`` package implements a robust estimator of covariance,
-the Minimum Covariance Determinant [3].
+the Minimum Covariance Determinant [3]_.
 
 
 Minimum Covariance Determinant
 ------------------------------
 
 The Minimum Covariance Determinant estimator is a robust estimator of
-a data set's covariance introduced by P.J. Rousseeuw in [3].  The idea
+a data set's covariance introduced by P.J. Rousseeuw in [3]_.  The idea
 is to find a given proportion (h) of "good" observations which are not
 outliers and compute their empirical covariance matrix.  This
 empirical covariance matrix is then rescaled to compensate the
@@ -286,7 +286,7 @@ weights to observations according to their Mahalanobis distance,
 leading to a reweighted estimate of the covariance matrix of the data
 set ("reweighting step").
 
-Rousseeuw and Van Driessen [4] developed the FastMCD algorithm in order
+Rousseeuw and Van Driessen [4]_ developed the FastMCD algorithm in order
 to compute the Minimum Covariance Determinant. This algorithm is used
 in scikit-learn when fitting an MCD object to data. The FastMCD
 algorithm also computes a robust estimate of the data set location at
