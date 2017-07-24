@@ -1160,29 +1160,15 @@ def test_gradient_boosting_validation_fraction():
                                      validation_fraction=0.1,
                                      learning_rate=0.1, max_depth=3,
                                      random_state=42)
-    gbc2 = GradientBoostingClassifier(n_estimators=100,
-                                      n_iter_no_change=10,
-                                      validation_fraction=0.3,
-                                      learning_rate=0.1, max_depth=3,
-                                      random_state=42)
-    gbc3 = GradientBoostingClassifier(n_estimators=100,
-                                      n_iter_no_change=20,
-                                      validation_fraction=0.1,
-                                      learning_rate=0.1, max_depth=3,
-                                      random_state=42)
+    gbc2 = clone(gbc).set_params(validation_fraction=0.3)
+    gbc3 = clone(gbc).set_params(n_iter_no_change=20)
 
     gbr = GradientBoostingRegressor(n_estimators=100, n_iter_no_change=10,
                                     learning_rate=0.1, max_depth=3,
                                     validation_fraction=0.1,
                                     random_state=42)
-    gbr2 = GradientBoostingRegressor(n_estimators=100, n_iter_no_change=10,
-                                     learning_rate=0.1, max_depth=3,
-                                     validation_fraction=0.3,
-                                     random_state=42)
-    gbr3 = GradientBoostingRegressor(n_estimators=100, n_iter_no_change=20,
-                                     learning_rate=0.1, max_depth=3,
-                                     validation_fraction=0.1,
-                                     random_state=42)
+    gbr2 = clone(gbr).set_params(validation_fraction=0.3)
+    gbr3 = clone(gbr).set_params(n_iter_no_change=20)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
     # Check if validation_fraction has an effect
