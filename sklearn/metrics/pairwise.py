@@ -324,13 +324,6 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     vector in the pair or if there are no common non-missing coordinates then
     NaN is returned for that pair.
 
-    References
-    ----------
-    John K. Dixon, "Pattern Recognition with Partly Missing Data",
-    IEEE Transactions on Systems, Man, and Cybernetics, Volume: 9, Issue:
-    10, pp. 617 - 621, Oct. 1979.
-    http://ieeexplore.ieee.org/abstract/document/4310090/
-
     Read more in the :ref:`User Guide <metrics>`.
 
     Parameters
@@ -366,6 +359,13 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     >>> masked_euclidean_distances(X, [[0, 0]])
     array([[ 1.        ],
            [ 1.41421356]])
+
+    References
+    ----------
+    * John K. Dixon, "Pattern Recognition with Partly Missing Data",
+      IEEE Transactions on Systems, Man, and Cybernetics, Volume: 9, Issue:
+      10, pp. 617 - 621, Oct. 1979.
+      http://ieeexplore.ieee.org/abstract/document/4310090/
 
     See also
     --------
@@ -409,9 +409,9 @@ def masked_euclidean_distances(X, Y=None, squared=False,
 
     # Calculate distances
 
-    distances = (X.shape[1] / ((np.dot(NX, NYT)))) * \
-                (np.dot((X * X), NYT) - 2 * (np.dot(X, YT)) +
-                 np.dot(NX, (YT * YT)))
+    distances = (X.shape[1] / (np.dot(NX, NYT))) * \
+                (np.dot(X * X, NYT) - 2 * (np.dot(X, YT)) +
+                 np.dot(NX, YT * YT))
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
@@ -1208,11 +1208,6 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     'masked_euclidean': masked_euclidean_distances,
 }
 
-# Helper functions with missing value support - distance
-# MASKED_PAIRWISE_DISTANCE_FUNCTIONS = {
-#     'euclidean': masked_euclidean_distances,
-# }
-
 
 def distance_metrics():
     """Valid metrics for pairwise_distances.
@@ -1223,9 +1218,9 @@ def distance_metrics():
 
     The valid distance metrics, and the function they map to, are:
 
-    ============            ====================================
+    ===================     ============================================
     metric                  Function
-    ============            ====================================
+    ===================     ============================================
     'cityblock'             metrics.pairwise.manhattan_distances
     'cosine'                metrics.pairwise.cosine_distances
     'euclidean'             metrics.pairwise.euclidean_distances
@@ -1233,7 +1228,7 @@ def distance_metrics():
     'l2'                    metrics.pairwise.euclidean_distances
     'manhattan'             metrics.pairwise.manhattan_distances
     'masked_euclidean'      metrics.pairwise.masked_euclidean_distances
-    ============            ====================================
+    ===================     ============================================
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -1393,18 +1388,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
                          "Valid metrics are %s, or 'precomputed', or a "
                          "callable" % (metric, _VALID_METRICS))
 
-    # To handle kill_missing = False
-    # kill_missing = kwds.get("kill_missing")
-    # if not kill_missing and kill_missing is not None:
     if metric in _MASKED_SUPPORTED_METRICS:
         missing_values = kwds.get("missing_values") if kwds.get(
             "missing_values") is not None else np.nan
 
-        # if (metric not in _MASKED_SUPPORTED_METRICS):
-        #     raise ValueError(
-        #         "Metric {0} does not have missing value support ".format(
-        #             metric)
-        #     )
         if(np.any(_get_mask(X, missing_values).sum(axis=1) == X.shape[1])):
             raise ValueError(
                 "One or more samples(s) only have missing values.")
@@ -1412,9 +1399,6 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
         return X
-    # elif kill_missing is False and metric in \
-    #         MASKED_PAIRWISE_DISTANCE_FUNCTIONS:
-    #         func = MASKED_PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
             func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):

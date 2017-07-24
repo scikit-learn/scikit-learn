@@ -104,9 +104,8 @@ def test_masked_unsupervised_kneighbors():
 
     neigh = neighbors.NearestNeighbors(2, metric="masked_euclidean")
     neigh.fit(X)
-    X_neigh = neigh.masked_kneighbors(n_neighbors=2, return_distance=False)
-    XY_neigh = neigh.masked_kneighbors(Y, 2, return_distance=False)
-
+    X_neigh = neigh.kneighbors(n_neighbors=2, return_distance=False)
+    XY_neigh = neigh.kneighbors(Y, 2, return_distance=False)
     # Expected outcome
     N1 = np.array(
         [[1, 4],
@@ -130,12 +129,10 @@ def test_masked_unsupervised_kneighbors():
     samples = [[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]]
     neigh = neighbors.NearestNeighbors(n_neighbors=2,
                                        metric="masked_euclidean")
-
     neigh.fit(samples)
-    X2_neigh = neigh.masked_kneighbors(n_neighbors=2, return_distance=False)
 
-    XY2_neigh = neigh.masked_kneighbors([[0, nan, 1]], 2,
-                                        return_distance=False)
+    X2_neigh = neigh.kneighbors(n_neighbors=2, return_distance=False)
+    XY2_neigh = neigh.kneighbors([[0, nan, 1]], 2, return_distance=False)
 
     # Expected outcome
     N3 = np.array(
