@@ -800,7 +800,7 @@ Miscellaneous
   consistent with the corresponding parameter names of the
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`. They will be
   removed in version 0.21. :issue:`7998` by :user:`Jiacheng <mrbeann>`
-  
+
   Removed in 0.19:
 
   - ``utils.fixes.argpartition``
@@ -844,64 +844,7 @@ Miscellaneous
   ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
   now only have ``self.estimators_`` available after ``fit``.
   :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
-   - Deprecate the ``y`` parameter in ``transform`` and ``inverse_transform``.
-     The method  should not accept ``y`` parameter, as it's used at the prediction time.
-     :issue:`8174` by :user:`Tahar Zanouda <tzano>`, `Alexandre Gramfort`_
-     and `Raghav RV`_.
 
-   - SciPy >= 0.13.3 and NumPy >= 1.8.2 are now the minimum supported versions
-     for scikit-learn. The following backported functions in
-     :mod:`utils` have been removed or deprecated accordingly.
-     :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
-
-   - The ``store_covariances`` and ``covariances_`` parameters of
-     :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
-     has been renamed to ``store_covariance`` and ``covariance_``. They will be
-     removed in version 0.21. :issue:`7998` by :user:`Jiacheng <mrbeann>`
-
-     Removed in 0.19:
-
-     - ``utils.fixes.argpartition``
-     - ``utils.fixes.array_equal``
-     - ``utils.fixes.astype``
-     - ``utils.fixes.bincount``
-     - ``utils.fixes.expit``
-     - ``utils.fixes.frombuffer_empty``
-     - ``utils.fixes.in1d``
-     - ``utils.fixes.norm``
-     - ``utils.fixes.rankdata``
-     - ``utils.fixes.safe_copy``
-
-     Deprecated in 0.19, to be removed in 0.21:
-
-     - ``utils.arpack.eigs``
-     - ``utils.arpack.eigsh``
-     - ``utils.arpack.svds``
-     - ``utils.extmath.fast_dot``
-     - ``utils.extmath.logsumexp``
-     - ``utils.extmath.norm``
-     - ``utils.extmath.pinvh``
-     - ``utils.graph.graph_laplacian``
-     - ``utils.random.choice``
-     - ``utils.sparsetools.connected_components``
-     - ``utils.stats.rankdata``
-
-   - Estimators with both methods ``decision_function`` and ``predict_proba``
-     are now required to have a monotonic relation between them. The
-     method ``check_decision_proba_consistency`` has been added in
-     **utils.estimator_checks** to check their consistency.
-     :issue:`7578` by :user:`Shubham Bhardwaj <shubham0704>`
-
-   - All checks in ``utils.estimator_checks``, in particular
-     :func:`utils.estimator_checks.check_estimator` now accept estimator
-     instances. Most other checks do not accept
-     estimator classes any more. :issue:`9019` by `Andreas Müller`_.
-
-   - Ensure that estimators' attributes ending with ``_`` are not set
-     in the constructor but only in the ``fit`` method. Most notably,
-     ensemble estimators (deriving from :class:`ensemble.BaseEnsemble`)
-     now only have ``self.estimators_`` available after ``fit``.
-     :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
 
 .. _changes_0_18_2:
 
@@ -3217,168 +3160,168 @@ People
 
 List of contributors for release 0.15 by number of commits.
 
-* 312	Olivier Grisel
-* 275	Lars Buitinck
-* 221	Gael Varoquaux
-* 148	Arnaud Joly
-* 134	Johannes Schönberger
-* 119	Gilles Louppe
-* 113	Joel Nothman
-* 111	Alexandre Gramfort
-*  95	Jaques Grobler
-*  89	Denis Engemann
-*  83	Peter Prettenhofer
-*  83	Alexander Fabisch
-*  62	Mathieu Blondel
-*  60	Eustache Diemert
-*  60	Nelle Varoquaux
-*  49	Michael Bommarito
-*  45	Manoj-Kumar-S
-*  28	Kyle Kastner
-*  26	Andreas Mueller
-*  22	Noel Dawe
-*  21	Maheshakya Wijewardena
-*  21	Brooke Osborn
-*  21	Hamzeh Alsalhi
-*  21	Jake VanderPlas
-*  21	Philippe Gervais
-*  19	Bala Subrahmanyam Varanasi
-*  12	Ronald Phlypo
-*  10	Mikhail Korobov
-*   8	Thomas Unterthiner
-*   8	Jeffrey Blackburne
-*   8	eltermann
-*   8	bwignall
-*   7	Ankit Agrawal
-*   7	CJ Carey
-*   6	Daniel Nouri
-*   6	Chen Liu
-*   6	Michael Eickenberg
-*   6	ugurthemaster
-*   5	Aaron Schumacher
-*   5	Baptiste Lagarde
-*   5	Rajat Khanduja
-*   5	Robert McGibbon
-*   5	Sergio Pascual
-*   4	Alexis Metaireau
-*   4	Ignacio Rossi
-*   4	Virgile Fritsch
-*   4	Sebastian Säger
-*   4	Ilambharathi Kanniah
-*   4	sdenton4
-*   4	Robert Layton
-*   4	Alyssa
-*   4	Amos Waterland
-*   3	Andrew Tulloch
-*   3	murad
-*   3	Steven Maude
-*   3	Karol Pysniak
-*   3	Jacques Kvam
-*   3	cgohlke
-*   3	cjlin
-*   3	Michael Becker
-*   3	hamzeh
-*   3	Eric Jacobsen
-*   3	john collins
-*   3	kaushik94
-*   3	Erwin Marsi
-*   2	csytracy
-*   2	LK
-*   2	Vlad Niculae
-*   2	Laurent Direr
-*   2	Erik Shilts
-*   2	Raul Garreta
-*   2	Yoshiki Vázquez Baeza
-*   2	Yung Siang Liau
-*   2	abhishek thakur
-*   2	James Yu
-*   2	Rohit Sivaprasad
-*   2	Roland Szabo
-*   2	amormachine
-*   2	Alexis Mignon
-*   2	Oscar Carlsson
-*   2	Nantas Nardelli
-*   2	jess010
-*   2	kowalski87
-*   2	Andrew Clegg
-*   2	Federico Vaggi
-*   2	Simon Frid
-*   2	Félix-Antoine Fortin
-*   1	Ralf Gommers
-*   1	t-aft
-*   1	Ronan Amicel
-*   1	Rupesh Kumar Srivastava
-*   1	Ryan Wang
-*   1	Samuel Charron
-*   1	Samuel St-Jean
-*   1	Fabian Pedregosa
-*   1	Skipper Seabold
-*   1	Stefan Walk
-*   1	Stefan van der Walt
-*   1	Stephan Hoyer
-*   1	Allen Riddell
-*   1	Valentin Haenel
-*   1	Vijay Ramesh
-*   1	Will Myers
-*   1	Yaroslav Halchenko
-*   1	Yoni Ben-Meshulam
-*   1	Yury V. Zaytsev
-*   1	adrinjalali
-*   1	ai8rahim
-*   1	alemagnani
-*   1	alex
-*   1	benjamin wilson
-*   1	chalmerlowe
-*   1	dzikie drożdże
-*   1	jamestwebber
-*   1	matrixorz
-*   1	popo
-*   1	samuela
-*   1	François Boulogne
-*   1	Alexander Measure
-*   1	Ethan White
-*   1	Guilherme Trein
-*   1	Hendrik Heuer
-*   1	IvicaJovic
-*   1	Jan Hendrik Metzen
-*   1	Jean Michel Rouly
-*   1	Eduardo Ariño de la Rubia
-*   1	Jelle Zijlstra
-*   1	Eddy L O Jansson
-*   1	Denis
-*   1	John
-*   1	John Schmidt
-*   1	Jorge Cañardo Alastuey
-*   1	Joseph Perla
-*   1	Joshua Vredevoogd
-*   1	José Ricardo
-*   1	Julien Miotte
-*   1	Kemal Eren
-*   1	Kenta Sato
-*   1	David Cournapeau
-*   1	Kyle Kelley
-*   1	Daniele Medri
-*   1	Laurent Luce
-*   1	Laurent Pierron
-*   1	Luis Pedro Coelho
-*   1	DanielWeitzenfeld
-*   1	Craig Thompson
-*   1	Chyi-Kwei Yau
-*   1	Matthew Brett
-*   1	Matthias Feurer
-*   1	Max Linke
-*   1	Chris Filo Gorgolewski
-*   1	Charles Earl
-*   1	Michael Hanke
-*   1	Michele Orrù
-*   1	Bryan Lunt
-*   1	Brian Kearns
-*   1	Paul Butler
-*   1	Paweł Mandera
-*   1	Peter
-*   1	Andrew Ash
-*   1	Pietro Zambelli
-*   1	staubda
+* 312 Olivier Grisel
+* 275 Lars Buitinck
+* 221 Gael Varoquaux
+* 148 Arnaud Joly
+* 134 Johannes Schönberger
+* 119 Gilles Louppe
+* 113 Joel Nothman
+* 111 Alexandre Gramfort
+*  95 Jaques Grobler
+*  89 Denis Engemann
+*  83 Peter Prettenhofer
+*  83 Alexander Fabisch
+*  62 Mathieu Blondel
+*  60 Eustache Diemert
+*  60 Nelle Varoquaux
+*  49 Michael Bommarito
+*  45 Manoj-Kumar-S
+*  28 Kyle Kastner
+*  26 Andreas Mueller
+*  22 Noel Dawe
+*  21 Maheshakya Wijewardena
+*  21 Brooke Osborn
+*  21 Hamzeh Alsalhi
+*  21 Jake VanderPlas
+*  21 Philippe Gervais
+*  19 Bala Subrahmanyam Varanasi
+*  12 Ronald Phlypo
+*  10 Mikhail Korobov
+*   8 Thomas Unterthiner
+*   8 Jeffrey Blackburne
+*   8 eltermann
+*   8 bwignall
+*   7 Ankit Agrawal
+*   7 CJ Carey
+*   6 Daniel Nouri
+*   6 Chen Liu
+*   6 Michael Eickenberg
+*   6 ugurthemaster
+*   5 Aaron Schumacher
+*   5 Baptiste Lagarde
+*   5 Rajat Khanduja
+*   5 Robert McGibbon
+*   5 Sergio Pascual
+*   4 Alexis Metaireau
+*   4 Ignacio Rossi
+*   4 Virgile Fritsch
+*   4 Sebastian Säger
+*   4 Ilambharathi Kanniah
+*   4 sdenton4
+*   4 Robert Layton
+*   4 Alyssa
+*   4 Amos Waterland
+*   3 Andrew Tulloch
+*   3 murad
+*   3 Steven Maude
+*   3 Karol Pysniak
+*   3 Jacques Kvam
+*   3 cgohlke
+*   3 cjlin
+*   3 Michael Becker
+*   3 hamzeh
+*   3 Eric Jacobsen
+*   3 john collins
+*   3 kaushik94
+*   3 Erwin Marsi
+*   2 csytracy
+*   2 LK
+*   2 Vlad Niculae
+*   2 Laurent Direr
+*   2 Erik Shilts
+*   2 Raul Garreta
+*   2 Yoshiki Vázquez Baeza
+*   2 Yung Siang Liau
+*   2 abhishek thakur
+*   2 James Yu
+*   2 Rohit Sivaprasad
+*   2 Roland Szabo
+*   2 amormachine
+*   2 Alexis Mignon
+*   2 Oscar Carlsson
+*   2 Nantas Nardelli
+*   2 jess010
+*   2 kowalski87
+*   2 Andrew Clegg
+*   2 Federico Vaggi
+*   2 Simon Frid
+*   2 Félix-Antoine Fortin
+*   1 Ralf Gommers
+*   1 t-aft
+*   1 Ronan Amicel
+*   1 Rupesh Kumar Srivastava
+*   1 Ryan Wang
+*   1 Samuel Charron
+*   1 Samuel St-Jean
+*   1 Fabian Pedregosa
+*   1 Skipper Seabold
+*   1 Stefan Walk
+*   1 Stefan van der Walt
+*   1 Stephan Hoyer
+*   1 Allen Riddell
+*   1 Valentin Haenel
+*   1 Vijay Ramesh
+*   1 Will Myers
+*   1 Yaroslav Halchenko
+*   1 Yoni Ben-Meshulam
+*   1 Yury V. Zaytsev
+*   1 adrinjalali
+*   1 ai8rahim
+*   1 alemagnani
+*   1 alex
+*   1 benjamin wilson
+*   1 chalmerlowe
+*   1 dzikie drożdże
+*   1 jamestwebber
+*   1 matrixorz
+*   1 popo
+*   1 samuela
+*   1 François Boulogne
+*   1 Alexander Measure
+*   1 Ethan White
+*   1 Guilherme Trein
+*   1 Hendrik Heuer
+*   1 IvicaJovic
+*   1 Jan Hendrik Metzen
+*   1 Jean Michel Rouly
+*   1 Eduardo Ariño de la Rubia
+*   1 Jelle Zijlstra
+*   1 Eddy L O Jansson
+*   1 Denis
+*   1 John
+*   1 John Schmidt
+*   1 Jorge Cañardo Alastuey
+*   1 Joseph Perla
+*   1 Joshua Vredevoogd
+*   1 José Ricardo
+*   1 Julien Miotte
+*   1 Kemal Eren
+*   1 Kenta Sato
+*   1 David Cournapeau
+*   1 Kyle Kelley
+*   1 Daniele Medri
+*   1 Laurent Luce
+*   1 Laurent Pierron
+*   1 Luis Pedro Coelho
+*   1 DanielWeitzenfeld
+*   1 Craig Thompson
+*   1 Chyi-Kwei Yau
+*   1 Matthew Brett
+*   1 Matthias Feurer
+*   1 Max Linke
+*   1 Chris Filo Gorgolewski
+*   1 Charles Earl
+*   1 Michael Hanke
+*   1 Michele Orrù
+*   1 Bryan Lunt
+*   1 Brian Kearns
+*   1 Paul Butler
+*   1 Paweł Mandera
+*   1 Peter
+*   1 Andrew Ash
+*   1 Pietro Zambelli
+*   1 staubda
 
 
 .. _changes_0_14:
