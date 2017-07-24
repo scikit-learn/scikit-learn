@@ -57,7 +57,7 @@ def test_pairwise_distances():
     S = pairwise_distances(X, Y, metric="euclidean")
     S2 = euclidean_distances(X, Y)
     assert_array_almost_equal(S, S2)
-    # Euclidean dist. (masked) should be equivalent to calling the function.
+    # Check to ensure NaNs work with pairwise_distances.
     X_masked = rng.random_sample((5, 4))
     Y_masked = rng.random_sample((2, 4))
     X_masked[0, 0] = np.nan
