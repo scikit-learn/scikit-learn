@@ -8,7 +8,7 @@ Release history
 Version 0.19
 ============
 
-**In Development**
+**Release Candidate (0.19b2) July 17, 2017**
 
 Highlights
 ----------
@@ -22,17 +22,17 @@ algorithms in existing estimators, such as multiplicative update in
 :class:`decomposition.NMF` and multinomial
 :class:`linear_model.LogisticRegression` with L1 loss (use ``solver='saga'``).
 
-You can also learn faster.  For instance, the :ref:`new option to cache
-transformations <pipeline_cache>` in :class:`pipeline.Pipeline` makes grid
-search over pipelines including slow transformations much more efficient.  And
-you can predict faster: if you're sure you know what you're doing, you can turn
-off validating that the input is finite using :func:`config_context`.
-
 Cross validation is now able to return the results from multiple metric
 evaluations. The new :func:`model_selection.cross_validate` can return many
 scores on the test data as well as training set performance and timings, and we
 have extended the ``scoring`` and ``refit`` parameters for grid/randomized
 search :ref:`to handle multiple metrics <multimetric_grid_search>`.
+
+You can also learn faster.  For instance, the :ref:`new option to cache
+transformations <pipeline_cache>` in :class:`pipeline.Pipeline` makes grid
+search over pipelines including slow transformations much more efficient.  And
+you can predict faster: if you're sure you know what you're doing, you can turn
+off validating that the input is finite using :func:`config_context`.
 
 We've made some important fixes too.  We've fixed a longstanding implementation
 error in :func:`metrics.average_precision_score`, so please be cautious with
@@ -51,21 +51,21 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-   * :class:`cluster.KMeans` with sparse X and initial centroids given (bug fix)
-   * :class:`cross_decomposition.PLSRegression`
+   - :class:`cluster.KMeans` with sparse X and initial centroids given (bug fix)
+   - :class:`cross_decomposition.PLSRegression`
      with ``scale=True`` (bug fix)
-   * :class:`ensemble.GradientBoostingClassifier` and
+   - :class:`ensemble.GradientBoostingClassifier` and
      :class:`ensemble.GradientBoostingRegressor` where ``min_impurity_split`` is used (bug fix)
-   * gradient boosting ``loss='quantile'`` (bug fix)
-   * :class:`ensemble.IsolationForest` (bug fix)
-   * :class:`feature_selection.SelectFdr` (bug fix)
-   * :class:`linear_model.RANSACRegressor` (bug fix)
-   * :class:`linear_model.LassoLars` (bug fix)
-   * :class:`linear_model.LassoLarsIC` (bug fix)
-   * :class:`manifold.TSNE` (bug fix)
-   * :class:`semi_supervised.LabelSpreading` (bug fix)
-   * :class:`semi_supervised.LabelPropagation` (bug fix)
-   * tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
+   - gradient boosting ``loss='quantile'`` (bug fix)
+   - :class:`ensemble.IsolationForest` (bug fix)
+   - :class:`feature_selection.SelectFdr` (bug fix)
+   - :class:`linear_model.RANSACRegressor` (bug fix)
+   - :class:`linear_model.LassoLars` (bug fix)
+   - :class:`linear_model.LassoLarsIC` (bug fix)
+   - :class:`manifold.TSNE` (bug fix)
+   - :class:`semi_supervised.LabelSpreading` (bug fix)
+   - :class:`semi_supervised.LabelPropagation` (bug fix)
+   - tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
 
 Details are listed in the changelog below.
 
@@ -174,6 +174,11 @@ Trees and ensembles
 
    - :func:`tree.export_graphviz` now shows configurable number of decimal
      places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
+     
+   - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
+     to change output shape of `transform` method to 2 dimensional.
+     :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
+     :user:`Herilalaina Rakotoarison <herilalaina>`.
 
 Linear, kernelized and related models
 
@@ -317,7 +322,7 @@ Model evaluation and meta-estimators
 
    - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
      now support online learning using ``partial_fit``.
-     :issue: `8053` by :user:`Peng Yu <yupbank>`.
+     :issue:`8053` by :user:`Peng Yu <yupbank>`.
 
    - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
      :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
@@ -4353,7 +4358,7 @@ Highlights
    - :ref:`out_of_bag` of generalization error for :ref:`ensemble`
      by `Andreas Müller`_.
 
-   - :ref:`randomized_l1`: Randomized sparse linear models for feature
+   - Randomized sparse linear models for feature
      selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_
 
    - :ref:`label_propagation` for semi-supervised learning, by Clay
@@ -4814,7 +4819,7 @@ Changelog
      `Mathieu Blondel`_ and `Lars Buitinck`_
 
    - Documentation improvements: thumbnails in
-     :ref:`example gallery <examples-index>` by `Fabian Pedregosa`_.
+     example gallery by `Fabian Pedregosa`_.
 
    - Important bugfixes in :ref:`svm` module (segfaults, bad
      performance) by `Fabian Pedregosa`_.
