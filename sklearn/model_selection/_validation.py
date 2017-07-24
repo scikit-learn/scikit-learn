@@ -554,6 +554,10 @@ class _MemoizedPredictEstimator:
             self._log_probs = self.estimator.predict_log_proba(X)
         return self._log_probs
 
+    @if_delegate_has_method(delegate='estimator')
+    def score(self, *args, **kwargs):
+        return self.estimator.score(*args, **kwargs)
+
 
 def _multimetric_score(estimator, X_test, y_test, scorers):
     """Return a dict of score for multimetric scoring"""
