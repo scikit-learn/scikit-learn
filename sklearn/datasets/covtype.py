@@ -32,6 +32,7 @@ from ..utils import check_random_state
 
 # The original data can be found in:
 # http://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
+
 ARCHIVE = RemoteFileMetadata(
     filename='covtype.data.gz',
     url='https://ndownloader.figshare.com/files/5976039',

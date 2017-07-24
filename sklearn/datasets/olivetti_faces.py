@@ -35,6 +35,8 @@ from .base import _pkl_filepath
 from ..utils import check_random_state, Bunch
 from ..externals import joblib
 
+# The original data can be found at:
+# http://cs.nyu.edu/~roweis/data/olivettifaces.mat
 
 ARCHIVE = RemoteFileMetadata(
     filename='olivettifaces.mat',

@@ -52,16 +52,19 @@ from ..utils import Bunch
 from sklearn.datasets.base import _pkl_filepath
 from sklearn.externals import joblib
 
-if sys.version_info[0] < 3:
-    PY2 = True
-else:
-    PY2 = False
+PY3_OR_LATER = sys.version_info[0] >= 3
+
+# The original SAMPLES data can be found at:
+# http://biodiversityinformatics.amnh.org/open_source/maxent/samples.zip
 
 SAMPLES = RemoteFileMetadata(
     filename='samples.zip',
     url='https://ndownloader.figshare.com/files/5976075',
     checksum=('abb07ad284ac50d9e6d20f1c4211e0fd'
               '3c098f7f85955e89d321ee8efe37ac28'))
+
+# The original COVERAGES data can be found at:
+# http://biodiversityinformatics.amnh.org/open_source/maxent/coverages.zip
 
 COVERAGES = RemoteFileMetadata(
     filename='coverages.zip',
@@ -70,6 +73,7 @@ COVERAGES = RemoteFileMetadata(
               '7926043ba7d39dcb31329cf3f6073807'))
 
 DATA_ARCHIVE_NAME = "species_coverage.pkz"
+
 
 def _load_coverage(F, header_length=6, dtype=np.int16):
     """Load a coverage file from an open file object.
@@ -100,12 +104,13 @@ def _load_csv(F):
     rec : np.ndarray
         record array representing the data
     """
-    if PY2:
-        # Numpy recarray wants Python 2 str but not unicode
-        names = F.readline().strip().split(',')
-    else:
+    if PY3_OR_LATER:
         # Numpy recarray wants Python 3 str but not bytes...
         names = F.readline().decode('ascii').strip().split(',')
+    else:
+        # Numpy recarray wants Python 2 str but not unicode
+        names = F.readline().strip().split(',')
+
     rec = np.loadtxt(F, skiprows=0, delimiter=',', dtype='a22,f4,f4')
     rec.dtype.names = names
     return rec

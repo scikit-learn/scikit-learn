@@ -26,12 +26,17 @@ from ..externals import joblib, six
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
+# The original data can be found at:
+# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz)
 
 ARCHIVE = RemoteFileMetadata(
     filename='kddcup99_data',
     url='https://ndownloader.figshare.com/files/5976045',
     checksum=('3b6c942aa0356c0ca35b7b595a26c89d'
               '343652c9db428893e7494f837b274292'))
+
+# The original data can be found at:
+# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz)
 
 ARCHIVE_10_PERCENT = RemoteFileMetadata(
     filename='kddcup99_10_data',

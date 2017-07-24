@@ -37,17 +37,28 @@ from ..externals.six import b
 
 logger = logging.getLogger(__name__)
 
+# The original data can be found in:
+# http://vis-www.cs.umass.edu/lfw/lfw.tgz
+
 ARCHIVE = RemoteFileMetadata(
     filename='lfw.tgz',
     url='https://ndownloader.figshare.com/files/5976018',
     checksum=('b47c8422c8cded889dc5a13418c4bc2a'
               'bbda121092b3533a83306f90d900100a'))
 
+# The original funneled data can be found in:
+# http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz
+
 FUNNELED_ARCHIVE = RemoteFileMetadata(
     filename='lfw-funneled.tgz',
     url='https://ndownloader.figshare.com/files/5976015',
     checksum=('b47c8422c8cded889dc5a13418c4bc2a'
               'bbda121092b3533a83306f90d900100a'))
+
+# The original target data can be found in:
+# http://vis-www.cs.umass.edu/lfw/pairsDevTrain.txt',
+# http://vis-www.cs.umass.edu/lfw/pairsDevTest.txt',
+# http://vis-www.cs.umass.edu/lfw/pairs.txt',
 
 TARGETS = [
     RemoteFileMetadata(
