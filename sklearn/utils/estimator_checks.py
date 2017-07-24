@@ -1644,8 +1644,6 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
     """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
     # this check works on classes, not instances
     estimator = Estimator()
-    init_params, vparms = _get_args(estimator.__init__, varargs=True)
-    dict_params = {k: v for (k, v) in zip(init_params, vparms)}
     for attr in dir(estimator):
         if attr.endswith("_") and not attr.startswith("__"):
             # This check is for properties, they can be listed in dir
@@ -1658,8 +1656,15 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                 'should not be initialized in the constructor of an '
                 'estimator but in the fit method. Attribute {!r} '
                 'was found in estimator {}'.format(attr, name))
-    for attr in vars(estimator):
-        assert_equal(getattr(estimator, attr), dict_params[attr])
+    init_params = _get_args(estimator.__init__)
+    base_params = []
+    for i in range(len(Estimator.__bases__)):
+        base_params.extend([k for k in
+                            _get_args(Estimator.__bases__[i].__init__)])
+    for attr, val in vars(estimator).items():
+        if attr not in base_params:
+            assert_true(attr in init_params)
+            assert_equal(getattr(estimator, attr), val)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

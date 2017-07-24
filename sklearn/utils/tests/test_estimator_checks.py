@@ -44,8 +44,8 @@ class BaseBadClassifier(BaseEstimator, ClassifierMixin):
 
 
 class ChangesDict(BaseEstimator):
-    def __init__(self):
-        self.key = 0
+    def __init__(self, key=0):
+        self.key = key
 
     def fit(self, X, y=None):
         X, y = check_X_y(X, y)
@@ -58,8 +58,8 @@ class ChangesDict(BaseEstimator):
 
 
 class SetsWrongAttribute(BaseEstimator):
-    def __init__(self):
-        self.acceptable_key = 0
+    def __init__(self, acceptable_key=0):
+        self.acceptable_key = acceptable_key
 
     def fit(self, X, y=None):
         self.wrong_attribute = 0
@@ -68,11 +68,18 @@ class SetsWrongAttribute(BaseEstimator):
 
 
 class ChangesWrongAttribute(BaseEstimator):
-    def __init__(self):
-        self.wrong_attribute = 0
+    def __init__(self, wrong_attribute = 0):
+        self.wrong_attribute = wrong_attribute
 
     def fit(self, X, y=None):
         self.wrong_attribute = 1
+        X, y = check_X_y(X, y)
+        return self
+
+
+class ChangesUnderscoreAttribute(BaseEstimator):
+    def fit(self, X, y=None):
+        self._good_attribute = 1
         X, y = check_X_y(X, y)
         return self
 
@@ -165,11 +172,11 @@ def test_check_estimator():
     assert_raises_regex(AssertionError, msg, check_estimator, ChangesDict)
     # check that `fit` only changes attribures that
     # are private (start with an _ or end with a _).
-    msg = ('Estimator changes public attribute\(s\) during the fit method.'
-           ' Estimators are only allowed to change attributes started'
-           ' or ended with _, but wrong_attribute changed')
+    msg = ('Estimator ChangesWrongAttribute should not change or mutate  '
+           'the parameter wrong_attribute from 0 to 1 during fit.')
     assert_raises_regex(AssertionError, msg,
                         check_estimator, ChangesWrongAttribute)
+    check_estimator(ChangesUnderscoreAttribute)
     # check that `fit` doesn't add any public attribute
     msg = ('Estimator adds public attribute\(s\) during the fit method.'
            ' Estimators are only allowed to add private attributes'
