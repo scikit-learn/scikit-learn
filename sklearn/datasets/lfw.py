@@ -116,12 +116,12 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         archive = ARCHIVE
 
     if not exists(data_folder_path):
-        archive_path = join(data_folder_path, ARCHIVE.filename)
+        archive_path = join(lfw_home, archive.filename)
         if not exists(archive_path):
             if download_if_missing:
                 logger.warning("Downloading LFW data (~200MB): %s",
-                               ARCHIVE.url)
-                _fetch_remote(archive, dirname=data_folder_path)
+                               archive.url)
+                _fetch_remote(archive, dirname=lfw_home)
             else:
                 raise IOError("%s is missing" % archive_path)
 
