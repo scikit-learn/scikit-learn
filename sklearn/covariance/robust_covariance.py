@@ -650,7 +650,7 @@ class MinCovDet(EmpiricalCovariance):
         """Apply a correction to raw Minimum Covariance Determinant estimates.
 
         Correction using the empirical correction factor suggested
-        by Rousseeuw and Van Driessen in [Rouseeuw1999]_.
+        by Rousseeuw and Van Driessen in [Rouseeuw1999_1]_.
 
         Parameters
         ----------
@@ -662,7 +662,7 @@ class MinCovDet(EmpiricalCovariance):
         References
         ----------
 
-        .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance
+        .. [Rouseeuw1999_1] `A Fast Algorithm for the Minimum Covariance
             Determinant Estimator, 1999, American Statistical Association
             and the American Society for Quality, TECHNOMETRICS`
 
@@ -683,7 +683,7 @@ class MinCovDet(EmpiricalCovariance):
         Re-weight observations using Rousseeuw's method (equivalent to
         deleting outlying observations from the data set before
         computing location and covariance estimates) described
-        in [Rouseeuw1999]_.
+        in [Rouseeuw1999_2]_.
 
         Parameters
         ----------
@@ -695,7 +695,7 @@ class MinCovDet(EmpiricalCovariance):
         References
         ----------
 
-        .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance
+        .. [Rouseeuw1999_2] `A Fast Algorithm for the Minimum Covariance
             Determinant Estimator, 1999, American Statistical Association
             and the American Society for Quality, TECHNOMETRICS`
 
