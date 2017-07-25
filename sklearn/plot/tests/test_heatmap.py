@@ -6,6 +6,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 import numpy as np
 from numpy.random import (RandomState,
                           randint)
@@ -53,6 +54,17 @@ def test_confusion_matrix():
         plot_confusion_matrix(array1, array2, normalize=True,
                               classes=["dummay1", "dummy2"],
                               cmap="Paired", ax=plt.gca())
+
+        # plot without passing classes explicitly
+        plot_confusion_matrix(array1, array2,
+                              cmap="Paired", ax=plt.gca())
+
+        # y having different value than classes should raise error
+        expected_msg = ("`classes=[1,2]` are not a superset of the unique",
+                        "values of y_true and y_pred which are [1,2,3]")
+        assert_raise_message(ValueError, expected_msg,
+                             plot_confusion_matrix, array1, array2,
+                             classes=[1, 2], ax=plt.gca())
 
         plt.draw()
         plt.close()

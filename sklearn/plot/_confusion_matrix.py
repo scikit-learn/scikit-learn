@@ -1,9 +1,10 @@
 import numpy as np
 from sklearn.metrics import confusion_matrix
 from sklearn.plot import plot_heatmap
+from sklearn.utils.multiclass import unique_labels
 
 
-def plot_confusion_matrix(y_true, y_pred, classes, sample_weight=None,
+def plot_confusion_matrix(y_true, y_pred, classes=None, sample_weight=None,
                           normalize=False,
                           xlabel="Predicted Label", ylabel="True Label",
                           title='Confusion matrix', cmap=None, vmin=None,
@@ -21,8 +22,10 @@ def plot_confusion_matrix(y_true, y_pred, classes, sample_weight=None,
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    classes : list of strings
+    classes : list of strings, optional (default=None)
         The list of classes represented in the two-dimensional input array.
+        If not passed in function call, the classes will be infered from
+        y_true and y_pred
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights used to calculate the confusion matrix
@@ -67,6 +70,16 @@ def plot_confusion_matrix(y_true, y_pred, classes, sample_weight=None,
     """
 
     import matplotlib.pyplot as plt
+
+    unique_y = unique_labels(y_true, y_pred)
+
+    if classes is None:
+        classes = unique_y
+    else:
+        if not set(classes).issuperset(set(unique_y)):
+            raise ValueError("`classes=%s` are not a superset of the unique",
+                             "values of y_true and y_pred which are %s" %
+                             (classes, unique_y))
 
     values = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
 
