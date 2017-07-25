@@ -548,7 +548,7 @@ def test_pca_score4():
     assert_almost_equal(score1, score2, 12)
     assert_almost_equal(score1, score3, 2)
 
-	
+
 def test_svd_solver_auto():
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(1000, 50))
