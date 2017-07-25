@@ -17,42 +17,42 @@ The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
 by decomposing such problems into binary classification problems. Multitarget
 regression is also supported.
 
-  - **Multiclass classification** means a classification task with more than
-    two classes; e.g., classify a set of images of fruits which may be oranges,
-    apples, or pears. Multiclass classification makes the assumption that each
-    sample is assigned to one and only one label: a fruit can be either an
-    apple or a pear but not both at the same time.
+- **Multiclass classification** means a classification task with more than
+  two classes; e.g., classify a set of images of fruits which may be oranges,
+  apples, or pears. Multiclass classification makes the assumption that each
+  sample is assigned to one and only one label: a fruit can be either an
+  apple or a pear but not both at the same time.
 
-  - **Multilabel classification** assigns to each sample a set of target
-    labels. This can be thought as predicting properties of a data-point
-    that are not mutually exclusive, such as topics that are relevant for a
-    document. A text might be about any of religion, politics, finance or
-    education at the same time or none of these.
+- **Multilabel classification** assigns to each sample a set of target
+  labels. This can be thought as predicting properties of a data-point
+  that are not mutually exclusive, such as topics that are relevant for a
+  document. A text might be about any of religion, politics, finance or
+  education at the same time or none of these.
 
-  - **Multioutput regression** assigns each sample a set of target
-    values.  This can be thought of as predicting several properties
-    for each data-point, such as wind direction and magnitude at a
-    certain location.
+- **Multioutput regression** assigns each sample a set of target
+  values.  This can be thought of as predicting several properties
+  for each data-point, such as wind direction and magnitude at a
+  certain location.
 
-  - **Multioutput-multiclass classification** and **multi-task classification**
-    means that a single estimator has to handle several joint classification
-    tasks. This is both a generalization of the multi-label classification
-    task, which only considers binary classification, as well as a
-    generalization of the multi-class classification task.  *The output format
-    is a 2d numpy array or sparse matrix.*
+- **Multioutput-multiclass classification** and **multi-task classification**
+  means that a single estimator has to handle several joint classification
+  tasks. This is both a generalization of the multi-label classification
+  task, which only considers binary classification, as well as a
+  generalization of the multi-class classification task.  *The output format
+  is a 2d numpy array or sparse matrix.*
 
-    The set of labels can be different for each output variable.
-    For instance, a sample could be assigned "pear" for an output variable that
-    takes possible values in a finite set of species such as "pear", "apple"; 
-    and "blue" or "green" for a second output variable that takes possible values
-    in a finite set of colors such as "green", "red", "blue", "yellow"...
+  The set of labels can be different for each output variable.
+  For instance, a sample could be assigned "pear" for an output variable that
+  takes possible values in a finite set of species such as "pear", "apple"; 
+  and "blue" or "green" for a second output variable that takes possible values
+  in a finite set of colors such as "green", "red", "blue", "yellow"...
 
-    This means that any classifiers handling multi-output
-    multiclass or multi-task classification tasks,
-    support the multi-label classification task as a special case.
-    Multi-task classification is similar to the multi-output
-    classification task with different model formulations. For
-    more information, see the relevant estimator documentation.
+  This means that any classifiers handling multi-output
+  multiclass or multi-task classification tasks,
+  support the multi-label classification task as a special case.
+  Multi-task classification is similar to the multi-output
+  classification task with different model formulations. For
+  more information, see the relevant estimator documentation.
 
 All scikit-learn classifiers are capable of multiclass classification,
 but the meta-estimators offered by :mod:`sklearn.multiclass`
@@ -64,20 +64,69 @@ Below is a summary of the classifiers supported by scikit-learn
 grouped by strategy; you don't need the meta-estimators in this class
 if you're using one of these, unless you want custom multiclass behavior:
 
-  - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
-    :ref:`LDA and QDA <lda_qda>`,
-    :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-    :ref:`Nearest Neighbors <neighbors>`,
-    setting ``multi_class='multinomial'`` in
-    :class:`sklearn.linear_model.LogisticRegression`.
-  - Support multilabel: :ref:`Decision Trees <tree>`,
-    :ref:`Random Forests <forest>`, :ref:`Nearest Neighbors <neighbors>`.
-  - One-Vs-One: :class:`sklearn.svm.SVC`.
-  - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
+- **Inherently multiclass:**
 
-Some estimators also support multioutput-multiclass classification
-tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-:ref:`Nearest Neighbors <neighbors>`.
+  - :class:`sklearn.naive_bayes.BernoulliNB`
+  - :class:`sklearn.tree.DecisionTreeClassifier`
+  - :class:`sklearn.tree.ExtraTreeClassifier`
+  - :class:`sklearn.ensemble.ExtraTreesClassifier`
+  - :class:`sklearn.naive_bayes.GaussianNB`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.semi_supervised.LabelPropagation`
+  - :class:`sklearn.semi_supervised.LabelSpreading`
+  - :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+  - :class:`sklearn.svm.LinearSVC` (setting multi_class="crammer_singer")
+  - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="multinomial")
+  - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
+  - :class:`sklearn.neural_network.MLPClassifier`
+  - :class:`sklearn.neighbors.NearestCentroid`
+  - :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.ensemble.RandomForestClassifier`
+  - :class:`sklearn.linear_model.RidgeClassifier`
+  - :class:`sklearn.linear_model.RidgeClassifierCV`
+
+
+- **Multiclass as One-Vs-One:**
+
+  - :class:`sklearn.svm.NuSVC`
+  - :class:`sklearn.svm.SVC`.
+  - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_one")
+
+
+- **Multiclass as One-Vs-All:**
+
+  - :class:`sklearn.ensemble.GradientBoostingClassifier`
+  - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
+  - :class:`sklearn.svm.LinearSVC` (setting multi_class="ovr")
+  - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="ovr")
+  - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="ovr")
+  - :class:`sklearn.linear_model.SGDClassifier`
+  - :class:`sklearn.linear_model.Perceptron`
+  - :class:`sklearn.linear_model.PassiveAggressiveClassifier`
+
+
+- **Support multilabel:**
+
+  - :class:`sklearn.tree.DecisionTreeClassifier`
+  - :class:`sklearn.tree.ExtraTreeClassifier`
+  - :class:`sklearn.ensemble.ExtraTreesClassifier`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neural_network.MLPClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.ensemble.RandomForestClassifier`
+  - :class:`sklearn.linear_model.RidgeClassifierCV`
+
+
+- **Support multiclass-multioutput:**
+
+  - :class:`sklearn.tree.DecisionTreeClassifier`
+  - :class:`sklearn.tree.ExtraTreeClassifier`
+  - :class:`sklearn.ensemble.ExtraTreesClassifier`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.ensemble.RandomForestClassifier`
+
 
 .. warning::
 
