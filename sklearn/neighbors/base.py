@@ -381,8 +381,7 @@ class KNeighborsMixin(object):
                 sample_range, np.argsort(dist[sample_range, neigh_ind])]
 
             if return_distance:
-                if self.effective_metric_ == 'euclidean' or self.\
-                        effective_metric_ == 'masked_euclidean':
+                if self.effective_metric_ in ['euclidean', 'masked_euclidean']:
                     result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
                 else:
                     result = dist[sample_range, neigh_ind], neigh_ind
