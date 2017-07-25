@@ -197,32 +197,44 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     """
     Considering the rows of X (and Y=X) as vectors, compute the
     distance matrix between each pair of vectors.
+
     For efficiency reasons, the euclidean distance between a pair of row
     vector x and y is computed as::
+
         dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
+
     This formulation has two advantages over other ways of computing distances.
     First, it is computationally efficient when dealing with sparse data.
     Second, if one argument varies but the other remains unchanged, then
     `dot(x, x)` and/or `dot(y, y)` can be pre-computed.
+
     However, this is not the most precise way of doing this computation, and
     the distance matrix returned by this function may not be exactly
     symmetric as required by, e.g., ``scipy.spatial.distance`` functions.
+
     Read more in the :ref:`User Guide <metrics>`.
+
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples_1, n_features)
+
     Y : {array-like, sparse matrix}, shape (n_samples_2, n_features)
+
     Y_norm_squared : array-like, shape (n_samples_2, ), optional
         Pre-computed dot-products of vectors in Y (e.g.,
         ``(Y**2).sum(axis=1)``)
+
     squared : boolean, optional
         Return squared Euclidean distances.
+
     X_norm_squared : array-like, shape = [n_samples_1], optional
         Pre-computed dot-products of vectors in X (e.g.,
         ``(X**2).sum(axis=1)``)
+
     Returns
     -------
     distances : {array, sparse matrix}, shape (n_samples_1, n_samples_2)
+
     Examples
     --------
     >>> from sklearn.metrics.pairwise import euclidean_distances
@@ -277,7 +289,6 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     return distances if squared else np.sqrt(distances, out=distances)
 
 
-# Pairwise distances in the presence of missing values
 def masked_euclidean_distances(X, Y=None, squared=False,
                                missing_values="NaN", copy=True):
     """Calculates euclidean distances in the presence of missing values
@@ -302,27 +313,18 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     Formula in matrix form derived by:
     Shreya Bhattarai <shreya.bhattarai@gmail.com>
 
-    This formulation zero-weights feature coordinates with missing value in
-    either vector in the pair and up-weights the remaining coordinates.
-    For instance, say we have two sample points (x1, y1) and (x2, NaN):
+    When calculating the distance between a pair of samples, this formulation
+    essentially zero-weights feature coordinates with a missing value in either
+    sample and scales up the weight of the remaining coordinates:
 
-    To calculate the euclidean distance between these, first the square
-    "distance" is calculated based only on the first feature coordinate
-    as the second coordinate is missing in one of the samples,
-    i.e., we have (x2-x1)**2. This squared distance is scaled-up by the ratio
-    of total number of coordinates to the number of available coordinates,
-    which in this case is 2/1 = 2. Now, we are left with 2*((x2-x1)**2).
-    Finally, if squared=False then the square root of this is evaluated
-    and returned otherwise the value is returned as is.
-
-    Breakdown of euclidean distance calculation between a vector pair x,y:
-
-        weight = Total # of coordinates / # of non-missing coordinates
         dist(x,y) = sqrt(weight * sq. distance from non-missing coordinates)
+        where,
+        weight = Total # of coordinates / # of non-missing coordinates
 
-    This formulation implies that if all coordinates are missing in either
-    vector in the pair or if there are no common non-missing coordinates then
-    NaN is returned for that pair.
+    For instance, the distance between sample points (x1, y1) and (x2, NaN)
+    would result in sqrt(2*((x2-x1)**2). Note that if all the coordinates are
+    missing or if there are no common non-missing coordinates then NaN is
+    returned for that pair.
 
     Read more in the :ref:`User Guide <metrics>`.
 

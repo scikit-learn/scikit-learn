@@ -427,13 +427,10 @@ def test_masked_euclidean_distances():
                   [np.nan, np.nan, 5., 4., 7.],
                   [np.nan, np.nan, np.nan, 4., 5.]])
 
-    D1 = np.array([[6.32455532, 6.95221787, 4.74341649],
-                   [5., 5., 6.70820393],
-                   [2.23606798, 13.41640786, 8.94427191]])
+    D1 = masked_euclidean_distances(X, Y,  missing_values="NaN")
+    D2 = masked_euclidean_distances(X, Y, squared=True, missing_values="NaN")
 
-    D2 = masked_euclidean_distances(X, Y,  missing_values="NaN")
-
-    assert_array_almost_equal(D1, D2)
+    assert_array_almost_equal(D1**2, D2)
 
     # check when squared = True
     D3 = np.array(
@@ -444,7 +441,7 @@ def test_masked_euclidean_distances():
 
     assert_array_almost_equal(D3, D4)
 
-    # Check with explicit formula and square=True
+    # Check with explicit formula and squared=True
     assert_array_almost_equal(
         masked_euclidean_distances(X[:1], Y[:1], squared=True),
         [[5.0/2.0 * ((7-3)**2 + (2-2)**2)]])

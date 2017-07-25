@@ -159,10 +159,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._fit_method = None
 
     def _fit(self, X):
-        if self.metric in _MASKED_SUPPORTED_METRICS:
-            kill_missing = False
-        else:
-            kill_missing = True
+        allow_nans = True if self.\
+                                 metric in _MASKED_SUPPORTED_METRICS else False
 
         if self.metric_params is None:
             self.effective_metric_params_ = {}
@@ -208,29 +206,28 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             return self
 
         X = check_array(X, accept_sparse='csr',
-                        force_all_finite=kill_missing)
+                        force_all_finite=not allow_nans)
 
         n_samples = X.shape[0]
         if n_samples == 0:
             raise ValueError("n_samples must be greater than 0")
 
         if issparse(X):
-            if not kill_missing:
+            if allow_nans:
                 raise ValueError(
                     "Nearest neighbor algorithm does not currently support"
-                    "the use of sparse matrices."
+                    "the use of sparse matrices for missing values."
                 )
-            else:
-                if self.algorithm not in ('auto', 'brute'):
-                    warnings.warn("cannot use tree with sparse input: "
-                                  "using brute force")
-                if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
-                    raise ValueError("metric '%s' not valid for sparse input"
-                                     % self.effective_metric_)
-                self._fit_X = X.copy()
-                self._tree = None
-                self._fit_method = 'brute'
-                return self
+            if self.algorithm not in ('auto', 'brute'):
+                warnings.warn("cannot use tree with sparse input: "
+                              "using brute force")
+            if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
+                raise ValueError("metric '%s' not valid for sparse input"
+                                 % self.effective_metric_)
+            self._fit_X = X.copy()
+            self._tree = None
+            self._fit_method = 'brute'
+            return self
 
         self._fit_method = self.algorithm
         self._fit_X = X
@@ -369,12 +366,10 @@ class KNeighborsMixin(object):
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
-            if self.effective_metric_ == 'euclidean':
-                dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          n_jobs=n_jobs, squared=True)
-            elif self.effective_metric_ == 'masked_euclidean':
+            if self.effective_metric_ == 'euclidean' or self.\
+                    effective_metric_ == 'masked_euclidean':
                 dist = pairwise_distances(X, self._fit_X,
-                                          'masked_euclidean',
+                                          self.effective_metric_,
                                           n_jobs=n_jobs, squared=True)
             else:
                 dist = pairwise_distances(
@@ -813,7 +808,6 @@ class SupervisedIntegerMixin(object):
 
 
 class UnsupervisedMixin(object):
-    # def fit(self, X, y=None, kill_missing=True):
     def fit(self, X, y=None):
         """Fit the model using X as training data
 
@@ -823,5 +817,4 @@ class UnsupervisedMixin(object):
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
         """
-        # return self._fit(X, kill_missing)
         return self._fit(X)
