@@ -68,7 +68,7 @@ class SetsWrongAttribute(BaseEstimator):
 
 
 class ChangesWrongAttribute(BaseEstimator):
-    def __init__(self, wrong_attribute = 0):
+    def __init__(self, wrong_attribute=0):
         self.wrong_attribute = wrong_attribute
 
     def fit(self, X, y=None):

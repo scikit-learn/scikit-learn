@@ -775,6 +775,15 @@ def _get_args(function, varargs=False):
         return args
 
 
+def _get_parent_args(Estimator):
+    """Helper to get list of parents properties"""
+    list_args = []
+    for parent in Estimator.__bases__:
+        list_args.extend(_get_args(parent.__init__))
+        list_args.extend(_get_parent_args(parent))
+    return list_args
+
+
 def _get_func_name(func, class_name=None):
     """Get function full name
 

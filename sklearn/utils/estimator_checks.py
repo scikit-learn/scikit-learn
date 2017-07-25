@@ -13,7 +13,7 @@ import struct
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
-from sklearn.utils.testing import assert_raises, _get_args
+from sklearn.utils.testing import assert_raises, _get_args, _get_parent_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
@@ -1657,10 +1657,7 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                 'estimator but in the fit method. Attribute {!r} '
                 'was found in estimator {}'.format(attr, name))
     init_params = _get_args(estimator.__init__)
-    base_params = []
-    for i in range(len(Estimator.__bases__)):
-        base_params.extend([k for k in
-                            _get_args(Estimator.__bases__[i].__init__)])
+    base_params = _get_parent_args(Estimator)
     for attr, val in vars(estimator).items():
         if attr not in base_params:
             assert_true(attr in init_params)
