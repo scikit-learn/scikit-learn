@@ -223,6 +223,7 @@ Model validation
    :toctree: generated/
    :template: function.rst
 
+   model_selection.cross_validate
    model_selection.cross_val_score
    model_selection.cross_val_predict
    model_selection.permutation_test_score
@@ -723,8 +724,6 @@ Kernels:
    linear_model.PassiveAggressiveClassifier
    linear_model.PassiveAggressiveRegressor
    linear_model.Perceptron
-   linear_model.RandomizedLasso
-   linear_model.RandomizedLogisticRegression
    linear_model.RANSACRegressor
    linear_model.Ridge
    linear_model.RidgeClassifier
@@ -738,6 +737,7 @@ Kernels:
    :toctree: generated/
    :template: function.rst
 
+   linear_model.enet_path
    linear_model.lars_path
    linear_model.lasso_path
    linear_model.lasso_stability_path
@@ -1013,6 +1013,7 @@ See the :ref:`metrics` section of the user guide for further details.
 
     multioutput.MultiOutputRegressor
     multioutput.MultiOutputClassifier
+    multioutput.ClassifierChain
 
 .. _naive_bayes_ref:
 
@@ -1387,6 +1388,18 @@ Low-level methods
 
 Recently deprecated
 ===================
+
+
+To be removed in 0.21
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
+
+   linear_model.RandomizedLasso
+   linear_model.RandomizedLogisticRegression
+   neighbors.LSHForest
 
 
 To be removed in 0.20

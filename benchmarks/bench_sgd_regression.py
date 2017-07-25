@@ -1,12 +1,3 @@
-"""
-Benchmark for SGD regression
-
-Compares SGD regression against coordinate descent and Ridge
-on synthetic data.
-"""
-
-print(__doc__)
-
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD 3 clause
 
@@ -21,10 +12,20 @@ from sklearn.linear_model import Ridge, SGDRegressor, ElasticNet
 from sklearn.metrics import mean_squared_error
 from sklearn.datasets.samples_generator import make_regression
 
+"""
+Benchmark for SGD regression
+
+Compares SGD regression against coordinate descent and Ridge
+on synthetic data.
+"""
+
+print(__doc__)
+
 if __name__ == "__main__":
     list_n_samples = np.linspace(100, 10000, 5).astype(np.int)
     list_n_features = [10, 100, 1000]
     n_test = 1000
+    max_iter = 1000
     noise = 0.1
     alpha = 0.01
     sgd_results = np.zeros((len(list_n_samples), len(list_n_features), 2))
@@ -70,30 +71,28 @@ if __name__ == "__main__":
             tstart = time()
             clf.fit(X_train, y_train)
             elnet_results[i, j, 0] = mean_squared_error(clf.predict(X_test),
-                                                       y_test)
+                                                        y_test)
             elnet_results[i, j, 1] = time() - tstart
 
             gc.collect()
             print("- benchmarking SGD")
-            n_iter = np.ceil(10 ** 4.0 / n_train)
             clf = SGDRegressor(alpha=alpha / n_train, fit_intercept=False,
-                               n_iter=n_iter, learning_rate="invscaling",
-                               eta0=.01, power_t=0.25)
+                               max_iter=max_iter, learning_rate="invscaling",
+                               eta0=.01, power_t=0.25, tol=1e-3)
 
             tstart = time()
             clf.fit(X_train, y_train)
             sgd_results[i, j, 0] = mean_squared_error(clf.predict(X_test),
-                                                     y_test)
+                                                      y_test)
             sgd_results[i, j, 1] = time() - tstart
 
             gc.collect()
-            print("n_iter", n_iter)
+            print("max_iter", max_iter)
             print("- benchmarking A-SGD")
-            n_iter = np.ceil(10 ** 4.0 / n_train)
             clf = SGDRegressor(alpha=alpha / n_train, fit_intercept=False,
-                               n_iter=n_iter, learning_rate="invscaling",
-                               eta0=.002, power_t=0.05,
-                               average=(n_iter * n_train // 2))
+                               max_iter=max_iter, learning_rate="invscaling",
+                               eta0=.002, power_t=0.05, tol=1e-3,
+                               average=(max_iter * n_train // 2))
 
             tstart = time()
             clf.fit(X_train, y_train)
@@ -107,7 +106,7 @@ if __name__ == "__main__":
             tstart = time()
             clf.fit(X_train, y_train)
             ridge_results[i, j, 0] = mean_squared_error(clf.predict(X_test),
-                                                       y_test)
+                                                        y_test)
             ridge_results[i, j, 1] = time() - tstart
 
     # Plot results
