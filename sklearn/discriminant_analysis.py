@@ -556,7 +556,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Regularizes the covariance estimate as
         ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
 
-    store_covariances : boolean
+    store_covariance : boolean
         If True the covariance matrices are computed and stored in the
         `self.covariances_` attribute.
 
@@ -629,11 +629,11 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         """Fit the model according to the given training data and parameters.
 
             .. versionchanged:: 0.19
-               *store_covariances* has been moved to main constructor as
-                *store_covariance*
+               ``store_covariances`` has been moved to main constructor as
+               ``store_covariance``
 
             .. versionchanged:: 0.19
-               *tol* has been moved to main constructor.
+               ``tol`` has been moved to main constructor.
 
         Parameters
         ----------
@@ -657,13 +657,12 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
             self.priors_ = self.priors
 
         cov = None
-        store_covariance = None
-        if self.store_covariances is not None:
+        store_covariance = self.store_covariance or self.store_covariances
+        if self.store_covariances:
             warnings.warn("'store_covariances' was renamed to store_covariance"
                           " in version 0.19 and will be removed in 0.21.",
                           DeprecationWarning)
-            store_covariance = self.store_covariances
-        if self.store_covariance or store_covariance:
+        if store_covariance:
             cov = []
         means = []
         scalings = []

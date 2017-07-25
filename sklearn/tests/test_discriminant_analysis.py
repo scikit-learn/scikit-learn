@@ -334,7 +334,6 @@ def test_qda_deprecation():
                          "removed in 0.21.", clf.fit, X, y)
 
     # check that covariance_ (and covariances_ with warning) is stored
-    clf = QuadraticDiscriminantAnalysis(store_covariances=True).fit(X6, y6)
     assert_warns_message(DeprecationWarning, "Attribute covariances_ was "
                          "deprecated in version 0.19 and will be removed "
                          "in 0.21. Use covariance_ instead", getattr, clf,
