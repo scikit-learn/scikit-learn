@@ -106,12 +106,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
     _fit_method = None
 
     @abstractmethod
-    def __init__(self):
-        pass
-
-    def _init_params(self, n_neighbors=None, radius=None,
-                     algorithm='auto', leaf_size=30, metric='minkowski',
-                     p=2, metric_params=None, n_jobs=1):
+    def __init__(self, n_neighbors=None, radius=None,
+                 algorithm='auto', leaf_size=30, metric='minkowski',
+                 p=2, metric_params=None, n_jobs=1):
 
         self.n_neighbors = n_neighbors
         self.radius = radius
@@ -125,13 +122,14 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _check_algorithm_metric(self):
         if self.algorithm not in ['auto', 'brute',
-                             'kd_tree', 'ball_tree']:
+                                  'kd_tree', 'ball_tree']:
             raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
 
         if self.algorithm == 'auto':
             if self.metric == 'precomputed':
                 alg_check = 'brute'
-            elif callable(self.metric) or self.metric in VALID_METRICS['ball_tree']:
+            elif (callable(self.metric) or
+                  self.metric in VALID_METRICS['ball_tree']):
                 alg_check = 'ball_tree'
             else:
                 alg_check = 'brute'

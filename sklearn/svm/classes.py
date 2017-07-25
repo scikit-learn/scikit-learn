@@ -580,7 +580,7 @@ class SVC(BaseSVC):
                  random_state=None):
 
         super(SVC, self).__init__(
-            impl='c_svc', kernel=kernel, degree=degree, gamma=gamma,
+            _impl='c_svc', kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
@@ -733,7 +733,7 @@ class NuSVC(BaseSVC):
                  decision_function_shape='ovr', random_state=None):
 
         super(NuSVC, self).__init__(
-            impl='nu_svc', kernel=kernel, degree=degree, gamma=gamma,
+            _impl='nu_svc', kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=0., nu=nu, shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,

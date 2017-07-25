@@ -1656,13 +1656,21 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                 'should not be initialized in the constructor of an '
                 'estimator but in the fit method. Attribute {!r} '
                 'was found in estimator {}'.format(attr, name))
-    init_params = _get_args(estimator.__init__)
-    base_params = (_get_parent_args(Estimator) +
-                   [a for a in dir(Estimator) if not a.startswith("__")])
-    for attr, val in vars(estimator).items():
-        if attr not in base_params:
-            assert_true(attr in init_params)
-            assert_equal(getattr(estimator, attr), val)
+
+    if(Estimator.__name__ not in ["GaussianProcess", "RandomizedLasso",
+                                  "RandomizedLogisticRegression",
+                                  "RandomizedPCA"] and
+       sys.version_info < (3, 5)):
+        # This check is only for non-decorated (eg: deprecated) estimator
+        # _get_args and _get_parent_args only work for python 3.5
+        init_params = _get_args(estimator.__init__)
+        base_params = (_get_parent_args(Estimator) +
+                       [a for a in dir(Estimator)
+                        if not a.startswith("__")])
+        for attr, val in vars(estimator).items():
+            if attr not in base_params:
+                assert_true(attr in init_params)
+                assert_equal(getattr(estimator, attr), val)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
