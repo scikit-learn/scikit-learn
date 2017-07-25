@@ -51,8 +51,6 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-   * :class:`sklearn.ensemble.IsolationForest` (bug fix)
-   * :class:`sklearn.neighbors.NearestCentroid` (bug fix)
 - :class:`cluster.KMeans` with sparse X and initial centroids given (bug fix)
 - :class:`cross_decomposition.PLSRegression`
   with ``scale=True`` (bug fix)
@@ -65,6 +63,7 @@ random sampling procedures.
 - :class:`linear_model.LassoLars` (bug fix)
 - :class:`linear_model.LassoLarsIC` (bug fix)
 - :class:`manifold.TSNE` (bug fix)
+- :class:`sklearn.neighbors.NearestCentroid` (bug fix)
 - :class:`semi_supervised.LabelSpreading` (bug fix)
 - :class:`semi_supervised.LabelPropagation` (bug fix)
 - tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
@@ -538,6 +537,9 @@ Decomposition, manifold learning and clustering
 - Fix bug where :mod:`mixture` ``sample`` methods did not return as many
   samples as requested. :issue:`7702` by :user:`Levi John Wolf <ljwolf>`.
 
+- Fixed the shrinkage implementation in :class:`neighbors.NearestCentroid`.
+  :issue:`9219` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
+
 Preprocessing and feature selection
 
 - For sparse matrices, :func:`preprocessing.normalize` with ``return_norm=True``
@@ -656,12 +658,6 @@ Miscellaneous
 - Add ``data_home`` parameter to :func:`sklearn.datasets.fetch_kddcup99`.
   :issue:`9289` by `Loic Esteve`_.
 
-   - Fixed an integer overflow bug in :func:`metrics.confusion_matrix` and
-     hence :func:`metrics.cohen_kappa_score`. :issue:`8354`, :issue:`7929`
-     by `Joel Nothman`_ and :user:`Jon Crall <Erotemic>`.
-	 
-   - Fixed the shrinkage implementation in :class:`neighbors.NearestCentroid`.
-     :issue:`9219` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 - Fix dataset loaders using Python 3 version of makedirs to also work in
   Python 2. :issue:`9284` by :user:`Sebastin Santy <SebastinSanty>`.
 
