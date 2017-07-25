@@ -57,7 +57,7 @@ with different biases per method:
    ensemble away from 0. We observe this effect most strongly with random
    forests because the base-level trees trained with random forests have
    relatively high variance due to feature subseting." As a result, the
-   calibration curve also referred to as the reliability diagram (Wilks 1995[5]_) shows a
+   calibration curve also referred to as the reliability diagram (Wilks 1995 [5]_) shows a
    characteristic sigmoid shape, indicating that the classifier could trust its
    "intuition" more and return probabilties closer to 0 or 1 typically.
 
@@ -199,9 +199,9 @@ a similar decrease in log-loss.
     * Probabilistic Outputs for Support Vector Machines and Comparisons to
       Regularized Likelihood Methods, J. Platt, (1999)
 
-    * Predicting Good Probabilities with Supervised Learning,
-      A. Niculescu-Mizil & R. Caruana, ICML 2005
+    .. [4] Predicting Good Probabilities with Supervised Learning,
+           A. Niculescu-Mizil & R. Caruana, ICML 2005
 
-    * On the combination of forecast probabilities for
-      consecutive precipitation periods. Wea. Forecasting, 5, 640–650.,
-      Wilks, D. S., 1990a
+    .. [5] On the combination of forecast probabilities for
+           consecutive precipitation periods. Wea. Forecasting, 5, 640–650.,
+           Wilks, D. S., 1990a
