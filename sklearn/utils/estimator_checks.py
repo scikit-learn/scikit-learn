@@ -1660,7 +1660,7 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
     if(Estimator.__name__ not in ["GaussianProcess", "RandomizedLasso",
                                   "RandomizedLogisticRegression",
                                   "RandomizedPCA"] and
-       sys.version_info < (3, 5)):
+       sys.version_info > (3, 5)):
         # This check is only for non-decorated (eg: deprecated) estimator
         # _get_args and _get_parent_args only work for python 3.5
         init_params = _get_args(estimator.__init__)
