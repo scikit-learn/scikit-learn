@@ -170,7 +170,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Number of components (< n_classes - 1) for dimensionality reduction.
 
     store_covariance : bool, optional
-        Additionally compute class covariance matrix (default False), used 
+        Additionally compute class covariance matrix (default False), used
         only in 'svd' solver.
 
         .. versionadded:: 0.17
