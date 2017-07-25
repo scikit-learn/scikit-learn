@@ -41,8 +41,8 @@ Functions
 
    base.clone
    config_context
-   set_config
    get_config
+   set_config
 
 
 .. _cluster_ref:
@@ -80,13 +80,13 @@ Functions
    :toctree: generated/
    :template: function.rst
 
-   cluster.estimate_bandwidth
-   cluster.k_means
-   cluster.ward_tree
    cluster.affinity_propagation
    cluster.dbscan
+   cluster.estimate_bandwidth
+   cluster.k_means
    cluster.mean_shift
    cluster.spectral_clustering
+   cluster.ward_tree
 
 .. _bicluster_ref:
 
@@ -141,10 +141,10 @@ Classes
    :template: function.rst
 
    covariance.empirical_covariance
-   covariance.ledoit_wolf
-   covariance.shrunk_covariance
-   covariance.oas
    covariance.graph_lasso
+   covariance.ledoit_wolf
+   covariance.oas
+   covariance.shrunk_covariance
 
 
 :mod:`sklearn.model_selection`: Model Selection
@@ -166,19 +166,19 @@ Splitter Classes
    :toctree: generated/
    :template: class.rst
 
-   model_selection.KFold
    model_selection.GroupKFold
-   model_selection.StratifiedKFold
+   model_selection.GroupShuffleSplit
+   model_selection.KFold
    model_selection.LeaveOneGroupOut
    model_selection.LeavePGroupsOut
    model_selection.LeaveOneOut
    model_selection.LeavePOut
+   model_selection.PredefinedSplit
    model_selection.RepeatedKFold
    model_selection.RepeatedStratifiedKFold
    model_selection.ShuffleSplit
-   model_selection.GroupShuffleSplit
+   model_selection.StratifiedKFold
    model_selection.StratifiedShuffleSplit
-   model_selection.PredefinedSplit
    model_selection.TimeSeriesSplit
 
 Splitter Functions
@@ -190,8 +190,8 @@ Splitter Functions
    :toctree: generated/
    :template: function.rst
 
-   model_selection.train_test_split
    model_selection.check_cv
+   model_selection.train_test_split
 
 Hyper-parameter optimizers
 --------------------------
@@ -203,9 +203,9 @@ Hyper-parameter optimizers
    :template: class.rst
 
    model_selection.GridSearchCV
-   model_selection.RandomizedSearchCV
    model_selection.ParameterGrid
    model_selection.ParameterSampler
+   model_selection.RandomizedSearchCV
 
 
 .. autosummary::
@@ -224,10 +224,10 @@ Model validation
    :template: function.rst
 
    model_selection.cross_validate
-   model_selection.cross_val_score
    model_selection.cross_val_predict
-   model_selection.permutation_test_score
+   model_selection.cross_val_score
    model_selection.learning_curve
+   model_selection.permutation_test_score
    model_selection.validation_curve
 
 .. _datasets_ref:
@@ -251,33 +251,33 @@ Loaders
    :template: function.rst
 
    datasets.clear_data_home
-   datasets.get_data_home
+   datasets.dump_svmlight_file
    datasets.fetch_20newsgroups
    datasets.fetch_20newsgroups_vectorized
+   datasets.fetch_california_housing
+   datasets.fetch_covtype
+   datasets.fetch_kddcup99
+   datasets.fetch_lfw_pairs
+   datasets.fetch_lfw_people
+   datasets.fetch_mldata
+   datasets.fetch_olivetti_faces
+   datasets.fetch_rcv1
+   datasets.fetch_species_distributions
+   datasets.get_data_home
    datasets.load_boston
    datasets.load_breast_cancer
    datasets.load_diabetes
    datasets.load_digits
    datasets.load_files
    datasets.load_iris
-   datasets.load_wine
-   datasets.fetch_lfw_pairs
-   datasets.fetch_lfw_people
    datasets.load_linnerud
-   datasets.mldata_filename
-   datasets.fetch_mldata
-   datasets.fetch_olivetti_faces
-   datasets.fetch_california_housing
-   datasets.fetch_covtype
-   datasets.fetch_kddcup99
-   datasets.fetch_rcv1
    datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
-   datasets.fetch_species_distributions
    datasets.load_svmlight_file
    datasets.load_svmlight_files
-   datasets.dump_svmlight_file
+   datasets.load_wine
+   datasets.mldata_filename
 
 Samples generator
 -----------------
@@ -288,9 +288,11 @@ Samples generator
    :toctree: generated/
    :template: function.rst
 
+   datasets.make_biclusters
    datasets.make_blobs
-   datasets.make_classification
+   datasets.make_checkerboard
    datasets.make_circles
+   datasets.make_classification
    datasets.make_friedman1
    datasets.make_friedman2
    datasets.make_friedman3
@@ -306,8 +308,6 @@ Samples generator
    datasets.make_sparse_uncorrelated
    datasets.make_spd_matrix
    datasets.make_swiss_roll
-   datasets.make_biclusters
-   datasets.make_checkerboard
 
 
 .. _decomposition_ref:
@@ -327,27 +327,27 @@ Samples generator
    :toctree: generated/
    :template: class.rst
 
-   decomposition.PCA
-   decomposition.IncrementalPCA
-   decomposition.KernelPCA
+   decomposition.DictionaryLearning
    decomposition.FactorAnalysis
    decomposition.FastICA
-   decomposition.TruncatedSVD
-   decomposition.NMF
-   decomposition.SparsePCA
-   decomposition.MiniBatchSparsePCA
-   decomposition.SparseCoder
-   decomposition.DictionaryLearning
-   decomposition.MiniBatchDictionaryLearning
+   decomposition.IncrementalPCA
+   decomposition.KernelPCA
    decomposition.LatentDirichletAllocation
+   decomposition.MiniBatchDictionaryLearning
+   decomposition.MiniBatchSparsePCA
+   decomposition.NMF
+   decomposition.PCA
+   decomposition.SparsePCA
+   decomposition.SparseCoder
+   decomposition.TruncatedSVD
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
-   decomposition.fastica
    decomposition.dict_learning
    decomposition.dict_learning_online
+   decomposition.fastica
    decomposition.sparse_encode
 
 .. _dummy_ref:
@@ -401,8 +401,8 @@ Samples generator
    ensemble.GradientBoostingRegressor
    ensemble.IsolationForest
    ensemble.RandomForestClassifier
-   ensemble.RandomTreesEmbedding
    ensemble.RandomForestRegressor
+   ensemble.RandomTreesEmbedding
    ensemble.VotingClassifier
 
 .. autosummary::
@@ -442,13 +442,13 @@ partial dependence
    :toctree: generated/
    :template: class_without_init.rst
 
-   exceptions.NotFittedError
    exceptions.ChangedBehaviorWarning
    exceptions.ConvergenceWarning
    exceptions.DataConversionWarning
    exceptions.DataDimensionalityWarning
    exceptions.EfficiencyWarning
    exceptions.FitFailedWarning
+   exceptions.NotFittedError
    exceptions.NonBLASDotWarning
    exceptions.UndefinedMetricWarning
 
@@ -485,9 +485,9 @@ From images
    :toctree: generated/
    :template: function.rst
 
-   feature_extraction.image.img_to_graph
-   feature_extraction.image.grid_to_graph
    feature_extraction.image.extract_patches_2d
+   feature_extraction.image.grid_to_graph
+   feature_extraction.image.img_to_graph
    feature_extraction.image.reconstruct_from_patches_2d
 
    :template: class.rst
@@ -571,8 +571,8 @@ From text
   :toctree: generated/
   :template: class.rst
 
-  gaussian_process.GaussianProcessRegressor
   gaussian_process.GaussianProcessClassifier
+  gaussian_process.GaussianProcessRegressor
 
 Kernels:
 
@@ -580,20 +580,20 @@ Kernels:
   :toctree: generated/
   :template: class_with_call.rst
 
-  gaussian_process.kernels.Kernel
-  gaussian_process.kernels.Sum
-  gaussian_process.kernels.Product
-  gaussian_process.kernels.Exponentiation
-  gaussian_process.kernels.ConstantKernel
-  gaussian_process.kernels.WhiteKernel
-  gaussian_process.kernels.RBF
-  gaussian_process.kernels.Matern
-  gaussian_process.kernels.RationalQuadratic
-  gaussian_process.kernels.ExpSineSquared
-  gaussian_process.kernels.DotProduct
-  gaussian_process.kernels.PairwiseKernel
   gaussian_process.kernels.CompoundKernel
+  gaussian_process.kernels.ConstantKernel
+  gaussian_process.kernels.DotProduct
+  gaussian_process.kernels.ExpSineSquared
+  gaussian_process.kernels.Exponentiation
   gaussian_process.kernels.Hyperparameter
+  gaussian_process.kernels.Kernel
+  gaussian_process.kernels.Matern
+  gaussian_process.kernels.PairwiseKernel
+  gaussian_process.kernels.Product
+  gaussian_process.kernels.RBF
+  gaussian_process.kernels.RationalQuadratic
+  gaussian_process.kernels.Sum
+  gaussian_process.kernels.WhiteKernel
 
 .. _isotonic_ref:
 
@@ -618,8 +618,8 @@ Kernels:
    :toctree: generated
    :template: function.rst
 
-   isotonic.isotonic_regression
    isotonic.check_increasing
+   isotonic.isotonic_regression
 
 .. _kernel_approximation_ref:
 
@@ -763,8 +763,8 @@ Kernels:
     :toctree: generated
     :template: class.rst
 
-    manifold.LocallyLinearEmbedding
     manifold.Isomap
+    manifold.LocallyLinearEmbedding
     manifold.MDS
     manifold.SpectralEmbedding
     manifold.TSNE
@@ -774,8 +774,8 @@ Kernels:
     :template: function.rst
 
     manifold.locally_linear_embedding
-    manifold.spectral_embedding
     manifold.smacof
+    manifold.spectral_embedding
 
 
 .. _metrics_ref:
@@ -801,8 +801,8 @@ details.
    :toctree: generated/
    :template: function.rst
 
-   metrics.make_scorer
    metrics.get_scorer
+   metrics.make_scorer
 
 Classification metrics
 ----------------------
@@ -930,9 +930,12 @@ See the :ref:`metrics` section of the user guide for further details.
 
    metrics.pairwise.additive_chi2_kernel
    metrics.pairwise.chi2_kernel
+   metrics.pairwise.cosine_similarity
+   metrics.pairwise.cosine_distances
    metrics.pairwise.distance_metrics
    metrics.pairwise.euclidean_distances
    metrics.pairwise.kernel_metrics
+   metrics.pairwise.laplacian_kernel
    metrics.pairwise.linear_kernel
    metrics.pairwise.manhattan_distances
    metrics.pairwise.pairwise_distances
@@ -940,16 +943,13 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
    metrics.pairwise.sigmoid_kernel
-   metrics.pairwise.cosine_similarity
-   metrics.pairwise.cosine_distances
-   metrics.pairwise.laplacian_kernel
-   metrics.pairwise_distances
-   metrics.pairwise_distances_argmin
-   metrics.pairwise_distances_argmin_min
    metrics.pairwise.paired_euclidean_distances
    metrics.pairwise.paired_manhattan_distances
    metrics.pairwise.paired_cosine_distances
    metrics.pairwise.paired_distances
+   metrics.pairwise_distances
+   metrics.pairwise_distances_argmin
+   metrics.pairwise_distances_argmin_min
 
 
 .. _mixture_ref:
@@ -969,8 +969,8 @@ See the :ref:`metrics` section of the user guide for further details.
    :toctree: generated/
    :template: class.rst
 
-   mixture.GaussianMixture
    mixture.BayesianGaussianMixture
+   mixture.GaussianMixture
 
 
 .. _multiclass_ref:
@@ -1011,9 +1011,9 @@ See the :ref:`metrics` section of the user guide for further details.
     :toctree: generated
     :template: class.rst
 
+    multioutput.ClassifierChain
     multioutput.MultiOutputRegressor
     multioutput.MultiOutputClassifier
-    multioutput.ClassifierChain
 
 .. _naive_bayes_ref:
 
@@ -1032,9 +1032,9 @@ See the :ref:`metrics` section of the user guide for further details.
    :toctree: generated/
    :template: class.rst
 
+   naive_bayes.BernoulliNB
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
-   naive_bayes.BernoulliNB
 
 
 .. _neighbors_ref:
@@ -1054,17 +1054,17 @@ See the :ref:`metrics` section of the user guide for further details.
    :toctree: generated/
    :template: class.rst
 
-   neighbors.NearestNeighbors
+   neighbors.BallTree
+   neighbors.DistanceMetric
+   neighbors.KDTree
+   neighbors.KernelDensity
    neighbors.KNeighborsClassifier
-   neighbors.RadiusNeighborsClassifier
    neighbors.KNeighborsRegressor
+   neighbors.LocalOutlierFactor
+   neighbors.RadiusNeighborsClassifier
    neighbors.RadiusNeighborsRegressor
    neighbors.NearestCentroid
-   neighbors.BallTree
-   neighbors.KDTree
-   neighbors.DistanceMetric
-   neighbors.KernelDensity
-   neighbors.LocalOutlierFactor
+   neighbors.NearestNeighbors
 
 .. autosummary::
    :toctree: generated/
@@ -1139,9 +1139,9 @@ See the :ref:`metrics` section of the user guide for further details.
    :toctree: generated/
    :template: class.rst
 
-   cross_decomposition.PLSRegression
-   cross_decomposition.PLSCanonical
    cross_decomposition.CCA
+   cross_decomposition.PLSCanonical
+   cross_decomposition.PLSRegression
    cross_decomposition.PLSSVD
 
 
@@ -1160,8 +1160,8 @@ See the :ref:`metrics` section of the user guide for further details.
    :toctree: generated/
    :template: class.rst
 
-   pipeline.Pipeline
    pipeline.FeatureUnion
+   pipeline.Pipeline
 
 .. autosummary::
    :toctree: generated/
@@ -1287,13 +1287,13 @@ Estimators
    :toctree: generated/
    :template: class.rst
 
-   svm.SVC
    svm.LinearSVC
-   svm.NuSVC
-   svm.SVR
    svm.LinearSVR
+   svm.NuSVC
    svm.NuSVR
    svm.OneClassSVM
+   svm.SVC
+   svm.SVR
 
 .. autosummary::
    :toctree: generated/
@@ -1308,11 +1308,11 @@ Low-level methods
    :toctree: generated
    :template: function.rst
 
-   svm.libsvm.fit
+   svm.libsvm.cross_validation
    svm.libsvm.decision_function
+   svm.libsvm.fit
    svm.libsvm.predict
    svm.libsvm.predict_proba
-   svm.libsvm.cross_validation
 
 
 .. _tree_ref:
@@ -1361,26 +1361,26 @@ Low-level methods
    :toctree: generated/
    :template: function.rst
 
-   utils.assert_all_finite
    utils.as_float_array
+   utils.assert_all_finite
    utils.check_X_y
    utils.check_array
    utils.check_consistent_length
    utils.check_random_state
-   utils.indexable
    utils.class_weight.compute_class_weight
    utils.class_weight.compute_sample_weight
    utils.estimator_checks.check_estimator
    utils.extmath.safe_sparse_dot
+   utils.indexable
    utils.resample
    utils.safe_indexing
    utils.shuffle
-   utils.sparsefuncs.mean_variance_axis
    utils.sparsefuncs.incr_mean_variance_axis
    utils.sparsefuncs.inplace_column_scale
    utils.sparsefuncs.inplace_row_scale
    utils.sparsefuncs.inplace_swap_row
    utils.sparsefuncs.inplace_swap_column
+   utils.sparsefuncs.mean_variance_axis
    utils.validation.check_is_fitted
    utils.validation.check_symmetric
    utils.validation.column_or_1d
@@ -1409,25 +1409,25 @@ To be removed in 0.20
    :toctree: generated/
    :template: deprecated_class.rst
 
-   grid_search.ParameterGrid
-   grid_search.ParameterSampler
-   grid_search.GridSearchCV
-   grid_search.RandomizedSearchCV
-   cross_validation.LeaveOneOut
-   cross_validation.LeavePOut
    cross_validation.KFold
    cross_validation.LabelKFold
    cross_validation.LeaveOneLabelOut
+   cross_validation.LeaveOneOut
+   cross_validation.LeavePOut
    cross_validation.LeavePLabelOut
    cross_validation.LabelShuffleSplit
-   cross_validation.StratifiedKFold
    cross_validation.ShuffleSplit
+   cross_validation.StratifiedKFold
    cross_validation.StratifiedShuffleSplit
    cross_validation.PredefinedSplit
    decomposition.RandomizedPCA
    gaussian_process.GaussianProcess
-   mixture.GMM
+   grid_search.ParameterGrid
+   grid_search.ParameterSampler
+   grid_search.GridSearchCV
+   grid_search.RandomizedSearchCV
    mixture.DPGMM
+   mixture.GMM
    mixture.VBGMM
 
 
@@ -1435,11 +1435,11 @@ To be removed in 0.20
    :toctree: generated/
    :template: deprecated_function.rst
 
+   cross_validation.check_cv
+   cross_validation.cross_val_predict
+   cross_validation.cross_val_score
+   cross_validation.permutation_test_score
+   cross_validation.train_test_split
    grid_search.fit_grid_point
    learning_curve.learning_curve
    learning_curve.validation_curve
-   cross_validation.cross_val_predict
-   cross_validation.cross_val_score
-   cross_validation.check_cv
-   cross_validation.permutation_test_score
-   cross_validation.train_test_split
