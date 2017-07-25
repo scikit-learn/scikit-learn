@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -140,6 +141,15 @@ class EstimatorWithFitAndPredict(object):
 class DummyScorer(object):
     """Dummy scorer that always returns 1."""
     def __call__(self, est, X, y):
+        return 1
+
+
+def DummyScorerWithLabels(y_true, y_pred, labels=None):
+    """A dummy scorer function which returns 1 if labels argument was set
+    else returns 0"""
+    if labels is None:
+        return 0
+    else:
         return 1
 
 
@@ -526,3 +536,27 @@ def test_scoring_is_not_metric():
                          Ridge(), r2_score)
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
                          KMeans(), cluster_module.adjusted_rand_score)
+
+
+def test_copy_classes():
+    # Test the various properties of copy_classes parameter added
+
+    X, y = make_blobs(random_state=0, centers=2)
+    clf = LogisticRegression(random_state=0)
+    clf.fit(X, y)
+
+    # copy_classes=None should not set labels
+    scorer = make_scorer(DummyScorerWithLabels, copy_classes=None)
+    assert_equal(scorer(clf, X, y), 0)
+
+    # by default, labels should be set
+    scorer = make_scorer(DummyScorerWithLabels)
+    assert_equal(scorer(clf, X, y), 1)
+
+    # if an argument other than labels passed, then it should be present in
+    # scorer's signature
+    scorer = make_scorer(DummyScorerWithLabels, copy_classes='label_names')
+    expected_msg = ("the scorer doesn't have label_names as a parameter,"
+                    "as passed in copy_classes parameter")
+    assert_raise_message(ValueError, expected_msg,
+                         scorer, clf, X, y)

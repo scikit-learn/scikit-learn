@@ -544,7 +544,7 @@ def test_suppress_validation():
 
 
 def test_check_y_classes():
-    y = [1, 2, 3, 1, 2]
+    y = [1, 2, 3]
     classes = [1, 2]
     assert_raises(ValueError, _check_y_classes, y, classes)
 

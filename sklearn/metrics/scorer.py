@@ -44,10 +44,11 @@ from ..externals.funcsigs import signature
 
 
 class _BaseScorer(six.with_metaclass(ABCMeta, object)):
-    def __init__(self, score_func, sign, kwargs):
+    def __init__(self, score_func, sign, copy_classes, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
+        self._copy_classes = copy_classes
         # XXX After removing the deprecated scorers (v0.20) remove the
         # XXX deprecation_msg property again and remove __call__'s body again
         self._deprecation_msg = None
@@ -72,27 +73,43 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
         labels argument and return new kwargs for scorer if label not already
         set in make score initialization"""
         est_has_classes = hasattr(estimator, "classes_")
-        scorer_has_labels = "labels" in signature(
+
+        # if nothing is to be copied
+        if self._copy_classes is None:
+            return self._kwargs
+
+        labels_atrr_name = self._copy_classes
+
+        if labels_atrr_name != 'labels':
+            if labels_atrr_name not in signature(
+                                            self._score_func).parameters:
+                raise ValueError("the scorer doesn't have %s as a parameter,"
+                                 "as passed in copy_classes parameter" %
+                                 labels_atrr_name)
+
+        scorer_has_labels = labels_atrr_name in signature(
                                             self._score_func).parameters
 
         if est_has_classes and scorer_has_labels:
             classes = getattr(estimator, "classes_", None)
             # if labels passed as kwargs, return kwargs as is
-            if 'labels' in self._kwargs:
+            if labels_atrr_name in self._kwargs:
                 if est_has_classes:
                     # labels should be a subset of classes
                     if not set(classes).issuperset(
-                                                set(self._kwargs['labels'])):
+                                        set(self._kwargs[labels_atrr_name])):
                         raise ValueError("`estimator classes=%r` is not the"
-                                         "superset of `scorer labels=%r`" %
-                                         (classes, self._kwargs['labels']))
+                                         "superset of `scorer %s=%r`" %
+                                         (classes,
+                                          labels_atrr_name,
+                                          self._kwargs['labels']))
                 return self._kwargs
             else:
                 kwargs = self._kwargs.copy()
                 if target_type == 'multilabel-indicator':
-                    kwargs['labels'] = list(range(len(classes)))
+                    kwargs[labels_atrr_name] = list(range(len(classes)))
                 else:
-                    kwargs['labels'] = classes
+                    kwargs[labels_atrr_name] = classes
                 return kwargs
         else:
             return self._kwargs
@@ -435,7 +452,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
-                needs_threshold=False, **kwargs):
+                needs_threshold=False, copy_classes='labels', **kwargs):
     """Make a scorer from a performance metric or loss function.
 
     This factory function wraps scoring functions for use in GridSearchCV
@@ -468,6 +485,14 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         For example ``average_precision`` or the area under the roc curve
         can not be computed using discrete predictions alone.
 
+    copy_classes : string or None, default='labels'
+        The name of the scorer parameter into which the classes_ attribute of
+        the estimator will be passed through. If None is passed, then the
+        classes_ atribute will not be copied.
+
+        It should be set only if a user-defined metric function is being used
+        and left as default in case of a scikit-learn API metric.
+
     **kwargs : additional arguments
         Additional parameters to be passed to score_func.
 
@@ -497,7 +522,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         cls = _ThresholdScorer
     else:
         cls = _PredictScorer
-    return cls(score_func, sign, kwargs)
+    return cls(score_func, sign, copy_classes, kwargs)
 
 
 # Standard regression scores
