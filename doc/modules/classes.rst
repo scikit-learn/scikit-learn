@@ -44,6 +44,31 @@ Functions
    get_config
    set_config
 
+.. _calibration_ref:
+
+:mod:`sklearn.calibration`: Probability Calibration
+===================================================
+
+.. automodule:: sklearn.calibration
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`calibration` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   calibration.CalibratedClassifierCV
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   calibration.calibration_curve
 
 .. _cluster_ref:
 
@@ -146,19 +171,16 @@ Classes
    covariance.oas
    covariance.shrunk_covariance
 
+.. _cross_decomposition_ref:
 
-:mod:`sklearn.model_selection`: Model Selection
-===============================================
+:mod:`sklearn.cross_decomposition`: Cross decomposition
+=======================================================
 
-.. automodule:: sklearn.model_selection
+.. automodule:: sklearn.cross_decomposition
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`cross_validation`, :ref:`grid_search` and
-:ref:`learning_curve` sections for further details.
-
-Splitter Classes
-----------------
+**User guide:** See the :ref:`cross_decomposition` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -166,69 +188,10 @@ Splitter Classes
    :toctree: generated/
    :template: class.rst
 
-   model_selection.GroupKFold
-   model_selection.GroupShuffleSplit
-   model_selection.KFold
-   model_selection.LeaveOneGroupOut
-   model_selection.LeavePGroupsOut
-   model_selection.LeaveOneOut
-   model_selection.LeavePOut
-   model_selection.PredefinedSplit
-   model_selection.RepeatedKFold
-   model_selection.RepeatedStratifiedKFold
-   model_selection.ShuffleSplit
-   model_selection.StratifiedKFold
-   model_selection.StratifiedShuffleSplit
-   model_selection.TimeSeriesSplit
-
-Splitter Functions
-------------------
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_selection.check_cv
-   model_selection.train_test_split
-
-Hyper-parameter optimizers
---------------------------
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   model_selection.GridSearchCV
-   model_selection.ParameterGrid
-   model_selection.ParameterSampler
-   model_selection.RandomizedSearchCV
-
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_selection.fit_grid_point
-
-Model validation
-----------------
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_selection.cross_validate
-   model_selection.cross_val_predict
-   model_selection.cross_val_score
-   model_selection.learning_curve
-   model_selection.permutation_test_score
-   model_selection.validation_curve
+   cross_decomposition.CCA
+   cross_decomposition.PLSCanonical
+   cross_decomposition.PLSRegression
+   cross_decomposition.PLSSVD
 
 .. _datasets_ref:
 
@@ -349,6 +312,26 @@ Samples generator
    decomposition.dict_learning_online
    decomposition.fastica
    decomposition.sparse_encode
+
+.. _lda_ref:
+
+:mod:`sklearn.discriminant_analysis`: Discriminant Analysis
+===========================================================
+
+.. automodule:: sklearn.discriminant_analysis
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`lda_qda` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated
+   :template: class.rst
+
+   discriminant_analysis.LinearDiscriminantAnalysis
+   discriminant_analysis.QuadraticDiscriminantAnalysis
 
 .. _dummy_ref:
 
@@ -662,27 +645,6 @@ Kernels:
 
    kernel_ridge.KernelRidge
 
-.. _lda_ref:
-
-:mod:`sklearn.discriminant_analysis`: Discriminant Analysis
-===========================================================
-
-.. automodule:: sklearn.discriminant_analysis
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`lda_qda` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated
-   :template: class.rst
-
-   discriminant_analysis.LinearDiscriminantAnalysis
-   discriminant_analysis.QuadraticDiscriminantAnalysis
-
-
 .. _linear_model_ref:
 
 :mod:`sklearn.linear_model`: Generalized Linear Models
@@ -972,6 +934,90 @@ See the :ref:`metrics` section of the user guide for further details.
    mixture.BayesianGaussianMixture
    mixture.GaussianMixture
 
+.. _modelselection_ref:
+
+:mod:`sklearn.model_selection`: Model Selection
+===============================================
+
+.. automodule:: sklearn.model_selection
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`cross_validation`, :ref:`grid_search` and
+:ref:`learning_curve` sections for further details.
+
+Splitter Classes
+----------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model_selection.GroupKFold
+   model_selection.GroupShuffleSplit
+   model_selection.KFold
+   model_selection.LeaveOneGroupOut
+   model_selection.LeavePGroupsOut
+   model_selection.LeaveOneOut
+   model_selection.LeavePOut
+   model_selection.PredefinedSplit
+   model_selection.RepeatedKFold
+   model_selection.RepeatedStratifiedKFold
+   model_selection.ShuffleSplit
+   model_selection.StratifiedKFold
+   model_selection.StratifiedShuffleSplit
+   model_selection.TimeSeriesSplit
+
+Splitter Functions
+------------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   model_selection.check_cv
+   model_selection.train_test_split
+
+Hyper-parameter optimizers
+--------------------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model_selection.GridSearchCV
+   model_selection.ParameterGrid
+   model_selection.ParameterSampler
+   model_selection.RandomizedSearchCV
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   model_selection.fit_grid_point
+
+Model validation
+----------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   model_selection.cross_validate
+   model_selection.cross_val_predict
+   model_selection.cross_val_score
+   model_selection.learning_curve
+   model_selection.permutation_test_score
+   model_selection.validation_curve
 
 .. _multiclass_ref:
 
@@ -1093,57 +1139,6 @@ See the :ref:`metrics` section of the user guide for further details.
    neural_network.BernoulliRBM
    neural_network.MLPClassifier
    neural_network.MLPRegressor
-
-
-.. _calibration_ref:
-
-:mod:`sklearn.calibration`: Probability Calibration
-===================================================
-
-.. automodule:: sklearn.calibration
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`calibration` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   calibration.CalibratedClassifierCV
-
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   calibration.calibration_curve
-
-
-.. _cross_decomposition_ref:
-
-:mod:`sklearn.cross_decomposition`: Cross decomposition
-=======================================================
-
-.. automodule:: sklearn.cross_decomposition
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`cross_decomposition` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   cross_decomposition.CCA
-   cross_decomposition.PLSCanonical
-   cross_decomposition.PLSRegression
-   cross_decomposition.PLSSVD
-
 
 .. _pipeline_ref:
 
