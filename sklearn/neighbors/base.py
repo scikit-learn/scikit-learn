@@ -366,8 +366,7 @@ class KNeighborsMixin(object):
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
-            if self.effective_metric_ == 'euclidean' or self.\
-                    effective_metric_ == 'masked_euclidean':
+            if self.effective_metric_ in ['euclidean', 'masked_euclidean']:
                 dist = pairwise_distances(X, self._fit_X,
                                           self.effective_metric_,
                                           n_jobs=n_jobs, squared=True)
