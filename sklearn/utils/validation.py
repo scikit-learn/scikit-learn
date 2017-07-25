@@ -767,6 +767,7 @@ def _check_y_classes(unique_y, classes):
     classes : array-like, shape (n_classes,)
             List of all the classes that can possibly appear in the y vector.
     """
+    unique_y = np.asarray(unique_y)
     unique_y_in_classes = np.in1d(unique_y, classes)
 
     if not np.all(unique_y_in_classes):
