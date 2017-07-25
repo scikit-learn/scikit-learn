@@ -21,7 +21,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from os.path import exists, join
+from os.path import exists
 from os import makedirs, remove
 import tarfile
 

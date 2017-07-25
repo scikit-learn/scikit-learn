@@ -39,7 +39,7 @@ For an example of using this dataset, see
 
 from io import BytesIO
 from os import makedirs, remove
-from os.path import exists, join
+from os.path import exists
 
 import sys
 

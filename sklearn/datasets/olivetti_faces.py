@@ -22,7 +22,7 @@ consists of 64x64 images.
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
-from os.path import exists, join
+from os.path import exists
 from os import makedirs, remove
 
 import numpy as np
