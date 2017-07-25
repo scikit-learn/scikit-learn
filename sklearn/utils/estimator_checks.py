@@ -1657,7 +1657,8 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                 'estimator but in the fit method. Attribute {!r} '
                 'was found in estimator {}'.format(attr, name))
     init_params = _get_args(estimator.__init__)
-    base_params = _get_parent_args(Estimator)
+    base_params = (_get_parent_args(Estimator) +
+                   [a for a in dir(Estimator) if not a.startswith("__")])
     for attr, val in vars(estimator).items():
         if attr not in base_params:
             assert_true(attr in init_params)

@@ -124,6 +124,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         component analysis. In Advances in kernel methods,
         MIT Press, Cambridge, MA, USA 327-352.
     """
+    _centerer = KernelCenterer()
 
     def __init__(self, n_components=None, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None,
@@ -145,7 +146,6 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.remove_zero_eig = remove_zero_eig
         self.tol = tol
         self.max_iter = max_iter
-        self._centerer = KernelCenterer()
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.copy_X = copy_X
