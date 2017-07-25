@@ -851,14 +851,20 @@ def _fetch_remote(remote, dirname=None):
 
     dirname : string
         Directory to save the file to.
+
+    Returns
+    -------
+    file_path: string
+        Full path of the created file.
     """
 
-    filename = (remote.filename if dirname is None
-                else join(dirname, remote.filename))
-    urlretrieve(remote.url, filename)
-    checksum = _sha256(filename)
+    file_path = (remote.filename if dirname is None
+                 else join(dirname, remote.filename))
+    urlretrieve(remote.url, file_path)
+    checksum = _sha256(file_path)
     if remote.checksum != checksum:
         raise IOError("{} has an SHA256 checksum ({}) "
                       "differing from expected ({}), "
-                      "file may be corrupted.".format(filename, checksum,
+                      "file may be corrupted.".format(file_path, checksum,
                                                       remote.checksum))
+    return file_path

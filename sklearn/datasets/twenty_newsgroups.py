@@ -74,7 +74,6 @@ TEST_FOLDER = "20news-bydate-test"
 
 def download_20newsgroups(target_dir, cache_path):
     """Download the 20 newsgroups data and stored it as a zipped pickle."""
-    archive_path = os.path.join(target_dir, ARCHIVE.filename)
     train_path = os.path.join(target_dir, TRAIN_FOLDER)
     test_path = os.path.join(target_dir, TEST_FOLDER)
 
@@ -82,7 +81,7 @@ def download_20newsgroups(target_dir, cache_path):
         os.makedirs(target_dir)
 
     logger.warning("Downloading dataset from %s (14 MB)", ARCHIVE.url)
-    _fetch_remote(ARCHIVE, dirname=target_dir)
+    archive_path = _fetch_remote(ARCHIVE, dirname=target_dir)
 
     logger.info("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)

@@ -158,14 +158,14 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         files = []
         for each in XY_METADATA:
             logger.warning("Downloading %s" % each.url)
-            _fetch_remote(each, dirname=rcv1_dir)
-            files.append(GzipFile(filename=join(rcv1_dir, each.filename)))
+            file_path = _fetch_remote(each, dirname=rcv1_dir)
+            files.append(GzipFile(filename=file_path))
 
         Xy = load_svmlight_files(files, n_features=N_FEATURES)
 
         # delete archives
-        for each in XY_METADATA:
-            remove(join(rcv1_dir, each.filename))
+        for f in files:
+            remove(f.name)
 
         # Training data is before testing data
         X = sp.vstack([Xy[8], Xy[0], Xy[2], Xy[4], Xy[6]]).tocsr()
@@ -182,7 +182,8 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     if download_if_missing and (not exists(sample_topics_path) or
                                 not exists(topics_path)):
         logger.warning("Downloading %s" % TOPICS_METADATA.url)
-        _fetch_remote(TOPICS_METADATA, dirname=rcv1_dir)
+        topics_archive_path = _fetch_remote(TOPICS_METADATA,
+                                            dirname=rcv1_dir)
 
         # parse the target file
         n_cat = -1
@@ -191,7 +192,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         y = np.zeros((N_SAMPLES, N_CATEGORIES), dtype=np.uint8)
         sample_id_bis = np.zeros(N_SAMPLES, dtype=np.int32)
         category_names = {}
-        topics_archive_path = join(rcv1_dir, TOPICS_METADATA.filename)
         for line in GzipFile(filename=topics_archive_path, mode='rb'):
             line_components = line.decode("ascii").split(u" ")
             if len(line_components) == 3:

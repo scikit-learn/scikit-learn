@@ -120,18 +120,14 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
 
         print('downloading Olivetti faces from %s to %s'
               % (ARCHIVE.url, data_home))
-        _fetch_remote(ARCHIVE, dirname=data_home)
-
-        mat_path = join(data_home, ARCHIVE.filename)
+        mat_path = _fetch_remote(ARCHIVE, dirname=data_home)
         mfile = loadmat(file_name=mat_path)
         # delete raw .mat data
         remove(mat_path)
 
         faces = mfile['faces'].T.copy()
         joblib.dump(faces, filepath, compress=6)
-
         del mfile
-
     else:
         faces = joblib.load(filepath)
 

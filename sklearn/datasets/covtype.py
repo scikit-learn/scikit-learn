@@ -95,8 +95,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
             makedirs(covtype_dir)
         logger.warning("Downloading %s" % ARCHIVE.url)
 
-        _fetch_remote(ARCHIVE, dirname=covtype_dir)
-        archive_path = join(covtype_dir, "covtype.data.gz")
+        archive_path = _fetch_remote(ARCHIVE, dirname=covtype_dir)
         Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=',')
         # delete archive
         remove(archive_path)
