@@ -14,7 +14,7 @@ from collections import defaultdict
 import numpy as np
 from scipy import sparse
 
-from .base import clone, TransformerMixin
+from .base import clone, TransformerMixin, frozen_fit
 from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
@@ -51,6 +51,8 @@ class Pipeline(_BaseComposition):
         List of (name, transform) tuples (implementing fit/transform) that are
         chained, in the order in which they are chained, with the last object
         an estimator.
+
+        Some of these estimators may be frozen (see :ref:`frozen`).
 
     memory : Instance of sklearn.external.joblib.Memory or string, optional \
             (default=None)
@@ -256,7 +258,7 @@ class Pipeline(_BaseComposition):
         """
         Xt, fit_params = self._fit(X, y, **fit_params)
         if self._final_estimator is not None:
-            self._final_estimator.fit(Xt, y, **fit_params)
+            frozen_fit(self._final_estimator, 'fit', Xt, y, **fit_params)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -289,11 +291,12 @@ class Pipeline(_BaseComposition):
         last_step = self._final_estimator
         Xt, fit_params = self._fit(X, y, **fit_params)
         if hasattr(last_step, 'fit_transform'):
-            return last_step.fit_transform(Xt, y, **fit_params)
+            return frozen_fit(last_step, 'fit_transform', Xt, y, **fit_params)
         elif last_step is None:
             return Xt
         else:
-            return last_step.fit(Xt, y, **fit_params).transform(Xt)
+            return frozen_fit(last_step, 'fit', Xt, y,
+                              **fit_params).transform(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X):
@@ -536,7 +539,8 @@ def make_pipeline(*steps, **kwargs):
 
     Parameters
     ----------
-    *steps : list of estimators,
+    *steps : list of estimators
+        Some of these estimators may be frozen (see :ref:`frozen`).
 
     memory : Instance of sklearn.externals.joblib.Memory or string, optional \
             (default=None)
@@ -572,7 +576,7 @@ def make_pipeline(*steps, **kwargs):
 
 
 def _fit_one_transformer(transformer, X, y):
-    return transformer.fit(X, y)
+    return frozen_fit(transformer, 'fit', X, y, **fit_params)
 
 
 def _transform_one(transformer, weight, X):
@@ -586,9 +590,9 @@ def _transform_one(transformer, weight, X):
 def _fit_transform_one(transformer, weight, X, y,
                        **fit_params):
     if hasattr(transformer, 'fit_transform'):
-        res = transformer.fit_transform(X, y, **fit_params)
+        res = frozen_fit(transformer, 'fit_transform', X, y, **fit_params)
     else:
-        res = transformer.fit(X, y, **fit_params).transform(X)
+        res = frozen_fit(transformer, 'fit', X, y, **fit_params).transform()
     # if we have a weight for this transformer, multiply output
     if weight is None:
         return res, transformer
@@ -614,6 +618,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
     transformer_list : list of (string, transformer) tuples
         List of transformer objects to be applied to the data. The first
         half of each tuple is the name of the transformer.
+
+        Some of these transformers may be frozen (see :ref:`frozen`).
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -800,6 +806,7 @@ def make_union(*transformers, **kwargs):
     Parameters
     ----------
     *transformers : list of estimators
+        Some of these transformers may be frozen (see :ref:`frozen`).
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).

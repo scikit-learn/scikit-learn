@@ -269,3 +269,59 @@ and ignored by setting to ``None``::
 
  * :ref:`sphx_glr_auto_examples_plot_feature_stacker.py`
  * :ref:`sphx_glr_auto_examples_hetero_feature_union.py`
+
+.. _frozen:
+
+Frozen estimators
+=================
+.. currentmodule:: sklearn
+
+It can be useful to pre-fit an estimator before including it in a Pipeline,
+FeatureUnion or other meta-estimators.  Example applications include:
+
+* transfer learning: incorporating a transformer trained on a large unlabelled
+  dataset in a prediction pipeline where the data to be modelled is much smaller
+* feature selection on the basis of an already fitted predictive model
+* calibrating an already fitted classifier for probabilistic output
+
+To enable this, some meta-estimators will refrain from fitting an estimator
+where it has the attribute ``frozen`` set to ``True``. For example::
+
+    Without transfer learning
+
+    >>> from sklearn.datasets import load_...
+    >>> from sklearn.model_selection import cross_val_score
+    >>> cross_val_score(make_pipeline(TfidfVectorizer(), LogisticRegression()),
+    ...                 X, y)
+
+    With transfer learning:
+    >>> tfidf = TfidfVectorizer().fit(large_X)
+    >>> tfidf.frozen = True
+    >>> cross_val_score(make_pipeline(tfidf, LogisticRegression()),
+    ...                 X, y)
+
+The following meta-estimators may make use of frozen estimators:
+
+* :class:`pipeline.Pipeline`
+* :class:`pipeline.FeatureUnion`
+* :class:`ensemble.VotingClassifier`
+* :class:`feature_selection.SelectFromModel`
+* :class:`calibration.CalibratedClassifierCV` with ``cv='prefit'``
+
+:func:`base.frozen_fit` is also available for developers of meta-estimators.
+
+.. note::
+    When an estimator is frozen, calling :func:`clone` on it will return
+    itself.::
+
+        >>> from base import clone
+        >>> clone(tfidf) is tfidf
+        True
+
+    This allows the model to be left untouched in cross-validation and
+    meta-estimators which clear the estimator with ``clone``.
+
+.. warning:: Leakage:
+    Please take care to not introduce data leakage by this method: do not
+    incorporate your test set into the training of some frozen component,
+    unless it would be realistic to do so in the target application.

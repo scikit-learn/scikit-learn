@@ -44,6 +44,8 @@ def clone(estimator, safe=True):
 
     """
     estimator_type = type(estimator)
+    if getattr(estimator, 'frozen', False):
+        return estimator
     # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
@@ -578,3 +580,39 @@ def is_regressor(estimator):
         True if estimator is a regressor and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "regressor"
+
+
+def frozen_fit(estimator, method, X, y, **kwargs):
+    """Fit the estimator if not frozen, and return the result of method
+
+    A frozen estimator has an attribute ``frozen`` set to True
+
+    Parameters
+    ----------
+    estimator
+    method : str
+        One of {'fit', 'fit_transform', 'fit_predict'} or similar.
+    X
+    y
+        will only be passed when fitting
+    kwargs
+        will only be passed when fitting
+
+    Returns
+    -------
+    out
+        estimator if ``method == 'fit'``, else the output of ``transform`` etc.
+        If the estimator has attribute ``frozen`` set to True, it will not be
+        refit.
+    """
+    if getattr(estimator, 'frozen', False):
+        if method == 'fit':
+            return estimator
+        if not method.startswith('fit_'):
+            raise ValueError('method must be "fit" or begin with "fit_"')
+        method = getattr(estimator, method[4:])
+        # FIXME: what do we do with kwargs?
+        return method(X)
+    else:
+        method = getattr(estimator, method)
+        return method(X, y, **kwargs)

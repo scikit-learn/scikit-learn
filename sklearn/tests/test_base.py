@@ -26,7 +26,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
 from sklearn.utils import deprecated
 
-from sklearn.base import TransformerMixin
+from sklearn.base import TransformerMixin, frozen_fit
 from sklearn.utils.mocking import MockDataFrame
 import pickle
 
@@ -186,6 +186,32 @@ def test_clone_sparse_matrices():
         clf_cloned = clone(clf)
         assert_true(clf.empty.__class__ is clf_cloned.empty.__class__)
         assert_array_equal(clf.empty.toarray(), clf_cloned.empty.toarray())
+
+
+def test_clone_frozen():
+    est = DecisionTreeClassifier()
+    est.fit([[0], [1]], [0, 1])
+    assert clone(est) is not est
+    est.frozen = True
+    assert clone(est) is est
+    # is still fitted
+    assert est.predict([[0]]) == 0
+    # freezing works recursively
+    seq = [est]
+    assert clone(seq) is not seq
+    assert clone(seq)[0] is est
+
+    # freezing first then fitting works too
+    est = DecisionTreeClassifier()
+    est.frozen = True
+    est.fit([[0], [1]], [0, 1])
+    assert clone(est) is est
+    assert est.predict([[0]]) == 0
+
+    # can freeze an unfitted estimator (not sure why, but worth testing)
+    est = DecisionTreeClassifier()
+    est.frozen = True
+    assert clone(est) is est
 
 
 def test_repr():
@@ -450,3 +476,75 @@ def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator_restored = pickle.loads(serialized)
     assert_equal(estimator_restored.attribute_pickled, 5)
     assert_equal(estimator_restored._attribute_not_pickled, None)
+
+
+def test_frozen_fit():
+    class DummyEstimator(BaseEstimator):
+        def fit(self, X, y, **kwargs):
+            self.X_ = X
+            self.y_ = y
+            self.kwargs_ = kwargs
+            self._last_call = 'fit'
+            return self
+
+        def fit_transform(self, X, y, **kwargs):
+            self.X_ = X
+            self.y_ = y
+            self.kwargs_ = kwargs
+            self._last_call = 'fit_transform'
+            return np.array(self.X_[0]) + X
+
+        def transform(self, X):
+            self._last_call = 'transform'
+            return np.array(self.X_[0]) + X
+
+        def fit_wobble(self, X, y, **kwargs):
+            self.X_ = X
+            self.y_ = y
+            self.kwargs_ = kwargs
+            self._last_call = 'fit_wobble'
+            return self.y_[0] + X[0][0]
+
+        def wobble(self, X):
+            self._last_call = 'wobble'
+            return self.y_[0] + X[0][0]
+
+    X_freeze = [[5]]
+    y_freeze = [-1]
+    z_freeze = [0]
+    X_train = [[10]]
+    y_train = [1]
+    z_train = [0]
+
+    for fit_method, method in [('fit', None),
+                               ('fit_transform', 'transform'),
+                               ('fit_wobble', 'wobble')]:
+
+        # est is not frozen
+        est = DummyEstimator().fit(X_freeze, y_freeze, z=z_freeze)
+
+        result = frozen_fit(est, fit_method, X_train, y_train, z=z_train)
+        # check it called .fit_transform(), not .fit().transform(), for example
+        assert est._last_call == fit_method
+        # check model was re-fit
+        assert est.X_ == X_train
+        assert est.y_ == y_train
+        assert est.kwargs_ == {'z': z_train}
+        if fit_method == 'fit':
+            assert result is est
+        else:
+            assert_array_equal(result, getattr(est, method)(X_train))
+
+        # est is not frozen
+        est = DummyEstimator().fit(X_freeze, y_freeze, z=z_freeze)
+        est.frozen = True
+        result = frozen_fit(est, fit_method, X_train, y_train, z=z_train)
+        # check model was not re-fit
+        assert est.X_ == X_freeze
+        assert est.y_ == y_freeze
+        assert est.kwargs_ == {'z': z_freeze}
+        if fit_method == 'fit':
+            assert result is est
+        else:
+            assert est._last_call == method
+            assert_array_equal(result, getattr(est, method)(X_train))

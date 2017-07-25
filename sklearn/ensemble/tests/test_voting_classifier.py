@@ -367,6 +367,9 @@ def test_estimator_weights_format():
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
+def test_frozen():
+    raise NotImplementedError()
+  
 def test_transform():
     """Check transform method of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
