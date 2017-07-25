@@ -85,8 +85,7 @@ def test_incremental_pca_validation():
     # Tests that n_components is also <= n_samples.
     assert_raises_regex(ValueError,
                         "n_components\=.* be less or equal to "
-                        "the batch number of samples .*\. You can change "
-                        "either one depending on what you want\.",
+                        "the batch number of samples .*\.",
                         IncrementalPCA(n_components=3).partial_fit, X)
 
 
