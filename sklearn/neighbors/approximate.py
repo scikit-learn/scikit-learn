@@ -132,9 +132,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
 
     radius : float, optinal (default = 1.0)
         Radius from the data point to its neighbors. This is the parameter
-        space to use by default for the :meth`radius_neighbors` queries.
+        space to use by default for the :meth:`radius_neighbors` queries.
 
-    n_candidates : int (default = 10)
+    n_candidates : int (default = 50)
         Minimum number of candidates evaluated per estimator, assuming enough
         items meet the `min_hash_match` constraint.
 
