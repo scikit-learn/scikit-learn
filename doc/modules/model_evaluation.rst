@@ -6,8 +6,8 @@
 Model evaluation: quantifying the quality of predictions
 ========================================================
 
-There are 3 different approaches to evaluate the quality of predictions of a
-model:
+There are 3 different APIs for evaluating the quality of a model's
+predictions:
 
 * **Estimator score method**: Estimators have a ``score`` method providing a
   default evaluation criterion for the problem they are designed to solve.
@@ -54,33 +54,40 @@ the model and the data, like :func:`metrics.mean_squared_error`, are
 available as neg_mean_squared_error which return the negated value
 of the metric.
 
-
-============================    =========================================     ==================================
-Scoring                         Function                                      Comment
-============================    =========================================     ==================================
+==============================    =============================================     ==================================
+Scoring                           Function                                          Comment
+==============================    =============================================     ==================================
 **Classification**
-'accuracy'                      :func:`metrics.accuracy_score`
-'average_precision'             :func:`metrics.average_precision_score`
-'f1'                            :func:`metrics.f1_score`                      for binary targets
-'f1_micro'                      :func:`metrics.f1_score`                      micro-averaged
-'f1_macro'                      :func:`metrics.f1_score`                      macro-averaged
-'f1_weighted'                   :func:`metrics.f1_score`                      weighted average
-'f1_samples'                    :func:`metrics.f1_score`                      by multilabel sample
-'neg_log_loss'                  :func:`metrics.log_loss`                      requires ``predict_proba`` support
-'precision' etc.                :func:`metrics.precision_score`               suffixes apply as with 'f1'
-'recall' etc.                   :func:`metrics.recall_score`                  suffixes apply as with 'f1'
-'roc_auc'                       :func:`metrics.roc_auc_score`
+'accuracy'                        :func:`metrics.accuracy_score`
+'average_precision'               :func:`metrics.average_precision_score`
+'f1'                              :func:`metrics.f1_score`                          for binary targets
+'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
+'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
+'f1_weighted'                     :func:`metrics.f1_score`                          weighted average
+'f1_samples'                      :func:`metrics.f1_score`                          by multilabel sample
+'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
+'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
+'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
+'roc_auc'                         :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_rand_score'           :func:`metrics.adjusted_rand_score`
+'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
+'adjusted_rand_score'             :func:`metrics.adjusted_rand_score`
+'completeness_score'              :func:`metrics.completeness_score`
+'fowlkes_mallows_score'           :func:`metrics.fowlkes_mallows_score`
+'homogeneity_score'               :func:`metrics.homogeneity_score`
+'mutual_info_score'               :func:`metrics.mutual_info_score`
+'normalized_mutual_info_score'    :func:`metrics.normalized_mutual_info_score`
+'v_measure_score'                 :func:`metrics.v_measure_score`
 
 **Regression**
-'neg_mean_absolute_error'       :func:`metrics.mean_absolute_error`
-'neg_mean_squared_error'        :func:`metrics.mean_squared_error`
-'neg_mean_squared_log_error'    :func:`metrics.mean_squared_log_error`
-'neg_median_absolute_error'     :func:`metrics.median_absolute_error`
-'r2'                            :func:`metrics.r2_score`
-============================    =========================================     ==================================
+'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
+'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
+'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
+'r2'                              :func:`metrics.r2_score`
+==============================    =============================================     ==================================
+
 
 Usage examples:
 
@@ -110,7 +117,7 @@ Usage examples:
 Defining your scoring strategy from metric functions
 -----------------------------------------------------
 
-The module :mod:`sklearn.metric` also exposes a set of simple functions
+The module :mod:`sklearn.metrics` also exposes a set of simple functions
 measuring a prediction error given ground truth and prediction:
 
 - functions ending with ``_score`` return a value to
@@ -203,6 +210,51 @@ the following two rules:
   Again, by convention higher numbers are better, so if your scorer
   returns loss, that value should be negated.
 
+.. _multimetric_scoring:
+
+Using multiple metric evaluation
+--------------------------------
+
+Scikit-learn also permits evaluation of multiple metrics in ``GridSearchCV``,
+``RandomizedSearchCV`` and ``cross_validate``.
+
+There are two ways to specify multiple scoring metrics for the ``scoring``
+parameter:
+
+- As an iterable of string metrics::
+      >>> scoring = ['accuracy', 'precision']
+
+- As a ``dict`` mapping the scorer name to the scoring function::
+      >>> from sklearn.metrics import accuracy_score
+      >>> from sklearn.metrics import make_scorer
+      >>> scoring = {'accuracy': make_scorer(accuracy_score),
+      ...            'prec': 'precision'}
+
+Note that the dict values can either be scorer functions or one of the
+predefined metric strings.
+
+Currently only those scorer functions that return a single score can be passed
+inside the dict. Scorer functions that return multiple values are not
+permitted and will require a wrapper to return a single metric::
+
+    >>> from sklearn.model_selection import cross_validate
+    >>> from sklearn.metrics import confusion_matrix
+    >>> # A sample toy binary classification dataset
+    >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
+    >>> svm = LinearSVC(random_state=0)
+    >>> tp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
+    >>> tn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
+    >>> fp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[1, 0]
+    >>> fn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 1]
+    >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
+    ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
+    >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
+    >>> # Getting the test set false positive scores
+    >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
+    [12 13 15]
+    >>> # Getting the test set false negative scores
+    >>> print(cv_results['test_fn'])          # doctest: +NORMALIZE_WHITESPACE
+    [5 4 1]
 
 .. _classification_metrics:
 
@@ -617,10 +669,6 @@ binary classification and multilabel indicator format.
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_precision_recall.py`
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
-
-  * See :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py`
-    for an example of :func:`precision_recall_curve` usage to select
-    features for sparse linear models.
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -1114,7 +1162,7 @@ predictions.
    BS = \frac{1}{N} \sum_{t=1}^{N}(f_t - o_t)^2
 
 where : :math:`N` is the total number of predictions, :math:`f_t` is the
-predicted probablity of the actual outcome :math:`o_t`.
+predicted probability of the actual outcome :math:`o_t`.
 
 Here is a small example of usage of this function:::
 

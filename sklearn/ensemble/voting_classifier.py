@@ -12,6 +12,7 @@ classification estimators.
 # License: BSD 3 clause
 
 import numpy as np
+import warnings
 
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
@@ -61,6 +62,13 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         The number of jobs to run in parallel for ``fit``.
         If -1, then the number of jobs is set to the number of cores.
 
+    flatten_transform : bool, optional (default=None)
+        Affects shape of transform output only when voting='soft'
+        If voting='soft' and flatten_transform=True, transform method returns
+        matrix with shape (n_samples, n_classifiers * n_classes). If
+        flatten_transform=False, it returns
+        (n_classifiers, n_samples, n_classes).
+
     Attributes
     ----------
     estimators_ : list of classifiers
@@ -94,18 +102,23 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     [1 1 1 2 2 2]
     >>> eclf3 = VotingClassifier(estimators=[
     ...        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
-    ...        voting='soft', weights=[2,1,1])
+    ...        voting='soft', weights=[2,1,1],
+    ...        flatten_transform=True)
     >>> eclf3 = eclf3.fit(X, y)
     >>> print(eclf3.predict(X))
     [1 1 1 2 2 2]
+    >>> print(eclf3.transform(X).shape)
+    (6, 6)
     >>>
     """
 
-    def __init__(self, estimators, voting='hard', weights=None, n_jobs=1):
+    def __init__(self, estimators, voting='hard', weights=None, n_jobs=1,
+                 flatten_transform=None):
         self.estimators = estimators
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
+        self.flatten_transform = flatten_transform
 
     @property
     def named_estimators(self):
@@ -163,6 +176,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         if n_isnone == len(self.estimators):
             raise ValueError('All estimators are None. At least one is '
                              'required to be a classifier!')
+
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         self.estimators_ = []
@@ -256,16 +270,30 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         Returns
         -------
-        If `voting='soft'`:
-          array-like = [n_classifiers, n_samples, n_classes]
+        If `voting='soft'` and `flatten_transform=True`:
+          array-like = (n_classifiers, n_samples * n_classes)
+          otherwise array-like = (n_classifiers, n_samples, n_classes)
             Class probabilities calculated by each classifier.
         If `voting='hard'`:
           array-like = [n_samples, n_classifiers]
             Class labels predicted by each classifier.
         """
         check_is_fitted(self, 'estimators_')
+
         if self.voting == 'soft':
-            return self._collect_probas(X)
+            probas = self._collect_probas(X)
+            if self.flatten_transform is None:
+                warnings.warn("'flatten_transform' default value will be "
+                              "changed to True in 0.21."
+                              "To silence this warning you may"
+                              " explicitly set flatten_transform=False.",
+                              DeprecationWarning)
+                return probas
+            elif not self.flatten_transform:
+                return probas
+            else:
+                return np.hstack(probas)
+
         else:
             return self._predict(X)
 

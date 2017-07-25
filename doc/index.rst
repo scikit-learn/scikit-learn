@@ -329,7 +329,7 @@
                    <!--Due to Télécom ParisTech's logo text being smaller, a style has been added to improve readability-->
                    <img id="index-funding-logo-small" src="_static/img/telecom.png" title="Télécom ParisTech" style="max-height: 36px">
                    <img id="index-funding-logo-small" src="_static/img/FNRS-logo.png" title="FNRS">
-                   <img id="index-funding-logo-small" src="_static/img/nyu_short_color.png" title="NYU CDS">
+                   <img id="index-funding-logo-small" src="_static/img/sloan_logo.jpg" title="Alfred P. Sloan Foundation" style="max-height: 36px">
                    <img id="index-funding-logo-small" src="_static/img/columbia.png" title="Columbia University" style="max-height: 36px;">
                  </a>
              </div>
