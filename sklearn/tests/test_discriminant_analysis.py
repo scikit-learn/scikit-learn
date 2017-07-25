@@ -227,6 +227,7 @@ def test_lda_scaling():
 
 def test_lda_store_covariance():
     # Test for slover 'lsqr' and 'eigen'
+    # 'store_covariance' has no effect on 'lsqr' and 'eigen' solvers
     for solver in ('lsqr', 'eigen'):
         clf = LinearDiscriminantAnalysis(solver=solver).fit(X6, y6)
         assert_true(hasattr(clf, 'covariance_'))
@@ -334,7 +335,6 @@ def test_qda_deprecation():
 
     # check that covariance_ (and covariances_ with warning) is stored
     clf = QuadraticDiscriminantAnalysis(store_covariances=True).fit(X6, y6)
-    assert_true(hasattr(clf, 'covariance_'))
     assert_warns_message(DeprecationWarning, "Attribute covariances_ was "
                          "deprecated in version 0.19 and will be removed "
                          "in 0.21. Use covariance_ instead", getattr, clf,
