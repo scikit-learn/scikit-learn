@@ -24,8 +24,12 @@ from ..utils import shuffle as shuffle_
 from ..utils import Bunch
 
 
-# The original XY data can be found at:
-# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors
+# The original data can be found at:
+# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz
+# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt1.dat.gz
+# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt2.dat.gz
+# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt3.dat.gz
+# http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_train.dat.gz
 XY_METADATA = [
     RemoteFileMetadata(
         url='https://ndownloader.figshare.com/files/5976069',
@@ -53,7 +57,7 @@ XY_METADATA = [
                   '3048a5c083eedc005dcdb5cc768924ae'),
         filename='lyrl2004_vectors_train.dat.gz')]
 
-# The original TOPICS data can be found at:
+# The original data can be found at:
 # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a08-topic-qrels/rcv1-v2.topics.qrels.gz
 TOPICS_METADATA = RemoteFileMetadata(
     url='https://ndownloader.figshare.com/files/5976048',
