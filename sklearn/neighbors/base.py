@@ -759,6 +759,11 @@ class SupervisedIntegerMixin(object):
 
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples] or [n_samples, n_outputs]
+            If y is sparse with values [0, 1], it is expected to be the
+            indicator representation of a multilabel classification problem.
+            Otherwise, if y is an array with integer dtype, it is interpreted
+            as the representation of a multiclass problem (possibly with
+            multiple outputs).
 
         """
         if not isinstance(X, (KDTree, BallTree)):
