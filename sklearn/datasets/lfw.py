@@ -103,13 +103,13 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         makedirs(lfw_home)
 
     for target in TARGETS:
-        if not exists(join(lfw_home, target.filename)):
+        target_filepath = join(lfw_home, target.filename)
+        if not exists(target_filepath):
             if download_if_missing:
                 logger.warning("Downloading LFW metadata: %s", target.url)
-                _fetch_remote(target, path=lfw_home)
+                _fetch_remote(target, dirname=lfw_home)
             else:
-                raise IOError("%s is missing"
-                              % join(lfw_home, target.filename))
+                raise IOError("%s is missing" % target_filepath)
 
     if funneled:
         data_folder_path = join(lfw_home, "lfw_funneled")
