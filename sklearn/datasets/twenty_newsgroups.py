@@ -60,7 +60,6 @@ logger = logging.getLogger(__name__)
 
 # The original data can be found at:
 # http://people.csail.mit.edu/jrennie/20Newsgroups/20news-bydate.tar.gz
-
 ARCHIVE = RemoteFileMetadata(
     filename='20news-bydate.tar.gz',
     url='https://ndownloader.figshare.com/files/5975967',

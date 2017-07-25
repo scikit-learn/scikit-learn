@@ -36,7 +36,6 @@ from ..externals import joblib
 
 # The original data can be found at:
 # "http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz"
-
 ARCHIVE = RemoteFileMetadata(
     filename='cal_housing.tgz',
     url='https://ndownloader.figshare.com/files/5976036',

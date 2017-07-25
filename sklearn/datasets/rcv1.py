@@ -26,7 +26,6 @@ from ..utils import Bunch
 
 # The original XY data can be found at:
 # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors
-
 XY_METADATA = [
     RemoteFileMetadata(
         url='https://ndownloader.figshare.com/files/5976069',
@@ -56,7 +55,6 @@ XY_METADATA = [
 
 # The original TOPICS data can be found at:
 # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a08-topic-qrels/rcv1-v2.topics.qrels.gz
-
 TOPICS_METADATA = RemoteFileMetadata(
     url='https://ndownloader.figshare.com/files/5976048',
     checksum=('2a98e5e5d8b770bded93afc8930d882'

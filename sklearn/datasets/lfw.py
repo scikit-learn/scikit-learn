@@ -39,7 +39,6 @@ logger = logging.getLogger(__name__)
 
 # The original data can be found in:
 # http://vis-www.cs.umass.edu/lfw/lfw.tgz
-
 ARCHIVE = RemoteFileMetadata(
     filename='lfw.tgz',
     url='https://ndownloader.figshare.com/files/5976018',
@@ -48,7 +47,6 @@ ARCHIVE = RemoteFileMetadata(
 
 # The original funneled data can be found in:
 # http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz
-
 FUNNELED_ARCHIVE = RemoteFileMetadata(
     filename='lfw-funneled.tgz',
     url='https://ndownloader.figshare.com/files/5976015',
@@ -59,7 +57,6 @@ FUNNELED_ARCHIVE = RemoteFileMetadata(
 # http://vis-www.cs.umass.edu/lfw/pairsDevTrain.txt',
 # http://vis-www.cs.umass.edu/lfw/pairsDevTest.txt',
 # http://vis-www.cs.umass.edu/lfw/pairs.txt',
-
 TARGETS = [
     RemoteFileMetadata(
         filename='pairsDevTrain.txt',

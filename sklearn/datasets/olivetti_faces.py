@@ -37,7 +37,6 @@ from ..externals import joblib
 
 # The original data can be found at:
 # http://cs.nyu.edu/~roweis/data/olivettifaces.mat
-
 ARCHIVE = RemoteFileMetadata(
     filename='olivettifaces.mat',
     url='https://ndownloader.figshare.com/files/5976027',
