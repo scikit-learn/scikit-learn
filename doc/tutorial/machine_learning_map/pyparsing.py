@@ -782,7 +782,7 @@ class ParserElement(object):
 
     def setFailAction( self, fn ):
         """Define action to perform if parsing fails at this expression.
-           Fail acton fn is a callable function that takes the arguments
+           Fail action fn is a callable function that takes the arguments
            fn(s,loc,expr,err) where:
             - s = string being parsed
             - loc = location where expression match was attempted and failed
