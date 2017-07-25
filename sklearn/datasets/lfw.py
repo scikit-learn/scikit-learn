@@ -42,8 +42,8 @@ logger = logging.getLogger(__name__)
 ARCHIVE = RemoteFileMetadata(
     filename='lfw.tgz',
     url='https://ndownloader.figshare.com/files/5976018',
-    checksum=('b47c8422c8cded889dc5a13418c4bc2a'
-              'bbda121092b3533a83306f90d900100a'))
+    checksum=('055f7d9c632d7370e6fb4afc7468d40f'
+              '970c34a80d4c6f50ffec63f5a8d536c0'))
 
 # The original funneled data can be found in:
 # http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz
