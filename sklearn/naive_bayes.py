@@ -421,10 +421,11 @@ class GaussianNB(BaseNB):
             # Put epsilon back in each time
             self.sigma_[:, :] -= epsilon
 
-        _check_y_classes(y, self.classes_)
+        unique_y = np.unique(y)
+        _check_y_classes(unique_y, self.classes_)
         classes = self.classes_
 
-        for y_i in np.unique(y):
+        for y_i in unique_y:
             # classes need not be sorted because user input
             i = classes.searchsorted(y_i)
             X_i = X[y == y_i, :]

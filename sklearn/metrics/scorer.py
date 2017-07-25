@@ -80,9 +80,11 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
             # if labels passed as kwargs, return kwargs as is
             if 'labels' in self._kwargs:
                 if est_has_classes:
-                    if not np.array_equal(classes, self._kwargs['labels']):
+                    # labels should be a subset of classes
+                    if not set(classes).issuperset(
+                                                set(self._kwargs['labels'])):
                         raise ValueError("`estimator classes=%r` is not the"
-                                         "same as scorer labels=%r" %
+                                         "superset of `scorer labels=%r`" %
                                          (classes, self._kwargs['labels']))
                 return self._kwargs
             else:

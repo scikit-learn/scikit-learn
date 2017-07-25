@@ -754,19 +754,19 @@ def check_non_negative(X, whom):
         raise ValueError("Negative values in data passed to %s" % whom)
 
 
-def _check_y_classes(y, classes):
+def _check_y_classes(unique_y, classes):
     """
     Check if y has a subset of classes as set in the classes argument.
 
     Parameters
     ----------
-    y : array, shape (n_samples,)
-            Target values passed into a fit-like function.
+    unique_y : array, shape (n_samples,)
+            The unique values of target values passed into a fit-like
+            function.
 
     classes : array-like, shape (n_classes,)
             List of all the classes that can possibly appear in the y vector.
     """
-    unique_y = np.unique(y)
     unique_y_in_classes = np.in1d(unique_y, classes)
 
     if not np.all(unique_y_in_classes):

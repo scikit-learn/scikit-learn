@@ -87,8 +87,7 @@ def test_gnb_classes_init_partial_fit_same_result():
                                        classes=[0, 1, 2, 3]).predict_proba(X)
 
     # check same results:
-    for i in range(y_pred1.shape[1]):
-        assert_array_almost_equal(y_pred1[:, i], y_pred2[:, i], 8)
+    assert_array_almost_equal(y_pred1, y_pred2, 8)
 
 
 def test_gnb_prior():
