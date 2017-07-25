@@ -220,9 +220,8 @@ class IncrementalPCA(_BasePCA):
                              "processing" % (self.n_components, n_features))
         elif not self.n_components <= n_samples:
             raise ValueError("n_components=%r must be less or equal to "
-                             "the batch number of samples %d. You can change "
-                             "either one depending on what you "
-                             "want." % (self.n_components, n_samples))
+                             "the batch number of samples "
+                             "%d." % (self.n_components, n_samples))
         else:
             self.n_components_ = self.n_components
 
