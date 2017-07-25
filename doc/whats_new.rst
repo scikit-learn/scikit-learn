@@ -63,7 +63,7 @@ random sampling procedures.
 - :class:`linear_model.LassoLars` (bug fix)
 - :class:`linear_model.LassoLarsIC` (bug fix)
 - :class:`manifold.TSNE` (bug fix)
-- :class:`sklearn.neighbors.NearestCentroid` (bug fix)
+- :class:`neighbors.NearestCentroid` (bug fix)
 - :class:`semi_supervised.LabelSpreading` (bug fix)
 - :class:`semi_supervised.LabelPropagation` (bug fix)
 - tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
