@@ -63,6 +63,7 @@ random sampling procedures.
 - :class:`linear_model.LassoLars` (bug fix)
 - :class:`linear_model.LassoLarsIC` (bug fix)
 - :class:`manifold.TSNE` (bug fix)
+- :class:`neighbors.NearestCentroid` (bug fix)
 - :class:`semi_supervised.LabelSpreading` (bug fix)
 - :class:`semi_supervised.LabelPropagation` (bug fix)
 - tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
@@ -535,6 +536,9 @@ Decomposition, manifold learning and clustering
 
 - Fix bug where :mod:`mixture` ``sample`` methods did not return as many
   samples as requested. :issue:`7702` by :user:`Levi John Wolf <ljwolf>`.
+
+- Fixed the shrinkage implementation in :class:`neighbors.NearestCentroid`.
+  :issue:`9219` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 Preprocessing and feature selection
 
