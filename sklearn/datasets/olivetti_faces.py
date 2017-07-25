@@ -120,7 +120,7 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
 
         print('downloading Olivetti faces from %s to %s'
               % (ARCHIVE.url, data_home))
-        _fetch_remote(ARCHIVE, path=data_home)
+        _fetch_remote(ARCHIVE, dirname=data_home)
 
         mat_path = join(data_home, ARCHIVE.filename)
         mfile = loadmat(file_name=mat_path)

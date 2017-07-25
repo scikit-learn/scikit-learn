@@ -241,7 +241,7 @@ def fetch_species_distributions(data_home=None,
 
         print('Downloading species data from %s to %s' % (SAMPLES.url,
                                                           data_home))
-        _fetch_remote(SAMPLES, path=data_home)
+        _fetch_remote(SAMPLES, dirname=data_home)
         samples_path = join(data_home, "samples.zip")
         X = np.load(samples_path)  # samples.zip is a valid npz
         remove(samples_path)
@@ -255,7 +255,7 @@ def fetch_species_distributions(data_home=None,
 
         print('Downloading coverage data from %s to %s' % (COVERAGES.url,
                                                            data_home))
-        _fetch_remote(COVERAGES, path=data_home)
+        _fetch_remote(COVERAGES, dirname=data_home)
         coverages_path = join(data_home, "coverages.zip")
         X = np.load(coverages_path)  # coverages.zip is a valid npz
         remove(coverages_path)

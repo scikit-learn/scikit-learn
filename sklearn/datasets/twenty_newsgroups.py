@@ -82,7 +82,7 @@ def download_20newsgroups(target_dir, cache_path):
         os.makedirs(target_dir)
 
     logger.warning("Downloading dataset from %s (14 MB)", ARCHIVE.url)
-    _fetch_remote(ARCHIVE, path=target_dir)
+    _fetch_remote(ARCHIVE, dirname=target_dir)
 
     logger.info("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)

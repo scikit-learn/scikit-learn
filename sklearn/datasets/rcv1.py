@@ -158,7 +158,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         files = []
         for each in XY_METADATA:
             logger.warning("Downloading %s" % each.url)
-            _fetch_remote(each, path=rcv1_dir)
+            _fetch_remote(each, dirname=rcv1_dir)
             files.append(GzipFile(filename=join(rcv1_dir, each.filename)))
 
         Xy = load_svmlight_files(files, n_features=N_FEATURES)
@@ -182,7 +182,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     if download_if_missing and (not exists(sample_topics_path) or
                                 not exists(topics_path)):
         logger.warning("Downloading %s" % TOPICS_METADATA.url)
-        _fetch_remote(TOPICS_METADATA, path=rcv1_dir)
+        _fetch_remote(TOPICS_METADATA, dirname=rcv1_dir)
 
         # parse the target file
         n_cat = -1

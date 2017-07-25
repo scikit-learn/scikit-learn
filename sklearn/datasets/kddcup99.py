@@ -296,7 +296,7 @@ def _fetch_brute_kddcup99(data_home=None,
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
         logger.warning("Downloading %s" % archive.url)
-        _fetch_remote(archive, path=kddcup_dir)
+        _fetch_remote(archive, dirname=kddcup_dir)
         dt = [('duration', int),
               ('protocol_type', 'S4'),
               ('service', 'S11'),

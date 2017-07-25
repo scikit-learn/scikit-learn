@@ -95,8 +95,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
 
         print('downloading Cal. housing from {} to {}'.format(
             ARCHIVE.url, data_home))
-
-        _fetch_remote(ARCHIVE, path=data_home)
+        _fetch_remote(ARCHIVE, dirname=data_home)
 
         archive_path = join(data_home, ARCHIVE.filename)
         fileobj = tarfile.open(
