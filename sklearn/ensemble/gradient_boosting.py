@@ -1152,8 +1152,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 validation_loss = loss_(y_val, next(y_val_pred_iter),
                                         sample_weight_val)
 
-                # Require validation_score to be better (less) than at least one
-                # of the last n_iter_no_change evaluations
+                # Require validation_score to be better (less) than at least
+                # one of the last n_iter_no_change evaluations
                 if np.any(validation_loss + self.tol < loss_history):
                     loss_history[i % len(loss_history)] = validation_loss
                 else:
