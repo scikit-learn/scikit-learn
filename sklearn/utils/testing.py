@@ -780,6 +780,7 @@ def _get_parent_args(Estimator):
     list_args = []
     for parent in Estimator.__bases__:
         list_args.extend(_get_args(parent.__init__))
+        list_args.extend([a for a in dir(parent) if not a.startswith("__")])
         list_args.extend(_get_parent_args(parent))
     return list_args
 
