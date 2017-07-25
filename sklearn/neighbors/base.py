@@ -159,8 +159,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._fit_method = None
 
     def _fit(self, X):
-        allow_nans = True if self.\
-                                 metric in _MASKED_SUPPORTED_METRICS else False
+        allow_nans = self.metric in _MASKED_SUPPORTED_METRICS
 
         if self.metric_params is None:
             self.effective_metric_params_ = {}
