@@ -13,6 +13,7 @@ at which the fixe is no longer needed.
 import warnings
 import os
 import errno
+from distutils.version import LooseVersion
 
 import numpy as np
 import scipy.sparse as sp
@@ -23,23 +24,11 @@ try:
 except ImportError:
     from ..externals.funcsigs import signature
 
-
-def _parse_version(version_string):
-    version = []
-    for x in version_string.split('.'):
-        try:
-            version.append(int(x))
-        except ValueError:
-            # x may be of the form dev-1ea1592
-            version.append(x)
-    return tuple(version)
-
-
 euler_gamma = getattr(np, 'euler_gamma',
                       0.577215664901532860606512090082402431)
 
-np_version = _parse_version(np.__version__)
-sp_version = _parse_version(scipy.__version__)
+np_version = LooseVersion(np.__version__)
+sp_version = LooseVersion(scipy.__version__)
 
 
 # Remove when minimum required NumPy >= 1.10
@@ -137,7 +126,7 @@ else:
                 X.max(axis=axis).toarray().ravel())
 
 
-if sp_version < (0, 15):
+if sp_version < LooseVersion('0.15'):
     # Backport fix for scikit-learn/scikit-learn#2986 / scipy/scipy#4142
     from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
 else:
@@ -177,7 +166,7 @@ else:
                 raise
 
 
-if np_version < (1, 12):
+if np_version < LooseVersion('1.12'):
     class MaskedArray(np.ma.MaskedArray):
         # Before numpy 1.12, np.ma.MaskedArray object is not picklable
         # This fix is needed to make our model_selection.GridSearchCV

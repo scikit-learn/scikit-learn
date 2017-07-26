@@ -13,7 +13,7 @@ from distutils.version import LooseVersion
 from numpy.distutils.system_info import get_info
 
 DEFAULT_ROOT = 'sklearn'
-CYTHON_MIN_VERSION = '0.23'
+CYTHON_MIN_VERSION = LooseVersion('0.23')
 
 
 def get_blas_info():

@@ -4,6 +4,8 @@
 #
 # License: BSD 3 clause
 
+from distutils.version import LooseVersion
+
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -613,7 +615,7 @@ def test_softmax():
 
 
 def test_stable_cumsum():
-    if np_version < (1, 9):
+    if np_version < LooseVersion('1.9'):
         raise SkipTest("Sum is as unstable as cumsum for numpy < 1.9")
     assert_array_equal(stable_cumsum([1, 2, 3]), np.cumsum([1, 2, 3]))
     r = np.random.RandomState(0).rand(100000)

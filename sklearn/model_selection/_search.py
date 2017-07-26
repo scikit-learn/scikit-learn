@@ -18,6 +18,7 @@ from functools import partial, reduce
 from itertools import product
 import operator
 import warnings
+from distutils.version import LooseVersion
 
 import numpy as np
 from scipy.stats import rankdata
@@ -258,7 +259,7 @@ class ParameterSampler(object):
                 params = dict()
                 for k, v in items:
                     if hasattr(v, "rvs"):
-                        if sp_version < (0, 16):
+                        if sp_version < LooseVersion('0.16'):
                             params[k] = v.rvs()
                         else:
                             params[k] = v.rvs(random_state=rnd)

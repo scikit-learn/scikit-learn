@@ -7,6 +7,7 @@ import scipy.sparse as sp
 import os
 import shutil
 from tempfile import NamedTemporaryFile
+from distutils.version import LooseVersion
 
 from sklearn.externals.six import b
 
@@ -487,7 +488,8 @@ def test_load_offset_exhaustive_splits():
     # load the same data in 2 parts with all the possible byte offsets to
     # locate the split so has to test for particular boundary cases
     for mark in range(size):
-        if sp_version < (0, 14) and (mark == 0 or mark > size - 100):
+        if (sp_version < LooseVersion('0.14') and
+                (mark == 0 or mark > size - 100)):
             # old scipy does not support sparse matrices with 0 rows.
             continue
         f.seek(0)

@@ -9,6 +9,7 @@ import pickle
 import sys
 from types import GeneratorType
 import re
+from distutils.version import LooseVersion
 
 import numpy as np
 import scipy.sparse as sp
@@ -712,7 +713,7 @@ def test_param_sampler():
                                n_iter=3, random_state=0)
     assert_equal([x for x in sampler], [x for x in sampler])
 
-    if sp_version >= (0, 16):
+    if sp_version >= LooseVersion('0.16'):
         param_distributions = {"C": uniform(0, 1)}
         sampler = ParameterSampler(param_distributions=param_distributions,
                                    n_iter=10, random_state=0)
