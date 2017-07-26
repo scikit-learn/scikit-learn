@@ -242,14 +242,14 @@ permitted and will require a wrapper to return a single metric::
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
     >>> svm = LinearSVC(random_state=0)
-    >>> tp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
-    >>> tn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
-    >>> fp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[1, 0]
-    >>> fn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 1]
+    >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
+    >>> def tn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
+    >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
+    >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
     >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
     ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
     >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
-    >>> # Getting the test set false positive scores
+    >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
     [12 13 15]
     >>> # Getting the test set false negative scores
