@@ -49,9 +49,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     Parameters
     ----------
     estimator : object
-        A supervised learning estimator with a `fit` method that updates a
-        `coef_` attribute that holds the fitted parameters. Important features
-        must correspond to high absolute values in the `coef_` array.
+        A supervised learning estimator with a `fit` method that either
+        updates a `coef_` attribute that holds the fitted parameters,
+        or computes `feature_importances_` attribute. Important features
+        must correspond to high absolute values in the `coef_`
+        or the `feature_importances_` array.
 
         For instance, this is the case for most supervised learning
         algorithms such as Support Vector Classifiers and Generalized
@@ -282,9 +284,11 @@ class RFECV(RFE, MetaEstimatorMixin):
     Parameters
     ----------
     estimator : object
-        A supervised learning estimator with a `fit` method that updates a
-        `coef_` attribute that holds the fitted parameters. Important features
-        must correspond to high absolute values in the `coef_` array.
+        A supervised learning estimator with a `fit` method that either
+        updates a `coef_` attribute that holds the fitted parameters,
+        or computes `feature_importances_` attribute. Important features
+        must correspond to high absolute values in the `coef_`
+        or the `feature_importances_` array.
 
         For instance, this is the case for most supervised learning
         algorithms such as Support Vector Classifiers and Generalized
