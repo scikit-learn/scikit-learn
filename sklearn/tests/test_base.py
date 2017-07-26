@@ -152,6 +152,16 @@ def test_clone_nan():
     assert_true(clf.empty is clf2.empty)
 
 
+def test_clone_copy_init_params():
+    # test for deprecation warning when copying or casting an init parameter
+    est = ModifyInitParams()
+    message = ("Estimator ModifyInitParams modifies parameters in __init__. "
+               "This behavior is deprecated as of 0.18 and support "
+               "for this behavior will be removed in 0.20.")
+
+    assert_warns_message(DeprecationWarning, message, clone, est)
+
+
 def test_clone_sparse_matrices():
     sparse_matrix_classes = [
         getattr(sp, name)

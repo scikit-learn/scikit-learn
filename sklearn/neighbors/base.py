@@ -101,9 +101,9 @@ def _get_weights(dist, weights):
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for nearest neighbors estimators."""
 
-    _fit_X = None
-    _tree = None
-    _fit_method = None
+#    _fit_X = None
+#    _tree = None
+#    _fit_method = None
 
     @abstractmethod
     def __init__(self, n_neighbors=None, radius=None,
@@ -324,7 +324,7 @@ class KNeighborsMixin(object):
                [2]]...)
 
         """
-        if self._fit_method is None:
+        if not hasattr(self, "_fit_method"):
             raise NotFittedError("Must fit neighbors before querying.")
 
         if n_neighbors is None:
@@ -570,7 +570,7 @@ class RadiusNeighborsMixin(object):
         For efficiency, `radius_neighbors` returns arrays of objects, where
         each object is a 1D array of indices or distances.
         """
-        if self._fit_method is None:
+        if not hasattr(self, "_fit_method"):
             raise NotFittedError("Must fit neighbors before querying.")
 
         if X is not None:
