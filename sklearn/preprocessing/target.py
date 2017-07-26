@@ -150,8 +150,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
             if not np.allclose(
                     y[subsample_idx],
                     self.transformer_.inverse_transform(
-                        self.transformer_.transform(y[subsample_idx])),
-                    atol=1e-4):
+                        self.transformer_.transform(y[subsample_idx]))):
                 raise ValueError("The provided functions or transformer are"
                                  " not strictly inverse of each other. If"
                                  " you are sure you want to proceed regardless"
