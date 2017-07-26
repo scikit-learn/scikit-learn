@@ -123,8 +123,8 @@ Given an external estimator that assigns weights to features (e.g., the
 coefficients of a linear model), recursive feature elimination (:class:`RFE`)
 is to select features by recursively considering smaller and smaller sets of
 features.  First, the estimator is trained on the initial set of features and
-the importance of each feature is obtained either through a `coef_` attribute
-or through a `feature_importances_` attribute. Then, the least important
+the importance of each feature is obtained either through a ``coef_`` attribute
+or through a ``feature_importances_`` attribute. Then, the least important
 features are pruned from current set of features.That procedure is recursively
 repeated on the pruned set until the desired number of features to select is
 eventually reached.
