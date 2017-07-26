@@ -182,7 +182,7 @@ def plot_time_vs_s(time, norm, point_labels, title):
     plt.figure()
     colors = ['g', 'b', 'y']
     for i, l in enumerate(sorted(norm.keys())):
-        if l is not "fbpca":
+        if l != "fbpca":
             plt.plot(time[l], norm[l], label=l, marker='o', c=colors.pop())
         else:
             plt.plot(time[l], norm[l], label=l, marker='^', c='red')
@@ -200,7 +200,7 @@ def scatter_time_vs_s(time, norm, point_labels, title):
     plt.figure()
     size = 100
     for i, l in enumerate(sorted(norm.keys())):
-        if l is not "fbpca":
+        if l != "fbpca":
             plt.scatter(time[l], norm[l], label=l, marker='o', c='b', s=size)
             for label, x, y in zip(point_labels, list(time[l]), list(norm[l])):
                 plt.annotate(label, xy=(x, y), xytext=(0, -80),

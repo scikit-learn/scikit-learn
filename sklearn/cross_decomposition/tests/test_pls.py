@@ -7,6 +7,7 @@ from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_, CCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import check_random_state
 
 
 def test_pls():
@@ -167,17 +168,17 @@ def test_pls():
     p_noise = 10
     q_noise = 5
     # 2 latents vars:
-    np.random.seed(11)
-    l1 = np.random.normal(size=n)
-    l2 = np.random.normal(size=n)
+    rng = check_random_state(11)
+    l1 = rng.normal(size=n)
+    l2 = rng.normal(size=n)
     latents = np.array([l1, l1, l2, l2]).T
-    X = latents + np.random.normal(size=4 * n).reshape((n, 4))
-    Y = latents + np.random.normal(size=4 * n).reshape((n, 4))
+    X = latents + rng.normal(size=4 * n).reshape((n, 4))
+    Y = latents + rng.normal(size=4 * n).reshape((n, 4))
     X = np.concatenate(
-        (X, np.random.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
+        (X, rng.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
     Y = np.concatenate(
-        (Y, np.random.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
-    np.random.seed(None)
+        (Y, rng.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
+
     pls_ca = pls_.PLSCanonical(n_components=3)
     pls_ca.fit(X, Y)
 
@@ -372,7 +373,7 @@ def test_pls_scaling():
     n_targets = 5
     n_features = 10
 
-    rng = np.random.RandomState(0)
+    rng = check_random_state(0)
 
     Q = rng.randn(n_targets, n_features)
     Y = rng.randn(n_samples, n_targets)

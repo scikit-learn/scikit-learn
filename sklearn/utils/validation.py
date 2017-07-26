@@ -363,7 +363,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         accept_sparse = False
 
     # store whether originally we wanted numeric dtype
-    dtype_numeric = dtype == "numeric"
+    dtype_numeric = isinstance(dtype, six.string_types) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
     if not hasattr(dtype_orig, 'kind'):
@@ -404,9 +404,10 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         if ensure_2d:
             if array.ndim == 1:
                 raise ValueError(
-                    "Got X with X.ndim=1. Reshape your data either using "
-                    "X.reshape(-1, 1) if your data has a single feature or "
-                    "X.reshape(1, -1) if it contains a single sample.")
+                    "Expected 2D array, got 1D array instead:\narray={}.\n"
+                    "Reshape your data either using array.reshape(-1, 1) if "
+                    "your data has a single feature or array.reshape(1, -1) "
+                    "if it contains a single sample.".format(array))
             array = np.atleast_2d(array)
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
@@ -585,10 +586,13 @@ def column_or_1d(y, warn=False):
 def check_random_state(seed):
     """Turn seed into a np.random.RandomState instance
 
-    If seed is None, return the RandomState singleton used by np.random.
-    If seed is an int, return a new RandomState instance seeded with seed.
-    If seed is already a RandomState instance, return it.
-    Otherwise raise ValueError.
+    Parameters
+    ----------
+    seed : None | int | instance of RandomState
+        If seed is None, return the RandomState singleton used by np.random.
+        If seed is an int, return a new RandomState instance seeded with seed.
+        If seed is already a RandomState instance, return it.
+        Otherwise raise ValueError.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -614,7 +618,7 @@ def has_fit_parameter(estimator, parameter):
     Returns
     -------
     is_parameter: bool
-        Whether the parameter was found to be a a named parameter of the
+        Whether the parameter was found to be a named parameter of the
         estimator's fit method.
 
     Examples
@@ -695,7 +699,8 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         estimator instance for which the check is performed.
 
     attributes : attribute name(s) given as string or a list/tuple of strings
-        Eg. : ["coef_", "estimator_", ...], "coef_"
+        Eg.:
+            ``["coef_", "estimator_", ...], "coef_"``
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
