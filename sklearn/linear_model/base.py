@@ -105,8 +105,8 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     return X, y, X_offset, y_offset, X_std
 
 
-@deprecated("center_data was deprecated in version 0.18 and will be removed in "
-            "0.20. Use utilities in preprocessing.data instead")
+@deprecated("center_data was deprecated in version 0.18 and will be removed "
+            "in 0.20. Use utilities in preprocessing.data instead")
 def center_data(X, y, fit_intercept, normalize=False, copy=True,
                 sample_weight=None):
     """
@@ -520,10 +520,11 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
     n_samples, n_features = X.shape
 
     if sparse.isspmatrix(X):
+        # copy is not needed here as X is not modified inplace when X is sparse
         precompute = False
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, fit_intercept=fit_intercept, normalize=normalize,
-            return_mean=True)
+            copy=False, return_mean=True)
     else:
         # copy was done in fit if necessary
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
