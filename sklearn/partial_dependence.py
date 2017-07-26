@@ -378,9 +378,9 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
     return pdp, axes
 
 
-def plot_partial_dependence(gbrt, X, features, feature_names=None,
+def plot_partial_dependence(est, X, features, feature_names=None,
                             label=None, n_cols=3, grid_resolution=100,
-                            percentiles=(0.05, 0.95), n_jobs=1,
+                            method=None, percentiles=(0.05, 0.95), n_jobs=1,
                             verbose=0, ax=None, line_kw=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
@@ -393,10 +393,10 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
 
     Parameters
     ----------
-    gbrt : BaseGradientBoosting
-        A fitted gradient boosting model.
+    est : BaseEstimator
+        A fitted classification or regression model.
     X : array-like, shape=(n_samples, n_features)
-        The data on which ``gbrt`` was trained.
+        The data on which ``est`` was trained.
     features : seq of ints, strings, or tuples of ints or strings
         If seq[i] is an int or a tuple with one int value, a one-way
         PDP is created; if seq[i] is a tuple of two ints, a two-way
@@ -410,7 +410,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         the name of the feature with index i.
     label : object
         The class label for which the PDPs should be computed.
-        Only if gbrt is a multi-class model. Must be in ``gbrt.classes_``.
+        Only if est is a multi-class model. Must be in ``est.classes_``.
     n_cols : int
         The number of columns in the grid plot (default: 3).
     percentiles : (low, high), default=(0.05, 0.95)
@@ -418,6 +418,22 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         for the PDP axes.
     grid_resolution : int, default=100
         The number of equally spaced points on the axes.
+    method : {'recursion', 'exact', 'estimated', None}, optional (default=None)
+        The method to use to calculate the partial dependence function:
+
+        - If 'recursion', the underlying trees of ``est`` will be recursed to
+          calculate the function. Only supported for BaseGradientBoosting and
+          ForestRegressor.
+        - If 'exact', the function will be calculated by calling the
+          ``predict_proba`` method of ``est`` for classification or ``predict``
+          for regression on ``X``for every point in the grid. To speed up this
+          method, you can use a subset of ``X`` or a more coarse grid.
+        - If 'estimated', the function will be calculated by calling the
+          ``predict_proba`` method of ``est`` for classification or ``predict``
+          for regression on the mean of ``X``.
+        - If None, then 'recursion' will be used if ``est`` is
+          BaseGradientBoosting or ForestRegressor, and 'exact' used for other
+          estimators.
     n_jobs : int
         The number of CPUs to use to compute the PDs. -1 means 'all CPUs'.
         Defaults to 1.
@@ -457,26 +473,46 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     from matplotlib.ticker import MaxNLocator
     from matplotlib.ticker import ScalarFormatter
 
-    if not isinstance(gbrt, BaseGradientBoosting):
-        raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
-    if gbrt.estimators_.shape[0] == 0:
-        raise ValueError('Call %s.fit before partial_dependence' %
-                         gbrt.__class__.__name__)
+    if method is None:
+        if isinstance(est, (BaseGradientBoosting, ForestRegressor)):
+            method = 'recursion'
+        else:
+            method = 'exact'
+    if (not isinstance(est, (BaseGradientBoosting, ForestRegressor)) and
+            method == 'recursion'):
+        raise ValueError('est has to be an instance of BaseGradientBoosting or'
+                         ' ForestRegressor for the "recursion" method. Try '
+                         'using method="exact" or "estimated".')
+    if (not hasattr(est, '_estimator_type') or
+            est._estimator_type not in ('classifier', 'regressor')):
+        raise ValueError('est must be a fitted regressor or classifier model.')
+    if method != 'recursion' and est._estimator_type == 'classifier':
+        raise ValueError('est requires a predict_proba method for '
+                         'method="exact" or "estimated" for classification.')
+    if method == 'recursion':
+        if len(est.estimators_) == 0:
+            raise ValueError('Call %s.fit before partial_dependence' %
+                             est.__class__.__name__)
+        n_features = est.n_features_
+    elif X is None:
+        raise ValueError('X is required for method="exact" or "estimated".')
+    else:
+        n_features = X.shape[1]
 
     # set label_idx for multi-class GBRT
-    if hasattr(gbrt, 'classes_') and np.size(gbrt.classes_) > 2:
+    if hasattr(est, 'classes_') and np.size(est.classes_) > 2:
         if label is None:
             raise ValueError('label is not given for multi-class PDP')
-        label_idx = np.searchsorted(gbrt.classes_, label)
-        if gbrt.classes_[label_idx] != label:
+        label_idx = np.searchsorted(est.classes_, label)
+        if est.classes_[label_idx] != label:
             raise ValueError('label %s not in ``gbrt.classes_``' % str(label))
     else:
         # regression and binary classification
         label_idx = 0
 
     X = check_array(X, dtype=DTYPE, order='C')
-    if gbrt.n_features_ != X.shape[1]:
-        raise ValueError('X.shape[1] does not match gbrt.n_features_')
+    if est.n_features_ != X.shape[1]:
+        raise ValueError('X.shape[1] does not match est.n_features_')
 
     if line_kw is None:
         line_kw = {'color': 'green'}
@@ -486,7 +522,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert feature_names to list
     if feature_names is None:
         # if not feature_names use fx indices as name
-        feature_names = [str(i) for i in range(gbrt.n_features_)]
+        feature_names = [str(i) for i in range(est.n_features_)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
 
@@ -530,7 +566,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
 
     # compute PD functions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(partial_dependence)(gbrt, fxs, X=X,
+        delayed(partial_dependence)(est, fxs, X=X, method=method,
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles)
         for fxs in features)
