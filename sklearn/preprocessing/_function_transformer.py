@@ -101,8 +101,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
                          random_state=self.random_state)
         try:
             assert_allclose_dense_sparse(
-                X_sel, self.inverse_transform(self.transform(X_sel)),
-                atol=1e-7)
+                X_sel, self.inverse_transform(self.transform(X_sel)))
         except AssertionError:
             raise ValueError("The provided functions are not strictly"
                              " inverse of each other. If you are sure you"
