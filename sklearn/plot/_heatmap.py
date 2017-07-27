@@ -90,4 +90,4 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
     # not anti-diagonal matrix
     ax.invert_yaxis()
 
-    return ax
+    return img

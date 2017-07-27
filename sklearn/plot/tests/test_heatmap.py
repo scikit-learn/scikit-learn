@@ -60,8 +60,9 @@ def test_confusion_matrix():
                               cmap="Paired", ax=plt.gca())
 
         # y having different value than classes should raise error
-        expected_msg = ("`classes=[1,2]` are not a superset of the unique",
-                        "values of y_true and y_pred which are [1,2,3]")
+        expected_msg = ("y_true and y_pred contain 3 unique classes, which is"
+                        "not the same as 2 classes found in `classes=[1,2]`"
+                        "paramter")
         assert_raise_message(ValueError, expected_msg,
                              plot_confusion_matrix, array1, array2,
                              classes=[1, 2], ax=plt.gca())

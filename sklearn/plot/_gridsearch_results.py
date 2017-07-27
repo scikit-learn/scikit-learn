@@ -2,6 +2,58 @@ import numpy as np
 from sklearn.plot import plot_heatmap
 
 
+def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title):
+    import matplotlib.pyplot as plt
+
+    param = params[0]
+    param_range = sorted(cv_results['param_%s' % param])
+    train_scores_mean = cv_results['mean_train_score']
+    train_scores_std = cv_results['std_train_score']
+    test_scores_mean = cv_results['mean_test_score']
+    test_scores_std = cv_results['std_test_score']
+
+    lw = 2
+    plt.semilogx(param_range, train_scores_mean,
+                 label="Training score",
+                 color="darkorange", lw=lw)
+    plt.fill_between(param_range, train_scores_mean - train_scores_std,
+                     train_scores_mean + train_scores_std, alpha=0.2,
+                     color="darkorange", lw=lw)
+
+    img = plt.semilogx(param_range, test_scores_mean,
+                       label="Cross-validation score",
+                       color="navy", lw=lw)
+    plt.fill_between(param_range, test_scores_mean - test_scores_std,
+                     test_scores_mean + test_scores_std, alpha=0.2,
+                     color="navy", lw=lw)
+
+    plt.xlabel(param)
+    plt.legend()
+    ylabel = "Score" if ylabel is None else ylabel
+    plt.ylabel(ylabel)
+    plt.title(title)
+    plt.show()
+    return img
+
+
+def _plot_2D_results(cv_results, params, metric, ax, xlabel, ylabel,
+                     title, norm):
+    import matplotlib.pyplot as plt
+
+    parameter1_values = np.unique(cv_results['param_%s' % params[0]])
+    parameter2_values = np.unique(cv_results['param_%s' % params[1]])
+
+    scores = cv_results[metric].reshape(len(parameter1_values),
+                                        len(parameter2_values))
+
+    img = plot_heatmap(scores, cmap=plt.cm.hot, xlabel=xlabel,
+                       ylabel=ylabel, xticklabels=parameter1_values,
+                       yticklabels=parameter2_values, ax=ax, norm=norm)
+    plt.title(title)
+    plt.show()
+    return img
+
+
 def plot_gridsearch_results(cv_results, metric='mean_test_score',
                             xlabel=None, ylabel=None,
                             title='Grid Search Results', cmap=None,
@@ -54,63 +106,24 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
 
     norm : matplotlib normalizer
         Normalizer passed to pcolormesh function from matplotlib used to
-        generate the heatmap.
+        generate the heatmap. This is ignored if only 1 parameter is used in
+        grid search.
     """
-
-    import matplotlib.pyplot as plt
 
     params = sorted(cv_results['params'][0].keys())
     nparams = len(params)
+    xlabel = params[0] if xlabel is None else xlabel
+    ylabel = params[1] if ylabel is None else ylabel
 
     if nparams == 1:
-        param = params[0]
-        param_range = sorted(cv_results['param_%s' % param])
-        train_scores_mean = cv_results['mean_train_score']
-        train_scores_std = cv_results['std_train_score']
-        test_scores_mean = cv_results['mean_test_score']
-        test_scores_std = cv_results['std_test_score']
-
-        lw = 2
-        plt.semilogx(param_range, train_scores_mean,
-                     label="Training score",
-                     color="darkorange", lw=lw)
-        plt.fill_between(param_range, train_scores_mean - train_scores_std,
-                         train_scores_mean + train_scores_std, alpha=0.2,
-                         color="darkorange", lw=lw)
-
-        plt.semilogx(param_range, test_scores_mean,
-                     label="Cross-validation score",
-                     color="navy", lw=lw)
-        plt.fill_between(param_range, test_scores_mean - test_scores_std,
-                         test_scores_mean + test_scores_std, alpha=0.2,
-                         color="navy", lw=lw)
-
-        plt.title(title)
-        plt.xlabel(param)
-        plt.legend()
-        ylabel = "Score" if ylabel is None else ylabel
-        plt.ylabel(ylabel)
-        plt.show()
+        img = _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title)
 
     elif nparams == 2:
-        parameter1_values = np.unique(cv_results['param_%s' % params[0]])
-        parameter2_values = np.unique(cv_results['param_%s' % params[1]])
-
-        scores = cv_results[metric].reshape(len(parameter1_values),
-                                            len(parameter2_values))
-
-        xlabel = params[0] if xlabel is None else xlabel
-        ylabel = params[1] if ylabel is None else ylabel
-
-        plot_heatmap(scores, cmap=plt.cm.hot, xlabel=xlabel, ylabel=ylabel,
-                     xticklabels=parameter1_values,
-                     yticklabels=parameter2_values,
-                     ax=ax, norm=norm)
-
-        plt.title(title)
-        plt.show()
+        img = _plot_2D_results(cv_results, params, metric, ax, xlabel,
+                               ylabel, title, norm)
 
     else:
         raise ValueError('Plot function supports upto 2 parameters in grid'
                          'search, got {0}.'.format(nparams))
-        pass
+
+    return img

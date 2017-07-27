@@ -23,9 +23,9 @@ def plot_confusion_matrix(y_true, y_pred, classes=None, sample_weight=None,
         Estimated targets as returned by a classifier.
 
     classes : list of strings, optional (default=None)
-        The list of classes represented in the two-dimensional input array.
-        If not passed in function call, the classes will be infered from
-        y_true and y_pred
+        The list of names of classes represented in the two-dimensional input
+        array. If not passed in function call, the classes will be infered
+        from y_true and y_pred
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights used to calculate the confusion matrix
@@ -76,10 +76,11 @@ def plot_confusion_matrix(y_true, y_pred, classes=None, sample_weight=None,
     if classes is None:
         classes = unique_y
     else:
-        if not set(classes).issuperset(set(unique_y)):
-            raise ValueError("`classes=%s` are not a superset of the unique",
-                             "values of y_true and y_pred which are %s" %
-                             (classes, unique_y))
+        if len(classes) != len(unique_y):
+            raise ValueError("y_true and y_pred contain %d unique classes,"
+                             "which is not the same as %d"
+                             "classes found in `classes=%s` paramter" %
+                             (len(classes), len(unique_y), unique_y))
 
     values = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
 
@@ -88,8 +89,11 @@ def plot_confusion_matrix(y_true, y_pred, classes=None, sample_weight=None,
 
     fmt = fmt if normalize else '{:d}'
 
-    plot_heatmap(values, xticklabels=classes, yticklabels=classes, cmap=cmap,
-                 xlabel=xlabel, ylabel=ylabel, vmin=vmin, vmax=vmax, ax=ax,
-                 fmt=fmt, xtickrotation=xtickrotation, norm=norm)
+    img = plot_heatmap(values, xticklabels=classes, yticklabels=classes,
+                       cmap=cmap, xlabel=xlabel, ylabel=ylabel, vmin=vmin,
+                       vmax=vmax, ax=ax, fmt=fmt, xtickrotation=xtickrotation,
+                       norm=norm)
 
     plt.title(title)
+
+    return img
