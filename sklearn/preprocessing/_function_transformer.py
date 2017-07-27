@@ -70,13 +70,6 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     inv_kw_args : dict, optional
         Dictionary of additional keyword arguments to pass to inverse_func.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by np.random. Note that this is only used when ``check_inverse=True``
-        to compute if func and inverse_func are the inverse of each other.
-
     """
     def __init__(self, func=None, inverse_func=None, validate=True,
                  accept_sparse=False, pass_y='deprecated', check_inverse=False,
@@ -89,16 +82,14 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         self.check_inverse = check_inverse
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
-        self.random_state = random_state
 
     def _validate_inverse(self, X):
         """Check that func and inverse_func are the inverse."""
-        n_subsample = min(100, X.shape[0])
-        X_sel = resample(X, replace=False, n_samples=n_subsample,
-                         random_state=self.random_state)
+        idx_selected = slice(None, None, max(1, X.shape[0] // 100))
         try:
             assert_allclose_dense_sparse(
-                X_sel, self.inverse_transform(self.transform(X_sel)))
+                X[idx_selected],
+                self.inverse_transform(self.transform(X[idx_selected])))
         except AssertionError:
             raise ValueError("The provided functions are not strictly"
                              " inverse of each other. If you are sure you"
