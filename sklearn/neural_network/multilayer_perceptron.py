@@ -74,6 +74,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.epsilon = epsilon
+        self.no_improvement_limit = 2
 
     def _unpack(self, packed_parameters):
         """Extract the coefficients and intercepts from packed_parameters."""
@@ -537,7 +538,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 # for learning rate that needs to be updated at iteration end
                 self._optimizer.iteration_ends(self.t_)
 
-                if self._no_improvement_count > 2:
+                if self._no_improvement_count > self.no_improvement_limit:
                     # not better than last two iterations by tol.
                     # stop or decrease learning rate
                     if early_stopping:
