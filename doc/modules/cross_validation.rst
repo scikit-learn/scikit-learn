@@ -532,12 +532,12 @@ parameter.
 Group k-fold
 ------------
 
-:class:`GroupKFold` is a variation of k-fold which ensures that the same group is
-not represented in both testing and training sets. For example if the data is
-obtained from different subjects with several samples per-subject and if the
+:class:`GroupKFold` is a variation of k-fold which ensures that the same group
+is not represented in both testing and training sets. For example if the data
+is obtained from different subjects with several samples per-subject and if the
 model is flexible enough to learn from highly person specific features it
 could fail to generalize to new subjects. :class:`GroupKFold` makes it possible
-to detect this kind of overfitting situations.
+to avoid these kind of overfitting situations.
 
 Imagine you have three subjects, each with an associated number from 1 to 3::
 
@@ -560,18 +560,26 @@ size due to the imbalance in the data.
 
 The same group will not appear in two different folds;
 this is a hard constraint. After this constraint is enforced,
-there are still multiple ways to divide groups across folds.
+there are still multiple ways to divide groups across folds. A greedy strategy
+is used to create folds of approximately the same size: at each step, the fold
+with the least number of items is assigned a new group. The order in which
+groups are assigned can be used to tweak the distribution of the resulting
+folds.
 
-The default, ``method='balance'``, will balance the sizes of the folds,
-such that each has approximately the same amount of items, as far as possible.
-With ``method='stratify'``, items are spread across the folds by stratifying on
-the ``y`` variable, as far as possible. Since this is done by sorting, it works
-for continuous variables as well.
-Finally, ``method='shuffle'`` distributes groups across folds randomly.
+The default, ``method='balance'``, will try to balance the sizes of the folds,
+by assigning the largest groups first. With ``method='stratify_median'`` or
+``method='stratify_mode``, items are spread across the folds by stratifying on
+the ``y`` variable, as far as possible. Median should be used for continuous
+variables, and mode for discrete variables. Stratification may be important
+when the ``y`` variable has a skewed distribution; stratification can help
+ensure that rare ``y`` values are represented in each fold.
+Finally, ``method='shuffle'`` adds randomness by shuffling the groups. This
+strategy is useful when you want to generate multiple sets of folds; repeated
+use of the other methods would deterministically result in the same folds.
 
 The latter two options work best when groups are relatively small (i.e., there
 are many groups), to avoid folds of uneven sizes. The stratification relies on
-the median ``y``-value of each group being representative of its group.
+picking ``y``-values of each group that are representative of its group.
 
 .. topic:: Examples
 

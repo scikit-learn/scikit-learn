@@ -1220,7 +1220,7 @@ def test_group_kfold():
 
     ideal_n_groups_per_fold = n_samples // n_splits
 
-    for method in ('balance', 'stratify', 'shuffle'):
+    for method in ('balance', 'stratify_median', 'stratify_mode', 'shuffle'):
         # Get the test fold indices from the test set indices of each fold
         folds = np.zeros(n_samples)
         lkf = GroupKFold(n_splits=n_splits, method=method)

@@ -445,10 +445,12 @@ class GroupKFold(_BaseKFold):
     n_splits : int, default=3
         Number of folds. Must be at least 2.
     method: string, default='balance'
-        One of 'balance', 'stratify', 'shuffle'.
+        One of 'balance', 'stratify_median', 'stratify_mode', 'shuffle'.
         By default, try to equalize the sizes of the resulting folds.
-        If 'stratify', sort groups according to their median ``y`` values
-        and distribute evenly across folds.
+        If 'stratify_median', distribute groups evenly across folds according
+        to their median ``y`` values; use when ``y`` is continuous.
+        If 'stratify_mode', distribute groups evenly across folds according to
+        the mode of their ``y`` values; use when ``y`` is discrete.
         If 'shuffle', shuffle the groups to randomize their assignments to
         folds.
 
@@ -485,9 +487,11 @@ class GroupKFold(_BaseKFold):
         stratification of the dataset.
     """
     def __init__(self, n_splits=3, method='balance'):
-        if method not in ('balance', 'stratify', 'shuffle'):
-            raise ValueError("The 'method' parameter should be in "
-                             "('balance', 'stratify', 'shuffle')")
+        if method not in ('balance', 'stratify_median', 'stratify_mode',
+                'shuffle'):
+            raise ValueError("The 'method' parameter should be one of: "
+                             "'balance', 'stratify_median', 'stratify_mode', "
+                             "'shuffle'")
         self.method = method
         super(GroupKFold, self).__init__(n_splits, shuffle=False,
                                          random_state=None)
@@ -512,7 +516,7 @@ class GroupKFold(_BaseKFold):
         if self.method == 'balance':
             # Distribute the most frequent groups first
             indices = np.argsort(n_samples_per_group)[::-1]
-        elif self.method == 'stratify':
+        elif self.method.startswith('stratify_'):
             # Distribute according to median y value per group
             if y is None:
                 raise ValueError("The 'y' parameter should not be None.")
@@ -520,18 +524,23 @@ class GroupKFold(_BaseKFold):
             y_by_group = dict.fromkeys(unique_groups, [])
             for group, y_value in zip(groups, y):
                 y_by_group[group].append(y_value)
-            # manual median; np.median doesn't work when groups are strings.
-            median_by_group = [
-                    sorted(y_by_group[group])[len(y_by_group[group]) // 2]
-                    for group in unique_groups]
-            indices = np.argsort(median_by_group)
+            if self.method == 'stratify_median':
+                # manual median; np.median doesn't work when groups are strings
+                by_group = [
+                        sorted(y_by_group[group])[len(y_by_group[group]) // 2]
+                        for group in unique_groups]
+            elif self.method == 'stratify_mode':
+                def mode(x):
+                    values, counts = np.unique(x, return_counts=True)
+                    return values[np.argmax(counts)]
+
+                by_group = [mode(y_by_group[group]) for group in unique_groups]
+            indices = np.argsort(by_group)
         elif self.method == 'shuffle':
             # Shuffle the groups
             rng = check_random_state(self.random_state)
             indices = np.arange(n_groups)
             rng.shuffle(indices)
-        else:
-            raise ValueError
         n_samples_per_group = n_samples_per_group[indices]
 
         # Total weight of each fold
