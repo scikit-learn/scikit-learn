@@ -543,10 +543,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                     # stop or decrease learning rate
                     if early_stopping:
                         msg = ("Validation score did not improve more than "
-                               "tol=%f for two consecutive epochs." % self.tol)
+                               "tol=%f for %d consecutive epochs." % (self.tol, self.no_improvement_limit))
                     else:
                         msg = ("Training loss did not improve more than tol=%f"
-                               " for two consecutive epochs." % self.tol)
+                               " for %d consecutive epochs." % (self.tol, self.no_improvement_limit))
 
                     is_stopping = self._optimizer.trigger_stopping(
                         msg, self.verbose)
