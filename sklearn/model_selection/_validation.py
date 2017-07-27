@@ -432,7 +432,7 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     elif encode and isinstance(predictions[0], list):
         # `predictions` is a list of method outputs from each fold.
         # If each of those is also a list, then treat this as a
-        # multi-class multi-label task. We need to separately concatenate
+        # multioutput-multiclass task. We need to separately concatenate
         # the method outputs for each label into an `n_labels` long list.
         n_labels = y.shape[1]
         concat_pred = []

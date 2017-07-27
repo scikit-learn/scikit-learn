@@ -179,7 +179,7 @@ Enhancements
      :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
    - Added ability for :func:`model_selection.cross_val_predict` to handle multi-label
-     (and multi-class multi-label) targets with `predict_proba`-type methods.
+     (and multioutput-multiclass) targets with ``predict_proba``-type methods.
      :issue:`8773` by:user:`Stephen Hoover <stephen-hoover>`.
 
 Bug fixes
