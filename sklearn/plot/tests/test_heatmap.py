@@ -59,12 +59,12 @@ def test_confusion_matrix():
                               cmap="Paired", ax=plt.gca())
 
         # y having different value than classes should raise error
-        expected_msg = ("y_true and y_pred contain 3 unique classes, which is"
-                        "not the same as 2 classes found in `classes=[1,2]`"
-                        "paramter")
+        expected_msg = ("y_true and y_pred contain 2 unique classes, which is"
+                        " not the same as 3 classes found in "
+                        "`classes=[1, 2, 3]` parameter")
         assert_raise_message(ValueError, expected_msg,
                              plot_confusion_matrix, array1, array2,
-                             classes=[1, 2], ax=plt.gca())
+                             classes=[1, 2, 3], ax=plt.gca())
 
         plt.draw()
         plt.close()
