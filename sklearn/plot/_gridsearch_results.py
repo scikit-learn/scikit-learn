@@ -5,6 +5,8 @@ from sklearn.plot import plot_heatmap
 def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title,
                      fmt, xtickrotation):
     import matplotlib.pyplot as plt
+    if ax is None:
+        ax = plt.gca()
 
     param = params[0]
     param_range = sorted(cv_results['param_%s' % param])
@@ -15,27 +17,29 @@ def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title,
 
     lw = 2
     x_vales = range(len(param_range))
-    plt.plot(x_vales, train_scores_mean,
-             label="Training score",
-             color="darkorange", lw=lw)
-    plt.fill_between(x_vales, train_scores_mean - train_scores_std,
-                     train_scores_mean + train_scores_std, alpha=0.2,
-                     color="darkorange", lw=lw)
+    ax.plot(x_vales, train_scores_mean,
+            label="Training score",
+            color="darkorange", lw=lw)
+    ax.fill_between(x_vales, train_scores_mean - train_scores_std,
+                    train_scores_mean + train_scores_std, alpha=0.2,
+                    color="darkorange", lw=lw)
 
-    img = plt.plot(x_vales, test_scores_mean,
-                   label="Cross-validation score",
-                   color="navy", lw=lw)
-    plt.fill_between(x_vales, test_scores_mean - test_scores_std,
-                     test_scores_mean + test_scores_std, alpha=0.2,
-                     color="navy", lw=lw)
-    plt.xticks(x_vales, [fmt.format(x) for x in param_range],
-               rotation=xtickrotation)
+    img = ax.plot(x_vales, test_scores_mean,
+                  label="Cross-validation score",
+                  color="navy", lw=lw)
+    ax.fill_between(x_vales, test_scores_mean - test_scores_std,
+                    test_scores_mean + test_scores_std, alpha=0.2,
+                    color="navy", lw=lw)
+    ax.set_xticks(x_vales)
+    ax.set_xticklabels([fmt.format(x) for x in param_range],
+                       rotation=xtickrotation)
+
     xlabel = params[0] if xlabel is None else xlabel
-    plt.xlabel(param)
-    plt.legend()
+    ax.set_xlabel(param)
+    ax.legend()
     ylabel = "Score" if ylabel is None else ylabel
-    plt.ylabel(ylabel)
-    plt.title(title)
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
     plt.show()
     return img
 
