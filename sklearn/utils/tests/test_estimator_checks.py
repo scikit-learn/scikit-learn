@@ -9,6 +9,7 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
                                    assert_equal, ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
@@ -251,6 +252,8 @@ def test_check_estimators_unfitted():
 
 
 def test_check_no_attributes_set_in_init():
+    if sys.version_info < (3, 5):
+        raise SkipTest("Skipping test_check_no_attributes_set_in_init.")
     class NonConformantEstimator(object):
         def __init__(self):
             self.you_should_not_set_this_ = None
