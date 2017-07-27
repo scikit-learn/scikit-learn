@@ -2,7 +2,8 @@ import numpy as np
 from sklearn.plot import plot_heatmap
 
 
-def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title):
+def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title,
+                     fmt, xtickrotation):
     import matplotlib.pyplot as plt
 
     param = params[0]
@@ -13,20 +14,23 @@ def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title):
     test_scores_std = cv_results['std_test_score']
 
     lw = 2
-    plt.semilogx(param_range, train_scores_mean,
-                 label="Training score",
-                 color="darkorange", lw=lw)
-    plt.fill_between(param_range, train_scores_mean - train_scores_std,
+    x_vales = range(len(param_range))
+    plt.plot(x_vales, train_scores_mean,
+             label="Training score",
+             color="darkorange", lw=lw)
+    plt.fill_between(x_vales, train_scores_mean - train_scores_std,
                      train_scores_mean + train_scores_std, alpha=0.2,
                      color="darkorange", lw=lw)
 
-    img = plt.semilogx(param_range, test_scores_mean,
-                       label="Cross-validation score",
-                       color="navy", lw=lw)
-    plt.fill_between(param_range, test_scores_mean - test_scores_std,
+    img = plt.plot(x_vales, test_scores_mean,
+                   label="Cross-validation score",
+                   color="navy", lw=lw)
+    plt.fill_between(x_vales, test_scores_mean - test_scores_std,
                      test_scores_mean + test_scores_std, alpha=0.2,
                      color="navy", lw=lw)
-
+    plt.xticks(x_vales, [fmt.format(x) for x in param_range],
+               rotation=xtickrotation)
+    xlabel = params[0] if xlabel is None else xlabel
     plt.xlabel(param)
     plt.legend()
     ylabel = "Score" if ylabel is None else ylabel
@@ -36,8 +40,9 @@ def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title):
     return img
 
 
-def _plot_2D_results(cv_results, params, metric, ax, xlabel, ylabel,
-                     title, norm):
+def _plot_2D_results(cv_results, params, metric, ax, xlabel,
+                     ylabel, title, cmap, vmin, vmax, fmt,
+                     xtickrotation, norm):
     import matplotlib.pyplot as plt
 
     parameter1_values = np.unique(cv_results['param_%s' % params[0]])
@@ -46,9 +51,16 @@ def _plot_2D_results(cv_results, params, metric, ax, xlabel, ylabel,
     scores = cv_results[metric].reshape(len(parameter1_values),
                                         len(parameter2_values))
 
-    img = plot_heatmap(scores, cmap=plt.cm.hot, xlabel=xlabel,
-                       ylabel=ylabel, xticklabels=parameter1_values,
-                       yticklabels=parameter2_values, ax=ax, norm=norm)
+    xlabel = params[0] if xlabel is None else xlabel
+    ylabel = params[1] if ylabel is None else ylabel
+
+    cmap = cmap if cmap is not None else plt.cm.hot
+
+    img = plot_heatmap(scores, xlabel=xlabel, ylabel=ylabel,
+                       xticklabels=parameter1_values,
+                       yticklabels=parameter2_values, cmap=cmap,
+                       vmin=vmin, vmax=vmax, fmt=fmt, ax=ax,
+                       xtickrotation=xtickrotation, norm=norm)
     plt.title(title)
     plt.show()
     return img
@@ -68,43 +80,43 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
     cv_results : dict of numpy (masked) ndarrays
         The cv_results_ attribute of the GridSearchCV object.
 
-    xlabel : string, default=None
+    xlabel : string, optional (default=None)
         Label for the x-axis. If None, the first key of the param_grid will
         be used as the xlabel.
 
-    ylabel : string, default=None
+    ylabel : string, optional (default=None)
         Label for the y-axis. If None, the second key of the param_grid will
         be used as the ylabel.
 
-    metric : string, default="mean_test_score"
+    metric : string, optional (default="mean_test_score")
         The metric from the GridSearchCV results to display. This is ignored
         if only 1 parameter is used in grid search.
 
-    title : string, default="Grid Search Results"
+    title : string, optional (default="Grid Search Results")
         Title for the heatmap.
 
-    cmap : string or colormap
-        Matpotlib colormap to use.
+    cmap : string or colormap, optional (default=None)
+        Matpotlib colormap to use. If None, plt.cm.hot will be used.
 
-    vmin : int, float or None
+    vmin : int, float or None, optional (default=None)
         Minimum clipping value. This argument will be passed on to the
         pcolormesh function from matplotlib used to generate the heatmap.
 
-    vmax : int, float or None
+    vmax : int, float or None, optional (default=None)
         Maximum clipping value. This argument will be passed on to the
         pcolormesh function from matplotlib used to generate the heatmap.
 
-    ax : axes object or None
+    ax : axes object or None, optional (default=None)
         Matplotlib axes object to plot into. If None, the current axes are
         used.
 
-    fmt : string, default="{:.2f}"
+    fmt : string, optional (default="{:.2f}")
         Format string to convert value to text.
 
-    xtickrotation : float, default=45
+    xtickrotation : float, optional (default=45)
         Rotation of the xticklabels.
 
-    norm : matplotlib normalizer
+    norm : matplotlib normalizer, optional (default=None)
         Normalizer passed to pcolormesh function from matplotlib used to
         generate the heatmap. This is ignored if only 1 parameter is used in
         grid search.
@@ -112,15 +124,15 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
 
     params = sorted(cv_results['params'][0].keys())
     nparams = len(params)
-    xlabel = params[0] if xlabel is None else xlabel
-    ylabel = params[1] if ylabel is None else ylabel
 
     if nparams == 1:
-        img = _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title)
+        img = _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title,
+                               fmt, xtickrotation)
 
     elif nparams == 2:
         img = _plot_2D_results(cv_results, params, metric, ax, xlabel,
-                               ylabel, title, norm)
+                               ylabel, title, cmap, vmin, vmax, fmt,
+                               xtickrotation, norm)
 
     else:
         raise ValueError('Plot function supports upto 2 parameters in grid'

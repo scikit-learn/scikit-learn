@@ -27,44 +27,44 @@ def plot_confusion_matrix(y_true, y_pred, classes=None, sample_weight=None,
         array. If not passed in function call, the classes will be infered
         from y_true and y_pred
 
-    sample_weight : array-like of shape = [n_samples], optional
+    sample_weight : array-like of shape = [n_samples], optional (default=None)
         Sample weights used to calculate the confusion matrix
 
-    normalize : boolean, default=False
+    normalize : boolean, optional (default=False)
         If True, the confusion matrix will be normalized by row.
 
-    xlabel : string, default="Predicted Label"
+    xlabel : string, optional (default="Predicted Label")
         Label for the x-axis.
 
-    ylabel : string, default="True Label"
+    ylabel : string, optional (default="True Label")
         Label for the y-axis.
 
-    title : string, default="Confusion matrix"
+    title : string, optional (default="Confusion matrix")
         Title for the heatmap.
 
-    cmap : string or colormap
-        Matpotlib colormap to use.
+    cmap : string or colormap, optional (default=None)
+        Matpotlib colormap to use. If None, plt.cm.hot will be used.
 
-    vmin : int, float or None
+    vmin : int, float or None, optional (default=None)
         Minimum clipping value. This argument will be passed on to the
         pcolormesh function from matplotlib used to generate the heatmap.
 
-    vmax : int, float or None
+    vmax : int, float or None, optional (default=None)
         Maximum clipping value. This argument will be passed on to the
         pcolormesh function from matplotlib used to generate the heatmap.
 
-    ax : axes object or None
+    ax : axes object or None, optional (default=None)
         Matplotlib axes object to plot into. If None, the current axes are
         used.
 
-    fmt : string, default="{:.2f}"
+    fmt : string, optional (default="{:.2f}")
         Format string to convert value to text. This will be ignored if
         normalize argument is False.
 
-    xtickrotation : float, default=45
+    xtickrotation : float, optional (default=45)
         Rotation of the xticklabels.
 
-    norm : matplotlib normalizer
+    norm : matplotlib normalizer, optional (default=None)
         Normalizer passed to pcolormesh function from matplotlib used to
         generate the heatmap.
     """

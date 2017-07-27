@@ -5,7 +5,6 @@ from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 import numpy as np
 from numpy.random import (RandomState,
@@ -147,6 +146,9 @@ def test_gridsearch_results_3d():
 
     with matplotlib.rc_context(rc={'backend': 'Agg', 'interactive': False}):
         plt.figure()
-        assert_raises(ValueError, plot_gridsearch_results, grid.cv_results_)
+        expected_msg = ('Plot function supports upto 2 parameters in grid'
+                        'search, got 3.')
+        assert_raise_message(ValueError, expected_msg,
+                             plot_gridsearch_results, grid.cv_results_)
         plt.draw()
         plt.close()
