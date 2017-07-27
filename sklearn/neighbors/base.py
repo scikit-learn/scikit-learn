@@ -101,10 +101,6 @@ def _get_weights(dist, weights):
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for nearest neighbors estimators."""
 
-#    _fit_X = None
-#    _tree = None
-#    _fit_method = None
-
     @abstractmethod
     def __init__(self, n_neighbors=None, radius=None,
                  algorithm='auto', leaf_size=30, metric='minkowski',

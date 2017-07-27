@@ -15,7 +15,7 @@ from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
-from sklearn.utils.estimator_checks import check_no_fit_attributes_set_in_init
+from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -250,17 +250,15 @@ def test_check_estimators_unfitted():
     check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier())
 
 
-def test_check_no_fit_attributes_set_in_init():
+def test_check_no_attributes_set_in_init():
     class NonConformantEstimator(object):
         def __init__(self):
             self.you_should_not_set_this_ = None
 
-    msg = ("By convention, attributes ending with '_'.+"
-           'should not be initialized in the constructor.+'
-           "Attribute 'you_should_not_set_this_' was found.+"
-           'in estimator estimator_name')
+    msg = ("Estimator estimator_name should not add new parameter "
+           "you_should_not_set_this_ during init.")
     assert_raises_regex(AssertionError, msg,
-                        check_no_fit_attributes_set_in_init,
+                        check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimator)
 

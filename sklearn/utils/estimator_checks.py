@@ -259,7 +259,7 @@ def check_estimator(Estimator):
         # got a class
         name = Estimator.__name__
         check_parameters_default_constructible(name, Estimator)
-        check_no_fit_attributes_set_in_init(name, Estimator)
+        check_no_attributes_set_in_init(name, Estimator)
         estimator = Estimator()
     else:
         # got an instance
@@ -1640,27 +1640,14 @@ def check_estimators_overwrite_params(name, estimator_orig):
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_no_fit_attributes_set_in_init(name, Estimator):
-    """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
-    # this check works on classes, not instances
+def check_no_attributes_set_in_init(name, Estimator):
+    """Check that Estimator.__init__ doesn't set any attributes apart from
+       the init parameters.
+    """
     estimator = Estimator()
-    for attr in dir(estimator):
-        if attr.endswith("_") and not attr.startswith("__"):
-            # This check is for properties, they can be listed in dir
-            # while at the same time have hasattr return False as long
-            # as the property getter raises an AttributeError
-            assert_false(
-                hasattr(estimator, attr),
-                "By convention, attributes ending with '_' are "
-                'estimated from data in scikit-learn. Consequently they '
-                'should not be initialized in the constructor of an '
-                'estimator but in the fit method. Attribute {!r} '
-                'was found in estimator {}'.format(attr, name))
-
-    if(Estimator.__name__ not in ["GaussianProcess", "RandomizedLasso",
-                                  "RandomizedLogisticRegression",
-                                  "RandomizedPCA"] and
-       sys.version_info > (3, 5)):
+    if(name not in ["GaussianProcess", "RandomizedLasso",
+                    "RandomizedLogisticRegression",
+                    "RandomizedPCA"] and sys.version_info > (3, 5)):
         # This check is only for non-decorated (eg: deprecated) estimator
         # _get_args and _get_parent_args only work for python 3.5
         init_params = _get_args(estimator.__init__)
@@ -1669,8 +1656,9 @@ def check_no_fit_attributes_set_in_init(name, Estimator):
                         if not a.startswith("__")])
         for attr, val in vars(estimator).items():
             if attr not in base_params:
-                assert_true(attr in init_params)
-                assert_equal(getattr(estimator, attr), val)
+                assert_in(attr, init_params,
+                          "Estimator %s should not add new parameter"
+                          " %s during init." % (name, attr))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
