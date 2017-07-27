@@ -20,8 +20,6 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     function. This is useful for stateless transformations such as taking the
     log of frequencies, doing custom scaling, etc.
 
-    A FunctionTransformer will not do any checks on its function's output.
-
     Note: If a lambda is used as the function, then the resulting
     transformer will not be pickleable.
 
@@ -60,9 +58,9 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
         .. deprecated::0.19
 
-    check_inverse : bool, (default=False)
-       Whether to check that ``transform`` followed by ``inverse_transform``
-       or ``func`` followed by ``inverse_func`` leads to the original inputs.
+    check_inverse : bool, default=False
+       Whether to check that or ``func`` followed by ``inverse_func`` leads to
+       the original inputs.
 
        .. versionadded:: 0.20
 
@@ -76,9 +74,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by np.random. Note that this is used to compute if func and
-        inverse_func are the inverse of each other.
-
+        by np.random. Note that this is only used when ``check_inverse=True``
+        to compute if func and inverse_func are the inverse of each other.
 
     """
     def __init__(self, func=None, inverse_func=None, validate=True,
