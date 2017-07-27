@@ -51,7 +51,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                  alpha, batch_size, learning_rate, learning_rate_init, power_t,
                  max_iter, loss, shuffle, random_state, tol, verbose,
                  warm_start, momentum, nesterovs_momentum, early_stopping,
-                 validation_fraction, beta_1, beta_2, epsilon, no_improvement_limit):
+                 validation_fraction, beta_1, beta_2, epsilon, n_iter_no_change):
         self.activation = activation
         self.solver = solver
         self.alpha = alpha
@@ -74,7 +74,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.epsilon = epsilon
-        self.no_improvement_limit = no_improvement_limit
+        self.n_iter_no_change = n_iter_no_change
 
     def _unpack(self, packed_parameters):
         """Extract the coefficients and intercepts from packed_parameters."""
@@ -538,15 +538,15 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 # for learning rate that needs to be updated at iteration end
                 self._optimizer.iteration_ends(self.t_)
 
-                if self._no_improvement_count > self.no_improvement_limit:
+                if self._no_improvement_count > self.n_iter_no_change:
                     # not better than last two iterations by tol.
                     # stop or decrease learning rate
                     if early_stopping:
                         msg = ("Validation score did not improve more than "
-                               "tol=%f for %d consecutive epochs." % (self.tol, self.no_improvement_limit))
+                               "tol=%f for %d consecutive epochs." % (self.tol, self.n_iter_no_change))
                     else:
                         msg = ("Training loss did not improve more than tol=%f"
-                               " for %d consecutive epochs." % (self.tol, self.no_improvement_limit))
+                               " for %d consecutive epochs." % (self.tol, self.n_iter_no_change))
 
                     is_stopping = self._optimizer.trigger_stopping(
                         msg, self.verbose)
@@ -891,7 +891,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8, no_improvement_limit=2):
+                 epsilon=1e-8, n_iter_no_change=2):
 
         sup = super(MLPClassifier, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -904,7 +904,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
-                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon, no_improvement_limit=no_improvement_limit)
+                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon, n_iter_no_change=n_iter_no_change)
 
     def _validate_input(self, X, y, incremental):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
@@ -1266,7 +1266,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8, no_improvement_limit=2):
+                 epsilon=1e-8, n_iter_no_change=2):
 
         sup = super(MLPRegressor, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -1279,7 +1279,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
-                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon, no_improvement_limit=no_improvement_limit)
+                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon, n_iter_no_change=n_iter_no_change)
 
     def predict(self, X):
         """Predict using the multi-layer perceptron model.
