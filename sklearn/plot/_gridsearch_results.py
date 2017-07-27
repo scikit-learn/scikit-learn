@@ -136,6 +136,6 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
 
     else:
         raise ValueError('Plot function supports upto 2 parameters in grid'
-                         'search, got {0}.'.format(nparams))
+                         'search, got %d.' % nparams)
 
     return img

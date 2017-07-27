@@ -77,10 +77,10 @@ def plot_confusion_matrix(y_true, y_pred, classes=None, sample_weight=None,
         classes = unique_y
     else:
         if len(classes) != len(unique_y):
-            raise ValueError("y_true and y_pred contain %d unique classes,"
-                             "which is not the same as %d"
-                             "classes found in `classes=%s` paramter" %
-                             (len(classes), len(unique_y), unique_y))
+            raise ValueError("y_true and y_pred contain %d unique classes, "
+                             "which is not the same as %d "
+                             "classes found in `classes=%s` parameter" %
+                             (len(unique_y), len(classes), classes))
 
     values = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
 
