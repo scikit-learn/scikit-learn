@@ -11,6 +11,13 @@ import ast
 import re
 from textwrap import dedent
 
+SYNTAX_ERROR_DOCSTRING = """
+SyntaxError
+===========
+
+Example script with invalid Python syntax
+"""
+
 
 def get_docstring_and_rest(filename):
     """Separate `filename` content between docstring and the rest
@@ -27,12 +34,16 @@ def get_docstring_and_rest(filename):
     # can't use codecs.open(filename, 'r', 'utf-8') here b/c ast doesn't
     # seem to work with unicode strings in Python2.7
     # "SyntaxError: encoding declaration in Unicode string"
-    with open(filename, 'rb') as f:
-        content = f.read()
+    with open(filename, 'rb') as fid:
+        content = fid.read()
     # change from Windows format to UNIX for uniformity
     content = content.replace(b'\r\n', b'\n')
 
-    node = ast.parse(content)
+    try:
+        node = ast.parse(content)
+    except SyntaxError:
+        return SYNTAX_ERROR_DOCSTRING, content.decode('utf-8')
+
     if not isinstance(node, ast.Module):
         raise TypeError("This function only supports modules. "
                         "You provided {0}".format(node.__class__.__name__))

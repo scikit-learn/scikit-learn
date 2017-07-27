@@ -77,7 +77,6 @@ class BayesianGaussianMixture(BaseMixture):
     The number of components actually used almost always depends on the data.
 
     .. versionadded:: 0.18
-    *BayesianGaussianMixture*.
 
     Read more in the :ref:`User Guide <bgmm>`.
 
@@ -132,7 +131,8 @@ class BayesianGaussianMixture(BaseMixture):
 
     weight_concentration_prior : float | None, optional.
         The dirichlet concentration of each component on the weight
-        distribution (Dirichlet). The higher concentration puts more mass in
+        distribution (Dirichlet). This is commonly called gamma in the
+        literature. The higher concentration puts more mass in
         the center and will lead to more components being active, while a lower
         concentration parameter will lead to more mass at the edge of the
         mixture weights simplex. The value of the parameter must be greater
@@ -163,8 +163,11 @@ class BayesianGaussianMixture(BaseMixture):
                 (n_features)             if 'diag',
                 float                    if 'spherical'
 
-    random_state : RandomState or an int seed, defaults to None.
-        A random number generator instance.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as

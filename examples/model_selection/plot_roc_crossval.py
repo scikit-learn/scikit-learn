@@ -40,10 +40,10 @@ from sklearn import svm, datasets
 from sklearn.metrics import roc_curve, auc
 from sklearn.model_selection import StratifiedKFold
 
-###############################################################################
+# #############################################################################
 # Data IO and generation
 
-# import some data to play with
+# Import some data to play with
 iris = datasets.load_iris()
 X = iris.data
 y = iris.target
@@ -54,7 +54,7 @@ n_samples, n_features = X.shape
 random_state = np.random.RandomState(0)
 X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
 
-###############################################################################
+# #############################################################################
 # Classification and ROC analysis
 
 # Run classifier with cross-validation and plot ROC curves

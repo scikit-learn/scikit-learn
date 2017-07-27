@@ -282,7 +282,7 @@ def test_ridge_individual_penalties():
 
     coefs_indiv_pen = [
         Ridge(alpha=penalties, solver=solver, tol=1e-8).fit(X, y).coef_
-        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag']]
+        for solver in ['svd', 'sparse_cg', 'lsqr', 'cholesky', 'sag', 'saga']]
     for coef_indiv_pen in coefs_indiv_pen:
         assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
 
@@ -383,6 +383,16 @@ def _test_ridge_loo(filter_):
     return ret
 
 
+def _test_ridge_cv_normalize(filter_):
+    ridge_cv = RidgeCV(normalize=True, cv=3)
+    ridge_cv.fit(filter_(10. * X_diabetes), y_diabetes)
+
+    gs = GridSearchCV(Ridge(normalize=True), cv=3,
+                      param_grid={'alpha': ridge_cv.alphas})
+    gs.fit(filter_(10. * X_diabetes), y_diabetes)
+    assert_equal(gs.best_estimator_.alpha, ridge_cv.alpha_)
+
+
 def _test_ridge_cv(filter_):
     ridge_cv = RidgeCV()
     ridge_cv.fit(filter_(X_diabetes), y_diabetes)
@@ -462,6 +472,7 @@ def check_dense_sparse(test_func):
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
                       _test_ridge_cv,
+                      _test_ridge_cv_normalize,
                       _test_ridge_diabetes,
                       _test_multi_ridge_diabetes,
                       _test_ridge_classifiers,
@@ -712,7 +723,7 @@ def test_n_iter():
     y_n = np.tile(y, (n_targets, 1)).T
 
     for max_iter in range(1, 4):
-        for solver in ('sag', 'lsqr'):
+        for solver in ('sag', 'saga', 'lsqr'):
             reg = Ridge(solver=solver, max_iter=max_iter, tol=1e-12)
             reg.fit(X, y_n)
             assert_array_equal(reg.n_iter_, np.tile(max_iter, n_targets))
@@ -728,12 +739,13 @@ def test_ridge_fit_intercept_sparse():
                            bias=10., random_state=42)
     X_csr = sp.csr_matrix(X)
 
-    dense = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
-    sparse = Ridge(alpha=1., tol=1.e-15, solver='sag', fit_intercept=True)
-    dense.fit(X, y)
-    sparse.fit(X_csr, y)
-    assert_almost_equal(dense.intercept_, sparse.intercept_)
-    assert_array_almost_equal(dense.coef_, sparse.coef_)
+    for solver in ['saga', 'sag']:
+        dense = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
+        sparse = Ridge(alpha=1., tol=1.e-15, solver=solver, fit_intercept=True)
+        dense.fit(X, y)
+        sparse.fit(X_csr, y)
+        assert_almost_equal(dense.intercept_, sparse.intercept_)
+        assert_array_almost_equal(dense.coef_, sparse.coef_)
 
     # test the solver switch and the corresponding warning
     sparse = Ridge(alpha=1., tol=1.e-15, solver='lsqr', fit_intercept=True)
@@ -787,3 +799,64 @@ def test_errors_and_values_svd_helper():
 def test_ridge_classifier_no_support_multilabel():
     X, y = make_multilabel_classification(n_samples=10, random_state=0)
     assert_raises(ValueError, RidgeClassifier().fit, X, y)
+
+
+def test_dtype_match():
+    rng = np.random.RandomState(0)
+    alpha = 1.0
+
+    n_samples, n_features = 6, 5
+    X_64 = rng.randn(n_samples, n_features)
+    y_64 = rng.randn(n_samples)
+    X_32 = X_64.astype(np.float32)
+    y_32 = y_64.astype(np.float32)
+
+    solvers = ["svd", "sparse_cg", "cholesky", "lsqr"]
+    for solver in solvers:
+
+        # Check type consistency 32bits
+        ridge_32 = Ridge(alpha=alpha, solver=solver)
+        ridge_32.fit(X_32, y_32)
+        coef_32 = ridge_32.coef_
+
+        # Check type consistency 64 bits
+        ridge_64 = Ridge(alpha=alpha, solver=solver)
+        ridge_64.fit(X_64, y_64)
+        coef_64 = ridge_64.coef_
+
+        # Do the actual checks at once for easier debug
+        assert coef_32.dtype == X_32.dtype
+        assert coef_64.dtype == X_64.dtype
+        assert ridge_32.predict(X_32).dtype == X_32.dtype
+        assert ridge_64.predict(X_64).dtype == X_64.dtype
+        assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
+
+
+def test_dtype_match_cholesky():
+    # Test different alphas in cholesky solver to ensure full coverage.
+    # This test is separated from test_dtype_match for clarity.
+    rng = np.random.RandomState(0)
+    alpha = (1.0, 0.5)
+
+    n_samples, n_features, n_target = 6, 7, 2
+    X_64 = rng.randn(n_samples, n_features)
+    y_64 = rng.randn(n_samples, n_target)
+    X_32 = X_64.astype(np.float32)
+    y_32 = y_64.astype(np.float32)
+
+    # Check type consistency 32bits
+    ridge_32 = Ridge(alpha=alpha, solver='cholesky')
+    ridge_32.fit(X_32, y_32)
+    coef_32 = ridge_32.coef_
+
+    # Check type consistency 64 bits
+    ridge_64 = Ridge(alpha=alpha, solver='cholesky')
+    ridge_64.fit(X_64, y_64)
+    coef_64 = ridge_64.coef_
+
+    # Do all the checks at once, like this is easier to debug
+    assert coef_32.dtype == X_32.dtype
+    assert coef_64.dtype == X_64.dtype
+    assert ridge_32.predict(X_32).dtype == X_32.dtype
+    assert ridge_64.predict(X_64).dtype == X_64.dtype
+    assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
