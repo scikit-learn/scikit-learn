@@ -1454,13 +1454,13 @@ positive class, confidence values, or binary decisions.
 Here is a small example of how to use the :func:`detection_error_tradeoff` function::
 
     >>> import numpy as np
-    >>> from sklearn.metrics import det_error_tradeoff
-    >>> y = np.array([1, 1, 2, 2])
-    >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = error_detection_tradeoff(y, scores, pos_label=2)
-    >>> fpr
+    >>> from sklearn.metrics import detection_error_tradeoff
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fps, fns, thresholds = detection_error_tradeoff(y_true, y_scores)
+    >>> fps
     array([ 0.5,  0.5,  0. ])
-    >>> fnr
+    >>> fns
     array([ 0. ,  0.5,  0.5])
     >>> thresholds
     array([ 0.35,  0.4 ,  0.8 ])
