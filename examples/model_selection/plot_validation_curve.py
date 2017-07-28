@@ -49,3 +49,31 @@ plt.fill_between(param_range, test_scores_mean - test_scores_std,
                  color="navy", lw=lw)
 plt.legend(loc="best")
 plt.show()
+
+#####################################################################
+"""
+The same plot can also be generated using a combination of GridSearchCV and
+ plotting module of scikit-learn.
+"""
+
+print(__doc__)
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.datasets import load_digits
+from sklearn.svm import SVC
+from sklearn.model_selection import GridSearchCV
+from sklearn.plot import plot_gridsearch_results
+
+digits = load_digits()
+X, y = digits.data, digits.target
+
+param_grid = {'gamma': np.logspace(-6, -1, 5)}
+gs = GridSearchCV(SVC(),
+                  param_grid=param_grid,
+                  cv=10, scoring="accuracy")
+
+gs.fit(X, y)
+plot_gridsearch_results(gs.cv_results_)
+plt.show()
