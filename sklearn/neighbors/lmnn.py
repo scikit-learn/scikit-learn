@@ -37,7 +37,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     optional (default=None)
         An initial linear transformation. If None (default), the initial
         transformation is set to the identity, except if ``warm_start`` or
-        ``use_pca`` is True.
+        ``init_pca`` is True.
 
     warm_start : bool, optional (default=False)
         If True and :meth:`fit` has been called before, the solution of the
@@ -50,7 +50,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     n_features_out : int, optional (default=None)
         Preferred dimensionality of the inputs after the transformation.
-        If None it is inferred from ``use_pca`` and ``init_transformation``.
+        If None it is inferred from ``init_pca`` and ``init_transformation``.
 
     n_neighbors : int, optional (default=3)
         Number of neighbors to use as target neighbors for each sample.
@@ -418,7 +418,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         check_scalar(self.tol, 'tol', float, 0.)
 
-        check_scalar(self.init_pca, 'use_pca', bool)
+        check_scalar(self.init_pca, 'init_pca', bool)
         check_scalar(self.use_sparse, 'use_sparse', bool)
         check_scalar(self.verbose, 'verbose', int, 0)
 

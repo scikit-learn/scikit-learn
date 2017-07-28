@@ -85,7 +85,7 @@ def test_params_validation():
     assert_raises(TypeError, LMNN(max_corrections=1e3).fit, X, y)
     assert_raises(TypeError, LMNN(tol=1).fit, X, y)
     assert_raises(TypeError, LMNN(n_features_out='invalid').fit, X, y)
-    assert_raises(TypeError, LMNN(use_pca=1).fit, X, y)
+    assert_raises(TypeError, LMNN(init_pca=1).fit, X, y)
     assert_raises(TypeError, LMNN(n_jobs='yes').fit, X, y)
     assert_raises(TypeError, LMNN(warm_start=1).fit, X, y)
     assert_raises(TypeError, LMNN(use_sparse=0.5).fit, X, y)
@@ -180,7 +180,7 @@ def test_n_features_out():
     lmnn.fit(X, y)
 
 
-def test_use_pca():
+def test_init_pca():
     X, y = datasets.make_classification(n_samples=30, n_features=5,
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
