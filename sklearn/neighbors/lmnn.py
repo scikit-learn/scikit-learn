@@ -44,7 +44,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         previous call to :meth:`fit` is used as the initial linear
         transformation.
 
-    use_pca : bool, optional (default=True)
+    init_pca : bool, optional (default=True)
         Whether to use PCA to initialize the linear transformation.
         If False, the identity will be used, except if ``warm_start`` is True.
 
@@ -67,7 +67,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
 
-    max_iter : int, optional (default=200)
+    max_iter : int, optional (default=50)
         Maximum number of iterations in the optimization.
 
     tol : float, optional (default=1e-5)
@@ -189,16 +189,16 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, init_transformation=None, warm_start=False,
-                 use_pca=True, n_features_out=None, n_neighbors=3,
-                 algorithm='auto', max_iter=200, tol=1e-5,
+    def __init__(self, init_transformation=None, init_pca=True,
+                 warm_start=False, n_features_out=None, n_neighbors=3,
+                 algorithm='auto', max_iter=50, tol=1e-5,
                  max_constraints=500000, use_sparse=True, callback=None,
                  max_corrections=100, verbose=0, random_state=None, n_jobs=1):
 
         # Parameters
         self.init_transformation = init_transformation
         self.warm_start = warm_start
-        self.use_pca = use_pca
+        self.init_pca = init_pca
         self.n_features_out = n_features_out
         self.n_neighbors = n_neighbors
         self.algorithm = algorithm
@@ -418,7 +418,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         check_scalar(self.tol, 'tol', float, 0.)
 
-        check_scalar(self.use_pca, 'use_pca', bool)
+        check_scalar(self.init_pca, 'use_pca', bool)
         check_scalar(self.use_sparse, 'use_sparse', bool)
         check_scalar(self.verbose, 'verbose', int, 0)
 
@@ -490,7 +490,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             transformation = np.asarray(self.init_transformation)
         elif self.warm_start and hasattr(self, 'transformation_'):
             transformation = self.transformation_
-        elif self.use_pca and X.shape[1] > 1:
+        elif self.init_pca and X.shape[1] > 1:
             pca = PCA(random_state=self.random_state_)
             if self.verbose:
                 print('Finding principal components...', end='')
@@ -639,7 +639,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             dist_tn[:, k] = row_norms(Lx - Lx[targets[:, k]], True) + 1
 
         # Compute distances to impostors under the current transformation
-        margin_radii = dist_tn[:, -1] + 2
+        margin_radii = dist_tn[:, -1] + 1
         imp_row, imp_col, dist_imp = \
             self._find_impostors(Lx, y, margin_radii, self.use_sparse)
 
@@ -792,7 +792,7 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
 
     X_in : array, shape (n_samples_in, n_features_out)
         Transformed data samples from one class not present in X_out,
-        so probably n_samples2 < n_samples1.
+        so probably n_samples_in < n_samples_out.
 
     margin_radii_out : array, shape (n_samples_out,)
         Distances of the samples in ``X_out`` to their margins.
@@ -822,7 +822,7 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
 
     imp_row, imp_col, dist = [], [], []
 
-    # X2 squared norm stays constant, so pre-compute it to get a speed-up
+    # X_in squared norm stays constant, so pre-compute it to get a speed-up
     X_in_norm_squared = row_norms(X_in, squared=True)
     for chunk in gen_batches(n_samples_out, batch_size):
         dist_out_in = euclidean_distances(X_out[chunk], X_in, squared=True,
