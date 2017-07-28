@@ -51,10 +51,8 @@ plt.legend(loc="best")
 plt.show()
 
 #####################################################################
-"""
-The same plot can also be generated using a combination of GridSearchCV and
- plotting module of scikit-learn.
-"""
+# The same plot can also be generated using a combination of GridSearchCV and
+# plotting module of scikit-learn.
 
 print(__doc__)
 
