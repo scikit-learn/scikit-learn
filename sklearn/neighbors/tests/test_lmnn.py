@@ -176,7 +176,7 @@ def test_n_features_out():
 
     # n_features_out < len(transformation) = np.eye(len(X[0])).shape[0]
     lmnn = LargeMarginNearestNeighbor(n_neighbors=1, n_features_out=2,
-                                      use_pca=False)
+                                      init_pca=False)
     lmnn.fit(X, y)
 
 
@@ -185,11 +185,11 @@ def test_use_pca():
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, use_pca=False)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init_pca=False)
     lmnn.fit(X_train, y_train)
     n_iter_no_pca = lmnn.n_iter_
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, use_pca=True)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init_pca=True)
     lmnn.fit(X_train, y_train)
     n_iter_pca = lmnn.n_iter_
 
