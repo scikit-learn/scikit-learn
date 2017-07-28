@@ -40,7 +40,6 @@ def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title,
     ylabel = "Score" if ylabel is None else ylabel
     ax.set_ylabel(ylabel)
     ax.set_title(title)
-    plt.show()
     return img
 
 
@@ -62,11 +61,10 @@ def _plot_2D_results(cv_results, params, metric, ax, xlabel,
 
     img = plot_heatmap(scores, xlabel=xlabel, ylabel=ylabel,
                        xticklabels=parameter1_values,
-                       yticklabels=parameter2_values, cmap=cmap,
+                       yticklabels=parameter2_values,
+                       title=title, cmap=cmap,
                        vmin=vmin, vmax=vmax, fmt=fmt, ax=ax,
                        xtickrotation=xtickrotation, norm=norm)
-    plt.title(title)
-    plt.show()
     return img
 
 
