@@ -69,8 +69,6 @@ def plot_confusion_matrix(y_true, y_pred, classes=None, sample_weight=None,
         generate the heatmap.
     """
 
-    import matplotlib.pyplot as plt
-
     unique_y = unique_labels(y_true, y_pred)
 
     if classes is None:
@@ -90,10 +88,8 @@ def plot_confusion_matrix(y_true, y_pred, classes=None, sample_weight=None,
     fmt = fmt if normalize else '{:d}'
 
     img = plot_heatmap(values, xticklabels=classes, yticklabels=classes,
-                       cmap=cmap, xlabel=xlabel, ylabel=ylabel, vmin=vmin,
-                       vmax=vmax, ax=ax, fmt=fmt, xtickrotation=xtickrotation,
-                       norm=norm)
-
-    plt.title(title)
+                       cmap=cmap, xlabel=xlabel, ylabel=ylabel, title=title,
+                       vmin=vmin, vmax=vmax, ax=ax, fmt=fmt,
+                       xtickrotation=xtickrotation, norm=norm)
 
     return img

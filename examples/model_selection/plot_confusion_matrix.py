@@ -56,7 +56,7 @@ plot_confusion_matrix(y_test, y_pred, classes=class_names,
 # Plot normalized confusion matrix
 plt.figure()
 plot_confusion_matrix(y_test, y_pred, classes=class_names, normalize=True,
-                      title='Normalized confusion matrix',
+                      title='Confusion matrix, with normalization',
                       cmap=plt.cm.Blues)
 
 plt.show()

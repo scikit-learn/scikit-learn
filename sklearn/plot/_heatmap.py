@@ -2,8 +2,9 @@ import numpy as np
 
 
 def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
-                 yticklabels=None, cmap=None, vmin=None, vmax=None, ax=None,
-                 fmt="{:.2f}", xtickrotation=45, norm=None):
+                 yticklabels=None, title=None, cmap=None, vmin=None,
+                 vmax=None, ax=None, fmt="{:.2f}", xtickrotation=45,
+                 norm=None):
     """Plot a matrix as heatmap with explicit numbers.
 
     Parameters
@@ -22,6 +23,9 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
 
     yticklabels : list of string or None, default=None
         Tick labels for the y-axis
+
+    title : string or None, default=None
+        Title of the chart
 
     cmap : string or colormap
         Matpotlib colormap to use.
@@ -89,5 +93,9 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
     # Invert the y-axis so that the matrix looks like a diagonal matrix and
     # not anti-diagonal matrix
     ax.invert_yaxis()
+
+    # set title if not none:
+    if title is not None:
+        ax.set_title(title)
 
     return img
