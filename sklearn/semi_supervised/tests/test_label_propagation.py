@@ -146,4 +146,5 @@ def test_convergence_speed():
 
         # this should converge quickly:
         assert mdl.n_iter_ < 10
-        assert_array_almost_equal(mdl.predict_proba([[0.5, 0.5]]), [[0.5, 0.5]], decimal=3)
+        assert_array_almost_equal(mdl.predict_proba([[0.5, 0.5]]),
+                                  [[0.5, 0.5]], decimal=3)
