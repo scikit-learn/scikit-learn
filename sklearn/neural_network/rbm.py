@@ -11,6 +11,7 @@ import time
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
@@ -21,7 +22,6 @@ from ..utils import gen_even_slices
 from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
-from ..utils.fixes import expit             # logistic function
 from ..utils.validation import check_is_fitted
 
 

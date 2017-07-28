@@ -67,16 +67,20 @@ extension in place::
     python setup.py build_ext --inplace
 
 
-Another option is to use the ``develop`` option if you change your code a lot
-and do not want to have to reinstall every time. This basically builds the
-extension in place and creates a link to the development directory (see
-`the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_)::
+Another option is to install the package in editable mode if you change your
+code a lot and do not want to have to reinstall every time. This basically
+builds the extension in place and creates a link to the development directory
+(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
 
-    python setup.py develop
+    pip install --editable .
 
 .. note::
 
-    if you decide to do that you have to rerun::
+    This is fundamentally similar to using the command ``python setup.py develop`` (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_). It is however preferred to use pip.
+
+.. note::
+
+    If you decide to do an editable install you have to rerun::
 
         python setup.py build_ext --inplace
 
@@ -220,16 +224,15 @@ rules before submitting a pull request:
       practice and, if possible, compare it to other methods available in
       scikit-learn.
 
-    * Documentation and high-coverage tests are necessary for enhancements
-      to be accepted.
-      Bug-fixes or new features should be provided with
-      [non-regression tests](https://en.wikipedia.org/wiki/Non-regression_testing).
-      These tests verify the correct behavior of the fix or feature. In this
-      manner, further modifications on the code base are granted to be consistent
-      with the desired behavior.
-      For the Bug-fixes case, at the time of the PR, this tests should fail for
-      the code base in master and pass for the PR code.
-
+    * Documentation and high-coverage tests are necessary for enhancements to be
+      accepted. Bug-fixes or new features should be provided with
+      `non-regression tests
+      <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
+      verify the correct behavior of the fix or feature. In this manner, further
+      modifications on the code base are granted to be consistent with the
+      desired behavior. For the case of bug fixes, at the time of the PR, the
+      non-regression tests should fail for the code base in the master branch
+      and pass for the PR code.
 
     * At least one paragraph of narrative documentation with links to
       references in the literature (with PDF links when possible) and
@@ -425,7 +428,7 @@ opposed to how it works "under the hood".
 You may also be asked to show your changes when it's built. When you create
 a pull request or make changes in an existing one modifying the docs, CircleCI
 automatically builds them. Thus, you can easily view your changes in the built
-artifacts using the following formula:
+artifacts using the following URL:
 
 ``http://scikit-learn.org/circle?{BUILD_NUMBER}``
 

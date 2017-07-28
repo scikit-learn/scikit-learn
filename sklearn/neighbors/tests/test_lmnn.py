@@ -31,16 +31,18 @@ def test_neighbors_iris():
     lmnn = LargeMarginNearestNeighbor(n_neighbors=1)
     lmnn.fit(iris.data, iris.target)
     knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
-    knn.fit(lmnn.transform(iris.data), iris.target)
-    y_pred = knn.predict(lmnn.transform(iris.data))
+    LX = lmnn.transform(iris.data)
+    knn.fit(LX, iris.target)
+    y_pred = knn.predict(LX)
 
     assert_array_equal(y_pred, iris.target)
 
     lmnn.set_params(n_neighbors=9)
     lmnn.fit(iris.data, iris.target)
     knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
+    knn.fit(LX, iris.target)
 
-    assert_true(knn.score(lmnn.transform(iris.data), iris.target) > 0.95)
+    assert_true(knn.score(LX, iris.target) > 0.95)
 
 
 def test_neighbors_digits():
@@ -56,8 +58,10 @@ def test_neighbors_digits():
     test = np.arange(train_test_boundary, n_samples)
     X_train, y_train, X_test, y_test = X[train], y[train], X[test], y[test]
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=1, max_iter=30)
-    knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
+    k = 1
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, max_iter=30)
+    lmnn.fit(X_train, y_train)
+    knn = KNeighborsClassifier(n_neighbors=k)
     knn.fit(lmnn.transform(X_train), y_train)
     score_uint8 = knn.score(lmnn.transform(X_test), y_test)
 
@@ -211,12 +215,15 @@ def test_use_sparse():
     test = np.arange(train_test_boundary, n_samples)
     X_train, y_train, X_test, y_test = X[train], y[train], X[test], y[test]
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, use_sparse=False)
-    knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
+    k = 3
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, use_sparse=False)
+    lmnn.fit(X_train, y_train)
+    knn = KNeighborsClassifier(n_neighbors=k)
     knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
     acc_sparse = knn.score(lmnn.transform(X_test), y_test)
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, use_sparse=True)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, use_sparse=True)
+    lmnn.fit(X_train, y_train)
     knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
     acc_dense = knn.score(lmnn.transform(X_test), y_test)
 
