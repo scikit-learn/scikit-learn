@@ -945,9 +945,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     and the 3rd quartile (75th quantile).
 
     Centering and scaling happen independently on each feature (or each
-    sample, depending on the `axis` argument) by computing the relevant
+    sample, depending on the ``axis`` argument) by computing the relevant
     statistics on the samples in the training set. Median and  interquartile
-    range are then stored to be used on later data using the `transform`
+    range are then stored to be used on later data using the ``transform``
     method.
 
     Standardization of a dataset is a common requirement for many
@@ -964,7 +964,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     ----------
     with_centering : boolean, True by default
         If True, center the data before scaling.
-        This does not work (and will raise an exception) when attempted on
+        This will cause ``transform`` to raise an exception when attempted on
         sparse matrices, because centering them entails building a dense
         matrix which in common use cases is likely to be too large to fit in
         memory.
@@ -1059,11 +1059,14 @@ class RobustScaler(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        """Center and scale the data
+        """Center and scale the data.
+
+        Can be called on sparse input, provided that ``RobustScaler`` has been
+        fitted to dense input and ``with_centering=False``.
 
         Parameters
         ----------
-        X : array-like
+        X : {array-like, sparse matrix}
             The data used to scale along the specified axis.
         """
         if self.with_centering:
