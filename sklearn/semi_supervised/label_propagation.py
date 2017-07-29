@@ -52,7 +52,8 @@ Learning (2006), pp. 193-216
 Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 """
 
-# Authors: Clay Woolam <clay@woolam.org>, Utkarsh Upadhyay <mail@musicallyut.in>
+# Authors: Clay Woolam <clay@woolam.org>
+#          Utkarsh Upadhyay <mail@musicallyut.in>
 # License: BSD
 from abc import ABCMeta, abstractmethod
 
@@ -265,7 +266,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         self.n_iter_ = 0
         while self.n_iter_ < self.max_iter:
             if np.abs(self.label_distributions_ - l_previous).sum() < self.tol:
-                 break
+                break
 
             l_previous = self.label_distributions_
             self.label_distributions_ = safe_sparse_dot(
