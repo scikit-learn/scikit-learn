@@ -12,6 +12,7 @@ from warnings import warn
 
 import numpy as np
 import time
+import sys
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.sparse import csr_matrix, csc_matrix, spdiags
 
@@ -39,14 +40,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         transformation is set to the identity, except if ``warm_start`` or
         ``init_pca`` is True.
 
+    init_pca : bool, optional (default=True)
+        Whether to use PCA to initialize the linear transformation.
+        If False, the identity will be used, except if ``warm_start`` is True.
+
     warm_start : bool, optional (default=False)
         If True and :meth:`fit` has been called before, the solution of the
         previous call to :meth:`fit` is used as the initial linear
         transformation.
-
-    init_pca : bool, optional (default=True)
-        Whether to use PCA to initialize the linear transformation.
-        If False, the identity will be used, except if ``warm_start`` is True.
 
     n_features_out : int, optional (default=None)
         Preferred dimensionality of the inputs after the transformation.
@@ -67,12 +68,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         Note: fitting on sparse input will override the setting of
         this parameter, using brute force.
 
-    max_iter : int, optional (default=50)
-        Maximum number of iterations in the optimization.
-
-    tol : float, optional (default=1e-5)
-        Convergence tolerance for the optimization.
-
     max_constraints : int, optional (default=500000)
         Maximum number of constraints to enforce per iteration.
 
@@ -83,11 +78,23 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         data sets than using a dense matrix. With a dense matrix, the unique
         impostor pairs have to be identified explicitly.
 
+    max_iter : int, optional (default=50)
+        Maximum number of iterations in the optimization.
+
+    tol : float, optional (default=1e-5)
+        Convergence tolerance for the optimization.
+
     max_corrections : int, optional (default=100)
         The maximum number of variable metric corrections
         used to define the limited memory matrix. (The limited memory BFGS
         method does not store the full hessian but uses this many terms in an
         approximation to it.)
+
+    callback : callable, optional (default=None)
+        If not None, this function is called after every iteration of the
+        optimizer taking as arguments the current solution and the number of
+        iterations (needs `scipy` >= 0.12.0).
+
 
     verbose : int, optional (default=0)
         If 0, no progress messages will be printed.
@@ -95,11 +102,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         If >1, progress messages will be printed and the ``iprint``
         parameter of :meth:`fmin_l_bfgs_b` of `scipy.optimize` will be set to
         verbose - 2.
-
-    callback : callable, optional (default=None)
-        If not None, this function is called after every iteration of the
-        optimizer taking as arguments the current solution and the number of
-        iterations (needs `scipy` >= 0.12.0).
 
     random_state : int or numpy.RandomState or None, optional (default=None)
         A pseudo random number generator used to sample from the constraints.
@@ -191,23 +193,24 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     def __init__(self, init_transformation=None, init_pca=True,
                  warm_start=False, n_features_out=None, n_neighbors=3,
-                 algorithm='auto', max_iter=50, tol=1e-5,
-                 max_constraints=500000, use_sparse=True, callback=None,
-                 max_corrections=100, verbose=0, random_state=None, n_jobs=1):
+                 algorithm='auto', max_constraints=500000, use_sparse=True,
+                 max_iter=50, tol=1e-5, max_corrections=100, callback=None,
+                 verbose=0, random_state=None, n_jobs=1):
 
         # Parameters
         self.init_transformation = init_transformation
-        self.warm_start = warm_start
         self.init_pca = init_pca
+        self.warm_start = warm_start
+
         self.n_features_out = n_features_out
         self.n_neighbors = n_neighbors
         self.algorithm = algorithm
-        self.max_iter = max_iter
-        self.tol = tol
         self.max_constraints = max_constraints
         self.use_sparse = use_sparse
-        self.callback = callback
+        self.max_iter = max_iter
+        self.tol = tol
         self.max_corrections = max_corrections
+        self.callback = callback
         self.verbose = verbose
         self.random_state = random_state
         self.n_jobs = n_jobs
@@ -493,7 +496,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         elif self.init_pca and X.shape[1] > 1:
             pca = PCA(random_state=self.random_state_)
             if self.verbose:
-                print('Finding principal components...', end='')
+                print('Finding principal components... ', end='')
+                sys.stdout.flush()
                 t = time.time()
 
             pca.fit(X)
@@ -538,7 +542,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         """
 
         if self.verbose:
-            print('Finding the target neighbors...', end='')
+            print('Finding the target neighbors... ', end='')
+            sys.stdout.flush()
             t = time.time()
 
         target_neighbors = np.empty((X.shape[0], self.n_neighbors_), dtype=int)
@@ -675,6 +680,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             else:
                 print('{:>10} {:>15.6e} {:>10.2f}'
                       .format(self.n_funcalls_, loss, toc - tic))
+
+            sys.stdout.flush()
 
         return loss, grad.ravel()
 
