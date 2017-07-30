@@ -672,7 +672,7 @@ class VBGMM(_DPGMMBase):
     Initialization is with normally-distributed means and identity
     covariance, for proper convergence.
 
-    Read more in the :ref:`User Guide <vbgmm>`.
+    Read more in the :ref:`User Guide <bgmm>`.
 
     Parameters
     ----------
