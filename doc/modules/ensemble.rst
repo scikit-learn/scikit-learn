@@ -915,10 +915,10 @@ averaged.
 
  .. _voting_classifier:
 
-VotingClassifier
+Voting Classifier
 ========================
 
-The idea behind the voting classifier implementation is to combine
+The idea behind the :class:`VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
 Such a classifier can be useful for a set of equally well performing model
