@@ -238,13 +238,8 @@ def test_lda_store_covariance():
         assert_true(hasattr(clf, 'covariance_'))
 
         assert_array_almost_equal(
-            clf.covariance_[0],
-            np.array([0.422222, 0.088889])
-        )
-
-        assert_array_almost_equal(
-            clf.covariance_[1],
-            np.array([0.088889, 0.533333])
+            clf.covariance_,
+            np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
         )
 
     # Test for SVD slover, the default is to not set the covariances_ attribute
@@ -257,13 +252,8 @@ def test_lda_store_covariance():
     assert_true(hasattr(clf, 'covariance_'))
 
     assert_array_almost_equal(
-        clf.covariance_[0],
-        np.array([0.422222, 0.088889])
-    )
-
-    assert_array_almost_equal(
-        clf.covariance_[1],
-        np.array([0.088889, 0.533333])
+        clf.covariance_,
+        np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
     )
 
 
