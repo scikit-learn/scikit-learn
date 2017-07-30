@@ -246,7 +246,7 @@ amount of time (e.g., on large datasets).
 
  .. [B1998] L. Breiman, "Arcing Classifiers", Annals of Statistics 1998.
 
- .. [GEW2006] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
+ * P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
 
 .. _random_forest_feature_importance:

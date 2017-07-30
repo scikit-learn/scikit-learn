@@ -126,8 +126,8 @@ This strategy is illustrated below.
 
 .. topic:: References:
 
-    ..  [RD1999] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
-        covariance determinant estimator" Technometrics 41(3), 212 (1999)
+    * Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the minimum
+      covariance determinant estimator" Technometrics 41(3), 212 (1999)
 
 .. _isolation_forest:
 
@@ -172,8 +172,8 @@ This strategy is illustrated below.
 
 .. topic:: References:
 
-    .. [LTZ2008] Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
-           Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
+    * Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
+      Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
 
 
 Local Outlier Factor
@@ -228,7 +228,7 @@ This strategy is illustrated below.
 
 .. topic:: References:
 
-   .. [BKNS2000]  Breunig, Kriegel, Ng, and Sander (2000)
+   *  Breunig, Kriegel, Ng, and Sander (2000)
       `LOF: identifying density-based local outliers.
       <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
       Proc. ACM SIGMOD
@@ -272,16 +272,16 @@ multiple modes and :class:`ensemble.IsolationForest` and
         opposite, the decision rule based on fitting an
         :class:`covariance.EllipticEnvelope` learns an ellipse, which
         fits well the inlier distribution. The :class:`ensemble.IsolationForest`
-	and :class:`neighbors.LocalOutlierFactor` perform as well.
+        and :class:`neighbors.LocalOutlierFactor` perform as well.
       - |outlier1| 
 
    *
       - As the inlier distribution becomes bimodal, the
         :class:`covariance.EllipticEnvelope` does not fit well the
         inliers. However, we can see that :class:`ensemble.IsolationForest`,
-	:class:`svm.OneClassSVM` and :class:`neighbors.LocalOutlierFactor`
-	have difficulties to detect the two modes,
-	and that the :class:`svm.OneClassSVM`
+        :class:`svm.OneClassSVM` and :class:`neighbors.LocalOutlierFactor`
+        have difficulties to detect the two modes,
+        and that the :class:`svm.OneClassSVM`
         tends to overfit: because it has no model of inliers, it
         interprets a region where, by chance some outliers are
         clustered, as inliers.
@@ -292,7 +292,7 @@ multiple modes and :class:`ensemble.IsolationForest` and
         :class:`svm.OneClassSVM` is able to recover a reasonable
         approximation as well as :class:`ensemble.IsolationForest`
         and :class:`neighbors.LocalOutlierFactor`,
-	whereas the :class:`covariance.EllipticEnvelope` completely fails.
+        whereas the :class:`covariance.EllipticEnvelope` completely fails.
       - |outlier3|
 
 .. topic:: Examples:
