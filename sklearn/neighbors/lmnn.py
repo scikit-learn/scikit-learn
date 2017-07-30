@@ -833,11 +833,14 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
         dist_out_in = euclidean_distances(X_out[chunk], X_in, squared=True,
                                           Y_norm_squared=X_in_norm_squared)
 
-        i1, j1 = np.where(dist_out_in < margin_radii_out[chunk, None])
-        i2, j2 = np.where(dist_out_in < margin_radii_in[None, :])
+    #    i1, j1 = np.where(dist_out_in < margin_radii_out[chunk, None])
+    #    i2, j2 = np.where(dist_out_in < margin_radii_in[None, :])
 
-        ind1 = np.ravel_multi_index((i1, j1), dist_out_in.shape)
-        ind2 = np.ravel_multi_index((i2, j2), dist_out_in.shape)
+    #    ind1 = np.ravel_multi_index((i1, j1), dist_out_in.shape)
+    #    ind2 = np.ravel_multi_index((i2, j2), dist_out_in.shape)
+
+        ind1, = np.where((dist_out_in < margin_radii_out[chunk, None]).ravel())
+        ind2, = np.where((dist_out_in < margin_radii_in[None, :]).ravel())
         ind = np.unique(np.concatenate((ind1, ind2)))
 
         if len(ind):
