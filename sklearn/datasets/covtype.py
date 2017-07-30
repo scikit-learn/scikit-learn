@@ -26,7 +26,7 @@ except ImportError:
 import numpy as np
 
 from .base import get_data_home
-from .base import Bunch
+from ..utils import Bunch
 from .base import _pkl_filepath
 from ..utils.fixes import makedirs
 from ..externals import joblib
@@ -50,7 +50,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     ----------
     data_home : string, optional
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : boolean, default=True
         If False, raise a IOError if the data is not locally available
@@ -89,7 +89,8 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     available = exists(samples_path)
 
     if download_if_missing and not available:
-        makedirs(covtype_dir, exist_ok=True)
+        if not exists(covtype_dir):
+            makedirs(covtype_dir)
         logger.warning("Downloading %s" % URL)
         f = BytesIO(urlopen(URL).read())
         Xy = np.genfromtxt(GzipFile(fileobj=f), delimiter=',')

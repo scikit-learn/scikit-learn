@@ -1,4 +1,5 @@
 import numpy as np
+import itertools
 
 from sklearn.exceptions import ConvergenceWarning
 
@@ -25,10 +26,27 @@ n_samples, n_features = 10, 8
 X = rng_global.randn(n_samples, n_features)
 
 
+def test_sparse_encode_shapes_omp():
+    rng = np.random.RandomState(0)
+    algorithms = ['omp', 'lasso_lars', 'lasso_cd', 'lars', 'threshold']
+    for n_components, n_samples in itertools.product([1, 5], [1, 9]):
+        X_ = rng.randn(n_samples, n_features)
+        dictionary = rng.randn(n_components, n_features)
+        for algorithm, n_jobs in itertools.product(algorithms, [1, 3]):
+            code = sparse_encode(X_, dictionary, algorithm=algorithm,
+                                 n_jobs=n_jobs)
+            assert_equal(code.shape, (n_samples, n_components))
+
+
 def test_dict_learning_shapes():
     n_components = 5
     dico = DictionaryLearning(n_components, random_state=0).fit(X)
-    assert_true(dico.components_.shape == (n_components, n_features))
+    assert_equal(dico.components_.shape, (n_components, n_features))
+
+    n_components = 1
+    dico = DictionaryLearning(n_components, random_state=0).fit(X)
+    assert_equal(dico.components_.shape, (n_components, n_features))
+    assert_equal(dico.transform(X).shape, (X.shape[0], n_components))
 
 
 def test_dict_learning_overcomplete():

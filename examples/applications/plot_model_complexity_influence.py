@@ -34,11 +34,11 @@ from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
 from sklearn.metrics import hamming_loss
 
-###############################################################################
+# #############################################################################
 # Routines
 
 
-# initialize random generator
+# Initialize random generator
 np.random.seed(0)
 
 
@@ -122,8 +122,8 @@ def _count_nonzero_coefficients(estimator):
     a = estimator.coef_.toarray()
     return np.count_nonzero(a)
 
-###############################################################################
-# main code
+# #############################################################################
+# Main code
 regression_data = generate_data('regression')
 classification_data = generate_data('classification', sparse=True)
 configurations = [

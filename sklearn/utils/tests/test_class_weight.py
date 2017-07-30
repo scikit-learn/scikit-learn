@@ -31,6 +31,12 @@ def test_compute_class_weight_not_present():
     classes = np.arange(4)
     y = np.asarray([0, 0, 0, 1, 1, 2])
     assert_raises(ValueError, compute_class_weight, "balanced", classes, y)
+    # Fix exception in error message formatting when missing label is a string
+    # https://github.com/scikit-learn/scikit-learn/issues/8312
+    assert_raise_message(ValueError,
+                         'Class label label_not_present not present',
+                         compute_class_weight,
+                         {'label_not_present': 1.}, classes, y)
     # Raise error when y has items not in classes
     classes = np.arange(2)
     assert_raises(ValueError, compute_class_weight, "balanced", classes, y)

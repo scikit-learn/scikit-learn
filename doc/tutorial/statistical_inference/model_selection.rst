@@ -107,9 +107,9 @@ scoring method.
 
     - :class:`KFold` **(n_splits, shuffle, random_state)**
 
-    - :class:`StratifiedKFold` **(n_iter, test_size, train_size, random_state)**
+    - :class:`StratifiedKFold` **(n_splits, shuffle, random_state)**
 
-    - :class:`GroupKFold` **(n_splits, shuffle, random_state)**
+    - :class:`GroupKFold` **(n_splits)**
 
 
    *
@@ -125,7 +125,7 @@ scoring method.
 
    *
 
-    - :class:`ShuffleSplit` **(n_iter, test_size, train_size, random_state)**
+    - :class:`ShuffleSplit` **(n_splits, test_size, train_size, random_state)**
 
     - :class:`StratifiedShuffleSplit`
 
@@ -146,7 +146,7 @@ scoring method.
 
     - :class:`LeaveOneGroupOut` **()**
 
-    - :class:`LeavePGroupsOut`  **(p)**
+    - :class:`LeavePGroupsOut`  **(n_groups)**
 
     - :class:`LeaveOneOut` **()**
 

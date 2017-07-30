@@ -15,6 +15,7 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import SkipTest
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils.mocking import MockDataFrame
@@ -29,28 +30,41 @@ from sklearn.utils.validation import (
     has_fit_parameter,
     check_is_fitted,
     check_consistent_length,
+    assert_all_finite,
 )
+import sklearn
 
 from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
 
-
 def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
     X = X + np.arange(10, dtype=np.int32)
-    # Checks that the return type is ok
     X2 = as_float_array(X, copy=False)
-    np.testing.assert_equal(X2.dtype, np.float32)
+    assert_equal(X2.dtype, np.float32)
     # Another test
     X = X.astype(np.int64)
     X2 = as_float_array(X, copy=True)
     # Checking that the array wasn't overwritten
     assert_true(as_float_array(X, False) is not X)
-    # Checking that the new type is ok
-    np.testing.assert_equal(X2.dtype, np.float64)
+    assert_equal(X2.dtype, np.float64)
+    # Test int dtypes <= 32bit
+    tested_dtypes = [np.bool,
+                     np.int8, np.int16, np.int32,
+                     np.uint8, np.uint16, np.uint32]
+    for dtype in tested_dtypes:
+        X = X.astype(dtype)
+        X2 = as_float_array(X)
+        assert_equal(X2.dtype, np.float32)
+
+    # Test object dtype
+    X = X.astype(object)
+    X2 = as_float_array(X, copy=True)
+    assert_equal(X2.dtype, np.float64)
+
     # Here, X is of the right type, it shouldn't be modified
     X = np.ones((3, 2), dtype=np.float32)
     assert_true(as_float_array(X, copy=False) is X)
@@ -121,9 +135,12 @@ def test_check_array():
     X = [[1, 2], [3, 4]]
     X_csr = sp.csr_matrix(X)
     assert_raises(TypeError, check_array, X_csr)
-    # ensure_2d
+    # ensure_2d=False
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert_equal(X_array.ndim, 1)
+    # ensure_2d=True
+    assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
+                         check_array, [0, 1, 2], ensure_2d=True)
     # don't allow ndim > 3
     X_ndim = np.arange(8).reshape(2, 2, 2)
     assert_raises(ValueError, check_array, X_ndim)
@@ -501,3 +518,24 @@ def test_check_consistent_length():
     assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
                          [1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
+
+
+def test_check_dataframe_fit_attribute():
+    # check pandas dataframe with 'fit' column does not raise error
+    # https://github.com/scikit-learn/scikit-learn/issues/8415
+    try:
+        import pandas as pd
+        X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+        X_df = pd.DataFrame(X, columns=['a', 'b', 'fit'])
+        check_consistent_length(X_df)
+    except ImportError:
+        raise SkipTest("Pandas not found")
+
+
+def test_suppress_validation():
+    X = np.array([0, np.inf])
+    assert_raises(ValueError, assert_all_finite, X)
+    sklearn.set_config(assume_finite=True)
+    assert_all_finite(X)
+    sklearn.set_config(assume_finite=False)
+    assert_raises(ValueError, assert_all_finite, X)
