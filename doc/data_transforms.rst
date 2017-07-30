@@ -33,3 +33,4 @@ scikit-learn.
     modules/kernel_approximation
     modules/metrics
     modules/preprocessing_targets
+    modules/freeze

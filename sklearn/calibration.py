@@ -45,7 +45,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
     base_estimator : instance BaseEstimator
         The classifier whose output decision function needs to be calibrated
         to offer more accurate predict_proba outputs. If cv=prefit, the
-        classifier must have been fit already on data.
+        classifier must have been fit already on data, and it is recommended
+        that the classifier be frozen (see :ref:`frozen`) in this case.
 
     method : 'sigmoid' or 'isotonic'
         The method to use for calibration. Can be 'sigmoid' which

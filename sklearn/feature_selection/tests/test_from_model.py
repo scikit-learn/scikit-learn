@@ -183,3 +183,6 @@ def test_threshold_without_refitting():
     # Set a higher threshold to filter out more features.
     model.threshold = "1.0 * mean"
     assert_greater(X_transform.shape[1], model.transform(data).shape[1])
+
+
+# TODO: test deprecation of prefit and that FreezeWrap behaves similarly

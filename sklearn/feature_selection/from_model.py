@@ -1,6 +1,8 @@
 # Authors: Gilles Louppe, Mathieu Blondel, Maheshakya Wijewardena
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 
 from .base import SelectorMixin
@@ -86,9 +88,10 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
     ----------
     estimator : object
         The base estimator from which the transformer is built.
-        This can be both a fitted (if ``prefit`` is set to True)
-        or a non-fitted estimator. The estimator must have either a
-        ``feature_importances_`` or ``coef_`` attribute after fitting.
+        The estimator must have either a ``feature_importances_``
+        or ``coef_`` attribute after fitting.
+
+        Use :class:`freeze.FreezeWrap` if your estimator is already fitted.
 
     threshold : string, float, optional default None
         The threshold value to use for feature selection. Features whose
@@ -100,14 +103,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         or implicitly (e.g, Lasso), the threshold used is 1e-5.
         Otherwise, "mean" is used by default.
 
-    prefit : bool, default False
-        Whether a prefit model is expected to be passed into the constructor
-        directly or not. If True, ``transform`` must be called directly
-        and SelectFromModel cannot be used with ``cross_val_score``,
-        ``GridSearchCV`` and similar utilities that clone the estimator.
-        Otherwise train the model using ``fit`` and then ``transform`` to do
-        feature selection.
-
     norm_order : non-zero int, inf, -inf, default 1
         Order of the norm used to filter the vectors of coefficients below
         ``threshold`` in the case where the ``coef_`` attribute of the
@@ -117,28 +112,22 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
     ----------
     estimator_ : an estimator
         The base estimator from which the transformer is built.
-        This is stored only when a non-fitted estimator is passed to the
-        ``SelectFromModel``, i.e when prefit is False.
 
     threshold_ : float
         The threshold value used for feature selection.
     """
-    def __init__(self, estimator, threshold=None, prefit=False, norm_order=1):
+    def __init__(self, estimator, threshold=None, prefit=None, norm_order=1):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
         self.norm_order = norm_order
 
     def _get_support_mask(self):
-        # SelectFromModel can directly call on transform.
         if self.prefit:
             estimator = self.estimator
-        elif hasattr(self, 'estimator_'):
-            estimator = self.estimator_
         else:
-            raise ValueError(
-                'Either fit SelectFromModel before transform or set "prefit='
-                'True" and pass a fitted estimator to the constructor.')
+            from ..utils.validation import check_is_fitted
+            check_is_fitted(self, 'estimator_')
         scores = _get_feature_importances(estimator, self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         return scores >= threshold
@@ -162,6 +151,9 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         self : object
             Returns self.
         """
+        if self.prefit is not None:
+            warnings.warn('Parameter prefit is deprecated and will be removed '
+                          'in version 0.22. Use FreezeWrap instead.')
         if self.prefit:
             raise NotFittedError(
                 "Since 'prefit=True', call transform directly")

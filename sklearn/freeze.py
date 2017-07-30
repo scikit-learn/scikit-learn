@@ -15,7 +15,7 @@ class FreezeWrap(BaseEstimator):
     """
 
     def __init__(self, estimator):
-        self.estimator
+        self.estimator = estimator
 
     def fit(self, X, y=None, **kwargs):
         """Return self

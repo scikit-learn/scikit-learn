@@ -26,7 +26,7 @@ from ..utils.metaestimators import _BaseComposition
 def _parallel_fit_estimator(estimator, X, y, sample_weight):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
-        estimator.fit(X, y, sample_weight)
+        estimator.fit(X, y, sample_weight=sample_weight)
     else:
         estimator.fit(X, y)
     return estimator
@@ -46,6 +46,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to `None` using
         ``set_params``.
+
+        Some of these estimators may be frozen (see :ref:`frozen`).
 
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
