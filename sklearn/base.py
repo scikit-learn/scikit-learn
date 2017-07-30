@@ -5,7 +5,6 @@
 
 from copy import deepcopy
 import warnings
-import functools
 
 import numpy as np
 from scipy import sparse
@@ -46,7 +45,8 @@ def clone(estimator, safe=True):
     """
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
-    if isinstance(getattr(estimator, 'fit', None), _FrozenFit):
+    from .freeze import FreezeWrap
+    if isinstance(estimator, FreezeWrap):
         return estimator
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
@@ -526,51 +526,3 @@ def is_classifier(estimator):
 def is_regressor(estimator):
     """Returns True if the given estimator is (probably) a regressor."""
     return getattr(estimator, "_estimator_type", None) == "regressor"
-
-
-class _FrozenFit(object):
-    # We use a class as this allows isinstance check in clone
-    def __init__(self, obj):
-        self.obj = obj
-
-    def __call__(self, *args, **kwargs):
-        return self.obj
-
-
-def _frozen_fit_method(obj, method, X, *args, **kwargs):
-    return getattr(obj, method)(X)
-
-
-def freeze(estimator, copy=False):
-    """Copies estimator and freezes it
-
-    Frozen estimators:
-        * have ``fit(self, *args, **kwargs)`` merely return ``self``
-        * have ``fit_transform`` merely perform ``transform``
-        * have ``fit_predict`` merely perform ``predict``
-
-    Parameters
-    ----------
-    estimator : estimator
-    copy : bool
-
-    Returns
-    -------
-    frozen_estimator : estimator
-        A frozen copy of the input estimator, if ``copy``; otherwise, the
-        estimator is mutated to a frozen version of itself.
-
-    Notes
-    -----
-    Only works on estimators with ``__dict__``.
-    """
-    if copy:
-        estimator = deepcopy(estimator)
-    estimator.fit = _FrozenFit(estimator)
-    if hasattr(estimator, 'fit_transform'):
-        estimator.fit_transform = functools.partial(_frozen_fit_method,
-                                                    estimator, 'transform')
-    if hasattr(estimator, 'fit_predict'):
-        estimator.fit_predict = functools.partial(_frozen_fit_method,
-                                                  estimator, 'predict')
-    return estimator
