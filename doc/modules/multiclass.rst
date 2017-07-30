@@ -251,8 +251,8 @@ Below is an example of multiclass learning using OvO::
 
 .. topic:: References:
 
-    .. [1] "Pattern Recognition and Machine Learning. Springer",
-        Christopher M. Bishop, page 183, (First Edition)
+    * "Pattern Recognition and Machine Learning. Springer",
+      Christopher M. Bishop, page 183, (First Edition)
 
 .. _ecoc:
 
@@ -315,19 +315,19 @@ Below is an example of multiclass learning using Output-Codes::
 
 .. topic:: References:
 
-    .. [2] "Solving multiclass learning problems via error-correcting output codes",
-        Dietterich T., Bakiri G.,
-        Journal of Artificial Intelligence Research 2,
-        1995.
+    * "Solving multiclass learning problems via error-correcting output codes",
+      Dietterich T., Bakiri G.,
+      Journal of Artificial Intelligence Research 2,
+      1995.
 
     .. [3] "The error coding method and PICTs",
         James G., Hastie T.,
         Journal of Computational and Graphical statistics 7,
         1998.
 
-    .. [4] "The Elements of Statistical Learning",
-        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
-        2008.
+    * "The Elements of Statistical Learning",
+      Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
+      2008.
 
 Multioutput regression
 ======================
