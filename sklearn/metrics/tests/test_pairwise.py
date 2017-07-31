@@ -418,7 +418,7 @@ def test_euclidean_distances():
 
 
 def test_masked_euclidean_distances():
-    # check with pairs of matrices with missing values
+    # Check with pairs of matrices with missing values
     X = np.array([[1., np.nan, 3., 4., 2.],
                   [np.nan, 4., 6., 1., np.nan],
                   [3., np.nan, np.nan, np.nan, 1.]])
@@ -432,7 +432,7 @@ def test_masked_euclidean_distances():
 
     assert_array_almost_equal(D1**2, D2)
 
-    # check when squared = True
+    # Check when squared = True
     D3 = np.array(
         [[40., 48.33333331, 22.5],
          [25., 25., 45.],
