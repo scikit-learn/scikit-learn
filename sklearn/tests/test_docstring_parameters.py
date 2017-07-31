@@ -2,8 +2,6 @@
 #          Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-from copy import copy
-
 import inspect
 import sys
 import warnings
