@@ -10,7 +10,7 @@ import warnings
 import importlib
 
 from pkgutil import walk_packages
-from inspect import getsource
+from inspect import getsource, isabstract
 
 import sklearn
 from sklearn.base import signature
@@ -27,27 +27,33 @@ PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
 # TODO Uncomment all modules and fix doc inconsistencies everywhere
 # The list of modules that are not tested for now
 IGNORED_MODULES = (
-    'sklearn.cross_decomposition',
-    'sklearn.discriminant_analysis',
-    'sklearn.ensemble',
-    'sklearn.feature_selection',
-    'sklearn.kernel_approximation',
-    'sklearn.model_selection',
-    'sklearn.multioutput',
-    'sklearn.random_projection',
-    'sklearn.setup',
-    'sklearn.svm',
-    'sklearn.utils',
+    'cross_decomposition',
+    'covariance',
+    'cluster',
+    'datasets',
+    'decomposition',
+    'feature_extraction',
+    'gaussian_process',
+    'linear_model',
+    'manifold',
+    'metrics',
+    'discriminant_analysis',
+    'ensemble',
+    'feature_selection',
+    'kernel_approximation',
+    'model_selection',
+    'multioutput',
+    'random_projection',
+    'setup',
+    'svm',
+    'utils',
     # Deprecated modules
-    'sklearn.cross_validation',
-    'sklearn.grid_search',
-    'sklearn.learning_curve',
+    'cross_validation',
+    'grid_search',
+    'learning_curve',
+    'neighbors'
 )
 
-for pckg in copy(PUBLIC_MODULES):
-    for ignored in IGNORED_MODULES:
-        if ignored in pckg:
-            PUBLIC_MODULES.remove(pckg)
 
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
@@ -83,7 +89,7 @@ def test_docstring_parameters():
 
     incorrect = []
     for name in PUBLIC_MODULES:
-        if name.startswith('_'):
+        if name.startswith('_') or name.split(".")[1] in IGNORED_MODULES:
             continue
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
@@ -92,9 +98,9 @@ def test_docstring_parameters():
         classes = [cls for cls in classes if cls[1].__module__ == name]
         for cname, cls in classes:
             this_incorrect = []
-            if cname in _DOCSTRING_IGNORES:
+            if cname in _DOCSTRING_IGNORES or cname.startswith('_'):
                 continue
-            if cname.startswith('_'):
+            if isabstract(cls):
                 continue
             with warnings.catch_warnings(record=True) as w:
                 cdoc = docscrape.ClassDoc(cls)
@@ -134,6 +140,8 @@ def test_docstring_parameters():
         for fname, func in functions:
             # Don't test private methods / functions
             if fname.startswith('_'):
+                continue
+            if fname == "configuration" and name.endswith("setup"):
                 continue
             name_ = _get_func_name(func)
             if (not any(d in name_ for d in _DOCSTRING_IGNORES) and
