@@ -102,11 +102,6 @@ def check_pairwise_arrays(X, Y, precomputed=False, dtype=None,
         to be any format. False means that a sparse matrix input will
         raise an error.
 
-        .. deprecated:: 0.19
-           Passing 'None' to parameter ``accept_sparse`` in methods is
-           deprecated in version 0.19 "and will be removed in 0.21. Use
-           ``accept_sparse=False`` instead.
-
     force_all_finite : bool
         Whether to raise an error on np.inf and np.nan in X (or Y if it exists)
 
@@ -293,25 +288,9 @@ def masked_euclidean_distances(X, Y=None, squared=False,
                                missing_values="NaN", copy=True):
     """Calculates euclidean distances in the presence of missing values
 
-    Considering the rows of X (and Y=X) as vectors, compute the
-    distance matrix between each pair of vectors. Similarly, if
-    Y is not X, then compute the distance matrix between each
-    pair of vectors (i.e., each row pair) in X and Y.
-
-    This function computes pairwise euclidean distance for vectors
-    in dense matrices X and Y with missing values in arbitrary
-    coordinates.
-
-    The following formula is used for this:
-
-        dist(X, Y) = (X.shape[1] / ((dot(NX, NYT)))) *
-                    (dot((X * X), NYT) - 2 * (dot(X, Y.T)) +
-                    dot(NX, (Y.T * Y.T)))
-
-    where NX and NYT represent the logical-not of the missing masks of
-    X and Y.T, respectively.
-    Formula in matrix form derived by:
-    Shreya Bhattarai <shreya.bhattarai@gmail.com>
+    Considering the rows of X (and Y=X) as samples, compute the distance matrix
+    between each pair of samples. Similarly, if Y is not X, then compute the
+    distance matrix between each sample pair (i.e., each row pair) in X and Y.
 
     When calculating the distance between a pair of samples, this formulation
     essentially zero-weights feature coordinates with a missing value in either
@@ -321,10 +300,8 @@ def masked_euclidean_distances(X, Y=None, squared=False,
         where,
         weight = Total # of coordinates / # of non-missing coordinates
 
-    For instance, the distance between sample points (x1, y1) and (x2, NaN)
-    would result in sqrt(2*((x2-x1)**2). Note that if all the coordinates are
-    missing or if there are no common non-missing coordinates then NaN is
-    returned for that pair.
+    Note that if all the coordinates are missing or if there are no common
+    non-missing coordinates then NaN is returned for that pair.
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -377,31 +354,31 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     # NOTE: force_all_finite=False allows not only NaN but also +/- inf
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False,
                                  force_all_finite=False, copy=copy)
-    if (np.any(np.isinf(X.data)) or
-            (Y is not None and np.any(np.isinf(Y.data)))):
+    if (np.any(np.isinf(X)) or
+            (Y is not X and np.any(np.isinf(Y)))):
         raise ValueError(
             "+/- Infinite values are not allowed.")
 
+    # Get missing mask for X and Y.T
+    mask_X = _get_mask(X, missing_values)
+
+    YT = Y.T
+    mask_YT = _get_mask(YT, missing_values)
+
     # Check if any rows have only missing value
-    if np.any(_get_mask(X, missing_values).sum(axis=1) == X.shape[1])\
-            or (Y is not None and np.any(_get_mask(Y, missing_values).sum(
-                axis=1) == Y.shape[1])):
+    if np.any(mask_X.sum(axis=1) == X.shape[1])\
+            or (Y is not X and np.any(mask_YT.sum(axis=0) == Y.shape[1])):
         raise ValueError("One or more rows only contain missing values.")
 
     # else:
     if missing_values != "NaN" and \
-            (np.any(_get_mask(X.data, "NaN")) or
-                np.any(_get_mask(Y.data, "NaN"))):
+            (np.any(np.isnan(X)) or
+                (Y is not X and np.any(np.isnan(Y)))):
         raise ValueError(
             "NaN values present but missing_value = {0}".format(
                 missing_values))
 
-    # Get missing mask for X
-    mask_X = _get_mask(X, missing_values)
-
-    # Get Y.T mask and anti-mask and set Y.T's missing to zero
-    YT = Y.T
-    mask_YT = _get_mask(YT, missing_values)
+    # Get anti-mask and set Y.T's missing to zero
     NYT = (~mask_YT).astype(np.int32)
     YT[mask_YT] = 0
 
@@ -410,6 +387,8 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     X[mask_X] = 0
 
     # Calculate distances
+    # The following formula was derived in matrix form by:
+    # Shreya Bhattarai <shreya.bhattarai@gmail.com>
 
     distances = (X.shape[1] / (np.dot(NX, NYT))) * \
                 (np.dot(X * X, NYT) - 2 * (np.dot(X, YT)) +

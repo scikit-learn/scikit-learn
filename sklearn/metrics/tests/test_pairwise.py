@@ -451,6 +451,37 @@ def test_masked_euclidean_distances():
     D6 = masked_euclidean_distances(X, X, missing_values="NaN")
     assert_array_almost_equal(D5, D6)
 
+    # Check with missing_value = 1 while NaN is present
+    assert_raises(ValueError, masked_euclidean_distances, X, Y,
+                  missing_values=1)
+    # Check with inf present
+    X_inf = np.array([
+        [np.inf, np.nan, 3., 4., 2.],
+        [np.nan, 4., 6., 1., np.nan],
+        [3., np.nan, np.nan, np.nan, 1.]])
+
+    assert_raises(ValueError, masked_euclidean_distances, X_inf, Y)
+
+    # Check with a row containing all NaNs
+    X_nan_row = np.array([
+        [1., np.nan, 3., 4., 2.],
+        [np.nan, 4., 6., 1., np.nan],
+        [np.nan, np.nan, np.nan, np.nan, np.nan]])
+
+    Y_nan_row = np.array([
+        [np.nan, 7., 7., np.nan, 2.],
+        [np.nan, np.nan, 5., 4., 7.],
+        [np.nan, np.nan, np.nan, np.nan, np.nan]])
+
+    assert_raises(ValueError, masked_euclidean_distances, X_nan_row, Y)
+    assert_raises(ValueError, masked_euclidean_distances, X, Y_nan_row)
+
+    # Check copy = True against copy = False
+    # Note: This test will alter X and Y
+    D7 = masked_euclidean_distances(X, Y, copy=True)
+    D8 = masked_euclidean_distances(X, Y, copy=False)
+    assert_array_almost_equal(D7, D8)
+
 
 def test_cosine_distances():
     # Check the pairwise Cosine distances computation
