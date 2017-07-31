@@ -43,11 +43,12 @@ run_tests() {
     fi
     $TEST_CMD sklearn
 
-    # Test doc (only with nose until we switch completely to pytest)
+    # Going back to git checkout folder needed for make test-doc
+    cd $OLDPWD
     if [[ "$USE_PYTEST" != "true" ]]; then
-        # Going back to git checkout folder needed for make test-doc
-        cd $OLDPWD
         make test-doc
+    else
+        make test-doc-pytest
     fi
 }
 
