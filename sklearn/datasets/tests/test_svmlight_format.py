@@ -1,3 +1,4 @@
+from __future__ import division
 from bz2 import BZ2File
 import gzip
 from io import BytesIO
@@ -13,8 +14,10 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_in
+from sklearn.utils.fixes import sp_version
 
 import sklearn
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
@@ -402,3 +405,106 @@ def test_load_with_long_qid():
     X, y = load_svmlight_file(f, query_id=False, zero_based=True)
     assert_array_equal(y, true_y)
     assert_array_equal(X.toarray(), true_X)
+
+
+def test_load_zeros():
+    f = BytesIO()
+    true_X = sp.csr_matrix(np.zeros(shape=(3, 4)))
+    true_y = np.array([0, 1, 0])
+    dump_svmlight_file(true_X, true_y, f)
+
+    for zero_based in ['auto', True, False]:
+        f.seek(0)
+        X, y = load_svmlight_file(f, n_features=4, zero_based=zero_based)
+        assert_array_equal(y, true_y)
+        assert_array_equal(X.toarray(), true_X.toarray())
+
+
+def test_load_with_offsets():
+    def check_load_with_offsets(sparsity, n_samples, n_features):
+        rng = np.random.RandomState(0)
+        X = rng.uniform(low=0.0, high=1.0, size=(n_samples, n_features))
+        if sparsity:
+            X[X < sparsity] = 0.0
+        X = sp.csr_matrix(X)
+        y = rng.randint(low=0, high=2, size=n_samples)
+
+        f = BytesIO()
+        dump_svmlight_file(X, y, f)
+        f.seek(0)
+
+        size = len(f.getvalue())
+
+        # put some marks that are likely to happen anywhere in a row
+        mark_0 = 0
+        mark_1 = size // 3
+        length_0 = mark_1 - mark_0
+        mark_2 = 4 * size // 5
+        length_1 = mark_2 - mark_1
+
+        # load the original sparse matrix into 3 independent CSR matrices
+        X_0, y_0 = load_svmlight_file(f, n_features=n_features,
+                                      offset=mark_0, length=length_0)
+        X_1, y_1 = load_svmlight_file(f, n_features=n_features,
+                                      offset=mark_1, length=length_1)
+        X_2, y_2 = load_svmlight_file(f, n_features=n_features,
+                                      offset=mark_2)
+
+        y_concat = np.concatenate([y_0, y_1, y_2])
+        X_concat = sp.vstack([X_0, X_1, X_2])
+        assert_array_equal(y, y_concat)
+        assert_array_almost_equal(X.toarray(), X_concat.toarray())
+
+    # Generate a uniformly random sparse matrix
+    for sparsity in [0, 0.1, .5, 0.99, 1]:
+        for n_samples in [13, 101]:
+            for n_features in [2, 7, 41]:
+                yield check_load_with_offsets, sparsity, n_samples, n_features
+
+
+def test_load_offset_exhaustive_splits():
+    rng = np.random.RandomState(0)
+    X = np.array([
+        [0, 0, 0, 0, 0, 0],
+        [1, 2, 3, 4, 0, 6],
+        [1, 2, 3, 4, 0, 6],
+        [0, 0, 0, 0, 0, 0],
+        [1, 0, 3, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0],
+    ])
+    X = sp.csr_matrix(X)
+    n_samples, n_features = X.shape
+    y = rng.randint(low=0, high=2, size=n_samples)
+    query_id = np.arange(n_samples) // 2
+
+    f = BytesIO()
+    dump_svmlight_file(X, y, f, query_id=query_id)
+    f.seek(0)
+
+    size = len(f.getvalue())
+
+    # load the same data in 2 parts with all the possible byte offsets to
+    # locate the split so has to test for particular boundary cases
+    for mark in range(size):
+        if sp_version < (0, 14) and (mark == 0 or mark > size - 100):
+            # old scipy does not support sparse matrices with 0 rows.
+            continue
+        f.seek(0)
+        X_0, y_0, q_0 = load_svmlight_file(f, n_features=n_features,
+                                           query_id=True, offset=0,
+                                           length=mark)
+        X_1, y_1, q_1 = load_svmlight_file(f, n_features=n_features,
+                                           query_id=True, offset=mark,
+                                           length=-1)
+        q_concat = np.concatenate([q_0, q_1])
+        y_concat = np.concatenate([y_0, y_1])
+        X_concat = sp.vstack([X_0, X_1])
+        assert_array_equal(y, y_concat)
+        assert_array_equal(query_id, q_concat)
+        assert_array_almost_equal(X.toarray(), X_concat.toarray())
+
+
+def test_load_with_offsets_error():
+    assert_raises_regex(ValueError, "n_features is required",
+                        load_svmlight_file, datafile, offset=3, length=3)

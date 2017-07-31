@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
@@ -163,8 +164,8 @@ def test_cross_validator_with_default_params():
     skf_repr = "StratifiedKFold(n_splits=2, random_state=None, shuffle=False)"
     lolo_repr = "LeaveOneGroupOut()"
     lopo_repr = "LeavePGroupsOut(n_groups=2)"
-    ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, test_size=0.1, "
-               "train_size=None)")
+    ss_repr = ("ShuffleSplit(n_splits=10, random_state=0, "
+               "test_size='default',\n       train_size=None)")
     ps_repr = "PredefinedSplit(test_fold=array([1, 1, 2, 2]))"
 
     n_splits_expected = [n_samples, comb(n_samples, p), n_splits, n_splits,
@@ -527,6 +528,7 @@ def test_shuffle_split():
         assert_array_equal(t3[1], t4[1])
 
 
+@ignore_warnings
 def test_stratified_shuffle_split_init():
     X = np.arange(7)
     y = np.asarray([0, 1, 1, 1, 2, 2, 2])
@@ -859,6 +861,7 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
                          LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
 
+@ignore_warnings
 def test_repeated_cv_value_errors():
     # n_repeats is not integer or <= 0
     for cv in (RepeatedKFold, RepeatedStratifiedKFold):
@@ -1070,6 +1073,7 @@ def train_test_split_list_input():
         np.testing.assert_equal(y_test3, y_test2)
 
 
+@ignore_warnings
 def test_shufflesplit_errors():
     # When the {test|train}_size is a float/invalid, error is raised at init
     assert_raises(ValueError, ShuffleSplit, test_size=None, train_size=None)
@@ -1364,6 +1368,14 @@ def test_nested_cv():
                           cv=inner_cv)
         cross_val_score(gs, X=X, y=y, groups=groups, cv=outer_cv,
                         fit_params={'groups': groups})
+
+
+def test_train_test_default_warning():
+    assert_warns(FutureWarning, ShuffleSplit, train_size=0.75)
+    assert_warns(FutureWarning, GroupShuffleSplit, train_size=0.75)
+    assert_warns(FutureWarning, StratifiedShuffleSplit, train_size=0.75)
+    assert_warns(FutureWarning, train_test_split, range(3),
+                 train_size=0.75)
 
 
 def test_build_repr():

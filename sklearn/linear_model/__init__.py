@@ -30,8 +30,10 @@ from .omp import (orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit,
 from .passive_aggressive import PassiveAggressiveClassifier
 from .passive_aggressive import PassiveAggressiveRegressor
 from .perceptron import Perceptron
+
 from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
                             lasso_stability_path)
+
 from .ransac import RANSACRegressor
 from .theil_sen import TheilSenRegressor
 
@@ -40,6 +42,7 @@ __all__ = ['ARDRegression',
            'ElasticNet',
            'ElasticNetCV',
            'Hinge',
+           'Huber',
            'HuberRegressor',
            'Lars',
            'LarsCV',

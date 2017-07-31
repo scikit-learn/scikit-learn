@@ -17,6 +17,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.externals.six import iteritems
 
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import masked_euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
@@ -56,6 +57,15 @@ def test_pairwise_distances():
     S = pairwise_distances(X, Y, metric="euclidean")
     S2 = euclidean_distances(X, Y)
     assert_array_almost_equal(S, S2)
+    # Check to ensure NaNs work with pairwise_distances.
+    X_masked = rng.random_sample((5, 4))
+    Y_masked = rng.random_sample((2, 4))
+    X_masked[0, 0] = np.nan
+    Y_masked[0, 0] = np.nan
+    S_masked = pairwise_distances(X_masked, Y_masked,
+                                  metric="masked_euclidean")
+    S2_masked = masked_euclidean_distances(X_masked, Y_masked)
+    assert_array_almost_equal(S_masked, S2_masked)
     # Test with tuples as X and Y
     X_tuples = tuple([tuple([v for v in row]) for row in X])
     Y_tuples = tuple([tuple([v for v in row]) for row in Y])
@@ -405,6 +415,72 @@ def test_euclidean_distances():
                                   X_norm_squared=np.zeros_like(X_norm_sq),
                                   Y_norm_squared=np.zeros_like(Y_norm_sq))
     assert_greater(np.max(np.abs(wrong_D - D1)), .01)
+
+
+def test_masked_euclidean_distances():
+    # Check with pairs of matrices with missing values
+    X = np.array([[1., np.nan, 3., 4., 2.],
+                  [np.nan, 4., 6., 1., np.nan],
+                  [3., np.nan, np.nan, np.nan, 1.]])
+
+    Y = np.array([[np.nan, 7., 7., np.nan, 2.],
+                  [np.nan, np.nan, 5., 4., 7.],
+                  [np.nan, np.nan, np.nan, 4., 5.]])
+
+    D1 = masked_euclidean_distances(X, Y,  missing_values="NaN")
+    D2 = masked_euclidean_distances(X, Y, squared=True, missing_values="NaN")
+
+    assert_array_almost_equal(D1**2, D2)
+
+    # Check when squared = True
+    D3 = np.array(
+        [[40., 48.33333331, 22.5],
+         [25., 25., 45.],
+         [5., 180., 80.]])
+    D4 = masked_euclidean_distances(X, Y, squared=True, missing_values="NaN")
+
+    assert_array_almost_equal(D3, D4)
+
+    # Check with explicit formula and squared=True
+    assert_array_almost_equal(
+        masked_euclidean_distances(X[:1], Y[:1], squared=True),
+        [[5.0/2.0 * ((7-3)**2 + (2-2)**2)]])
+
+    # Check when Y = X is explicitly passed
+    D5 = masked_euclidean_distances(X, missing_values="NaN")
+    D6 = masked_euclidean_distances(X, X, missing_values="NaN")
+    assert_array_almost_equal(D5, D6)
+
+    # Check with missing_value = 1 while NaN is present
+    assert_raises(ValueError, masked_euclidean_distances, X, Y,
+                  missing_values=1)
+    # Check with inf present
+    X_inf = np.array([
+        [np.inf, np.nan, 3., 4., 2.],
+        [np.nan, 4., 6., 1., np.nan],
+        [3., np.nan, np.nan, np.nan, 1.]])
+
+    assert_raises(ValueError, masked_euclidean_distances, X_inf, Y)
+
+    # Check with a row containing all NaNs
+    X_nan_row = np.array([
+        [1., np.nan, 3., 4., 2.],
+        [np.nan, 4., 6., 1., np.nan],
+        [np.nan, np.nan, np.nan, np.nan, np.nan]])
+
+    Y_nan_row = np.array([
+        [np.nan, 7., 7., np.nan, 2.],
+        [np.nan, np.nan, 5., 4., 7.],
+        [np.nan, np.nan, np.nan, np.nan, np.nan]])
+
+    assert_raises(ValueError, masked_euclidean_distances, X_nan_row, Y)
+    assert_raises(ValueError, masked_euclidean_distances, X, Y_nan_row)
+
+    # Check copy = True against copy = False
+    # Note: This test will alter X and Y
+    D7 = masked_euclidean_distances(X, Y, copy=True)
+    D8 = masked_euclidean_distances(X, Y, copy=False)
+    assert_array_almost_equal(D7, D8)
 
 
 def test_cosine_distances():

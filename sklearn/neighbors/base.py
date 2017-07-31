@@ -17,6 +17,7 @@ from .kd_tree import KDTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..metrics.pairwise import _MASKED_SUPPORTED_METRICS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
@@ -125,8 +126,10 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         if algorithm == 'auto':
             if metric == 'precomputed':
                 alg_check = 'brute'
-            else:
+            elif callable(metric) or metric in VALID_METRICS['ball_tree']:
                 alg_check = 'ball_tree'
+            else:
+                alg_check = 'brute'
         else:
             alg_check = algorithm
 
@@ -156,6 +159,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._fit_method = None
 
     def _fit(self, X):
+        allow_nans = self.metric in _MASKED_SUPPORTED_METRICS
+
         if self.metric_params is None:
             self.effective_metric_params_ = {}
         else:
@@ -199,13 +204,19 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr',
+                        force_all_finite=not allow_nans)
 
         n_samples = X.shape[0]
         if n_samples == 0:
             raise ValueError("n_samples must be greater than 0")
 
         if issparse(X):
+            if allow_nans:
+                raise ValueError(
+                    "Nearest neighbor algorithm does not currently support"
+                    "the use of sparse matrices for missing values."
+                )
             if self.algorithm not in ('auto', 'brute'):
                 warnings.warn("cannot use tree with sparse input: "
                               "using brute force")
@@ -228,8 +239,11 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     self.metric != 'precomputed'):
                 if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
-                else:
+                elif (callable(self.effective_metric_) or
+                        self.effective_metric_ in VALID_METRICS['ball_tree']):
                     self._fit_method = 'ball_tree'
+                else:
+                    self._fit_method = 'brute'
             else:
                 self._fit_method = 'brute'
 
@@ -326,7 +340,11 @@ class KNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            X = check_array(X, accept_sparse='csr')
+            if self.effective_metric_ in _MASKED_SUPPORTED_METRICS:
+                X = check_array(X, accept_sparse='csr',
+                                force_all_finite=False)
+            else:
+                X = check_array(X, accept_sparse='csr')
         else:
             query_is_train = True
             X = self._fit_X
@@ -347,8 +365,9 @@ class KNeighborsMixin(object):
         n_jobs = _get_n_jobs(self.n_jobs)
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
-            if self.effective_metric_ == 'euclidean':
-                dist = pairwise_distances(X, self._fit_X, 'euclidean',
+            if self.effective_metric_ in ['euclidean', 'masked_euclidean']:
+                dist = pairwise_distances(X, self._fit_X,
+                                          self.effective_metric_,
                                           n_jobs=n_jobs, squared=True)
             else:
                 dist = pairwise_distances(
@@ -362,7 +381,7 @@ class KNeighborsMixin(object):
                 sample_range, np.argsort(dist[sample_range, neigh_ind])]
 
             if return_distance:
-                if self.effective_metric_ == 'euclidean':
+                if self.effective_metric_ in ['euclidean', 'masked_euclidean']:
                     result = np.sqrt(dist[sample_range, neigh_ind]), neigh_ind
                 else:
                     result = dist[sample_range, neigh_ind], neigh_ind

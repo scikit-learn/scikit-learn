@@ -64,8 +64,10 @@ print("Log-loss: %.3f (initial) %.3f (optimized)"
 
 # Plot posteriors
 plt.figure(0)
-plt.scatter(X[:train_size, 0], y[:train_size], c='k', label="Train data")
-plt.scatter(X[train_size:, 0], y[train_size:], c='g', label="Test data")
+plt.scatter(X[:train_size, 0], y[:train_size], c='k', label="Train data",
+            edgecolors=(0, 0, 0))
+plt.scatter(X[train_size:, 0], y[train_size:], c='g', label="Test data",
+            edgecolors=(0, 0, 0))
 X_ = np.linspace(0, 5, 100)
 plt.plot(X_, gp_fix.predict_proba(X_[:, np.newaxis])[:, 1], 'r',
          label="Initial kernel: %s" % gp_fix.kernel_)

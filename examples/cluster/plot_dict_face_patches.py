@@ -32,7 +32,7 @@ from sklearn.feature_extraction.image import extract_patches_2d
 
 faces = datasets.fetch_olivetti_faces()
 
-###############################################################################
+# #############################################################################
 # Learn the dictionary of images
 
 print('Learning the dictionary... ')
@@ -66,7 +66,7 @@ for _ in range(6):
 dt = time.time() - t0
 print('done in %.2fs.' % dt)
 
-###############################################################################
+# #############################################################################
 # Plot the results
 plt.figure(figsize=(4.2, 4))
 for i, patch in enumerate(kmeans.cluster_centers_):

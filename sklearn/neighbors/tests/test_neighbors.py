@@ -1,23 +1,27 @@
 from itertools import product
+
 import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
 
 from sklearn import metrics
-from sklearn.model_selection import train_test_split
+from sklearn import neighbors, datasets
+from sklearn.exceptions import DataConversionWarning
+from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors.base import VALID_METRICS_SPARSE, VALID_METRICS
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.validation import check_random_state
-from sklearn.metrics.pairwise import pairwise_distances
-from sklearn import neighbors, datasets
-from sklearn.exceptions import DataConversionWarning
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -82,6 +86,64 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
             assert_array_almost_equal(results_nodist[i], results[i][1])
             assert_array_almost_equal(results[i][0], results[i + 1][0])
             assert_array_almost_equal(results[i][1], results[i + 1][1])
+
+
+def test_masked_unsupervised_kneighbors():
+    # Test 1
+    X = np.array([[np.nan, 3., 7., np.nan],
+                  [6., 3., 7., 2.],
+                  [7., 3., 4., 4.],
+                  [2., 7., 7., 1.],
+                  [np.nan, 2., np.nan, 4.]], dtype=np.float32)
+
+    Y = np.array([[3., 1., 7., np.nan],
+                  [1., 3., 1., 6.],
+                  [np.nan, 1., np.nan, 5.],
+                  [3., 1., 3., 3.],
+                  [2., 3., 1., 9.]], dtype=np.float32)
+
+    neigh = neighbors.NearestNeighbors(2, metric="masked_euclidean")
+    neigh.fit(X)
+    X_neigh = neigh.kneighbors(n_neighbors=2, return_distance=False)
+    XY_neigh = neigh.kneighbors(Y, 2, return_distance=False)
+    # Expected outcome
+    N1 = np.array(
+        [[1, 4],
+            [0, 4],
+            [4, 1],
+            [0, 1],
+            [2, 0]])
+
+    N2 = np.array(
+        [[4, 0],
+            [4, 2],
+            [4, 2],
+            [4, 2],
+            [4, 2]])
+
+    assert_array_equal(X_neigh, N1)
+    assert_array_equal(XY_neigh, N2)
+
+    # Test 2
+    nan = float("nan")
+    samples = [[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]]
+    neigh = neighbors.NearestNeighbors(n_neighbors=2,
+                                       metric="masked_euclidean")
+    neigh.fit(samples)
+
+    X2_neigh = neigh.kneighbors(n_neighbors=2, return_distance=False)
+    XY2_neigh = neigh.kneighbors([[0, nan, 1]], 2, return_distance=False)
+
+    # Expected outcome
+    N3 = np.array(
+        [[3, 1],
+         [3, 2],
+         [3, 1],
+         [2, 1]])
+    N4 = np.array([[1, 3]])
+
+    assert_array_equal(X2_neigh, N3)
+    assert_array_equal(XY2_neigh, N4)
 
 
 def test_unsupervised_inputs():
@@ -986,6 +1048,53 @@ def test_callable_metric():
     dist2, ind2 = nbrs2.kneighbors(X)
 
     assert_array_almost_equal(dist1, dist2)
+
+
+def test_valid_brute_metric_for_auto_algorithm():
+    X = rng.rand(12, 12)
+    Xcsr = csr_matrix(X)
+
+    # check that there is a metric that is valid for brute
+    # but not ball_tree (so we actually test something)
+    assert_in("cosine", VALID_METRICS['brute'])
+    assert_false("cosine" in VALID_METRICS['ball_tree'])
+
+    # Metric which don't required any additional parameter
+    require_params = ['mahalanobis', 'wminkowski', 'seuclidean']
+    for metric in VALID_METRICS['brute']:
+        if metric != 'precomputed' and metric not in require_params:
+            nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                            metric=metric).fit(X)
+            nn.kneighbors(X)
+        elif metric == 'precomputed':
+            X_precomputed = rng.random_sample((10, 4))
+            Y_precomputed = rng.random_sample((3, 4))
+            DXX = metrics.pairwise_distances(X_precomputed, metric='euclidean')
+            DYX = metrics.pairwise_distances(Y_precomputed, X_precomputed,
+                                             metric='euclidean')
+            nb_p = neighbors.NearestNeighbors(n_neighbors=3)
+            nb_p.fit(DXX)
+            nb_p.kneighbors(DYX)
+
+    for metric in VALID_METRICS_SPARSE['brute']:
+        # TODO: Remove after adding sparse support for masked_euclidean
+        if metric == "masked_euclidean":
+            continue
+        if metric != 'precomputed' and metric not in require_params:
+            nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                            metric=metric).fit(Xcsr)
+            nn.kneighbors(Xcsr)
+
+    # Metric with parameter
+    VI = np.dot(X, X.T)
+    list_metrics = [('seuclidean', dict(V=rng.rand(12))),
+                    ('wminkowski', dict(w=rng.rand(12))),
+                    ('mahalanobis', dict(VI=VI))]
+    for metric, params in list_metrics:
+        nn = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
+                                        metric=metric,
+                                        metric_params=params).fit(X)
+        nn.kneighbors(X)
 
 
 def test_metric_params_interface():

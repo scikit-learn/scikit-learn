@@ -1133,7 +1133,7 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
 class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
-    def __init__(self, n_splits=10, test_size=0.1, train_size=None,
+    def __init__(self, n_splits=10, test_size="default", train_size=None,
                  random_state=None):
         _validate_shuffle_split_init(test_size, train_size)
         self.n_splits = n_splits
@@ -1211,16 +1211,20 @@ class ShuffleSplit(BaseShuffleSplit):
 
     Parameters
     ----------
-    n_splits : int (default 10)
+    n_splits : int, default 10
         Number of re-shuffling & splitting iterations.
 
-    test_size : float, int, or None, default 0.1
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
+    test_size : float, int, None, default=0.1
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, the value is set to the
+        complement of the train size. By default (the is parameter
+        unspecified), the value is set to 0.1.
+        The default will change in version 0.21. It will remain 0.1 only
+        if ``train_size`` is unspecified, otherwise it will complement
+        the specified ``train_size``.
 
-    train_size : float, int, or None (default is None)
+    train_size : float, int, or None, default=None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
@@ -1260,7 +1264,8 @@ class ShuffleSplit(BaseShuffleSplit):
 
     def _iter_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
-        n_train, n_test = _validate_shuffle_split(n_samples, self.test_size,
+        n_train, n_test = _validate_shuffle_split(n_samples,
+                                                  self.test_size,
                                                   self.train_size)
         rng = check_random_state(self.random_state)
         for i in range(self.n_splits):
@@ -1299,13 +1304,16 @@ class GroupShuffleSplit(ShuffleSplit):
     n_splits : int (default 5)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float (default 0.2), int, or None
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the groups to include in the test split. If
-        int, represents the absolute number of test groups. If None,
-        the value is automatically set to the complement of the train size.
+    test_size : float, int, None, optional
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, the value is set to the
+        complement of the train size. By default, the value is set to 0.2.
+        The default will change in version 0.21. It will remain 0.2 only
+        if ``train_size`` is unspecified, otherwise it will complement
+        the specified ``train_size``.
 
-    train_size : float, int, or None (default is None)
+    train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the groups to include in the train split. If
         int, represents the absolute number of train groups. If None,
@@ -1319,8 +1327,16 @@ class GroupShuffleSplit(ShuffleSplit):
 
     '''
 
-    def __init__(self, n_splits=5, test_size=0.2, train_size=None,
+    def __init__(self, n_splits=5, test_size="default", train_size=None,
                  random_state=None):
+        if test_size == "default":
+            if train_size is not None:
+                warnings.warn("From version 0.21, test_size will always "
+                              "complement train_size unless both "
+                              "are specified.",
+                              FutureWarning)
+            test_size = 0.2
+
         super(GroupShuffleSplit, self).__init__(
             n_splits=n_splits,
             test_size=test_size,
@@ -1428,16 +1444,19 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
     Parameters
     ----------
-    n_splits : int (default 10)
+    n_splits : int, default 10
         Number of re-shuffling & splitting iterations.
 
-    test_size : float (default 0.1), int, or None
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
+    test_size : float, int, None, optional
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, the value is set to the
+        complement of the train size. By default, the value is set to 0.1.
+        The default will change in version 0.21. It will remain 0.1 only
+        if ``train_size`` is unspecified, otherwise it will complement
+        the specified ``train_size``.
 
-    train_size : float, int, or None (default is None)
+    train_size : float, int, or None, default is None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
@@ -1468,7 +1487,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [0 2] TEST: [3 1]
     """
 
-    def __init__(self, n_splits=10, test_size=0.1, train_size=None,
+    def __init__(self, n_splits=10, test_size="default", train_size=None,
                  random_state=None):
         super(StratifiedShuffleSplit, self).__init__(
             n_splits, test_size, train_size, random_state)
@@ -1502,6 +1521,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              'equal to the number of classes = %d' %
                              (n_test, n_classes))
 
+        # Find the sorted list of instances for each class:
+        # (np.unique above performs a sort, so code is O(n logn) already)
+        class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
+                                 np.cumsum(class_counts)[:-1])
+
         rng = check_random_state(self.random_state)
 
         for _ in range(self.n_splits):
@@ -1514,12 +1538,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             train = []
             test = []
 
-            for i, class_i in enumerate(classes):
+            for i in range(n_classes):
                 permutation = rng.permutation(class_counts[i])
-                perm_indices_class_i = np.where((y == class_i))[0][permutation]
+                perm_indices_class_i = class_indices[i].take(permutation,
+                                                             mode='clip')
 
                 train.extend(perm_indices_class_i[:n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
+
             train = rng.permutation(train)
             test = rng.permutation(test)
 
@@ -1563,6 +1589,14 @@ def _validate_shuffle_split_init(test_size, train_size):
     NOTE This does not take into account the number of samples which is known
     only at split
     """
+    if test_size == "default":
+        if train_size is not None:
+            warnings.warn("From version 0.21, test_size will always "
+                          "complement train_size unless both "
+                          "are specified.",
+                          FutureWarning)
+        test_size = 0.1
+
     if test_size is None and train_size is None:
         raise ValueError('test_size and train_size can not both be None')
 
@@ -1597,15 +1631,20 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     Validation helper to check if the test/test sizes are meaningful wrt to the
     size of the data (n_samples)
     """
-    if (test_size is not None and np.asarray(test_size).dtype.kind == 'i' and
+    if (test_size is not None and
+            np.asarray(test_size).dtype.kind == 'i' and
             test_size >= n_samples):
         raise ValueError('test_size=%d should be smaller than the number of '
                          'samples %d' % (test_size, n_samples))
 
-    if (train_size is not None and np.asarray(train_size).dtype.kind == 'i' and
+    if (train_size is not None and
+            np.asarray(train_size).dtype.kind == 'i' and
             train_size >= n_samples):
         raise ValueError("train_size=%d should be smaller than the number of"
                          " samples %d" % (train_size, n_samples))
+
+    if test_size == "default":
+        test_size = 0.1
 
     if np.asarray(test_size).dtype.kind == 'f':
         n_test = ceil(test_size * n_samples)
@@ -1783,10 +1822,11 @@ def check_cv(cv=3, y=None, classifier=False):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other
@@ -1844,14 +1884,16 @@ def train_test_split(*arrays, **options):
         Allowed inputs are lists, numpy arrays, scipy-sparse
         matrices or pandas dataframes.
 
-    test_size : float, int, or None (default is None)
-        If float, should be between 0.0 and 1.0 and represent the
-        proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples. If None,
-        the value is automatically set to the complement of the train size.
-        If train size is also None, test size is set to 0.25.
+    test_size : float, int, None, optional
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to include in the test split. If int, represents the
+        absolute number of test samples. If None, the value is set to the
+        complement of the train size. By default, the value is set to 0.25.
+        The default will change in version 0.21. It will remain 0.25 only
+        if ``train_size`` is unspecified, otherwise it will complement
+        the specified ``train_size``.
 
-    train_size : float, int, or None (default is None)
+    train_size : float, int, or None, default None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
@@ -1917,7 +1959,7 @@ def train_test_split(*arrays, **options):
     n_arrays = len(arrays)
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
-    test_size = options.pop('test_size', None)
+    test_size = options.pop('test_size', 'default')
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     stratify = options.pop('stratify', None)
@@ -1925,6 +1967,14 @@ def train_test_split(*arrays, **options):
 
     if options:
         raise TypeError("Invalid parameters passed: %s" % str(options))
+
+    if test_size == 'default':
+        test_size = None
+        if train_size is not None:
+            warnings.warn("From version 0.21, test_size will always "
+                          "complement train_size unless both "
+                          "are specified.",
+                          FutureWarning)
 
     if test_size is None and train_size is None:
         test_size = 0.25
