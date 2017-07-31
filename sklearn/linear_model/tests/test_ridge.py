@@ -383,6 +383,16 @@ def _test_ridge_loo(filter_):
     return ret
 
 
+def _test_ridge_cv_normalize(filter_):
+    ridge_cv = RidgeCV(normalize=True, cv=3)
+    ridge_cv.fit(filter_(10. * X_diabetes), y_diabetes)
+
+    gs = GridSearchCV(Ridge(normalize=True), cv=3,
+                      param_grid={'alpha': ridge_cv.alphas})
+    gs.fit(filter_(10. * X_diabetes), y_diabetes)
+    assert_equal(gs.best_estimator_.alpha, ridge_cv.alpha_)
+
+
 def _test_ridge_cv(filter_):
     ridge_cv = RidgeCV()
     ridge_cv.fit(filter_(X_diabetes), y_diabetes)
@@ -462,6 +472,7 @@ def check_dense_sparse(test_func):
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
                       _test_ridge_cv,
+                      _test_ridge_cv_normalize,
                       _test_ridge_diabetes,
                       _test_multi_ridge_diabetes,
                       _test_ridge_classifiers,
@@ -813,12 +824,12 @@ def test_dtype_match():
         ridge_64.fit(X_64, y_64)
         coef_64 = ridge_64.coef_
 
-        # Do all the checks at once, like this is easier to debug
-        assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
-
         # Do the actual checks at once for easier debug
-        assert_equal(coef_32.dtype, X_32.dtype)
-        assert_equal(coef_64.dtype, X_64.dtype)
+        assert coef_32.dtype == X_32.dtype
+        assert coef_64.dtype == X_64.dtype
+        assert ridge_32.predict(X_32).dtype == X_32.dtype
+        assert ridge_64.predict(X_64).dtype == X_64.dtype
+        assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)
 
 
 def test_dtype_match_cholesky():
@@ -844,6 +855,8 @@ def test_dtype_match_cholesky():
     coef_64 = ridge_64.coef_
 
     # Do all the checks at once, like this is easier to debug
-    assert_equal(coef_32.dtype, X_32.dtype)
-    assert_equal(coef_64.dtype, X_64.dtype)
+    assert coef_32.dtype == X_32.dtype
+    assert coef_64.dtype == X_64.dtype
+    assert ridge_32.predict(X_32).dtype == X_32.dtype
+    assert ridge_64.predict(X_64).dtype == X_64.dtype
     assert_almost_equal(ridge_32.coef_, ridge_64.coef_, decimal=5)

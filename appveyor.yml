@@ -73,8 +73,7 @@ test_script:
   # installed library.
   - "mkdir empty_folder"
   - "cd empty_folder"
-
-  - "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s -v sklearn"
+  - "python -c \"import nose; nose.main()\" --with-timer --timer-top-n 20 -s sklearn"
 
   # Move back to the project folder
   - "cd .."
