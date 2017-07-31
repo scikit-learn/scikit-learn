@@ -365,7 +365,7 @@ def test_numerical_stability():
 
 def test_importances():
     # Check variable importances.
-    X, y = datasets.make_classification(n_samples=2000,
+    X, y = datasets.make_classification(n_samples=5000,
                                         n_features=10,
                                         n_informative=3,
                                         n_redundant=0,

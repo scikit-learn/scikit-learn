@@ -114,7 +114,7 @@ cdef class DistanceMetric:
 
     >>> dist = DistanceMetric.get_metric('euclidean')
     >>> X = [[0, 1, 2],
-             [3, 4, 5]])
+             [3, 4, 5]]
     >>> dist.pairwise(X)
     array([[ 0.        ,  5.19615242],
            [ 5.19615242,  0.        ]])
@@ -343,7 +343,7 @@ cdef class DistanceMetric:
         """Convert the Reduced distance to the true distance.
 
         The reduced distance, defined for some metrics, is a computationally
-        more efficent measure which preserves the rank of the true distance.
+        more efficient measure which preserves the rank of the true distance.
         For example, in the Euclidean distance metric, the reduced distance
         is the squared-euclidean distance.
         """
@@ -353,7 +353,7 @@ cdef class DistanceMetric:
         """Convert the true distance to the reduced distance.
 
         The reduced distance, defined for some metrics, is a computationally
-        more efficent measure which preserves the rank of the true distance.
+        more efficient measure which preserves the rank of the true distance.
         For example, in the Euclidean distance metric, the reduced distance
         is the squared-euclidean distance.
         """
@@ -1093,22 +1093,29 @@ cdef class PyFuncDistance(DistanceMetric):
         self.func = func
         self.kwargs = kwargs
 
+    # in cython < 0.26, GIL was required to be acquired during definition of
+    # the function and inside the body of the function. This behaviour is not
+    # allowed in cython >= 0.26 since it is a redundant GIL acquisition. The
+    # only way to be back compatible is to inherit `dist` from the base class
+    # without GIL and called an inline `_dist` which acquire GIL.
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
-                             ITYPE_t size) except -1 with gil:
+                             ITYPE_t size) nogil except -1:
+        return self._dist(x1, x2, size)
+
+    cdef inline DTYPE_t _dist(self, DTYPE_t* x1, DTYPE_t* x2,
+                              ITYPE_t size) except -1 with gil:
         cdef np.ndarray x1arr
         cdef np.ndarray x2arr
-        with gil:
-            x1arr = _buffer_to_ndarray(x1, size)
-            x2arr = _buffer_to_ndarray(x2, size)
-            d = self.func(x1arr, x2arr, **self.kwargs)
-            try:
-                # Cython generates code here that results in a TypeError
-                # if d is the wrong type.
-                return d
-            except TypeError:
-                raise TypeError("Custom distance function must accept two "
-                                "vectors and return a float.")
-            
+        x1arr = _buffer_to_ndarray(x1, size)
+        x2arr = _buffer_to_ndarray(x2, size)
+        d = self.func(x1arr, x2arr, **self.kwargs)
+        try:
+            # Cython generates code here that results in a TypeError
+            # if d is the wrong type.
+            return d
+        except TypeError:
+            raise TypeError("Custom distance function must accept two "
+                            "vectors and return a float.")
 
 
 cdef inline double fmax(double a, double b) nogil:

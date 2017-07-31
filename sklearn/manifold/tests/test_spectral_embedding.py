@@ -162,7 +162,7 @@ def test_spectral_embedding_callable_affinity(seed=36):
 def test_spectral_embedding_amg_solver(seed=36):
     # Test spectral embedding with amg solver
     try:
-        from pyamg import smoothed_aggregation_solver
+        from pyamg import smoothed_aggregation_solver  # noqa
     except ImportError:
         raise SkipTest("pyamg not available.")
 

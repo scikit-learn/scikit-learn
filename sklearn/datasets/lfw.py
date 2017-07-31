@@ -68,6 +68,7 @@ def scale_face(face):
 
 def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     """Helper function to download any missing LFW data"""
+
     data_home = get_data_home(data_home=data_home)
     lfw_home = join(data_home, "lfw_home")
 

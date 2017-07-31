@@ -96,8 +96,7 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
             Returns the instance itself.
         """
 
-
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Apply dimensionality reduction to X.
 
         X is projected on the first principal components previously extracted
@@ -134,7 +133,7 @@ class _BasePCA(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
             X_transformed /= np.sqrt(self.explained_variance_)
         return X_transformed
 
-    def inverse_transform(self, X, y=None):
+    def inverse_transform(self, X):
         """Transform data back to its original space.
 
         In other words, return an input X_original whose transform would be X.

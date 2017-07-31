@@ -321,7 +321,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         """
         return self.score_samples(X).mean()
 
-    def predict(self, X, y=None):
+    def predict(self, X):
         """Predict the labels for the data samples in X using trained model.
 
         Parameters
@@ -351,7 +351,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         Returns
         -------
         resp : array, shape (n_samples, n_components)
-            Returns the probability of each Gaussian (state) in
+            Returns the probability each Gaussian (state) in
             the model given each sample.
         """
         self._check_is_fitted()
@@ -417,7 +417,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
 
         Returns
         -------
-        weighted_log_prob : array, shape (n_features, n_component)
+        weighted_log_prob : array, shape (n_samples, n_component)
         """
         return self._estimate_log_prob(X) + self._estimate_log_weights()
 
