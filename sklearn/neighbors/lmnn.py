@@ -653,11 +653,13 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         A0 = csr_matrix(shape)
         for k in reversed(range(self.n_neighbors_)):
             loss1 = np.maximum(dist_tn[imp_row, k] - dist_imp, 0)
-            ac, = np.where(loss1 > 0)
+            #ac, = np.where(loss1 > 0)
+            ac = loss1 > 0
             A1 = csr_matrix((2*loss1[ac], (imp_row[ac], imp_col[ac])), shape)
 
             loss2 = np.maximum(dist_tn[imp_col, k] - dist_imp, 0)
-            ac, = np.where(loss2 > 0)
+            #ac, = np.where(loss2 > 0)
+            ac = loss2 > 0
             A2 = csc_matrix((2*loss2[ac], (imp_row[ac], imp_col[ac])), shape)
 
             values = np.squeeze(np.asarray(A1.sum(1).ravel() + A2.sum(0)))
