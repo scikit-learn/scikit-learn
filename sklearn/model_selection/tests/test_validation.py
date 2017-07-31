@@ -937,8 +937,8 @@ def check_cross_val_predict_with_method(est, X, y, method):
         est.fit(X[train], y[train])
         preds = func(X[test])
         if isinstance(predictions, list):
-            for i_label in range(y.shape[1]):
-                expected_predictions[i_label][test] = preds[i_label]
+            for i_output in range(y.shape[1]):
+                expected_predictions[i_output][test] = preds[i_output]
         else:
             expected_predictions[test] = func(X[test])
 
