@@ -73,7 +73,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     """
     def __init__(self, func=None, inverse_func=None, validate=True,
                  accept_sparse=False, pass_y='deprecated', check_inverse=False,
-                 kw_args=None, inv_kw_args=None, random_state=None):
+                 kw_args=None, inv_kw_args=None):
         self.func = func
         self.inverse_func = inverse_func
         self.validate = validate
