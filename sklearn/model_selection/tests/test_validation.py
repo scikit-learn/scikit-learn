@@ -959,6 +959,8 @@ def check_cross_val_predict_with_method(est, X, y, method):
                                          method=method, cv=kfold)
     assert_array_equal_maybe_list(predictions, predictions_ystr)
 
+    return predictions
+
 
 def assert_array_equal_maybe_list(x, y):
     # If x and y are lists of arrays, compare arrays individually.
@@ -974,7 +976,9 @@ def test_cross_val_predict_with_method():
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
-        check_cross_val_predict_with_method(LogisticRegression(), X, y, method)
+        est = LogisticRegression()
+        out = check_cross_val_predict_with_method(est, X, y, method)
+        assert_array_equal(out.shape, (len(X), len(set(y))))
 
 
 def test_gridsearchcv_cross_val_predict_with_method():
@@ -985,7 +989,8 @@ def test_gridsearchcv_cross_val_predict_with_method():
                        {'C': [0.1, 1]},
                        cv=2)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
-        check_cross_val_predict_with_method(est, X, y, method)
+        out = check_cross_val_predict_with_method(est, X, y, method)
+        assert_array_equal(out.shape, (len(X), len(set(y))))
 
 
 def test_cross_val_predict_with_method_multilabel_ovr():
@@ -999,19 +1004,24 @@ def test_cross_val_predict_with_method_multilabel_ovr():
                                           random_state=42)
     est = OneVsRestClassifier(LogisticRegression(random_state=0))
     for method in ['predict_proba', 'decision_function']:
-        check_cross_val_predict_with_method(est, X, y, method=method)
+        out = check_cross_val_predict_with_method(est, X, y, method=method)
+        assert_array_equal(out.shape, (n_samp, n_classes))
 
 
 def test_cross_val_predict_with_method_multilabel_rf():
     # The RandomForest allows anything for the contents of the labels.
     # Output of predict_proba is a list of outputs of predict_proba
     # for each individual label.
+    n_classes = 4
     X, y = make_multilabel_classification(n_samples=100, n_labels=3,
-                                          n_classes=4, n_features=5,
+                                          n_classes=n_classes, n_features=5,
                                           random_state=42)
     y[:, 0] += y[:, 1]  # Put three classes in the first column
     est = RandomForestClassifier(n_estimators=5, random_state=0)
-    check_cross_val_predict_with_method(est, X, y, method='predict_proba')
+    out = check_cross_val_predict_with_method(est, X, y, method='predict_proba')
+    assert_array_equal(out[0].shape, (len(X), 3))
+    for i_output in range(1, n_classes):
+        assert_array_equal(out[i_output].shape, (len(X), 2))
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
