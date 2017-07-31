@@ -30,7 +30,7 @@ from .utils.multiclass import check_classification_targets
 from .externals.joblib import Parallel, delayed
 from .externals import six
 
-__all__ = ["MultiOutputRegressor", "MultiOutputClassifier", "ClassifierChain", "RegressorChain"]
+__all__ = ["MultiOutputRegressor", "MultiOutputClassifier", "BaseChain", "ClassifierChain", "RegressorChain"]
 
 
 def _fit_estimator(estimator, X, y, sample_weight=None):
@@ -370,72 +370,8 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return np.mean(np.all(y == y_pred, axis=1))
 
 
-class ClassifierChain(BaseEstimator):
-    """A multi-label model that arranges binary classifiers into a chain.
-
-    Each model makes a prediction in the order specified by the chain using
-    all of the available features provided to the model plus the predictions
-    of models that are earlier in the chain.
-
-    Parameters
-    ----------
-    base_estimator : estimator
-        The base estimator from which the classifier chain is built.
-
-    order : array-like, shape=[n_outputs] or 'random', optional
-        By default the order will be determined by the order of columns in
-        the label matrix Y.::
-
-            order = [0, 1, 2, ..., Y.shape[1] - 1]
-
-        The order of the chain can be explicitly set by providing a list of
-        integers. For example, for a chain of length 5.::
-
-            order = [1, 3, 2, 4, 0]
-
-        means that the first model in the chain will make predictions for
-        column 1 in the Y matrix, the second model will make predictions
-        for column 3, etc.
-
-        If order is 'random' a random ordering will be used.
-
-    cv : int, cross-validation generator or an iterable, optional (
-    default=None)
-        Determines whether to use cross validated predictions or true
-        labels for the results of previous estimators in the chain.
-        If cv is None the true labels are used when fitting. Otherwise
-        possible inputs for cv are:
-            * integer, to specify the number of folds in a (Stratified)KFold,
-            * An object to be used as a cross-validation generator.
-            * An iterable yielding train, test splits.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-        The random number generator is used to generate random chain orders.
-
-    Attributes
-    ----------
-    classes_ : list
-        A list of arrays of length len(estimators_) containing the
-        class labels for each estimator in the chain.
-
-    estimators_ : list
-        A list of clones of base_estimator.
-
-    order_ : list
-        The order of labels in the classifier chain.
-
-    References
-    ----------
-    Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
-    Chains for Multi-label Classification", 2009.
-
-    """
-    def __init__(self, base_estimator, order=None, cv=None, random_state=None):
+class BaseChain(BaseEstimator):
+    def __init__(self.base_estimator, order=None, cv=None, random_state=None):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
@@ -511,17 +447,16 @@ class ClassifierChain(BaseEstimator):
     def predict(self, X):
         """Predict on the data matrix X using the ClassifierChain model.
 
-        Parameters
+         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data.
-
         Returns
         -------
         Y_pred : array-like, shape (n_samples, n_classes)
-            The predicted values.
+        The predicted values.
 
-        """
+    """
         X = check_array(X, accept_sparse=True)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
@@ -540,6 +475,73 @@ class ClassifierChain(BaseEstimator):
         Y_pred = Y_pred_chain[:, inv_order]
 
         return Y_pred
+
+
+class ClassifierChain(BaseChain):
+    """A multi-label model that arranges binary classifiers into a chain.
+
+    Each model makes a prediction in the order specified by the chain using
+    all of the available features provided to the model plus the predictions
+    of models that are earlier in the chain.
+
+    Parameters
+    ----------
+    base_estimator : estimator
+        The base estimator from which the classifier chain is built.
+
+    order : array-like, shape=[n_outputs] or 'random', optional
+        By default the order will be determined by the order of columns in
+        the label matrix Y.::
+
+            order = [0, 1, 2, ..., Y.shape[1] - 1]
+
+        The order of the chain can be explicitly set by providing a list of
+        integers. For example, for a chain of length 5.::
+
+            order = [1, 3, 2, 4, 0]
+
+        means that the first model in the chain will make predictions for
+        column 1 in the Y matrix, the second model will make predictions
+        for column 3, etc.
+
+        If order is 'random' a random ordering will be used.
+
+    cv : int, cross-validation generator or an iterable, optional (
+    default=None)
+        Determines whether to use cross validated predictions or true
+        labels for the results of previous estimators in the chain.
+        If cv is None the true labels are used when fitting. Otherwise
+        possible inputs for cv are:
+            * integer, to specify the number of folds in a (Stratified)KFold,
+            * An object to be used as a cross-validation generator.
+            * An iterable yielding train, test splits.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+        The random number generator is used to generate random chain orders.
+
+    Attributes
+    ----------
+    classes_ : list
+        A list of arrays of length len(estimators_) containing the
+        class labels for each estimator in the chain.
+
+    estimators_ : list
+        A list of clones of base_estimator.
+
+    order_ : list
+        The order of labels in the classifier chain.
+
+    References
+    ----------
+    Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
+    Chains for Multi-label Classification", 2009.
+
+    """
 
     @if_delegate_has_method('base_estimator')
     def predict_proba(self, X):
@@ -607,8 +609,8 @@ class ClassifierChain(BaseEstimator):
         return Y_decision
 
 
-class RegressorChain(BaseEstimator):
-     """A multi-label model that arranges regressions into a chain.
+class RegressorChain(BaseChain):
+    """A multi-label model that arranges regressions into a chain.
 
     Each model makes a prediction in the order specified by the chain using
     all of the available features provided to the model plus the predictions
@@ -661,106 +663,5 @@ class RegressorChain(BaseEstimator):
 
     order_ : list
         The order of labels in the classifier chain.
+
     """
-    def __init__(self, base_estimator, order=None, cv=None, random_state=None):
-        self.base_estimator = base_estimator
-        self.order = order
-        self.cv = cv
-        self.random_state = random_state
-
-    def fit(self, X, Y):
-        """Fit the model to data matrix X and targets Y.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The input data.
-        Y : array-like, shape (n_samples, n_classes)
-            The target values.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        X, Y = check_X_y(X, Y,  multi_output=True, accept_sparse=True)
-
-        random_state = check_random_state(self.random_state)
-        check_array(X, accept_sparse=True)
-        self.order_ = self.order
-        if self.order_ is None:
-            self.order_ = np.array(range(Y.shape[1]))
-        elif isinstance(self.order_, str):
-            if self.order_ == 'random':
-                self.order_ = random_state.permutation(Y.shape[1])
-        elif sorted(self.order_) != list(range(Y.shape[1])):
-                raise ValueError("invalid order")
-
-        self.estimators_ = [clone(self.base_estimator)
-                            for _ in range(Y.shape[1])]
-        
-        if self.cv is None:
-            Y_pred_chain = Y[:, self.order_]
-            if sp.issparse(X):
-                X_aug = sp.hstack((X, Y_pred_chain), format='lil')
-                X_aug = X_aug.tocsr()
-            else:
-                X_aug = np.hstack((X, Y_pred_chain))
-
-        elif sp.issparse(X):
-            Y_pred_chain = sp.lil_matrix((X.shape[0], Y.shape[1]))
-            X_aug = sp.hstack((X, Y_pred_chain), format='lil')
-
-        else:
-            Y_pred_chain = np.zeros((X.shape[0], Y.shape[1]))
-            X_aug = np.hstack((X, Y_pred_chain))
-
-        del Y_pred_chain
-
-        for chain_idx, estimator in enumerate(self.estimators_):
-            y = Y[:, self.order_[chain_idx]]
-            estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y)
-            if self.cv is not None and chain_idx < len(self.estimators_) - 1:
-                col_idx = X.shape[1] + chain_idx
-                cv_result = cross_val_predict(
-                    self.base_estimator, X_aug[:, :col_idx],
-                    y=y, cv=self.cv)
-                if sp.issparse(X_aug):
-                    X_aug[:, col_idx] = np.expand_dims(cv_result, 1)
-                else:
-                    X_aug[:, col_idx] = cv_result
-
-        return self
-
-    def predict(self, X):
-        """Predict on the data matrix X using the RegressorChain model.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The input data.
-
-        Returns
-        -------
-        Y_pred : array-like, shape (n_samples, n_classes)
-            The predicted values.
-
-        """
-        X = check_array(X, accept_sparse=True)
-        Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
-        for chain_idx, estimator in enumerate(self.estimators_):
-            previous_predictions = Y_pred_chain[:, :chain_idx]
-            if sp.issparse(X):
-                if chain_idx == 0:
-                    X_aug = X
-                else:
-                    X_aug = sp.hstack((X, previous_predictions))
-            else:
-                X_aug = np.hstack((X, previous_predictions))
-            Y_pred_chain[:, chain_idx] = estimator.predict(X_aug)
-
-        inv_order = np.empty_like(self.order_)
-        inv_order[self.order_] = np.arange(len(self.order_))
-        Y_pred = Y_pred_chain[:, inv_order]
-
-        return Y_pred
