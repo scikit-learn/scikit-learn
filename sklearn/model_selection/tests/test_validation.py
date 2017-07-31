@@ -921,6 +921,8 @@ def check_cross_val_predict_with_method(est, X, y, method):
 
     predictions = cross_val_predict(est, X, y, method=method)
 
+    # Check output sizes and prepare an empty array to hold
+    # expected predictions.
     if isinstance(predictions, list):
         assert_equal(len(predictions), y.shape[1])
         for i in range(y.shape[1]):
@@ -930,6 +932,13 @@ def check_cross_val_predict_with_method(est, X, y, method):
     else:
         assert_equal(len(predictions), len(y))
         expected_predictions = np.zeros_like(predictions)
+
+    # Store classes in the full training set so we can properly
+    # order columns in predictions on subsets.
+    if y.ndim == 2:
+        classes = [np.unique(y[:, i]) for i in range(y.shape[1])]
+    else:
+        classes = np.unique(y)
     func = getattr(est, method)
 
     # Naive loop (should be same as cross_val_predict):
@@ -937,10 +946,19 @@ def check_cross_val_predict_with_method(est, X, y, method):
         est.fit(X[train], y[train])
         preds = func(X[test])
         if isinstance(predictions, list):
-            for i_output in range(y.shape[1]):
-                expected_predictions[i_output][test] = preds[i_output]
+            for i_out in range(y.shape[1]):
+                col = np.searchsorted(classes[i_out],
+                                      np.unique(y[train, i_out]))
+                expected_predictions[i_out][np.ix_(test, col)] = preds[i_out]
         else:
-            expected_predictions[test] = func(X[test])
+            if isinstance(classes, list):
+                # In this case, we'll assume all classes are present
+                # in each CV fold.
+                col = np.arange(len(classes))
+                assert_equal(expected_predictions.shape[1], preds.shape[1])
+            else:
+                col = np.searchsorted(classes, np.unique(y[train]))
+            expected_predictions[np.ix_(test, col)] = preds
 
     predictions = cross_val_predict(est, X, y, method=method,
                                     cv=kfold)
@@ -1022,6 +1040,33 @@ def test_cross_val_predict_with_method_multilabel_rf():
     assert_array_equal(out[0].shape, (len(X), 3))
     for i_output in range(1, n_classes):
         assert_array_equal(out[i_output].shape, (len(X), 2))
+
+
+def test_cross_val_predict_with_method_rare_class():
+    # Test a multiclass problem where one class will be missing from
+    # one of the CV training sets.
+    rng = np.random.RandomState(0)
+    X = rng.normal(0, 1, size=(10, 10))
+    y = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 2])
+    est = LogisticRegression()
+    for method in ['predict_proba', 'predict_log_proba']:
+        out = check_cross_val_predict_with_method(est, X, y, method)
+        assert_array_equal(out.shape, (len(X), len(set(y))))
+
+
+def test_cross_val_predict_with_method_multilabel_rf_rare_class():
+    # The RandomForest allows anything for the contents of the labels.
+    # Output of predict_proba is a list of outputs of predict_proba
+    # for each individual label.
+    # In this test, the first label has a class with a single example.
+    # We'll have one CV fold where the training data don't include it.
+    rng = np.random.RandomState(0)
+    X = rng.normal(0, 1, size=(5, 10))
+    y = np.array([[0, 0], [1, 1], [2, 1], [0, 1], [1, 0]])
+    est = RandomForestClassifier(n_estimators=5, random_state=0)
+    out = check_cross_val_predict_with_method(est, X, y, method='predict_proba')
+    assert_array_equal(out[0].shape, (len(X), 3))
+    assert_array_equal(out[1].shape, (len(X), 2))
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
