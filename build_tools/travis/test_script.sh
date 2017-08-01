@@ -22,6 +22,7 @@ python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 run_tests() {
     if [[ "$USE_PYTEST" == "true" ]]; then
+="pytest --showlocals --durations=1 --pyargs -rs"
         TEST_CMD="pytest --showlocals --durations=20 --pyargs"
     else
         TEST_CMD="nosetests --with-timer --timer-top-n 20"
