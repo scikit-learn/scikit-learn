@@ -60,7 +60,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
     check_inverse : bool, default=False
        Whether to check that or ``func`` followed by ``inverse_func`` leads to
-       the original inputs.
+       the original inputs. It can be used for a sanity check.
 
        .. versionadded:: 0.20
 
