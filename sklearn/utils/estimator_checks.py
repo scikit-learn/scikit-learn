@@ -1351,7 +1351,7 @@ def check_regressors_no_decision_function(name, regressor_orig):
 def check_class_weight_classifiers(name, classifier_orig):
     if name == "NuSVC":
         # the sparse version has a parameter that doesn't do anything
-        raise SkipTest
+        raise SkipTest("Not testing NuSVC class weight as it is ignored.")
     if name.endswith("NB"):
         # NaiveBayes classifiers have a somewhat different interface.
         # FIXME SOON!
@@ -1534,7 +1534,9 @@ def check_regressor_data_not_an_array(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     if name in CROSS_DECOMPOSITION:
-        raise SkipTest
+        raise SkipTest("Skipping check_estimators_data_not_an_array "
+                       "for cross decomposition module as estimators "
+                       "are not deterministic.")
     # separate estimators to control random seeds
     estimator_1 = clone(estimator_orig)
     estimator_2 = clone(estimator_orig)
