@@ -131,6 +131,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Clear any previous fit results
         self.estimators_ = []
+        self.sample_weights_ = []
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float64)
         self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float64)
 
@@ -148,6 +149,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if sample_weight is None:
                 break
 
+            self.sample_weights_.append(sample_weight)
             self.estimator_weights_[iboost] = estimator_weight
             self.estimator_errors_[iboost] = estimator_error
 
