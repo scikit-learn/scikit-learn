@@ -118,6 +118,13 @@ Andreas Müller also received a grant to improve scikit-learn from the `Alfred P
    :align: center
    :target: https://sloan.org/
 
+`The University of Sydney <http://sydney.edu.au>`_ funds Joel Nothman since July 2017.
+
+.. image:: themes/scikit-learn/static/img/sydney-primary.jpeg
+   :width: 200pt
+   :align: center
+   :target: http://www.sydney.edu.au/
+
 The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
 to work on scikit-learn through the
 `Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
