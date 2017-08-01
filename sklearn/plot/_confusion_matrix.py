@@ -68,6 +68,7 @@ def plot_confusion_matrix(y_true, y_pred, classes=None, sample_weight=None,
         Normalizer passed to pcolormesh function from matplotlib used to
         generate the heatmap.
     """
+    import matplotlib.pyplot as plt
 
     unique_y = unique_labels(y_true, y_pred)
 
@@ -86,6 +87,10 @@ def plot_confusion_matrix(y_true, y_pred, classes=None, sample_weight=None,
         values = values.astype('float') / values.sum(axis=1)[:, np.newaxis]
 
     fmt = fmt if normalize else '{:d}'
+
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
 
     img = plot_heatmap(values, xticklabels=classes, yticklabels=classes,
                        cmap=cmap, xlabel=xlabel, ylabel=ylabel, title=title,

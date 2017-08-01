@@ -5,9 +5,6 @@ from sklearn.plot import plot_heatmap
 def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title,
                      fmt, xtickrotation):
     import matplotlib.pyplot as plt
-    if ax is None:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
 
     param = params[0]
     param_range = sorted(cv_results['param_%s' % param])
@@ -125,9 +122,14 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
         generate the heatmap. This is ignored if only 1 parameter is used in
         grid search.
     """
+    import matplotlib.pyplot as plt
 
     params = sorted(cv_results['params'][0].keys())
     nparams = len(params)
+
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
 
     if nparams == 1:
         img = _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title,
