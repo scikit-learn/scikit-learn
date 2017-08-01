@@ -205,11 +205,6 @@ computes the coefficients along the full path of possible values.
       thus be used to perform feature selection, as detailed in
       :ref:`l1_feature_selection`.
 
-.. note:: **Randomized sparsity**
-
-      For feature selection or sparse recovery, it may be interesting to
-      use :ref:`randomized_l1`.
-
 
 Setting regularization parameter
 --------------------------------
@@ -1146,7 +1141,7 @@ in the following ways.
 
 .. topic:: References:
 
-    .. [#f1] Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
+  * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
 
 Also, this estimator is different from the R implementation of Robust Regression
 (http://www.ats.ucla.edu/stat/r/dae/rreg.htm) because the R implementation does a weighted least
