@@ -172,7 +172,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 sample_weight /= sample_weight_sum
 
         if self.retain_sample_weights:
-            self.sample_weights_ = np.asarray(sample_weights_, dtype=np.float64)
+            self.sample_weights_ = np.asarray(
+                sample_weights_, dtype=np.float64)
 
         return self
 
