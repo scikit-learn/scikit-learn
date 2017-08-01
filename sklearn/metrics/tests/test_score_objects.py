@@ -154,6 +154,7 @@ def DummyScorerWithLabels(y_true, y_pred, labels=None):
     else:
         return 1
 
+
 def DummyScorerWithLabelsNamedDifferent(y_true, y_pred,
                                         labels_other_name=None):
     """A dummy scorer function which returns 1 if labels argument was set
