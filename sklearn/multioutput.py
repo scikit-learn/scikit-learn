@@ -368,7 +368,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return np.mean(np.all(y == y_pred, axis=1))
 
 
-class ClassifierChain(BaseEstimator):
+class ClassifierChain(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """A multi-label model that arranges binary classifiers into a chain.
 
     Each model makes a prediction in the order specified by the chain using
