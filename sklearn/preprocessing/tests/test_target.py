@@ -9,7 +9,7 @@ from sklearn.utils.testing import assert_allclose
 from sklearn.preprocessing import TransformTargetRegressor
 from sklearn.preprocessing import MaxAbsScaler
 
-from sklearn.linear_model import LinearRegression, Lasso
+from sklearn.linear_model import LinearRegression, LogisticRegression, Lasso
 from sklearn.preprocessing import StandardScaler
 
 from sklearn import datasets
@@ -34,6 +34,11 @@ def test_transform_target_regressor_error():
     assert_raises_regex(ValueError, "The regressor Lasso does not support"
                         " sample weight.", regr.fit, X, y,
                         sample_weight=sample_weight)
+    # provide a classifier instead of a regressor
+    regr = TransformTargetRegressor(regressor=LogisticRegression())
+    assert_raises_regex(TypeError, "The regressor LogisticRegression is of"
+                        " type classifier. Provide a regressor instead.",
+                        regr.fit, X, y)
 
 
 def test_transform_target_regressor_invertible():
@@ -67,8 +72,8 @@ def _check_max_abs_scaler(y, y_pred):
 def test_transform_target_regressor_friedman():
     X = friedman[0]
     y = friedman[1]
-    # create a multioutput y
-    # keep why to be 2d and it will squeezed when relevant
+    # create a multioutput Y
+    # keep Y to be 2d and it will squeezed when relevant
     Y = [y.reshape(-1, 1), np.vstack((y, y ** 2 + 1)).T]
     for y_2d in Y:
         regr = TransformTargetRegressor(regressor=LinearRegression(),
@@ -111,3 +116,16 @@ def test_transform_target_regressor_friedman():
                 y_lr_pred).squeeze())
             assert_allclose(regr.regressor_.coef_.squeeze(),
                             lr.coef_.squeeze())
+
+
+def test_transform_target_regressor_single_to_multi():
+    X = friedman[0]
+    y = friedman[1] + 1j * (friedman[1] ** 2 + 1)
+
+    def func(y):
+        return np.vstack((np.real(y), np.imag(y))).T
+
+    tt = TransformTargetRegressor(func=func, check_inverse=False)
+    tt.fit(X, y)
+    y_pred = tt.predict(X)
+    assert_equal(y_pred.shape, (100, 2))

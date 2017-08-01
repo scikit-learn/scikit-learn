@@ -11,11 +11,10 @@ Version 0.20
 Changelog
 ---------
 
-- Added the :class:`preprocessing.TransformTargetRegressor` which
-     transforms the target y before fitting a regression model. The
-     predictions are mapped back to the original space via an inverse
-     transform. :issue:`9041` by `Andreas Müller`_ and
-     :user:`Guillaume Lemaitre <glemaitre>`.
+- Added the :class:`preprocessing.TransformTargetRegressor` which transforms
+  the target y before fitting a regression model. The predictions are mapped
+  back to the original space via an inverse transform. :issue:`9041` by
+  `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
 Version 0.19
 ============
@@ -186,7 +185,7 @@ Trees and ensembles
   places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
    - :func:`tree.export_graphviz` now shows configurable number of decimal
      places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
-     
+
    - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
      to change output shape of `transform` method to 2 dimensional.
      :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
@@ -513,7 +512,7 @@ Decomposition, manifold learning and clustering
   in :class:`decomposition.PCA`,
   :class:`decomposition.RandomizedPCA` and
   :class:`decomposition.IncrementalPCA`.
-  :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+  :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 - Fixed a bug where :class:`cluster.DBSCAN` gives incorrect
   result when input is a precomputed sparse matrix with initial

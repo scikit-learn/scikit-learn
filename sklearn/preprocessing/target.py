@@ -88,7 +88,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.preprocessing import TransformTargetRegressor
     >>> tt = TransformTargetRegressor(regressor=LinearRegression(),
-    ...                                 func=np.log, inverse_func=np.exp)
+    ...                               func=np.log, inverse_func=np.exp)
     >>> X = np.arange(4).reshape(-1, 1)
     >>> y = np.exp(2 * X).ravel()
     >>> tt.fit(X, y)
@@ -179,7 +179,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         """
         X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
-        # transformer are designed to modify X which is a 2d dimensional, we
+        # transformers are designed to modify X which is a 2d dimensional, we
         # need to modify y accordingly.
         if y.ndim == 1 and self.func is None:
             y_2d = y.reshape(-1, 1)
@@ -191,6 +191,11 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
             from ..linear_model import LinearRegression
             self.regressor_ = LinearRegression()
         else:
+            if self.regressor._estimator_type != 'regressor':
+                raise TypeError("The regressor {} is of type {}. Provide"
+                                " a regressor instead.".format(
+                                    self.regressor.__class__.__name__,
+                                    self.regressor._estimator_type))
             self.regressor_ = clone(self.regressor)
 
         support_sample_weight = has_fit_parameter(self.regressor_,
