@@ -78,6 +78,7 @@ Usage examples:
     The scorer objects for those functions are stored in the dictionary
     ``sklearn.metrics.SCORERS``.
 
+
 .. _scoring:
 
 Defining your scoring strategy from metric functions
