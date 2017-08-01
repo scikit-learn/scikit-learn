@@ -17,6 +17,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -41,6 +42,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import joblib
+from sklearn.naive_bayes import GaussianNB
 
 
 REGRESSION_SCORERS = ['r2', 'neg_mean_absolute_error',
@@ -547,8 +549,8 @@ def test_scoring_is_not_metric():
                          KMeans(), cluster_module.adjusted_rand_score)
 
 
-def test_copy_classes():
-    # Test the various properties of copy_classes parameter added
+def test_pass_classes():
+    # Test the various properties of pass_classes parameter added
 
     X, y = make_blobs(random_state=0, centers=2)
     clf = LogisticRegression(random_state=0)
@@ -574,3 +576,18 @@ def test_copy_classes():
     scorer = make_scorer(DummyScorerWithLabelsNamedDifferent,
                          pass_classes='labels_other_name')
     assert_equal(scorer(clf, X, y), 1)
+
+    # test that passing labels through make_scorer affects the actual scores
+    clf = GaussianNB()
+    clf.fit(X, y)
+    scorer = make_scorer(f1_score, average="macro", pass_classes=None)
+    scores = scorer(clf, X, y)
+
+    # iterate over 2 - 5 classes and see that the scores are multiplied by
+    # right factor
+    scorer = make_scorer(f1_score, average="macro", pass_classes='labels')
+    for num_classes in range(2, 6):
+        clf = GaussianNB(classes=list(range(num_classes)))
+        clf.fit(X, y)
+        scores2 = scorer(clf, X, y)
+        assert_array_almost_equal(scores*2./num_classes, scores2)
