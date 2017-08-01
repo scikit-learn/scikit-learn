@@ -588,3 +588,24 @@ def test_warm_start():
                    'classes as in the previous call to fit.'
                    ' Previously got [0 1 2], `y` has %s' % np.unique(y_i))
         assert_raise_message(ValueError, message, clf.fit, X, y_i)
+
+
+def test_predict_all_activations():
+    X = Xboston
+    y = yboston
+    n_train = len(X) // 2
+    X_train = X[:n_train]
+    y_train = y[:n_train]
+    X_test = X[n_train:]
+    input_dim = X.shape[1]
+    batch_size = n_train // 4
+    hidden_sizes = [20, 10, 2]
+    for solver in ["sgd", "lbfgs"]:
+        for activation in ["relu", "identity"]:
+            mlp = MLPRegressor(solver=solver, activation=activation,
+                               random_state=1, batch_size=batch_size,
+                               hidden_layer_sizes=hidden_sizes)
+            mlp.fit(X_train, y_train)
+            activations = mlp._predict_all_activations(X_test)
+            for h, activation in zip([input_dim] + hidden_sizes, activations):
+                assert_equal(activation.shape, (n_train, h))

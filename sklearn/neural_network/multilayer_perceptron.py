@@ -643,7 +643,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
     def _partial_fit(self, X, y):
         return self._fit(X, y, incremental=True)
 
-    def _predict(self, X):
+    def _predict_all_activations(self, X):
         """Predict using the trained model
 
         Parameters
@@ -675,8 +675,24 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                          layer_units[i + 1])))
         # forward propagate
         self._forward_pass(activations)
-        y_pred = activations[-1]
 
+        return activations
+
+    def _predict(self, X):
+        """Predict using the trained model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        y_pred : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The decision function of the samples for each class in the model.
+        """
+        activations = self._predict_all_activations(X)
+        y_pred = activations[-1]
         return y_pred
 
 
