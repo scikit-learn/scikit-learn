@@ -491,3 +491,91 @@ def test_classifier_chain_vs_independent_models():
 
     assert_greater(jaccard_similarity_score(Y_test, Y_pred_chain),
                    jaccard_similarity_score(Y_test, Y_pred_ovr))
+
+
+def test_regressor_chain_fit_and_predict_with_linear_regression():
+    # Fit regressor chain and verify predict performance
+    X, Y = generate_multilabel_dataset_with_correlations()
+    regressor_chain = RegressorChain(LinearRegression())
+    regressor_chain.fit(X, Y)
+
+    Y_pred = regressor_chain.predict(X)
+    assert_equal(Y_pred.shape, Y.shape)
+
+    Y_prob = regressor_chain.predict_proba(X)
+    Y_binary = (Y_prob >= .5)
+    assert_array_equal(Y_binary, Y_pred)
+
+    assert_equal([c.coef_.size for c in regressor_chain.estimators_],
+                 list(range(X.shape[1], X.shape[1] + Y.shape[1])))
+
+
+def test_regressor_chain_fit_and_predict_with_sparse_data():
+    # Fit regressor chain with sparse data
+    X, Y = generate_multilabel_dataset_with_correlations()
+    X_sparse = sp.csr_matrix(X)
+
+    regressor_chain = RegressorChain(LinearRegression())
+    regressor_chain.fit(X_sparse, Y)
+    Y_pred_sparse = regressor_chain.predict(X_sparse)
+
+    regressor_chain = RegressorChain(LinearRegression())
+    regressor_chain.fit(X, Y)
+    Y_pred_dense = regressor_chain.predict(X)
+
+    assert_array_equal(Y_pred_sparse, Y_pred_dense)
+
+
+def test_regressor_chain_fit_and_predict_with_sparse_data_and_cv():
+    # Fit regressor chain with sparse data cross_val_predict
+    X, Y = generate_multilabel_dataset_with_correlations()
+    X_sparse = sp.csr_matrix(X)
+    regressor_chain = RegressorChain(LinearRegression(), cv=3)
+    regressor_chain.fit(X_sparse, Y)
+    Y_pred = regressor_chain.predict(X_sparse)
+    assert_equal(Y_pred.shape, Y.shape)
+
+
+def test_regressor_chain_random_order():
+    # Fit regressor chain with random order
+    X, Y = generate_multilabel_dataset_with_correlations()
+    regressor_chain_random = RegressorChain(LinearRegression(),
+                                              order='random',
+                                              random_state=42)
+    regressor_chain_random.fit(X, Y)
+    Y_pred_random = regressor_chain_random.predict(X)
+
+    assert_not_equal(list(regressor_chain_random.order), list(range(4)))
+    assert_equal(len(regressor_chain_random.order_), 4)
+    assert_equal(len(set(regressor_chain_random.order_)), 4)
+
+    regressor_chain_fixed = \
+        RegressorChain(LinearRegression(),
+                        order=regressor_chain_random.order_)
+    regressor_chain_fixed.fit(X, Y)
+    Y_pred_fixed = regressor_chain_fixed.predict(X)
+
+    # Randomly ordered chain should behave identically to a fixed order chain
+    # with the same order.
+    assert_array_equal(Y_pred_random, Y_pred_fixed)
+
+
+def test_regressor_chain_crossval_fit_and_predict():
+    # Fit regressor chain with cross_val_predict and verify predict
+    # performance
+    X, Y = generate_multilabel_dataset_with_correlations()
+    regressor_chain_cv = RegressorChain(LinearRegression(), cv=3)
+    regressor_chain_cv.fit(X, Y)
+
+    regressor_chain = RegressorChain(LinearRegression())
+    regressor_chain.fit(X, Y)
+
+    Y_pred_cv = regressor_chain_cv.predict(X)
+    Y_pred = regressor_chain.predict(X)
+
+    assert_equal(Y_pred_cv.shape, Y.shape)
+    assert_greater(jaccard_similarity_score(Y, Y_pred_cv), 0.4)
+
+    assert_not_equal(jaccard_similarity_score(Y, Y_pred_cv),
+                     jaccard_similarity_score(Y, Y_pred))
+

@@ -30,7 +30,7 @@ from .utils.multiclass import check_classification_targets
 from .externals.joblib import Parallel, delayed
 from .externals import six
 
-__all__ = ["MultiOutputRegressor", "MultiOutputClassifier", "BaseChain", "ClassifierChain", "RegressorChain"]
+__all__ = ["MultiOutputRegressor", "MultiOutputClassifier", "ClassifierChain", "RegressorChain"]
 
 
 def _fit_estimator(estimator, X, y, sample_weight=None):
