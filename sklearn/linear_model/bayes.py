@@ -120,8 +120,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
     http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
-    Their beta is our self.alpha_
-    Their alpha is our self.lambda_
+    Their beta is our ``self.alpha_``
+    Their alpha is our ``self.lambda_``
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
@@ -148,7 +148,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         X : numpy array of shape [n_samples,n_features]
             Training data
         y : numpy array of shape [n_samples]
-            Target values
+            Target values. Will be cast to X's dtype if necessary
 
         Returns
         -------
@@ -384,10 +384,10 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
     http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
-    Their beta is our self.alpha_
-    Their alpha is our self.lambda_
+    Their beta is our ``self.alpha_``
+    Their alpha is our ``self.lambda_``
     ARD is a little different than the slide: only dimensions/features for
-    which self.lambda_ < self.threshold_lambda are kept and the rest are
+    which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
     discarded.
     """
 
@@ -420,7 +420,7 @@ class ARDRegression(LinearModel, RegressorMixin):
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
         y : array, shape = [n_samples]
-            Target values (integers)
+            Target values (integers). Will be cast to X's dtype if necessary
 
         Returns
         -------

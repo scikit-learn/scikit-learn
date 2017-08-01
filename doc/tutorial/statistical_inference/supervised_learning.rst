@@ -402,10 +402,10 @@ This is known as :class:`LogisticRegression`.
    model. Leave out the last 10% and test prediction performance on these
    observations.
 
-   .. literalinclude:: ../../auto_examples/exercises/digits_classification_exercise.py
+   .. literalinclude:: ../../auto_examples/exercises/plot_digits_classification_exercise.py
        :lines: 15-19
 
-   Solution: :download:`../../auto_examples/exercises/digits_classification_exercise.py`
+   Solution: :download:`../../auto_examples/exercises/plot_digits_classification_exercise.py`
 
 
 Support vector machines (SVMs)

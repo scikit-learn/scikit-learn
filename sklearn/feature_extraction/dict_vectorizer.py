@@ -271,7 +271,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         return dicts
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transform feature->value dicts to array or sparse matrix.
 
         Named features not encountered during fit or fit_transform will be
@@ -282,7 +282,6 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         X : Mapping or iterable over Mappings, length = n_samples
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
-        y : (ignored)
 
         Returns
         -------
