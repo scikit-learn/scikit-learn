@@ -212,8 +212,8 @@ the following two rules:
 
 .. _multimetric_scoring:
 
-Using mutiple metric evaluation
--------------------------------
+Using multiple metric evaluation
+--------------------------------
 
 Scikit-learn also permits evaluation of multiple metrics in ``GridSearchCV``,
 ``RandomizedSearchCV`` and ``cross_validate``.
@@ -242,14 +242,14 @@ permitted and will require a wrapper to return a single metric::
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
     >>> svm = LinearSVC(random_state=0)
-    >>> tp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
-    >>> tn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
-    >>> fp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[1, 0]
-    >>> fn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 1]
+    >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
+    >>> def tn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
+    >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
+    >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
     >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
     ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
     >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
-    >>> # Getting the test set false positive scores
+    >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
     [12 13 15]
     >>> # Getting the test set false negative scores
@@ -669,10 +669,6 @@ binary classification and multilabel indicator format.
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_precision_recall.py`
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
-
-  * See :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py`
-    for an example of :func:`precision_recall_curve` usage to select
-    features for sparse linear models.
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^

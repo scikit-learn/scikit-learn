@@ -91,6 +91,9 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     gamma : float
         Parameter for rbf kernel
 
+    n_neighbors : integer > 0
+        Parameter for knn kernel
+
     alpha : float
         Clamping factor
 
@@ -100,9 +103,6 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     tol : float
         Convergence tolerance: threshold to consider the system at steady
         state
-
-    n_neighbors : integer > 0
-        Parameter for knn kernel
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run.
@@ -331,6 +331,10 @@ class LabelPropagation(BaseLabelPropagation):
         Convergence tolerance: threshold to consider the system at steady
         state
 
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+
     Attributes
     ----------
     X_ : array, shape = [n_samples, n_features]
@@ -376,7 +380,7 @@ class LabelPropagation(BaseLabelPropagation):
     _variant = 'propagation'
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=None, max_iter=30, tol=1e-3, n_jobs=1):
+                 alpha=None, max_iter=1000, tol=1e-3, n_jobs=1):
         super(LabelPropagation, self).__init__(
             kernel=kernel, gamma=gamma, n_neighbors=n_neighbors, alpha=alpha,
             max_iter=max_iter, tol=tol, n_jobs=n_jobs)

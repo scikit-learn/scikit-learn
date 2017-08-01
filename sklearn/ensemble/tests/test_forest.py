@@ -243,14 +243,14 @@ def check_importances(name, criterion, dtype, tolerance):
 
 def test_importances():
     for dtype in (np.float64, np.float32):
-        tolerance = 0.001
+        tolerance = 0.01
         for name, criterion in product(FOREST_CLASSIFIERS,
                                        ["gini", "entropy"]):
             yield check_importances, name, criterion, dtype, tolerance
 
         for name, criterion in product(FOREST_REGRESSORS,
                                        ["mse", "friedman_mse", "mae"]):
-            tolerance = 0.01 if criterion == "mae" else 0.001
+            tolerance = 0.05 if criterion == "mae" else 0.01
             yield check_importances, name, criterion, dtype, tolerance
 
 

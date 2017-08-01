@@ -209,6 +209,18 @@ class _ThresholdScorer(_BaseScorer):
 
 
 def get_scorer(scoring):
+    """Get a scorer from string
+
+    Parameters
+    ----------
+    scoring : str | callable
+        scoring method as string. If callable it is returned as is.
+
+    Returns
+    -------
+    scorer : callable
+        The scorer.
+    """
     valid = True
     if isinstance(scoring, six.string_types):
         try:
@@ -308,7 +320,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
         value. Metric functions returning a list/array of values can be wrapped
         into multiple scorers that return one value each.
 
-        See :ref:`multivalued_scorer_wrapping` for an example.
+        See :ref:`multimetric_grid_search` for an example.
 
         If None the estimator's default scorer (if available) is used.
         The return value in that case will be ``{'score': <default_scorer>}``.
