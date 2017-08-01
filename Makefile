@@ -42,9 +42,7 @@ endif
 
 test-doc-pytest:
 ifeq ($(BITS),64)
-	$(PYTEST) doc/modules/ doc/datasets/ \
-	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
-	doc/tutorial/text_analytics
+	$(PYTEST) doc/
 endif
 
 test-coverage:
