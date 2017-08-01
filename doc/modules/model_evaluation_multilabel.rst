@@ -10,6 +10,26 @@ In multilabel learning, each sample can have any number of ground truth labels
 associated with it. The goal is to give high scores and better rank to
 the ground truth labels.
 
+There are also some classification metrics that work in the multilabel case:
+
+.. autosummary::
+   :template: function.rst
+
+   accuracy_score
+   classification_report
+   f1_score
+   fbeta_score
+   hamming_loss
+   jaccard_similarity_score
+   log_loss
+   precision_recall_fscore_support
+   precision_score
+   recall_score
+   zero_one_loss
+   average_precision_score
+   roc_auc_score
+
+
 .. _coverage_error:
 
 Coverage error

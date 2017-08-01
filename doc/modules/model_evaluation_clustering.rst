@@ -17,8 +17,8 @@ classes according to some similarity metric.
 
 .. _clustering_evaluation:
 
-Clustering performance evaluation
-=================================
+Clustering with known ground truth
+==================================
 
 .. _adjusted_rand_score:
 
@@ -552,6 +552,10 @@ Drawbacks
 
   * `Wikipedia entry for the Fowlkes-Mallows Index
     <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
+
+
+Clustering with unknown ground truth
+====================================
 
 .. _silhouette_coefficient:
 

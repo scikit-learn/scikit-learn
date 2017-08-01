@@ -251,6 +251,6 @@ clustering this :math:`n \times q` matrix yields the column labels.
 Biclustering evaluation
 =======================
 
-The :mod:`sklearn.metrics` module implements several loss, score, and utility
-functions. For more information see the :ref:`biclustering_evaluation` for
+The :mod:`sklearn.metrics` module implements metrics to evaluate performance.
+For more information see the :ref:`biclustering_evaluation` for
 biclustering.

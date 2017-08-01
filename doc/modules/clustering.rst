@@ -894,6 +894,6 @@ the user is advised
 Clustering performance evaluation
 =================================
 
-The :mod:`sklearn.metrics` module implements several loss, score, and utility
-functions. For more information see the :ref:`clustering_evaluation`
+The :mod:`sklearn.metrics` module implements metrics to evaluate performance.
+For more information see the :ref:`clustering_evaluation`
 section for instance clustering.

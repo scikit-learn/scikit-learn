@@ -13,7 +13,7 @@ predictions:
 
 * **Estimator score method**: Estimators have a ``score`` method providing a
   default evaluation criterion for the problem they are designed to solve.
-  This is not discussed on this page, but in each estimator's documentation.
+  This is not discussed in this section, but in each estimator's documentation.
 
 * **Scoring parameter**: Model-evaluation tools using
   :ref:`cross-validation <cross_validation>` (such as
@@ -23,9 +23,8 @@ predictions:
 
 * **Metric functions**: The :mod:`metrics` module implements functions
   assessing prediction error for specific purposes. These metrics are detailed
-  in sections on :ref:`classification_metrics`,
-  :ref:`multilabel_ranking_metrics`, :ref:`regression_metrics` and
-  :ref:`clustering_metrics`.
+  in sections on  :ref:`regression_metrics`, :ref:`classification_metrics`,
+  :ref:`multilabel_ranking_metrics` and  :ref:`clustering_metrics`.
 
 Finally, :ref:`dummy_estimators` are useful to get a baseline
 value of those metrics for random predictions.
