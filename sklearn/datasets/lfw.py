@@ -57,7 +57,7 @@ FUNNELED_ARCHIVE = RemoteFileMetadata(
 # http://vis-www.cs.umass.edu/lfw/pairsDevTrain.txt',
 # http://vis-www.cs.umass.edu/lfw/pairsDevTest.txt',
 # http://vis-www.cs.umass.edu/lfw/pairs.txt',
-TARGETS = [
+TARGETS = (
     RemoteFileMetadata(
         filename='pairsDevTrain.txt',
         url='https://ndownloader.figshare.com/files/5976012',
@@ -75,7 +75,7 @@ TARGETS = [
         url='https://ndownloader.figshare.com/files/5976006',
         checksum=('ea42330c62c92989f9d7c03237ed5d59'
                   '1365e89b3e649747777b70e692dc1592')),
-]
+)
 
 
 def scale_face(face):
