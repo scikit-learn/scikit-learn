@@ -130,6 +130,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Check parameters
         self._validate_estimator()
+        retain_weights = self.retain_sample_weights
 
         # Clear any previous fit results
         sample_weights_ = []
@@ -154,7 +155,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             self.estimator_weights_[iboost] = estimator_weight
             self.estimator_errors_[iboost] = estimator_error
 
-            if self.retain_sample_weights:
+            if retain_weights:
                 sample_weights_.append(sample_weight)
 
             # Stop if error is zero
@@ -171,7 +172,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 # Normalize
                 sample_weight /= sample_weight_sum
 
-        if self.retain_sample_weights:
+        if retain_weights:
             self.sample_weights_ = np.asarray(
                 sample_weights_, dtype=np.float64)
 
