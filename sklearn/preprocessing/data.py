@@ -1836,14 +1836,15 @@ def _transform_selected(X, transform, selected="all", copy=True):
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
-    """Encode ordinal integer features using a one-hot aka one-of-K scheme.
+    """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
     The input to this transformer should be a matrix of integers, denoting
     the values taken on by categorical (discrete) features. The output will be
     a sparse matrix where each column corresponds to one possible value of one
     feature. It is assumed that input features take on values in the range
     [0, n_values). For an encoder based on the unique values of the input
-    features, see the :class:`sklearn.preprocessing.CategoricalEncoder`.
+    features of any type, see the
+    :class:`~sklearn.preprocessing.CategoricalEncoder`.
 
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
@@ -2578,7 +2579,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         - 'auto' : Determine categories automatically from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
-          column.
+          column. The passed categories are sorted before encoding the data.
 
     dtype : number type, default=np.float
         Desired dtype of output.
@@ -2588,7 +2589,10 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
     handle_unknown : str, 'error' or 'ignore'
         Whether to raise an error or ignore if a unknown categorical feature is
-        present during transform.
+        present during transform (default is to raise). When this is parameter
+        is set to 'ignore' and an unknown category is encountered during
+        transform, the resulting one-hot encoded columns for this feature
+        will be all zeros.
 
     Examples
     --------
@@ -2608,8 +2612,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     See also
     --------
     sklearn.preprocessing.OneHotEncoder : performs a one-hot encoding of
-      integer ordinal features. This transformer assumes that input features
-      take on values in the range [0, max(feature)].
+      integer ordinal features. The ``OneHotEncoder assumes`` that input
+      features take on values in the range ``[0, max(feature)]`` instead of
+      using the unique values.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
@@ -2629,7 +2634,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape [n_samples, n_feature]
-            Input array of type int.
+            The data to determine the categories of each feature.
 
         Returns
         -------
@@ -2652,17 +2657,30 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             if self.categories == 'auto':
                 le.fit(Xi)
             else:
-                if not np.all(np.in1d(Xi, self.categories[i])):
+                valid_mask = np.in1d(Xi, self.categories[i])
+                if not np.all(valid_mask):
                     if self.handle_unknown == 'error':
-                        diff = np.setdiff1d(Xi, self.categories[i])
-                        msg = 'Unknown feature(s) %s in column %d' % (diff, i)
+                        diff = np.unique(Xi[~valid_mask])
+                        msg = ("Found unknown categories {0} in column {1}"
+                               " during fit".format(diff, i))
                         raise ValueError(msg)
                 le.classes_ = np.array(np.sort(self.categories[i]))
 
         return self
 
     def transform(self, X, y=None):
-        """Encode the selected categorical features using the one-hot scheme.
+        """Transform X using one-hot encoding.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            The data to encode.
+
+        Returns
+        -------
+        X_out : sparse matrix if sparse=True else a 2-d array
+            Transformed input.
+
         """
         X = check_array(X, accept_sparse='csc', dtype=np.object, copy=True)
         n_samples, n_features = X.shape
@@ -2674,9 +2692,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
             if not np.all(valid_mask):
                 if self.handle_unknown == 'error':
-                    diff = np.setdiff1d(X[:, i],
-                                        self._label_encoders_[i].classes_)
-                    msg = 'Unknown feature(s) %s in column %d' % (diff, i)
+                    diff = np.unique(X[~valid_mask, i])
+                    msg = ("Found unknown categories {0} in column {1}"
+                           " during transform".format(diff, i))
                     raise ValueError(msg)
                 else:
                     # Set the problematic rows to an acceptable value and
@@ -2688,7 +2706,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         mask = X_mask.ravel()
         n_values = [le.classes_.shape[0] for le in self._label_encoders_]
-        n_values = np.hstack([[0], n_values])
+        n_values = np.array([0] + n_values)
         indices = np.cumsum(n_values)
 
         column_indices = (X_int + indices[:-1]).ravel()[mask]

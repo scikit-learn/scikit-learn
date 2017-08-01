@@ -1959,17 +1959,12 @@ def check_categorical(X):
     enc = CategoricalEncoder()
     Xtr1 = enc.fit_transform(X)
 
-    enc = CategoricalEncoder()
+    enc = CategoricalEncoder(sparse=False)
     Xtr2 = enc.fit_transform(X)
 
-    enc = CategoricalEncoder(sparse=False)
-    Xtr3 = enc.fit_transform(X)
-
-    assert_allclose(Xtr1.toarray(), Xtr2.toarray())
-    assert_allclose(Xtr1.toarray(), Xtr3)
+    assert_allclose(Xtr1.toarray(), Xtr2)
 
     assert sparse.issparse(Xtr1)
-    assert sparse.issparse(Xtr2)
     return Xtr1.toarray()
 
 
@@ -1993,7 +1988,7 @@ def test_categorical_encoder_errors():
     enc.fit(X)
 
     X[0][0] = -1
-    msg = re.escape('Unknown feature(s) [-1] in column 0')
+    msg = re.escape('unknown categories [-1] in column 0')
     assert_raises_regex(ValueError, msg, enc.transform, X)
 
     enc = CategoricalEncoder(handle_unknown='ignore')
@@ -2031,7 +2026,8 @@ def test_categorical_encoder_specified_categories():
     enc = CategoricalEncoder(categories=[['a', 'b']])
     assert_raises(ValueError, enc.fit, X)
     enc = CategoricalEncoder(categories=[['a', 'b']], handle_unknown='ignore')
-    enc.fit(X)
+    exp = np.array([[1., 0.], [0., 1.], [0., 0.]])
+    assert_array_equal(enc.fit(X).transform(X).toarray(), exp)
 
 
 def test_categorical_encoder_pandas():
