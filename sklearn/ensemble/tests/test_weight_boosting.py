@@ -115,7 +115,7 @@ def test_classification_toy_with_sample_weights():
 
 
 def test_regression_toy_with_sample_weights():
-    # Check classification on a toy dataset and show we retain the
+    # Check regression on a toy dataset and show we retain the
     # sample weights
     clf = AdaBoostRegressor(random_state=0, retain_sample_weights=True)
     clf.fit(X, y_regr)
