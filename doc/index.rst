@@ -323,7 +323,7 @@
                 Funding provided by INRIA and others.
               </div>
               <div class="span6">
-                 <a class="reference internal" href="about.html#funding" style="text-decoration: none" >
+                 <a class="reference internal" href="about.html#funding" style="text-decoration: none; white-space: nowrap" >
                        <img id="index-funding-logo-big" src="_static/img/inria-small.png" title="INRIA">
                    <img id="index-funding-logo-small" src="_static/img/google.png" title="Google">
                    <!--Due to Télécom ParisTech's logo text being smaller, a style has been added to improve readability-->
@@ -331,6 +331,7 @@
                    <img id="index-funding-logo-small" src="_static/img/FNRS-logo.png" title="FNRS">
                    <img id="index-funding-logo-small" src="_static/img/sloan_logo.jpg" title="Alfred P. Sloan Foundation" style="max-height: 36px">
                    <img id="index-funding-logo-small" src="_static/img/columbia.png" title="Columbia University" style="max-height: 36px;">
+                   <img id="index-funding-logo-small" src="_static/img/sydney-stacked.jpeg" title="The University of Sydney" style="max-height: 36px;">
                  </a>
              </div>
              <div class="span3">
