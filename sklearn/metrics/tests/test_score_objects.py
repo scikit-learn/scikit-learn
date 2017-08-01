@@ -152,6 +152,15 @@ def DummyScorerWithLabels(y_true, y_pred, labels=None):
     else:
         return 1
 
+def DummyScorerWithLabelsNamedDifferent(y_true, y_pred,
+                                        labels_other_name=None):
+    """A dummy scorer function which returns 1 if labels argument was set
+    else returns 0"""
+    if labels_other_name is None:
+        return 0
+    else:
+        return 1
+
 
 def test_all_scorers_repr():
     # Test that all scorers have a working repr
@@ -546,7 +555,7 @@ def test_copy_classes():
     clf.fit(X, y)
 
     # copy_classes=None should not set labels
-    scorer = make_scorer(DummyScorerWithLabels, copy_classes=None)
+    scorer = make_scorer(DummyScorerWithLabels, pass_classes=None)
     assert_equal(scorer(clf, X, y), 0)
 
     # by default, labels should be set
@@ -555,8 +564,13 @@ def test_copy_classes():
 
     # if an argument other than labels passed, then it should be present in
     # scorer's signature
-    scorer = make_scorer(DummyScorerWithLabels, copy_classes='label_names')
+    scorer = make_scorer(DummyScorerWithLabels, pass_classes='label_names')
     expected_msg = ("the scorer doesn't have label_names as a parameter,"
-                    "as passed in copy_classes parameter")
+                    "as passed in pass_classes parameter")
     assert_raise_message(ValueError, expected_msg,
                          scorer, clf, X, y)
+
+    # if custom scorer has another name for labels, it should be set
+    scorer = make_scorer(DummyScorerWithLabelsNamedDifferent,
+                         pass_classes='labels_other_name')
+    assert_equal(scorer(clf, X, y), 1)
