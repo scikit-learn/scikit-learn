@@ -544,7 +544,6 @@ def test_pca_score4():
     pca3 = PCA(n_components=30, svd_solver='randomized', random_state=0)
     pca3.fit(X_digits)
     score3 = pca3.score(X_digits)
-
     assert_almost_equal(score1, score2, 12)
     assert_almost_equal(score1, score3, 2)
 
