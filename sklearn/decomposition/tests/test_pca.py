@@ -530,18 +530,18 @@ def test_pca_score3():
 
 
 def test_pca_score4():
-    # Ensure that the scores are correctly calculated in extreme situations
+    # Ensure that the scores are correctly calculated
     # Specially designed for issue #7568, #8541, #8544
     digits = datasets.load_digits()
     X_digits = digits.data
 
-    pca1 = PCA(n_components=30, svd_solver='full')
+    pca1 = PCA(n_components=30, svd_solver='full', random_state=0)
     pca1.fit(X_digits)
     score1 = pca1.score(X_digits)
-    pca2 = PCA(n_components=30, svd_solver='arpack')
+    pca2 = PCA(n_components=30, svd_solver='arpack', random_state=0)
     pca2.fit(X_digits)
     score2 = pca2.score(X_digits)
-    pca3 = PCA(n_components=30, svd_solver='randomized')
+    pca3 = PCA(n_components=30, svd_solver='randomized', random_state=0)
     pca3.fit(X_digits)
     score3 = pca3.score(X_digits)
 
