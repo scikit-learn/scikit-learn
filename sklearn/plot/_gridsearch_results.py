@@ -6,7 +6,8 @@ def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title,
                      fmt, xtickrotation):
     import matplotlib.pyplot as plt
     if ax is None:
-        ax = plt.gca()
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
 
     param = params[0]
     param_range = sorted(cv_results['param_%s' % param])
@@ -40,6 +41,7 @@ def _plot_1D_results(cv_results, params, ax, xlabel, ylabel, title,
     ylabel = "Score" if ylabel is None else ylabel
     ax.set_ylabel(ylabel)
     ax.set_title(title)
+    plt.draw()
     return img
 
 

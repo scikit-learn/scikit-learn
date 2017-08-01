@@ -52,7 +52,8 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
 
     import matplotlib.pyplot as plt
     if ax is None:
-        ax = plt.gca()
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
     img = ax.pcolormesh(values, cmap=cmap, vmin=vmin, vmax=vmax, norm=norm)
 
     # this will allow us to access the pixel values:
@@ -97,5 +98,7 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
     # set title if not none:
     if title is not None:
         ax.set_title(title)
+
+    plt.draw()
 
     return img
