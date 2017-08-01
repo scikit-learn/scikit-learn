@@ -26,6 +26,7 @@ from os import makedirs, remove
 import tarfile
 
 import numpy as np
+import logging
 
 from .base import get_data_home
 from .base import _fetch_remote
@@ -46,6 +47,7 @@ ARCHIVE = RemoteFileMetadata(
 # dataset
 MODULE_DOCS = __doc__
 
+logger = logging.getLogger(__name__)
 
 def fetch_california_housing(data_home=None, download_if_missing=True):
     """Loader for the California housing dataset from StatLib.
@@ -92,7 +94,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
 
-        print('downloading Cal. housing from {} to {}'.format(
+        logger.warning('Downloading Cal. housing from {} to {}'.format(
             ARCHIVE.url, data_home))
         archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
 

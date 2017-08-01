@@ -43,6 +43,7 @@ from os.path import exists
 
 import sys
 
+import logging
 import numpy as np
 
 from .base import get_data_home
@@ -71,6 +72,9 @@ COVERAGES = RemoteFileMetadata(
               '7926043ba7d39dcb31329cf3f6073807'))
 
 DATA_ARCHIVE_NAME = "species_coverage.pkz"
+
+
+logger = logging.getLogger(__name__)
 
 
 def _load_coverage(F, header_length=6, dtype=np.int16):
@@ -237,8 +241,8 @@ def fetch_species_distributions(data_home=None,
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
 
-        print('Downloading species data from %s to %s' % (SAMPLES.url,
-                                                          data_home))
+        logger.warning('Downloading species data from %s to %s' % (
+            SAMPLES.url, data_home))
         samples_path = _fetch_remote(SAMPLES, dirname=data_home)
         X = np.load(samples_path)  # samples.zip is a valid npz
         remove(samples_path)
@@ -250,8 +254,8 @@ def fetch_species_distributions(data_home=None,
             if 'test' in f:
                 test = _load_csv(fhandle)
 
-        print('Downloading coverage data from %s to %s' % (COVERAGES.url,
-                                                           data_home))
+        logger.warning('Downloading coverage data from %s to %s' % (
+            COVERAGES.url, data_home))
         coverages_path = _fetch_remote(COVERAGES, dirname=data_home)
         X = np.load(coverages_path)  # coverages.zip is a valid npz
         remove(coverages_path)
@@ -259,7 +263,7 @@ def fetch_species_distributions(data_home=None,
         coverages = []
         for f in X.files:
             fhandle = BytesIO(X[f])
-            print(' - converting {}'.format(f))
+            logger.info(' - converting {}'.format(f))
             coverages.append(_load_coverage(fhandle))
         coverages = np.asarray(coverages, dtype=dtype)
 
