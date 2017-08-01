@@ -61,7 +61,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  n_estimators=50,
                  estimator_params=tuple(),
                  learning_rate=1.,
-                 random_state=None):
+                 random_state=None,
+                 retain_sample_weights=False):
 
         super(BaseWeightBoosting, self).__init__(
             base_estimator=base_estimator,
@@ -70,6 +71,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         self.learning_rate = learning_rate
         self.random_state = random_state
+        self.retain_sample_weights = retain_sample_weights
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -130,8 +132,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self._validate_estimator()
 
         # Clear any previous fit results
+        sample_weights_ = []
         self.estimators_ = []
-        self.sample_weights_ = []
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float64)
         self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float64)
 
@@ -149,9 +151,11 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if sample_weight is None:
                 break
 
-            self.sample_weights_.append(sample_weight)
             self.estimator_weights_[iboost] = estimator_weight
             self.estimator_errors_[iboost] = estimator_error
+
+            if self.retain_sample_weights:
+                sample_weights_.append(sample_weight)
 
             # Stop if error is zero
             if estimator_error == 0:
@@ -166,6 +170,9 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if iboost < self.n_estimators - 1:
                 # Normalize
                 sample_weight /= sample_weight_sum
+
+        if self.retain_sample_weights:
+            self.sample_weights_ = np.asarray(sample_weights_, dtype=np.float64)
 
         return self
 
@@ -338,6 +345,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    retain_sample_weights : boolean, optional (default=False)
+        If True, the sample weights for each iteration will be retained.
+        There will be up to ``n_estimators`` sample_weights.
+
     Attributes
     ----------
     estimators_ : list of classifiers
@@ -359,6 +370,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
 
+    sample_weights_ : array of shape = [n_estimators, n_samples]
+        The sample weights stored at each iteration. Only retained if
+        ``retain_sample_weights`` is True.
+
     See also
     --------
     AdaBoostRegressor, GradientBoostingClassifier, DecisionTreeClassifier
@@ -376,13 +391,15 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  n_estimators=50,
                  learning_rate=1.,
                  algorithm='SAMME.R',
-                 random_state=None):
+                 random_state=None,
+                 retain_sample_weights=False):
 
         super(AdaBoostClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
-            random_state=random_state)
+            random_state=random_state,
+            retain_sample_weights=retain_sample_weights)
 
         self.algorithm = algorithm
 
@@ -890,6 +907,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    retain_sample_weights : boolean, optional (default=False)
+        If True, the sample weights for each iteration will be retained.
+        There will be up to ``n_estimators`` sample_weights.
+
     Attributes
     ----------
     estimators_ : list of classifiers
@@ -903,6 +924,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     feature_importances_ : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
+
+    sample_weights_ : array of shape = [n_estimators, n_samples]
+        The sample weights stored at each iteration. Only retained if
+        ``retain_sample_weights`` is True.
 
     See also
     --------
@@ -921,13 +946,15 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                  n_estimators=50,
                  learning_rate=1.,
                  loss='linear',
-                 random_state=None):
+                 random_state=None,
+                 retain_sample_weights=False):
 
         super(AdaBoostRegressor, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
-            random_state=random_state)
+            random_state=random_state,
+            retain_sample_weights=retain_sample_weights)
 
         self.loss = loss
         self.random_state = random_state

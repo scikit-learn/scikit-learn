@@ -93,6 +93,8 @@ def test_classification_toy():
         assert_equal(clf.predict_proba(T).shape, (len(T), 2))
         assert_equal(clf.decision_function(T).shape, (len(T),))
 
+        # by default sample weights are not retained
+        assert not hasattr(clf, 'sample_weights_')
 
 def test_regression_toy():
     # Check classification on a toy dataset.
@@ -100,6 +102,24 @@ def test_regression_toy():
     clf.fit(X, y_regr)
     assert_array_equal(clf.predict(T), y_t_regr)
 
+    # by default sample weights are not retained
+    assert not hasattr(clf, 'sample_weights_')
+
+
+def test_classification_toy_with_sample_weights():
+    # Check classification on a toy dataset and show we retain the
+    # sample weights
+    clf = AdaBoostClassifier(random_state=0, retain_sample_weights=True)
+    clf.fit(X, y_class)
+    assert hasattr(clf, 'sample_weights_')
+
+
+def test_regression_toy_with_sample_weights():
+    # Check classification on a toy dataset and show we retain the
+    # sample weights
+    clf = AdaBoostRegressor(random_state=0, retain_sample_weights=True)
+    clf.fit(X, y_regr)
+    assert hasattr(clf, 'sample_weights_')
 
 def test_iris():
     # Check consistency on dataset iris.
