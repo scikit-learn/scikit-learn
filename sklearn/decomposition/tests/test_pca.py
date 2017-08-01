@@ -535,7 +535,7 @@ def test_pca_score4():
     digits = datasets.load_digits()
     X_digits = digits.data
 
-    pca1 = PCA(n_components=30, svd_solver='full', random_state=0)
+    pca1 = PCA(n_components=30, svd_solver='full')
     pca1.fit(X_digits)
     score1 = pca1.score(X_digits)
     pca2 = PCA(n_components=30, svd_solver='arpack', random_state=0)

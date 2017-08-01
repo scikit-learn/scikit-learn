@@ -235,7 +235,7 @@ class PCA(_BasePCA):
         http://www.miketipping.com/papers/met-mppca.pdf. It is required to
         computed the estimated data covariance and score samples.
 
-        Equal to the average of (n_features - n_components)
+        Equal to the average of (min(n_features, n_samples) - n_components)
         smallest eigenvalues of the covariance matrix of X.
 
     References
