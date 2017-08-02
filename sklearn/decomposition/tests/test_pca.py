@@ -529,23 +529,30 @@ def test_pca_score3():
     assert_true(ll.argmax() == 1)
 
 
-def test_pca_score4():
-    # Ensure that the scores are correctly calculated
-    # Specially designed for issue #7568, #8541, #8544
+def test_pca_score_with_different_solvers():
     digits = datasets.load_digits()
     X_digits = digits.data
 
-    pca1 = PCA(n_components=30, svd_solver='full')
-    pca1.fit(X_digits)
-    score1 = pca1.score(X_digits)
-    pca2 = PCA(n_components=30, svd_solver='arpack', random_state=0)
-    pca2.fit(X_digits)
-    score2 = pca2.score(X_digits)
-    pca3 = PCA(n_components=30, svd_solver='randomized', random_state=0)
-    pca3.fit(X_digits)
-    score3 = pca3.score(X_digits)
-    assert_almost_equal(score1, score2, 12)
-    assert_almost_equal(score1, score3, 2)
+    svd_solvers = ['full', 'arpack', 'randomized']
+
+    pca_dict = {svd_solver: PCA(n_components=30, svd_solver=svd_solver,
+                                random_state=0)
+                for svd_solver in svd_solvers}
+
+    for pca in pca_dict.values():
+        pca.fit(X_digits)
+        # Sanity check for the noise_variance_. For more details see
+        # https://github.com/scikit-learn/scikit-learn/issues/7568
+        # https://github.com/scikit-learn/scikit-learn/issues/8541
+        # https://github.com/scikit-learn/scikit-learn/issues/8544
+        assert np.all((pca.explained_variance_ - pca.noise_variance_) >= 0)
+
+    # Compare scores with different svd_solvers
+    score_dict = {svd_solver: pca.score(X_digits)
+                  for svd_solver, pca in pca_dict.items()}
+    assert_almost_equal(score_dict['full'], score_dict['arpack'])
+    assert_almost_equal(score_dict['full'], score_dict['randomized'],
+                        decimal=3)
 
 
 def test_svd_solver_auto():
