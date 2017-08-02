@@ -4,7 +4,7 @@ from scipy import sparse
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils.testing import (assert_equal, assert_array_equal,
                                    assert_allclose_dense_sparse)
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_warns_message, assert_no_warnings
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -163,5 +163,5 @@ def test_check_inverse():
                                     inverse_func=np.log1p,
                                     accept_sparse=accept_sparse,
                                     check_inverse=True)
-        Xt = trans.fit_transform(X)
+        Xt = assert_no_warnings(trans.fit_transform, X)
         assert_allclose_dense_sparse(X, trans.inverse_transform(Xt))

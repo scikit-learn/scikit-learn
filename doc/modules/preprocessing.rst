@@ -610,7 +610,7 @@ a transformer that applies a log transformation in a pipeline, do::
     array([[ 0.        ,  0.69314718],
            [ 1.09861229,  1.38629436]])
 
-We can ensure that ``func`` and ``inverse_func`` are the inverse of each other
+You can ensure that ``func`` and ``inverse_func`` are the inverse of each other
 by setting ``check_inverse=True``.
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
