@@ -570,7 +570,6 @@ def test_regressor_chain_crossval_fit_and_predict():
     Y_pred = regressor_chain.predict(X)
 
     assert_equal(Y_pred_cv.shape, Y.shape)
-    print mean_squared_error(Y, Y_pred_cv)
     assert_less(mean_squared_error(Y, Y_pred_cv), 0.25)
 
     assert_not_equal(mean_squared_error(Y, Y_pred_cv),
