@@ -759,7 +759,7 @@ class MultinomialNB(BaseDiscreteNB):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
-        self.classes = None
+        self.classes = classes
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -877,7 +877,7 @@ class BernoulliNB(BaseDiscreteNB):
         self.binarize = binarize
         self.fit_prior = fit_prior
         self.class_prior = class_prior
-        self.classes = None
+        self.classes = classes
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""

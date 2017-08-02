@@ -49,7 +49,6 @@ def test_gnb():
     y_pred_proba = clf.predict_proba(X)
     y_pred_log_proba = clf.predict_log_proba(X)
     assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
-
     # Test whether label mismatch between target y and classes raises
     # an Error
     # FIXME Remove this test once the more general partial_fit tests are merged
@@ -189,49 +188,6 @@ def test_gnb_pfit_wrong_nb_features():
     clf.fit(X, y)
     # Partial fit a second time with an incoherent X
     assert_raises(ValueError, clf.partial_fit, np.hstack((X, X)), y)
-
-
-def test_gnb_extra_classes():
-    "Test whether adding extra classes doesn't change the prediction of the"
-    "existing classes just adds 0 value columns for new classes"
-    clf1 = GaussianNB(classes=[1, 2]).fit(X, y)
-    pred1 = clf1.predict_proba(X)
-
-    clf2 = GaussianNB(classes=[1, 2, 3, 4]).fit(X, y)
-    pred2 = clf2.predict_proba(X)
-
-    clf3 = GaussianNB(classes=[0, 1, 2, 3]).fit(X, y)
-    pred3 = clf3.predict_proba(X)
-
-    # check shapes:
-    assert_equal(pred1.shape, (X.shape[0], 2))
-    assert_equal(pred2.shape, (X.shape[0], 4))
-    assert_equal(pred3.shape, (X.shape[0], 4))
-
-    # check same columns are equal:
-    assert_array_almost_equal(pred1[:, 0], pred2[:, 0])
-    assert_array_almost_equal(pred1[:, 0], pred3[:, 1])
-    assert_array_almost_equal(pred1[:, 1], pred2[:, 1])
-    assert_array_almost_equal(pred1[:, 1], pred3[:, 2])
-    assert_array_almost_equal(pred2[:, 2], 0)
-    assert_array_almost_equal(pred2[:, 3], 0)
-    assert_array_almost_equal(pred3[:, 0], 0)
-    assert_array_almost_equal(pred3[:, 3], 0)
-
-
-@ignore_warnings(category=(DeprecationWarning))
-def test_gnb_duplicate_unsorted_lasses():
-    "Test whether duplicate classes result in error"
-    expected_msg = ("Classses parameter should contain all unique"
-                    " values, duplicates found in [1, 1, 2]")
-    expected_msg2 = ("Classses parameter should contain sorted values"
-                     ", unsorted values found in [1, 3, 2]")
-    assert_raise_message(ValueError, expected_msg,
-                         GaussianNB(classes=[1, 1, 2]).fit, X, y)
-    assert_raise_message(ValueError, expected_msg,
-                         GaussianNB().partial_fit, X, y, classes=[1, 1, 2])
-    assert_raise_message(ValueError, expected_msg2,
-                         GaussianNB().partial_fit, X, y, classes=[1, 3, 2])
 
 
 def test_discrete_prior():
@@ -673,3 +629,48 @@ def test_alpha():
                          X, y, classes=[0, 1])
     assert_raise_message(ValueError, expected_msg, m_nb.partial_fit,
                          X, y, classes=[0, 1])
+
+
+def test_classes_parameter_extra_classes():
+    # Test whether adding extra classes doesn't change the prediction of the
+    # existing classes just adds 0 value columns for new classes
+    for estimator in [GaussianNB, BernoulliNB, MultinomialNB]:
+        clf1 = estimator(classes=[1, 2]).fit(X2, y)
+        pred1 = clf1.predict_proba(X2)
+
+        clf2 = estimator(classes=[1, 2, 3, 4]).fit(X2, y)
+        pred2 = clf2.predict_proba(X2)
+
+        clf3 = estimator(classes=[0, 1, 2, 3]).fit(X2, y)
+        pred3 = clf3.predict_proba(X2)
+
+        # check shapes:
+        assert_equal(pred1.shape, (X2.shape[0], 2))
+        assert_equal(pred2.shape, (X2.shape[0], 4))
+        assert_equal(pred3.shape, (X2.shape[0], 4))
+
+        # check same columns are equal:
+        assert_array_almost_equal(pred1[:, 0], pred2[:, 0])
+        assert_array_almost_equal(pred1[:, 0], pred3[:, 1])
+        assert_array_almost_equal(pred1[:, 1], pred2[:, 1])
+        assert_array_almost_equal(pred1[:, 1], pred3[:, 2])
+        assert_array_almost_equal(pred2[:, 2], 0)
+        assert_array_almost_equal(pred2[:, 3], 0)
+        assert_array_almost_equal(pred3[:, 0], 0)
+        assert_array_almost_equal(pred3[:, 3], 0)
+
+
+@ignore_warnings(category=(DeprecationWarning))
+def test_classes_parameter_duplicate_unsorted_lasses():
+    # Test whether duplicate classes result in error
+    expected_msg = ("Classses parameter should contain all unique"
+                    " values, duplicates found in [1, 1, 2]")
+    expected_msg2 = ("Classses parameter should contain sorted values"
+                     ", unsorted values found in [1, 3, 2]")
+    for estimator in [GaussianNB, BernoulliNB, MultinomialNB]:
+        assert_raise_message(ValueError, expected_msg,
+                             estimator(classes=[1, 1, 2]).fit, X, y)
+        assert_raise_message(ValueError, expected_msg,
+                             estimator().partial_fit, X, y, classes=[1, 1, 2])
+        assert_raise_message(ValueError, expected_msg2,
+                             estimator().partial_fit, X, y, classes=[1, 3, 2])
