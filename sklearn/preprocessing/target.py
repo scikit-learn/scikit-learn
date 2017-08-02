@@ -198,13 +198,6 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
                                     self.regressor._estimator_type))
             self.regressor_ = clone(self.regressor)
 
-        support_sample_weight = has_fit_parameter(self.regressor_,
-                                                  'sample_weight')
-        if not support_sample_weight and sample_weight is not None:
-            raise ValueError("The regressor {} does not support sample "
-                             "weight.".format(
-                                 self.regressor_.__class__.__name__))
-
         # transform y and convert back to 1d array if needed
         y_trans = self.transformer_.fit_transform(y_2d)
         if y.ndim == 1 and self.func is None:

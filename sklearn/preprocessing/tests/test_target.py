@@ -31,8 +31,8 @@ def test_transform_target_regressor_error():
     sample_weight = np.ones((y.shape[0],))
     regr = TransformTargetRegressor(regressor=Lasso(),
                                     transformer=StandardScaler())
-    assert_raises_regex(ValueError, "The regressor Lasso does not support"
-                        " sample weight.", regr.fit, X, y,
+    assert_raises_regex(TypeError, "fit\(\) got an unexpected keyword argument"
+                        " 'sample_weight'", regr.fit, X, y,
                         sample_weight=sample_weight)
     # provide a classifier instead of a regressor
     regr = TransformTargetRegressor(regressor=LogisticRegression())
