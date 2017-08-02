@@ -47,8 +47,6 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         ``self.estimators_``. An estimator can be set to `None` using
         ``set_params``.
 
-        Some of these estimators may be frozen (see :ref:`frozen`).
-
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
         Else if 'soft', predicts the class label based on the argmax of

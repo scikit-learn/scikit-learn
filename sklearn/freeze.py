@@ -1,17 +1,36 @@
 """
 Utility for making estimators frozen / un-trainable.
 """
+# Author: Joel Nothman
+# License: BSD
 
 from .base import BaseEstimator, MetaEstimatorMixin
 from .utils.metaestimators import if_delegate_has_method
 
+__all__ = ['FreezeWrap']
+
 
 class FreezeWrap(BaseEstimator, MetaEstimatorMixin):
-    """Disables fitting and cloning (clearing model) for the wrapped estimator
+    """Disable fitting and cloning for the wrapped estimator
+
+    Wrapping an estimator in this freezes it, such that:
+
+    * ``clone(FreezeWrap(estimator))`` will return the same model without
+      clearing it
+    * ``FreezeWrap(estimator).fit(...)`` will not call ``estimator.fit()``
+    * ``FreezeWrap(estimator).fit_transform(X, y)`` will just return
+      ``estimator.transform(X)``
+
+    Read more in the :ref:`User Guide <freeze>`.
 
     Parameters
     ----------
     estimator : estimator
+
+    Notes
+    -----
+    Any keyword arguments passed to ``fit_transform``, will *not*
+    be passed on to ``transform`` (and similar for ``fit_predict``).
     """
 
     def __init__(self, estimator):

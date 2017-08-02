@@ -537,6 +537,24 @@ From text
    feature_selection.mutual_info_regression
 
 
+:mod:`sklearn.freeze`: Estimator Freezing
+=========================================
+
+.. automodule:: sklearn.freeze
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`freeze` section for further details.
+
+Classes
+-------
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+
 .. _gaussian_process_ref:
 
 :mod:`sklearn.gaussian_process`: Gaussian Processes

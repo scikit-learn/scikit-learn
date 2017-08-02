@@ -1,7 +1,8 @@
-.. _frozen:
+.. _freeze:
 
 Frozen estimators and transfer learning
 =======================================
+
 .. currentmodule:: sklearn
 
 It can be useful to pre-fit an estimator before including it in a Pipeline,
