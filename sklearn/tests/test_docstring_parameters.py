@@ -45,7 +45,7 @@ IGNORED_MODULES = (
     'setup',
     'svm',
     'utils',
-    'neighbors'
+    'neighbors',
     # Deprecated modules
     'cross_validation',
     'grid_search',
