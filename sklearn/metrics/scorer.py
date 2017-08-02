@@ -320,7 +320,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
         value. Metric functions returning a list/array of values can be wrapped
         into multiple scorers that return one value each.
 
-        See :ref:`multivalued_scorer_wrapping` for an example.
+        See :ref:`multimetric_grid_search` for an example.
 
         If None the estimator's default scorer (if available) is used.
         The return value in that case will be ``{'score': <default_scorer>}``.

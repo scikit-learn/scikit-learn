@@ -614,6 +614,25 @@ class ElasticNet(LinearModel, RegressorMixin):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import ElasticNet
+    >>> from sklearn.datasets import make_regression
+    >>>
+    >>> X, y = make_regression(n_features=2, random_state=0)
+    >>> regr = ElasticNet(random_state=0)
+    >>> regr.fit(X, y)
+    ElasticNet(alpha=1.0, copy_X=True, fit_intercept=True, l1_ratio=0.5,
+          max_iter=1000, normalize=False, positive=False, precompute=False,
+          random_state=0, selection='cyclic', tol=0.0001, warm_start=False)
+    >>> print(regr.coef_) # doctest: +ELLIPSIS
+    [ 18.83816048  64.55968825]
+    >>> print(regr.intercept_) # doctest: +ELLIPSIS
+    1.45126075617
+    >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
+    [ 1.45126076]
+
+
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -1485,6 +1504,26 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import ElasticNetCV
+    >>> from sklearn.datasets import make_regression
+    >>>
+    >>> X, y = make_regression(n_features=2, random_state=0)
+    >>> regr = ElasticNetCV(cv=5, random_state=0)
+    >>> regr.fit(X, y)
+    ElasticNetCV(alphas=None, copy_X=True, cv=5, eps=0.001, fit_intercept=True,
+           l1_ratio=0.5, max_iter=1000, n_alphas=100, n_jobs=1,
+           normalize=False, positive=False, precompute='auto', random_state=0,
+           selection='cyclic', tol=0.0001, verbose=0)
+    >>> print(regr.alpha_) # doctest: +ELLIPSIS
+    0.19947279427
+    >>> print(regr.intercept_) # doctest: +ELLIPSIS
+    0.398882965428
+    >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
+    [ 0.39888297]
+
 
     Notes
     -----
