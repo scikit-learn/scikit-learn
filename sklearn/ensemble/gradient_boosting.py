@@ -448,7 +448,7 @@ class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
     def _score_to_proba(self, score):
         """Template method to convert scores to probabilities.
 
-         the does not support probabilites raises AttributeError.
+         the does not support probabilities raises AttributeError.
         """
         raise TypeError('%s does not support predict_proba' % type(self).__name__)
 
