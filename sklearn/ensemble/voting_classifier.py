@@ -26,7 +26,7 @@ from ..utils.metaestimators import _BaseComposition
 def _parallel_fit_estimator(estimator, X, y, sample_weight):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
-        estimator.fit(X, y, sample_weight=sample_weight)
+        estimator.fit(X, y, sample_weight)
     else:
         estimator.fit(X, y)
     return estimator

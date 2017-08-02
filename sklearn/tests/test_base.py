@@ -1,8 +1,6 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
-import pickle
-
 import numpy as np
 import scipy.sparse as sp
 
@@ -30,6 +28,7 @@ from sklearn.utils import deprecated
 
 from sklearn.base import TransformerMixin
 from sklearn.utils.mocking import MockDataFrame
+import pickle
 
 
 #############################################################################
