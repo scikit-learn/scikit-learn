@@ -29,7 +29,7 @@ from sklearn.multioutput import ClassifierChain
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
-from .base import ClassifierMixin
+from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 
 
