@@ -179,6 +179,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         set to the value corresponding to the nearest train interval endpoint.
         When set to "raise", allow ``interp1d`` to throw ValueError.
 
+    do_weight_averaging: boolean, optional, default: False
+        The ``do_weight_averaging'' parameter determines how weights for points
+        with duplicate X values are handled. If True, the weights for 
+        duplicate points will be averaged before fitting the isotonic 
+        regression. If False, the weights will be summed. 
 
     Attributes
     ----------
@@ -211,11 +216,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     Leeuw, Psychometrica, 1977
     """
     def __init__(self, y_min=None, y_max=None, increasing=True,
-                 out_of_bounds='nan'):
+                 out_of_bounds='nan', do_weight_averaging=False):
         self.y_min = y_min
         self.y_max = y_max
         self.increasing = increasing
         self.out_of_bounds = out_of_bounds
+        self.do_weight_averaging = do_weight_averaging
 
     @property
     @deprecated("Attribute ``X_`` is deprecated in version 0.18 and will be"
@@ -293,7 +299,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         X, y, sample_weight = [array[order].astype(np.float64, copy=False)
                                for array in [X, y, sample_weight]]
         unique_X, unique_y, unique_sample_weight = _make_unique(
-            X, y, sample_weight)
+            X, y, sample_weight, self.do_weight_averaging)
 
         # Store _X_ and _y_ to maintain backward compat during the deprecation
         # period of X_ and y_
