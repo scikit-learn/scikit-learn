@@ -475,7 +475,7 @@ class BaseChain(BaseEstimator):
         return Y_pred
 
 
-class ClassifierChain(BaseChain):
+class ClassifierChain(BaseChain, ClassifierMixin):
     """A multi-label model that arranges binary classifiers into a chain.
 
     Each model makes a prediction in the order specified by the chain using
@@ -607,7 +607,7 @@ class ClassifierChain(BaseChain):
         return Y_decision
 
 
-class RegressorChain(BaseChain):
+class RegressorChain(BaseChain, RegressorMixin):
     """A multi-label model that arranges regressions into a chain.
 
     Each model makes a prediction in the order specified by the chain using

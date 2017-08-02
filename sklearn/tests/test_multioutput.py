@@ -23,9 +23,9 @@ from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
-from sklearn.metrics import jaccard_similarity_score
+from sklearn.metrics import jaccard_similarity_score, mean_squared_error
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multioutput import ClassifierChain
+from sklearn.multioutput import ClassifierChain, RegressorChain
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
@@ -570,8 +570,8 @@ def test_regressor_chain_crossval_fit_and_predict():
     Y_pred = regressor_chain.predict(X)
 
     assert_equal(Y_pred_cv.shape, Y.shape)
-    assert_greater(jaccard_similarity_score(Y, Y_pred_cv), 0.4)
+    assert_less(mean_squared_error(Y, Y_pred_cv), 0.4)
 
-    assert_not_equal(jaccard_similarity_score(Y, Y_pred_cv),
-                     jaccard_similarity_score(Y, Y_pred))
+    assert_not_equal(mean_squared_error(Y, Y_pred_cv),
+                     mean_squared_error(Y, Y_pred))
 
