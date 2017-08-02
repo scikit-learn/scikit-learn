@@ -808,8 +808,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least tol for `n_iter_no_change`
-        consecutive epochs.
+        validation score is not improving by at least tol for
+        `n_iter_no_change` consecutive epochs.
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, optional, default 0.1
@@ -1190,8 +1190,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least tol for `n_iter_no_change`
-        consecutive epochs.
+        validation score is not improving by at least tol for
+        `n_iter_no_change` consecutive epochs.
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, optional, default 0.1
