@@ -51,7 +51,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                  alpha, batch_size, learning_rate, learning_rate_init, power_t,
                  max_iter, loss, shuffle, random_state, tol, verbose,
                  warm_start, momentum, nesterovs_momentum, early_stopping,
-                 validation_fraction, beta_1, beta_2, epsilon, n_iter_no_change):
+                 validation_fraction, beta_1, beta_2, epsilon,
+                 n_iter_no_change):
         self.activation = activation
         self.solver = solver
         self.alpha = alpha
@@ -543,10 +544,12 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                     # stop or decrease learning rate
                     if early_stopping:
                         msg = ("Validation score did not improve more than "
-                               "tol=%f for %d consecutive epochs." % (self.tol, self.n_iter_no_change))
+                               "tol=%f for %d consecutive epochs." % (
+                                   self.tol, self.n_iter_no_change))
                     else:
                         msg = ("Training loss did not improve more than tol=%f"
-                               " for %d consecutive epochs." % (self.tol, self.n_iter_no_change))
+                               " for %d consecutive epochs." % (
+                                   self.tol, self.n_iter_no_change))
 
                     is_stopping = self._optimizer.trigger_stopping(
                         msg, self.verbose)
