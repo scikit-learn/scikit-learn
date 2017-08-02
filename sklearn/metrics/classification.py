@@ -167,6 +167,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     2
 
     In the multilabel case with binary label indicators:
+    
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
