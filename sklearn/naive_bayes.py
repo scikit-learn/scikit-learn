@@ -697,7 +697,7 @@ class MultinomialNB(BaseDiscreteNB):
             the training data. It is recommended to set this parameter during
             initialization.
 
-            .. versionadded:: 0.19
+            .. versionadded:: 0.20
 
     Attributes
     ----------
@@ -821,7 +821,7 @@ class BernoulliNB(BaseDiscreteNB):
             the training data. It is recommended to set this parameter during
             initialization.
 
-            .. versionadded:: 0.19
+            .. versionadded:: 0.20
 
     Attributes
     ----------
