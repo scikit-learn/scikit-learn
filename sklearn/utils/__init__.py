@@ -126,11 +126,20 @@ def safe_indexing(X, indices):
 
     Parameters
     ----------
-    X : array-like, sparse-matrix, list.
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series.
         Data from which to sample rows or items.
-
-    indices : array-like, list
+    indices : array-like of int
         Indices according to which X will be subsampled.
+
+    Returns
+    -------
+    subset
+        Subset of X on first axis
+
+    Notes
+    -----
+    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    not supported.
     """
     if hasattr(X, "iloc"):
         # Pandas Dataframes and Series
@@ -459,7 +468,12 @@ def _get_n_jobs(n_jobs):
 
 
 def tosequence(x):
-    """Cast iterable x to a Sequence, avoiding a copy if possible."""
+    """Cast iterable x to a Sequence, avoiding a copy if possible.
+
+    Parameters
+    ----------
+    x : iterable
+    """
     if isinstance(x, np.ndarray):
         return np.asarray(x)
     elif isinstance(x, Sequence):

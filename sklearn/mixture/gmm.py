@@ -15,14 +15,14 @@ of Gaussian Mixture Models.
 # - 'sklearn/mixture/dpgmm.py'
 # - 'sklearn/mixture/test_dpgmm.py'
 # - 'sklearn/mixture/test_gmm.py'
+from time import time
 
 import numpy as np
 from scipy import linalg
-from time import time
 
 from ..base import BaseEstimator
 from ..utils import check_random_state, check_array, deprecated
-from ..utils.extmath import logsumexp
+from ..utils.fixes import logsumexp
 from ..utils.validation import check_is_fitted
 from .. import cluster
 
@@ -781,7 +781,7 @@ def _validate_covars(covars, covariance_type, n_components):
                          "'spherical', 'tied', 'diag', 'full'")
 
 
-@deprecated("The functon distribute_covar_matrix_to_match_covariance_type"
+@deprecated("The function distribute_covar_matrix_to_match_covariance_type"
             "is deprecated in 0.18 and will be removed in 0.20.")
 def distribute_covar_matrix_to_match_covariance_type(
         tied_cv, covariance_type, n_components):

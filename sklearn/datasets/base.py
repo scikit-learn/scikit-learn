@@ -41,6 +41,11 @@ def get_data_home(data_home=None):
     '~' symbol is expanded to the user home folder.
 
     If the folder does not already exist, it is automatically created.
+
+    Parameters
+    ----------
+    data_home : str | None
+        The path to scikit-learn data dir.
     """
     if data_home is None:
         data_home = environ.get('SCIKIT_LEARN_DATA',
@@ -52,7 +57,13 @@ def get_data_home(data_home=None):
 
 
 def clear_data_home(data_home=None):
-    """Delete all the content of the data home cache."""
+    """Delete all the content of the data home cache.
+
+    Parameters
+    ----------
+    data_home : str | None
+        The path to scikit-learn data dir.
+    """
     data_home = get_data_home(data_home)
     shutil.rmtree(data_home)
 
@@ -118,6 +129,11 @@ def load_files(container_path, description=None, categories=None,
         in the data structure returned. If not, a filenames attribute
         gives the path to the files.
 
+    shuffle : bool, optional (default=True)
+        Whether or not to shuffle the data: might be important for models that
+        make the assumption that the samples are independent and identically
+        distributed (i.i.d.), such as stochastic gradient descent.
+
     encoding : string or None (default is None)
         If None, do not try to decode the content of the files (e.g. for
         images or other non-text content).
@@ -128,11 +144,6 @@ def load_files(container_path, description=None, categories=None,
         Instruction on what to do if a byte sequence is given to analyze that
         contains characters not of the given `encoding`. Passed as keyword
         argument 'errors' to bytes.decode.
-
-    shuffle : bool, optional (default=True)
-        Whether or not to shuffle the data: might be important for models that
-        make the assumption that the samples are independent and identically
-        distributed (i.i.d.), such as stochastic gradient descent.
 
     random_state : int, RandomState instance or None, optional (default=0)
         If int, random_state is the seed used by the random number generator;
@@ -499,6 +510,9 @@ def load_digits(n_class=10, return_X_y=False):
 
         .. versionadded:: 0.18
 
+    This is a copy of the test set of the UCI ML hand-written digits datasets
+    http://archive.ics.uci.edu/ml/datasets/Optical+Recognition+of+Handwritten+Digits
+
     Examples
     --------
     To load the data and visualize the images::
@@ -588,10 +602,12 @@ def load_diabetes(return_X_y=False):
 def load_linnerud(return_X_y=False):
     """Load and return the linnerud dataset (multivariate regression).
 
-    Samples total: 20
-    Dimensionality: 3 for both data and targets
-    Features: integer
-    Targets: integer
+    ==============    ============================
+    Samples total     20
+    Dimensionality    3 (for both data and target)
+    Features          integer
+    Targets           integer
+    ==============    ============================
 
     Parameters
     ----------
