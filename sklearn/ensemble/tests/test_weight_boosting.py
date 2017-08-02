@@ -119,6 +119,9 @@ def test_classification_toy_with_sample_weights():
     # show rows sum to 1
     assert_array_almost_equal(wts.sum(axis=1), np.ones(wts.shape[0]))
 
+    # show there are no zeros in the sample weights
+    assert not (wts == 0.).any()
+
 
 def test_regression_toy_with_sample_weights():
     # Check regression on a toy dataset and show we retain the
@@ -132,6 +135,10 @@ def test_regression_toy_with_sample_weights():
 
     # show rows sum to 1
     assert_array_almost_equal(wts.sum(axis=1), np.ones(wts.shape[0]))
+
+    # show there are no zeros in the sample weights
+    assert not (wts == 0.).any()
+
 
 def test_iris():
     # Check consistency on dataset iris.
