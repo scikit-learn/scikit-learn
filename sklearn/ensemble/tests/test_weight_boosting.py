@@ -109,33 +109,31 @@ def test_regression_toy():
 def test_classification_toy_with_sample_weights():
     # Check classification on a toy dataset and show we retain the
     # sample weights
-    n_estimators = 5
-    clf = AdaBoostClassifier(random_state=0, retain_sample_weights=True,
-                             n_estimators=n_estimators)
+    clf = AdaBoostClassifier(random_state=0, retain_sample_weights=True)
     clf.fit(X, y_class)
 
-    # assert shape is correct
+    # assert shape is correct (there will be as many rows
+    # as there are estimators)
     wts = clf.sample_weights_
-    assert wts.shape == (n_estimators, X.shape[0])
+    assert wts.shape == (len(clf.estimators_), len(X))
 
     # show rows sum to 1
-    assert_array_almost_equal(wts.sum(axis=1), np.ones(n_estimators))
+    assert_array_almost_equal(wts.sum(axis=1), np.ones(wts.shape[0]))
 
 
 def test_regression_toy_with_sample_weights():
     # Check regression on a toy dataset and show we retain the
     # sample weights
-    n_estimators = 5
-    clf = AdaBoostRegressor(random_state=0, retain_sample_weights=True,
-                            n_estimators=n_estimators)
+    clf = AdaBoostRegressor(random_state=0, retain_sample_weights=True)
     clf.fit(X, y_regr)
 
-    # assert shape is correct
+    # assert shape is correct (there will be as many rows 
+    # as there are estimators)
     wts = clf.sample_weights_
-    assert wts.shape == (n_estimators, X.shape[0])
+    assert wts.shape == (len(clf.estimators_), len(X))
 
     # show rows sum to 1
-    assert_array_almost_equal(wts.sum(axis=1), np.ones(n_estimators))
+    assert_array_almost_equal(wts.sum(axis=1), np.ones(wts.shape[0]))
 
 def test_iris():
     # Check consistency on dataset iris.
