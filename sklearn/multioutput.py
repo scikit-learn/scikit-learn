@@ -727,5 +727,3 @@ class RegressorChain(BaseChain, RegressorMixin):
                     X_aug[:, col_idx] = cv_result
 
         return self
-
-

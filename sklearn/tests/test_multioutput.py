@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_less
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.datasets import fetch_mldata
@@ -574,4 +575,3 @@ def test_regressor_chain_crossval_fit_and_predict():
 
     assert_not_equal(mean_squared_error(Y, Y_pred_cv),
                      mean_squared_error(Y, Y_pred))
-
