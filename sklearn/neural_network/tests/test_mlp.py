@@ -622,6 +622,30 @@ def test_n_iter_no_change():
         assert_equal(clf._no_improvement_count, n_iter_no_change + 1)
 
 
+def test_n_iter_no_change_inf():
+    # test n_iter_no_change using binary data set
+    # the fitting process should go to max_iter iterations
+    X = X_digits_binary[:100]
+    y = y_digits_binary[:100]
+
+    # set a ridiculous tolerance
+    # this should always trigger _update_no_improvement_count()
+    tol = 1e9
+
+    # fit
+    n_iter_no_change = np.inf
+    max_iter = 3000
+    clf = MLPClassifier(tol=tol, max_iter=max_iter, solver='sgd',
+                        n_iter_no_change=n_iter_no_change)
+    clf.fit(X, y)
+
+    # validate n_iter_no_change doesn't cause early stopping
+    assert_equal(clf.n_iter_, max_iter)
+
+    # validate _update_no_improvement_count() was always triggered
+    assert_equal(clf._no_improvement_count, clf.n_iter_ - 1)
+
+
 def test_n_iter_no_change_fluctations():
     # test n_iter_no_change using binary data set
     # the regression fitting process is prone to loss curve fluctuations
