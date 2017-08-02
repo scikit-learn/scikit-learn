@@ -11,6 +11,7 @@ from ..externals import six
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
+from ..utils.validation import check_is_fitted
 
 
 def _get_feature_importances(estimator, norm_order=1):
@@ -126,7 +127,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         if self.prefit:
             estimator = self.estimator
         else:
-            from ..utils.validation import check_is_fitted
             check_is_fitted(self, 'estimator_')
             estimator = self.estimator_
         scores = _get_feature_importances(estimator, self.norm_order)
