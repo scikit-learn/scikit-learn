@@ -128,6 +128,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         else:
             from ..utils.validation import check_is_fitted
             check_is_fitted(self, 'estimator_')
+            estimator = self.estimator_
         scores = _get_feature_importances(estimator, self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         return scores >= threshold

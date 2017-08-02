@@ -2,11 +2,11 @@
 Utility for making estimators frozen / un-trainable.
 """
 
-from .base import BaseEstimator
+from .base import BaseEstimator, MetaEstimatorMixin
 from .utils.metaestimators import if_delegate_has_method
 
 
-class FreezeWrap(BaseEstimator):
+class FreezeWrap(BaseEstimator, MetaEstimatorMixin):
     """Disables fitting and cloning (clearing model) for the wrapped estimator
 
     Parameters
