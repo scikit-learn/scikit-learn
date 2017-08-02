@@ -87,7 +87,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
 
-    def _validate_inverse(self, X):
+    def _check_inverse_transform(self, X):
         """Check that func and inverse_func are the inverse."""
         idx_selected = slice(None, None, max(1, X.shape[0] // 100))
         try:
@@ -121,9 +121,9 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         self
         """
         if self.validate:
-            check_array(X, self.accept_sparse)
+            X = check_array(X, self.accept_sparse)
         if self.check_inverse:
-            self._validate_inverse(X)
+            self._check_inverse_transform(X)
         return self
 
     def transform(self, X, y='deprecated'):
