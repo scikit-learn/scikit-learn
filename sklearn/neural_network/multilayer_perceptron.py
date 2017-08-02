@@ -911,7 +911,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
-                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon, n_iter_no_change=n_iter_no_change)
+                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
+                     n_iter_no_change=n_iter_no_change)
 
     def _validate_input(self, X, y, incremental):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
@@ -1290,7 +1291,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
-                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon, n_iter_no_change=n_iter_no_change)
+                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
+                     n_iter_no_change=n_iter_no_change)
 
     def predict(self, X):
         """Predict using the multi-layer perceptron model.
