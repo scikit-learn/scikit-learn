@@ -784,9 +784,9 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     tol : float, optional, default 1e-4
         Tolerance for the optimization. When the loss or score is not improving
-        by at least tol for two consecutive iterations, unless `learning_rate`
-        is set to 'adaptive', convergence is considered to be reached and
-        training stops.
+        by at least tol for `n_iter_no_change` consecutive iterations, unless
+        `learning_rate` is set to 'adaptive', convergence is considered to be
+        reached and training stops.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
@@ -808,8 +808,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least tol for two consecutive
-        epochs.
+        validation score is not improving by at least tol for `n_iter_no_change`
+        consecutive epochs.
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, optional, default 0.1
@@ -827,6 +827,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     epsilon : float, optional, default 1e-8
         Value for numerical stability in adam. Only used when solver='adam'
+
+    n_iter_no_change : int, optional, default 2
+        Maximum number of epochs to not meet `tol` improvement.
+        Only effective when solver='sgd' or 'adam'
 
     Attributes
     ----------
@@ -1161,9 +1165,9 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     tol : float, optional, default 1e-4
         Tolerance for the optimization. When the loss or score is not improving
-        by at least tol for two consecutive iterations, unless `learning_rate`
-        is set to 'adaptive', convergence is considered to be reached and
-        training stops.
+        by at least tol for `n_iter_no_change` consecutive iterations, unless
+        `learning_rate` is set to 'adaptive', convergence is considered
+        to be reached and training stops.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
@@ -1185,8 +1189,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least tol for two consecutive
-        epochs.
+        validation score is not improving by at least tol for `n_iter_no_change`
+        consecutive epochs.
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, optional, default 0.1
@@ -1204,6 +1208,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     epsilon : float, optional, default 1e-8
         Value for numerical stability in adam. Only used when solver='adam'
+
+    n_iter_no_change : int, optional, default 2
+        Maximum number of epochs to not meet `tol` improvement.
+        Only effective when solver='sgd' or 'adam'
 
     Attributes
     ----------
