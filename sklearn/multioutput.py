@@ -316,7 +316,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
     def predict_proba(self, X):
         """Probability estimates.
-        Returns prediction probabilites for each class of each output.
+        Returns prediction probabilities for each class of each output.
 
         Parameters
         ----------
