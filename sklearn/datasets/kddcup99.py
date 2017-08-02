@@ -293,7 +293,7 @@ def _fetch_brute_kddcup99(data_home=None,
 
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
-        logger.warning("Downloading %s" % archive.url)
+        logger.info("Downloading %s" % archive.url)
         _fetch_remote(archive, dirname=kddcup_dir)
         dt = [('duration', int),
               ('protocol_type', 'S4'),
@@ -338,7 +338,7 @@ def _fetch_brute_kddcup99(data_home=None,
               ('dst_host_srv_rerror_rate', float),
               ('labels', 'S16')]
         DT = np.dtype(dt)
-        logger.info("extracting archive")
+        logger.debug("extracting archive")
         archive_path = join(kddcup_dir, archive.filename)
         file_ = GzipFile(filename=archive_path, mode='r')
         Xy = []
@@ -347,7 +347,7 @@ def _fetch_brute_kddcup99(data_home=None,
                 line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
-        logger.info('extraction done')
+        logger.debug('extraction done')
         os.remove(archive_path)
 
         Xy = np.asarray(Xy, dtype=object)

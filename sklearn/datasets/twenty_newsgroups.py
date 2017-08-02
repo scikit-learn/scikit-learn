@@ -79,10 +79,10 @@ def download_20newsgroups(target_dir, cache_path):
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    logger.warning("Downloading dataset from %s (14 MB)", ARCHIVE.url)
+    logger.info("Downloading dataset from %s (14 MB)", ARCHIVE.url)
     archive_path = _fetch_remote(ARCHIVE, dirname=target_dir)
 
-    logger.info("Decompressing %s", archive_path)
+    logger.debug("Decompressing %s", archive_path)
     tarfile.open(archive_path, "r:gz").extractall(path=target_dir)
     os.remove(archive_path)
 
@@ -209,8 +209,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     if cache is None:
         if download_if_missing:
-            logger.warning("Downloading 20news dataset. "
-                           "This may take a few minutes.")
+            logger.info("Downloading 20news dataset. "
+                        "This may take a few minutes.")
             cache = download_20newsgroups(target_dir=twenty_home,
                                           cache_path=cache_path)
         else:

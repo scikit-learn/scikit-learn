@@ -92,7 +92,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     if download_if_missing and not available:
         if not exists(covtype_dir):
             makedirs(covtype_dir)
-        logger.warning("Downloading %s" % ARCHIVE.url)
+        logger.info("Downloading %s" % ARCHIVE.url)
 
         archive_path = _fetch_remote(ARCHIVE, dirname=covtype_dir)
         Xy = np.genfromtxt(GzipFile(filename=archive_path), delimiter=',')

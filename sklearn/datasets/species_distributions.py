@@ -240,8 +240,7 @@ def fetch_species_distributions(data_home=None,
     if not exists(archive_path):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
-
-        logger.warning('Downloading species data from %s to %s' % (
+        logger.info('Downloading species data from %s to %s' % (
             SAMPLES.url, data_home))
         samples_path = _fetch_remote(SAMPLES, dirname=data_home)
         X = np.load(samples_path)  # samples.zip is a valid npz
@@ -254,7 +253,7 @@ def fetch_species_distributions(data_home=None,
             if 'test' in f:
                 test = _load_csv(fhandle)
 
-        logger.warning('Downloading coverage data from %s to %s' % (
+        logger.info('Downloading coverage data from %s to %s' % (
             COVERAGES.url, data_home))
         coverages_path = _fetch_remote(COVERAGES, dirname=data_home)
         X = np.load(coverages_path)  # coverages.zip is a valid npz
@@ -263,7 +262,7 @@ def fetch_species_distributions(data_home=None,
         coverages = []
         for f in X.files:
             fhandle = BytesIO(X[f])
-            logger.info(' - converting {}'.format(f))
+            logger.debug(' - converting {}'.format(f))
             coverages.append(_load_coverage(fhandle))
         coverages = np.asarray(coverages, dtype=dtype)
 

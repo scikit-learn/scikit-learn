@@ -66,7 +66,7 @@ TOPICS_METADATA = RemoteFileMetadata(
               '99474317fe14181aee1466cc754d0d1c1'),
     filename='rcv1v2.topics.qrels.gz')
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
@@ -160,7 +160,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
                                 not exists(sample_id_path)):
         files = []
         for each in XY_METADATA:
-            logger.warning("Downloading %s" % each.url)
+            logger.info("Downloading %s" % each.url)
             file_path = _fetch_remote(each, dirname=rcv1_dir)
             files.append(GzipFile(filename=file_path))
 
@@ -184,7 +184,7 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
                                 not exists(topics_path)):
-        logger.warning("Downloading %s" % TOPICS_METADATA.url)
+        logger.info("Downloading %s" % TOPICS_METADATA.url)
         topics_archive_path = _fetch_remote(TOPICS_METADATA,
                                             dirname=rcv1_dir)
 

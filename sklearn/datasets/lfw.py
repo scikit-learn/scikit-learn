@@ -103,7 +103,7 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         target_filepath = join(lfw_home, target.filename)
         if not exists(target_filepath):
             if download_if_missing:
-                logger.warning("Downloading LFW metadata: %s", target.url)
+                logger.info("Downloading LFW metadata: %s", target.url)
                 _fetch_remote(target, dirname=lfw_home)
             else:
                 raise IOError("%s is missing" % target_filepath)
@@ -119,14 +119,14 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         archive_path = join(lfw_home, archive.filename)
         if not exists(archive_path):
             if download_if_missing:
-                logger.warning("Downloading LFW data (~200MB): %s",
-                               archive.url)
+                logger.info("Downloading LFW data (~200MB): %s",
+                            archive.url)
                 _fetch_remote(archive, dirname=lfw_home)
             else:
                 raise IOError("%s is missing" % archive_path)
 
         import tarfile
-        logger.info("Decompressing the data archive to %s", data_folder_path)
+        logger.debug("Decompressing the data archive to %s", data_folder_path)
         tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
         remove(archive_path)
 
@@ -176,7 +176,7 @@ def _load_imgs(file_paths, slice_, color, resize):
     # arrays
     for i, file_path in enumerate(file_paths):
         if i % 1000 == 0:
-            logger.info("Loading face #%05d / %05d", i + 1, n_faces)
+            logger.debug("Loading face #%05d / %05d", i + 1, n_faces)
 
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
@@ -321,7 +321,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
-    logger.info('Loading LFW people faces from %s', lfw_home)
+    logger.debug('Loading LFW people faces from %s', lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
@@ -484,7 +484,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
-    logger.info('Loading %s LFW pairs from %s', subset, lfw_home)
+    logger.debug('Loading %s LFW pairs from %s', subset, lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
