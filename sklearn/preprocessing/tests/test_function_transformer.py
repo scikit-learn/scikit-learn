@@ -146,11 +146,19 @@ def test_check_inverse():
                                     inverse_func=np.around,
                                     accept_sparse=accept_sparse,
                                     check_inverse=True)
-        assert_raises_regex(ValueError, "The provided functions are not"
-                            " strictly inverse of each other. If you are sure"
-                            " you want to proceed regardless, set"
-                            " 'check_inverse=False'",
-                            trans.fit, X)
+        # TODO: an error will be raised from 0.22
+        # assert_raises_regex(ValueError, "The provided functions are not"
+        #                     " strictly inverse of each other. If you are"
+        #                     " sure you want to proceed regardless, set"
+        #                     " 'check_inverse=False'",
+        #                     trans.fit, X)
+        assert_warns_message(DeprecationWarning,
+                             "The provided functions are not strictly"
+                             " inverse of each other. If you are sure you"
+                             " want to proceed regardless, set"
+                             " 'check_inverse=False'. This warning will turn"
+                             " to an error from 0.22",
+                             trans.fit, X)
         trans = FunctionTransformer(func=np.expm1,
                                     inverse_func=np.log1p,
                                     accept_sparse=accept_sparse,

@@ -58,11 +58,15 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
         .. deprecated::0.19
 
-    check_inverse : bool, default=False
+    check_inverse : bool, default=True
        Whether to check that or ``func`` followed by ``inverse_func`` leads to
        the original inputs. It can be used for a sanity check.
 
        .. versionadded:: 0.20
+
+       .. deprecated:: 0.20
+          ``check_inverse=True`` is currently raising a warning if the
+          condition is violated. From 0.22, an error will be raised instead.
 
     kw_args : dict, optional
         Dictionary of additional keyword arguments to pass to func.
@@ -72,7 +76,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, func=None, inverse_func=None, validate=True,
-                 accept_sparse=False, pass_y='deprecated', check_inverse=False,
+                 accept_sparse=False, pass_y='deprecated', check_inverse=True,
                  kw_args=None, inv_kw_args=None):
         self.func = func
         self.inverse_func = inverse_func
@@ -91,10 +95,16 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
                 X[idx_selected],
                 self.inverse_transform(self.transform(X[idx_selected])))
         except AssertionError:
-            raise ValueError("The provided functions are not strictly"
-                             " inverse of each other. If you are sure you"
-                             " want to proceed regardless, set"
-                             " 'check_inverse=False'")
+            # TODO: an error will be raised from 0.22
+            # raise ValueError("The provided functions are not strictly"
+            #                  " inverse of each other. If you are sure you"
+            #                  " want to proceed regardless, set"
+            #                  " 'check_inverse=False'.")
+            warnings.warn("The provided functions are not strictly"
+                          " inverse of each other. If you are sure you"
+                          " want to proceed regardless, set"
+                          " 'check_inverse=False'. This warning will turn to"
+                          " an error from 0.22", DeprecationWarning)
 
     def fit(self, X, y=None):
         """Fit transformer by checking X.
