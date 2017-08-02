@@ -20,7 +20,7 @@ from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Lasso
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
 from sklearn.metrics import jaccard_similarity_score, mean_squared_error
@@ -570,7 +570,8 @@ def test_regressor_chain_crossval_fit_and_predict():
     Y_pred = regressor_chain.predict(X)
 
     assert_equal(Y_pred_cv.shape, Y.shape)
-    assert_less(mean_squared_error(Y, Y_pred_cv), 0.4)
+    print mean_squared_error(Y, Y_pred_cv)
+    assert_less(mean_squared_error(Y, Y_pred_cv), 0.25)
 
     assert_not_equal(mean_squared_error(Y, Y_pred_cv),
                      mean_squared_error(Y, Y_pred))
