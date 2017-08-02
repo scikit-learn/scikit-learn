@@ -112,8 +112,7 @@ def test_classification_toy_with_sample_weights():
     clf = AdaBoostClassifier(random_state=0, retain_sample_weights=True)
     clf.fit(X, y_class)
 
-    # assert shape is correct (there will be as many rows
-    # as there are estimators)
+    # assert shape is correct (as many rows as there are estimators)
     wts = clf.sample_weights_
     assert wts.shape == (len(clf.estimators_), len(X))
 
@@ -127,8 +126,7 @@ def test_regression_toy_with_sample_weights():
     clf = AdaBoostRegressor(random_state=0, retain_sample_weights=True)
     clf.fit(X, y_regr)
 
-    # assert shape is correct (there will be as many rows 
-    # as there are estimators)
+    # assert shape is correct (as many rows as there are estimators)
     wts = clf.sample_weights_
     assert wts.shape == (len(clf.estimators_), len(X))
 
