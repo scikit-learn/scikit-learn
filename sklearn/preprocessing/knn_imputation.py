@@ -110,22 +110,22 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                              .format(self.col_max_missing*100, np.where(
                               mask.sum(axis=0) > (X.shape[0] *
                                                   self.col_max_missing))))
-        # X_masked = np.ma.array(X, mask=mask)
-        X_col_means = X.mean(axis=0)
+        X_col_means = np.nanmean(X, axis=0)
 
         # Check if % missing in any row > col_max_missing
         bad_rows = mask.sum(axis=1) > (mask.shape[1] * self.row_max_missing)
         if np.any(bad_rows):
             warnings.warn(
                 "The following rows have more than {0}% missing values and "
-                "are not included as nearest neighbors: {1}"
+                "are not included as donor neighbors: {1}"
                     .format(self.row_max_missing*100, np.where(bad_rows)))
 
             # Remove rows that have more than row_max_missing % missing
             X = X[~bad_rows, :]
-            mask = _get_mask(X, self.missing_values)
+            # mask = _get_mask(X, self.missing_values)
             # X_masked = np.ma.array(X, mask=mask)
 
+        # Check if sufficient neighboring samples available
         if X.shape[0] < self.n_neighbors:
             raise ValueError("There are only %d samples, "
                              "but n_neighbors=%d."
