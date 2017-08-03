@@ -11,32 +11,38 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 import sys
 import errno
 from gzip import GzipFile
-from io import BytesIO
 import logging
 import os
 from os.path import exists, join
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 
 import numpy as np
 
+
+from .base import _fetch_remote
 from .base import get_data_home
+from .base import RemoteFileMetadata
 from ..utils import Bunch
 from ..externals import joblib, six
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
+# The original data can be found at:
+# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz
+ARCHIVE = RemoteFileMetadata(
+    filename='kddcup99_data',
+    url='https://ndownloader.figshare.com/files/5976045',
+    checksum=('3b6c942aa0356c0ca35b7b595a26c89d'
+              '343652c9db428893e7494f837b274292'))
 
-URL10 = ('http://archive.ics.uci.edu/ml/'
-         'machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz')
+# The original data can be found at:
+# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz
+ARCHIVE_10_PERCENT = RemoteFileMetadata(
+    filename='kddcup99_10_data',
+    url='https://ndownloader.figshare.com/files/5976042',
+    checksum=('8045aca0d84e70e622d1148d7df78249'
+              '6f6333bf6eb979a1b0837c42a9fd9561'))
 
-URL = ('http://archive.ics.uci.edu/ml/'
-       'machine-learning-databases/kddcup99-mld/kddcup.data.gz')
-
-
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
@@ -273,20 +279,22 @@ def _fetch_brute_kddcup99(data_home=None,
     else:
         # Backward compat for Python 2 users
         dir_suffix = ""
+
     if percent10:
         kddcup_dir = join(data_home, "kddcup99_10" + dir_suffix)
+        archive = ARCHIVE_10_PERCENT
     else:
         kddcup_dir = join(data_home, "kddcup99" + dir_suffix)
+        archive = ARCHIVE
+
     samples_path = join(kddcup_dir, "samples")
     targets_path = join(kddcup_dir, "targets")
     available = exists(samples_path)
 
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
-        URL_ = URL10 if percent10 else URL
-        logger.warning("Downloading %s" % URL_)
-        f = BytesIO(urlopen(URL_).read())
-
+        logger.info("Downloading %s" % archive.url)
+        _fetch_remote(archive, dirname=kddcup_dir)
         dt = [('duration', int),
               ('protocol_type', 'S4'),
               ('service', 'S11'),
@@ -330,15 +338,18 @@ def _fetch_brute_kddcup99(data_home=None,
               ('dst_host_srv_rerror_rate', float),
               ('labels', 'S16')]
         DT = np.dtype(dt)
-
-        file_ = GzipFile(fileobj=f, mode='r')
+        logger.debug("extracting archive")
+        archive_path = join(kddcup_dir, archive.filename)
+        file_ = GzipFile(filename=archive_path, mode='r')
         Xy = []
         for line in file_.readlines():
             if six.PY3:
                 line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
-        print('extraction done')
+        logger.debug('extraction done')
+        os.remove(archive_path)
+
         Xy = np.asarray(Xy, dtype=object)
         for j in range(42):
             Xy[:, j] = Xy[:, j].astype(DT[j])
