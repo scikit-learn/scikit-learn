@@ -12,6 +12,7 @@ import warnings
 import sys
 import re
 import pkgutil
+import numpy as np
 
 from sklearn.externals.six import PY3
 from sklearn.utils.testing import assert_false, clean_warning_registry
@@ -21,6 +22,8 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import _named_check
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_raise_message
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
@@ -166,3 +169,53 @@ def test_all_tests_are_importable():
                  '{0} do not have `tests` subpackages. Perhaps they require '
                  '__init__.py or an add_subpackage directive in the parent '
                  'setup.py'.format(missing_tests))
+
+
+@ignore_warnings(category=(DeprecationWarning))
+def test_classes_parameter_extra_classes():
+    # Test whether adding extra classes doesn't change the prediction of the
+    # existing classes just adds 0 value columns for new classes
+    rng = np.random.RandomState(0)
+    X = rng.randint(5, size=(6, 100))
+    y = np.array([1, 1, 1, 2, 2, 2])
+    estimators_to_check = ['GaussianNB', 'BernoulliNB', 'MultinomialNB']
+    for name, estimator in all_estimators():
+        if estimator in estimators_to_check:
+            clf1 = estimator(classes=[1, 2]).fit(X, y)
+            pred1 = clf1.predict_proba(X)
+
+            clf2 = estimator(classes=[1, 2, 3, 4]).fit(X, y)
+            pred2 = clf2.predict_proba(X)
+
+            clf3 = estimator(classes=[0, 1, 2, 3]).fit(X, y)
+            pred3 = clf3.predict_proba(X)
+
+            # check shapes:
+            assert_equal(pred1.shape, (X.shape[0], 2))
+            assert_equal(pred2.shape, (X.shape[0], 4))
+            assert_equal(pred3.shape, (X.shape[0], 4))
+
+            # check same columns are equal:
+            assert_array_almost_equal(pred1[:, 0], pred2[:, 0])
+            assert_array_almost_equal(pred1[:, 0], pred3[:, 1])
+            assert_array_almost_equal(pred1[:, 1], pred2[:, 1])
+            assert_array_almost_equal(pred1[:, 1], pred3[:, 2])
+            assert_array_almost_equal(pred2[:, 2], 0)
+            assert_array_almost_equal(pred2[:, 3], 0)
+            assert_array_almost_equal(pred3[:, 0], 0)
+            assert_array_almost_equal(pred3[:, 3], 0)
+
+    # Test whether duplicate classes result in error
+            expected_msg = ("Classses parameter should contain all unique"
+                            " values, duplicates found in [1, 1, 2]")
+            expected_msg2 = ("Classses parameter should contain sorted values"
+                             ", unsorted values found in [1, 3, 2]")
+
+            assert_raise_message(ValueError, expected_msg,
+                                 estimator(classes=[1, 1, 2]).fit, X, y)
+            assert_raise_message(ValueError, expected_msg,
+                                 estimator().partial_fit, X, y,
+                                 classes=[1, 1, 2])
+            assert_raise_message(ValueError, expected_msg2,
+                                 estimator().partial_fit, X, y,
+                                 classes=[1, 3, 2])

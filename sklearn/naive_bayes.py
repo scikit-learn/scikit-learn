@@ -622,7 +622,8 @@ class BaseDiscreteNB(BaseNB):
             _check_unique_sorted_classes(self.classes)
             self.classes_ = np.asarray(self.classes)
 
-        _check_y_classes(y, self.classes_)
+        _check_y_classes(np.unique(y), self.classes_)
+        print(y)
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
