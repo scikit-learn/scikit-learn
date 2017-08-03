@@ -445,7 +445,9 @@ def test_classifier_chain_random_order():
 
     # Randomly ordered chain should behave identically to a fixed order chain
     # with the same order.
-    assert_array_equal(Y_pred_random, Y_pred_fixed)
+    for est1, est2 in zip(classifier_chain_random.estimators_,
+                          classifier_chain_fixed.estimators_):
+        assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
 def test_classifier_chain_crossval_fit_and_predict():
@@ -534,7 +536,9 @@ def test_regressor_chain_random_order():
 
     # Randomly ordered chain should behave identically to a fixed order chain
     # with the same order.
-    assert_array_equal(Y_pred_random, Y_pred_fixed)
+    for est1, est2 in zip(regressor_chain_random.estimators_,
+                          regressor_chain_fixed.estimators_):
+        assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
 def test_regressor_chain_crossval_fit_and_predict():
