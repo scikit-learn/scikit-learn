@@ -245,7 +245,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         K[np.diag_indices_from(K)] += self.alpha
         try:
             self.L_ = cholesky(K, lower=True)  # Line 2
-            # self.L_ changed, delete self._K_inv
+            # self.L_ changed, self._K_inv needs to be recomputed
             self._K_inv = None
         except np.linalg.LinAlgError as exc:
             exc.args = ("The kernel, %s, is not returning a "
