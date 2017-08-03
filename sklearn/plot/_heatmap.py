@@ -99,6 +99,4 @@ def plot_heatmap(values, xlabel="", ylabel="", xticklabels=None,
     if title is not None:
         ax.set_title(title)
 
-    plt.draw()
-
     return img
