@@ -100,7 +100,8 @@ elif [[ "$DISTRIB" == "scipy-dev" ]]; then
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
-    pip install coverage codecov
+    pip install hg+http://bitbucket.org/ogrisel/coverage.py/@fix-thread-safety#egg=coverage
+    pip install codecov
 fi
 
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then

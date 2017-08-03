@@ -1170,7 +1170,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='liblinear', max_iter=100,
-                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1):
+                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=None):
 
         self.penalty = penalty
         self.dual = dual
@@ -1287,11 +1287,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
         if self.solver in ['sag', 'saga']:
-            backend = 'threading'
+            prefer = 'threads'
         else:
-            backend = 'multiprocessing'
+            prefer = 'processes'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                               backend=backend)(
+                               prefer=prefer)(
             path_func(X, y, pos_class=class_, Cs=[self.C],
                       fit_intercept=self.fit_intercept, tol=self.tol,
                       verbose=self.verbose, solver=self.solver,
@@ -1580,7 +1580,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
     def __init__(self, Cs=10, fit_intercept=True, cv='warn', dual=False,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
-                 max_iter=100, class_weight=None, n_jobs=1, verbose=0,
+                 max_iter=100, class_weight=None, n_jobs=None, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='ovr',
                  random_state=None):
         self.Cs = Cs
@@ -1692,11 +1692,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
         if self.solver in ['sag', 'saga']:
-            backend = 'threading'
+            prefer = 'threads'
         else:
-            backend = 'multiprocessing'
+            prefer = 'processes'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                               backend=backend)(
+                               prefer=prefer)(
             path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=self.solver, tol=self.tol,
