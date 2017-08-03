@@ -26,7 +26,7 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
            rejection_ratio=.7, similarity_threshold=0.4,
            significant_min=.003, min_cluster_size_ratio=.005,
            min_maxima_ratio=0.001, algorithm='ball_tree',
-           leaf_size=30, n_jobs=1):
+           leaf_size=30, n_jobs=None):
     """Perform OPTICS clustering from vector array
 
     OPTICS: Ordering Points To Identify the Clustering Structure
@@ -285,7 +285,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
                  rejection_ratio=.7, similarity_threshold=0.4,
                  significant_min=.003, min_cluster_size_ratio=.005,
                  min_maxima_ratio=0.001, algorithm='ball_tree',
-                 leaf_size=30, n_jobs=1):
+                 leaf_size=30, n_jobs=None):
 
         self.max_bound = max_bound
         self.min_samples = min_samples
@@ -394,7 +394,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
         # Keep n_jobs = 1 in the following lines...please
         if len(unproc) > 0:
             dists = pairwise_distances(P, np.take(X, unproc, axis=0),
-                                       self.metric, n_jobs=1).ravel()
+                                       self.metric, n_jobs=None).ravel()
 
             rdists = np.maximum(dists, self.core_distances_[point_index])
             new_reach = np.minimum(np.take(self.reachability_, unproc), rdists)
