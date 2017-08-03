@@ -32,7 +32,7 @@ from .utils import _check_y_classes
 from .utils import _check_unique_sorted_classes
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
-from .utils.multiclass import _check_partial_fit_first_call
+from .utils.multiclass import _check_partial_fit_first_call, unique_labels
 from .utils.validation import check_is_fitted
 from .externals import six
 
@@ -616,14 +616,15 @@ class BaseDiscreteNB(BaseNB):
 
         # case when not set, infer from y
         if self.classes is None:
-            self.classes_ = np.unique(y)
+            # np.unique should not be used here becasue unique_labels performs
+            # some checkes as well
+            self.classes_ = unique_labels(y)
         # case when set at intialization
         else:
             _check_unique_sorted_classes(self.classes)
             self.classes_ = np.asarray(self.classes)
 
         _check_y_classes(np.unique(y), self.classes_)
-        print(y)
         Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
