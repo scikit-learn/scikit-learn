@@ -35,6 +35,8 @@ from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..utils import _check_y_classes
+from ..preprocessing import label_binarize
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -148,13 +150,32 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                 y_original = np.copy(y)
 
             y_encoded = np.zeros(y.shape, dtype=np.int)
-            for k in range(self.n_outputs_):
-                classes_k, y_encoded[:, k] = np.unique(y[:, k],
-                                                       return_inverse=True)
-                self.classes_.append(classes_k)
-                self.n_classes_.append(classes_k.shape[0])
-            y = y_encoded
 
+            if self.classes is None:
+                for k in range(self.n_outputs_):
+                    classes_k, y_encoded[:, k] = np.unique(
+                                                    y[:, k],
+                                                    return_inverse=True)
+                    self.classes_.append(classes_k)
+                    self.n_classes_.append(classes_k.shape[0])
+            else:
+                # check classes have same length as number of outputs:
+                num_classes = len(self.classes)
+                if num_classes != self.n_outputs_:
+                    raise ValueError(
+                            "%d lists of classes found in `classes=%s`, which"
+                            "is different from %d outputs found in `y`" %
+                            (num_classes, self.classes, self.n_outputs_))
+                # encode y:
+                for k in range(self.n_outputs_):
+                    classes_k = np.asarray(self.classes[k])
+                    # check y has subset of classes:
+                    _check_y_classes(np.unique(y), classes_k)
+                    y_encoded = label_binarize(y, classes=classes_k)
+                    self.classes_.append(classes_k)
+                    self.n_classes_.append(classes_k.shape[0])
+
+            y = y_encoded
             if self.class_weight is not None:
                 expanded_class_weight = compute_sample_weight(
                     self.class_weight, y_original)

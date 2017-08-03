@@ -178,7 +178,8 @@ def test_classes_parameter_extra_classes():
     rng = np.random.RandomState(0)
     X = rng.randint(5, size=(6, 100))
     y = np.array([1, 1, 1, 2, 2, 2])
-    estimators_to_check = ['GaussianNB', 'BernoulliNB', 'MultinomialNB']
+    estimators_to_check = ['GaussianNB', 'BernoulliNB', 'MultinomialNB',
+                           'DecisionTreeClassifier']
     for name, estimator in all_estimators():
         if estimator in estimators_to_check:
             clf1 = estimator(classes=[1, 2]).fit(X, y)
