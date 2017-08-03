@@ -179,11 +179,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         set to the value corresponding to the nearest train interval endpoint.
         When set to "raise", allow ``interp1d`` to throw ValueError.
 
-    do_weight_averaging: boolean, optional, default: False
+    do_weight_averaging : boolean, optional, default: False
         The ``do_weight_averaging'' parameter determines how weights for points
-        with duplicate X values are handled. If True, the weights for 
-        duplicate points will be averaged before fitting the isotonic 
-        regression. If False, the weights will be summed. 
+        with duplicate X values are handled. If True, the weights for
+        duplicate points will be averaged before fitting the isotonic
+        regression. If False, the weights will be summed.
 
     Attributes
     ----------
