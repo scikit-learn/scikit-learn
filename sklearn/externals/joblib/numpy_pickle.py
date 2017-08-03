@@ -537,7 +537,7 @@ def load(filename, mmap_mode=None):
     mmap_mode: {None, 'r+', 'r', 'w+', 'c'}, optional
         If not None, the arrays are memory-mapped from the disk. This
         mode has no effect for compressed files. Note that in this
-        case the reconstructed object might not longer match exactly
+        case the reconstructed object might no longer match exactly
         the originally pickled object.
 
     Returns
@@ -556,7 +556,7 @@ def load(filename, mmap_mode=None):
     dump. If the mmap_mode argument is given, it is passed to np.load and
     arrays are loaded as memmaps. As a consequence, the reconstructed
     object might not match the original pickled object. Note that if the
-    file was saved with compression, the arrays cannot be memmaped.
+    file was saved with compression, the arrays cannot be memmapped.
     """
     if Path is not None and isinstance(filename, Path):
         filename = str(filename)

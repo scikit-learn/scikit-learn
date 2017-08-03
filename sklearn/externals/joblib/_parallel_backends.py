@@ -7,6 +7,7 @@ import os
 import sys
 import warnings
 import threading
+import functools
 from abc import ABCMeta, abstractmethod
 
 from .format_stack import format_exc
@@ -14,8 +15,15 @@ from .my_exceptions import WorkerInterrupt, TransportableException
 from ._multiprocessing_helpers import mp
 from ._compat import with_metaclass
 if mp is not None:
-    from .pool import MemmapingPool
+    from .disk import delete_folder
+    from .pool import MemmappingPool
     from multiprocessing.pool import ThreadPool
+    from .executor import get_memmapping_executor
+
+    # Compat between concurrent.futures and multiprocessing TimeoutError
+    from multiprocessing import TimeoutError
+    from .externals.loky._base import TimeoutError as LokyTimeoutError
+    from .externals.loky import process_executor
 
 
 class ParallelBackendBase(with_metaclass(ABCMeta)):
@@ -55,7 +63,7 @@ class ParallelBackendBase(with_metaclass(ABCMeta)):
         return self.effective_n_jobs(n_jobs)
 
     def terminate(self):
-        """Shutdown the process or thread pool"""
+        """Shutdown the workers and free the shared memory."""
 
     def compute_batch_size(self):
         """Determine the optimal batch size"""
@@ -86,9 +94,9 @@ class ParallelBackendBase(with_metaclass(ABCMeta)):
         Setting ensure_ready to False is an optimization that can be leveraged
         when aborting tasks via killing processes from a local process pool
         managed by the backend it-self: if we expect no new tasks, there is no
-        point in re-creating a new working pool.
+        point in re-creating new workers.
         """
-        # Does nothing by default: to be overridden in subclasses when canceling
+        # Does nothing by default: to be overriden in subclasses when canceling
         # tasks is possible.
         pass
 
@@ -283,12 +291,22 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
                     stacklevel=3)
             return 1
 
+        if process_executor._CURRENT_DEPTH > 0:
+            # Mixing loky and multiprocessing in nested loop is not supported
+            if n_jobs != 1:
+                warnings.warn(
+                    'Multiprocessing-backed parallel loops cannot be nested,'
+                    ' below loky, setting n_jobs=1',
+                    stacklevel=3)
+            return 1
+
         if not isinstance(threading.current_thread(), threading._MainThread):
             # Prevent posix fork inside in non-main posix threads
-            warnings.warn(
-                'Multiprocessing-backed parallel loops cannot be nested'
-                ' below threads, setting n_jobs=1',
-                stacklevel=3)
+            if n_jobs != 1:
+                warnings.warn(
+                    'Multiprocessing-backed parallel loops cannot be nested'
+                    ' below threads, setting n_jobs=1',
+                    stacklevel=3)
             return 1
 
         return super(MultiprocessingBackend, self).effective_n_jobs(n_jobs)
@@ -314,7 +332,7 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
 
         # Make sure to free as much memory as possible before forking
         gc.collect()
-        self._pool = MemmapingPool(n_jobs, **backend_args)
+        self._pool = MemmappingPool(n_jobs, **backend_args)
         self.parallel = parallel
         return n_jobs
 
@@ -323,6 +341,84 @@ class MultiprocessingBackend(PoolManagerMixin, AutoBatchingMixin,
         super(MultiprocessingBackend, self).terminate()
         if self.JOBLIB_SPAWNED_PROCESS in os.environ:
             del os.environ[self.JOBLIB_SPAWNED_PROCESS]
+
+
+class LokyBackend(AutoBatchingMixin, ParallelBackendBase):
+    """Managing pool of workers with loky instead of multiprocessing."""
+
+    supports_timeout = True
+
+    def configure(self, n_jobs=1, parallel=None, **backend_args):
+        """Build a process executor and return the number of workers"""
+        n_jobs = self.effective_n_jobs(n_jobs)
+        if n_jobs == 1:
+            raise FallbackToBackend(SequentialBackend())
+
+        self._workers = get_memmapping_executor(n_jobs, **backend_args)
+        self.parallel = parallel
+        return n_jobs
+
+    def effective_n_jobs(self, n_jobs):
+        """Determine the number of jobs which are going to run in parallel"""
+        if n_jobs == 0:
+            raise ValueError('n_jobs == 0 in Parallel has no meaning')
+        elif mp is None or n_jobs is None:
+            # multiprocessing is not available or disabled, fallback
+            # to sequential mode
+            return 1
+        elif mp.current_process().daemon:
+            # Daemonic processes cannot have children
+            if n_jobs != 1:
+                warnings.warn(
+                    'Loky-backed parallel loops cannot be called in a'
+                    ' multiprocessing, setting n_jobs=1',
+                    stacklevel=3)
+            return 1
+        elif not isinstance(threading.current_thread(), threading._MainThread):
+            # Prevent posix fork inside in non-main posix threads
+            if n_jobs != 1:
+                warnings.warn(
+                    'Loky-backed parallel loops cannot be nested below '
+                    'threads, setting n_jobs=1',
+                    stacklevel=3)
+            return 1
+        elif n_jobs < 0:
+            n_jobs = max(mp.cpu_count() + 1 + n_jobs, 1)
+        return n_jobs
+
+    def apply_async(self, func, callback=None):
+        """Schedule a func to be run"""
+        future = self._workers.submit(SafeFunction(func))
+        future.get = functools.partial(self.wrap_future_result, future)
+        if callback is not None:
+            future.add_done_callback(callback)
+        return future
+
+    @staticmethod
+    def wrap_future_result(future, timeout=None):
+        """Wrapper for Future.result to implement the same behaviour as
+        AsyncResults.get from multiprocessing."""
+        try:
+            return future.result(timeout=timeout)
+        except LokyTimeoutError:
+            raise TimeoutError()
+
+    def terminate(self):
+        if self._workers is not None:
+            # Terminate does not shutdown the workers as we want to reuse them
+            # in latter calls but we free as much memory as we can by deleting
+            # the shared memory
+            delete_folder(self._workers._temp_folder)
+            self._workers = None
+
+    def abort_everything(self, ensure_ready=True):
+        """Shutdown the workers and restart a new one with the same parameters
+        """
+        self._workers.shutdown(kill_workers=True)
+        delete_folder(self._workers._temp_folder)
+        self._workers = None
+        if ensure_ready:
+            self.configure(n_jobs=self.parallel.n_jobs, parallel=self.parallel)
 
 
 class ImmediateResult(object):
