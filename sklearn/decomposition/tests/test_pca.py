@@ -555,6 +555,24 @@ def test_pca_score_with_different_solvers():
                         decimal=3)
 
 
+def test_pca_zero_noise_variance_edge_cases():
+    n, p = 100, 3
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
+    # arpack raises ValueError for n_components == min(n_samples,
+    # n_features)
+    svd_solvers = ['full', 'randomized']
+
+    for svd_solver in svd_solvers:
+        pca = PCA(svd_solver=svd_solver, n_components=p)
+        pca.fit(X)
+        assert pca.noise_variance_ == 0
+
+        pca.fit(X.T)
+        assert pca.noise_variance_ == 0
+
+
 def test_svd_solver_auto():
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(1000, 50))
