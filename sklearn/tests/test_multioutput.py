@@ -499,28 +499,8 @@ def test_regressor_chain_fit_and_predict_with_linear_regression():
     Y_pred = regressor_chain.predict(X)
     assert_equal(Y_pred.shape, Y.shape)
 
-    Y_prob = regressor_chain.predict_proba(X)
-    Y_binary = (Y_prob >= .5)
-    assert_array_equal(Y_binary, Y_pred)
-
     assert_equal([c.coef_.size for c in regressor_chain.estimators_],
                  list(range(X.shape[1], X.shape[1] + Y.shape[1])))
-
-
-def test_regressor_chain_fit_and_predict_with_sparse_data():
-    # Fit regressor chain with sparse data
-    X, Y = generate_multilabel_dataset_with_correlations()
-    X_sparse = sp.csr_matrix(X)
-
-    regressor_chain = RegressorChain(LinearRegression())
-    regressor_chain.fit(X_sparse, Y)
-    Y_pred_sparse = regressor_chain.predict(X_sparse)
-
-    regressor_chain = RegressorChain(LinearRegression())
-    regressor_chain.fit(X, Y)
-    Y_pred_dense = regressor_chain.predict(X)
-
-    assert_array_equal(Y_pred_sparse, Y_pred_dense)
 
 
 def test_regressor_chain_fit_and_predict_with_sparse_data_and_cv():
