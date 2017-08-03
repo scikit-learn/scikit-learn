@@ -5,7 +5,7 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
 
-from sklearn.glvq.glvq import GlvqModel
+from sklearn.glvq.glvq import GlvqModel, _squared_euclidean
 from sklearn.utils.multiclass import unique_labels, check_classification_targets
 
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -15,22 +15,14 @@ from sklearn.utils.validation import check_is_fitted
 import matplotlib.pyplot as plt
 
 
-def _squared_euclidean(A, B=None):
-    if B is None:
-        d = np.sum(A ** 2, 1)[np.newaxis].T + np.sum(A ** 2, 1) - 2 * A.dot(A.T)
-    else:
-        d = np.sum(A ** 2, 1)[np.newaxis].T + np.sum(B ** 2, 1) - 2 * A.dot(B.T)
-    return np.maximum(d, 0)
-
-
 class GmlvqModel(GlvqModel):
     def __init__(self, random_state=None, initial_prototypes=None, initial_rototype_labels=None, prototypes_per_class=1,
-                 display=False, max_iter=2500, gtol=1e-5, regularization=0, initial_matrix=None, dim=None,
+                 display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrix=None, dim=None,
                  nb_reiterations=100):
         super().__init__(random_state, initial_prototypes, initial_rototype_labels, prototypes_per_class,
                          display, max_iter, gtol)
-        if not isinstance(regularization, int):
-            raise ValueError("nb_reiterations must be a int")
+        if not isinstance(regularization, float):
+            raise ValueError("regularization must be a float ")
         self.regularization = regularization
         self.initial_matrix = initial_matrix
         self.initialdim = dim
@@ -171,3 +163,9 @@ class GmlvqModel(GlvqModel):
         for i in range(nb_prototypes):
             distance[i] = np.sum((X - w[i]).dot(omega.T) ** 2, 1)
         return distance.T
+
+    def project(self, X, dims):
+        v, u = np.linalg.eig(self.omega_.conj().T.dot(self.omega_))
+        idx = v.argsort()[::-1]
+        print('projection procent:',v[idx][:dims].sum()/v.sum())
+        return X.dot(u[:, idx][:, :dims].dot(np.diag(np.sqrt(v[idx][:dims]))))

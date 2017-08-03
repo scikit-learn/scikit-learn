@@ -1,15 +1,11 @@
-from math import log
-
 import numpy as np
 from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
-from sklearn.utils.multiclass import unique_labels, check_classification_targets
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import validation
+from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.validation import check_is_fitted
-
-import matplotlib.pyplot as plt
 
 
 def _squared_euclidean(A, B=None):
@@ -21,11 +17,11 @@ def _squared_euclidean(A, B=None):
 
 
 class GlvqModel(BaseEstimator, ClassifierMixin):
-    def __init__(self, random_state=None, initial_prototypes=None, initial_rototype_labels=None, prototypes_per_class=1,
+    #def __init__(self, random_state=None, initial_prototypes=None, initial_rototype_labels=None, prototypes_per_class=1,
+    def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
                  display=False, max_iter=2500, gtol=1e-5):
         self.random_state = random_state
         self.initial_prototypes = initial_prototypes
-        self.initial_rototype_labels = initial_rototype_labels
         self.prototypes_per_class = prototypes_per_class
         self.display = display
         self.max_iter = max_iter
@@ -89,14 +85,12 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
 
     def _validate_train_parms(self, train_set, train_lab):
         random_state = validation.check_random_state(self.random_state)
-        if not isinstance(self.prototypes_per_class, int):
-            raise ValueError("prototypes_per_class must be an integer")
         if not isinstance(self.display, bool):
             raise ValueError("display must be a boolean")
-        if not isinstance(self.max_iter, int):
-            raise ValueError("max_iter must be an integer")
-        if not isinstance(self.gtol, float):
-            raise ValueError("gtol must be a float")
+        if not isinstance(self.max_iter, int) or self.max_iter<1:
+            raise ValueError("max_iter must be an positive integer")
+        if not isinstance(self.gtol, float) or self.gtol<=0:
+            raise ValueError("gtol must be a positive float")
         train_set, train_lab = validation.check_X_y(train_set, train_lab)
 
         self.classes_ = unique_labels(train_lab)
@@ -113,16 +107,14 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
                 validation.check_array(self.prototypes_per_class, ensure_2d=False, dtype='int'))
             if nb_ppc.min() <= 0:
                 raise ValueError("Values in prototypes_per_class must be greater than 0")
-            if nb_ppc.shape[0] != nb_classes:
+            if nb_ppc.size != nb_classes:
                 raise ValueError("Length of prototypes per class does not fit the number of classes"
                                  "classes=%d"
-                                 "length=%d" % (nb_classes, nb_ppc.shape[0]))
+                                 "length=%d" % (nb_classes, nb_ppc.size))
         # initialize prototypes
-        if self.initial_prototypes is None or self.initial_rototype_labels is None:
-            if self.initial_prototypes != self.initial_rototype_labels:
-                raise ValueError("initialPrototypes and initialPrototypeLabels must both be defined")
+        if self.initial_prototypes is None:
             self.w_ = np.empty([np.sum(nb_ppc), nb_features], dtype=np.double)
-            self.c_w_ = np.empty([np.sum(nb_ppc)], dtype=self.classes_.dtype)
+            self.c_w_ = np.empty([nb_ppc.sum()], dtype=self.classes_.dtype)
             pos = 0
             for actClass in range(nb_classes):
                 nb_prot = nb_ppc[actClass]
@@ -131,15 +123,13 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
                 self.c_w_[pos:pos + nb_prot] = self.classes_[actClass]
                 pos += nb_prot
         else:
-            self.w_, self.c_w_ = validation.check_X_y(self.initial_prototypes, self.initial_rototype_labels)
+            X = validation.check_array(self.initial_prototypes)
+            self.w_ = X[:,:-1]
+            self.c_w_ = X[:,-1]
             if self.w_.shape != (np.sum(nb_ppc), nb_features):
                 raise ValueError("The initial prototypes have wrong shape\n"
                                  "found=(%d,%d)\n"
-                                 "expected=(%d,%d)" % (self.w_.shape[0], self.w_.shape[1], np.sum(nb_ppc), nb_features))
-            if self.c_w_.shape[0] != np.sum(nb_ppc):
-                raise ValueError("Length of prototype labels wrong\n"
-                                 "found=%d\n"
-                                 "expected=%d" % (self.c_w_.shape[0], np.sum(nb_ppc)))
+                                 "expected=(%d,%d)" % (self.w_.shape[0], self.w_.shape[1], nb_ppc.sum(), nb_features))
             if set(self.c_w_) != set(self.classes_):
                 raise ValueError("Prototype labels and test data classes dont match\n"
                                  "classes={}\n"

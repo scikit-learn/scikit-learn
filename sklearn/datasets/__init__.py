@@ -9,6 +9,7 @@ from .base import load_diabetes
 from .base import load_digits
 from .base import load_files
 from .base import load_iris
+from .base import load_segmentation
 from .base import load_linnerud
 from .base import load_sample_images
 from .base import load_sample_image
@@ -71,6 +72,7 @@ __all__ = ['clear_data_home',
            'load_digits',
            'load_files',
            'load_iris',
+           'load_segmentation',
            'load_breast_cancer',
            'load_linnerud',
            'load_mlcomp',

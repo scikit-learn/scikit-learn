@@ -3,7 +3,7 @@ from math import log
 import numpy as np
 from scipy.optimize import minimize
 
-from sklearn.glvq.glvq import GlvqModel
+from sklearn.glvq.glvq import GlvqModel, _squared_euclidean
 from sklearn.utils import validation
 
 
@@ -11,22 +11,15 @@ def call(args):
     print(args)
 
 
-# TODO: split gradient from optfun, implement custom optfun for grlvq without omega
-
-
-def _squared_euclidean(A, B=None):
-    if B is None:
-        d = np.sum(A ** 2, 1)[np.newaxis].T + np.sum(A ** 2, 1) - 2 * A.dot(A.T)
-    else:
-        d = np.sum(A ** 2, 1)[np.newaxis].T + np.sum(B ** 2, 1) - 2 * A.dot(B.T)
-    return np.maximum(d, 0)
-
+# TODO: implement custom optfun for grlvq without omega
 
 class GrlvqModel(GlvqModel):
-    def __init__(self, random_state=None, initial_prototypes=None, initial_rototype_labels=None, prototypes_per_class=1,
-                 display=False, max_iter=2500, gtol=1e-5, regularization=0, initial_relevances=None):
-        super().__init__(random_state, initial_prototypes, initial_rototype_labels, prototypes_per_class,
+    def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
+                 display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_relevances=None):
+        super().__init__(random_state, initial_prototypes, prototypes_per_class,
                          display, max_iter, gtol)
+        if not isinstance(regularization, float):
+            raise ValueError("regularization must be a int")
         self.regularization = regularization
         self.initial_relevances = initial_relevances
 
@@ -121,23 +114,28 @@ class GrlvqModel(GlvqModel):
             fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
                                        lr_relevances=0, random_state=random_state),
-            x0=variables, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            method='BFGS', x0=variables,
+            options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = res.nit
         res = minimize(
             fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=0,
                                        lr_relevances=1, random_state=random_state),
-            x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            method='BFGS', x0=variables,
+            options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         res = minimize(
             fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
                                        lr_relevances=1, random_state=random_state),
-            x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            method='BFGS', x0=variables,
+            options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         out = res.x.reshape(res.x.size // nb_features, nb_features)
         self.w_ = out[:nb_prototypes]
         self.lambda_ = np.diag(out[nb_prototypes:].T.dot(out[nb_prototypes:]))
+        self.lambda_ = self.lambda_ / self.lambda_.sum()
+        print(self.lambda_.sum())
         return n_iter
 
     def _optimize2(self, X, y, random_state):
@@ -201,3 +199,8 @@ class GrlvqModel(GlvqModel):
             delta = X - w[i]
             distance[i] = np.sum(delta ** 2 * lambda_, 1)
         return distance.T
+
+    def project(self, X, dims):
+        idx = self.lambda_.argsort()[::-1]
+        print('projection procent:', self.lambda_[idx][:dims].sum() / self.lambda_.sum())
+        return X.dot(np.diag(self.lambda_)[idx][:, :dims])
