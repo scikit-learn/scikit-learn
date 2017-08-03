@@ -155,9 +155,11 @@ def test_convergence_warning():
     y = np.array([0, 1, -1])
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=1)
     assert_warns(ConvergenceWarning, mdl.fit, X, y)
+    assert_equal(mdl.n_iter_, mdl.max_iter)
 
     mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=1)
     assert_warns(ConvergenceWarning, mdl.fit, X, y)
+    assert_equal(mdl.n_iter_, mdl.max_iter)
 
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=500)
     assert_no_warnings(mdl.fit, X, y)

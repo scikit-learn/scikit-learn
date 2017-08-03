@@ -263,8 +263,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         if sparse.isspmatrix(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
 
-        self.n_iter_ = 0
-        while self.n_iter_ < self.max_iter:
+        for self.n_iter_ in range(self.max_iter):
             if np.abs(self.label_distributions_ - l_previous).sum() < self.tol:
                 break
 
@@ -283,12 +282,12 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 # clamp
                 self.label_distributions_ = np.multiply(
                     alpha, self.label_distributions_) + y_static
-            self.n_iter_ += 1
         else:
             warnings.warn(
                 'max_iter=%d was reached without convergence.' % self.max_iter,
                 category=ConvergenceWarning
             )
+            self.n_iter_ += 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         self.label_distributions_ /= normalizer
