@@ -28,7 +28,8 @@ from .utils.multiclass import check_classification_targets
 from .externals.joblib import Parallel, delayed
 from .externals import six
 
-__all__ = ["MultiOutputRegressor", "MultiOutputClassifier", "ClassifierChain", "RegressorChain"]
+__all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
+           "ClassifierChain", "RegressorChain"]
 
 
 def _fit_estimator(estimator, X, y, sample_weight=None):
@@ -146,7 +147,8 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
         """
 
         if not hasattr(self.estimator, "fit"):
-            raise ValueError("The base estimator should implement a fit method")
+            raise ValueError("The base estimator should \
+                             implement a fit method")
 
         X, y = check_X_y(X, y,
                          multi_output=True,
@@ -187,7 +189,8 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         check_is_fitted(self, 'estimators_')
         if not hasattr(self.estimator, "predict"):
-            raise ValueError("The base estimator should implement a predict method")
+            raise ValueError("The base estimator should \
+                             implement a predict method")
 
         X = check_array(X, accept_sparse=True)
 
