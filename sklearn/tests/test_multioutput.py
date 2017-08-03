@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import fetch_mldata
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
@@ -431,7 +430,6 @@ def test_classifier_chain_random_order():
                                               order='random',
                                               random_state=42)
     classifier_chain_random.fit(X, Y)
-    Y_pred_random = classifier_chain_random.predict(X)
 
     assert_not_equal(list(classifier_chain_random.order), list(range(4)))
     assert_equal(len(classifier_chain_random.order_), 4)
@@ -441,7 +439,6 @@ def test_classifier_chain_random_order():
         ClassifierChain(LogisticRegression(),
                         order=classifier_chain_random.order_)
     classifier_chain_fixed.fit(X, Y)
-    Y_pred_fixed = classifier_chain_fixed.predict(X)
 
     # Randomly ordered chain should behave identically to a fixed order chain
     # with the same order.
@@ -519,10 +516,9 @@ def test_regressor_chain_random_order():
     # Fit regressor chain with random order
     X, Y = generate_multilabel_dataset_with_correlations()
     regressor_chain_random = RegressorChain(LinearRegression(),
-                                              order='random',
-                                              random_state=42)
+                                            order='random',
+                                            random_state=42)
     regressor_chain_random.fit(X, Y)
-    Y_pred_random = regressor_chain_random.predict(X)
 
     assert_not_equal(list(regressor_chain_random.order), list(range(4)))
     assert_equal(len(regressor_chain_random.order_), 4)
@@ -530,9 +526,8 @@ def test_regressor_chain_random_order():
 
     regressor_chain_fixed = \
         RegressorChain(LinearRegression(),
-                        order=regressor_chain_random.order_)
+                       order=regressor_chain_random.order_)
     regressor_chain_fixed.fit(X, Y)
-    Y_pred_fixed = regressor_chain_fixed.predict(X)
 
     # Randomly ordered chain should behave identically to a fixed order chain
     # with the same order.
