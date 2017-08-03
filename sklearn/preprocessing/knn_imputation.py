@@ -156,7 +156,6 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         # Get fitted objects
         fitted_NNObj, fitted_col_means = self.statistics_
         fitted_X = fitted_NNObj._fit_X
-        fitted_mask = _get_mask(fitted_X, self.missing_values)
 
         # Check for excessive missingness in rows
         bad_rows = row_total_missing > (mask.shape[1] * self.row_max_missing)
@@ -171,11 +170,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             row_total_missing = mask.sum(axis=1)
 
         # Check if the X in fit() and transform() are the same
-        if np.ma.allequal(np.ma.array(X, mask=mask),
-                          np.ma.array(fitted_X, mask=fitted_mask)) and \
-                np.array_equal(mask, fitted_mask):
-
-            # Get the k nearest neighbors from fitted matrix
+        if X.base is fitted_X.base:
             neighbors = fitted_NNObj.kneighbors(n_neighbors=self.n_neighbors,
                                                 return_distance=self.weighted)
         else:
@@ -186,7 +181,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         # Get row index and distance (if weighted) of donors
         if self.weighted:
             knn_row_index = neighbors[1]
-            knn_distances = neighbors[0]
+            # knn_distances = neighbors[0]
         else:
             knn_row_index = neighbors
             # knn_distances = np.ones_like(neighbors)
@@ -203,7 +198,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         # Calculate kNN score and impute
         imputed = np.nanmean(
             (fitted_NNObj._fit_X[(knn_row_index, knn_col_index)]).
-                             reshape((-1, self.n_neighbors)), axis=1)
+            reshape((-1, self.n_neighbors)), axis=1)
         X[mask] = imputed
 
         # Merge bad rows to X and mean impute any leftover missing
