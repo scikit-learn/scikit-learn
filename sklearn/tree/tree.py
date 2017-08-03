@@ -92,7 +92,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                  min_impurity_decrease,
                  min_impurity_split,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 classes=None):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -106,6 +107,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
+        self.classes = classes
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
@@ -641,6 +643,21 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         When using either a smaller dataset or a restricted depth, this may
         speed up the training.
 
+    classes : array-like or list of such arrays, shape (n_classes,n_outputs),
+              optional (default=None)
+            List of all the classes that can possibly appear in the
+            y vector (single output problem).
+            List of all the classes that can possibly appear in each output
+            of the y vector. (multi-output problem)
+
+            The list of classes for each output should be sorted.
+
+            If not specified, this will be set as per the classes present in
+            the training data. It is recommended to set this parameter during
+            initialization.
+
+            .. versionadded:: 0.20
+
     Attributes
     ----------
     classes_ : array of shape = [n_classes] or a list of such arrays
@@ -729,7 +746,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None,
-                 presort=False):
+                 presort=False,
+                 classes=None):
         super(DecisionTreeClassifier, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -743,7 +761,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            presort=presort)
+            presort=presort,
+            classes=classes)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
