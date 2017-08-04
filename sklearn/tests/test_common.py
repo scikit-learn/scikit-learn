@@ -178,10 +178,13 @@ def test_classes_parameter_extra_classes():
     rng = np.random.RandomState(0)
     X = rng.randint(5, size=(6, 100))
     y = np.array([1, 1, 1, 2, 2, 2])
-    estimators_to_check = ['GaussianNB', 'BernoulliNB', 'MultinomialNB',
-                           'DecisionTreeClassifier']
+    estimators_to_check = set(['GaussianNB', 'BernoulliNB', 'MultinomialNB',
+                               'DecisionTreeClassifier'])
     for name, estimator in all_estimators():
-        if estimator in estimators_to_check:
+        if name in estimators_to_check:
+            # remove the estimator from set:
+            estimators_to_check.remove(name)
+
             clf1 = estimator(classes=[1, 2]).fit(X, y)
             pred1 = clf1.predict_proba(X)
 
@@ -220,3 +223,8 @@ def test_classes_parameter_extra_classes():
             assert_raise_message(ValueError, expected_msg2,
                                  estimator().partial_fit, X, y,
                                  classes=[1, 3, 2])
+
+    # check that all estimators in estimator_to_check were tested
+    assert_equal(estimators_to_check, set(),
+                 "All estimators specified in list estimators_to_check were"
+                 "not checked")
