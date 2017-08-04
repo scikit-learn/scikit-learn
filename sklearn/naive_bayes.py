@@ -127,8 +127,7 @@ class GaussianNB(BaseNB):
 
     classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
-            The list will be sorted internally. Use the classes_ attribute to
-            refer to the final order of classes.
+            The list should be sorted in the value of classes.
 
             If not specified, this will be set as per the classes present in
             the training data. It is recommended to set this parameter during
@@ -426,7 +425,6 @@ class GaussianNB(BaseNB):
         classes = self.classes_
 
         for y_i in unique_y:
-            # classes need not be sorted because user input
             i = classes.searchsorted(y_i)
             X_i = X[y == y_i, :]
 
