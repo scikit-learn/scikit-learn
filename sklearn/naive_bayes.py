@@ -692,8 +692,7 @@ class MultinomialNB(BaseDiscreteNB):
 
     classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
-            The list will be sorted internally. Use the classes_ attribute to
-            refer to the final order of classes.
+            The list should be sorted in the value of classes.
 
             If not specified, this will be set as per the classes present in
             the training data. It is recommended to set this parameter during
@@ -816,8 +815,7 @@ class BernoulliNB(BaseDiscreteNB):
 
     classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
-            The list will be sorted internally. Use the classes_ attribute to
-            refer to the final order of classes.
+            The list should be sorted in the value of classes.
 
             If not specified, this will be set as per the classes present in
             the training data. It is recommended to set this parameter during
