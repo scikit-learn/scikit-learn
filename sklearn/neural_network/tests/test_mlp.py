@@ -644,35 +644,3 @@ def test_n_iter_no_change_inf():
 
     # validate _update_no_improvement_count() was always triggered
     assert_equal(clf._no_improvement_count, clf.n_iter_ - 1)
-
-
-def test_n_iter_no_change_fluctations():
-    # test n_iter_no_change using binary data set
-    # the regression fitting process is prone to loss curve fluctuations
-    X = X_digits_binary[:100]
-    y = y_digits_binary[:100]
-    tol = 0.01
-
-    # test multiple n_iter_no_change
-    for n_iter_no_change in [2, 5, 10, 50, 100]:
-        clf = MLPRegressor(tol=tol, max_iter=3000, solver='sgd',
-                           n_iter_no_change=n_iter_no_change)
-        clf.fit(X, y)
-
-        # calculate the loss curve derivative
-        # negative values signify an improvement
-        diff = np.diff(clf.loss_curve_)
-
-        # count iterations which do not meet the tolerance criteria
-        # reset the counter when the tolerance criteria is met
-        no_improvements = diff > -tol
-        no_improvement_count_from_losses = 0
-        for e in no_improvements:
-            if e:
-                no_improvement_count_from_losses += 1
-            else:
-                no_improvement_count_from_losses = 0
-
-        # validate n_iter_no_change
-        assert_equal(no_improvement_count_from_losses, n_iter_no_change + 1)
-        assert_equal(clf._no_improvement_count, n_iter_no_change + 1)
