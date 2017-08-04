@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, clone
+from ..base import BaseEstimator, RegressorMixin, is_regressor, clone
 from ..utils.validation import check_is_fitted
 from ..utils import check_X_y, check_random_state
 from ._function_transformer import FunctionTransformer
@@ -191,7 +191,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
             from ..linear_model import LinearRegression
             self.regressor_ = LinearRegression()
         else:
-            if self.regressor._estimator_type != 'regressor':
+            if not is_regressor(self.regressor):
                 raise TypeError("The regressor {} is of type {}. Provide"
                                 " a regressor instead.".format(
                                     self.regressor.__class__.__name__,
