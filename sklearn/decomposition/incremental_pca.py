@@ -246,7 +246,7 @@ class IncrementalPCA(_BasePCA):
             X -= col_batch_mean
             # Build matrix of combined previous basis and new data
             mean_correction = \
-                np.sqrt((self.n_samples_seen_ * n_samples) /
+                np.sqrt(float(self.n_samples_seen_ * n_samples) /
                         n_total_samples) * (self.mean_ - col_batch_mean)
             X = np.vstack((self.singular_values_.reshape((-1, 1)) *
                           self.components_, X, mean_correction))
