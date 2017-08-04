@@ -224,8 +224,7 @@ def _yield_all_checks(name, estimator):
     yield check_fit2d_predict1d
     yield check_fit2d_1sample
     yield check_fit2d_1feature
-    yield check_fit1d_1feature
-    yield check_fit1d_1sample
+    yield check_fit1d
     yield check_get_params_invariance
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
@@ -598,7 +597,8 @@ def check_fit2d_1sample(name, estimator_orig):
 
 @ignore_warnings
 def check_fit2d_1feature(name, estimator_orig):
-    # check by fitting a 2d array with only one feature
+    # check fitting a 2d array with only 1 feature either works or returns
+    # informative message
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
     y = X[:, 0].astype(np.int)
@@ -609,17 +609,29 @@ def check_fit2d_1feature(name, estimator_orig):
         estimator.n_components = 1
     if hasattr(estimator, "n_clusters"):
         estimator.n_clusters = 1
+    # default k = 10 features in SelectKBest which is > 1 feature
+    if name == 'SelectKBest':
+        estimator.k = 'all'
+    # ensure two labels in subsample for RandomizedLogisticRegression
+    if name == 'RandomizedLogisticRegression':
+        estimator.sample_fraction = 1
+    # ensure non skipped trials for RANSACRegressor
+    if name == 'RANSACRegressor':
+        estimator.residual_threshold = 0.5
 
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     set_random_state(estimator, 1)
+
     try:
         estimator.fit(X, y)
-    except ValueError:
-        pass
+    except ValueError as e:
+        if "Found array with 1 feature(s)" not in str(e):
+            raise e
 
 
 @ignore_warnings
-def check_fit1d_1feature(name, estimator_orig):
-    # check fitting 1d array with 1 feature
+def check_fit1d(name, estimator_orig):
+    # check fitting 1d X array raises a ValueError
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20))
     y = X.astype(np.int)
@@ -632,33 +644,7 @@ def check_fit1d_1feature(name, estimator_orig):
         estimator.n_clusters = 1
 
     set_random_state(estimator, 1)
-
-    try:
-        estimator.fit(X, y)
-    except ValueError:
-        pass
-
-
-@ignore_warnings
-def check_fit1d_1sample(name, estimator_orig):
-    # check fitting 1d array with 1 sample
-    rnd = np.random.RandomState(0)
-    X = 3 * rnd.uniform(size=(20))
-    y = np.array([1])
-    estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
-
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
-
-    set_random_state(estimator, 1)
-
-    try:
-        estimator.fit(X, y)
-    except ValueError:
-        pass
+    assert_raises(ValueError, estimator.fit, X, y)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
