@@ -279,8 +279,8 @@ def test_sample_weight_kwargs():
     """Check that VotingClassifier passes sample_weight as kwargs"""
     class MockClassifier(BaseEstimator, ClassifierMixin):
         """Mock Classifier to check that sample_weight is received as kwargs"""
-        def fit(self, X, y, *args, sample_weight=None):
-            assert_true(sample_weight is not None)
+        def fit(self, X, y, *args, **sample_weight):
+            assert_true('sample_weight' in sample_weight)
 
     clf = MockClassifier()
     eclf = VotingClassifier(estimators=[('mock', clf)], voting='soft')
