@@ -179,6 +179,13 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     (1 - shrinkage)*cov
       + shrinkage * mu * np.identity(n_features)
 
+    Note that if the population covariance is a multiple of the identity
+    matrix, the Ledoit-Wolf shrinkage will tend towards 1 as n/p increases.
+    This seems counter-intuitive, as we would expect shrinkage to go to 0.
+    Because Ledoit-Wolf shrinks the covariance towards mu * np.identity,
+    this will not affect the resulting shrunken covariance matrix. Refer to
+    :ref:`User Guide <shrunk_covariance>` for further explanation.
+
     where mu = trace(cov) / n_features
 
     """
@@ -279,6 +286,13 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
     (1 - shrinkage)*cov
       + shrinkage * mu * np.identity(n_features)
 
+    Note that if the population covariance is a multiple of the identity
+    matrix, the Ledoit-Wolf shrinkage will tend towards 1 as n/p increases.
+    This seems counter-intuitive, as we would expect shrinkage to go to 0.
+    Because Ledoit-Wolf shrinks the covariance towards mu * np.identity,
+    this will not affect the resulting shrunken covariance matrix. Refer to
+    :ref:`User Guide <shrunk_covariance>` for further explanation.
+
     where mu = trace(cov) / n_features
 
     """
@@ -357,6 +371,13 @@ class LedoitWolf(EmpiricalCovariance):
 
     where mu = trace(cov) / n_features
     and shrinkage is given by the Ledoit and Wolf formula (see References)
+
+    Note that if the population covariance is a multiple of the identity
+    matrix, the Ledoit-Wolf shrinkage will tend towards 1 as n/p increases.
+    This seems counter-intuitive, as we would expect shrinkage to go to 0.
+    Because Ledoit-Wolf shrinks the covariance towards mu * np.identity,
+    this will not affect the resulting shrunken covariance matrix. Refer to
+    :ref:`User Guide <shrunk_covariance>` for further explanation.
 
     References
     ----------
@@ -486,10 +507,10 @@ class OAS(EmpiricalCovariance):
     The formula used here does not correspond to the one given in the
     article. It has been taken from the Matlab program available from the
     authors' webpage (http://tbayes.eecs.umich.edu/yilun/covestimation).
-    In the original article, formula (23) states that 2/p is multiplied by 
+    In the original article, formula (23) states that 2/p is multiplied by
     Trace(cov*cov) in both the numerator and denominator, this operation is omitted
-    in the author's MATLAB program because for a large p, the value of 2/p is so 
-    small that it doesn't affect the value of the estimator. 
+    in the author's MATLAB program because for a large p, the value of 2/p is so
+    small that it doesn't affect the value of the estimator.
 
     Parameters
     ----------
