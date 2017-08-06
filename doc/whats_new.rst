@@ -4372,6 +4372,7 @@ Highlights
   by `Andreas Müller`_.
 
 - Randomized sparse linear models for feature
+- :ref:`randomized_l1`: Randomized sparse linear models for feature
   selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_
 
 - :ref:`label_propagation` for semi-supervised learning, by Clay
@@ -4833,6 +4834,7 @@ Changelog
 
 - Documentation improvements: thumbnails in
   example gallery by `Fabian Pedregosa`_.
+  :ref:`example gallery <examples-index>` by `Fabian Pedregosa`_.
 
 - Important bugfixes in :ref:`svm` module (segfaults, bad
   performance) by `Fabian Pedregosa`_.
