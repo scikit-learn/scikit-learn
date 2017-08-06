@@ -554,6 +554,8 @@ def test_pca_score_with_different_solvers():
 
 
 def test_pca_zero_noise_variance_edge_cases():
+    # ensure that noise_variance_ is 0 in edge cases
+    # when n_components == min(n_samples, n_features)
     n, p = 100, 3
 
     rng = np.random.RandomState(0)
