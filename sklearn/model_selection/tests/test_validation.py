@@ -942,6 +942,8 @@ def check_cross_val_predict_with_method(est, X, y, method):
     func = getattr(est, method)
 
     # Naive loop (should be same as cross_val_predict):
+    # This loop doesn't handle the case where the method is
+    # decision_function and there's a class missing from one fold.
     for train, test in kfold.split(X, y):
         est.fit(X[train], y[train])
         preds = func(X[test])
@@ -949,7 +951,12 @@ def check_cross_val_predict_with_method(est, X, y, method):
             for i_out in range(y.shape[1]):
                 col = np.searchsorted(classes[i_out],
                                       np.unique(y[train, i_out]))
-                expected_predictions[i_out][np.ix_(test, col)] = preds[i_out]
+                if preds[i_out].ndim == 1 and \
+                        expected_predictions[i_out].ndim == 1:
+                    # Get here for binary decision functions
+                    expected_predictions[i_out][test] = preds
+                else:
+                    expected_predictions[i_out][np.ix_(test, col)] = preds[i_out]
         else:
             if isinstance(classes, list):
                 # In this case, we'll assume all classes are present
@@ -958,7 +965,11 @@ def check_cross_val_predict_with_method(est, X, y, method):
                 assert_equal(expected_predictions.shape[1], preds.shape[1])
             else:
                 col = np.searchsorted(classes, np.unique(y[train]))
-            expected_predictions[np.ix_(test, col)] = preds
+            if preds.ndim == 1 and expected_predictions.ndim == 1:
+                # Get here for binary decision functions
+                expected_predictions[test] = preds
+            else:
+                expected_predictions[np.ix_(test, col)] = preds
 
     predictions = cross_val_predict(est, X, y, method=method,
                                     cv=kfold)
@@ -987,6 +998,15 @@ def assert_array_equal_maybe_list(x, y):
             assert_array_equal(x[i], y[i])
     else:
         assert_array_equal(x, y)
+
+
+def test_cross_val_predict_binary_decision_function():
+    # The decision_function with two classes is a special case:
+    # it has only one column of output.
+    X, y = make_classification(n_classes=2, random_state=0)
+    est = LogisticRegression()
+    out = check_cross_val_predict_with_method(est, X, y, 'decision_function')
+    assert_array_equal(out.shape, (len(X),))
 
 
 def test_cross_val_predict_with_method():
@@ -1027,7 +1047,7 @@ def test_cross_val_predict_with_method_multilabel_ovr():
 
 
 def test_cross_val_predict_with_method_multilabel_rf():
-    # The RandomForest allows anything for the contents of the labels.
+    # The RandomForest allows multiple classes in each label.
     # Output of predict_proba is a list of outputs of predict_proba
     # for each individual label.
     n_classes = 4
@@ -1046,11 +1066,14 @@ def test_cross_val_predict_with_method_rare_class():
     # Test a multiclass problem where one class will be missing from
     # one of the CV training sets.
     rng = np.random.RandomState(0)
-    X = rng.normal(0, 1, size=(10, 10))
-    y = np.array([0, 1, 0, 1, 0, 1, 0, 1, 0, 2])
+    X = rng.normal(0, 1, size=(14, 10))
+    y = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 3])
     est = LogisticRegression()
-    for method in ['predict_proba', 'predict_log_proba']:
-        out = check_cross_val_predict_with_method(est, X, y, method)
+    for method in ['predict_proba', 'predict_log_proba', 'decision_function']:
+        with warnings.catch_warnings():
+            # Suppress warning about too few examples of a class
+            warnings.simplefilter('ignore')
+            out = check_cross_val_predict_with_method(est, X, y, method)
         assert_array_equal(out.shape, (len(X), len(set(y))))
 
 

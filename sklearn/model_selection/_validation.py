@@ -530,15 +530,24 @@ def _enforce_prediction_order(classes, predictions, n_classes,
     then the output prediction array might not have the same
     columns as other folds. Use the list of class names
     (assumed to be integers) to enforce the correct column order.
+
+    Note that `classes` is the list of classes in this fold
+    (a subset of the classes in the full training set)
+    and `n_classes` is the number of classes in the full training set.
     """
+    if len(classes) == n_classes:
+        # If all classes are present in the training set, the prediction
+        # columns are already ordered.
+        return predictions
+
     predictions_ = np.zeros((predictions.shape[0], n_classes),
                             dtype=predictions.dtype)
     if one_col_if_binary and len(classes) == 2:
+        # We only get here if the full labeled data have > 2 classes.
         predictions_[:, classes[-1]] = predictions
     else:
         predictions_[:, classes] = predictions
-    predictions = predictions_
-    return predictions
+    return predictions_
 
 
 def _check_is_permutation(indices, n_samples):
