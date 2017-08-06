@@ -201,6 +201,9 @@ class PCA(_BasePCA):
     explained_variance_ : array, shape (n_components,)
         The amount of variance explained by each of the selected components.
 
+        Equal to n_components largest eigenvalues
+        of the covariance matrix of X.
+
         .. versionadded:: 0.18
 
     explained_variance_ratio_ : array, shape (n_components,)
@@ -231,6 +234,9 @@ class PCA(_BasePCA):
         Machine Learning" by C. Bishop, 12.2.1 p. 574 or
         http://www.miketipping.com/papers/met-mppca.pdf. It is required to
         computed the estimated data covariance and score samples.
+
+        Equal to the average of (min(n_features, n_samples) - n_components)
+        smallest eigenvalues of the covariance matrix of X.
 
     References
     ----------
@@ -494,9 +500,10 @@ class PCA(_BasePCA):
         self.explained_variance_ratio_ = \
             self.explained_variance_ / total_var.sum()
         self.singular_values_ = S.copy()  # Store the singular values.
-        if self.n_components_ < n_features:
+        if self.n_components_ < min(n_features, n_samples):
             self.noise_variance_ = (total_var.sum() -
                                     self.explained_variance_.sum())
+            self.noise_variance_ /= min(n_features, n_samples) - n_components
         else:
             self.noise_variance_ = 0.
 

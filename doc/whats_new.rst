@@ -240,6 +240,9 @@ Decomposition, manifold learning and clustering
   ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
   :issue:`7685` by :user:`Tommy Löfstedt <tomlof>`
 
+- Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
+  :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
+
 - :class:`decomposition.NMF` now faster when ``beta_loss=0``.
   :issue:`9277` by :user:`hongkahjun`.
 
