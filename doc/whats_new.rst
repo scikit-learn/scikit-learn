@@ -172,13 +172,11 @@ Trees and ensembles
 
 - :func:`tree.export_graphviz` now shows configurable number of decimal
   places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
-   - :func:`tree.export_graphviz` now shows configurable number of decimal
-     places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
      
-   - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
-     to change output shape of `transform` method to 2 dimensional.
-     :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
-     :user:`Herilalaina Rakotoarison <herilalaina>`.
+- Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
+  to change output shape of `transform` method to 2 dimensional.
+  :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
+  :user:`Herilalaina Rakotoarison <herilalaina>`.
 
 Linear, kernelized and related models
 
@@ -323,9 +321,6 @@ Model evaluation and meta-estimators
 - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
   now support online learning using ``partial_fit``.
   :issue: `8053` by :user:`Peng Yu <yupbank>`.
-   - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
-     now support online learning using ``partial_fit``.
-     :issue:`8053` by :user:`Peng Yu <yupbank>`.
 
 - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
   :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
@@ -4372,7 +4367,6 @@ Highlights
   by `Andreas Müller`_.
 
 - Randomized sparse linear models for feature
-- :ref:`randomized_l1`: Randomized sparse linear models for feature
   selection, by `Alexandre Gramfort`_ and `Gael Varoquaux`_
 
 - :ref:`label_propagation` for semi-supervised learning, by Clay
@@ -4833,7 +4827,6 @@ Changelog
   `Mathieu Blondel`_ and `Lars Buitinck`_
 
 - Documentation improvements: thumbnails in
-  example gallery by `Fabian Pedregosa`_.
   :ref:`example gallery <examples-index>` by `Fabian Pedregosa`_.
 
 - Important bugfixes in :ref:`svm` module (segfaults, bad
