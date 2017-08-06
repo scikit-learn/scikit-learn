@@ -240,9 +240,6 @@ Decomposition, manifold learning and clustering
   ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
   :issue:`7685` by :user:`Tommy Löfstedt <tomlof>`
 
-- Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
-  :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
-
 - :class:`decomposition.NMF` now faster when ``beta_loss=0``.
   :issue:`9277` by :user:`hongkahjun`.
 
@@ -505,6 +502,9 @@ Decomposition, manifold learning and clustering
   :class:`decomposition.RandomizedPCA` and
   :class:`decomposition.IncrementalPCA`.
   :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+
+- Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
+  :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 - Fixed a bug where :class:`cluster.DBSCAN` gives incorrect
   result when input is a precomputed sparse matrix with initial
