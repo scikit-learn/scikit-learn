@@ -112,9 +112,12 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         # Check parameters
         X = check_array(X, accept_sparse=False, dtype=np.float64,
                         force_all_finite=False, copy=self.copy)
-        mask = _get_mask(X, self.missing_values)
+        # Check for +/- inf
+        if (np.any(np.isinf(X))):
+            raise ValueError("+/- Infinite values are not allowed.")
 
         # Check if % missing in any column > col_max_missing
+        mask = _get_mask(X, self.missing_values)
         if np.any(mask.sum(axis=0) > (X.shape[0] * self.col_max_missing)):
             raise ValueError("The following columns have, "
                              "more than {0}% missing values: {1}"
