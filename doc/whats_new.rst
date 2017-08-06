@@ -1,12 +1,13 @@
 .. currentmodule:: sklearn
 
-
 ===============
 Release history
 ===============
 
 Version 0.19
 ============
+
+**August 7, 2017**
 
 Highlights
 ----------
