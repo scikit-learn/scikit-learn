@@ -498,6 +498,9 @@ Decomposition, manifold learning and clustering
   :class:`decomposition.IncrementalPCA`.
   :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
 
+- Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
+  :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
+
 - Fixed a bug where :class:`cluster.DBSCAN` gives incorrect
   result when input is a precomputed sparse matrix with initial
   rows all zero. :issue:`8306` by :user:`Akshay Gupta <Akshay0724>`
