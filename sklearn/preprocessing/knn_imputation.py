@@ -10,7 +10,7 @@ from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..neighbors import NearestNeighbors
-
+from ..neighbors.base import _get_weights, _check_weights
 __all__ = [
     'KNNImputer',
 ]
@@ -36,11 +36,22 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         `missing_values` will be imputed. For missing values encoded as np.nan,
         use the string value "NaN".
 
-    n_neighbors : int, optional (default = 10)
+    n_neighbors : int, optional (default = 5)
         Number of neighbors to get.
 
-    weighted : bool, optional (default = True)
-        Set the imputed value as a distance-weighted score of the neighbors
+    weights : str or callable
+        weight function used in prediction.  Possible values:
+
+        - 'uniform' : uniform weights.  All points in each neighborhood
+          are weighted equally.
+        - 'distance' : weight points by the inverse of their distance.
+          in this case, closer neighbors of a query point will have a
+          greater influence than neighbors which are further away.
+        - [callable] : a user-defined function which accepts an
+          array of distances, and returns an array of the same shape
+          containing the weights.
+
+        Uniform weights are used by default.
 
     metric : string or callable, optional (default = 'masked_euclidean')
         metric to use for distance computation.
@@ -65,20 +76,20 @@ class KNNImputer(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
-        A tuple whose first element if the fitted NearestNeighbors object
-        and second element is the column means using available values.
+        A tuple whose first element is the fitted NearestNeighbors object
+        and the second element is the column means using available values.
 
     Notes
     -----
     """
 
-    def __init__(self, missing_values="NaN", n_neighbors=10,
-                 weighted=True, metric="masked_euclidean",
+    def __init__(self, missing_values="NaN", n_neighbors=5,
+                 weights="uniform", metric="masked_euclidean",
                  row_max_missing=0.5, col_max_missing=0.8, copy=True):
 
         self.missing_values = missing_values
         self.n_neighbors = n_neighbors
-        self.weighted = weighted
+        self.weights = _check_weights(weights)
         self.metric = metric
         self.row_max_missing = row_max_missing
         self.col_max_missing = col_max_missing
@@ -89,7 +100,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like}, shape (n_samples, n_features)
             Input data, where ``n_samples`` is the number of samples and
             ``n_features`` is the number of features.
 
@@ -110,7 +121,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                              .format(self.col_max_missing*100, np.where(
                               mask.sum(axis=0) > (X.shape[0] *
                                                   self.col_max_missing))))
-        X_col_means = np.nanmean(X, axis=0)
+        X_col_means = np.ma.array(X, mask=mask).mean(axis=0).data
 
         # Check if % missing in any row > col_max_missing
         bad_rows = mask.sum(axis=1) > (mask.shape[1] * self.row_max_missing)
@@ -122,8 +133,6 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
             # Remove rows that have more than row_max_missing % missing
             X = X[~bad_rows, :]
-            # mask = _get_mask(X, self.missing_values)
-            # X_masked = np.ma.array(X, mask=mask)
 
         # Check if sufficient neighboring samples available
         if X.shape[0] < self.n_neighbors:
@@ -143,7 +152,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like}, shape = [n_samples, n_features]
             The input data to complete.
         """
         check_is_fitted(self, 'statistics_')
@@ -170,25 +179,20 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             row_total_missing = mask.sum(axis=1)
 
         # Check if the X in fit() and transform() are the same
-        if X.base is fitted_X.base:
-            neighbors = fitted_NNObj.kneighbors(n_neighbors=self.n_neighbors,
-                                                return_distance=self.weighted)
+        if X is fitted_X or X.base is fitted_X.base:
+            neighbors = fitted_NNObj.kneighbors(n_neighbors=self.n_neighbors)
         else:
             neighbors = fitted_NNObj.kneighbors(X,
-                                                n_neighbors=self.n_neighbors,
-                                                return_distance=self.weighted)
+                                                n_neighbors=self.n_neighbors)
 
-        # Get row index and distance (if weighted) of donors
-        if self.weighted:
-            knn_row_index = neighbors[1]
-            # knn_distances = neighbors[0]
-        else:
-            knn_row_index = neighbors
-            # knn_distances = np.ones_like(neighbors)
+        # Get row index, distance, and weights of donors
+        knn_distances, knn_row_index = neighbors
+        weights = _get_weights(knn_distances[row_total_missing.astype(
+            np.bool), ], self.weights)
 
         knn_row_index = np.vsplit(knn_row_index, knn_row_index.shape[0])
-        knn_row_index = np.repeat(knn_row_index, row_total_missing, axis=0)
-        knn_row_index = knn_row_index.ravel()
+        knn_row_index = np.repeat(knn_row_index,
+                                  row_total_missing, axis=0).ravel()
 
         # Get column index of donors
         # NOTE: Following assumes columns in X and _fit_X are in the same order
@@ -196,10 +200,12 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         knn_col_index = np.repeat(col_missing_index, self.n_neighbors)
 
         # Calculate kNN score and impute
-        imputed = np.nanmean(
-            (fitted_NNObj._fit_X[(knn_row_index, knn_col_index)]).
-            reshape((-1, self.n_neighbors)), axis=1)
-        X[mask] = imputed
+        donors = fitted_X[
+            (knn_row_index, knn_col_index)].reshape((-1, self.n_neighbors))
+        donors = np.ma.array(
+            donors, mask=_get_mask(donors, self.missing_values))
+        imputed = np.ma.average(donors, axis=1, weights=weights)
+        X[mask] = imputed.data
 
         # Merge bad rows to X and mean impute any leftover missing
         if np.any(bad_rows):
