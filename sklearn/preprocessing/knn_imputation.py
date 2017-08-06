@@ -114,7 +114,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                         force_all_finite=False, copy=self.copy)
         # Check for +/- inf
         if (np.any(np.isinf(X))):
-            raise ValueError("+/- Infinite values are not allowed.")
+            raise ValueError("+/- inf values are not allowed even though NaN "
+                             "values are allowed.")
 
         # Check if % missing in any column > col_max_missing
         mask = _get_mask(X, self.missing_values)
