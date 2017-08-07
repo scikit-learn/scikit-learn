@@ -393,3 +393,8 @@ A sample algorithmic trick: warm restarts for cross validation
 
 TODO: demonstrate the warm restart tricks for cross validation of linear
 regression with Coordinate Descent.
+One of the most common task when doing model selection is cross validation.
+Since it is computationally expensive, one can speed up the training by 
+using the `warm_start` parameter of the input estimator.
+Setting `warm_start=True` allows to reuse the solution of the previous call
+to fit as initialization. It may lead to faster convergence.
