@@ -5790,6 +5790,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Arthur Mensch: https://amensch.fr
 .. currentmodule:: sklearn
 .. include:: includes/big_toc_css.rst
+.. include:: whats_new/_contributors.txt
 ===============
 Release History
 ===============
@@ -5801,10 +5802,10 @@ Previous Releases
 .. toctree::
     :maxdepth: 1
 
-    Version 0.18 <whats_new/whats_new_version_0.18.rst>
-    Version 0.17 <whats_new/whats_new_version_0.17.rst>
-    Version 0.16 <whats_new/whats_new_version_0.16.rst>
-    Version 0.15 <whats_new/whats_new_version_0.15.rst>
-    Version 0.14 <whats_new/whats_new_version_0.14.rst>
-    Version 0.13 <whats_new/whats_new_version_0.13.rst>
-    Older Versions <whats_new/whats_new_older_versions.rst>
+    whats_new/whats_new_version_0.18.rst
+    whats_new/whats_new_version_0.17.rst
+    whats_new/whats_new_version_0.16.rst
+    whats_new/whats_new_version_0.15.rst
+    whats_new/whats_new_version_0.14.rst
+    whats_new/whats_new_version_0.13.rst
+    whats_new/whats_new_older_versions.rst
