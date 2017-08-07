@@ -1,7 +1,5 @@
 .. currentmodule:: sklearn
 
-.. include:: ../../AUTHORS.rst
-
 .. _changes_0_14:
 
 Version 0.14
