@@ -509,7 +509,7 @@ META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "MultiOutputRegressor", "MultiOutputClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier",
                    "RFE", "RFECV", "BaseEnsemble", "ClassifierChain",
-                   "StackMetaEstimator"]
+                   "StackingTransformer"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel", "StackLayer"]

@@ -8,7 +8,7 @@ Testing for the stacking ensemble module (sklearn.ensemble.stacking).
 
 import numpy as np
 from sklearn.utils.testing import (assert_equal, assert_array_equal)
-from sklearn.ensemble import (StackMetaEstimator, StackLayer, make_stack_layer)
+from sklearn.ensemble import (StackingTransformer, StackLayer, make_stack_layer)
 from sklearn.linear_model import (RidgeClassifier, LinearRegression,
                                   LogisticRegression)
 from sklearn.ensemble import RandomForestClassifier
@@ -54,7 +54,7 @@ def test_regression():
             if params['method'] is 'predict_proba':
                 # no need to test this, as it's related to classification
                 continue
-            blended_reg = StackMetaEstimator(reg, **params)
+            blended_reg = StackingTransformer(reg, **params)
             for fit_params in META_ESTIMATOR_FIT_PARAMS:
                 _check_estimator(blended_reg, **fit_params)
 
@@ -68,13 +68,13 @@ def test_classification():
 
     for clf in classifiers_with_proba:
         for params in ParameterGrid(META_ESTIMATOR_PARAMS):
-            blended_clf = StackMetaEstimator(clf, **params)
+            blended_clf = StackingTransformer(clf, **params)
             for fit_params in META_ESTIMATOR_FIT_PARAMS:
                 _check_estimator(blended_clf, **fit_params)
 
     # test method='auto' for classifiers without 'predict_proba'
     for clf in classifiers_without_proba:
-        clf = StackMetaEstimator(clf, method='auto')
+        clf = StackingTransformer(clf, method='auto')
         _check_estimator(blended_clf, **fit_params)
 
 

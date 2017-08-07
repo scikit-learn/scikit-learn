@@ -1189,17 +1189,17 @@ from the base classifiers when applied to the Iris dataset
     :align: center
     :scale: 75%
 
-The `StackMetaEstimator`
+The `StackingTransformer`
 ------------------------
 
 Under the hood, this is the class that implements what's needed to turn an
 estimator into a transformer that can be used for stacked
 generalization. `StackLayer` is actually just a wrapper that takes the
-estimators, wraps them with `StackMetaEstimator` and joins everything with
+estimators, wraps them with `StackingTransformer` and joins everything with
 `FeatureUnion`.
 
 On the simpler use cases, `StackLayer` should be enough but for some special
-cases, it can be useful to use `StackMetaEstimator` directly.
+cases, it can be useful to use `StackingTransformer` directly.
 
 Advanced usage
 --------------

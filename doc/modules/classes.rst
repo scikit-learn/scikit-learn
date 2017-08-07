@@ -404,7 +404,7 @@ Samples generator
    ensemble.RandomTreesEmbedding
    ensemble.RandomForestRegressor
    ensemble.VotingClassifier
-   ensemble.StackMetaEstimator
+   ensemble.StackingTransformer
    ensemble.StackLayer
 
 .. autosummary::

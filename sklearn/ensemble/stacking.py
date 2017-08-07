@@ -9,13 +9,13 @@ from ..pipeline import (_name_estimators, FeatureUnion)
 from ..preprocessing import FunctionTransformer
 
 
-class StackMetaEstimator(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
+class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
     """Transformer to turn estimators into meta-estimators for model stacking
 
     In stacked generalization, meta estimators are combined in layers to
     improve the final result. To prevent data leaks between layers, a procedure
     similar to cross validation is adopted, where the model is trained in one
-    part of the set and predicts the other part. In `StackMetaEstimator`, it
+    part of the set and predicts the other part. In `StackingTransformer`, it
     happens during `fit_transform`, as the result of this procedure is what
     should be used by the next layers.
 
@@ -137,7 +137,7 @@ def _identity(x):
 
 
 def _identity_transformer():
-    """Contructs a transformer that does nothing"""
+    """Contructs a transformer that returns its input unchanged"""
     return FunctionTransformer(_identity)
 
 
@@ -152,7 +152,7 @@ class StackLayer(FeatureUnion):
         Whether input should be concatenated to the transformation.
 
     cv : cv to be used, optional (default=3)
-        Will be passed to `StackMetaEstimator` for each base estimator.
+        Will be passed to `StackingTransformer` for each base estimator.
 
     method : string, optional (default='auto')
         Invokes the passed method name of the estimators. If the method is
@@ -190,8 +190,8 @@ class StackLayer(FeatureUnion):
         self._update_layer()
 
     def _wrap_estimator(self, estimator):
-        return StackMetaEstimator(estimator, cv=self.cv, method=self.method,
-                                  n_jobs=self.n_jobs)
+        return StackingTransformer(estimator, cv=self.cv, method=self.method,
+                                   n_jobs=self.n_jobs)
 
     def _update_layer(self):
         self.transformer_list = [(name, self._wrap_estimator(x))
