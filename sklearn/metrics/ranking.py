@@ -15,7 +15,6 @@ the lower the better
 #          Lars Buitinck
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Noel Dawe <noel@dawe.me>
-#          Jeremy Karnowski <jeremy.karnowski@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -218,11 +217,13 @@ def average_precision_score(y_true, y_score, average="macro",
                                  sample_weight=sample_weight)
 
 
-def detection_error_tradeoff(y_true, y_score, pos_label=None,
-                             sample_weight=None):
-    """Compute error rates for different probability thresholds
+def detection_error_tradeoff_curve(y_true, y_score, pos_label=None,
+                                   sample_weight=None):
+    """Compute error rates for different probability thresholds.
 
-    Note: this implementation is restricted to the binary classification task.
+    Note: This implementation is restricted to the binary classification task.
+
+    Read more in the :ref:`User Guide <det_curve>`.
 
     Parameters
     ----------
@@ -240,42 +241,35 @@ def detection_error_tradeoff(y_true, y_score, pos_label=None,
 
     Returns
     -------
-    fps : array, shape = [n_thresholds]
-        A count of false positives, at index i being the number of negative
-        samples assigned a score >= thresholds[i]. The total number of
-        negative samples is equal to fps[-1] (thus true negatives are given by
-        fps[-1] - fps).
+    fpr : array, shape = [n_thresholds]
+        False positive rate (FPR) such that element i is the false positive
+        rate of predictions with score >= thresholds[i]. This is occasionally
+        referred to as false acceptance propability or fall-out.
 
-    fns : array, shape = [n_thresholds]
-        A count of false negatives, at index i being the number of positive
-        samples assigned a score < thresholds[i]. The total number of
-        positive samples is equal to tps[-1] (thus false negatives are given by
-        tps[-1] - tps).
+    fnr : array, shape = [n_thresholds]
+        False negative rate (FNR) such that element i is the false negative
+        rate of predictions with score >= thresholds[i]. This is occasionally
+        referred to as false rejection or miss rate.
 
     thresholds : array, shape = [n_thresholds]
         Decreasing score values.
 
-    References
-    ----------
-    .. [1] `Wikipedia entry for Detection error tradeoff
-            <https://en.wikipedia.org/wiki/Detection_error_tradeoff>`_
-    .. [2] `The DET Curve in Assessment of Detection Task Performance
-            <http://www.itl.nist.gov/iad/mig/publications/storage_paper/det.pdf>`_
-    .. [3] `2008 NIST Speaker Recognition Evaluation Results
-            <http://www.itl.nist.gov/iad/mig/tests/sre/2008/official_results/>`_
-    .. [4] `DET-Curve Plotting software for use with MATLAB
-            <http://www.itl.nist.gov/iad/mig/tools/DETware_v2.1.targz.htm>`_
+    See also
+    --------
+    roc_curve : Compute Receiver operating characteristic (ROC) curve
+
+    precision_recall_curve : Compute precision-recall curve
 
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import detection_error_tradeoff
+    >>> from sklearn.metrics import detection_error_tradeoff_curve
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fps, fns, thresholds = detection_error_tradeoff(y_true, y_scores)
-    >>> fps
+    >>> fpr, fnr, thresholds = detection_error_tradeoff_curve(y_true, y_scores)
+    >>> fpr
     array([ 0.5,  0.5,  0. ])
-    >>> fns
+    >>> fnr
     array([ 0. ,  0.5,  0.5])
     >>> thresholds
     array([ 0.35,  0.4 ,  0.8 ])
@@ -284,16 +278,17 @@ def detection_error_tradeoff(y_true, y_score, pos_label=None,
     fps, tps, thresholds = _binary_clf_curve(y_true, y_score,
                                              pos_label=pos_label,
                                              sample_weight=sample_weight)
+
     fns = tps[-1] - tps
-    tp_count = tps[-1]
-    tn_count = (fps[-1] - fps)[0]
+    p_count = tps[-1]
+    n_count = fps[-1]
 
     # start with false positives is zero and stop with false negatives zero
     # and reverse the outputs so list of false positives is decreasing
     last_ind = tps.searchsorted(tps[-1]) + 1
     first_ind = fps[::-1].searchsorted(fps[0])
     sl = range(first_ind, last_ind)[::-1]
-    return fps[sl] / tp_count, fns[sl] / tn_count, thresholds[sl]
+    return fps[sl] / n_count, fns[sl] / p_count, thresholds[sl]
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
