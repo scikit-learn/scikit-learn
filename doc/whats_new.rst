@@ -5788,3 +5788,20 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Neeraj Gangwar: http://neerajgangwar.in
 .. _Arthur Mensch: https://amensch.fr
+.. currentmodule:: sklearn
+
+===============
+Release history
+===============
+
+.. toctree::
+    :maxdepth: 2
+    
+    Version 0.19 <whats_new/whats_new_version_0.19.rst>
+    Version 0.18 <whats_new/whats_new_version_0.18.rst>
+    Version 0.17 <whats_new/whats_new_version_0.17.rst>
+    Version 0.16 <whats_new/whats_new_version_0.16.rst>
+    Version 0.15 <whats_new/whats_new_version_0.15.rst>
+    Version 0.14 <whats_new/whats_new_version_0.14.rst>
+    Version 0.13 <whats_new/whats_new_version_0.13.rst>
+    Older Versions <whats_new/whats_new_older_versions.rst>
