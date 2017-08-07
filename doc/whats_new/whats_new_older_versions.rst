@@ -1,4 +1,4 @@
-.. include:: contributors.rst
+.. include:: _contributors.rst
 
 .. currentmodule:: sklearn
 
