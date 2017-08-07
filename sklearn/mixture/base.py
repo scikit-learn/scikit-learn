@@ -351,7 +351,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         Returns
         -------
         resp : array, shape (n_samples, n_components)
-            Returns the probability of each Gaussian (state) in
+            Returns the probability each Gaussian (state) in
             the model given each sample.
         """
         self._check_is_fitted()

@@ -131,7 +131,8 @@ class BayesianGaussianMixture(BaseMixture):
 
     weight_concentration_prior : float | None, optional.
         The dirichlet concentration of each component on the weight
-        distribution (Dirichlet). The higher concentration puts more mass in
+        distribution (Dirichlet). This is commonly called gamma in the
+        literature. The higher concentration puts more mass in
         the center and will lead to more components being active, while a lower
         concentration parameter will lead to more mass at the edge of the
         mixture weights simplex. The value of the parameter must be greater
