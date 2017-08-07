@@ -1,3 +1,5 @@
+.. include:: contributors.rst
+
 .. currentmodule:: sklearn
 
 .. _changes_0_13_1:
