@@ -15,6 +15,28 @@ truth set of classes or satisfying some assumption such that members
 belong to the same class are more similar that members of different
 classes according to some similarity metric.
 
+Some of these are restricted to the case where ground truth is known:
+
+.. autosummary::
+   :template: function.rst
+
+    adjusted_rand_score
+    adjusted_mutual_info_score
+    homogeneity_score
+    completeness_score
+    v_measure_score
+    homogeneity_completeness_v_measure
+    fowlkes_mallows_score
+
+Some of these are restricted to the case where ground truth is not known:
+
+.. autosummary::
+   :template: function.rst
+
+    silhouette_score
+    calinski_harabaz_score
+
+
 .. _clustering_evaluation:
 
 Clustering with known ground truth

@@ -29,6 +29,14 @@ There are also some classification metrics that work in the multilabel case:
    average_precision_score
    roc_auc_score
 
+Some are typically used for ranking:
+
+.. autosummary::
+   :template: function.rst
+
+   dcg_score
+   ndcg_score
+
 
 .. _coverage_error:
 
