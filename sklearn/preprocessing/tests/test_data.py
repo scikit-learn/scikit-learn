@@ -2043,6 +2043,21 @@ def test_categorical_encoder_pandas():
     assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
 
 
+def test_categorical_encoder_ordinal():
+    X = [['abc', 2, 55], ['def', 1, 55]]
+
+    enc = CategoricalEncoder(encoding='other')
+    assert_raises(ValueError, enc.fit, X)
+
+    enc = CategoricalEncoder(encoding='ordinal', handle_unknown='ignore')
+    assert_raises(ValueError, enc.fit, X)
+
+    enc = CategoricalEncoder(encoding='ordinal')
+    exp = np.array([[0, 1, 0],
+                    [1, 0, 0]])
+    assert_array_equal(enc.fit_transform(X), exp)
+
+
 def test_fit_cold_start():
     X = iris.data
     X_2d = X[:, :2]

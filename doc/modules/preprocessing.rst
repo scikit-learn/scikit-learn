@@ -471,7 +471,7 @@ Continuing the example above::
   >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
   >>> enc.fit(X)  # doctest: +ELLIPSIS
   CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
-            handle_unknown='error', sparse=True)
+            encoding='onehot', handle_unknown='error', sparse=True)
   >>> enc.transform([['female', 'from US', 'uses Safari']]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  1.]])
 

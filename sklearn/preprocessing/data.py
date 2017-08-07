@@ -2574,6 +2574,15 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
+    encoding : str, 'onehot' or 'ordinal'
+        The type of encoding to use (default is 'onehot'):
+
+        - 'onehot': encode the features using a one-hot aka one-of-K scheme
+          (or also called 'dummy' encoding). This creates a binary column for
+          each category.
+        - 'ordinal': encode the features as ordinal integers. This results in
+          a single column of integers (0 to n_categories - 1) per feature.
+
     categories : 'auto' or a list of lists/arrays of values.
         Values per feature.
 
@@ -2582,10 +2591,12 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
           column. The passed categories are sorted before encoding the data.
 
     dtype : number type, default=np.float
-        Desired dtype of output.
+        Desired dtype of output. This keyword is ignored in case of
+        ``encoding='ordinal'`` (the output is always integer).
 
     sparse : boolean, default=True
         Will return sparse matrix if set True else will return an array.
+        This keyword is ignored in case of ``encoding='ordinal'``.
 
     handle_unknown : str, 'error' or 'ignore'
         Whether to raise an error or ignore if a unknown categorical feature is
@@ -2593,6 +2604,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         is set to 'ignore' and an unknown category is encountered during
         transform, the resulting one-hot encoded columns for this feature
         will be all zeros.
+        Ignoring unknown categories is not supported for
+        ``encoding='ordinal'``.
 
     Examples
     --------
@@ -2605,7 +2618,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
     ... # doctest: +ELLIPSIS
     CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
-              handle_unknown='error', sparse=True)
+              encoding='onehot', handle_unknown='error', sparse=True)
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
 
@@ -2621,8 +2634,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
       encoding of dictionary items or strings.
     """
 
-    def __init__(self, categories='auto', dtype=np.float64, sparse=True,
-                 handle_unknown='error'):
+    def __init__(self, encoding='onehot', categories='auto', dtype=np.float64,
+                 sparse=True, handle_unknown='error'):
+        self.encoding = encoding
         self.categories = categories
         self.dtype = dtype
         self.sparse = sparse
@@ -2641,10 +2655,19 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         self
         """
 
+        if self.encoding not in ['onehot', 'ordinal']:
+            template = ("encoding should be either 'onehot' or "
+                        "'ordinal', got %s")
+            raise ValueError(template % self.handle_unknown)
+
         if self.handle_unknown not in ['error', 'ignore']:
             template = ("handle_unknown should be either 'error' or "
                         "'ignore', got %s")
             raise ValueError(template % self.handle_unknown)
+
+        if self.encoding == 'ordinal' and self.handle_unknown == 'ignore':
+            raise ValueError("handle_unknown='ignore' is not supported for"
+                             " encoding='ordinal'")
 
         X = check_array(X, dtype=np.object, accept_sparse='csc', copy=True)
         n_samples, n_features = X.shape
@@ -2703,6 +2726,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                     X_mask[:, i] = valid_mask
                     X[:, i][~valid_mask] = self._label_encoders_[i].classes_[0]
             X_int[:, i] = self._label_encoders_[i].transform(X[:, i])
+
+        if self.encoding == 'ordinal':
+            return X_int
 
         mask = X_mask.ravel()
         n_values = [le.classes_.shape[0] for le in self._label_encoders_]
