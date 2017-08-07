@@ -6,6 +6,7 @@ Testing for the stacking ensemble module (sklearn.ensemble.stacking).
 # License BSD 3 clause
 
 
+from copy import deepcopy
 import numpy as np
 from sklearn.utils.testing import (assert_equal, assert_array_equal)
 from sklearn.ensemble import (StackingTransformer, StackLayer, make_stack_layer)
@@ -22,7 +23,6 @@ X, y = iris.data[:, 1:3], iris.target
 RANDOM_SEED = 8939
 
 META_ESTIMATOR_PARAMS = {'cv': [2, StratifiedKFold()],
-                         'method': ['auto', 'predict', 'predict_proba'],
                          'n_jobs': [1, 2]}
 META_ESTIMATOR_FIT_PARAMS = [{}, {"sample_weight": np.ones(y.shape)}]
 
@@ -47,13 +47,13 @@ def _check_estimator(estimator, **fit_params):
 def test_regression():
     # tests regression with various parameter settings
 
+    meta_params = {'method': ['auto', 'predict']}
+    meta_params.update(META_ESTIMATOR_PARAMS)
+
     regressors = [LinearRegression(), LinearSVR()]
 
     for reg in regressors:
-        for params in ParameterGrid(META_ESTIMATOR_PARAMS):
-            if params['method'] is 'predict_proba':
-                # no need to test this, as it's related to classification
-                continue
+        for params in ParameterGrid(meta_params):
             blended_reg = StackingTransformer(reg, **params)
             for fit_params in META_ESTIMATOR_FIT_PARAMS:
                 _check_estimator(blended_reg, **fit_params)
@@ -62,20 +62,25 @@ def test_regression():
 def test_classification():
     # tests classification with various parameter settings
 
-    classifiers_with_proba = [RandomForestClassifier(random_state=RANDOM_SEED)]
-    classifiers_without_proba = [RidgeClassifier(random_state=RANDOM_SEED),
-                                 LinearSVC(random_state=RANDOM_SEED)]
+    testcases = [{'clf': RandomForestClassifier(random_state=RANDOM_SEED),
+                  'extra_params': {'method': ['auto', 'predict',
+                                              'predict_proba']}},
+                 {'clf': LinearSVC(random_state=RANDOM_SEED),
+                  'extra_params': {'method': ['auto', 'predict',
+                                              'decision_function']}},
+                 {'clf': RidgeClassifier(random_state=RANDOM_SEED),
+                  'extra_params': {'method': ['auto', 'predict']}}]
 
-    for clf in classifiers_with_proba:
-        for params in ParameterGrid(META_ESTIMATOR_PARAMS):
+    for testcase in testcases:
+        clf = testcase['clf']
+
+        meta_params = deepcopy(testcase['extra_params'])
+        meta_params.update(META_ESTIMATOR_PARAMS)
+
+        for params in ParameterGrid(meta_params):
             blended_clf = StackingTransformer(clf, **params)
             for fit_params in META_ESTIMATOR_FIT_PARAMS:
                 _check_estimator(blended_clf, **fit_params)
-
-    # test method='auto' for classifiers without 'predict_proba'
-    for clf in classifiers_without_proba:
-        clf = StackingTransformer(clf, method='auto')
-        _check_estimator(blended_clf, **fit_params)
 
 
 STACK_LAYER_PARAMS = {'restack': [True, False],

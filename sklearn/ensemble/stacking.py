@@ -28,8 +28,8 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
 
     method : string, optional (default='auto')
         Invokes the passed method name of the passed estimator. If the method
-        is `auto`, will try to invoke `predict_proba` or `predict` in that
-        order.
+        is `auto`, will try to invoke `predict_proba`, `decision_function` or
+        `predict` in that order.
 
     n_jobs : int, optional (default=1)
         Number of jobs to be passed to `cross_val_predict` during
@@ -71,6 +71,8 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         if self.method == 'auto':
             if getattr(self.base_estimator, 'predict_proba', None):
                 method = 'predict_proba'
+            elif getattr(self.base_estimator, 'decision_function', None):
+                method = 'decision_function'
             else:
                 method = 'predict'
         else:
