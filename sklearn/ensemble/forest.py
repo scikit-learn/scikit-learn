@@ -207,7 +207,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         indicators = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                               backend="threading")(
             delayed(parallel_helper)(tree, 'decision_path', X,
-                                      check_input=False)
+                                     check_input=False)
             for tree in self.estimators_)
 
         n_nodes = [0]
@@ -222,9 +222,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Parameters
         ----------
         X : array-like or sparse matrix of shape = [n_samples, n_features]
-            The training input samples. Internally, its dtype will be converted to
-            ``dtype=np.float32``. If a sparse matrix is provided, it will be
-            converted into a sparse ``csc_matrix``.
+            The training input samples. Internally, its dtype will be
+            converted to ``dtype=np.float32``. If a sparse matrix is provided,
+            it will be converted into a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (class labels in classification, real numbers in
@@ -479,7 +479,9 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
         for k in range(self.n_outputs_):
-            classes_k, y_store_unique_indices[:, k] = np.unique(y[:, k], return_inverse=True)
+            classes_k, y_store_unique_indices[:, k] = np.unique(
+                                                        y[:, k],
+                                                        return_inverse=True)
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
         y = y_store_unique_indices
@@ -489,13 +491,15 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             if isinstance(self.class_weight, six.string_types):
                 if self.class_weight not in valid_presets:
                     raise ValueError('Valid presets for class_weight include '
-                                     '"balanced" and "balanced_subsample". Given "%s".'
-                                     % self.class_weight)
+                                     '"balanced" and "balanced_subsample". '
+                                     'Given "%s".' % self.class_weight)
                 if self.warm_start:
-                    warn('class_weight presets "balanced" or "balanced_subsample" are '
+                    warn('class_weight presets "balanced" or'
+                         '"balanced_subsample" are '
                          'not recommended for warm_start if the fitted data '
                          'differs from the full dataset. In order to use '
-                         '"balanced" weights, use compute_class_weight("balanced", '
+                         '"balanced" weights, use '
+                         'compute_class_weight("balanced", '
                          'classes, y). In place of y you can use a large '
                          'enough sample of the full training set target to '
                          'properly estimate the class frequency '
@@ -554,8 +558,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         The predicted class probabilities of an input sample are computed as
         the mean predicted class probabilities of the trees in the forest. The
-        class probability of a single tree is the fraction of samples of the same
-        class in a leaf.
+        class probability of a single tree is the fraction of samples of the
+        same class in a leaf.
 
         Parameters
         ----------
@@ -891,6 +895,22 @@ class RandomForestClassifier(ForestClassifier):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+    classes : array-like or list of such arrays, shape (n_classes,n_outputs),
+              optional (default=None)
+        List of all the classes that can possibly appear in the
+        y vector (single output problem).
+        List of all the classes that can possibly appear in each output
+        of the y vector. (multi-output problem)
+
+        The list of classes for each output should be sorted in the value
+        of classes.
+
+        If not specified, this will be set as per the classes present in
+        the training data. It is recommended to set this parameter during
+        initialization.
+
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     estimators_ : list of DecisionTreeClassifier
@@ -963,7 +983,8 @@ class RandomForestClassifier(ForestClassifier):
                  random_state=None,
                  verbose=0,
                  warm_start=False,
-                 class_weight=None):
+                 class_weight=None,
+                 classes=None):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -971,7 +992,7 @@ class RandomForestClassifier(ForestClassifier):
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
                               "min_impurity_decrease", "min_impurity_split",
-                              "random_state"),
+                              "random_state", "classes"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -989,6 +1010,7 @@ class RandomForestClassifier(ForestClassifier):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
+        self.classes = classes
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -1333,7 +1355,8 @@ class ExtraTreesClassifier(ForestClassifier):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest.
 
-    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or None, optional (default=None)
+    class_weight : dict, list of dicts, "balanced", "balanced_subsample" or
+                   None, optional (default=None)
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
@@ -1349,8 +1372,9 @@ class ExtraTreesClassifier(ForestClassifier):
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``
 
-        The "balanced_subsample" mode is the same as "balanced" except that weights are
-        computed based on the bootstrap sample for every tree grown.
+        The "balanced_subsample" mode is the same as "balanced" except that
+        weights are computed based on the bootstrap sample for every tree
+        grown.
 
         For multi-output, the weights of each column of y will be multiplied.
 

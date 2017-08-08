@@ -665,19 +665,19 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     classes : array-like or list of such arrays, shape (n_classes,n_outputs),
               optional (default=None)
-            List of all the classes that can possibly appear in the
-            y vector (single output problem).
-            List of all the classes that can possibly appear in each output
-            of the y vector. (multi-output problem)
+        List of all the classes that can possibly appear in the
+        y vector (single output problem).
+        List of all the classes that can possibly appear in each output
+        of the y vector. (multi-output problem)
 
-            The list of classes for each output should be sorted in the value
-            of classes.
+        The list of classes for each output should be sorted in the value
+        of classes.
 
-            If not specified, this will be set as per the classes present in
-            the training data. It is recommended to set this parameter during
-            initialization.
+        If not specified, this will be set as per the classes present in
+        the training data. It is recommended to set this parameter during
+        initialization.
 
-            .. versionadded:: 0.20
+        .. versionadded:: 0.20
 
     Attributes
     ----------
