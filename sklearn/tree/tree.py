@@ -36,7 +36,7 @@ from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, _check_classes
 from ..utils import _check_y_classes
-from ..preprocessing import label_binarize
+from ..preprocessing import LabelEncoder
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -160,12 +160,17 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                     self.n_classes_.append(classes_k.shape[0])
             else:
                 _check_classes(self.classes, self.n_outputs_)
+                if self.n_outputs_ == 1:
+                    classes_ = np.atleast_2d(self.classes)
+                else:
+                    classes_ = np.asarray(self.classes)
                 # encode y:
                 for k in range(self.n_outputs_):
-                    classes_k = np.asarray(self.classes[k])
+                    classes_k = np.asarray(classes_[k])
                     # check y has subset of classes:
-                    _check_y_classes(np.unique(y), classes_k)
-                    y_encoded = label_binarize(y, classes=classes_k)
+                    _check_y_classes(np.unique(y[:, k]), classes_k)
+                    le = LabelEncoder().fit(classes_k)
+                    y_encoded[:, k] = le.transform(y[:, k])
                     self.classes_.append(classes_k)
                     self.n_classes_.append(classes_k.shape[0])
 

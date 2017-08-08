@@ -209,7 +209,7 @@ def test_classes_parameter_extra_classes():
             assert_array_almost_equal(pred3[:, 0], 0)
             assert_array_almost_equal(pred3[:, 3], 0)
 
-    # Test whether duplicate classes result in error
+            # Test whether duplicate classes result in error
             expected_msg = ("Classses parameter should contain all unique"
                             " values, duplicates found in [1 1 2]")
             expected_msg2 = ("Classses parameter should contain sorted values"
@@ -217,12 +217,14 @@ def test_classes_parameter_extra_classes():
 
             assert_raise_message(ValueError, expected_msg,
                                  estimator(classes=[1, 1, 2]).fit, X, y)
-            assert_raise_message(ValueError, expected_msg,
-                                 estimator().partial_fit, X, y,
-                                 classes=[1, 1, 2])
-            assert_raise_message(ValueError, expected_msg2,
-                                 estimator().partial_fit, X, y,
-                                 classes=[1, 3, 2])
+            # Run only if partial_fit is present:
+            if hasattr(estimator, 'partial_fit'):
+                assert_raise_message(ValueError, expected_msg,
+                                     estimator().partial_fit, X, y,
+                                     classes=[1, 1, 2])
+                assert_raise_message(ValueError, expected_msg2,
+                                     estimator().partial_fit, X, y,
+                                     classes=[1, 3, 2])
 
     # check that all estimators in estimator_to_check were tested
     assert_equal(estimators_to_check, set(),
