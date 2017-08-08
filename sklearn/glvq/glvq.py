@@ -2,10 +2,10 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
 
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils import validation
-from sklearn.utils.multiclass import unique_labels
-from sklearn.utils.validation import check_is_fitted
+from ..base import BaseEstimator, ClassifierMixin
+from ..utils import validation
+from ..utils.multiclass import unique_labels
+from ..utils.validation import check_is_fitted
 
 
 def _squared_euclidean(A, B=None):

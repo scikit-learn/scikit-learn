@@ -1,20 +1,8 @@
-from math import log
-
 import numpy as np
 from scipy.optimize import minimize
-from scipy.spatial.distance import cdist
 
-from sklearn.glvq.glvq import GlvqModel
-from sklearn.utils.multiclass import unique_labels, check_classification_targets
-
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils import validation
-from sklearn.utils.validation import check_is_fitted
-
-import matplotlib.pyplot as plt
-
-
-# Todo: procent of projection data(eigenvalues are normed, so sum(eigenvalue)=1)
+from .glvq import GlvqModel
+from ..utils import validation
 
 
 class LgmlvqModel(GlvqModel):

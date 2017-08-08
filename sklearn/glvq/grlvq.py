@@ -3,8 +3,8 @@ from math import log
 import numpy as np
 from scipy.optimize import minimize
 
-from sklearn.glvq.glvq import GlvqModel, _squared_euclidean
-from sklearn.utils import validation
+from .glvq import GlvqModel, _squared_euclidean
+from ..utils import validation
 
 
 # TODO: implement custom optfun for grlvq without omega

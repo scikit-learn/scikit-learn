@@ -1,24 +1,16 @@
+import math
 from math import log
 
-import math
 import numpy as np
 from scipy.optimize import minimize
-from scipy.spatial.distance import cdist
 
-from sklearn.glvq.glvq import GlvqModel, _squared_euclidean
-from sklearn.utils.multiclass import unique_labels, check_classification_targets
-
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils import validation
-from sklearn.utils.validation import check_is_fitted
-
-import matplotlib.pyplot as plt
+from .glvq import GlvqModel, _squared_euclidean
+from ..utils import validation
 
 
 class GmlvqModel(GlvqModel):
     def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
-                 display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrix=None, dim=None
-                 ,nb_reiterations=100): #TODO nb_reiterations irrelevant?
+                 display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrix=None, dim=None):
         super().__init__(random_state, initial_prototypes, prototypes_per_class,
                          display, max_iter, gtol)
         if not isinstance(regularization, float) or regularization<0:
@@ -26,7 +18,6 @@ class GmlvqModel(GlvqModel):
         self.regularization = regularization
         self.initial_matrix = initial_matrix
         self.initialdim = dim
-        self.nb_reiterations = nb_reiterations
 
     def optgrad(self, variables, training_data, label_equals_prototype, random_state, lr_relevances=0, lr_prototypes=1):
         n_data, n_dim = training_data.shape
