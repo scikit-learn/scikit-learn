@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-from glvq.plotting import project_plot2d
+from sklearn.glvq.plotting import project_plot2d
 from sklearn.utils.multiclass import unique_labels
 
 from sklearn.glvq.gmlvq import GmlvqModel
@@ -19,12 +19,12 @@ glvq = GlvqModel()
 glvq.fit(toy_data,toy_label)
 pred = glvq.predict(toy_data)
 
-# f = plt.figure(1)
-# plt.scatter(toy_data[:, 0], toy_data[:, 1], c=toy_label)
-# plt.scatter(toy_data[:, 0], toy_data[:, 1], c=pred, marker='.')
-# plt.scatter(glvq.w_[:, 0], glvq.w_[:, 1])
-# plt.axis('equal')
-# f.show()
+f = plt.figure(1)
+plt.scatter(toy_data[:, 0], toy_data[:, 1], c=toy_label)
+plt.scatter(toy_data[:, 0], toy_data[:, 1], c=pred, marker='.')
+plt.scatter(glvq.w_[:, 0], glvq.w_[:, 1])
+plt.axis('equal')
+f.show()
 
 toy_data = np.append(np.random.multivariate_normal([0, 0], np.array([[0.3,0],[0,4]]), size=nb_ppc),
                      np.random.multivariate_normal([4, 4], np.array([[0.3,0],[0,4]]), size=nb_ppc), axis=0)
@@ -35,8 +35,8 @@ project_plot2d(grlvq,toy_data,toy_label,2)
 print('grlvq:',grlvq.score(toy_data,toy_label))
 print('gvlq:', glvq.score(toy_data,toy_label))
 
-toy_data = np.append(np.random.multivariate_normal([0, 0], np.array([[5,4],[4,6]]), size=nb_ppc),
-                     np.random.multivariate_normal([9, 0], np.array([[5,4],[4,6]]), size=nb_ppc), axis=0)
+#toy_data = np.append(np.random.multivariate_normal([0, 0], np.array([[5,4],[4,6]]), size=nb_ppc),
+#                     np.random.multivariate_normal([9, 0], np.array([[5,4],[4,6]]), size=nb_ppc), axis=0)
 gmlvq = GmlvqModel()
 gmlvq.fit(toy_data,toy_label)
 project_plot2d(gmlvq,toy_data,toy_label,3)
@@ -49,25 +49,6 @@ toy_data = np.append(np.random.multivariate_normal([0, 1], np.array([[5,-4],[-4,
 lgmlvq = LgmlvqModel()
 lgmlvq.fit(toy_data,toy_label)
 project_plot2d(lgmlvq, toy_data, toy_label, 4)
-# pred = lgmlvq.predict(toy_data)
-#
-# plt.subplot(427)
-# plt.scatter(toy_data[:, 0], toy_data[:, 1], c=toy_label)
-# plt.scatter(toy_data[:, 0], toy_data[:, 1], c=pred, marker='.')
-# plt.scatter(lgmlvq.w_[:, 0], lgmlvq.w_[:, 1])
-# plt.axis('equal')
-#
-# classes = unique_labels(toy_label)
-# class_points = []
-# for i in range(len(classes)):
-#     class_points.append(toy_data[classes[i]==toy_label].dot(lgmlvq.psis_[i]))
-#
-# plt.subplot(428)
-# for i in range(len(class_points)):
-#     plt.scatter(class_points[i][:, 0], class_points[i][:, 1])
-#     #plt.scatter(class_points[i][:, 0], class_points[i][:, 1], c=pred, marker='.')
-#     #plt.scatter(glvq.w_[:, 0], glvq.w_[:, 1])
-# plt.axis('equal')
 
 print('lgmlvq:',lgmlvq.score(toy_data,toy_label))
 print('gvlq:', glvq.score(toy_data,toy_label))

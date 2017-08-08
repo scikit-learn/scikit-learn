@@ -7,10 +7,6 @@ from sklearn.glvq.glvq import GlvqModel, _squared_euclidean
 from sklearn.utils import validation
 
 
-def call(args):
-    print(args)
-
-
 # TODO: implement custom optfun for grlvq without omega
 
 class GrlvqModel(GlvqModel):
@@ -18,8 +14,8 @@ class GrlvqModel(GlvqModel):
                  display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_relevances=None):
         super().__init__(random_state, initial_prototypes, prototypes_per_class,
                          display, max_iter, gtol)
-        if not isinstance(regularization, float):
-            raise ValueError("regularization must be a int")
+        if not isinstance(regularization, float) or regularization<0:
+            raise ValueError("regularization must be a positive float")
         self.regularization = regularization
         self.initial_relevances = initial_relevances
 
@@ -105,9 +101,12 @@ class GrlvqModel(GlvqModel):
         if self.initial_relevances is None:
             self.lambda_ = np.ones([nb_features])
         else:
-            self.lambda_ = validation.column_or_1d(self.initial_relevances)
+            self.lambda_ = validation.column_or_1d(validation.check_array(self.initial_relevances, dtype='float', ensure_2d=False))
+            if self.lambda_.size != nb_features:
+                raise ValueError("length of initial relevances is wrong"
+                                 "features=%d"
+                                 "length=%d" % (nb_features, self.lambda_.size))
         self.lambda_ /= np.sum(self.lambda_)
-        method = 'BFGS'
         variables = np.append(self.w_, np.diag(np.sqrt(self.lambda_)), axis=0)
         label_equals_prototype = y[np.newaxis].T == self.c_w_
         res = minimize(
@@ -135,57 +134,7 @@ class GrlvqModel(GlvqModel):
         self.w_ = out[:nb_prototypes]
         self.lambda_ = np.diag(out[nb_prototypes:].T.dot(out[nb_prototypes:]))
         self.lambda_ = self.lambda_ / self.lambda_.sum()
-        print(self.lambda_.sum())
         return n_iter
-
-    def _optimize2(self, X, y, random_state):
-        nb_prototypes, nb_features = self.w_.shape
-        if self.initial_relevances is None:
-            self.lambda_ = np.ones([nb_features])
-        else:
-            self.lambda_ = validation.column_or_1d(self.initial_relevances)
-        self.lambda_ /= np.sum(self.lambda_)
-
-        curr = np.append(self.w_, np.diag(np.sqrt(self.lambda_)), axis=0)
-        start = curr.copy()
-        curr = curr.ravel()
-        precision = 1e-5
-        gamma = 1
-        label_equals_prototype = y[np.newaxis].T == self.c_w_
-        count = 0
-        newfval = self.optfun(curr, X, label_equals_prototype)
-        fval = float('inf')
-        while abs(newfval - fval) > precision:
-            curr += -gamma * self.optgrad(curr, X, label_equals_prototype, lr_prototypes=1, lr_relevances=0,
-                                          random_state=random_state)
-            fval = newfval
-            newfval = self.optfun(curr, X, label_equals_prototype)
-            count += 1
-        print(count)
-        count = 0
-        newfval = self.optfun(curr, X, label_equals_prototype)
-        fval = float('inf')
-        while abs(newfval - fval) > precision:
-            curr += -gamma * self.optgrad(curr, X, label_equals_prototype, lr_prototypes=0, lr_relevances=1,
-                                          random_state=random_state)
-            fval = newfval
-            newfval = self.optfun(curr, X, label_equals_prototype)
-            count += 1
-        print(count)
-        count = 0
-        newfval = self.optfun(curr, X, label_equals_prototype)
-        fval = float('inf')
-        while abs(newfval - fval) > precision:
-            curr += -gamma * self.optgrad(curr, X, label_equals_prototype, lr_prototypes=1, lr_relevances=1,
-                                          random_state=random_state)
-            fval = newfval
-            newfval = self.optfun(curr, X, label_equals_prototype)
-            count += 1
-        print(count)
-        out = curr.reshape(curr.size // nb_features, nb_features)
-        print(out)
-        self.w_ = out[:nb_prototypes]
-        self.lambda_ = np.diag(out[nb_prototypes:].T.dot(out[nb_prototypes:]))
 
     def _compute_distance(self, X, w=None, lambda_=None):
         if w is None:

@@ -17,7 +17,6 @@ def _squared_euclidean(A, B=None):
 
 
 class GlvqModel(BaseEstimator, ClassifierMixin):
-    #def __init__(self, random_state=None, initial_prototypes=None, initial_rototype_labels=None, prototypes_per_class=1,
     def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
                  display=False, max_iter=2500, gtol=1e-5):
         self.random_state = random_state
@@ -100,15 +99,15 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         # set prototypes per class
         if isinstance(self.prototypes_per_class, int):
             if self.prototypes_per_class < 0:
-                raise ValueError("prototypes_per_class must be greater than 0")
+                raise ValueError("prototypes_per_class must be positive")
             nb_ppc = np.ones([nb_classes], dtype='int') * self.prototypes_per_class
         else:
             nb_ppc = validation.column_or_1d(
                 validation.check_array(self.prototypes_per_class, ensure_2d=False, dtype='int'))
             if nb_ppc.min() <= 0:
-                raise ValueError("Values in prototypes_per_class must be greater than 0")
+                raise ValueError("values in prototypes_per_class must be positive")
             if nb_ppc.size != nb_classes:
-                raise ValueError("Length of prototypes per class does not fit the number of classes"
+                raise ValueError("length of prototypes per class does not fit the number of classes"
                                  "classes=%d"
                                  "length=%d" % (nb_classes, nb_ppc.size))
         # initialize prototypes
@@ -127,11 +126,11 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
             self.w_ = X[:,:-1]
             self.c_w_ = X[:,-1]
             if self.w_.shape != (np.sum(nb_ppc), nb_features):
-                raise ValueError("The initial prototypes have wrong shape\n"
+                raise ValueError("the initial prototypes have wrong shape\n"
                                  "found=(%d,%d)\n"
                                  "expected=(%d,%d)" % (self.w_.shape[0], self.w_.shape[1], nb_ppc.sum(), nb_features))
             if set(self.c_w_) != set(self.classes_):
-                raise ValueError("Prototype labels and test data classes dont match\n"
+                raise ValueError("prototype labels and test data classes do not match\n"
                                  "classes={}\n"
                                  "prototype labels={}\n".format(self.classes_, self.c_w_))
         return train_set, train_lab, random_state

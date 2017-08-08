@@ -16,13 +16,13 @@ import matplotlib.pyplot as plt
 
 
 class GmlvqModel(GlvqModel):
-    def __init__(self, random_state=None, initial_prototypes=None, initial_rototype_labels=None, prototypes_per_class=1,
-                 display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrix=None, dim=None,
-                 nb_reiterations=100):
-        super().__init__(random_state, initial_prototypes, initial_rototype_labels, prototypes_per_class,
+    def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
+                 display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrix=None, dim=None
+                 ,nb_reiterations=100): #TODO nb_reiterations irrelevant?
+        super().__init__(random_state, initial_prototypes, prototypes_per_class,
                          display, max_iter, gtol)
-        if not isinstance(regularization, float):
-            raise ValueError("regularization must be a float ")
+        if not isinstance(regularization, float) or regularization<0:
+            raise ValueError("regularization must be a positive float ")
         self.regularization = regularization
         self.initial_matrix = initial_matrix
         self.initialdim = dim
@@ -110,7 +110,7 @@ class GmlvqModel(GlvqModel):
         if self.initialdim is None:
             self.dim_ = nb_features
         elif not isinstance(self.initialdim, int) or self.initialdim <= 0:
-            raise ValueError("dim must be an int above 0")
+            raise ValueError("dim must be an positive int")
         else:
             self.dim_ = self.initialdim
 
@@ -126,6 +126,11 @@ class GmlvqModel(GlvqModel):
                 self.omega_ = random_state.rand(self.dim_, nb_features) * 2 - 1
         else:
             self.omega_ = validation.check_array(self.initial_matrix)
+            if self.omega_.shape[1] != nb_features:
+                raise ValueError("initial matrix has wrong number of features\n"
+                                 "found=%d\n"
+                                 "expected=%d" % (self.omega_.shape[1],nb_features))
+
         variables = np.append(self.w_, self.omega_, axis=0)
         label_equals_prototype = y[np.newaxis].T == self.c_w_
         res = minimize(
