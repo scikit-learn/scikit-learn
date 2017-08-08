@@ -29,6 +29,7 @@ from sklearn.multioutput import ClassifierChain
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
+from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 
 
@@ -379,6 +380,8 @@ def test_classifier_chain_fit_and_predict_with_logistic_regression():
 
     assert_equal([c.coef_.size for c in classifier_chain.estimators_],
                  list(range(X.shape[1], X.shape[1] + Y.shape[1])))
+
+    assert isinstance(classifier_chain, ClassifierMixin)
 
 
 def test_classifier_chain_fit_and_predict_with_linear_svc():
