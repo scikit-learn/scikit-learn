@@ -13,6 +13,7 @@ from scipy.optimize import fmin_l_bfgs_b
 import warnings
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
 from ..model_selection import train_test_split
@@ -268,7 +269,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.n_layers_ = len(layer_units)
 
         # Output for regression
-        if not isinstance(self, ClassifierMixin):
+        if not is_classifier(self):
             self.out_activation_ = 'identity'
         # Output for multi class
         elif self._label_binarizer.y_type_ == 'multiclass':
@@ -491,7 +492,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             X, X_val, y, y_val = train_test_split(
                 X, y, random_state=self._random_state,
                 test_size=self.validation_fraction)
-            if isinstance(self, ClassifierMixin):
+            if is_classifier(self):
                 y_val = self._label_binarizer.inverse_transform(y_val)
         else:
             X_val = None
