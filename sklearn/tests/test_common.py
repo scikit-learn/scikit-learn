@@ -211,9 +211,9 @@ def test_classes_parameter_extra_classes():
 
     # Test whether duplicate classes result in error
             expected_msg = ("Classses parameter should contain all unique"
-                            " values, duplicates found in [1, 1, 2]")
+                            " values, duplicates found in [1 1 2]")
             expected_msg2 = ("Classses parameter should contain sorted values"
-                             ", unsorted values found in [1, 3, 2]")
+                             ", unsorted values found in [1 3 2]")
 
             assert_raise_message(ValueError, expected_msg,
                                  estimator(classes=[1, 1, 2]).fit, X, y)

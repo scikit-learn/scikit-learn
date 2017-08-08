@@ -776,24 +776,43 @@ def _check_y_classes(unique_y, classes):
                          (unique_y[~unique_y_in_classes], classes))
 
 
-def _check_unique_sorted_classes(array):
+def _check_classes(classes, ndim=1):
     """
     A helper to check the classes argument of classifiers. This will check
-    that the input is sorted and unique.
+    the dimensions of classes and that each dimension is sorted and unique.
 
     Parameters
     ----------
-    array : array-like
-        Input data.
+    classes : array-like
+        Input classes.
 
-    name : string, default=None
-        The string to be used argument to be used for error message
+    ndim : int, default=1
+        the expected number of dimensions in classes
     """
-    if array is not None:
-        unq = np.unique(array)
-        if unq.size != np.asarray(array).size:
+    if classes is None:
+        return
+
+    if ndim == 1:
+        classes = np.atleast_2d(classes)
+    else:
+        classes = np.asarray(classes)
+        print(classes.ndim)
+        if ndim != len(classes):
+            raise ValueError("`classes=%s` has length %d. expected "
+                             "length %d, same as the number of outputs in y" %
+                             (classes, len(classes), ndim))
+
+    for classes_k in classes:
+        classes_k = np.asarray(classes_k)
+        unq = np.unique(classes_k)
+        if classes_k.ndim == 0:
+            raise ValueError("Expected `classes=%s` to be a list of %d lists, "
+                             "found `%s` of type `%s`" %
+                             (classes, ndim, str(classes_k),
+                              classes_k.dtype.name))
+        if unq.size != np.asarray(classes_k).size:
             raise ValueError("Classses parameter should contain all unique"
-                             " values, duplicates found in %s" % array)
-        if not np.array_equal(unq, array):
+                             " values, duplicates found in %s" % classes_k)
+        if not np.array_equal(unq, classes_k):
             raise ValueError("Classses parameter should contain sorted values"
-                             ", unsorted values found in %s" % array)
+                             ", unsorted values found in %s" % classes_k)

@@ -18,7 +18,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import SkipTest
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y, _check_y_classes
-from sklearn.utils import _check_unique_sorted_classes
+from sklearn.utils import _check_classes
 from sklearn.utils.mocking import MockDataFrame
 from sklearn.utils.estimator_checks import NotAnArray
 from sklearn.random_projection import sparse_random_matrix
@@ -549,14 +549,33 @@ def test_check_y_classes():
     assert_raises(ValueError, _check_y_classes, y, classes)
 
 
-def test_check_unique_sorted_classes():
-    expected_msg = ("Classses parameter should contain all unique"
-                    " values, duplicates found in [1, 2, 1, 2, 2, 3, 4]")
-    expected_msg2 = ("Classses parameter should contain sorted values"
-                     ", unsorted values found in [1, 2, 4, 3]")
-    array = [1, 2, 1, 2, 2, 3, 4]
+def test_check_classes():
+    expected_msg = ("`classes=[[1 2]\n [1 2]]` has length 2. expected "
+                    "length 3, same as the number of outputs in y")
+    classes = [[1, 2], [1, 2]]
     assert_raise_message(ValueError, expected_msg,
-                         _check_unique_sorted_classes, array)
-    array = [1, 2, 4, 3]
-    assert_raise_message(ValueError, expected_msg2,
-                         _check_unique_sorted_classes, array)
+                         _check_classes, classes, 3)
+
+    expected_msg = ("Classses parameter should contain all unique"
+                    " values, duplicates found in [1 2 1 2]")
+    classes = [1, 2, 1, 2]
+    assert_raise_message(ValueError, expected_msg,
+                         _check_classes, classes)
+    classes = [[1, 2, 1, 2], [3]]
+    assert_raise_message(ValueError, expected_msg,
+                         _check_classes, classes, 2)
+
+    expected_msg = ("Classses parameter should contain sorted values"
+                    ", unsorted values found in [1 3 2]")
+    classes = [1, 3, 2]
+    assert_raise_message(ValueError, expected_msg,
+                         _check_classes, classes)
+    classes = [[1, 3, 2], [1, 2]]
+    assert_raise_message(ValueError, expected_msg,
+                         _check_classes, classes, 2)
+
+    expected_msg = ("Expected `classes=[1 2]` to be a list of 2 lists, "
+                    "found `1` of type `int64`")
+    classes = [1, 2]
+    assert_raise_message(ValueError, expected_msg,
+                         _check_classes, classes, 2)

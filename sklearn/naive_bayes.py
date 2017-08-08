@@ -29,7 +29,7 @@ from .utils import check_X_y
 from .utils import check_array
 from .utils import check_consistent_length
 from .utils import _check_y_classes
-from .utils import _check_unique_sorted_classes
+from .utils import _check_classes
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call, unique_labels
@@ -621,7 +621,7 @@ class BaseDiscreteNB(BaseNB):
             self.classes_ = unique_labels(y)
         # case when set at intialization
         else:
-            _check_unique_sorted_classes(self.classes)
+            _check_classes(self.classes)
             self.classes_ = np.asarray(self.classes)
 
         _check_y_classes(np.unique(y), self.classes_)

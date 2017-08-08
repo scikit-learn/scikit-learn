@@ -34,7 +34,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_classes
 from ..utils import _check_y_classes
 from ..preprocessing import label_binarize
 
@@ -159,13 +159,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                     self.classes_.append(classes_k)
                     self.n_classes_.append(classes_k.shape[0])
             else:
-                # check classes have same length as number of outputs:
-                num_classes = len(self.classes)
-                if num_classes != self.n_outputs_:
-                    raise ValueError(
-                            "%d lists of classes found in `classes=%s`, which"
-                            "is different from %d outputs found in `y`" %
-                            (num_classes, self.classes, self.n_outputs_))
+                _check_classes(self.classes, self.n_outputs_)
                 # encode y:
                 for k in range(self.n_outputs_):
                     classes_k = np.asarray(self.classes[k])
@@ -671,7 +665,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             List of all the classes that can possibly appear in each output
             of the y vector. (multi-output problem)
 
-            The list of classes for each output should be sorted.
+            The list of classes for each output should be sorted in the value
+            of classes.
 
             If not specified, this will be set as per the classes present in
             the training data. It is recommended to set this parameter during
