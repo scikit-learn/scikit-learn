@@ -186,6 +186,9 @@ def test_classes_parameter_extra_classes():
             # remove the estimator from set:
             estimators_to_check.remove(name)
 
+            clf0 = estimator().fit(X, y)
+            pred0 = clf0.predict_proba(X)
+
             clf1 = estimator(classes=[1, 2]).fit(X, y)
             pred1 = clf1.predict_proba(X)
 
@@ -196,11 +199,13 @@ def test_classes_parameter_extra_classes():
             pred3 = clf3.predict_proba(X)
 
             # check shapes:
+            assert_equal(pred0.shape, (X.shape[0], 2))
             assert_equal(pred1.shape, (X.shape[0], 2))
             assert_equal(pred2.shape, (X.shape[0], 4))
             assert_equal(pred3.shape, (X.shape[0], 4))
 
             # check same columns are equal:
+            assert_array_almost_equal(pred0, pred1)
             assert_array_almost_equal(pred1[:, 0:2], pred2[:, 0:2])
             assert_array_almost_equal(pred1[:, 0:2], pred3[:, 1:3])
             assert_array_almost_equal(pred2[:, 2:4], 0)
@@ -245,6 +250,9 @@ def test_classes_parameter_extra_classes_multilabel():
             # remove the estimator from set:
             estimators_to_check.remove(name)
 
+            clf0 = estimator().fit(X, y)
+            pred0 = clf0.predict_proba(X)
+
             classes = [[1, 2], [1, 2]]
             clf1 = estimator(classes=classes).fit(X, y)
             pred1 = clf1.predict_proba(X)
@@ -258,15 +266,18 @@ def test_classes_parameter_extra_classes_multilabel():
             pred3 = clf3.predict_proba(X)
 
             for i in range(2):
+                pred0_i = pred0[i]
                 pred1_i = pred1[i]
                 pred2_i = pred2[i]
                 pred3_i = pred3[i]
                 # check shapes:
+                assert_equal(pred0_i.shape, (X.shape[0], 2))
                 assert_equal(pred1_i.shape, (X.shape[0], 2))
                 assert_equal(pred2_i.shape, (X.shape[0], 4))
                 assert_equal(pred3_i.shape, (X.shape[0], 4))
 
                 # check same columns are equal:
+                assert_array_almost_equal(pred0_i, pred1_i)
                 assert_array_almost_equal(pred1_i[:, 0:2], pred2_i[:, 0:2])
                 assert_array_almost_equal(pred1_i[:, 0:2], pred3_i[:, 1:3])
                 assert_array_almost_equal(pred2_i[:, 2:4], 0)
