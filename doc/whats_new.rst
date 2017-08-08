@@ -139,9 +139,6 @@ Model selection and evaluation
   :class:`model_selection.RepeatedStratifiedKFold`.
   :issue:`8120` by `Neeraj Gangwar`_.
 
-- Added a scorer based on :class:`metrics.explained_variance_score`.
-  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
-
 Miscellaneous
 
 - Validation that input data contains no NaN or inf can now be suppressed
@@ -333,6 +330,9 @@ Model evaluation and meta-estimators
 
 - More clustering metrics are now available through :func:`metrics.get_scorer`
   and ``scoring`` parameters. :issue:`8117` by `Raghav RV`_.
+
+- A scorer based on :func:`metrics.explained_variance_score` is also available.
+  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
 
 Metrics
 
@@ -605,6 +605,9 @@ Model evaluation and meta-estimators
   target columns had different numbers of classes, a ``ValueError`` would be
   raised on trying to stack matrices with different dimensions.
   :issue:`8093` by :user:`Peter Bull <pjbull>`.
+
+- Cross validation now works with Pandas datatypes that that have a
+  read-only index. :issue:`9507` by `Loic Esteve`_.
 
 Metrics
 
