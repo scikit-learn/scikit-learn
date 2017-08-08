@@ -26,7 +26,7 @@ predictions:
     >>> est.fit (X_train, y_train)
     LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
     >>> est.score(X_test, y_test)
-    0.875...
+    0.87500000000000089
 
 
 * **Scoring parameter**: Model-evaluation tools using
@@ -41,8 +41,8 @@ predictions:
     >>> import numpy as np
     >>> from sklearn.model_selection import cross_val_score
     >>> scores = cross_val_score(est, X, y)
-    >>> np.mean(scores.mean)
-    0.998...
+    >>> np.mean(scores)
+    0.99833333333333341
 
 
 * **Metric functions**: The :mod:`metrics` module implements functions
