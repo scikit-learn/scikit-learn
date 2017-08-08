@@ -180,23 +180,33 @@ def test_classes_parameter_extra_classes():
     y = np.array([1, 1, 1, 2, 2, 2])
     estimators_to_check = set(['GaussianNB', 'BernoulliNB', 'MultinomialNB',
                                'DecisionTreeClassifier',
-                               'ExtraTreeClassifier'])
+                               'ExtraTreeClassifier',
+                               'RandomForestClassifier',
+                               'ExtraTreesClassifier'])
     for name, estimator in all_estimators():
         if name in estimators_to_check:
             # remove the estimator from set:
             estimators_to_check.remove(name)
+            clf = estimator()
+            if hasattr(clf, 'random_state'):
+                params = {'random_state': 0}
+            else:
+                params = {}
 
-            clf0 = estimator().fit(X, y)
-            pred0 = clf0.predict_proba(X)
+            clf.set_params(**params)
+            pred0 = clf.fit(X, y).predict_proba(X)
 
-            clf1 = estimator(classes=[1, 2]).fit(X, y)
-            pred1 = clf1.predict_proba(X)
+            params['classes'] = [1, 2]
+            clf.set_params(**params)
+            pred1 = clf.fit(X, y).predict_proba(X)
 
-            clf2 = estimator(classes=[1, 2, 3, 4]).fit(X, y)
-            pred2 = clf2.predict_proba(X)
+            params['classes'] = [1, 2, 3, 4]
+            clf.set_params(**params)
+            pred2 = clf.fit(X, y).predict_proba(X)
 
-            clf3 = estimator(classes=[0, 1, 2, 3]).fit(X, y)
-            pred3 = clf3.predict_proba(X)
+            params['classes'] = [0, 1, 2, 3]
+            clf.set_params(**params)
+            pred3 = clf.fit(X, y).predict_proba(X)
 
             # check shapes:
             assert_equal(pred0.shape, (X.shape[0], 2))
@@ -244,26 +254,37 @@ def test_classes_parameter_extra_classes_multilabel():
     y = np.array([1, 1, 1, 2, 2, 2])
     y = np.hstack([y, y]).reshape(len(y), 2)
     estimators_to_check = set(['DecisionTreeClassifier',
-                              'ExtraTreeClassifier'])
+                               'ExtraTreeClassifier',
+                               'RandomForestClassifier',
+                               'ExtraTreesClassifier'])
     for name, estimator in all_estimators():
         if name in estimators_to_check:
             # remove the estimator from set:
             estimators_to_check.remove(name)
 
+            clf = estimator()
+            if hasattr(clf, 'random_state'):
+                params = {'random_state': 0}
+            else:
+                params = {}
+
             clf0 = estimator().fit(X, y)
             pred0 = clf0.predict_proba(X)
 
-            classes = [[1, 2], [1, 2]]
-            clf1 = estimator(classes=classes).fit(X, y)
-            pred1 = clf1.predict_proba(X)
+            clf.set_params(**params)
+            pred0 = clf.fit(X, y).predict_proba(X)
 
-            classes = [[1, 2, 3, 4], [1, 2, 3, 4]]
-            clf2 = estimator(classes=classes).fit(X, y)
-            pred2 = clf2.predict_proba(X)
+            params['classes'] = [[1, 2], [1, 2]]
+            clf.set_params(**params)
+            pred1 = clf.fit(X, y).predict_proba(X)
 
-            classes = [[0, 1, 2, 3], [0, 1, 2, 3]]
-            clf3 = estimator(classes=classes).fit(X, y)
-            pred3 = clf3.predict_proba(X)
+            params['classes'] = [[1, 2, 3, 4], [1, 2, 3, 4]]
+            clf.set_params(**params)
+            pred2 = clf.fit(X, y).predict_proba(X)
+
+            params['classes'] = [[0, 1, 2, 3], [0, 1, 2, 3]]
+            clf.set_params(**params)
+            pred3 = clf.fit(X, y).predict_proba(X)
 
             for i in range(2):
                 pred0_i = pred0[i]

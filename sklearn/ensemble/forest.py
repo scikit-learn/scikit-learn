@@ -484,8 +484,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
                 classes_k, y_store_unique_indices[:, k] = np.unique(
                                                         y[:, k],
                                                         return_inverse=True)
-            self.classes_.append(classes_k)
-            self.n_classes_.append(classes_k.shape[0])
+                self.classes_.append(classes_k)
+                self.n_classes_.append(classes_k.shape[0])
         else:
             _check_classes(self.classes, self.n_outputs_)
             if self.n_outputs_ == 1:
@@ -1005,11 +1005,12 @@ class RandomForestClassifier(ForestClassifier):
         super(RandomForestClassifier, self).__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
+            # no need to set classes for estimator as it gets encoded y
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
                               "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "classes"),
+                              "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1487,11 +1488,12 @@ class ExtraTreesClassifier(ForestClassifier):
         super(ExtraTreesClassifier, self).__init__(
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
+            # no need to set classes for estimator as it gets encoded y
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
                               "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "classes"),
+                              "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,

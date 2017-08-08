@@ -125,6 +125,12 @@ class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
         estimator = clone(self.base_estimator_)
         estimator.set_params(**dict((p, getattr(self, p))
                                     for p in self.estimator_params))
+        # set classes separately based on encoded values:
+        if hasattr(self, "classes"):
+            classes = []
+            for n in self.n_classes_:
+                classes.append(list(range(n)))
+            estimator.set_params(**dict([('classes', classes)]))
 
         if random_state is not None:
             _set_random_states(estimator, random_state)
