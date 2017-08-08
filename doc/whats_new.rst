@@ -139,6 +139,9 @@ Model selection and evaluation
   :class:`model_selection.RepeatedStratifiedKFold`.
   :issue:`8120` by `Neeraj Gangwar`_.
 
+- Added a scorer based on :class:`metrics.explained_variance_score`.
+  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+
 Miscellaneous
 
 - Validation that input data contains no NaN or inf can now be suppressed
