@@ -321,8 +321,10 @@ class LeastAbsoluteError(RegressionLossFunction):
         """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
         sample_weight = sample_weight.take(terminal_region, axis=0)
-        diff = y.take(terminal_region, axis=0) - pred.take(terminal_region, axis=0)
-        tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight, percentile=50)
+        diff = (y.take(terminal_region, axis=0)
+                - pred.take(terminal_region, axis=0))
+        tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight,
+                                                      percentile=50)
 
 
 class HuberLossFunction(RegressionLossFunction):
@@ -352,15 +354,18 @@ class HuberLossFunction(RegressionLossFunction):
             if sample_weight is None:
                 gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
             else:
-                gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
+                gamma = _weighted_percentile(np.abs(diff), sample_weight,
+                                             self.alpha * 100)
 
         gamma_mask = np.abs(diff) <= gamma
         if sample_weight is None:
             sq_loss = np.sum(0.5 * diff[gamma_mask] ** 2.0)
-            lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask]) - gamma / 2.0))
+            lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask])
+                                       - gamma / 2.0))
             loss = (sq_loss + lin_loss) / y.shape[0]
         else:
-            sq_loss = np.sum(0.5 * sample_weight[gamma_mask] * diff[gamma_mask] ** 2.0)
+            sq_loss = np.sum(0.5 * sample_weight[gamma_mask]
+                             * diff[gamma_mask] ** 2.0)
             lin_loss = np.sum(gamma * sample_weight[~gamma_mask] *
                               (np.abs(diff[~gamma_mask]) - gamma / 2.0))
             loss = (sq_loss + lin_loss) / sample_weight.sum()
@@ -372,7 +377,8 @@ class HuberLossFunction(RegressionLossFunction):
         if sample_weight is None:
             gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
         else:
-            gamma = _weighted_percentile(np.abs(diff), sample_weight, self.alpha * 100)
+            gamma = _weighted_percentile(np.abs(diff), sample_weight,
+                                         self.alpha * 100)
         gamma_mask = np.abs(diff) <= gamma
         residual = np.zeros((y.shape[0],), dtype=np.float64)
         residual[gamma_mask] = diff[gamma_mask]
@@ -421,7 +427,8 @@ class QuantileLossFunction(RegressionLossFunction):
                     (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
         else:
             loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) -
-                    (1.0 - alpha) * np.sum(sample_weight[~mask] * diff[~mask])) /
+                    (1.0 - alpha) * np.sum(sample_weight[~mask]
+                                           * diff[~mask])) /
                     sample_weight.sum())
         return loss
 
@@ -450,7 +457,8 @@ class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
 
          the does not support probabilites raises AttributeError.
         """
-        raise TypeError('%s does not support predict_proba' % type(self).__name__)
+        raise TypeError('%s does not support predict_proba' %
+                        type(self).__name__)
 
     @abstractmethod
     def _score_to_decision(self, score):
@@ -484,7 +492,8 @@ class BinomialDeviance(ClassificationLossFunction):
             return -2.0 * np.mean((y * pred) - np.logaddexp(0.0, pred))
         else:
             return (-2.0 / sample_weight.sum() *
-                    np.sum(sample_weight * ((y * pred) - np.logaddexp(0.0, pred))))
+                    np.sum(sample_weight * ((y * pred) - np.logaddexp(0.0,
+                                                                      pred))))
 
     def negative_gradient(self, y, pred, **kargs):
         """Compute the residual (= negative gradient). """
@@ -506,7 +515,8 @@ class BinomialDeviance(ClassificationLossFunction):
         sample_weight = sample_weight.take(terminal_region, axis=0)
 
         numerator = np.sum(sample_weight * residual)
-        denominator = np.sum(sample_weight * (y - residual) * (1 - y + residual))
+        denominator = np.sum(sample_weight * (y - residual)
+                             * (1 - y + residual))
 
         # prevents overflow and division by zero
         if abs(denominator) < 1e-150:
@@ -789,11 +799,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
             # update tree leaves
             if X_csr is not None:
-                loss.update_terminal_regions(tree.tree_, X_csr, y, residual, y_pred,
-                                             sample_weight, sample_mask,
-                                             self.learning_rate, k=k)
+                loss.update_terminal_regions(tree.tree_, X_csr, y, residual,
+                                             y_pred, sample_weight,
+                                             sample_mask, self.learning_rate,
+                                             k=k)
             else:
-                loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
+                loss.update_terminal_regions(tree.tree_, X, y, residual,
+                                             y_pred,
                                              sample_weight, sample_mask,
                                              self.learning_rate, k=k)
 
@@ -976,7 +988,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             self._clear_state()
 
         # Check input
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         dtype=DTYPE)
         n_samples, self.n_features_ = X.shape
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
@@ -1022,9 +1035,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         elif presort == 'auto':
             presort = True
 
-        if presort == True:
+        if presort:
             if issparse(X):
-                raise ValueError("Presorting is not supported for sparse matrices.")
+                raise ValueError("Presorting is not supported for sparse "
+                                 "matrices.")
             else:
                 X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
                                                  dtype=np.int32)
@@ -1130,7 +1144,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         score = self._init_decision_function(X)
         predict_stages(self.estimators_, X, self.learning_rate, score)
         return score
-
 
     def _staged_decision_function(self, X):
         """Compute decision function of ``X`` for each iteration.
@@ -1405,7 +1418,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
-    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators, ``loss_.K``]
+    estimators_ : ndarray of DecisionTreeRegressor, shape = [n_estimators,
+                  ``loss_.K``]
         The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
         classification, otherwise n_classes.
 
