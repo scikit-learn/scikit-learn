@@ -25,9 +25,9 @@ def _get_mask(X, value_to_mask):
 
 
 class KNNImputer(BaseEstimator, TransformerMixin):
-    """Imputation transformer for completing missing values.
-
-    Read more in the :ref:`User Guide <imputation>`.
+    """Imputation transformer for completing missing values using Nearest
+    Neighbors. Broadly speaking, the imputation is performed using either
+    the weighted or the unweighted mean of the desired number of neighbors.
 
     Parameters
     ----------
@@ -75,12 +75,33 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    statistics_ : array of shape (n_features,)
-        A tuple whose first element is the fitted NearestNeighbors object
-        and the second element is the column means using available values.
+    statistics_ : {tuple}
+        A tuple whose first element is the input dataset used to fit the
+        KNNImputer object and the second element is the column means of that
+        dataset using observed (i.e. non-missing) values.
 
-    Notes
-    -----
+    References
+    ----------
+    * Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
+      Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, Missing
+      value estimation methods for DNA microarrays, BIOINFORMATICS Vol. 17
+      no. 6, 2001 Pages 520-525.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import knn_imputation
+    >>> nan = float("NaN")
+    >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
+    >>> imputer = knn_imputation.KNNImputer(n_neighbors=2, weights="uniform")
+    >>> imputer.fit(X)
+    KNNImputer(col_max_missing=0.8, copy=True, metric='masked_euclidean',
+          missing_values='NaN', n_neighbors=2, row_max_missing=0.5,
+          weights='uniform')
+    >>> imputer.transform(X)
+    array([[ 1. ,  2. ,  4. ],
+           [ 3. ,  4. ,  3. ],
+           [ 5.5,  6. ,  5. ],
+           [ 8. ,  8. ,  7. ]])
     """
 
     def __init__(self, missing_values="NaN", n_neighbors=5,
@@ -110,12 +131,13 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             Returns self.
         """
         # Check parameters
+        force_all_finite = False if self.missing_values in ["NaN",
+                                                            np.nan] else True
         X = check_array(X, accept_sparse=False, dtype=np.float64,
-                        force_all_finite=False, copy=self.copy)
+                        force_all_finite=force_all_finite, copy=self.copy)
         # Check for +/- inf
         if (np.any(np.isinf(X))):
-            raise ValueError("+/- inf values are not allowed even though NaN "
-                             "values are allowed.")
+            raise ValueError("+/- inf values are not allowed.")
 
         # Check if % missing in any column > col_max_missing
         mask = _get_mask(X, self.missing_values)
@@ -159,9 +181,11 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         X : {array-like}, shape = [n_samples, n_features]
             The input data to complete.
         """
+        force_all_finite = False if self.missing_values in ["NaN",
+                                                            np.nan] else True
         check_is_fitted(self, 'statistics_')
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=False, copy=self.copy)
+                        force_all_finite=force_all_finite, copy=self.copy)
         mask = _get_mask(X, self.missing_values)
         n_rows_X, n_cols_X = X.shape
         row_total_missing = mask.sum(axis=1)
