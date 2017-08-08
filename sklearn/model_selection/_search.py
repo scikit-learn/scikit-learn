@@ -16,7 +16,7 @@ from __future__ import division
 from abc import ABCMeta, abstractmethod
 from collections import Mapping, namedtuple, defaultdict, Sequence
 from functools import partial, reduce
-from itertools import product, chain
+from itertools import product
 import operator
 import warnings
 
