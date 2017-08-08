@@ -179,7 +179,8 @@ def test_classes_parameter_extra_classes():
     X = rng.randint(5, size=(6, 100))
     y = np.array([1, 1, 1, 2, 2, 2])
     estimators_to_check = set(['GaussianNB', 'BernoulliNB', 'MultinomialNB',
-                               'DecisionTreeClassifier'])
+                               'DecisionTreeClassifier',
+                               'RandomForestClassifier'])
     for name, estimator in all_estimators():
         if name in estimators_to_check:
             # remove the estimator from set:
