@@ -180,7 +180,7 @@ def test_classes_parameter_extra_classes():
     y = np.array([1, 1, 1, 2, 2, 2])
     estimators_to_check = set(['GaussianNB', 'BernoulliNB', 'MultinomialNB',
                                'DecisionTreeClassifier',
-                               'RandomForestClassifier'])
+                               'ExtraTreeClassifier'])
     for name, estimator in all_estimators():
         if name in estimators_to_check:
             # remove the estimator from set:
@@ -238,7 +238,8 @@ def test_classes_parameter_extra_classes_multilabel():
     X = rng.randint(5, size=(6, 100))
     y = np.array([1, 1, 1, 2, 2, 2])
     y = np.hstack([y, y]).reshape(len(y), 2)
-    estimators_to_check = set(['DecisionTreeClassifier'])
+    estimators_to_check = set(['DecisionTreeClassifier',
+                              'ExtraTreeClassifier'])
     for name, estimator in all_estimators():
         if name in estimators_to_check:
             # remove the estimator from set:
