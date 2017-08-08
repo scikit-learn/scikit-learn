@@ -172,7 +172,7 @@ Trees and ensembles
 
 - :func:`tree.export_graphviz` now shows configurable number of decimal
   places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
-     
+
 - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
   to change output shape of `transform` method to 2 dimensional.
   :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
@@ -332,7 +332,7 @@ Model evaluation and meta-estimators
   and ``scoring`` parameters. :issue:`8117` by `Raghav RV`_.
 
 - A scorer based on :func:`metrics.explained_variance_score` is also available.
-  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 Metrics
 
@@ -502,7 +502,7 @@ Decomposition, manifold learning and clustering
   in :class:`decomposition.PCA`,
   :class:`decomposition.RandomizedPCA` and
   :class:`decomposition.IncrementalPCA`.
-  :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+  :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 - Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
   :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
