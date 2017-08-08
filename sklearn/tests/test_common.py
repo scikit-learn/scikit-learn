@@ -200,14 +200,10 @@ def test_classes_parameter_extra_classes():
             assert_equal(pred3.shape, (X.shape[0], 4))
 
             # check same columns are equal:
-            assert_array_almost_equal(pred1[:, 0], pred2[:, 0])
-            assert_array_almost_equal(pred1[:, 0], pred3[:, 1])
-            assert_array_almost_equal(pred1[:, 1], pred2[:, 1])
-            assert_array_almost_equal(pred1[:, 1], pred3[:, 2])
-            assert_array_almost_equal(pred2[:, 2], 0)
-            assert_array_almost_equal(pred2[:, 3], 0)
-            assert_array_almost_equal(pred3[:, 0], 0)
-            assert_array_almost_equal(pred3[:, 3], 0)
+            assert_array_almost_equal(pred1[:, 0:2], pred2[:, 0:2])
+            assert_array_almost_equal(pred1[:, 0:2], pred3[:, 1:3])
+            assert_array_almost_equal(pred2[:, 2:4], 0)
+            assert_array_almost_equal(pred3[:, [0, 3]], 0)
 
             # Test whether duplicate classes result in error
             expected_msg = ("Classses parameter should contain all unique"
@@ -217,6 +213,8 @@ def test_classes_parameter_extra_classes():
 
             assert_raise_message(ValueError, expected_msg,
                                  estimator(classes=[1, 1, 2]).fit, X, y)
+            assert_raise_message(ValueError, expected_msg2,
+                                 estimator(classes=[1, 3, 2]).fit, X, y)
             # Run only if partial_fit is present:
             if hasattr(estimator, 'partial_fit'):
                 assert_raise_message(ValueError, expected_msg,
@@ -225,6 +223,52 @@ def test_classes_parameter_extra_classes():
                 assert_raise_message(ValueError, expected_msg2,
                                      estimator().partial_fit, X, y,
                                      classes=[1, 3, 2])
+
+    # check that all estimators in estimator_to_check were tested
+    assert_equal(estimators_to_check, set(),
+                 "All estimators specified in list estimators_to_check were"
+                 "not checked")
+
+
+@ignore_warnings(category=(DeprecationWarning))
+def test_classes_parameter_extra_classes_multilabel():
+    # Test same as extra_classes but for multilabel
+    rng = np.random.RandomState(0)
+    X = rng.randint(5, size=(6, 100))
+    y = np.array([1, 1, 1, 2, 2, 2])
+    y = np.hstack([y, y]).reshape(len(y), 2)
+    estimators_to_check = set(['DecisionTreeClassifier'])
+    for name, estimator in all_estimators():
+        if name in estimators_to_check:
+            # remove the estimator from set:
+            estimators_to_check.remove(name)
+
+            classes = [[1, 2], [1, 2]]
+            clf1 = estimator(classes=classes).fit(X, y)
+            pred1 = clf1.predict_proba(X)
+
+            classes = [[1, 2, 3, 4], [1, 2, 3, 4]]
+            clf2 = estimator(classes=classes).fit(X, y)
+            pred2 = clf2.predict_proba(X)
+
+            classes = [[0, 1, 2, 3], [0, 1, 2, 3]]
+            clf3 = estimator(classes=classes).fit(X, y)
+            pred3 = clf3.predict_proba(X)
+
+            for i in range(2):
+                pred1_i = pred1[i]
+                pred2_i = pred2[i]
+                pred3_i = pred3[i]
+                # check shapes:
+                assert_equal(pred1_i.shape, (X.shape[0], 2))
+                assert_equal(pred2_i.shape, (X.shape[0], 4))
+                assert_equal(pred3_i.shape, (X.shape[0], 4))
+
+                # check same columns are equal:
+                assert_array_almost_equal(pred1_i[:, 0:2], pred2_i[:, 0:2])
+                assert_array_almost_equal(pred1_i[:, 0:2], pred3_i[:, 1:3])
+                assert_array_almost_equal(pred2_i[:, 2:4], 0)
+                assert_array_almost_equal(pred3_i[:, [0, 3]], 0)
 
     # check that all estimators in estimator_to_check were tested
     assert_equal(estimators_to_check, set(),
