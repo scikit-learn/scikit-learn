@@ -1999,6 +1999,18 @@ def test_categorical_encoder_errors():
     assert_allclose(Xtr.toarray(), [[0, 0, 1, 0, 1, 0], [0, 1, 0, 1, 0, 1]])
 
 
+def test_categorical_encoder_categories():
+    X = [['abc', 1, 55], ['def', 2, 55]]
+    enc = CategoricalEncoder()
+    enc.fit(X)
+
+    assert enc.categories == 'auto'
+    assert isinstance(enc.categories_, list)
+    cat_exp = [['abc', 'def'], [1, 2], [55]]
+    for res, exp in zip(enc.categories_, cat_exp):
+        assert res.tolist() == exp
+
+
 def test_categorical_encoder_specified_categories():
     X = np.array([['a', 'b']], dtype=object).T
 
@@ -2012,6 +2024,8 @@ def test_categorical_encoder_specified_categories():
     exp = np.array([[1., 0., 0.],
                     [0., 1., 0.]])
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
+    assert enc.categories[0] == ['c', 'b', 'a']
+    assert enc.categories_[0].tolist() == ['a', 'b', 'c']
 
     # multiple columns
     X = np.array([['a', 'b'], ['A', 'C']], dtype=object).T

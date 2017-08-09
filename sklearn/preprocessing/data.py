@@ -2561,7 +2561,8 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
 
 class CategoricalEncoder(BaseEstimator, TransformerMixin):
-    """Encode categorical features using a one-hot aka one-of-K scheme.
+    """Encode categorical features using specified encoding scheme (one-hot
+    or ordinal encoding).
 
     The input to this transformer should be a matrix of integers or strings,
     denoting the values taken on by categorical (discrete) features. The
@@ -2590,11 +2591,11 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         - 'auto' : Determine categories automatically from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
-          column. The passed categories are sorted before encoding the data.
+          column. The passed categories are sorted before encoding the data
+          (used categories can be found in the ``categories_`` attribute).
 
-    dtype : number type, default=np.float
-        Desired dtype of output. This keyword is ignored in case of
-        ``encoding='ordinal'`` (the output is always integer).
+    dtype : number type, default=np.float64
+        Desired dtype of output.
 
     handle_unknown : str, 'error' or 'ignore'
         Whether to raise an error or ignore if a unknown categorical feature is
@@ -2604,6 +2605,13 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         will be all zeros.
         Ignoring unknown categories is not supported for
         ``encoding='ordinal'``.
+
+    Attributes
+    ----------
+    categories_ : list of arrays
+        The categories of each feature determined during fitting. When
+        categories were specified manually, this holds the sorted categories
+        (in order corresponding with output of `transform`).
 
     Examples
     --------
@@ -2617,8 +2625,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     ... # doctest: +ELLIPSIS
     CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
               encoding='onehot', handle_unknown='error')
-    >>> enc.transform([[0, 1, 1]]).toarray()
-    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
+    >>> enc.transform([[0, 1, 1], [1, 0, 3]]).toarray()
+    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.],
+           [ 0.,  1.,  1.,  0.,  0.,  0.,  0.,  0.,  1.]])
 
     See also
     --------
@@ -2686,6 +2695,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                         raise ValueError(msg)
                 le.classes_ = np.array(np.sort(self.categories[i]))
 
+        self.categories_ = [le.classes_ for le in self._label_encoders_]
+
         return self
 
     def transform(self, X):
@@ -2708,7 +2719,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         X_mask = np.ones_like(X, dtype=np.bool)
 
         for i in range(n_features):
-            valid_mask = np.in1d(X[:, i], self._label_encoders_[i].classes_)
+            valid_mask = np.in1d(X[:, i], self.categories_[i])
 
             if not np.all(valid_mask):
                 if self.handle_unknown == 'error':
@@ -2721,14 +2732,14 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
                     X_mask[:, i] = valid_mask
-                    X[:, i][~valid_mask] = self._label_encoders_[i].classes_[0]
+                    X[:, i][~valid_mask] = self.categories_[i][0]
             X_int[:, i] = self._label_encoders_[i].transform(X[:, i])
 
         if self.encoding == 'ordinal':
             return X_int.astype(self.dtype, copy=False)
 
         mask = X_mask.ravel()
-        n_values = [le.classes_.shape[0] for le in self._label_encoders_]
+        n_values = [cats.shape[0] for cats in self.categories_]
         n_values = np.array([0] + n_values)
         indices = np.cumsum(n_values)
 
