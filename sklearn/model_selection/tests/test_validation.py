@@ -452,8 +452,8 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
             assert type(cv_results['test_r2']) == np.ndarray
             assert (type(cv_results['test_neg_mean_squared_error']) ==
                     np.ndarray)
-            assert type(cv_results['fit_time'] == np.ndarray)
-            assert type(cv_results['score_time'] == np.ndarray)
+            assert type(cv_results['fit_time']) == np.ndarray
+            assert type(cv_results['score_time']) == np.ndarray
 
             # Ensure all the times are within sane limits
             assert np.all(cv_results['fit_time'] >= 0)

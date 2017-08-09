@@ -144,6 +144,9 @@ Model selection and evaluation
   :class:`model_selection.RepeatedStratifiedKFold`.
   :issue:`8120` by `Neeraj Gangwar`_.
 
+- Added a scorer based on :class:`metrics.explained_variance_score`.
+  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+
 Miscellaneous
 
 - Validation that input data contains no NaN or inf can now be suppressed
@@ -508,6 +511,9 @@ Decomposition, manifold learning and clustering
   :class:`decomposition.IncrementalPCA`.
   :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
 
+- Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
+  :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
+
 - Fixed a bug where :class:`cluster.DBSCAN` gives incorrect
   result when input is a precomputed sparse matrix with initial
   rows all zero. :issue:`8306` by :user:`Akshay Gupta <Akshay0724>`
@@ -802,6 +808,13 @@ Miscellaneous
   for scikit-learn. The following backported functions in
   :mod:`utils` have been removed or deprecated accordingly.
   :issue:`8854` and :issue:`8874` by :user:`Naoya Kanai <naoyak>`
+
+- The ``store_covariances`` and ``covariances_`` parameters of
+  :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`
+  has been renamed to ``store_covariance`` and ``covariance_`` to be
+  consistent with the corresponding parameter names of the
+  :class:`discriminant_analysis.LinearDiscriminantAnalysis`. They will be
+  removed in version 0.21. :issue:`7998` by :user:`Jiacheng <mrbeann>`
 
   Removed in 0.19:
 
