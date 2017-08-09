@@ -20,7 +20,7 @@ code for the scikit-learn project.
   discovery of simple **algorithmic tricks**, or by using another algorithm
   altogether that is better suited to the problem.
 
-  The section :ref:`warm-restarts` gives an example of such a trick.
+  The section :ref:`warm-starts` gives an example of such a trick.
 
 
 Python, Cython or C/C++?
@@ -386,18 +386,19 @@ Checkout the official joblib documentation:
 - https://pythonhosted.org/joblib
 
 
-.. _warm-restarts:
+.. _warm-starts:
 
 A sample algorithmic trick: warm starts for cross validation
 ==============================================================
 
-One of the most common task when doing model selection is cross validation.
-Since it is computationally expensive, one can speed up the training by 
-using the `warm_start` parameter of the input estimator.
-Setting `warm_start=True` allows to reuse the solution of the previous call
-to fit as initialization. It may lead to faster 
-convergence. In the following script, we print the number of iteration for
-during cross validation of linear model with Coordinate Descent.
+One of the most common task when doing model selection is
+:ref:`cross-validation <cross_validation>`. Since it is computationally
+expensive, one can speed up the training by using the `warm_start`
+parameter of the input estimator. Setting `warm_start=True` allows
+to reuse the solution of the previous call to fit as initialization.
+It may lead to faster convergence. In the following script,
+we print the number of iteration during cross validation of
+linear model with Coordinate Descent.
 
   >>> from sklearn import linear_model
   >>> from sklearn.datasets.samples_generator import make_regression
