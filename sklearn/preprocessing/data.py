@@ -2725,7 +2725,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             X_int[:, i] = self._label_encoders_[i].transform(X[:, i])
 
         if self.encoding == 'ordinal':
-            return X_int
+            return X_int.astype(self.dtype, copy=False)
 
         mask = X_mask.ravel()
         n_values = [le.classes_.shape[0] for le in self._label_encoders_]

@@ -2054,7 +2054,9 @@ def test_categorical_encoder_ordinal():
 
     enc = CategoricalEncoder(encoding='ordinal')
     exp = np.array([[0, 1, 0],
-                    [1, 0, 0]])
+                    [1, 0, 0]], dtype='int64')
+    assert_array_equal(enc.fit_transform(X), exp.astype('float64'))
+    enc = CategoricalEncoder(encoding='ordinal', dtype='int64')
     assert_array_equal(enc.fit_transform(X), exp)
 
 
