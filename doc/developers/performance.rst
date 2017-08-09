@@ -400,6 +400,7 @@ convergence. In the following script, we print the number of iteration for
 during cross validation of linear model with Coordinate Descent.
 
   >>> from sklearn import linear_model
+  >>> from sklearn.datasets.samples_generator import make_regression
   >>> from sklearn.model_selection import KFold
   >>> clf = linear_model.Lasso(warm_start=False)
   >>> clf_warm_started = linear_model.Lasso(warm_start=True)
