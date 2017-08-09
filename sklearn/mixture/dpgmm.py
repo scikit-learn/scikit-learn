@@ -47,7 +47,7 @@ def gammaln(x):
 @deprecated("The function log_normalize is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def log_normalize(v, axis=0):
-    """Normalized probabilities from unnormalized log-probabilites"""
+    """Normalized probabilities from unnormalized log-probabilities"""
     v = np.rollaxis(v, axis)
     v = v.copy()
     v -= v.max(axis=0)

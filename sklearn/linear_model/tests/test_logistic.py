@@ -986,7 +986,7 @@ def test_logreg_predict_proba_multinomial():
     X, y = make_classification(n_samples=10, n_features=20, random_state=0,
                                n_classes=3, n_informative=10)
 
-    # Predicted probabilites using the true-entropy loss should give a
+    # Predicted probabilities using the true-entropy loss should give a
     # smaller loss than those using the ovr method.
     clf_multi = LogisticRegression(multi_class="multinomial", solver="lbfgs")
     clf_multi.fit(X, y)
@@ -996,7 +996,7 @@ def test_logreg_predict_proba_multinomial():
     clf_ovr_loss = log_loss(y, clf_ovr.predict_proba(X))
     assert_greater(clf_ovr_loss, clf_multi_loss)
 
-    # Predicted probabilites using the soft-max function should give a
+    # Predicted probabilities using the soft-max function should give a
     # smaller loss than those using the logistic function.
     clf_multi_loss = log_loss(y, clf_multi.predict_proba(X))
     clf_wrong_loss = log_loss(y, clf_multi._predict_proba_lr(X))
