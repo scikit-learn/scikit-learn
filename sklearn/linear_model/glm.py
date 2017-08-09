@@ -15,9 +15,10 @@ Generalized Linear Models with Exponential Dispersion Family
 
 # Design Decisions:
 # - Which name? GeneralizedLinearModel vs GeneralizedLinearRegressor.
-#   So far, it is GeneralizedLinearModel, since it could very easily
-#   extended by Bernoulli/Binomial distribution.
-#   Solution: GeneralizedLinearRegressor
+#   Estimators in sklearn are either regressors or classifiers. A Generalized
+#   Linear Model does both depending on the chosen distribution, e.g. Normal =>
+#   regressor, Bernoulli/Binomial => classifier.
+#   Solution: GeneralizedLinearRegressor since this is the focus.
 # - The link funtion (instance of class Link) is necessary for the evaluation
 #   of deviance, score, Fisher and Hessian matrix as functions of the
 #   coefficients, which is needed by optimizers.
@@ -33,7 +34,7 @@ from .base import LinearRegression
 from ..base import BaseEstimator, RegressorMixin
 from ..exceptions import ConvergenceWarning
 from ..externals import six
-from ..utils import check_X_y
+from ..utils import check_array, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_is_fitted
@@ -372,46 +373,67 @@ class TweedieDistribution(ExponentialDispersionModel):
             The variance power of the unit_variance
             :math:`v(mu) = mu^{power}`.
     """
+    def _less_upper_bound(self, x):
+        return np.less(x, self.upper_bound)
+
+    def _less_equal_upper_bound(self, x):
+        return np.less_equal(x, self.upper_bound)
+
+    def _greater_lower_bound(self, x):
+        return np.greater(x, self.lower_bound)
+
+    def _greater_equal_lower_bound(self, x):
+        return np.greater_equal(x, self.lower_bound)
+
     def __init__(self, power=0):
         self.power = power
         self._upper_bound = np.Inf
-        self._upper_compare = lambda x: np.less(x, self.upper_bound)
+        # self._upper_compare = lambda x: np.less(x, self.upper_bound)
+        self._upper_compare = self._less_upper_bound
         if power < 0:
             # Extreme Stable
             self._lower_bound = -np.Inf
-            self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            # self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            self._lower_compare = self._greater_lower_bound
         elif power == 0:
-            # GaussianDistribution
+            # NormalDistribution
             self._lower_bound = -np.Inf
-            self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            # self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            self._lower_compare = self._greater_lower_bound
         elif (power > 0) and (power < 1):
             raise ValueError('For 0<power<1, no distribution exists.')
         elif power == 1:
             # PoissonDistribution
             self._lower_bound = 0
-            self._lower_compare = (
-                lambda x: np.greater_equal(x, self.lower_bound))
+            # self._lower_compare = (
+            #     lambda x: np.greater_equal(x, self.lower_bound))
+            self._lower_compare = self._greater_equal_lower_bound
         elif (power > 1) and (power < 2):
             # Compound Poisson
             self._lower_bound = 0
-            self._lower_compare = (
-                lambda x: np.greater_equal(x, self.lower_bound))
+            # self._lower_compare = (
+            #     lambda x: np.greater_equal(x, self.lower_bound))
+            self._lower_compare = self._greater_equal_lower_bound
         elif power == 2:
             # GammaDistribution
             self._lower_bound = 0
-            self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            # self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            self._lower_compare = self._greater_lower_bound
         elif (power > 2) and (power < 3):
             # Positive Stable
             self._lower_bound = 0
-            self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            # self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            self._lower_compare = self._greater_lower_bound
         elif power == 3:
             # InverseGaussianDistribution
             self._lower_bound = 0
-            self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            # self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            self._lower_compare = self._greater_lower_bound
         elif power > 3:
             # Positive Stable
             self._lower_bound = 0
-            self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            # self._lower_compare = lambda x: np.greater(x, self.lower_bound)
+            self._lower_compare = self._greater_lower_bound
 
     @property
     def power(self):
@@ -530,6 +552,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     Class to fit a Generalized Linear Model (GLM) based on reproductive
     Exponential Dispersion Models (EDM).
 
+    #TODO: This belongs to User Guide
     Assumptions:
 
     - The target values y_i are realizations of random variables
@@ -559,25 +582,26 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-    fit_intercept : boolean, optional, default True
-        whether to calculate the intercept for this model. If set
-        to False, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
+    fit_intercept : boolean, optional (default=True)
+        Specifies if a constant (a.k.a. bias or intercept) should be
+        added to the linear predictor (X*coef+intercept).
 
     family : {'normal', 'poisson', 'gamma', 'inverse.gaussian'} or an instance
-        of a subclass of ExponentialDispersionModel, optional, default 'normal'
+        of a subclass of ExponentialDispersionModel, optional
+        (default='normal')
         the distributional assumption of the GLM.
 
     link : {'identity', 'log'} or an instance of a subclass of Link,
-        optional, default IdentityLink()
-        the link function (class) of the GLM
+        optional (default='identity')
+        the link function of the GLM, i.e. mapping from linear predictor
+        (X*coef) to expectation (mu).
 
-    fit_dispersion : {None, 'chisqr', 'deviance'}, defaul 'chisqr'
+    fit_dispersion : {None, 'chisqr', 'deviance'}, optional (defaul='chisqr')
         method for estimation of the dispersion parameter phi. Whether to use
         the chi squared statisic or the deviance statistic. If None, the
         dispersion is not estimated.
 
-    solver : {'irls', 'newton-cg', 'lbfgs'}, defaul 'irls'
+    solver : {'irls', 'newton-cg', 'lbfgs'}, optional (defaul='irls')
         Algorithm to use in the optimization problem.
 
         - 'irls' is iterated reweighted least squares. It is the standard
@@ -585,16 +609,16 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         - 'newton-cg', 'lbfgs'
 
-    max_iter : int, default 100
+    max_iter : int, optional (default=100)
         TODO
 
-    tol : float
+    tol : float, optional (default=1e-4)
         Stopping criterion. For the irls, newton-cg and lbfgs solvers,
         the iteration will stop when ``max{|g_i | i = 1, ..., n} <= tol``
         where ``g_i`` is the i-th component of the gradient (derivative of
         the deviance).
 
-    start_params : {array shape (n_features, ), 'ols'}, default None
+    start_params : {array shape (n_features, ), 'ols'}, optional (default=None)
         sets the start values for coef_ in the fit.
         If None, default values are taken.
         If 'ols' the result of an ordinary least squares in the link space
@@ -603,9 +627,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         If fit_intercept is true, the first value is assumed to be the start
         value for the intercept_.
 
-    verbose : int, default: 0
-        For the lbfgs solver set verbose to any positive
-        number for verbosity.
+    verbose : int, optional (default=0)
+        For the lbfgs solver set verbose to any positive number for verbosity.
 
     Attributes
     ----------
@@ -629,15 +652,15 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     TODO
     """
 
-    def __init__(self, fit_intercept=True, family=NormalDistribution(),
-                 link=IdentityLink(), fit_dispersion='chisqr', solver='irls',
+    def __init__(self, fit_intercept=True, family='normal',
+                 link='identity', fit_dispersion='chisqr', solver='irls',
                  max_iter=100, tol=1e-4, start_params=None, verbose=0):
         self.fit_intercept = fit_intercept
         self.family = family
         self.link = link
         self.fit_dispersion = fit_dispersion
         self.solver = solver
-        self.max_iter = 100
+        self.max_iter = max_iter
         self.tol = tol
         self.start_params = start_params
         self.verbose = verbose
@@ -663,29 +686,38 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        if not isinstance(self.family, ExponentialDispersionModel):
+        # Garantee that self._family_instance is an instance of class
+        # ExponentialDispersionModel
+        if isinstance(self.family, ExponentialDispersionModel):
+            self._family_instance = self.family
+        else:
             if self.family == 'normal':
-                self.family = NormalDistribution()
+                self._family_instance = NormalDistribution()
             elif self.family == 'poisson':
-                self.family = PoissonDistribution()
+                self._family_instance = PoissonDistribution()
             elif self.family == 'gamma':
-                self.family = GammaDistribution()
+                self._family_instance = GammaDistribution()
             elif self.family == 'inverse.gaussian':
-                self.family = InverseGaussianDistribution()
+                self._family_instance = InverseGaussianDistribution()
             else:
                 raise ValueError(
-                    "The argument family must be an instance of class"
+                    "The family must be an instance of class"
                     " ExponentialDispersionModel or an element of"
                     " ['normal', 'poisson', 'gamma', 'inverse.gaussian'].")
-        if not isinstance(self.link, Link):
+
+        # Garantee that self._link_instance is set to an instance of class Link
+        if isinstance(self.link, Link):
+            self._link_instance = self.link
+        else:
             if self.link == 'identity':
-                self.link = IdentityLink()
-            if self.link == 'log':
-                self.link = LogLink()
+                self._link_instance = IdentityLink()
+            elif self.link == 'log':
+                self._link_instance = LogLink()
             else:
                 raise ValueError(
-                    "The argument link must be an instance of class Link or"
+                    "The link must be an instance of class Link or"
                     " an element of ['identity', 'log'].")
+
         if not isinstance(self.fit_intercept, bool):
             raise ValueError("The argument fit_intercept must be bool,"
                              " got {0}".format(self.fit_intercept))
@@ -711,10 +743,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                          y_numeric=True, multi_output=False)
         y = y.astype(np.float64)
 
-        if not np.all(self.family.in_y_range(y)):
+        family = self._family_instance
+        link = self._link_instance
+
+        if not np.all(family.in_y_range(y)):
             raise ValueError("Some value(s) of y are out of the valid "
                              "range for family {0}"
-                             .format(self.family.__class__.__name__))
+                             .format(family.__class__.__name__))
 
         if weight is None:
             weight = np.ones_like(y)
@@ -745,14 +780,14 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         coef = None
         if start_params is None:
             # Use mu_start and apply one irls step to calculate coef
-            mu = self.family.starting_mu(y, weight)
+            mu = family.starting_mu(y, weight)
             # linear predictor
-            eta = self.link.link(mu)
+            eta = link.link(mu)
             # h'(eta)
-            hp = self.link.inverse_derivative(eta)
+            hp = link.inverse_derivative(eta)
             # working weights w, in principle a diagonal matrix
             # therefore here just as 1d array
-            w = (hp**2 / self.family.variance(mu, phi=1, weight=weight))
+            w = (hp**2 / family.variance(mu, phi=1, weight=weight))
             wroot = np.sqrt(w)
             # working observations
             yw = eta + (y-mu)/hp
@@ -763,7 +798,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             coef = linalg.lstsq(X_rescale, yw_rescale)[0]
         elif start_params is 'ols':
             reg = LinearRegression(copy_X=False, fit_intercept=False)
-            reg.fit(Xnew, self.link.link(y))
+            reg.fit(Xnew, link.link(y))
             coef = reg.coef_
         else:
             coef = start_params
@@ -775,16 +810,16 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if self.solver == 'irls':
             # linear predictor
             eta = safe_sparse_dot(Xnew, coef, dense_output=True)
-            mu = self.link.inverse(eta)
+            mu = link.inverse(eta)
             while self.n_iter_ < self.max_iter:
                 self.n_iter_ += 1
                 # coef_old not used so far.
                 # coef_old = coef
                 # h'(eta)
-                hp = self.link.inverse_derivative(eta)
+                hp = link.inverse_derivative(eta)
                 # working weights w, in principle a diagonal matrix
                 # therefore here just as 1d array
-                w = (hp**2 / self.family.variance(mu, phi=1, weight=weight))
+                w = (hp**2 / family.variance(mu, phi=1, weight=weight))
                 wroot = np.sqrt(w)
                 # working observations
                 yw = eta + (y-mu)/hp
@@ -799,13 +834,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 # updated linear predictor
                 # do it here for updated values for tolerance
                 eta = safe_sparse_dot(Xnew, coef, dense_output=True)
-                mu = self.link.inverse(eta)
+                mu = link.inverse(eta)
 
                 # which tolerace? |coef - coef_old| or gradient?
                 # use gradient for compliance with newton-cg and lbfgs
                 # TODO: faster computation of gradient, use mu and eta directly
-                gradient = self.family._deviance_derivative(
-                    coef=coef, X=Xnew, y=y, weight=weight, link=self.link)
+                gradient = family._deviance_derivative(
+                    coef=coef, X=Xnew, y=y, weight=weight, link=link)
                 if (np.max(np.abs(gradient)) <= self.tol):
                     converged = True
                     break
@@ -818,9 +853,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # TODO: performance: make one function return both deviance and
         #       gradient of deviance
         elif self.solver == 'lbfgs':
-            func = self.family._deviance
-            fprime = self.family._deviance_derivative
-            args = (Xnew, y, weight, self.link)
+            func = family._deviance
+            fprime = family._deviance_derivative
+            args = (Xnew, y, weight, link)
             coef, loss, info = optimize.fmin_l_bfgs_b(
                 func, coef, fprime=fprime,
                 args=args,
@@ -836,13 +871,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                         info["task"]))
             self.n_iter_ = info['nit']
         elif self.solver == 'newton-cg':
-            func = self.family._deviance
-            grad = self.family._deviance_derivative
+            func = family._deviance
+            grad = family._deviance_derivative
 
             def grad_hess(coef, X, y, weight, link):
-                grad = (self.family._deviance_derivative(
+                grad = (family._deviance_derivative(
                     coef, X, y, weight, link))
-                hessian = (self.family._deviance_hessian(
+                hessian = (family._deviance_hessian(
                     coef, X, y, weight, link))
 
                 def Hs(s):
@@ -850,7 +885,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     return ret
                 return grad, Hs
             hess = grad_hess
-            args = (Xnew, y, weight, self.link)
+            args = (Xnew, y, weight, link)
             coef, n_iter_i = newton_cg(hess, func, grad, coef, args=args,
                                        maxiter=self.max_iter, tol=self.tol)
             self.coef_ = coef
@@ -871,37 +906,50 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         If weights are given, returns prediction*weights.
         """
         check_is_fitted(self, "coef_")
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        # TODO: validation of weight
         eta = safe_sparse_dot(X, self.coef_, dense_output=True)
         if self.fit_intercept is True:
             eta += self.intercept_
-        mu = self.link.inverse(eta)
+        mu = self._link_instance.inverse(eta)
         return mu*weight
 
     def estimate_phi(self, y, X, weight):
+        """Estimation of the dispersion parameter.
+        Returns the estimate.
+        """
+        check_is_fitted(self, "coef_")
         n_samples, n_features = X.shape
         eta = safe_sparse_dot(X, self.coef_, dense_output=True)
         if self.fit_intercept is True:
             eta += self.intercept_
-        mu = self.link.inverse(eta)
+        mu = self._link_instance.inverse(eta)
         if self.fit_dispersion == 'chisqr':
-            chisq = np.sum(weight*(y-mu)**2/self.family.unit_variance(mu))
+            chisq = np.sum(weight*(y-mu)**2 /
+                           self._family_instance.unit_variance(mu))
             return chisq/(n_samples - n_features)
         elif self.fit_dispersion == 'deviance':
-            dev = self.family.deviance(y, mu, weight)
+            dev = self._family_instance.deviance(y, mu, weight)
             return dev/(n_samples - n_features)
 
+# TODO: Fix "AssertionError: -0.28014056555724598 not greater than 0.5"
+#       in check_estimator for score
+#       from sklearn.utils.estimator_checks import check_estimator
+#       from sklearn.linear_model import GeneralizedLinearRegressor
+#       check_estimator(GeneralizedLinearRegressor)
     def score(self, X, y, weight=1):
         """The natural score for a GLM is -deviance.
-        Returns the weight averaged negitive deviance (the better the score,
+        Returns the weight averaged negative deviance (the better the score,
         the better the fit). Maximum score is therefore 0.
         """
         # RegressorMixin has R^2 score.
         # TODO: Make it more compatible with the score function in
         #      sklearn.metrics.regression.py
+        check_is_fitted(self, "coef_")
         eta = safe_sparse_dot(X, self.coef_, dense_output=True)
         if self.fit_intercept is True:
             eta += self.intercept_
-        mu = self.link.inverse(eta)
-        output_errors = self.family.unit_deviance(y, mu)
+        mu = self._link_instance.inverse(eta)
+        output_errors = self._family_instance.unit_deviance(y, mu)
         weight = weight * np.ones_like(y)
-        return np.average(output_errors, weights=weight)
+        return -np.average(output_errors, weights=weight)
