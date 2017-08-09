@@ -273,3 +273,17 @@ def test_whitening():
         assert_almost_equal(X, Xinv_ipca, decimal=prec)
         assert_almost_equal(X, Xinv_pca, decimal=prec)
         assert_almost_equal(Xinv_pca, Xinv_ipca, decimal=prec)
+
+
+def test_partial_fit_correct_answer():
+    # Non-regression test for issue #9489
+
+    A = np.array([[6, 7, 3], [5, 2, 1], [3, 5, 6]])
+    B = np.array([[1, 2, 4], [5, 3, 6]])
+    C = np.array([[3, 2, 1]])
+
+    ipca = IncrementalPCA(n_components=2)
+    ipca.partial_fit(A)
+    ipca.partial_fit(B)
+    # Know answer is [[-1.48864923, -3.15618645]], want to ensure
+    np.testing.assert_allclose(ipca.transform(C), [[-1.48864923, -3.15618645]])
