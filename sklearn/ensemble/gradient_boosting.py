@@ -1438,7 +1438,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         early stopping. Must be between 0 and 1.
         Only used if ``n_iter_no_change`` is set to an integer.
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
 
     n_iter_no_change : int, default None
         ``n_iter_no_change`` is used to decide if early stopping will be used
@@ -1449,14 +1449,14 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         improving in all of the previous ``n_iter_no_change`` numbers of
         iterations.
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
 
     tol : float, optional, default 1e-4
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
 
     Attributes
     ----------
@@ -1464,6 +1464,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         The number of estimators as selected by early stopping (if
         ``n_iter_no_change`` is specified). Otherwise it is set to
         ``n_estimators``.
+
+        .. versionadded:: 0.20
 
     feature_importances_ : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
@@ -1888,7 +1890,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
 
     n_iter_no_change : int, default None
         ``n_iter_no_change`` is used to decide if early stopping will be used
@@ -1899,14 +1901,14 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         improving in all of the previous ``n_iter_no_change`` numbers of
         iterations.
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
 
     tol : float, optional, default 1e-4
         Tolerance for the early stopping. When the loss is not improving
         by at least tol for ``n_iter_no_change`` iterations (if set to a
         number), the training stops.
 
-        .. versionadded:: 0.19
+        .. versionadded:: 0.20
 
 
     Attributes

@@ -27,7 +27,8 @@ The number of stages of the final model is available at the attribute
 This example illustrates how the early stopping can used in the
 :class:`sklearn.ensemble.GradientBoostingClassifier` model to achieve
 almost the same accuracy as compared to a model built without early stopping
-using many fewer estimators. This can save memory and prediction time.
+using many fewer estimators. This can significantly reduce training time,
+memory usage and prediction latency.
 """
 
 # Authors: Vighnesh Birodkar <vighneshbirodkar@nyu.edu>
@@ -125,7 +126,7 @@ plt.legend(loc='best')
 plt.grid(True)
 
 plt.xlabel('Datasets')
-plt.ylabel('Score')
+plt.ylabel('Test score')
 
 plt.show()
 
