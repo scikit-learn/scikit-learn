@@ -5,6 +5,26 @@
 Release history
 ===============
 
+Version 0.20 (under development)
+================================
+
+Changed models
+--------------
+
+Changelog
+---------
+
+New features
+............
+
+Classifiers and regressors
+
+- :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` now support early stopping
+  via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
+  by `Raghav RV`_
+
+
 Version 0.19
 ============
 
@@ -80,11 +100,6 @@ New features
 ............
 
 Classifiers and regressors
-
-- :class:`ensemble.GradientBoostingClassifier` and
-  :class:`ensemble.GradientBoostingRegressor` now support early stopping
-  via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
-  by `Raghav RV`_
 
 - Added :class:`multioutput.ClassifierChain` for multi-label
   classification. By `Adam Kleczewski <adamklec>`_.
