@@ -2579,7 +2579,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         - 'onehot': encode the features using a one-hot aka one-of-K scheme
           (or also called 'dummy' encoding). This creates a binary column for
-          each category.
+          each category and returns a sparse matrix.
+        - 'onehot-dense': the same as 'onehot' but returns a dense array
+          instead of a sparse matrix.
         - 'ordinal': encode the features as ordinal integers. This results in
           a single column of integers (0 to n_categories - 1) per feature.
 
@@ -2593,10 +2595,6 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     dtype : number type, default=np.float
         Desired dtype of output. This keyword is ignored in case of
         ``encoding='ordinal'`` (the output is always integer).
-
-    sparse : boolean, default=True
-        Will return sparse matrix if set True else will return an array.
-        This keyword is ignored in case of ``encoding='ordinal'``.
 
     handle_unknown : str, 'error' or 'ignore'
         Whether to raise an error or ignore if a unknown categorical feature is
@@ -2618,7 +2616,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
     ... # doctest: +ELLIPSIS
     CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
-              encoding='onehot', handle_unknown='error', sparse=True)
+              encoding='onehot', handle_unknown='error')
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
 
@@ -2635,11 +2633,10 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, encoding='onehot', categories='auto', dtype=np.float64,
-                 sparse=True, handle_unknown='error'):
+                 handle_unknown='error'):
         self.encoding = encoding
         self.categories = categories
         self.dtype = dtype
-        self.sparse = sparse
         self.handle_unknown = handle_unknown
 
     def fit(self, X, y=None):
@@ -2655,7 +2652,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         self
         """
 
-        if self.encoding not in ['onehot', 'ordinal']:
+        if self.encoding not in ['onehot', 'onehot-dense', 'ordinal']:
             template = ("encoding should be either 'onehot' or "
                         "'ordinal', got %s")
             raise ValueError(template % self.handle_unknown)
@@ -2701,7 +2698,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_out : sparse matrix if sparse=True else a 2-d array
+        X_out : sparse matrix or a 2-d array
             Transformed input.
 
         """
@@ -2743,5 +2740,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
-
-        return out if self.sparse else out.toarray()
+        if self.encoding == 'onehot-dense':
+            return out.toarray()
+        else:
+            return out

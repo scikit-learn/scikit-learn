@@ -1955,11 +1955,11 @@ def test_one_hot_encoder_unknown_transform():
     assert_raises(ValueError, oh.transform, y)
 
 
-def check_categorical(X):
-    enc = CategoricalEncoder()
+def check_categorical_onehot(X):
+    enc = CategoricalEncoder(encoding='onehot')
     Xtr1 = enc.fit_transform(X)
 
-    enc = CategoricalEncoder(sparse=False)
+    enc = CategoricalEncoder(encoding='onehot-dense')
     Xtr2 = enc.fit_transform(X)
 
     assert_allclose(Xtr1.toarray(), Xtr2)
@@ -1968,13 +1968,13 @@ def check_categorical(X):
     return Xtr1.toarray()
 
 
-def test_categorical_encoder():
+def test_categorical_encoder_onehot():
     X = [['abc', 1, 55], ['def', 2, 55]]
 
-    Xtr = check_categorical(np.array(X)[:, [0]])
+    Xtr = check_categorical_onehot(np.array(X)[:, [0]])
     assert_allclose(Xtr, [[1, 0], [0, 1]])
 
-    Xtr = check_categorical(np.array(X)[:, [0, 1]])
+    Xtr = check_categorical_onehot(np.array(X)[:, [0, 1]])
     assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
 
     Xtr = CategoricalEncoder().fit_transform(X)
@@ -2039,7 +2039,7 @@ def test_categorical_encoder_pandas():
 
     X_df = pd.DataFrame({'A': ['a', 'b'], 'B': ['c', 'd']})
 
-    Xtr = check_categorical(X_df)
+    Xtr = check_categorical_onehot(X_df)
     assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
 
 
