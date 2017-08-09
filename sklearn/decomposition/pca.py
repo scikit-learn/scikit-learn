@@ -201,6 +201,9 @@ class PCA(_BasePCA):
     explained_variance_ : array, shape (n_components,)
         The amount of variance explained by each of the selected components.
 
+        Equal to n_components largest eigenvalues
+        of the covariance matrix of X.
+
         .. versionadded:: 0.18
 
     explained_variance_ratio_ : array, shape (n_components,)
@@ -231,6 +234,9 @@ class PCA(_BasePCA):
         Machine Learning" by C. Bishop, 12.2.1 p. 574 or
         http://www.miketipping.com/papers/met-mppca.pdf. It is required to
         computed the estimated data covariance and score samples.
+
+        Equal to the average of (min(n_features, n_samples) - n_components)
+        smallest eigenvalues of the covariance matrix of X.
 
     References
     ----------
@@ -284,12 +290,6 @@ class PCA(_BasePCA):
     [ 0.99244...]
     >>> print(pca.singular_values_)  # doctest: +ELLIPSIS
     [ 6.30061...]
-
-    Notes
-    -----
-    PCA uses the maximum likelihood estimate of the eigenvalues, which does not
-    include the Bessel correction, though in practice this should rarely make a
-    difference in a machine learning context.
 
     See also
     --------
@@ -346,7 +346,7 @@ class PCA(_BasePCA):
 
         if self.whiten:
             # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
-            U *= sqrt(X.shape[0])
+            U *= sqrt(X.shape[0] - 1)
         else:
             # X_new = X * V = U * S * V^T * V = U * S
             U *= S[:self.n_components_]
@@ -362,7 +362,7 @@ class PCA(_BasePCA):
             raise TypeError('PCA does not support sparse input. See '
                             'TruncatedSVD for a possible alternative.')
 
-        X = check_array(X, dtype=[np.float64], ensure_2d=True,
+        X = check_array(X, dtype=[np.float64, np.float32], ensure_2d=True,
                         copy=self.copy)
 
         # Handle n_components==None
@@ -416,7 +416,7 @@ class PCA(_BasePCA):
         components_ = V
 
         # Get variance explained by singular values
-        explained_variance_ = (S ** 2) / n_samples
+        explained_variance_ = (S ** 2) / (n_samples - 1)
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = S.copy()  # Store the singular values.
@@ -495,14 +495,15 @@ class PCA(_BasePCA):
         self.n_components_ = n_components
 
         # Get variance explained by singular values
-        self.explained_variance_ = (S ** 2) / n_samples
-        total_var = np.var(X, axis=0)
+        self.explained_variance_ = (S ** 2) / (n_samples - 1)
+        total_var = np.var(X, ddof=1, axis=0)
         self.explained_variance_ratio_ = \
             self.explained_variance_ / total_var.sum()
         self.singular_values_ = S.copy()  # Store the singular values.
-        if self.n_components_ < n_features:
+        if self.n_components_ < min(n_features, n_samples):
             self.noise_variance_ = (total_var.sum() -
                                     self.explained_variance_.sum())
+            self.noise_variance_ /= min(n_features, n_samples) - n_components
         else:
             self.noise_variance_ = 0.
 
@@ -714,8 +715,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
                                  n_iter=self.iterated_power,
                                  random_state=random_state)
 
-        self.explained_variance_ = exp_var = (S ** 2) / n_samples
-        full_var = np.var(X, axis=0).sum()
+        self.explained_variance_ = exp_var = (S ** 2) / (n_samples - 1)
+        full_var = np.var(X, ddof=1, axis=0).sum()
         self.explained_variance_ratio_ = exp_var / full_var
         self.singular_values_ = S  # Store the singular values.
 
@@ -770,7 +771,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X = self._fit(X)
         return np.dot(X, self.components_.T)
 
-    def inverse_transform(self, X, y=None):
+    def inverse_transform(self, X):
         """Transform data back to its original space.
 
         Returns an array X_original whose transform would be X.

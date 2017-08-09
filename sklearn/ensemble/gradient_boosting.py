@@ -448,7 +448,7 @@ class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
     def _score_to_proba(self, score):
         """Template method to convert scores to probabilities.
 
-         the does not support probabilites raises AttributeError.
+         the does not support probabilities raises AttributeError.
         """
         raise TypeError('%s does not support predict_proba' % type(self).__name__)
 
@@ -1526,7 +1526,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Returns
         -------
-        y : array of shape = ["n_samples]
+        y : array of shape = [n_samples]
             The predicted values.
         """
         score = self.decision_function(X)

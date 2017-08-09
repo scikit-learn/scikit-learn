@@ -4,9 +4,10 @@ import numpy as np
 from numpy.testing import run_module_suite
 from scipy.sparse import csr_matrix
 
+from sklearn.utils import check_random_state
 from sklearn.utils.testing import (assert_array_equal, assert_almost_equal,
                                    assert_false, assert_raises, assert_equal,
-                                   assert_allclose, assert_greater)
+                                   assert_greater)
 from sklearn.feature_selection.mutual_info_ import (
     mutual_info_regression, mutual_info_classif, _compute_mi)
 
@@ -44,8 +45,8 @@ def test_compute_mi_cc():
     I_theory = (np.log(sigma_1) + np.log(sigma_2) -
                 0.5 * np.log(np.linalg.det(cov)))
 
-    np.random.seed(0)
-    Z = np.random.multivariate_normal(mean, cov, size=1000)
+    rng = check_random_state(0)
+    Z = rng.multivariate_normal(mean, cov, size=1000)
 
     x, y = Z[:, 0], Z[:, 1]
 
@@ -73,15 +74,15 @@ def test_compute_mi_cd():
     # done easily using conditional distribution logic.
 
     n_samples = 1000
-    np.random.seed(0)
+    rng = check_random_state(0)
 
     for p in [0.3, 0.5, 0.7]:
-        x = np.random.uniform(size=n_samples) > p
+        x = rng.uniform(size=n_samples) > p
 
         y = np.empty(n_samples)
         mask = x == 0
-        y[mask] = np.random.uniform(-1, 1, size=np.sum(mask))
-        y[~mask] = np.random.uniform(0, 2, size=np.sum(~mask))
+        y[mask] = rng.uniform(-1, 1, size=np.sum(mask))
+        y[~mask] = rng.uniform(0, 2, size=np.sum(~mask))
 
         I_theory = -0.5 * ((1 - p) * np.log(0.5 * (1 - p)) +
                            p * np.log(0.5 * p) + np.log(0.5)) - np.log(2)
@@ -141,8 +142,8 @@ def test_mutual_info_regression():
     cov = T.dot(T.T)
     mean = np.zeros(4)
 
-    np.random.seed(0)
-    Z = np.random.multivariate_normal(mean, cov, size=1000)
+    rng = check_random_state(0)
+    Z = rng.multivariate_normal(mean, cov, size=1000)
     X = Z[:, 1:]
     y = Z[:, 0]
 
@@ -153,8 +154,8 @@ def test_mutual_info_regression():
 def test_mutual_info_classif_mixed():
     # Here the target is discrete and there are two continuous and one
     # discrete feature. The idea of this test is clear from the code.
-    np.random.seed(0)
-    X = np.random.rand(1000, 3)
+    rng = check_random_state(0)
+    X = rng.rand(1000, 3)
     X[:, 1] += X[:, 0]
     y = ((0.5 * X[:, 0] + X[:, 2]) > 0.5).astype(int)
     X[:, 2] = X[:, 2] > 0.5
