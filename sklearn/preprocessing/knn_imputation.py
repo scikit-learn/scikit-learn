@@ -110,7 +110,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         self.missing_values = missing_values
         self.n_neighbors = n_neighbors
-        self.weights = _check_weights(weights)
+        self.weights = weights
         self.metric = metric
         self.row_max_missing = row_max_missing
         self.col_max_missing = col_max_missing
@@ -135,6 +135,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                                                             np.nan] else True
         X = check_array(X, accept_sparse=False, dtype=np.float64,
                         force_all_finite=force_all_finite, copy=self.copy)
+        self.weights = _check_weights(self.weights)
+
         # Check for +/- inf
         if (np.any(np.isinf(X))):
             raise ValueError("+/- inf values are not allowed.")
