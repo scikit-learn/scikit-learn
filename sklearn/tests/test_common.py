@@ -182,7 +182,8 @@ def test_classes_parameter_extra_classes():
                                'DecisionTreeClassifier',
                                'ExtraTreeClassifier',
                                'RandomForestClassifier',
-                               'ExtraTreesClassifier'])
+                               'ExtraTreesClassifier',
+                               'GradientBoostingClassifier'])
     for name, estimator in all_estimators():
         if name in estimators_to_check:
             # remove the estimator from set:
@@ -214,12 +215,13 @@ def test_classes_parameter_extra_classes():
             assert_equal(pred2.shape, (X.shape[0], 4))
             assert_equal(pred3.shape, (X.shape[0], 4))
 
-            # check same columns are equal:
-            assert_array_almost_equal(pred0, pred1)
-            assert_array_almost_equal(pred1[:, 0:2], pred2[:, 0:2])
-            assert_array_almost_equal(pred1[:, 0:2], pred3[:, 1:3])
-            assert_array_almost_equal(pred2[:, 2:4], 0)
-            assert_array_almost_equal(pred3[:, [0, 3]], 0)
+            # check same columns are equal. since these are probabilities,
+            # checking upto 3 decimal places should be fine.
+            assert_array_almost_equal(pred0, pred1, 3)
+            assert_array_almost_equal(pred1[:, 0:2], pred2[:, 0:2], 3)
+            assert_array_almost_equal(pred1[:, 0:2], pred3[:, 1:3], 3)
+            assert_array_almost_equal(pred2[:, 2:4], 0, 3)
+            assert_array_almost_equal(pred3[:, [0, 3]], 0, 3)
 
             # Test whether duplicate classes result in error
             expected_msg = ("Classses parameter should contain all unique"
@@ -298,11 +300,11 @@ def test_classes_parameter_extra_classes_multilabel():
                 assert_equal(pred3_i.shape, (X.shape[0], 4))
 
                 # check same columns are equal:
-                assert_array_almost_equal(pred0_i, pred1_i)
-                assert_array_almost_equal(pred1_i[:, 0:2], pred2_i[:, 0:2])
-                assert_array_almost_equal(pred1_i[:, 0:2], pred3_i[:, 1:3])
-                assert_array_almost_equal(pred2_i[:, 2:4], 0)
-                assert_array_almost_equal(pred3_i[:, [0, 3]], 0)
+                assert_array_almost_equal(pred0_i, pred1_i, 3)
+                assert_array_almost_equal(pred1_i[:, 0:2], pred2_i[:, 0:2], 3)
+                assert_array_almost_equal(pred1_i[:, 0:2], pred3_i[:, 1:3], 3)
+                assert_array_almost_equal(pred2_i[:, 2:4], 0, 3)
+                assert_array_almost_equal(pred3_i[:, [0, 3]], 0, 3)
 
     # check that all estimators in estimator_to_check were tested
     assert_equal(estimators_to_check, set(),

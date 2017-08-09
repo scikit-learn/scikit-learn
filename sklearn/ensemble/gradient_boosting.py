@@ -55,11 +55,13 @@ from ..utils import check_X_y
 from ..utils import column_or_1d
 from ..utils import check_consistent_length
 from ..utils import deprecated
+from ..utils import _check_y_classes
 from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_classes
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
+from ..preprocessing import LabelEncoder
 
 
 class QuantileEstimator(object):
@@ -134,11 +136,17 @@ class PriorProbabilityEstimator(object):
     """An estimator predicting the probability of each
     class in the training data.
     """
+    def __init__(self, n_classes):
+        self.K = n_classes
+
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
             sample_weight = np.ones_like(y, dtype=np.float64)
-        class_counts = np.bincount(y, weights=sample_weight)
-        self.priors = class_counts / class_counts.sum()
+        priors = []
+        y_len = len(y)
+        for k in range(self.K):
+            priors.append(sum(y == k)/y_len)
+        self.priors = np.asarray(priors)
 
     def predict(self, X):
         check_is_fitted(self, 'priors')
@@ -551,7 +559,7 @@ class MultinomialDeviance(ClassificationLossFunction):
         super(MultinomialDeviance, self).__init__(n_classes)
 
     def init_estimator(self):
-        return PriorProbabilityEstimator()
+        return PriorProbabilityEstimator(self.K)
 
     def __call__(self, y, pred, sample_weight=None):
         # create one-hot label encoding
@@ -734,7 +742,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  max_depth, min_impurity_decrease, min_impurity_split,
                  init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto'):
+                 warm_start=False, presort='auto', classes=None):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -755,6 +763,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.max_leaf_nodes = max_leaf_nodes
         self.warm_start = warm_start
         self.presort = presort
+        self.classes = classes
 
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
                    random_state, X_idx_sorted, X_csc=None, X_csr=None):
@@ -887,6 +896,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 raise ValueError("max_features must be in (0, n_features]")
 
         self.max_features_ = max_features
+
+        # check classes
+        if self.classes:
+            _check_classes(self.classes)
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
@@ -1395,6 +1408,17 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         .. versionadded:: 0.17
            *presort* parameter.
 
+    classes : array-like, optional (default=None)
+        List of all the classes that can possibly appear in the
+        y vector. The list of classes should be sorted in the
+        value of classes.
+
+        If not specified, this will be set as per the classes present in
+        the training data. It is recommended to set this parameter during
+        initialization.
+
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1457,7 +1481,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
-                 presort='auto'):
+                 presort='auto', classes=None):
 
         super(GradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1471,11 +1495,18 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
             warm_start=warm_start,
-            presort=presort)
+            presort=presort,
+            classes=classes)
 
     def _validate_y(self, y):
         check_classification_targets(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
+        if self.classes is None:
+            self.classes_, y = np.unique(y, return_inverse=True)
+        else:
+            _check_y_classes(np.unique(y), self.classes)
+            self.classes_ = np.asarray(self.classes)
+            le = LabelEncoder().fit(self.classes_)
+            y = le.transform(y)
         self.n_classes_ = len(self.classes_)
         return y
 
