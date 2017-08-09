@@ -397,15 +397,21 @@ using the `warm_start` parameter of the input estimator.
 Setting `warm_start=True` allows to reuse the solution of the previous call
 to fit as initialization. It may lead to faster 
 convergence. In the following script, we print the number of iteration for
-successive fitting of linear model with Coordinate Descent when 
-`warm_start=True`. Values of `n_iter_` are the same for all fit when 
-`warm_start=False`.
+during cross validation of linear model with Coordinate Descent.
 
   >>> from sklearn import linear_model
-  >>> from sklearn.datasets.samples_generator import make_regression
-  >>> clf = linear_model.Lasso(warm_start=True)
-  >>> X, y = make_regression(n_samples=800, n_features=200, random_state=0)
-  >>> print(clf.fit(X, y).n_iter_)
-  6
-  >>> print(clf.fit(X, y).n_iter_) # Reuse last solution
-  1
+  >>> from sklearn.model_selection import KFold
+  >>> clf = linear_model.Lasso(warm_start=False)
+  >>> clf_warm_started = linear_model.Lasso(warm_start=True)
+  >>> X, y = make_regression(n_samples=100, n_features=500, random_state=0)
+  >>> n_iter, n_iter_warm = 0, 0
+  >>> for train_index, test_index in KFold(n_splits=10).split(X):
+  ...     X_train = X[train_index]
+  ...     y_train = y[train_index]
+  ...     # count number of iteration
+  ...     n_iter += clf.fit(X_train, y_train).n_iter_
+  ...     n_iter_warm += clf_warm_started.fit(X_train, y_train).n_iter_
+  >>> n_iter
+  655
+  >>> n_iter_warm
+  105
