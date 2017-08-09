@@ -45,6 +45,7 @@ from scipy.sparse import issparse
 from scipy.special import expit
 
 from time import time
+from ..model_selection import train_test_split
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE
 from ..tree._tree import TREE_LEAF
@@ -724,7 +725,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  max_depth, min_impurity_decrease, min_impurity_split,
                  init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto'):
+                 warm_start=False, presort='auto',
+                 validation_fraction=0.1, n_iter_no_change=None,
+                 tol=1e-4):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -745,6 +748,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.max_leaf_nodes = max_leaf_nodes
         self.warm_start = warm_start
         self.presort = presort
+        self.validation_fraction = validation_fraction
+        self.n_iter_no_change = n_iter_no_change
+        self.tol = tol
 
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
                    random_state, X_idx_sorted, X_csc=None, X_csr=None):
@@ -876,6 +882,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         self.max_features_ = max_features
 
+        if not isinstance(self.n_iter_no_change,
+                          (numbers.Integral, np.integer, type(None))):
+            raise ValueError("n_iter_no_change should either be None or an "
+                             "integer. %r was passed"
+                             % self.n_iter_no_change)
+
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
 
@@ -904,6 +916,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             del self.oob_improvement_
         if hasattr(self, 'init_'):
             del self.init_
+        if hasattr(self, '_rng'):
+            del self._rng
 
     def _resize_state(self):
         """Add additional ``n_estimators`` entries to all attributes. """
@@ -987,7 +1001,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         y = self._validate_y(y)
 
-        random_state = check_random_state(self.random_state)
+        if self.n_iter_no_change is not None:
+            X, X_val, y, y_val, sample_weight, sample_weight_val = (
+                train_test_split(X, y, sample_weight,
+                                 random_state=self.random_state,
+                                 test_size=self.validation_fraction))
+        else:
+            X_val = y_val = sample_weight_val = None
+
         self._check_params()
 
         if not self._is_initialized():
@@ -1000,6 +1021,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             # init predictions
             y_pred = self.init_.predict(X)
             begin_at_stage = 0
+
+            # The rng state must be preserved if warm_start is True
+            self._rng = check_random_state(self.random_state)
+
         else:
             # add more estimators to fitted model
             # invariant: warm_start = True
@@ -1030,8 +1055,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                                  dtype=np.int32)
 
         # fit the boosting stages
-        n_stages = self._fit_stages(X, y, y_pred, sample_weight, random_state,
+        n_stages = self._fit_stages(X, y, y_pred, sample_weight, self._rng,
+                                    X_val, y_val, sample_weight_val,
                                     begin_at_stage, monitor, X_idx_sorted)
+
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
             self.estimators_ = self.estimators_[:n_stages]
@@ -1039,9 +1066,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if hasattr(self, 'oob_improvement_'):
                 self.oob_improvement_ = self.oob_improvement_[:n_stages]
 
+        self.n_estimators_ = n_stages
         return self
 
     def _fit_stages(self, X, y, y_pred, sample_weight, random_state,
+                    X_val, y_val, sample_weight_val,
                     begin_at_stage=0, monitor=None, X_idx_sorted=None):
         """Iteratively fits the stages.
 
@@ -1069,6 +1098,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         X_csc = csc_matrix(X) if issparse(X) else None
         X_csr = csr_matrix(X) if issparse(X) else None
+
+        if self.n_iter_no_change is not None:
+            loss_history = np.ones(self.n_iter_no_change) * np.inf
+            # We create a generator to get the predictions for X_val after
+            # the addition of each successive stage
+            y_val_pred_iter = self._staged_decision_function(X_val)
 
         # perform boosting iterations
         i = begin_at_stage
@@ -1108,6 +1143,22 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 early_stopping = monitor(i, self, locals())
                 if early_stopping:
                     break
+
+            # We also provide an early stopping based on the score from
+            # validation set (X_val, y_val), if n_iter_no_change is set
+            if self.n_iter_no_change is not None:
+                # By calling next(y_val_pred_iter), we get the predictions
+                # for X_val after the addition of the current stage
+                validation_loss = loss_(y_val, next(y_val_pred_iter),
+                                        sample_weight_val)
+
+                # Require validation_score to be better (less) than at least
+                # one of the last n_iter_no_change evaluations
+                if np.any(validation_loss + self.tol < loss_history):
+                    loss_history[i % len(loss_history)] = validation_loss
+                else:
+                    break
+
         return i + 1
 
     def _make_estimator(self, append=True):
@@ -1382,8 +1433,40 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         .. versionadded:: 0.17
            *presort* parameter.
 
+    validation_fraction : float, optional, default 0.1
+        The proportion of training data to set aside as validation set for
+        early stopping. Must be between 0 and 1.
+        Only used if ``n_iter_no_change`` is set to an integer.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default None
+        ``n_iter_no_change`` is used to decide if early stopping will be used
+        to terminate training when validation score is not improving. By
+        default it is set to None to disable early stopping. If set to a
+        number, it will set aside ``validation_fraction`` size of the training
+        data as validation and terminate training when validation score is not
+        improving in all of the previous ``n_iter_no_change`` numbers of
+        iterations.
+
+        .. versionadded:: 0.20
+
+    tol : float, optional, default 1e-4
+        Tolerance for the early stopping. When the loss is not improving
+        by at least tol for ``n_iter_no_change`` iterations (if set to a
+        number), the training stops.
+
+        .. versionadded:: 0.20
+
     Attributes
     ----------
+    n_estimators_ : int
+        The number of estimators as selected by early stopping (if
+        ``n_iter_no_change`` is specified). Otherwise it is set to
+        ``n_estimators``.
+
+        .. versionadded:: 0.20
+
     feature_importances_ : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
@@ -1443,7 +1526,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
-                 presort='auto'):
+                 presort='auto', validation_fraction=0.1,
+                 n_iter_no_change=None, tol=1e-4):
 
         super(GradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1456,8 +1540,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             max_leaf_nodes=max_leaf_nodes,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            warm_start=warm_start,
-            presort=presort)
+            warm_start=warm_start, presort=presort,
+            validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, tol=tol)
 
     def _validate_y(self, y):
         check_classification_targets(y)
@@ -1800,6 +1885,32 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         .. versionadded:: 0.17
            optional parameter *presort*.
 
+    validation_fraction : float, optional, default 0.1
+        The proportion of training data to set aside as validation set for
+        early stopping. Must be between 0 and 1.
+        Only used if early_stopping is True
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default None
+        ``n_iter_no_change`` is used to decide if early stopping will be used
+        to terminate training when validation score is not improving. By
+        default it is set to None to disable early stopping. If set to a
+        number, it will set aside ``validation_fraction`` size of the training
+        data as validation and terminate training when validation score is not
+        improving in all of the previous ``n_iter_no_change`` numbers of
+        iterations.
+
+        .. versionadded:: 0.20
+
+    tol : float, optional, default 1e-4
+        Tolerance for the early stopping. When the loss is not improving
+        by at least tol for ``n_iter_no_change`` iterations (if set to a
+        number), the training stops.
+
+        .. versionadded:: 0.20
+
+
     Attributes
     ----------
     feature_importances_ : array, shape = [n_features]
@@ -1858,7 +1969,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='auto'):
+                 warm_start=False, presort='auto', validation_fraction=0.1,
+                 n_iter_no_change=None, tol=1e-4):
 
         super(GradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1871,7 +1983,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             min_impurity_split=min_impurity_split,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort)
+            presort=presort, validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, tol=tol)
 
     def predict(self, X):
         """Predict regression target for X.
