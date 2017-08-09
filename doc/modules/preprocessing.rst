@@ -493,8 +493,8 @@ features, one has to explicitly set ``classes``. For example,
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X) # doctest: +ELLIPSIS
     CategoricalEncoder(categories=[...],
-              dtype=<... 'numpy.float64'>, handle_unknown='error',
-              sparse=True)
+              dtype=<... 'numpy.float64'>, encoding='onehot',
+              handle_unknown='error', sparse=True)
 
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])

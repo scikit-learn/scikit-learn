@@ -2691,7 +2691,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transform X using one-hot encoding.
 
         Parameters
