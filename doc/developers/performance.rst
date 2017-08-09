@@ -391,7 +391,7 @@ Checkout the official joblib documentation:
 A sample algorithmic trick: warm starts for cross validation
 ==============================================================
 
-One of the most common task when doing model selection is
+One of the most common task when doing model selection is 
 :ref:`cross-validation <cross_validation>`. Since it is computationally
 expensive, one can speed up the training by using the `warm_start`
 parameter of the input estimator. Setting `warm_start=True` allows
