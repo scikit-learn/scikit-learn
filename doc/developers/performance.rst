@@ -388,13 +388,24 @@ Checkout the official joblib documentation:
 
 .. _warm-restarts:
 
-A sample algorithmic trick: warm restarts for cross validation
+A sample algorithmic trick: warm starts for cross validation
 ==============================================================
 
-TODO: demonstrate the warm restart tricks for cross validation of linear
-regression with Coordinate Descent.
 One of the most common task when doing model selection is cross validation.
 Since it is computationally expensive, one can speed up the training by 
 using the `warm_start` parameter of the input estimator.
 Setting `warm_start=True` allows to reuse the solution of the previous call
-to fit as initialization. It may lead to faster convergence.
+to fit as initialization. It may lead to faster 
+convergence. In the following script, we print the number of iteration for
+successive fitting of linear model with Coordinate Descent when 
+`warm_start=True`. Values of `n_iter_` are the same for all fit when 
+`warm_start=False`.
+
+  >>> from sklearn import linear_model
+  >>> from sklearn.datasets.samples_generator import make_regression
+  >>> clf = linear_model.Lasso(warm_start=True)
+  >>> X, y = make_regression(n_samples=800, n_features=200, random_state=0)
+  >>> print(clf.fit(X, y).n_iter_)
+  6
+  >>> print(clf.fit(X, y).n_iter_) # Reuse last solution
+  1
