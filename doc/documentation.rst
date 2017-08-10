@@ -48,6 +48,12 @@ Documentation of scikit-learn 0.19.dev0
                     </blockquote>
                 </div>
                 <div class="span4 box">
+                    <h2><a href="glossary.html">Glossary</a></h2>
+                            <blockquote>The definitive description of key terms
+                            and API elements for using scikit-learn and developing compatible tools.
+                            </blockquote>
+                </div>
+                <div class="span4 box">
                     <h2><a href="modules/classes.html">API</a></h2>
                             <blockquote>The exact API of all functions and classes, as given by the docstrings.
                             The API documents expected types and allowed features for all functions,

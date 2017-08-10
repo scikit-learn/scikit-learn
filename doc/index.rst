@@ -358,6 +358,7 @@
     preface
     tutorial/index
     user_guide
+    glossary
     auto_examples/index
     modules/classes
     developers/index

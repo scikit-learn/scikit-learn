@@ -787,6 +787,9 @@ objects. In addition, to avoid the proliferation of framework code, we
 try to adopt simple conventions and limit to a minimum the number of
 methods an object must implement.
 
+Aspects of the scikit-learn are described more definitively in the
+:ref:`glossary`.
+
 Different objects
 -----------------
 
