@@ -23,6 +23,8 @@ General Concepts
     attribute
         TODO
 
+        Sufficient statistics for prediction/transformation. Diagnostics.
+
     classifier
         TODO
         Mention :func:`~base.is_classifier`.
@@ -44,7 +46,6 @@ General Concepts
     convergence
         TODO mention :class:`exceptions.ConvergenceWarning`
 
-    deprecated
     deprecation
         TODO
 
@@ -73,6 +74,9 @@ General Concepts
 
     feature
         TODO
+
+    fitting
+        Calling :term:`fit` on an estimator.
 
     fitted
         TODO
@@ -106,8 +110,9 @@ General Concepts
 
         Between construction and fitting, parameters may be modified using
         :term:`set_params`.  To enable this, parameters are not ordinarily
-        validated when the estimator is constructed, or when each parameter is
-        set. Parameter validation is performed when :term:`fit` is called.
+        validated or altered when the estimator is constructed, or when each
+        parameter is set. Parameter validation is performed when :term:`fit` is
+        called.
 
     pairwise metric
         TODO
@@ -126,6 +131,9 @@ General Concepts
     scorer
         TODO
         See also :term:`evaluation metric`.
+
+    sparse matrix
+        TODO
 
     target
         TODO
@@ -235,6 +243,8 @@ Methods
         TODO
         mention validation
 
+        mention model being cleared unless :term:`warm_start`
+
     ``partial_fit``
         TODO
 
@@ -263,7 +273,9 @@ Methods
 Parameters
 ==========
 
-See concept :term:`parameter`.
+These common parameter names, specifically used in estimator construction
+(see concept :term:`parameter`) sometimes also appear as function and
+non-estimator parameters with similar semantics.
 
 .. glossary::
 
@@ -273,11 +285,44 @@ See concept :term:`parameter`.
     ``max_iter``
         TODO
 
+    ``memory``
+        TODO
+
     ``n_iter``
         TODO
 
     ``n_jobs``
-        TODO
+        This is used to specify how many concurrent processes/threads should be
+        used for parallelized routines.  Scikit-learn uses one processor for
+        its processing by default, although it also makes use of NumPy, which
+        may be configured to use a threaded numerical processor library (like
+        MKL).
+
+        ``n_jobs`` is an int, specifying the maximum number of concurrently
+        running jobs.  If set to -1, all CPUs are used. If 1 is given, no
+        parallel computing code is used at all.  For n_jobs below -1, (n_cpus +
+        1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one are used.
+
+        The use of ``n_jobs``-based parallelism in estimators varies:
+
+        * Most often parallelism happens in :term:`fitting <fit>`, but
+          sometimes parallelism happens in prediction (e.g. in random forests).
+        * Some parallelism uses a multi-threading backend by default, some
+          a multi-processing backend.  It is possible to override the default
+          backend by using :func:`sklearn.externals.joblib.parallel.parallel_backend`.
+        * Whether parallel processing is helpful at improving runtime depends
+          on many factors, and it's usually a good idea to experiment rather
+          than assuming that increasing the number of jobs is always a good
+          thing.
+
+        Nested uses of ``n_jobs``-based parallelism with the same backend will
+        result in an exception.
+        So ``GridSearchCV(OneVsRestClassifier(SVC(), n_jobs=2), n_jobs=2)``
+        won't work.
+
+        When ``n_jobs`` is not 1, the estimator being parallelized must be
+        picklable.  This means, for instance, that lambdas cannot be used
+        as estimator parameters.
 
     ``random_state``
         TODO
