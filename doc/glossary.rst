@@ -102,6 +102,8 @@ Concepts
 Methods
 =======
 
+.. glossary::
+
     ``decision_function``
         TODO
     ``get_params``
@@ -127,6 +129,8 @@ Methods
 Parameters
 ==========
 
+.. glossary::
+
     ``n_jobs``
         TODO
     ``random_state``
@@ -140,6 +144,8 @@ Parameters
 Attributes
 ==========
 
+.. glossary::
+
     ``feature_importances_``
         TODO
     ``labels_``
@@ -147,6 +153,8 @@ Attributes
 
 Sample properties
 =================
+
+.. glossary::
 
     ``groups``
         TODO
