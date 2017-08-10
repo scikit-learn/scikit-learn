@@ -49,7 +49,7 @@ Documentation of scikit-learn 0.19.dev0
                 </div>
                 <div class="span4 box">
                     <h2><a href="glossary.html">Glossary</a></h2>
-                            <blockquote>The definitive description of key terms
+                            <blockquote>The definitive description of key concepts
                             and API elements for using scikit-learn and developing compatible tools.
                             </blockquote>
                 </div>
@@ -61,11 +61,6 @@ Documentation of scikit-learn 0.19.dev0
                             </blockquote>
                 </div>
 
-                <div class="span4 box">
-                    <h2><a href="presentations.html">Additional Resources</a></h2>
-                                <blockquote>Talks given, slide-sets and other information relevant to scikit-learn.
-                                </blockquote>
-                </div>
             </div>
           <!-- row -->
             <div class="row-fluid">
@@ -76,7 +71,20 @@ Documentation of scikit-learn 0.19.dev0
                             how to build their own estimators.
                             </blockquote>
                 </div>
+                <div class="span4 box">
+                    <h2><a href="faq.html">FAQ</a></h2>
+                    <blockquote>Frequently asked questions about the project and contributing.
+                    </blockquote>
+                </div>
+                <div class="span4 box">
+                    <h2><a href="presentations.html">Additional Resources</a></h2>
+                                <blockquote>Talks given, slide-sets and other information relevant to scikit-learn.
+                                </blockquote>
+                </div>
 
+            </div>
+
+            <div class="row-fluid">
                 <div class="span4 box">
                     <h2><a href="tutorial/machine_learning_map/index.html">Flow Chart</a></h2>
                     <blockquote>A graphical overview of basic areas of machine
@@ -84,14 +92,6 @@ Documentation of scikit-learn 0.19.dev0
                         to use in a given situation.
                     </blockquote>
                 </div>
-                <div class="span4 box">
-                    <h2><a href="faq.html">FAQ</a></h2>
-                    <blockquote>Frequently asked questions about the project and contributing.
-                    </blockquote>
-                </div>
-            </div>
-
-            <div class="row-fluid">
                 <div class="span4 box">
                     <h2><a href="related_projects.html">Related packages</a></h2>
                     <blockquote>Other machine learning packages for Python and
