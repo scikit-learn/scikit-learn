@@ -7,7 +7,7 @@ Release history
 Version 0.19
 ============
 
-**August 10, 2017**
+**August 12, 2017**
 
 Highlights
 ----------
