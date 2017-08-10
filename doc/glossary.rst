@@ -17,6 +17,8 @@ Concepts
 
     attribute (for representing a learnt model)
         TODO
+    clone
+        TODO
     cross validation splitter
         TODO
     estimator
@@ -64,6 +66,8 @@ Methods
 
     ``decision_function``
         TODO
+    ``get_params``
+        TODO
     ``fit_predict``
         TODO
     ``fit_transform``
@@ -77,6 +81,8 @@ Methods
     ``predict_proba``
         TODO
     ``predict``
+        TODO
+    ``set_params``
         TODO
 
 Parameters
