@@ -86,9 +86,9 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         random_state = validation.check_random_state(self.random_state)
         if not isinstance(self.display, bool):
             raise ValueError("display must be a boolean")
-        if not isinstance(self.max_iter, int) or self.max_iter<1:
+        if not isinstance(self.max_iter, int) or self.max_iter < 1:
             raise ValueError("max_iter must be an positive integer")
-        if not isinstance(self.gtol, float) or self.gtol<=0:
+        if not isinstance(self.gtol, float) or self.gtol <= 0:
             raise ValueError("gtol must be a positive float")
         train_set, train_lab = validation.check_X_y(train_set, train_lab)
 
@@ -123,8 +123,8 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
                 pos += nb_prot
         else:
             X = validation.check_array(self.initial_prototypes)
-            self.w_ = X[:,:-1]
-            self.c_w_ = X[:,-1]
+            self.w_ = X[:, :-1]
+            self.c_w_ = X[:, -1]
             if self.w_.shape != (np.sum(nb_ppc), nb_features):
                 raise ValueError("the initial prototypes have wrong shape\n"
                                  "found=(%d,%d)\n"
@@ -146,6 +146,8 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         return res.nit
 
     def fit(self, X, y):
+        if len(np.unique(y)) == 1:
+            raise ValueError("fitting " + type(self).__name__ + " with only one class is not possible")
         X, y, random_state = self._validate_train_parms(X, y)
         self.n_iter_ = self._optimize(X, y, random_state)
         return self

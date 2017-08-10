@@ -14,8 +14,6 @@ class GrlvqModel(GlvqModel):
                  display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_relevances=None):
         super().__init__(random_state, initial_prototypes, prototypes_per_class,
                          display, max_iter, gtol)
-        if not isinstance(regularization, float) or regularization<0:
-            raise ValueError("regularization must be a positive float")
         self.regularization = regularization
         self.initial_relevances = initial_relevances
 
@@ -97,6 +95,8 @@ class GrlvqModel(GlvqModel):
         return mu.sum(0)
 
     def _optimize(self, X, y, random_state):
+        if not isinstance(self.regularization, float) or self.regularization<0:
+            raise ValueError("regularization must be a positive float")
         nb_prototypes, nb_features = self.w_.shape
         if self.initial_relevances is None:
             self.lambda_ = np.ones([nb_features])

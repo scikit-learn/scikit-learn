@@ -13,8 +13,6 @@ class GmlvqModel(GlvqModel):
                  display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrix=None, dim=None):
         super().__init__(random_state, initial_prototypes, prototypes_per_class,
                          display, max_iter, gtol)
-        if not isinstance(regularization, float) or regularization<0:
-            raise ValueError("regularization must be a positive float ")
         self.regularization = regularization
         self.initial_matrix = initial_matrix
         self.initialdim = dim
@@ -97,6 +95,8 @@ class GmlvqModel(GlvqModel):
         return mu.sum(0)
 
     def _optimize(self, X, y, random_state):
+        if not isinstance(self.regularization, float) or self.regularization<0:
+            raise ValueError("regularization must be a positive float ")
         nb_prototypes, nb_features = self.w_.shape
         if self.initialdim is None:
             self.dim_ = nb_features
@@ -104,11 +104,6 @@ class GmlvqModel(GlvqModel):
             raise ValueError("dim must be an positive int")
         else:
             self.dim_ = self.initialdim
-
-        if not isinstance(self.nb_reiterations, int):
-            raise ValueError("nb_reiterations must be a int")
-        elif self.nb_reiterations < 1:
-            raise ValueError("nb_reiterations must be above 0")
 
         if self.initial_matrix is None:
             if self.dim_ == nb_features:

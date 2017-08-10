@@ -1,4 +1,8 @@
 import numpy as np
+from sklearn.utils.estimator_checks import check_estimator
+import warnings
+from sklearn.exceptions import NonBLASDotWarning
+warnings.simplefilter('always', NonBLASDotWarning)
 
 from sklearn.glvq.glvq import GlvqModel
 from sklearn.glvq.grlvq import GrlvqModel
@@ -20,7 +24,7 @@ iris.target = iris.target[perm]
 # TODO: grlvq not working with lbfgs-b
 
 def test_glvq_iris():
-    model = GlvqModel()  # , display=True)
+    model = GlvqModel()
     model.fit(iris.data, iris.target)
     assert_greater(model.score(iris.data, iris.target), 0.94)
 
@@ -61,7 +65,7 @@ def test_grlvq_iris():
     assert_raise_message(ValueError, 'length of initial relevances is wrong',
                          GrlvqModel(initial_relevances=[1, 2]).fit, iris.data, iris.target)
     assert_raise_message(ValueError, 'regularization must be a positive float',
-                         GrlvqModel, regularization=-1.0)
+                         GrlvqModel(regularization=-1.0).fit, iris.data, iris.target)
     assert_allclose(np.array([[0,0],[0,0.15],[0.96,0.15],[0.96,0.31]]),model.project(X,2),atol=0.02)
 
 
@@ -77,7 +81,7 @@ def test_gmlvq_iris():
     assert_allclose(np.array([[0.7, 0.4], [0.4, 0.1]]), model.omega_, rtol=0.2)
 
     assert_raise_message(ValueError, 'regularization must be a positive float',
-                         GmlvqModel, regularization=-1.0)
+                         GmlvqModel(regularization=-1.0).fit, iris.data, iris.target)
     assert_raise_message(ValueError, 'initial matrix has wrong number of features',
                          GmlvqModel(initial_matrix=[[1, 2], [3, 4], [5, 6]]).fit, iris.data, iris.target)
     assert_raise_message(ValueError, 'dim must be an positive int',
