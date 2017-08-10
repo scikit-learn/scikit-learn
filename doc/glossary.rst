@@ -21,7 +21,15 @@ Concepts
         TODO
     cross validation splitter
         TODO
+    double-underscore (``__``) notation
+        See :term:`parameter`.
     estimator
+        TODO
+    estimator instance
+        TODO
+    feature
+        TODO
+    fitted
         TODO
     meta-estimator
         TODO
@@ -35,17 +43,37 @@ Concepts
         TODO
     parameter
         We mostly use parameter to refer to the aspects of an estimator that can be
-        specified in construction. For example, ``min_depth`` and ``random_state``
-        are parameter of ``RandomForestClassifier``.
+        specified in its construction. For example, ``max_depth`` and ``random_state``
+        are parameters of :class:`RandomForestClassifier`.
 
         We do not use _parameters_ in the statistical sense, where parameters
         are values that specify a model and can be estimated from data. In this
         sense, what we call parameters might be what statisticians call
         hyperparameters to the model: decisions about model structure that are
-        often not directly learnt from data.
+        often not directly learnt from data.  However, our parameters are also
+        used to prescribe modeling operations that do not affect the learnt
+        model, such as :term:`n_jobs` for controlling parallelism.
+
+        When talking about the parameters of a :term:`meta-estimator`, we may
+        also be including the parameters of the estimators wrapped by the
+        meta-estimator.  Ordinarily, these nested parameters are denoted by
+        using a double-underscore (``__``) to separate between the
+        estimator-as-parameter and its parameter.  Thus
+        ``BaggingClassifier(base_estimator=DecisionTreeClassifier(max_depth=3))``
+        has a deep paramter ``base_estimator__max_depth`` with value ``3``.
+
+        The list of parameters and their current values can be retrieved from
+        an :term:`estimator instance` using its :term:`get_params` method.
+
+        Between construction and fitting, parameters may be modified using
+        :term:`set_params`.  To enable this, parameters are not ordinarily
+        validated when the estimator is constructed, or when each parameter is
+        set. Parameter validation is performed when :term:`fit` is called.
     pairwise metric
         TODO
     predictor
+        TODO
+    sample
         TODO
     sample property
         TODO
@@ -74,6 +102,7 @@ Methods
         TODO
     ``fit``
         TODO
+        mention validation
     ``partial_fit``
         TODO
     ``predict_log_proba``
