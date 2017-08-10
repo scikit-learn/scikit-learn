@@ -1,3 +1,5 @@
+.. currentmodule:: sklearn
+
 .. _glossary:
 
 =========================================
@@ -23,7 +25,7 @@ General Concepts
 
     classifier
         TODO
-        Mention :func:`~sklearn.base.is_classifier`.
+        Mention :func:`~base.is_classifier`.
 
     clone
         To copy an :term:`estimator instance` and create a new one with
@@ -33,14 +35,14 @@ General Concepts
         When ``fit`` is called, a :term:`meta-estimator` usually clones
         a wrapped estimator instance before fitting the cloned instance.
         (Exceptions, for legacy reasons, include
-        :class:`~sklearn.pipeline.Pipeline` and
-        :class:`~sklearn.pipeline.FeatureUnion`.)
+        :class:`~pipeline.Pipeline` and
+        :class:`~pipeline.FeatureUnion`.)
 
     common tests
         TODO
 
     convergence
-        TODO mention :class:`sklearn.exceptions.ConvergenceWarning`
+        TODO mention :class:`exceptions.ConvergenceWarning`
 
     deprecated
     deprecation
@@ -136,6 +138,9 @@ Class APIs and Estimator Types
 
 .. glossary::
 
+    clusterer
+        TODO
+
     cross validation splitter
         TODO
 
@@ -150,17 +155,30 @@ Class APIs and Estimator Types
         TODO
 
     predictor
-        TODO
+        An :term:`estimator` which provides :term:`predict`.
+        This encompasses :term:`classifier`, :term:`regressor`,
+        :term:`outlier detector` and sometimes :term:`clusterer` (at least when
+        they are inductive).  In scikit-learn, if an estimator is not a
+        predictor, it is usually a :term:`transformer`.
 
     regressor
         TODO
-        Mention :func:`~sklearn.base.is_regressor`.
+        Mention :func:`~base.is_regressor`.
 
     transformer
         TODO
 
     vectorizer
-        TODO
+        A :term:`tranformer` which takes input where each sample is not
+        represented as an :term:`array-like` object of fixed length, and
+        produces an `array-like` object for each sample (and thus a
+        2-dimensional array-like for a set of samples).
+
+There are further APIs specific to a small family of estimators, such as:
+
+* :class:`neighbors.DistanceMetric`
+* :class:`gaussian_process.kernels.Kernel`
+* ``tree.Criterion``
 
 Target Types
 ============
