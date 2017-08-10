@@ -19,14 +19,24 @@ Concepts
         TODO
     clone
         TODO
+    common tests
+        TODO
     cross validation splitter
         TODO
-    double-underscore (``__``) notation
+    double-underscore notation
+        When specifying parameter names for nested estimators, ``__`` may be
+        used to separate between parent and child.
         See :term:`parameter`.
     estimator
         TODO
     estimator instance
-        TODO
+        We sometimes use this terminology to distinguish an estimator class
+        from a constructed instance. For example, in the following, ``cls``
+        is an estimator class, while ``est1`` and ``est2`` are instances::
+
+            cls = RandomForestClassifier
+            est1 = cls()
+            est2 = RandomForestClassifier()
     feature
         TODO
     fitted
@@ -42,7 +52,7 @@ Concepts
     multi-output
         TODO
     parameter
-        We mostly use parameter to refer to the aspects of an estimator that can be
+        We mostly use *parameter* to refer to the aspects of an estimator that can be
         specified in its construction. For example, ``max_depth`` and ``random_state``
         are parameters of :class:`RandomForestClassifier`.
 
