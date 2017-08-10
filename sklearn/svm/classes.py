@@ -6,7 +6,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils import check_X_y
-from ..utils.validation import _num_samples
+from ..utils.validation import _num_samples, _check_classes
 from ..utils.multiclass import check_classification_targets
 
 
@@ -96,6 +96,22 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
 
+    classes : array-like or list of such arrays, shape (n_classes,n_outputs),
+              optional (default=None)
+        List of all the classes that can possibly appear in the
+        y vector (single output problem).
+        List of all the classes that can possibly appear in each output
+        of the y vector. (multi-output problem)
+
+        The list of classes for each output should be sorted in the value
+        of classes.
+
+        If not specified, this will be set as per the classes present in
+        the training data. It is recommended to set this parameter during
+        initialization.
+
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     coef_ : array, shape = [n_features] if n_classes == 2 else [n_classes, n_features]
@@ -153,7 +169,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     def __init__(self, penalty='l2', loss='squared_hinge', dual=True, tol=1e-4,
                  C=1.0, multi_class='ovr', fit_intercept=True,
                  intercept_scaling=1, class_weight=None, verbose=0,
-                 random_state=None, max_iter=1000):
+                 random_state=None, max_iter=1000, classes=None):
         self.dual = dual
         self.tol = tol
         self.C = C
@@ -166,6 +182,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         self.max_iter = max_iter
         self.penalty = penalty
         self.loss = loss
+        self.classes = classes
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -208,7 +225,11 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         X, y = check_X_y(X, y, accept_sparse='csr',
                          dtype=np.float64, order="C")
         check_classification_targets(y)
-        self.classes_ = np.unique(y)
+        if self.classes is None:
+            self.classes_ = np.unique(y)
+        else:
+            _check_classes(self.classes)
+            self.classes_ = self.classes
 
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,

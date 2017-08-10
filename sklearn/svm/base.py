@@ -751,7 +751,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                    penalty, dual, verbose, max_iter, tol,
                    random_state=None, multi_class='ovr',
                    loss='logistic_regression', epsilon=0.1,
-                   sample_weight=None):
+                   sample_weight=None, classes=None):
     """Used by Logistic Regression (and CV) and LinearSVC.
 
     Preprocessing is done in this function before supplying it to liblinear.
@@ -842,11 +842,32 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
     n_iter_ : int
         Maximum number of iterations run across all classes.
+
+    classes : array-like or list of such arrays, shape (n_classes,n_outputs),
+              optional (default=None)
+        List of all the classes that can possibly appear in the
+        y vector (single output problem).
+        List of all the classes that can possibly appear in each output
+        of the y vector. (multi-output problem)
+
+        The list of classes for each output should be sorted in the value
+        of classes.
+
+        If not specified, this will be set as per the classes present in
+        the training data. It is recommended to set this parameter during
+        initialization.
+
+        .. versionadded:: 0.20
     """
     if loss not in ['epsilon_insensitive', 'squared_epsilon_insensitive']:
-        enc = LabelEncoder()
-        y_ind = enc.fit_transform(y)
-        classes_ = enc.classes_
+        if classes is None:
+            enc = LabelEncoder()
+            y_ind = enc.fit_transform(y)
+            classes_ = enc.classes_
+        else:
+            enc = LabelEncoder().fit(classes)
+            y_ind = enc.fit_transform(y)
+            classes_ = classes
         if len(classes_) < 2:
             raise ValueError("This solver needs samples of at least 2 classes"
                              " in the data, but the data contains only one"
@@ -865,8 +886,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     bias = -1.0
     if fit_intercept:
         if intercept_scaling <= 0:
-            raise ValueError("Intercept scaling is %r but needs to be greater than 0."
-                             " To disable fitting an intercept,"
+            raise ValueError("Intercept scaling is %r but needs to be greater"
+                             "than 0. To disable fitting an intercept,"
                              " set fit_intercept=False." % intercept_scaling)
         else:
             bias = intercept_scaling
