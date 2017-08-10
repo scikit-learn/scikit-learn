@@ -248,7 +248,7 @@ def test_ward_agglomeration():
     assert_raises(ValueError, agglo.fit, X[:0])
 
 
-def assess_same_labelling(cut1, cut2):
+def assess_same_labeling(cut1, cut2):
     """Util for comparison with scipy"""
     co_clust = []
     for cut in [cut1, cut2]:
@@ -281,7 +281,7 @@ def test_scikit_vs_scipy():
 
             cut = _hc_cut(k, children, n_leaves)
             cut_ = _hc_cut(k, children_, n_leaves)
-            assess_same_labelling(cut, cut_)
+            assess_same_labeling(cut, cut_)
 
     # Test error management in _hc_cut
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)

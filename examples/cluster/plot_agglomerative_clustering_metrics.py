@@ -73,7 +73,7 @@ n_clusters = 3
 
 labels = ('Waveform 1', 'Waveform 2', 'Waveform 3')
 
-# Plot the ground-truth labelling
+# Plot the ground-truth labeling
 plt.figure()
 plt.axes([0, 0, 1, 1])
 for l, c, n in zip(range(n_clusters), 'rgb',
