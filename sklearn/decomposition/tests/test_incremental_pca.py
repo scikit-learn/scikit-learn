@@ -275,15 +275,25 @@ def test_whitening():
         assert_almost_equal(Xinv_pca, Xinv_ipca, decimal=prec)
 
 
-def test_partial_fit_correct_answer():
-    # Non-regression test for issue #9489
+def test_incremental_pca_partial_fit_float_division():
+    # Test to ensure float division is used in all versions of Python
+    # (non-regression test for issue #9489)
 
-    A = np.array([[6, 7, 3], [5, 2, 1], [3, 5, 6]])
-    B = np.array([[1, 2, 4], [5, 3, 6]])
-    C = np.array([[3, 2, 1]])
+    rng = np.random.RandomState(0)
+    A = rng.randn(5, 3) + 2
+    B = rng.randn(7, 3) + 5
 
-    ipca = IncrementalPCA(n_components=2)
-    ipca.partial_fit(A)
-    ipca.partial_fit(B)
-    # Know answer is [[-1.48864923, -3.15618645]], want to ensure
-    np.testing.assert_allclose(ipca.transform(C), [[-1.48864923, -3.15618645]])
+    pca = IncrementalPCA(n_components=2)
+    pca.partial_fit(A)
+    # Set n_samples_seen_ to be a floating point number instead of an int
+    pca.n_samples_seen_ = float(pca.n_samples_seen_)
+    pca.partial_fit(B)
+    singular_vals_float_samples_seen = pca.singular_values_
+
+    pca2 = IncrementalPCA(n_components=2)
+    pca2.partial_fit(A)
+    pca2.partial_fit(B)
+    singular_vals_int_samples_seen = pca2.singular_values_
+
+    np.testing.assert_allclose(singular_vals_float_samples_seen,
+                               singular_vals_int_samples_seen)
