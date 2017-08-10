@@ -43,7 +43,6 @@ General Concepts
         TODO mention :class:`sklearn.exceptions.ConvergenceWarning`
 
     deprecated
-
     deprecation
         TODO
 
