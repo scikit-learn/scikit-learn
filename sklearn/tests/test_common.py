@@ -23,6 +23,7 @@ from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import _named_check
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
 
 import sklearn
@@ -184,44 +185,85 @@ def test_classes_parameter_extra_classes():
                                'RandomForestClassifier',
                                'ExtraTreesClassifier',
                                'GradientBoostingClassifier'])
+    num_predict_proba_checks = 8
+    num_decision_function_checks = 1
+
     for name, estimator in all_estimators():
         if name in estimators_to_check:
             # remove the estimator from set:
             estimators_to_check.remove(name)
-            clf = estimator()
-            if hasattr(clf, 'random_state'):
+            if hasattr(estimator(), 'random_state'):
                 params = {'random_state': 0}
             else:
                 params = {}
 
-            clf.set_params(**params)
-            pred0 = clf.fit(X, y).predict_proba(X)
+            if hasattr(estimator(), 'predict_proba'):
+                num_predict_proba_checks -= 1
+                clf = estimator()
 
-            params['classes'] = [1, 2]
-            clf.set_params(**params)
-            pred1 = clf.fit(X, y).predict_proba(X)
+                clf.set_params(**params)
+                pred0 = clf.fit(X, y).predict_proba(X)
 
-            params['classes'] = [1, 2, 3, 4]
-            clf.set_params(**params)
-            pred2 = clf.fit(X, y).predict_proba(X)
+                params['classes'] = [1, 2]
+                clf.set_params(**params)
+                pred1 = clf.fit(X, y).predict_proba(X)
 
-            params['classes'] = [0, 1, 2, 3]
-            clf.set_params(**params)
-            pred3 = clf.fit(X, y).predict_proba(X)
+                params['classes'] = [1, 2, 3, 4]
+                clf.set_params(**params)
+                pred2 = clf.fit(X, y).predict_proba(X)
 
-            # check shapes:
-            assert_equal(pred0.shape, (X.shape[0], 2))
-            assert_equal(pred1.shape, (X.shape[0], 2))
-            assert_equal(pred2.shape, (X.shape[0], 4))
-            assert_equal(pred3.shape, (X.shape[0], 4))
+                params['classes'] = [0, 1, 2, 3]
+                clf.set_params(**params)
+                pred3 = clf.fit(X, y).predict_proba(X)
 
-            # check same columns are equal. since these are probabilities,
-            # checking upto 3 decimal places should be fine.
-            assert_array_almost_equal(pred0, pred1, 3)
-            assert_array_almost_equal(pred1[:, 0:2], pred2[:, 0:2], 3)
-            assert_array_almost_equal(pred1[:, 0:2], pred3[:, 1:3], 3)
-            assert_array_almost_equal(pred2[:, 2:4], 0, 3)
-            assert_array_almost_equal(pred3[:, [0, 3]], 0, 3)
+                # check shapes:
+                assert_equal(pred0.shape, (X.shape[0], 2))
+                assert_equal(pred1.shape, (X.shape[0], 2))
+                assert_equal(pred2.shape, (X.shape[0], 4))
+                assert_equal(pred3.shape, (X.shape[0], 4))
+
+                # check same columns are equal. since these are probabilities,
+                # checking upto 3 decimal places should be fine.
+                assert_array_almost_equal(pred0, pred1, 3)
+                assert_array_almost_equal(pred1[:, 0:2], pred2[:, 0:2], 3)
+                assert_array_almost_equal(pred1[:, 0:2], pred3[:, 1:3], 3)
+                assert_array_almost_equal(pred2[:, 2:4], 0, 3)
+                assert_array_almost_equal(pred3[:, [0, 3]], 0, 3)
+
+            if hasattr(estimator, 'decision_function'):
+                num_decision_function_checks -= 1
+                clf = estimator()
+                params.pop("classes", None)
+
+                clf.set_params(**params)
+                pred0 = clf.fit(X, y).decision_function(X)
+                pred0 = np.atleast_2d(pred0).T
+
+                params['classes'] = [1, 2]
+                clf.set_params(**params)
+                pred1 = clf.fit(X, y).decision_function(X)
+                pred1 = np.atleast_2d(pred1).T
+
+                params['classes'] = [1, 2, 3, 4]
+                clf.set_params(**params)
+                pred2 = clf.fit(X, y).decision_function(X)
+
+                params['classes'] = [0, 1, 2, 3]
+                clf.set_params(**params)
+                pred3 = clf.fit(X, y).decision_function(X)
+
+                # check shapes:
+                assert_equal(pred0.shape, (X.shape[0], 1))
+                assert_equal(pred1.shape, (X.shape[0], 1))
+                assert_equal(pred2.shape, (X.shape[0], 4))
+                assert_equal(pred3.shape, (X.shape[0], 4))
+
+                # check same columns have same sign
+                assert_array_equal(np.sign(pred0), np.sign(pred1))
+                assert_array_equal(np.sign(pred2[:, 0:2]),
+                                   np.sign(pred3[:, 1:3]))
+                assert_array_equal(np.sign(pred2[:, 2:4]), -1)
+                assert_array_equal(np.sign(pred3[:, [0, 3]]), -1)
 
             # Test whether duplicate classes result in error
             expected_msg = ("Classses parameter should contain all unique"
@@ -242,10 +284,17 @@ def test_classes_parameter_extra_classes():
                                      estimator().partial_fit, X, y,
                                      classes=[1, 3, 2])
 
-    # check that all estimators in estimator_to_check were tested
+    # check that all estimators in estimator_to_check were tested and right
+    # number of predict_proba and decision_function checks were done
     assert_equal(estimators_to_check, set(),
                  "All estimators specified in list estimators_to_check were"
                  "not checked")
+    assert_equal(num_predict_proba_checks, 0,
+                 "The required number of predict_proba checks not done, "
+                 "remaining: %d" % num_predict_proba_checks)
+    assert_equal(num_decision_function_checks, 0,
+                 "The required number of decision_function checks not done, "
+                 "remaining: %d" % num_decision_function_checks)
 
 
 @ignore_warnings(category=(DeprecationWarning))
@@ -259,6 +308,8 @@ def test_classes_parameter_extra_classes_multilabel():
                                'ExtraTreeClassifier',
                                'RandomForestClassifier',
                                'ExtraTreesClassifier'])
+    num_predict_proba_checks = 4
+
     for name, estimator in all_estimators():
         if name in estimators_to_check:
             # remove the estimator from set:
@@ -270,43 +321,51 @@ def test_classes_parameter_extra_classes_multilabel():
             else:
                 params = {}
 
-            clf0 = estimator().fit(X, y)
-            pred0 = clf0.predict_proba(X)
+            if hasattr(clf, 'predict_proba'):
+                num_predict_proba_checks -= 1
 
-            clf.set_params(**params)
-            pred0 = clf.fit(X, y).predict_proba(X)
+                clf0 = estimator().fit(X, y)
+                pred0 = clf0.predict_proba(X)
 
-            params['classes'] = [[1, 2], [1, 2]]
-            clf.set_params(**params)
-            pred1 = clf.fit(X, y).predict_proba(X)
+                clf.set_params(**params)
+                pred0 = clf.fit(X, y).predict_proba(X)
 
-            params['classes'] = [[1, 2, 3, 4], [1, 2, 3, 4]]
-            clf.set_params(**params)
-            pred2 = clf.fit(X, y).predict_proba(X)
+                params['classes'] = [[1, 2], [1, 2]]
+                clf.set_params(**params)
+                pred1 = clf.fit(X, y).predict_proba(X)
 
-            params['classes'] = [[0, 1, 2, 3], [0, 1, 2, 3]]
-            clf.set_params(**params)
-            pred3 = clf.fit(X, y).predict_proba(X)
+                params['classes'] = [[1, 2, 3, 4], [1, 2, 3, 4]]
+                clf.set_params(**params)
+                pred2 = clf.fit(X, y).predict_proba(X)
 
-            for i in range(2):
-                pred0_i = pred0[i]
-                pred1_i = pred1[i]
-                pred2_i = pred2[i]
-                pred3_i = pred3[i]
-                # check shapes:
-                assert_equal(pred0_i.shape, (X.shape[0], 2))
-                assert_equal(pred1_i.shape, (X.shape[0], 2))
-                assert_equal(pred2_i.shape, (X.shape[0], 4))
-                assert_equal(pred3_i.shape, (X.shape[0], 4))
+                params['classes'] = [[0, 1, 2, 3], [0, 1, 2, 3]]
+                clf.set_params(**params)
+                pred3 = clf.fit(X, y).predict_proba(X)
 
-                # check same columns are equal:
-                assert_array_almost_equal(pred0_i, pred1_i, 3)
-                assert_array_almost_equal(pred1_i[:, 0:2], pred2_i[:, 0:2], 3)
-                assert_array_almost_equal(pred1_i[:, 0:2], pred3_i[:, 1:3], 3)
-                assert_array_almost_equal(pred2_i[:, 2:4], 0, 3)
-                assert_array_almost_equal(pred3_i[:, [0, 3]], 0, 3)
+                for i in range(2):
+                    pred0_i = pred0[i]
+                    pred1_i = pred1[i]
+                    pred2_i = pred2[i]
+                    pred3_i = pred3[i]
+                    # check shapes:
+                    assert_equal(pred0_i.shape, (X.shape[0], 2))
+                    assert_equal(pred1_i.shape, (X.shape[0], 2))
+                    assert_equal(pred2_i.shape, (X.shape[0], 4))
+                    assert_equal(pred3_i.shape, (X.shape[0], 4))
+
+                    # check same columns are equal.
+                    assert_array_almost_equal(pred0_i, pred1_i, 3)
+                    assert_array_almost_equal(pred1_i[:, 0:2],
+                                              pred2_i[:, 0:2], 3)
+                    assert_array_almost_equal(pred1_i[:, 0:2],
+                                              pred3_i[:, 1:3], 3)
+                    assert_array_almost_equal(pred2_i[:, 2:4], 0, 3)
+                    assert_array_almost_equal(pred3_i[:, [0, 3]], 0, 3)
 
     # check that all estimators in estimator_to_check were tested
     assert_equal(estimators_to_check, set(),
                  "All estimators specified in list estimators_to_check were"
                  "not checked")
+    assert_equal(num_predict_proba_checks, 0,
+                 "The required number of predict_proba checks not done, "
+                 "remaining: %d" % num_predict_proba_checks)
