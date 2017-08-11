@@ -146,7 +146,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
-        X, y = check_X_y(X, y, dtype=np.float64, order='C', accept_sparse='csr')
+        X, y = check_X_y(X, y, dtype=np.float64, order='C',
+                         accept_sparse='csr')
         y = self._validate_targets(y)
 
         sample_weight = np.asarray([]
@@ -190,7 +191,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.shape_fit_ = X.shape
 
         # In binary case, we need to flip the sign of coef, intercept and
-        # decision function. Use self._intercept_ and self._dual_coef_ internally.
+        # decision function. Use self._intercept_ and self._dual_coef_
+        # internally.
         self._intercept_ = self.intercept_.copy()
         self._dual_coef_ = self.dual_coef_
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
