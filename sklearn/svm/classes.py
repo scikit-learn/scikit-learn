@@ -6,7 +6,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils import check_X_y
-from ..utils.validation import _num_samples, _check_classes
+from ..utils.validation import _num_samples, _check_classes, _check_y_classes
 from ..utils.multiclass import check_classification_targets
 
 
@@ -224,6 +224,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             self.classes_ = np.unique(y)
         else:
             _check_classes(self.classes)
+            _check_y_classes(np.unique(y), self.classes)
             self.classes_ = np.asarray(self.classes)
 
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(

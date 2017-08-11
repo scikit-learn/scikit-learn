@@ -255,8 +255,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 cache_size=self.cache_size, coef0=self.coef0,
                 gamma=self._gamma, epsilon=self.epsilon,
                 max_iter=self.max_iter, random_seed=random_seed)
-        print('after fit:')
-        print(self.n_support_.shape, self.probA_, self.probB_)
 
         self._warn_from_fit_status()
 
@@ -408,8 +406,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         if callable(kernel):
             kernel = 'precomputed'
 
-        print('before decision function call, n_support_: ')
-        print(self.n_support_)
         return libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
             self._dual_coef_, self._intercept_,
@@ -538,8 +534,6 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             n_classes)
         """
         dec = self._decision_function(X)
-        print('result of decision function call: dec shape = ')
-        print(dec.shape)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
             return _ovr_decision_function(dec < 0, -dec, len(self.classes_))
         return dec
@@ -847,6 +841,9 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     sample_weight : array-like, optional
         Weights assigned to each sample.
 
+    classes : array-like, optional
+        A list of classes used to decide the shape of the result
+
     Returns
     -------
     coef_ : ndarray, shape (n_features, n_features + 1)
@@ -875,15 +872,9 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         .. versionadded:: 0.20
     """
     if loss not in ['epsilon_insensitive', 'squared_epsilon_insensitive']:
-        if classes is None:
-            enc = LabelEncoder()
-            y_ind = enc.fit_transform(y)
-            classes_ = enc.classes_
-        else:
-            enc = LabelEncoder().fit(classes)
-            y_ind = enc.transform(y)
-            classes_ = classes
-        n_classes = classes_.shape[0]
+        enc = LabelEncoder()
+        y_ind = enc.fit_transform(y)
+        classes_ = enc.classes_
         if len(classes_) < 2:
             raise ValueError("This solver needs samples of at least 2 classes"
                              " in the data, but the data contains only one"
@@ -893,7 +884,6 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     else:
         class_weight_ = np.empty(0, dtype=np.float64)
         y_ind = y
-        n_classes = 0
     liblinear.set_verbosity_wrap(verbose)
     rnd = check_random_state(random_state)
     if verbose:
@@ -925,7 +915,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     raw_coef_, n_iter_ = liblinear.train_wrap(
         X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
         class_weight_, max_iter, rnd.randint(np.iinfo('i').max),
-        epsilon, sample_weight, n_classes)
+        epsilon, sample_weight)
     # Regarding rnd.randint(..) in the above signature:
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy
     # on 32-bit platforms, we can't get to the UINT_MAX limit that
@@ -935,9 +925,22 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         warnings.warn("Liblinear failed to converge, increase "
                       "the number of iterations.", ConvergenceWarning)
 
+    # check present labels vs classes and fix labels.
+    if class_weight_.shape[0] and classes is not None:
+        present_classes = np.unique(y)
+        if not np.array_equal(present_classes, classes):
+            # if binary, stack more coef_
+            if len(present_classes) == 2:
+                raw_coef_ = np.vstack([raw_coef_, -raw_coef_])
+
+            _coef = raw_coef_.copy()
+            raw_coef_ = np.zeros((classes.shape[0], raw_coef_.shape[1]))
+            fill_ind = np.searchsorted(classes, present_classes)
+            raw_coef_[fill_ind, :] = _coef
+
     if fit_intercept:
-        coef_ = raw_coef_[:, :-1]
         intercept_ = intercept_scaling * raw_coef_[:, -1]
+        coef_ = raw_coef_[:, :-1]
     else:
         coef_ = raw_coef_
         intercept_ = 0.

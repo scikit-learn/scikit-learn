@@ -187,8 +187,9 @@ def test_classes_parameter_extra_classes():
                                'ExtraTreesClassifier',
                                'GradientBoostingClassifier',
                                'LinearSVC',
-                               'SVC',
-                               'NuSVC'])
+                               # 'SVC',
+                               # 'NuSVC'
+                               ])
     num_predict_proba_checks = 8
     num_decision_function_checks = 2
 
@@ -275,11 +276,15 @@ def test_classes_parameter_extra_classes():
                             " values, duplicates found in [1 1 2]")
             expected_msg2 = ("Classses parameter should contain sorted values"
                              ", unsorted values found in [1 3 2]")
+            expected_msg3 = ("The target label(s) [1] in y do not exist in the"
+                             "initial classes [2, 3]")
 
             assert_raise_message(ValueError, expected_msg,
                                  estimator(classes=[1, 1, 2]).fit, X, y)
             assert_raise_message(ValueError, expected_msg2,
                                  estimator(classes=[1, 3, 2]).fit, X, y)
+            assert_raise_message(ValueError, expected_msg3,
+                                 estimator(classes=[2, 3]).fit, X, y)
             # Run only if partial_fit is present:
             if hasattr(estimator, 'partial_fit'):
                 assert_raise_message(ValueError, expected_msg,
@@ -288,6 +293,9 @@ def test_classes_parameter_extra_classes():
                 assert_raise_message(ValueError, expected_msg2,
                                      estimator().partial_fit, X, y,
                                      classes=[1, 3, 2])
+                assert_raise_message(ValueError, expected_msg3,
+                                     estimator().partial_fit, X, y,
+                                     classes=[2, 3])
 
     # check that all estimators in estimator_to_check were tested and right
     # number of predict_proba and decision_function checks were done
