@@ -15,7 +15,8 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
                bint is_sparse, int solver_type, double eps, double bias,
                double C, np.ndarray[np.float64_t, ndim=1] class_weight,
                int max_iter, unsigned random_seed, double epsilon,
-               np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight):
+               np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
+               int n_classes):
     cdef parameter *param
     cdef problem *problem
     cdef model *model
@@ -56,7 +57,11 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
 
     # coef matrix holder created as fortran since that's what's used in liblinear
     cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
-    cdef int nr_class = get_nr_class(model)
+    cdef int nr_class
+    if n_classes:
+        nr_class = n_classes
+    else:
+        nr_class = get_nr_class(model)
 
     cdef int labels_ = nr_class
     if nr_class == 2:

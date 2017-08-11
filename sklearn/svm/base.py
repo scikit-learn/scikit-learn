@@ -866,8 +866,9 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
             classes_ = enc.classes_
         else:
             enc = LabelEncoder().fit(classes)
-            y_ind = enc.fit_transform(y)
+            y_ind = enc.transform(y)
             classes_ = classes
+        n_classes = classes_.shape[0]
         if len(classes_) < 2:
             raise ValueError("This solver needs samples of at least 2 classes"
                              " in the data, but the data contains only one"
@@ -877,6 +878,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     else:
         class_weight_ = np.empty(0, dtype=np.float64)
         y_ind = y
+        n_classes = 0
     liblinear.set_verbosity_wrap(verbose)
     rnd = check_random_state(random_state)
     if verbose:
@@ -886,7 +888,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     bias = -1.0
     if fit_intercept:
         if intercept_scaling <= 0:
-            raise ValueError("Intercept scaling is %r but needs to be greater"
+            raise ValueError("Intercept scaling is %r but needs to be greater "
                              "than 0. To disable fitting an intercept,"
                              " set fit_intercept=False." % intercept_scaling)
         else:
@@ -908,7 +910,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     raw_coef_, n_iter_ = liblinear.train_wrap(
         X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
         class_weight_, max_iter, rnd.randint(np.iinfo('i').max),
-        epsilon, sample_weight)
+        epsilon, sample_weight, n_classes)
     # Regarding rnd.randint(..) in the above signature:
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy
     # on 32-bit platforms, we can't get to the UINT_MAX limit that

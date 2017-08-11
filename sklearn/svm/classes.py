@@ -229,13 +229,13 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             self.classes_ = np.unique(y)
         else:
             _check_classes(self.classes)
-            self.classes_ = self.classes
+            self.classes_ = np.asarray(self.classes)
 
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
             self.class_weight, self.penalty, self.dual, self.verbose,
             self.max_iter, self.tol, self.random_state, self.multi_class,
-            self.loss, sample_weight=sample_weight)
+            self.loss, sample_weight=sample_weight, classes=self.classes_)
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)

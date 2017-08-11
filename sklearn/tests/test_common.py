@@ -178,15 +178,17 @@ def test_classes_parameter_extra_classes():
     rng = np.random.RandomState(0)
     X = rng.randint(5, size=(6, 100))
     y = np.array([1, 1, 1, 2, 2, 2])
-    estimators_to_check = set(['GaussianNB', 'BernoulliNB', 'MultinomialNB',
+    estimators_to_check = set(['GaussianNB',
+                               'BernoulliNB',
+                               'MultinomialNB',
                                'DecisionTreeClassifier',
                                'ExtraTreeClassifier',
                                'RandomForestClassifier',
                                'ExtraTreesClassifier',
-                               'GradientBoostingClassifier'
-                               ])
+                               'GradientBoostingClassifier',
+                               'LinearSVC'])
     num_predict_proba_checks = 8
-    num_decision_function_checks = 1
+    num_decision_function_checks = 2
 
     for name, estimator in all_estimators():
         if name in estimators_to_check:
@@ -259,7 +261,6 @@ def test_classes_parameter_extra_classes():
                 assert_equal(pred3.shape, (X.shape[0], 4))
 
                 # check same columns have same sign
-                print(name)
                 assert_array_almost_equal(pred0, pred1, 1)
                 assert_array_almost_equal(pred2[:, 0:2],
                                           pred3[:, 1:3], 1)
