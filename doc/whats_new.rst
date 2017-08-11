@@ -138,6 +138,9 @@ Model selection and evaluation
   :class:`model_selection.RepeatedStratifiedKFold`.
   :issue:`8120` by `Neeraj Gangwar`_.
 
+- Added a scorer based on :class:`metrics.explained_variance_score`.
+  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+
 Miscellaneous
 
 - Validation that input data contains no NaN or inf can now be suppressed
@@ -329,9 +332,6 @@ Model evaluation and meta-estimators
 
 - More clustering metrics are now available through :func:`metrics.get_scorer`
   and ``scoring`` parameters. :issue:`8117` by `Raghav RV`_.
-
-- A scorer based on :func:`metrics.explained_variance_score` is also available.
-  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 Metrics
 
@@ -4906,7 +4906,7 @@ Changelog
   `Mathieu Blondel`_ and `Lars Buitinck`_
 
 - Documentation improvements: thumbnails in
-  :ref:`example gallery <examples-index>` by `Fabian Pedregosa`_.
+  example gallery by `Fabian Pedregosa`_.
 
 - Important bugfixes in :ref:`svm` module (segfaults, bad
   performance) by `Fabian Pedregosa`_.
