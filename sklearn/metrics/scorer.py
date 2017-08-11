@@ -27,7 +27,7 @@ from . import (r2_score, median_absolute_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss,
-               explained_variance_score)
+               explained_variance_score, brier_score_loss)
 
 from .cluster import adjusted_rand_score
 from .cluster import homogeneity_score
@@ -514,6 +514,7 @@ deprecation_msg = ('Scoring method log_loss was renamed to '
 log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
                               needs_proba=True)
 log_loss_scorer._deprecation_msg = deprecation_msg
+brier_score_loss_scorer = make_scorer(brier_score_loss)
 
 
 # Clustering scores
@@ -540,6 +541,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                average_precision=average_precision_scorer,
                log_loss=log_loss_scorer,
                neg_log_loss=neg_log_loss_scorer,
+               brier_score_loss=brier_score_loss_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
                homogeneity_score=homogeneity_scorer,
