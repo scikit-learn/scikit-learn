@@ -277,7 +277,7 @@ def test_classes_parameter_extra_classes():
             expected_msg2 = ("Classses parameter should contain sorted values"
                              ", unsorted values found in [1 3 2]")
             expected_msg3 = ("The target label(s) [1] in y do not exist in the"
-                             "initial classes [2, 3]")
+                             " initial classes [2 3]")
 
             assert_raise_message(ValueError, expected_msg,
                                  estimator(classes=[1, 1, 2]).fit, X, y)
