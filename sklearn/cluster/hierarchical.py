@@ -369,7 +369,7 @@ def linkage_tree(X, connectivity=None, n_components='deprecated',
     ward_tree : hierarchical clustering with ward linkage
     """
     if n_components != 'deprecated':
-        warnings.warn("n_components was deprecated in 0.18"
+        warnings.warn("n_components was deprecated in 0.19"
                       "will be removed in 0.21", DeprecationWarning)
 
     X = np.asarray(X)
