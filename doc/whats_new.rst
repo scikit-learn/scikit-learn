@@ -195,13 +195,11 @@ Trees and ensembles
 
 - :func:`tree.export_graphviz` now shows configurable number of decimal
   places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
-   - :func:`tree.export_graphviz` now shows configurable number of decimal
-     places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
-     
-   - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
-     to change output shape of `transform` method to 2 dimensional.
-     :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
-     :user:`Herilalaina Rakotoarison <herilalaina>`.
+
+- Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
+  to change output shape of `transform` method to 2 dimensional.
+  :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
+  :user:`Herilalaina Rakotoarison <herilalaina>`.
 
 Linear, kernelized and related models
 
@@ -262,6 +260,9 @@ Decomposition, manifold learning and clustering
   from the underlying SVD. They are stored in the attribute
   ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
   :issue:`7685` by :user:`Tommy Löfstedt <tomlof>`
+
+- Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
+  :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 - :class:`decomposition.NMF` now faster when ``beta_loss=0``.
   :issue:`9277` by :user:`hongkahjun`.
@@ -346,9 +347,6 @@ Model evaluation and meta-estimators
 - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
   now support online learning using ``partial_fit``.
   :issue: `8053` by :user:`Peng Yu <yupbank>`.
-   - :class:`multioutput.MultiOutputRegressor` and :class:`multioutput.MultiOutputClassifier`
-     now support online learning using ``partial_fit``.
-     :issue:`8053` by :user:`Peng Yu <yupbank>`.
 
 - Add ``max_train_size`` parameter to :class:`model_selection.TimeSeriesSplit`
   :issue:`8282` by :user:`Aman Dalmia <dalmia>`.
@@ -524,7 +522,7 @@ Decomposition, manifold learning and clustering
   in :class:`decomposition.PCA`,
   :class:`decomposition.RandomizedPCA` and
   :class:`decomposition.IncrementalPCA`.
-  :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+  :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 - Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
   :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
@@ -627,6 +625,9 @@ Model evaluation and meta-estimators
   target columns had different numbers of classes, a ``ValueError`` would be
   raised on trying to stack matrices with different dimensions.
   :issue:`8093` by :user:`Peter Bull <pjbull>`.
+
+- Cross validation now works with Pandas datatypes that that have a
+  read-only index. :issue:`9507` by `Loic Esteve`_.
 
 Metrics
 
@@ -875,6 +876,74 @@ Miscellaneous
   now only have ``self.estimators_`` available after ``fit``.
   :issue:`7464` by `Lars Buitinck`_ and `Loic Esteve`_.
 
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of the
+project since version 0.18, including:
+
+Joel Nothman, Loic Esteve, Andreas Mueller, Guillaume Lemaitre, Olivier Grisel,
+Hanmin Qin, Raghav RV, Alexandre Gramfort, themrmax, Aman Dalmia, Gael
+Varoquaux, Naoya Kanai, Tom Dupré la Tour, Rishikesh, Nelson Liu, Taehoon Lee,
+Nelle Varoquaux, Aashil, Mikhail Korobov, Sebastin Santy, Joan Massich, Roman
+Yurchak, RAKOTOARISON Herilalaina, Thierry Guillemot, Alexandre Abadie, Carol
+Willing, Balakumaran Manoharan, Josh Karnofsky, Vlad Niculae, Utkarsh Upadhyay,
+Dmitry Petrov, Minghui Liu, Srivatsan, Vincent Pham, Albert Thomas, Jake
+VanderPlas, Attractadore, JC Liu, alexandercbooth, chkoar, Óscar Nájera,
+Aarshay Jain, Kyle Gilliam, Ramana Subramanyam, CJ Carey, Clement Joudet, David
+Robles, He Chen, Joris Van den Bossche, Karan Desai, Katie Luangkote, Leland
+McInnes, Maniteja Nandana, Michele Lacchia, Sergei Lebedev, Shubham Bhardwaj,
+akshay0724, omtcyfz, rickiepark, waterponey, Vathsala Achar, jbDelafosse, Ralf
+Gommers, Ekaterina Krivich, Vivek Kumar, Ishank Gulati, Dave Elliott, ldirer,
+Reiichiro Nakano, Levi John Wolf, Mathieu Blondel, Sid Kapur, Dougal J.
+Sutherland, midinas, mikebenfield, Sourav Singh, Aseem Bansal, Ibraim Ganiev,
+Stephen Hoover, AishwaryaRK, Steven C. Howell, Gary Foreman, Neeraj Gangwar,
+Tahar, Jon Crall, dokato, Kathy Chen, ferria, Thomas Moreau, Charlie Brummitt,
+Nicolas Goix, Adam Kleczewski, Sam Shleifer, Nikita Singh, Basil Beirouti,
+Giorgio Patrini, Manoj Kumar, Rafael Possas, James Bourbeau, James A. Bednar,
+Janine Harper, Jaye, Jean Helie, Jeremy Steward, Artsiom, John Wei, Jonathan
+LIgo, Jonathan Rahn, seanpwilliams, Arthur Mensch, Josh Levy, Julian Kuhlmann,
+Julien Aubert, Jörn Hees, Kai, shivamgargsya, Kat Hempstalk, Kaushik
+Lakshmikanth, Kennedy, Kenneth Lyons, Kenneth Myers, Kevin Yap, Kirill Bobyrev,
+Konstantin Podshumok, Arthur Imbert, Lee Murray, toastedcornflakes, Lera, Li
+Li, Arthur Douillard, Mainak Jas, tobycheese, Manraj Singh, Manvendra Singh,
+Marc Meketon, MarcoFalke, Matthew Brett, Matthias Gilch, Mehul Ahuja, Melanie
+Goetz, Meng, Peng, Michael Dezube, Michal Baumgartner, vibrantabhi19, Artem
+Golubin, Milen Paskov, Antonin Carette, Morikko, MrMjauh, NALEPA Emmanuel,
+Namiya, Antoine Wendlinger, Narine Kokhlikyan, NarineK, Nate Guerin, Angus
+Williams, Ang Lu, Nicole Vavrova, Nitish Pandey, Okhlopkov Daniil Olegovich,
+Andy Craze, Om Prakash, Parminder Singh, Patrick Carlson, Patrick Pei, Paul
+Ganssle, Paulo Haddad, Paweł Lorek, Peng Yu, Pete Bachant, Peter Bull, Peter
+Csizsek, Peter Wang, Pieter Arthur de Jong, Ping-Yao, Chang, Preston Parry,
+Puneet Mathur, Quentin Hibon, Andrew Smith, Andrew Jackson, 1kastner, Rameshwar
+Bhaskaran, Rebecca Bilbro, Remi Rampin, Andrea Esuli, Rob Hall, Robert
+Bradshaw, Romain Brault, Aman Pratik, Ruifeng Zheng, Russell Smith, Sachin
+Agarwal, Sailesh Choyal, Samson Tan, Samuël Weber, Sarah Brown, Sebastian
+Pölsterl, Sebastian Raschka, Sebastian Saeger, Alyssa Batula, Abhyuday Pratap
+Singh, Sergey Feldman, Sergul Aydore, Sharan Yalburgi, willduan, Siddharth
+Gupta, Sri Krishna, Almer, Stijn Tonk, Allen Riddell, Theofilos Papapanagiotou,
+Alison, Alexis Mignon, Tommy Boucher, Tommy Löfstedt, Toshihiro Kamishima,
+Tyler Folkman, Tyler Lanigan, Alexander Junge, Varun Shenoy, Victor Poughon,
+Vilhelm von Ehrenheim, Aleksandr Sandrovskii, Alan Yee, Vlasios Vasileiou,
+Warut Vijitbenjaronk, Yang Zhang, Yaroslav Halchenko, Yichuan Liu, Yuichi
+Fujikawa, affanv14, aivision2020, xor, andreh7, brady salz, campustrampus,
+Agamemnon Krasoulis, ditenberg, elena-sharova, filipj8, fukatani, gedeck,
+guiniol, guoci, hakaa1, hongkahjun, i-am-xhy, jakirkham, jaroslaw-weber,
+jayzed82, jeroko, jmontoyam, jonathan.striebel, josephsalmon, jschendel,
+leereeves, martin-hahn, mathurinm, mehak-sachdeva, mlewis1729, mlliou112,
+mthorrell, ndingwall, nuffe, yangarbiter, plagree, pldtc325, Breno Freitas,
+Brett Olsen, Brian A. Alfano, Brian Burns, polmauri, Brandon Carter, Charlton
+Austin, Chayant T15h, Chinmaya Pancholi, Christian Danielsen, Chung Yen,
+Chyi-Kwei Yau, pravarmahajan, DOHMATOB Elvis, Daniel LeJeune, Daniel Hnyk,
+Darius Morawiec, David DeTomaso, David Gasquez, David Haberthür, David
+Heryanto, David Kirkby, David Nicholson, rashchedrin, Deborah Gertrude Digges,
+Denis Engemann, Devansh D, Dickson, Bob Baxley, Don86, E. Lynch-Klarup, Ed
+Rogers, Elizabeth Ferriss, Ellen-Co2, Fabian Egli, Fang-Chieh Chou, Bing Tian
+Dai, Greg Stupp, Grzegorz Szpak, Bertrand Thirion, Hadrien Bertrand, Harizo
+Rajaona, zxcvbnius, Henry Lin, Holger Peters, Icyblade Dai, Igor
+Andriushchenko, Ilya, Isaac Laughlin, Iván Vallés, Aurélien Bellet, JPFrancoia,
+Jacob Schreiber, Asish Mahapatra
 
 .. _changes_0_18_2:
 
