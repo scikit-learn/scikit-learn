@@ -11,6 +11,18 @@ Version 0.20 (under development)
 Changed models
 --------------
 
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- :class:`decomposition.IncrementalPCA` (bug fix)
+
+Details are listed in the changelog below.
+
+(While we are trying to better inform users by providing this information, we
+cannot assure that this list is complete.)
+
 Changelog
 ---------
 
@@ -23,6 +35,16 @@ Classifiers and regressors
   :class:`ensemble.GradientBoostingRegressor` now support early stopping
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
+
+Bug fixes
+.........
+
+Decomposition, manifold learning and clustering
+
+- Fixed a bug where the ``partial_fit`` method of
+  :class:`decomposition.IncrementalPCA` used integer division instead of float
+  division on Python 2 versions. :issue:`9492` by
+  :user:`James Bourbeau <jrbourbeau>`.
 
 
 Version 0.19
@@ -160,7 +182,7 @@ Model selection and evaluation
   :issue:`8120` by `Neeraj Gangwar`_.
 
 - Added a scorer based on :class:`metrics.explained_variance_score`.
-  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 Miscellaneous
 
@@ -197,7 +219,7 @@ Trees and ensembles
   places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
    - :func:`tree.export_graphviz` now shows configurable number of decimal
      places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
-     
+
    - Added ``flatten_transform`` parameter to :class:`ensemble.VotingClassifier`
      to change output shape of `transform` method to 2 dimensional.
      :issue:`7794` by :user:`Ibraim Ganiev <olologin>` and
@@ -524,7 +546,7 @@ Decomposition, manifold learning and clustering
   in :class:`decomposition.PCA`,
   :class:`decomposition.RandomizedPCA` and
   :class:`decomposition.IncrementalPCA`.
-  :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+  :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 - Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
   :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
