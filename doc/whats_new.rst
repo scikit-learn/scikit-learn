@@ -5,6 +5,26 @@
 Release history
 ===============
 
+Version 0.20 (under development)
+================================
+
+Changed models
+--------------
+
+Changelog
+---------
+
+New features
+............
+
+Classifiers and regressors
+
+- :class:`ensemble.GradientBoostingClassifier` and
+  :class:`ensemble.GradientBoostingRegressor` now support early stopping
+  via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
+  by `Raghav RV`_
+
+
 Version 0.19
 ============
 
@@ -138,6 +158,9 @@ Model selection and evaluation
 - Added the :class:`model_selection.RepeatedKFold` and
   :class:`model_selection.RepeatedStratifiedKFold`.
   :issue:`8120` by `Neeraj Gangwar`_.
+
+- Added a scorer based on :class:`metrics.explained_variance_score`.
+  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
 
 Miscellaneous
 
@@ -502,6 +525,9 @@ Decomposition, manifold learning and clustering
   :class:`decomposition.RandomizedPCA` and
   :class:`decomposition.IncrementalPCA`.
   :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+
+- Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
+  :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 - Fixed a bug where :class:`cluster.DBSCAN` gives incorrect
   result when input is a precomputed sparse matrix with initial
