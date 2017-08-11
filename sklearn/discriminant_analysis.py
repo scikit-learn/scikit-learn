@@ -558,7 +558,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     store_covariance : boolean
         If True the covariance matrices are computed and stored in the
-        `self.covariances_` attribute.
+        `self.covariance_` attribute.
 
         .. versionadded:: 0.17
 
