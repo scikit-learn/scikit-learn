@@ -63,6 +63,8 @@ _METHODS_IGNORE_NONE_Y = [
 
 
 def test_docstring_parameters():
+    raise SkipTest('Not testing docstring parameter consistency')
+
     # Test module docstring formatting
 
     # Skip test if numpydoc is not found or if python version is < 3.5
