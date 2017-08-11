@@ -96,14 +96,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
 
-    classes : array-like or list of such arrays, shape (n_classes,n_outputs),
-              optional (default=None)
+    classes : array-like, shape (n_classes,), optional (default=None)
         List of all the classes that can possibly appear in the
-        y vector (single output problem).
-        List of all the classes that can possibly appear in each output
-        of the y vector. (multi-output problem)
-
-        The list of classes for each output should be sorted in the value
+        y vector. The list of classes should be sorted in the value
         of classes.
 
         If not specified, this will be set as per the classes present in
@@ -502,6 +497,17 @@ class SVC(BaseSVC):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
+    classes : array-like, shape (n_classes,), optional (default=None)
+        List of all the classes that can possibly appear in the
+        y vector. The list of classes should be sorted in the value
+        of classes.
+
+        If not specified, this will be set as per the classes present in
+        the training data. It is recommended to set this parameter during
+        initialization.
+
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
@@ -538,7 +544,7 @@ class SVC(BaseSVC):
     >>> from sklearn.svm import SVC
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    SVC(C=1.0, cache_size=200, class_weight=None, classes=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
@@ -561,7 +567,7 @@ class SVC(BaseSVC):
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
                  verbose=False, max_iter=-1, decision_function_shape='ovr',
-                 random_state=None):
+                 random_state=None, classes=None):
 
         super(SVC, self).__init__(
             impl='c_svc', kernel=kernel, degree=degree, gamma=gamma,
@@ -569,7 +575,7 @@ class SVC(BaseSVC):
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
             decision_function_shape=decision_function_shape,
-            random_state=random_state)
+            random_state=random_state, classes=classes)
 
 
 class NuSVC(BaseSVC):
@@ -658,6 +664,17 @@ class NuSVC(BaseSVC):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
+    classes : array-like, shape (n_classes,), optional (default=None)
+        List of all the classes that can possibly appear in the
+        y vector. The list of classes should be sorted in the value
+        of classes.
+
+        If not specified, this will be set as per the classes present in
+        the training data. It is recommended to set this parameter during
+        initialization.
+
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
@@ -694,7 +711,7 @@ class NuSVC(BaseSVC):
     >>> from sklearn.svm import NuSVC
     >>> clf = NuSVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    NuSVC(cache_size=200, class_weight=None, coef0=0.0,
+    NuSVC(cache_size=200, class_weight=None, classes=None, coef0=0.0,
           decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
           max_iter=-1, nu=0.5, probability=False, random_state=None,
           shrinking=True, tol=0.001, verbose=False)
@@ -714,7 +731,8 @@ class NuSVC(BaseSVC):
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  shrinking=True, probability=False, tol=1e-3, cache_size=200,
                  class_weight=None, verbose=False, max_iter=-1,
-                 decision_function_shape='ovr', random_state=None):
+                 decision_function_shape='ovr', random_state=None,
+                 classes=None):
 
         super(NuSVC, self).__init__(
             impl='nu_svc', kernel=kernel, degree=degree, gamma=gamma,
@@ -722,7 +740,7 @@ class NuSVC(BaseSVC):
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
             decision_function_shape=decision_function_shape,
-            random_state=random_state)
+            random_state=random_state, classes=classes)
 
 
 class SVR(BaseLibSVM, RegressorMixin):

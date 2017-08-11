@@ -73,7 +73,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 class_weight, verbose, max_iter, random_state):
+                 class_weight, verbose, max_iter, random_state, classes=None):
 
         if impl not in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -100,6 +100,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.verbose = verbose
         self.max_iter = max_iter
         self.random_state = random_state
+        self.classes = classes
 
     @property
     def _pairwise(self):
@@ -254,6 +255,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 cache_size=self.cache_size, coef0=self.coef0,
                 gamma=self._gamma, epsilon=self.epsilon,
                 max_iter=self.max_iter, random_seed=random_seed)
+        print('after fit:')
+        print(self.n_support_.shape, self.probA_, self.probB_)
 
         self._warn_from_fit_status()
 
@@ -405,6 +408,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         if callable(kernel):
             kernel = 'precomputed'
 
+        print('before decision function call, n_support_: ')
+        print(self.n_support_)
         return libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
             self._dual_coef_, self._intercept_,
@@ -488,26 +493,32 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
     @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0, tol, C, nu,
                  shrinking, probability, cache_size, class_weight, verbose,
-                 max_iter, decision_function_shape, random_state):
+                 max_iter, decision_function_shape, random_state, classes):
         self.decision_function_shape = decision_function_shape
         super(BaseSVC, self).__init__(
             impl=impl, kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
             tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
-            random_state=random_state)
+            random_state=random_state, classes=classes)
 
     def _validate_targets(self, y):
         y_ = column_or_1d(y, warn=True)
         check_classification_targets(y)
-        cls, y = np.unique(y_, return_inverse=True)
-        self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
-        if len(cls) < 2:
+        if self.classes is None:
+            classes, y = np.unique(y_, return_inverse=True)
+        else:
+            enc = LabelEncoder().fit(self.classes)
+            y = enc.transform(y_)
+            classes = np.asarray(self.classes)
+        self.class_weight_ = compute_class_weight(self.class_weight,
+                                                  classes, y_)
+        if len(classes) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
-                % len(cls))
+                % len(classes))
 
-        self.classes_ = cls
+        self.classes_ = classes
 
         return np.asarray(y, dtype=np.float64, order='C')
 
@@ -527,6 +538,8 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             n_classes)
         """
         dec = self._decision_function(X)
+        print('result of decision function call: dec shape = ')
+        print(dec.shape)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
             return _ovr_decision_function(dec < 0, -dec, len(self.classes_))
         return dec

@@ -186,7 +186,9 @@ def test_classes_parameter_extra_classes():
                                'RandomForestClassifier',
                                'ExtraTreesClassifier',
                                'GradientBoostingClassifier',
-                               'LinearSVC'])
+                               'LinearSVC',
+                               'SVC',
+                               'NuSVC'])
     num_predict_proba_checks = 8
     num_decision_function_checks = 2
 
@@ -194,10 +196,11 @@ def test_classes_parameter_extra_classes():
         if name in estimators_to_check:
             # remove the estimator from set:
             estimators_to_check.remove(name)
+            params = {}
             if hasattr(estimator(), 'random_state'):
-                params = {'random_state': 0}
-            else:
-                params = {}
+                params['random_state'] = 0
+            if hasattr(estimator(), 'probability'):
+                params['probability'] = True
 
             if hasattr(estimator(), 'predict_proba'):
                 num_predict_proba_checks -= 1
