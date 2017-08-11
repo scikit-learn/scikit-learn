@@ -455,8 +455,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
     * For unwritten formatting rules, try to follow existing good works:
 
-        * For "References" in docstrings, see the Silhouette Coefficient
-          (:func:`sklearn.metrics.silhouette_score`).
+    * For "References" in docstrings, see the Silhouette Coefficient
+      (:func:`sklearn.metrics.silhouette_score`).
 
 .. warning:: **Sphinx version**
 
