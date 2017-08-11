@@ -21,6 +21,7 @@ General Concepts
         TODO
 
     attribute
+    attributes
         TODO
 
         Sufficient statistics for prediction/transformation. Diagnostics.
@@ -31,8 +32,8 @@ General Concepts
 
     clone
         To copy an :term:`estimator instance` and create a new one with
-        identical :term:`parameters <parameter>`, but without any fitted
-        :term:`attributes <attribute>`, using :func:`~skelarn.base.clone`.
+        identical :term:`parameters`, but without any fitted
+        :term:`attributes`, using :func:`~skelarn.base.clone`.
 
         When ``fit`` is called, a :term:`meta-estimator` usually clones
         a wrapped estimator instance before fitting the cloned instance.
@@ -85,6 +86,7 @@ General Concepts
         TODO
 
     parameter
+    parameters
         We mostly use *parameter* to refer to the aspects of an estimator that can be
         specified in its construction. For example, ``max_depth`` and ``random_state``
         are parameters of :class:`RandomForestClassifier`.
@@ -118,11 +120,13 @@ General Concepts
         TODO
 
     sample
+    samples
         We usually use this terms as a noun to indicate a single instance or
         feature vector.  Thus ``n_samples`` indicates the number of instances
         in a dataset.
 
     sample property
+    sample properties
         TODO
 
     scikit-learn-contrib
@@ -130,12 +134,14 @@ General Concepts
 
     scorer
         TODO
+        See :ref:`scoring_parameter`.
         See also :term:`evaluation metric`.
 
     sparse matrix
         TODO
 
     target
+    targets
         TODO
 
     unlabeled data
@@ -240,10 +246,20 @@ Methods
         TODO
 
     ``fit``
-        TODO
-        mention validation
+        The ``fit`` method is provided on every estimator. It usually takes some
+        :term`samples` ``X``, :term:`targets` ``y`` if the model is supervised,
+        and potentially other :term:`sample properties` such as
+        :term:`sample_weight`.  It should:
 
-        mention model being cleared unless :term:`warm_start`
+        * clear any prior :term:`attributes` stored on the estimator, unless
+          :term:`warm_start` is used;
+        * validate and interpret any :term:`parameters`, ideally raising an
+          error if invalid;
+        * validate the input data;
+        * estimate and store model attributes from the estimated parameters and
+          provided data; and
+        * return the now :term:`fitted` estimator to facilitate method
+          chaining.
 
     ``partial_fit``
         TODO
@@ -279,17 +295,26 @@ non-estimator parameters with similar semantics.
 
 .. glossary::
 
+    ``class_weight``
+        TODO
+
     ``cv``
         TODO
 
     ``max_iter``
         TODO
 
-    ``memory``
-        TODO
+        Mention ConvergenceWarning
 
-    ``n_iter``
-        TODO
+    ``memory``
+        Some estimators make use of :class:`joblib.Memory` to
+        store partial solutions during fitting. Thus when ``fit`` is called
+        again, those partial solutions have been memoized and can be reused.
+
+        Memory can be specified as a string with a path to a directory, or
+        a :class:`joblib.Memory` instance can be used. In the latter case,
+        ``Memory`` should be imported from ``sklearn.externals.joblib``, which
+        may differ from the installed ``joblib`` package.
 
     ``n_jobs``
         This is used to specify how many concurrent processes/threads should be
@@ -325,10 +350,48 @@ non-estimator parameters with similar semantics.
         as estimator parameters.
 
     ``random_state``
-        TODO
+        Whenever randomization is part of a Scikit-learn algorithm, a
+        ``random_state`` parameter may be provided to control the random number
+        generator used.  Note that the mere presence of ``random_state`` doesn't
+        mean that randomization is always used, as it may be dependent on
+        another parameter, e.g. ``shuffle``, being set.
+
+        ``random_state``'s value may be:
+
+            None (default)
+                Use the global random state from :mod:`numpy.random`.
+
+            An integer
+                Use a new random number generator seeded by the given integer.
+                To make a randomized algorithm deterministic (i.e. running it
+                multiple times will produce the same result), an arbitrary
+                integer ``random_state`` can be used. However, it may be
+                worthwhile checking that your results are stable across a
+                number of different distinct random seeds.
+
+            A :class:`numpy.random.RandomState` instance
+                Use the provided random state, only affecting other users
+                of the same random state instance.
+
+        :func:`utils.check_random_state` is used internally to validate the
+        input ``random_state`` and return a :class:`~numpy.random.RandomState`
+        instance.
 
     ``scoring``
-        TODO
+        Specifies the score function to be maximized (usually by :ref:`cross
+        validation <cross_validation>`), or -- in some cases -- multiple score
+        functions to be reported. The score function can be a string accepted
+        by :func:`metrics.get_scorer` or a callable :term:`scorer`, not to be
+        confused with an :term:`evaluation metric`, as the latter have a more
+        diverse API.  ``scoring`` may also be set to None, in which case the
+        estimator's ``score`` method is used.  See :ref:`scoring_parameter` in
+        the user guide.
+
+        Where multiple metrics can be evaluated, ``scoring`` may be given
+        either as a list of unique strings or a dict with names as keys and
+        callables as values. Note that this does *not* specify which score
+        function is to be maximised, and another parameter such as ``refit``
+        may be used for this purpose.
 
     ``verbose``
         TODO
@@ -343,6 +406,9 @@ Attributes
 See concept :term:`attribute`.
 
 .. glossary::
+
+    ``classes_``
+        TODO
 
     ``n_iter_``
         TODO
