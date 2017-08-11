@@ -10,6 +10,7 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
+from ..utils.multiclass import _fill_missing_class_dimensions
 from ..utils import check_array, check_consistent_length, check_random_state
 from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
@@ -928,15 +929,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     # check present labels vs classes and fix labels.
     if class_weight_.shape[0] and classes is not None:
         present_classes = np.unique(y)
-        if not np.array_equal(present_classes, classes):
-            # if binary, stack more coef_
-            if len(present_classes) == 2:
-                raw_coef_ = np.vstack([raw_coef_, -raw_coef_])
-
-            _coef = raw_coef_.copy()
-            raw_coef_ = np.zeros((classes.shape[0], raw_coef_.shape[1]))
-            fill_ind = np.searchsorted(classes, present_classes)
-            raw_coef_[fill_ind, :] = _coef
+        raw_coef_ = _fill_missing_class_dimensions(raw_coef_, present_classes,
+                                                   classes)
 
     if fit_intercept:
         intercept_ = intercept_scaling * raw_coef_[:, -1]

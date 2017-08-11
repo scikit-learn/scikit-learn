@@ -451,3 +451,45 @@ def _ovr_decision_function(predictions, confidences, n_classes):
     max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
     scale = (0.5 - eps) / max_abs_confidence
     return votes + sum_of_confidences * scale
+
+
+def _fill_missing_class_dimensions(array, present_classes, all_classes,
+                                   fill_value=0, negate_neg_class=True):
+    """Fill in the values for the missing dimensions in case where the classes
+    parameter has more values than present in actual data.
+
+    array : array-like
+        The value returned by the function to be transformed.
+
+    present_classes : array-like
+        The classes present in y
+
+    all_classes : array-like
+        The full list of classes requried
+
+    fill_value : int, default = 0
+        The value to be filled in missing classes
+
+    negate_neg_class : bool, default = True
+        Whether to negate the values of the negative class while completing
+        dimensions.
+    """
+    if np.array_equal(present_classes, all_classes):
+        return array
+
+    if negate_neg_class:
+        multiplier = -1
+    else:
+        multiplier = 1
+
+    if len(present_classes) == 2:
+        array = np.vstack([multiplier * array, array])
+
+    n_classes = all_classes.shape[0]
+    n_values = array.shape[1]
+    array_ = np.repeat(fill_value, n_classes * n_values).reshape(n_classes,
+                                                                 n_values)
+    fill_ind = np.searchsorted(all_classes, present_classes)
+    array_[fill_ind, :] = array
+
+    return array_
