@@ -23,7 +23,6 @@ from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import _named_check
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
 
 import sklearn
@@ -184,7 +183,8 @@ def test_classes_parameter_extra_classes():
                                'ExtraTreeClassifier',
                                'RandomForestClassifier',
                                'ExtraTreesClassifier',
-                               'GradientBoostingClassifier'])
+                               'GradientBoostingClassifier'
+                               ])
     num_predict_proba_checks = 8
     num_decision_function_checks = 1
 
@@ -259,11 +259,12 @@ def test_classes_parameter_extra_classes():
                 assert_equal(pred3.shape, (X.shape[0], 4))
 
                 # check same columns have same sign
-                assert_array_equal(np.sign(pred0), np.sign(pred1))
-                assert_array_equal(np.sign(pred2[:, 0:2]),
-                                   np.sign(pred3[:, 1:3]))
-                assert_array_equal(np.sign(pred2[:, 2:4]), -1)
-                assert_array_equal(np.sign(pred3[:, [0, 3]]), -1)
+                print(name)
+                assert_array_almost_equal(pred0, pred1, 1)
+                assert_array_almost_equal(pred2[:, 0:2],
+                                          pred3[:, 1:3], 1)
+                assert_array_almost_equal(pred2[:, 2:4],
+                                          pred3[:, [0, 3]], 1)
 
             # Test whether duplicate classes result in error
             expected_msg = ("Classses parameter should contain all unique"
