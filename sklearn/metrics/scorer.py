@@ -515,8 +515,7 @@ log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
                               needs_proba=True)
 log_loss_scorer._deprecation_msg = deprecation_msg
 brier_score_loss_scorer = make_scorer(brier_score_loss,
-                                      greater_is_better=False,
-                                      needs_proba=True)
+                                      greater_is_better=False)
 
 
 # Clustering scores
