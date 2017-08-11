@@ -109,18 +109,16 @@ It is important to note that when the number of samples is much larger than
 the number of features, one would expect that no shrinkage would be necessary.
 The intuition behind this is that if the population covariance is full rank,
 when the number of sample grows, the sample covariance will also become
-positive definite.  As a result, no shrinkage would necessary
+positive definite. As a result, no shrinkage would necessary
 and the method should automatically do this.
 
-However, this is not the case in the LW procedure when the
-population covariance is a multiple of the identity matrix.  While at
-first this might sound like an issue, it easy to see why this is not
-the case.  When the population covariance is a multiple of the
-identity, the LW shrinkage estimate becomes close or equal to 1.
-This indicates that the optimal estimate of the covariance matrix in
-the LW sense of the is multiple of the identity.  Since the population
-covariance was a multiple of the identity matrix, the LW solution is
-in deed a very good and reasonable.
+This, however, is not the case in the Ledoit-Wolf procedure when the population
+covariance happens to be a multiple of the identity matrix. In this case,
+the Ledoit-Wolf shrinkage estimate approaches 1 as the number of samples
+increases. This indicates that the optimal estimate of the covariance matrix
+in the Ledoit-Wolf sense is multiple of the identity. Since the population
+covariance is already a multiple of the identity matrix, the Ledoit-Wolf
+solution is indeed a reasonable estimate.
 
 .. topic:: Examples:
 
@@ -170,13 +168,13 @@ object to the same sample.
      an example on how to fit an :class:`OAS` object
      to data.
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_lw_vs_oas.py` to visualize the
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_Ledoit-Wolf_vs_oas.py` to visualize the
      Mean Squared Error difference between a :class:`LedoitWolf` and
      an :class:`OAS` estimator of the covariance.
 
 
-.. figure:: ../auto_examples/covariance/images/sphx_glr_plot_lw_vs_oas_001.png
-   :target: ../auto_examples/covariance/plot_lw_vs_oas.html
+.. figure:: ../auto_examples/covariance/images/sphx_glr_plot_Ledoit-Wolf_vs_oas_001.png
+   :target: ../auto_examples/covariance/plot_Ledoit-Wolf_vs_oas.html
    :align: center
    :scale: 75%
 
