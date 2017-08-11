@@ -514,7 +514,9 @@ deprecation_msg = ('Scoring method log_loss was renamed to '
 log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
                               needs_proba=True)
 log_loss_scorer._deprecation_msg = deprecation_msg
-brier_score_loss_scorer = make_scorer(brier_score_loss)
+brier_score_loss_scorer = make_scorer(brier_score_loss,
+                                      greater_is_better=False,
+                                      needs_proba=True)
 
 
 # Clustering scores
