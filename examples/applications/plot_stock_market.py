@@ -77,6 +77,17 @@ from sklearn import cluster, covariance, manifold
 # #############################################################################
 # Retrieve the data from Internet
 
+def retry(f, n_attempts=3):
+    "Wrapper function to retry function calls in case of exceptions"
+    def wrapper(*args, **kwargs):
+        for i in range(n_attempts):
+            try:
+                return f(*args, **kwargs)
+            except Exception as e:
+                if i == n_attempts - 1:
+                    raise
+    return wrapper
+
 
 def quotes_historical_google(symbol, date1, date2):
     """Get the historical data from Google finance.
@@ -179,8 +190,10 @@ symbol_dict = {
 
 symbols, names = np.array(list(symbol_dict.items())).T
 
+# retry is used because quotes_historical_google can temporarily fail
+# for various reasons (e.g. empty result from Google API).
 quotes = [
-    quotes_historical_google(symbol, d1, d2) for symbol in symbols
+    retry(quotes_historical_google)(symbol, d1, d2) for symbol in symbols
 ]
 
 close_prices = np.vstack([q['close'] for q in quotes])

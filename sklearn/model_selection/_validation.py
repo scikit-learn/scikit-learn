@@ -69,7 +69,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         value. Metric functions returning a list/array of values can be wrapped
         into multiple scorers that return one value each.
 
-        See :ref:`multivalued_scorer_wrapping` for an example.
+        See :ref:`multimetric_grid_search` for an example.
 
         If None, the estimator's default scorer (if available) is used.
 
@@ -803,8 +803,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         the dataset into train/test set.
 
     scoring : string, callable or None, optional, default: None
-        A single string (see :ref:`_scoring_parameter`) or a callable
-        (see :ref:`_scoring`) to evaluate the predictions on the test set.
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
 
         If None the estimator's default scorer, if available, is used.
 
