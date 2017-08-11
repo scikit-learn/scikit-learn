@@ -16,6 +16,7 @@ from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_classes, _check_y_classes
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
 from ..exceptions import ConvergenceWarning
@@ -504,7 +505,11 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         check_classification_targets(y)
         if self.classes is None:
             classes, y = np.unique(y_, return_inverse=True)
+            self._present_labels = classes
         else:
+            self._present_labels = np.unique(y)
+            _check_classes(self.classes)
+            _check_y_classes(self._present_labels, self.classes)
             enc = LabelEncoder().fit(self.classes)
             y = enc.transform(y_)
             classes = np.asarray(self.classes)
