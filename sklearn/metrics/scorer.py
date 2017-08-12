@@ -514,8 +514,13 @@ deprecation_msg = ('Scoring method log_loss was renamed to '
 log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
                               needs_proba=True)
 log_loss_scorer._deprecation_msg = deprecation_msg
-brier_score_loss_scorer = make_scorer(brier_score_loss,
-                                      greater_is_better=False)
+# currently brier_score_loss don't support the result
+# returned by predict_proba(shape = (n_samples, n_classes)),
+# so we just pass the second column(probabilities of the positive class)
+brier_score_loss_scorer = make_scorer(lambda y_true, y_pred:
+                                      brier_score_loss(y_true, y_pred[:, 1]),
+                                      greater_is_better=False,
+                                      needs_proba=True)
 
 
 # Clustering scores
