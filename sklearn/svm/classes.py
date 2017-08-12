@@ -126,10 +126,10 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     >>> X, y = make_classification(n_features=4, random_state=0)
     >>> clf = LinearSVC(random_state=0)
     >>> clf.fit(X, y)
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
-         verbose=0)
+    LinearSVC(C=1.0, class_weight=None, classes=None, dual=True,
+         fit_intercept=True, intercept_scaling=1, loss='squared_hinge',
+         max_iter=1000, multi_class='ovr', penalty='l2', random_state=0,
+         tol=0.0001, verbose=0)
     >>> print(clf.coef_)
     [[ 0.08551385  0.39414796  0.49847831  0.37513797]]
     >>> print(clf.intercept_)

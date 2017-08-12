@@ -1459,20 +1459,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         .. versionadded:: 0.17
            *presort* parameter.
 
-<<<<<<< HEAD
-    classes : array-like, optional (default=None)
-        List of all the classes that can possibly appear in the
-        y vector. The list of classes should be sorted in the
-        value of classes.
-
-        If not specified, this will be set as per the classes present in
-        the training data. It is recommended to set this parameter during
-        initialization.
-
-        .. versionadded:: 0.20
-
-||||||| merged common ancestors
-=======
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
@@ -1498,7 +1484,17 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         .. versionadded:: 0.20
 
->>>>>>> upstream/master
+    classes : array-like, optional (default=None)
+        List of all the classes that can possibly appear in the
+        y vector. The list of classes should be sorted in the
+        value of classes.
+
+        If not specified, this will be set as per the classes present in
+        the training data. It is recommended to set this parameter during
+        initialization.
+
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     n_estimators_ : int
