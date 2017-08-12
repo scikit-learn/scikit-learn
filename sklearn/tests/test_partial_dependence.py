@@ -7,13 +7,11 @@ from numpy.testing import assert_array_equal
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import if_matplotlib
-from sklearn.ensemble.partial_dependence import partial_dependence
-from sklearn.ensemble.partial_dependence import plot_partial_dependence
+from sklearn.partial_dependence import partial_dependence
+from sklearn.partial_dependence import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn import datasets
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns_message
 
 
 # toy sample
@@ -29,7 +27,6 @@ boston = datasets.load_boston()
 iris = datasets.load_iris()
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_partial_dependence_classifier():
     # Test partial dependence for classifier
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -50,7 +47,6 @@ def test_partial_dependence_classifier():
     assert_array_equal(pdp, pdp_2)
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_partial_dependence_multiclass():
     # Test partial dependence for multi-class classifier
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -66,7 +62,6 @@ def test_partial_dependence_multiclass():
     assert axes[0].shape[0] == grid_resolution
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_partial_dependence_regressor():
     # Test partial dependence for regressor
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
@@ -80,7 +75,6 @@ def test_partial_dependence_regressor():
     assert axes[0].shape[0] == grid_resolution
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_partial_dependecy_input():
     # Test input validation of partial dependence.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -109,7 +103,6 @@ def test_partial_dependecy_input():
     assert_raises(ValueError, partial_dependence, clf, [0], grid=grid)
 
 
-@ignore_warnings(category=DeprecationWarning)
 @if_matplotlib
 def test_plot_partial_dependence():
     # Test partial dependence plot function.
@@ -143,7 +136,6 @@ def test_plot_partial_dependence():
 
 
 @if_matplotlib
-@ignore_warnings(category=DeprecationWarning)
 def test_plot_partial_dependence_input():
     # Test partial dependence plot function input checks.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -179,7 +171,6 @@ def test_plot_partial_dependence_input():
 
 
 @if_matplotlib
-@ignore_warnings(category=DeprecationWarning)
 def test_plot_partial_dependence_multiclass():
     # Test partial dependence plot function on multi-class input.
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -213,31 +204,3 @@ def test_plot_partial_dependence_multiclass():
     assert_raises(ValueError, plot_partial_dependence,
                   clf, iris.data, [0, 1],
                   grid_resolution=grid_resolution)
-
-
-def test_warning_raised_for_partial_dependence():
-    # Test that running the old partial_dependence function warns
-    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
-    clf.fit(boston.data, boston.target)
-    grid_resolution = 25
-
-    assert_warns_message(DeprecationWarning, "The function "
-                         "ensemble.partial_dependence has been moved to "
-                         "partial_dependence in 0.20 and will be removed in "
-                         "0.22.", partial_dependence, clf, [0], X=boston.data,
-                         grid_resolution=grid_resolution)
-
-
-@if_matplotlib
-def test_warning_raised_for_plot_partial_dependence():
-    # Test that running the old partial_dependence function warns
-    clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
-    clf.fit(boston.data, boston.target)
-    grid_resolution = 25
-
-    assert_warns_message(DeprecationWarning, "The function "
-                         "ensemble.plot_partial_dependence has been moved to "
-                         "partial_dependence in 0.20 and will be removed in "
-                         "0.22.", plot_partial_dependence, clf, boston.data,
-                         [0, 1, (0, 1)], grid_resolution=grid_resolution,
-                         feature_names=boston.feature_names)

@@ -15,6 +15,7 @@ from .externals.joblib import Parallel, delayed
 from .externals import six
 from .externals.six.moves import map, range, zip
 from .utils import check_array
+from .utils.validation import check_is_fitted
 from .tree._tree import DTYPE
 
 from .ensemble._gradient_boosting import _partial_dependence_tree
@@ -310,9 +311,9 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         raise ValueError('est requires a predict_proba method for '
                          'method="exact" or "estimated" for classification.')
     if method == 'recursion':
-        if len(est.estimators_) == 0:
-            raise ValueError('Call %s.fit before partial_dependence' %
-                             est.__class__.__name__)
+        check_is_fitted(est, 'estimators_', msg='Call %s.fit before '
+                                                'partial_dependence' %
+                                                est.__class__.__name__)
         n_features = est.n_features_
     elif X is None:
         raise ValueError('X is required for method="exact" or "estimated".')
@@ -490,9 +491,9 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         raise ValueError('est requires a predict_proba method for '
                          'method="exact" or "estimated" for classification.')
     if method == 'recursion':
-        if len(est.estimators_) == 0:
-            raise ValueError('Call %s.fit before partial_dependence' %
-                             est.__class__.__name__)
+        check_is_fitted(est, 'estimators_', msg='Call %s.fit before '
+                                                'partial_dependence' %
+                                                est.__class__.__name__)
         n_features = est.n_features_
     elif X is None:
         raise ValueError('X is required for method="exact" or "estimated".')
