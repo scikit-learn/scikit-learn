@@ -629,4 +629,3 @@ def test_alpha():
                          X, y, classes=[0, 1])
     assert_raise_message(ValueError, expected_msg, m_nb.partial_fit,
                          X, y, classes=[0, 1])
-
