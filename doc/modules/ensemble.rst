@@ -246,7 +246,7 @@ amount of time (e.g., on large datasets).
 
  .. [B1998] L. Breiman, "Arcing Classifiers", Annals of Statistics 1998.
 
- .. [GEW2006] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
+ * P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
 
 .. _random_forest_feature_importance:
@@ -915,10 +915,10 @@ averaged.
 
  .. _voting_classifier:
 
-VotingClassifier
+Voting Classifier
 ========================
 
-The idea behind the voting classifier implementation is to combine
+The idea behind the :class:`VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
 Such a classifier can be useful for a set of equally well performing model
