@@ -144,7 +144,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     Examples
     --------
     >>> from sklearn import datasets, linear_model
-    >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.model_selection import cross_validate
     >>> from sklearn.metrics.scorer import make_scorer
     >>> from sklearn.metrics import confusion_matrix
     >>> from sklearn.svm import LinearSVC
@@ -153,15 +153,17 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
 
-    # single metric evaluation using cross_validate
+    Single metric evaluation using ``cross_validate``
+
     >>> cv_results = cross_validate(lasso, X, y, return_train_score=False)
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     array([ 0.33...,  0.08...,  0.03...])
 
-    # Multiple metric evaluation using cross_validate
-    # (Please refer the ``scoring`` parameter doc for more information)
+    Multiple metric evaluation using ``cross_validate``
+    (please refer the ``scoring`` parameter doc for more information)
+
     >>> scores = cross_validate(lasso, X, y,
     ...                         scoring=('r2', 'neg_mean_squared_error'))
     >>> print(scores['test_neg_mean_squared_error'])      # doctest: +ELLIPSIS
