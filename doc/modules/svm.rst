@@ -77,7 +77,7 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> y = [0, 1]
     >>> clf = svm.SVC()
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    SVC(C=1.0, cache_size=200, class_weight=None, classes=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
@@ -121,7 +121,7 @@ n_classes)``::
     >>> Y = [0, 1, 2, 3]
     >>> clf = svm.SVC(decision_function_shape='ovo')
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    SVC(C=1.0, cache_size=200, class_weight=None, classes=None, coef0=0.0,
         decision_function_shape='ovo', degree=3, gamma='auto', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
@@ -139,10 +139,10 @@ two classes, only one model is trained::
 
     >>> lin_clf = svm.LinearSVC()
     >>> lin_clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
-    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
-         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
-         multi_class='ovr', penalty='l2', random_state=None, tol=0.0001,
-         verbose=0)
+    LinearSVC(C=1.0, class_weight=None, classes=None, dual=True,
+         fit_intercept=True, intercept_scaling=1, loss='squared_hinge',
+         max_iter=1000, multi_class='ovr', penalty='l2', random_state=None,
+         tol=0.0001, verbose=0)
     >>> dec = lin_clf.decision_function([[1]])
     >>> dec.shape[1]
     4
@@ -520,7 +520,7 @@ test vectors must be provided.
     >>> # linear kernel computation
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    SVC(C=1.0, cache_size=200, class_weight=None, classes=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='auto',
         kernel='precomputed', max_iter=-1, probability=False,
         random_state=None, shrinking=True, tol=0.001, verbose=False)

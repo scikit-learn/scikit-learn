@@ -62,6 +62,7 @@ filling in the names automatically::
              steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
                     ('multinomialnb', MultinomialNB(alpha=1.0,
                                                     class_prior=None,
+                                                    classes=None,
                                                     fit_prior=True))])
 
 The estimators of a pipeline are stored as a list in the ``steps`` attribute::

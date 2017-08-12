@@ -179,10 +179,10 @@ which produces a new array that contains all but
 the last entry of ``digits.data``::
 
   >>> clf.fit(digits.data[:-1], digits.target[:-1])  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma=0.001, kernel='rbf',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
+  SVC(C=100.0, cache_size=200, class_weight=None, classes=None, coef0=0.0,
+      decision_function_shape='ovr', degree=3, gamma=0.001, kernel='rbf',
+      max_iter=-1, probability=False, random_state=None, shrinking=True,
+      tol=0.001, verbose=False)
 
 Now you can predict new values, in particular, we can ask to the
 classifier what is the digit of our last image in the ``digits`` dataset,
@@ -218,10 +218,10 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
+  SVC(C=1.0, cache_size=200, class_weight=None, classes=None, coef0=0.0,
+      decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
+      max_iter=-1, probability=False, random_state=None, shrinking=True,
+      tol=0.001, verbose=False)
 
   >>> import pickle
   >>> s = pickle.dumps(clf)
@@ -292,7 +292,7 @@ maintained::
     >>> iris = datasets.load_iris()
     >>> clf = SVC()
     >>> clf.fit(iris.data, iris.target)  # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    SVC(C=1.0, cache_size=200, class_weight=None, classes=None, coef0=0.0,
       decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
       max_iter=-1, probability=False, random_state=None, shrinking=True,
       tol=0.001, verbose=False)
@@ -301,7 +301,7 @@ maintained::
     [0, 0, 0]
 
     >>> clf.fit(iris.data, iris.target_names[iris.target])  # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
+    SVC(C=1.0, cache_size=200, class_weight=None, classes=None, coef0=0.0,
       decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
       max_iter=-1, probability=False, random_state=None, shrinking=True,
       tol=0.001, verbose=False)
@@ -330,18 +330,18 @@ more than once will overwrite what was learned by any previous ``fit()``::
 
   >>> clf = SVC()
   >>> clf.set_params(kernel='linear').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma='auto', kernel='linear',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
+  SVC(C=1.0, cache_size=200, class_weight=None, classes=None, coef0=0.0,
+      decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
+      max_iter=-1, probability=False, random_state=None, shrinking=True,
+      tol=0.001, verbose=False)
   >>> clf.predict(X_test)
   array([1, 0, 1, 1, 0])
 
   >>> clf.set_params(kernel='rbf').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
+  SVC(C=1.0, cache_size=200, class_weight=None, classes=None, coef0=0.0,
+      decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
+      max_iter=-1, probability=False, random_state=None, shrinking=True,
+      tol=0.001, verbose=False)
   >>> clf.predict(X_test)
   array([0, 0, 0, 1, 0])
 
