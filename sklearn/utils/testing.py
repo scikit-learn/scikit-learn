@@ -35,7 +35,7 @@ import shutil
 import os.path as op
 import atexit
 import unittest
-import modifiedunittest
+import sklearn.utils.modifiedunittest
 
 # WindowsError only exist on Windows
 try:
