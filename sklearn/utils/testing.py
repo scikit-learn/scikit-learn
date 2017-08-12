@@ -35,6 +35,7 @@ import shutil
 import os.path as op
 import atexit
 import unittest
+import modifiedunittest
 
 # WindowsError only exist on Windows
 try:
@@ -69,11 +70,12 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
 
 
 _dummy = unittest.TestCase('__init__')
+_dummy2 = modifiedunittest.TestCase('__init__')
 assert_equal = _dummy.assertEqual
 assert_not_equal = _dummy.assertNotEqual
 assert_true = _dummy.assertTrue
 assert_false = _dummy.assertFalse
-assert_raises = _dummy.assertRaises
+assert_raises = _dummy2.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
 assert_in = _dummy.assertIn
@@ -84,11 +86,7 @@ assert_less_equal = _dummy.assertLessEqual
 assert_greater_equal = _dummy.assertGreaterEqual
 
 
-try:
-    assert_raises_regex = _dummy.assertRaisesRegex
-except AttributeError:
-    # Python 2.7
-    assert_raises_regex = _dummy.assertRaisesRegexp
+assert_raises_regex = _dummy2.assertRaisesRegex
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
