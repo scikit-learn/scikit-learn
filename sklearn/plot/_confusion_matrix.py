@@ -10,9 +10,11 @@ def plot_confusion_matrix(y_true, y_pred, classes=None, sample_weight=None,
                           title='Confusion matrix', cmap=None, vmin=None,
                           vmax=None, ax=None, fmt="{:.2f}",
                           xtickrotation=45, norm=None):
-    """Plot the confusion matrix as a heatmap. A confusion matrix is computed
-    using `y_true`, `y_pred` and `sample_weights` arguments. Normalization
-    can be applied by setting `normalize=True`.
+    """Plot confusion matrix as a heatmap.
+
+    A confusion matrix is computed using `y_true`, `y_pred` and
+    `sample_weights` arguments. Normalization can be applied by setting
+    `normalize=True`.
 
     Parameters
     ----------

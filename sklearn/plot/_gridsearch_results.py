@@ -69,7 +69,9 @@ def plot_gridsearch_results(cv_results, metric='mean_test_score',
                             title='Grid Search Results', cmap=None,
                             vmin=None, vmax=None, ax=None, fmt="{:.2f}",
                             xtickrotation=45, norm=None):
-    """Plot the grid search results as a line chart for 1D search and heatmap
+    """Plot grid search results.
+
+    The results are plotted as a line chart for 1D search and as a heatmap
     for a 2D search. This function will not work if grid-search has more than
     2 parameters in the search space.
 
