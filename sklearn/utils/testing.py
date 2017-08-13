@@ -59,7 +59,6 @@ import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
-from .util import safe_repr
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
@@ -188,7 +187,7 @@ class TestCase_new(object):
             # it changes the way unicode input is handled
             return '%s : %s' % (standardMsg, msg)
         except UnicodeDecodeError:
-            return '%s : %s' % (safe_repr(standardMsg), safe_repr(msg))
+            return '%s : %s' % (standardMsg, msg)
 
     def assertRaises(self, expected_exception, *args, **kwargs):
         """Fail unless an exception of class expected_exception is raised
