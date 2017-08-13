@@ -332,8 +332,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
-                sum1 = np.dot(K_trans, self._K_inv).T
-                y_var -= np.einsum("ki,ik->k", K_trans, sum1)
+                y_var -= np.einsum("ij,ij->i", np.dot(K_trans, self._K_inv), K_trans)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
