@@ -59,6 +59,7 @@ import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
+from .util import safe_repr
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
@@ -68,10 +69,12 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "SkipTest"]
 
+
 def _is_subtype(expected, basetype):
     if isinstance(expected, tuple):
         return all(_is_subtype(e, basetype) for e in expected)
     return isinstance(expected, type) and issubclass(expected, basetype)
+
 
 class _BaseTestCaseContext:
 
@@ -81,6 +84,7 @@ class _BaseTestCaseContext:
     def _raiseFailure(self, standardMsg):
         msg = self.test_case._formatMessage(self.msg, standardMsg)
         raise self.test_case.failureException(msg)
+
 
 class _AssertRaisesBaseContext(_BaseTestCaseContext):
 
@@ -149,13 +153,8 @@ class _AssertRaisesContext(_AssertRaisesBaseContext):
                                                                 self.obj_name))
             else:
                 self._raiseFailure("{} not raised".format(exc_name))
-        #else:
-        #    traceback.clear_frames(tb)
         if not issubclass(exc_type, self.expected):
-            # let unexpected exceptions pass through
             return False
-        # store exception, without traceback, for later retrieval
-        #self.exception = exc_value.with_traceback(None)
         if self.expected_regex is None:
             return True
 
@@ -169,6 +168,7 @@ class _AssertRaisesContext(_AssertRaisesBaseContext):
 class TestCase_new(object):
     longMessage = False
     failureException = AssertionError
+
     def _formatMessage(self, msg, standardMsg):
         """Honour the longMessage attribute when generating failure messages.
         If longMessage is False this means:
@@ -177,7 +177,7 @@ class TestCase_new(object):
 
         If longMessage is True:
         * Use the standard message
-        * If an explicit message is provided, plus ' : ' and the explicit message
+        * If an explicit message is provided, plus ' : ' and the explicit msg
         """
         if not self.longMessage:
             return msg or standardMsg
@@ -188,7 +188,7 @@ class TestCase_new(object):
             # it changes the way unicode input is handled
             return '%s : %s' % (standardMsg, msg)
         except UnicodeDecodeError:
-            return  '%s : %s' % (safe_repr(standardMsg), safe_repr(msg))
+            return '%s : %s' % (safe_repr(standardMsg), safe_repr(msg))
 
     def assertRaises(self, expected_exception, *args, **kwargs):
         """Fail unless an exception of class expected_exception is raised
@@ -222,8 +222,9 @@ class TestCase_new(object):
         finally:
             # bpo-23890: manually break a reference cycle
             context = None
-    def assertRaisesRegex(self, expected_exception, expected_regex,
-                          *args, **kwargs):
+
+    def assertRaisesRegex(self, expected_exception,
+                          expected_regex, *args, **kwargs):
         """Asserts that the message in a raised exception matches a regex.
 
         Args:
@@ -235,7 +236,8 @@ class TestCase_new(object):
             msg: Optional message used in case of failure. Can only be used
                     when assertRaisesRegex is used as a context manager.
         """
-        context = _AssertRaisesContext(expected_exception, self, expected_regex)
+        context = _AssertRaisesContext(expected_exception,
+                                       self, expected_regex)
         return context.handle('assertRaisesRegex', args, kwargs)
 
 
@@ -1070,4 +1072,3 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
             if n1 != n2:
                 incorrect += [func_name + ' ' + n1 + ' != ' + n2]
     return incorrect
-
