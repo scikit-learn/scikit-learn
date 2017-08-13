@@ -17,6 +17,9 @@ General Concepts
 
 .. glossary::
 
+    affinity
+        TODO
+
     array-like
 
         The most common data format for input to Scikit-learn estimators and
@@ -72,7 +75,15 @@ General Concepts
         :class:`~pipeline.FeatureUnion`.)
 
     common tests
-        TODO
+        This refers to the tests run on almost every estimator class in
+        Scikit-learn to check they comply with basic API conventions.  They are
+        available for external use through
+        :func:`utils.estimator_checks.check_estimator`.
+
+        Note: Some exceptions to the common testing regime are currently
+        hard-coded into the library, but we hope to replace this by marking
+        exceptional behaviours on the estimator using semantic :term:`estimator
+        tags`.
 
     deprecation
         TODO
@@ -104,6 +115,31 @@ General Concepts
     evaluation metric
         TODO
 
+    estimator tags
+        A proposed feature (e.g. :issue:`8022`) by which the capabilities of an
+        estimator are described through a set of semantic tags.  This would
+        enable some runtime behaviors based on estimator inspection, but it
+        also allows each estimator to be tested for appropriate invariances
+        while being excepted from other :term:`common tests`.
+
+        Some aspects of estimator tags are currently determined through
+        the :term:`duck typing` of methods like ``predict_proba`` and through
+        some special attributes on estimator objects:
+
+        ``_estimator_type``
+            This string-valued attribute identifies an estimator as being a
+            classifier, regressor, etc. It is set by mixins such as
+            :class:`base.ClassifierMixin`, but needs to be more explicitly
+            adopted on a :term:`meta-estimator`.  Its value should usually be
+            checked by way of a helper such as :func:`base.is_classifier`.
+
+        ``_pairwise``
+            This boolean attribute indicates whether the data (``X``) passed to
+            :func:`fit` and similar methods consists of pairwise measures over
+            samples rather than a feature representation for each sample.  It
+            is usually ``True`` where an estimator has a ``metric`` or
+            ``affinity`` parameter with value 'precomputed'.
+
     feature
         TODO
 
@@ -113,7 +149,7 @@ General Concepts
     fitted
         TODO
 
-    missing data
+    missing values
         TODO
 
     parameter
@@ -155,6 +191,11 @@ General Concepts
         Common parameters are listed :ref:`below <glossary_attributes>`.
 
     pairwise metric
+        TODO
+
+        See precomputed.
+
+    precomputed
         TODO
 
     sample
@@ -201,7 +242,7 @@ Class APIs and Estimator Types
 
     meta-estimator
         TODO
-        Mention duck typing.
+        Mention duck typing. Mention lenient validation.
 
     outlier detector
         TODO
