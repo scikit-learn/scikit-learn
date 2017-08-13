@@ -7,7 +7,7 @@ Glossary of Common Terms and API Elements
 =========================================
 
 This glossary hopes to definitively represent the tacit and explicit
-conventions applied in scikit-learn and its API, while providing a reference
+conventions applied in Scikit-learn and its API, while providing a reference
 for users and contributors. It aims to describe the concepts and either detail
 their corresponding API or link to other relevant parts of the documentation
 which do so.
@@ -28,6 +28,8 @@ General Concepts
 
     classifier
         TODO
+        Mention that within scikit-learn, all support multi-class
+        classification, defaulting to OvR.
         Mention :func:`~base.is_classifier`.
 
     clone
@@ -44,9 +46,6 @@ General Concepts
     common tests
         TODO
 
-    convergence
-        TODO mention :class:`exceptions.ConvergenceWarning`
-
     deprecation
         TODO
 
@@ -54,6 +53,10 @@ General Concepts
         When specifying parameter names for nested estimators, ``__`` may be
         used to separate between parent and child.
         See :term:`parameter`.
+
+    dtype
+    data type
+        TODO. Mention casting.
 
     duck typing
         TODO
@@ -105,7 +108,7 @@ General Concepts
         using a double-underscore (``__``) to separate between the
         estimator-as-parameter and its parameter.  Thus
         ``BaggingClassifier(base_estimator=DecisionTreeClassifier(max_depth=3))``
-        has a deep paramter ``base_estimator__max_depth`` with value ``3``.
+        has a deep parameter ``base_estimator__max_depth`` with value ``3``.
 
         The list of parameters and their current values can be retrieved from
         an :term:`estimator instance` using its :term:`get_params` method.
@@ -208,6 +211,8 @@ Target Types
     multiclass
         TODO
 
+        strings, etc.
+
     multilabel
         TODO
 
@@ -296,25 +301,78 @@ non-estimator parameters with similar semantics.
 .. glossary::
 
     ``class_weight``
-        TODO
+        Used to specify sample weights when fitting classifiers as a function
+        of the :term:`target` class.  Where the :term:`sample_weight`
+        :term:`sample property` is also supported and given, it is multiplied
+        by the ``class_weight`` contribution. Similarly, where ``class_weight``
+        is used in a :term:`multi-output` (including :term:`multilabel`) tasks,
+        the weights are multiplied across outputs (i.e. columns of ``y``).
+
+        By default all samples have equal weight such that classes are
+        effectively weighted by their their prevalence in the training data.
+        This could be achieved explicitly with ``class_weight={label1: 1,
+        label2: 1, ...}`` for all class labels.
+
+        More generally, ``class_weight`` is specified as a dict mapping class
+        labels to weights (``{class_label: weight}``), such that each sample
+        of the named class is given that weight.
+
+        ``class_weight='balanced'`` can be used to give all classes
+        equal weight by giving each sample a weight inversely related
+        to its class's prevalence in the training data:
+        ``n_samples / (n_classes * np.bincount(y))``.
+
+        For multioutput classification, a list of dicts is used to specify
+        weights for each output. For example, for four-class multilabel
+        classification weights should be ``[{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1,
+        1: 1}, {0: 1, 1: 1}]`` instead of ``[{1:1}, {2:5}, {3:1}, {4:1}]``.
+
+        The ``class_weight`` parameter is validated and interpreted with
+        :func:`utils.compute_class_weight`.
 
     ``cv``
-        TODO
+        Determines a cross validation splitting strategy, as used in
+        cross-validation based routines. ``cv`` is also available in estimators
+        such as :class:`multioutput.ClassifierChain` which use the predictions
+        of one estimator as training data for another, to not overfit the
+        training supervision.
+
+        Possible inputs for ``cv`` are usually:
+
+        - An integer, specifying the number of folds in K-fold cross
+          validation. K-fold will be stratified over classes if the estimator
+          is a classifier (determined by :func:`base.is_classifier`) and the
+          :term:`targets` may represent a binary or multiclass (but not
+          multi-output) classification problem (determined by
+          :func:`utils.multiclass.type_of_target`).
+        - A :term:`cross validation splitter` instance. Refer to the
+          :ref:`User Guide <cross_validation>` for splitters available
+          within Scikit-learn.
+        - An iterable yielding train/test splits.
+
+        With some exceptions (especially where not using cross validation at
+        all is an option), the default is 3-fold.
+
+        ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
     ``max_iter``
-        TODO
+        For estimators involving iterative optimization, this determines the
+        maximum number of iterations to be performed in :term:`fit`.  If
+        ``max_iter`` iterations are run without convergence, a
+        :class:`exceptions.ConvergenceWarning` should be raised.
 
-        Mention ConvergenceWarning
+        TODO is this always epochs?
 
     ``memory``
         Some estimators make use of :class:`joblib.Memory` to
         store partial solutions during fitting. Thus when ``fit`` is called
         again, those partial solutions have been memoized and can be reused.
 
-        Memory can be specified as a string with a path to a directory, or
-        a :class:`joblib.Memory` instance can be used. In the latter case,
-        ``Memory`` should be imported from ``sklearn.externals.joblib``, which
-        may differ from the installed ``joblib`` package.
+        A ``memory`` parameter can be specified as a string with a path to a
+        directory, or a :class:`joblib.Memory` instance can be used. In the
+        latter case, ``Memory`` should be imported from
+        ``sklearn.externals.joblib``, which may differ from the installed
+        ``joblib`` package.
 
     ``n_jobs``
         This is used to specify how many concurrent processes/threads should be
@@ -393,12 +451,37 @@ non-estimator parameters with similar semantics.
         function is to be maximised, and another parameter such as ``refit``
         may be used for this purpose.
 
+        The ``scoring`` parameter is validated and interpreted using
+        :func:`metrics.check_scoring`.
+
     ``verbose``
-        TODO
+        Logging is not handled very consistently in Scikit-learn at present,
+        but when it is provided as an option, the ``verbose`` parameter is
+        usually available to choose no logging (set to False). Any True value
+        should enable some logging, but larger integers (e.g. above 10) may be
+        needed for full verbosity.  Verbose logs are usually printed to
+        Standard Output.
 
     ``warm_start``
-        TODO
-        See also :term:`partial_fit`.
+
+        When fitting an estimator repeatedly on the same dataset, but for
+        multiple parameter values (such as to find the value maximizing
+        performance as in :ref:`grid search <grid_search>`), it may be possible
+        to reuse aspects of the model learnt from the previous parameter value,
+        saving time.  When ``warm_start`` is true, the existing :term:`fitted`
+        model :term:`attributes` an are used to initialise the new model
+        in a subsequent call to :term:`fit`.
+
+        Note that this is only applicable for some models and some
+        parameters, and even some orders of parameter values. For example,
+        ``warm_start`` may be used when building random forests to add more
+        trees to the forest (increasing ``n_estimators``) but not to reduce
+        their number.
+
+        :term:`partial_fit` also retains the model between calls, but differs:
+        with ``warm_start`` the parameters change and the data is constant
+        across calls to ``fit``; with ``partial_fit``, the mini-batch of data
+        changes and model parameters stay fixed.
 
 Attributes
 ==========
@@ -431,3 +514,6 @@ See concept :term:`sample property`.
 
     ``sample_weight``
         TODO
+
+        Mention clustering. Can also be specified in terms of
+        :term:`class_weight` as an estimator :term:`parameter`.

@@ -764,6 +764,7 @@ details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.check_scoring
    metrics.get_scorer
    metrics.make_scorer
 
