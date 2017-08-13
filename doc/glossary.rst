@@ -18,13 +18,41 @@ General Concepts
 .. glossary::
 
     array-like
-        TODO
+
+        The most common data format for input to Scikit-learn estimators and
+        functions, array-like is any type object for which
+        :func:`numpy.asarray` will produce an array of appropriate shape
+        (usually 1 or 2-dimensional) of appropriate dtype (usually numeric).
+
+        This includes:
+
+        * a numpy array
+        * a list of numbers
+        * a list of length-k lists of numbers for some fixed length k
+        * a :class:`pandas.DataFrame` with all columns numeric
+
+        It excludes:
+
+        * a :term:`sparse matrix`
+        * an iterator
+        * a generator
 
     attribute
     attributes
-        TODO
 
-        Sufficient statistics for prediction/transformation. Diagnostics.
+        We mostly use *attribute* to refer to how model information is stored
+        on an estimator during fitting.  Public attributes on Scikit-learn
+        estimators conventionally begin with an alphabetic character and end
+        with a single underscore (``_``) -- for instance ``coef_`` -- are
+        available as attributes (in the Python object sense) of a
+        :term:`fitted` estimator, and are described in the estimator's
+        docstring.
+
+        The information stored in attributes are usually either: sufficient
+        statistics used for prediction or transformation; or diagnostic data,
+        such as :term:`feature_importances_`.
+
+        Common attributes are listed :ref:`below <glossary_attributes>`.
 
     classifier
         TODO
@@ -90,17 +118,22 @@ General Concepts
 
     parameter
     parameters
-        We mostly use *parameter* to refer to the aspects of an estimator that can be
-        specified in its construction. For example, ``max_depth`` and ``random_state``
-        are parameters of :class:`RandomForestClassifier`.
 
-        We do not use _parameters_ in the statistical sense, where parameters
-        are values that specify a model and can be estimated from data. In this
-        sense, what we call parameters might be what statisticians call
-        hyperparameters to the model: decisions about model structure that are
-        often not directly learnt from data.  However, our parameters are also
-        used to prescribe modeling operations that do not affect the learnt
-        model, such as :term:`n_jobs` for controlling parallelism.
+        We mostly use *parameter* to refer to the aspects of an estimator that
+        can be specified in its construction. For example, ``max_depth`` and
+        ``random_state`` are parameters of :class:`RandomForestClassifier`.
+        Parameters to an estimator's constructor are stored as attributes the
+        estimator, and conventionally start with an alphabetic character and
+        end with an alphanumeric character.  Each estimator's constructor
+        parameters are described in the estimator's docstring.
+
+        We do not use parameters in the statistical sense, where parameters are
+        values that specify a model and can be estimated from data. What we
+        call parameters might be what statisticians call hyperparameters to the
+        model: aspects for configuring model structure that are often not
+        directly learnt from data.  However, our parameters are also used to
+        prescribe modeling operations that do not affect the learnt model, such
+        as :term:`n_jobs` for controlling parallelism.
 
         When talking about the parameters of a :term:`meta-estimator`, we may
         also be including the parameters of the estimators wrapped by the
@@ -118,6 +151,8 @@ General Concepts
         validated or altered when the estimator is constructed, or when each
         parameter is set. Parameter validation is performed when :term:`fit` is
         called.
+
+        Common parameters are listed :ref:`below <glossary_attributes>`.
 
     pairwise metric
         TODO
@@ -291,6 +326,8 @@ Methods
     ``split``
         TODO
 
+.. _glossary_parameters:
+
 Parameters
 ==========
 
@@ -362,6 +399,9 @@ non-estimator parameters with similar semantics.
         :class:`exceptions.ConvergenceWarning` should be raised.
 
         TODO is this always epochs?
+
+        FIXME perhaps we should have some common tests about the relationship
+        between ConvergenceWarning and max_iter.
 
     ``memory``
         Some estimators make use of :class:`joblib.Memory` to
@@ -483,6 +523,8 @@ non-estimator parameters with similar semantics.
         across calls to ``fit``; with ``partial_fit``, the mini-batch of data
         changes and model parameters stay fixed.
 
+.. _glossary_attributes:
+
 Attributes
 ==========
 
@@ -502,6 +544,8 @@ See concept :term:`attribute`.
     ``labels_``
         TODO
 
+.. _glossary_sample_props:
+
 Sample properties
 =================
 
@@ -513,7 +557,21 @@ See concept :term:`sample property`.
         TODO
 
     ``sample_weight``
-        TODO
 
-        Mention clustering. Can also be specified in terms of
-        :term:`class_weight` as an estimator :term:`parameter`.
+        A relative weight for each sample.  Intuitively, if all weights are
+        integers, a weighted model or score should be equivalent to that
+        calculated when repeating the sample the number of times specified in
+        the weight.  Weights may be specified as floats, so that
+        ``sample_weight``s are usually equivalent up to a constant positive 
+        scaling factor.
+
+        FIXME  Is this interpretation always the case in practice? We have no
+        common tests.
+
+        This is not entirely the case where other parameters of the model
+        consider the number of samples in a region, as with ``min_samples`` in
+        :class:`cluster.DBSCAN`.  In this case, a count of samples becomes
+        to a sum of their weights.
+
+        In classification, sample weights can also be specified as a function
+        of class with the :term:`class_weight` estimator :term:`parameter`.
