@@ -16,6 +16,7 @@ import pkgutil
 import warnings
 import sys
 import struct
+import re
 
 import scipy as sp
 import scipy.io
