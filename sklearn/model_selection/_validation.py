@@ -173,7 +173,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     See Also
     ---------
-    :func:`sklearn.metrics.cross_val_score`:
+    :func:`sklearn.model_selection.cross_val_score`:
         Run cross-validation for single metric evaluation.
 
     :func:`sklearn.metrics.make_scorer`:
