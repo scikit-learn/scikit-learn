@@ -68,6 +68,149 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_approx_equal", "SkipTest"]
 
 
+class _BaseTestCaseContext:
+
+    def __init__(self, test_case):
+        self.test_case = test_case
+
+    def _raiseFailure(self, standardMsg):
+        msg = self.test_case._formatMessage(self.msg, standardMsg)
+        raise self.test_case.failureException(msg)
+
+class _AssertRaisesBaseContext(_BaseTestCaseContext):
+
+    def __init__(self, expected, test_case, expected_regex=None):
+        _BaseTestCaseContext.__init__(self, test_case)
+        self.expected = expected
+        self.test_case = test_case
+        if expected_regex is not None:
+            expected_regex = re.compile(expected_regex)
+        self.expected_regex = expected_regex
+        self.obj_name = None
+        self.msg = None
+
+    def handle(self, name, args, kwargs):
+        """
+        If args is empty, assertRaises/Warns is being used as a
+        context manager, so check for a 'msg' kwarg and return self.
+        If args is not empty, call a callable passing positional and keyword
+        arguments.
+        """
+        try:
+            if not _is_subtype(self.expected, self._base_type):
+                raise TypeError('%s() arg 1 must be %s' %
+                                (name, self._base_type_str))
+            if args and args[0] is None:
+                warnings.warn("callable is None",
+                              DeprecationWarning, 3)
+                args = ()
+            if not args:
+                self.msg = kwargs.pop('msg', None)
+                if kwargs:
+                    warnings.warn('%r is an invalid keyword argument for '
+                                  'this function' % next(iter(kwargs)),
+                                  DeprecationWarning, 3)
+                return self
+
+            callable_obj, args = args[0], args[1:]
+            try:
+                self.obj_name = callable_obj.__name__
+            except AttributeError:
+                self.obj_name = str(callable_obj)
+            with self:
+                callable_obj(*args, **kwargs)
+        finally:
+            # bpo-23890: manually break a reference cycle
+            self = None
+
+
+class _AssertRaisesContext(_AssertRaisesBaseContext):
+    """A context manager used to implement TestCase.assertRaises* methods."""
+
+    _base_type = BaseException
+    _base_type_str = 'an exception type or tuple of exception types'
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, tb):
+        if exc_type is None:
+            try:
+                exc_name = self.expected.__name__
+            except AttributeError:
+                exc_name = str(self.expected)
+            if self.obj_name:
+                self._raiseFailure("{} not raised by {}".format(exc_name,
+                                                                self.obj_name))
+            else:
+                self._raiseFailure("{} not raised".format(exc_name))
+        #else:
+        #    traceback.clear_frames(tb)
+        if not issubclass(exc_type, self.expected):
+            # let unexpected exceptions pass through
+            return False
+        # store exception, without traceback, for later retrieval
+        #self.exception = exc_value.with_traceback(None)
+        if self.expected_regex is None:
+            return True
+
+        expected_regex = self.expected_regex
+        if not expected_regex.search(str(exc_value)):
+            self._raiseFailure('"{}" does not match "{}"'.format(
+                     expected_regex.pattern, str(exc_value)))
+        return True
+
+
+class TestCase_new(object):
+    def assertRaises(self, expected_exception, *args, **kwargs):
+        """Fail unless an exception of class expected_exception is raised
+           by the callable when invoked with specified positional and
+           keyword arguments. If a different type of exception is
+           raised, it will not be caught, and the test case will be
+           deemed to have suffered an error, exactly as for an
+           unexpected exception.
+
+           If called with the callable and arguments omitted, will return a
+           context object used like this::
+
+                with self.assertRaises(SomeException):
+                    do_something()
+
+           An optional keyword argument 'msg' can be provided when assertRaises
+           is used as a context object.
+
+           The context manager keeps a reference to the exception as
+           the 'exception' attribute. This allows you to inspect the
+           exception after the assertion::
+
+               with self.assertRaises(SomeException) as cm:
+                   do_something()
+               the_exception = cm.exception
+               self.assertEqual(the_exception.error_code, 3)
+        """
+        context = _AssertRaisesContext(expected_exception, self)
+        try:
+            return context.handle('assertRaises', args, kwargs)
+        finally:
+            # bpo-23890: manually break a reference cycle
+            context = None
+    def assertRaisesRegex(self, expected_exception, expected_regex,
+                          *args, **kwargs):
+        """Asserts that the message in a raised exception matches a regex.
+
+        Args:
+            expected_exception: Exception class expected to be raised.
+            expected_regex: Regex (re pattern object or string) expected
+                    to be found in error message.
+            args: Function to be called and extra positional args.
+            kwargs: Extra kwargs.
+            msg: Optional message used in case of failure. Can only be used
+                    when assertRaisesRegex is used as a context manager.
+        """
+        context = _AssertRaisesContext(expected_exception, self, expected_regex)
+        return context.handle('assertRaisesRegex', args, kwargs)
+
+
 _dummy = unittest.TestCase('__init__')
 _dummy2 = TestCase_new()
 assert_equal = _dummy.assertEqual
@@ -83,7 +226,6 @@ assert_less = _dummy.assertLess
 assert_greater = _dummy.assertGreater
 assert_less_equal = _dummy.assertLessEqual
 assert_greater_equal = _dummy.assertGreaterEqual
-
 
 assert_raises_regex = _dummy2.assertRaisesRegex
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
@@ -900,147 +1042,4 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
             if n1 != n2:
                 incorrect += [func_name + ' ' + n1 + ' != ' + n2]
     return incorrect
-
-
-class _BaseTestCaseContext:
-
-    def __init__(self, test_case):
-        self.test_case = test_case
-
-    def _raiseFailure(self, standardMsg):
-        msg = self.test_case._formatMessage(self.msg, standardMsg)
-        raise self.test_case.failureException(msg)
-
-class _AssertRaisesBaseContext(_BaseTestCaseContext):
-
-    def __init__(self, expected, test_case, expected_regex=None):
-        _BaseTestCaseContext.__init__(self, test_case)
-        self.expected = expected
-        self.test_case = test_case
-        if expected_regex is not None:
-            expected_regex = re.compile(expected_regex)
-        self.expected_regex = expected_regex
-        self.obj_name = None
-        self.msg = None
-
-    def handle(self, name, args, kwargs):
-        """
-        If args is empty, assertRaises/Warns is being used as a
-        context manager, so check for a 'msg' kwarg and return self.
-        If args is not empty, call a callable passing positional and keyword
-        arguments.
-        """
-        try:
-            if not _is_subtype(self.expected, self._base_type):
-                raise TypeError('%s() arg 1 must be %s' %
-                                (name, self._base_type_str))
-            if args and args[0] is None:
-                warnings.warn("callable is None",
-                              DeprecationWarning, 3)
-                args = ()
-            if not args:
-                self.msg = kwargs.pop('msg', None)
-                if kwargs:
-                    warnings.warn('%r is an invalid keyword argument for '
-                                  'this function' % next(iter(kwargs)),
-                                  DeprecationWarning, 3)
-                return self
-
-            callable_obj, args = args[0], args[1:]
-            try:
-                self.obj_name = callable_obj.__name__
-            except AttributeError:
-                self.obj_name = str(callable_obj)
-            with self:
-                callable_obj(*args, **kwargs)
-        finally:
-            # bpo-23890: manually break a reference cycle
-            self = None
-
-
-class _AssertRaisesContext(_AssertRaisesBaseContext):
-    """A context manager used to implement TestCase.assertRaises* methods."""
-
-    _base_type = BaseException
-    _base_type_str = 'an exception type or tuple of exception types'
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, tb):
-        if exc_type is None:
-            try:
-                exc_name = self.expected.__name__
-            except AttributeError:
-                exc_name = str(self.expected)
-            if self.obj_name:
-                self._raiseFailure("{} not raised by {}".format(exc_name,
-                                                                self.obj_name))
-            else:
-                self._raiseFailure("{} not raised".format(exc_name))
-        #else:
-        #    traceback.clear_frames(tb)
-        if not issubclass(exc_type, self.expected):
-            # let unexpected exceptions pass through
-            return False
-        # store exception, without traceback, for later retrieval
-        #self.exception = exc_value.with_traceback(None)
-        if self.expected_regex is None:
-            return True
-
-        expected_regex = self.expected_regex
-        if not expected_regex.search(str(exc_value)):
-            self._raiseFailure('"{}" does not match "{}"'.format(
-                     expected_regex.pattern, str(exc_value)))
-        return True
-
-
-class TestCase_new(object):
-    def assertRaises(self, expected_exception, *args, **kwargs):
-        """Fail unless an exception of class expected_exception is raised
-           by the callable when invoked with specified positional and
-           keyword arguments. If a different type of exception is
-           raised, it will not be caught, and the test case will be
-           deemed to have suffered an error, exactly as for an
-           unexpected exception.
-
-           If called with the callable and arguments omitted, will return a
-           context object used like this::
-
-                with self.assertRaises(SomeException):
-                    do_something()
-
-           An optional keyword argument 'msg' can be provided when assertRaises
-           is used as a context object.
-
-           The context manager keeps a reference to the exception as
-           the 'exception' attribute. This allows you to inspect the
-           exception after the assertion::
-
-               with self.assertRaises(SomeException) as cm:
-                   do_something()
-               the_exception = cm.exception
-               self.assertEqual(the_exception.error_code, 3)
-        """
-        context = _AssertRaisesContext(expected_exception, self)
-        try:
-            return context.handle('assertRaises', args, kwargs)
-        finally:
-            # bpo-23890: manually break a reference cycle
-            context = None
-    def assertRaisesRegex(self, expected_exception, expected_regex,
-                          *args, **kwargs):
-        """Asserts that the message in a raised exception matches a regex.
-
-        Args:
-            expected_exception: Exception class expected to be raised.
-            expected_regex: Regex (re pattern object or string) expected
-                    to be found in error message.
-            args: Function to be called and extra positional args.
-            kwargs: Extra kwargs.
-            msg: Optional message used in case of failure. Can only be used
-                    when assertRaisesRegex is used as a context manager.
-        """
-        context = _AssertRaisesContext(expected_exception, self, expected_regex)
-        return context.handle('assertRaisesRegex', args, kwargs)
 
