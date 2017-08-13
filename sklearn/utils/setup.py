@@ -75,7 +75,6 @@ def configuration(parent_package='', top_path=None):
                          libraries=libraries)
 
     config.add_subpackage('tests')
-    config.add_subpackage('modifiedunittest')
 
     return config
 
