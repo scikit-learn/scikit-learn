@@ -48,7 +48,7 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
 
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
-    cs = plt.contourf(xx, yy, Z, cmap=plt.cm.Paired)
+    cs = plt.contourf(xx, yy, Z, cmap=plt.cm.RdYlBu)
 
     plt.xlabel(iris.feature_names[pair[0]])
     plt.ylabel(iris.feature_names[pair[1]])
