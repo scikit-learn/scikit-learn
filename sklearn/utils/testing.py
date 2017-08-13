@@ -67,6 +67,10 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "SkipTest"]
 
+def _is_subtype(expected, basetype):
+    if isinstance(expected, tuple):
+        return all(_is_subtype(e, basetype) for e in expected)
+    return isinstance(expected, type) and issubclass(expected, basetype)
 
 class _BaseTestCaseContext:
 
