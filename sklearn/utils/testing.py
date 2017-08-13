@@ -167,6 +167,8 @@ class _AssertRaisesContext(_AssertRaisesBaseContext):
 
 
 class TestCase_new(object):
+    longMessage = False
+    failureException = AssertionError
     def _formatMessage(self, msg, standardMsg):
         """Honour the longMessage attribute when generating failure messages.
         If longMessage is False this means:
