@@ -366,9 +366,18 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     dtype_numeric = isinstance(dtype, six.string_types) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
+
     if not hasattr(dtype_orig, 'kind'):
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
+
+    if dtype_orig is not None and dtype_orig.kind == "c":
+        raise ValueError("Complex data is not supported\n{}\n".format(array))
+    elif isinstance(array, list) or isinstance(array, tuple):
+        np_array = np.array(array)
+        if np_array.dtype.kind == "c":
+            raise ValueError("Complex data is not supported"
+                             "\n{}\n".format(array))
 
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
