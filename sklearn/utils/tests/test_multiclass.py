@@ -27,6 +27,7 @@ from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.multiclass import _fill_missing_class_dimensions
 
 from sklearn.utils.metaestimators import _safe_split
 from sklearn.model_selection import ShuffleSplit
@@ -372,3 +373,34 @@ def test_safe_split_with_precomputed_kernel():
     K_test, y_test2 = _safe_split(clfp, K, y, test, train)
     assert_array_almost_equal(K_test, np.dot(X_test, X_train.T))
     assert_array_almost_equal(y_test, y_test2)
+
+
+def test_fill_missing_class_dimensions():
+    array = np.array([1, 1, 2, 2])
+    zero_array = np.zeros(array.size)
+    dummy_array = np.repeat(10, array.size)
+    present_classes = np.array([1, 2])
+
+    all_classes = np.array([1, 2, 3, 4])
+    result = _fill_missing_class_dimensions(array, present_classes,
+                                            all_classes)
+    expected = np.vstack([-array, array, zero_array, zero_array])
+    assert_array_equal(result, expected)
+
+    result = _fill_missing_class_dimensions(array, present_classes,
+                                            all_classes,
+                                            negate_neg_class=False)
+    expected = np.vstack([array, array, zero_array, zero_array])
+    assert_array_equal(result, expected)
+
+    result = _fill_missing_class_dimensions(array, present_classes,
+                                            all_classes,
+                                            fill_value=10)
+    expected = np.vstack([-array, array, dummy_array, dummy_array])
+    assert_array_equal(result, expected)
+
+    all_classes = np.array([0, 1, 2, 3])
+    result = _fill_missing_class_dimensions(array, present_classes,
+                                            all_classes)
+    expected = np.vstack([zero_array, -array, array, zero_array])
+    assert_array_equal(result, expected)
