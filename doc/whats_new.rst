@@ -41,11 +41,15 @@ Bug fixes
 
 Decomposition, manifold learning and clustering
 
+- Fix for uninformative error in :class:`decomposition.incremental_pca`:
+  now an error is raised if the number of components is larger than the
+  chosen batch size. The ``n_components=None`` case was adapted accordingly.
+  :issue:`6452`. By :user:`Wally Gauze <wallygauze>`.
+
 - Fixed a bug where the ``partial_fit`` method of
   :class:`decomposition.IncrementalPCA` used integer division instead of float
   division on Python 2 versions. :issue:`9492` by
   :user:`James Bourbeau <jrbourbeau>`.
-
 
 Version 0.19
 ============
