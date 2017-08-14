@@ -141,7 +141,10 @@ General Concepts
             ``affinity`` parameter with value 'precomputed'.
 
     feature
+    features
         TODO
+
+        Elsewhere known as predictors, regressors, independent variables.
 
     fitting
         Calling :term:`fit` on an estimator.
@@ -151,6 +154,18 @@ General Concepts
 
     missing values
         TODO
+
+    ``n_features``
+        The number of :term:`features`.
+
+    ``n_outputs``
+        The number of :term:`outputs` in the :term:`target`.
+
+    ``n_samples``
+        The number of :term:`samples`.
+
+    outputs
+        TODO?
 
     parameter
     parameters
@@ -200,7 +215,7 @@ General Concepts
 
     sample
     samples
-        We usually use this terms as a noun to indicate a single instance or
+        We usually use this term as a noun to indicate a single instance or
         feature vector.  Thus ``n_samples`` indicates the number of instances
         in a dataset.
 
@@ -222,6 +237,8 @@ General Concepts
     target
     targets
         TODO
+
+        Dependent variable or outcome variable.
 
     unlabeled data
         TODO
