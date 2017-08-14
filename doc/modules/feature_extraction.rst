@@ -490,13 +490,13 @@ log \frac{n_d}{\text{df}(d, t)} + 1 = log(1)+1 = 1`
 Now, if we repeat this computation for the remaining 2 terms in the document,
 we get
 
-:math:`\text{tf-idf}_{\text{term2}} = 0 \times log(6/1)+1 = 0`
+:math:`\text{tf-idf}_{\text{term2}} = 0 \times (log(6/1)+1) = 0`
 
-:math:`\text{tf-idf}_{\text{term3}} = 1 \times log(6/2)+1 \approx 2.0986`
+:math:`\text{tf-idf}_{\text{term3}} = 1 \times (log(6/2)+1) \approx 2.0986`
 
 and the vector of raw tf-idfs:
 
-:math:`\text{tf-idf}_raw = [3, 0, 2.0986].`
+:math:`\text{tf-idf}_{\text{raw}} = [3, 0, 2.0986].`
 
 
 Then, applying the Euclidean (L2) norm, we obtain the following tf-idfs
