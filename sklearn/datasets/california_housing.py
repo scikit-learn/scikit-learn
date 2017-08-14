@@ -2,7 +2,7 @@
 
 The original database is available from StatLib
 
-    http://lib.stat.cmu.edu/
+    http://lib.stat.cmu.edu/datasets/
 
 The data contains 20,640 observations on 9 variables.
 
