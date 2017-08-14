@@ -273,3 +273,27 @@ def test_whitening():
         assert_almost_equal(X, Xinv_ipca, decimal=prec)
         assert_almost_equal(X, Xinv_pca, decimal=prec)
         assert_almost_equal(Xinv_pca, Xinv_ipca, decimal=prec)
+
+
+def test_incremental_pca_partial_fit_float_division():
+    # Test to ensure float division is used in all versions of Python
+    # (non-regression test for issue #9489)
+
+    rng = np.random.RandomState(0)
+    A = rng.randn(5, 3) + 2
+    B = rng.randn(7, 3) + 5
+
+    pca = IncrementalPCA(n_components=2)
+    pca.partial_fit(A)
+    # Set n_samples_seen_ to be a floating point number instead of an int
+    pca.n_samples_seen_ = float(pca.n_samples_seen_)
+    pca.partial_fit(B)
+    singular_vals_float_samples_seen = pca.singular_values_
+
+    pca2 = IncrementalPCA(n_components=2)
+    pca2.partial_fit(A)
+    pca2.partial_fit(B)
+    singular_vals_int_samples_seen = pca2.singular_values_
+
+    np.testing.assert_allclose(singular_vals_float_samples_seen,
+                               singular_vals_int_samples_seen)
