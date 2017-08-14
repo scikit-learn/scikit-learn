@@ -16,7 +16,7 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- :class:`decomposition.IncrementalPCA` (bug fix)
+- :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 
 Details are listed in the changelog below.
 
