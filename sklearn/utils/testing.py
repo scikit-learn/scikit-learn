@@ -881,7 +881,8 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
             # If there was no space between name and the colon
             # "verbose:" -> len(["verbose", ""][0]) -> 7
             # If "verbose:"[7] == ":", then there was no space
-            if param_name[len(param_name.split(':')[0].strip())] == ':':
+            if (':' not in param_name or
+                    param_name[len(param_name.split(':')[0].strip())] == ':'):
                 incorrect += [func_name +
                               ' There was no space between the param name and '
                               'colon ("%s")' % name]

@@ -169,7 +169,7 @@ Model selection and evaluation
   :issue:`8120` by `Neeraj Gangwar`_.
 
 - Added a scorer based on :class:`metrics.explained_variance_score`.
-  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
+  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
 
 Miscellaneous
 
