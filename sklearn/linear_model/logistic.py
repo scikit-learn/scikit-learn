@@ -1095,6 +1095,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         to 'liblinear' regardless of whether 'multi_class' is specified or
         not. If given a value of -1, all cores are used.
 
+    classes : array-like, shape (n_classes,), optional (default=None)
+        List of all the classes that can possibly appear in the
+        y vector. The list of classes should be sorted in the value
+        of classes.
+
+        If not specified, this will be set as per the classes present in
+        the training data. It is recommended to set this parameter during
+        initialization.
+
+        .. versionadded:: 0.20
+
     Attributes
     ----------
 
@@ -1156,7 +1167,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None, solver='liblinear', max_iter=100,
-                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1):
+                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1,
+                 classes=None):
 
         self.penalty = penalty
         self.dual = dual
@@ -1172,6 +1184,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.verbose = verbose
         self.warm_start = warm_start
         self.n_jobs = n_jobs
+        self.classes = classes
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -1501,6 +1514,17 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
+    classes : array-like, shape (n_classes,), optional (default=None)
+        List of all the classes that can possibly appear in the
+        y vector. The list of classes should be sorted in the value
+        of classes.
+
+        If not specified, this will be set as per the classes present in
+        the training data. It is recommended to set this parameter during
+        initialization.
+
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     coef_ : array, shape (1, n_features) or (n_classes, n_features)
@@ -1558,7 +1582,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                  penalty='l2', scoring=None, solver='lbfgs', tol=1e-4,
                  max_iter=100, class_weight=None, n_jobs=1, verbose=0,
                  refit=True, intercept_scaling=1., multi_class='ovr',
-                 random_state=None):
+                 random_state=None, classes=None):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
         self.cv = cv
@@ -1575,6 +1599,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.random_state = random_state
+        self.classes = classes
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
