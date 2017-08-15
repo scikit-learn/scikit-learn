@@ -11,6 +11,18 @@ Version 0.20 (under development)
 Changed models
 --------------
 
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
+
+Details are listed in the changelog below.
+
+(While we are trying to better inform users by providing this information, we
+cannot assure that this list is complete.)
+
 Changelog
 ---------
 
@@ -24,6 +36,20 @@ Classifiers and regressors
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
 
+Bug fixes
+.........
+
+Decomposition, manifold learning and clustering
+
+- Fix for uninformative error in :class:`decomposition.incremental_pca`:
+  now an error is raised if the number of components is larger than the
+  chosen batch size. The ``n_components=None`` case was adapted accordingly.
+  :issue:`6452`. By :user:`Wally Gauze <wallygauze>`.
+
+- Fixed a bug where the ``partial_fit`` method of
+  :class:`decomposition.IncrementalPCA` used integer division instead of float
+  division on Python 2 versions. :issue:`9492` by
+  :user:`James Bourbeau <jrbourbeau>`.
 
 Version 0.19
 ============
@@ -160,7 +186,7 @@ Model selection and evaluation
   :issue:`8120` by `Neeraj Gangwar`_.
 
 - Added a scorer based on :class:`metrics.explained_variance_score`.
-  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_. 
+  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 Miscellaneous
 
