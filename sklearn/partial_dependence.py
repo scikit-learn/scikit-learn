@@ -75,8 +75,8 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     return cartesian(axes), axes
 
 
-def _exact_partial_dependence(est, target_variables, grid, X, output=None):
-    """Calculate the partial dependence of ``target_variables``.
+def _predict(est, X_eval, method, output=None):
+    """Calculate part of the partial dependence of ``target_variables``.
 
     The function will be calculated by calling the ``predict_proba`` method of
     ``est`` for classification or ``predict`` for regression on ``X`` for every
@@ -86,142 +86,68 @@ def _exact_partial_dependence(est, target_variables, grid, X, output=None):
     ----------
     est : BaseEstimator
         A fitted classification or regression model.
-    target_variables : array-like, dtype=int
-        The target features for which the partial dependency should be
-        computed (size should be smaller than 3 for visual renderings).
-    grid : array-like, shape=(n_points, len(target_variables))
-        The grid of ``target_variables`` values for which the
-        partial dependency should be evaluated (either ``grid`` or ``X``
-        must be specified).
-    X : array-like, shape=(n_samples, n_features)
-        The data on which ``est`` was trained.
+    X_eval : array-like, shape=(n_samples, n_features)
+        The data on which the partial dependence of ``est`` should be
+        predicted.
+    method : {'exact', 'estimated'}
+        The method to use to calculate the partial dependence function:
+
+        - If 'exact', the function will be calculated by calling the
+          ``predict_proba`` method of ``est`` for classification or ``predict``
+          for regression on ``X``for every point in the grid. To speed up this
+          method, you can use a subset of ``X`` or a more coarse grid.
+        - If 'estimated', the function will be calculated by calling the
+          ``predict_proba`` method of ``est`` for classification or ``predict``
+          for regression on the mean of ``X``.
     output : int, optional (default=None)
         The output index to use for multi-output estimators.
 
     Returns
     -------
-    pdp : array, shape=(n_classes, n_points)
+    out : array, shape=(n_classes, n_points)
         The partial dependence function evaluated on the ``grid``.
         For regression and binary classification ``n_classes==1``.
     """
-    n_samples = X.shape[0]
-    pdp = []
-    for row in range(grid.shape[0]):
-        X_eval = X.copy()
-        for i, variable in enumerate(target_variables):
-            X_eval[:, variable] = np.repeat(grid[row, i], n_samples)
-        if est._estimator_type == 'regressor':
-            try:
-                pdp_row = est.predict(X_eval)
-            except NotFittedError:
-                raise ValueError('Call %s.fit before partial_dependence' %
-                                 est.__class__.__name__)
-            if pdp_row.ndim != 1 and pdp_row.shape[1] != 1:
-                # Multi-output
-                if not 0 <= output < pdp_row.shape[1]:
-                    raise ValueError('Valid output must be specified for '
-                                     'multi-output models.')
-                pdp_row = pdp_row[:, output]
-            pdp.append(np.mean(pdp_row))
-        elif est._estimator_type == 'classifier':
-            try:
-                pdp_row = est.predict_proba(X_eval)
-            except NotFittedError:
-                raise ValueError('Call %s.fit before partial_dependence' %
-                                 est.__class__.__name__)
-            if isinstance(pdp_row, list):
-                # Multi-output
-                if not 0 <= output < len(pdp_row):
-                    raise ValueError('Valid output must be specified for '
-                                     'multi-output models.')
-                pdp_row = pdp_row[output]
-            pdp_row = np.log(np.clip(pdp_row, 1e-16, 1))
-            pdp_row = np.subtract(pdp_row,
-                                  np.mean(pdp_row, 1)[:, np.newaxis])
-            pdp.append(np.mean(pdp_row, 0))
-        else:
-            raise ValueError('est must be a fitted regressor or classifier '
-                             'model.')
-    pdp = np.array(pdp).transpose()
-    if pdp.shape[0] == 2:
-        # Binary classification
-        pdp = pdp[1, :][np.newaxis]
-    elif len(pdp.shape) == 1:
-        # Regression
-        pdp = pdp[np.newaxis]
-    return pdp
-
-
-def _estimated_partial_dependence(est, target_variables, grid, X, output=None):
-    """Calculate the partial dependence of ``target_variables``.
-
-    The function will be calculated by calling the ``predict_proba`` method of
-    ``est`` for classification or ``predict`` for regression on the mean of
-    ``X``.
-
-    Parameters
-    ----------
-    est : BaseEstimator
-        A fitted classification or regression model.
-    target_variables : array-like, dtype=int
-        The target features for which the partial dependency should be
-        computed (size should be smaller than 3 for visual renderings).
-    grid : array-like, shape=(n_points, len(target_variables))
-        The grid of ``target_variables`` values for which the
-        partial dependency should be evaluated (either ``grid`` or ``X``
-        must be specified).
-    X : array-like, shape=(n_samples, n_features)
-        The data on which ``est`` was trained.
-    output : int, optional (default=None)
-        The output index to use for multi-output estimators.
-
-    Returns
-    -------
-    pdp : array, shape=(n_classes, n_points)
-        The partial dependence function evaluated on the ``grid``.
-        For regression and binary classification ``n_classes==1``.
-    """
-    n_samples = grid.shape[0]
-    X_eval = np.tile(X.mean(0), [n_samples, 1])
-    for i, variable in enumerate(target_variables):
-        X_eval[:, variable] = grid[:, i]
     if est._estimator_type == 'regressor':
         try:
-            pdp = est.predict(X_eval)
+            out = est.predict(X_eval)
         except NotFittedError:
             raise ValueError('Call %s.fit before partial_dependence' %
                              est.__class__.__name__)
-        if pdp.ndim != 1 and pdp.shape[1] == 1:
+        if out.ndim != 1 and out.shape[1] == 1:
             # Column output
-            pdp = pdp.ravel()
-        if pdp.ndim != 1 and pdp.shape[1] != 1:
+            out = out.ravel()
+        if out.ndim != 1 and out.shape[1] != 1:
             # Multi-output
-            if not 0 <= output < pdp.shape[1]:
+            if not 0 <= output < out.shape[1]:
                 raise ValueError('Valid output must be specified for '
                                  'multi-output models.')
-            pdp = pdp[:, output]
-        pdp = pdp[np.newaxis]
+            out = out[:, output]
+        if method == 'exact':
+            return np.mean(out)
+        else:
+            return out[np.newaxis]
     elif est._estimator_type == 'classifier':
         try:
-            pdp = est.predict_proba(X_eval)
+            out = est.predict_proba(X_eval)
         except NotFittedError:
             raise ValueError('Call %s.fit before partial_dependence' %
                              est.__class__.__name__)
-        if isinstance(pdp, list):
+        if isinstance(out, list):
             # Multi-output
-            if not 0 <= output < len(pdp):
+            if not 0 <= output < len(out):
                 raise ValueError('Valid output must be specified for '
                                  'multi-output models.')
-            pdp = pdp[output]
-        pdp = np.log(np.clip(pdp, 1e-16, 1))
-        pdp = np.subtract(pdp, np.mean(pdp, 1)[:, np.newaxis])
-        pdp = pdp.transpose()
+            out = out[output]
+        out = np.log(np.clip(out, 1e-16, 1))
+        out = np.subtract(out, np.mean(out, 1)[:, np.newaxis])
+        if method == 'exact':
+            return np.mean(out, 0)
+        else:
+            return out.transpose()
     else:
-        raise ValueError('est must be a fitted regressor or classifier model.')
-    if pdp.shape[0] == 2:
-        # Binary classification
-        pdp = pdp[1, :][np.newaxis]
-    return pdp
+        raise ValueError('est must be a fitted regressor or classifier '
+                         'model.')
 
 
 def partial_dependence(est, target_variables, grid=None, X=None, output=None,
@@ -368,10 +294,29 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         if isinstance(est, ForestRegressor):
             pdp /= n_estimators
     elif method == 'exact':
-        pdp = _exact_partial_dependence(est, target_variables, grid, X, output)
+        n_samples = X.shape[0]
+        pdp = []
+        for row in range(grid.shape[0]):
+            X_eval = X.copy()
+            for i, variable in enumerate(target_variables):
+                X_eval[:, variable] = np.repeat(grid[row, i], n_samples)
+            pdp.append(_predict(est, X_eval, method, output=None))
+        pdp = np.array(pdp).transpose()
+        if pdp.shape[0] == 2:
+            # Binary classification
+            pdp = pdp[1, :][np.newaxis]
+        elif len(pdp.shape) == 1:
+            # Regression
+            pdp = pdp[np.newaxis]
     elif method == 'estimated':
-        pdp = _estimated_partial_dependence(est, target_variables, grid, X,
-                                            output)
+        n_samples = grid.shape[0]
+        X_eval = np.tile(X.mean(0), [n_samples, 1])
+        for i, variable in enumerate(target_variables):
+            X_eval[:, variable] = grid[:, i]
+        pdp = _predict(est, X_eval, method, output=None)
+        if pdp.shape[0] == 2:
+            # Binary classification
+            pdp = pdp[1, :][np.newaxis]
     else:
         raise ValueError('method "%s" is invalid. Use "recursion", "exact", '
                          '"estimated", or None.' % method)
