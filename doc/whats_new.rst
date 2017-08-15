@@ -52,9 +52,9 @@ Decomposition, manifold learning and clustering
   :user:`James Bourbeau <jrbourbeau>`.
 
 - In :class:`decomposition.pca` selecting a n_components parameter greater than
-  the number of samples failed to raise an error.
+  the number of samples now raises an error.
   Similarly, the ``n_components=None`` case now selects the minimum of
-  n_samples and n_features. :issue:`6452`. By :user:`Wally Gauze <wallygauze>`.
+  n_samples and n_features. :issue:`8484`. By :user:`Wally Gauze <wallygauze>`.
 
 Version 0.19
 ============
