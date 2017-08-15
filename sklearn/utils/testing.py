@@ -58,7 +58,7 @@ import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
-from _unittest_backport import TestCase_new
+from sklearn.utils._unittest_backport import TestCase_new
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
