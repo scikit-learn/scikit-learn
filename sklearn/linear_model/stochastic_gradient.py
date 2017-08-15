@@ -69,6 +69,9 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.n_iter = n_iter
         self.max_iter = max_iter
         self.tol = tol
+        # current tests expect init to do parameter validation
+        # but we are not allowed to set attributes
+        self._validate_params(set_max_iter=False)
 
     def set_params(self, *args, **kwargs):
         super(BaseSGD, self).set_params(*args, **kwargs)
@@ -79,7 +82,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     def fit(self, X, y):
         """Fit model."""
 
-    def _validate_params(self):
+    def _validate_params(self, set_max_iter=True):
         """Validate input params. """
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
@@ -104,6 +107,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
 
+        if not set_max_iter:
+            return
         # n_iter deprecation, set self._max_iter, self._tol
         self._tol = self.tol
         if self.n_iter is not None:
