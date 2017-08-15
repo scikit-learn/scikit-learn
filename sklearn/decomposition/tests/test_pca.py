@@ -379,6 +379,16 @@ def test_n_components_none():
             assert_equal(pca.n_components_, min(X.shape) - 1)
         else:
             assert_equal(pca.n_components_, min(X.shape))
+    
+    # We conduct the same test on X.T so that it is invariant to axis.
+    X_2 = X.T
+    for solver in solver_list:
+        pca = PCA(svd_solver=solver)
+        pca.fit(X_2)
+        if solver == 'arpack':
+            assert_equal(pca.n_components_, min(X_2.shape) - 1)
+        else:
+            assert_equal(pca.n_components_, min(X_2.shape))
 
 
 def test_randomized_pca_check_projection():
