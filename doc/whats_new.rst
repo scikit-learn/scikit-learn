@@ -51,6 +51,11 @@ Decomposition, manifold learning and clustering
   division on Python 2 versions. :issue:`9492` by
   :user:`James Bourbeau <jrbourbeau>`.
 
+- In :class:`decomposition.pca` selecting a n_components parameter greater than
+  the number of samples failed to raise an error.
+  Similarly, the ``n_components=None`` case now selects the minimum of
+  n_samples and n_features. :issue:`6452`. By :user:`Wally Gauze <wallygauze>`.
+
 Version 0.19
 ============
 
