@@ -540,7 +540,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 self._optimizer.iteration_ends(self.t_)
 
                 if self._no_improvement_count > self.n_iter_no_change:
-                    # not better than last two iterations by tol.
+                    # not better than last `n_iter_no_change` iterations by tol.
                     # stop or decrease learning rate
                     if early_stopping:
                         msg = ("Validation score did not improve more than "
