@@ -377,6 +377,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         -------
         self : returns an instance of self.
         """
+        self._validate_params()
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
         return self._partial_fit(X, y, alpha=1.0, C=self.C,
                                  loss="epsilon_insensitive",

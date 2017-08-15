@@ -411,6 +411,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
+        self._validate_params()
         if hasattr(self, "classes_"):
             self.classes_ = None
 
@@ -579,7 +580,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        self._validate_params()
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
@@ -991,6 +991,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
+        self._validate_params()
         if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
                 coef_init = self.coef_
@@ -1047,7 +1048,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        self._validate_params()
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init,
