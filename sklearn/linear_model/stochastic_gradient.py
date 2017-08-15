@@ -86,7 +86,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         """Validate input params. """
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
-        if self.n_iter is None and self.max_iter <= 0:
+        if self.max_iter is not None and self.max_iter <= 0:
             raise ValueError("max_iter must be > zero. Got %f" % self.max_iter)
         if not (0.0 <= self.l1_ratio <= 1.0):
             raise ValueError("l1_ratio must be in [0, 1]")
