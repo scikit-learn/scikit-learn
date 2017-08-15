@@ -154,6 +154,7 @@ cdef class WeightedMedianCalculator:
     cdef SIZE_t k
     cdef DOUBLE_t sum_w_0_k            # represents sum(weights[0:k])
                                        # = w[0] + w[1] + ... + w[k-1]
+    cdef DOUBLE_t mae  # mean absolute error of median
 
     cdef SIZE_t size(self) nogil
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1
@@ -161,9 +162,18 @@ cdef class WeightedMedianCalculator:
     cdef int update_median_parameters_post_push(
         self, DOUBLE_t data, DOUBLE_t weight,
         DOUBLE_t original_median) nogil
+    cdef int update_mae_post_push(
+        self, DOUBLE_t data, DOUBLE_t weight,
+        DOUBLE_t original_median, int original_k) nogil
     cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
     cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
     cdef int update_median_parameters_post_remove(
         self, DOUBLE_t data, DOUBLE_t weight,
         DOUBLE_t original_median) nogil
+    cdef int update_mae_post_remove(
+        self, DOUBLE_t data, DOUBLE_t weight,
+        DOUBLE_t original_median, int original_k) nogil
+    cdef int update_mae_post_change(
+        self, DOUBLE_t data, DOUBLE_t weight, DOUBLE_t original_median,
+        int original_k, int shift_from_change) nogil
     cdef DOUBLE_t get_median(self) nogil
