@@ -553,8 +553,10 @@ def test_cnb():
     # Classes are China (0), Japan (1).
     Y = np.array([0, 0, 0, 1])
 
-    # Fit ComplementNB w/ alpha = 1.0.
+    # Check the ability to predict the learning set.
     clf = ComplementNB(alpha=1.0)
+    assert_raises(ValueError, clf.fit, -X, Y)
+
     clf.fit(X, Y)
 
     # Check that counts are correct.
