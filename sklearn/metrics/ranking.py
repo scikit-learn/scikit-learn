@@ -116,7 +116,8 @@ def average_precision_score(y_true, y_score, average="macro",
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary label indicators.
+        True binary labels (either {0, 1} or {-1, 1}) or binary label
+        indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -200,7 +201,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary label indicators.
+        True binary labels (either {0, 1} or {-1, 1}) or binary label
+        indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
