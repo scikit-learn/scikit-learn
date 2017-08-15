@@ -19,11 +19,26 @@ from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
+from .utils.metaestimators import check_routing
 from .utils import Bunch
 
 from .utils.metaestimators import _BaseComposition
 
 __all__ = ['Pipeline', 'FeatureUnion']
+
+
+def _pipeline_default_routing(props, dests):
+    dest_props = {dest: {} for dest in dests}
+    remainder = set()
+    for k, v in props.items():
+        if v is not None:
+            # XXX: not sure if we need to remove Nones
+            step, name = k.split('__', 1)
+            try:
+                dest_props[step][name] = v
+            except KeyError:
+                remainder.add(name)
+    return [dest_props[dest] for dest in dests], remainder
 
 
 class Pipeline(_BaseComposition):
@@ -62,6 +77,13 @@ class Pipeline(_BaseComposition):
         directly. Use the attribute ``named_steps`` or ``steps`` to
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
+
+    prop_routing : dict, optional
+        Policy for mapping sample properties passed to Pipeline's fit (e.g.
+        sample_weight) to steps' fit or fit_transform methods.
+        By default, parameter ``p`` for step ``s`` has name ``s__p``.
+
+        TODO
 
     Attributes
     ----------
@@ -110,11 +132,12 @@ class Pipeline(_BaseComposition):
 
     # BaseEstimator interface
 
-    def __init__(self, steps, memory=None):
+    def __init__(self, steps, memory=None, prop_routing=None):
         # shallow copy of steps
         self.steps = tosequence(steps)
         self._validate_steps()
         self.memory = memory
+        self.prop_routing = prop_routing
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -184,7 +207,7 @@ class Pipeline(_BaseComposition):
 
     # Estimator interface
 
-    def _fit(self, X, y=None, **fit_params):
+    def _fit(self, X, y=None, **props):
         self._validate_steps()
         # Setup the memory
         memory = self.memory
@@ -200,11 +223,12 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        fit_params_steps = dict((name, {}) for name, step in self.steps
-                                if step is not None)
-        for pname, pval in six.iteritems(fit_params):
-            step, param = pname.split('__', 1)
-            fit_params_steps[step][param] = pval
+        router = check_routing(self.prop_routing, _pipeline_default_routing)
+        step_props, rem_props = router(props, [name for name, _ in self.steps])
+        if rem_props:
+            raise ValueError('The following properties were not routed to any '
+                             'Pipeline step: %r' % list(rem_props))
+
         Xt = X
         for step_idx, (name, transformer) in enumerate(self.steps[:-1]):
             if transformer is None:
@@ -219,16 +243,16 @@ class Pipeline(_BaseComposition):
                 # Fit or load from cache the current transfomer
                 Xt, fitted_transformer = fit_transform_one_cached(
                     cloned_transformer, None, Xt, y,
-                    **fit_params_steps[name])
+                    **step_props[step_idx])
                 # Replace the transformer of the step with the fitted
                 # transformer. This is necessary when loading the transformer
                 # from the cache.
                 self.steps[step_idx] = (name, fitted_transformer)
         if self._final_estimator is None:
             return Xt, {}
-        return Xt, fit_params_steps[self.steps[-1][0]]
+        return Xt, step_props[-1]
 
-    def fit(self, X, y=None, **fit_params):
+    def fit(self, X, y=None, **props):
         """Fit the model
 
         Fit all the transforms one after the other and transform the
@@ -244,22 +268,23 @@ class Pipeline(_BaseComposition):
             Training targets. Must fulfill label requirements for all steps of
             the pipeline.
 
-        **fit_params : dict of string -> object
+        **props : dict of string -> object
             Parameters passed to the ``fit`` method of each step, where
             each parameter name is prefixed such that parameter ``p`` for step
             ``s`` has key ``s__p``.
+            TODO
 
         Returns
         -------
         self : Pipeline
             This estimator
         """
-        Xt, fit_params = self._fit(X, y, **fit_params)
+        Xt, props = self._fit(X, y, **props)
         if self._final_estimator is not None:
-            self._final_estimator.fit(Xt, y, **fit_params)
+            self._final_estimator.fit(Xt, y, **props)
         return self
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None, **props):
         """Fit the model and transform with the final estimator
 
         Fits all the transforms one after the other and transforms the
@@ -276,10 +301,11 @@ class Pipeline(_BaseComposition):
             Training targets. Must fulfill label requirements for all steps of
             the pipeline.
 
-        **fit_params : dict of string -> object
+        **props : dict of string -> object
             Parameters passed to the ``fit`` method of each step, where
             each parameter name is prefixed such that parameter ``p`` for step
             ``s`` has key ``s__p``.
+            TODO
 
         Returns
         -------
@@ -287,13 +313,13 @@ class Pipeline(_BaseComposition):
             Transformed samples
         """
         last_step = self._final_estimator
-        Xt, fit_params = self._fit(X, y, **fit_params)
+        Xt, props = self._fit(X, y, **props)
         if hasattr(last_step, 'fit_transform'):
-            return last_step.fit_transform(Xt, y, **fit_params)
+            return last_step.fit_transform(Xt, y, **props)
         elif last_step is None:
             return Xt
         else:
-            return last_step.fit(Xt, y, **fit_params).transform(Xt)
+            return last_step.fit(Xt, y, **props).transform(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict(self, X):
@@ -316,7 +342,7 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][-1].predict(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def fit_predict(self, X, y=None, **fit_params):
+    def fit_predict(self, X, y=None, **props):
         """Applies fit_predict of last step in pipeline after transforms.
 
         Applies fit_transforms of a pipeline to the data, followed by the
@@ -333,7 +359,7 @@ class Pipeline(_BaseComposition):
             Training targets. Must fulfill label requirements for all steps
             of the pipeline.
 
-        **fit_params : dict of string -> object
+        **props : dict of string -> object
             Parameters passed to the ``fit`` method of each step, where
             each parameter name is prefixed such that parameter ``p`` for step
             ``s`` has key ``s__p``.
@@ -342,8 +368,8 @@ class Pipeline(_BaseComposition):
         -------
         y_pred : array-like
         """
-        Xt, fit_params = self._fit(X, y, **fit_params)
-        return self.steps[-1][-1].fit_predict(Xt, y, **fit_params)
+        Xt, props = self._fit(X, y, **props)
+        return self.steps[-1][-1].fit_predict(Xt, y, **props)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def predict_proba(self, X):

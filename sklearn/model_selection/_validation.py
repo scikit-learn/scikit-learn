@@ -323,7 +323,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
-                   parameters, fit_params, return_train_score=False,
+                   parameters, fit_props, score_props=None,
+                   return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, error_score='raise'):
     """Fit estimator and compute scores for a given dataset split.
@@ -368,8 +369,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     parameters : dict or None
         Parameters to be set on the estimator.
 
-    fit_params : dict or None
+    fit_props : dict or None
         Parameters that will be passed to ``estimator.fit``.
+
+    score_props : dict or None
+        TODO
 
     return_train_score : boolean, optional, default: False
         Compute and return score on training set.
@@ -413,9 +417,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
     # Adjust length of sample weights
-    fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, _index_param_value(X, v, train))
-                      for k, v in fit_params.items()])
+    fit_props = fit_props if fit_props is not None else {}
+    fit_props = dict([(k, _index_param_value(X, v, train))
+                      for k, v in fit_props.items()])
+
+    score_props = score_props if score_props is not None else {}
+    score_props = dict([(k, _index_param_value(X, v, test))
+                        for k, v in score_props.items()])
 
     test_scores = {}
     train_scores = {}
@@ -432,9 +440,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     try:
         if y_train is None:
-            estimator.fit(X_train, **fit_params)
+            estimator.fit(X_train, **fit_props)
         else:
-            estimator.fit(X_train, y_train, **fit_params)
+            estimator.fit(X_train, y_train, **fit_props)
 
     except Exception as e:
         # Note fit time as time until error
@@ -464,7 +472,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     else:
         fit_time = time.time() - start_time
         # _score will return dict if is_multimetric is True
-        test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
+        test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric,
+                             score_props)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
             train_scores = _score(estimator, X_train, y_train, scorer,
@@ -492,19 +501,23 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
-def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
+def _score(estimator, X_test, y_test, scorer, is_multimetric=False,
+           score_props=None):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a single float if is_multimetric is False and a dict of floats,
     if is_multimetric is True
     """
+    if score_props is None:
+        score_props = {}
     if is_multimetric:
-        return _multimetric_score(estimator, X_test, y_test, scorer)
+        return _multimetric_score(estimator, X_test, y_test, scorer,
+                                  score_props)
     else:
         if y_test is None:
-            score = scorer(estimator, X_test)
+            score = scorer(estimator, X_test, **score_props)
         else:
-            score = scorer(estimator, X_test, y_test)
+            score = scorer(estimator, X_test, y_test, **score_props)
 
         if hasattr(score, 'item'):
             try:
@@ -521,15 +534,15 @@ def _score(estimator, X_test, y_test, scorer, is_multimetric=False):
     return score
 
 
-def _multimetric_score(estimator, X_test, y_test, scorers):
+def _multimetric_score(estimator, X_test, y_test, scorers, score_props):
     """Return a dict of score for multimetric scoring"""
     scores = {}
 
     for name, scorer in scorers.items():
         if y_test is None:
-            score = scorer(estimator, X_test)
+            score = scorer(estimator, X_test, **score_props)
         else:
-            score = scorer(estimator, X_test, y_test)
+            score = scorer(estimator, X_test, y_test, **score_props)
 
         if hasattr(score, 'item'):
             try:
@@ -1061,7 +1074,7 @@ def learning_curve(estimator, X, y, groups=None,
 
         out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test,
-            verbose, parameters=None, fit_params=None, return_train_score=True)
+            verbose, parameters=None, fit_props=None, return_train_score=True)
             for train, test in train_test_proportions)
         out = np.array(out)
         n_cv_folds = out.shape[0] // n_unique_ticks
@@ -1243,7 +1256,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
         clone(estimator), X, y, scorer, train, test, verbose,
-        parameters={param_name: v}, fit_params=None, return_train_score=True)
+        parameters={param_name: v}, fit_props=None, return_train_score=True)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
     out = np.asarray(out)

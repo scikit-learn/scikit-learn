@@ -6,13 +6,16 @@
 from abc import ABCMeta, abstractmethod
 from operator import attrgetter
 from functools import update_wrapper
+import re
+import fnmatch
+
 import numpy as np
 
 from ..utils import safe_indexing
 from ..externals import six
 from ..base import BaseEstimator
 
-__all__ = ['if_delegate_has_method']
+__all__ = ['if_delegate_has_method', 'check_routing']
 
 
 class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -205,3 +208,130 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         y_subset = None
 
     return X_subset, y_subset
+
+
+class _Router:
+    """Matches destinations and props according to a specification
+
+    Parameters
+    ----------
+    routing : dict
+        Each key should be a string naming the input property, or '*'.
+        Each value should be a tuple ``(destination, dest_prop)``
+        or a list thereof. Here ``destination`` is a pattern to match
+        destinations as specified by the meta-estimator using this router.
+        Patterns are matched with :mod:`fnmatch`.  ``dest_prop`` is
+        an identifier for the prop to be passed to the destination with,
+        or '*' to match names with the input prop.
+    dest_regex : str
+        Used to help validate the destinations
+
+    Examples
+    --------
+    >>> props = {'foo': [1, 2, 3], 'bar': [4, 5, 6]}
+    >>> dests = ['dest1', 'dest2']
+    >>> r = _Router({'*': [('*', '*')]})
+    >>> (dest1_props, dest2_props), remainder = r(props, dests)
+    >>> sorted(dest1_props.items())
+    [('bar', [4, 5, 6]), ('foo', [1, 2, 3])]
+    >>> sorted(dest2_props.items())
+    [('bar', [4, 5, 6]), ('foo', [1, 2, 3])]
+    >>> sorted(remainder)
+    []
+
+    >>> r = _Router({'foo': [('*', '*')]})
+    >>> (dest1_props, dest2_props), remainder = r(props, dests)
+    >>> sorted(dest1_props.items())
+    [('foo', [1, 2, 3])]
+    >>> sorted(dest2_props.items())
+    [('foo', [1, 2, 3])]
+    >>> sorted(remainder)
+    ['bar']
+
+    >>> r = _Router({'foo': [('d*1', '*')]})
+    >>> (dest1_props, dest2_props), remainder = r(props, dests)
+    >>> sorted(dest1_props.items())
+    [('foo', [1, 2, 3])]
+    >>> sorted(dest2_props.items())
+    []
+    >>> sorted(remainder)
+    ['bar']
+
+    >>> r = _Router({'foo': [('d*1', 'goo')]})
+    >>> (dest1_props, dest2_props), remainder = r(props, dests)
+    >>> sorted(dest1_props.items())
+    [('goo', [1, 2, 3])]
+    >>> sorted(dest2_props.items())
+    []
+    >>> sorted(remainder)
+    ['bar']
+    """
+
+    def __init__(self, routing, dest_regex='.*'):
+        routing = {prop: dests if isinstance(dests, list) else [dests]
+                   for prop, dests in routing.items()}
+        self._validate(routing, dest_regex)
+        self.routing = routing
+
+    @staticmethod
+    def _validate(routing, dest_regex):
+        for prop, dests in routing.items():
+            for dest_tuple in dests:
+                if not isinstance(dest_tuple, tuple):
+                    raise ValueError('Each routing destination should be '
+                                     '(destination, dest_prop)')
+                dest, dest_prop = dest_tuple
+                if not isinstance(dest, str):
+                    raise ValueError('Expected string for routing '
+                                     'destination, got %r' % dest)
+                if not isinstance(dest_prop, str) \
+                   or not re.match(r'\*$|^[A-Za-z_]\w*$', dest_prop):
+                    raise ValueError('Expected identifier or "*" for '
+                                     'routing destination prop, got %r'
+                                     % dest_prop)
+                if not re.match(dest_regex, dest):
+                    raise ValueError('Routing destination was not of expected '
+                                     'form. %r does not match %r'
+                                     % (dest, dest_regex))
+
+            if not isinstance(prop, str):
+                raise ValueError('Expected string for prop name, '
+                                 'got %r' % prop)
+
+    def __call__(self, props, dests):
+        out = {dest: {} for dest in dests}
+        remainder = set()
+        for prop, val in props.items():
+            if val is None:
+                continue
+
+            def _set(routes):
+                n_matched = 0
+                for dest_pattern, dest_prop in routes:
+                    if dest_prop == '*':
+                        dest_prop = prop
+                    for dest in fnmatch.filter(dests, dest_pattern):
+                        n_matched += 1
+                        if dest_prop in out[dest]:
+                            raise ValueError('Already have a prop %r '
+                                             'for destination %r'
+                                             % (dest_prop, dest))
+                        out[dest][dest_prop] = val
+                return n_matched
+
+            n_matched = _set(self.routing.get(prop, []))
+            n_matched += _set(self.routing.get('*', []))
+            if not n_matched:
+                remainder.add(prop)
+
+        return [out[dest] for dest in dests], remainder
+
+
+def check_routing(routing, default=None, dest_regex='.*'):
+    if routing is None:
+        if default is None:
+            raise ValueError('Routing must be specified')
+        routing = default
+    if not callable(routing):
+        return _Router(routing, dest_regex)
+    return routing

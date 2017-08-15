@@ -35,7 +35,7 @@ from ..utils.fixes import sp_version
 from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import if_delegate_has_method, check_routing
 from ..metrics.scorer import _check_multimetric_scoring
 from ..metrics.scorer import check_scoring
 
@@ -333,7 +333,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     scores, n_samples_test = _fit_and_score(estimator, X, y,
                                             scorer, train,
                                             test, verbose, parameters,
-                                            fit_params=fit_params,
+                                            fit_props=fit_params,
                                             return_n_test_samples=True,
                                             error_score=error_score)
     return scores, parameters, n_samples_test
@@ -390,7 +390,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self, estimator, scoring=None,
                  fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
-                 error_score='raise', return_train_score=True):
+                 error_score='raise', return_train_score=True,
+                 prop_routing=None):
 
         self.scoring = scoring
         self.estimator = estimator
@@ -403,6 +404,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.pre_dispatch = pre_dispatch
         self.error_score = error_score
         self.return_train_score = return_train_score
+        self.prop_routing = prop_routing
 
     @property
     def _estimator_type(self):
@@ -555,7 +557,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted("classes_")
         return self.best_estimator_.classes_
 
-    def fit(self, X, y=None, groups=None, **fit_params):
+    def fit(self, X, y=None, **props):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -569,24 +571,22 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        groups : array-like, with shape (n_samples,), optional
-            Group labels for the samples used while splitting the dataset into
-            train/test set.
-
-        **fit_params : dict of string -> object
+        **props : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
+
+            TODO
         """
         if self.fit_params is not None:
             warnings.warn('"fit_params" as a constructor argument was '
                           'deprecated in version 0.19 and will be removed '
                           'in version 0.21. Pass fit parameters to the '
                           '"fit" method instead.', DeprecationWarning)
-            if fit_params:
+            if props:
                 warnings.warn('Ignoring fit_params passed as a constructor '
                               'argument in favor of keyword arguments to '
                               'the "fit" method.', RuntimeWarning)
             else:
-                fit_params = self.fit_params
+                props = self.fit_params
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
@@ -611,8 +611,30 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         else:
             refit_metric = 'score'
 
-        X, y, groups = indexable(X, y, groups)
-        n_splits = cv.get_n_splits(X, y, groups)
+        router = check_routing(self.prop_routing,
+                               {'groups': ('cv', '*'),
+                                '*': ('estimator', '*'),
+                                # FIXME: That line should be more like
+                                #        '*-groups': ('estimator', '*')
+                                #        to except groups.
+                                #        Not currently handled by _Router.
+                                })
+        (fit_props, cv_props, score_props), remainder = \
+            router(props, ['estimator', 'cv', 'scoring'])
+
+        if remainder:
+            raise ValueError('Unhandled sample properties: %r'
+                             % list(remainder))
+
+        if cv_props:
+            cv_prop_names, cv_prop_values = zip(*cv_props.items())
+        else:
+            cv_prop_names, cv_prop_values = [], []
+        indexables = indexable(X, y, *cv_prop_values)
+        X, y = indexables[:2]
+        cv_prop_values = indexables[2:]
+        cv_props = dict(zip(cv_prop_names, cv_prop_values))
+        n_splits = cv.get_n_splits(X, y, **cv_props)
         # Regenerate parameter iterable for each fit
         candidate_params = list(self._get_param_iterator())
         n_candidates = len(candidate_params)
@@ -629,13 +651,14 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             pre_dispatch=pre_dispatch
         )(delayed(_fit_and_score)(clone(base_estimator), X, y, scorers, train,
                                   test, self.verbose, parameters,
-                                  fit_params=fit_params,
+                                  fit_props=fit_props,
+                                  score_props=score_props,
                                   return_train_score=self.return_train_score,
                                   return_n_test_samples=True,
                                   return_times=True, return_parameters=False,
                                   error_score=self.error_score)
           for parameters, (train, test) in product(candidate_params,
-                                                   cv.split(X, y, groups)))
+                                                   cv.split(X, y, **cv_props)))
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
@@ -722,9 +745,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             self.best_estimator_ = clone(base_estimator).set_params(
                 **self.best_params_)
             if y is not None:
-                self.best_estimator_.fit(X, y, **fit_params)
+                self.best_estimator_.fit(X, y, **fit_props)
             else:
-                self.best_estimator_.fit(X, **fit_params)
+                self.best_estimator_.fit(X, **fit_props)
 
         # Store the only scorer not as a dict for single metric evaluation
         self.scorer_ = scorers if self.multimetric_ else scorers['score']
@@ -886,6 +909,9 @@ class GridSearchCV(BaseSearchCV):
         If ``'False'``, the ``cv_results_`` attribute will not include training
         scores.
 
+    prop_routing : dict, optional
+        Available destinations: 'estimator', 'cv', 'scoring'
+        TODO
 
     Examples
     --------
@@ -1044,12 +1070,13 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
-                 return_train_score=True):
+                 return_train_score=True, prop_routing=None):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
-            return_train_score=return_train_score)
+            return_train_score=return_train_score,
+            prop_routing=prop_routing)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -1204,6 +1231,10 @@ class RandomizedSearchCV(BaseSearchCV):
         If ``'False'``, the ``cv_results_`` attribute will not include training
         scores.
 
+    prop_routing : dict, optional
+        Available destinations: 'estimator', 'cv', 'scoring'
+        TODO
+
     Attributes
     ----------
     cv_results_ : dict of numpy (masked) ndarrays
@@ -1327,7 +1358,8 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
-                 error_score='raise', return_train_score=True):
+                 error_score='raise', return_train_score=True,
+                 prop_routing=None):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
@@ -1335,7 +1367,7 @@ class RandomizedSearchCV(BaseSearchCV):
              estimator=estimator, scoring=scoring, fit_params=fit_params,
              n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
              pre_dispatch=pre_dispatch, error_score=error_score,
-             return_train_score=return_train_score)
+             return_train_score=return_train_score, prop_routing=prop_routing)
 
     def _get_param_iterator(self):
         """Return ParameterSampler instance for the given distributions"""

@@ -81,8 +81,8 @@ class Transf(NoInvTransf):
 
 class TransfFitParams(Transf):
 
-    def fit(self, X, y, **fit_params):
-        self.fit_params = fit_params
+    def fit(self, X, y, **props):
+        self.props = props
         return self
 
 
@@ -224,7 +224,7 @@ def test_pipeline_methods_anova():
     pipe.score(X, y)
 
 
-def test_pipeline_fit_params():
+def test_pipeline_props():
     # Test that the pipeline can take fit parameters
     pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())])
     pipe.fit(X=None, y=None, clf__should_succeed=True)
@@ -371,17 +371,17 @@ def test_fit_predict_on_pipeline_without_fit_predict():
                         getattr, pipe, 'fit_predict')
 
 
-def test_fit_predict_with_intermediate_fit_params():
-    # tests that Pipeline passes fit_params to intermediate steps
+def test_fit_predict_with_intermediate_props():
+    # tests that Pipeline passes props to intermediate steps
     # when fit_predict is invoked
     pipe = Pipeline([('transf', TransfFitParams()), ('clf', FitParamT())])
     pipe.fit_predict(X=None,
                      y=None,
                      transf__should_get_this=True,
                      clf__should_succeed=True)
-    assert_true(pipe.named_steps['transf'].fit_params['should_get_this'])
+    assert_true(pipe.named_steps['transf'].props['should_get_this'])
     assert_true(pipe.named_steps['clf'].successful)
-    assert_false('should_succeed' in pipe.named_steps['transf'].fit_params)
+    assert_false('should_succeed' in pipe.named_steps['transf'].props)
 
 
 def test_feature_union():
@@ -555,6 +555,7 @@ def test_set_pipeline_step_none():
                        'm3': None,
                        'last': mult5,
                        'memory': None,
+                       'routing': None,
                        'm2__mult': 2,
                        'last__mult': 5,
                        })
