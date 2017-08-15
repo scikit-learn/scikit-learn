@@ -434,16 +434,28 @@ def test_check_array_min_samples_and_features_messages():
 
 def test_check_array_complex_data_error():
     X = np.array([[1+2j, 3+4j, 5+7j], [2+3j, 4+5j, 6+7j]])
-    assert_raises(ValueError, check_array, X)
+    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+
     X = [[1+2j, 3+4j, 5+7j], [2+3j, 4+5j, 6+7j]]
-    assert_raises(ValueError, check_array, X)
+    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+
     X = ((1+2j, 3+4j, 5+7j), (2+3j, 4+5j, 6+7j))
-    assert_raises(ValueError, check_array, X)
+    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+
     X = [np.array([1+2j, 3+4j, 5+7j]), np.array([2+3j, 4+5j, 6+7j])]
-    assert_raises(ValueError, check_array, X)
+    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+
     X = (np.array([1+2j, 3+4j, 5+7j]), np.array([2+3j, 4+5j, 6+7j]))
-    assert_raises(ValueError, check_array, X)
-    
+    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+
+    X = (np.array([1+2j, 3+4j, 5+7j]), np.array([2+3j, 4+5j, 6+7j]))
+    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+
+    X = MockDataFrame(np.array([[1+2j, 3+4j, 5+7j], [2+3j, 4+5j, 6+7j]]))
+    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+
+    X = sp.coo_matrix([[0, 1+2j], [0, 0]])
+    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
 
 def test_has_fit_parameter():
     assert_false(has_fit_parameter(KNeighborsClassifier, "sample_weight"))

@@ -276,6 +276,12 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     return spmatrix
 
 
+def _ensure_non_complex_data(array):
+    if array.dtype.kind == "c":
+        raise ValueError("Complex data not supported\n"
+                         "{}\n".format(array))
+
+
 def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                 copy=False, force_all_finite=True, ensure_2d=True,
                 allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
@@ -371,14 +377,6 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
 
-    if dtype_orig is not None and dtype_orig.kind == "c":
-        raise ValueError("Complex data is not supported\n{}\n".format(array))
-    elif isinstance(array, list) or isinstance(array, tuple):
-        np_array = np.array(array)
-        if np_array.dtype.kind == "c":
-            raise ValueError("Complex data is not supported"
-                             "\n{}\n".format(array))
-
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
@@ -405,10 +403,12 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     context = " by %s" % estimator_name if estimator is not None else ""
 
     if sp.issparse(array):
+        _ensure_non_complex_data(array)
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
     else:
         array = np.array(array, dtype=dtype, order=order, copy=copy)
+        _ensure_non_complex_data(array)
 
         if ensure_2d:
             if array.ndim == 1:
