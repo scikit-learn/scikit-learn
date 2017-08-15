@@ -187,14 +187,15 @@ def test_classes_parameter_extra_classes():
                                'ExtraTreesClassifier',
                                'GradientBoostingClassifier',
                                'LinearSVC',
-                               # 'SVC',
-                               # 'NuSVC'
+                               'LogisticRegression',
+                               'LogisticRegressionCV'
                                ])
-    num_predict_proba_checks = 8
-    num_decision_function_checks = 2
+    num_predict_proba_checks = 10
+    num_decision_function_checks = 4
 
     for name, estimator in all_estimators():
         if name in estimators_to_check:
+            print(name)
             # remove the estimator from set:
             estimators_to_check.remove(name)
             params = {}

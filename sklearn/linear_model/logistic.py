@@ -29,6 +29,7 @@ from ..utils.extmath import row_norms
 from ..utils.fixes import logsumexp
 from ..utils.optimize import newton_cg
 from ..utils.validation import check_X_y
+from ..utils.validation import _check_classes, _check_y_classes
 from ..exceptions import NotFittedError
 from ..utils.multiclass import check_classification_targets
 from ..externals.joblib import Parallel, delayed
@@ -447,7 +448,8 @@ def _check_solver_option(solver, multi_class, penalty, dual):
                              "dual=False, got dual=%s" % (solver, dual))
 
 
-def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
+def logistic_regression_path(X, y, classes, pos_class=None, Cs=10,
+                             fit_intercept=True,
                              max_iter=100, tol=1e-4, verbose=0,
                              solver='lbfgs', coef=None,
                              class_weight=None, dual=False, penalty='l2',
@@ -472,6 +474,9 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
     y : array-like, shape (n_samples,)
         Input data, target values.
+
+    classes : array-like, shape (n_classes,)
+        A sorted list of unique classes present in y
 
     pos_class : int, None
         The class with respect to which we perform a one-vs-all fit.
@@ -598,7 +603,6 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         y = check_array(y, ensure_2d=False, dtype=None)
         check_consistent_length(X, y)
     _, n_features = X.shape
-    classes = np.unique(y)
     random_state = check_random_state(random_state)
 
     if pos_class is None and multi_class != 'multinomial':
@@ -622,7 +626,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     le = LabelEncoder()
     if isinstance(class_weight, dict) or multi_class == 'multinomial':
         class_weight_ = compute_class_weight(class_weight, classes, y)
-        sample_weight *= class_weight_[le.fit_transform(y)]
+        sample_weight *= class_weight_[le.fit(classes).transform(y)]
 
     # For doing a ovr, we need to mask the labels first. for the
     # multinomial case this is not necessary.
@@ -642,13 +646,13 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     else:
         if solver not in ['sag', 'saga']:
             lbin = LabelBinarizer()
-            Y_multi = lbin.fit_transform(y)
+            Y_multi = lbin.fit(classes).transform(y)
             if Y_multi.shape[1] == 1:
                 Y_multi = np.hstack([1 - Y_multi, Y_multi])
         else:
             # SAG multinomial solver needs LabelEncoder, not LabelBinarizer
             le = LabelEncoder()
-            Y_multi = le.fit_transform(y).astype(X.dtype, copy=False)
+            Y_multi = le.fit(classes).transform(y).astype(X.dtype, copy=False)
 
         w0 = np.zeros((classes.size, n_features + int(fit_intercept)),
                       order='F', dtype=X.dtype)
@@ -771,7 +775,7 @@ def logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
 
 # helper function for LogisticCV
-def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
+def _log_reg_scoring_path(X, y, train, test, classes, pos_class=None, Cs=10,
                           scoring=None, fit_intercept=False,
                           max_iter=100, tol=1e-4, class_weight=None,
                           verbose=0, solver='lbfgs', penalty='l2',
@@ -793,6 +797,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     test : list of indices
         The indices of the test set.
+
+    classes : array-like, shape (n_classes,)
+        A sorted list of unique classes present in y
 
     pos_class : int, None
         The class with respect to which we perform a one-vs-all fit.
@@ -914,7 +921,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         sample_weight = sample_weight[train]
 
     coefs, Cs, n_iter = logistic_regression_path(
-        X_train, y_train, Cs=Cs, fit_intercept=fit_intercept,
+        X_train, y_train, classes, Cs=Cs, fit_intercept=fit_intercept,
         solver=solver, max_iter=max_iter, class_weight=class_weight,
         pos_class=pos_class, multi_class=multi_class,
         tol=tol, verbose=verbose, dual=dual, penalty=penalty,
@@ -928,7 +935,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     if multi_class == 'ovr':
         log_reg.classes_ = np.array([-1, 1])
     elif multi_class == 'multinomial':
-        log_reg.classes_ = np.unique(y_train)
+        log_reg.classes_ = classes
     else:
         raise ValueError("multi_class should be either multinomial or ovr, "
                          "got %d" % multi_class)
@@ -1228,7 +1235,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
                          order="C")
         check_classification_targets(y)
-        self.classes_ = np.unique(y)
+        if self.classes is None:
+            self.classes_ = np.unique(y)
+        else:
+            _check_classes(self.classes)
+            _check_y_classes(np.unique(y), self.classes)
+            self.classes_ = np.asarray(self.classes)
         n_samples, n_features = X.shape
 
         _check_solver_option(self.solver, self.multi_class, self.penalty,
@@ -1243,7 +1255,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 X, y, self.C, self.fit_intercept, self.intercept_scaling,
                 self.class_weight, self.penalty, self.dual, self.verbose,
                 self.max_iter, self.tol, self.random_state,
-                sample_weight=sample_weight)
+                sample_weight=sample_weight, classes=self.classes_)
             self.n_iter_ = np.array([n_iter_])
             return self
 
@@ -1292,7 +1304,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             backend = 'multiprocessing'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                backend=backend)(
-            path_func(X, y, pos_class=class_, Cs=[self.C],
+            path_func(X, y, classes=self.classes_,
+                      pos_class=class_, Cs=[self.C],
                       fit_intercept=self.fit_intercept, tol=self.tol,
                       verbose=self.verbose, solver=self.solver,
                       multi_class=self.multi_class, max_iter=self.max_iter,
@@ -1637,17 +1650,25 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         check_classification_targets(y)
 
         class_weight = self.class_weight
+        if self.classes is None:
+            self.classes_ = np.unique(y)
+        else:
+            _check_classes(self.classes)
+            _check_y_classes(np.unique(y), self.classes)
+            self.classes_ = np.asarray(self.classes)
 
         # Encode for string labels
-        label_encoder = LabelEncoder().fit(y)
+        label_encoder = LabelEncoder().fit(self.classes_)
         y = label_encoder.transform(y)
         if isinstance(class_weight, dict):
             class_weight = dict((label_encoder.transform([cls])[0], v)
                                 for cls, v in class_weight.items())
 
         # The original class labels
-        classes = self.classes_ = label_encoder.classes_
-        encoded_labels = label_encoder.transform(label_encoder.classes_)
+        classes = self.classes_
+        encoded_labels = label_encoder.transform(self.classes_)
+        # make a copy to pass layer in function call
+        encoded_labels_ = encoded_labels.copy()
 
         if self.solver in ['sag', 'saga']:
             max_squared_sum = row_norms(X, squared=True).max()
@@ -1698,7 +1719,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
             backend = 'multiprocessing'
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                backend=backend)(
-            path_func(X, y, train, test, pos_class=label, Cs=self.Cs,
+            path_func(X, y, train, test, classes=encoded_labels_,
+                      pos_class=label, Cs=self.Cs,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=self.solver, tol=self.tol,
                       max_iter=self.max_iter, verbose=self.verbose,
@@ -1776,7 +1798,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                 # Note that y is label encoded and hence pos_class must be
                 # the encoded label / None (for 'multinomial')
                 w, _, _ = logistic_regression_path(
-                    X, y, pos_class=encoded_label, Cs=[C_], solver=self.solver,
+                    X, y, classes=encoded_labels_, pos_class=encoded_label,
+                    Cs=[C_], solver=self.solver,
                     fit_intercept=self.fit_intercept, coef=coef_init,
                     max_iter=self.max_iter, tol=self.tol,
                     penalty=self.penalty,

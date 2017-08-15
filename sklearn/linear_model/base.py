@@ -303,7 +303,6 @@ class LinearClassifierMixin(ClassifierMixin):
         if X.shape[1] != n_features:
             raise ValueError("X has %d features per sample; expecting %d"
                              % (X.shape[1], n_features))
-
         scores = safe_sparse_dot(X, self.coef_.T,
                                  dense_output=True) + self.intercept_
         return scores.ravel() if scores.shape[1] == 1 else scores
@@ -344,7 +343,10 @@ class LinearClassifierMixin(ClassifierMixin):
             return np.vstack([1 - prob, prob]).T
         else:
             # OvR normalization, like LibLinear's predict_probability
-            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
+            # sum only over non-nan numbers, nans are missing classes
+            prob /= np.nansum(prob, axis=1).reshape((prob.shape[0], -1))
+            # make prob of missing classes as zero
+            prob = np.nan_to_num(prob)
             return prob
 
 

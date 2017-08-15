@@ -258,6 +258,7 @@ def test_consistency_path():
     rng = np.random.RandomState(0)
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = [1] * 100 + [-1] * 100
+    classes = np.array([-1, 1])
     Cs = np.logspace(0, 4, 10)
 
     f = ignore_warnings
@@ -265,7 +266,8 @@ def test_consistency_path():
     # penalizes the intercept
     for solver in ['sag', 'saga']:
         coefs, Cs, _ = f(logistic_regression_path)(
-            X, y, Cs=Cs, fit_intercept=False, tol=1e-5, solver=solver,
+            X, y, classes=classes,
+            Cs=Cs, fit_intercept=False, tol=1e-5, solver=solver,
             max_iter=1000,
             random_state=0)
         for i, C in enumerate(Cs):
@@ -281,7 +283,8 @@ def test_consistency_path():
     for solver in ('lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'):
         Cs = [1e3]
         coefs, Cs, _ = f(logistic_regression_path)(
-            X, y, Cs=Cs, fit_intercept=True, tol=1e-6, solver=solver,
+            X, y, classes=classes,
+            Cs=Cs, fit_intercept=True, tol=1e-6, solver=solver,
             intercept_scaling=10000., random_state=0)
         lr = LogisticRegression(C=Cs[0], fit_intercept=True, tol=1e-4,
                                 intercept_scaling=10000., random_state=0)
