@@ -135,7 +135,10 @@ class _ProbaScorer(_BaseScorer):
         """
         super(_ProbaScorer, self).__call__(clf, X, y,
                                            sample_weight=sample_weight)
+        y_type = type_of_target(y)
         y_pred = clf.predict_proba(X)
+        if y_type == "binary":
+            y_pred = y_pred[:, 1]
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
@@ -514,11 +517,7 @@ deprecation_msg = ('Scoring method log_loss was renamed to '
 log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
                               needs_proba=True)
 log_loss_scorer._deprecation_msg = deprecation_msg
-# Currently brier_score_loss don't support the shape of result
-# returned by predict_proba (shape = (n_samples, n_classes)),
-# so we just pass the second column (probabilities of the positive class)
-brier_score_loss_scorer = make_scorer(lambda y_true, y_pred:
-                                      brier_score_loss(y_true, y_pred[:, 1]),
+brier_score_loss_scorer = make_scorer(brier_score_loss,
                                       greater_is_better=False,
                                       needs_proba=True)
 
