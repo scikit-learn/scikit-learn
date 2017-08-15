@@ -136,9 +136,10 @@ class PCA(_BasePCA):
         of components such that the amount of variance that needs to be
         explained is greater than the percentage specified by n_components.
         If svd_solver == 'arpack', the number of components must be strictly
-        less than the minimum of n_features and n_samples:
-
-            n_components == min(n_samples, n_features)
+        less than the minimum of n_features and n_samples. 
+        Hence, the None case results in:
+        
+            n_components == min(n_samples, n_features) - 1
 
     copy : bool (default True)
         If False, data passed to fit are overwritten and running
