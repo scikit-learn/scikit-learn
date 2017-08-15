@@ -105,13 +105,14 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             raise ValueError("The loss %s is not supported. " % self.loss)
 
         # n_iter deprecation, set self._max_iter, self._tol
+        self._tol = self.tol
         if self.n_iter is not None:
             warnings.warn("n_iter parameter is deprecated in 0.19 and will be"
                           " removed in 0.21. Use max_iter and tol instead.",
                           DeprecationWarning)
             # Same behavior as before 0.19
             max_iter = self.n_iter
-            tol = None
+            self._tol = None
 
         elif self.tol is None and self.max_iter is None:
             warnings.warn(
@@ -125,7 +126,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         else:
             max_iter = self.max_iter if self.max_iter is not None else 1000
         self._max_iter = max_iter
-        self._tol = tol
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
@@ -367,7 +367,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         n_samples, n_features = X.shape
 
-        self._validate_params()
         _check_partial_fit_first_call(self, classes)
 
         n_classes = self.classes_.shape[0]
@@ -532,6 +531,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
+        self._validate_params()
         if self.class_weight in ['balanced']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
@@ -574,6 +574,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
+        self._validate_params()
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
@@ -935,8 +936,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         n_samples, n_features = X.shape
 
-        self._validate_params()
-
         # Allocate datastructures from input arguments
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
@@ -978,6 +977,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+        self._validate_params()
         return self._partial_fit(X, y, self.alpha, C=1.0,
                                  loss=self.loss,
                                  learning_rate=self.learning_rate, max_iter=1,
@@ -1042,6 +1042,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+        self._validate_params()
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init,
