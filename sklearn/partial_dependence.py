@@ -152,7 +152,7 @@ def _predict(est, X_eval, method, output=None):
 
 def partial_dependence(est, target_variables, grid=None, X=None, output=None,
                        percentiles=(0.05, 0.95), grid_resolution=100,
-                       method=None):
+                       method='auto'):
     """Partial dependence of ``target_variables``.
 
     Partial dependence plots show the dependence between the joint values
@@ -184,7 +184,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         for the ``grid``. Only if ``X`` is not None.
     grid_resolution : int, default=100
         The number of equally spaced points on the ``grid``.
-    method : {'recursion', 'exact', 'estimated', None}, optional (default=None)
+    method : {'recursion', 'exact', 'estimated', 'auto'}, default='auto'
         The method to use to calculate the partial dependence function:
 
         - If 'recursion', the underlying trees of ``est`` will be recursed to
@@ -197,7 +197,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         - If 'estimated', the function will be calculated by calling the
           ``predict_proba`` method of ``est`` for classification or ``predict``
           for regression on the mean of ``X``.
-        - If None, then 'recursion' will be used if ``est`` is
+        - If 'auto', then 'recursion' will be used if ``est`` is
           BaseGradientBoosting or ForestRegressor, and 'exact' used for other
           estimators.
 
@@ -220,7 +220,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
     >>> partial_dependence(gb, [0], **kwargs) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
-    if method is None:
+    if method == 'auto':
         if isinstance(est, (BaseGradientBoosting, ForestRegressor)):
             method = 'recursion'
         else:
@@ -326,7 +326,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
 
 def plot_partial_dependence(est, X, features, feature_names=None,
                             label=None, n_cols=3, grid_resolution=100,
-                            method=None, percentiles=(0.05, 0.95), n_jobs=1,
+                            method='auto', percentiles=(0.05, 0.95), n_jobs=1,
                             verbose=0, ax=None, line_kw=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
@@ -364,7 +364,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         for the PDP axes.
     grid_resolution : int, default=100
         The number of equally spaced points on the axes.
-    method : {'recursion', 'exact', 'estimated', None}, optional (default=None)
+    method : {'recursion', 'exact', 'estimated', 'auto'}, default='auto'
         The method to use to calculate the partial dependence function:
 
         - If 'recursion', the underlying trees of ``est`` will be recursed to
@@ -377,7 +377,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         - If 'estimated', the function will be calculated by calling the
           ``predict_proba`` method of ``est`` for classification or ``predict``
           for regression on the mean of ``X``.
-        - If None, then 'recursion' will be used if ``est`` is
+        - If 'auto', then 'recursion' will be used if ``est`` is
           BaseGradientBoosting or ForestRegressor, and 'exact' used for other
           estimators.
     n_jobs : int
@@ -419,7 +419,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     from matplotlib.ticker import MaxNLocator
     from matplotlib.ticker import ScalarFormatter
 
-    if method is None:
+    if method == 'auto':
         if isinstance(est, (BaseGradientBoosting, ForestRegressor)):
             method = 'recursion'
         else:
