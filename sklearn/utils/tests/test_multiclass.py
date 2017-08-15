@@ -377,20 +377,20 @@ def test_safe_split_with_precomputed_kernel():
 
 def test_fill_missing_class_dimensions():
     array = np.array([1, 1, 2, 2])
-    zero_array = np.zeros(array.size)
+    nan_array = np.repeat(np.nan, array.size)
     dummy_array = np.repeat(10, array.size)
     present_classes = np.array([1, 2])
 
     all_classes = np.array([1, 2, 3, 4])
     result = _fill_missing_class_dimensions(array, present_classes,
                                             all_classes)
-    expected = np.vstack([-array, array, zero_array, zero_array])
+    expected = np.vstack([-array, array, nan_array, nan_array])
     assert_array_equal(result, expected)
 
     result = _fill_missing_class_dimensions(array, present_classes,
                                             all_classes,
                                             negate_neg_class=False)
-    expected = np.vstack([array, array, zero_array, zero_array])
+    expected = np.vstack([array, array, nan_array, nan_array])
     assert_array_equal(result, expected)
 
     result = _fill_missing_class_dimensions(array, present_classes,
@@ -402,5 +402,5 @@ def test_fill_missing_class_dimensions():
     all_classes = np.array([0, 1, 2, 3])
     result = _fill_missing_class_dimensions(array, present_classes,
                                             all_classes)
-    expected = np.vstack([zero_array, -array, array, zero_array])
+    expected = np.vstack([nan_array, -array, array, nan_array])
     assert_array_equal(result, expected)
