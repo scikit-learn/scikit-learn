@@ -32,6 +32,7 @@ with open('README.rst') as f:
 MAINTAINER = 'Andreas Mueller'
 MAINTAINER_EMAIL = 'amueller@ais.uni-bonn.de'
 URL = 'http://scikit-learn.org'
+DOWNLOAD_URL = 'https://pypi.org/project/scikit-learn/#files'
 LICENSE = 'new BSD'
 
 # We can actually import a restricted version of sklearn that
@@ -40,8 +41,8 @@ import sklearn
 
 VERSION = sklearn.__version__
 
-SCIPY_MIN_VERSION = '0.9'
-NUMPY_MIN_VERSION = '1.6.1'
+SCIPY_MIN_VERSION = '0.13.3'
+NUMPY_MIN_VERSION = '1.8.2'
 
 
 # Optional setuptools features
@@ -183,6 +184,7 @@ def setup_package():
                     description=DESCRIPTION,
                     license=LICENSE,
                     url=URL,
+                    download_url=DOWNLOAD_URL,
                     version=VERSION,
                     long_description=LONG_DESCRIPTION,
                     classifiers=['Intended Audience :: Science/Research',

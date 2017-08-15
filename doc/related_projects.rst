@@ -26,6 +26,11 @@ enhance the functionality of scikit-learn's estimators.
 
 **Auto-ML**
 
+- `auto_ml <https://github.com/ClimbsRocks/auto_ml/>`_
+  Automated machine learning for production and analytics, built on scikit-learn
+  and related projects. Trains a pipeline wth all the standard machine learning 
+  steps. Tuned for prediction speed and ease of transfer to production environments. 
+
 - `auto-sklearn <https://github.com/automl/auto-sklearn/>`_
   An automated machine learning toolkit and a drop-in replacement for a
   scikit-learn estimator
@@ -37,9 +42,6 @@ enhance the functionality of scikit-learn's estimators.
   scikit-learn estimator.
 
 **Experimentation frameworks**
-
-- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
-  fitting algorithms.
 
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
   research in a consistent and reproducible way
@@ -55,6 +57,11 @@ enhance the functionality of scikit-learn's estimators.
   wrapper around scikit-learn that makes it easy to run machine learning
   experiments with multiple learners and large feature sets.
 
+- `Xcessiv <https://github.com/reiinakano/xcessiv>`_ is a notebook-like
+  application for quick, scalable, and automated hyperparameter tuning
+  and stacked ensembling. Provides a framework for keeping track of 
+  model-hyperparameter combinations.
+
 **Model inspection and visualisation**
 
 - `eli5 <https://github.com/TeamHG-Memex/eli5/>`_ A library for
@@ -66,6 +73,10 @@ enhance the functionality of scikit-learn's estimators.
 
 - `scikit-plot <https://github.com/reiinakano/scikit-plot>`_ A visualization library
   for quick and easy generation of common plots in data analysis and machine learning.
+
+- `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
+  custom matplotlib visualizers for scikit-learn estimators to support visual feature
+  analysis, model selection, evaluation, and diagnostics.
 
 
 **Model export for production**
@@ -204,21 +215,22 @@ Other packages useful for data analysis and machine learning.
 - `theano <http://deeplearning.net/software/theano/>`_ A CPU/GPU array
   processing framework geared towards deep learning research.
 
-- `statsmodels <http://statsmodels.sourceforge.net/>`_ Estimating and analysing
+- `statsmodels <http://www.statsmodels.org>`_ Estimating and analysing
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
+- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
+  fitting algorithms.
+
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
   organize, log and reproduce experiments
-
-- `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
-  document indexing and similarity retrieval
 
 - `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
   software libraries.
+
 
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -228,6 +240,9 @@ Domain specific packages
 
 - `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natural language
   processing and some machine learning.
+
+- `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
+  document indexing and similarity retrieval
 
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 

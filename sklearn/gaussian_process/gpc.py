@@ -10,7 +10,7 @@ from operator import itemgetter
 import numpy as np
 from scipy.linalg import cholesky, cho_solve, solve
 from scipy.optimize import fmin_l_bfgs_b
-from scipy.special import erf
+from scipy.special import erf, expit
 
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.gaussian_process.kernels \
@@ -389,7 +389,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         log_marginal_likelihood = -np.inf
         for _ in range(self.max_iter_predict):
             # Line 4
-            pi = 1 / (1 + np.exp(-f))
+            pi = expit(f)
             W = pi * (1 - pi)
             # Line 5
             W_sr = np.sqrt(W)
