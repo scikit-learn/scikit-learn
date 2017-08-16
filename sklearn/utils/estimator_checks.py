@@ -21,7 +21,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_in
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_equal, assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_allclose_dense_sparse
 from sklearn.utils.testing import assert_warns_message
@@ -131,6 +131,38 @@ def _yield_classifier_checks(name, classifier):
     yield check_non_transformer_estimators_n_iter
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
+
+
+def _yield_classifier_classes_param_checks(name, classifier):
+    estimators_to_check = set(['GaussianNB',
+                               'BernoulliNB',
+                               'MultinomialNB',
+                               'DecisionTreeClassifier',
+                               'ExtraTreeClassifier',
+                               'RandomForestClassifier',
+                               'ExtraTreesClassifier',
+                               'GradientBoostingClassifier',
+                               'LinearSVC',
+                               'LogisticRegression',
+                               'LogisticRegressionCV'
+                               ])
+    estimators_multilabel = set(['DecisionTreeClassifier',
+                                 'ExtraTreeClassifier',
+                                 'RandomForestClassifier',
+                                 'ExtraTreesClassifier'])
+
+    if name in estimators_to_check:
+        yield check_classes_parameter_sorted_unique
+
+        if hasattr(estimator(), 'predict_proba'):
+            yield check_classes_parameter_predict_proba
+            if name in estimators_multilabel:
+                yield check_classes_parameter_predict_proba_multilabel
+
+        if hasattr(estimator(), 'decision_function'):
+            yield check_classes_parameter_decision_func
+            if name in estimators_multilabel:
+                yield check_classes_parameter_decision_func_multilabel
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -1749,3 +1781,204 @@ def check_decision_proba_consistency(name, estimator_orig):
         a = estimator.predict_proba(X_test)[:, 1]
         b = estimator.decision_function(X_test)
         assert_array_equal(rankdata(a), rankdata(b))
+
+
+@ignore_warnings(category=(DeprecationWarning))
+def check_classes_parameter_predict_proba(name, estimator_orig):
+    # Test whether adding extra classes doesn't change the prediction of the
+    # existing classes just adds 0 value columns for new classes
+    rng = np.random.RandomState(0)
+    X = rng.randint(5, size=(6, 100))
+    y = np.array([1, 1, 1, 2, 2, 2])
+    params = {}
+
+    clf = clone(estimator_orig)
+    pred0 = clf.fit(X, y).predict_proba(X)
+
+    params['classes'] = [1, 2]
+    clf.set_params(**params)
+    pred1 = clf.fit(X, y).predict_proba(X)
+
+    params['classes'] = [1, 2, 3, 4]
+    clf.set_params(**params)
+    pred2 = clf.fit(X, y).predict_proba(X)
+
+    params['classes'] = [0, 1, 2, 3]
+    clf.set_params(**params)
+    pred3 = clf.fit(X, y).predict_proba(X)
+
+    # check shapes:
+    assert_equal(pred0.shape, (X.shape[0], 2))
+    assert_equal(pred1.shape, (X.shape[0], 2))
+    assert_equal(pred2.shape, (X.shape[0], 4))
+    assert_equal(pred3.shape, (X.shape[0], 4))
+
+    # check same columns are equal. since these are probabilities,
+    # checking upto 3 decimal places should be fine.
+    assert_array_almost_equal(pred0, pred1, 3)
+    assert_array_almost_equal(pred1[:, 0:2], pred2[:, 0:2], 3)
+    assert_array_almost_equal(pred1[:, 0:2], pred3[:, 1:3], 3)
+    assert_array_almost_equal(pred2[:, 2:4], 0, 3)
+    assert_array_almost_equal(pred3[:, [0, 3]], 0, 3)
+
+
+@ignore_warnings(category=(DeprecationWarning))
+def check_classes_parameter_decision_func(name, estimator_orig):
+    rng = np.random.RandomState(0)
+    X = rng.randint(5, size=(6, 100))
+    y = np.array([1, 1, 1, 2, 2, 2])
+    params = {}
+
+    clf = clone(estimator_orig)
+    pred0 = clf.fit(X, y).decision_function(X)
+    pred0 = np.atleast_2d(pred0).T
+
+    params['classes'] = [1, 2]
+    clf.set_params(**params)
+    pred1 = clf.fit(X, y).decision_function(X)
+    pred1 = np.atleast_2d(pred1).T
+
+    params['classes'] = [1, 2, 3, 4]
+    clf.set_params(**params)
+    pred2 = clf.fit(X, y).decision_function(X)
+
+    params['classes'] = [0, 1, 2, 3]
+    clf.set_params(**params)
+    pred3 = clf.fit(X, y).decision_function(X)
+
+    # check shapes:
+    assert_equal(pred0.shape, (X.shape[0], 1))
+    assert_equal(pred1.shape, (X.shape[0], 1))
+    assert_equal(pred2.shape, (X.shape[0], 4))
+    assert_equal(pred3.shape, (X.shape[0], 4))
+
+    # check same columns have same sign
+    assert_array_almost_equal(pred0, pred1, 1)
+    assert_array_almost_equal(pred2[:, 0:2],
+                              pred3[:, 1:3], 1)
+    assert_array_almost_equal(pred2[:, 2:4],
+                              pred3[:, [0, 3]], 1)
+
+
+@ignore_warnings(category=(DeprecationWarning))
+def check_classes_parameter_sorted_unique(name, estimator_orig):
+    # Test classes are sorted, unique and superset of y
+    rng = np.random.RandomState(0)
+    X = rng.randint(5, size=(6, 100))
+    y = np.array([1, 1, 1, 2, 2, 2])
+    estimator = clone(estimator_orig)
+
+    expected_msg = ("Classses parameter should contain all unique"
+                    " values, duplicates found in [1 1 2]")
+    expected_msg2 = ("Classses parameter should contain sorted values"
+                     ", unsorted values found in [1 3 2]")
+    expected_msg3 = ("The target label(s) [1] in y do not exist in the"
+                     " initial classes [2 3]")
+
+    assert_raise_message(ValueError, expected_msg,
+                         estimator(classes=[1, 1, 2]).fit, X, y)
+    assert_raise_message(ValueError, expected_msg2,
+                         estimator(classes=[1, 3, 2]).fit, X, y)
+    assert_raise_message(ValueError, expected_msg3,
+                         estimator(classes=[2, 3]).fit, X, y)
+    # Run only if partial_fit is present:
+    if hasattr(estimator, 'partial_fit'):
+        assert_raise_message(ValueError, expected_msg,
+                             estimator().partial_fit, X, y,
+                             classes=[1, 1, 2])
+        assert_raise_message(ValueError, expected_msg2,
+                             estimator().partial_fit, X, y,
+                             classes=[1, 3, 2])
+        assert_raise_message(ValueError, expected_msg3,
+                             estimator().partial_fit, X, y,
+                             classes=[2, 3])
+
+
+@ignore_warnings(category=(DeprecationWarning))
+def check_classes_parameter_predict_proba_multilabel(name, estimator_orig):
+    # Test whether adding extra classes doesn't change the prediction of the
+    # existing classes just adds 0 value columns for new classes
+    rng = np.random.RandomState(0)
+    X = rng.randint(5, size=(6, 100))
+    y = np.array([1, 1, 1, 2, 2, 2])
+    y = np.hstack([y, y]).reshape(len(y), 2)
+    params = {}
+    clf = clone(estimator_orig)
+    pred0 = clf.fit(X, y).predict_proba(X)
+
+    params['classes'] = [[1, 2], [1, 2]]
+    clf.set_params(**params)
+    pred1 = clf.fit(X, y).predict_proba(X)
+
+    params['classes'] = [[1, 2, 3, 4], [1, 2, 3, 4]]
+    clf.set_params(**params)
+    pred2 = clf.fit(X, y).predict_proba(X)
+
+    params['classes'] = [[0, 1, 2, 3], [0, 1, 2, 3]]
+    clf.set_params(**params)
+    pred3 = clf.fit(X, y).predict_proba(X)
+
+    for i in range(2):
+        pred0_i = pred0[i]
+        pred1_i = pred1[i]
+        pred2_i = pred2[i]
+        pred3_i = pred3[i]
+        # check shapes:
+        assert_equal(pred0_i.shape, (X.shape[0], 2))
+        assert_equal(pred1_i.shape, (X.shape[0], 2))
+        assert_equal(pred2_i.shape, (X.shape[0], 4))
+        assert_equal(pred3_i.shape, (X.shape[0], 4))
+
+        # check same columns are equal.
+        assert_array_almost_equal(pred0_i, pred1_i, 3)
+        assert_array_almost_equal(pred1_i[:, 0:2],
+                                  pred2_i[:, 0:2], 3)
+        assert_array_almost_equal(pred1_i[:, 0:2],
+                                  pred3_i[:, 1:3], 3)
+        assert_array_almost_equal(pred2_i[:, 2:4], 0, 3)
+        assert_array_almost_equal(pred3_i[:, [0, 3]], 0, 3)
+
+
+@ignore_warnings(category=(DeprecationWarning))
+def check_classes_parameter_decision_func_multilabel(name, estimator_orig):
+    rng = np.random.RandomState(0)
+    X = rng.randint(5, size=(6, 100))
+    y = np.array([1, 1, 1, 2, 2, 2])
+    y = np.hstack([y, y]).reshape(len(y), 2)
+    params = {}
+
+    clf = clone(estimator_orig)
+    pred0 = clf.fit(X, y).predict_proba(X)
+    pred0 = np.atleast_2d(pred0).T
+
+    params['classes'] = [1, 2]
+    clf.set_params(**params)
+    pred1 = clf.fit(X, y).decision_function(X)
+    pred1 = np.atleast_2d(pred1).T
+
+    params['classes'] = [1, 2, 3, 4]
+    clf.set_params(**params)
+    pred2 = clf.fit(X, y).decision_function(X)
+
+    params['classes'] = [0, 1, 2, 3]
+    clf.set_params(**params)
+    pred3 = clf.fit(X, y).decision_function(X)
+
+    for i in range(2):
+        pred0_i = pred0[i]
+        pred1_i = pred1[i]
+        pred2_i = pred2[i]
+        pred3_i = pred3[i]
+
+        # check shapes:
+        assert_equal(pred0_i.shape, (X.shape[0], 1))
+        assert_equal(pred1_i.shape, (X.shape[0], 1))
+        assert_equal(pred2_i.shape, (X.shape[0], 4))
+        assert_equal(pred3_i.shape, (X.shape[0], 4))
+
+        # check same columns have same sign
+        assert_array_almost_equal(pred0_i, pred1_i, 1)
+        assert_array_almost_equal(pred2_i[:, 0:2],
+                                  pred3_i[:, 1:3], 1)
+        assert_array_almost_equal(pred2_i[:, 2:4],
+                                  pred3_i[:, [0, 3]], 1)
