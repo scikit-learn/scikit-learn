@@ -257,6 +257,7 @@ METRICS_WITH_POS_LABEL = [
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
+    "roc_auc_score",
 ]
 
 # Metrics with a "labels" argument
