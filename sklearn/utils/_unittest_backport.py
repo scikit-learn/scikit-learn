@@ -50,6 +50,7 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 import re
 import warnings
+import unittest
 
 
 def _is_subtype(expected, basetype):
@@ -147,7 +148,7 @@ class _AssertRaisesContext(_AssertRaisesBaseContext):
         return True
 
 
-class TestCase(object):
+class TestCase(unittest.TestCase):
     longMessage = False
     failureException = AssertionError
 
