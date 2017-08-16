@@ -258,9 +258,9 @@ def check_estimator(Estimator):
     if isinstance(Estimator, type):
         # got a class
         name = Estimator.__name__
-        check_parameters_default_constructible(name, Estimator)
-        check_no_attributes_set_in_init(name, Estimator)
         estimator = Estimator()
+        check_parameters_default_constructible(name, Estimator)
+        check_no_attributes_set_in_init(name, estimator)
     else:
         # got an instance
         estimator = Estimator
@@ -1651,9 +1651,9 @@ def check_no_attributes_set_in_init(name, estimator):
         # To not check decorated (eg: deprecated) estimator
         return
 
-    init_params = _get_args(estimator.__class__.__init__)
-    base_params = (_get_parent_args(estimator.__class__) +
-                   [a for a in dir(estimator.__class__)
+    init_params = _get_args(type(estimator).__init__)
+    base_params = (_get_parent_args(type(estimator)) +
+                   [a for a in dir(type(estimator))
                     if not a.startswith("__")])
     for attr, val in vars(estimator).items():
         if attr not in base_params:
