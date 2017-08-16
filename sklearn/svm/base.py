@@ -916,16 +916,22 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
                       "the number of iterations.", ConvergenceWarning)
 
     # check present labels vs classes and fix labels.
+    miss_ind = None
     if class_weight_.shape[0] and classes is not None:
         present_classes = np.unique(y)
-        raw_coef_ = _fill_missing_class_dimensions(raw_coef_, present_classes,
-                                                   classes)
+        raw_coef_, miss_ind = _fill_missing_class_dimensions(raw_coef_,
+                                                             present_classes,
+                                                             classes)
 
     if fit_intercept:
         intercept_ = intercept_scaling * raw_coef_[:, -1]
         coef_ = raw_coef_[:, :-1]
     else:
         coef_ = raw_coef_
-        intercept_ = 0.
+        intercept_ = np.zeros(coef_.shape[0])
+
+    # make the intercept of missing classes very small
+    if miss_ind is not None:
+        intercept_[miss_ind] = -1e10
 
     return coef_, intercept_, n_iter_
