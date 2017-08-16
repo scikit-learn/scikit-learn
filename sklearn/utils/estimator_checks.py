@@ -1645,7 +1645,7 @@ def check_no_attributes_set_in_init(name, Estimator):
        the init parameters.
     """
     estimator = Estimator()
-    if(name not in ["GaussianProcess", "RandomizedLasso",
+    if (name not in ["GaussianProcess", "RandomizedLasso",
                     "RandomizedLogisticRegression",
                     "RandomizedPCA"] and sys.version_info > (3, 5)):
         # This check is only for non-decorated (eg: deprecated) estimator

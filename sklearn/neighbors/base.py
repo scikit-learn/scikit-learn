@@ -19,6 +19,7 @@ from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.multiclass import check_classification_targets
+from ..utils.validation import check_is_fitted
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..exceptions import NotFittedError
@@ -320,7 +321,7 @@ class KNeighborsMixin(object):
                [2]]...)
 
         """
-        if not hasattr(self, "_fit_method"):
+        if check_is_fitted(self, "_fit_method"):
             raise NotFittedError("Must fit neighbors before querying.")
 
         if n_neighbors is None:
