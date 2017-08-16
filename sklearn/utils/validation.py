@@ -13,6 +13,8 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
+from numpy.core.numeric import ComplexWarning
+import ipdb
 
 from ..externals import six
 from ..utils.fixes import signature
@@ -21,13 +23,12 @@ from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 
-
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
 warnings.simplefilter('ignore', NonBLASDotWarning)
-
+warnings.simplefilter('error', ComplexWarning)
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
@@ -276,10 +277,11 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     return spmatrix
 
 
-def _ensure_non_complex_data(array):
-    if array.dtype.kind == "c":
-        raise ValueError("Complex data not supported\n"
-                         "{}\n".format(array))
+def _ensure_no_complex_data(array):
+    if hasattr(array, 'dtype') and array.dtype is not None \
+        and hasattr(array.dtype, 'kind')  and array.dtype.kind == "c":
+            raise ValueError("Complex data not supported\n"
+                             "{}\n".format(array))
 
 
 def check_array(array, accept_sparse=False, dtype="numeric", order=None,
@@ -377,6 +379,8 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
 
+    _ensure_no_complex_data(array)
+
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
@@ -403,12 +407,20 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     context = " by %s" % estimator_name if estimator is not None else ""
 
     if sp.issparse(array):
-        _ensure_non_complex_data(array)
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
     else:
-        array = np.array(array, dtype=dtype, order=order, copy=copy)
-        _ensure_non_complex_data(array)
+        with warnings.catch_warnings():
+            try:
+                warnings.simplefilter('error', ComplexWarning)
+                array = np.array(array, dtype=dtype, order=order, copy=copy)
+            except ComplexWarning:
+                raise ValueError("Complex data not supported\n"
+                                 "{}\n".format(array))
+
+        if array.dtype.kind == "c":
+            raise ValueError("Complex data not supported\n"
+                             "{}\n".format(array))
 
         if ensure_2d:
             if array.ndim == 1:

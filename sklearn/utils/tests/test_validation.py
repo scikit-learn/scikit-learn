@@ -1,6 +1,7 @@
 """Tests for input validation functions"""
 
 import warnings
+import ipdb
 
 from tempfile import NamedTemporaryFile
 from itertools import product
