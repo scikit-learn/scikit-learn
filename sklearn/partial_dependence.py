@@ -114,19 +114,12 @@ def _predict(est, X_eval, method, output=None):
         except NotFittedError:
             raise ValueError('Call %s.fit before partial_dependence' %
                              est.__class__.__name__)
-        if out.ndim != 1 and out.shape[1] == 1:
-            # Column output
-            out = out.ravel()
         if out.ndim != 1 and out.shape[1] != 1:
             # Multi-output
             if not 0 <= output < out.shape[1]:
                 raise ValueError('Valid output must be specified for '
                                  'multi-output models.')
             out = out[:, output]
-        if method == 'exact':
-            return np.mean(out)
-        else:
-            return out[np.newaxis]
     elif est._estimator_type == 'classifier':
         try:
             out = est.predict_proba(X_eval)
@@ -141,13 +134,10 @@ def _predict(est, X_eval, method, output=None):
             out = out[output]
         out = np.log(np.clip(out, 1e-16, 1))
         out = np.subtract(out, np.mean(out, 1)[:, np.newaxis])
-        if method == 'exact':
-            return np.mean(out, 0)
-        else:
-            return out.transpose()
     else:
         raise ValueError('est must be a fitted regressor or classifier '
                          'model.')
+    return out
 
 
 def partial_dependence(est, target_variables, grid=None, X=None, output=None,
@@ -308,6 +298,10 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         elif len(pdp.shape) == 1:
             # Regression
             pdp = pdp[np.newaxis]
+        if est._estimator_type == 'regressor':
+            pdp = np.mean(pdp)
+        else:
+            pdp = np.mean(pdp, 0)
     elif method == 'estimated':
         n_samples = grid.shape[0]
         X_eval = np.tile(X.mean(0), [n_samples, 1])
@@ -317,6 +311,10 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         if pdp.shape[0] == 2:
             # Binary classification
             pdp = pdp[1, :][np.newaxis]
+        if est._estimator_type == 'regressor':
+            pdp = pdp[np.newaxis]
+        else:
+            pdp = pdp.transpose()
     else:
         raise ValueError('method "%s" is invalid. Use "recursion", "exact", '
                          '"estimated", or None.' % method)
