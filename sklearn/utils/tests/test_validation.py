@@ -39,7 +39,6 @@ from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
 
-
 def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)

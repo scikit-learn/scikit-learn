@@ -22,6 +22,7 @@ from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 
+
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 # Silenced by default to reduce verbosity. Turn on at runtime for
