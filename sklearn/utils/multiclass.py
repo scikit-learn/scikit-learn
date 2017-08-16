@@ -454,7 +454,7 @@ def _ovr_decision_function(predictions, confidences, n_classes):
 
 
 def _fill_missing_class_dimensions(array, present_classes, all_classes,
-                                   fill_value=np.nan, negate_neg_class=True):
+                                   fill_value=0., negate_neg_class=True):
     """Fill in the values for the missing dimensions in case where the classes
     parameter has more values than present in actual data.
 
@@ -475,7 +475,7 @@ def _fill_missing_class_dimensions(array, present_classes, all_classes,
         dimensions.
     """
     if np.array_equal(present_classes, all_classes):
-        return array
+        return (array, None)
 
     if negate_neg_class:
         multiplier = -1
@@ -490,6 +490,7 @@ def _fill_missing_class_dimensions(array, present_classes, all_classes,
     array_ = np.repeat(fill_value, n_classes * n_values).reshape(n_classes,
                                                                  n_values)
     fill_ind = np.searchsorted(all_classes, present_classes)
+    miss_ind = np.where([x not in present_classes for x in all_classes])[0]
     array_[fill_ind] = array
 
-    return array_
+    return (array_, miss_ind)
