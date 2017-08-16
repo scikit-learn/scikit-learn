@@ -40,7 +40,7 @@ is an estimator object::
     >>> estimators = [('reduce_dim', PCA()), ('clf', SVC())]
     >>> pipe = Pipeline(estimators)
     >>> pipe # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    Pipeline(memory=None,
+    Pipeline(memory=None, prop_routing=None,
              steps=[('reduce_dim', PCA(copy=True,...)),
                     ('clf', SVC(C=1.0,...))])
 
@@ -53,7 +53,7 @@ filling in the names automatically::
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> from sklearn.preprocessing import Binarizer
     >>> make_pipeline(Binarizer(), MultinomialNB()) # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(memory=None,
+    Pipeline(memory=None, prop_routing=None,
              steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
                     ('multinomialnb', MultinomialNB(alpha=1.0,
                                                     class_prior=None,
@@ -75,7 +75,7 @@ Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
 
     >>> pipe.set_params(clf__C=10) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-    Pipeline(memory=None,
+    Pipeline(memory=None, prop_routing=None,
              steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',...)),
                     ('clf', SVC(C=10, cache_size=200, class_weight=None,...))])
 

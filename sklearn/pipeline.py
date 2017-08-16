@@ -101,7 +101,7 @@ class Pipeline(_BaseComposition):
     >>> # and a parameter 'C' of the svm
     >>> anova_svm.set_params(anova__k=10, svc__C=.1).fit(X, y)
     ...                      # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    Pipeline(memory=None,
+    Pipeline(memory=None, prop_routing=None,
              steps=[('anova', SelectKBest(...)),
                     ('svc', SVC(...))])
     >>> prediction = anova_svm.predict(X)
@@ -588,7 +588,7 @@ def make_pipeline(*steps, **kwargs):
     >>> from sklearn.preprocessing import StandardScaler
     >>> make_pipeline(StandardScaler(), GaussianNB(priors=None))
     ...     # doctest: +NORMALIZE_WHITESPACE
-    Pipeline(memory=None,
+    Pipeline(memory=None, prop_routing=None,
              steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
                     ('gaussiannb', GaussianNB(priors=None))])

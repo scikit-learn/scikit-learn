@@ -926,8 +926,8 @@ class GridSearchCV(BaseSearchCV):
                          random_state=None, shrinking=True, tol=...,
                          verbose=False),
            fit_params=None, iid=..., n_jobs=1,
-           param_grid=..., pre_dispatch=..., refit=..., return_train_score=...,
-           scoring=..., verbose=...)
+           param_grid=..., pre_dispatch=..., prop_routing=..., refit=...,
+           return_train_score=..., scoring=..., verbose=...)
     >>> sorted(clf.cv_results_.keys())
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
