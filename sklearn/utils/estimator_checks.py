@@ -133,7 +133,9 @@ def _yield_classifier_checks(name, classifier):
     yield check_decision_proba_consistency
 
 
-def _yield_classifier_classes_param_checks(name, classifier):
+def _yield_classifier_classes_param_checks(name, estimator):
+    # to be moved to _yield_classifier_checks once classes added to all
+    # classifiers
     estimators_to_check = set(['GaussianNB',
                                'BernoulliNB',
                                'MultinomialNB',
@@ -154,12 +156,12 @@ def _yield_classifier_classes_param_checks(name, classifier):
     if name in estimators_to_check:
         yield check_classes_parameter_sorted_unique
 
-        if hasattr(estimator(), 'predict_proba'):
+        if hasattr(estimator, 'predict_proba'):
             yield check_classes_parameter_predict_proba
             if name in estimators_multilabel:
                 yield check_classes_parameter_predict_proba_multilabel
 
-        if hasattr(estimator(), 'decision_function'):
+        if hasattr(estimator, 'decision_function'):
             yield check_classes_parameter_decision_func
             if name in estimators_multilabel:
                 yield check_classes_parameter_decision_func_multilabel
@@ -1815,6 +1817,7 @@ def check_classes_parameter_predict_proba(name, estimator_orig):
 
     # check same columns are equal. since these are probabilities,
     # checking upto 3 decimal places should be fine.
+    print(pred1, pred2)
     assert_array_almost_equal(pred0, pred1, 3)
     assert_array_almost_equal(pred1[:, 0:2], pred2[:, 0:2], 3)
     assert_array_almost_equal(pred1[:, 0:2], pred3[:, 1:3], 3)
@@ -1875,22 +1878,32 @@ def check_classes_parameter_sorted_unique(name, estimator_orig):
     expected_msg3 = ("The target label(s) [1] in y do not exist in the"
                      " initial classes [2 3]")
 
+    params = {'classes': [1, 1, 2]}
+    estimator.set_params(**params)
     assert_raise_message(ValueError, expected_msg,
-                         estimator(classes=[1, 1, 2]).fit, X, y)
+                         estimator.fit, X, y)
+
+    params = {'classes': [1, 3, 2]}
+    estimator.set_params(**params)
     assert_raise_message(ValueError, expected_msg2,
-                         estimator(classes=[1, 3, 2]).fit, X, y)
+                         estimator.fit, X, y)
+
+    params = {'classes': [2, 3]}
+    estimator.set_params(**params)
     assert_raise_message(ValueError, expected_msg3,
-                         estimator(classes=[2, 3]).fit, X, y)
+                         estimator.fit, X, y)
+
     # Run only if partial_fit is present:
+    estimator = clone(estimator_orig)
     if hasattr(estimator, 'partial_fit'):
         assert_raise_message(ValueError, expected_msg,
-                             estimator().partial_fit, X, y,
+                             estimator.partial_fit, X, y,
                              classes=[1, 1, 2])
         assert_raise_message(ValueError, expected_msg2,
-                             estimator().partial_fit, X, y,
+                             estimator.partial_fit, X, y,
                              classes=[1, 3, 2])
         assert_raise_message(ValueError, expected_msg3,
-                             estimator().partial_fit, X, y,
+                             estimator.partial_fit, X, y,
                              classes=[2, 3])
 
 
