@@ -14,7 +14,6 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 from numpy.core.numeric import ComplexWarning
-import ipdb
 
 from ..externals import six
 from ..utils.fixes import signature
@@ -28,7 +27,6 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
 warnings.simplefilter('ignore', NonBLASDotWarning)
-warnings.simplefilter('error', ComplexWarning)
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
