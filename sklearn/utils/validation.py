@@ -28,6 +28,7 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 # performance profiling.
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
+
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
     if _get_config()['assume_finite']:
@@ -277,9 +278,9 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
 def _ensure_no_complex_data(array):
     if hasattr(array, 'dtype') and array.dtype is not None \
-        and hasattr(array.dtype, 'kind')  and array.dtype.kind == "c":
-            raise ValueError("Complex data not supported\n"
-                             "{}\n".format(array))
+            and hasattr(array.dtype, 'kind') and array.dtype.kind == "c":
+        raise ValueError("Complex data not supported\n"
+                         "{}\n".format(array))
 
 
 def check_array(array, accept_sparse=False, dtype="numeric", order=None,

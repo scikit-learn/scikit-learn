@@ -40,6 +40,7 @@ from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
 
+
 def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
@@ -97,7 +98,7 @@ def test_np_matrix():
 def test_memmap():
     # Confirm that input validation code doesn't copy memory mapped arrays
 
-    asflt = lambda x: as_float_array(x, copy=False)
+    def asflt(x): return as_float_array(x, copy=False)
 
     with NamedTemporaryFile(prefix='sklearn-test') as tmp:
         M = np.memmap(tmp, shape=(10, 10), dtype=np.float32)
@@ -433,30 +434,44 @@ def test_check_array_min_samples_and_features_messages():
     assert_array_equal(X, X_checked)
     assert_array_equal(y, y_checked)
 
+
 def test_check_array_complex_data_error():
-    X = np.array([[1+2j, 3+4j, 5+7j], [2+3j, 4+5j, 6+7j]])
-    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+    X = np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]])
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
 
-    X = [[1+2j, 3+4j, 5+7j], [2+3j, 4+5j, 6+7j]]
-    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+    X = [[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]]
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
 
-    X = ((1+2j, 3+4j, 5+7j), (2+3j, 4+5j, 6+7j))
-    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+    X = ((1 + 2j, 3 + 4j, 5 + 7j), (2 + 3j, 4 + 5j, 6 + 7j))
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
 
-    X = [np.array([1+2j, 3+4j, 5+7j]), np.array([2+3j, 4+5j, 6+7j])]
-    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+    X = [np.array([1 + 2j, 3 + 4j, 5 + 7j]),
+         np.array([2 + 3j, 4 + 5j, 6 + 7j])]
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
 
-    X = (np.array([1+2j, 3+4j, 5+7j]), np.array([2+3j, 4+5j, 6+7j]))
-    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+    X = (np.array([1 + 2j, 3 + 4j, 5 + 7j]),
+         np.array([2 + 3j, 4 + 5j, 6 + 7j]))
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
 
-    X = (np.array([1+2j, 3+4j, 5+7j]), np.array([2+3j, 4+5j, 6+7j]))
-    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+    X = (np.array([1 + 2j, 3 + 4j, 5 + 7j]),
+         np.array([2 + 3j, 4 + 5j, 6 + 7j]))
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
 
-    X = MockDataFrame(np.array([[1+2j, 3+4j, 5+7j], [2+3j, 4+5j, 6+7j]]))
-    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+    X = MockDataFrame(
+        np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]]))
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
 
-    X = sp.coo_matrix([[0, 1+2j], [0, 0]])
-    assert_raises_regexp(ValueError, "Complex data not supported", check_array, X)
+    X = sp.coo_matrix([[0, 1 + 2j], [0, 0]])
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
+
 
 def test_has_fit_parameter():
     assert_false(has_fit_parameter(KNeighborsClassifier, "sample_weight"))

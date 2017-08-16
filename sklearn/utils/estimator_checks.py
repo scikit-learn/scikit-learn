@@ -119,7 +119,7 @@ def _yield_classifier_checks(name, classifier):
     if (name not in
         ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
         # TODO some complication with -1 label
-       name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
+            name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
             # We don't raise a warning in these classifiers, as
             # the column y interface is used by the forests.
 
@@ -458,11 +458,12 @@ def check_dtype_object(name, estimator_orig):
     msg = "argument must be a string or a number"
     assert_raises_regex(TypeError, msg, estimator.fit, X, y)
 
+
 def check_complex_data(name, estimator_orig):
     # check that estimators raise an exception on providing complex data
-    X = np.random.sample(10) + 1j*np.random.sample(10)
+    X = np.random.sample(10) + 1j * np.random.sample(10)
     X = X.reshape(-1, 1)
-    y = np.random.sample(10) + 1j*np.random.sample(10)
+    y = np.random.sample(10) + 1j * np.random.sample(10)
     estimator = clone(estimator_orig)
     assert_raises_regex(ValueError, "Complex data not supported",
                         estimator.fit, X, y)
