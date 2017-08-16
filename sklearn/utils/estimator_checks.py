@@ -119,7 +119,7 @@ def _yield_classifier_checks(name, classifier):
     if (name not in
         ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
         # TODO some complication with -1 label
-            name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
+        name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
             # We don't raise a warning in these classifiers, as
             # the column y interface is used by the forests.
 

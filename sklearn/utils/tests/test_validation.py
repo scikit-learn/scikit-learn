@@ -1,7 +1,6 @@
 """Tests for input validation functions"""
 
 import warnings
-import ipdb
 
 from tempfile import NamedTemporaryFile
 from itertools import product
@@ -98,7 +97,7 @@ def test_np_matrix():
 def test_memmap():
     # Confirm that input validation code doesn't copy memory mapped arrays
 
-    def asflt(x): return as_float_array(x, copy=False)
+    asflt = lambda x: as_float_array(x, copy=False)
 
     with NamedTemporaryFile(prefix='sklearn-test') as tmp:
         M = np.memmap(tmp, shape=(10, 10), dtype=np.float32)

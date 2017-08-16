@@ -373,7 +373,6 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     dtype_numeric = isinstance(dtype, six.string_types) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
-
     if not hasattr(dtype_orig, 'kind'):
         # not a data type (e.g. a column named dtype in a pandas DataFrame)
         dtype_orig = None
