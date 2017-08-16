@@ -761,7 +761,7 @@ class SGDClassifier(BaseSGDClassifier):
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
            eta0=0.0, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
+           learning_rate='optimal', loss='hinge', max_iter=None, n_iter=None,
            n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
            shuffle=True, tol=None, verbose=0, warm_start=False)
 
@@ -1314,7 +1314,7 @@ class SGDRegressor(BaseSGDRegressor):
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDRegressor(alpha=0.0001, average=False, epsilon=0.1, eta0=0.01,
            fit_intercept=True, l1_ratio=0.15, learning_rate='invscaling',
-           loss='squared_loss', max_iter=5, n_iter=None, penalty='l2',
+           loss='squared_loss', max_iter=None, n_iter=None, penalty='l2',
            power_t=0.25, random_state=None, shuffle=True, tol=None,
            verbose=0, warm_start=False)
 
