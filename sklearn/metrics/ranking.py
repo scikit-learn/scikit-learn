@@ -440,8 +440,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     ----------
 
     y_true : array, shape = [n_samples]
-        True binary labels (either {0, 1} or {-1, 1}). If labels are not
-        binary, pos_label should be explicitly given.
+        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
+        pos_label should be explicitly given.
 
     y_score : array, shape = [n_samples]
         Target scores, can either be probability estimates of the positive
