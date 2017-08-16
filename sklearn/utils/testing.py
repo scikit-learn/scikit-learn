@@ -68,7 +68,7 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "SkipTest"]
 
-_dummy = unittest.TestCase()
+_dummy = unittest.TestCase('__init__')
 _dummy2 = TestCase()
 assert_equal = _dummy.assertEqual
 assert_not_equal = _dummy.assertNotEqual
