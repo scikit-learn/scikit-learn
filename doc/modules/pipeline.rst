@@ -171,7 +171,7 @@ object::
      >>> pipe = Pipeline([('reduce_dim', pca1), ('clf', svm1)])
      >>> pipe.fit(digits.data, digits.target)
      ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
-     Pipeline(memory=None,
+     Pipeline(memory=None, prop_routing=None,
               steps=[('reduce_dim', PCA(...)), ('clf', SVC(...))])
      >>> # The pca instance can be inspected directly
      >>> print(pca1.components_) # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
