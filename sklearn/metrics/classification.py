@@ -1822,6 +1822,25 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     return np.average(losses, weights=sample_weight)
 
 
+def _check_binary_probabilistic_predictions(y_true, y_prob):
+    """Check that y_true is binary and y_prob contains valid probabilities"""
+    check_consistent_length(y_true, y_prob)
+
+    labels = np.unique(y_true)
+
+    if len(labels) > 2:
+        raise ValueError("Only binary classification is supported. "
+                         "Provided labels %s." % labels)
+
+    if y_prob.max() > 1:
+        raise ValueError("y_prob contains values greater than 1.")
+
+    if y_prob.min() < 0:
+        raise ValueError("y_prob contains values less than 0.")
+
+    return label_binarize(y_true, labels)[:, 0]
+
+
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     """Compute the Brier score.
 
