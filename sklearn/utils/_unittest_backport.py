@@ -152,6 +152,11 @@ class TestCase_new(unittest.TestCase):
     longMessage = False
     failureException = AssertionError
 
+    def runTest(self):
+        assertRaises(self, expected_exception, *args, **kwargs)
+        assertRaisesRegex(self, expected_exception,
+                          expected_regex, *args, **kwargs)
+        
     def _formatMessage(self, msg, standardMsg):
         """Honour the longMessage attribute when generating failure messages.
         If longMessage is False this means:
