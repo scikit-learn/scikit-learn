@@ -306,8 +306,6 @@ class _Router:
             for alias in aliases:
                 alias_to_idx[alias].append(i)
 
-        # policies is a list with an element for each dest
-        # An element may be None, '*', a set of exclusions, or a dict
         policies = [None] * len(dests)
 
         # Sorted so error messages are deterministic
@@ -327,7 +325,7 @@ class _Router:
                     elif any(minuses):
                         raise ValueError('Routing props should either all '
                                          'start with "-" or none should start '
-                                         'with "-"')
+                                         'with "-". Got a mix for %r' % dest)
                     else:
                         policy = _IncludePolicy({prop: prop for prop in props})
 
