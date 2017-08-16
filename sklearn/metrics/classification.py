@@ -1822,25 +1822,6 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     return np.average(losses, weights=sample_weight)
 
 
-def _check_binary_probabilistic_predictions(y_true, y_prob):
-    """Check that y_true is binary and y_prob contains valid probabilities"""
-    check_consistent_length(y_true, y_prob)
-
-    labels = np.unique(y_true)
-
-    if len(labels) > 2:
-        raise ValueError("Only binary classification is supported. "
-                         "Provided labels %s." % labels)
-
-    if y_prob.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-
-    if y_prob.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
-
-    return label_binarize(y_true, labels)[:, 0]
-
-
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     """Compute the Brier score.
 
@@ -1911,9 +1892,29 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
+    check_consistent_length(y_true, y_prob)
 
+    if y_prob.max() > 1:
+        raise ValueError("y_prob contains values greater than 1.")
+    if y_prob.min() < 0:
+        raise ValueError("y_prob contains values less than 0.")
+
+    # currently, we only support binary classification
+    classes = np.unique(y_true)
+    if len(classes) > 2:
+        raise ValueError("Only binary classification is supported.")
+
+    # ensure valid y_true if pos_label is not specified
     if pos_label is None:
-        pos_label = y_true.max()
+        if (np.array_equal(classes, [0]) or
+           np.array_equal(classes, [-1]) or
+           np.array_equal(classes, [1])):
+            pos_label = 1.
+        elif len(classes) == 1:
+            raise ValueError("Data is not binary "
+                             "and pos_label is not specified")
+        else:
+            pos_label = max(y_true)
+
     y_true = np.array(y_true == pos_label, int)
-    y_true = _check_binary_probabilistic_predictions(y_true, y_prob)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
