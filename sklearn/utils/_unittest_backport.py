@@ -1,7 +1,7 @@
-""" 
+"""
 This is a backport of assertRaises() and assertRaisesRegex from Python 3.5.4
 
-The original copyright message is as follows:
+The original copyright message is as follows
 
 Python unit testing framework, based on Erich Gamma's JUnit and Kent Beck's
 Smalltalk testing framework (used with permission).
@@ -50,7 +50,6 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
 import re
 import warnings
-import unittest
 
 
 def _is_subtype(expected, basetype):
@@ -144,19 +143,14 @@ class _AssertRaisesContext(_AssertRaisesBaseContext):
         expected_regex = self.expected_regex
         if not expected_regex.search(str(exc_value)):
             self._raiseFailure('"{}" does not match "{}"'.format(
-                     expected_regex.pattern, str(exc_value)))
+                expected_regex.pattern, str(exc_value)))
         return True
 
 
-class TestCase_new(unittest.TestCase):
+class TestCase(object):
     longMessage = False
     failureException = AssertionError
 
-    def runTest(self):
-        assertRaises(self, expected_exception, *args, **kwargs)
-        assertRaisesRegex(self, expected_exception,
-                          expected_regex, *args, **kwargs)
-        
     def _formatMessage(self, msg, standardMsg):
         """Honour the longMessage attribute when generating failure messages.
         If longMessage is False this means:
