@@ -287,7 +287,7 @@ class _Router:
         - a list of property names to include
         - a list of property names, each prefixed by '-', to exclude; all
           others will be provided
-        - a single identifier to include or exclude
+        - a single name to include or exclude
         - a dict mapping each target property name to its source property name
 
     dests : list of {str, iterable of str}
@@ -398,11 +398,11 @@ def check_routing(routing, dests, default=None):
         Maps each destination string to the properties that should be provided
         to that destination. Props may be:
 
-        - '*': provide all properties
+        - ``'*'``: provide all properties
         - a list of property names to include
-        - a list of property names, each prefixed by '-', to exclude; all
+        - a list of property names, each prefixed by ``-``, to exclude; all
           others will be provided
-        - a single identifier to include or exclude
+        - a single name to include or exclude (prefixed by ``-``)
         - a dict mapping each target property name to its source property name
 
     dests : list of {str, iterable of str}
