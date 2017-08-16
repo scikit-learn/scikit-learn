@@ -932,6 +932,6 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
     # make the intercept of missing classes very small
     if miss_ind is not None:
-        intercept_[miss_ind] = -1e10
+        intercept_[miss_ind] = -np.abs(np.min(intercept_))**10
 
     return coef_, intercept_, n_iter_
