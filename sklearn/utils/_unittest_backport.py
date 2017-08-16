@@ -148,7 +148,7 @@ class _AssertRaisesContext(_AssertRaisesBaseContext):
         return True
 
 
-class TestCase_new(unittest.TestCase('__init__')):
+class TestCase_new(unittest.TestCase):
     longMessage = False
     failureException = AssertionError
 
