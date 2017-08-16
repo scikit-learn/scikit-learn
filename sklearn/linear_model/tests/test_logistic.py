@@ -77,7 +77,7 @@ def test_error():
 
     msg = "is not a valid scoring value"
     assert_raise_message(ValueError, msg,
-                         LogisticRegressionCV(scoring='bad-scorer',cv=2).fit,
+                         LogisticRegressionCV(scoring='bad-scorer', cv=2).fit,
                          X, Y1)
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
