@@ -347,7 +347,7 @@ def set_checking_parameters(estimator):
         estimator.set_params(n_init=2)
     if "decision_function_shape" in params:
         # SVC
-        estimator.set_params(decision_function_shape='ovo')
+        estimator.set_params(decision_function_shape='ovr')
 
     if estimator.__class__.__name__ == "SelectFdr":
         # be tolerant of noisy datasets (not actually speed)
