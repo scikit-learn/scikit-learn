@@ -239,6 +239,35 @@ def test_pipeline_props():
         "fit() got an unexpected keyword argument 'bad'",
         pipe.fit, None, None, clf__bad=True
     )
+    # Unknown step
+    assert_raise_message(
+        TypeError,
+        "fit() got unexpected keyword arguments ['foo__bar']",
+        pipe.fit, None, None, foo__bar=True
+    )
+
+
+def test_pipeline_prop_routing():
+    pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())],
+                    prop_routing={'clf': ['should_succeed', 'bad']})
+    pipe.fit(X=None, y=None, should_succeed=True)
+    # classifier should return True
+    assert_true(pipe.predict(None))
+    # and transformer params should not be changed
+    assert_true(pipe.named_steps['transf'].a is None)
+    assert_true(pipe.named_steps['transf'].b is None)
+    # invalid parameters should raise an error message
+    assert_raise_message(
+        TypeError,
+        "fit() got an unexpected keyword argument 'bad'",
+        pipe.fit, None, None, bad=True
+    )
+    assert_raise_message(
+        TypeError,
+        "fit() got unexpected keyword arguments ['stuff']",
+        pipe.fit, None, None, stuff=True
+    )
+    # TODO: test '*'
 
 
 def test_pipeline_sample_weight_supported():
@@ -555,7 +584,7 @@ def test_set_pipeline_step_none():
                        'm3': None,
                        'last': mult5,
                        'memory': None,
-                       'routing': None,
+                       'prop_routing': None,
                        'm2__mult': 2,
                        'last__mult': 5,
                        })

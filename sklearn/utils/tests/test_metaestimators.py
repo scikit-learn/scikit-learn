@@ -84,20 +84,22 @@ def test_if_delegate_has_method():
 FOO = [1, 2, 3]
 BAR = [4, 5, 6]
 TEST_ROUTER_BASIC_PARAMS = [
-    ({'*': [('*', '*')]},
+    ({'*': '*'},
      {'bar': BAR, 'foo': FOO}, {'bar': BAR, 'foo': FOO}, set()),
-    ({'foo': [('*', '*')]},
+    ({'*': 'foo'},
      {'foo': FOO}, {'foo': FOO}, {'bar'}),
-    ({'foo': ('*', '*')},
+    ({'*': ['foo']},
      {'foo': FOO}, {'foo': FOO}, {'bar'}),
-    ({'foo': [('d*1', '*')]},
+    ({'*': ['goo']},
+     {}, {}, {'bar', 'foo'}),
+    ({'dest1': {'goo': 'foo'}},
+     {'goo': FOO}, {}, {'bar'}),
+    ({'dest1': {'foo': 'goo'}},
+     {}, {}, {'bar', 'foo'}),
+    ({'dest1': '-bar'},
      {'foo': FOO}, {}, {'bar'}),
-    ({'foo': [('d*1', 'goo')]},
-     {'goo': FOO}, {}, {'bar'}),
-    ({'foo': [('dest1', 'goo')]},
-     {'goo': FOO}, {}, {'bar'}),
-    ({'foo': [('dest11', 'goo')]},
-     {}, {}, {'foo', 'bar'}),
+    ({'dest1': ['-bar']},
+     {'foo': FOO}, {}, {'bar'}),
 ]
 
 # pytest.mark.parametrize(['routing', 'expected_dest1',
@@ -109,9 +111,8 @@ def test_router_basic():
     for params in TEST_ROUTER_BASIC_PARAMS:
         print(params)
         routing, expected_dest1, expected_dest2, expected_remainder = params
-        router = _Router(routing)
-        (dest1, dest2), remainder = router({'foo': FOO, 'bar': BAR},
-                                           ['dest1', 'dest2'])
+        router = _Router(routing, [['dest1', '*'], ['dest2', '*']])
+        (dest1, dest2), remainder = router({'foo': FOO, 'bar': BAR})
         assert dest1 == expected_dest1
         assert dest2 == expected_dest2
         assert remainder == expected_remainder

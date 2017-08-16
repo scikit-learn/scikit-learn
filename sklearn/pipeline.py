@@ -27,20 +27,6 @@ from .utils.metaestimators import _BaseComposition
 __all__ = ['Pipeline', 'FeatureUnion']
 
 
-def _pipeline_default_routing(props, dests):
-    dest_props = {dest: {} for dest in dests}
-    remainder = set()
-    for k, v in props.items():
-        if v is not None:
-            # XXX: not sure if we need to remove Nones
-            step, name = k.split('__', 1)
-            try:
-                dest_props[step][name] = v
-            except KeyError:
-                remainder.add(name)
-    return [dest_props[dest] for dest in dests], remainder
-
-
 class Pipeline(_BaseComposition):
     """Pipeline of transforms with a final estimator.
 
@@ -81,6 +67,11 @@ class Pipeline(_BaseComposition):
     prop_routing : dict, optional
         Policy for mapping sample properties passed to Pipeline's fit (e.g.
         sample_weight) to steps' fit or fit_transform methods.
+
+        Available destinations: step names, '*' for all.
+
+        See :func:`sklearn.utils.metaestimators.check_routing`.
+
         By default, parameter ``p`` for step ``s`` has name ``s__p``.
 
         TODO
@@ -205,6 +196,20 @@ class Pipeline(_BaseComposition):
     def _final_estimator(self):
         return self.steps[-1][1]
 
+    def _default_routing(self, props):
+        names = [name for name, _ in self.steps]
+        step_props = {name: {} for name in names}
+        remainder = set()
+        for k, v in props.items():
+            if v is not None:
+                # XXX: not sure if we need to remove Nones
+                name, prop = k.split('__', 1)
+                try:
+                    step_props[name][prop] = v
+                except KeyError:
+                    remainder.add(k)
+        return [step_props[name] for name in names], remainder
+
     # Estimator interface
 
     def _fit(self, X, y=None, **props):
@@ -223,11 +228,13 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        router = check_routing(self.prop_routing, _pipeline_default_routing)
-        step_props, rem_props = router(props, [name for name, _ in self.steps])
-        if rem_props:
-            raise ValueError('The following properties were not routed to any '
-                             'Pipeline step: %r' % list(rem_props))
+        router = check_routing(self.prop_routing,
+                               [[name, '*'] for name, _ in self.steps],
+                               self._default_routing)
+        step_props, unused = router(props)
+        if unused:
+            raise TypeError('fit() got unexpected keyword arguments %r'
+                            % sorted(unused))
 
         Xt = X
         for step_idx, (name, transformer) in enumerate(self.steps[:-1]):

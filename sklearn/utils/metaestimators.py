@@ -8,6 +8,7 @@ from operator import attrgetter
 from functools import update_wrapper
 import re
 import fnmatch
+from collections import defaultdict
 
 import numpy as np
 
@@ -210,128 +211,166 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     return X_subset, y_subset
 
 
+class _NonePolicy:
+    def apply(self, props, unused):
+        return {}
+
+
+class _AllPolicy:
+    def apply(self, props, unused):
+        unused.clear()
+        return props
+
+    def update(self, other):
+        pass
+
+
+class _ExcludePolicy:
+    def __init__(self, exclusions):
+        # exclusions is a set of strings
+        self.exclusions = exclusions
+
+    def apply(self, props, unused):
+        out = {k: v for k, v in props.items()
+               if k not in self.exclusions}
+        unused.intersection_update(self.exclusions)
+        return out
+
+    def update(self, other):
+        self.exclusions.update(other)
+
+
+class _IncludePolicy:
+    def __init__(self, inclusions):
+        # inclusions maps {tgt: src}
+        self.inclusions = inclusions
+
+    def apply(self, props, unused):
+        unused.difference_update(self.inclusions.values())
+        return {tgt: props[src]
+                for tgt, src in self.inclusions.items()
+                if src in props}
+
+    def update(self, other):
+        intersection = set(self.inclusions) & set(other.inclusions)
+        if intersection:
+            raise ValueError('Target property names {!r} are used multiple '
+                             'times in the routing policy for the same '
+                             'destination'.format(sorted(intersection)))
+        self.inclusions.update(other.inclusions)
+
+
 class _Router:
-    """Matches destinations and props according to a specification
+    """Matches sample props to destinations according to a routing policy
 
     Parameters
     ----------
-    routing : dict
-        Each key should be a string naming the input property, or '*'.
-        Each value should be a tuple ``(destination, dest_prop)``
-        or a list thereof. Here ``destination`` is a pattern to match
-        destinations as specified by the meta-estimator using this router.
-        Patterns are matched with :mod:`fnmatch`.  ``dest_prop`` is
-        an identifier for the prop to be passed to the destination with,
-        or '*' to match names with the input prop.
-    dest_regex : str
-        Used to help validate the destinations
+    routing : dict {dest: props} for dest str, props {str, list, dict}
+        User-defined routing policy.
+        Maps each destination string to the properties that should be provided
+        to that destination. Props may be:
 
-    Examples
-    --------
-    >>> props = {'foo': [1, 2, 3], 'bar': [4, 5, 6]}
-    >>> dests = ['dest1', 'dest2']
-    >>> r = _Router({'*': [('*', '*')]})
-    >>> (dest1_props, dest2_props), remainder = r(props, dests)
-    >>> sorted(dest1_props.items())
-    [('bar', [4, 5, 6]), ('foo', [1, 2, 3])]
-    >>> sorted(dest2_props.items())
-    [('bar', [4, 5, 6]), ('foo', [1, 2, 3])]
-    >>> sorted(remainder)
-    []
+        - '*': provide all properties
+        - a list of property names to include
+        - a list of property names, each prefixed by '-', to exclude; all
+          others will be provided
+        - a single identifier to include or exclude
+        - a dict mapping each target property name to its source property name
 
-    >>> r = _Router({'foo': [('*', '*')]})
-    >>> (dest1_props, dest2_props), remainder = r(props, dests)
-    >>> sorted(dest1_props.items())
-    [('foo', [1, 2, 3])]
-    >>> sorted(dest2_props.items())
-    [('foo', [1, 2, 3])]
-    >>> sorted(remainder)
-    ['bar']
+    dests : list of {str, iterable of str}
+        The ordered destinations for this router. If a set of strings
+        is provided for each entry, any of these strings will route
+        parameters to the destination.
 
-    >>> r = _Router({'foo': [('d*1', '*')]})
-    >>> (dest1_props, dest2_props), remainder = r(props, dests)
-    >>> sorted(dest1_props.items())
-    [('foo', [1, 2, 3])]
-    >>> sorted(dest2_props.items())
-    []
-    >>> sorted(remainder)
-    ['bar']
+        Usually this is fixed for a metaestimator.
 
-    >>> r = _Router({'foo': [('d*1', 'goo')]})
-    >>> (dest1_props, dest2_props), remainder = r(props, dests)
-    >>> sorted(dest1_props.items())
-    [('goo', [1, 2, 3])]
-    >>> sorted(dest2_props.items())
-    []
-    >>> sorted(remainder)
-    ['bar']
+    Notes
+    -----
+    Abstracting away destination names/aliases in this way allows for providing
+    syntactic sugar to users (e.g. Pipeline can declare '*' or 'steps' as an
+    alias for "provide these props to ``fit`` of all steps).  While this may be
+    instead facilitated by some string-based pattern matching, the present
+    approach is more explicit and ensures backwards compatibility can be
+    maintained.
     """
 
-    def __init__(self, routing, dest_regex='.*'):
-        routing = {prop: dests if isinstance(dests, list) else [dests]
-                   for prop, dests in routing.items()}
-        self._validate(routing, dest_regex)
-        self.routing = routing
+    def __init__(self, routing, dests):
+        # can immediately:
+        #     * check that all routes have valid dests
+        #     * consolidate routing across aliases, such that each must be
+        #       either a blacklist of length 0 or more or a mapping
+        alias_to_idx = defaultdict(list)
+        for i, aliases in enumerate(dests):
+            if isinstance(aliases, six.string_types):
+                aliases = [aliases]
+            for alias in aliases:
+                alias_to_idx[alias].append(i)
 
-    @staticmethod
-    def _validate(routing, dest_regex):
-        for prop, dests in routing.items():
-            for dest_tuple in dests:
-                if not isinstance(dest_tuple, tuple):
-                    raise ValueError('Each routing destination should be '
-                                     '(destination, dest_prop)')
-                dest, dest_prop = dest_tuple
-                if not isinstance(dest, str):
-                    raise ValueError('Expected string for routing '
-                                     'destination, got %r' % dest)
-                if not isinstance(dest_prop, str) \
-                   or not re.match(r'\*$|^[A-Za-z_]\w*$', dest_prop):
-                    raise ValueError('Expected identifier or "*" for '
-                                     'routing destination prop, got %r'
-                                     % dest_prop)
-                if not re.match(dest_regex, dest):
-                    raise ValueError('Routing destination was not of expected '
-                                     'form. %r does not match %r'
-                                     % (dest, dest_regex))
+        # policies is a list with an element for each dest
+        # An element may be None, '*', a set of exclusions, or a dict
+        policies = [None] * len(dests)
 
-            if not isinstance(prop, str):
-                raise ValueError('Expected string for prop name, '
-                                 'got %r' % prop)
+        # Sorted so error messages are deterministic
+        for dest, props in sorted(routing.items()):
+            if props == '*':
+                policy = _AllPolicy()
+            else:
+                if isinstance(props, six.string_types):
+                    props = [props]
 
-    def __call__(self, props, dests):
-        out = {dest: {} for dest in dests}
-        remainder = set()
-        for prop, val in props.items():
-            if val is None:
-                continue
+                if isinstance(props, dict):
+                    policy = _IncludePolicy(props)
+                else:
+                    minuses = [prop[:1] == '-' for prop in props]
+                    if all(minuses):
+                        policy = _ExcludePolicy({prop[1:] for prop in props})
+                    elif any(minuses):
+                        raise ValueError('Routing props should either all '
+                                         'start with "-" or none should start '
+                                         'with "-"')
+                    else:
+                        policy = _IncludePolicy({prop: prop for prop in props})
 
-            def _set(routes):
-                n_matched = 0
-                for dest_pattern, dest_prop in routes:
-                    if dest_prop == '*':
-                        dest_prop = prop
-                    for dest in fnmatch.filter(dests, dest_pattern):
-                        n_matched += 1
-                        if dest_prop in out[dest]:
-                            raise ValueError('Already have a prop %r '
-                                             'for destination %r'
-                                             % (dest_prop, dest))
-                        out[dest][dest_prop] = val
-                return n_matched
+            # raises KeyError if unknown dest
+            for idx in alias_to_idx[dest]:
+                if policies[idx] is None:
+                    policies[idx] = policy
+                else:
+                    if type(policies[idx]) is not type(policy):
+                        raise ValueError('When handling routing for '
+                                         'destination {!r}, found a mix of '
+                                         'inclusion, exclusion and pass all '
+                                         'policies.'.format(dest))
+                    policies[idx].update(policy)
 
-            n_matched = _set(self.routing.get(prop, []))
-            n_matched += _set(self.routing.get('*', []))
-            if not n_matched:
-                remainder.add(prop)
+        self.policies = [_NonePolicy() if policy is None else policy
+                         for policy in policies]
 
-        return [out[dest] for dest in dests], remainder
+    def __call__(self, props):
+        """Apply the routing policy to the given sample props
+
+        Parameters
+        ----------
+        props : dict
+
+        Returns
+        -------
+        dest_props : list of dicts
+            Props to be passed to each destination declared in the constructor.
+        unused : set of str
+            Names of props that were not routed anywhere.
+        """
+        unused = set(props)
+        out = [policy.apply(props, unused)
+               for policy in self.policies]
+        return out, unused
 
 
-def check_routing(routing, default=None, dest_regex='.*'):
+def check_routing(routing, dests, default=None):
     if routing is None:
         if default is None:
             raise ValueError('Routing must be specified')
         routing = default
     if not callable(routing):
-        return _Router(routing, dest_regex)
+        return _Router(routing, dests)
     return routing

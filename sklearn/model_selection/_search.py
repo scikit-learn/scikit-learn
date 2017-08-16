@@ -436,6 +436,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
         score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
+        # TODO: sample props
         return score(self.best_estimator_, X, y)
 
     def _check_is_fitted(self, method_name):
@@ -612,15 +613,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             refit_metric = 'score'
 
         router = check_routing(self.prop_routing,
-                               {'groups': ('cv', '*'),
-                                '*': ('estimator', '*'),
-                                # FIXME: That line should be more like
-                                #        '*-groups': ('estimator', '*')
-                                #        to except groups.
-                                #        Not currently handled by _Router.
-                                })
-        (fit_props, cv_props, score_props), remainder = \
-            router(props, ['estimator', 'cv', 'scoring'])
+                               ['estimator', 'cv', 'scoring'],
+                               {'cv': 'groups',
+                                'estimator': '-groups'})
+        (fit_props, cv_props, score_props), remainder = router(props)
 
         if remainder:
             raise ValueError('Unhandled sample properties: %r'
