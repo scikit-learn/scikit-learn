@@ -319,9 +319,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     >>> regr = PassiveAggressiveRegressor(random_state=0)
     >>> regr.fit(X, y)
     PassiveAggressiveRegressor(C=1.0, average=False, epsilon=0.1,
-                  fit_intercept=True, loss='epsilon_insensitive', max_iter=None,
-                  n_iter=None, random_state=0, shuffle=True, tol=None,
-                  verbose=0, warm_start=False)
+                  fit_intercept=True, loss='epsilon_insensitive',
+                  max_iter=None, n_iter=None, random_state=0, shuffle=True,
+                  tol=None, verbose=0, warm_start=False)
     >>> print(regr.coef_)
     [ 20.48736655  34.18818427  67.59122734  87.94731329]
     >>> print(regr.intercept_)
