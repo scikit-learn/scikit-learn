@@ -698,11 +698,11 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             memory = Memory(cachedir=None, verbose=0)
         elif isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
-        elif not isinstance(memory, Memory):
+        elif not issubclass(type(memory), Memory):
             raise ValueError("'memory' should either be a string or"
-                             " a sklearn.externals.joblib.Memory"
-                             " instance, got 'memory={!r}' instead.".format(
-                                 type(memory)))
+                             " an instance of sklearn.externals.joblib.Memory"
+                             " (or a derived class), got"
+                             " 'memory={!r}' instead.".format(type(memory)))
 
         if self.n_clusters <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."
