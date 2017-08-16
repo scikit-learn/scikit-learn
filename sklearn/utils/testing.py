@@ -758,21 +758,25 @@ class TempMemmap(object):
 
 def _get_args(function, varargs=False):
     """Helper to get function arguments"""
-    # NOTE this works only in python3.5
-    if sys.version_info < (3, 5):
-        NotImplementedError("_get_args is not available for python < 3.5")
 
-    params = inspect.signature(function).parameters
-    args = [key for key, param in params.items()
-            if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
-    if varargs:
-        varargs = [param.name for param in params.values()
-                   if param.kind == param.VAR_POSITIONAL]
-        if len(varargs) == 0:
-            varargs = None
-        return args, varargs
+    if sys.version_info < (3, 5):
+        params = inspect.getargspec(function)
+        if varargs:
+            return params.args, params.varargs
+        else:
+            return params.args
     else:
-        return args
+        params = inspect.signature(function).parameters
+        args = [key for key, param in params.items()
+                if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
+        if varargs:
+            varargs = [param.name for param in params.values()
+                       if param.kind == param.VAR_POSITIONAL]
+            if len(varargs) == 0:
+                varargs = None
+            return args, varargs
+        else:
+            return args
 
 
 def _get_parent_args(Estimator):
