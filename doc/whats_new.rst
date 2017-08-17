@@ -42,7 +42,7 @@ Enhancements
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
-  :issue:`9521` by `Hanmin Qin <qinhanmin2014>`.
+  :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 Bug fixes
 .........
@@ -292,9 +292,6 @@ Decomposition, manifold learning and clustering
   ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
   :issue:`7685` by :user:`Tommy Löfstedt <tomlof>`
 
-- Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
-  :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
-
 - :class:`decomposition.NMF` now faster when ``beta_loss=0``.
   :issue:`9277` by :user:`hongkahjun`.
 
@@ -386,7 +383,7 @@ Model evaluation and meta-estimators
   and ``scoring`` parameters. :issue:`8117` by `Raghav RV`_.
 
 - A scorer based on :func:`metrics.explained_variance_score` is also available.
-  :issue:`9259` by `Hanmin Qin <qinhanmin2014>`.
+  :issue:`9259` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 Metrics
 
