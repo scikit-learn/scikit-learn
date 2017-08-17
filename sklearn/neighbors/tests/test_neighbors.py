@@ -1255,6 +1255,35 @@ def test_dtype_convert():
     assert_array_equal(result, y)
 
 
+def test_sparse_metric_callable():
+    def sparse_metric(x, y): # Some metric accepting sparse matrix input (only)
+        x_nnz = x.count_nonzero()
+        y_nnz = y.count_nonzero()
+
+        return min(x_nnz, y_nnz) / max(x_nnz, y_nnz)
+
+    X = csr_matrix([ # Population matrix
+        [1, 1, 1, 1, 1],
+        [1, 0, 1, 0, 1],
+        [0, 0, 1, 0, 0]
+    ])
+
+    Y = csr_matrix([ # Query matrix
+        [1, 1, 0, 1, 1],
+        [1, 0, 0, 0, 1]
+    ])
+
+    nn = neighbors.NearestNeighbors(algorithm='brute', n_neighbors=2, metric=sparse_metric).fit(X)
+    N = nn.kneighbors(Y, return_distance=False)
+
+    gold_standard_nn = np.array([ # GS indices of nearest neighbours in `X` for `sparse_metric`
+        [2, 1],
+        [0, 2]
+    ])
+
+    assert_array_equal(N, gold_standard_nn)
+
+
 # ignore conversion to boolean in pairwise_distances
 @ignore_warnings(category=DataConversionWarning)
 def test_pairwise_boolean_distance():
