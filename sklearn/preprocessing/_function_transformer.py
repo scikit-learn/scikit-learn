@@ -95,16 +95,10 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
                 X[idx_selected],
                 self.inverse_transform(self.transform(X[idx_selected])))
         except AssertionError:
-            # TODO: an error will be raised from 0.22
-            # raise ValueError("The provided functions are not strictly"
-            #                  " inverse of each other. If you are sure you"
-            #                  " want to proceed regardless, set"
-            #                  " 'check_inverse=False'.")
             warnings.warn("The provided functions are not strictly"
                           " inverse of each other. If you are sure you"
                           " want to proceed regardless, set"
-                          " 'check_inverse=False'. This warning will turn to"
-                          " an error from 0.22", DeprecationWarning)
+                          " 'check_inverse=False'.", UserWarning)
 
     def fit(self, X, y=None):
         """Fit transformer by checking X.
@@ -122,7 +116,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         """
         if self.validate:
             X = check_array(X, self.accept_sparse)
-        if self.check_inverse:
+        if self.check_inverse and self.inverse_func is not None:
             self._check_inverse_transform(X)
         return self
 
