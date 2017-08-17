@@ -36,6 +36,14 @@ Classifiers and regressors
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
 
+Enhancements
+............
+
+Model evaluation and meta-estimators
+
+- A scorer based on :func:`metrics.brier_score_loss` is also available.
+  :issue:`9521` by `Hanmin Qin <qinhanmin2014>`.
+
 Bug fixes
 .........
 
@@ -184,9 +192,6 @@ Model selection and evaluation
 - Added the :class:`model_selection.RepeatedKFold` and
   :class:`model_selection.RepeatedStratifiedKFold`.
   :issue:`8120` by `Neeraj Gangwar`_.
-
-- Added a scorer based on :class:`metrics.explained_variance_score`.
-  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 Miscellaneous
 
@@ -379,6 +384,9 @@ Model evaluation and meta-estimators
 
 - More clustering metrics are now available through :func:`metrics.get_scorer`
   and ``scoring`` parameters. :issue:`8117` by `Raghav RV`_.
+
+- A scorer based on :func:`metrics.explained_variance_score` is also available.
+  :issue:`9259` by `Hanmin Qin <qinhanmin2014>`.
 
 Metrics
 
