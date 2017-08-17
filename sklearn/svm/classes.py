@@ -238,12 +238,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         X, y = check_X_y(X, y, accept_sparse='csr',
                          dtype=np.float64, order="C")
         check_classification_targets(y)
-        if self.classes is None:
-            self.classes_ = np.unique(y)
-        else:
-            _check_classes(self.classes)
-            _check_y_classes(np.unique(y), self.classes)
-            self.classes_ = np.asarray(self.classes)
+        self.classes_ = np.unique(y)
 
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
             X, y, self.C, self.fit_intercept, self.intercept_scaling,
@@ -255,6 +250,10 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
             intercept = self.intercept_[1] - self.intercept_[0]
             self.intercept_ = np.array([intercept])
+
+        # check present labels vs classes and fix labels.
+        if self.classes is not None:
+            self._supplement_missing_labels()
 
         return self
 

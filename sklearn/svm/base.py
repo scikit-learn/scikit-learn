@@ -10,7 +10,6 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils.multiclass import _ovr_decision_function
-from ..utils.multiclass import _fill_missing_class_dimensions
 from ..utils import check_array, check_consistent_length, check_random_state
 from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
@@ -915,23 +914,11 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
         warnings.warn("Liblinear failed to converge, increase "
                       "the number of iterations.", ConvergenceWarning)
 
-    # check present labels vs classes and fix labels.
-    miss_ind = None
-    if class_weight_.shape[0] and classes is not None:
-        present_classes = np.unique(y)
-        raw_coef_, miss_ind = _fill_missing_class_dimensions(raw_coef_,
-                                                             present_classes,
-                                                             classes)
-
     if fit_intercept:
         intercept_ = intercept_scaling * raw_coef_[:, -1]
         coef_ = raw_coef_[:, :-1]
     else:
         coef_ = raw_coef_
         intercept_ = np.zeros(coef_.shape[0])
-
-    # make the intercept of missing classes very small
-    if miss_ind is not None:
-        intercept_[miss_ind] = -np.abs(np.min(intercept_))**10
 
     return coef_, intercept_, n_iter_
