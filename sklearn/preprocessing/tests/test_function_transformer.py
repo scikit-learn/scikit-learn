@@ -152,9 +152,19 @@ def test_check_inverse():
                              " want to proceed regardless, set"
                              " 'check_inverse=False'.",
                              trans.fit, X)
+
         trans = FunctionTransformer(func=np.expm1,
                                     inverse_func=np.log1p,
                                     accept_sparse=accept_sparse,
                                     check_inverse=True)
         Xt = assert_no_warnings(trans.fit_transform, X)
         assert_allclose_dense_sparse(X, trans.inverse_transform(Xt))
+
+    # check that we don't check inverse when one of the func or inverse is not
+    # provided.
+    trans = FunctionTransformer(func=np.expm1, inverse_func=None,
+                                check_inverse=True)
+    assert_no_warnings(trans.fit, X_dense)
+    trans = FunctionTransformer(func=None, inverse_func=np.expm1,
+                                check_inverse=True)
+    assert_no_warnings(trans.fit, X_dense)

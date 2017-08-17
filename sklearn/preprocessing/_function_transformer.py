@@ -116,7 +116,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         """
         if self.validate:
             X = check_array(X, self.accept_sparse)
-        if self.check_inverse and self.inverse_func is not None:
+        if (self.check_inverse and not (self.func is None or
+                                        self.inverse_func is None)):
             self._check_inverse_transform(X)
         return self
 
