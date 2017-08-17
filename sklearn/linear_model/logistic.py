@@ -1235,11 +1235,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
                          order="C")
         check_classification_targets(y)
+        present_classes = np.unique(y)
         if self.classes is None:
-            self.classes_ = np.unique(y)
+            self.classes_ = present_classes
         else:
             _check_classes(self.classes)
-            _check_y_classes(np.unique(y), self.classes)
+            _check_y_classes(present_classes, self.classes)
             self.classes_ = np.asarray(self.classes)
         n_samples, n_features = X.shape
 
@@ -1257,6 +1258,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 self.max_iter, self.tol, self.random_state,
                 sample_weight=sample_weight, classes=self.classes_)
             self.n_iter_ = np.array([n_iter_])
+
+            # check present labels vs classes and fix labels.
+            if self.classes is not None:
+                self._supplement_missing_labels(present_classes)
             return self
 
         if self.solver in ['sag', 'saga']:
@@ -1329,6 +1334,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.fit_intercept:
             self.intercept_ = self.coef_[:, -1]
             self.coef_ = self.coef_[:, :-1]
+
+        # check present labels vs classes and fix labels.
+        if self.classes is not None:
+            self._supplement_missing_labels(present_classes)
 
         return self
 
@@ -1650,11 +1659,12 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         check_classification_targets(y)
 
         class_weight = self.class_weight
+        present_classes = np.unique(y)
         if self.classes is None:
-            self.classes_ = np.unique(y)
+            self.classes_ = present_classes
         else:
             _check_classes(self.classes)
-            _check_y_classes(np.unique(y), self.classes)
+            _check_y_classes(present_classes, self.classes)
             self.classes_ = np.asarray(self.classes)
 
         # Encode for string labels
@@ -1830,4 +1840,10 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     self.intercept_[index] = w[-1]
 
         self.C_ = np.asarray(self.C_)
+
+        # check present labels vs classes and fix labels.
+        # if self.classes is not None:
+        #     print(self.classes_, self.coef_)
+        #     self._supplement_missing_labels(present_classes)
+
         return self
