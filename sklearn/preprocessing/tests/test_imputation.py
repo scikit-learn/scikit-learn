@@ -20,7 +20,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
-
+from sklearn.preprocessing.imputation import _get_mask
 
 @ignore_warnings
 def _check_statistics(X, X_true,
@@ -382,14 +382,6 @@ def test_imputation_copy():
     # made, even if copy=False.
 
 
-def _get_mask(X, value_to_mask):
-    """Compute the boolean mask X == missing_values."""
-    if value_to_mask == "NaN" or np.isnan(value_to_mask):
-        return np.isnan(X)
-    else:
-        return X == value_to_mask
-
-
 def test_missing_indicator():
     X1_orig = np.array([
         [np.nan,  np.nan,   1,   3],
@@ -431,7 +423,7 @@ def test_missing_indicator():
 
         X1_in = retype(X1)
         X2_in = retype(X2)
-        # features = "train":
+        # features = "auto":
         indicator = MissingIndicator(missing_values=missing_values, sparse=sparse_param)
         X1_tr = indicator.fit_transform(X1_in)
         X2_tr = indicator.transform(X2_in)

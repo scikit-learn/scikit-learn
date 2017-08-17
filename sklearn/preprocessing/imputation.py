@@ -380,11 +380,11 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     ----------
     missing_values : integer or np.NaN, optional (default=np.NaN)
         The placeholder for the missing values. All occurrences of
-        ``missing_values`` will be imputed.
+        ``missing_values`` will be represented as ones.
 
-    features : {'train' (default), 'all', array-like of int}
+    features : {'auto' (default), 'all', array-like of int}
         If "all", mask will represent all features.
-        If "train", mask will only represent features with missing values
+        If "auto", mask will only represent features with missing values
         during fit time.
         If mask/indices, mask will only represent features in the
         indices or mask.
@@ -394,11 +394,10 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         If False, the transformed ``X`` will be a numpy array.
         If "auto", the transformed ``X`` will be of same type as input.
 
-    strict : boolean, optional (default=True)
+    error_on_new : boolean, optional (default=True)
         If True, transform will raise an error when there are features with
         missing values in transform but have no missing values in fit
-
-        This is applicable only when ``features`` = "train"
+        This is applicable only when ``features`` = "auto"
 
     Example
     -------
@@ -414,10 +413,10 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     ...       [np.NaN,  2,  3],
     ...       [ 2,  4,  0]
     ... ])
-    >>> indicator = MissingIndicator(missing_values=np.NaN)
+    >>> indicator = MissingIndicator()
     >>> indicator.fit(X1)
-    MissingIndicator(features='train', missing_values=nan, sparse='auto',
-             strict=True)
+    MissingIndicator(error_on_new=True, features='auto', missing_values=nan,
+             sparse='auto')
     >>> X2_tr = indicator.transform(X2)
     >>> X2_tr
     array([[0, 1],
@@ -433,11 +432,12 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         The number of features in the input.
     """
 
-    def __init__(self, missing_values=np.NaN, features="train", sparse="auto", strict=True):
+    def __init__(self, missing_values=np.NaN, features="auto", sparse="auto",
+                 error_on_new=True):
         self.missing_values = missing_values
         self.features = features
         self.sparse = sparse
-        self.strict = strict
+        self.error_on_new = error_on_new
 
     def fit(self, X, y=None):
         """Fit the transformer on X.
@@ -459,9 +459,9 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         self.n_features_ = X.shape[1]
 
         if isinstance(self.features, six.string_types):
-            if self.features == "train":
+            if self.features == "auto":
                 _, self.feat_with_missing_ = self._get_missing_features_info(X)
-            else : # self.features == "all"
+            else:  # self.features == "all"
                 self.feat_with_missing_ = np.arange(self.n_features_)
         else:
             self.feat_with_missing_ = self.features
@@ -492,10 +492,10 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         imputer_mask, feat_with_missing = self._get_missing_features_info(X)
 
         if isinstance(self.features, six.string_types):
-            if self.features == "train":
+            if self.features == "auto":
                 features = np.setdiff1d(feat_with_missing,
                                         self.feat_with_missing_)
-                if self.strict and features.size > 0:
+                if self.error_on_new and features.size > 0:
                     raise Exception("The features %s have missing values "
                                     "in transform but have no missing values "
                                     "in fit" % features)
@@ -520,30 +520,13 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
              The missing indicator for input data
 
         """
-        self._validate_params()
-        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64, force_all_finite=False)
-
-        imputer_mask, feat_with_missing = self._get_missing_features_info(X)
-
-        self.n_features_ = X.shape[1]
-        if isinstance(self.features, six.string_types):
-            if self.features == "train":
-                self.feat_with_missing_ = feat_with_missing
-            else : # self.features == "all"
-                self.feat_with_missing_ = np.arange(self.n_features_)
-        else :
-            self.feat_with_missing_ = self.features
-
-        if not (isinstance(self.features, six.string_types) and self.features == "all"):
-            # no need to slice when all features have missing values
-            imputer_mask = imputer_mask[:, self.feat_with_missing_]
-
-        return imputer_mask
+        self.fit(X, y)
+        return self.transform(X)
 
     def _validate_params(self):
         if (isinstance(self.features, six.string_types) and
-                self.features not in ["train", "all"]):
-            raise ValueError("Can only use these options: 'train', 'all'"
+                self.features not in ["auto", "all"]):
+            raise ValueError("Can only use these options: 'auto', 'all'"
                              " got {0}".format(self.features))
         elif not isinstance(self.features, six.string_types):
             self.features = check_array(self.features, ensure_2d=False)
