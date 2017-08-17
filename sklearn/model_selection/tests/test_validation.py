@@ -42,6 +42,8 @@ from sklearn.model_selection._validation import _check_is_permutation
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
+from sklearn.datasets import make_blobs
+
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
@@ -56,6 +58,7 @@ from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
+from sklearn.naive_bayes import GaussianNB
 
 from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import LabelEncoder
@@ -1299,3 +1302,17 @@ def test_permutation_test_score_pandas():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
         permutation_test_score(clf, X_df, y_ser)
+
+
+def test_cross_val_score_labels_paramter():
+    # check if adding a classes argument to estimator passes it to the scorer
+    X, y = make_blobs(n_samples=20, n_features=2, centers=2, shuffle=False)
+    clf = GaussianNB()
+    scores = cross_val_score(clf, X, y, scoring='f1_macro')
+
+    # iterate over 2 - 5 classes and see that the scores are multiplied by
+    # right factor
+    for num_classes in range(2, 6):
+        clf = GaussianNB(classes=list(range(num_classes)))
+        scores2 = cross_val_score(clf, X, y, scoring='f1_macro')
+        assert_array_almost_equal(scores*2./num_classes, scores2)

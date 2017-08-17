@@ -752,3 +752,48 @@ def check_non_negative(X, whom):
     X = X.data if sp.issparse(X) else X
     if (X < 0).any():
         raise ValueError("Negative values in data passed to %s" % whom)
+
+
+def _check_y_classes(unique_y, classes):
+    """
+    Check if y has a subset of classes as set in the classes argument.
+
+    Parameters
+    ----------
+    unique_y : array, shape (n_samples,)
+            The unique values of target values passed into a fit-like
+            function.
+
+    classes : array-like, shape (n_classes,)
+            List of all the classes that can possibly appear in the y vector.
+    """
+    unique_y = np.asarray(unique_y)
+    unique_y_in_classes = np.in1d(unique_y, classes)
+
+    if not np.all(unique_y_in_classes):
+        raise ValueError("The target label(s) %s in y do not exist in the "
+                         "initial classes %s" %
+                         (unique_y[~unique_y_in_classes], classes))
+
+
+def _check_unique_sorted_classes(array):
+    """
+    A helper to check the classes argument of classifiers. This will check
+    that the input is sorted and unique.
+
+    Parameters
+    ----------
+    array : array-like
+        Input data.
+
+    name : string, default=None
+        The string to be used argument to be used for error message
+    """
+    if array is not None:
+        unq = np.unique(array)
+        if unq.size != np.asarray(array).size:
+            raise ValueError("Classses parameter should contain all unique"
+                             " values, duplicates found in %s" % array)
+        if not np.array_equal(unq, array):
+            raise ValueError("Classses parameter should contain sorted values"
+                             ", unsorted values found in %s" % array)

@@ -17,9 +17,9 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
+from ..utils import _check_unique_sorted_classes
 from ..externals.six import string_types
 from .validation import check_array
-
 
 
 def _unique_multiclass(y):
@@ -301,21 +301,30 @@ def _check_partial_fit_first_call(clf, classes=None):
     set on ``clf``.
 
     """
-    if getattr(clf, 'classes_', None) is None and classes is None:
+    if ((getattr(clf, 'classes_', None) is None)
+            and (getattr(clf, 'classes', None) is None)
+            and (classes is None)):
+
         raise ValueError("classes must be passed on the first call "
-                         "to partial_fit.")
+                         "to partial_fit or set during initialization"
+                         "if the class has a classes parameter.")
 
-    elif classes is not None:
-        if getattr(clf, 'classes_', None) is not None:
-            if not np.array_equal(clf.classes_, unique_labels(classes)):
-                raise ValueError(
-                    "`classes=%r` is not the same as on last call "
-                    "to partial_fit, was: %r" % (classes, clf.classes_))
+    if ((classes is not None)
+            and (getattr(clf, 'classes_', None) is not None)):
+        if not np.array_equal(clf.classes_, unique_labels(classes)):
+            raise ValueError(
+                "`classes=%s` is not the same as on last call "
+                "to partial_fit, was: %s" % (classes, clf.classes_))
 
+    if getattr(clf, 'classes_', None) is None:
+        # This is the first call to partial_fit
+        if getattr(clf, 'classes', None) is not None:
+            _check_unique_sorted_classes(classes)
+            clf.classes_ = np.sort(clf.classes)
         else:
-            # This is the first call to partial_fit
+            _check_unique_sorted_classes(classes)
             clf.classes_ = unique_labels(classes)
-            return True
+        return True
 
     # classes is None and clf.classes_ has already previously been set:
     # nothing to do

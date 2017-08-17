@@ -41,13 +41,15 @@ from .cluster import fowlkes_mallows_score
 from ..utils.multiclass import type_of_target
 from ..externals import six
 from ..base import is_regressor
+from ..externals.funcsigs import signature
 
 
 class _BaseScorer(six.with_metaclass(ABCMeta, object)):
-    def __init__(self, score_func, sign, kwargs):
+    def __init__(self, score_func, sign, pass_classes, kwargs):
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
+        self._pass_classes = pass_classes
         # XXX After removing the deprecated scorers (v0.20) remove the
         # XXX deprecation_msg property again and remove __call__'s body again
         self._deprecation_msg = None
@@ -66,6 +68,43 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
                 % (self._score_func.__name__,
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
+
+    def _get_labels_from_estimator(self, estimator, target_type):
+        """Check if estimator has a classes argument and if scorer has a
+        labels argument and return new kwargs for scorer if label not already
+        set in make score initialization"""
+        classes = getattr(estimator, "classes_", None)
+
+        # if classes_ parameter doesn't exist
+        if classes is None:
+            return self._kwargs
+
+        if self._pass_classes in signature(self._score_func).parameters:
+            # if labels passed as kwargs, return kwargs as is
+            if self._pass_classes in self._kwargs:
+                if classes is not None:
+                    # labels should be a subset of classes
+                    if not set(classes).issuperset(
+                                        set(self._kwargs[self._pass_classes])):
+                        raise ValueError("`estimator classes=%r` is not the"
+                                         "superset of `scorer %s=%r`" %
+                                         (classes,
+                                          self._pass_classes,
+                                          self._kwargs['labels']))
+                return self._kwargs
+            else:
+                kwargs = self._kwargs.copy()
+                if target_type == 'multilabel-indicator':
+                    kwargs[self._pass_classes] = list(range(len(classes)))
+                else:
+                    kwargs[self._pass_classes] = classes
+                return kwargs
+        else:
+            if self._pass_classes != 'labels':
+                raise ValueError("the scorer doesn't have %s as a parameter,"
+                                 "as passed in pass_classes parameter" %
+                                 self._pass_classes)
+            return self._kwargs
 
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
@@ -99,13 +138,19 @@ class _PredictScorer(_BaseScorer):
         super(_PredictScorer, self).__call__(estimator, X, y_true,
                                              sample_weight=sample_weight)
         y_pred = estimator.predict(X)
+        if self._pass_classes is None:
+            kwargs = self._kwargs
+        else:
+            kwargs = self._get_labels_from_estimator(estimator,
+                                                     type_of_target(y_true))
+
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
                                                  sample_weight=sample_weight,
-                                                 **self._kwargs)
+                                                 **kwargs)
         else:
             return self._sign * self._score_func(y_true, y_pred,
-                                                 **self._kwargs)
+                                                 **kwargs)
 
 
 class _ProbaScorer(_BaseScorer):
@@ -136,12 +181,19 @@ class _ProbaScorer(_BaseScorer):
         super(_ProbaScorer, self).__call__(clf, X, y,
                                            sample_weight=sample_weight)
         y_pred = clf.predict_proba(X)
+
+        if self._pass_classes is None:
+            kwargs = self._kwargs
+        else:
+            kwargs = self._get_labels_from_estimator(clf,
+                                                     type_of_target(y))
+
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
-                                                 **self._kwargs)
+                                                 **kwargs)
         else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+            return self._sign * self._score_func(y, y_pred, **kwargs)
 
     def _factory_args(self):
         return ", needs_proba=True"
@@ -198,12 +250,18 @@ class _ThresholdScorer(_BaseScorer):
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
+        if self._pass_classes is None:
+            kwargs = self._kwargs
+        else:
+            kwargs = self._get_labels_from_estimator(clf,
+                                                     type_of_target(y))
+
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
-                                                 **self._kwargs)
+                                                 **kwargs)
         else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+            return self._sign * self._score_func(y, y_pred, **kwargs)
 
     def _factory_args(self):
         return ", needs_threshold=True"
@@ -398,7 +456,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
-                needs_threshold=False, **kwargs):
+                needs_threshold=False, pass_classes='labels', **kwargs):
     """Make a scorer from a performance metric or loss function.
 
     This factory function wraps scoring functions for use in GridSearchCV
@@ -431,6 +489,14 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         For example ``average_precision`` or the area under the roc curve
         can not be computed using discrete predictions alone.
 
+    pass_classes : string or None, default='labels'
+        The name of the scorer parameter into which the ``classes_`` attribute
+        of the estimator will be passed through. If None is passed, then the
+        ``classes_`` atribute will not be copied.
+
+        It should be set only if a user-defined metric function is being used
+        and left as default in case of a scikit-learn API metric.
+
     **kwargs : additional arguments
         Additional parameters to be passed to score_func.
 
@@ -460,7 +526,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
         cls = _ThresholdScorer
     else:
         cls = _PredictScorer
-    return cls(score_func, sign, kwargs)
+    return cls(score_func, sign, pass_classes, kwargs)
 
 
 # Standard regression scores

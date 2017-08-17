@@ -26,7 +26,10 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array, check_consistent_length
+from .utils import check_X_y
+from .utils import check_array
+from .utils import check_consistent_length
+from .utils import _check_y_classes
 from .utils.extmath import safe_sparse_dot
 from .utils.fixes import logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
@@ -118,9 +121,20 @@ class GaussianNB(BaseNB):
 
     Parameters
     ----------
-    priors : array-like, shape (n_classes,)
+    priors : array-like, shape (n_classes,), optional (default=None)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
+
+    classes : array-like, shape (n_classes,), optional (default=None)
+            List of all the classes that can possibly appear in the y vector.
+            The list will be sorted internally. Use the classes_ attribute to
+            refer to the final order of classes.
+
+            If not specified, this will be set as per the classes present in
+            the training data. It is recommended to set this parameter during
+            initialization.
+
+            .. versionadded:: 0.20
 
     Attributes
     ----------
@@ -144,18 +158,19 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(priors=None)
+    GaussianNB(classes=None, priors=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB(priors=None)
+    GaussianNB(classes=None, priors=None)
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
 
-    def __init__(self, priors=None):
+    def __init__(self, priors=None, classes=None):
         self.priors = priors
+        self.classes = classes
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -180,8 +195,10 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
+        # check if classes were defined, set the classes_ attribute every time
         X, y = check_X_y(X, y)
-        return self._partial_fit(X, y, np.unique(y), _refit=True,
+        classes = self.classes if self.classes is not None else np.unique(y)
+        return self._partial_fit(X, y, classes, _refit=True,
                                  sample_weight=sample_weight)
 
     @staticmethod
@@ -285,9 +302,16 @@ class GaussianNB(BaseNB):
 
         classes : array-like, shape (n_classes,), optional (default=None)
             List of all the classes that can possibly appear in the y vector.
+            You can only set this argument in call to partial_fit or while
+            initialization. Setting in both is erroneous.
 
-            Must be provided at the first call to partial_fit, can be omitted
-            in subsequent calls.
+            The parameter will only be considered in first call to fit or
+            partial_fit unless refit parameter of partial_fit is set to True.
+            It will be ignored in subsequent fit calls.
+
+            ..deprecated:: 0.20
+                This parameter has been deprecated in version 0.20 and will be
+                removed in 0.22. Use the argument classes to __init__ instead.
 
         sample_weight : array-like, shape (n_samples,), optional (default=None)
             Weights applied to individual samples (1. for unweighted).
@@ -299,7 +323,20 @@ class GaussianNB(BaseNB):
         self : object
             Returns self.
         """
-        return self._partial_fit(X, y, classes, _refit=False,
+        # deprecation warning if classes passed:
+        if classes is not None:
+            warnings.warn("The classes argument to partial_fit has been"
+                          "deprecated in version 0.20 and will be removed in"
+                          "0.22. Use the argument classes to __init__"
+                          " instead.", DeprecationWarning)
+
+        # Raise error if classes set in both initialization and in partial_fit
+        if (self.classes is not None) and (classes is not None):
+            raise ValueError("The classes argument was already set in"
+                             "initialization. Resetting it in call to"
+                             "partial_fit is not allowed as this argument"
+                             "will be deprecated in version 0.22")
+        return self._partial_fit(X, y, classes=classes, _refit=False,
                                  sample_weight=sample_weight)
 
     def _partial_fit(self, X, y, classes=None, _refit=False,
@@ -316,12 +353,10 @@ class GaussianNB(BaseNB):
             Target values.
 
         classes : array-like, shape (n_classes,), optional (default=None)
-            List of all the classes that can possibly appear in the y vector.
+            classes argument being passed on from partial_fit call. This will
+            be deprecated in later versions.
 
-            Must be provided at the first call to partial_fit, can be omitted
-            in subsequent calls.
-
-        _refit: bool, optional (default=False)
+        _refit : bool, optional (default=False)
             If true, act as though this were the first time we called
             _partial_fit (ie, throw away any past fitting and start over).
 
@@ -334,6 +369,7 @@ class GaussianNB(BaseNB):
             Returns self.
         """
         X, y = check_X_y(X, y)
+
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             check_consistent_length(y, sample_weight)
@@ -344,6 +380,7 @@ class GaussianNB(BaseNB):
         # deviation of the largest dimension.
         epsilon = 1e-9 * np.var(X, axis=0).max()
 
+        # reset flag if refit called
         if _refit:
             self.classes_ = None
 
@@ -384,17 +421,12 @@ class GaussianNB(BaseNB):
             # Put epsilon back in each time
             self.sigma_[:, :] -= epsilon
 
+        unique_y = np.unique(y)
+        _check_y_classes(unique_y, self.classes_)
         classes = self.classes_
 
-        unique_y = np.unique(y)
-        unique_y_in_classes = np.in1d(unique_y, classes)
-
-        if not np.all(unique_y_in_classes):
-            raise ValueError("The target label(s) %s in y do not exist in the "
-                             "initial classes %s" %
-                             (unique_y[~unique_y_in_classes], classes))
-
         for y_i in unique_y:
+            # classes need not be sorted because user input
             i = classes.searchsorted(y_i)
             X_i = X[y == y_i, :]
 
