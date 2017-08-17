@@ -180,7 +180,7 @@ def average_precision_score(y_true, y_score, average="macro",
             y_true, y_score, sample_weight=sample_weight)
         # Return the step function integral
         # The following works because the last entry of precision is
-        # garantee to be 1, as returned by precision_recall_curve
+        # guaranteed to be 1, as returned by precision_recall_curve
         return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
     return _average_binary_score(_binary_uninterpolated_average_precision,
@@ -840,7 +840,7 @@ def ndcg_score(y_true, y_score, k=5):
     """
     y_score, y_true = check_X_y(y_score, y_true)
 
-    # Make sure we use all the labels (max between the lenght and the higher
+    # Make sure we use all the labels (max between the length and the higher
     # number in the array)
     lb = LabelBinarizer()
     lb.fit(np.arange(max(np.max(y_true) + 1, len(y_true))))
