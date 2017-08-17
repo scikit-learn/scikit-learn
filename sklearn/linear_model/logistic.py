@@ -1245,6 +1245,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                 self.max_iter, self.tol, self.random_state,
                 sample_weight=sample_weight)
             self.n_iter_ = np.array([n_iter_])
+            # check present labels vs classes and fix labels.
+            if self.classes is not None:
+                self._supplement_missing_labels()
             return self
 
         if self.solver in ['sag', 'saga']:
@@ -1316,6 +1319,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         if self.fit_intercept:
             self.intercept_ = self.coef_[:, -1]
             self.coef_ = self.coef_[:, :-1]
+
+        # check present labels vs classes and fix labels.
+        if self.classes is not None:
+            self._supplement_missing_labels()
 
         return self
 
@@ -1807,4 +1814,9 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                     self.intercept_[index] = w[-1]
 
         self.C_ = np.asarray(self.C_)
+
+        # check present labels vs classes and fix labels.
+        if self.classes is not None:
+            self._supplement_missing_labels()
+
         return self

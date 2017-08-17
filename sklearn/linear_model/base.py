@@ -28,12 +28,14 @@ from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import check_array, check_X_y, deprecated, as_float_array
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _check_classes, _check_y_classes
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
 from ..utils.fixes import sparse_lsqr
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..utils.validation import check_is_fitted
+from ..utils.multiclass import _fill_missing_class_dims
 from ..exceptions import NotFittedError
 from ..preprocessing.data import normalize as f_normalize
 
@@ -348,6 +350,28 @@ class LinearClassifierMixin(ClassifierMixin):
             # make prob of missing classes as zero
             prob = np.nan_to_num(prob)
             return prob
+
+    def _supplement_missing_labels(self):
+        """Add extra entries for missing classes in coef and intercept
+        """
+        present_classes = self.classes_.copy()
+        if not np.array_equal(present_classes, self.classes):
+            _check_classes(self.classes)
+            _check_y_classes(present_classes, self.classes)
+
+            self.classes_ = np.asarray(self.classes)
+            self.coef_ = _fill_missing_class_dims(self.coef_,
+                                                  present_classes,
+                                                  self.classes_)
+            self.intercept_ = _fill_missing_class_dims(self.intercept_,
+                                                       present_classes,
+                                                       self.classes_,
+                                                       fill_value=-1e10).T
+            if hasattr(self, 'n_iter_'):
+                self.n_iter_ = _fill_missing_class_dims(self.n_iter_,
+                                                        present_classes,
+                                                        self.classes_,
+                                                        fill_value=0).T
 
 
 class SparseCoefMixin(object):
