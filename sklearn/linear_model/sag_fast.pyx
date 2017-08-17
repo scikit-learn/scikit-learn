@@ -263,7 +263,7 @@ def sag(SequentialDataset dataset,
     cdef int *x_ind_ptr = NULL
     # the number of non-zero features for current sample
     cdef int xnnz = -1
-    # the label value for curent sample
+    # the label value for current sample
     cdef double y
     # the sample weight
     cdef double sample_weight
