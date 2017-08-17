@@ -17,7 +17,6 @@ from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
                                     log_likelihood)
 
 from ..exceptions import ConvergenceWarning
-from ..utils.extmath import pinvh
 from ..utils.validation import check_random_state, check_array
 from ..utils import deprecated
 from ..linear_model import lars_path
@@ -191,7 +190,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     covariance_ *= 0.95
     diagonal = emp_cov.flat[::n_features + 1]
     covariance_.flat[::n_features + 1] = diagonal
-    precision_ = pinvh(covariance_)
+    precision_ = linalg.pinvh(covariance_)
 
     indices = np.arange(n_features)
     costs = list()
@@ -222,7 +221,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                         _, _, coefs = lars_path(
                             sub_covariance, row, Xy=row, Gram=sub_covariance,
                             alpha_min=alpha / (n_features - 1), copy_Gram=True,
-                            method='lars', return_path=False)
+                            eps=eps, method='lars', return_path=False)
                 # Update the precision matrix
                 precision_[idx, idx] = (
                     1. / (covariance_[idx, idx]
@@ -325,18 +324,23 @@ class GraphLasso(EmpiricalCovariance):
 
     def __init__(self, alpha=.01, mode='cd', tol=1e-4, enet_tol=1e-4,
                  max_iter=100, verbose=False, assume_centered=False):
+        super(GraphLasso, self).__init__(assume_centered=assume_centered)
         self.alpha = alpha
         self.mode = mode
         self.tol = tol
         self.enet_tol = enet_tol
         self.max_iter = max_iter
         self.verbose = verbose
-        self.assume_centered = assume_centered
-        # The base class needs this for the score method
-        self.store_precision = True
 
     def fit(self, X, y=None):
+        """Fits the GraphLasso model to X.
 
+        Parameters
+        ----------
+        X : ndarray, shape (n_samples, n_features)
+            Data from which to compute the covariance estimate
+        y : (ignored)
+        """
         # Covariance does not make sense for a single feature
         X = check_array(X, ensure_min_features=2, ensure_min_samples=2,
                         estimator=self)
@@ -552,22 +556,17 @@ class GraphLassoCV(GraphLasso):
     def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
                  enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=1,
                  verbose=False, assume_centered=False):
+        super(GraphLassoCV, self).__init__(
+            mode=mode, tol=tol, verbose=verbose, enet_tol=enet_tol,
+            max_iter=max_iter, assume_centered=assume_centered)
         self.alphas = alphas
         self.n_refinements = n_refinements
-        self.mode = mode
-        self.tol = tol
-        self.enet_tol = enet_tol
-        self.max_iter = max_iter
-        self.verbose = verbose
         self.cv = cv
         self.n_jobs = n_jobs
-        self.assume_centered = assume_centered
-        # The base class needs this for the score method
-        self.store_precision = True
 
     @property
     @deprecated("Attribute grid_scores was deprecated in version 0.19 and "
-                "will be removed in 0.21. Use 'grid_scores_' instead")
+                "will be removed in 0.21. Use ``grid_scores_`` instead")
     def grid_scores(self):
         return self.grid_scores_
 
@@ -578,6 +577,7 @@ class GraphLassoCV(GraphLasso):
         ----------
         X : ndarray, shape (n_samples, n_features)
             Data from which to compute the covariance estimate
+        y : (ignored)
         """
         # Covariance does not make sense for a single feature
         X = check_array(X, ensure_min_features=2, estimator=self)

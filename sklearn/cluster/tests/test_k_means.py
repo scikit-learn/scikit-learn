@@ -27,7 +27,6 @@ from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics.cluster import homogeneity_score
 
 
@@ -404,7 +403,7 @@ def test_minibatch_sensible_reassign_partial_fit():
 def test_minibatch_reassign():
     # Give a perfect initialization, but a large reassignment_ratio,
     # as a result all the centers should be reassigned and the model
-    # should not longer be good
+    # should no longer be good
     for this_X in (X, X_csr):
         mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
                                      random_state=42)

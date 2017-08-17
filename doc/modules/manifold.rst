@@ -538,7 +538,14 @@ entropy of the conditional probability distribution. The perplexity of a
 :math:`k`-sided die is :math:`k`, so that :math:`k` is effectively the number of
 nearest neighbors t-SNE considers when generating the conditional probabilities.
 Larger perplexities lead to more nearest neighbors and less sensitive to small
-structure. Larger datasets tend to require larger perplexities.
+structure. Conversely a lower perplexity considers a smaller number of
+neighbors, and thus ignores more global information in favour of the
+local neighborhood. As dataset sizes get larger more points will be
+required to get a reasonable sample of the local neighborhood, and hence
+larger perplexities may be required. Similarly noisier datasets will require
+larger perplexity values to encompass enough local neighbors to see beyond
+the background noise.
+
 The maximum number of iterations is usually high enough and does not need
 any tuning. The optimization consists of two phases: the early exaggeration
 phase and the final optimization. During early exaggeration the joint
@@ -553,6 +560,10 @@ Laurens van der Maaten's FAQ (see references). The last parameter, angle,
 is a tradeoff between performance and accuracy. Larger angles imply that we
 can approximate larger regions by a single point,leading to better speed
 but less accurate results.
+
+`"How to Use t-SNE Effectively" <http://distill.pub/2016/misread-tsne/>`_
+provides a good discussion of the effects of the various parameters, as well
+as interactive plots to explore the effects of different parameters.
 
 Barnes-Hut t-SNE
 ----------------

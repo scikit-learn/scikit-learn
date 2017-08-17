@@ -169,11 +169,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         exponential distribution (log-uniform on [thetaL, thetaU]).
         Default does not use random starting point (random_start = 1).
 
-    random_state : integer or numpy.RandomState, optional
+    random_state : int, RandomState instance or None, optional (default=None)
         The generator used to shuffle the sequence of coordinates of theta in
-        the Welch optimizer. If an integer is given, it fixes the seed.
-        Defaults to the global numpy random number generator.
-
+        the Welch optimizer. If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -565,20 +566,15 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             A dictionary containing the requested Gaussian Process model
             parameters:
 
-                sigma2
-                        Gaussian Process variance.
-                beta
-                        Generalized least-squares regression weights for
-                        Universal Kriging or given beta0 for Ordinary
-                        Kriging.
-                gamma
-                        Gaussian Process weights.
-                C
-                        Cholesky decomposition of the correlation matrix [R].
-                Ft
-                        Solution of the linear equation system : [R] x Ft = F
-                G
-                        QR decomposition of the matrix Ft.
+            - ``sigma2`` is the Gaussian Process variance.
+            - ``beta`` is the generalized least-squares regression weights for
+              Universal Kriging or given beta0 for Ordinary Kriging.
+            - ``gamma`` is the Gaussian Process weights.
+            - ``C`` is the Cholesky decomposition of the correlation
+              matrix [R].
+            - ``Ft`` is the solution of the linear equation system
+              [R] x Ft = F
+            - ``G`` is the QR decomposition of the matrix Ft.
         """
         check_is_fitted(self, "X")
 

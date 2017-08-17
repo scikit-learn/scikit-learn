@@ -24,7 +24,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 
-###############################################################################
+# #############################################################################
 # Dataset based latent variables model
 
 n = 500
@@ -46,7 +46,7 @@ print(np.round(np.corrcoef(X.T), 2))
 print("Corr(Y)")
 print(np.round(np.corrcoef(Y.T), 2))
 
-###############################################################################
+# #############################################################################
 # Canonical (symmetric) PLS
 
 # Transform data
@@ -61,8 +61,10 @@ X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
 # 1) On diagonal plot X vs Y scores on each components
 plt.figure(figsize=(12, 8))
 plt.subplot(221)
-plt.plot(X_train_r[:, 0], Y_train_r[:, 0], "ob", label="train")
-plt.plot(X_test_r[:, 0], Y_test_r[:, 0], "or", label="test")
+plt.scatter(X_train_r[:, 0], Y_train_r[:, 0], label="train",
+            marker="o", c="b", s=25)
+plt.scatter(X_test_r[:, 0], Y_test_r[:, 0], label="test",
+            marker="o", c="r", s=25)
 plt.xlabel("x scores")
 plt.ylabel("y scores")
 plt.title('Comp. 1: X vs Y (test corr = %.2f)' %
@@ -72,8 +74,10 @@ plt.yticks(())
 plt.legend(loc="best")
 
 plt.subplot(224)
-plt.plot(X_train_r[:, 1], Y_train_r[:, 1], "ob", label="train")
-plt.plot(X_test_r[:, 1], Y_test_r[:, 1], "or", label="test")
+plt.scatter(X_train_r[:, 1], Y_train_r[:, 1], label="train",
+            marker="o", c="b", s=25)
+plt.scatter(X_test_r[:, 1], Y_test_r[:, 1], label="test",
+            marker="o", c="r", s=25)
 plt.xlabel("x scores")
 plt.ylabel("y scores")
 plt.title('Comp. 2: X vs Y (test corr = %.2f)' %
@@ -84,8 +88,10 @@ plt.legend(loc="best")
 
 # 2) Off diagonal plot components 1 vs 2 for X and Y
 plt.subplot(222)
-plt.plot(X_train_r[:, 0], X_train_r[:, 1], "*b", label="train")
-plt.plot(X_test_r[:, 0], X_test_r[:, 1], "*r", label="test")
+plt.scatter(X_train_r[:, 0], X_train_r[:, 1], label="train",
+            marker="*", c="b", s=50)
+plt.scatter(X_test_r[:, 0], X_test_r[:, 1], label="test",
+            marker="*", c="r", s=50)
 plt.xlabel("X comp. 1")
 plt.ylabel("X comp. 2")
 plt.title('X comp. 1 vs X comp. 2 (test corr = %.2f)'
@@ -95,8 +101,10 @@ plt.xticks(())
 plt.yticks(())
 
 plt.subplot(223)
-plt.plot(Y_train_r[:, 0], Y_train_r[:, 1], "*b", label="train")
-plt.plot(Y_test_r[:, 0], Y_test_r[:, 1], "*r", label="test")
+plt.scatter(Y_train_r[:, 0], Y_train_r[:, 1], label="train",
+            marker="*", c="b", s=50)
+plt.scatter(Y_test_r[:, 0], Y_test_r[:, 1], label="test",
+            marker="*", c="r", s=50)
 plt.xlabel("Y comp. 1")
 plt.ylabel("Y comp. 2")
 plt.title('Y comp. 1 vs Y comp. 2 , (test corr = %.2f)'
@@ -106,7 +114,7 @@ plt.xticks(())
 plt.yticks(())
 plt.show()
 
-###############################################################################
+# #############################################################################
 # PLS regression, with multivariate response, a.k.a. PLS2
 
 n = 1000
@@ -126,7 +134,6 @@ print("Estimated B")
 print(np.round(pls2.coef_, 1))
 pls2.predict(X)
 
-###############################################################################
 # PLS regression, with univariate response, a.k.a. PLS1
 
 n = 1000
@@ -139,10 +146,10 @@ pls1.fit(X, y)
 print("Estimated betas")
 print(np.round(pls1.coef_, 1))
 
-###############################################################################
+# #############################################################################
 # CCA (PLS mode B with symmetric deflation)
 
 cca = CCA(n_components=2)
 cca.fit(X_train, Y_train)
-X_train_r, Y_train_r = plsca.transform(X_train, Y_train)
-X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
+X_train_r, Y_train_r = cca.transform(X_train, Y_train)
+X_test_r, Y_test_r = cca.transform(X_test, Y_test)
