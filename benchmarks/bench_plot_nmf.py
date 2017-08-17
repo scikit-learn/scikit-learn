@@ -203,15 +203,11 @@ class _PGNMF(NMF):
     def __init__(self, n_components=None, solver='pg', init=None,
                  tol=1e-4, max_iter=200, random_state=None,
                  alpha=0., l1_ratio=0., nls_max_iter=10):
+        super(_PGNMF, self).__init__(
+            n_components=n_components, init=init, solver=solver, tol=tol,
+            max_iter=max_iter, random_state=random_state, alpha=alpha,
+            l1_ratio=l1_ratio)
         self.nls_max_iter = nls_max_iter
-        self.n_components = n_components
-        self.init = init
-        self.solver = solver
-        self.tol = tol
-        self.max_iter = max_iter
-        self.random_state = random_state
-        self.alpha = alpha
-        self.l1_ratio = l1_ratio
 
     def fit(self, X, y=None, **params):
         self.fit_transform(X, **params)

@@ -123,10 +123,11 @@ Given an external estimator that assigns weights to features (e.g., the
 coefficients of a linear model), recursive feature elimination (:class:`RFE`)
 is to select features by recursively considering smaller and smaller sets of
 features.  First, the estimator is trained on the initial set of features and
-weights are assigned to each one of them. Then, features whose absolute weights
-are the smallest are pruned from the current set features. That procedure is
-recursively repeated on the pruned set until the desired number of features to
-select is eventually reached.
+the importance of each feature is obtained either through a ``coef_`` attribute
+or through a ``feature_importances_`` attribute. Then, the least important
+features are pruned from current set of features.That procedure is recursively
+repeated on the pruned set until the desired number of features to select is
+eventually reached.
 
 :class:`RFECV` performs RFE in a cross-validation loop to find the optimal
 number of features.
@@ -227,67 +228,6 @@ alpha parameter, the fewer features selected.
    Processing Magazine [120] July 2007
    http://dsp.rice.edu/sites/dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
 
-.. _randomized_l1:
-
-Randomized sparse models
--------------------------
-
-.. currentmodule:: sklearn.linear_model
-
-In terms of feature selection, there are some well-known limitations of
-L1-penalized models for regression and classification. For example, it is
-known that the Lasso will tend to select an individual variable out of a group
-of highly correlated features. Furthermore, even when the correlation between
-features is not too high, the conditions under which L1-penalized methods
-consistently select "good" features can be restrictive in general.
-
-To mitigate this problem, it is possible to use randomization techniques such
-as those presented in [B2009]_ and [M2010]_. The latter technique, known as
-stability selection, is implemented in the module :mod:`sklearn.linear_model`.
-In the stability selection method, a subsample of the data is fit to a
-L1-penalized model where the penalty of a random subset of coefficients has
-been scaled. Specifically, given a subsample of the data
-:math:`(x_i, y_i), i \in I`, where :math:`I \subset \{1, 2, \ldots, n\}` is a
-random subset of the data of size :math:`n_I`, the following modified Lasso
-fit is obtained:
-
-.. math::   \hat{w_I} = \mathrm{arg}\min_{w} \frac{1}{2n_I} \sum_{i \in I} (y_i - x_i^T w)^2 + \alpha \sum_{j=1}^p \frac{ \vert w_j \vert}{s_j},
-
-where :math:`s_j \in \{s, 1\}` are independent trials of a fair Bernoulli
-random variable, and :math:`0<s<1` is the scaling factor. By repeating this
-procedure across different random subsamples and Bernoulli trials, one can
-count the fraction of times the randomized procedure selected each feature,
-and used these fractions as scores for feature selection.
-
-:class:`RandomizedLasso` implements this strategy for regression
-settings, using the Lasso, while :class:`RandomizedLogisticRegression` uses the
-logistic regression and is suitable for classification tasks. To get a full
-path of stability scores you can use :func:`lasso_stability_path`.
-
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_sparse_recovery_003.png
-   :target: ../auto_examples/linear_model/plot_sparse_recovery.html
-   :align: center
-   :scale: 60
-
-Note that for randomized sparse models to be more powerful than standard
-F statistics at detecting non-zero features, the ground truth model
-should be sparse, in other words, there should be only a small fraction
-of features non zero.
-
-.. topic:: Examples:
-
-   * :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py`: An example
-     comparing different feature selection approaches and discussing in
-     which situation each approach is to be favored.
-
-.. topic:: References:
-
-  .. [B2009] F. Bach, "Model-Consistent Sparse Estimation through the
-        Bootstrap." https://hal.inria.fr/hal-00354771/
-
-  .. [M2010] N. Meinshausen, P. Buhlmann, "Stability selection",
-       Journal of the Royal Statistical Society, 72 (2010)
-       http://arxiv.org/pdf/0809.2932.pdf
 
 Tree-based feature selection
 ----------------------------

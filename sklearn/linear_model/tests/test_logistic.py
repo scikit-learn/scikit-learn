@@ -75,6 +75,11 @@ def test_error():
     assert_raise_message(ValueError, msg,
                          LogisticRegression(C="test").fit, X, Y1)
 
+    msg = "is not a valid scoring value"
+    assert_raise_message(ValueError, msg,
+                         LogisticRegressionCV(scoring='bad-scorer', cv=2).fit,
+                         X, Y1)
+
     for LR in [LogisticRegression, LogisticRegressionCV]:
         msg = "Tolerance for stopping criteria must be positive"
         assert_raise_message(ValueError, msg, LR(tol=-1).fit, X, Y1)
@@ -145,8 +150,8 @@ def test_check_solver_option():
     X, y = iris.data, iris.target
     for LR in [LogisticRegression, LogisticRegressionCV]:
 
-        msg = ("Logistic Regression supports only liblinear, newton-cg, lbfgs"
-               " and sag solvers, got wrong_name")
+        msg = ('Logistic Regression supports only liblinear, newton-cg, '
+               'lbfgs, sag and saga solvers, got wrong_name')
         lr = LR(solver="wrong_name")
         assert_raise_message(ValueError, msg, lr.fit, X, y)
 
@@ -986,7 +991,7 @@ def test_logreg_predict_proba_multinomial():
     X, y = make_classification(n_samples=10, n_features=20, random_state=0,
                                n_classes=3, n_informative=10)
 
-    # Predicted probabilites using the true-entropy loss should give a
+    # Predicted probabilities using the true-entropy loss should give a
     # smaller loss than those using the ovr method.
     clf_multi = LogisticRegression(multi_class="multinomial", solver="lbfgs")
     clf_multi.fit(X, y)
@@ -996,7 +1001,7 @@ def test_logreg_predict_proba_multinomial():
     clf_ovr_loss = log_loss(y, clf_ovr.predict_proba(X))
     assert_greater(clf_ovr_loss, clf_multi_loss)
 
-    # Predicted probabilites using the soft-max function should give a
+    # Predicted probabilities using the soft-max function should give a
     # smaller loss than those using the logistic function.
     clf_multi_loss = log_loss(y, clf_multi.predict_proba(X))
     clf_wrong_loss = log_loss(y, clf_multi._predict_proba_lr(X))

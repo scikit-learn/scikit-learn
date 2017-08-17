@@ -1512,7 +1512,8 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     parameter periodicity>0. Only the isotropic variant where l is a scalar is
     supported at the moment. The kernel given by:
 
-    k(x_i, x_j) = exp(-2 sin(\pi / periodicity * d(x_i, x_j)) / length_scale)^2
+    k(x_i, x_j) =
+    exp(-2 (sin(\pi / periodicity * d(x_i, x_j)) / length_scale) ^ 2)
 
     .. versionadded:: 0.18
 
