@@ -266,11 +266,17 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
                                         sample_weight=sample_weight)
         return auc(fpr, tpr, reorder=True)
 
-    _partial_binary_roc_auc_score = partial(_binary_roc_auc_score,
-                                            pos_label=pos_label)
-    return _average_binary_score(
-        _partial_binary_roc_auc_score, y_true, y_score, average,
-        sample_weight=sample_weight)
+    y_type = type_of_target(y_true)
+    if y_type == "binary":
+        _partial_binary_roc_auc_score = partial(_binary_roc_auc_score,
+                                                pos_label=pos_label)
+        return _average_binary_score(
+            _partial_binary_roc_auc_score, y_true, y_score, average,
+            sample_weight=sample_weight)
+    else:
+        return _average_binary_score(
+            _binary_roc_auc_score, y_true, y_score, average,
+            sample_weight=sample_weight)
 
 
 def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
