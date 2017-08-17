@@ -5,7 +5,6 @@
 Release history
 ===============
 
-
 Version 0.20 (under development)
 ================================
 
