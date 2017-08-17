@@ -202,7 +202,7 @@ bias. Empirical good default values are ``max_features=n_features``
 for regression problems, and ``max_features=sqrt(n_features)`` for
 classification tasks (where ``n_features`` is the number of features
 in the data). Good results are often achieved when setting ``max_depth=None``
-in combination with ``min_samples_split=1`` (i.e., when fully developing the
+in combination with ``min_samples_split=2`` (i.e., when fully developing the
 trees). Bear in mind though that these values are usually not optimal, and
 might result in models that consume a lot of RAM. The best parameter values
 should always be cross-validated. In addition, note that in random forests,
