@@ -929,7 +929,9 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
         ----------
         X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
-            and n_features is the number of features.
+            and n_features is the number of features. Ignored.
+
+        y : Ignored.
 
         Returns
         -------
@@ -1080,6 +1082,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored.
 
         Returns
         -------
@@ -1251,6 +1255,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored.
+
         Returns
         -------
         self : object
@@ -1283,6 +1289,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored.
 
         iter_offset : integer, optional
             The number of iteration on data batches that has been
