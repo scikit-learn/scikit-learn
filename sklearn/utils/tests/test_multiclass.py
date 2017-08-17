@@ -27,7 +27,7 @@ from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.multiclass import check_classification_targets
-from sklearn.utils.multiclass import _fill_missing_class_dimensions
+from sklearn.utils.multiclass import _fill_missing_class_dims
 
 from sklearn.utils.metaestimators import _safe_split
 from sklearn.model_selection import ShuffleSplit
@@ -375,41 +375,36 @@ def test_safe_split_with_precomputed_kernel():
     assert_array_almost_equal(y_test, y_test2)
 
 
-def test_fill_missing_class_dimensions():
+def test_fill_missing_class_dims():
     array = np.array([1, 1, 2, 2])
     zero_array = np.repeat(0., array.size)
     dummy_array = np.repeat(10, array.size)
     present_classes = np.array([1, 2])
 
     all_classes = np.array([1, 2, 3, 4])
-    result, fi = _fill_missing_class_dimensions(array, present_classes,
-                                                all_classes)
+    result = _fill_missing_class_dims(array, present_classes,
+                                      all_classes)
     expected = np.vstack([-array, array, zero_array, zero_array])
     assert_array_equal(result, expected)
-    assert_array_equal(fi, [2, 3])
 
-    result, fi = _fill_missing_class_dimensions(array, present_classes,
-                                                all_classes,
-                                                negate_neg_class=False)
+    result = _fill_missing_class_dims(array, present_classes,
+                                      all_classes,
+                                      negate_neg_class=False)
     expected = np.vstack([array, array, zero_array, zero_array])
     assert_array_equal(result, expected)
-    assert_array_equal(fi, [2, 3])
 
-    result, fi = _fill_missing_class_dimensions(array, present_classes,
-                                                all_classes,
-                                                fill_value=10)
+    result = _fill_missing_class_dims(array, present_classes,
+                                      all_classes,
+                                      fill_value=10)
     expected = np.vstack([-array, array, dummy_array, dummy_array])
     assert_array_equal(result, expected)
-    assert_array_equal(fi, [2, 3])
 
     all_classes = np.array([0, 1, 2, 3])
-    result, fi = _fill_missing_class_dimensions(array, present_classes,
-                                                all_classes)
+    result = _fill_missing_class_dims(array, present_classes,
+                                      all_classes)
     expected = np.vstack([zero_array, -array, array, zero_array])
     assert_array_equal(result, expected)
-    assert_array_equal(fi, [0, 3])
 
-    result, fi = _fill_missing_class_dimensions(array, present_classes,
-                                                present_classes)
+    result = _fill_missing_class_dims(array, present_classes,
+                                      present_classes)
     assert_array_equal(result, array)
-    assert_equal(fi, None)
