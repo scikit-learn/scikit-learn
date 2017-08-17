@@ -70,8 +70,7 @@ def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
 @cython.cdivision(True)
 def _make_unique(np.ndarray[dtype=np.float64_t] X,
                  np.ndarray[dtype=np.float64_t] y,
-                 np.ndarray[dtype=np.float64_t] sample_weights,
-                 do_weight_averaging):
+                 np.ndarray[dtype=np.float64_t] sample_weights):
     """Average targets for duplicate X, drop duplicates.
 
     Aggregates duplicate X values into a single X value where
@@ -79,10 +78,6 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
     targets.
 
     Assumes that X is ordered, so that all duplicates follow each other.
-
-    If do_weight_averaging is True, the weights for duplicate items will
-    be averaged, effectively down-weighting the duplicates points. If
-    False, the weights for duplicate points will be summed.
     """
     unique_values = len(np.unique(X))
     if unique_values == len(X):
@@ -100,16 +95,12 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
     cdef int j
     cdef np.float64_t x
     cdef int n_samples = len(X)
-    cdef bint weight_averaging = do_weight_averaging
     for j in range(n_samples):
         x = X[j]
         if x != current_x:
             # next unique value
             x_out[i] = current_x
-            if weight_averaging:
-                weights_out[i] = current_weight / current_count
-            else:
-                weights_out[i] = current_weight
+            weights_out[i] = current_weight
             y_out[i] = current_y / current_weight
             i += 1
             current_x = x
@@ -122,9 +113,6 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
             current_count += 1
 
     x_out[i] = current_x
-    if weight_averaging:
-        weights_out[i] = current_weight / current_count
-    else:
-        weights_out[i] = current_weight
+    weights_out[i] = current_weight
     y_out[i] = current_y / current_weight
     return x_out, y_out, weights_out
