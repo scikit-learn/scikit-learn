@@ -1817,7 +1817,6 @@ def check_classes_parameter_predict_proba(name, estimator_orig):
 
     # check same columns are equal. since these are probabilities,
     # checking upto 3 decimal places should be fine.
-    print(pred1, pred2)
     assert_array_almost_equal(pred0, pred1, 3)
     assert_array_almost_equal(pred1[:, 0:2], pred2[:, 0:2], 3)
     assert_array_almost_equal(pred1[:, 0:2], pred3[:, 1:3], 3)

@@ -474,9 +474,6 @@ def _fill_missing_class_dims(array, present_classes, all_classes,
         Whether to negate the values of the negative class while completing
         dimensions.
     """
-    if np.array_equal(present_classes, all_classes):
-        return array
-
     if negate_neg_class:
         multiplier = -1
     else:
@@ -485,10 +482,10 @@ def _fill_missing_class_dims(array, present_classes, all_classes,
     if len(present_classes) == 2:
         array = np.vstack([multiplier * array, array])
 
-    n_classes = all_classes.shape[0]
-    n_values = array.shape[1]
-    array_ = np.repeat(fill_value, n_classes * n_values).reshape(n_classes,
-                                                                 n_values)
+    n_classes = tuple([all_classes.shape[0]])
+    n_values = tuple(array.shape[1:])
+    array_ = np.empty(n_classes + n_values)
+    array_.fill(fill_value)
     fill_ind = np.searchsorted(all_classes, present_classes)
     array_[fill_ind] = array
 
