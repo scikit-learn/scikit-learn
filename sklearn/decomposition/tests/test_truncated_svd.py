@@ -254,7 +254,12 @@ def test_truncated_svd_eq_pca():
 
         Xt_svd = svd.fit_transform(X_c)
         Xt_pca = pca.fit_transform(X_c)
-        assert_allclose(Xt_svd, Xt_pca)
+
+        if whiten is True:
+            rtol = 9e-3
+        else:
+            rtol = 1e-9
+        assert_allclose(Xt_svd, Xt_pca, rtol=rtol)
 
         assert_allclose(pca.mean_, 0, atol=1e-9)
 
@@ -263,11 +268,11 @@ def test_truncated_svd_eq_pca():
         # transform only a subset of the data
         Xt2_svd = svd.transform(X_c[:10])
         Xt2_pca = pca.transform(X_c[:10])
-        assert_allclose(Xt2_svd, Xt2_pca)
+        assert_allclose(Xt2_svd, Xt2_pca, rtol=rtol)
 
         X2_svd = svd.inverse_transform(Xt2_svd)
         X2_pca = pca.inverse_transform(Xt2_svd)
-        assert_allclose(X2_svd, X2_pca)
+        assert_allclose(X2_svd, X2_pca, rtol=rtol)
 
 
 def test_lsi():
