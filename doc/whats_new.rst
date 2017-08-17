@@ -59,7 +59,6 @@ Decomposition, manifold learning and clustering
   division on Python 2 versions. :issue:`9492` by
   :user:`James Bourbeau <jrbourbeau>`.
 
-
 Version 0.19
 ============
 
