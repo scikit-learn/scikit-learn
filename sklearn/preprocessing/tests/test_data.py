@@ -1161,8 +1161,10 @@ def test_quantile_transform_bounds():
     X = np.random.random((1000, 1))
     transformer = QuantileTransformer()
     transformer.fit(X)
-    assert_equal(transformer.transform([[-10]]), transformer.transform([[np.min(X)]]))
-    assert_equal(transformer.transform([[10]]), transformer.transform([[np.max(X)]]))
+    assert_equal(transformer.transform([[-10]]),
+                 transformer.transform([[np.min(X)]]))
+    assert_equal(transformer.transform([[10]]),
+                 transformer.transform([[np.max(X)]]))
     assert_equal(transformer.inverse_transform([[-10]]),
                  transformer.inverse_transform(
                      [[np.min(transformer.references_)]]))
