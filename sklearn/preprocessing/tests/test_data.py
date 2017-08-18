@@ -934,7 +934,8 @@ def test_quantile_transform_check_error():
                         " 'normal' or 'uniform'. Got 'rnd' instead.",
                         transformer.inverse_transform, X_tran)
     # check that an error is raised if input is scalar
-    assert_raise_message(ValueError, 'Expected 2D array, got scalar array instead',
+    assert_raise_message(ValueError,
+                         'Expected 2D array, got scalar array instead',
                          transformer.transform, 10)
 
 
