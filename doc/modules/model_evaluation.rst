@@ -640,7 +640,7 @@ With random predictions, the AP is the fraction of positive samples. AP is
 defined as
 
 .. math::
-    \\text{AP} = \\sum_n (R_n - R_{n-1}) P_n
+    \text{AP} = \sum_n (R_n - R_{n-1}) P_n
 
 where :math:`P_n` and :math:`R_n` are the precision and recall at the
 nth threshold.
