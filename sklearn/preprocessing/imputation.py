@@ -610,7 +610,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                 knn_row_index, row_repeats, axis=0).ravel()
 
             # Get column index of donors
-            # NOTE: Following assumes columns in X and _fit_X are in the same order
+            # NOTE: Following assumes columns in X and _fit_X are in the same
+            # order
             row_missing_index, col_missing_index = np.where(mask)
             knn_col_index = np.repeat(col_missing_index, self.n_neighbors)
 
@@ -622,7 +623,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                 donors, mask=donors_mask)
             imputed = np.ma.average(donors, axis=1, weights=weights)
             X[mask] = imputed.data
-            unimputed_index = np.where(donors_mask.sum(axis=1) == self.n_neighbors)
+            unimputed_index = np.where(
+                donors_mask.sum(axis=1) == self.n_neighbors)
             # imputed_mask = _get_mask(imputed.data, self.missing_values)
             if len(unimputed_index[0]) > 0:
                 # unimputed_loc = np.where(imputed_mask)
@@ -643,7 +645,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             X = X_merged
 
         # Impute bad_rows and leftover missing with column means
-        # mask_after_knn = _get_mask(X[row_has_missing, :], self.missing_values)
+        # mask_after_knn = _get_mask(X[row_has_missing, :],
+        #                            self.missing_values)
         # if np.any(mask_after_knn):
         #     missing_index = np.where(mask_after_knn)
         #     X[row_has_missing, :][missing_index] = np.take(self.statistics_,
