@@ -1802,8 +1802,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     return _weighted_sum(loss, sample_weight, normalize)
 
 
-def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None,
-               allow_labels_subset=False):
+def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized)
 
     In binary class case, assuming labels in y_true are encoded with +1 and -1,
@@ -1834,13 +1833,6 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None,
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
-
-    allow_labels_subset : bool, optional default = False
-        This should be set to True if scoring on a subset of labels is
-        required. The subset of labels to score on should be passed in the
-        ``labels`` argument.
-
-        .. versionadded:: 0.20
 
     Returns
     -------
