@@ -40,7 +40,8 @@ def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     This is a general function, given points on a curve.  For computing the
-    area under the ROC-curve, see :func:`roc_auc_score`.
+    area under the ROC-curve, see :func:`roc_auc_score`.  For summarizing a
+    precision-recall curve, see :func:`average_precision_score`.
 
     Parameters
     ----------
@@ -68,7 +69,8 @@ def auc(x, y, reorder=False):
 
     See also
     --------
-    roc_auc_score : Computes the area under the ROC curve
+    roc_auc_score : Compute the area under the ROC curve
+    average_precision_score : Compute average precision from prediction scores
     precision_recall_curve :
         Compute precision-recall pairs for different probability thresholds
     """
@@ -107,6 +109,16 @@ def auc(x, y, reorder=False):
 def average_precision_score(y_true, y_score, average="macro",
                             sample_weight=None):
     """Compute average precision (AP) from prediction scores
+
+    AP summarizes a precision-recall curve as the weighted mean of precisions
+    achieved at each threshold, with the increase in recall from the previous
+    threshold used as the weight:
+
+    .. math::
+        \\text{AP} = \\sum_n (R_n - R_{n-1}) P_n
+
+    where :math:`P_n` and :math:`R_n` are the precision and recall at the nth
+    threshold [1]_.
 
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
@@ -149,13 +161,8 @@ def average_precision_score(y_true, y_score, average="macro",
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-           <http://en.wikipedia.org/wiki/Average_precision>`_
-    .. [2] `Stanford Information Retrieval book
-            <http://nlp.stanford.edu/IR-book/html/htmledition/
-            evaluation-of-ranked-retrieval-results-1.html>`_
-    .. [3] `The PASCAL Visual Object Classes (VOC) Challenge
-            <http://citeseerx.ist.psu.edu/viewdoc/
-            download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_
+           <http://en.wikipedia.org/w/index.php?title=Information_retrieval&
+           oldid=793358396#Average_precision>`_
 
     See also
     --------
@@ -395,6 +402,10 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     thresholds : array, shape = [n_thresholds <= len(np.unique(probas_pred))]
         Increasing thresholds on the decision function used to compute
         precision and recall.
+
+    See also
+    --------
+    average_precision_score : Compute average precision from prediction scores
 
     Examples
     --------

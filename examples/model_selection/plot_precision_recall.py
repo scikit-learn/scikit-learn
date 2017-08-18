@@ -69,7 +69,8 @@ threshold used as the weight:
 
 where :math:`P_n` and :math:`R_n` are the precision and recall at the
 nth threshold. A pair :math:`(R_k, P_k)` is referred to as an
-*operating point*.
+*operating point*. When summarizing a precision-recall curve, AP is preferable
+to computing the trapezoidal area under the operating points.
 
 Precision-recall curves are typically used in binary classification to study
 the output of a classifier. In order to extend the precision-recall curve and
