@@ -6,11 +6,11 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
 
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import TransformTargetRegressor
-from sklearn.preprocessing import MaxAbsScaler
+from sklearn.preprocessing import StandardScaler
 
 from sklearn.linear_model import LinearRegression, LogisticRegression, Lasso
-from sklearn.preprocessing import StandardScaler
 
 from sklearn import datasets
 
@@ -64,58 +64,143 @@ def _check_standard_scaler(y, y_pred):
     assert_allclose((y - y_mean) / y_std, y_pred)
 
 
-def _check_max_abs_scaler(y, y_pred):
-    max_abs = np.abs(y).max(axis=0)
-    assert_allclose(y / max_abs, y_pred)
+def _check_custom_scaler(y, y_pred):
+    assert_allclose(y + 1, y_pred)
 
 
-def test_transform_target_regressor_friedman():
+def test_transform_target_regressor_functions():
     X = friedman[0]
     y = friedman[1]
-    # create a multioutput Y
-    # keep Y to be 2d and it will squeezed when relevant
-    Y = [y.reshape(-1, 1), np.vstack((y, y ** 2 + 1)).T]
-    for y_2d in Y:
-        regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                        func=np.log, inverse_func=np.exp)
-        y_pred = regr.fit(X, y_2d.squeeze()).predict(X)
-        y_tran = regr.transformer_.transform(y_2d).squeeze()
-        assert_allclose(np.log(y_2d.squeeze()), y_tran)
-        assert_allclose(y_2d.squeeze(), regr.transformer_.inverse_transform(
-            y_tran).squeeze())
-        assert_equal(y_2d.squeeze().shape, y_pred.shape)
-        assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
-        lr = LinearRegression().fit(X, regr.func(y_2d.squeeze()))
-        assert_allclose(y_pred, regr.inverse_func(lr.predict(X)))
-        assert_allclose(regr.regressor_.coef_.ravel(), lr.coef_.ravel())
-        # StandardScaler support 1d array while MaxAbsScaler support only 2d
-        # array
-        for transformer in (StandardScaler(), MaxAbsScaler()):
-            regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                            transformer=transformer)
-            y_pred = regr.fit(X, y_2d.squeeze()).predict(X)
-            assert_equal(y_2d.squeeze().shape, y_pred.shape)
-            y_tran = regr.transformer_.transform(y_2d).squeeze()
-            if issubclass(StandardScaler, transformer.__class__):
-                _check_standard_scaler(y_2d.squeeze(), y_tran)
-            else:
-                _check_max_abs_scaler(y_2d.squeeze(), y_tran)
-            assert_equal(y_2d.squeeze().shape, y_pred.shape)
-            if y_tran.ndim == 1:
-                y_tran = y_tran.reshape(-1, 1)
-            assert_allclose(y_2d.squeeze(),
-                            regr.transformer_.inverse_transform(
-                                y_tran).squeeze())
-            lr = LinearRegression()
-            transformer2 = clone(transformer)
-            lr.fit(X, transformer2.fit_transform(y_2d).squeeze())
-            y_lr_pred = lr.predict(X)
-            if y_lr_pred.ndim == 1:
-                y_lr_pred = y_lr_pred.reshape(-1, 1)
-            assert_allclose(y_pred, transformer2.inverse_transform(
-                y_lr_pred).squeeze())
-            assert_allclose(regr.regressor_.coef_.squeeze(),
-                            lr.coef_.squeeze())
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    func=np.log, inverse_func=np.exp)
+    y_pred = regr.fit(X, y).predict(X)
+    # check the transformer output
+    y_tran = regr.transformer_.transform(y.reshape(-1, 1)).squeeze()
+    assert_allclose(np.log(y), y_tran)
+    assert_allclose(y, regr.transformer_.inverse_transform(
+        y_tran.reshape(-1, 1)).squeeze())
+    assert_equal(y.shape, y_pred.shape)
+    assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
+    # check the regressor output
+    lr = LinearRegression().fit(X, regr.func(y))
+    assert_allclose(regr.regressor_.coef_.ravel(), lr.coef_.ravel())
+
+
+def test_transform_target_regressor_functions_multioutput():
+    X = friedman[0]
+    y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    func=np.log, inverse_func=np.exp)
+    y_pred = regr.fit(X, y).predict(X)
+    # check the transformer output
+    y_tran = regr.transformer_.transform(y)
+    assert_allclose(np.log(y), y_tran)
+    assert_allclose(y, regr.transformer_.inverse_transform(y_tran))
+    assert_equal(y.shape, y_pred.shape)
+    assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
+    # check the regressor output
+    lr = LinearRegression().fit(X, regr.func(y))
+    assert_allclose(regr.regressor_.coef_.ravel(), lr.coef_.ravel())
+
+
+def test_transform_target_regressor_1d_transformer():
+    X = friedman[0]
+    y = friedman[1]
+    transformer = FunctionTransformer(func=lambda x: x + 1,
+                                      inverse_func=lambda x: x - 1,
+                                      validate=False)
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    transformer=transformer)
+    y_pred = regr.fit(X, y).predict(X)
+    assert_equal(y.shape, y_pred.shape)
+    # consistency forward transform
+    y_tran = regr.transformer_.transform(y)
+    _check_custom_scaler(y, y_tran)
+    assert_equal(y.shape, y_pred.shape)
+    # consistency inverse transform
+    assert_allclose(y, regr.transformer_.inverse_transform(
+        y_tran).squeeze())
+    # consistency of the regressor
+    lr = LinearRegression()
+    transformer2 = clone(transformer)
+    lr.fit(X, transformer2.fit_transform(y))
+    y_lr_pred = lr.predict(X)
+    assert_allclose(y_pred, transformer2.inverse_transform(y_lr_pred))
+    assert_allclose(regr.regressor_.coef_, lr.coef_)
+
+
+def test_transform_target_regressor_1d_transformer_multioutput():
+    X = friedman[0]
+    y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
+    transformer = FunctionTransformer(func=lambda x: x + 1,
+                                      inverse_func=lambda x: x - 1,
+                                      validate=False)
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    transformer=transformer)
+    y_pred = regr.fit(X, y).predict(X)
+    assert_equal(y.shape, y_pred.shape)
+    # consistency forward transform
+    y_tran = regr.transformer_.transform(y)
+    _check_custom_scaler(y, y_tran)
+    assert_equal(y.shape, y_pred.shape)
+    # consistency inverse transform
+    assert_allclose(y, regr.transformer_.inverse_transform(
+        y_tran).squeeze())
+    # consistency of the regressor
+    lr = LinearRegression()
+    transformer2 = clone(transformer)
+    lr.fit(X, transformer2.fit_transform(y))
+    y_lr_pred = lr.predict(X)
+    assert_allclose(y_pred, transformer2.inverse_transform(y_lr_pred))
+    assert_allclose(regr.regressor_.coef_, lr.coef_)
+
+
+def test_transform_target_regressor_2d_transformer():
+    X = friedman[0]
+    y = friedman[1]
+    transformer = StandardScaler()
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    transformer=transformer)
+    y_pred = regr.fit(X, y).predict(X)
+    assert_equal(y.shape, y_pred.shape)
+    # consistency forward transform
+    y_tran = regr.transformer_.transform(y.reshape(-1, 1)).squeeze()
+    _check_standard_scaler(y, y_tran)
+    assert_equal(y.shape, y_pred.shape)
+    # consistency inverse transform
+    assert_allclose(y, regr.transformer_.inverse_transform(
+        y_tran).squeeze())
+    # consistency of the regressor
+    lr = LinearRegression()
+    transformer2 = clone(transformer)
+    lr.fit(X, transformer2.fit_transform(y.reshape(-1, 1)).squeeze())
+    y_lr_pred = lr.predict(X)
+    assert_allclose(y_pred, transformer2.inverse_transform(y_lr_pred))
+    assert_allclose(regr.regressor_.coef_, lr.coef_)
+
+
+def test_transform_target_regressor_2d_transformer_multioutput():
+    X = friedman[0]
+    y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
+    transformer = StandardScaler()
+    regr = TransformTargetRegressor(regressor=LinearRegression(),
+                                    transformer=transformer)
+    y_pred = regr.fit(X, y).predict(X)
+    assert_equal(y.shape, y_pred.shape)
+    # consistency forward transform
+    y_tran = regr.transformer_.transform(y)
+    _check_standard_scaler(y, y_tran)
+    assert_equal(y.shape, y_pred.shape)
+    # consistency inverse transform
+    assert_allclose(y, regr.transformer_.inverse_transform(
+        y_tran).squeeze())
+    # consistency of the regressor
+    lr = LinearRegression()
+    transformer2 = clone(transformer)
+    lr.fit(X, transformer2.fit_transform(y))
+    y_lr_pred = lr.predict(X)
+    assert_allclose(y_pred, transformer2.inverse_transform(y_lr_pred))
+    assert_allclose(regr.regressor_.coef_, lr.coef_)
 
 
 def test_transform_target_regressor_single_to_multi():
@@ -123,9 +208,23 @@ def test_transform_target_regressor_single_to_multi():
     y = friedman[1] + 1j * (friedman[1] ** 2 + 1)
 
     def func(y):
-        return np.vstack((np.real(y), np.imag(y))).T
+        """Stack the real and imaginary part."""
+        return np.hstack((np.real(y), np.imag(y)))
 
     tt = TransformTargetRegressor(func=func, check_inverse=False)
     tt.fit(X, y)
     y_pred = tt.predict(X)
     assert_equal(y_pred.shape, (100, 2))
+
+
+def test_transform_target_regressor_multi_to_single():
+    X = friedman[0]
+    y = np.transpose([friedman[1], (friedman[1] ** 2 + 1)])
+
+    def func(y):
+        return np.sqrt(y[:, 0] ** 2 + y[:, 1] ** 2)
+
+    tt = TransformTargetRegressor(func=func, check_inverse=False)
+    tt.fit(X, y)
+    y_pred = tt.predict(X)
+    assert_equal(y_pred.shape, (100, 1))

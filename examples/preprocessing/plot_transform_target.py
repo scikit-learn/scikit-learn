@@ -130,7 +130,7 @@ from sklearn.preprocessing import QuantileTransformer, quantile_transform
 
 dataset = load_boston()
 target = np.array(dataset.feature_names) == "DIS"
-X = dataset.data[:, np.bitwise_not(target)]
+X = dataset.data[:, np.logical_not(target)]
 y = dataset.data[:, target].squeeze()
 y_trans = quantile_transform(dataset.data[:, target],
                              output_distribution='normal').squeeze()

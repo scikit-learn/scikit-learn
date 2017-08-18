@@ -6,7 +6,7 @@ import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, is_regressor, clone
 from ..utils.validation import check_is_fitted
-from ..utils import check_X_y, check_random_state
+from ..utils import check_X_y, check_random_state, safe_indexing
 from ._function_transformer import FunctionTransformer
 
 __all__ = ['TransformTargetRegressor']
@@ -66,13 +66,6 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     check_inverse : bool, (default=True)
         Whether to check that ``transform`` followed by ``inverse_transform``
         or ``func`` followed by ``inverse_func`` leads to the original targets.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. The random state is used for subsampling in
-        ``check_inverse``.
 
     Attributes
     ----------
@@ -135,22 +128,19 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
             self.transformer_ = clone(self.transformer)
         else:
             self.transformer_ = FunctionTransformer(
-                func=self.func, inverse_func=self.inverse_func, validate=False)
+                func=self.func, inverse_func=self.inverse_func, validate=True)
         # XXX: sample_weight is not currently passed to the
         # transformer. However, if transformer starts using sample_weight, the
         # code should be modified accordingly. At the time to consider the
         # sample_prop feature, it is also a good use case to be considered.
         self.transformer_.fit(y)
         if self.check_inverse:
-            random_state = check_random_state(self.random_state)
-            n_subsample = min(10, y.shape[0])
-            subsample_idx = random_state.choice(range(y.shape[0]),
-                                                size=n_subsample,
-                                                replace=False)
+            idx_selected = slice(None, None, max(1, y.shape[0] // 10))
             if not np.allclose(
-                    y[subsample_idx],
+                    safe_indexing(y, idx_selected),
                     self.transformer_.inverse_transform(
-                        self.transformer_.transform(y[subsample_idx]))):
+                        self.transformer_.transform(
+                            safe_indexing(y, idx_selected)))):
                 raise ValueError("The provided functions or transformer are"
                                  " not strictly inverse of each other. If"
                                  " you are sure you want to proceed regardless"
@@ -181,7 +171,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
 
         # transformers are designed to modify X which is a 2d dimensional, we
         # need to modify y accordingly.
-        if y.ndim == 1 and self.func is None:
+        if y.ndim == 1:
             y_2d = y.reshape(-1, 1)
         else:
             y_2d = y
@@ -199,9 +189,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
             self.regressor_ = clone(self.regressor)
 
         # transform y and convert back to 1d array if needed
-        y_trans = self.transformer_.fit_transform(y_2d)
-        if y.ndim == 1 and self.func is None:
-            y_trans = y_trans.reshape(-1)
+        y_trans = self.transformer_.fit_transform(y_2d).squeeze()
         if sample_weight is None:
             self.regressor_.fit(X, y_trans)
         else:
@@ -228,7 +216,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         """
         check_is_fitted(self, "regressor_")
         pred = self.regressor_.predict(X)
-        if pred.ndim == 1 and self.func is None:
+        if pred.ndim == 1:
             return self.transformer_.inverse_transform(
                 pred.reshape(-1, 1)).squeeze()
         else:

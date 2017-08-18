@@ -22,7 +22,6 @@ from .data import maxabs_scale
 from .data import minmax_scale
 from .data import quantile_transform
 from .data import OneHotEncoder
-
 from .data import PolynomialFeatures
 
 from .label import label_binarize
@@ -31,7 +30,6 @@ from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
 from .target import TransformTargetRegressor
-
 from .imputation import Imputer
 
 
