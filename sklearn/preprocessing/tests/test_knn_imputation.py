@@ -7,7 +7,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 
-from sklearn.preprocessing.knn_imputation import KNNImputer
+from sklearn.preprocessing.imputation import KNNImputer
 from sklearn.random_projection import sparse_random_matrix
 
 
@@ -68,8 +68,8 @@ def test_knn_imputation_zero():
         [6, 6,   1.5, 5, 13],
     ])
 
-    assert_array_equal(imputer.fit(X).transform(X), X_imputed)
-    assert_array_equal(imputer.statistics_[1], statistics_mean)
+    assert_array_equal(imputer.fit_transform(X), X_imputed)
+    assert_array_equal(imputer.statistics_, statistics_mean)
 
 
 def test_knn_imputation_default():
@@ -132,8 +132,8 @@ def test_knn_imputation_default():
     ])
 
     imputer = KNNImputer()
-    assert_array_equal(imputer.fit(X).transform(X), X_imputed)
-    assert_array_equal(imputer.statistics_[1], statistics_mean)
+    assert_array_equal(imputer.fit_transform(X), X_imputed)
+    assert_array_equal(imputer.statistics_, statistics_mean)
 
     # Test with % missing in row > row_max_missing
     X = np.array([
@@ -158,8 +158,35 @@ def test_knn_imputation_default():
     ])
 
     imputer = KNNImputer()
-    assert_array_equal(imputer.fit(X).transform(X), X_imputed)
-    assert_array_equal(imputer.statistics_[1], statistics_mean)
+    assert_array_equal(imputer.fit_transform(X), X_imputed)
+    assert_array_equal(imputer.statistics_, statistics_mean)
+
+    # Test with all neighboring donors also having missing feature values
+    X = np.array([
+        [1, 0, 0, np.nan],
+        [2, 1, 2, np.nan],
+        [3, 2, 3, np.nan],
+        [np.nan, 4, 5, 5],
+        [6, np.nan, 6, 7],
+        [8, 8, 8, 8],
+        [np.nan, np.nan, np.nan, 20],
+    ])
+
+    statistics_mean = [4, 3, 4, 10]
+
+    X_imputed = np.array([
+        [1, 0, 0, 10],
+        [2, 1, 2, 10],
+        [3, 2, 3, 5],
+        [4.5, 4, 5, 5],
+        [6, 6, 6, 7],
+        [8, 8, 8, 8],
+        [4, 3, 4, 20],
+    ])
+
+    imputer = KNNImputer(n_neighbors=2)
+    assert_array_equal(imputer.fit_transform(X), X_imputed)
+    assert_array_equal(imputer.statistics_, statistics_mean)
 
     # Test with weights = "distance"
     X = np.array([
@@ -179,26 +206,9 @@ def test_knn_imputation_default():
     ])
 
     imputer = KNNImputer(n_neighbors=2, weights="distance")
-    assert_array_almost_equal(imputer.fit(X).transform(X), X_imputed,
+    assert_array_almost_equal(imputer.fit_transform(X), X_imputed,
                               decimal=4)
-    assert_array_equal(imputer.statistics_[1], statistics_mean)
-
-
-def test_imputation_pickle():
-    # Test for pickling imputers.
-    import pickle
-
-    l = 100
-    X = np.random.rand(l, l+1)
-
-    imputer = KNNImputer()
-    imputer.fit(X)
-
-    imputer_pickled = pickle.loads(pickle.dumps(imputer))
-
-    assert_array_equal(imputer.transform(X.copy()),
-                       imputer_pickled.transform(X.copy()),
-                       "Fail to transform the data after pickling ")
+    assert_array_equal(imputer.statistics_, statistics_mean)
 
 
 def test_imputation_copy():
@@ -208,13 +218,13 @@ def test_imputation_copy():
     # copy=True, dense => copy
     X = X_orig.copy().toarray()
     imputer = KNNImputer(missing_values=0, copy=True)
-    Xt = imputer.fit(X).transform(X)
+    Xt = imputer.fit_transform(X)
     Xt[0, 0] = -1
     assert_false(np.all(X == Xt))
 
     # copy=False, dense => no copy
     X = X_orig.copy().toarray()
     imputer = KNNImputer(missing_values=0, copy=False)
-    Xt = imputer.fit(X).transform(X)
+    Xt = imputer.fit_transform(X)
     Xt[0, 0] = -1
     assert_array_equal(X, Xt)

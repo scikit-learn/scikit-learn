@@ -31,7 +31,6 @@ from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
 from .imputation import Imputer
-from .knn_imputation import KNNImputer
 
 
 __all__ = [
@@ -39,7 +38,6 @@ __all__ = [
     'FunctionTransformer',
     'Imputer',
     'KernelCenterer',
-    'KNNImputer',
     'LabelBinarizer',
     'LabelEncoder',
     'MultiLabelBinarizer',

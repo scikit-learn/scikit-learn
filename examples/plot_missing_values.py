@@ -9,16 +9,22 @@ Imputing does not always improve the predictions, so please check via
 cross-validation.  Sometimes dropping rows or using marker values is
 more effective.
 
+Imputer:
 Missing values can be replaced by the mean, the median or the most frequent
 value using the ``strategy`` hyper-parameter.
 The median is a more robust estimator for data with high magnitude variables
 which could dominate results (otherwise known as a 'long tail').
+
+KNNImputer:
+Missing values can be imputed using the weighted or unweighted mean of the
+desired number of nearest neighbors.
 
 Script output::
 
   Score with the entire dataset = 0.56
   Score without the samples containing missing values = 0.48
   Score after imputation of the missing values = 0.55
+  Score after knn-imputation of the missing values = 0.55
 
 In this case, imputing helps the classifier get close to the original score.
 
@@ -28,7 +34,7 @@ import numpy as np
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import Imputer
+from sklearn.preprocessing.imputation import Imputer, KNNImputer
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
@@ -71,3 +77,13 @@ estimator = Pipeline([("imputer", Imputer(missing_values=0,
                                                        n_estimators=100))])
 score = cross_val_score(estimator, X_missing, y_missing).mean()
 print("Score after imputation of the missing values = %.2f" % score)
+
+# Estimate the score after kNN-imputation of the missing values
+X_missing = X_full.copy()
+X_missing[np.where(missing_samples)[0], missing_features] = np.nan
+y_missing = y_full.copy()
+knn_estimator = Pipeline([("knnimputer", KNNImputer(n_neighbors=10)),
+                          ("forest", RandomForestRegressor(random_state=0,
+                                                           n_estimators=100))])
+knn_score = cross_val_score(knn_estimator, X_missing, y_missing).mean()
+print("Score after knn-imputation of the missing values = %.2f" % knn_score)
