@@ -583,12 +583,3 @@ def test_pass_classes():
     clf.fit(X, y)
     scorer = make_scorer(f1_score, average="macro", pass_classes=None)
     scores = scorer(clf, X, y)
-
-    # iterate over 2 - 5 classes and see that the scores are multiplied by
-    # right factor
-    scorer = make_scorer(f1_score, average="macro", pass_classes='labels')
-    for num_classes in range(2, 6):
-        clf = GaussianNB(classes=list(range(num_classes)))
-        clf.fit(X, y)
-        scores2 = scorer(clf, X, y)
-        assert_array_almost_equal(scores*2./num_classes, scores2)
