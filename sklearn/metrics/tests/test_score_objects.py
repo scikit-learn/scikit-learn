@@ -16,6 +16,8 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -39,6 +41,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import joblib
+from sklearn.naive_bayes import GaussianNB
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
@@ -140,6 +143,25 @@ class EstimatorWithFitAndPredict(object):
 class DummyScorer(object):
     """Dummy scorer that always returns 1."""
     def __call__(self, est, X, y):
+        return 1
+
+
+def DummyScorerWithLabels(y_true, y_pred, labels=None):
+    """A dummy scorer function which returns 1 if labels argument was set
+    else returns 0"""
+    if labels is None:
+        return 0
+    else:
+        return 1
+
+
+def DummyScorerWithLabelsNamedDifferent(y_true, y_pred,
+                                        labels_other_name=None):
+    """A dummy scorer function which returns 1 if labels argument was set
+    else returns 0"""
+    if labels_other_name is None:
+        return 0
+    else:
         return 1
 
 
@@ -526,3 +548,47 @@ def test_scoring_is_not_metric():
                          Ridge(), r2_score)
     assert_raises_regexp(ValueError, 'make_scorer', check_scoring,
                          KMeans(), cluster_module.adjusted_rand_score)
+
+
+def test_pass_classes():
+    # Test the various properties of pass_classes parameter added
+
+    X, y = make_blobs(random_state=0, centers=2)
+    clf = LogisticRegression(random_state=0)
+    clf.fit(X, y)
+
+    # copy_classes=None should not set labels
+    scorer = make_scorer(DummyScorerWithLabels, pass_classes=None)
+    assert_equal(scorer(clf, X, y), 0)
+
+    # by default, labels should be set
+    scorer = make_scorer(DummyScorerWithLabels)
+    assert_equal(scorer(clf, X, y), 1)
+
+    # if an argument other than labels passed, then it should be present in
+    # scorer's signature
+    scorer = make_scorer(DummyScorerWithLabels, pass_classes='label_names')
+    expected_msg = ("the scorer doesn't have label_names as a parameter,"
+                    "as passed in pass_classes parameter")
+    assert_raise_message(ValueError, expected_msg,
+                         scorer, clf, X, y)
+
+    # if custom scorer has another name for labels, it should be set
+    scorer = make_scorer(DummyScorerWithLabelsNamedDifferent,
+                         pass_classes='labels_other_name')
+    assert_equal(scorer(clf, X, y), 1)
+
+    # test that passing labels through make_scorer affects the actual scores
+    clf = GaussianNB()
+    clf.fit(X, y)
+    scorer = make_scorer(f1_score, average="macro", pass_classes=None)
+    scores = scorer(clf, X, y)
+
+    # iterate over 2 - 5 classes and see that the scores are multiplied by
+    # right factor
+    scorer = make_scorer(f1_score, average="macro", pass_classes='labels')
+    for num_classes in range(2, 6):
+        clf = GaussianNB(classes=list(range(num_classes)))
+        clf.fit(X, y)
+        scores2 = scorer(clf, X, y)
+        assert_array_almost_equal(scores*2./num_classes, scores2)
