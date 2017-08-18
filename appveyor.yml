@@ -34,6 +34,13 @@ environment:
       PYTHON_ARCH: "64"
 
 
+# Because we only have a single worker, we don't want to waste precious
+# appveyor CI time and make other PRs wait for repeated failures in a failing
+# PR. The following option cancels pending jobs in a given PR after the first
+# job failure in that specific PR.
+matrix:
+    fast_finish: true
+
 
 install:
   # If there is a newer build queued for the same PR, cancel this one.
