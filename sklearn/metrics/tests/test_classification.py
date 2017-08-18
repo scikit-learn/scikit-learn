@@ -26,7 +26,6 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import MockDataFrame
-from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -638,6 +637,7 @@ def test_confusion_matrix_sample_weight():
         sample_weight=weights[:-1])
 
 
+@ignore_warnings
 def test_confusion_matrix_multiclass_subset_labels():
     # Test confusion matrix - multi-class case with subset of labels
     y_true, y_pred, _ = make_prediction(binary=False)

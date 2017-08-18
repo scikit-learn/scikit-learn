@@ -1082,6 +1082,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     present_labels = unique_labels(y_true, y_pred)
+    if labels is not None:
+        _check_labels_subset(present_labels, labels, allow_labels_subset)
 
     if average == 'binary':
         if y_type == 'binary':
@@ -1106,7 +1108,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         labels = present_labels
         n_labels = None
     else:
-        _check_labels_subset(present_labels, labels, allow_labels_subset)
         n_labels = len(labels)
         labels = np.hstack([labels, np.setdiff1d(present_labels, labels,
                                                  assume_unique=True)])
@@ -1747,7 +1748,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     lb = LabelBinarizer()
 
     if labels is not None:
-        _check_labels_subset(unique_labels(y_true, y_pred),
+        _check_labels_subset(np.unique(y_true),
                              labels, allow_labels_subset)
         lb.fit(labels)
     else:
