@@ -828,7 +828,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     epsilon : float, optional, default 1e-8
         Value for numerical stability in adam. Only used when solver='adam'
 
-    n_iter_no_change : int, optional, default 2
+    n_iter_no_change : int, optional, default 10
         Maximum number of epochs to not meet `tol` improvement.
         Only effective when solver='sgd' or 'adam'
 
@@ -1210,7 +1210,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     epsilon : float, optional, default 1e-8
         Value for numerical stability in adam. Only used when solver='adam'
 
-    n_iter_no_change : int, optional, default 2
+    n_iter_no_change : int, optional, default 10
         Maximum number of epochs to not meet `tol` improvement.
         Only effective when solver='sgd' or 'adam'
 
