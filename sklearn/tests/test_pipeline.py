@@ -31,7 +31,7 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.externals.joblib import Memory
+from joblib import Memory
 
 
 JUNK_FOOD_DOCS = (
@@ -264,6 +264,29 @@ def test_pipeline_sample_weight_unsupported():
         "score() got an unexpected keyword argument 'sample_weight'",
         pipe.score, X, sample_weight=np.array([2, 3])
     )
+
+
+class Dummy(object):
+    def __init__(self):
+        pass
+
+    def cache(self):
+        pass
+
+
+class Wrong_Dummy(object):
+    def __init__(self):
+        pass
+
+
+def test_pipeline_with_cache_attribute():
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())], memory=Dummy())
+    pipe.fit(X, y=None)
+
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
+                    memory=Wrong_Dummy())
+    assert_raises(ValueError, pipe.fit, X)
 
 
 def test_pipeline_raise_set_params_error():

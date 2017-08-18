@@ -15,7 +15,8 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
-from .externals.joblib import Parallel, delayed, Memory
+from .externals.joblib import Parallel, delayed
+from joblib import Memory
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
@@ -52,7 +53,7 @@ class Pipeline(_BaseComposition):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
-    memory : Instance of sklearn.external.joblib.Memory or string, optional \
+    memory : Instance of joblib.Memory or string, optional \
             (default=None)
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
@@ -192,9 +193,9 @@ class Pipeline(_BaseComposition):
             memory = Memory(cachedir=None, verbose=0)
         elif isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
-        elif not isinstance(memory, Memory):
+        elif not hasattr(memory, 'cache'):
             raise ValueError("'memory' should either be a string or"
-                             " a sklearn.externals.joblib.Memory"
+                             " a joblib.Memory"
                              " instance, got 'memory={!r}' instead.".format(
                                  type(memory)))
 
@@ -538,7 +539,7 @@ def make_pipeline(*steps, **kwargs):
     ----------
     *steps : list of estimators,
 
-    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+    memory : Instance of joblib.Memory or string, optional \
             (default=None)
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to

@@ -15,7 +15,7 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
-from ..externals.joblib import Memory
+from joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
@@ -196,7 +196,8 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
     else:
         if n_clusters > n_samples:
             raise ValueError('Cannot provide more clusters than samples. '
-                             '%i n_clusters was asked, and there are %i samples.'
+                             '%i n_clusters was asked, and there are'
+                             ' %i samples.'
                              % (n_clusters, n_samples))
         n_nodes = 2 * n_samples - n_clusters
 
@@ -609,7 +610,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+    memory : Instance of joblib.Memory or string, optional \
             (default=None)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
@@ -698,9 +699,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             memory = Memory(cachedir=None, verbose=0)
         elif isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
-        elif not isinstance(memory, Memory):
+        elif not hasattr(memory, 'cache'):
             raise ValueError("'memory' should either be a string or"
-                             " a sklearn.externals.joblib.Memory"
+                             " a joblib.Memory"
                              " instance, got 'memory={!r}' instead.".format(
                                  type(memory)))
 
@@ -779,7 +780,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+    memory : Instance of joblib.Memory or string, optional \
             (default=None)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the

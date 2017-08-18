@@ -50,6 +50,7 @@ def test_deprecation_of_n_components_in_linkage_tree():
     assert_equal(n_leaves, n_leaves_t)
     assert_equal(parent, parent_t)
 
+
 def test_linkage_misc():
     # Misc tests on linkage
     rng = np.random.RandomState(42)
@@ -137,6 +138,28 @@ def test_agglomerative_clustering_wrong_arg_memory():
     X = rng.randn(n_samples, 50)
     memory = 5
     clustering = AgglomerativeClustering(memory=memory)
+    assert_raises(ValueError, clustering.fit, X)
+
+
+class Dummy(object):
+    def __init__(self):
+        pass
+
+    def cache(self):
+        pass
+
+
+class Wrong_Dummy(object):
+    def __init__(self):
+        pass
+
+
+def test_agglomerative_clustering_with_cache_attribute():
+    X = np.random.random((100, 1000))
+    clustering = AgglomerativeClustering(memory=Dummy())
+    clustering.fit(X)
+
+    clustering = AgglomerativeClustering(memory=Wrong_Dummy())
     assert_raises(ValueError, clustering.fit, X)
 
 
