@@ -655,12 +655,18 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         return X
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Impute all missing values in X.
+        """Fit KNNImputer and impute all missing values in X.
 
         Parameters
         ----------
-        X : {array-like}, shape = [n_samples, n_features]
-            The input data to complete.
+        X : {array-like}, shape (n_samples, n_features)
+            Input data, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
+
+        Returns
+        -------
+        X : {array-like}, shape (n_samples, n_features)
+            Returns imputed dataset.
         """
         return self.fit(X)._transform(X, n_neighbors_new=self.n_neighbors + 1)
 
@@ -671,6 +677,11 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         ----------
         X : {array-like}, shape = [n_samples, n_features]
             The input data to complete.
+
+        Returns
+        -------
+        X : {array-like}, shape (n_samples, n_features)
+            Returns imputed dataset.
         """
         check_is_fitted(self, 'statistics_')
         return self._transform(X, n_neighbors_new=self.n_neighbors)
