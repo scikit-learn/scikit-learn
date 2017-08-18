@@ -407,4 +407,5 @@ def test_fill_missing_class_dims():
 
     result = _fill_missing_class_dims(array, present_classes,
                                       present_classes)
-    assert_array_equal(result, array)
+    expected = np.vstack([-array, array])
+    assert_array_equal(result, expected)

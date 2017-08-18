@@ -1804,6 +1804,7 @@ def check_classes_parameter_predict_proba(name, estimator_orig):
     params['classes'] = [1, 2, 3, 4]
     clf.set_params(**params)
     pred2 = clf.fit(X, y).predict_proba(X)
+    print(clf.get_params())
 
     params['classes'] = [0, 1, 2, 3]
     clf.set_params(**params)
