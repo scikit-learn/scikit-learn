@@ -41,7 +41,7 @@ Bug fixes
 
 Decomposition, manifold learning and clustering
 
-- Fix for uninformative error in :class:`decomposition.incremental_pca`:
+- Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
   now an error is raised if the number of components is larger than the
   chosen batch size. The ``n_components=None`` case was adapted accordingly.
   :issue:`6452`. By :user:`Wally Gauze <wallygauze>`.
@@ -51,7 +51,7 @@ Decomposition, manifold learning and clustering
   division on Python 2 versions. :issue:`9492` by
   :user:`James Bourbeau <jrbourbeau>`.
 
-- In :class:`decomposition.pca` selecting a n_components parameter greater than
+- In :class:`decomposition.PCA` selecting a n_components parameter greater than
   the number of samples now raises an error.
   Similarly, the ``n_components=None`` case now selects the minimum of
   n_samples and n_features. :issue:`8484`. By :user:`Wally Gauze <wallygauze>`.
