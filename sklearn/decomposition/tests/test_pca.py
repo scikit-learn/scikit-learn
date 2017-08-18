@@ -354,8 +354,8 @@ def test_pca_validation():
     # (less than 0 or more than the lesser dimension of the input
     # matrix X) raise errors.
     X = np.array([[0, 1, 0], [1, 0, 0]])
-    minimum = 2 # The smallest dimension
-    lower_limit = {'randomized':1,'full':0,'auto':0}
+    minimum = 2  # The smallest dimension
+    lower_limit = {'randomized': 1, 'full': 0, 'auto': 0}
     # We conduct the same test on X.T so that it is invariant to axis.
     for data in [X, X.T]:
         for solver in solver_list:
@@ -371,8 +371,8 @@ def test_pca_validation():
                 else:
                     assert_raises_regex(ValueError,
                                         "n_components={} must be between {} "
-                                        "and min(n_samples, n_features)={} with "
-                                        "svd_solver='{}'"
+                                        "and min(n_samples, n_features)={} "
+                                        "with svd_solver='{}'"
                                         .format(n_components,
                                                 lower_limit[solver], minimum,
                                                 solver),
