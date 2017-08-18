@@ -551,6 +551,34 @@ values than observed values.
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
 estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
+The :class:`KNNImputer` class provides imputation for completing missing
+values using the k-Nearest Neighbors approach. Broadly speaking, the
+imputation is performed using either the weighted or the unweighted
+statistic (ex., mean) of the missing feature value of the desired number
+of neighbors. In case if all of the 'k' neighbors also have the desired
+feature value missing, then the value is imputed to be the "column" mean,
+that is the overall feature mean.
+
+The following snippet demonstrates how to replace missing values,
+encoded as ``np.nan``, using the mean feature value of the two nearest
+neighbors of the rows that contain the missing values::
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing.imputation import KNNImputer
+    >>> nan = np.nan
+    >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
+    >>> imputer = KNNImputer(n_neighbors=2, weights="uniform")
+    >>> imputer.fit_transform(X)
+    array([[ 1. ,  2. ,  4. ],
+           [ 3. ,  4. ,  3. ],
+           [ 5.5,  6. ,  5. ],
+           [ 8. ,  8. ,  7. ]])
+
+
+:class:`KNNImputer` can also be used in a Pipeline as a way to build a
+composite estimator that supports imputation.
+See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
+
 .. _polynomial_features:
 
 Generating polynomial features
