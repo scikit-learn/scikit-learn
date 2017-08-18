@@ -13,7 +13,6 @@ from ..utils import check_array
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..neighbors import NearestNeighbors
 from ..neighbors.base import _get_weights, _check_weights
 
 from ..externals import six
@@ -487,6 +486,9 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
+        # Import NearestNeighbor here to avoid circular import
+        from ..neighbors import NearestNeighbors
+
         # Check parameters
         force_all_finite = False if self.missing_values in ["NaN",
                                                             np.nan] else True
