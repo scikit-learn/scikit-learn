@@ -112,6 +112,23 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
         return sample_score.sum()
 
 
+def _check_labels_subset(present_labels, labels, allow_labels_subset):
+    present_labels = set(present_labels)
+    labels = set(labels)
+
+    if not present_labels.issuperset(labels):
+        raise ValueError("`labels = %s` contain a label(s) = %s not found in "
+                         "the unique values of y = %s")
+
+    if len(labels) < len(present_labels):
+        if not allow_labels_subset:
+            warnings.warn("The `allow_labels_subset` argument should be True "
+                          "if a subset of all classes=%s was passed in the "
+                          "labels=%s argument. `allow_labels_subset` was added"
+                          " in version 0.20 and this will result in error from"
+                          " version 0.22." % (present_labels, labels))
+
+
 def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     """Accuracy classification score.
 
@@ -183,7 +200,8 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
+def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
+                     allow_labels_subset=False):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
@@ -212,6 +230,13 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    allow_labels_subset : bool, optional default = False
+        This should be set to True if scoring on a subset of labels is
+        required. The subset of labels to score on should be passed in the
+        ``labels`` argument.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -291,7 +316,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     return CM
 
 
-def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
+def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None,
+                      allow_labels_subset=False):
     """Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -329,6 +355,13 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    allow_labels_subset : bool, optional default = False
+        This should be set to True if scoring on a subset of labels is
+        required. The subset of labels to score on should be passed in the
+        ``labels`` argument.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -613,7 +646,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
 
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
-             sample_weight=None):
+             sample_weight=None, allow_labels_subset=False):
     """Compute the F1 score, also known as balanced F-score or F-measure
 
     The F1 score can be interpreted as a weighted average of the precision and
@@ -682,6 +715,13 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    allow_labels_subset : bool, optional default = False
+        This should be set to True if scoring on a subset of labels is
+        required. The subset of labels to score on should be passed in the
+        ``labels`` argument.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
     f1_score : float or array of float, shape = [n_unique_labels]
@@ -715,7 +755,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
 
 def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
-                average='binary', sample_weight=None):
+                average='binary', sample_weight=None,
+                allow_labels_subset=False):
     """Compute the F-beta score
 
     The F-beta score is the weighted harmonic mean of precision and recall,
@@ -784,6 +825,13 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    allow_labels_subset : bool, optional default = False
+        This should be set to True if scoring on a subset of labels is
+        required. The subset of labels to score on should be passed in the
+        ``labels`` argument.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -877,7 +925,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                                     pos_label=1, average=None,
                                     warn_for=('precision', 'recall',
                                               'f-score'),
-                                    sample_weight=None):
+                                    sample_weight=None,
+                                    allow_labels_subset=False):
     """Compute precision, recall, F-measure and support for each class
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -960,6 +1009,13 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    allow_labels_subset : bool, optional default = False
+        This should be set to True if scoring on a subset of labels is
+        required. The subset of labels to score on should be passed in the
+        ``labels`` argument.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -1163,7 +1219,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
 
 def precision_score(y_true, y_pred, labels=None, pos_label=1,
-                    average='binary', sample_weight=None):
+                    average='binary', sample_weight=None,
+                    allow_labels_subset=False):
     """Compute the precision
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -1229,6 +1286,13 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    allow_labels_subset : bool, optional default = False
+        This should be set to True if scoring on a subset of labels is
+        required. The subset of labels to score on should be passed in the
+        ``labels`` argument.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
     precision : float (if average is not None) or array of float, shape =\
@@ -1263,7 +1327,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
 
 def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
-                 sample_weight=None):
+                 sample_weight=None, allow_labels_subset=False):
     """Compute the recall
 
     The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
@@ -1328,6 +1392,13 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    allow_labels_subset : bool, optional default = False
+        This should be set to True if scoring on a subset of labels is
+        required. The subset of labels to score on should be passed in the
+        ``labels`` argument.
+
+        .. versionadded:: 0.20
+
     Returns
     -------
     recall : float (if average is not None) or array of float, shape =\
@@ -1361,7 +1432,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None, digits=2):
+                          sample_weight=None, digits=2,
+                          allow_labels_subset=False):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1385,6 +1457,13 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     digits : int
         Number of digits for formatting output floating point values
+
+    allow_labels_subset : bool, optional default = False
+        This should be set to True if scoring on a subset of labels is
+        required. The subset of labels to score on should be passed in the
+        ``labels`` argument.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -1464,7 +1543,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
 
 def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
-                 classes=None):
+                 classes=None, allow_labels_subset=False):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1496,6 +1575,13 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         .. deprecated:: 0.18
            This parameter has been deprecated in favor of ``labels`` in
            version 0.18 and will be removed in 0.20. Use ``labels`` instead.
+
+    allow_labels_subset : bool, optional default = False
+        This should be set to True if scoring on a subset of labels is
+        required. The subset of labels to score on should be passed in the
+        ``labels`` argument.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -1574,7 +1660,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
 
 
 def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
-             labels=None):
+             labels=None, allow_labels_subset=False):
     """Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
@@ -1617,6 +1703,13 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
         is ``None`` and ``y_pred`` has shape (n_samples,) the labels are
         assumed to be binary and are inferred from ``y_true``.
         .. versionadded:: 0.18
+
+    allow_labels_subset : bool, optional default = False
+        This should be set to True if scoring on a subset of labels is
+        required. The subset of labels to score on should be passed in the
+        ``labels`` argument.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -1696,7 +1789,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     return _weighted_sum(loss, sample_weight, normalize)
 
 
-def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
+def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None,
+               allow_labels_subset=False):
     """Average hinge loss (non-regularized)
 
     In binary class case, assuming labels in y_true are encoded with +1 and -1,
@@ -1727,6 +1821,13 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
+
+    allow_labels_subset : bool, optional default = False
+        This should be set to True if scoring on a subset of labels is
+        required. The subset of labels to score on should be passed in the
+        ``labels`` argument.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
