@@ -17,7 +17,6 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -41,7 +40,6 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import joblib
-from sklearn.naive_bayes import GaussianNB
 
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
@@ -577,9 +575,3 @@ def test_pass_classes():
     scorer = make_scorer(DummyScorerWithLabelsNamedDifferent,
                          pass_classes='labels_other_name')
     assert_equal(scorer(clf, X, y), 1)
-
-    # test that passing labels through make_scorer affects the actual scores
-    clf = GaussianNB()
-    clf.fit(X, y)
-    scorer = make_scorer(f1_score, average="macro", pass_classes=None)
-    scores = scorer(clf, X, y)

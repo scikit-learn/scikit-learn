@@ -113,20 +113,17 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
 
 
 def _check_labels_subset(present_labels, labels, allow_labels_subset):
-    present_labels = set(present_labels)
-    labels = set(labels)
+    present_labels_ = set(present_labels)
+    labels_ = set(labels)
 
-    if not present_labels.issuperset(labels):
-        raise ValueError("`labels = %s` contain a label(s) = %s not found in "
-                         "the unique values of y = %s")
-
-    if len(labels) < len(present_labels):
+    if present_labels_ - labels_:
         if not allow_labels_subset:
             warnings.warn("The `allow_labels_subset` argument should be True "
-                          "if a subset of all classes=%s was passed in the "
-                          "labels=%s argument. `allow_labels_subset` was added"
-                          " in version 0.20 and this will result in error from"
-                          " version 0.22." % (present_labels, labels))
+                          "if a subset of available classes=%s was passed in "
+                          " the labels=%s argument. `allow_labels_subset` was "
+                          " added in version 0.20 and this behavior will "
+                          "result in error from version 0.22." %
+                          (present_labels, labels), DeprecationWarning)
 
 
 def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
@@ -276,9 +273,11 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
+    present_labels = unique_labels(y_true, y_pred)
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        labels = present_labels
     else:
+        _check_labels_subset(present_labels, labels, allow_labels_subset)
         labels = np.asarray(labels)
         if np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
@@ -751,7 +750,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
                        pos_label=pos_label, average=average,
-                       sample_weight=sample_weight)
+                       sample_weight=sample_weight,
+                       allow_labels_subset=allow_labels_subset)
 
 
 def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
@@ -867,13 +867,15 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     array([ 0.71...,  0.        ,  0.        ])
 
     """
-    _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
-                                                 beta=beta,
-                                                 labels=labels,
-                                                 pos_label=pos_label,
-                                                 average=average,
-                                                 warn_for=('f-score',),
-                                                 sample_weight=sample_weight)
+    _, _, f, _ = precision_recall_fscore_support(
+                                 y_true, y_pred,
+                                 beta=beta,
+                                 labels=labels,
+                                 pos_label=pos_label,
+                                 average=average,
+                                 warn_for=('f-score',),
+                                 sample_weight=sample_weight,
+                                 allow_labels_subset=allow_labels_subset)
     return f
 
 
@@ -1104,6 +1106,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         labels = present_labels
         n_labels = None
     else:
+        _check_labels_subset(present_labels, labels, allow_labels_subset)
         n_labels = len(labels)
         labels = np.hstack([labels, np.setdiff1d(present_labels, labels,
                                                  assume_unique=True)])
@@ -1317,12 +1320,14 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     array([ 0.66...,  0.        ,  0.        ])
 
     """
-    p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
-                                                 labels=labels,
-                                                 pos_label=pos_label,
-                                                 average=average,
-                                                 warn_for=('precision',),
-                                                 sample_weight=sample_weight)
+    p, _, _, _ = precision_recall_fscore_support(
+                                     y_true, y_pred,
+                                     labels=labels,
+                                     pos_label=pos_label,
+                                     average=average,
+                                     warn_for=('precision',),
+                                     sample_weight=sample_weight,
+                                     allow_labels_subset=allow_labels_subset)
     return p
 
 
@@ -1422,12 +1427,14 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
 
 
     """
-    _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
-                                                 labels=labels,
-                                                 pos_label=pos_label,
-                                                 average=average,
-                                                 warn_for=('recall',),
-                                                 sample_weight=sample_weight)
+    _, r, _, _ = precision_recall_fscore_support(
+                                     y_true, y_pred,
+                                     labels=labels,
+                                     pos_label=pos_label,
+                                     average=average,
+                                     warn_for=('recall',),
+                                     sample_weight=sample_weight,
+                                     allow_labels_subset=allow_labels_subset)
     return r
 
 
@@ -1496,9 +1503,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     """
 
+    present_labels = unique_labels(y_true, y_pred)
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        labels = present_labels
     else:
+        _check_labels_subset(present_labels, labels, allow_labels_subset)
         labels = np.asarray(labels)
 
     if target_names is not None and len(labels) != len(target_names):
@@ -1637,9 +1646,11 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
+    present_labels = unique_labels(y_true, y_pred)
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        labels = present_labels
     else:
+        _check_labels_subset(present_labels, labels, allow_labels_subset)
         labels = np.asarray(labels)
 
     if sample_weight is None:
@@ -1736,6 +1747,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     lb = LabelBinarizer()
 
     if labels is not None:
+        _check_labels_subset(unique_labels(y_true, y_pred),
+                             labels, allow_labels_subset)
         lb.fit(labels)
     else:
         lb.fit(y_true)
