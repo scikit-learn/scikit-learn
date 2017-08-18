@@ -60,13 +60,10 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
     check_inverse : bool, default=True
        Whether to check that or ``func`` followed by ``inverse_func`` leads to
-       the original inputs. It can be used for a sanity check.
+       the original inputs. It can be used for a sanity check, raising a
+       warning when the condition is not fulfilled.
 
        .. versionadded:: 0.20
-
-       .. deprecated:: 0.20
-          ``check_inverse=True`` is currently raising a warning if the
-          condition is violated. From 0.22, an error will be raised instead.
 
     kw_args : dict, optional
         Dictionary of additional keyword arguments to pass to func.

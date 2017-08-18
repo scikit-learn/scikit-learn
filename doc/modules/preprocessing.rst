@@ -611,7 +611,13 @@ a transformer that applies a log transformation in a pipeline, do::
            [ 1.09861229,  1.38629436]])
 
 You can ensure that ``func`` and ``inverse_func`` are the inverse of each other
-by setting ``check_inverse=True``.
+by setting ``check_inverse=True`` and calling ``fit`` before
+``transform``. Please note that a warning is raised and can be turned into an
+error with a ``filterwarnings``::
+
+  >>> import warnings
+  >>> warnings.filterwarnings("error", message="The provided functions are not"
+  ...                         " strictly inverse of each other", append=True)
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
 to do custom feature selection,
