@@ -155,8 +155,10 @@ class Wrong_Dummy(object):
 
 
 def test_agglomerative_clustering_with_cache_attribute():
-    X = np.random.random((100, 1000))
-    clustering = AgglomerativeClustering(memory=Dummy())
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    clustering = AgglomerativeClustering(memory = Dummy())
     clustering.fit(X)
 
     clustering = AgglomerativeClustering(memory=Wrong_Dummy())
