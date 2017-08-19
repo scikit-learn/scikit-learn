@@ -270,8 +270,8 @@ class Dummy(object):
     def __init__(self):
         pass
 
-    def cache(self):
-        pass
+    def cache(self, func):
+        return func
 
 
 class Wrong_Dummy(object):
