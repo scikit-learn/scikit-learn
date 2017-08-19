@@ -475,7 +475,7 @@ class PCA(_BasePCA):
                                 svd_solver))
         elif svd_solver == 'arpack' and n_components == min(n_samples,
                                                             n_features):
-            raise ValueError("n_components=%r must be stricly less than "
+            raise ValueError("n_components=%r must be strictly less than "
                              "min(n_samples, n_features)=%r with "
                              "svd_solver='%s'"
                              % (n_components, min(n_samples, n_features),
