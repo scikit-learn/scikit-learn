@@ -15,7 +15,6 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
-from joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
@@ -25,6 +24,8 @@ from ._feature_agglomeration import AgglomerationTransform
 from ..utils.fast_dict import IntFloatDict
 
 from ..externals.six.moves import xrange
+
+from sklearn.utils.validation import check_memory
 
 ###############################################################################
 # For non fully-connected graphs
@@ -694,12 +695,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self
         """
         X = check_array(X, ensure_min_samples=2, estimator=self)
-        memory = self.memory
-        if memory is None:
-            memory = Memory(cachedir=None, verbose=0)
-        elif isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory, verbose=0)
-        elif not hasattr(memory, 'cache'):
+        memory = check_memory(self.memory)
+        if not hasattr(memory, 'cache'):
             raise ValueError("'memory' should either be a string or"
                              " a joblib.Memory"
                              " instance, got 'memory={!r}' instead.".format(

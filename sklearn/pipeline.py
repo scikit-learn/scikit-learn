@@ -15,14 +15,14 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
-from .externals.joblib import Parallel, delayed
-from joblib import Memory
+from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
 
 from .utils.metaestimators import _BaseComposition
+from sklearn.utils.validation import check_memory
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
@@ -188,12 +188,8 @@ class Pipeline(_BaseComposition):
     def _fit(self, X, y=None, **fit_params):
         self._validate_steps()
         # Setup the memory
-        memory = self.memory
-        if memory is None:
-            memory = Memory(cachedir=None, verbose=0)
-        elif isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory, verbose=0)
-        elif not hasattr(memory, 'cache'):
+        memory = check_memory(self.memory)
+        if not hasattr(memory, 'cache'):
             raise ValueError("'memory' should either be a string or"
                              " a joblib.Memory"
                              " instance, got 'memory={!r}' instead.".format(

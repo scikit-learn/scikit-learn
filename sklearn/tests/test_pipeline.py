@@ -31,7 +31,7 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
-from joblib import Memory
+from sklearn.externals.joblib import Memory
 
 
 JUNK_FOOD_DOCS = (
