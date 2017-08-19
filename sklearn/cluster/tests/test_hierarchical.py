@@ -158,7 +158,7 @@ def test_agglomerative_clustering_with_cache_attribute():
     rng = np.random.RandomState(0)
     n_samples = 100
     X = rng.randn(n_samples, 50)
-    clustering = AgglomerativeClustering(memory = Dummy())
+    clustering = AgglomerativeClustering(memory=Dummy())
     clustering.fit(X)
 
     clustering = AgglomerativeClustering(memory=Wrong_Dummy())
