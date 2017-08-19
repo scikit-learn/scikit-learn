@@ -350,34 +350,44 @@ def test_pca_inverse():
 
 
 def test_pca_validation():
-    # Ensures that extreme inputs for n_components common to all solvers
-    # (less than 0 or more than the lesser dimension of the input
-    # matrix X) raise errors.
+    # Ensures that solver-specific extreme inputs for the n_components
+    # parameter raise errors
     X = np.array([[0, 1, 0], [1, 0, 0]])
-    minimum = 2  # The smallest dimension
-    lower_limit = {'randomized': 1, 'full': 0, 'auto': 0}
-    # We conduct the same test on X.T so that it is invariant to axis.
-    for data in [X, X.T]:
-        for solver in solver_list:
+    smallest_d = 2  # The smallest dimension
+    lower_limit = {'randomized': 1, 'arpack': 1, 'full': 0, 'auto': 0}
+
+    for solver in solver_list:
+        # We conduct the same test on X.T so that it is invariant to axis.
+        for data in [X, X.T]:
             for n_components in [-1, 3]:
-                if solver == 'arpack':
-                    assert_raises_regex(ValueError,
-                                        "n_components={} must be stricly less "
-                                        "than min(n_samples, n_features)={} "
-                                        "with svd_solver='arpack'"
-                                        .format(n_components, minimum),
-                                        PCA(n_components, svd_solver=solver)
-                                        .fit, data)
+
+                if solver == 'auto':
+                    solver_reported = 'full'
                 else:
-                    assert_raises_regex(ValueError,
-                                        "n_components={} must be between {} "
-                                        "and min(n_samples, n_features)={} "
-                                        "with svd_solver='{}'"
-                                        .format(n_components,
-                                                lower_limit[solver], minimum,
-                                                solver),
-                                        PCA(n_components,
-                                            svd_solver=solver).fit, data)
+                    solver_reported = solver
+
+                assert_raises_regex(ValueError,
+                                    "n_components={} must be between "
+                                    "{} and min\(n_samples, n_features\)="
+                                    "{} with svd_solver=\'{}\'"
+                                    .format(n_components,
+                                            lower_limit[solver],
+                                            smallest_d,
+                                            solver_reported),
+                                    PCA(n_components,
+                                        svd_solver=solver).fit, data)
+            if solver == 'arpack':
+
+                n_components = smallest_d
+
+                assert_raises_regex(ValueError,
+                                    "n_components={} must be "
+                                    "strictly less than "
+                                    "min\(n_samples, n_features\)={}"
+                                    " with svd_solver=\'arpack\'"
+                                    .format(n_components, smallest_d),
+                                    PCA(n_components, svd_solver=solver)
+                                    .fit, data)
 
 
 def test_n_components_none():
