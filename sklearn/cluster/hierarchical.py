@@ -736,7 +736,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             n_clusters = None
 
         # Construct the tree
-        if not getattr(memory, 'cachedir', True): 
+        if getattr(memory, 'cachedir', True) != True: 
             kwargs = {}
             if self.linkage != 'ward':
                 kwargs['linkage'] = self.linkage
