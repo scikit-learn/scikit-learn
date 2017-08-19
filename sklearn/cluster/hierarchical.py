@@ -15,7 +15,6 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
-from joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
@@ -695,11 +694,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         """
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = self.memory
-        if memory is None:
-            memory = Memory(cachedir=None, verbose=0)
-        elif isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory, verbose=0)
-        elif not hasattr(memory, 'cache'):
+        if not hasattr(memory, 'cache'):
             raise ValueError("'memory' should either be a string or"
                              " a joblib.Memory"
                              " instance, got 'memory={!r}' instead.".format(
@@ -741,14 +736,15 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             n_clusters = None
 
         # Construct the tree
-        kwargs = {}
-        if self.linkage != 'ward':
-            kwargs['linkage'] = self.linkage
-            kwargs['affinity'] = self.affinity
-        self.children_, self.n_components_, self.n_leaves_, parents = \
-            memory.cache(tree_builder)(X, connectivity,
-                                       n_clusters=n_clusters,
-                                       **kwargs)
+        if not getattr(memory, 'cachedir', True): 
+            kwargs = {}
+            if self.linkage != 'ward':
+                kwargs['linkage'] = self.linkage
+                kwargs['affinity'] = self.affinity
+            self.children_, self.n_components_, self.n_leaves_, parents = \
+                memory.cache(tree_builder)(X, connectivity,
+                                           n_clusters=n_clusters,
+                                           **kwargs)
         # Cut the tree
         if compute_full_tree:
             self.labels_ = _hc_cut(self.n_clusters, self.children_,
