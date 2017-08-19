@@ -737,16 +737,15 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if compute_full_tree:
             n_clusters = None
 
-        # Construct the tree
-        if getattr(memory, 'cachedir', True) != True: 
-            kwargs = {}
-            if self.linkage != 'ward':
-                kwargs['linkage'] = self.linkage
-                kwargs['affinity'] = self.affinity
-            self.children_, self.n_components_, self.n_leaves_, parents = \
-                memory.cache(tree_builder)(X, connectivity,
-                                           n_clusters=n_clusters,
-                                           **kwargs)
+        # Construct the tree 
+        kwargs = {}
+        if self.linkage != 'ward':
+            kwargs['linkage'] = self.linkage
+            kwargs['affinity'] = self.affinity
+        self.children_, self.n_components_, self.n_leaves_, parents = \
+            memory.cache(tree_builder)(X, connectivity,
+                                       n_clusters=n_clusters,
+                                       **kwargs)
         # Cut the tree
         if compute_full_tree:
             self.labels_ = _hc_cut(self.n_clusters, self.children_,
