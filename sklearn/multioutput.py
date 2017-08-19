@@ -18,7 +18,7 @@ import numpy as np
 import scipy.sparse as sp
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
-from .base import RegressorMixin, ClassifierMixin
+from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.fixes import parallel_helper
@@ -154,7 +154,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
                          multi_output=True,
                          accept_sparse=True)
 
-        if isinstance(self, ClassifierMixin):
+        if is_classifier(self):
             check_classification_targets(y)
 
         if y.ndim == 1:
@@ -319,7 +319,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
     def predict_proba(self, X):
         """Probability estimates.
-        Returns prediction probabilites for each class of each output.
+        Returns prediction probabilities for each class of each output.
 
         Parameters
         ----------
