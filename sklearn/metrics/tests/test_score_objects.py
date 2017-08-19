@@ -563,6 +563,13 @@ def test_pass_classes():
     scorer = make_scorer(DummyScorerWithLabels)
     assert_equal(scorer(clf, X, y), 1)
 
+    # by default, labels should be set
+    scorer = make_scorer(DummyScorerWithLabels, labels=[1, 2, 3])
+    expected_msg = ("`estimator classes=[0 1]` is not the"
+                    "superset of `scorer labels=[1, 2, 3]`")
+    assert_raise_message(ValueError, expected_msg,
+                         scorer, clf, X, y)
+
     # if an argument other than labels passed, then it should be present in
     # scorer's signature
     scorer = make_scorer(DummyScorerWithLabels, pass_classes='label_names')
