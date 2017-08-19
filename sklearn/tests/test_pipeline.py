@@ -273,6 +273,8 @@ class Dummy(object):
     def cache(self, func):
         return func
 
+    cachedir = None
+
 
 class Wrong_Dummy(object):
     def __init__(self):
