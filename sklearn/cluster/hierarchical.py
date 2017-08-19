@@ -737,7 +737,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if compute_full_tree:
             n_clusters = None
 
-        # Construct the tree 
+        # Construct the tree
         kwargs = {}
         if self.linkage != 'ward':
             kwargs['linkage'] = self.linkage
