@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 
 from sklearn.preprocessing.imputation import Imputer
+from sklearn.preprocessing.imputation import MICEImputer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
@@ -85,6 +86,10 @@ def test_imputation_shape():
         assert_equal(X_imputed.shape, (10, 2))
         X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
         assert_equal(X_imputed.shape, (10, 2))
+
+    mice = MICEImputer()
+    X_imputed = mice.fit_transform(X)
+    assert_equal(X_imputed.shape, (10, 2))
 
 
 def test_imputation_mean_median_only_zero():
@@ -267,6 +272,24 @@ def test_imputation_pipeline_grid_search():
 
     l = 100
     X = sparse_random_matrix(l, l, density=0.10)
+    Y = sparse_random_matrix(l, 1, density=0.10).toarray()
+    gs = GridSearchCV(pipeline, parameters)
+    gs.fit(X, Y)
+
+
+def test_mice_pipeline_grid_search():
+    # Test imputation within a pipeline + gridsearch.
+    pipeline = Pipeline([('imputer', MICEImputer(missing_values=0,
+                                                 n_imputations=1,
+                                                 n_burn_in=1)),
+                         ('tree', tree.DecisionTreeRegressor(random_state=0))])
+
+    parameters = {
+        'imputer__initial_fill_method': ["mean", "median", "most_frequent"]
+    }
+
+    l = 100
+    X = sparse_random_matrix(l, l, density=0.10).toarray()
     Y = sparse_random_matrix(l, 1, density=0.10).toarray()
     gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
