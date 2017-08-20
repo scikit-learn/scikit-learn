@@ -27,6 +27,14 @@ def test_permutation_invariance():
     assert_array_equal(y_transformed, y_transformed_s)
 
 
+def test_check_increasing_small_number_of_samples():
+    x = [0, 1, 2]
+    y = [1, 1.1, 1.05]
+
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_true(is_increasing)
+
+
 def test_check_increasing_up():
     x = [0, 1, 2, 3, 4, 5]
     y = [0, 1.5, 2.77, 8.99, 8.99, 50]

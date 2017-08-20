@@ -15,7 +15,6 @@ import scipy.sparse as sp
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
 from ..utils import shuffle as util_shuffle
-from ..utils.fixes import astype
 from ..utils.random import sample_without_replacement
 from ..externals import six
 map = six.moves.map
@@ -26,11 +25,11 @@ def _generate_hypercube(samples, dimensions, rng):
     """Returns distinct binary samples of length dimensions
     """
     if dimensions > 30:
-        return np.hstack([_generate_hypercube(samples, dimensions - 30, rng),
+        return np.hstack([rng.randint(2, size=(samples, dimensions - 30)),
                           _generate_hypercube(samples, 30, rng)])
-    out = astype(sample_without_replacement(2 ** dimensions, samples,
-                                            random_state=rng),
-                 dtype='>u4', copy=False)
+    out = sample_without_replacement(2 ** dimensions, samples,
+                                     random_state=rng).astype(dtype='>u4',
+                                                              copy=False)
     out = np.unpackbits(out.view('>u1')).reshape((-1, 32))[:, -dimensions:]
     return out
 
@@ -590,6 +589,12 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
 
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
     factor : double < 1 (default=.8)
         Scale factor between inner and outer circle.
 
@@ -643,6 +648,12 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
     noise : double or None (default=None)
         Standard deviation of Gaussian noise added to the data.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -1059,8 +1070,11 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
     n_nonzero_coefs : int
         number of active (non-zero) coefficients in each sample
 
-    random_state : int or RandomState instance, optional (default=None)
-        seed used by the pseudo random number generator
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -1197,21 +1211,21 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
         The probability that a coefficient is zero (see notes). Larger values
         enforce more sparsity.
 
+    norm_diag : boolean, optional (default=False)
+        Whether to normalize the output matrix to make the leading diagonal
+        elements all 1
+
+    smallest_coef : float between 0 and 1, optional (default=0.1)
+        The value of the smallest coefficient.
+
+    largest_coef : float between 0 and 1, optional (default=0.9)
+        The value of the largest coefficient.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    largest_coef : float between 0 and 1, optional (default=0.9)
-        The value of the largest coefficient.
-
-    smallest_coef : float between 0 and 1, optional (default=0.1)
-        The value of the smallest coefficient.
-
-    norm_diag : boolean, optional (default=False)
-        Whether to normalize the output matrix to make the leading diagonal
-        elements all 1
 
     Returns
     -------

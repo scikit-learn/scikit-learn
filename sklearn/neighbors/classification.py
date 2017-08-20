@@ -61,16 +61,16 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or DistanceMetric object (default = 'minkowski')
-        the distance metric to use for the tree.  The default metric is
-        minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
-        list of available metrics.
-
     p : integer, optional (default = 2)
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric : string or callable, default 'minkowski'
+        the distance metric to use for the tree.  The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. See the documentation of the DistanceMetric class for a
+        list of available metrics.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -233,7 +233,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     Parameters
     ----------
     radius : float, optional (default = 1.0)
-        Range of parameter space to use by default for :meth`radius_neighbors`
+        Range of parameter space to use by default for :meth:`radius_neighbors`
         queries.
 
     weights : str or callable
@@ -254,7 +254,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDtree`
+        - 'kd_tree' will use :class:`KDTree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -268,16 +268,16 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or DistanceMetric object (default='minkowski')
-        the distance metric to use for the tree.  The default metric is
-        minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
-        list of available metrics.
-
     p : integer, optional (default = 2)
         Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric : string or callable, default 'minkowski'
+        the distance metric to use for the tree.  The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. See the documentation of the DistanceMetric class for a
+        list of available metrics.
 
     outlier_label : int, optional (default = None)
         Label, which is given for outlier samples (samples with no
@@ -366,8 +366,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
-            pred_labels = np.array([_y[ind, k] for ind in neigh_ind],
-                                   dtype=object)
+            pred_labels = np.zeros(len(neigh_ind), dtype=object)
+            pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
             if weights is None:
                 mode = np.array([stats.mode(pl)[0]
                                  for pl in pred_labels[inliers]], dtype=np.int)

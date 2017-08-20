@@ -6,6 +6,8 @@ Testing for mean shift clustering methods
 import numpy as np
 import warnings
 
+from scipy import sparse
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
@@ -45,6 +47,13 @@ def test_mean_shift():
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)
     assert_equal(n_clusters_, n_clusters)
+
+
+def test_estimate_bandwidth_with_sparse_matrix():
+    # Test estimate_bandwidth with sparse matrix
+    X = sparse.lil_matrix((1000, 1000))
+    msg = "A sparse matrix was passed, but dense data is required."
+    assert_raise_message(TypeError, msg, estimate_bandwidth, X, 200)
 
 
 def test_parallel():

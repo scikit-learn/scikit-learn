@@ -158,7 +158,7 @@ def test_load_missing_sample_image_error():
         try:
             from scipy.misc import imread
         except ImportError:
-            from scipy.misc.pilutil import imread
+            from scipy.misc.pilutil import imread  # noqa
     except ImportError:
         have_PIL = False
     if have_PIL:
@@ -173,6 +173,7 @@ def test_load_diabetes():
     assert_equal(res.data.shape, (442, 10))
     assert_true(res.target.size, 442)
     assert_equal(len(res.feature_names), 10)
+    assert_true(res.DESCR)
 
     # test return_X_y option
     X_y_tuple = load_diabetes(return_X_y=True)

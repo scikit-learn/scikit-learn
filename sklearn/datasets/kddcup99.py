@@ -11,35 +11,42 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 import sys
 import errno
 from gzip import GzipFile
-from io import BytesIO
 import logging
 import os
 from os.path import exists, join
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 
 import numpy as np
 
+
+from .base import _fetch_remote
 from .base import get_data_home
-from .base import Bunch
+from .base import RemoteFileMetadata
+from ..utils import Bunch
 from ..externals import joblib, six
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 
+# The original data can be found at:
+# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz
+ARCHIVE = RemoteFileMetadata(
+    filename='kddcup99_data',
+    url='https://ndownloader.figshare.com/files/5976045',
+    checksum=('3b6c942aa0356c0ca35b7b595a26c89d'
+              '343652c9db428893e7494f837b274292'))
 
-URL10 = ('http://archive.ics.uci.edu/ml/'
-         'machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz')
+# The original data can be found at:
+# http://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data_10_percent.gz
+ARCHIVE_10_PERCENT = RemoteFileMetadata(
+    filename='kddcup99_10_data',
+    url='https://ndownloader.figshare.com/files/5976042',
+    checksum=('8045aca0d84e70e622d1148d7df78249'
+              '6f6333bf6eb979a1b0837c42a9fd9561'))
 
-URL = ('http://archive.ics.uci.edu/ml/'
-       'machine-learning-databases/kddcup99-mld/kddcup.data.gz')
+logger = logging.getLogger(__name__)
 
 
-logger = logging.getLogger()
-
-
-def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
+def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
+                   random_state=None,
                    percent10=True, download_if_missing=True):
     """Load and return the kddcup 99 dataset (classification).
 
@@ -124,15 +131,20 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
         To return the corresponding classical subsets of kddcup 99.
         If None, return the entire kddcup 99 dataset.
 
+    data_home : string, optional
+        Specify another download and cache folder for the datasets. By default
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+        .. versionadded:: 0.19
+
+    shuffle : bool, default=False
+        Whether to shuffle dataset.
+
     random_state : int, RandomState instance or None, optional (default=None)
         Random state for shuffling the dataset.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    shuffle : bool, default=False
-        Whether to shuffle dataset.
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.
@@ -162,7 +174,9 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
            and data mining, pages 320-324. ACM Press, 2000.
 
     """
-    kddcup99 = _fetch_brute_kddcup99(shuffle=shuffle, percent10=percent10,
+    data_home = get_data_home(data_home=data_home)
+    kddcup99 = _fetch_brute_kddcup99(data_home=data_home, shuffle=shuffle,
+                                     percent10=percent10,
                                      download_if_missing=download_if_missing)
 
     data = kddcup99.data
@@ -214,7 +228,7 @@ def fetch_kddcup99(subset=None, shuffle=False, random_state=None,
     return Bunch(data=data, target=target)
 
 
-def _fetch_brute_kddcup99(subset=None, data_home=None,
+def _fetch_brute_kddcup99(data_home=None,
                           download_if_missing=True, random_state=None,
                           shuffle=False, percent10=True):
 
@@ -222,13 +236,9 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
 
     Parameters
     ----------
-    subset : None, 'SA', 'SF', 'http', 'smtp'
-        To return the corresponding classical subsets of kddcup 99.
-        If None, return the entire kddcup 99 dataset.
-
     data_home : string, optional
         Specify another download and cache folder for the datasets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     download_if_missing : boolean, default=True
         If False, raise a IOError if the data is not locally available
@@ -269,20 +279,22 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
     else:
         # Backward compat for Python 2 users
         dir_suffix = ""
+
     if percent10:
         kddcup_dir = join(data_home, "kddcup99_10" + dir_suffix)
+        archive = ARCHIVE_10_PERCENT
     else:
         kddcup_dir = join(data_home, "kddcup99" + dir_suffix)
+        archive = ARCHIVE
+
     samples_path = join(kddcup_dir, "samples")
     targets_path = join(kddcup_dir, "targets")
     available = exists(samples_path)
 
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
-        URL_ = URL10 if percent10 else URL
-        logger.warning("Downloading %s" % URL_)
-        f = BytesIO(urlopen(URL_).read())
-
+        logger.info("Downloading %s" % archive.url)
+        _fetch_remote(archive, dirname=kddcup_dir)
         dt = [('duration', int),
               ('protocol_type', 'S4'),
               ('service', 'S11'),
@@ -326,15 +338,18 @@ def _fetch_brute_kddcup99(subset=None, data_home=None,
               ('dst_host_srv_rerror_rate', float),
               ('labels', 'S16')]
         DT = np.dtype(dt)
-
-        file_ = GzipFile(fileobj=f, mode='r')
+        logger.debug("extracting archive")
+        archive_path = join(kddcup_dir, archive.filename)
+        file_ = GzipFile(filename=archive_path, mode='r')
         Xy = []
         for line in file_.readlines():
             if six.PY3:
                 line = line.decode()
             Xy.append(line.replace('\n', '').split(','))
         file_.close()
-        print('extraction done')
+        logger.debug('extraction done')
+        os.remove(archive_path)
+
         Xy = np.asarray(Xy, dtype=object)
         for j in range(42):
             Xy[:, j] = Xy[:, j].astype(DT[j])

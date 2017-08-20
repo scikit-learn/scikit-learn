@@ -237,7 +237,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                                     X.indptr[1:-1])
 
             # astype necessary for bug in numpy.hsplit before v1.9
-            columns = [col[astype(mask, bool, copy=False)]
+            columns = [col[mask.astype(bool, copy=False)]
                        for col, mask in zip(columns_all, mask_valids)]
 
             # Median
@@ -367,8 +367,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
                                 np.diff(X.indptr))[mask]
 
-            X.data[mask] = astype(valid_statistics[indexes], X.dtype,
-                                  copy=False)
+            X.data[mask] = valid_statistics[indexes].astype(X.dtype,
+                                                            copy=False)
         else:
             if sparse.issparse(X):
                 X = X.toarray()
@@ -624,11 +624,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                         strategy=self.initial_fill_method,
                                         axis=0)
         X_filled = self.initial_imputer_.fit_transform(X)
-<<<<<<< HEAD
         self._val_inds = self.initial_imputer_._valid_statistics_inds
-=======
-        self._val_inds = self.initial_imputer_._valid_statistics_inds
->>>>>>> a7c5f6b22d0692f04de185bc18f788045577d6f2
+
         X = X[:, self._val_inds]
         mask_missing_values = mask_missing_values[:, self._val_inds]
 

@@ -67,16 +67,20 @@ extension in place::
     python setup.py build_ext --inplace
 
 
-Another option is to use the ``develop`` option if you change your code a lot
-and do not want to have to reinstall every time. This basically builds the
-extension in place and creates a link to the development directory (see
-`the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_)::
+Another option is to install the package in editable mode if you change your
+code a lot and do not want to have to reinstall every time. This basically
+builds the extension in place and creates a link to the development directory
+(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
 
-    python setup.py develop
+    pip install --editable .
 
 .. note::
 
-    if you decide to do that you have to rerun::
+    This is fundamentally similar to using the command ``python setup.py develop`` (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_). It is however preferred to use pip.
+
+.. note::
+
+    If you decide to do an editable install you have to rerun::
 
         python setup.py build_ext --inplace
 
@@ -111,7 +115,8 @@ then submit a "pull request" (PR):
  2. Fork the `project repository
     <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
     button near the top of the page. This creates a copy of the code under your
-    account on the GitHub server.
+    account on the GitHub server. For more details on how to fork a
+    repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
  3. Clone this copy to your local disk::
 
@@ -133,10 +138,11 @@ then submit a "pull request" (PR):
 
         $ git push -u origin my-feature
 
-Finally, go to the web page of the your fork of the scikit-learn repo,
-and click 'Pull request' to send your changes to the maintainers for review.
-You may want to consider sending an email to the mailing list for more
-visibility.
+Finally, follow `these
+<https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+instructions to create a pull request from your fork. This will send an
+email to the committers. You may want to consider sending an email to the
+mailing list for more visibility.
 
 .. note::
 
@@ -153,12 +159,22 @@ If any of the above seems like magic to you, then look up the `Git documentation
 <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
 web.
 
-In particular, if some conflicts arise between your branch and the master
-branch, you will need to `rebase your branch on master
-<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#rebasing-on-master>`_.
-Please avoid merging master branch into yours. If you did it anyway, you can fix
-it following `this example
-<https://github.com/scikit-learn/scikit-learn/pull/7111#issuecomment-249175383>`_.
+If some conflicts arise between your branch and the ``master`` branch, you need
+to merge ``master``. The command will be::
+
+  $ git merge master
+
+with ``master`` being synchronized with the ``upstream``.
+
+Subsequently, you need to solve the conflicts. You can refer to the `Git
+documentation related to resolving merge conflict using the command line
+<https://help.github.com/articles/resolving-a-merge-conflict-using-the-command-line/>`_.
+
+.. note::
+
+   In the past, the policy to resolve conflicts was to rebase your branch on
+   ``master``. GitHub interface deals with merging ``master`` better than in
+   the past.
 
 
 Contributing pull requests
@@ -208,8 +224,15 @@ rules before submitting a pull request:
       practice and, if possible, compare it to other methods available in
       scikit-learn.
 
-    * Documentation and high-coverage tests are necessary for enhancements
-      to be accepted.
+    * Documentation and high-coverage tests are necessary for enhancements to be
+      accepted. Bug-fixes or new features should be provided with
+      `non-regression tests
+      <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
+      verify the correct behavior of the fix or feature. In this manner, further
+      modifications on the code base are granted to be consistent with the
+      desired behavior. For the case of bug fixes, at the time of the PR, the
+      non-regression tests should fail for the code base in the master branch
+      and pass for the PR code.
 
     * At least one paragraph of narrative documentation with links to
       references in the literature (with PDF links when possible) and
@@ -309,7 +332,7 @@ following rules before submitting:
 
 -  Please include your operating system type and version number, as well
    as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by runnning the following code snippet::
+   can be found by running the following code snippet::
 
      import platform; print(platform.platform())
      import sys; print("Python", sys.version)
@@ -405,7 +428,7 @@ opposed to how it works "under the hood".
 You may also be asked to show your changes when it's built. When you create
 a pull request or make changes in an existing one modifying the docs, CircleCI
 automatically builds them. Thus, you can easily view your changes in the built
-artifacts using the following formula:
+artifacts using the following URL:
 
 ``http://scikit-learn.org/circle?{BUILD_NUMBER}``
 
@@ -728,16 +751,23 @@ the removal will be in 0.(x+2). For example, if the deprecation happened
 in version 0.18-dev, the message should say it happened in version 0.18
 and the old behavior will be removed in version 0.20.
 
+In addition, a deprecation note should be added in the docstring, recalling the
+same information as the deprecation warning as explained above. Use the
+``.. deprecated::`` directive::
+
+  .. deprecated:: 0.13
+     ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
+     in 0.15.
+
 
 .. currentmodule:: sklearn
 
-Python 3.x support
-------------------
+Python versions supported
+-------------------------
 
-All scikit-learn code should work unchanged in both Python 2.[67]
-and 3.2 or newer. Since Python 3.x is not backwards compatible,
-that may require changes to code and it certainly requires testing
-on both 2.7 and 3.2 or newer.
+All scikit-learn code should work unchanged in both Python 2.7 and 3.4 or
+newer. Since Python 3.x is not backwards compatible, that may require changes
+to code and it certainly requires testing on both 2.7 and 3.4 or newer.
 
 For most numerical algorithms, Python 3.x support is easy:
 just remember that ``print`` is a function and

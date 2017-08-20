@@ -18,12 +18,11 @@ from __future__ import division
 from math import log
 
 import numpy as np
-from scipy.misc import comb
 from scipy import sparse as sp
 
 from .expected_mutual_info_fast import expected_mutual_information
-from ...utils.fixes import bincount
 from ...utils.validation import check_array
+from ...utils.fixes import comb
 
 
 def comb2(n):
@@ -151,7 +150,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     Examples
     --------
 
-    Perfectly maching labelings have a score of 1 even
+    Perfectly matching labelings have a score of 1 even
 
       >>> from sklearn.metrics.cluster import adjusted_rand_score
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 1])
@@ -532,17 +531,15 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     """Mutual Information between two clusterings.
 
     The Mutual Information is a measure of the similarity between two labels of
-    the same data. Where :math:`P(i)` is the probability of a random sample
-    occurring in cluster :math:`U_i` and :math:`P'(j)` is the probability of a
-    random sample occurring in cluster :math:`V_j`, the Mutual Information
+    the same data. Where :math:`|U_i|` is the number of the samples
+    in cluster :math:`U_i` and :math:`|V_j|` is the number of the
+    samples in cluster :math:`V_j`, the Mutual Information
     between clusterings :math:`U` and :math:`V` is given as:
 
     .. math::
 
-        MI(U,V)=\sum_{i=1}^R \sum_{j=1}^C P(i,j)\log\\frac{P(i,j)}{P(i)P'(j)}
-
-    This is equal to the Kullback-Leibler divergence of the joint distribution
-    with the product distribution of the marginals.
+        MI(U,V)=\sum_{i=1}^|U| \sum_{j=1}^|V| \\frac{|U_i\cap V_j|}{N}
+        \log\\frac{N|U_i \cap V_j|}{|U_i||V_j|}
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
@@ -816,6 +813,9 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
     labels_pred : array, shape = (``n_samples``, )
         A clustering of the data into disjoint subsets.
 
+    sparse : bool
+        Compute contingency matrix internally with sparse matrix.
+
     Returns
     -------
     score : float
@@ -864,7 +864,7 @@ def entropy(labels):
     if len(labels) == 0:
         return 1.0
     label_idx = np.unique(labels, return_inverse=True)[1]
-    pi = bincount(label_idx).astype(np.float64)
+    pi = np.bincount(label_idx).astype(np.float64)
     pi = pi[pi > 0]
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
