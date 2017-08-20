@@ -175,7 +175,8 @@ class Imputer(BaseEstimator, TransformerMixin):
                                                    self.axis)
 
             valid_mask = np.logical_not(np.isnan(self.statistics_))
-            self._valid_statistics_indexes = np.flatnonzero(valid_mask)
+            self._valid_statistics_inds = np.flatnonzero(valid_mask)
+
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, axis):
@@ -623,7 +624,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                         strategy=self.initial_fill_method,
                                         axis=0)
         X_filled = self.initial_imputer_.fit_transform(X)
-        self._val_inds = self.initial_imputer_._valid_statistics_indexes
+<<<<<<< HEAD
+        self._val_inds = self.initial_imputer_._valid_statistics_inds
+=======
+        self._val_inds = self.initial_imputer_._valid_statistics_inds
+>>>>>>> a7c5f6b22d0692f04de185bc18f788045577d6f2
         X = X[:, self._val_inds]
         mask_missing_values = mask_missing_values[:, self._val_inds]
 
