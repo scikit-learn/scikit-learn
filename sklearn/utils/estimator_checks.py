@@ -688,7 +688,8 @@ def check_transformers_unfitted(name, transformer):
     X, y = _boston_subset()
 
     transformer = clone(transformer)
-    with assert_raises((AttributeError, ValueError), msg="Transformers unfitted"):
+    with assert_raises((AttributeError, ValueError),
+                       msg="Transformers unfitted"):
         transformer.transform(X)
 
 
@@ -761,7 +762,8 @@ def _check_transformer(name, transformer_orig, X, y):
         # raises error on malformed input for transform
         if hasattr(X, 'T'):
             # If it's not an array, it does not have a 'T' property
-            with assert_raises(ValueError, msg="Malformed input for transform"):
+            with assert_raises(ValueError,
+                               msg="Malformed input for transform"):
                 transformer.transform(X.T)
 
 
@@ -991,7 +993,9 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
     except NotImplementedError:
         return
 
-    with assert_raises(ValueError, msg="Number of features changes between calls to partial_fit"):
+    with assert_raises(ValueError,
+                       msg="Number of features "
+                       "changes between calls to partial_fit"):
         estimator.partial_fit(X[:, :-1], y)
 
 
@@ -1131,7 +1135,9 @@ def check_classifiers_train(name, classifier_orig):
                 with assert_raises(ValueError, msg="Malformed inputs"):
                     classifier.decision_function(X.T)
                 # raises error on malformed input for decision_function
-                with assert_raises(ValueError, msg="Malformed input for decision_function"):
+                with assert_raises(ValueError,
+                                   msg="Malformed input "
+                                   "for decision_function"):
                     classifier.decision_function(X.T)
             except NotImplementedError:
                 pass
@@ -1146,7 +1152,8 @@ def check_classifiers_train(name, classifier_orig):
             with assert_raises(ValueError, msg="Malformed input"):
                 classifier.predict_proba(X.T)
             # raises error on malformed input for predict_proba
-            with assert_raises(ValueError, msg="Malformed input for predict_proba"):
+            with assert_raises(ValueError,
+                               msg="Malformed input for predict_proba"):
                 classifier.predict_proba(X.T)
             if hasattr(classifier, "predict_log_proba"):
                 # predict_log_proba is a transformation of predict_proba
