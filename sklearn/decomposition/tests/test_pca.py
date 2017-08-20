@@ -353,7 +353,7 @@ def test_pca_validation():
     # Ensures that solver-specific extreme inputs for the n_components
     # parameter raise errors
     X = np.array([[0, 1, 0], [1, 0, 0]])
-    smallest_d = 2  # The smallest dimension
+    smallest_d = int(2)  # The smallest dimension
     lower_limit = {'randomized': 1, 'arpack': 1, 'full': 0, 'auto': 0}
 
     for solver in solver_list:
@@ -367,9 +367,9 @@ def test_pca_validation():
                     solver_reported = solver
 
                 assert_raises_regex(ValueError,
-                                    "n_components={} must be between "
-                                    "{} and min\(n_samples, n_features\)="
-                                    "{} with svd_solver=\'{}\'"
+                                    "n_components={}L? must be between "
+                                    "{}L? and min\(n_samples, n_features\)="
+                                    "{}L? with svd_solver=\'{}\'"
                                     .format(n_components,
                                             lower_limit[solver],
                                             smallest_d,
@@ -381,9 +381,9 @@ def test_pca_validation():
                 n_components = smallest_d
 
                 assert_raises_regex(ValueError,
-                                    "n_components={} must be "
+                                    "n_components={}L? must be "
                                     "strictly less than "
-                                    "min\(n_samples, n_features\)={}"
+                                    "min\(n_samples, n_features\)={}L?"
                                     " with svd_solver=\'arpack\'"
                                     .format(n_components, smallest_d),
                                     PCA(n_components, svd_solver=solver)
