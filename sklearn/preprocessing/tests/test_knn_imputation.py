@@ -34,9 +34,9 @@ def test_knn_imputation_zero():
     imputer = KNNImputer(missing_values=missing_values,
                          n_neighbors=n_neighbors,
                          weights="uniform")
-    imputer_nan = KNNImputer(missing_values=np.nan,
-                             n_neighbors=n_neighbors,
-                             weights="uniform")
+    # imputer_nan = KNNImputer(missing_values=np.nan,
+    #                          n_neighbors=n_neighbors,
+    #                          weights="uniform")
 
     # Test with missing_values=0 when NaN present
     X = np.array([
@@ -71,12 +71,12 @@ def test_knn_imputation_zero():
         [6, 6, 0, 5, 17],
     ])
 
-    X_nan = np.array([
-        [1, np.nan, 1, np.nan, 1],
-        [2, 1, 2, 2, 3],
-        [3, 2, 3, np.nan, np.nan],
-        [6, 6, np.nan, 5, 17],
-    ])
+    # X_nan = np.array([
+    #     [1, np.nan, 1, np.nan, 1],
+    #     [2, 1, 2, 2, 3],
+    #     [3, 2, 3, np.nan, np.nan],
+    #     [6, 6, np.nan, 5, 17],
+    # ])
 
     statistics_mean = [3, 3, 2, 3.5, 7]
     X_imputed = np.array([
