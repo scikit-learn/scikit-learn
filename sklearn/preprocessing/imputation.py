@@ -17,7 +17,6 @@ from ..externals import six
 from ..externals.funcsigs import signature
 from ..preprocessing import normalize
 from ..utils import check_array, check_random_state
-from ..utils.fixes import astype
 from ..utils.random import choice
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import FLOAT_DTYPES
