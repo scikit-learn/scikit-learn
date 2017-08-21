@@ -35,8 +35,8 @@ from sklearn.utils.testing import assert_dict_equal
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
-from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
-                          TransformerMixin, ClusterMixin, BaseEstimator)
+from sklearn.base import (clone, TransformerMixin, ClusterMixin,
+                          BaseEstimator, is_classifier, is_regressor)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.random_projection import BaseRandomProjection
@@ -208,10 +208,10 @@ def _yield_clustering_checks(name, clusterer):
 def _yield_all_checks(name, estimator):
     for check in _yield_non_meta_checks(name, estimator):
         yield check
-    if isinstance(estimator, ClassifierMixin):
+    if is_classifier(estimator):
         for check in _yield_classifier_checks(name, estimator):
             yield check
-    if isinstance(estimator, RegressorMixin):
+    if is_regressor(estimator):
         for check in _yield_regressor_checks(name, estimator):
             yield check
     if isinstance(estimator, TransformerMixin):
@@ -980,7 +980,7 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
     X -= X.min()
 
     try:
-        if isinstance(estimator, ClassifierMixin):
+        if is_classifier(estimator):
             classes = np.unique(y)
             estimator.partial_fit(X, y, classes=classes)
         else:
@@ -1351,7 +1351,7 @@ def check_regressors_no_decision_function(name, regressor_orig):
 def check_class_weight_classifiers(name, classifier_orig):
     if name == "NuSVC":
         # the sparse version has a parameter that doesn't do anything
-        raise SkipTest
+        raise SkipTest("Not testing NuSVC class weight as it is ignored.")
     if name.endswith("NB"):
         # NaiveBayes classifiers have a somewhat different interface.
         # FIXME SOON!
@@ -1534,7 +1534,9 @@ def check_regressor_data_not_an_array(name, estimator_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_data_not_an_array(name, estimator_orig, X, y):
     if name in CROSS_DECOMPOSITION:
-        raise SkipTest
+        raise SkipTest("Skipping check_estimators_data_not_an_array "
+                       "for cross decomposition module as estimators "
+                       "are not deterministic.")
     # separate estimators to control random seeds
     estimator_1 = clone(estimator_orig)
     estimator_2 = clone(estimator_orig)
