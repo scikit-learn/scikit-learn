@@ -52,16 +52,18 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         transformer will be cloned during fitting.
 
     func : function, optional
+
         Function to apply to ``y`` before passing to ``fit``. Cannot be set at
-        the same time as ``transformer``. If ``func`` is ``None``, the function
-        used will be the identity function.
+        the same time as ``transformer``. The function needs to return a
+        2-dimensional array. If ``func`` is ``None``, the function used will be
+        the identity function.
 
     inverse_func : function, optional
         Function to apply to the prediction of the regressor. Cannot be set at
-        the same time as ``transformer`` as well. If ``inverse_func is
-        ``None``, the function used will be the identity function. The inverse
-        function is used to return to the same space of the original training
-        labels during prediction.
+        the same time as ``transformer`` as well. The function needs to return
+        a 2-dimensional array. If ``inverse_func is ``None``, the function used
+        will be the identity function. The inverse function is used to return
+        to the same space of the original training labels during prediction.
 
     check_inverse : bool, (default=True)
         Whether to check that ``transform`` followed by ``inverse_transform``
