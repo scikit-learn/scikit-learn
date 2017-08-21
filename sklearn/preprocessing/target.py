@@ -6,7 +6,7 @@ import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, is_regressor, clone
 from ..utils.validation import check_is_fitted
-from ..utils import check_X_y, check_random_state, safe_indexing
+from ..utils import check_X_y, safe_indexing
 from ._function_transformer import FunctionTransformer
 
 __all__ = ['TransformTargetRegressor']
@@ -102,11 +102,12 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
 
     Notes
     -----
-    The benefit of transforming the target before fitting a regression model is
-    highlighted in :ref:`examples/preprocessing/plot_transform_target.py
-    <sphx_glr_auto_examples_preprocessing_plot_transform_target.py> `.
+    Internally, the target ``y`` is always converted into a 2-dimensional array
+    to be used by scikit-learn transformers. At the time of prediction, the
+    output will be reshape to a have the same number of dimension than ``y``.
 
-    See also :ref:`User guide <scaling_regression>`
+    See :ref:`examples/preprocessing/plot_transform_target.py
+    <sphx_glr_auto_examples_preprocessing_plot_transform_target.py> `.
 
     """
     def __init__(self, regressor=None, transformer=None,
@@ -189,7 +190,12 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
             self.regressor_ = clone(self.regressor)
 
         # transform y and convert back to 1d array if needed
-        y_trans = self.transformer_.fit_transform(y_2d).squeeze()
+        y_trans = self.transformer_.fit_transform(y_2d)
+        # FIXME: a FunctionTransformer can return a 1D array even when validate
+        # is set to True. Therefore, we need to check the number of dimension
+        # first.
+        if y_trans.ndim == 2 and y_trans.shape[1] == 1:
+            y_trans = y_trans.squeeze(axis=1)
         if sample_weight is None:
             self.regressor_.fit(X, y_trans)
         else:
@@ -217,7 +223,11 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         check_is_fitted(self, "regressor_")
         pred = self.regressor_.predict(X)
         if pred.ndim == 1:
-            return self.transformer_.inverse_transform(
-                pred.reshape(-1, 1)).squeeze()
+            pred_trans = self.transformer_.inverse_transform(
+                pred.reshape(-1, 1))
         else:
-            return self.transformer_.inverse_transform(pred)
+            pred_trans = self.transformer_.inverse_transform(pred)
+        if pred_trans.ndim == 2 and pred_trans.shape[1] == 1:
+            pred_trans = pred_trans.squeeze(axis=1)
+
+        return pred_trans

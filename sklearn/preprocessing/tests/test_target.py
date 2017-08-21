@@ -211,6 +211,7 @@ def test_transform_target_regressor_single_to_multi():
         """Stack the real and imaginary part."""
         return np.hstack((np.real(y), np.imag(y)))
 
+    # transform only with the forward
     tt = TransformTargetRegressor(func=func, check_inverse=False)
     tt.fit(X, y)
     y_pred = tt.predict(X)
@@ -222,9 +223,18 @@ def test_transform_target_regressor_multi_to_single():
     y = np.transpose([friedman[1], (friedman[1] ** 2 + 1)])
 
     def func(y):
-        return np.sqrt(y[:, 0] ** 2 + y[:, 1] ** 2)
+        out = np.sqrt(y[:, 0] ** 2 + y[:, 1] ** 2)
+        return out[:, np.newaxis]
 
     tt = TransformTargetRegressor(func=func, check_inverse=False)
+    tt.fit(X, y)
+    y_pred = tt.predict(X)
+    assert_equal(y_pred.shape, (100,))
+
+    # force that the function only return a 1D array
+    def func(y):
+        return np.sqrt(y[:, 0] ** 2 + y[:, 1] ** 2)
+
     tt.fit(X, y)
     y_pred = tt.predict(X)
     assert_equal(y_pred.shape, (100,))
