@@ -283,7 +283,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     outlier_label : int, optional (default = None)
         Label, which is given for outlier samples (samples with no
         neighbors on given radius).
-        If set to None, ValueError is raised, when outlier is detected.
+        If set to None and outlier is detected, ValueError is raised when 
+        function predict(X) is called, UserWarning is raised when function
+        preduct_proba(X) is called.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -298,7 +300,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     RadiusNeighborsClassifier(...)
     >>> print(neigh.predict([[1.5]]))
     [0]
-
+    >>> print(neigh.predict_proba([[1.0]]))
+    [[ 0.66666667  0.33333333]]
+    
     See also
     --------
     KNeighborsClassifier
