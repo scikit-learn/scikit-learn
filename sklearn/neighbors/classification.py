@@ -442,11 +442,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             if weights is None:
                 for i, idx in enumerate(pred_labels):  # loop is O(n_samples)
                     proba_k[i, :] += np.bincount(idx,
-                                                minlength=classes_k.size)
+                                                 minlength=classes_k.size)
             else:
                 for i, idx in enumerate(pred_labels):  # loop is O(n_samples)
-                    proba_k[i, :] += np.bincount(idx, weights[i],
-                                                minlength=classes_k.size)
+                    proba_k[i, :] += np.bincount(idx,
+                                                 weights[i],
+                                                 minlength=classes_k.size)
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
