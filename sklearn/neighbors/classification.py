@@ -8,6 +8,7 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
+import warnings
 import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
@@ -411,6 +412,13 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
+        
+        outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
+        if len(outliers) > 0:
+            warnings.warn('No neighbors found for test samples %r, '
+                             'their probabilities will be assgined with 0.'
+                             % outliers)
+        
         classes_ = self.classes_
         _y = self._y
         if not self.outputs_2d_:
