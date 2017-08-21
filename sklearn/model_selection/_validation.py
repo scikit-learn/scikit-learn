@@ -734,7 +734,10 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         n_classes = len(set(y))
         predictions_ = np.zeros((X_test.shape[0], n_classes))
         if method == 'decision_function' and len(estimator.classes_) == 2:
-            predictions_[:, estimator.classes_[-1]] = predictions
+            if n_classes == 2:
+                predictions_ = predictions
+            else:
+                predictions_[:, estimator.classes_[-1]] = predictions
         else:
             predictions_[:, estimator.classes_] = predictions
         predictions = predictions_
