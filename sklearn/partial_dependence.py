@@ -18,9 +18,6 @@ from .utils import check_array
 from .utils.validation import check_is_fitted
 from .tree._tree import DTYPE
 
-from .ensemble._gradient_boosting import _partial_dependence_tree
-from .ensemble.gradient_boosting import BaseGradientBoosting
-from .ensemble.forest import ForestRegressor
 from .exceptions import NotFittedError
 
 
@@ -210,6 +207,12 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
     >>> partial_dependence(gb, [0], **kwargs) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
+    # TODO: The pattern below required to avoid a namespace collision.
+    # TODO: Move below imports to module level import at 0.22 release.
+    from .ensemble._gradient_boosting import _partial_dependence_tree
+    from .ensemble.gradient_boosting import BaseGradientBoosting
+    from .ensemble.forest import ForestRegressor
+
     if method == 'auto':
         if isinstance(est, (BaseGradientBoosting, ForestRegressor)):
             method = 'recursion'
@@ -223,7 +226,8 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
     if (not hasattr(est, '_estimator_type') or
             est._estimator_type not in ('classifier', 'regressor')):
         raise ValueError('est must be a fitted regressor or classifier model.')
-    if method != 'recursion' and est._estimator_type == 'classifier':
+    if (method != 'recursion' and est._estimator_type == 'classifier' and
+            not hasattr(est, 'predict_proba')):
         raise ValueError('est requires a predict_proba method for '
                          'method="exact" or "estimated" for classification.')
     if method == 'recursion':
@@ -416,6 +420,10 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     from matplotlib import transforms
     from matplotlib.ticker import MaxNLocator
     from matplotlib.ticker import ScalarFormatter
+    # TODO: The pattern below required to avoid a namespace collision.
+    # TODO: Move below imports to module level import at 0.22 release.
+    from .ensemble.gradient_boosting import BaseGradientBoosting
+    from .ensemble.forest import ForestRegressor
 
     if method == 'auto':
         if isinstance(est, (BaseGradientBoosting, ForestRegressor)):
@@ -455,7 +463,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         label_idx = 0
 
     X = check_array(X, dtype=DTYPE, order='C')
-    if est.n_features_ != X.shape[1]:
+    if hasattr(est, 'n_features_') and est.n_features_ != X.shape[1]:
         raise ValueError('X.shape[1] does not match est.n_features_')
 
     if line_kw is None:
