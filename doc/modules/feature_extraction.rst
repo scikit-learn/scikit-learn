@@ -117,15 +117,18 @@ extraction steps.  Often it is easiest to preprocess data before applying
 scikit-learn methods, for example using `pandas <http://pandas.pydata.org/>`__.
 Processing your data before passing it to scikit-learn might be problematic for
 one of the following reasons:
+
 1. Incorporating statistics from test data into the preprocessors makes
    cross-validation scores unreliable (known as *data leakage*).
 2. You may want to include the parameters of the preprocessors in a
    :ref:`parameter search <grid_search>`.
+
 :class:`~sklearn.experimental.ColumnTransformer` helps performing different
 transformations for different columns of the data, within a
 :class:`~sklearn.pipeline.Pipeline` that is safe from data leakage and that can
-be parametrised. ColumnTransformer works on arrays, sparse matrices, and pandas
-DataFrames.
+be parametrized. :class:`~sklearn.experimental.ColumnTransformer` works on
+arrays, sparse matrices, and
+`pandas DataFrames <http://pandas.pydata.org/pandas-docs/stable/>`__.
 
 To each column, a different transformation can be applied, such as
 preprocessing or a specific feature extraction method::
@@ -136,7 +139,7 @@ preprocessing or a specific feature extraction method::
   ...      'title': ["His Last Bow", "How Watson Learned the Trick",
   ...                "A Moveable Feast", "The Grapes of Wrath"]})
 
-For this data, we might want to encode ``'city'`` column as a categorical
+For this data, we might want to encode the ``'city'`` column as a categorical
 variable, but apply a :class:`feature_extraction.text.CountVectorizer
 <sklearn.feature_extraction.text.CountVectorizer>` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give
@@ -171,7 +174,7 @@ In the above example, the
 :class:`~sklearn.feature_extraction.text.CountVectorizer` expects a 1D array as
 input and therefore the columns were specified as a string (``'city'``).
 However, other transformers generally expect 2D data, and in that case you need
-to specify the column as a list of string (``['city']``).
+to specify the column as a list of strings (``['city']``).
 
 Apart from a scalar or a single item list, the column selection can be specified
 as a list of multiple items, an integer array, a slice, or a boolean mask.

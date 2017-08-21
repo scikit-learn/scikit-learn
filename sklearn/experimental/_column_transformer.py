@@ -59,9 +59,9 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
  mask array
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
-            by name.  A string or int should be used where ``transformer``
-            expects X to be a 1d array-like (vector), otherwise a 2d array will
-            be passed to the transformer.
+            by name.  A scalar string or int should be used where
+            ``transformer`` expects X to be a 1d array-like (vector),
+            otherwise a 2d array will be passed to the transformer.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -224,7 +224,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             for name, old, column in self.transformers
         ]
 
-    def _fit(self, X, y, transform, **fit_params):
+    def _fit(self, X, y, transform):
         """Private function to fit and transform on demand."""
         self._validate_transformers()
 
@@ -235,8 +235,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
 
         try:
             result = Parallel(n_jobs=self.n_jobs)(
-                delayed(func)(clone(trans), X_sel, y, weight,
-                              **fit_params)
+                delayed(func)(clone(trans), X_sel, y, weight)
                 for name, trans, X_sel, weight in self._iter(X=X))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
@@ -281,7 +280,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         """
         return self._fit(X, y, transform=False)
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None):
         """Fit all transformers, transform the data and concatenate results.
 
         Parameters
@@ -302,7 +301,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             sparse matrices.
 
         """
-        return self._fit(X, y, transform=True, **fit_params)
+        return self._fit(X, y, transform=True)
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -318,7 +317,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
         X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers. If
-            one result is a sparse matrix, everything will be converted to
+            any result is a sparse matrix, everything will be converted to
             sparse matrices.
 
         """
@@ -364,7 +363,7 @@ def _get_column(X, key):
     """
     Get feature column(s) from input data X.
 
-    Supported input types (X): numpy arrays, sparse arrays and dataframes
+    Supported input types (X): numpy arrays, sparse arrays and DataFrames
 
     Supported key types (key):
     - scalar: output is 1D
@@ -373,7 +372,7 @@ def _get_column(X, key):
     Supported key data types:
 
     - integer or boolean mask (positional):
-        - supported for (sparse) arrays or dataframes
+        - supported for arrays, sparse matrices and dataframes
     - string (key-based):
         - only supported for dataframes
         - So no keys other than strings are allowed (while in principle you
