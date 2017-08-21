@@ -283,7 +283,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     outlier_label : int, optional (default = None)
         Label, which is given for outlier samples (samples with no
         neighbors on given radius).
-        If set to None and outlier is detected, ValueError is raised when 
+        If set to None and outlier is detected, ValueError is raised when
         function predict(X) is called, UserWarning is raised when function
         preduct_proba(X) is called.
 
@@ -302,7 +302,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     [0]
     >>> print(neigh.predict_proba([[1.0]]))
     [[ 0.66666667  0.33333333]]
-    
+
     See also
     --------
     KNeighborsClassifier
@@ -393,7 +393,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             y_pred = y_pred.ravel()
 
         return y_pred
-        
+
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
 
@@ -411,42 +411,42 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             by lexicographic order.
             Outliers will be assign 0s in all class probabilities.
         """
-        
+
         X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-        
+
         outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
         if len(outliers) > 0:
             warnings.warn('No neighbors found for test samples %r, '
-                             'their probabilities will be assgined with 0.'
-                             % outliers)
-        
+                          'their probabilities will be assgined with 0.'
+                          % outliers)
+
         classes_ = self.classes_
         _y = self._y
         if not self.outputs_2d_:
             _y = self._y.reshape((-1, 1))
             classes_ = [self.classes_]
 
-                             
         weights = _get_weights(neigh_dist, self.weights)
-        
+
         probabilities = []
         for k, classes_k in enumerate(classes_):
             pred_labels = np.zeros(len(neigh_ind), dtype=object)
             pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
-            
+
             proba_k = np.zeros((n_samples, classes_k.size))
 
-            #samples have different size of neighbors within the same radius
+            # samples have different size of neighbors within the same radius
             if weights is None:
                 for i, idx in enumerate(pred_labels):  # loop is O(n_samples)
-                    proba_k[i,:] += np.bincount(idx, minlength = classes_k.size)
+                    proba_k[i, :] += np.bincount(idx,
+                                                minlength=classes_k.size)
             else:
                 for i, idx in enumerate(pred_labels):  # loop is O(n_samples)
-                    proba_k[i,:] += np.bincount(idx, weights[i],
-                                                minlength = classes_k.size)
+                    proba_k[i, :] += np.bincount(idx, weights[i],
+                                                minlength=classes_k.size)
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
