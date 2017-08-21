@@ -403,7 +403,7 @@ def test_mice_imputation_order():
     l = 100
     X = sparse_random_matrix(l, l, density=0.10).toarray()
 
-    for imputation_order in ['roman', 'monotone',
+    for imputation_order in ['random', 'roman', 'monotone',
                              'revmonotone', 'arabic']:
         imputer = MICEImputer(missing_values=0,
                               n_imputations=1,
