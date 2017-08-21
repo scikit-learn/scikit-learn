@@ -849,8 +849,8 @@ def test_random_search_cv_results():
         check_cv_results_array_types(search, param_keys, score_keys)
         check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
         # For random_search, all the param array vals should be unmasked
-        assert_false(any(cv_results['param_C'].mask) or
-                     any(cv_results['param_gamma'].mask))
+        assert_false(any(np.ma.getmaskarray(cv_results['param_C'])) or
+                     any(np.ma.getmaskarray(cv_results['param_gamma'])))
         check_cv_results_grid_scores_consistency(search)
 
 

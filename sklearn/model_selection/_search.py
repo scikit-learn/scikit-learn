@@ -555,6 +555,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_is_fitted("classes_")
         return self.best_estimator_.classes_
 
+    def _generate_candidates(self):
+        """To be overridden by implementors
+        """
+        yield self._get_param_iterator()
+
     def fit(self, X, y=None, groups=None, **fit_params):
         """Run fit with all sets of parameters.
 
@@ -613,101 +618,125 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         X, y, groups = indexable(X, y, groups)
         n_splits = cv.get_n_splits(X, y, groups)
-        # Regenerate parameter iterable for each fit
-        candidate_params = list(self._get_param_iterator())
-        n_candidates = len(candidate_params)
-        if self.verbose > 0:
-            print("Fitting {0} folds for each of {1} candidates, totalling"
-                  " {2} fits".format(n_splits, n_candidates,
-                                     n_candidates * n_splits))
 
         base_estimator = clone(self.estimator)
-        pre_dispatch = self.pre_dispatch
 
-        out = Parallel(
-            n_jobs=self.n_jobs, verbose=self.verbose,
-            pre_dispatch=pre_dispatch
-        )(delayed(_fit_and_score)(clone(base_estimator), X, y, scorers, train,
-                                  test, self.verbose, parameters,
-                                  fit_params=fit_params,
-                                  return_train_score=self.return_train_score,
-                                  return_n_test_samples=True,
-                                  return_times=True, return_parameters=False,
-                                  error_score=self.error_score)
-          for parameters, (train, test) in product(candidate_params,
-                                                   cv.split(X, y, groups)))
+        parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                            pre_dispatch=self.pre_dispatch)
 
-        # if one choose to see train score, "out" will contain train score info
-        if self.return_train_score:
-            (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
-             score_time) = zip(*out)
-        else:
-            (test_score_dicts, test_sample_counts, fit_time,
-             score_time) = zip(*out)
+        all_results = []
 
-        # test_score_dicts and train_score dicts are lists of dictionaries and
-        # we make them into dict of lists
-        test_scores = _aggregate_score_dicts(test_score_dicts)
-        if self.return_train_score:
-            train_scores = _aggregate_score_dicts(train_score_dicts)
+        # Regenerate parameter iterable for each fit
+        candidate_generator = self._generate_candidates()
+        candidate_params = list(next(candidate_generator))
+        fit_and_score_kwargs = dict(scorer=scorers,
+                                    fit_params=fit_params,
+                                    return_train_score=self.return_train_score,
+                                    return_n_test_samples=True,
+                                    return_times=True,
+                                    return_parameters=False,
+                                    error_score=self.error_score,
+                                    verbose=self.verbose)
+        with parallel:
+            while True:
+                n_candidates = len(candidate_params)
 
-        results = dict()
+                if self.verbose > 0:
+                    print("Fitting {0} folds for each of {1} candidates, totalling"
+                          " {2} fits".format(n_splits, n_candidates,
+                                             n_candidates * n_splits))
 
-        def _store(key_name, array, weights=None, splits=False, rank=False):
-            """A small helper to store the scores/times to the cv_results_"""
-            # When iterated first by splits, then by parameters
-            # We want `array` to have `n_candidates` rows and `n_splits` cols.
-            array = np.array(array, dtype=np.float64).reshape(n_candidates,
-                                                              n_splits)
-            if splits:
-                for split_i in range(n_splits):
-                    # Uses closure to alter the results
-                    results["split%d_%s"
-                            % (split_i, key_name)] = array[:, split_i]
+                out = parallel(delayed(_fit_and_score)(clone(base_estimator),
+                                                       X, y,
+                                                       train=train, test=test,
+                                                       parameters=parameters,
+                                                       **fit_and_score_kwargs)
+                               for parameters, (train, test)
+                               in product(candidate_params,
+                                          cv.split(X, y, groups)))
 
-            array_means = np.average(array, axis=1, weights=weights)
-            results['mean_%s' % key_name] = array_means
-            # Weighted std is not directly available in numpy
-            array_stds = np.sqrt(np.average((array -
-                                             array_means[:, np.newaxis]) ** 2,
-                                            axis=1, weights=weights))
-            results['std_%s' % key_name] = array_stds
+                # if one choose to see train score, "out" will contain train score info
+                if self.return_train_score:
+                    (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
+                     score_time) = zip(*out)
+                else:
+                    (test_score_dicts, test_sample_counts, fit_time,
+                     score_time) = zip(*out)
 
-            if rank:
-                results["rank_%s" % key_name] = np.asarray(
-                    rankdata(-array_means, method='min'), dtype=np.int32)
+                # test_score_dicts and train_score dicts are lists of dictionaries and
+                # we make them into dict of lists
+                test_scores = _aggregate_score_dicts(test_score_dicts)
+                if self.return_train_score:
+                    train_scores = _aggregate_score_dicts(train_score_dicts)
 
-        _store('fit_time', fit_time)
-        _store('score_time', score_time)
-        # Use one MaskedArray and mask all the places where the param is not
-        # applicable for that candidate. Use defaultdict as each candidate may
-        # not contain all the params
-        param_results = defaultdict(partial(MaskedArray,
-                                            np.empty(n_candidates,),
-                                            mask=True,
-                                            dtype=object))
-        for cand_i, params in enumerate(candidate_params):
-            for name, value in params.items():
-                # An all masked empty array gets created for the key
-                # `"param_%s" % name` at the first occurence of `name`.
-                # Setting the value at an index also unmasks that index
-                param_results["param_%s" % name][cand_i] = value
+                results = dict()
 
-        results.update(param_results)
-        # Store a list of param dicts at the key 'params'
-        results['params'] = candidate_params
+                def _store(key_name, array, weights=None, splits=False, rank=False):
+                    """A small helper to store the scores/times to the cv_results_"""
+                    # When iterated first by splits, then by parameters
+                    # We want `array` to have `n_candidates` rows and `n_splits` cols.
+                    array = np.array(array, dtype=np.float64).reshape(n_candidates,
+                                                                      n_splits)
+                    if splits:
+                        for split_i in range(n_splits):
+                            # Uses closure to alter the results
+                            results["split%d_%s"
+                                    % (split_i, key_name)] = array[:, split_i]
 
-        # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[:n_splits],
-                                      dtype=np.int)
-        for scorer_name in scorers.keys():
-            # Computed the (weighted) mean and std for test scores alone
-            _store('test_%s' % scorer_name, test_scores[scorer_name],
-                   splits=True, rank=True,
-                   weights=test_sample_counts if self.iid else None)
-            if self.return_train_score:
-                _store('train_%s' % scorer_name, train_scores[scorer_name],
-                       splits=True)
+                    array_means = np.average(array, axis=1, weights=weights)
+                    results['mean_%s' % key_name] = array_means
+                    # Weighted std is not directly available in numpy
+                    array_stds = np.sqrt(np.average((array -
+                                                     array_means[:, np.newaxis]) ** 2,
+                                                    axis=1, weights=weights))
+                    results['std_%s' % key_name] = array_stds
+
+                    if rank:
+                        results["rank_%s" % key_name] = np.asarray(
+                            rankdata(-array_means, method='min'), dtype=np.int32)
+
+                _store('fit_time', fit_time)
+                _store('score_time', score_time)
+                # Use one MaskedArray and mask all the places where the param is not
+                # applicable for that candidate. Use defaultdict as each candidate may
+                # not contain all the params
+                param_results = defaultdict(partial(MaskedArray,
+                                                    np.empty(n_candidates,),
+                                                    mask=True,
+                                                    dtype=object))
+                for cand_i, params in enumerate(candidate_params):
+                    for name, value in params.items():
+                        # An all masked empty array gets created for the key
+                        # `"param_%s" % name` at the first occurence of `name`.
+                        # Setting the value at an index also unmasks that index
+                        param_results["param_%s" % name][cand_i] = value
+
+                results.update(param_results)
+                # Store a list of param dicts at the key 'params'
+                results['params'] = candidate_params
+
+                # NOTE test_sample counts (weights) remain the same for all candidates
+                test_sample_counts = np.array(test_sample_counts[:n_splits],
+                                              dtype=np.int)
+                for scorer_name in scorers.keys():
+                    # Computed the (weighted) mean and std for test scores alone
+                    _store('test_%s' % scorer_name, test_scores[scorer_name],
+                           splits=True, rank=True,
+                           weights=test_sample_counts if self.iid else None)
+                    if self.return_train_score:
+                        _store('train_%s' % scorer_name, train_scores[scorer_name],
+                               splits=True)
+
+                all_results.append(results)
+                try:
+                    candidate_params = list(candidate_generator.send(results))
+                except StopIteration:
+                    break
+
+        # FIXME: handle keys present in some resutls and not in others
+        results = {k: (np.ma if hasattr(all_results[0][k], 'mask') else np).concatenate([r[k] for r in all_results])
+                   for k in all_results[0]}
+        del all_results
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
