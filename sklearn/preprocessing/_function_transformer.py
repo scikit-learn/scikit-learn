@@ -1,7 +1,7 @@
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
+from ..utils import check_array, safe_indexing
 from ..externals.six import string_types
 
 
@@ -18,8 +18,6 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     user-defined function or function object and returns the result of this
     function. This is useful for stateless transformations such as taking the
     log of frequencies, doing custom scaling, etc.
-
-    A FunctionTransformer will not do any checks on its function's output.
 
     Note: If a lambda is used as the function, then the resulting
     transformer will not be pickleable.
@@ -42,11 +40,13 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         will be the identity function.
 
     validate : bool, optional default=True
-        Indicate that the input X array should be checked before calling
-        func. If validate is false, there will be no input validation.
-        If it is true, then X will be converted to a 2-dimensional NumPy
-        array or sparse matrix. If this conversion is not possible or X
-        contains NaN or infinity, an exception is raised.
+        Indicate that the input X and transformed output arrays should be
+        checked before calling ``transform``. If validate is false, there will
+        be no input validation. If it is true, then X will be converted to a
+        2-dimensional NumPy array or sparse matrix. If this conversion is not
+        possible or X contains NaN or infinity, an exception is raised. In
+        addition, the output of func and inverse_func are checked to return a
+        2-dimensional array.
 
     accept_sparse : boolean, optional
         Indicate that func accepts a sparse matrix as input. If validate is
@@ -77,6 +77,19 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
 
+    def _check_functions(self, X):
+        """Check that transform and inverse_transform lead to a 2D array"""
+        idx_selected = slice(None, None, max(1, X.shape[0] // 100))
+        msg = (" transforms a 2D array into a 1D array"
+               " which do not follow the estimator API of"
+               " scikit-learn. If you are sure you want to"
+               " proceed, set 'validate=False'.")
+        if self.transform(safe_indexing(X, idx_selected)).ndim != 2:
+            raise ValueError("'func'" + msg)
+        if (self.inverse_transform(
+                self.transform(safe_indexing(X, idx_selected))).ndim != 2):
+            raise ValueError("'inverse_func'" + msg)
+
     def fit(self, X, y=None):
         """Fit transformer by checking X.
 
@@ -92,7 +105,8 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         self
         """
         if self.validate:
-            check_array(X, self.accept_sparse)
+            X = check_array(X, self.accept_sparse)
+            self._check_functions(X)
         return self
 
     def transform(self, X, y='deprecated'):

@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.utils.testing import assert_equal, assert_array_equal
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raises_regex
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):
@@ -126,3 +127,28 @@ def test_inverse_transform():
         F.inverse_transform(F.transform(X)),
         np.around(np.sqrt(X), decimals=3),
     )
+
+
+def test_function_transformer_1d_function():
+    X = np.random.random((100, 2))
+
+    def func_1d(X):
+        return X[:, 0] + 1j * X[:, 1]
+
+    transformer = FunctionTransformer(func=func_1d, validate=True)
+    assert_raises_regex(ValueError, "'func' transforms a 2D array into a 1D"
+                        " array", transformer.fit, X)
+
+    X = (X[:, 0] + 1j * X[:, 1]).reshape(-1, 1)
+
+    def func_2d(X):
+        return np.hstack((np.real(X), np.imag(X)))
+
+    def inverse_func_1d(X):
+        return X[:, 0] + 1j * X[:, 1]
+
+    transformer = FunctionTransformer(func=func_2d,
+                                      inverse_func=inverse_func_1d,
+                                      validate=True)
+    assert_raises_regex(ValueError, "'inverse_func' transforms a 2D array into"
+                        " a 1D array", transformer.fit, X)
