@@ -385,10 +385,10 @@ def test_imputation_copy():
 
 def test_mice_rank_one():
     l = 100
-    A = np.random.random((l,1))
-    B = np.random.random((1,l))
-    X = np.dot(A,B)
-    nan_mask = np.random.random((l,l)) < 0.5
+    A = np.random.random((l, 1))
+    B = np.random.random((1, l))
+    X = np.dot(A, B)
+    nan_mask = np.random.random((l, l)) < 0.5
     X_missing = X.copy()
     X_missing[nan_mask] = np.nan
 
@@ -410,4 +410,4 @@ def test_mice_imputation_order():
                               n_burn_in=1,
                               n_nearest_features=10,
                               imputation_order=imputation_order)
-        X_filled = imputer.fit_transform(X)
+        imputer.fit_transform(X)

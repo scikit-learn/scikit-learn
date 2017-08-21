@@ -692,11 +692,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # perform imputations
         n_samples, n_features = X_filled.shape
         total_rounds = self.n_burn_in + self.n_imputations
+        results_list = []
         if total_rounds > 0:
             total_iterations = len(self._trained_model_triplets)
             imputations_per_round = total_iterations / total_rounds
             round_index = 0
-            results_list = []
             if self.verbose:
                 print("[MICE] Completing matrix with shape %s" % (X.shape,))
                 start_t = time()
