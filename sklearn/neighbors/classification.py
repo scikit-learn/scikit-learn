@@ -388,3 +388,62 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             y_pred = y_pred.ravel()
 
         return y_pred
+        
+    def predict_proba(self, X):
+        """Return probability estimates for the test data X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_query, n_features), \
+                or (n_query, n_indexed) if metric == 'precomputed'
+            Test samples.
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            of such arrays if n_outputs > 1.
+            The class probabilities of the input samples. Classes are ordered
+            by lexicographic order.
+            Outliers will be assign 0s in all class probabilities.
+        """
+        
+        X = check_array(X, accept_sparse='csr')
+        n_samples = X.shape[0]
+
+        neigh_dist, neigh_ind = self.radius_neighbors(X)
+        classes_ = self.classes_
+        _y = self._y
+        if not self.outputs_2d_:
+            _y = self._y.reshape((-1, 1))
+            classes_ = [self.classes_]
+
+                             
+        weights = _get_weights(neigh_dist, self.weights)
+        
+        probabilities = []
+        for k, classes_k in enumerate(classes_):
+            pred_labels = np.zeros(len(neigh_ind), dtype=object)
+            pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
+            
+            proba_k = np.zeros((n_samples, classes_k.size))
+
+            #samples have different size of neighbors within the same radius
+            if weights is None:
+                for i, idx in enumerate(pred_labels):  # loop is O(n_samples)
+                    proba_k[i,:] += np.bincount(idx, minlength = classes_k.size)
+            else:
+                for i, idx in enumerate(pred_labels):  # loop is O(n_samples)
+                    proba_k[i,:] += np.bincount(idx, weights[i],
+                                                minlength = classes_k.size)
+
+            # normalize 'votes' into real [0,1] probabilities
+            normalizer = proba_k.sum(axis=1)[:, np.newaxis]
+            normalizer[normalizer == 0.0] = 1.0
+            proba_k /= normalizer
+
+            probabilities.append(proba_k)
+
+        if not self.outputs_2d_:
+            probabilities = probabilities[0]
+
+        return probabilities
