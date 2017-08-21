@@ -493,6 +493,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         if isinstance(self.features, six.string_types):
             if self.features == "auto":
+                print feat_with_missing
+                print self.feat_with_missing_
                 features = np.setdiff1d(feat_with_missing,
                                         self.feat_with_missing_)
                 if self.error_on_new and features.size > 0:
