@@ -31,13 +31,16 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
     func : callable, optional default=None
         The callable to use for the transformation. This will be passed
         the same arguments as transform, with args and kwargs forwarded.
+        If validate is True, func needs to return a 2-dimensional array.
         If func is None, then func will be the identity function.
 
     inverse_func : callable, optional default=None
+
         The callable to use for the inverse transformation. This will be
         passed the same arguments as inverse transform, with args and
-        kwargs forwarded. If inverse_func is None, then inverse_func
-        will be the identity function.
+        kwargs forwarded. If validate is True, inverse_func needs to return
+        a 2-dimensional array. If inverse_func is None, then inverse_func will
+        be the identity function.
 
     validate : bool, optional default=True
         Indicate that the input X and transformed output arrays should be
