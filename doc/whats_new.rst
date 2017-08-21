@@ -36,6 +36,14 @@ Classifiers and regressors
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
 
+Enhancements
+............
+
+Model evaluation and meta-estimators
+
+- A scorer based on :func:`metrics.brier_score_loss` is also available.
+  :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 Bug fixes
 .........
 
@@ -185,9 +193,6 @@ Model selection and evaluation
   :class:`model_selection.RepeatedStratifiedKFold`.
   :issue:`8120` by `Neeraj Gangwar`_.
 
-- Added a scorer based on :class:`metrics.explained_variance_score`.
-  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
-
 Miscellaneous
 
 - Validation that input data contains no NaN or inf can now be suppressed
@@ -287,9 +292,6 @@ Decomposition, manifold learning and clustering
   ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
   :issue:`7685` by :user:`Tommy Löfstedt <tomlof>`
 
-- Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
-  :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
-
 - :class:`decomposition.NMF` now faster when ``beta_loss=0``.
   :issue:`9277` by :user:`hongkahjun`.
 
@@ -379,6 +381,9 @@ Model evaluation and meta-estimators
 
 - More clustering metrics are now available through :func:`metrics.get_scorer`
   and ``scoring`` parameters. :issue:`8117` by `Raghav RV`_.
+
+- A scorer based on :func:`metrics.explained_variance_score` is also available.
+  :issue:`9259` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 Metrics
 
