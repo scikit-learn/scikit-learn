@@ -227,4 +227,4 @@ def test_transform_target_regressor_multi_to_single():
     tt = TransformTargetRegressor(func=func, check_inverse=False)
     tt.fit(X, y)
     y_pred = tt.predict(X)
-    assert_equal(y_pred.shape, (100, 1))
+    assert_equal(y_pred.shape, (100,))
