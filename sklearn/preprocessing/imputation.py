@@ -17,10 +17,11 @@ from ..externals import six
 from ..externals.funcsigs import signature
 from ..preprocessing import normalize
 from ..utils import check_array, check_random_state
-from ..utils.random import choice
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import check_is_fitted
+
+choice = np.random.choice
 
 zip = six.moves.zip
 map = six.moves.map

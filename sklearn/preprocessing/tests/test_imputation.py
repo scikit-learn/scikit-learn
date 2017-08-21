@@ -4,6 +4,7 @@ from scipy import sparse
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 
@@ -380,3 +381,33 @@ def test_imputation_copy():
 
     # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
     # made, even if copy=False.
+
+
+def test_mice_rank_one():
+    l = 100
+    A = np.random.random((l,1))
+    B = np.random.random((1,l))
+    X = np.dot(A,B)
+    nan_mask = np.random.random((l,l)) < 0.5
+    X_missing = X.copy()
+    X_missing[nan_mask] = np.nan
+
+    imputer = MICEImputer(n_imputations=5,
+                          n_burn_in=5,
+                          verbose=True)
+    X_filled = imputer.fit_transform(X_missing)
+    assert_almost_equal(X_filled, X, decimal=2)
+
+
+def test_mice_imputation_order():
+    l = 100
+    X = sparse_random_matrix(l, l, density=0.10).toarray()
+
+    for imputation_order in ['roman', 'monotone',
+                             'revmonotone', 'arabic']:
+        imputer = MICEImputer(missing_values=0,
+                              n_imputations=1,
+                              n_burn_in=1,
+                              n_nearest_features=10,
+                              imputation_order=imputation_order)
+        X_filled = imputer.fit_transform(X)
