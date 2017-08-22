@@ -730,14 +730,12 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         estimator.fit(X_train, y_train, **fit_params)
     func = getattr(estimator, method)
     predictions = func(X_test)
-    if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
-        n_classes = len(set(y))
+    n_classes = len(set(y))
+    if not n_classes == len(estimator.classes_) and method in \
+            ['decision_function', 'predict_proba', 'predict_log_proba']:
         predictions_ = np.zeros((X_test.shape[0], n_classes))
         if method == 'decision_function' and len(estimator.classes_) == 2:
-            if n_classes == 2:
-                predictions_ = predictions
-            else:
-                predictions_[:, estimator.classes_[-1]] = predictions
+            predictions_[:, estimator.classes_[-1]] = predictions
         else:
             predictions_[:, estimator.classes_] = predictions
         predictions = predictions_
