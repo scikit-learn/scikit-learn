@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.tests.test_validation import DummyMemory, WrongDummyMemory
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils.mocking import MockDataFrame

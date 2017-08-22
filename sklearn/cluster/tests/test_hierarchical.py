@@ -34,6 +34,7 @@ from sklearn.cluster._hierarchical import average_merge, max_merge
 from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.tests.test_validation import DummyMemory, WrongDummyMemory
 
 
 def test_deprecation_of_n_components_in_linkage_tree():
