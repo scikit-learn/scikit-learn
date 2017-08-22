@@ -46,6 +46,7 @@ from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import BaseSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
 
@@ -1484,3 +1485,33 @@ def test_transform_inverse_transform_round_trip():
     grid_search.fit(X, y)
     X_round_trip = grid_search.inverse_transform(grid_search.transform(X))
     assert_array_equal(X, X_round_trip)
+
+
+def test_generate_candidates():
+    def check_results(results, param_grid):
+        gscv = GridSearchCV(clf, param_grid).fit(X, y)
+        exp_results = gscv.cv_results_
+        assert sorted(results.keys()) == sorted(exp_results.keys())
+        for k in results:
+            if not k.endswith('_time'):
+                # XXX: results['param'] is a list :(
+                results[k] = np.asanyarray(results[k])
+                if results[k].dtype.kind == 'O':
+                    assert_array_equal(exp_results[k], results[k])
+                else:
+                    assert_almost_equal(exp_results[k], results[k])
+
+    class MySearchCV(BaseSearchCV):
+        def __init__(self, *args, **kwargs):
+            super(MySearchCV, self).__init__(*args, **kwargs)
+
+        def _generate_candidates(self):
+            results = yield [{'C': 0.1}, {'C': 1}]
+            check_results(results, {'C': [0.1, 1]})
+            results = yield [{'C': 5}, {'C': 10}]
+            check_results(results, {'C': [5, 10]})
+
+    clf = LinearSVC(random_state=0)
+    X, y = make_classification(n_samples=50)
+    check_results(MySearchCV(clf).fit(X, y).cv_results_,
+                  {'C': [0.1, 1, 5, 10]})

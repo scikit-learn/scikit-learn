@@ -384,7 +384,11 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
 
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
-    """Base class for hyper parameter search with cross-validation."""
+    """Abstract base class for hyper parameter search with cross-validation.
+
+    Implementers should provide ``__init__`` and either ``_get_param_iterator``
+    or ``_generate_candidates``.
+    """
 
     @abstractmethod
     def __init__(self, estimator, scoring=None,
@@ -556,7 +560,17 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         return self.best_estimator_.classes_
 
     def _generate_candidates(self):
-        """To be overridden by implementors
+        """Generates lists of candidates to search as a coroutine
+
+        To be overridden by implementors.
+
+        It can iteratively generate a list of candidate parameter dicts, and is
+        returned the results corresponding to those candidates::
+
+            def _generate_candidates(self):
+                results = yield self.initial_candidates()
+                while self.not_good_enough(results):
+                    results = yield self.more_candidates()
         """
         yield self._get_param_iterator()
 
