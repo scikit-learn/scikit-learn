@@ -776,6 +776,18 @@ def test_cross_val_predict():
 
     assert_raises(ValueError, cross_val_predict, est, X, y, cv=BadCV())
 
+    X, y = make_classification(n_classes=2, n_samples=50)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='decision_function')
+    assert_equal(preds.shape, (10,))
+
+    X, y = make_classification(n_classes=4, n_samples=50)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='decision_function')
+    assert_equal(preds.shape, (10, 4))
+
 
 def test_cross_val_predict_input_types():
     iris = load_iris()
