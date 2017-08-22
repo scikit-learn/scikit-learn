@@ -782,11 +782,11 @@ def test_cross_val_predict():
                               method='decision_function')
     assert_equal(preds.shape, (50,))
 
-    X, y = make_classification(n_classes=4, n_samples=50)
+    X, y = load_iris(return_X_y=True)
 
     preds = cross_val_predict(LogisticRegression(), X, y,
                               method='decision_function')
-    assert_equal(preds.shape, (50, 4))
+    assert_equal(preds.shape, (150, 3))
 
 
 def test_cross_val_predict_input_types():
