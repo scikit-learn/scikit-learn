@@ -1490,15 +1490,19 @@ def test_transform_inverse_transform_round_trip():
 def test_generate_candidates():
     def check_results(results, gscv):
         exp_results = gscv.cv_results_
-        assert sorted(results.keys()) == sorted(exp_results.keys())
+        assert_equal(sorted(results.keys()),
+                     sorted(k for k in exp_results
+                            if not k.startswith('rank_')))
         for k in results:
             if not k.endswith('_time'):
-                # XXX: results['param'] is a list :(
+                # XXX: results['params'] is a list :|
                 results[k] = np.asanyarray(results[k])
                 if results[k].dtype.kind == 'O':
-                    assert_array_equal(exp_results[k], results[k])
+                    assert_array_equal(exp_results[k], results[k],
+                                       err_msg='Checking ' + k)
                 else:
-                    assert_almost_equal(exp_results[k], results[k])
+                    assert_almost_equal(exp_results[k], results[k],
+                                        err_msg='Checking ' + k)
 
     def fit_grid(param_grid):
         return GridSearchCV(clf, param_grid).fit(X, y)
@@ -1508,17 +1512,27 @@ def test_generate_candidates():
             super(MySearchCV, self).__init__(*args, **kwargs)
 
         def _generate_candidates(self):
-            results = yield [{'C': 0.1}, {'C': 1}]
-            check_results(results, fit_grid({'C': [0.1, 1]}))
-            results = yield [{'C': 5}, {'C': 10}]
-            check_results(results, fit_grid({'C': [5, 10]}))
+            results = yield [{'max_depth': 1}, {'max_depth': 2}]
+            check_results(results, fit_grid({'max_depth': [1, 2]}))
+            results = yield [{'min_samples_split': 5},
+                             {'min_samples_split': 10}]
+            check_results(results, fit_grid({'min_samples_split': [5, 10]}))
 
-    clf = LinearSVC(random_state=0)
-    X, y = make_classification(n_samples=50)
+    # Using regressor to make sure each score differs
+    clf = DecisionTreeRegressor(random_state=0)
+    X, y = make_classification(n_samples=100, n_informative=4,
+                               random_state=0)
     mycv = MySearchCV(clf).fit(X, y)
-    gscv = fit_grid({'C': [0.1, 1, 5, 10]})
+    gscv = fit_grid([{'max_depth': [1, 2]},
+                     {'min_samples_split': [5, 10]}])
 
-    check_results(mycv.cv_results_, gscv)
+    results = mycv.cv_results_
+    rank = results.pop('rank_test_score')
+    check_results(results, gscv)
+    assert_array_equal(rank, gscv.cv_results_['rank_test_score'])
     for attr in dir(gscv):
-        if attr[0].islower() and attr[-1:] == '_' and attr != 'cv_results_':
-            assert_equal(getattr(gscv, attr), getattr(mycv, attr))
+        if attr[0].islower() and attr[-1:] == '_' and \
+           attr not in {'cv_results_', 'best_estimator_',
+                        'grid_scores_'}:
+            assert_equal(getattr(gscv, attr), getattr(mycv, attr),
+                         msg='Attribute %s not equal' % attr)

@@ -565,7 +565,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         To be overridden by implementors.
 
         It can iteratively generate a list of candidate parameter dicts, and is
-        returned the results corresponding to those candidates::
+        returned the results (without ranks) corresponding to those
+        candidates::
 
             def _generate_candidates(self):
                 results = yield self.initial_candidates()
@@ -677,18 +678,42 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 except StopIteration:
                     break
 
-        # FIXME: handle keys present in some resutls and not in others
-        # FIXME: only construct ranks after this
-        results = {k: (np.ma if hasattr(all_results[0][k], 'mask')
-                       else np).concatenate([r[k] for r in all_results])
-                   for k in all_results[0]}
+        # Merge all_results into a single dict
+        if len(all_results) == 1:
+            results = all_results[0]
+        else:
+            results = {}
+            keys = set()
+            for some_results in all_results:
+                keys.update(some_results)
+            for k in keys:
+                to_concat = []
+                for some_results in all_results:
+                    try:
+                        v = some_results[k]
+                    except KeyError:
+                        assert k.startswith('param_')
+                        v = np.ma.masked_all(len(some_results['params']),
+                                             dtype='O')
+                    to_concat.append(v)
+
+                if hasattr(v, 'mask'):
+                    results[k] = np.ma.concatenate(to_concat)
+                else:
+                    results[k] = np.concatenate(to_concat)
+
+        results.update({"rank_%s" % k[5:]:
+                        np.asarray(rankdata(-v, method='min'),
+                                   dtype=np.int32)
+                        for k, v in results.items()
+                        if k.startswith('mean_test_')})
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
             self.best_index_ = results["rank_test_%s" % refit_metric].argmin()
-            self.best_params_ = candidate_params[self.best_index_]
+            self.best_params_ = results["params"][self.best_index_]
             self.best_score_ = results["mean_test_%s" % refit_metric][
                 self.best_index_]
 
@@ -727,7 +752,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         results = dict()
 
-        def _store(key_name, array, weights=None, splits=False, rank=False):
+        def _store(key_name, array, weights=None, splits=False):
             """A small helper to store the scores/times to the cv_results_"""
             # When iterated first by splits, then by parameters
             # We want `array` to have `n_candidates` rows and `n_splits` cols.
@@ -746,10 +771,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                              array_means[:, np.newaxis]) ** 2,
                                             axis=1, weights=weights))
             results['std_%s' % key_name] = array_stds
-
-            if rank:
-                results["rank_%s" % key_name] = np.asarray(
-                    rankdata(-array_means, method='min'), dtype=np.int32)
 
         _store('fit_time', fit_time)
         _store('score_time', score_time)
@@ -777,7 +798,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
             _store('test_%s' % scorer_name, test_scores[scorer_name],
-                   splits=True, rank=True,
+                   splits=True,
                    weights=test_sample_counts if self.iid else None)
             if self.return_train_score:
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
