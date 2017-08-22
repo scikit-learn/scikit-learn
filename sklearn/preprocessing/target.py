@@ -91,7 +91,6 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     TransformTargetRegressor(check_inverse=True,
                              func=<ufunc 'log'>,
                              inverse_func=<ufunc 'exp'>,
-                             random_state=None,
                              regressor=LinearRegression(copy_X=True,
                                                         fit_intercept=True,
                                                         n_jobs=1,
@@ -113,14 +112,12 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
 
     """
     def __init__(self, regressor=None, transformer=None,
-                 func=None, inverse_func=None, check_inverse=True,
-                 random_state=None):
+                 func=None, inverse_func=None, check_inverse=True):
         self.regressor = regressor
         self.transformer = transformer
         self.func = func
         self.inverse_func = inverse_func
         self.check_inverse = check_inverse
-        self.random_state = random_state
 
     def _fit_transformer(self, y):
         if (self.transformer is not None and
