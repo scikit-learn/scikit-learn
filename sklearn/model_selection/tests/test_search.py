@@ -1488,8 +1488,7 @@ def test_transform_inverse_transform_round_trip():
 
 
 def test_generate_candidates():
-    def check_results(results, param_grid):
-        gscv = GridSearchCV(clf, param_grid).fit(X, y)
+    def check_results(results, gscv):
         exp_results = gscv.cv_results_
         assert sorted(results.keys()) == sorted(exp_results.keys())
         for k in results:
@@ -1501,17 +1500,25 @@ def test_generate_candidates():
                 else:
                     assert_almost_equal(exp_results[k], results[k])
 
+    def fit_grid(param_grid):
+        return GridSearchCV(clf, param_grid).fit(X, y)
+
     class MySearchCV(BaseSearchCV):
         def __init__(self, *args, **kwargs):
             super(MySearchCV, self).__init__(*args, **kwargs)
 
         def _generate_candidates(self):
             results = yield [{'C': 0.1}, {'C': 1}]
-            check_results(results, {'C': [0.1, 1]})
+            check_results(results, fit_grid({'C': [0.1, 1]}))
             results = yield [{'C': 5}, {'C': 10}]
-            check_results(results, {'C': [5, 10]})
+            check_results(results, fit_grid({'C': [5, 10]}))
 
     clf = LinearSVC(random_state=0)
     X, y = make_classification(n_samples=50)
-    check_results(MySearchCV(clf).fit(X, y).cv_results_,
-                  {'C': [0.1, 1, 5, 10]})
+    mycv = MySearchCV(clf).fit(X, y)
+    gscv = fit_grid({'C': [0.1, 1, 5, 10]})
+
+    check_results(mycv.cv_results_, gscv)
+    for attr in dir(gscv):
+        if attr[0].islower() and attr[-1:] == '_' and attr != 'cv_results_':
+            assert_equal(getattr(gscv, attr), getattr(mycv, attr))

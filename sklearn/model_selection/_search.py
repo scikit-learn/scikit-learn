@@ -678,6 +678,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                     break
 
         # FIXME: handle keys present in some resutls and not in others
+        # FIXME: only construct ranks after this
         results = {k: (np.ma if hasattr(all_results[0][k], 'mask')
                        else np).concatenate([r[k] for r in all_results])
                    for k in all_results[0]}
