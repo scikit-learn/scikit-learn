@@ -172,6 +172,7 @@ def test_isotonic_regression_with_ties_in_differently_sized_groups():
     https://github.com/scikit-learn/scikit-learn/issues/9432
 
     Compare against output in R:
+    > require('isotone') || (install.packages('isotone') && require('isotone'))
     > library("isotone")
     > x <- c(0, 1, 1, 2, 3, 4)
     > y <- c(0, 0, 1, 0, 0, 1)

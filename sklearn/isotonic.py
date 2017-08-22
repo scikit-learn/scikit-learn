@@ -179,6 +179,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         set to the value corresponding to the nearest train interval endpoint.
         When set to "raise", allow ``interp1d`` to throw ValueError.
 
+
     Attributes
     ----------
     X_min_ : float
