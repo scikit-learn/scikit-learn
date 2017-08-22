@@ -598,6 +598,25 @@ shown in the following figure:
    :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
    :align: center
 
+Custom kernel
+-------------
+
+If none of the above kernels fit your needs, you have the option of creating a custom kernel. A custom kernel must include the following methods:
+
++-------------------------+------------------------------------------------------------+
+| Methods                                                                              | 
++=========================+============================================================+
+| clone_with_theta(theta) | Returns a clone of self with given hyperparameters theta.  |
++-------------------------+------------------------------------------------------------+
+| diag(X)                 | Returns the diagonal of the kernel k(X, X).                |
++-------------------------+------------------------------------------------------------+
+| get_params([deep])      | Get parameters of this kernel.                             |
++-------------------------+------------------------------------------------------------+
+| is_stationary()         | Returns whether the kernel is stationary.                  |
++-------------------------+------------------------------------------------------------+
+| set_params('**'params)  | Set the parameters of this kernel.                         |
++-------------------------+------------------------------------------------------------+
+
 References
 ----------
 
