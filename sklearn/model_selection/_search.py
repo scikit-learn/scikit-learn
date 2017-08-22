@@ -562,7 +562,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def _generate_candidates(self):
         """Supplies candidates to search in response to accumulated results
 
-        To be overridden by implementors.
+        To be overridden by implementers.
 
         As in the following snippet, an implementation should yield an
         initial list of candidates, where each candidate is a dict of
