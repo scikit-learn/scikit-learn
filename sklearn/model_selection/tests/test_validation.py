@@ -801,12 +801,8 @@ def test_cross_val_predict_input_types():
     assert_array_equal(predictions.shape, (150, 2))
 
     # test with X and y as list
-    list_check = lambda x: isinstance(x, list)
-    clf = CheckingClassifier(check_X=list_check)
-    predictions = cross_val_predict(clf, X.tolist(), y.tolist())
-
-    clf = CheckingClassifier(check_y=list_check)
-    predictions = cross_val_predict(clf, X, y.tolist())
+    predictions = cross_val_predict(LogisticRegression(), X.tolist(), y.tolist())
+    predictions = cross_val_predict(LogisticRegression(), X, y.tolist())
 
     #test with X and y as list and non empty method
     list_check = lambda x: isinstance(x, list)
