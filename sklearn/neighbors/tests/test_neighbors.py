@@ -1268,3 +1268,15 @@ def test_pairwise_boolean_distance():
     nn1 = NN(metric="jaccard", algorithm='brute').fit(X)
     nn2 = NN(metric="jaccard", algorithm='ball_tree').fit(X)
     assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
+
+def test_radius_neighbors_clf_predict_proba():
+    # test for #9597
+    # weight of uniform
+    # outlier warnings
+    def check_warn():
+        clf = RadiusNeighborsClassifier(radius=1, weights='uniform')
+        X = [[0], [1], [2], [3]]
+        y = [0, 0, 1, 1]
+        clf.fit(X, y)
+        clf.predict_proba([[1],[5]])
+    assert_warns(UserWarning, check_warn)

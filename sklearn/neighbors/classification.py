@@ -420,7 +420,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
         if len(outliers) > 0:
             warnings.warn('No neighbors found for test samples %r, '
-                          'their probabilities will be assgined with 0.'
+                          'their probabilities will be assgined with 0, '
+                          'which may influence scoring. '
+                          'You can try using larger radius, '
+                          'or consider removing them from your dataset.'
                           % outliers)
 
         classes_ = self.classes_
