@@ -808,11 +808,11 @@ def test_cross_val_predict_input_types():
     clf = CheckingClassifier(check_y=list_check)
     predictions = cross_val_predict(clf, X, y.tolist())
 
-    #test with X and y as list and non empty method
+    # test with X and y as list and non empty method
     predictions = cross_val_predict(LogisticRegression(), X.tolist(),
-            y.tolist(), method='decision_function')
+                                    y.tolist(), method='decision_function')
     predictions = cross_val_predict(LogisticRegression(), X,
-            y.tolist(), method='decision_function')
+                                    y.tolist(), method='decision_function')
 
     # test with 3d X and
     X_3d = X[:, :, np.newaxis]
