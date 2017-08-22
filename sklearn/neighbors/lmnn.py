@@ -22,7 +22,6 @@ from ..metrics.pairwise import euclidean_distances
 from ..decomposition import PCA
 from ..utils import gen_batches
 from ..utils.extmath import row_norms
-from ..utils.fixes import sp_version
 from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y
@@ -93,7 +92,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     callback : callable, optional (default=None)
         If not None, this function is called after every iteration of the
         optimizer taking as arguments the current solution and the number of
-        iterations (needs `scipy` >= 0.12.0).
+        iterations.
 
 
     verbose : int, optional (default=0)
@@ -201,7 +200,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         self.init_transformation = init_transformation
         self.init_pca = init_pca
         self.warm_start = warm_start
-
         self.n_features_out = n_features_out
         self.n_neighbors = n_neighbors
         self.algorithm = algorithm
@@ -256,32 +254,22 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         self.n_funcalls_ = 0
         iprint = self.verbose - 2 if self.verbose > 1 else -1
 
-        # For older versions of fmin, x0 needs to be a vector
-        transformation = transformation.ravel()
-
         # Create parameters dict for optimizer
-        optimizer_params = {'func': self._loss_grad, 'x0': transformation,
-                            'iprint': iprint, 'm': self.max_corrections,
+        optimizer_params = {'func': self._loss_grad,
+                            'x0': transformation,
+                            'args': (X_valid, y_valid, targets, grad_static),
+                            'm': self.max_corrections,
                             'pgtol': self.tol,
-                            'args': (X_valid, y_valid, targets, grad_static)}
+                            'iprint': iprint,
+                            'maxiter': self.max_iter,
+                            'callback': self._lbfgs_callback
+                            }
 
-        if sp_version >= (0, 12, 0):
-            optimizer_params['maxiter'] = self.max_iter
-            if self.verbose:
-                optimizer_params['callback'] = self._lbfgs_callback
-                print('\n{:>10} {:>10} {:>15} {:>10}'.
-                      format('Iteration', 'Func.Call', 'Func.Value',
-                             'Time(s)'))
-                print('-' * 48)
-                print('{:>10}'.format(self.n_iter_ + 1))
-        else:
-            # Type Error caused in old versions of SciPy (<= 0.11.0)
-            # because of no maxiter and no callback argument.
-            optimizer_params['maxfun'] = self.max_iter
-            if self.verbose:
-                print('\n{:>10} {:>15} {:>10}'.
-                      format('Func.Call', 'Func.Value', 'Time(s)'))
-                print('-' * 37)
+        if self.verbose:
+            print('\n{:>10} {:>10} {:>15} {:>10}'.
+                  format('Iteration', 'Func.Call', 'Func.Value', 'Time(s)'))
+            print('-' * 48)
+            print('{:>10}'.format(self.n_iter_ + 1))
 
         # Call optimizer
         transformation, loss, info = fmin_l_bfgs_b(**optimizer_params)
@@ -290,16 +278,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         d = transformation.size // self.n_features_out_
         self.transformation_ = transformation.reshape(self.n_features_out_, d)
 
-        # Get number of iterations or function calls from the optimizer
-        n_funcalls = info['funcalls']
-        self.n_iter_ = info.get('nit', n_funcalls)
-
         # Store information dict from the optimizer
         self.details_ = info
         self.details_['loss'] = loss
+        self.n_iter_ = info['nit']
 
         if self.verbose:
             termination_reason = info['warnflag']
+            n_funcalls = info['funcalls']
             if termination_reason == 0:
                 print('Converged after {} function calls.'.format(n_funcalls))
             elif termination_reason == 1:
@@ -653,13 +639,11 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         A0 = csr_matrix(shape)
         for k in reversed(range(self.n_neighbors_)):
             loss1 = np.maximum(dist_tn[imp_row, k] - dist_imp, 0)
-            #ac, = np.where(loss1 > 0)
-            ac = loss1 > 0
+            ac, = np.where(loss1 > 0)
             A1 = csr_matrix((2*loss1[ac], (imp_row[ac], imp_col[ac])), shape)
 
             loss2 = np.maximum(dist_tn[imp_col, k] - dist_imp, 0)
-            #ac, = np.where(loss2 > 0)
-            ac = loss2 > 0
+            ac, = np.where(loss2 > 0)
             A2 = csc_matrix((2*loss2[ac], (imp_row[ac], imp_col[ac])), shape)
 
             values = np.squeeze(np.asarray(A1.sum(1).ravel() + A2.sum(0)))
@@ -676,13 +660,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         toc = time.time()
         self.n_funcalls_ += 1
         if self.verbose:
-            if sp_version >= (0, 12, 0):
-                print('{:10} {:>10} {:>15.6e} {:>10.2f}'
-                      .format('', self.n_funcalls_, loss, toc - tic))
-            else:
-                print('{:>10} {:>15.6e} {:>10.2f}'
-                      .format(self.n_funcalls_, loss, toc - tic))
-
+            print('{:10} {:>10} {:>15.6e} {:>10.2f}'
+                  .format('', self.n_funcalls_, loss, toc - tic))
             sys.stdout.flush()
 
         return loss, grad.ravel()
@@ -834,12 +813,6 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
     for chunk in gen_batches(n_samples_out, batch_size):
         dist_out_in = euclidean_distances(X_out[chunk], X_in, squared=True,
                                           Y_norm_squared=X_in_norm_squared)
-
-    #    i1, j1 = np.where(dist_out_in < margin_radii_out[chunk, None])
-    #    i2, j2 = np.where(dist_out_in < margin_radii_in[None, :])
-
-    #    ind1 = np.ravel_multi_index((i1, j1), dist_out_in.shape)
-    #    ind2 = np.ravel_multi_index((i2, j2), dist_out_in.shape)
 
         ind1, = np.where((dist_out_in < margin_radii_out[chunk, None]).ravel())
         ind2, = np.where((dist_out_in < margin_radii_in[None, :]).ravel())
