@@ -305,7 +305,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         for i, variable in enumerate(target_variables):
             X_eval[:, variable] = grid[:, i]
         pdp = _predict(est, X_eval, output=output)
-        if pdp.shape[1] == 2:
+        if est._estimator_type == 'classifier' and pdp.shape[1] == 2:
             # Binary classification
             pdp = pdp[:, 1][np.newaxis]
         if est._estimator_type == 'regressor':
@@ -313,7 +313,6 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
     else:
         raise ValueError('method "%s" is invalid. Use "recursion", "exact", '
                          '"estimated", or None.' % method)
-
     return pdp, axes
 
 

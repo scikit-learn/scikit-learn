@@ -7,12 +7,15 @@ from numpy.testing import assert_array_equal
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import if_matplotlib
+from sklearn.utils.testing import all_estimators
+from sklearn.utils.testing import ignore_warnings
 from sklearn.partial_dependence import partial_dependence
 from sklearn.partial_dependence import plot_partial_dependence
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble.gradient_boosting import BaseGradientBoosting
+from sklearn.ensemble.forest import ForestRegressor
 from sklearn import datasets
-
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -20,11 +23,57 @@ y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
 
-# also load the boston dataset
+# Load the boston, iris & breast cancer datasets
 boston = datasets.load_boston()
-
-# also load the iris dataset
 iris = datasets.load_iris()
+breast_cancer = datasets.load_breast_cancer()
+
+
+@ignore_warnings()
+def test_output_shape_classifier():
+    # Test that partial_dependence has same output shape for all classifiers
+    for name, Estimator in all_estimators():
+        clf = Estimator()
+        if (not hasattr(clf, '_estimator_type') or
+                'MultiTask' in name or
+                clf._estimator_type != 'classifier' or
+                not hasattr(clf, 'predict_proba')):
+            continue
+        clf.fit(breast_cancer.data, breast_cancer.target)
+        for method in ['recursion', 'exact', 'estimated']:
+            if (method == 'recursion' and not
+                    (isinstance(clf, BaseGradientBoosting) or
+                     isinstance(clf, ForestRegressor))):
+                continue
+            pdp, axes = partial_dependence(clf,
+                                           target_variables=[1],
+                                           X=breast_cancer.data,
+                                           method=method,
+                                           grid_resolution=20)
+            assert(pdp.shape == (1, 20))
+
+
+@ignore_warnings()
+def test_output_shape_regressor():
+    # Test that partial_dependence has same output shape for all regressors
+    for name, Estimator in all_estimators():
+        clf = Estimator()
+        if (not hasattr(clf, '_estimator_type') or
+                'MultiTask' in name or
+                clf._estimator_type != 'regressor'):
+            continue
+        clf.fit(boston.data, boston.target)
+        for method in ['recursion', 'exact', 'estimated']:
+            if (method == 'recursion' and not
+                    (isinstance(clf, BaseGradientBoosting) or
+                     isinstance(clf, ForestRegressor))):
+                continue
+            pdp, axes = partial_dependence(clf,
+                                           target_variables=[1],
+                                           X=boston.data,
+                                           method=method,
+                                           grid_resolution=20)
+            assert(pdp.shape == (1, 20))
 
 
 def test_partial_dependence_classifier():
