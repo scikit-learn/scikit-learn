@@ -616,8 +616,8 @@ by setting ``check_inverse=True`` and calling ``fit`` before
 error with a ``filterwarnings``::
 
   >>> import warnings
-  >>> warnings.filterwarnings("error", message="The provided functions are not"
-  ...                         " strictly inverse of each other", append=True)
+  >>> warnings.filterwarnings("error", message=".*check_inverse*.",
+  ...                         category=UserWarning, append=False)
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
 to do custom feature selection,
