@@ -208,6 +208,18 @@ def test_pipeline_init():
     assert_equal(params, params2)
 
 
+def test_pipeline_init_tuple():
+    # Pipeline accepts steps as tuple
+    X = np.array([[1, 2]])
+    pipe = Pipeline((('transf', Transf()), ('clf', FitParamT())))
+    pipe.fit(X, y=None)
+    pipe.score(X)
+
+    pipe.set_params(transf=None)
+    pipe.fit(X, y=None)
+    pipe.score(X)
+
+
 def test_pipeline_methods_anova():
     # Test the various methods of the pipeline (anova).
     iris = load_iris()
@@ -424,6 +436,10 @@ def test_feature_union():
                         'transform.*\\bNoTrans\\b',
                         FeatureUnion,
                         [("transform", Transf()), ("no_transform", NoTrans())])
+
+    # test that init accepts tuples
+    fs = FeatureUnion((("svd", svd), ("select", select)))
+    fs.fit(X, y)
 
 
 def test_make_union():

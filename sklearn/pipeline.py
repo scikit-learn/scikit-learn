@@ -17,7 +17,6 @@ from scipy import sparse
 from .base import clone, TransformerMixin
 from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
-from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
 
@@ -112,7 +111,7 @@ class Pipeline(_BaseComposition):
 
     def __init__(self, steps, memory=None):
         # shallow copy of steps
-        self.steps = tosequence(steps)
+        self.steps = list(steps)
         self._validate_steps()
         self.memory = memory
 
@@ -624,7 +623,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
-        self.transformer_list = tosequence(transformer_list)
+        self.transformer_list = list(transformer_list)
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self._validate_transformers()
