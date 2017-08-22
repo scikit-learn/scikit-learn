@@ -678,6 +678,24 @@ binary classification and multilabel indicator format.
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
 
+
+.. topic:: References:
+
+  * C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
+  <http://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
+  2008.
+  * M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
+  `The Pascal Visual Object Classes (VOC) Challenge
+  <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_,
+  IJCV 2010.
+  * J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
+  <http://www.machinelearning.org/proceedings/icml2006/030_The_Relationship_Bet.pdf>`_,
+  ICML 2006.
+  * P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
+  <http://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
+  NIPS 2015.
+
+
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
 
