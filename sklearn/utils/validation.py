@@ -158,18 +158,16 @@ def _shape_repr(shape):
 
 def check_memory(memory):
     """Check that the memory is an instance of joblib.Memory.
-
     Raises a ValueError if the passed object does not have a
-
     cache attribute.
 
     Parameters
     ----------
-    memory: input object.
+    memory : string or None or something with cache.
 
     Returns
     -------
-    memory: the input memory if it is valid. A valueError if invalid memory instance.
+    memory : Memory
     """
 
     if memory is None:

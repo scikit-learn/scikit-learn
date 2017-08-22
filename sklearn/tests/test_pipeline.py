@@ -19,7 +19,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
-from sklearn.utils.tests.test_validation import DummyMemory, WrongDummyMemory
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -265,16 +264,6 @@ def test_pipeline_sample_weight_unsupported():
         "score() got an unexpected keyword argument 'sample_weight'",
         pipe.score, X, sample_weight=np.array([2, 3])
     )
-
-
-def test_pipeline_with_cache_attribute():
-    X = np.array([[1, 2]])
-    pipe = Pipeline([('transf', Transf()), ('clf', Mult())], memory=DummyMemory())
-    pipe.fit(X, y=None)
-
-    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
-                    memory=WrongDummyMemory())
-    assert_raises(ValueError, pipe.fit, X)
 
 
 def test_pipeline_raise_set_params_error():

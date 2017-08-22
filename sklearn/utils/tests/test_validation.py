@@ -558,5 +558,11 @@ class WrongDummyMemory(object):
 
 
 def test_check_memory():
-    memory = check_memory(DummyMemory())
+    try:
+        check_memory("TestString")
+        check_memory(None)
+        check_memory(DummyMemory())
+    except ValueError:
+        assert False, "check_memory failed with ValueError"
+    assert_raises(ValueError, check_memory, 1)
     assert_raises(ValueError, check_memory, WrongDummyMemory())

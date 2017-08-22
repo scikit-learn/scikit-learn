@@ -34,7 +34,6 @@ from sklearn.cluster._hierarchical import average_merge, max_merge
 from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
-from sklearn.utils.tests.test_validation import DummyMemory, WrongDummyMemory
 
 
 def test_deprecation_of_n_components_in_linkage_tree():
@@ -139,17 +138,6 @@ def test_agglomerative_clustering_wrong_arg_memory():
     X = rng.randn(n_samples, 50)
     memory = 5
     clustering = AgglomerativeClustering(memory=memory)
-    assert_raises(ValueError, clustering.fit, X)
-
-
-def test_agglomerative_clustering_with_cache_attribute():
-    rng = np.random.RandomState(0)
-    n_samples = 100
-    X = rng.randn(n_samples, 50)
-    clustering = AgglomerativeClustering(memory=DummyMemory())
-    clustering.fit(X)
-
-    clustering = AgglomerativeClustering(memory=WrongDummyMemory())
     assert_raises(ValueError, clustering.fit, X)
 
 
