@@ -53,8 +53,7 @@ class Pipeline(_BaseComposition):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
-    memory : Instance of joblib.Memory or string, optional \
-            (default=None)
+    memory : Instance of joblib.Memory or string, optional (default=None)
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -530,8 +529,7 @@ def make_pipeline(*steps, **kwargs):
     ----------
     *steps : list of estimators,
 
-    memory : Instance of joblib.Memory or string, optional \
-            (default=None)
+    memory : Instance of joblib.Memory or string, optional (default=None)
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of

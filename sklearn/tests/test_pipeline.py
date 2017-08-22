@@ -852,8 +852,8 @@ def test_pipeline_wrong_memory():
     memory = 1
     cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
                            memory=memory)
-    assert_raises_regex(ValueError, "'memory' should either be a string or"
-                        " a joblib.Memory instance", cached_pipe.fit, X, y)
+    assert_raises_regex(ValueError, "'memory' is not a string or a Memory instance "
+                        "implementing a cache method. Got a {} instance, instead.".format(type(memory)), cached_pipe.fit, X, y)
 
 
 def test_pipeline_memory():

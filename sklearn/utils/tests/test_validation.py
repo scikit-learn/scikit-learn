@@ -10,7 +10,11 @@ from numpy.testing import assert_array_equal
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_true, assert_false, assert_equal
-from sklearn.utils.testing import assert_raises, assert_raises_regexp
+from sklearn.utils.testing import (
+    assert_raises,
+    assert_raises_regexp,
+    assert_raises_regex
+)
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
@@ -39,6 +43,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
+
 
 def test_as_float_array():
     # Test function for as_float_array
@@ -549,8 +554,6 @@ class DummyMemory(object):
     def cache(self, func):
         return func
 
-    cachedir = None
-
 
 class WrongDummyMemory(object):
     def __init__(self):
@@ -558,11 +561,18 @@ class WrongDummyMemory(object):
 
 
 def test_check_memory():
-    try:
-        check_memory("TestString")
-        check_memory(None)
-        check_memory(DummyMemory())
-    except ValueError:
-        assert False, "check_memory failed with ValueError"
-    assert_raises(ValueError, check_memory, 1)
-    assert_raises(ValueError, check_memory, WrongDummyMemory())
+    memory = check_memory("TestString")
+    assert_equal(memory.cachedir="TestString")
+    memory = check_memory(None)
+    assert_equal(memory.cachedir=None)
+    dummy = DummyMemory()
+    memory = check_memory(dummy)
+    assert memory is dummy
+    assert_raises_regex(ValueError, "'memory' is not a string "
+                        "or a Memory instance implementing a"
+                        " cache method. Got a {} instance, "
+                        "instead.".format(type(memory)), check_memory, 1)
+    assert_raises_regex(ValueError, "'memory' is not a string "
+                        "or a Memory instance implementing a cache method."
+                        " Got a {} instance, instead.".format(type(memory)),
+                        check_memory, WrongDummyMemory())
