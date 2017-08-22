@@ -9,6 +9,75 @@ from ..utils import validation
 
 
 class GmlvqModel(GlvqModel):
+    """Generalized Matrix Learning Vector Quantization
+
+    Parameters
+    ----------
+
+    random_state: int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    initial_prototypes : array-like, shape =  [n_samples, n_features + 1], optional
+        Prototypes to start with. If not given initialization near the class means.
+        Class label must be placed as last entry of each prototype
+
+    prototypes_per_class : int or list of int, optional (default=1)
+        Number of prototypes per class. Use list to specify different numbers per class
+
+    display: boolean, optional (default=False)
+        Print information about the bfgs steps
+
+    max_iter: int, optional (default=2500)
+        The maximum number of iterations
+
+    gtol: float, optional (default=1e-5)
+        Gradient norm must be less than gtol before successful termination of bfgs
+
+    regularization: int, optional (default=0.0)
+        Values between 0 and 1 (treat with care)
+
+    initial_matrix: array-like, shape = [dim, n_features], optional
+        Relevance matrix to start with.
+        If not given random initialization for rectangular matrix and unity for squared matrix
+
+    dim: int, optional (default=nb_features)
+        Maximum rank or projection dimensions
+
+
+    Attributes
+    ----------
+
+    w_ : array-like, shape = [n_prototypes, n_features]
+        Prototype vector, where n_prototypes in the number of prototypes and
+        n_features is the number of features
+
+    c_w_ : array-like, shape = [n_prototypes]
+        Prototype classes
+
+    classes_ : array-like, shape = [n_classes]
+        Array containing labels.
+
+    dim_ : int
+        Maximum rank or projection dimensions
+
+    omega_ : array-like, shape = [dim, n_features]
+        Relevance matrix
+
+    Examples
+    --------
+    >>> X = [[0,0],[0,1],[1,0],[1,1]]
+    >>> y = [0,0,1,1]
+    >>> model = GmlvqModel()
+    >>> model.fit(X,y)
+    []
+
+    See also
+    --------
+    GLVQ, GRLVQ, LGMLVQ
+    """
     def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
                  display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrix=None, dim=None):
         super().__init__(random_state, initial_prototypes, prototypes_per_class,
@@ -112,7 +181,7 @@ class GmlvqModel(GlvqModel):
                 self.omega_ = random_state.rand(self.dim_, nb_features) * 2 - 1
         else:
             self.omega_ = validation.check_array(self.initial_matrix)
-            if self.omega_.shape[1] != nb_features:
+            if self.omega_.shape[1] != nb_features: #TODO: check dim
                 raise ValueError("initial matrix has wrong number of features\n"
                                  "found=%d\n"
                                  "expected=%d" % (self.omega_.shape[1],nb_features))

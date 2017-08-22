@@ -1,3 +1,15 @@
+"""
+=========================================================
+Generalized Learning Vector Quantization Example
+=========================================================
+This example shows the different glvq algorithms and how they project
+different data sets. The data sets are choosen show the strength of each algorithm.
+Each plot shows for each datapoint which class it belongs to (big circle) and
+which class it was classified to (samler circle). It also shows the
+prototypes (light blue circle). The projected data is shown in the right plot
+
+"""
+print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 

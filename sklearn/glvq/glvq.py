@@ -17,6 +17,60 @@ def _squared_euclidean(A, B=None):
 
 
 class GlvqModel(BaseEstimator, ClassifierMixin):
+    """Generalized Learning Vector Quantization
+
+    Parameters
+    ----------
+
+    random_state: int, RandomState instance or None, optional
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    initial_prototypes : array-like, shape =  [n_samples, n_features + 1], optional
+        Prototypes to start with. If not given initialization near the class means.
+        Class label must be placed as last entry of each prototype
+
+    prototypes_per_class : int or list of int, optional (default=1)
+        Number of prototypes per class. Use list to specify different numbers per class
+
+    display: boolean, optional (default=False)
+        Print information about the bfgs steps
+
+    max_iter: int, optional (default=2500)
+        The maximum number of iterations
+
+    gtol: float, optional (default=1e-5)
+        Gradient norm must be less than gtol before successful termination of bfgs.
+
+
+    Attributes
+    ----------
+
+    w_ : array-like, shape = [n_prototypes, n_features]
+        Prototype vector, where n_prototypes in the number of prototypes and
+        n_features is the number of features
+
+    c_w_ : array-like, shape = [n_prototypes]
+        Prototype classes
+
+    classes_ : array-like, shape = [n_classes]
+        Array containing labels.
+
+    Examples
+    --------
+    >>> X = [[0,0],[0,1],[1,0],[1,1]]
+    >>> y = [0,0,1,1]
+    >>> prototypes = [[0,0.5,0],[1,0.5,1]]
+    >>> model = GlvqModel(initial_prototypes=prototypes)
+    >>> model.fit(X,y)
+    []
+
+    See also
+    --------
+    GRLVQ, GMLVQ, LGMLVQ
+    """
     def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
                  display=False, max_iter=2500, gtol=1e-5):
         self.random_state = random_state
@@ -98,8 +152,8 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
 
         # set prototypes per class
         if isinstance(self.prototypes_per_class, int):
-            if self.prototypes_per_class < 0:
-                raise ValueError("prototypes_per_class must be positive")
+            if self.prototypes_per_class < 0 or not isinstance(self.prototypes_per_class,int):
+                raise ValueError("prototypes_per_class must be a positive int")
             nb_ppc = np.ones([nb_classes], dtype='int') * self.prototypes_per_class
         else:
             nb_ppc = validation.column_or_1d(
@@ -146,6 +200,21 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         return res.nit
 
     def fit(self, X, y):
+        """Fit the GLVQ model to the given training data and parameters using bfgs.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+          Training vector, where n_samples in the number of samples and
+          n_features is the number of features.
+        Y : array, shape = [n_samples]
+          Target values (integers in classification, real numbers in
+          regression)
+
+        Returns
+        --------
+        self
+        """
         if len(np.unique(y)) == 1:
             raise ValueError("fitting " + type(self).__name__ + " with only one class is not possible")
         X, y, random_state = self._validate_train_parms(X, y)
@@ -158,6 +227,22 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         return cdist(X, w, 'euclidean')
 
     def predict(self, X):
+        """Predict class membership index for each input sample.
+
+        This function does classification on an array of
+        test vectors X.
+
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+
+        Returns
+        -------
+        C : array, shape = (n_samples,)
+            Returns predicted values.
+        """
         check_is_fitted(self, ['w_', 'c_w_'])
         X = validation.check_array(X)
         if X.shape[1] != self.w_.shape[1]:

@@ -6,6 +6,77 @@ from ..utils import validation
 
 
 class LgmlvqModel(GlvqModel):
+    """Localized Generalized Matrix Learning Vector Quantization
+
+    Parameters
+    ----------
+
+    random_state: int, RandomState instance or None, optional
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    initial_prototypes : array-like, shape =  [n_samples, n_features + 1], optional
+        Prototypes to start with. If not given initialization near the class means.
+        Class label must be placed as last entry of each prototype
+
+    prototypes_per_class : int or list of int, optional (default=1)
+        Number of prototypes per class. Use list to specify different numbers per class
+
+    display: boolean, optional (default=False)
+        Print information about the bfgs steps
+
+    max_iter: int, optional (default=2500)
+        The maximum number of iterations
+
+    gtol: float, optional (default=1e-5)
+        Gradient norm must be less than gtol before successful termination of bfgs.
+
+    regularization: int, optional (default=0.0)
+        Values between 0 and 1 (treat with care)
+
+    initial_matrices: list of array-like, optional TODO
+        Matrices to start with. If not given random initialization
+
+    classwise: boolean, optional
+        Values between 0 and 1 (treat with care)
+
+    dim: int, optional
+        Maximum rank or projection dimensions
+
+
+    Attributes
+    ----------
+
+    w_ : array-like, shape = [n_prototypes, n_features]
+        Prototype vector, where n_prototypes in the number of prototypes and
+        n_features is the number of features
+
+    c_w_ : array-like, shape = [n_prototypes]
+        Prototype classes
+
+    classes_ : array-like, shape = [n_classes]
+        Array containing labels.
+
+    psis_ :
+
+    dim_ :
+
+    regularization_ : 
+
+    Examples
+    --------
+    >>> X = [[0,0],[0,1],[1,0],[1,1]]
+    >>> y = [0,0,1,1]
+    >>> model = LgmlvqModel()
+    >>> model.fit(X,y)
+    []
+
+    See also
+    --------
+    GLVQ, GRLVQ, GMLVQ
+    """
     def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
                  display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrices=None, classwise=False,
                  dim=None):
