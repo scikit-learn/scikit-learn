@@ -634,16 +634,22 @@ from the ground truth label and a score given by the classifier
 by varying a decision threshold.
 
 The :func:`average_precision_score` function computes the average precision
-(AP) from prediction scores. This score corresponds to the area under the
-precision-recall curve. The value is between 0 and 1 and higher is better.
-With random predictions, the AP is the fraction of positive samples. AP is
-defined as
+(AP) from prediction scores. The value is between 0 and 1 and higher is better.
+AP is defined as
 
 .. math::
     \text{AP} = \sum_n (R_n - R_{n-1}) P_n
 
 where :math:`P_n` and :math:`R_n` are the precision and recall at the
-nth threshold.
+nth threshold. With random predictions, the AP is the fraction of positive
+samples.
+
+The references below present alternative variants of AP that interpolate the
+precision-recall curve, which are not implemented in
+:func:`average_precision_score`. They also describe why a linear interpolation
+of points on the precision-recall curve provides an overly-optimistic measure
+of classifier performance. This linear interpolation is used when computing
+area under the curve with the trapezoidal rule in :func:`auc`.
 
 Several functions allow you to analyze the precision, recall and F-measures
 score:
