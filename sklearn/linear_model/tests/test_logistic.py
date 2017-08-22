@@ -75,6 +75,11 @@ def test_error():
     assert_raise_message(ValueError, msg,
                          LogisticRegression(C="test").fit, X, Y1)
 
+    msg = "is not a valid scoring value"
+    assert_raise_message(ValueError, msg,
+                         LogisticRegressionCV(scoring='bad-scorer', cv=2).fit,
+                         X, Y1)
+
     for LR in [LogisticRegression, LogisticRegressionCV]:
         msg = "Tolerance for stopping criteria must be positive"
         assert_raise_message(ValueError, msg, LR(tol=-1).fit, X, Y1)
