@@ -353,7 +353,7 @@ def test_pca_validation():
     # Ensures that solver-specific extreme inputs for the n_components
     # parameter raise errors
     X = np.array([[0, 1, 0], [1, 0, 0]])
-    smallest_d = int(2)  # The smallest dimension
+    smallest_d = 2  # The smallest dimension
     lower_limit = {'randomized': 1, 'arpack': 1, 'full': 0, 'auto': 0}
 
     for solver in solver_list:
