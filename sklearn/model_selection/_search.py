@@ -560,13 +560,17 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         return self.best_estimator_.classes_
 
     def _generate_candidates(self):
-        """Generates lists of candidates to search as a coroutine
+        """Supplies candidates to search in response to accumulated results
 
         To be overridden by implementors.
 
-        It can iteratively generate a list of candidate parameter dicts, and is
-        returned the results (without ranks) corresponding to those
-        candidates::
+        As in the following snippet, an implementation should yield an
+        initial list of candidates, where each candidate is a dict of
+        parameter settings.  The yield expression then returns the results
+        dict corresponding to those candidates, and further yields can
+        be used to evaluate more candidates.
+
+        ::
 
             def _generate_candidates(self):
                 results = yield self.initial_candidates()
