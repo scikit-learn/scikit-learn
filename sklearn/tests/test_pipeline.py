@@ -215,8 +215,6 @@ def test_pipeline_init_tuple():
     pipe.fit(X, y=None)
     pipe.score(X)
 
-    X = np.array([[1, 2]])
-    pipe = Pipeline((('transf', Transf()), ('clf', FitParamT())))
     pipe.set_params(transf=None)
     pipe.fit(X, y=None)
     pipe.score(X)
