@@ -42,6 +42,7 @@ from sklearn.model_selection._validation import _check_is_permutation
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
+from sklearn.datasets import load_digits
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
@@ -787,6 +788,13 @@ def test_cross_val_predict():
     preds = cross_val_predict(LogisticRegression(), X, y,
                               method='decision_function')
     assert_equal(preds.shape, (150, 3))
+
+    X, y = load_digits(return_X_y=True)
+
+    preds = cross_val_predict(SVC(kernel='linear', decision_function_shape='ovo'),
+                              X, y,
+                              method='decision_function')
+    assert_equal(preds.shape, (1797, 45))
 
 
 def test_cross_val_predict_input_types():
