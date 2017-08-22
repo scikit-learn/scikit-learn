@@ -10,11 +10,8 @@ from numpy.testing import assert_array_equal
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_true, assert_false, assert_equal
-from sklearn.utils.testing import (
-    assert_raises,
-    assert_raises_regexp,
-    assert_raises_regex
-)
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
@@ -512,17 +509,17 @@ def test_check_consistent_length():
     check_consistent_length([1], [2], [3], [4], [5])
     check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ['a', 'b'])
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
-    assert_raises_regexp(ValueError, 'inconsistent numbers of samples',
-                         check_consistent_length, [1, 2], [1])
-    assert_raises_regexp(TypeError, 'got <\w+ \'int\'>',
-                         check_consistent_length, [1, 2], 1)
-    assert_raises_regexp(TypeError, 'got <\w+ \'object\'>',
-                         check_consistent_length, [1, 2], object())
+    assert_raises_regex(ValueError, 'inconsistent numbers of samples',
+                        check_consistent_length, [1, 2], [1])
+    assert_raises_regex(TypeError, 'got <\w+ \'int\'>',
+                        check_consistent_length, [1, 2], 1)
+    assert_raises_regex(TypeError, 'got <\w+ \'object\'>',
+                        check_consistent_length, [1, 2], object())
 
     assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
     # Despite ensembles having __len__ they must raise TypeError
-    assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
-                         [1, 2], RandomForestRegressor())
+    assert_raises_regex(TypeError, 'estimator', check_consistent_length,
+                        [1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
 
 
@@ -561,8 +558,8 @@ class WrongDummyMemory(object):
 
 
 def test_check_memory():
-    memory = check_memory("TestString")
-    assert_equal(memory.cachedir, "TestString/joblib")
+    memory = check_memory("cache_directory")
+    assert_equal(memory.cachedir, os.join.path('cache_directory', 'joblib'))
     memory = check_memory(None)
     assert_equal(memory.cachedir, None)
     dummy = DummyMemory()
@@ -570,9 +567,9 @@ def test_check_memory():
     assert memory is dummy
     assert_raises_regex(ValueError, "'memory' is not a string "
                         "or a Memory instance implementing a"
-                        " cache method. Got a {} instance, "
-                        "instead.".format(type(memory)), check_memory, 1)
+                        " cache method. Got a <type 'int'> instance, "
+                        "instead.", check_memory, 1)
     assert_raises_regex(ValueError, "'memory' is not a string "
                         "or a Memory instance implementing a cache method."
-                        " Got a {} instance, instead.".format(type(memory)),
-                        check_memory, WrongDummyMemory())
+                        " Got a <class '__main__.WrongDummyMemory'> "
+                        "instance, instead.", check_memory, WrongDummyMemory())

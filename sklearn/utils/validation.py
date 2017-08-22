@@ -174,7 +174,7 @@ def check_memory(memory):
     Returns
     -------
     memory : Memory
-        Validated memory instance
+        Validated memory instance.
     """
 
     if memory is None:
