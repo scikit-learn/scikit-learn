@@ -667,7 +667,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         results = {k: (np.ma if hasattr(all_results[0][k], 'mask')
                        else np).concatenate([r[k] for r in all_results])
                    for k in all_results[0]}
-        del all_results
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
