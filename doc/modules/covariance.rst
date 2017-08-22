@@ -170,13 +170,13 @@ object to the same sample.
      an example on how to fit an :class:`OAS` object
      to data.
 
-   * See :ref:`sphx_glr_auto_examples_covariance_plot_Ledoit-Wolf_vs_oas.py` to visualize the
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_lw_vs_oas.py` to visualize the
      Mean Squared Error difference between a :class:`LedoitWolf` and
      an :class:`OAS` estimator of the covariance.
 
 
-.. figure:: ../auto_examples/covariance/images/sphx_glr_plot_Ledoit-Wolf_vs_oas_001.png
-   :target: ../auto_examples/covariance/plot_Ledoit-Wolf_vs_oas.html
+.. figure:: ../auto_examples/covariance/images/sphx_glr_plot_lw_vs_oas_001.png
+   :target: ../auto_examples/covariance/plot_lw_vs_oas.html
    :align: center
    :scale: 75%
 
