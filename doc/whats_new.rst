@@ -67,6 +67,7 @@ random sampling procedures.
 - :class:`semi_supervised.LabelSpreading` (bug fix)
 - :class:`semi_supervised.LabelPropagation` (bug fix)
 - tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
+- :class:`isotonic.IsotonicRegression` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -465,6 +466,10 @@ Linear, kernelized and related models
   would fail with a unmeaningful error by default.
   :issue:`6573` by :user:`Quazi Marufur Rahman <qmaruf>` and
   `Manoj Kumar`_.
+
+- Fixed a bug in :class:`isotonic.IsotonicRegression` which incorrectly combined
+  weights when fitting a model to data involving points with identical X values.
+  :issue:`9432` by :user:`Dallas Card <dallascard>`
 
 Other predictors
 
