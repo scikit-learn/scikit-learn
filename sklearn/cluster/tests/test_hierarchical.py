@@ -141,27 +141,14 @@ def test_agglomerative_clustering_wrong_arg_memory():
     assert_raises(ValueError, clustering.fit, X)
 
 
-class Dummy(object):
-    def __init__(self):
-        pass
-
-    def cache(self, func):
-        return func
-
-
-class Wrong_Dummy(object):
-    def __init__(self):
-        pass
-
-
 def test_agglomerative_clustering_with_cache_attribute():
     rng = np.random.RandomState(0)
     n_samples = 100
     X = rng.randn(n_samples, 50)
-    clustering = AgglomerativeClustering(memory=Dummy())
+    clustering = AgglomerativeClustering(memory=DummyMemory())
     clustering.fit(X)
 
-    clustering = AgglomerativeClustering(memory=Wrong_Dummy())
+    clustering = AgglomerativeClustering(memory=WrongDummyMemory())
     assert_raises(ValueError, clustering.fit, X)
 
 

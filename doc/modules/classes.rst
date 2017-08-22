@@ -1380,6 +1380,7 @@ Low-level methods
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
+   utils.validation.check_memory
 
 Recently deprecated
 ===================

@@ -157,10 +157,28 @@ def _shape_repr(shape):
 
 
 def check_memory(memory):
+    """Check that the memory is an instance of joblib.Memory.
+
+    Raises a ValueError if the passed object does not have a
+
+    cache attribute.
+
+    Parameters
+    ----------
+    memory: input object.
+
+    Returns
+    -------
+    memory: the input memory if it is valid. A valueError if invalid memory instance.
+    """
+
     if memory is None:
         memory = Memory(cachedir=None, verbose=0)
     elif isinstance(memory, six.string_types):
         memory = Memory(cachedir=memory, verbose=0)
+    elif not hasattr(memory, 'cache'):
+            raise ValueError("'memory' should either be a string or"
+                             " a joblib.Memory instance")
     return memory
 
 

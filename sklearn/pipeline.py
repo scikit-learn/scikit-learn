@@ -189,11 +189,6 @@ class Pipeline(_BaseComposition):
         self._validate_steps()
         # Setup the memory
         memory = check_memory(self.memory)
-        if not hasattr(memory, 'cache'):
-            raise ValueError("'memory' should either be a string or"
-                             " a joblib.Memory"
-                             " instance, got 'memory={!r}' instead.".format(
-                                 type(memory)))
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 

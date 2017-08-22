@@ -696,11 +696,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         """
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
-        if not hasattr(memory, 'cache'):
-            raise ValueError("'memory' should either be a string or"
-                             " a joblib.Memory"
-                             " instance, got 'memory={!r}' instead.".format(
-                                 type(memory)))
 
         if self.n_clusters <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."

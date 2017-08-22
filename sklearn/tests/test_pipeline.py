@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.tests.test_validation import DummyMemory, WrongDummyMemory
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -266,28 +267,13 @@ def test_pipeline_sample_weight_unsupported():
     )
 
 
-class Dummy(object):
-    def __init__(self):
-        pass
-
-    def cache(self, func):
-        return func
-
-    cachedir = None
-
-
-class Wrong_Dummy(object):
-    def __init__(self):
-        pass
-
-
 def test_pipeline_with_cache_attribute():
     X = np.array([[1, 2]])
-    pipe = Pipeline([('transf', Transf()), ('clf', Mult())], memory=Dummy())
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())], memory=DummyMemory())
     pipe.fit(X, y=None)
 
     pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
-                    memory=Wrong_Dummy())
+                    memory=WrongDummyMemory())
     assert_raises(ValueError, pipe.fit, X)
 
 
@@ -878,10 +864,7 @@ def test_pipeline_wrong_memory():
     cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
                            memory=memory)
     assert_raises_regex(ValueError, "'memory' should either be a string or"
-                        " a joblib.Memory"
-                        " instance, got 'memory={!r}' instead.".format(
-                                 type(memory)),
-                        cached_pipe.fit, X, y)
+                        " a joblib.Memory instance", cached_pipe.fit, X, y)
 
 
 def test_pipeline_memory():

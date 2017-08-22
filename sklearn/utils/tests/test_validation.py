@@ -16,6 +16,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.tests.test_validation import DummyMemory, WrongDummyMemory
 from sklearn.utils import as_float_array, check_array, check_symmetric
 from sklearn.utils import check_X_y
 from sklearn.utils.mocking import MockDataFrame
@@ -31,6 +32,7 @@ from sklearn.utils.validation import (
     check_is_fitted,
     check_consistent_length,
     assert_all_finite,
+    check_memory
 )
 import sklearn
 
@@ -539,3 +541,23 @@ def test_suppress_validation():
     assert_all_finite(X)
     sklearn.set_config(assume_finite=False)
     assert_raises(ValueError, assert_all_finite, X)
+
+
+class DummyMemory(object):
+    def __init__(self):
+        pass
+
+    def cache(self, func):
+        return func
+
+    cachedir = None
+
+
+class WrongDummyMemory(object):
+    def __init__(self):
+        pass
+
+
+def test_check_memory():
+    memory = check_memory(DummyMemory())
+    assert_raises(ValueError, check_memory, WrongDummyMemory())
