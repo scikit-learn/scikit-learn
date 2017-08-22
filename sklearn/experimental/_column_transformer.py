@@ -224,41 +224,25 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             for name, old, column in self.transformers
         ]
 
-    def _fit(self, X, y, transform):
-        """Private function to fit and transform on demand."""
-        self._validate_transformers()
+    def _fit_transform(self, X, y, func, fitted=False):
+        """
+        Private function to fit and/or transform on demand.
 
-        if transform:
-            func = _fit_transform_one
-        else:
-            func = _fit_one_transformer
-
+        Return value (transformers and/or transformed X data) depends
+        on the passed function.
+        ``fitted=True`` ensures the fitted transformers are used.
+        """
         try:
-            result = Parallel(n_jobs=self.n_jobs)(
-                delayed(func)(clone(trans), X_sel, y, weight)
-                for name, trans, X_sel, weight in self._iter(X=X))
+            return Parallel(n_jobs=self.n_jobs)(
+                delayed(func)(clone(trans) if not fitted else trans,
+                              X_sel, y, weight)
+                for name, trans, X_sel, weight in self._iter(X=X,
+                                                             fitted=fitted))
         except ValueError as e:
             if "Expected 2D array, got 1D array instead" in str(e):
                 raise ValueError(_ERR_MSG_1DCOLUMN)
             else:
                 raise
-
-        if transform:
-            if not result:
-                # All transformers are None
-                return np.zeros((X.shape[0], 0))
-            Xs, transformers = zip(*result)
-        else:
-            transformers = result
-
-        self._update_fitted_transformers(transformers)
-        if not transform:
-            return self
-        if any(sparse.issparse(f) for f in Xs):
-            Xs = sparse.hstack(Xs).tocsr()
-        else:
-            Xs = np.hstack(Xs)
-        return Xs
 
     def fit(self, X, y=None):
         """Fit all transformers using X.
@@ -278,7 +262,12 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             This estimator
 
         """
-        return self._fit(X, y, transform=False)
+        self._validate_transformers()
+
+        transformers = self._fit_transform(X, y, _fit_one_transformer)
+
+        self._update_fitted_transformers(transformers)
+        return self
 
     def fit_transform(self, X, y=None):
         """Fit all transformers, transform the data and concatenate results.
@@ -301,7 +290,20 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             sparse matrices.
 
         """
-        return self._fit(X, y, transform=True)
+        result = self._fit_transform(X, y, _fit_transform_one)
+
+        if not result:
+            # All transformers are None
+            return np.zeros((X.shape[0], 0))
+        Xs, transformers = zip(*result)
+
+        self._update_fitted_transformers(transformers)
+
+        if any(sparse.issparse(f) for f in Xs):
+            Xs = sparse.hstack(Xs).tocsr()
+        else:
+            Xs = np.hstack(Xs)
+        return Xs
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.
@@ -322,15 +324,8 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
 
         """
         check_is_fitted(self, 'transformers_')
-        try:
-            Xs = Parallel(n_jobs=self.n_jobs)(
-                delayed(_transform_one)(trans, X_sel, weight)
-                for name, trans, X_sel, weight in self._iter(X=X, fitted=True))
-        except ValueError as e:
-            if "Expected 2D array, got 1D array instead" in str(e):
-                raise ValueError(_ERR_MSG_1DCOLUMN)
-            else:
-                raise
+
+        Xs = self._fit_transform(X, None, _transform_one, fitted=True)
 
         if not Xs:
             # All transformers are None

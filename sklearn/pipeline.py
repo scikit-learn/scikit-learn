@@ -571,14 +571,14 @@ def make_pipeline(*steps, **kwargs):
     return Pipeline(_name_estimators(steps), memory=memory)
 
 
-# weight and fit_params are not used but it allows _fit_one_transformer and
-# _fit_transform_one to have the same signature to factorize the code in
-# ColumnTransformer
+# weight and fit_params are not used but it allows _fit_one_transformer,
+# _transform_one and _fit_transform_one to have the same signature to
+#  factorize the code in ColumnTransformer
 def _fit_one_transformer(transformer, X, y, weight=None, **fit_params):
     return transformer.fit(X, y)
 
 
-def _transform_one(transformer, X, weight):
+def _transform_one(transformer, X, y, weight, **fit_params):
     res = transformer.transform(X)
     # if we have a weight for this transformer, multiply output
     if weight is None:
@@ -784,7 +784,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, weight)
+            delayed(_transform_one)(trans, X, None, weight)
             for name, trans, weight in self._iter())
         if not Xs:
             # All transformers are None
