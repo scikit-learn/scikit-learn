@@ -72,7 +72,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     return cartesian(axes), axes
 
 
-def _predict(est, X_eval, method, output=None):
+def _predict(est, X_eval, output=None):
     """Calculate part of the partial dependence of ``target_variables``.
 
     The function will be calculated by calling the ``predict_proba`` method of
@@ -86,16 +86,6 @@ def _predict(est, X_eval, method, output=None):
     X_eval : array-like, shape=(n_samples, n_features)
         The data on which the partial dependence of ``est`` should be
         predicted.
-    method : {'exact', 'estimated'}
-        The method to use to calculate the partial dependence function:
-
-        - If 'exact', the function will be calculated by calling the
-          ``predict_proba`` method of ``est`` for classification or ``predict``
-          for regression on ``X``for every point in the grid. To speed up this
-          method, you can use a subset of ``X`` or a more coarse grid.
-        - If 'estimated', the function will be calculated by calling the
-          ``predict_proba`` method of ``est`` for classification or ``predict``
-          for regression on the mean of ``X``.
     output : int, optional (default=None)
         The output index to use for multi-output estimators.
 
@@ -111,6 +101,9 @@ def _predict(est, X_eval, method, output=None):
         except NotFittedError:
             raise ValueError('Call %s.fit before partial_dependence' %
                              est.__class__.__name__)
+        if out.ndim != 1 and out.shape[1] == 1:
+            # Column output
+            out = out.ravel()
         if out.ndim != 1 and out.shape[1] != 1:
             # Multi-output
             if not 0 <= output < out.shape[1]:
@@ -294,7 +287,11 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
             X_eval = X.copy()
             for i, variable in enumerate(target_variables):
                 X_eval[:, variable] = np.repeat(grid[row, i], n_samples)
-            pdp.append(_predict(est, X_eval, method, output=None))
+            pdp_row = _predict(est, X_eval, output=output)
+            if est._estimator_type == 'regressor':
+                pdp.append(np.mean(pdp_row))
+            else:
+                pdp.append(np.mean(pdp_row, 0))
         pdp = np.array(pdp).transpose()
         if pdp.shape[0] == 2:
             # Binary classification
@@ -302,23 +299,17 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         elif len(pdp.shape) == 1:
             # Regression
             pdp = pdp[np.newaxis]
-        if est._estimator_type == 'regressor':
-            pdp = np.mean(pdp)
-        else:
-            pdp = np.mean(pdp, 0)
     elif method == 'estimated':
         n_samples = grid.shape[0]
         X_eval = np.tile(X.mean(0), [n_samples, 1])
         for i, variable in enumerate(target_variables):
             X_eval[:, variable] = grid[:, i]
-        pdp = _predict(est, X_eval, method, output=None)
-        if pdp.shape[0] == 2:
+        pdp = _predict(est, X_eval, output=output)
+        if pdp.shape[1] == 2:
             # Binary classification
-            pdp = pdp[1, :][np.newaxis]
+            pdp = pdp[:, 1][np.newaxis]
         if est._estimator_type == 'regressor':
             pdp = pdp[np.newaxis]
-        else:
-            pdp = pdp.transpose()
     else:
         raise ValueError('method "%s" is invalid. Use "recursion", "exact", '
                          '"estimated", or None.' % method)
