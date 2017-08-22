@@ -22,7 +22,7 @@ General Concepts
 
     array-like
 
-        The most common data format for input to Scikit-learn estimators and
+        The most common data format for *input* to Scikit-learn estimators and
         functions, array-like is any type object for which
         :func:`numpy.asarray` will produce an array of appropriate shape
         (usually 1 or 2-dimensional) of appropriate dtype (usually numeric).
@@ -33,12 +33,18 @@ General Concepts
         * a list of numbers
         * a list of length-k lists of numbers for some fixed length k
         * a :class:`pandas.DataFrame` with all columns numeric
+        * a numeric :class:`pandas.Series`
 
         It excludes:
 
         * a :term:`sparse matrix`
         * an iterator
         * a generator
+
+        Note that *output* from scikit-learn estimators and functions (e.g.
+        predictions) should generally be arrays or sparse matrices, or lists
+        thereof. An estimator where ``predict()`` returns a list or a Series is
+        not valid.
 
     attribute
     attributes
@@ -56,6 +62,17 @@ General Concepts
         such as :term:`feature_importances_`.
 
         Common attributes are listed :ref:`below <glossary_attributes>`.
+
+    backwards compatibility
+        TODO
+
+        We may sometimes assume that all optional parameters other than X and y
+        are passed as keyword arguments only and may be positionally reordered.
+
+        See also :term:`deprecation`.
+
+    categorical feature
+        TODO
 
     classifier
         TODO
@@ -144,7 +161,11 @@ General Concepts
     features
         TODO
 
-        Elsewhere known as predictors, regressors, independent variables.
+        Expected to be numeric, even when semantically distinct domains and
+        distributions (categorical, ordinal, count-valued, real-valued,
+        interval). See also :term`categorical feature`.
+
+        Elsewhere known as predictors, regressors, independent variables, attributes.
 
     fitting
         Calling :term:`fit` on an estimator.
@@ -163,6 +184,9 @@ General Concepts
 
     ``n_samples``
         The number of :term:`samples`.
+
+    ``n_targets``
+        Synonym for :term:`n_outputs`.
 
     outputs
         TODO?
@@ -257,6 +281,12 @@ Class APIs and Estimator Types
     estimator
         TODO
 
+    feature extractor
+        A :term:`tranformer` which takes input where each sample is not
+        represented as an :term:`array-like` object of fixed length, and
+        produces an `array-like` object for each sample (and thus a
+        2-dimensional array-like for a set of samples).
+
     meta-estimator
         TODO
         Mention duck typing. Mention lenient validation.
@@ -279,10 +309,7 @@ Class APIs and Estimator Types
         TODO
 
     vectorizer
-        A :term:`tranformer` which takes input where each sample is not
-        represented as an :term:`array-like` object of fixed length, and
-        produces an `array-like` object for each sample (and thus a
-        2-dimensional array-like for a set of samples).
+        See :term:`feature extractor`.
 
 There are further APIs specific to a small family of estimators, such as:
 
@@ -296,23 +323,57 @@ Target Types
 .. glossary::
 
     binary
-        TODO
+        A classification problem consisting of two classes.  A binary target
+        may represented as for a :term:`multiclass` problem but with only two
+        labels.  A binary decision function is represented as a 1d array.
+
+        Note that a dataset sampled from a multiclass ``y`` or a continuous
+        ``y`` may appear to be binary.
+
+        :func:`~utils.multiclass.type_of_target` will return 'binary' for
+        binary input, or a similar array with only a single class present.
 
     continuous
         TODO
 
     multiclass
-        TODO
+        A classification problem consisting of more than two classes.  A
+        multiclass target may be represented as a 1-dimensional array of
+        strings or integers. A 2d column vector of integers (i.e. a
+        single output is also accepted.
 
-        strings, etc.
+        We may also support other orderable, hashable objects as class labels.
+
+        Within sckit-learn, all estimators supporting binary classification
+        also support multiclass classification, using One-vs-Rest by default.
+
+        A :class:`preprocessing.LabelEncoder` helps to canonicalize multiclass
+        targets as integers.
+
+        :func:`~utils.multiclass.type_of_target` will return 'multiclass' (or
+        'binary' in the degenerate case) for multiclass input.
 
     multilabel
-        TODO
+        A multi-output target where each output is :term:`binary`.  This may be
+        represented as a 2d (dense) array or sparse matrix of integers, such
+        that each column is a separate binary target, where positive labels are
+        indicated with 1 and negative labels are usually -1 or 0.
+
+        Semantically, a multilabel target can be thought of as a set of labels
+        for each sample.  While not used internally,
+        :class:`preprocessing.MultiLabelBinarizer` is provided as a utility to
+        convert from a list of sets representation to a 2d array or sparse
+        matrix.
+
+        :func:`~utils.multiclass.type_of_target` will return
+        'multilabel-indicator' for multilabel input, whether sparse or dense.
 
     multi-output continuous
         TODO
 
     multi-output multiclass
+        A classification problem .
+
         TODO
 
 Methods
@@ -322,8 +383,16 @@ Methods
 
     ``decision_function``
 
+        Output conventions:
+
         classifier
             TODO
+
+            Binary
+            Multiclass
+            OvO
+            Multioutput
+            Multilabel either like multiclass or like multioutput
 
         outlier detector
             TODO
@@ -340,12 +409,19 @@ Methods
     ``fit_predict``
         TODO
 
+        See :term:`labels_`
+
     ``fit_transform``
         TODO
 
+        Syntactic sugar.
+        Efficiency.
+        ``transform`` may not be available.
+        ``fit_transform`` can be different, as in stacking.
+
     ``fit``
         The ``fit`` method is provided on every estimator. It usually takes some
-        :term`samples` ``X``, :term:`targets` ``y`` if the model is supervised,
+        :term:`samples` ``X``, :term:`targets` ``y`` if the model is supervised,
         and potentially other :term:`sample properties` such as
         :term:`sample_weight`.  It should:
 
@@ -360,7 +436,20 @@ Methods
           chaining.
 
     ``partial_fit``
-        TODO
+        Facilitates fitting an estimator in an online fashion.  Unlike ``fit``,
+        repeatedly calling ``partial_fit`` does not clear the model, but
+        updates it with respect to the data provided. The portion of data
+        provided to ``partial_fit`` may be called a mini-batch.
+        Each mini-batch must be of consistent shape, etc.
+
+        Generally, estimator parameters should not be modified between calls
+        to ``partial_fit``, although ``partial_fit`` should validate them
+        as well as the new mini-batch of data.
+
+        Like ``fit``, ``partial_fit`` should return the estimator object.
+
+        To clear the model, a new estimator should be constructed, for instance
+        with :func:`base.clone`.
 
     ``predict_log_proba``
         TODO
@@ -368,9 +457,24 @@ Methods
     ``predict_proba``
         TODO
 
+        Output conventions are like those for ``decision_function`` except
+        in the :term:`binary` case.
+
     ``predict``
         TODO
-        Mention ``return_std``
+
+        Return type is array ...
+
+        classifier
+            TODO
+            Mention ``return_std``
+
+        clusterer
+
+        outlier detector
+            TODO
+
+        regressor
 
     ``score``
         TODO
@@ -465,6 +569,8 @@ non-estimator parameters with similar semantics.
         Some estimators make use of :class:`joblib.Memory` to
         store partial solutions during fitting. Thus when ``fit`` is called
         again, those partial solutions have been memoized and can be reused.
+
+        FIXME: we should use ducktyping
 
         A ``memory`` parameter can be specified as a string with a path to a
         directory, or a :class:`joblib.Memory` instance can be used. In the
