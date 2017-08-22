@@ -791,7 +791,8 @@ def test_cross_val_predict():
 
     X, y = load_digits(return_X_y=True)
 
-    preds = cross_val_predict(SVC(kernel='linear', decision_function_shape='ovo'),
+    preds = cross_val_predict(SVC(kernel='linear',
+                                  decision_function_shape='ovo'),
                               X, y,
                               method='decision_function')
     assert_equal(preds.shape, (1797, 45))
