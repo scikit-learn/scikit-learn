@@ -562,7 +562,7 @@ class WrongDummyMemory(object):
 
 def test_check_memory():
     memory = check_memory("TestString")
-    assert_equal(memory.cachedir, "TestString//joblib")
+    assert_equal(memory.cachedir, "TestString/joblib")
     memory = check_memory(None)
     assert_equal(memory.cachedir, None)
     dummy = DummyMemory()
