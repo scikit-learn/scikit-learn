@@ -14,6 +14,7 @@
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
 from libc.stdlib cimport realloc
+from libc.math cimport fabs
 from libc.math cimport log as ln
 
 import numpy as np
@@ -484,6 +485,10 @@ cdef class WeightedMedianCalculator:
         ``sum_w_0_k`` >= ``total_weight / 2`` provides a mechanism for
         calculating the median in constant time.
 
+    mae : DOUBLE_t
+        The mean absolute error of the median. Computed in constant time when
+        samples are removed and pushed, so that it does not need to be computed
+        by iterating over the samples.
     """
 
     def __cinit__(self, SIZE_t initial_capacity):
@@ -492,6 +497,7 @@ cdef class WeightedMedianCalculator:
         self.total_weight = 0
         self.k = 0
         self.sum_w_0_k = 0
+        self.mae = 0
 
     cdef SIZE_t size(self) nogil:
         """Return the number of samples in the
@@ -510,6 +516,7 @@ cdef class WeightedMedianCalculator:
         self.total_weight = 0
         self.k = 0
         self.sum_w_0_k = 0
+        self.mae = 0
         return 0
 
     cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1:
@@ -520,13 +527,14 @@ cdef class WeightedMedianCalculator:
         """
         cdef int return_value
         cdef DOUBLE_t original_median
+        cdef int original_k = self.k
 
         if self.size() != 0:
             original_median = self.get_median()
         # samples.push (WeightedPQueue.push) uses safe_realloc, hence except -1
         return_value = self.samples.push(data, weight)
-        self.update_median_parameters_post_push(data, weight,
-                                                original_median)
+        self.update_median_parameters_post_push(data, weight, original_median)
+        self.update_mae_post_push(data, weight, original_median, original_k)
         return return_value
 
     cdef int update_median_parameters_post_push(
@@ -570,6 +578,13 @@ cdef class WeightedMedianCalculator:
                 self.k += 1
                 self.sum_w_0_k += self.samples.get_weight_from_index(self.k-1)
             return 0
+
+    cdef int update_mae_post_push(
+            self, DOUBLE_t data, DOUBLE_t weight,
+            DOUBLE_t original_median, int original_k) nogil:
+        """Update the mean absolute error of the median after an insertion."""
+        return self.update_mae_post_change(
+            data, weight, original_median, original_k, 1)
 
     cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil:
         """Remove a value from the MedianHeap, removing it
@@ -655,6 +670,98 @@ cdef class WeightedMedianCalculator:
                 self.k -= 1
                 self.sum_w_0_k -= self.samples.get_weight_from_index(self.k)
             return 0
+
+    cdef int update_mae_post_remove(
+            self, DOUBLE_t data, DOUBLE_t weight,
+            DOUBLE_t original_median, int original_k) nogil:
+        """Update the mean absolute error of the median after a removal."""
+        return self.update_mae_post_change(
+            data, weight, original_median, original_k, -1)
+
+
+    cdef int update_mae_post_change(
+            self, DOUBLE_t data, DOUBLE_t weight, DOUBLE_t original_median,
+            int original_k, int shift_from_change) nogil:
+        """Update the mean absolute error of the median after an
+        insertion/removal."""
+        cdef DOUBLE_t new_median
+        cdef DOUBLE_t original_mae
+        cdef DOUBLE_t new_mae
+        # samples[0:start_k] <= min(original_median, new_median)
+        cdef int start_k
+        # samples[end_k:end] >= max(original_median, new_median)
+        cdef int end_k
+        # The sum of the weights from samples[0:start_k] and samples[end_k:end]
+        cdef DOUBLE_t sum_w_0_start_k
+        cdef DOUBLE_t sum_w_end_k_end
+        cdef int i
+        cdef DOUBLE_t original_error
+        cdef DOUBLE_t new_error
+
+        new_median = self.get_median()
+
+        if new_median > original_median:
+            if data < original_median:
+                start_k = original_k + shift_from_change
+            else:
+                start_k = original_k
+            if data < new_median:
+                end_k = self.k - 1
+            else:
+                end_k = self.k
+        else:
+            if data < new_median:
+                start_k = self.k + shift_from_change
+            else:
+                start_k = self.k
+            if data < original_median:
+                end_k = original_k - 1
+            else:
+                end_k = original_k
+
+        sum_w_0_start_k = self.sum_w_0_k
+        i = self.k
+        if self.k > start_k:
+            while i > start_k:
+                sum_w_0_start_k -= self.samples.get_weight_from_index(i-1)
+                i -= 1
+        else:
+            while i < start_k:
+                sum_w_0_start_k += self.samples.get_weight_from_index(i)
+                i += 1
+        i = self.k
+        if self.k > end_k:
+            while i > end_k:
+                sum_w_end_k_end += self.samples.get_weight_from_index(i-1)
+                i -= 1
+        else:
+            while i < end_k:
+                sum_w_end_k_end -= self.samples.get_weight_from_index(i)
+                i += 1
+
+        original_mae = self.mae
+        # construct the new MAE additively
+        new_mae = (  # contribution from new sample with old median
+            weight / self.total_weight) * fabs(data - original_median)
+        new_mae += (  # contribution from old samples with old median
+            self.total_weight - weight) / self.total_weight * original_mae
+        # contribution from changing median due to samples that stay on the
+        # same side of the median
+        new_mae += (
+            sum_w_0_start_k - sum_w_end_k_end) / self.total_weight * (
+            new_median - original_median)
+        # contribution from changing median due to remaining samples
+        i = start_k
+        while i < end_k:
+            original_error = fabs(
+                self.samples.get_value_from_index(i) - original_median)
+            new_error = fabs(
+                self.samples.get_value_from_index(i) - new_median)
+            new_mae += (new_error - original_error) * (
+                self.samples.get_weight_from_index(i) / self.total_weight)
+            i += 1
+        self.mae = new_mae
+        return 0
 
     cdef DOUBLE_t get_median(self) nogil:
         """Write the median to a pointer, taking into account

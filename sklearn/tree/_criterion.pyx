@@ -1282,25 +1282,11 @@ cdef class MAE(RegressionCriterion):
         impurity_right[0] = 0.0
 
         for k in range(self.n_outputs):
-            median = (<WeightedMedianCalculator> left_child[k]).get_median()
-            for p in range(start, pos):
-                i = samples[p]
-
-                y_ik = y[i * self.y_stride + k]
-
-                impurity_left[0] += <double>fabs((<double> y_ik) -
-                                                 <double> median)
+            impurity_left[0] += (<WeightedMedianCalculator> left_child[k]).mae
         impurity_left[0] /= <double>((self.weighted_n_left) * self.n_outputs)
 
         for k in range(self.n_outputs):
-            median = (<WeightedMedianCalculator> right_child[k]).get_median()
-            for p in range(pos, end):
-                i = samples[p]
-
-                y_ik = y[i * self.y_stride + k]
-
-                impurity_right[0] += <double>fabs((<double> y_ik) -
-                                                  <double> median)
+            impurity_right[0] += (<WeightedMedianCalculator> left_child[k]).mae
         impurity_right[0] /= <double>((self.weighted_n_right) *
                                       self.n_outputs)
 
