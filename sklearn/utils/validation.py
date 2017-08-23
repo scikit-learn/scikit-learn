@@ -164,12 +164,8 @@ def check_memory(memory):
 
     Parameters
     ----------
-    memory : string or None or user Memory implementing a cache method.
-        If memory is a string, a joblib.Memory will be used with
-        ``cachedir``corresponding to the provided string.
-        If None is given, no caching is done and the Memory
-        object is completely transparent.
-        If a user-specified Memory, the instance need a ``cache`` method.
+    memory : string or None or Memory instance.
+        Any object with a cache method will be accepted as a Memory instance.
 
     Returns
     -------

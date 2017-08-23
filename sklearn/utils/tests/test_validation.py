@@ -560,7 +560,7 @@ class WrongDummyMemory(object):
 
 def test_check_memory():
     memory = check_memory("cache_directory")
-    assert_equal(memory.cachedir, os.join.path('cache_directory', 'joblib'))
+    assert_equal(memory.cachedir, os.path.join('cache_directory', 'joblib'))
     memory = check_memory(None)
     assert_equal(memory.cachedir, None)
     dummy = DummyMemory()
