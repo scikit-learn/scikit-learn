@@ -391,29 +391,12 @@ Checkout the official joblib documentation:
 A sample algorithmic trick: warm starts for cross validation
 ==============================================================
 
-One of the most common task when doing model selection is 
-:ref:`cross-validation <cross_validation>`. Since it is computationally
+One of the most common tasks when doing model selection is
+ref:`cross-validation <cross_validation>`. Since it is computationally
 expensive, one can speed up the training by using the `warm_start`
-parameter of the input estimator. Setting `warm_start=True` allows
-to reuse the solution of the previous call to fit as initialization.
-It may lead to faster convergence. In the following script,
-we print the number of iteration during cross validation of
-linear model with Coordinate Descent.
-
-  >>> from sklearn import linear_model
-  >>> from sklearn.datasets.samples_generator import make_regression
-  >>> from sklearn.model_selection import KFold
-  >>> clf = linear_model.Lasso(warm_start=False)
-  >>> clf_warm_started = linear_model.Lasso(warm_start=True)
-  >>> X, y = make_regression(n_samples=100, n_features=500, random_state=0)
-  >>> n_iter, n_iter_warm = 0, 0
-  >>> for train_index, test_index in KFold(n_splits=10).split(X):
-  ...     X_train = X[train_index]
-  ...     y_train = y[train_index]
-  ...     # count number of iteration
-  ...     n_iter += clf.fit(X_train, y_train).n_iter_
-  ...     n_iter_warm += clf_warm_started.fit(X_train, y_train).n_iter_
-  >>> n_iter
-  655
-  >>> n_iter_warm
-  105
+parameter of the input estimator. For each fold, we sequentially train an
+estimator for a list of parameters on the same data. Setting
+`warm_start=True` allows to reuse the solution of the previous call to
+fit as initialization. In the case of linear model with Coordinate
+Descent, this technique is likely to reduce the number of iteration
+required by the next fit and so leads to faster training.
