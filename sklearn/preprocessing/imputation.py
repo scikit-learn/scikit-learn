@@ -5,6 +5,8 @@ import warnings
 
 import numpy as np
 import numpy.ma as ma
+#TODO: add a dependency to fancyimpute
+from fancyimpute import SoftImpute
 from scipy import sparse
 from scipy import stats
 
@@ -12,6 +14,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
+from ..utils.validation import check_array
 from ..utils.validation import FLOAT_DTYPES
 
 from ..externals import six
@@ -20,6 +23,7 @@ zip = six.moves.zip
 map = six.moves.map
 
 __all__ = [
+    'FactorizationImputer',
     'Imputer',
 ]
 
@@ -374,3 +378,106 @@ class Imputer(BaseEstimator, TransformerMixin):
             X[coordinates] = values
 
         return X
+    
+
+class FactorizationImputer(SoftImpute, BaseEstimator, TransformerMixin):
+    """Imputes a sparse matrix by iterative soft thresholding of SVD decompositions. 
+    
+    Parameters
+    ----------
+    shrinkage_value : float
+        Value by which we shrink singular values on each iteration. If
+        omitted then the default value will be the maximum singular
+        value of the initialized matrix (zeros for missing values) divided
+        by 100.
+    convergence_threshold : float
+        Minimum ration difference between iterations (as a fraction of
+        the Frobenius norm of the current solution) before stopping.
+    max_iters : int
+        Maximum number of SVD iterations
+    max_rank : int, optional
+        Perform a truncated SVD on each iteration with this value as its
+        rank.
+    n_power_iterations : int
+        Number of power iterations to perform with randomized SVD
+    init_fill_method : str
+        How to initialize missing values of data matrix, default is
+        to fill them with zeros.
+    min_value : float
+        Smallest allowable value in the solution
+    max_value : float
+        Largest allowable value in the solution
+    normalizer : object
+        Any object (such as BiScaler) with fit() and transform() methods
+    verbose : bool
+        Print debugging info
+
+    Notes
+    -----
+    - Missing values must be numpy NaN format.
+    """
+    def __init__(self,
+            shrinkage_value=None,
+            convergence_threshold=0.001,
+            max_iters=100,
+            max_rank=None,
+            n_power_iterations=1,
+            init_fill_method="zero",
+            min_value=None,
+            max_value=None,
+            normalizer=None,
+            verbose=True):
+        super(FactorizationImputer, self).__init__(shrinkage_value, convergence_threshold, max_iters, max_rank, n_power_iterations, init_fill_method, min_value, max_value, normalizer, verbose)
+        self.fitted = False
+
+    def fit_transform(self, X, y=None):
+        """
+        Parameters
+        ----------
+
+        X: {array-like}, shape = [n_samples, n_features] 
+            Data matrix to be factorized. Missing values must be numpy NaN format.
+        
+        Returns
+        -------
+        imputed matrix : {array-like}
+            Returns imputed matrix.
+        """
+        X = check_array(X, force_all_finite=False)
+        self.fitted = True
+        return self.complete(X)
+
+    def fit(self, X, y=None):
+        """
+        Parameters
+        ----------
+
+        X: {array-like}, shape = [n_samples, n_features] 
+            Data matrix to be factorized. Missing values must be numpy NaN format.
+        
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        self.fit_transform(X)
+        return self
+
+
+    def transform(self, X, y=None):
+        """
+        Parameters
+        ----------
+
+        X: {array-like}, shape = [n_samples, n_features] 
+            Data matrix to be factorized. Missing values must be numpy NaN format.
+
+        Returns
+        -------
+        imputed matrix : {array-like}
+            Returns imputed matrix.
+        """
+        check_is_fitted(self, 'fitted')
+        res = self.fit_transform(X)
+        return res
+

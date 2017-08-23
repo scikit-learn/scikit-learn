@@ -6,8 +6,9 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_true
 
-from sklearn.preprocessing.imputation import Imputer
+from sklearn.preprocessing.imputation import Imputer, FactorizationImputer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
@@ -357,3 +358,29 @@ def test_imputation_copy():
 
     # Note: If X is sparse and if missing_values=0, then a (dense) copy of X is
     # made, even if copy=False.
+
+
+def test_factorization():
+    random_state = np.random.RandomState(0)
+
+    n_samples = 20
+    n_features = 15
+    max_rank = 3
+
+    L = random_state.rand(n_samples, max_rank)
+    R = random_state.rand(max_rank, n_features)
+
+    X = np.dot(L, R)
+    X_corrupted = X.copy()
+    for i in range(n_samples):
+        for j in range(3):
+            X_corrupted[i, (i % 5) + j * 5] = np.nan
+
+    for max_rank in [None, 10, 30]:
+        mf = FactorizationImputer(max_rank=max_rank)
+        L = mf.fit_transform(X_corrupted)
+
+        # Check the format of the output
+        assert_equal(L.shape[0], n_samples)
+        if max_rank is not None:
+            assert_true(L.shape[1], max_rank + 2)
