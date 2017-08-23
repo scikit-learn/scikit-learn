@@ -4,6 +4,33 @@
 Release history
 ===============
 
+Version 0.19.1
+==============
+
+**September, 2017**
+
+Changelog
+---------
+
+Bug fixes
+.........
+
+- Fix regression in :func:`model_selection.cross_val_predict` where it no
+  longer accepted ``X`` as a list. :issue:`9600` by :user:`Rasul Kerimov
+  <CoderINusE>`.
+
+- Fix regression in :class:`pipeline.Pipeline` where it no longer accepted
+  ``steps`` as a tuple. :issue:`9604` by :user:`Joris Van den Bossche
+  <jorisvandenbossche>`.
+
+- Fix bug where ``n_iter`` was not properly deprecated, leaving ``n_iter``
+  unavailable for interim use in
+  :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor` and
+  :class:`linear_model.Perceptron`. :issue:`9558` by `Andreas Müller`_.
+
+
 Version 0.19
 ============
 
