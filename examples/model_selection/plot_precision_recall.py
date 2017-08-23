@@ -61,16 +61,19 @@ stairstep area of the plot - at the edges of these steps a small change
 in the threshold considerably reduces precision, with only a minor gain in
 recall.
 
-**Average precision** summarizes such a plot as the weighted mean of precisions
-achieved at each threshold, with the increase in recall from the previous
-threshold used as the weight:
+**Average precision** (AP) summarizes such a plot as the weighted mean of
+precisions achieved at each threshold, with the increase in recall from the
+previous threshold used as the weight:
 
 :math:`\\text{AP} = \\sum_n (R_n - R_{n-1}) P_n`
 
 where :math:`P_n` and :math:`R_n` are the precision and recall at the
 nth threshold. A pair :math:`(R_k, P_k)` is referred to as an
-*operating point*. When summarizing a precision-recall curve, AP is preferable
-to computing the trapezoidal area under the operating points.
+*operating point*.
+
+AP and the trapezoidal area under the operating points
+(:func:`sklearn.metrics.auc`) are common ways to summarize a precision-recall
+curve. Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
 Precision-recall curves are typically used in binary classification to study
 the output of a classifier. In order to extend the precision-recall curve and
