@@ -43,6 +43,11 @@ should be used when applicable.
   be sliced or indexed using safe_index.  This is used to validate input for
   cross-validation.
 
+- Some estimators are able to store intermediate results using ``Memory``
+  instance. The func:`check_memory`: check that memory is a valid input.
+  If a string is given, a ``joblib.Memory`` will be created. A user-specific 
+  ``Memory`` object having a ``cache`` method can be passed as well.
+
 If your code relies on a random number generator, it should never use
 functions like ``numpy.random.random`` or ``numpy.random.normal``.  This
 approach can lead to repeatability issues in unit tests.  Instead, a
@@ -176,10 +181,6 @@ Benchmarking
 
 Testing Functions
 =================
-
-- :func:`check_memory`: check that memory is a valid input. If a string is
-  given, a ``joblib.Memory`` will be created. A user-specific Memory 
-  object having a ``cache`` method can be passed as well.
 
 - :func:`testing.assert_in`, :func:`testing.assert_not_in`: Assertions for
   container membership. Designed for forward compatibility with Nose 1.0.
