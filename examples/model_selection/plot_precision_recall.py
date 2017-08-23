@@ -145,7 +145,7 @@ plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.ylim([0.0, 1.05])
 plt.xlim([0.0, 1.0])
-plt.title('2-class Precision-Recall curve: AUC={0:0.2f}'.format(
+plt.title('2-class Precision-Recall curve: AP={0:0.2f}'.format(
           average_precision))
 
 ###############################################################################
@@ -216,7 +216,7 @@ plt.ylabel('Precision')
 plt.ylim([0.0, 1.05])
 plt.xlim([0.0, 1.0])
 plt.title(
-    'Average precision score, micro-averaged over all classes: AUC={0:0.2f}'
+    'Average precision score, micro-averaged over all classes: AP={0:0.2f}'
     .format(average_precision["micro"]))
 
 ###############################################################################
