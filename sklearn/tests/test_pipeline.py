@@ -870,8 +870,8 @@ def test_pipeline_wrong_memory():
                            memory=memory)
     assert_raises_regex(ValueError, "'memory' is not a string or a "
                         "Memory instance implementing a cache method."
-                        " Got a {} instance, instead."
-                        .format(type(memory)), cached_pipe.fit, X, y)
+                        " Got a *.int*. instance, instead.",
+                        cached_pipe.fit, X, y)
 
 
 def test_pipeline_memory():

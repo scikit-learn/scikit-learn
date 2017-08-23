@@ -19,9 +19,9 @@ from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
+from .utils.validation import check_memory
 
 from .utils.metaestimators import _BaseComposition
-from sklearn.utils.validation import check_memory
 
 __all__ = ['Pipeline', 'FeatureUnion']
 

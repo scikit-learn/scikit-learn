@@ -177,6 +177,10 @@ Benchmarking
 Testing Functions
 =================
 
+- :func:`check_memory`: check that memory is a valid input. If a string is
+  given, a ``joblib.Memory`` will be created. A user-specific Memory 
+  object having a ``cache`` method can be passed as well.
+
 - :func:`testing.assert_in`, :func:`testing.assert_not_in`: Assertions for
   container membership. Designed for forward compatibility with Nose 1.0.
 
