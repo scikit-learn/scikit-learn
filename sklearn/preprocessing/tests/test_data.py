@@ -44,6 +44,7 @@ from sklearn.preprocessing.data import Normalizer
 from sklearn.preprocessing.data import normalize
 from sklearn.preprocessing.data import OneHotEncoder
 from sklearn.preprocessing.data import CategoricalEncoder
+from sklearn.preprocessing.data import CountFeaturizer
 from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
@@ -2377,3 +2378,156 @@ def test_power_transformer_lambda_zero():
     pt.lambdas_ = np.array([0])
     X_trans = pt.transform(X)
     assert_array_almost_equal(pt.inverse_transform(X_trans), X)
+
+
+def test_count_featurizer():
+    # test count featurizer fit-transform on a very standard data
+
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    cf_1 = CountFeaturizer()
+    assert_array_equal(
+        cf_1.fit_transform(X),
+        np.array([[0, 2, 1, 1], [1, 0, 3, 1], [1, 0, 2, 2], [1, 0, 2, 2]]))
+
+
+def test_count_featurizer_diff_fit():
+    # test count featurizer where fit is trained on something different
+    # than what we are transforming
+
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    X2 = np.array([[0, 2, 1], [0, 2, 1], [0, 2, 1], [1, 0, 2]])
+    cf_1 = CountFeaturizer().fit(X)
+    assert_array_equal(
+        cf_1.transform(X2),
+        np.array([[0, 2, 1, 1], [0, 2, 1, 1], [0, 2, 1, 1], [1, 0, 2, 2]]))
+
+
+def test_count_featurizer_diff_fit_y():
+    # test count featurizer where fit is trained on something different
+    # than what we are transforming with a y in fit
+
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    X2 = np.array([[0, 2, 1], [0, 2, 1], [0, 2, 1], [1, 0, 2]])
+    y = np.array([0, 0, 1, 0])
+    cf_1 = CountFeaturizer().fit(X, y=y)
+    assert_array_equal(
+        cf_1.transform(X2),
+        np.array([[0, 2, 1, 1, 0], [0, 2, 1, 1, 0],
+                 [0, 2, 1, 1, 0], [1, 0, 2, 1, 1]]))
+
+
+def test_count_featurizer_diff_fit_multi_y():
+    # test count featurizer where fit is trained on something different
+    # than what we are transforming, now with multi-dimensional y
+
+    X = np.array([[0], [0], [1], [1]])
+    X2 = np.array([[1], [1], [0], [0]])
+    y = np.array([[0, 1], [0, 1], [0, 0], [0, 1]])
+    cf = CountFeaturizer().fit(X, y=y)
+    assert_array_equal(
+        cf.transform(X2),
+        np.array([[1, 2, 1, 1], [1, 2, 1, 1],
+                 [0, 2, 0, 2], [0, 2, 0, 2]]))
+
+    X2 = np.array([[1], [1], [1], [1]])
+    cf = CountFeaturizer().fit(X, y=y)
+    assert_array_equal(
+        cf.transform(X2),
+        np.array([[1, 2, 1, 1], [1, 2, 1, 1],
+                 [1, 2, 1, 1], [1, 2, 1, 1]]))
+
+
+def test_count_featurizer_inclusion():
+    # test with the inclusion parameter set
+
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    X2 = np.array([[0, 2, 1], [0, 2, 3], [1, 0, 5], [1, 1, 5]])
+    cf_inclusion_1 = CountFeaturizer(inclusion=[0])
+    cf_inclusion_2 = CountFeaturizer(inclusion=[0, 1, 2])
+    cf_inclusion_3 = CountFeaturizer(inclusion=[0, 1])
+    assert_array_equal(
+        cf_inclusion_1.fit_transform(X),
+        np.array([[0, 2, 1, 1], [1, 0, 3, 3], [1, 0, 2, 3], [1, 0, 2, 3]]))
+
+    assert_array_equal(
+        cf_inclusion_2.fit_transform(X),
+        np.array([[0, 2, 1, 1], [1, 0, 3, 1], [1, 0, 2, 2], [1, 0, 2, 2]]))
+
+    assert_array_equal(
+        cf_inclusion_3.fit_transform(X2),
+        np.array([[0, 2, 1, 2], [0, 2, 3, 2], [1, 0, 5, 1], [1, 1, 5, 1]]))
+
+
+def test_count_featurizer_y():
+    # test with the y parameter set
+
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    y = np.array([0, 0, 1, 0])
+    cf_1 = CountFeaturizer()
+    assert_array_equal(
+        cf_1.fit_transform(X, y=y),
+        np.array([[0, 2, 1, 1, 0], [1, 0, 3, 1, 0],
+                 [1, 0, 2, 1, 1], [1, 0, 2, 1, 1]]))
+
+
+def test_count_featurizer_y_inclusion():
+    # test with the inclusion and y parameter set
+
+    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2], [1, 0, 2]])
+    y = np.array([0, 0, 1, 0])
+    cf_inclusion_1 = CountFeaturizer(inclusion=[0])
+    cf_inclusion_2 = CountFeaturizer(inclusion=[0, 1, 2])
+    assert_array_equal(
+        cf_inclusion_1.fit_transform(X, y=y),
+        np.array([[0, 2, 1, 1, 0], [1, 0, 3, 2, 1],
+                 [1, 0, 2, 2, 1], [1, 0, 2, 2, 1]]))
+
+    assert_array_equal(
+        cf_inclusion_2.fit_transform(X, y=y),
+        np.array([[0, 2, 1, 1, 0], [1, 0, 3, 1, 0],
+                 [1, 0, 2, 1, 1], [1, 0, 2, 1, 1]]))
+
+
+def test_count_featurizer_multi_y():
+    # test with multi-dimensional y parameter
+
+    X = np.array([[0], [0], [1], [1]])
+    y = np.array([[0, 1], [0, 1], [0, 0], [0, 1]])
+    cf = CountFeaturizer()
+    assert_array_equal(
+        cf.fit_transform(X, y=y),
+        np.array([[0, 2, 0, 2], [0, 2, 0, 2],
+                 [1, 2, 1, 1], [1, 2, 1, 1]]))
+
+
+def test_count_featurizer_multi_inclusion():
+    # test with 2D inclusion
+    X = np.array([[0, 0], [0, 0], [1, 0], [1, 0]])
+    y = np.array([[0], [0], [0], [1]])
+    cf = CountFeaturizer(inclusion=np.array([[0], [1]]))
+    assert_array_equal(
+        cf.fit_transform(X, y=y),
+        np.array([[0, 0, 2, 0, 3, 1], [0, 0, 2, 0, 3, 1],
+                 [1, 0, 1, 1, 3, 1], [1, 0, 1, 1, 3, 1]]))
+
+    # each should be the same as [[0], [1]]
+    cf = CountFeaturizer(inclusion="each")
+    assert_array_equal(
+        cf.fit_transform(X, y=y),
+        np.array([[0, 0, 2, 0, 3, 1], [0, 0, 2, 0, 3, 1],
+                 [1, 0, 1, 1, 3, 1], [1, 0, 1, 1, 3, 1]]))
+
+    cf = CountFeaturizer(inclusion=[[0]])
+    assert_array_equal(
+        cf.fit_transform(X, y=y),
+        np.array([[0, 0, 2, 0], [0, 0, 2, 0],
+                 [1, 0, 1, 1], [1, 0, 1, 1]]))
+
+    cf = CountFeaturizer(inclusion="each")
+    y = np.array([[0, 0], [0, 1], [0, 2], [1, 3]])
+    assert_array_equal(
+        cf.fit_transform(X, y=y),
+        np.array([[0, 0, 2, 0, 1, 1, 0, 0, 3, 1, 1, 1, 1, 1],
+                 [0, 0, 2, 0, 1, 1, 0, 0, 3, 1, 1, 1, 1, 1],
+                 [1, 0, 1, 1, 0, 0, 1, 1, 3, 1, 1, 1, 1, 1],
+[1, 0, 1, 1, 0, 0, 1, 1, 3, 1, 1, 1, 1, 1]]))

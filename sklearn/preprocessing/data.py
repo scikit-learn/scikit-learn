@@ -9,7 +9,9 @@
 
 from __future__ import division
 
+from collections import defaultdict
 from itertools import chain, combinations
+import functools
 import numbers
 import warnings
 from itertools import combinations_with_replacement as combinations_w_r
@@ -22,6 +24,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six import string_types
 from ..utils import check_array
+from ..utils import check_X_y
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.fixes import _argmax
@@ -2864,6 +2867,229 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
     """
     pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)
+
+
+def _get_nested_counter(remaining, y_dim, inclusion_size):
+    "A nested dictionary with 'remaining' layers and a 2D array at the end"
+    if remaining == 1:
+        return np.zeros((y_dim, inclusion_size))
+    return defaultdict(
+        functools.partial(
+            _get_nested_counter, remaining - 1, y_dim, inclusion_size))
+
+
+class CountFeaturizer(BaseEstimator, TransformerMixin):
+    """Adds a feature representing each feature value's count in training
+
+    Specifically, for each data point 'X_i' in the dataset 'X', it will add in
+    a new set of columns 'count_X_i' to the end of 'X_i' where 'count_X_i' is the
+    number of occurences of 'X_i' in the dataset 'X' given the equality indicator
+    'inclusion'.
+
+    If a 'y' argument is given during the fit step, then the
+    count in the transform step will be conditional on the 'y'.
+    The number of columns added will be the number of different values 'y' can
+    take on.
+
+    This preprocessing step is useful when the number of occurences
+    of a particular piece of data is helpful in computing the prediction.
+
+    Parameters
+    ----------
+    inclusion : 'all', 'each', list, or numpy.ndarray
+        The inclusion criteria for counting
+
+        - 'all' (default) : Every feature is concatenated and counted
+        - 'each' : Each feature will have its own set of counts
+        - list of indices : Only the given list of features is
+                               concatenated and counted
+        - list of lists of indices : The given list of lists of features is
+                               concatenated and counted, but each list in the
+                               list of lists has its own set of counts
+
+    Attributes
+    ----------
+    count_cache_ : defaultdict(int)
+        The counts of each example learned during 'fit'
+
+    classes_ : list of (index, y) tuples
+        An enumerated set of all unique values 'y' can have
+
+    n_input_features_ : int
+        The number of columns of 'X' learned during 'fit'
+        We use this to compare to the number of columns of 'X'
+        during transform to make sure that the transformation is compatible
+
+    n_output_features_ : int
+        The number of columns of 'y' learned during 'fit'
+        If 0, then the fit is not conditional on the y given
+
+    Examples
+    --------
+    Given a dataset with two features and four samples, we let the transformer
+    find the number of occurences of each data point in the dataset
+    Note how the first column duplicates the input data, the second column
+    corresponds to the count of ``y=0`` and the third column corresponds to
+    the count of ``y=1``.
+
+    >>> from sklearn.preprocessing.data import CountFeaturizer
+    >>> X = [[0], [0], [0], [0], [1], [1], [1], [1]]
+    >>> y = [0, 1, 1, 1, 0, 0, 0, 0]
+    >>> cf = CountFeaturizer().fit(X, y)
+    >>> cf.transform(X)      # doctest: +NORMALIZE_WHITESPACE
+    array([[ 0.,  1.,  3.],
+           [ 0.,  1.,  3.],
+           [ 0.,  1.,  3.],
+           [ 0.,  1.,  3.],
+           [ 1.,  4.,  0.],
+           [ 1.,  4.,  0.],
+           [ 1.,  4.,  0.],
+           [ 1.,  4.,  0.]])
+
+    See also
+    --------
+    https://blogs.technet.microsoft.com/machinelearning/2015/02/17/big-learning-made-easy-with-counts/      # noqa
+    https://msdn.microsoft.com/en-us/library/azure/dn913056.aspx
+    """
+    def __init__(self, inclusion='all'):
+        self.inclusion = inclusion
+
+    @staticmethod
+    def _valid_data_type(type_check):
+        return isinstance(type_check, (np.ndarray, list))
+
+    @staticmethod
+    def _check_inclusion(inclusion, n_input_features=1):
+        if inclusion is None:
+            raise ValueError("Inclusion cannot be none")
+        if isinstance(inclusion, str) and inclusion == "all":
+            return np.array([range(n_input_features)])
+        elif isinstance(inclusion, str) and inclusion == "each":
+            return np.array([[i] for i in range(n_input_features)])
+        elif CountFeaturizer._valid_data_type(inclusion):
+            if len(inclusion) == 0:
+                raise ValueError("Inclusion size must not be 0")
+            if CountFeaturizer._valid_data_type(inclusion[0]):
+                return inclusion
+            else:
+                return [inclusion]
+        else:
+            raise ValueError("Illegal data type in inclusion")
+
+    def fit(self, X, y=None):
+        """Fits the CountFeaturizer to X, y
+
+        Stores the counts for each example X, conditional on y
+        Both X and y must be appropriately reshaped to a 2D list
+
+        Parameters
+        ----------
+        X : array
+            The data set to learn the counts from, conditional to 'y'
+            X must not be 1 dimensional
+
+        y : array-like, optional
+            If provided, a separate column is output for each value of 'y',
+            counting the occurences of 'X' conditioned on that 'y' value
+
+        Returns
+        -------
+        self
+        """
+
+        if y is not None:
+            X, y = check_X_y(X, y, multi_output=True)
+            if len(y.shape) == 1:
+                self.n_output_features_ = 1
+                y = np.reshape(y, (-1, 1))
+            else:
+                self.n_output_features_ = len(y[0])
+        else:
+            X = check_array(X)
+            y = np.zeros((len(X), 1))
+            self.n_output_features_ = 1
+
+        self.n_input_features_ = len(X[0])
+        inclusion_used = \
+            CountFeaturizer._check_inclusion(
+                self.inclusion, n_input_features=self.n_input_features_)
+        len_data = len(X)
+        len_inclusion = len(inclusion_used)
+        self.count_cache_ = \
+            _get_nested_counter(3, self.n_output_features_, len_inclusion)
+        classes_unsorted = [set() for i in range(self.n_output_features_)]
+
+        for inclusion_i in range(len_inclusion):
+            for i in range(len_data):
+                X_key = tuple(X[i].take(inclusion_used[inclusion_i]))
+                for j in range(self.n_output_features_):
+                    y_key = y[i, j]
+                    self.count_cache_[X_key][y_key][j, inclusion_i] += 1
+                    classes_unsorted[j].add(y_key)
+
+        self.classes_ = \
+            [list(enumerate(sorted(ys))) for ys in classes_unsorted]
+
+        return self
+
+    def transform(self, X):
+        """Transforms X to include the counts learned during 'fit'
+
+        Augments 'X' with a new column containing the counts of each example,
+        conditional on 'y'.
+
+        Parameters
+        ----------
+        X : array
+            The 'X' that we augment with count columns
+            'X' must not be 1 dimensional
+
+        Returns
+        -------
+        transformed : numpy.ndarray
+            The transformed input
+
+        Notes
+        -----
+        The data returned from the transformation will always be a
+        numpy.ndarray
+        """
+
+        check_is_fitted(self, ['count_cache_', 'n_input_features_'])
+
+        X = check_array(X)
+        len_data = len(X)
+        len_classes = 0
+        for ys in self.classes_:
+            len_classes += len(ys)
+
+        num_features = len(X[0])
+        if self.n_input_features_ != num_features:
+            raise ValueError("Dimensions mismatch in X during transform")
+        inclusion_used = \
+            CountFeaturizer._check_inclusion(
+                self.inclusion, n_input_features=self.n_input_features_)
+
+        # the number of added cols is the number of unique y vals
+        # multiplied by the number of different inclusion lists
+        num_added_cols = len_classes * len(inclusion_used)
+        transformed = np.zeros((len_data, num_features + num_added_cols))
+        transformed[:, :-num_added_cols] = X
+
+        col_offset_inclusion = 0
+        for inclusion_i in range(len(inclusion_used)):
+            col_offset_y = 0
+            col_offset_inclusion = inclusion_i * len_classes
+            for j in range(self.n_output_features_):
+                for y_ind, y_key in self.classes_[j]:
+                    for i in range(len_data):
+                        X_key = tuple(X[i].take(inclusion_used[inclusion_i]))
+                        transformed[i, num_features + y_ind +
+                                    col_offset_y + col_offset_inclusion] = \
+                            self.count_cache_[X_key][y_key][j, inclusion_i]
+                col_offset_y += len(self.classes_[j])
+
+        return transformed
 
 
 class CategoricalEncoder(BaseEstimator, TransformerMixin):
