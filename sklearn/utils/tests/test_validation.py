@@ -570,7 +570,8 @@ def test_check_memory():
                         "or a Memory instance implementing a"
                         " cache method. Got a <type 'int'> instance, "
                         "instead.", check_memory, 1)
-    assert_raises_regex(ValueError, "'memory' is not a string "
-                        "or a Memory instance implementing a cache method."
-                        " Got a <class '__main__.WrongDummyMemory'> "
-                        "instance, instead.", check_memory, WrongDummyMemory())
+    assert_raises_regex(ValueError, "'memory' is not a string or a Memory"
+                        " instance implementing a cache method. Got a <class"
+                        " 'sklearn.utils.tests.test_validation."
+                        "WrongDummyMemory'> instance, instead.",
+                        check_memory, WrongDummyMemory())
