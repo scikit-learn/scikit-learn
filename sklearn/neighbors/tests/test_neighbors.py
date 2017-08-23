@@ -1256,27 +1256,27 @@ def test_dtype_convert():
 
 
 def test_sparse_metric_callable():
-    def sparse_metric(x, y): # Some metric accepting sparse matrix input (only)
-        x_nnz = x.count_nonzero()
-        y_nnz = y.count_nonzero()
+    def sparse_metric(x, y):  # Metric accepting sparse matrix input (only)
 
-        return min(x_nnz, y_nnz) / max(x_nnz, y_nnz)
+        return min(x.nnz, y.nnz) / max(x.nnz, y.nnz)
 
-    X = csr_matrix([ # Population matrix
+    X = csr_matrix([  # Population matrix
         [1, 1, 1, 1, 1],
         [1, 0, 1, 0, 1],
         [0, 0, 1, 0, 0]
     ])
 
-    Y = csr_matrix([ # Query matrix
+    Y = csr_matrix([  # Query matrix
         [1, 1, 0, 1, 1],
         [1, 0, 0, 0, 1]
     ])
 
-    nn = neighbors.NearestNeighbors(algorithm='brute', n_neighbors=2, metric=sparse_metric).fit(X)
+    nn = neighbors.NearestNeighbors(algorithm='brute', n_neighbors=2,
+                                    metric=sparse_metric).fit(X)
     N = nn.kneighbors(Y, return_distance=False)
 
-    gold_standard_nn = np.array([ # GS indices of nearest neighbours in `X` for `sparse_metric`
+    # GS indices of nearest neighbours in `X` for `sparse_metric`
+    gold_standard_nn = np.array([
         [2, 1],
         [0, 2]
     ])
