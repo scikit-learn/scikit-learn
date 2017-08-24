@@ -809,8 +809,8 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
     X_in_norm_squared = row_norms(X_in, squared=True)
     for chunk in gen_batches(n_samples_out, batch_size):
 
-        #dist_out_in = euclidean_distances(X_out[chunk], X_in, squared=True,
-        #                                  Y_norm_squared=X_in_norm_squared)
+        # dist_out_in = euclidean_distances(X_out[chunk], X_in, squared=True,
+        #                                   Y_norm_squared=X_in_norm_squared)
         # check_input in every chunk would add an extra ~8% time of computation
 
         X = X_out[chunk]
