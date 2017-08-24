@@ -388,15 +388,15 @@ Checkout the official joblib documentation:
 
 .. _warm-starts:
 
-A sample algorithmic trick: warm starts for cross validation
+A sample algorithmic trick: warm starts for parameter search
 ==============================================================
 
-One of the most common tasks when doing model selection is
-ref:`cross-validation <cross_validation>`. Since it is computationally
-expensive, one can speed up the training by using the `warm_start`
-parameter of the input estimator. For each fold, we sequentially train an
-estimator for a list of parameters on the same data. Setting
-`warm_start=True` allows to reuse the solution of the previous call to
-fit as initialization. In the case of linear model with Coordinate
-Descent, this technique is likely to reduce the number of iteration
-required by the next fit and so leads to faster training.
+One of the most common machine learning tasks is parameter search. 
+One approach is to sequentially train an estimator for a list of
+parameters on the same data. Since it is computationally
+expensive, one can speed up by using the `warm_start`
+parameter of the estimator. Setting `warm_start=True` allows to
+reuse the solution of the previous call to fit as initialization.
+In the case of linear model with Coordinate Descent, this technique
+is likely to reduce the number of iteration required by the next
+fit and so leads to faster training.
