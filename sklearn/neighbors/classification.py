@@ -281,12 +281,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         list of available metrics.
 
     outlier_label : int, 'uniform', 'prior', optional (default = None)
-        - int : manual label, which is given for outlier samples (samples with
-          no neighbors on given radius).
+        - int : manual label, which is given for outlier samples (samples
+          with no neighbors on given radius).
         - 'uniform' : outlier samples have same probabilities to be assgined
           into every label.
-        - 'prior' : outlier samples have the same probabilities to be assgined
-          into labels as label probabilities of 'y' in training data.
+        - 'prior' : outlier samples will be labeled according to the label
+          distributuin of 'y' in training data.
         - None : when outlier is detected, ValueError is raised.
 
     metric_params : dict, optional (default = None)
@@ -475,7 +475,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 if self.outlier_label == 'uniform':
                     proba_k[outliers, :] = 1.0 / classes_k.size
                 elif self.outlier_label == 'prior':
-                    proba_k[outliers, :] = np.bincount(_y[:, k]) / float(_y.shape[0])
+                    proba_k[outliers, :] = (np.bincount(_y[:, k])
+                    / float(_y.shape[0]))
                 else:
                     proba_k[outliers, :] = 0.0
                     warns.warn('No neighbors found for test samples %r, '
