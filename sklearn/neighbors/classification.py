@@ -280,12 +280,14 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         metric. See the documentation of the DistanceMetric class for a
         list of available metrics.
 
-    outlier_label : int, optional (default = None)
-        Label, which is given for outlier samples (samples with no
-        neighbors on given radius).
-        If set to None and outlier is detected, ValueError is raised when
-        function predict(X) is called, UserWarning is raised when function
-        preduct_proba(X) is called.
+    outlier_label : int, 'uniform', 'prior', optional (default = None)
+        - int : manual label, which is given for outlier samples (samples with
+          no neighbors on given radius).
+        - 'uniform' : outlier samples have same probabilities to be assgined
+          into every label.
+        - 'prior' : outlier samples have the same probabilities to be assgined
+          into labels as label probabilities of 'y' in training data.
+        - None : when outlier is detected, ValueError is raised.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -386,7 +388,17 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
             y_pred[inliers, k] = classes_k.take(mode)
 
-        if outliers:
+            if outliers:
+                if self.outlier_label == 'uniform':
+                    y_pred[outliers, k] = np.random.randint(classes_k.size,
+                                                            size=len(outliers))
+                elif self.outlier_label == 'prior':
+                    prior = np.bincount(_y[:, k]) / _y.shape[0]
+                    y_pred[outliers, k] = np.random.choice(classes_k,
+                                                           p=prior,
+                                                           size=len(outliers))          
+
+        if outliers and isinstance(self.outlier_label, int):
             y_pred[outliers, :] = self.outlier_label
 
         if not self.outputs_2d_:
@@ -417,20 +429,25 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
 
+        inliers = [i for i, nind in enumerate(neigh_ind) if len(nind) != 0]
+        mask = np.ones(n_samples, np.bool)
+        mask[inliers] = 0
         outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
-        if len(outliers) > 0:
-            warnings.warn('No neighbors found for test samples %r, '
-                          'their probabilities will be assgined with 0, '
-                          'which may influence scoring. '
-                          'You can try using larger radius, '
-                          'or consider removing them from your dataset.'
-                          % outliers)
 
         classes_ = self.classes_
         _y = self._y
         if not self.outputs_2d_:
             _y = self._y.reshape((-1, 1))
             classes_ = [self.classes_]
+
+        if self.outlier_label is not None:
+            neigh_dist[outliers] = 1e-6
+        elif outliers:
+            raise ValueError('No neighbors found for test samples %r, '
+                             'you can try using larger radius, '
+                             'give a label for outliers, '
+                             'or consider removing them from your dataset.'
+                             % outliers)
 
         weights = _get_weights(neigh_dist, self.weights)
 
@@ -440,17 +457,33 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
 
             proba_k = np.zeros((n_samples, classes_k.size))
-
+            proba_inliers = np.zeros((len(inliers), classes_k.size))
+            
             # samples have different size of neighbors within the same radius
             if weights is None:
-                for i, idx in enumerate(pred_labels):  # loop is O(n_samples)
-                    proba_k[i, :] += np.bincount(idx,
+                for i, idx in enumerate(pred_labels[inliers]):  # loop is O(n_samples)
+                    proba_inliers[i, :] += np.bincount(idx,
                                                  minlength=classes_k.size)
             else:
-                for i, idx in enumerate(pred_labels):  # loop is O(n_samples)
-                    proba_k[i, :] += np.bincount(idx,
+                for i, idx in enumerate(pred_labels[inliers]):  # loop is O(n_samples)
+                    proba_inliers[i, :] += np.bincount(idx,
                                                  weights[i],
                                                  minlength=classes_k.size)
+            proba_k[inliers, :] = proba_inliers
+
+            if outliers:
+                if self.outlier_label == 'uniform':
+                    proba_k[outliers, :] = 1.0 / classes_k.size
+                elif self.outlier_label == 'prior':
+                    proba_k[outliers, :] = np.bincount(_y[:, k]) / _y.shape[0]
+                else:
+                    proba_k[outliers, :] = 0.0
+                    warnings.warn('No neighbors found for test samples %r, '
+                                  'their probabilities will be assgined with 0., '
+                                  'which may influence scoring. '
+                                  'You can try using larger radius, '
+                                  'or consider removing them from your dataset.'
+                                  % outliers)
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]

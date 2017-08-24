@@ -1276,10 +1276,41 @@ def test_radius_neighbors_clf_predict_proba():
     # outlier warnings
     def check_warn(w='distance'):
         RNC = neighbors.RadiusNeighborsClassifier
-        clf = RNC(radius=1, weights=w)
+        clf = RNC(radius=1, weights=w, outlier_label = -1)
         X = [[0], [1], [2], [3]]
         y = [0, 0, 1, 1]
         clf.fit(X, y)
         clf.predict_proba([[1], [5]])
     assert_warns(UserWarning, check_warn, w='distance')
     assert_warns(UserWarning, check_warn, w='uniform')
+
+
+def test_radius_neighbors_outliers():
+    # outler handlers: 1. uniform, prior, None
+    RNC = neighbors.RadiusNeighborsClassifier
+    X = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]
+    y = [0, 2, 2, 1, 1, 1, 3, 3, 3, 3]
+
+    def check_exception():
+        clf = RNC(radius=1, outlier_label=None)
+        clf.fit(X, y)
+        clf.predict_proba([[1], [15]])
+    assert_raises(ValueError, check_exception)
+
+    clf = RNC(radius=1, outlier_label='uniform')
+    clf.fit(X, y)
+    predict = clf.predict_proba([[1], [15]])
+    assert_equal(predict[1, 0], 0.25)
+    assert_equal(predict[1, 1], 0.25)
+    assert_equal(predict[1, 2], 0.25)
+    assert_equal(predict[1, 3], 0.25)
+    clf.predict([[1], [15]])
+
+    clf = RNC(radius=1, outlier_label='prior')
+    clf.fit(X, y)
+    predict = clf.predict_proba([[1], [15]])
+    assert_equal(predict[1, 0], 0.1)
+    assert_equal(predict[1, 1], 0.3)
+    assert_equal(predict[1, 2], 0.2)
+    assert_equal(predict[1, 3], 0.4)
+    clf.predict([[1], [15]])
