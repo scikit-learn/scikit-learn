@@ -17,6 +17,7 @@ from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 
 # Load the iris dataset and randomly permute it
@@ -272,6 +273,20 @@ def test_sample_weight():
         voting='soft')
     msg = ('Underlying estimator \'knn\' does not support sample weights.')
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
+
+
+def test_sample_weight_kwargs():
+    """Check that VotingClassifier passes sample_weight as kwargs"""
+    class MockClassifier(BaseEstimator, ClassifierMixin):
+        """Mock Classifier to check that sample_weight is received as kwargs"""
+        def fit(self, X, y, *args, **sample_weight):
+            assert_true('sample_weight' in sample_weight)
+
+    clf = MockClassifier()
+    eclf = VotingClassifier(estimators=[('mock', clf)], voting='soft')
+
+    # Should not raise an error.
+    eclf.fit(X, y, sample_weight=np.ones((len(y),)))
 
 
 def test_set_params():

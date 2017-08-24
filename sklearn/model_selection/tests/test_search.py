@@ -189,7 +189,7 @@ def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
     clf = CheckingClassifier(expected_fit_params=['spam', 'eggs'])
     searcher = klass(clf, {'foo_param': [1, 2, 3]}, cv=2, **klass_kwargs)
 
-    # The CheckingClassifer generates an assertion error if
+    # The CheckingClassifier generates an assertion error if
     # a parameter is missing or has length != len(X).
     assert_raise_message(AssertionError,
                          "Expected fit parameter(s) ['eggs'] not seen.",
