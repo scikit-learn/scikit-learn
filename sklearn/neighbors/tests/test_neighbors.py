@@ -1276,7 +1276,7 @@ def test_radius_neighbors_clf_predict_proba():
     # outlier warnings
     def check_warn(w='distance'):
         RNC = neighbors.RadiusNeighborsClassifier
-        clf = RNC(radius=1, weights=w, outlier_label = -1)
+        clf = RNC(radius=1, weights=w, outlier_label=-1)
         X = [[0], [1], [2], [3]]
         y = [0, 0, 1, 1]
         clf.fit(X, y)

@@ -8,7 +8,7 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
-import warnings
+import warnings as warns
 import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
@@ -393,10 +393,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                     y_pred[outliers, k] = np.random.randint(classes_k.size,
                                                             size=len(outliers))
                 elif self.outlier_label == 'prior':
-                    prior = np.bincount(_y[:, k]) / _y.shape[0]
+                    prior = np.bincount(_y[:, k]) / float(_y.shape[0])
                     y_pred[outliers, k] = np.random.choice(classes_k,
                                                            p=prior,
-                                                           size=len(outliers))          
+                                                           size=len(outliers))
 
         if outliers and isinstance(self.outlier_label, int):
             y_pred[outliers, :] = self.outlier_label
@@ -457,33 +457,33 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
 
             proba_k = np.zeros((n_samples, classes_k.size))
-            proba_inliers = np.zeros((len(inliers), classes_k.size))
-            
+            proba_inl = np.zeros((len(inliers), classes_k.size))
+
             # samples have different size of neighbors within the same radius
             if weights is None:
-                for i, idx in enumerate(pred_labels[inliers]):  # loop is O(n_samples)
-                    proba_inliers[i, :] += np.bincount(idx,
-                                                 minlength=classes_k.size)
+                for i, idx in enumerate(pred_labels[inliers]):
+                    proba_inl[i, :] += np.bincount(idx,
+                                                   minlength=classes_k.size)
             else:
-                for i, idx in enumerate(pred_labels[inliers]):  # loop is O(n_samples)
-                    proba_inliers[i, :] += np.bincount(idx,
-                                                 weights[i],
-                                                 minlength=classes_k.size)
-            proba_k[inliers, :] = proba_inliers
+                for i, idx in enumerate(pred_labels[inliers]):
+                    proba_inl[i, :] += np.bincount(idx,
+                                                   weights[i],
+                                                   minlength=classes_k.size)
+            proba_k[inliers, :] = proba_inl
 
             if outliers:
                 if self.outlier_label == 'uniform':
                     proba_k[outliers, :] = 1.0 / classes_k.size
                 elif self.outlier_label == 'prior':
-                    proba_k[outliers, :] = np.bincount(_y[:, k]) / _y.shape[0]
+                    proba_k[outliers, :] = np.bincount(_y[:, k]) / float(_y.shape[0])
                 else:
                     proba_k[outliers, :] = 0.0
-                    warnings.warn('No neighbors found for test samples %r, '
-                                  'their probabilities will be assgined with 0., '
-                                  'which may influence scoring. '
-                                  'You can try using larger radius, '
-                                  'or consider removing them from your dataset.'
-                                  % outliers)
+                    warns.warn('No neighbors found for test samples %r, '
+                               'their probabilities will be assgined with 0, '
+                               'which may influence scoring. '
+                               'You can try using larger radius, '
+                               'or consider removing them from your dataset.'
+                               % outliers)
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
