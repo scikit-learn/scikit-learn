@@ -759,12 +759,7 @@ class SupervisedIntegerMixin(object):
 
         y : {array-like, sparse matrix}
             Target values of shape = [n_samples] or [n_samples, n_outputs]
-            If y is sparse with values [0, 1], it is expected to be the
-            indicator representation of a multilabel classification problem.
-            Otherwise, if y is an array with integer dtype, it is interpreted
-            as the representation of a multiclass problem (possibly with
-            multiple outputs).
-
+            A sparse matrix may only be used for multilabel targets.
         """
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_X_y(X, y, "csr", multi_output=True)
@@ -786,9 +781,10 @@ class SupervisedIntegerMixin(object):
         except ValueError as e:
             if issparse(y) and self.outputs_2d_:
                 raise ValueError("Sparse y is only supported for multilabel"
-                                 "case (multioutput is not supported)")
+                                 " case (multioutput multiclass is not"
+                                 " supported)")
             else:
-                raise e
+                raise
 
         self.classes_ = []
 

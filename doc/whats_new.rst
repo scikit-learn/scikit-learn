@@ -36,6 +36,9 @@ Classifiers and regressors
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
 
+- Add support for sparse multilabel ``y`` in :class:`NeighborsBase`
+  :issue:`8057` by :user:`Aman Dalmia <dalmia>`, :user:`Joan Massich <massich>`.
+
 Enhancements
 ............
 
@@ -144,9 +147,6 @@ Classifiers and regressors
   multinomial logistic loss, and behaves marginally better than 'sag'
   during the first epochs of ridge and logistic regression.
   :issue:`8446` by `Arthur Mensch`_.
-
-   - Add support for sparse multilabel ``y`` in :class:`NeighborsBase`
-     :issue:`8057` by :user:`Aman Dalmia <dalmia>`, :user:`Joan Massich <massich>`.
 
 Other estimators
 
