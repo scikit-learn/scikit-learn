@@ -23,15 +23,15 @@ training point that are supposed to contain only samples that share the same
 label as the central point.
 
 In the beginning of the algorithm each training sample fixes :math:`k`
-target neighbors, namely :math:`k` nearest training samples according to some
-initial - most commonly the Euclidean - metric that share the same label.
-The first goal is to find a metric such that the distances of each sample to
-its target neighbors are minimized.
+target neighbors, namely the :math:`k` nearest training samples that share
+the same label according to some initial metric - most commonly the Euclidean.
 
-The second goal of the algorithm is to create a large margin between the
-farthest target neighbor of each sample and data samples that belong to
-different classes. Data samples from different classes that violate this
-margin are called impostors.
+The first goal of the algorithm is to find a metric such that the distances of
+each sample to its target neighbors are minimized. The second goal of the
+algorithm is to create a large margin between the farthest target neighbor
+of each sample and data samples that belong to different classes, thereby
+enclosing the target neighbors in a sphere around the reference sample. Data
+samples from different classes that violate this margin are called impostors.
 
 Combined with a nearest neighbors classifier (:class:`classification.KNeighborsClassifier`)
 this method is attractive for classification because it requires no
@@ -62,10 +62,10 @@ Dimensionality reduction
 ========================
 
 :class:`lmnn.LargeMarginNearestNeighbor` can be used to
-perform supervised dimensionality reduction, by projecting the input data to a
-linear subspace consisting of the directions which maximize the nearest
-neighbor classification accuracy and therefore the separation between
-clusters of samples of the same class.
+perform supervised dimensionality reduction. The input data are projected
+onto a linear subspace consisting of the directions which maximize the nearest
+neighbor classification accuracy. Therefore the separation between clusters
+of samples of the same class is also maximized.
 
 This is implemented in :func:`lmnn.LargeMarginNearestNeighbor.transform`.
 The desired dimensionality can be set using the ``n_features_out`` parameter
@@ -81,13 +81,13 @@ Mathematical formulation
 ========================
 
 The LMNN objective function consists of two competing terms, the pull loss
-that pulls target neighbors together and the push loss that pushes impostors
- away:
+that pulls target neighbors closer to their reference samples and the push
+loss that pushes impostors away:
 
 .. math::
 
-    \varepsilon_{\text{pull}} (L) = \sum_{i, j \rightsquigarrow i} ||L
-    (x_i - x_j)||^2
+    \varepsilon_{\text{pull}} (L) = \sum_{i, j \rightsquigarrow i} ||L(x_i -
+     x_j)||^2
 
     \varepsilon_{\text{push}} (L) = \sum_{i, j \rightsquigarrow i}
     \sum_{l} (1 - y_{il}) [1 + || L(x_i - x_j)||^2 - || L
@@ -101,7 +101,7 @@ that pulls target neighbors together and the push loss that pushes impostors
 The term inside the sum of the push loss is called the hingle loss and
 the notation amounts to :math:`[x]_+ = \max(0, x)`.
 The parameter :math:`\mu` is a trade-off between penalizing large distances
-between target neighbors and penalizing margin violations. In practice,
+to target neighbors and penalizing margin violations by impostors. In practice,
 the two terms are weighted equally.
 
 To use this model for classification, we just need to use a nearest neighbors
@@ -150,9 +150,9 @@ differentiable).
 
 .. topic:: References:
 
-   .. [#1] "Distance Metric Learning for Large Margin Nearest Neighbor
-            Classification.", Weinberger, Kilian Q., and Lawrence K. Saul, Journal
-            of Machine Learning Research, Vol. 10, Feb. 2009, pp. 207-244.
+   .. [#1] "Distance Metric Learning for Large Margin Nearest NeighborClassification.",
+   Weinberger, Kilian Q., and Lawrence K. Saul, Journal of Machine Learning
+   Research, Vol. 10, Feb. 2009, pp. 207-244.
 
     http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf
 
