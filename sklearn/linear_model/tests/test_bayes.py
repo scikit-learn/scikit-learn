@@ -16,7 +16,7 @@ from sklearn import datasets
 
 def test_bayesian_on_diabetes():
     # Test BayesianRidge on diabetes
-    raise SkipTest("XFailed Test")
+    raise SkipTest("test_bayesian_on_diabetes is broken")
     diabetes = datasets.load_diabetes()
     X, y = diabetes.data, diabetes.target
 
