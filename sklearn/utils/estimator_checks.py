@@ -688,8 +688,9 @@ def check_transformers_unfitted(name, transformer):
     X, y = _boston_subset()
 
     transformer = clone(transformer)
-    with assert_raises((AttributeError, ValueError),
-                       msg="Transformers unfitted"):
+    with assert_raises((AttributeError, ValueError), msg="The unfitted "
+                       "transformer {name} does not raise an error when "
+                       "transform is called. Perhaps use check_is_fitted"):
         transformer.transform(X)
 
 
