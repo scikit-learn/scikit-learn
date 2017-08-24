@@ -18,10 +18,9 @@ from scipy.sparse import csr_matrix, csc_matrix, spdiags
 
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors
-from ..metrics.pairwise import euclidean_distances
 from ..decomposition import PCA
 from ..utils import gen_batches
-from ..utils.extmath import row_norms
+from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y
@@ -295,7 +294,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(self, X, check=True):
+    def transform(self, X, check_input=True):
         """Applies the learned transformation to the given data.
 
         Parameters
@@ -303,7 +302,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features_in)
             Data samples.
 
-        check: bool, optional (default=True)
+        check_input: bool, optional (default=True)
             Whether to validate ``X``.
 
         Returns
@@ -319,7 +318,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         check_is_fitted(self, ['transformation_'])
 
-        if check:
+        if check_input:
             X = check_array(X)
 
         return X.dot(self.transformation_.T)
@@ -367,7 +366,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                  .format(len(singleton_classes)))
             is_sample_single = np.asarray([yi in singleton_classes for yi in
                                            y_inverse])
-            # -1 is used by semisupervised algorithms
+            # -1 is used by semi-supervised algorithms
             # y_inverse[is_sample_single] = -2
             X = X[~is_sample_single].copy()
             y_inverse = y_inverse[~is_sample_single].copy()
@@ -404,9 +403,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         check_scalar(self.max_constraints, 'max_constraints', int, 1)
         check_scalar(self.max_corrections, 'max_corrections', int, 1)
         check_scalar(self.n_jobs, 'n_jobs', int, -1)
-
         check_scalar(self.tol, 'tol', float, 0.)
-
         check_scalar(self.init_pca, 'init_pca', bool)
         check_scalar(self.use_sparse, 'use_sparse', bool)
         check_scalar(self.verbose, 'verbose', int, 0)
@@ -559,7 +556,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             The training samples.
 
         targets : array, shape (n_samples, n_neighbors)
-            The k nearest neighbors of each sample in the euclidean space.
+            The k nearest neighbors of each sample from the same class.
 
         verbose : bool, optional (default=False)
             Whether to print progress info.
@@ -622,7 +619,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                                       n_features_in)
 
         tic = time.time()
-        Lx = self.transform(X, check=False)
+        Lx = self.transform(X, check_input=False)
 
         # Compute distances to target neighbors (plus margin)
         dist_tn = np.zeros((n_samples, self.n_neighbors_))
@@ -649,7 +646,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             values = np.squeeze(np.asarray(A1.sum(1).ravel() + A2.sum(0)))
             A0 = A0 - A1 - A2 + csr_matrix((values, (range(n_samples),
                                                      targets[:, k])), shape)
-            loss = loss + np.sum(loss1 ** 2) + np.sum(loss2 ** 2)
+            loss += loss1.dot(loss1) + loss2.dot(loss2)
 
         grad_new = sum_outer_products(X, A0)
         grad = self.transformation_.dot(grad_static + grad_new)
@@ -727,7 +724,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             impostors_sp = impostors_sp.tocoo(copy=False)
             imp_row = impostors_sp.row
             imp_col = impostors_sp.col
-            dist = pairs_distances_batch(Lx, imp_row, imp_col)
+            dist = paired_distances_batch(Lx, imp_row, imp_col)
         else:
             # Initialize impostors vectors
             imp_row, imp_col, dist = [], [], []
@@ -739,7 +736,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 # fitting in memory
                 ii, jj, dd = _find_impostors_batch(
                     Lx[ind_out], Lx[ind_in], margin_radii[ind_out],
-                    margin_radii[ind_in], True)
+                    margin_radii[ind_in], return_distance=True)
 
                 if len(ii):
                     # sample constraints if they are too many
@@ -768,7 +765,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
 
 def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
-                          return_dist=False, mem_budget=int(1e7)):
+                          return_distance=False, mem_budget=int(1e7)):
     """Find impostor pairs in chunks to avoid large memory usage
 
     Parameters
@@ -789,7 +786,7 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
     mem_budget : int, optional (default=int(1e7))
         Memory budget (in bytes) for computing distances.
 
-    return_dist : bool, optional (default=False)
+    return_distance : bool, optional (default=False)
         Whether to return the distances to the impostors.
 
     Returns
@@ -811,8 +808,18 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
     # X_in squared norm stays constant, so pre-compute it to get a speed-up
     X_in_norm_squared = row_norms(X_in, squared=True)
     for chunk in gen_batches(n_samples_out, batch_size):
-        dist_out_in = euclidean_distances(X_out[chunk], X_in, squared=True,
-                                          Y_norm_squared=X_in_norm_squared)
+
+        #dist_out_in = euclidean_distances(X_out[chunk], X_in, squared=True,
+        #                                  Y_norm_squared=X_in_norm_squared)
+        # check_input in every chunk would add an extra ~8% time of computation
+
+        X = X_out[chunk]
+        XX = row_norms(X, squared=True)[:, np.newaxis]
+        YY = X_in_norm_squared
+        dist_out_in = safe_sparse_dot(X, X_in.T, dense_output=True)
+        dist_out_in *= -2
+        dist_out_in += XX
+        dist_out_in += YY
 
         ind1, = np.where((dist_out_in < margin_radii_out[chunk, None]).ravel())
         ind2, = np.where((dist_out_in < margin_radii_in[None, :]).ravel())
@@ -822,10 +829,12 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
             ii, jj = np.unravel_index(ind, dist_out_in.shape)
             imp_row.extend(ii + chunk.start)
             imp_col.extend(jj)
-            if return_dist:
+            if return_distance:
+                # This np.maximum would add another ~8% time of computation
+                np.maximum(dist_out_in, 0, out=dist_out_in)
                 dist.extend(dist_out_in[ii, jj])
 
-    if return_dist:
+    if return_distance:
         return imp_row, imp_col, dist
     else:
         return imp_row, imp_col
@@ -900,7 +909,7 @@ def sum_outer_products(X, weights):
     return sum_outer_prods
 
 
-def pairs_distances_batch(X, ind_a, ind_b, mem_budget=int(1e7)):
+def paired_distances_batch(X, ind_a, ind_b, mem_budget=int(1e7)):
     """Equivalent to  row_norms(X[ind_a] - X[ind_b], True)
 
     Parameters
