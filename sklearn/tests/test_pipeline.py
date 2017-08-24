@@ -874,6 +874,29 @@ def test_pipeline_wrong_memory():
                         cached_pipe.fit, X, y)
 
 
+class DummyMemory(object):
+    def __init__(self):
+        pass
+
+    def cache(self, func):
+        return func
+
+
+class WrongDummyMemory(object):
+    def __init__(self):
+        pass
+
+
+def test_pipeline_with_cache_attribute():
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
+                    memory=DummyMemory())
+    pipe.fit(X, y=None)
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
+                    memory=WrongDummyMemory())
+    assert_raises(ValueError, pipe.fit, X)
+
+
 def test_pipeline_memory():
     iris = load_iris()
     X = iris.data
