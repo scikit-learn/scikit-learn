@@ -763,8 +763,9 @@ def _check_transformer(name, transformer_orig, X, y):
         # raises error on malformed input for transform
         if hasattr(X, 'T'):
             # If it's not an array, it does not have a 'T' property
-            with assert_raises(ValueError,
-                               msg="Malformed input for transform"):
+            with assert_raises(ValueError, msg="The transformer {name} does not"
+                               " raise an error when incorrect/malformed input "
+                               "array is passed"):
                 transformer.transform(X.T)
 
 
@@ -858,7 +859,8 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     X_zero_samples = np.empty(0).reshape(0, 3)
     # The precise message can change depending on whether X or y is
     # validated first. Let us test the type of exception only:
-    with assert_raises(ValueError, msg="Empty data messages"):
+    with assert_raises(ValueError, msg="The estimators {name} does not"
+                               " raise an error when"):
         e.fit(X_zero_samples, [])
 
     X_zero_features = np.empty(0).reshape(3, 0)
