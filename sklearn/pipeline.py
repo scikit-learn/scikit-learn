@@ -200,7 +200,7 @@ class Pipeline(_BaseComposition):
             if transformer is None:
                 pass
             else:
-                if memory.cachedir is None:
+                if getattr(memory, 'cachedir', True):
                     # we do not clone when caching is disabled to preserve
                     # backward compatibility
                     cloned_transformer = transformer
