@@ -476,7 +476,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                     proba_k[outliers, :] = 1.0 / classes_k.size
                 elif self.outlier_label == 'prior':
                     proba_k[outliers, :] = (np.bincount(_y[:, k])
-                    / float(_y.shape[0]))
+                                            / float(_y.shape[0]))
                 else:
                     proba_k[outliers, :] = 0.0
                     warns.warn('No neighbors found for test samples %r, '
