@@ -712,7 +712,7 @@ class TSNE(BaseEstimator):
 
             # Find the nearest neighbors for every point
             neighbors_method = 'ball_tree'
-            if (self.metric == 'precomputed'):
+            if (self.metric == 'precomputed') or (self.metric == "cosine"):
                 neighbors_method = 'brute'
             knn = NearestNeighbors(algorithm=neighbors_method, n_neighbors=k,
                                    metric=self.metric)
