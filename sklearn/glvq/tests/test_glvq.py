@@ -90,6 +90,10 @@ def test_gmlvq_iris():
 
 
 def test_lgmlvq_iris():
+    model = LgmlvqModel()
+    model.fit(iris.data, iris.target)
+    assert_greater(model.score(iris.data, iris.target), 0.95)
+
     assert_raise_message(ValueError, 'regularization must be a positive float',
                          LgmlvqModel(regularization=-1.0).fit, iris.data, iris.target)
     assert_raise_message(ValueError, 'length of regularization must be number of prototypes',
@@ -115,9 +119,6 @@ def test_lgmlvq_iris():
     assert_raise_message(ValueError, 'dim length must be number of classes',
                          LgmlvqModel(dim=[1, 1], classwise=True).fit, iris.data, iris.target)
     LgmlvqModel(classwise=True, dim=[1], prototypes_per_class=2).fit(iris.data, iris.target)
-    model = LgmlvqModel()
-    model.fit(iris.data, iris.target)
-    assert_greater(model.score(iris.data, iris.target), 0.95)
 
     model = LgmlvqModel(regularization=0.1)
     model.fit(iris.data, iris.target)

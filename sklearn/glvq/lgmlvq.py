@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 from scipy.optimize import minimize
 
@@ -33,7 +35,7 @@ class LgmlvqModel(GlvqModel):
     gtol: float, optional (default=1e-5)
         Gradient norm must be less than gtol before successful termination of bfgs.
 
-    regularization: int, optional (default=0.0)
+    regularization: float or array-like, shape = [n_classes/n_prototypes], optional (default=0.0)
         Values between 0 and 1 (treat with care)
 
     initial_matrices: list of array-like, optional TODO
@@ -59,29 +61,25 @@ class LgmlvqModel(GlvqModel):
     classes_ : array-like, shape = [n_classes]
         Array containing labels.
 
-    psis_ :
+    psis_ : list of array-like
+        Relevance Matrices
 
-    dim_ :
+    dim_ : list of int
+        Maximum rank of projection
 
-    regularization_ : 
-
-    Examples
-    --------
-    >>> X = [[0,0],[0,1],[1,0],[1,1]]
-    >>> y = [0,0,1,1]
-    >>> model = LgmlvqModel()
-    >>> model.fit(X,y)
-    []
+    regularization_ : array-like, shape = [n_classes/n_prototypes]
+        Values between 0 and 1
 
     See also
     --------
     GLVQ, GRLVQ, GMLVQ
     """
+
     def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
                  display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrices=None, classwise=False,
                  dim=None):
-        super().__init__(random_state, initial_prototypes, prototypes_per_class,
-                         display, max_iter, gtol)
+        super(LgmlvqModel, self).__init__(random_state, initial_prototypes, prototypes_per_class,
+                                          display, max_iter, gtol)
         self.regularization = regularization
         self.initial_matrices = initial_matrices
         self.classwise = classwise
@@ -141,7 +139,7 @@ class LgmlvqModel(GlvqModel):
             if sum(self.regularization_) > 0:
                 regmatrices = np.zeros([sum(self.dim_), nb_features])
                 for i in range(len(psis)):
-                    regmatrices[sum(self.dim_[:i+1]) - self.dim_[i]:sum(self.dim_[:i+1])] = \
+                    regmatrices[sum(self.dim_[:i + 1]) - self.dim_[i]:sum(self.dim_[:i + 1])] = \
                         self.regularization_[i] * np.linalg.pinv(psis[i])
                 G[nb_prototypes:] = 2 / nb_samples * lr_relevances * np.concatenate(Gw) - regmatrices
             else:
@@ -292,7 +290,7 @@ class LgmlvqModel(GlvqModel):
                 distance[i] = np.sum(np.dot(X - w[i], psis[i].conj().T) ** 2, 1)
             return np.transpose(distance)
         for i in range(nb_prototypes):
-            matrixIdx = np.where(self.classes_==self.c_w_[i])[0][0]
+            matrixIdx = np.where(self.classes_ == self.c_w_[i])[0][0]
             distance[i] = np.sum(np.dot(X - w[i], psis[matrixIdx].conj().T) ** 2, 1)
         return np.transpose(distance)
 

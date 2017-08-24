@@ -1,3 +1,5 @@
+from __future__ import division
+
 from math import log
 
 import numpy as np
@@ -37,8 +39,8 @@ class GrlvqModel(GlvqModel):
     gtol: float, optional (default=1e-5)
         Gradient norm must be less than gtol before successful termination of bfgs.
 
-    regularization: int, optional (default=0.0)
-        Values between 0 and 1 (treat with care)
+    regularization: float, optional (default=0.0)
+        Value between 0 and 1 (treat with care)
 
     initial_relevances: array-like, shape = [n_prototypes], optional
         Relevances to start with. If not given all relevances are equal
@@ -60,22 +62,15 @@ class GrlvqModel(GlvqModel):
     lambda_ : array-like, shape = [n_prototypes]
         Relevances
 
-    Examples
-    --------
-    >>> X = [[0,0],[0,1],[1,0],[1,1]]
-    >>> y = [0,0,1,1]
-    >>> model = GrlvqModel()
-    >>> model.fit(X,y)
-    []
-
     See also
     --------
     GLVQ, GMLVQ, LGMLVQ
     """
+
     def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
                  display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_relevances=None):
-        super().__init__(random_state, initial_prototypes, prototypes_per_class,
-                         display, max_iter, gtol)
+        super(GrlvqModel, self).__init__(random_state, initial_prototypes, prototypes_per_class,
+                                        display, max_iter, gtol)
         self.regularization = regularization
         self.initial_relevances = initial_relevances
 
@@ -157,13 +152,14 @@ class GrlvqModel(GlvqModel):
         return mu.sum(0)
 
     def _optimize(self, X, y, random_state):
-        if not isinstance(self.regularization, float) or self.regularization<0:
+        if not isinstance(self.regularization, float) or self.regularization < 0:
             raise ValueError("regularization must be a positive float")
         nb_prototypes, nb_features = self.w_.shape
         if self.initial_relevances is None:
             self.lambda_ = np.ones([nb_features])
         else:
-            self.lambda_ = validation.column_or_1d(validation.check_array(self.initial_relevances, dtype='float', ensure_2d=False))
+            self.lambda_ = validation.column_or_1d(
+                validation.check_array(self.initial_relevances, dtype='float', ensure_2d=False))
             if self.lambda_.size != nb_features:
                 raise ValueError("length of initial relevances is wrong"
                                  "features=%d"

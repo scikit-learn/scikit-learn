@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 from scipy.optimize import minimize
 from scipy.spatial.distance import cdist
@@ -57,15 +59,6 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
 
     classes_ : array-like, shape = [n_classes]
         Array containing labels.
-
-    Examples
-    --------
-    >>> X = [[0,0],[0,1],[1,0],[1,1]]
-    >>> y = [0,0,1,1]
-    >>> prototypes = [[0,0.5,0],[1,0.5,1]]
-    >>> model = GlvqModel(initial_prototypes=prototypes)
-    >>> model.fit(X,y)
-    []
 
     See also
     --------

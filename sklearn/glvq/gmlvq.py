@@ -1,3 +1,5 @@
+from __future__ import division
+
 import math
 from math import log
 
@@ -36,8 +38,8 @@ class GmlvqModel(GlvqModel):
     gtol: float, optional (default=1e-5)
         Gradient norm must be less than gtol before successful termination of bfgs
 
-    regularization: int, optional (default=0.0)
-        Values between 0 and 1 (treat with care)
+    regularization: float, optional (default=0.0)
+        Value between 0 and 1 (treat with care)
 
     initial_matrix: array-like, shape = [dim, n_features], optional
         Relevance matrix to start with.
@@ -66,22 +68,15 @@ class GmlvqModel(GlvqModel):
     omega_ : array-like, shape = [dim, n_features]
         Relevance matrix
 
-    Examples
-    --------
-    >>> X = [[0,0],[0,1],[1,0],[1,1]]
-    >>> y = [0,0,1,1]
-    >>> model = GmlvqModel()
-    >>> model.fit(X,y)
-    []
-
     See also
     --------
     GLVQ, GRLVQ, LGMLVQ
     """
+
     def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
                  display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrix=None, dim=None):
-        super().__init__(random_state, initial_prototypes, prototypes_per_class,
-                         display, max_iter, gtol)
+        super(GmlvqModel, self).__init__(random_state, initial_prototypes, prototypes_per_class,
+                                         display, max_iter, gtol)
         self.regularization = regularization
         self.initial_matrix = initial_matrix
         self.initialdim = dim
@@ -164,7 +159,7 @@ class GmlvqModel(GlvqModel):
         return mu.sum(0)
 
     def _optimize(self, X, y, random_state):
-        if not isinstance(self.regularization, float) or self.regularization<0:
+        if not isinstance(self.regularization, float) or self.regularization < 0:
             raise ValueError("regularization must be a positive float ")
         nb_prototypes, nb_features = self.w_.shape
         if self.initialdim is None:
@@ -181,10 +176,10 @@ class GmlvqModel(GlvqModel):
                 self.omega_ = random_state.rand(self.dim_, nb_features) * 2 - 1
         else:
             self.omega_ = validation.check_array(self.initial_matrix)
-            if self.omega_.shape[1] != nb_features: #TODO: check dim
+            if self.omega_.shape[1] != nb_features:  # TODO: check dim
                 raise ValueError("initial matrix has wrong number of features\n"
                                  "found=%d\n"
-                                 "expected=%d" % (self.omega_.shape[1],nb_features))
+                                 "expected=%d" % (self.omega_.shape[1], nb_features))
 
         variables = np.append(self.w_, self.omega_, axis=0)
         label_equals_prototype = y[np.newaxis].T == self.c_w_
@@ -227,5 +222,5 @@ class GmlvqModel(GlvqModel):
     def project(self, X, dims):
         v, u = np.linalg.eig(self.omega_.conj().T.dot(self.omega_))
         idx = v.argsort()[::-1]
-        print('projection procent:',v[idx][:dims].sum()/v.sum())
+        print('projection procent:', v[idx][:dims].sum() / v.sum())
         return X.dot(u[:, idx][:, :dims].dot(np.diag(np.sqrt(v[idx][:dims]))))
