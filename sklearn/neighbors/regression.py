@@ -14,7 +14,7 @@ from .base import \
     _check_weights, _get_weights, \
     _check_outlier_handler,\
     NeighborsBase, KNeighborsMixin,\
-    RadiusNeighborsMixin, SupervisedIntegerMixin
+    RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
 from ..utils import check_array
 
