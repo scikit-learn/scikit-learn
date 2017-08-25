@@ -38,7 +38,7 @@ def _check_shape(param, param_shape, name):
                          "but got %s" % (name, param_shape, param.shape))
 
 
-def _check_X(X, n_components=None, n_features=None):
+def _check_X(X, n_components=None, n_features=None, force_all_finite=True):
     """Check the input data X.
 
     Parameters
@@ -51,7 +51,8 @@ def _check_X(X, n_components=None, n_features=None):
     -------
     X : array, shape (n_samples, n_features)
     """
-    X = check_array(X, dtype=[np.float64, np.float32])
+    X = check_array(X, dtype=[np.float64, np.float32],
+                    force_all_finite=force_all_finite)
     if n_components is not None and X.shape[0] < n_components:
         raise ValueError('Expected n_samples >= n_components '
                          'but got n_components = %d, n_samples = %d'
