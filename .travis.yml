@@ -1,3 +1,4 @@
+:i
 # make it explicit that we favor the new container-based travis workers
 sudo: false
 
@@ -70,3 +71,22 @@ notifications:
     on_success: change  # options: [always|never|change] default: always
     on_failure: always  # options: [always|never|change] default: always
     on_start: never     # options: [always|never|change] default: always
+
+env:
+          global:
+                     # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+                     #    #   via the "travis encrypt" command using the project repo's public key
+                     #       - secure: "Osigk3WSk8tNg4MzAzE/ce2howWpPYzhkxVL3+rKGEIXui2LZ1OYVeqeTSdr0oNStRCQ4DBcOXjyglNNk6hHRjZXLKEoISN5zxulOOO48ZysQtS3+lKX/yxGSYOeG3o3xdxWsgABNIzW9Ny3O4GOdPHyU3EvQ6yeXncQ+iLiu/08kGNQDUsF4tytZbQDWMyNElvx8pwIvnr10npTBKteJbfu27DpHJBsQ1G9nIw5kyD42NtCupULuLpE52/FgwMdn8FXP2SacH0FA7ctclRnEceJvbY0pJuWFjggi3t6dSvFcLNizLAZqUyWCotJXQGs2snXmeLgEII06V042IhBI9TWqSA+f+5LwmVPolx9Xm8osPL4M1XjKC92ACw7wzVV+K5xP9aq1TYqIB5Kmw3fFdTJxQSixoo3FGg1vOHoiMI0PrB34sBiYAXUvoz/dYWJTRxhqRmglmiFxXm6bexicHHZ5rBCkpn1G1kX/tLnQm4PZc25xEE8XyJ/lp2MRpByCEh92CgCKZZYAY7vELNfU5PP9/raOzjPsksWVqXZij0yPWP82kUw3oK7uDOgehrALDGPvcaAHt/PTAJU6Nuf6naJOxIoF95LYsCTiKaZkmhbn01GxKTb5CuQa238tZ1ZvKfJNCZkBjHTm/Z9kjOExcbWMJGXUQG5JeH+jvUqIuY="
+                     #
+                     #       before_install:
+                     #             - echo -n | openssl s_client -connect scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+                     #
+                     #             addons:
+                     #               coverity_scan:
+                     #                   project:
+                     #                         name: "chuacc22/scikit-learn"
+                     #                               description: "Build submitted via Travis CI"
+                     #                                   notification_email: clarence0622@gmail.com
+                     #                                       build_command_prepend: "./configure; make clean"
+                     #                                           build_command:   "make -j 4"
+                     #                                               branch_pattern: coverity_scan:
