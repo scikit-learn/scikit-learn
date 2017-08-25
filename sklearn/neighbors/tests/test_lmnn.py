@@ -8,6 +8,8 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn import datasets
 from sklearn.neighbors import LargeMarginNearestNeighbor, KNeighborsClassifier
+from sklearn.neighbors.lmnn import select_target_neighbors
+
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset
@@ -156,6 +158,19 @@ def test_n_neighbors():
 
     lmnn = LargeMarginNearestNeighbor(n_neighbors=2)
     assert_warns(UserWarning, lmnn.fit, X, y)
+
+
+def test_target_neighbors():
+
+    X, y = iris.data, iris.target
+
+    targets = select_target_neighbors(X, y, n_neighbors=3)
+    lmnn = LargeMarginNearestNeighbor(targets=targets)
+    lmnn.fit(X, y)
+
+    targets[0, 0] = len(iris.data) + 1
+    lmnn = LargeMarginNearestNeighbor(targets=targets)
+    assert_raises(IndexError, lmnn.fit, X, y)
 
 
 def test_n_features_out():
