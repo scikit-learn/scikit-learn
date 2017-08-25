@@ -564,5 +564,9 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         elif self.sparse is False and sparse.issparse(imputer_mask):
             imputer_mask = imputer_mask.toarray()
 
+        print 'before'
+        print feat_with_missing
         feat_with_missing = feat_with_missing.ravel()
+        print 'after'
+        print feat_with_missing
         return imputer_mask, feat_with_missing
