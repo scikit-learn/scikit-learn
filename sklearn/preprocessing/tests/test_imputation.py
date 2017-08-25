@@ -416,6 +416,7 @@ def test_missing_indicator():
             assert_array_equal(actual, expected[:, features])
 
     def _check_missing_indicator(X1, X2, retype, sparse_param, missing_values):
+        print retype, sparse_param
         mask_X2 = _get_mask(X2, missing_values)
         mask_X1 = _get_mask(X1, missing_values)
 

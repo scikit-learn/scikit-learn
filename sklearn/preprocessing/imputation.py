@@ -404,18 +404,18 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
     >>> from sklearn.preprocessing import MissingIndicator
     >>> import numpy as np
     >>> X1 = np.array([
-    ...       [np.NaN,  1,  3],
-    ...       [ 4,  0, np.NaN],
+    ...       ["NaN",  1,  3],
+    ...       [ 4,  0, "NaN"],
     ...       [ 8,  1,  0]
     ... ])
     >>> X2 = np.array([
-    ...       [ 5, 1, np.NaN],
-    ...       [np.NaN,  2,  3],
+    ...       [ 5, 1, "NaN"],
+    ...       ["NaN",  2,  3],
     ...       [ 2,  4,  0]
     ... ])
     >>> indicator = MissingIndicator()
     >>> indicator.fit(X1)
-    MissingIndicator(error_on_new=True, features='auto', missing_values=nan,
+    MissingIndicator(error_on_new=True, features='auto', missing_values='NaN',
              sparse='auto')
     >>> X2_tr = indicator.transform(X2)
     >>> X2_tr
@@ -432,7 +432,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         The number of features in the input.
     """
 
-    def __init__(self, missing_values=np.NaN, features="auto", sparse="auto",
+    def __init__(self, missing_values="NaN", features="auto", sparse="auto",
                  error_on_new=True):
         self.missing_values = missing_values
         self.features = features

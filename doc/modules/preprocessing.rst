@@ -604,7 +604,7 @@ Imputation of missing values
 The :class:`MissingIndicator` transformer is useful to transform a dataset into corresponding
 binary matrix indicating the presence of missing values in the dataset.
 This transformation is useful in conjunction with imputation. When using imputation,
-preserving the information about which values have been imputed can be informative.
+preserving the information about which values had been missing can be informative.
 
 The ``features`` parameter is used to choose the features for which the mask is constructed.
 By default, it is 'auto' which means the binary matrix has features with missing values
