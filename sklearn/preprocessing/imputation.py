@@ -566,7 +566,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         print 'before'
         print feat_with_missing
-        feat_with_missing = feat_with_missing.ravel()
+        feat_with_missing = feat_with_missing.flatten()
         print 'after'
         print feat_with_missing
         return imputer_mask, feat_with_missing
