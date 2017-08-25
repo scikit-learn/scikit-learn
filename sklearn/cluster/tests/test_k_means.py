@@ -27,7 +27,6 @@ from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics.cluster import homogeneity_score
 
 
@@ -404,7 +403,7 @@ def test_minibatch_sensible_reassign_partial_fit():
 def test_minibatch_reassign():
     # Give a perfect initialization, but a large reassignment_ratio,
     # as a result all the centers should be reassigned and the model
-    # should not longer be good
+    # should no longer be good
     for this_X in (X, X_csr):
         mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
                                      random_state=42)
@@ -812,7 +811,7 @@ def test_float_precision():
                                       decimal=4)
 
 
-def test_KMeans_init_centers():
+def test_k_means_init_centers():
     # This test is used to check KMeans won't mutate the user provided input
     # array silently even if input data and init centers have the same type
     X_small = np.array([[1.1, 1.1], [-7.5, -7.5], [-1.1, -1.1], [7.5, 7.5]])
@@ -824,3 +823,47 @@ def test_KMeans_init_centers():
         km = KMeans(init=init_centers_test, n_clusters=3, n_init=1)
         km.fit(X_test)
         assert_equal(False, np.may_share_memory(km.cluster_centers_, init_centers))
+
+
+def test_sparse_k_means_init_centers():
+    from sklearn.datasets import load_iris
+
+    iris = load_iris()
+    X = iris.data
+
+    # Get a local optimum
+    centers = KMeans(n_clusters=3).fit(X).cluster_centers_
+
+    # Fit starting from a local optimum shouldn't change the solution
+    np.testing.assert_allclose(
+        centers,
+        KMeans(n_clusters=3,
+               init=centers,
+               n_init=1).fit(X).cluster_centers_
+    )
+
+    # The same should be true when X is sparse
+    X_sparse = sp.csr_matrix(X)
+    np.testing.assert_allclose(
+        centers,
+        KMeans(n_clusters=3,
+               init=centers,
+               n_init=1).fit(X_sparse).cluster_centers_
+    )
+
+
+def test_sparse_validate_centers():
+    from sklearn.datasets import load_iris
+
+    iris = load_iris()
+    X = iris.data
+
+    # Get a local optimum
+    centers = KMeans(n_clusters=4).fit(X).cluster_centers_
+
+    # Test that a ValueError is raised for validate_center_shape
+    classifier = KMeans(n_clusters=3, init=centers, n_init=1)
+
+    msg = "The shape of the initial centers \(\(4L?, 4L?\)\) " \
+          "does not match the number of clusters 3"
+    assert_raises_regex(ValueError, msg, classifier.fit, X)

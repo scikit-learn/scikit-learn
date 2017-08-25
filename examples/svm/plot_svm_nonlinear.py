@@ -34,7 +34,8 @@ plt.imshow(Z, interpolation='nearest',
            origin='lower', cmap=plt.cm.PuOr_r)
 contours = plt.contour(xx, yy, Z, levels=[0], linewidths=2,
                        linetypes='--')
-plt.scatter(X[:, 0], X[:, 1], s=30, c=Y, cmap=plt.cm.Paired)
+plt.scatter(X[:, 0], X[:, 1], s=30, c=Y, cmap=plt.cm.Paired,
+            edgecolors='k')
 plt.xticks(())
 plt.yticks(())
 plt.axis([-3, 3, -3, 3])

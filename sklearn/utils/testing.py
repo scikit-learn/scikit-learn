@@ -15,8 +15,6 @@ import inspect
 import pkgutil
 import warnings
 import sys
-import re
-import platform
 import struct
 
 import scipy as sp
@@ -36,6 +34,7 @@ import tempfile
 import shutil
 import os.path as op
 import atexit
+import unittest
 
 # WindowsError only exist on Windows
 try:
@@ -47,19 +46,7 @@ import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 
-# Conveniently import all assertions in one place.
-from nose.tools import assert_equal
-from nose.tools import assert_not_equal
-from nose.tools import assert_true
-from nose.tools import assert_false
-from nose.tools import assert_raises
 from nose.tools import raises
-try:
-    from nose.tools import assert_dict_equal
-except ImportError:
-    # Not in old versions of nose, but is only for formatting anyway
-    assert_dict_equal = assert_equal
-from nose import SkipTest
 from nose import with_setup
 
 from numpy.testing import assert_almost_equal
@@ -71,7 +58,7 @@ import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
-from sklearn.cluster import DBSCAN
+from sklearn.utils._unittest_backport import TestCase
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_raises_regexp", "raises", "with_setup", "assert_true",
@@ -79,74 +66,28 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
-           "assert_approx_equal"]
+           "assert_approx_equal", "SkipTest"]
 
+_dummy = TestCase('__init__')
+assert_equal = _dummy.assertEqual
+assert_not_equal = _dummy.assertNotEqual
+assert_true = _dummy.assertTrue
+assert_false = _dummy.assertFalse
+assert_raises = _dummy.assertRaises
+SkipTest = unittest.case.SkipTest
+assert_dict_equal = _dummy.assertDictEqual
+assert_in = _dummy.assertIn
+assert_not_in = _dummy.assertNotIn
+assert_less = _dummy.assertLess
+assert_greater = _dummy.assertGreater
+assert_less_equal = _dummy.assertLessEqual
+assert_greater_equal = _dummy.assertGreaterEqual
 
-try:
-    from nose.tools import assert_in, assert_not_in
-except ImportError:
-    # Nose < 1.0.0
-
-    def assert_in(x, container):
-        assert_true(x in container, msg="%r in %r" % (x, container))
-
-    def assert_not_in(x, container):
-        assert_false(x in container, msg="%r in %r" % (x, container))
-
-try:
-    from nose.tools import assert_raises_regex
-except ImportError:
-    # for Python 2
-    def assert_raises_regex(expected_exception, expected_regexp,
-                            callable_obj=None, *args, **kwargs):
-        """Helper function to check for message patterns in exceptions."""
-        not_raised = False
-        try:
-            callable_obj(*args, **kwargs)
-            not_raised = True
-        except expected_exception as e:
-            error_message = str(e)
-            if not re.compile(expected_regexp).search(error_message):
-                raise AssertionError("Error message should match pattern "
-                                     "%r. %r does not." %
-                                     (expected_regexp, error_message))
-        if not_raised:
-            raise AssertionError("%s not raised by %s" %
-                                 (expected_exception.__name__,
-                                  callable_obj.__name__))
-
+assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-
-def _assert_less(a, b, msg=None):
-    message = "%r is not lower than %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a < b, message
-
-
-def _assert_greater(a, b, msg=None):
-    message = "%r is not greater than %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a > b, message
-
-
-def assert_less_equal(a, b, msg=None):
-    message = "%r is not lower than or equal to %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a <= b, message
-
-
-def assert_greater_equal(a, b, msg=None):
-    message = "%r is not greater than or equal to %r" % (a, b)
-    if msg is not None:
-        message += ": " + msg
-    assert a >= b, message
 
 
 def assert_warns(warning_class, func, *args, **kw):
@@ -266,9 +207,6 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
-    # XXX: once we may depend on python >= 2.6, this can be replaced by the
-
-    # warnings module context manager.
     # very important to avoid uncontrolled state propagation
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
@@ -325,7 +263,7 @@ class _IgnoreWarnings(object):
 
     Parameters
     ----------
-    category : tuple of warning class, defaut to Warning
+    category : tuple of warning class, default to Warning
         The category to filter. By default, all the categories will be muted.
 
     """
@@ -377,15 +315,8 @@ class _IgnoreWarnings(object):
         clean_warning_registry()  # be safe and not propagate state + chaos
 
 
-try:
-    from nose.tools import assert_less
-except ImportError:
-    assert_less = _assert_less
-
-try:
-    from nose.tools import assert_greater
-except ImportError:
-    assert_greater = _assert_greater
+assert_less = _dummy.assertLess
+assert_greater = _dummy.assertGreater
 
 
 def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
@@ -436,6 +367,47 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
 
         raise AssertionError("%s not raised by %s" %
                              (names, function.__name__))
+
+
+def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
+    """Assert allclose for sparse and dense data.
+
+    Both x and y need to be either sparse or dense, they
+    can't be mixed.
+
+    Parameters
+    ----------
+    x : array-like or sparse matrix
+        First array to compare.
+
+    y : array-like or sparse matrix
+        Second array to compare.
+
+    rtol : float, optional
+        relative tolerance; see numpy.allclose
+
+    atol : float, optional
+        absolute tolerance; see numpy.allclose. Note that the default here is
+        more tolerant than the default for numpy.testing.assert_allclose, where
+        atol=0.
+
+    err_msg : string, default=''
+        Error message to raise.
+    """
+    if sp.sparse.issparse(x) and sp.sparse.issparse(y):
+        x = x.tocsr()
+        y = y.tocsr()
+        x.sum_duplicates()
+        y.sum_duplicates()
+        assert_array_equal(x.indices, y.indices, err_msg=err_msg)
+        assert_array_equal(x.indptr, y.indptr, err_msg=err_msg)
+        assert_allclose(x.data, y.data, rtol=rtol, atol=atol, err_msg=err_msg)
+    elif not sp.sparse.issparse(x) and not sp.sparse.issparse(y):
+        # both dense
+        assert_allclose(x, y, rtol=rtol, atol=atol, err_msg=err_msg)
+    else:
+        raise ValueError("Can only compare two sparse matrices,"
+                         " not a sparse matrix and an array.")
 
 
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):
@@ -531,7 +503,7 @@ def uninstall_mldata_mock():
 META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "MultiOutputRegressor", "MultiOutputClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier",
-                   "RFE", "RFECV", "BaseEnsemble"]
+                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel"]
@@ -657,13 +629,7 @@ def all_estimators(include_meta_estimators=False,
 
 def set_random_state(estimator, random_state=0):
     """Set random state of an estimator if it has the `random_state` param.
-
-    Classes for whom random_state is deprecated are ignored. Currently DBSCAN
-    is one such class.
     """
-    if isinstance(estimator, DBSCAN):
-        return
-
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
 
@@ -695,28 +661,6 @@ def skip_if_32bit(func):
         else:
             return func(*args, **kwargs)
     return run_test
-
-
-def if_not_mac_os(versions=('10.7', '10.8', '10.9'),
-                  message='Multi-process bug in Mac OS X >= 10.7 '
-                          '(see issue #636)'):
-    """Test decorator that skips test if OS is Mac OS X and its
-    major version is one of ``versions``.
-    """
-    warnings.warn("if_not_mac_os is deprecated in 0.17 and will be removed"
-                  " in 0.19: use the safer and more generic"
-                  " if_safe_multiprocessing_with_blas instead",
-                  DeprecationWarning)
-    mac_version, _, _ = platform.mac_ver()
-    skip = '.'.join(mac_version.split('.')[:2]) in versions
-
-    def decorator(func):
-        if skip:
-            @wraps(func)
-            def func(*args, **kwargs):
-                raise SkipTest(message)
-        return func
-    return decorator
 
 
 def if_safe_multiprocessing_with_blas(func):
@@ -803,3 +747,154 @@ class TempMemmap(object):
 
 with_network = with_setup(check_skip_network)
 with_travis = with_setup(check_skip_travis)
+
+
+class _named_check(object):
+    """Wraps a check to show a useful description
+
+    Parameters
+    ----------
+    check : function
+        Must have ``__name__`` and ``__call__``
+    arg_text : str
+        A summary of arguments to the check
+    """
+    # Setting the description on the function itself can give incorrect results
+    # in failing tests
+    def __init__(self, check, arg_text):
+        self.check = check
+        self.description = ("{0[1]}.{0[3]}:{1.__name__}({2})".format(
+            inspect.stack()[1], check, arg_text))
+
+    def __call__(self, *args, **kwargs):
+        return self.check(*args, **kwargs)
+
+# Utils to test docstrings
+
+
+def _get_args(function, varargs=False):
+    """Helper to get function arguments"""
+    # NOTE this works only in python3.5
+    if sys.version_info < (3, 5):
+        NotImplementedError("_get_args is not available for python < 3.5")
+
+    params = inspect.signature(function).parameters
+    args = [key for key, param in params.items()
+            if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
+    if varargs:
+        varargs = [param.name for param in params.values()
+                   if param.kind == param.VAR_POSITIONAL]
+        if len(varargs) == 0:
+            varargs = None
+        return args, varargs
+    else:
+        return args
+
+
+def _get_func_name(func, class_name=None):
+    """Get function full name
+
+    Parameters
+    ----------
+    func : callable
+        The function object.
+    class_name : string, optional (default: None)
+       If ``func`` is a class method and the class name is known specify
+       class_name for the error message.
+
+    Returns
+    -------
+    name : str
+        The function name.
+    """
+    parts = []
+    module = inspect.getmodule(func)
+    if module:
+        parts.append(module.__name__)
+    if class_name is not None:
+        parts.append(class_name)
+    elif hasattr(func, 'im_class'):
+        parts.append(func.im_class.__name__)
+
+    parts.append(func.__name__)
+    return '.'.join(parts)
+
+
+def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
+    """Helper to check docstring
+
+    Parameters
+    ----------
+    func : callable
+        The function object to test.
+    doc : str, optional (default: None)
+        Docstring if it is passed manually to the test.
+    ignore : None | list
+        Parameters to ignore.
+    class_name : string, optional (default: None)
+       If ``func`` is a class method and the class name is known specify
+       class_name for the error message.
+
+    Returns
+    -------
+    incorrect : list
+        A list of string describing the incorrect results.
+    """
+    from numpydoc import docscrape
+    incorrect = []
+    ignore = [] if ignore is None else ignore
+
+    func_name = _get_func_name(func, class_name=class_name)
+    if (not func_name.startswith('sklearn.') or
+            func_name.startswith('sklearn.externals')):
+        return incorrect
+    # Don't check docstring for property-functions
+    if inspect.isdatadescriptor(func):
+        return incorrect
+    args = list(filter(lambda x: x not in ignore, _get_args(func)))
+    # drop self
+    if len(args) > 0 and args[0] == 'self':
+        args.remove('self')
+
+    if doc is None:
+        with warnings.catch_warnings(record=True) as w:
+            try:
+                doc = docscrape.FunctionDoc(func)
+            except Exception as exp:
+                incorrect += [func_name + ' parsing error: ' + str(exp)]
+                return incorrect
+        if len(w):
+            raise RuntimeError('Error for %s:\n%s' % (func_name, w[0]))
+
+    param_names = []
+    for name, type_definition, param_doc in doc['Parameters']:
+        if (type_definition.strip() == "" or
+                type_definition.strip().startswith(':')):
+
+            param_name = name.lstrip()
+
+            # If there was no space between name and the colon
+            # "verbose:" -> len(["verbose", ""][0]) -> 7
+            # If "verbose:"[7] == ":", then there was no space
+            if (':' not in param_name or
+                    param_name[len(param_name.split(':')[0].strip())] == ':'):
+                incorrect += [func_name +
+                              ' There was no space between the param name and '
+                              'colon ("%s")' % name]
+            else:
+                incorrect += [func_name + ' Incorrect type definition for '
+                              'param: "%s" (type definition was "%s")'
+                              % (name.split(':')[0], type_definition)]
+        if '*' not in name:
+            param_names.append(name.split(':')[0].strip('` '))
+
+    param_names = list(filter(lambda x: x not in ignore, param_names))
+
+    if len(param_names) != len(args):
+        bad = str(sorted(list(set(param_names) ^ set(args))))
+        incorrect += [func_name + ' arg mismatch: ' + bad]
+    else:
+        for n1, n2 in zip(param_names, args):
+            if n1 != n2:
+                incorrect += [func_name + ' ' + n1 + ' != ' + n2]
+    return incorrect

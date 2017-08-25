@@ -4,10 +4,10 @@ Comparing random forests and the multi-output meta estimator
 ============================================================
 
 An example to compare multi-output regression with random forest and
-the :ref:`multioutput.MultiOutputRegressor <_multiclass>` meta-estimator.
+the :ref:`multioutput.MultiOutputRegressor <multiclass>` meta-estimator.
 
 This example illustrates the use of the
-:ref:`multioutput.MultiOutputRegressor <_multiclass>` meta-estimator
+:ref:`multioutput.MultiOutputRegressor <multiclass>` meta-estimator
 to perform multi-output regression. A random forest regressor is used,
 which supports multi-output regression natively, so the results can be
 compared.
@@ -59,12 +59,12 @@ y_rf = regr_rf.predict(X_test)
 plt.figure()
 s = 50
 a = 0.4
-plt.scatter(y_test[:, 0], y_test[:, 1],
+plt.scatter(y_test[:, 0], y_test[:, 1], edgecolor='k',
             c="navy", s=s, marker="s", alpha=a, label="Data")
-plt.scatter(y_multirf[:, 0], y_multirf[:, 1],
+plt.scatter(y_multirf[:, 0], y_multirf[:, 1], edgecolor='k',
             c="cornflowerblue", s=s, alpha=a,
             label="Multi RF score=%.2f" % regr_multirf.score(X_test, y_test))
-plt.scatter(y_rf[:, 0], y_rf[:, 1],
+plt.scatter(y_rf[:, 0], y_rf[:, 1], edgecolor='k',
             c="c", s=s, marker="^", alpha=a,
             label="RF score=%.2f" % regr_rf.score(X_test, y_test))
 plt.xlim([-6, 6])

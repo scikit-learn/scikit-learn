@@ -12,13 +12,13 @@ import warnings
 
 import numpy as np
 from scipy import sparse
+from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
 from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
-from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -30,8 +30,7 @@ from ..externals.six.moves import xrange
 # For non fully-connected graphs
 
 
-def _fix_connectivity(X, connectivity, n_components=None,
-                      affinity="euclidean"):
+def _fix_connectivity(X, connectivity, affinity):
     """
     Fixes the connectivity matrix
 
@@ -116,7 +115,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
-    return_distance: bool (optional)
+    return_distance : bool (optional)
         If True, return the distance between the clusters.
 
     Returns
@@ -190,7 +189,8 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         else:
             return children_, 1, n_samples, None
 
-    connectivity, n_components = _fix_connectivity(X, connectivity)
+    connectivity, n_components = _fix_connectivity(X, connectivity,
+                                                   affinity='euclidean')
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
     else:
@@ -289,7 +289,7 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
 
 
 # average and complete linkage
-def linkage_tree(X, connectivity=None, n_components=None,
+def linkage_tree(X, connectivity=None, n_components='deprecated',
                  n_clusters=None, linkage='complete', affinity="euclidean",
                  return_distance=False):
     """Linkage agglomerative clustering based on a Feature matrix.
@@ -311,6 +311,9 @@ def linkage_tree(X, connectivity=None, n_components=None,
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
+
+    n_components : int (optional)
+        The number of connected components in the graph.
 
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -365,6 +368,10 @@ def linkage_tree(X, connectivity=None, n_components=None,
     --------
     ward_tree : hierarchical clustering with ward linkage
     """
+    if n_components != 'deprecated':
+        warnings.warn("n_components was deprecated in 0.19"
+                      "will be removed in 0.21", DeprecationWarning)
+
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
@@ -415,7 +422,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
             return children_, 1, n_samples, None, distances
         return children_, 1, n_samples, None
 
-    connectivity, n_components = _fix_connectivity(X, connectivity)
+    connectivity, n_components = _fix_connectivity(X, connectivity,
+                                                   affinity=affinity)
 
     connectivity = connectivity.tocoo()
     # Put the diagonal to zero
@@ -596,6 +604,17 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_clusters : int, default=2
         The number of clusters to find.
 
+    affinity : string or callable, default: "euclidean"
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "cosine", or 'precomputed'.
+        If linkage is "ward", only "euclidean" is accepted.
+
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+            (default=None)
+        Used to cache the output of the computation of the tree.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
+
     connectivity : array-like or callable, optional
         Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
@@ -603,16 +622,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         the data into a connectivity matrix, such as derived from
         kneighbors_graph. Default is None, i.e, the
         hierarchical clustering algorithm is unstructured.
-
-    affinity : string or callable, default: "euclidean"
-        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "cosine", or 'precomputed'.
-        If linkage is "ward", only "euclidean" is accepted.
-
-    memory : Instance of joblib.Memory or string (optional)
-        Used to cache the output of the computation of the tree.
-        By default, no caching is done. If a string is given, it is the
-        path to the caching directory.
 
     compute_full_tree : bool or 'auto' (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -660,7 +669,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, n_clusters=2, affinity="euclidean",
-                 memory=Memory(cachedir=None, verbose=0),
+                 memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean):
         self.n_clusters = n_clusters
@@ -685,8 +694,15 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         """
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = self.memory
-        if isinstance(memory, six.string_types):
+        if memory is None:
+            memory = Memory(cachedir=None, verbose=0)
+        elif isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
+        elif not isinstance(memory, Memory):
+            raise ValueError("'memory' should either be a string or"
+                             " a sklearn.externals.joblib.Memory"
+                             " instance, got 'memory={!r}' instead.".format(
+                                 type(memory)))
 
         if self.n_clusters <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."
@@ -758,6 +774,17 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     n_clusters : int, default 2
         The number of clusters to find.
 
+    affinity : string or callable, default "euclidean"
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "cosine", or 'precomputed'.
+        If linkage is "ward", only "euclidean" is accepted.
+
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+            (default=None)
+        Used to cache the output of the computation of the tree.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
+
     connectivity : array-like or callable, optional
         Connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
@@ -765,16 +792,6 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         the data into a connectivity matrix, such as derived from
         kneighbors_graph. Default is None, i.e, the
         hierarchical clustering algorithm is unstructured.
-
-    affinity : string or callable, default "euclidean"
-        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "cosine", or 'precomputed'.
-        If linkage is "ward", only "euclidean" is accepted.
-
-    memory : Instance of joblib.Memory or string, optional
-        Used to cache the output of the computation of the tree.
-        By default, no caching is done. If a string is given, it is the
-        path to the caching directory.
 
     compute_full_tree : bool or 'auto', optional, default "auto"
         Stop early the construction of the tree at n_clusters. This is

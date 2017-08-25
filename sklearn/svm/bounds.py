@@ -2,8 +2,6 @@
 # Author: Paolo Losi
 # License: BSD 3 clause
 
-from warnings import warn
-
 import numpy as np
 
 from ..preprocessing import LabelBinarizer
@@ -50,7 +48,7 @@ def l1_min_c(X, y, loss='squared_hinge', fit_intercept=True,
 
     Returns
     -------
-    l1_min_c: float
+    l1_min_c : float
         minimum value for C
     """
     if loss not in ('squared_hinge', 'log'):

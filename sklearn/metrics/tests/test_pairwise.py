@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.externals.six import iteritems
@@ -74,10 +75,10 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
-    # Low-level function for manhattan can divide in blocks to avoid
-    # using too much memory during the broadcasting
-    S3 = manhattan_distances(X, Y, size_threshold=10)
-    assert_array_almost_equal(S, S3)
+    # Using size_threshold argument should raise
+    # a deprecation warning
+    assert_warns(DeprecationWarning,
+                 manhattan_distances, X, Y, size_threshold=10)
     # Test cosine as a string metric versus cosine callable
     # The string "cosine" uses sklearn.metric,
     # while the function cosine is scipy.spatial
@@ -405,6 +406,36 @@ def test_euclidean_distances():
                                   X_norm_squared=np.zeros_like(X_norm_sq),
                                   Y_norm_squared=np.zeros_like(Y_norm_sq))
     assert_greater(np.max(np.abs(wrong_D - D1)), .01)
+
+
+def test_cosine_distances():
+    # Check the pairwise Cosine distances computation
+    rng = np.random.RandomState(1337)
+    x = np.abs(rng.rand(910))
+    XA = np.vstack([x, x])
+    D = cosine_distances(XA)
+    assert_array_almost_equal(D, [[0., 0.], [0., 0.]])
+    # check that all elements are in [0, 2]
+    assert_true(np.all(D >= 0.))
+    assert_true(np.all(D <= 2.))
+    # check that diagonal elements are equal to 0
+    assert_array_almost_equal(D[np.diag_indices_from(D)], [0., 0.])
+
+    XB = np.vstack([x, -x])
+    D2 = cosine_distances(XB)
+    # check that all elements are in [0, 2]
+    assert_true(np.all(D2 >= 0.))
+    assert_true(np.all(D2 <= 2.))
+    # check that diagonal elements are equal to 0 and non diagonal to 2
+    assert_array_almost_equal(D2, [[0., 2.], [2., 0.]])
+
+    # check large random matrix
+    X = np.abs(rng.rand(1000, 5000))
+    D = cosine_distances(X)
+    # check that diagonal elements are equal to 0
+    assert_array_almost_equal(D[np.diag_indices_from(D)], [0.] * D.shape[0])
+    assert_true(np.all(D >= 0.))
+    assert_true(np.all(D <= 2.))
 
 
 # Paired distances

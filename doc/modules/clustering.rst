@@ -191,7 +191,7 @@ minimum. This is highly dependent on the initialization of the centroids.
 As a result, the computation is often done several times, with different
 initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
-(use the ``init='kmeans++'`` parameter). This initializes the centroids to be
+(use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
 random initialization, as shown in the reference.
 
@@ -301,7 +301,9 @@ is given.
 Affinity Propagation can be interesting as it chooses the number of
 clusters based on the data provided. For this purpose, the two important
 parameters are the *preference*, which controls how many exemplars are
-used, and the *damping factor*.
+used, and the *damping factor* which damps the responsibility and 
+availability messages to avoid numerical oscillations when updating these
+messages.
 
 The main drawback of Affinity Propagation is its complexity. The
 algorithm has a time complexity of the order :math:`O(N^2 T)`, where :math:`N`
@@ -338,7 +340,7 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    r(i, k) \leftarrow s(i, k) - max [ a(i, \acute{k}) + s(i, \acute{k}) \forall \acute{k} \neq k ]
+    r(i, k) \leftarrow s(i, k) - max [ a(i, k') + s(i, k') \forall k' \neq k ]
 
 Where :math:`s(i, k)` is the similarity between samples :math:`i` and :math:`k`.
 The availability of sample :math:`k`
@@ -346,10 +348,17 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    a(i, k) \leftarrow min [0, r(k, k) + \sum_{\acute{i}~s.t.~\acute{i} \notin \{i, k\}}{r(\acute{i}, k)}]
+    a(i, k) \leftarrow min [0, r(k, k) + \sum_{i'~s.t.~i' \notin \{i, k\}}{r(i', k)}]
 
 To begin with, all values for :math:`r` and :math:`a` are set to zero,
 and the calculation of each iterates until convergence.
+As discussed above, in order to avoid numerical oscillations when updating the 
+messages, the damping factor :math:`\lambda` is introduced to iteration process:
+
+.. math:: r_{t+1}(i, k) = \lambda\cdot r_{t}(i, k) + (1-\lambda)\cdot r_{t+1}(i, k)
+.. math:: a_{t+1}(i, k) = \lambda\cdot a_{t}(i, k) + (1-\lambda)\cdot a_{t+1}(i, k)
+
+where :math:`t` indicates the iteration times.
 
 .. _mean_shift:
 
@@ -668,7 +677,7 @@ affinities), in particular Euclidean distance (*l2*), Manhattan distance
 matrix.
 
 * *l1* distance is often good for sparse features, or sparse noise: ie
-  many of the features are zero, as in text mining using occurences of
+  many of the features are zero, as in text mining using occurrences of
   rare words.
 
 * *cosine* distance is interesting because it is invariant to global
@@ -718,7 +727,7 @@ More formally, we define a core sample as being a sample in the dataset such
 that there exist ``min_samples`` other samples within a distance of
 ``eps``, which are defined as *neighbors* of the core sample. This tells
 us that the core sample is in a dense area of the vector space. A cluster
-is a set of core samples, that can be built by recursively by taking a core
+is a set of core samples that can be built by recursively taking a core
 sample, finding all of its neighbors that are core samples, finding all of
 *their* neighbors that are core samples, and so on. A cluster also has a
 set of non-core samples, which are samples that are neighbors of a core sample
@@ -746,17 +755,18 @@ by black points below.
 
 .. topic:: Implementation
 
-    The algorithm is non-deterministic, but the core samples will
-    always belong to the same clusters (although the labels may be
-    different). The non-determinism comes from deciding to which cluster a
-    non-core sample belongs. A non-core sample can have a distance lower
-    than ``eps`` to two core samples in different clusters. By the
+    The DBSCAN algorithm is deterministic, always generating the same clusters 
+    when given the same data in the same order.  However, the results can differ when
+    data is provided in a different order. First, even though the core samples 
+    will always be assigned to the same clusters, the labels of those clusters
+    will depend on the order in which those samples are encountered in the data.
+    Second and more importantly, the clusters to which non-core samples are assigned
+    can differ depending on the data order.  This would happen when a non-core sample
+    has a distance lower than ``eps`` to two core samples in different clusters. By the
     triangular inequality, those two core samples must be more distant than
     ``eps`` from each other, or they would be in the same cluster. The non-core
-    sample is assigned to whichever cluster is generated first, where
-    the order is determined randomly. Other than the ordering of
-    the dataset, the algorithm is deterministic, making the results relatively
-    stable between runs on the same data.
+    sample is assigned to whichever cluster is generated first in a pass
+    through the data, and so the results will depend on the data ordering.
 
     The current implementation uses ball trees and kd-trees
     to determine the neighborhood of points,
@@ -1118,20 +1128,24 @@ Mathematical formulation
 Assume two label assignments (of the same N objects), :math:`U` and :math:`V`.
 Their entropy is the amount of uncertainty for a partition set, defined by:
 
-.. math:: H(U) = \sum_{i=1}^{|U|}P(i)\log(P(i))
+.. math:: H(U) = - \sum_{i=1}^{|U|}P(i)\log(P(i))
 
 where :math:`P(i) = |U_i| / N` is the probability that an object picked at
 random from :math:`U` falls into class :math:`U_i`. Likewise for :math:`V`:
 
-.. math:: H(V) = \sum_{j=1}^{|V|}P'(j)\log(P'(j))
+.. math:: H(V) = - \sum_{j=1}^{|V|}P'(j)\log(P'(j))
 
 With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U`
 and :math:`V` is calculated by:
 
 .. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|}\sum_{j=1}^{|V|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
-
+ 
 where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object
 picked at random falls into both classes :math:`U_i` and :math:`V_j`.
+
+It also can be expressed in set cardinality formulation:
+
+.. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \frac{|U_i \cap V_j|}{N}\log\left(\frac{N|U_i \cap V_j|}{|U_i||V_j|}\right)
 
 The normalized mutual information is defined as
 
@@ -1329,7 +1343,7 @@ mean of homogeneity and completeness**:
 
 .. topic:: References
 
- .. [RH2007] `V-Measure: A conditional entropy-based external cluster evaluation
+ * `V-Measure: A conditional entropy-based external cluster evaluation
    measure <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 

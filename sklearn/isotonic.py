@@ -9,8 +9,7 @@ from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_array, check_consistent_length
 from .utils import deprecated
-from .utils.fixes import astype
-from ._isotonic import _isotonic_regression, _make_unique
+from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 import warnings
 import math
 
@@ -35,7 +34,7 @@ def check_increasing(x, y):
 
     Returns
     -------
-    `increasing_bool` : boolean
+    increasing_bool : boolean
         Whether the relationship is increasing or decreasing.
 
     Notes
@@ -57,7 +56,7 @@ def check_increasing(x, y):
     increasing_bool = rho >= 0
 
     # Run Fisher transform to get the rho CI, but handle rho=+/-1
-    if rho not in [-1.0, 1.0]:
+    if rho not in [-1.0, 1.0] and len(x) > 3:
         F = 0.5 * math.log((1. + rho) / (1. - rho))
         F_se = 1 / math.sqrt(len(x) - 3)
 
@@ -120,28 +119,22 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
-    y = np.asarray(y, dtype=np.float64)
+    order = np.s_[:] if increasing else np.s_[::-1]
+    y = np.array(y[order], dtype=np.float64)
     if sample_weight is None:
-        sample_weight = np.ones(len(y), dtype=y.dtype)
+        sample_weight = np.ones(len(y), dtype=np.float64)
     else:
-        sample_weight = np.asarray(sample_weight, dtype=np.float64)
-    if not increasing:
-        y = y[::-1]
-        sample_weight = sample_weight[::-1]
+        sample_weight = np.array(sample_weight[order], dtype=np.float64)
 
-    solution = np.empty(len(y))
-    y_ = _isotonic_regression(y, sample_weight, solution)
-    if not increasing:
-        y_ = y_[::-1]
-
+    _inplace_contiguous_isotonic_regression(y, sample_weight)
     if y_min is not None or y_max is not None:
         # Older versions of np.clip don't accept None as a bound, so use np.inf
         if y_min is None:
             y_min = -np.inf
         if y_max is None:
             y_max = np.inf
-        np.clip(y_, y_min, y_max, y_)
-    return y_
+        np.clip(y, y_min, y_max, y)
+    return y[order]
 
 
 class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
@@ -297,7 +290,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             sample_weight = np.ones(len(y))
 
         order = np.lexsort((y, X))
-        X, y, sample_weight = [astype(array[order], np.float64, copy=False)
+        X, y, sample_weight = [array[order].astype(np.float64, copy=False)
                                for array in [X, y, sample_weight]]
         unique_X, unique_y, unique_sample_weight = _make_unique(
             X, y, sample_weight)

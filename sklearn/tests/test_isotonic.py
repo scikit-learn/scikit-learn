@@ -27,6 +27,14 @@ def test_permutation_invariance():
     assert_array_equal(y_transformed, y_transformed_s)
 
 
+def test_check_increasing_small_number_of_samples():
+    x = [0, 1, 2]
+    y = [1, 1.1, 1.05]
+
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_true(is_increasing)
+
+
 def test_check_increasing_up():
     x = [0, 1, 2, 3, 4, 5]
     y = [0, 1.5, 2.77, 8.99, 8.99, 50]
@@ -78,6 +86,10 @@ def test_check_ci_warn():
 def test_isotonic_regression():
     y = np.array([3, 7, 5, 9, 8, 7, 10])
     y_ = np.array([3, 6, 6, 8, 8, 8, 10])
+    assert_array_equal(y_, isotonic_regression(y))
+
+    y = np.array([10, 0, 2])
+    y_ = np.array([4, 4, 4])
     assert_array_equal(y_, isotonic_regression(y))
 
     x = np.arange(len(y))

@@ -1,5 +1,3 @@
-
-
 About us
 ========
 
@@ -69,28 +67,63 @@ Funding
 
 `INRIA <https://www.inria.fr>`_ actively supports this project. It has
 provided funding for Fabian Pedregosa (2010-2012), Jaques Grobler
-(2012-2013) and Olivier Grisel (2013-2015) to work on this project
+(2012-2013) and Olivier Grisel (2013-2017) to work on this project
 full-time. It also hosts coding sprints and other events.
 
 .. image:: images/inria-logo.jpg
    :width: 200pt
    :align: center
+   :target: https://www.inria.fr
 
 `Paris-Saclay Center for Data Science <http://www.datascience-paris-saclay.fr>`_
 funded one year for a developer to work on the project full-time
-(2014-2015).
+(2014-2015) and 50% of the time of Guillaume Lemaitre (2016-2017).
 
 .. image:: images/cds-logo.png
    :width: 200pt
    :align: center
+   :target: http://www.datascience-paris-saclay.fr
 
 `NYU Moore-Sloan Data Science Environment <http://cds.nyu.edu/mooresloan/>`_
-funds Andreas Mueller (2014-2015) to work on this project. The Moore-Sloan Data Science
+funded Andreas Mueller (2014-2016) to work on this project. The Moore-Sloan Data Science
 Environment also funds several students to work on the project part-time.
 
 .. image:: images/nyu_short_color.png
    :width: 200pt
    :align: center
+   :target: http://cds.nyu.edu/mooresloan/
+
+
+`Télécom Paristech <http://www.telecom-paristech.com>`_ funded Manoj Kumar (2014),
+Tom Dupré la Tour (2015), Raghav RV (2015-2017), Thierry Guillemot (2016-2017)
+and Albert Thomas (2017) to work on scikit-learn.
+
+.. image:: themes/scikit-learn/static/img/telecom.png
+   :width: 100pt
+   :align: center
+   :target: http://www.telecom-paristech.fr/
+
+
+`Columbia University <http://columbia.edu>`_ funds Andreas Müller since 2016.
+
+.. image:: themes/scikit-learn/static/img/columbia.png
+   :width: 100pt
+   :align: center
+   :target: http://www.columbia.edu/
+
+Andreas Müller also received a grant to improve scikit-learn from the `Alfred P. Sloan Foundation <https://sloan.org>`_ in 2017.
+
+.. image:: images/sloan_banner.png
+   :width: 200pt
+   :align: center
+   :target: https://sloan.org/
+
+`The University of Sydney <http://sydney.edu.au>`_ funds Joel Nothman since July 2017.
+
+.. image:: themes/scikit-learn/static/img/sydney-primary.jpeg
+   :width: 200pt
+   :align: center
+   :target: http://www.sydney.edu.au/
 
 The following students were sponsored by `Google <https://developers.google.com/open-source/>`_
 to work on scikit-learn through the
@@ -102,7 +135,7 @@ program.
 - 2012 - `Vlad Niculae`_, Immanuel Bayer.
 - 2013 - Kemal Eren, Nicolas Trésegnie
 - 2014 - Hamzeh Alsalhi, Issam Laradji, Maheshakya Wijewardena, Manoj Kumar.
-- 2015 - `Raghav R V <https://github.com/raghavrv>`_, Wei Xue
+- 2015 - `Raghav RV <https://github.com/raghavrv>`_, Wei Xue
 - 2016 - `Nelson Liu <http://nelsonliu.me>`_, `YenChen Lin <http://yclin.me>`_
 
 It also provided funding for sprints and events around scikit-learn. If
@@ -177,7 +210,7 @@ The 2013 Paris international sprint
     <div style="text-align: center; margin: -7px 0 -10px 0;">
 
 
-.. |telecom| image:: http://f.hypotheses.org/wp-content/blogs.dir/331/files/2011/03/Logo-TPT.jpg
+.. |telecom| image:: themes/scikit-learn/static/img/telecom.png
    :width: 120pt
    :target: http://www.telecom-paristech.fr/
 
@@ -200,7 +233,7 @@ The 2013 Paris international sprint
    :width: 120pt
    :target: http://www.frs-fnrs.be/
 
-.. figure:: http://sites.uclouvain.be/dysco/pmwiki/uploads/Main/dysco.gif
+.. figure:: images/dysco.png
    :width: 120pt
    :target: http://sites.uclouvain.be/dysco/
 
@@ -226,4 +259,3 @@ Infrastructure support
 - We would also like to thank `Shining Panda
   <http://shiningpanda.com/>`_ for free CPU time on their Continuous
   Integration server.
-

@@ -1,4 +1,4 @@
-.. _feature_extraction:
+﻿.. _feature_extraction:
 
 ==================
 Feature extraction
@@ -42,7 +42,7 @@ is a traditional numerical feature::
   >>> measurements = [
   ...     {'city': 'Dubai', 'temperature': 33.},
   ...     {'city': 'London', 'temperature': 12.},
-  ...     {'city': 'San Fransisco', 'temperature': 18.},
+  ...     {'city': 'San Francisco', 'temperature': 18.},
   ... ]
 
   >>> from sklearn.feature_extraction import DictVectorizer
@@ -54,7 +54,7 @@ is a traditional numerical feature::
          [  0.,   0.,   1.,  18.]])
 
   >>> vec.get_feature_names()
-  ['city=Dubai', 'city=London', 'city=San Fransisco', 'temperature']
+  ['city=Dubai', 'city=London', 'city=San Francisco', 'temperature']
 
 :class:`DictVectorizer` is also a useful representation transformation
 for training sequence classifiers in Natural Language Processing models
@@ -125,11 +125,10 @@ Since the hash function might cause collisions between (unrelated) features,
 a signed hash function is used and the sign of the hash value
 determines the sign of the value stored in the output matrix for a feature.
 This way, collisions are likely to cancel out rather than accumulate error,
-and the expected mean of any output feature's value is zero.
-
-If ``non_negative=True`` is passed to the constructor, the absolute
-value is taken.  This undoes some of the collision handling, but allows
-the output to be passed to estimators like
+and the expected mean of any output feature's value is zero. This mechanism
+is enabled by default with ``alternate_sign=True`` and is particularly useful
+for small hash table sizes (``n_features < 10000``). For large hash table
+sizes, it can be disabled, to allow the output to be passed to estimators like
 :class:`sklearn.naive_bayes.MultinomialNB` or
 :class:`sklearn.feature_selection.chi2`
 feature selectors that expect non-negative inputs.
@@ -289,7 +288,7 @@ This model has many parameters, however the default values are quite
 reasonable (please see  the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details)::
 
-  >>> vectorizer = CountVectorizer(min_df=1)
+  >>> vectorizer = CountVectorizer()
   >>> vectorizer                     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   CountVectorizer(analyzer=...'word', binary=False, decode_error=...'strict',
           dtype=<... 'numpy.int64'>, encoding=...'utf-8', input=...'content',
@@ -491,13 +490,13 @@ log \frac{n_d}{\text{df}(d, t)} + 1 = log(1)+1 = 1`
 Now, if we repeat this computation for the remaining 2 terms in the document,
 we get
 
-:math:`\text{tf-idf}_{\text{term2}} = 0 \times log(6/1)+1 = 0`
+:math:`\text{tf-idf}_{\text{term2}} = 0 \times (log(6/1)+1) = 0`
 
-:math:`\text{tf-idf}_{\text{term3}} = 1 \times log(6/2)+1 \approx 2.0986`
+:math:`\text{tf-idf}_{\text{term3}} = 1 \times (log(6/2)+1) \approx 2.0986`
 
 and the vector of raw tf-idfs:
 
-:math:`\text{tf-idf}_raw = [3, 0, 2.0986].`
+:math:`\text{tf-idf}_{\text{raw}} = [3, 0, 2.0986].`
 
 
 Then, applying the Euclidean (L2) norm, we obtain the following tf-idfs
@@ -546,7 +545,7 @@ class called :class:`TfidfVectorizer` that combines all the options of
 :class:`CountVectorizer` and :class:`TfidfTransformer` in a single model::
 
   >>> from sklearn.feature_extraction.text import TfidfVectorizer
-  >>> vectorizer = TfidfVectorizer(min_df=1)
+  >>> vectorizer = TfidfVectorizer()
   >>> vectorizer.fit_transform(corpus)
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <4x9 sparse matrix of type '<... 'numpy.float64'>'
@@ -669,7 +668,7 @@ Finally it is possible to discover the main topics of a corpus by
 relaxing the hard assignment constraint of clustering, for instance by
 using :ref:`NMF`:
 
-  * :ref:`sphx_glr_auto_examples_applications_topics_extraction_with_nmf_lda.py`
+  * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
 
 
 Limitations of the Bag of Words representation
@@ -696,7 +695,7 @@ A character 2-gram representation, however, would find the documents
 matching in 4 out of 8 features, which may help the preferred classifier
 decide better::
 
-  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2), min_df=1)
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2))
   >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
   >>> ngram_vectorizer.get_feature_names() == (
   ...     [' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp'])
@@ -710,7 +709,7 @@ only from characters inside word boundaries (padded with space on each
 side). The ``'char'`` analyzer, alternatively, creates n-grams that
 span across words::
 
-  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5), min_df=1)
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5))
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x4 sparse matrix of type '<... 'numpy.int64'>'
@@ -719,7 +718,7 @@ span across words::
   ...     [' fox ', ' jump', 'jumpy', 'umpy '])
   True
 
-  >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5), min_df=1)
+  >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5))
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x5 sparse matrix of type '<... 'numpy.int64'>'
@@ -915,6 +914,33 @@ Some tips and tricks:
         >>> vect = CountVectorizer(tokenizer=LemmaTokenizer())  # doctest: +SKIP
 
     (Note that this will not filter out punctuation.)
+
+
+    The following example will, for instance, transform some British spelling 
+    to American spelling::
+
+        >>> import re
+        >>> def to_british(tokens):
+        ...     for t in tokens:
+        ...         t = re.sub(r"(...)our$", r"\1or", t)
+        ...         t = re.sub(r"([bt])re$", r"\1er", t)
+        ...         t = re.sub(r"([iy])s(e$|ing|ation)", r"\1z\2", t)
+        ...         t = re.sub(r"ogue$", "og", t)
+        ...         yield t
+        ...
+        >>> class CustomVectorizer(CountVectorizer):
+        ...     def build_tokenizer(self):
+        ...         tokenize = super(CustomVectorizer, self).build_tokenizer()
+        ...         return lambda doc: list(to_british(tokenize(doc)))
+        ...
+        >>> print(CustomVectorizer().build_analyzer()(u"color colour")) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+        [...'color', ...'color']
+
+    for other styles of preprocessing; examples include stemming, lemmatization,
+    or normalizing numerical tokens, with the latter illustrated in:
+
+     * :ref:`sphx_glr_auto_examples_bicluster_plot_bicluster_newsgroups.py`
+
 
 Customizing the vectorizer can also be useful when handling Asian languages
 that do not use an explicit word separator such as whitespace.

@@ -12,6 +12,8 @@ from .ranking import label_ranking_loss
 from .ranking import precision_recall_curve
 from .ranking import roc_auc_score
 from .ranking import roc_curve
+from .ranking import dcg_score
+from .ranking import ndcg_score
 
 from .classification import accuracy_score
 from .classification import classification_report
@@ -54,6 +56,7 @@ from .pairwise import pairwise_kernels
 from .regression import explained_variance_score
 from .regression import mean_absolute_error
 from .regression import mean_squared_error
+from .regression import mean_squared_log_error
 from .regression import median_absolute_error
 from .regression import r2_score
 
@@ -67,8 +70,10 @@ __all__ = [
     'adjusted_rand_score',
     'auc',
     'average_precision_score',
+    'calinski_harabaz_score',
     'classification_report',
     'cluster',
+    'cohen_kappa_score',
     'completeness_score',
     'confusion_matrix',
     'consensus_score',
@@ -77,6 +82,7 @@ __all__ = [
     'explained_variance_score',
     'f1_score',
     'fbeta_score',
+    'fowlkes_mallows_score',
     'get_scorer',
     'hamming_loss',
     'hinge_loss',
@@ -90,6 +96,7 @@ __all__ = [
     'matthews_corrcoef',
     'mean_absolute_error',
     'mean_squared_error',
+    'mean_squared_log_error',
     'median_absolute_error',
     'mutual_info_score',
     'normalized_mutual_info_score',
@@ -111,4 +118,6 @@ __all__ = [
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',
+    'dcg_score',
+    'ndcg_score'
 ]

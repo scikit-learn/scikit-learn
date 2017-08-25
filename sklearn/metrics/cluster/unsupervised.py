@@ -28,7 +28,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
     b)``.  To clarify, ``b`` is the distance between a sample and the nearest
     cluster that the sample is not a part of.
-    Note that Silhouette Coefficent is only defined if number of labels
+    Note that Silhouette Coefficient is only defined if number of labels
     is 2 <= n_labels <= n_samples - 1.
 
     This function returns the mean Silhouette Coefficient over all samples.
@@ -61,12 +61,14 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         on a random subset of the data.
         If ``sample_size is None``, no sampling is used.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to randomly select a subset of samples if
-        ``sample_size is not None``. If an integer is given, it fixes the seed.
-        Defaults to the global numpy random number generator.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The generator used to randomly select a subset of samples.  If int,
+        random_state is the seed used by the random number generator; If
+        RandomState instance, random_state is the random number generator; If
+        None, the random number generator is the RandomState instance used by
+        `np.random`. Used when ``sample_size is not None``.
 
-    `**kwds` : optional keyword parameters
+    **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
@@ -88,15 +90,8 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
            <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
-    X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
-    le = LabelEncoder()
-    labels = le.fit_transform(labels)
-    n_labels = len(le.classes_)
-    n_samples = X.shape[0]
-
-    check_number_of_labels(n_labels, n_samples)
-
     if sample_size is not None:
+        X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
         random_state = check_random_state(random_state)
         indices = random_state.permutation(X.shape[0])[:sample_size]
         if metric == "precomputed":
@@ -119,7 +114,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     distance (``a``) and the mean nearest-cluster distance (``b``) for each
     sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
     b)``.
-    Note that Silhouette Coefficent is only defined if number of labels
+    Note that Silhouette Coefficient is only defined if number of labels
     is 2 <= n_labels <= n_samples - 1.
 
     This function returns the Silhouette Coefficient for each sample.
@@ -144,7 +139,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
         the distance array itself, use "precomputed" as the metric.
 
-    `**kwds` : optional keyword parameters
+    **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a ``scipy.spatial.distance`` metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
@@ -166,21 +161,24 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
        <https://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+    X, labels = check_X_y(X, labels, accept_sparse=['csc', 'csr'])
     le = LabelEncoder()
     labels = le.fit_transform(labels)
+    check_number_of_labels(len(le.classes_), X.shape[0])
 
     distances = pairwise_distances(X, metric=metric, **kwds)
     unique_labels = le.classes_
+    n_samples_per_label = np.bincount(labels, minlength=len(unique_labels))
 
     # For sample i, store the mean distance of the cluster to which
     # it belongs in intra_clust_dists[i]
-    intra_clust_dists = np.ones(distances.shape[0], dtype=distances.dtype)
+    intra_clust_dists = np.zeros(distances.shape[0], dtype=distances.dtype)
 
     # For sample i, store the mean distance of the second closest
     # cluster in inter_clust_dists[i]
-    inter_clust_dists = np.inf * intra_clust_dists
+    inter_clust_dists = np.inf + intra_clust_dists
 
-    for curr_label in unique_labels:
+    for curr_label in range(len(unique_labels)):
 
         # Find inter_clust_dist for all samples belonging to the same
         # label.
@@ -188,14 +186,14 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         current_distances = distances[mask]
 
         # Leave out current sample.
-        n_samples_curr_lab = np.sum(mask) - 1
+        n_samples_curr_lab = n_samples_per_label[curr_label] - 1
         if n_samples_curr_lab != 0:
             intra_clust_dists[mask] = np.sum(
                 current_distances[:, mask], axis=1) / n_samples_curr_lab
 
         # Now iterate over all other labels, finding the mean
         # cluster distance that is closest to every sample.
-        for other_label in unique_labels:
+        for other_label in range(len(unique_labels)):
             if other_label != curr_label:
                 other_mask = labels == other_label
                 other_distances = np.mean(
@@ -205,6 +203,8 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     sil_samples = inter_clust_dists - intra_clust_dists
     sil_samples /= np.maximum(intra_clust_dists, inter_clust_dists)
+    # score 0 for clusters of size 1, according to the paper
+    sil_samples[n_samples_per_label.take(labels) == 1] = 0
     return sil_samples
 
 
@@ -227,7 +227,7 @@ def calinski_harabaz_score(X, labels):
 
     Returns
     -------
-    score: float
+    score : float
         The resulting Calinski-Harabaz score.
 
     References

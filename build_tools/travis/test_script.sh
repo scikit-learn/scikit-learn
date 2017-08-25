@@ -11,10 +11,22 @@ set -e
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
+python -c "\
+try:
+    import pandas
+    print('pandas %s' % pandas.__version__)
+except ImportError:
+    pass
+"
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 run_tests() {
-    # Get into a temp directory to run test from the installed scikit learn and
+    if [[ "$USE_PYTEST" == "true" ]]; then
+        TEST_CMD="pytest --showlocals --durations=20 --pyargs"
+    else
+        TEST_CMD="nosetests --with-timer --timer-top-n 20"
+    fi
+    # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
     mkdir -p $TEST_DIR
     # We need the setup.cfg for the nose settings
@@ -27,17 +39,16 @@ run_tests() {
     export SKLEARN_SKIP_NETWORK_TESTS=1
 
     if [[ "$COVERAGE" == "true" ]]; then
-        nosetests -s --with-coverage --with-timer --timer-top-n 20 sklearn
-    else
-        nosetests -s --with-timer --timer-top-n 20 sklearn
+        TEST_CMD="$TEST_CMD --with-coverage"
     fi
+    $TEST_CMD sklearn
 
-    # Is directory still empty ?
-    ls -ltra
-
-    # Test doc
-    cd $CACHED_BUILD_DIR/scikit-learn
-    make test-doc test-sphinxext
+    # Test doc (only with nose until we switch completely to pytest)
+    if [[ "$USE_PYTEST" != "true" ]]; then
+        # Going back to git checkout folder needed for make test-doc
+        cd $OLDPWD
+        make test-doc
+    fi
 }
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then

@@ -91,8 +91,8 @@ def _check_precision_matrix(precision, covariance_type):
 
 def _check_precisions_full(precisions, covariance_type):
     """Check the precision matrices are symmetric and positive-definite."""
-    for k, prec in enumerate(precisions):
-        prec = _check_precision_matrix(prec, covariance_type)
+    for prec in precisions:
+        _check_precision_matrix(prec, covariance_type)
 
 
 def _check_precisions(precisions, covariance_type, n_components, n_features):
@@ -120,7 +120,7 @@ def _check_precisions(precisions, covariance_type, n_components, n_features):
     """
     precisions = check_array(precisions, dtype=[np.float64, np.float32],
                              ensure_2d=False,
-                             allow_nd=covariance_type is 'full')
+                             allow_nd=covariance_type == 'full')
 
     precisions_shape = {'full': (n_components, n_features, n_features),
                         'tied': (n_features, n_features),
@@ -255,7 +255,7 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
     X : array-like, shape (n_samples, n_features)
         The input data array.
 
-    resp : array-like, shape (n_samples, n_features)
+    resp : array-like, shape (n_samples, n_components)
         The responsibilities for each data sample in X.
 
     reg_covar : float
@@ -321,7 +321,7 @@ def _compute_precision_cholesky(covariances, covariance_type):
             precisions_chol[k] = linalg.solve_triangular(cov_chol,
                                                          np.eye(n_features),
                                                          lower=True).T
-    elif covariance_type is 'tied':
+    elif covariance_type == 'tied':
         _, n_features = covariances.shape
         try:
             cov_chol = linalg.cholesky(covariances, lower=True)
@@ -439,10 +439,9 @@ class GaussianMixture(BaseMixture):
     This class allows to estimate the parameters of a Gaussian mixture
     distribution.
 
-    .. versionadded:: 0.18
-    *GaussianMixture*.
-
     Read more in the :ref:`User Guide <gmm>`.
+
+    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -450,19 +449,20 @@ class GaussianMixture(BaseMixture):
         The number of mixture components.
 
     covariance_type : {'full', 'tied', 'diag', 'spherical'},
-        defaults to 'full'.
+            defaults to 'full'.
         String describing the type of covariance parameters to use.
         Must be one of::
-        'full' (each component has its own general covariance matrix),
-        'tied' (all components share the same general covariance matrix),
-        'diag' (each component has its own diagonal covariance matrix),
-        'spherical' (each component has its own single variance).
+
+            'full' (each component has its own general covariance matrix),
+            'tied' (all components share the same general covariance matrix),
+            'diag' (each component has its own diagonal covariance matrix),
+            'spherical' (each component has its own single variance).
 
     tol : float, defaults to 1e-3.
         The convergence threshold. EM iterations will stop when the
         lower bound average gain is below this threshold.
 
-    reg_covar : float, defaults to 0.
+    reg_covar : float, defaults to 1e-6.
         Non-negative regularization added to the diagonal of covariance.
         Allows to assure that the covariance matrices are all positive.
 
@@ -476,29 +476,34 @@ class GaussianMixture(BaseMixture):
         The method used to initialize the weights, the means and the
         precisions.
         Must be one of::
-        'kmeans' : responsibilities are initialized using kmeans.
-        'random' : responsibilities are initialized randomly.
+
+            'kmeans' : responsibilities are initialized using kmeans.
+            'random' : responsibilities are initialized randomly.
 
     weights_init : array-like, shape (n_components, ), optional
         The user-provided initial weights, defaults to None.
         If it None, weights are initialized using the `init_params` method.
 
-    means_init: array-like, shape (n_components, n_features), optional
+    means_init : array-like, shape (n_components, n_features), optional
         The user-provided initial means, defaults to None,
         If it None, means are initialized using the `init_params` method.
 
-    precisions_init: array-like, optional.
+    precisions_init : array-like, optional.
         The user-provided initial precisions (inverse of the covariance
         matrices), defaults to None.
         If it None, precisions are initialized using the 'init_params' method.
         The shape depends on 'covariance_type'::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    random_state: RandomState or an int seed, defaults to None.
-        A random number generator instance.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     warm_start : bool, default to False.
         If 'warm_start' is True, the solution of the last fitting is used as
@@ -525,6 +530,7 @@ class GaussianMixture(BaseMixture):
     covariances_ : array-like
         The covariance of each mixture component.
         The shape depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -538,6 +544,7 @@ class GaussianMixture(BaseMixture):
         precision matrices instead of the covariance matrices makes it more
         efficient to compute the log-likelihood of new samples at test time.
         The shape depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -551,6 +558,7 @@ class GaussianMixture(BaseMixture):
         Storing the precision matrices instead of the covariance matrices makes
         it more efficient to compute the log-likelihood of new samples at test
         time. The shape depends on `covariance_type`::
+
             (n_components,)                        if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
@@ -633,11 +641,11 @@ class GaussianMixture(BaseMixture):
             self.covariances_ = covariances
             self.precisions_cholesky_ = _compute_precision_cholesky(
                 covariances, self.covariance_type)
-        elif self.covariance_type is 'full':
+        elif self.covariance_type == 'full':
             self.precisions_cholesky_ = np.array(
                 [linalg.cholesky(prec_init, lower=True)
                  for prec_init in self.precisions_init])
-        elif self.covariance_type is 'tied':
+        elif self.covariance_type == 'tied':
             self.precisions_cholesky_ = linalg.cholesky(self.precisions_init,
                                                         lower=True)
         else:
@@ -686,12 +694,12 @@ class GaussianMixture(BaseMixture):
         # Attributes computation
         _, n_features = self.means_.shape
 
-        if self.covariance_type is 'full':
+        if self.covariance_type == 'full':
             self.precisions_ = np.empty(self.precisions_cholesky_.shape)
             for k, prec_chol in enumerate(self.precisions_cholesky_):
                 self.precisions_[k] = np.dot(prec_chol, prec_chol.T)
 
-        elif self.covariance_type is 'tied':
+        elif self.covariance_type == 'tied':
             self.precisions_ = np.dot(self.precisions_cholesky_,
                                       self.precisions_cholesky_.T)
         else:
@@ -720,8 +728,8 @@ class GaussianMixture(BaseMixture):
 
         Returns
         -------
-        bic: float
-            The greater the better.
+        bic : float
+            The lower the better.
         """
         return (-2 * self.score(X) * X.shape[0] +
                 self._n_parameters() * np.log(X.shape[0]))
@@ -731,11 +739,11 @@ class GaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array of shape(n_samples, n_dimensions)
+        X : array of shape (n_samples, n_dimensions)
 
         Returns
         -------
-        aic: float
-            The greater the better.
+        aic : float
+            The lower the better.
         """
         return -2 * self.score(X) * X.shape[0] + 2 * self._n_parameters()

@@ -473,7 +473,7 @@ def _naive_lmvnpdf_diag(X, means, covars):
 def test_gaussian_mixture_log_probabilities():
     from sklearn.mixture.gaussian_mixture import _estimate_log_gaussian_prob
 
-    # test aginst with _naive_lmvnpdf_diag
+    # test against with _naive_lmvnpdf_diag
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng)
     n_samples = 500
@@ -649,7 +649,7 @@ def test_gaussian_mixture_fit_convergence_warning():
                             max_iter=max_iter, reg_covar=0, random_state=rng,
                             covariance_type=covar_type)
         assert_warns_message(ConvergenceWarning,
-                             'Initialization %d did not converged. '
+                             'Initialization %d did not converge. '
                              'Try different init parameters, '
                              'or increase max_iter, tol '
                              'or check for degenerate data.'
@@ -918,7 +918,7 @@ def test_property():
 
 def test_sample():
     rng = np.random.RandomState(0)
-    rand_data = RandomData(rng, scale=7)
+    rand_data = RandomData(rng, scale=7, n_components=3)
     n_features, n_components = rand_data.n_features, rand_data.n_components
 
     for covar_type in COVARIANCE_TYPE:
@@ -935,8 +935,10 @@ def test_sample():
                              gmm.sample, 0)
 
         # Just to make sure the class samples correctly
-        X_s, y_s = gmm.sample(20000)
-        for k in range(n_features):
+        n_samples = 20000
+        X_s, y_s = gmm.sample(n_samples)
+
+        for k in range(n_components):
             if covar_type == 'full':
                 assert_array_almost_equal(gmm.covariances_[k],
                                           np.cov(X_s[y_s == k].T), decimal=1)
@@ -953,8 +955,16 @@ def test_sample():
                     decimal=1)
 
         means_s = np.array([np.mean(X_s[y_s == k], 0)
-                           for k in range(n_features)])
+                           for k in range(n_components)])
         assert_array_almost_equal(gmm.means_, means_s, decimal=1)
+
+        # Check shapes of sampled data, see
+        # https://github.com/scikit-learn/scikit-learn/issues/7701
+        assert_equal(X_s.shape, (n_samples, n_features))
+
+        for sample_size in range(1, 100):
+            X_s, _ = gmm.sample(sample_size)
+            assert_equal(X_s.shape, (sample_size, n_features))
 
 
 @ignore_warnings(category=ConvergenceWarning)

@@ -32,7 +32,7 @@ The target values are stored in a scipy CSR sparse matrix, with 804414 samples a
 Each sample can be identified by its ID, ranging (with gaps) from 2286 to 810596::
 
     >>> rcv1.sample_id[:3]
-    array([2286, 2287, 2288], dtype=int32)
+    array([2286, 2287, 2288], dtype=uint32)
 
 ``target_names``:
 The target values are the topics of each sample. Each sample belongs to at least one topic, and to up to 17 topics.

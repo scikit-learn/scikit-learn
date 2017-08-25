@@ -1,15 +1,15 @@
-import sys
 import numpy as np
-from nose import SkipTest
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 
@@ -17,16 +17,6 @@ from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.discriminant_analysis import _cov
-
-
-# import reload
-version = sys.version_info
-if version[0] == 3:
-    # Python 3+ import for reload. Builtin in Python2
-    if version[1] == 3:
-        reload = None
-    else:
-        from importlib import reload
 
 
 # Data is just 6 separable points in the plane
@@ -171,19 +161,17 @@ def test_lda_explained_variance_ratio():
     clf_lda_eigen = LinearDiscriminantAnalysis(solver="eigen")
     clf_lda_eigen.fit(X, y)
     assert_almost_equal(clf_lda_eigen.explained_variance_ratio_.sum(), 1.0, 3)
+    assert_equal(clf_lda_eigen.explained_variance_ratio_.shape, (2,),
+                 "Unexpected length for explained_variance_ratio_")
 
     clf_lda_svd = LinearDiscriminantAnalysis(solver="svd")
     clf_lda_svd.fit(X, y)
     assert_almost_equal(clf_lda_svd.explained_variance_ratio_.sum(), 1.0, 3)
+    assert_equal(clf_lda_svd.explained_variance_ratio_.shape, (2,),
+                 "Unexpected length for explained_variance_ratio_")
 
-    tested_length = min(clf_lda_svd.explained_variance_ratio_.shape[0],
-                        clf_lda_eigen.explained_variance_ratio_.shape[0])
-
-    # NOTE: clf_lda_eigen.explained_variance_ratio_ is not of n_components
-    # length. Make it the same length as clf_lda_svd.explained_variance_ratio_
-    # before comparison.
     assert_array_almost_equal(clf_lda_svd.explained_variance_ratio_,
-                              clf_lda_eigen.explained_variance_ratio_[:tested_length])
+                              clf_lda_eigen.explained_variance_ratio_)
 
 
 def test_lda_orthogonality():
@@ -237,6 +225,38 @@ def test_lda_scaling():
                      'using covariance: %s' % solver)
 
 
+def test_lda_store_covariance():
+    # Test for slover 'lsqr' and 'eigen'
+    # 'store_covariance' has no effect on 'lsqr' and 'eigen' solvers
+    for solver in ('lsqr', 'eigen'):
+        clf = LinearDiscriminantAnalysis(solver=solver).fit(X6, y6)
+        assert_true(hasattr(clf, 'covariance_'))
+
+        # Test the actual attribute:
+        clf = LinearDiscriminantAnalysis(solver=solver,
+                                         store_covariance=True).fit(X6, y6)
+        assert_true(hasattr(clf, 'covariance_'))
+
+        assert_array_almost_equal(
+            clf.covariance_,
+            np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
+        )
+
+    # Test for SVD slover, the default is to not set the covariances_ attribute
+    clf = LinearDiscriminantAnalysis(solver='svd').fit(X6, y6)
+    assert_false(hasattr(clf, 'covariance_'))
+
+    # Test the actual attribute:
+    clf = LinearDiscriminantAnalysis(solver=solver,
+                                     store_covariance=True).fit(X6, y6)
+    assert_true(hasattr(clf, 'covariance_'))
+
+    assert_array_almost_equal(
+        clf.covariance_,
+        np.array([[0.422222, 0.088889], [0.088889, 0.533333]])
+    )
+
+
 def test_qda():
     # QDA classification.
     # This checks that QDA implements fit and predict and returns
@@ -276,24 +296,38 @@ def test_qda_priors():
     assert_greater(n_pos2, n_pos)
 
 
-def test_qda_store_covariances():
+def test_qda_store_covariance():
     # The default is to not set the covariances_ attribute
     clf = QuadraticDiscriminantAnalysis().fit(X6, y6)
-    assert_true(not hasattr(clf, 'covariances_'))
+    assert_false(hasattr(clf, 'covariance_'))
 
     # Test the actual attribute:
-    clf = QuadraticDiscriminantAnalysis(store_covariances=True).fit(X6, y6)
-    assert_true(hasattr(clf, 'covariances_'))
+    clf = QuadraticDiscriminantAnalysis(store_covariance=True).fit(X6, y6)
+    assert_true(hasattr(clf, 'covariance_'))
 
     assert_array_almost_equal(
-        clf.covariances_[0],
+        clf.covariance_[0],
         np.array([[0.7, 0.45], [0.45, 0.7]])
     )
 
     assert_array_almost_equal(
-        clf.covariances_[1],
+        clf.covariance_[1],
         np.array([[0.33333333, -0.33333333], [-0.33333333, 0.66666667]])
     )
+
+
+def test_qda_deprecation():
+    # Test the deprecation
+    clf = QuadraticDiscriminantAnalysis(store_covariances=True)
+    assert_warns_message(DeprecationWarning, "'store_covariances' was renamed"
+                         " to store_covariance in version 0.19 and will be "
+                         "removed in 0.21.", clf.fit, X, y)
+
+    # check that covariance_ (and covariances_ with warning) is stored
+    assert_warns_message(DeprecationWarning, "Attribute covariances_ was "
+                         "deprecated in version 0.19 and will be removed "
+                         "in 0.21. Use covariance_ instead", getattr, clf,
+                         'covariances_')
 
 
 def test_qda_regularization():
@@ -317,31 +351,6 @@ def test_qda_regularization():
         clf.fit(X5, y5)
     y_pred5 = clf.predict(X5)
     assert_array_equal(y_pred5, y5)
-
-
-def test_deprecated_lda_qda_deprecation():
-    if reload is None:
-        raise SkipTest("Can't reload module on Python3.3")
-
-    def import_lda_module():
-        import sklearn.lda
-        # ensure that we trigger DeprecationWarning even if the sklearn.lda
-        # was loaded previously by another test.
-        reload(sklearn.lda)
-        return sklearn.lda
-
-    lda = assert_warns(DeprecationWarning, import_lda_module)
-    assert lda.LDA is LinearDiscriminantAnalysis
-
-    def import_qda_module():
-        import sklearn.qda
-        # ensure that we trigger DeprecationWarning even if the sklearn.qda
-        # was loaded previously by another test.
-        reload(sklearn.qda)
-        return sklearn.qda
-
-    qda = assert_warns(DeprecationWarning, import_qda_module)
-    assert qda.QDA is QuadraticDiscriminantAnalysis
 
 
 def test_covariance():
