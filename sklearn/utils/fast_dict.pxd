@@ -7,6 +7,7 @@ integers, and values float.
 
 from libcpp.map cimport map as cpp_map
 
+import numpy as np
 # Import the C-level symbols of numpy
 cimport numpy as np
 
