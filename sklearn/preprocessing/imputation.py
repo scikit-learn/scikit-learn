@@ -10,14 +10,14 @@ from fancyimpute import SoftImpute
 from scipy import sparse
 from scipy import stats
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
-from ..utils.sparsefuncs import _get_median
-from ..utils.validation import check_is_fitted
-from ..utils.validation import check_array
-from ..utils.validation import FLOAT_DTYPES
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils import check_array
+from sklearn.utils.sparsefuncs import _get_median
+from sklearn.utils.validation import check_is_fitted
+from sklearn.utils.validation import check_array
+from sklearn.utils.validation import FLOAT_DTYPES
 
-from ..externals import six
+from sklearn.externals import six
 
 zip = six.moves.zip
 map = six.moves.map
@@ -429,6 +429,7 @@ class FactorizationImputer(SoftImpute, BaseEstimator, TransformerMixin):
             verbose=True):
         super(FactorizationImputer, self).__init__(shrinkage_value, convergence_threshold, max_iters, max_rank, n_power_iterations, init_fill_method, min_value, max_value, normalizer, verbose)
         self.fitted = False
+        self.X_filled = None
 
     def fit_transform(self, X, y=None):
         """
@@ -445,7 +446,8 @@ class FactorizationImputer(SoftImpute, BaseEstimator, TransformerMixin):
         """
         X = check_array(X, force_all_finite=False)
         self.fitted = True
-        return self.complete(X)
+        self.X_filled = self.complete(X)
+        return self.X_filled
 
     def fit(self, X, y=None):
         """
@@ -462,7 +464,6 @@ class FactorizationImputer(SoftImpute, BaseEstimator, TransformerMixin):
         """
         self.fit_transform(X)
         return self
-
 
     def transform(self, X, y=None):
         """
@@ -481,3 +482,29 @@ class FactorizationImputer(SoftImpute, BaseEstimator, TransformerMixin):
         res = self.fit_transform(X)
         return res
 
+    def predict(self, user=None, item=None):
+        """Prediction of a User-Item pair. Predicts mean rating for new users or items. Assumes an user x item shaped matrix.
+        Parameters
+        ----------
+
+        user: {integer}
+            Index of user whose item rating is being predicted. Defaults to None, which calculates the given item's rating for a new user.
+        item: {integer}
+            Index of item whose rating by a specific user is being predited. Defaults to None, which calculates the given user's rating for a new item.
+
+        Returns
+        -------
+        predicted rating: {float}
+            Returns a predicted rating for a given user-item pair.
+        """
+        if user is None and item is None:
+            return self.X_filled
+         
+        elif user is None:
+            return np.mean(self.X_filled[:, item])
+
+        elif item is None:
+            return np.mean(self.X_filled[user, :])
+
+        else:
+            return self.X_filled[user, item]
