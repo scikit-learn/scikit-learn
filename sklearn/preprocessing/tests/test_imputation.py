@@ -401,7 +401,8 @@ def test_missing_indicator():
     def assert_type(actual, X_is_sparse, sparse_param, missing_values):
         if sparse_param is True:
             assert_equal(actual, sparse.csc_matrix)
-        elif ((sparse_param == "auto" and missing_values == 0) or sparse_param is False):
+        elif ((sparse_param == "auto" and missing_values == 0) or
+              sparse_param is False):
             assert_equal(actual, np.ndarray)
         else:
             if X_is_sparse:
@@ -410,13 +411,14 @@ def test_missing_indicator():
                 assert_equal(actual, np.ndarray)
 
     def assert_mask(actual, expected, features):
+        if len(features) != 0:
+            expected = expected[:, features]
         if hasattr(actual, 'toarray'):
-            assert_array_equal(actual.toarray(), expected[:, features])
+            assert_array_equal(actual.toarray(), expected)
         else:
-            assert_array_equal(actual, expected[:, features])
+            assert_array_equal(actual, expected)
 
     def _check_missing_indicator(X1, X2, retype, sparse_param, missing_values):
-        print retype, sparse_param
         mask_X2 = _get_mask(X2, missing_values)
         mask_X1 = _get_mask(X1, missing_values)
 
@@ -425,13 +427,16 @@ def test_missing_indicator():
         X1_in = retype(X1)
         X2_in = retype(X2)
         # features = "auto":
-        indicator = MissingIndicator(missing_values=missing_values, sparse=sparse_param)
+        indicator = MissingIndicator(missing_values=missing_values,
+                                     sparse=sparse_param)
         X1_tr = indicator.fit_transform(X1_in)
         X2_tr = indicator.transform(X2_in)
         features = indicator.feat_with_missing_
         assert_array_equal(expect_feat_missing, features)
-        assert_type(type(X2_tr), sparse.issparse(X2_in), sparse_param, missing_values)
-        assert_type(type(X1_tr), sparse.issparse(X1_in), sparse_param, missing_values)
+        assert_type(type(X2_tr), sparse.issparse(X2_in), sparse_param,
+                    missing_values)
+        assert_type(type(X1_tr), sparse.issparse(X1_in), sparse_param,
+                    missing_values)
         assert_mask(X2_tr, mask_X2, features)
         assert_mask(X1_tr, mask_X1, features)
 
@@ -440,8 +445,10 @@ def test_missing_indicator():
         X1_tr = indicator.fit_transform(X1_in)
         X2_tr = indicator.transform(X2_in)
         features = np.arange(X2.shape[1])
-        assert_type(type(X1_tr), sparse.issparse(X1_in), sparse_param, missing_values)
-        assert_type(type(X2_tr), sparse.issparse(X2_in), sparse_param, missing_values)
+        assert_type(type(X1_tr), sparse.issparse(X1_in), sparse_param,
+                    missing_values)
+        assert_type(type(X2_tr), sparse.issparse(X2_in), sparse_param,
+                    missing_values)
         assert_mask(X2_tr, mask_X2, features)
         assert_mask(X1_tr, mask_X1, features)
 
@@ -449,8 +456,10 @@ def test_missing_indicator():
         indicator = clone(indicator).set_params(features=features)
         X1_tr = indicator.fit_transform(X1_in)
         X2_tr = indicator.transform(X2_in)
-        assert_type(type(X2_tr), sparse.issparse(X2_in), sparse_param, missing_values)
-        assert_type(type(X1_tr), sparse.issparse(X1_in), sparse_param, missing_values)
+        assert_type(type(X2_tr), sparse.issparse(X2_in), sparse_param,
+                    missing_values)
+        assert_type(type(X1_tr), sparse.issparse(X1_in), sparse_param,
+                    missing_values)
         assert_mask(X2_tr, mask_X2, features)
         assert_mask(X1_tr, mask_X1, features)
 
@@ -459,7 +468,8 @@ def test_missing_indicator():
         for retype in [lambda x: x.tolist(), np.array, sparse.csr_matrix,
                        sparse.csc_matrix, sparse.lil_matrix]:
             for sparse_param in [True, False, 'auto']:
-                _check_missing_indicator(X1, X2, retype, sparse_param, missing_values)
+                _check_missing_indicator(X1, X2, retype, sparse_param,
+                                         missing_values)
 
 
 def test_missing_indicator_error():

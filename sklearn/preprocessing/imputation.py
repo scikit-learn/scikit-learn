@@ -455,7 +455,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         """
         self._validate_params()
 
-        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64, force_all_finite=False)
+        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64,
+                        force_all_finite=False)
         self.n_features_ = X.shape[1]
 
         if isinstance(self.features, six.string_types):
@@ -484,7 +485,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, "feat_with_missing_", "n_features_")
 
-        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64, force_all_finite=False)
+        X = check_array(X, accept_sparse=('csc', 'csr'), dtype=np.float64,
+                        force_all_finite=False)
         if X.shape[1] != self.n_features_:
             raise ValueError("X has a different number of features "
                              "than during fitting.")
@@ -493,8 +495,6 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
 
         if isinstance(self.features, six.string_types):
             if self.features == "auto":
-                print feat_with_missing
-                print self.feat_with_missing_
                 features = np.setdiff1d(feat_with_missing,
                                         self.feat_with_missing_)
                 if self.error_on_new and features.size > 0:
@@ -502,7 +502,8 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
                                     "in transform but have no missing values "
                                     "in fit" % features)
 
-        if not (isinstance(self.features, six.string_types) and self.features == "all"):
+        if not (isinstance(self.features, six.string_types) and
+                self.features == "all") and len(self.feat_with_missing_) != 0:
             # no need to slice when all features have missing values
             imputer_mask = imputer_mask[:, self.feat_with_missing_]
 
@@ -564,9 +565,7 @@ class MissingIndicator(BaseEstimator, TransformerMixin):
         elif self.sparse is False and sparse.issparse(imputer_mask):
             imputer_mask = imputer_mask.toarray()
 
-        print 'before'
-        print feat_with_missing
-        feat_with_missing = feat_with_missing.flatten()
-        print 'after'
-        print feat_with_missing
+        if isinstance(feat_with_missing, np.matrix):
+            feat_with_missing = feat_with_missing.A1
+
         return imputer_mask, feat_with_missing
