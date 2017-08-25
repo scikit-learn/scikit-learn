@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
@@ -1291,12 +1292,14 @@ def test_radius_neighbors_outliers():
     X = [[0], [1], [2], [3], [4], [5], [6], [7], [8], [9]]
     y = [0, 2, 2, 1, 1, 1, 3, 3, 3, 3]
 
+    # test outiler Error rasing
     def check_exception():
         clf = RNC(radius=1, outlier_label=None)
         clf.fit(X, y)
         clf.predict_proba([[1], [15]])
     assert_raises(ValueError, check_exception)
 
+    # test uniform outlier
     clf = RNC(radius=1, outlier_label='uniform')
     clf.fit(X, y)
     predict = clf.predict_proba([[1], [15]])
@@ -1304,8 +1307,10 @@ def test_radius_neighbors_outliers():
     assert_equal(predict[1, 1], 0.25)
     assert_equal(predict[1, 2], 0.25)
     assert_equal(predict[1, 3], 0.25)
+    # test uniform outlier in predict method
     clf.predict([[1], [15]])
 
+    # test prior outlier
     clf = RNC(radius=1, outlier_label='prior')
     clf.fit(X, y)
     predict = clf.predict_proba([[1], [15]])
@@ -1313,4 +1318,30 @@ def test_radius_neighbors_outliers():
     assert_equal(predict[1, 1], 0.3)
     assert_equal(predict[1, 2], 0.2)
     assert_equal(predict[1, 3], 0.4)
+    # test prior outlier in predcit method
     clf.predict([[1], [15]])
+
+    # est manual label in y
+    clf = RNC(radius=1, outlier_label=2)
+    clf.fit(X, y)
+    predict = clf.predict_proba([[1], [15]])
+    assert_equal(predict[1, 2], 1.0)
+
+    # test manual label out of y
+    clf = RNC(radius=1, outlier_label=4)
+    clf.fit(X, y)
+    predict = clf.predict_proba([[1], [15]])
+    assert_equal(predict[1, 0], 0.0)
+    assert_equal(predict[1, 1], 0.0)
+    assert_equal(predict[1, 2], 0.0)
+    assert_equal(predict[1, 3], 0.0)
+    predict = clf.predict([[7], [15]])
+    assert_equal(predict[0], 3.0)
+    assert_equal(predict[1], 4.0)
+
+    # test check_outlier_handler error raise
+    assert_raise_message(ValueError,
+                        'outlier_label',
+                        lambda:RNC(outlier_label='hello world'))
+
+    neighbors.RadiusNeighborsRegressor()

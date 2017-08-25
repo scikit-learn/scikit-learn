@@ -8,6 +8,7 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
+import numbers
 import warnings as warns
 import numpy as np
 from scipy import stats
@@ -15,6 +16,7 @@ from ..utils.extmath import weighted_mode
 
 from .base import \
     _check_weights, _get_weights, \
+    _check_outlier_handler,\
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
@@ -329,7 +331,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                           metric=metric, p=p, metric_params=metric_params,
                           **kwargs)
         self.weights = _check_weights(weights)
-        self.outlier_label = outlier_label
+        self.outlier_label = _check_outlier_handler(outlier_label,
+                                                    kind='label')
 
     def predict(self, X):
         """Predict the class labels for the provided data
@@ -398,9 +401,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                                            p=prior,
                                                            size=len(outliers))
 
-        if outliers and isinstance(self.outlier_label, int):
+        if outliers and isinstance(self.outlier_label, (numbers.Integral,
+                                                        np.integer)):
             y_pred[outliers, :] = self.outlier_label
-
+            warns.warn('No neighbors found for test samples %r, '
+                       'their labels will be assgined with %d. '
+                       % (outliers, self.outlier_label))
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
 
@@ -428,11 +434,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-
         inliers = [i for i, nind in enumerate(neigh_ind) if len(nind) != 0]
         mask = np.ones(n_samples, np.bool)
-        mask[inliers] = 0
-        outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
+        mask[inliers] = False
+        outliers = np.arange(n_samples)[mask]
 
         classes_ = self.classes_
         _y = self._y
@@ -445,8 +450,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         elif outliers:
             raise ValueError('No neighbors found for test samples %r, '
                              'you can try using larger radius, '
-                             'give a label for outliers, '
-                             'or consider removing them from your dataset.'
+                             'consider removing them from your dataset '
+                             'or change oulier_label parameter.'
                              % outliers)
 
         weights = _get_weights(neigh_dist, self.weights)
@@ -477,14 +482,16 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 elif self.outlier_label == 'prior':
                     proba_k[outliers, :] = (np.bincount(_y[:, k])
                                             / float(_y.shape[0]))
-                else:
-                    proba_k[outliers, :] = 0.0
-                    warns.warn('No neighbors found for test samples %r, '
-                               'their probabilities will be assgined with 0, '
-                               'which may influence scoring. '
-                               'You can try using larger radius, '
-                               'or consider removing them from your dataset.'
-                               % outliers)
+                elif isinstance(self.outlier_label, (numbers.Integral,
+                                                     np.integer)):
+                    if self.outlier_label in classes_k:
+                        proba_k[outliers, self.outlier_label] = 1.0
+                    else:
+                        proba_k[outliers, :] = 0.0
+                        warns.warn('No neighbors found for test samples %r, '
+                                   'their probabilities will be assgined '
+                                   'with 0., which may influence scoring.'
+                                   % outliers)
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
