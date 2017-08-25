@@ -1964,7 +1964,7 @@ def check_categorical_onehot(X):
 
     assert_allclose(Xtr1.toarray(), Xtr2)
 
-    assert sparse.issparse(Xtr1)
+    assert sparse.isspmatrix_csr(Xtr1)
     return Xtr1.toarray()
 
 
@@ -1981,34 +1981,39 @@ def test_categorical_encoder_onehot():
     assert_allclose(Xtr.toarray(), [[1, 0, 1, 0,  1], [0, 1, 0, 1, 1]])
 
 
-def test_categorical_encoder_errors():
+def test_categorical_encoder_handle_unknown():
+    X = [[1, 2, 3], [4, 5, 6]]
+    y = [[7, 5, 3]]
 
+    # Test that encoder raises error for unknown features during transform.
     enc = CategoricalEncoder()
-    X = [[1, 2, 3], [4, 5, 6]]
     enc.fit(X)
+    msg = re.escape('unknown categories [7] in column 0')
+    assert_raises_regex(ValueError, msg, enc.transform, y)
 
-    X[0][0] = -1
-    msg = re.escape('unknown categories [-1] in column 0')
-    assert_raises_regex(ValueError, msg, enc.transform, X)
-
+    # With 'ignore' you get all 0's in result
     enc = CategoricalEncoder(handle_unknown='ignore')
-    X = [[1, 2, 3], [4, 5, 6]]
     enc.fit(X)
-    X[0][0] = -1
-    Xtr = enc.transform(X)
-    assert_allclose(Xtr.toarray(), [[0, 0, 1, 0, 1, 0], [0, 1, 0, 1, 0, 1]])
+    Xtr = enc.transform(y)
+    assert_allclose(Xtr.toarray(), [[0, 0, 0, 1, 1, 0]])
+
+    # Invalid option
+    enc = CategoricalEncoder(handle_unknown='invalid')
+    assert_raises(ValueError, enc.fit, X)
 
 
 def test_categorical_encoder_categories():
     X = [['abc', 1, 55], ['def', 2, 55]]
-    enc = CategoricalEncoder()
-    enc.fit(X)
 
-    assert enc.categories == 'auto'
-    assert isinstance(enc.categories_, list)
-    cat_exp = [['abc', 'def'], [1, 2], [55]]
-    for res, exp in zip(enc.categories_, cat_exp):
-        assert res.tolist() == exp
+    # order of categories should not depend on order of samples
+    for Xi in [X, X[::-1]]:
+        enc = CategoricalEncoder()
+        enc.fit(Xi)
+        assert enc.categories == 'auto'
+        assert isinstance(enc.categories_, list)
+        cat_exp = [['abc', 'def'], [1, 2], [55]]
+        for res, exp in zip(enc.categories_, cat_exp):
+            assert res.tolist() == exp
 
 
 def test_categorical_encoder_specified_categories():
@@ -2045,7 +2050,6 @@ def test_categorical_encoder_specified_categories():
 
 
 def test_categorical_encoder_pandas():
-
     try:
         import pandas as pd
     except ImportError:

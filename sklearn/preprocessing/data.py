@@ -1921,9 +1921,10 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.CategoricalEncoder : performs a one-hot encoding of
-      all features (also handles string-valued features). This encoder
-      derives the categories based on the unique values in the features.
+    sklearn.preprocessing.CategoricalEncoder : performs a one-hot or ordinal
+      encoding of all features (also handles string-valued features). This
+      encoder derives the categories based on the unique values in the
+      features.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
@@ -2561,21 +2562,22 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
 
 class CategoricalEncoder(BaseEstimator, TransformerMixin):
-    """Encode categorical features using specified encoding scheme (one-hot
-    or ordinal encoding).
+    """Encode categorical features as a numeric array.
 
     The input to this transformer should be a matrix of integers or strings,
-    denoting the values taken on by categorical (discrete) features. The
-    output will be a sparse matrix where each column corresponds to one
-    possible value of one feature.
+    denoting the values taken on by categorical (discrete) features.
+    The features can be encoded using a one-hot aka one-of-K scheme
+    (``encoding='onehot'``, the default) or converted to ordinal integers
+    (``encoding='ordinal'``).
 
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
+
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
     Parameters
     ----------
-    encoding : str, 'onehot' or 'ordinal'
+    encoding : str, 'onehot', 'onehot-dense' or 'ordinal'
         The type of encoding to use (default is 'onehot'):
 
         - 'onehot': encode the features using a one-hot aka one-of-K scheme
@@ -2587,17 +2589,17 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
           a single column of integers (0 to n_categories - 1) per feature.
 
     categories : 'auto' or a list of lists/arrays of values.
-        Values per feature.
+        Categories (unique values) per feature:
 
         - 'auto' : Determine categories automatically from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
           column. The passed categories are sorted before encoding the data
           (used categories can be found in the ``categories_`` attribute).
 
-    dtype : number type, default=np.float64
+    dtype : number type, default np.float64
         Desired dtype of output.
 
-    handle_unknown : str, 'error' or 'ignore'
+    handle_unknown : 'error' (default) or 'ignore'
         Whether to raise an error or ignore if a unknown categorical feature is
         present during transform (default is to raise). When this is parameter
         is set to 'ignore' and an unknown category is encountered during
@@ -2620,14 +2622,14 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     one-hot encoding.
 
     >>> from sklearn.preprocessing import CategoricalEncoder
-    >>> enc = CategoricalEncoder()
+    >>> enc = CategoricalEncoder(handle_unknown='ignore')
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
     ... # doctest: +ELLIPSIS
     CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
-              encoding='onehot', handle_unknown='error')
-    >>> enc.transform([[0, 1, 1], [1, 0, 3]]).toarray()
+              encoding='onehot', handle_unknown='ignore')
+    >>> enc.transform([[0, 1, 1], [1, 0, 4]]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.],
-           [ 0.,  1.,  1.,  0.,  0.,  0.,  0.,  0.,  1.]])
+           [ 0.,  1.,  1.,  0.,  0.,  0.,  0.,  0.,  0.]])
 
     See also
     --------
@@ -2662,8 +2664,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         """
 
         if self.encoding not in ['onehot', 'onehot-dense', 'ordinal']:
-            template = ("encoding should be either 'onehot' or "
-                        "'ordinal', got %s")
+            template = ("encoding should be either 'onehot', 'onehot-dense' "
+                        "or 'ordinal', got %s")
             raise ValueError(template % self.handle_unknown)
 
         if self.handle_unknown not in ['error', 'ignore']:
@@ -2748,7 +2750,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                                 n_features)[mask]
         data = np.ones(n_samples * n_features)[mask]
 
-        out = sparse.coo_matrix((data, (row_indices, column_indices)),
+        out = sparse.csc_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
         if self.encoding == 'onehot-dense':

@@ -455,15 +455,29 @@ Such features can be efficiently coded as integers, for instance
 ``[0, 1, 3]`` while ``["female", "from Asia", "uses Chrome"]`` would be
 ``[1, 2, 1]``.
 
-Such integer representation can not be used directly with scikit-learn estimators, as these
-expect continuous input, and would interpret the categories as being ordered, which is often
-not desired (i.e. the set of browsers was ordered arbitrarily).
+To convert categorical features to such integer codes, we can use the
+:class:`CategoricalEncoder`. When specifying that we want to perform an
+ordinal encoding, the estimator transforms each categorical feature to one
+new feature of integers (0 to n_categories - 1)::
+
+    >>> enc = preprocessing.CategoricalEncoder(encoding='ordinal')
+    >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+    >>> enc.fit(X)  # doctest: +ELLIPSIS
+    CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+              encoding='ordinal', handle_unknown='error')
+    >>> enc.transform([['female', 'from US', 'uses Safari']])
+    array([[ 0.,  1.,  1.]])
+
+Such integer representation can, however, not be used directly with all
+scikit-learn estimators, as these expect continuous input, and would interpret
+the categories as being ordered, which is often not desired (i.e. the set of
+browsers was ordered arbitrarily).
 
 One possibility to convert categorical features to features that can be used
-with scikit-learn estimators is to use a one-of-K or one-hot encoding, which is
-implemented in :class:`CategoricalEncoder`.  This estimator transforms each
-categorical feature with ``m`` possible values into ``m`` binary features, with
-only one active.
+with scikit-learn estimators is to use a one-of-K or one-hot encoding. This
+type of encoding is the default behaviour of the :class:`CategoricalEncoder`.
+The estimator then transforms each categorical feature with ``n_categories``
+possible values into ``n_categories`` binary features, with only one active.
 
 Continuing the example above::
 
@@ -475,14 +489,18 @@ Continuing the example above::
   >>> enc.transform([['female', 'from US', 'uses Safari']]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  1.]])
 
+By default, how many values each feature can take is inferred automatically
+from the dataset and can be found in the ``categories_`` attribute::
 
-By default, how many values each feature can take is inferred automatically from the dataset.
-It is possible to specify this explicitly using the parameter ``classes``.
+    >>> enc.categories_
+    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
+
+It is possible to specify this explicitly using the parameter ``categories``.
 There are two genders, three possible continents and four web browsers in our
 dataset.
 
 Note that, if there is a possibilty that the training data might have missing categorical
-features, one has to explicitly set ``classes``. For example,
+features, one has to explicitly set ``categories``. For example,
 
     >>> genders = ['male', 'female']
     >>> locations = ['from Europe', 'from US', 'from Africa', 'from Asia']
@@ -495,12 +513,11 @@ features, one has to explicitly set ``classes``. For example,
     CategoricalEncoder(categories=[...],
               dtype=<... 'numpy.float64'>, encoding='onehot',
               handle_unknown='error')
-
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
 
 See :ref:`dict_feature_extraction` for categorical features that are represented
-as a dict, not as integers.
+as a dict, not as scalars.
 
 .. _imputation:
 
