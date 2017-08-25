@@ -860,7 +860,8 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     # The precise message can change depending on whether X or y is
     # validated first. Let us test the type of exception only:
     with assert_raises(ValueError, msg="The estimators {name} does not"
-                               " raise an error when"):
+                       " raise an error when an empty data is used "
+                       "to train. Perhaps use check_is_fitted"):
         e.fit(X_zero_samples, [])
 
     X_zero_features = np.empty(0).reshape(3, 0)
@@ -997,8 +998,9 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
         return
 
     with assert_raises(ValueError,
-                       msg="Number of features "
-                       "changes between calls to partial_fit"):
+                       msg="The estimators {name} does not"
+                       " raise an error when number of features"
+                       " changes between calls to partial_fit"):
         estimator.partial_fit(X[:, :-1], y)
 
 
@@ -1103,7 +1105,9 @@ def check_classifiers_train(name, classifier_orig):
             X -= X.min()
         set_random_state(classifier)
         # raises error on malformed input for fit
-        with assert_raises(ValueError, msg="Malformed input for fit"):
+        with assert_raises(ValueError, msg="The classifers {name} does not"
+                           " raise an error when incorrect/malformed input "
+                           "data for fit is passed"):
             classifier.fit(X, y[:-1])
 
         # fit
@@ -1118,7 +1122,9 @@ def check_classifiers_train(name, classifier_orig):
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
-        with assert_raises(ValueError, msg="Malformed input for predict"):
+        with assert_raises(ValueError, msg="The classifers {name} does not"
+                           " raise an error when incorrect/malformed input "
+                           "data for predict is passed"):
             classifier.predict(X.T)
         if hasattr(classifier, "decision_function"):
             try:
@@ -1138,9 +1144,9 @@ def check_classifiers_train(name, classifier_orig):
                 with assert_raises(ValueError, msg="Malformed inputs"):
                     classifier.decision_function(X.T)
                 # raises error on malformed input for decision_function
-                with assert_raises(ValueError,
-                                   msg="Malformed input "
-                                   "for decision_function"):
+                with assert_raises(ValueError, msg="The classifers {name} does not"
+                                   " raise an error when incorrect/malformed input "
+                                   "data for decision function is passed"):
                     classifier.decision_function(X.T)
             except NotImplementedError:
                 pass
@@ -1152,7 +1158,9 @@ def check_classifiers_train(name, classifier_orig):
             # check that probas for all classes sum to one
             assert_allclose(np.sum(y_prob, axis=1), np.ones(n_samples))
             # raises error on malformed input
-            with assert_raises(ValueError, msg="Malformed input"):
+            with assert_raises(ValueError, msg="The classifers {name} does not"
+                               " raise an error when incorrect/malformed input "
+                               "data for predict is passed"):
                 classifier.predict_proba(X.T)
             # raises error on malformed input for predict_proba
             with assert_raises(ValueError,
@@ -1321,7 +1329,9 @@ def check_regressors_train(name, regressor_orig):
         regressor.C = 0.01
 
     # raises error on malformed input for fit
-    with assert_raises(ValueError, msg="Malformed input for fit"):
+    with assert_raises(ValueError, msg="The regressors {name} does not"
+                                   " raise an error when incorrect/malformed input "
+                                   "data for fit is passed"):
         regressor.fit(X, y[:-1])
     # fit
     if name in CROSS_DECOMPOSITION:
