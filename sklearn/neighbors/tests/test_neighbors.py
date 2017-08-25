@@ -1341,7 +1341,7 @@ def test_radius_neighbors_outliers():
 
     # test check_outlier_handler error raise
     assert_raise_message(ValueError,
-                        'outlier_label',
-                        lambda:RNC(outlier_label='hello world'))
+                         'outlier_label',
+                         lambda: RNC(outlier_label='hello world'))
 
     neighbors.RadiusNeighborsRegressor()

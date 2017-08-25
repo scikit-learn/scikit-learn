@@ -10,8 +10,11 @@
 
 import numpy as np
 
-from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
-from .base import RadiusNeighborsMixin, SupervisedFloatMixin
+from .base import \
+    _check_weights, _get_weights, \
+    _check_outlier_handler,\
+    NeighborsBase, KNeighborsMixin,\
+    RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import RegressorMixin
 from ..utils import check_array
 
@@ -254,7 +257,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     """
 
     def __init__(self, radius=1.0, weights='uniform',
-                 algorithm='auto', leaf_size=30,p=2, metric='minkowski',
+                 algorithm='auto', leaf_size=30, p=2, metric='minkowski',
                  outlier_value=None, metric_params=None, **kwargs):
         self._init_params(radius=radius,
                           algorithm=algorithm,

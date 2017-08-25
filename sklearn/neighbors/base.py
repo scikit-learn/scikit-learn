@@ -101,8 +101,9 @@ def _get_weights(dist, weights):
 
 def _check_outlier_handler(outlier_handler, kind):
     """Check to make sure outlier_handler is valid"""
-    if (outlier_handler in [None, 'uniform', 'prior']
-        or isinstance(outlier_handler, (numbers.Integral, np.integer))):
+    if outlier_handler in [None, 'uniform', 'prior']:
+        return outlier_handler
+    elif isinstance(outlier_handler, (numbers.Integral, np.integer)):
         return outlier_handler
     else:
         raise ValueError("outlier_%s not recognized, should be int "
