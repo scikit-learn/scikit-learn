@@ -78,3 +78,14 @@ def test_affinity_propagation_predict_error():
     af = AffinityPropagation(affinity="precomputed")
     af.fit(S)
     assert_raises(ValueError, af.predict, X)
+
+
+def test_affinity_propagation_fit_non_convergence():
+    # In case of non-convergence of affinity_propagation(), the cluster centers should be an empty array
+    X = np.array([[0, 0], [1, 1], [-2, -2]])
+
+    # Force non-convergence by allowing only a single iteration
+    af = AffinityPropagation(preference=-10, max_iter=1).fit(X)
+
+    assert_equal(np.array([]), af.cluster_centers_)
+    assert_equal(np.array([0, 1, 2]), af.labels_)
