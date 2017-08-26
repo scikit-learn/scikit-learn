@@ -46,7 +46,8 @@ def check_invalid_max_features(est, X, y):
     max_features = X.shape[1]
     for invalid_max_n_feature in [-1, max_features + 1, 'gobbledigook']:
         transformer = SelectFromModel(estimator=est,
-                                      max_features=invalid_max_n_feature)
+                                      max_features=invalid_max_n_feature,
+                                      threshold=-np.inf)
         assert_raises(ValueError, transformer.fit, X, y)
 
 
@@ -54,7 +55,8 @@ def check_valid_max_features(est, X, y):
     max_features = X.shape[1]
     for valid_max_n_feature in [0, max_features, 'all', 5]:
         transformer = SelectFromModel(estimator=est,
-                                      max_features=valid_max_n_feature)
+                                      max_features=valid_max_n_feature,
+                                      threshold=-np.inf)
         X_new = transformer.fit_transform(X, y)
         if valid_max_n_feature == 'all':
             valid_max_n_feature = max_features
@@ -76,22 +78,27 @@ def check_max_features(est, X, y):
     check_valid_max_features(est, X, y)
     check_invalid_max_features(est, X, y)
 
-    transformer1 = SelectFromModel(estimator=est, max_features='all')
+    transformer1 = SelectFromModel(estimator=est, max_features='all',
+                                   threshold=-np.inf)
     transformer2 = SelectFromModel(estimator=est,
-                                   max_features=max_features)
+                                   max_features=max_features,
+                                   threshold=-np.inf)
     X_new1 = transformer1.fit_transform(X, y)
     X_new2 = transformer2.fit_transform(X, y)
     assert_array_equal(X_new1, X_new2)
 
     # Test max_features against actual model.
-    transformer1 = SelectFromModel(estimator=Lasso(alpha=0.025))
+    transformer1 = SelectFromModel(estimator=Lasso(alpha=0.025,
+                                        random_state=42))
     X_new1 = transformer1.fit_transform(X, y)
     scores1 = np.abs(transformer1.estimator_.coef_)
     candidate_indices1 = np.argsort(-scores1, kind='mergesort')
 
     for n_features in range(1, X_new1.shape[1] + 1):
-        transformer2 = SelectFromModel(estimator=Lasso(alpha=0.025),
-                                       max_features=n_features)
+        transformer2 = SelectFromModel(estimator=Lasso(alpha=0.025,
+                                       random_state=42),
+                                       max_features=n_features,
+                                       threshold=-np.inf)
         X_new2 = transformer2.fit_transform(X, y)
         scores2 = np.abs(transformer2.estimator_.coef_)
         candidate_indices2 = np.argsort(-scores2, kind='mergesort')
@@ -106,7 +113,8 @@ def check_max_features(est, X, y):
     for n_features in range(1, max_features + 1):
         transformer = SelectFromModel(
             FixedImportanceEstimator(feature_importances),
-            max_features=n_features)
+            max_features=n_features,
+            threshold=-np.inf)
         X_new = transformer.fit_transform(X, y)
         selected_feature_indices = np.where(transformer._get_support_mask())[0]
         assert_array_equal(selected_feature_indices, np.arange(n_features))
@@ -114,7 +122,8 @@ def check_max_features(est, X, y):
 
 
 def check_threshold_and_max_features(est, X, y):
-    transformer1 = SelectFromModel(estimator=est, max_features=3)
+    transformer1 = SelectFromModel(estimator=est, max_features=3,
+                                    threshold=-np.inf)
     X_new1 = transformer1.fit_transform(X, y)
 
     transformer2 = SelectFromModel(estimator=est, threshold=0.04)
@@ -124,29 +133,32 @@ def check_threshold_and_max_features(est, X, y):
                                    threshold=0.04)
     X_new3 = transformer3.fit_transform(X, y)
     assert_equal(X_new3.shape[1], min(X_new1.shape[1], X_new2.shape[1]))
-    selected_indices = \
-        transformer3.transform(np.arange(X.shape[1]))[np.newaxis, :]
-    assert_array_equal(X_new3, X[:, selected_indices[0][0]])
+    selected_indices = transformer3.transform(np.arange(X.shape[1])[np.newaxis, :])
+    assert_array_equal(X_new3, X[:, selected_indices[0]])
 
     """
     If threshold and max_features are not provided, all features are
-    returned, use threshold=None if it is not required.
+    returned, use threshold=-np.inf if it is not required.
     """
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1))
+    transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
+                                    random_state=42), threshold=-np.inf)
     X_new = transformer.fit_transform(X, y)
     assert_array_equal(X, X_new)
 
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1), max_features=3)
+    transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
+                                    random_state=42), max_features=3,
+                                    threshold=-np.inf)
     X_new = transformer.fit_transform(X, y)
     assert_equal(X_new.shape[1], 3)
 
-    # Threshold will be applied if it is not None
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1), threshold=1e-5)
+    transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
+                                    random_state=42), threshold=1e-5)
     X_new = transformer.fit_transform(X, y)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
     assert_array_equal(X_new, X[:, mask])
 
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1), threshold=1e-5,
+    transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
+                                  random_state=42), threshold=1e-5,
                                   max_features=4)
     X_new = transformer.fit_transform(X, y)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
@@ -185,7 +197,8 @@ def test_feature_importances():
     assert_almost_equal(importances, importances_bis)
 
     # For the Lasso and related models, the threshold defaults to 1e-5
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1), threshold=1e-5)
+    transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
+                                    random_state=42))
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
