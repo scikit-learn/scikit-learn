@@ -21,13 +21,8 @@ logger = logging.getLogger(__name__)
 
 def equal_similarities_and_preferences(S, preference):
     def all_equal_preferences():
-        if isinstance(preference, (int, float)):
-            return True
-        elif isinstance(preference, (list, tuple, np.ndarray)):
-            multi_preferences = np.array(preference)
-            return np.all(multi_preferences == multi_preferences[0])
-        else:
-            return False
+        multi_preferences = np.array(preference)
+        return np.all(multi_preferences == multi_preferences.flat[0])
 
     def all_equal_similarities():
         S.flat[::S.shape[0] + 1] = S.flat[1]  # Fill "diagonal" of S with first similarity value in S
