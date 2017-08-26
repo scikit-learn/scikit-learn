@@ -78,9 +78,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     use_sparse : bool, optional (default=True)
         Whether to use a sparse matrix (default) or a dense matrix for the
         impostor-pairs storage. Using a sparse matrix, the distance to
-        impostors is computed twice, but it is somewhat faster for larger
-        data sets than using a dense matrix. With a dense matrix, the unique
-        impostor pairs have to be identified explicitly.
+        impostors is computed twice, but it is faster for larger data sets
+        than using a dense matrix. With a dense matrix, the unique impostor
+        pairs have to be identified explicitly.
 
     max_iter : int, optional (default=50)
         Maximum number of iterations in the optimization.
@@ -680,7 +680,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         imp_col : array, shape (n_impostors,)
             Corresponding sample indices that violate a margin.
         dist : array, shape (n_impostors,)
-            dist[i] is the distance between samples imp1[i] and imp2[i].
+            dist[i] is the distance between samples imp_row[i] and imp_col[i].
         """
         n_samples = Lx.shape[0]
 
@@ -694,19 +694,18 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
                 # Subdivide ind_out x ind_in to chunks of a size that is
                 # fitting in memory
-                ii, jj = _find_impostors_batch(Lx[ind_out], Lx[ind_in],
-                                               margin_radii[ind_out],
-                                               margin_radii[ind_in])
+                imp_ind = _find_impostors_batch(Lx[ind_out], Lx[ind_in],
+                                                margin_radii[ind_out],
+                                                margin_radii[ind_in])
 
-                if len(ii):
+                if len(imp_ind):
                     # sample constraints if they are too many
-                    if len(ii) > self.max_constraints:
-                        dims = (len(ind_out), len(ind_in))
-                        ind = np.ravel_multi_index((ii, jj), dims=dims)
-                        ind_sampled = self.random_state_.choice(
-                            ind, self.max_constraints, replace=False)
-                        ii, jj = np.unravel_index(ind_sampled, dims=dims)
+                    if len(imp_ind) > self.max_constraints:
+                        imp_ind = self.random_state_.choice(
+                            imp_ind, self.max_constraints, replace=False)
 
+                    dims = (len(ind_out), len(ind_in))
+                    ii, jj = np.unravel_index(imp_ind, dims=dims)
                     imp_row = ind_out[ii]
                     imp_col = ind_in[jj]
                     new_imp = csr_matrix((np.ones(len(imp_row), dtype=np.int8),
@@ -727,26 +726,26 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
                 # Subdivide ind_out x ind_in to chunks of a size that is
                 # fitting in memory
-                ii, jj, dd = _find_impostors_batch(
+                imp_ind, imp_dist = _find_impostors_batch(
                     Lx[ind_out], Lx[ind_in], margin_radii[ind_out],
                     margin_radii[ind_in], return_distance=True)
 
-                if len(ii):
+                if len(imp_ind):
                     # sample constraints if they are too many
-                    if len(ii) > self.max_constraints:
-                        dims = (len(ind_out), len(ind_in))
-                        ind = np.ravel_multi_index((ii, jj), dims=dims)
+                    if len(imp_ind) > self.max_constraints:
                         ind_sampled = self.random_state_.choice(
-                            len(ind), self.max_constraints, replace=False)
-                        dd = np.asarray(dd)[ind_sampled]
-                        ind_sampled = ind[ind_sampled]
-                        ii, jj = np.unravel_index(ind_sampled, dims=dims)
+                            len(imp_ind), self.max_constraints, replace=False)
+                        imp_ind = imp_ind[ind_sampled]
+                        imp_dist = np.asarray(imp_dist)[ind_sampled]
 
+                    dims = (len(ind_out), len(ind_in))
+                    ii, jj = np.unravel_index(imp_ind, dims=dims)
                     imp_row.extend(ind_out[ii])
                     imp_col.extend(ind_in[jj])
-                    dist.extend(dd)
+                    dist.extend(imp_dist)
 
-            imp_row, imp_col = np.asarray(imp_row), np.asarray(imp_col)
+            imp_row = np.asarray(imp_row)
+            imp_col = np.asarray(imp_col)
             dist = np.asarray(dist)
 
         return imp_row, imp_col, dist
@@ -758,7 +757,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
 
 def select_target_neighbors(X, y, n_neighbors, algorithm='auto', n_jobs=1,
-                            verbose=True):
+                            verbose=1):
     """Finds the target neighbors of each sample, namely the k nearest
     neighbors of the same class.
 
@@ -789,6 +788,9 @@ def select_target_neighbors(X, y, n_neighbors, algorithm='auto', n_jobs=1,
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
         Doesn't affect :meth:`fit` method.
+
+    verbose : int, optional (default=1)
+        If 1 (default), progress information will be printed.
 
     Returns
     -------
@@ -846,19 +848,19 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
 
     Returns
     -------
-    imp_row : array, shape (n_impostors,)
-        Sample indices.
-    imp_col : array, shape (n_impostors,)
-        Corresponding sample indices that violate a margin.
+    imp_ind : array, shape (n_impostors,)
+        Linear indices of impostor pairs in euclidean_distances(X_out, X_in)
     dist : array, shape (n_impostors,), optional
-        dist[i] is the distance between samples imp_row[i] and imp_col[i].
+        dist[i] is the distance between samples imp_row[i] and imp_col[i],
+        where imp_row, imp_col = np.unravel_index(imp_ind, dims=(len(X_out),
+        len(X_in)))
     """
 
     n_samples_out = X_out.shape[0]
     bytes_per_row = X_in.shape[0] * X_in.itemsize
     batch_size = int(mem_budget // bytes_per_row)
 
-    imp_row, imp_col, dist = [], [], []
+    imp_ind, dist = [], []
 
     # X_in squared norm stays constant, so pre-compute it to get a speed-up
     X_in_norm_squared = row_norms(X_in, squared=True)
@@ -881,18 +883,17 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
         ind = np.unique(np.concatenate((ind1, ind2)))
 
         if len(ind):
-            ii, jj = np.unravel_index(ind, dist_out_in.shape)
-            imp_row.extend(ii + chunk.start)
-            imp_col.extend(jj)
+            imp_ind.extend(ind + chunk.start * len(X_in))
+
             if return_distance:
                 # This np.maximum would add another ~8% time of computation
                 np.maximum(dist_out_in, 0, out=dist_out_in)
-                dist.extend(dist_out_in[ii, jj])
+                dist.extend(dist_out_in.ravel()[ind])
 
     if return_distance:
-        return imp_row, imp_col, dist
+        return imp_ind, dist
     else:
-        return imp_row, imp_col
+        return imp_ind
 
 
 def paired_distances_batch(X, ind_a, ind_b, mem_budget=int(1e7)):
