@@ -5,6 +5,8 @@
 
 # License: BSD 3 clause
 
+import logging
+
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
@@ -12,6 +14,9 @@ from ..utils import as_float_array, check_array
 from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
+
+
+logger = logging.getLogger(__name__)
 
 
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
@@ -177,6 +182,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         cluster_centers_indices = np.unique(labels)
         labels = np.searchsorted(cluster_centers_indices, labels)
     else:
+        logger.warning("Affinity propagation did not converge, this model will not have any cluster centers.")
         labels = np.arange(S.shape[0])
         cluster_centers_indices = []
 
@@ -326,4 +332,9 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")
 
-        return pairwise_distances_argmin(X, self.cluster_centers_)
+        if self.cluster_centers_.size > 0:
+            return pairwise_distances_argmin(X, self.cluster_centers_)
+        else:
+            logger.warning("This model does not have any cluster centers because affinity propagation did not "
+                           "converge. Returning unique labels for the provided samples.")
+            return np.arange(X.shape[0])
