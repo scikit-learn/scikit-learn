@@ -87,5 +87,5 @@ def test_affinity_propagation_fit_non_convergence():
     # Force non-convergence by allowing only a single iteration
     af = AffinityPropagation(preference=-10, max_iter=1).fit(X)
 
-    assert_equal(np.array([]), af.cluster_centers_)
-    assert_equal(np.array([0, 1, 2]), af.labels_)
+    assert_array_equal(np.empty((0, 2)), af.cluster_centers_)
+    assert_array_equal(np.array([0, 1, 2]), af.labels_)

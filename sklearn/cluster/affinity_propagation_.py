@@ -177,9 +177,8 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         cluster_centers_indices = np.unique(labels)
         labels = np.searchsorted(cluster_centers_indices, labels)
     else:
-        labels = np.empty((n_samples, 1))
-        cluster_centers_indices = None
-        labels.fill(np.nan)
+        labels = np.arange(S.shape[0])
+        cluster_centers_indices = []
 
     if return_n_iter:
         return cluster_centers_indices, labels, it + 1
