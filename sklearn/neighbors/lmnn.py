@@ -679,8 +679,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             Sample indices.
         imp_col : array, shape (n_impostors,)
             Corresponding sample indices that violate a margin.
-        dist : array, shape (n_impostors,)
-            dist[i] is the distance between samples imp_row[i] and imp_col[i].
+        imp_dist : array, shape (n_impostors,)
+            imp_dist[i] is the squared distance between Lx[imp_row[i]] and
+            Lx[imp_col[i]].
         """
         n_samples = Lx.shape[0]
 
@@ -716,17 +717,17 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             impostors_sp = impostors_sp.tocoo(copy=False)
             imp_row = impostors_sp.row
             imp_col = impostors_sp.col
-            dist = paired_distances_batch(Lx, imp_row, imp_col)
+            imp_dist = paired_distances_batch(Lx, imp_row, imp_col)
         else:
             # Initialize impostors vectors
-            imp_row, imp_col, dist = [], [], []
+            imp_row, imp_col, imp_dist = [], [], []
             for class_id in self.classes_non_singleton_[:-1]:
                 ind_in, = np.where(y == class_id)
                 ind_out, = np.where(y > class_id)
 
                 # Subdivide ind_out x ind_in to chunks of a size that is
                 # fitting in memory
-                imp_ind, imp_dist = _find_impostors_batch(
+                imp_ind, dist_batch = _find_impostors_batch(
                     Lx[ind_out], Lx[ind_in], margin_radii[ind_out],
                     margin_radii[ind_in], return_distance=True)
 
@@ -736,19 +737,26 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                         ind_sampled = self.random_state_.choice(
                             len(imp_ind), self.max_constraints, replace=False)
                         imp_ind = imp_ind[ind_sampled]
-                        imp_dist = np.asarray(imp_dist)[ind_sampled]
+                        dist_batch = dist_batch[ind_sampled]
 
                     dims = (len(ind_out), len(ind_in))
                     ii, jj = np.unravel_index(imp_ind, dims=dims)
-                    imp_row.extend(ind_out[ii])
-                    imp_col.extend(ind_in[jj])
-                    dist.extend(imp_dist)
+                    ind_out_batch = ind_out[ii]
+                    ind_in_batch = ind_in[jj]
+                    try:
+                        imp_row.extend(ind_out_batch)
+                        imp_col.extend(ind_in_batch)
+                        imp_dist.extend(dist_batch)
+                    except TypeError:
+                        imp_row.append(ind_out_batch)
+                        imp_col.append(ind_in_batch)
+                        imp_dist.append(dist_batch)
 
             imp_row = np.asarray(imp_row)
             imp_col = np.asarray(imp_col)
-            dist = np.asarray(dist)
+            imp_dist = np.asarray(imp_dist)
 
-        return imp_row, imp_col, dist
+        return imp_row, imp_col, imp_dist
 
 
 ##########################
@@ -883,17 +891,25 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
         ind = np.unique(np.concatenate((ind1, ind2)))
 
         if len(ind):
-            imp_ind.extend(ind + chunk.start * len(X_in))
+            ind_plus_offset = ind + chunk.start * len(X_in)
+            try:
+                imp_ind.extend(ind_plus_offset)
+            except TypeError:
+                imp_ind.append(ind_plus_offset)
 
             if return_distance:
                 # This np.maximum would add another ~8% time of computation
                 np.maximum(dist_out_in, 0, out=dist_out_in)
-                dist.extend(dist_out_in.ravel()[ind])
+                dist_chunk = dist_out_in.ravel()[ind]
+                try:
+                    dist.extend(dist_chunk)
+                except TypeError:
+                    dist.append(dist_chunk)
 
     if return_distance:
-        return imp_ind, dist
+        return np.asarray(imp_ind), np.asarray(dist)
     else:
-        return imp_ind
+        return np.asarray(imp_ind)
 
 
 def paired_distances_batch(X, ind_a, ind_b, mem_budget=int(1e7)):
