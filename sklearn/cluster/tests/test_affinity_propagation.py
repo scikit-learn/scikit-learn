@@ -5,9 +5,7 @@ Testing for Clustering methods
 
 import numpy as np
 
-from sklearn.utils.testing import assert_equal, assert_false, assert_true
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_equal, assert_false, assert_true, assert_array_equal, assert_raises
 
 from sklearn.cluster.affinity_propagation_ import AffinityPropagation, equal_similarities_and_preferences
 from sklearn.cluster.affinity_propagation_ import affinity_propagation
