@@ -5,11 +5,11 @@ Testing for Clustering methods
 
 import numpy as np
 
-from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_equal, assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 
-from sklearn.cluster.affinity_propagation_ import AffinityPropagation
+from sklearn.cluster.affinity_propagation_ import AffinityPropagation, equal_similarities_and_preferences
 from sklearn.cluster.affinity_propagation_ import affinity_propagation
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.metrics import euclidean_distances
@@ -99,3 +99,19 @@ def test_affinity_propagation_predict_non_convergence():
     af = AffinityPropagation(preference=-10, max_iter=1).fit(X)
 
     assert_array_equal(np.array([0, 1, 2]), af.predict(X))
+
+
+def test_equal_similarities_and_preferences():
+    X = np.array([[0, 0], [1, 1], [-2, -2]])  # Unequal distances
+    S = -euclidean_distances(X, squared=True)
+
+    assert_false(equal_similarities_and_preferences(S, 0))
+    assert_false(equal_similarities_and_preferences(S, [0, 0]))
+    assert_false(equal_similarities_and_preferences(S, [0, 1]))
+
+    X = np.array([[0, 0], [1, 1]])  # Equal distances
+    S = -euclidean_distances(X, squared=True)
+
+    assert_false(equal_similarities_and_preferences(S, [0, 1]))  # Different preferences
+    assert_true(equal_similarities_and_preferences(S, [0, 0]))
+    assert_true(equal_similarities_and_preferences(S, 0))

@@ -19,6 +19,23 @@ from ..metrics import pairwise_distances_argmin
 logger = logging.getLogger(__name__)
 
 
+def equal_similarities_and_preferences(S, preference):
+    def all_equal_preferences():
+        if isinstance(preference, (int, float)):
+            return True
+        elif isinstance(preference, (list, tuple, np.ndarray)):
+            multi_preferences = np.array(preference)
+            return np.all(multi_preferences == multi_preferences[0])
+        else:
+            return False
+
+    def all_equal_similarities():
+        S.flat[::S.shape[0] + 1] = S.flat[1]  # Fill "diagonal" of S with first similarity value in S
+        return np.all(S.flat == S.flat[0])
+
+    return all_equal_preferences() and all_equal_similarities()
+
+
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                          damping=0.5, copy=True, verbose=False,
                          return_n_iter=False):
