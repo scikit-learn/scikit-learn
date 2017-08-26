@@ -89,6 +89,30 @@ def test_affinity_propagation_fit_non_convergence():
     assert_array_equal(np.array([0, 1, 2]), af.labels_)
 
 
+def test_affinity_propagation_equal_mutual_similarities():
+    X = np.array([[-1, 1], [1, -1]])
+    S = -euclidean_distances(X, squared=True)
+
+    res = affinity_propagation(S, preference=0)  # preference > similarity
+    cluster_center_indices, labels = res
+
+    # expect every sample to become an exemplar
+    assert_array_equal([0, 1], cluster_center_indices)
+    assert_array_equal([0, 1], labels)
+
+    cluster_center_indices, labels = affinity_propagation(S, preference=-10)  # preference < similarity
+
+    # expect one cluster, with arbitrary (first) sample as exemplar
+    assert_array_equal([0], cluster_center_indices)
+    assert_array_equal([0, 0], labels)
+
+    cluster_center_indices, labels = affinity_propagation(S, preference=[-20, -10])  # different preferences
+
+    # expect one cluster, with highest-preference sample as exemplar
+    assert_array_equal([1], cluster_center_indices)
+    assert_array_equal([0, 0], labels)
+
+
 def test_affinity_propagation_predict_non_convergence():
     # In case of non-convergence of affinity_propagation(), the cluster centers should be an empty array
     X = np.array([[0, 0], [1, 1], [-2, -2]])

@@ -112,6 +112,16 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     if damping < 0.5 or damping >= 1:
         raise ValueError('damping must be >= 0.5 and < 1')
 
+    if equal_similarities_and_preferences(S, preference):
+        # It makes no sense to run the algorithm in this case, so simply return 1 or n_samples clusters,
+        # depending on preferences
+        if np.array(preference).flat[0] >= S.flat[1]:
+            return (np.arange(n_samples), np.arange(n_samples), 0) if return_n_iter \
+                else (np.arange(n_samples), np.arange(n_samples))
+        else:
+            return (np.array([0]), np.array([0] * n_samples), 0) if return_n_iter \
+                else (np.array([0]), np.array([0] * n_samples))
+
     random_state = np.random.RandomState(0)
 
     # Place preference on the diagonal of S
