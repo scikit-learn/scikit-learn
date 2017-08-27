@@ -158,7 +158,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         if verbose:
             print("Did not converge")
 
-    I = np.where(np.diag(A + R) > 0)[0]
+    I = np.flatnonzero(E)
     K = I.size  # Identify exemplars
 
     if K > 0:
