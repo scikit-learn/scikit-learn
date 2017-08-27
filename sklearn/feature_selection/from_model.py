@@ -127,7 +127,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         The threshold value used for feature selection.
     """
     def __init__(self, estimator, threshold=None, prefit=False,
-            max_features=None, norm_order=1):
+                 max_features=None, norm_order=1):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
@@ -142,8 +142,8 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
             elif self.max_features == 'all':
                     return
             raise ValueError(
-                    "max_features should be >=0, <= n_features or 'all'; got %r."
-                    " Use max_features='all' to return all features."
+                    "max_features should be >=0, <= n_features or 'all';"
+                    " got %r. Use max_features='all' to return all features."
                     % self.max_features)
 
     def _check_params(self, X, y):
@@ -157,8 +157,9 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         elif hasattr(self, 'estimator_'):
             estimator = self.estimator_
         else:
-            raise ValueError('Either fit the model before transform or set "prefit=True"'
-                ' while passing the fitted estimator to the constructor.')
+            raise ValueError('Either fit the model before transform or set'
+                             ' "prefit=True" while passing the fitted'
+                             ' estimator to the constructor.')
         scores = _get_feature_importances(estimator, self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         mask = np.zeros_like(scores, dtype=bool)

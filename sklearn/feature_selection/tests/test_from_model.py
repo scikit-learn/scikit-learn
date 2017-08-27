@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import skip_if_32bit
-from sklearn.utils.testing import assert_equal
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
@@ -89,7 +88,7 @@ def check_max_features(est, X, y):
 
     # Test max_features against actual model.
     transformer1 = SelectFromModel(estimator=Lasso(alpha=0.025,
-                                        random_state=42))
+                                   random_state=42))
     X_new1 = transformer1.fit_transform(X, y)
     scores1 = np.abs(transformer1.estimator_.coef_)
     candidate_indices1 = np.argsort(-scores1, kind='mergesort')
@@ -123,7 +122,7 @@ def check_max_features(est, X, y):
 
 def check_threshold_and_max_features(est, X, y):
     transformer1 = SelectFromModel(estimator=est, max_features=3,
-                                    threshold=-np.inf)
+                                   threshold=-np.inf)
     X_new1 = transformer1.fit_transform(X, y)
 
     transformer2 = SelectFromModel(estimator=est, threshold=0.04)
@@ -133,7 +132,8 @@ def check_threshold_and_max_features(est, X, y):
                                    threshold=0.04)
     X_new3 = transformer3.fit_transform(X, y)
     assert_equal(X_new3.shape[1], min(X_new1.shape[1], X_new2.shape[1]))
-    selected_indices = transformer3.transform(np.arange(X.shape[1])[np.newaxis, :])
+    selected_indices = \
+        transformer3.transform(np.arange(X.shape[1])[np.newaxis, :])
     assert_array_equal(X_new3, X[:, selected_indices[0]])
 
     """
@@ -141,18 +141,18 @@ def check_threshold_and_max_features(est, X, y):
     returned, use threshold=-np.inf if it is not required.
     """
     transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                    random_state=42), threshold=-np.inf)
+                                  random_state=42), threshold=-np.inf)
     X_new = transformer.fit_transform(X, y)
     assert_array_equal(X, X_new)
 
     transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                    random_state=42), max_features=3,
-                                    threshold=-np.inf)
+                                  random_state=42), max_features=3,
+                                  threshold=-np.inf)
     X_new = transformer.fit_transform(X, y)
     assert_equal(X_new.shape[1], 3)
 
     transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                    random_state=42), threshold=1e-5)
+                                  random_state=42), threshold=1e-5)
     X_new = transformer.fit_transform(X, y)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
     assert_array_equal(X_new, X[:, mask])
@@ -198,7 +198,7 @@ def test_feature_importances():
 
     # For the Lasso and related models, the threshold defaults to 1e-5
     transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                    random_state=42))
+                                  random_state=42))
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
