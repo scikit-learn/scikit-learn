@@ -5,14 +5,14 @@ Testing for Clustering methods
 
 import numpy as np
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import (
+    assert_equal, assert_false, assert_true, assert_array_equal, assert_raises
+)
 
 from sklearn.cluster.affinity_propagation_ import AffinityPropagation
-from sklearn.cluster.affinity_propagation_ import equal_similarities_and_preferences
+from sklearn.cluster.affinity_propagation_ import (
+    equal_similarities_and_preferences
+)
 from sklearn.cluster.affinity_propagation_ import affinity_propagation
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.metrics import euclidean_distances
