@@ -393,6 +393,8 @@ Samples generator
    :toctree: generated/
    :template: function.rst
 
+   ensemble.make_stack_layer
+
 
 partial dependence
 ------------------

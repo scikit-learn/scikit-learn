@@ -1078,37 +1078,41 @@ Optionally, weights can be provided for the individual classifiers::
 Stacked generalization
 ======================
 
-Stacked generalization is another method of combining estimators to reduce their
-biases [W1992]_ by combining several estimators (possibly non-linearly) stacked
-together in layers. Each layer will contain estimators and their outputs are
-used as features to the next layer.
+.. currentmodule:: sklearn.ensemble
 
-The method is as follows [MLW2015]_:
+Stacked generalization is another method of combining estimators to reduce
+their biases [W1992]_ by combining several estimators (possibly non-linearly)
+stacked together in layers. Each layer will contain estimators and their
+predictions are used as features to the next layer.
+
+Considering one of the layers in a stacked generalization, the method is as
+follows [MLW2015]_:
 
 1. Split the training set in 2 parts;
-2. Train the model on the first part and create predictions for the second
-   part;
-3. Train the model on the second part and create predictions for the first
-   part;
-4. Use this predictions to train the models on the next layer;
-5. Fit the model on the whole training set.
+2. Train each estimator on the layer using the first part of the training set
+   and create predictions for the second part;
+3. Train each estimator on the layer using the second part of the training set
+   and create predictions for the first part;
+4. Use these predictions to train the estimators on the next layer;
+5. Fit each estimator on the whole training set.
 
-As stacked generalization is a generic framework for combining estimators, it
-works with regression and classification problems. The API reflects that, so
-it's the same for both categories.
+As stacked generalization is a generic framework for combining supervised
+estimators, it works with regression and classification problems. The API
+reflects that, so it's the same for both categories.
 
-Usage:
+Usage
 ------
 
 The most basic stacked ensemble consists of two layers: a layer of base
 generalizers and a single estimator for combining the output of the base
-estimators. We implement it with the `make_stack_layer` function.
+estimators. We implement it with the :func:`make_stack_layer` function.
 
 Stacked generalization applied to regression
 ............................................
 
-For this problem, assume some regressors were tested and have a good performance
-on the dataset. Here we used a `LassoCV`, `RidgeCV` and `SVR`::
+For this problem, assume some regressors were tested and have a good
+performance on the dataset. Here we used a ``LassoCV``, ``RidgeCV`` and
+``SVR``::
 
     >>> from sklearn.linear_model import LassoCV, RidgeCV
     >>> from sklearn.svm import SVR
@@ -1121,8 +1125,8 @@ on the dataset. Here we used a `LassoCV`, `RidgeCV` and `SVR`::
     ...                    ("ridge", ridge),
     ...                    ("svr", svr)]
 
-Now here is where `make_stack_layer` comes into play: it will take the base
-regressors and turn them into a transformer::
+Now here is where :func:`make_stack_layer` comes into play: it will take the
+base regressors and turn them into a transformer::
 
     >>> from sklearn.ensemble import make_stack_layer
     >>> layer0 = make_stack_layer(base_regressors)
@@ -1133,7 +1137,7 @@ regressors without leaking data to the next layer, so no need to worry.
 The output for ``layer0`` is a matrix where each column is the prediction from
 one of the base regressors. We can now combine them in any way, including
 training another regressor with it. For this example, we use a linear
-regression and build the final model using `Pipeline` class::
+regression and build the final model using :class:`sklearn.pipeline.Pipeline`::
 
     >>> from sklearn.ensemble import make_stack_layer
     >>> from sklearn.pipeline import Pipeline
@@ -1157,8 +1161,8 @@ Stacked generalization applied to classification
 
 As stated before, stacked generalization can be applied both to regression and
 classification algorithms. The procedure is the same: combine base classifiers
-into one transformer with `make_stack_layer` and use it as a step in the final
-classifier::
+into one transformer with :func:`make_stack_layer` and use it as a step in the
+final classifier::
 
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.svm import SVC
@@ -1179,8 +1183,8 @@ classifier::
     ...                              ('layer1', combiner)])
 
 We can then apply ``final_classifier`` in our classification problem. The
-following figure shows how the final classifier combined the decision boundaries
-from the base classifiers when applied to the Iris dataset
+following figure shows how the final classifier combined the decision
+boundaries from the base classifiers when applied to the Iris dataset
 (:func:`sklearn.datasets.load_iris`).
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_stacked_generalization_classification_001.png
@@ -1188,17 +1192,27 @@ from the base classifiers when applied to the Iris dataset
     :align: center
     :scale: 75%
 
-The `StackingTransformer`
-------------------------
+The :class:`StackingTransformer`
+---------------------------
 
 Under the hood, this is the class that implements what's needed to turn an
 estimator into a transformer that can be used for stacked
-generalization. `make_stack_layer` is actually just a wrapper that takes the
-estimators, wraps them with `StackingTransformer` and joins everything with
-`FeatureUnion`.
+generalization. :func:`make_stack_layer` is actually just a wrapper that takes
+the estimators, wraps them with :class:`StackingTransformer` and joins
+everything with :class:`sklearn.pipeline.FeatureUnion`.
 
-On the simpler use cases, `make_stack_layer` should be enough but for some
-special cases, it can be useful to use `StackingTransformer` directly.
+On the simpler use cases, :func:`make_stack_layer` should be enough but for
+some special cases, it can be useful to use :class:`StackingTransformer`
+directly.
+
+.. note:: ``fit_transform()`` versus ``fit().transform()``
+
+   Although :class:`StackingTransformer` presents both ways, ``fit_transform``
+   should be used in almost every case. Calling ``fit_transform`` will output
+   the cross validation transform, while ``fit().transform()`` won't. The
+   latter should only be used when the cross validation prediction is not
+   wanted, for example when working with non i.i.d data. See the next session
+   for more examples.
 
 Advanced usage
 --------------
@@ -1220,8 +1234,8 @@ layer::
     ...      ('rf2', RandomForestClassifier(criterion='entropy'))],
     ...     cv=None)
 
-Then split the data and train the first layer only on part of it. Use the fitted
-model to transform the second part::
+Then split the data and train the first layer only on part of it. Use the
+fitted model to transform the second part::
 
     >>> from sklearn.model_selection import train_test_split
     >>> X0, X1, y0, y1 = train_test_split(X, y, test_size=.1)
@@ -1234,8 +1248,8 @@ Now train the combiner using the transformed data.
     >>> combiner = LogisticRegression().fit(X1_transformed, y1)
 
 That's it. The advantage of doing this method is that it can be faster than
-doing a full cross validation split on the first layer. The obvious disadvantage
-is that less data is used to train the model.
+doing a full cross validation split on the first layer. The obvious
+disadvantage is that less data is used to train the model.
 
 Stacking multiple layers together
 .................................

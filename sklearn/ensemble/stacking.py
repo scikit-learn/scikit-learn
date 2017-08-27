@@ -144,7 +144,7 @@ def _identity_transformer():
     return FunctionTransformer(_identity)
 
 
-def make_stack_layer(base_estimators=[], restack=False, cv=3, method='auto',
+def make_stack_layer(base_estimators, restack=False, cv=3, method='auto',
                      n_jobs=1, n_cv_jobs=1, transformer_weights=None):
     """ Construct single layer for model stacking
 
@@ -188,16 +188,23 @@ def make_stack_layer(base_estimators=[], restack=False, cv=3, method='auto',
     >>> from sklearn.ensemble import make_stack_layer
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> from sklearn.svm import SVC
-    >>> t = make_stack_layer(KNeighborsClassifier(n_neighbors=3), SVC())
+    >>> t = make_stack_layer([('knn', KNeighborsClassifier(n_neighbors=3)),
+    ...                       ('svc', SVC())])
     >>> X = np.array([[1, 3], [.12, 1], [.5, -2], [1, -1], [-2, .1], [7, -84]])
     >>> y = np.array([1, 0, 0, 1, 0, 1])
     >>> t.fit_transform(X, y) # doctest: +NORMALIZE_WHITESPACE
-    array([[ 0.66666667,  0.33333333,  0.        ],
-           [ 0.66666667,  0.33333333,  1.        ],
-           [ 0.66666667,  0.33333333,  1.        ],
-           [ 0.66666667,  0.33333333,  0.        ],
-           [ 0.66666667,  0.33333333,  0.        ],
-           [ 0.66666667,  0.33333333,  0.        ]])
+    array([[  6.66666667e-01,   3.33333333e-01,   0.00000000e+00,
+             -4.44715665e-04],
+           [  6.66666667e-01,   3.33333333e-01,   0.00000000e+00,
+              1.04443234e-02],
+           [  6.66666667e-01,   3.33333333e-01,   0.00000000e+00,
+              2.01594603e-02],
+           [  6.66666667e-01,   3.33333333e-01,   0.00000000e+00,
+             -6.22390628e-02],
+           [  6.66666667e-01,   3.33333333e-01,   0.00000000e+00,
+             -1.10049720e-01],
+           [  6.66666667e-01,   3.33333333e-01,   0.00000000e+00,
+             -4.09417930e-02]])
     """
     transformer_list = [(name, StackingTransformer(estimator, cv=cv,
                                                    method=method,
