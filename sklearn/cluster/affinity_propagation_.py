@@ -25,7 +25,9 @@ def equal_similarities_and_preferences(S, preference):
         return np.all(multi_preferences == multi_preferences.flat[0])
 
     def all_equal_similarities():
-        S.flat[::S.shape[0] + 1] = S.flat[1]  # Fill "diagonal" of S with first similarity value in S
+        # Fill "diagonal" of S with first similarity value in S
+        S.flat[::S.shape[0] + 1] = S.flat[1]
+
         return np.all(S.flat == S.flat[0])
 
     return all_equal_preferences() and all_equal_similarities()
@@ -108,16 +110,20 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         raise ValueError('damping must be >= 0.5 and < 1')
 
     if n_samples == 1:
-        # It makes no sense to run the algorithm in this case, so return 1 cluster equal to the single sample
-        return (np.array([0]), np.array([0]), 0) if return_n_iter else (np.array([0], np.array([0])))
+        # It makes no sense to run the algorithm in this case, so return 1
+        # cluster equal to the single sample
+        return (np.array([0]), np.array([0]), 0) if return_n_iter \
+            else (np.array([0], np.array([0])))
     elif equal_similarities_and_preferences(S, preference):
-        # It makes no sense to run the algorithm in this case, so return 1 or n_samples clusters,
-        # depending on preferences
+        # It makes no sense to run the algorithm in this case, so return 1 or
+        # n_samples clusters, depending on preferences
         if np.array(preference).flat[0] >= S.flat[1]:
-            return (np.arange(n_samples), np.arange(n_samples), 0) if return_n_iter \
+            return (np.arange(n_samples), np.arange(n_samples), 0) \
+                if return_n_iter \
                 else (np.arange(n_samples), np.arange(n_samples))
         else:
-            return (np.array([0]), np.array([0] * n_samples), 0) if return_n_iter \
+            return (np.array([0]), np.array([0] * n_samples), 0) \
+                if return_n_iter \
                 else (np.array([0]), np.array([0] * n_samples))
 
     random_state = np.random.RandomState(0)
@@ -207,7 +213,8 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         cluster_centers_indices = np.unique(labels)
         labels = np.searchsorted(cluster_centers_indices, labels)
     else:
-        logger.warning("Affinity propagation did not converge, this model will not have any cluster centers.")
+        logger.warning("Affinity propagation did not converge, this model "
+                       "will not have any cluster centers.")
         labels = np.arange(S.shape[0])
         cluster_centers_indices = []
 
@@ -360,6 +367,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         if self.cluster_centers_.size > 0:
             return pairwise_distances_argmin(X, self.cluster_centers_)
         else:
-            logger.warning("This model does not have any cluster centers because affinity propagation did not "
-                           "converge. Returning unique labels for the provided samples.")
+            logger.warning("This model does not have any cluster centers "
+                           "because affinity propagation did not converge. "
+                           "Returning unique labels for the provided samples.")
             return np.arange(X.shape[0])
