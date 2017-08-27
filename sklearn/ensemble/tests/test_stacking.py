@@ -9,7 +9,7 @@ Testing for the stacking ensemble module (sklearn.ensemble.stacking).
 from copy import deepcopy
 import numpy as np
 from sklearn.utils.testing import (assert_equal, assert_array_equal)
-from sklearn.ensemble import (StackingTransformer, StackLayer, make_stack_layer)
+from sklearn.ensemble import (StackingTransformer, make_stack_layer)
 from sklearn.linear_model import (RidgeClassifier, LinearRegression,
                                   LogisticRegression)
 from sklearn.ensemble import RandomForestClassifier
@@ -85,7 +85,7 @@ def test_classification():
 
 def test_multi_output_classification():
     clf_base = RandomForestClassifier(random_state=RANDOM_SEED)
-    clf = StackMetaEstimator(clf_base, method='predict_proba')
+    clf = StackingTransformer(clf_base, method='predict_proba')
     X, y = datasets.make_multilabel_classification()
     Xt = clf.fit_transform(X[:-10], y[:-10])
     print(Xt)
@@ -94,7 +94,9 @@ def test_multi_output_classification():
 
 STACK_LAYER_PARAMS = {'restack': [True, False],
                       'cv': [3, StratifiedKFold()],
-                      'method': ['auto', 'predict', 'predict_proba']}
+                      'method': ['auto', 'predict', 'predict_proba'],
+                      'n_jobs': [1, 2],
+                      'n_cv_jobs': [1, 2]}
 
 
 def _check_restack(X, Xorig):
@@ -102,15 +104,15 @@ def _check_restack(X, Xorig):
     assert_array_equal(Xorig, X[:, -Xorig.shape[1]:])
 
 
-def _check_layer(l):
+def _check_layer(l, restack):
     # check that we can fit_transform the data
     Xt = l.fit_transform(X, y)
-    if l.restack:
+    if restack:
         _check_restack(Xt, X)
 
     # check that we can transform the data
     Xt = l.transform(X)
-    if l.restack:
+    if restack:
         _check_restack(Xt, X)
 
     # check that `fit` is accessible
@@ -122,11 +124,14 @@ def test_layer_regression():
                  ('svr', LinearSVR())]
 
     for params in ParameterGrid(STACK_LAYER_PARAMS):
+        if params['n_jobs'] != 1 and params['n_cv_jobs'] != 1:
+            continue  # nested parallelism is not supported
+
         if params['method'] is 'predict_proba':
             continue
         # assert constructor
-        reg_layer = StackLayer(base_estimators=base_regs, **params)
-        _check_layer(reg_layer)
+        reg_layer = make_stack_layer(base_estimators=base_regs, **params)
+        _check_layer(reg_layer, params['restack'])
 
 
 def test_layer_classification():
@@ -136,28 +141,20 @@ def test_layer_classification():
                                                 criterion='entropy'))]
 
     for params in ParameterGrid(STACK_LAYER_PARAMS):
+        if params['n_jobs'] != 1 and params['n_cv_jobs'] != 1:
+            continue  # nested parallelism is not supported
+
         # assert constructor
-        clf_layer = StackLayer(base_estimators=base_clfs, **params)
-        _check_layer(clf_layer)
+        clf_layer = make_stack_layer(base_estimators=base_clfs, **params)
+        _check_layer(clf_layer, params['restack'])
 
 
 def test_layer_restack():
-    base_estimators = [LinearRegression(), LinearRegression()]
-    blended_layer = make_stack_layer(*base_estimators, restack=True,
+    base_estimators = [('lr1', LinearRegression()),
+                       ('lr2', LinearRegression())]
+    blended_layer = make_stack_layer(base_estimators, restack=True,
                                      method='predict')
     X = np.random.rand(100, 3)
     y = np.random.rand(100)
     Xt = blended_layer.fit_transform(X, y)
     assert_array_equal(X, Xt[:, 2:])
-
-
-def test_stacking_shortcuts():
-    # Just test if the API generates the expected pipelines
-    clf1 = RidgeClassifier(random_state=1)
-    clf2 = LogisticRegression(random_state=1)
-    clf3 = RandomForestClassifier(random_state=1)
-
-    layer = make_stack_layer(clf1, clf2, clf3)
-
-    assert_array_equal([x[1].base_estimator for x in layer.transformer_list],
-                       [clf1, clf2, clf3])

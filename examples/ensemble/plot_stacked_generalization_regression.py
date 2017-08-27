@@ -26,7 +26,7 @@ from sklearn.linear_model import LassoCV, RidgeCV, LinearRegression
 from sklearn.svm import SVR
 
 # stacking api
-from sklearn.ensemble import StackLayer
+from sklearn.ensemble import make_stack_layer
 from sklearn.pipeline import Pipeline
 
 # dataset
@@ -80,7 +80,7 @@ for i, (name, regressor) in enumerate(base_regressors):
 
 # Stacked ensemble: we use the base regressors as features for a new linear
 # regressor.
-layer0 = StackLayer(base_regressors)
+layer0 = make_stack_layer(base_regressors)
 final_regressor = Pipeline([('layer0', layer0),
                             ('layer1', LinearRegression())])
 

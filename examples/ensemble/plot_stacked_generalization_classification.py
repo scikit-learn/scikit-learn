@@ -20,7 +20,7 @@ from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 
 # stacking api
-from sklearn.ensemble import StackLayer
+from sklearn.ensemble import make_stack_layer
 from sklearn.pipeline import Pipeline
 
 # dataset
@@ -77,7 +77,7 @@ for i, (name, classifier) in enumerate(base_classifiers):
 # Stacked ensemble: we use the base classifiers as features for another model
 
 
-layer0 = StackLayer(base_classifiers)
+layer0 = make_stack_layer(base_classifiers)
 
 X2_train = layer0.fit_transform(X_train, y_train)
 

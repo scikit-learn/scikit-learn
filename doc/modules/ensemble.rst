@@ -1102,14 +1102,13 @@ Usage:
 
 The most basic stacked ensemble consists of two layers: a layer of base
 generalizers and a single estimator for combining the output of the base
-estimators. We implement it with the `StackLayer` class.
+estimators. We implement it with the `make_stack_layer` function.
 
 Stacked generalization applied to regression
 ............................................
 
 For this problem, assume some regressors were tested and have a good performance
-on the dataset. Here we used a `LassoCV`, `RidgeCV` and
-`SVR`::
+on the dataset. Here we used a `LassoCV`, `RidgeCV` and `SVR`::
 
     >>> from sklearn.linear_model import LassoCV, RidgeCV
     >>> from sklearn.svm import SVR
@@ -1122,11 +1121,11 @@ on the dataset. Here we used a `LassoCV`, `RidgeCV` and
     ...                    ("ridge", ridge),
     ...                    ("svr", svr)]
 
-Now here is where `StackLayer` comes into play: it will take the base regressors
-and turn them into a transformer::
+Now here is where `make_stack_layer` comes into play: it will take the base
+regressors and turn them into a transformer::
 
-    >>> from sklearn.ensemble import StackLayer
-    >>> layer0 = StackLayer(base_regressors)
+    >>> from sklearn.ensemble import make_stack_layer
+    >>> layer0 = make_stack_layer(base_regressors)
 
 This transformer already implements the proper algorithm to train the base
 regressors without leaking data to the next layer, so no need to worry.
@@ -1136,7 +1135,7 @@ one of the base regressors. We can now combine them in any way, including
 training another regressor with it. For this example, we use a linear
 regression and build the final model using `Pipeline` class::
 
-    >>> from sklearn.ensemble import StackLayer
+    >>> from sklearn.ensemble import make_stack_layer
     >>> from sklearn.pipeline import Pipeline
     >>> from sklearn.linear_model import LinearRegression
 
@@ -1158,7 +1157,7 @@ Stacked generalization applied to classification
 
 As stated before, stacked generalization can be applied both to regression and
 classification algorithms. The procedure is the same: combine base classifiers
-into one transformer with `StackLayer` and use it as a step in the final
+into one transformer with `make_stack_layer` and use it as a step in the final
 classifier::
 
     >>> from sklearn.linear_model import LogisticRegression
@@ -1174,7 +1173,7 @@ classifier::
     ...                     ("ExtraTrees", et),
     ...                     ("RandomForest", rf)]
 
-    >>> layer0 = StackLayer(base_classifiers)
+    >>> layer0 = make_stack_layer(base_classifiers)
     >>> combiner = LogisticRegression()
     >>> final_classifier = Pipeline([('layer0', layer0),
     ...                              ('layer1', combiner)])
@@ -1194,12 +1193,12 @@ The `StackingTransformer`
 
 Under the hood, this is the class that implements what's needed to turn an
 estimator into a transformer that can be used for stacked
-generalization. `StackLayer` is actually just a wrapper that takes the
+generalization. `make_stack_layer` is actually just a wrapper that takes the
 estimators, wraps them with `StackingTransformer` and joins everything with
 `FeatureUnion`.
 
-On the simpler use cases, `StackLayer` should be enough but for some special
-cases, it can be useful to use `StackingTransformer` directly.
+On the simpler use cases, `make_stack_layer` should be enough but for some
+special cases, it can be useful to use `StackingTransformer` directly.
 
 Advanced usage
 --------------
@@ -1216,9 +1215,10 @@ transformed data.
 The simpler way is to train the layers separatelly. First, build the first
 layer::
 
-    >>> l0 = StackLayer([('rf1', RandomForestClassifier(criterion='gini')),
-    ...                  ('rf2', RandomForestClassifier(criterion='entropy'))],
-    ...                 cv=None)
+    >>> l0 = make_stack_layer(
+    ...     [('rf1', RandomForestClassifier(criterion='gini')),
+    ...      ('rf2', RandomForestClassifier(criterion='entropy'))],
+    ...     cv=None)
 
 Then split the data and train the first layer only on part of it. Use the fitted
 model to transform the second part::
@@ -1255,9 +1255,9 @@ the `Pipeline` API to stack everything together::
     >>> layer2 = [('rf', RandomForestClassifier()),
     ...           ('svc', SVC())]
     >>> combiner = LogisticRegression()
-    >>> clf = Pipeline([('layer0', StackLayer(layer0)),
-    ...                 ('layer1', StackLayer(layer1)),
-    ...                 ('layer2', StackLayer(layer2)),
+    >>> clf = Pipeline([('layer0', make_stack_layer(layer0)),
+    ...                 ('layer1', make_stack_layer(layer1)),
+    ...                 ('layer2', make_stack_layer(layer2)),
     ...                 ('combiner', combiner)])
 
 .. topic:: References

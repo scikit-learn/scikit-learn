@@ -7,6 +7,7 @@ from ..base import (BaseEstimator, TransformerMixin, MetaEstimatorMixin)
 from ..model_selection import cross_val_predict
 from ..pipeline import (_name_estimators, FeatureUnion)
 from ..preprocessing import FunctionTransformer
+from ..utils.metaestimators import _BaseComposition
 
 
 class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
@@ -143,8 +144,9 @@ def _identity_transformer():
     return FunctionTransformer(_identity)
 
 
-class StackLayer(FeatureUnion):
-    """ Single layer for model stacking
+def make_stack_layer(base_estimators=[], restack=False, cv=3, method='auto',
+                     n_jobs=1, n_cv_jobs=1, transformer_weights=None):
+    """ Construct single layer for model stacking
 
     Parameters
     ----------
@@ -162,91 +164,23 @@ class StackLayer(FeatureUnion):
         order.
 
     n_jobs : int, optional (default=1)
-        Number of jobs to be passed to `cross_val_predict` during
-        `fit_transform`.
+        Number of jobs to run in parallel. Each job will be assigned to a base
+        estimator.
+
+    n_cv_jobs: int, optional (default=1)
+        Number of jobs to be passed to each base estimator's
+        ``cross_val_predict`` during ``fit_transform``.
+        If ``n_jobs != 1``, ``n_cv_jobs`` must be 1 and vice-versa, since
+        nested parallelism is not supported and will likely break in future
+        versions.
 
     transformer_weights : dict, optional (default=None)
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
-    Example
-    -------
-    >>> from sklearn.ensemble import StackLayer
-    >>> from sklearn.linear_model import Ridge
-    >>> from sklearn.svm import SVC
-    >>> l = StackLayer([('svc', SVC()), ('ridge', Ridge())])
-    >>> l # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    StackLayer(base_estimators=[('svc', SVC(C=1.0, ...)),
-                                ('ridge', Ridge(alpha=1.0, ...))],
-               cv=3, method='auto', n_jobs=1, restack=False,
-               transformer_weights=None)
-    """
-    def __init__(self, base_estimators=[], restack=False, cv=3, method='auto',
-                 n_jobs=1, transformer_weights=None):
-        self.base_estimators = base_estimators
-        self.restack = restack
-        self.cv = cv
-        self.method = method
-        self.n_jobs = n_jobs
-        self.transformer_weights = transformer_weights
-        self._update_layer()
-
-    def _wrap_estimator(self, estimator):
-        return StackingTransformer(estimator, cv=self.cv, method=self.method,
-                                   n_jobs=self.n_jobs)
-
-    def _update_layer(self):
-        self.transformer_list = [(name, self._wrap_estimator(x))
-                                 for name, x in self.base_estimators]
-        if self.restack:
-            self.transformer_list.append(('restacker',
-                                          _identity_transformer()))
-
-    def get_params(self, deep=True):
-        """Get parameters for this estimator.
-
-        Parameters
-        ----------
-        deep : boolean, optional
-            If True, will return the parameters for this estimator and
-            contained subobjects that are estimators.
-
-        Returns
-        -------
-        params : mapping of string to any
-            Parameter names mapped to their values.
-        """
-        return self._get_params('base_estimators', deep=deep)
-
-    def set_params(self, **kwargs):
-        """Set the parameters of this estimator.
-
-        Valid parameter keys can be listed with ``get_params()``.
-
-        Returns
-        -------
-        self
-        """
-        self._set_params('base_estimators', **kwargs)
-        self._update_layer()
-        return self
-
-
-def make_stack_layer(*base_estimators, **kwargs):
-    """Construct a single layer for a stacked model.
-
-    This is a shorthand for the StackLayer constructor to automatically name
-    the estimators.
-
-    Parameters
-    ----------
-    *base_estimators : list of base estimators.
-
-    **kwargs : Keyword arguments to be passed to `StackLayer`.
-
     Returns
     -------
-    StackLayer
+    FeatureUnion
 
     Examples
     --------
@@ -264,6 +198,13 @@ def make_stack_layer(*base_estimators, **kwargs):
            [ 0.66666667,  0.33333333,  0.        ],
            [ 0.66666667,  0.33333333,  0.        ],
            [ 0.66666667,  0.33333333,  0.        ]])
-
     """
-    return StackLayer(_name_estimators(base_estimators), **kwargs)
+    transformer_list = [(name, StackingTransformer(estimator, cv=cv,
+                                                   method=method,
+                                                   n_jobs=n_cv_jobs))
+                        for name, estimator in base_estimators]
+    if restack:
+        transformer_list.append(('restacker', _identity_transformer()))
+
+    return FeatureUnion(transformer_list, n_jobs=n_jobs,
+                        transformer_weights=transformer_weights)
