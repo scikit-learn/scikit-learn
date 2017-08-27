@@ -400,8 +400,8 @@ reuse the solution of the previous call to fit as initialization.
 For example in the case of linear model with Coordinate Descent,
 warm starting is likely to reduce the number of iteration required
 by the next fit and so leads to faster training.
-class:`sklearn.linear_model.ElasticNetCV` and other *CV
-(class:`sklearn.linear_model.LogisticRegressionCV`, ...)
+:class:`sklearn.linear_model.ElasticNetCV` and other *CV
+(:class:`sklearn.linear_model.LogisticRegressionCV`, ...)
 class already use this technique. The following code shows
 the performance warm starting for parameter search.
 
