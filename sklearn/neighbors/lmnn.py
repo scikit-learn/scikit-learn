@@ -811,7 +811,7 @@ def select_target_neighbors(X, y, n_neighbors, algorithm='auto', n_jobs=1,
         sys.stdout.flush()
         t = time.time()
 
-    target_neighbors = np.empty((X.shape[0], n_neighbors), dtype=int)
+    target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=int)
 
     nn = NearestNeighbors(n_neighbors=n_neighbors, algorithm=algorithm,
                           n_jobs=n_jobs)
