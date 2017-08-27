@@ -711,10 +711,7 @@ class TSNE(BaseEstimator):
                 print("[t-SNE] Computing {} nearest neighbors...".format(k))
 
             # Find the nearest neighbors for every point
-            neighbors_method = 'ball_tree'
-            if (self.metric == 'precomputed') or (self.metric == "cosine"):
-                neighbors_method = 'brute'
-            knn = NearestNeighbors(algorithm=neighbors_method, n_neighbors=k,
+            knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
                                    metric=self.metric)
             t0 = time()
             knn.fit(X)
