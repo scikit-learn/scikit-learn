@@ -878,10 +878,10 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
         #                                   Y_norm_squared=X_in_norm_squared)
         # check_input in every chunk would add an extra ~8% time of computation
 
-        X = X_out[chunk]
-        XX = row_norms(X, squared=True)[:, np.newaxis]
+        X_out_chunk = X_out[chunk]
+        XX = row_norms(X_out_chunk, squared=True)[:, np.newaxis]
         YY = X_in_norm_squared
-        dist_out_in = safe_sparse_dot(X, X_in.T, dense_output=True)
+        dist_out_in = safe_sparse_dot(X_out_chunk, X_in.T, dense_output=True)
         dist_out_in *= -2
         dist_out_in += XX
         dist_out_in += YY

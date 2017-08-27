@@ -2,6 +2,7 @@ import numpy as np
 
 from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_equal
@@ -339,7 +340,7 @@ def test_random_state():
     lmnn.fit(X, y)
     transformation_2 = lmnn.transformation_
 
-    assert_array_equal(transformation_1, transformation_2)
+    assert_allclose(transformation_1, transformation_2)
 
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=n_constr,
                                       random_state=2)
