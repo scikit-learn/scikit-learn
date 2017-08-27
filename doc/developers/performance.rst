@@ -394,9 +394,58 @@ A sample algorithmic trick: warm starts for parameter search
 One of the most common machine learning tasks is parameter search. 
 One approach is to sequentially train an estimator for a list of
 parameters on the same data. Since it is computationally
-expensive, one can speed up by using the `warm_start`
-parameter of the estimator. Setting `warm_start=True` allows to
+expensive, one can speed up by using the ``warm_start``
+parameter of the estimator. Setting ``warm_start=True`` allows to
 reuse the solution of the previous call to fit as initialization.
-In the case of linear model with Coordinate Descent, this technique
-is likely to reduce the number of iteration required by the next
-fit and so leads to faster training.
+For example in the case of linear model with Coordinate Descent,
+warm starting is likely to reduce the number of iteration required
+by the next fit and so leads to faster training.
+class:`sklearn.linear_model.ElasticNetCV` and other *CV
+(class:`sklearn.linear_model.LogisticRegressionCV`, ...)
+class already use this technique. The following code shows
+the performance warm starting for parameter search.
+
+  >>> from sklearn import linear_model
+  >>> from sklearn.datasets.samples_generator import make_regression
+  >>> from sklearn.metrics import mean_squared_error
+  >>> from sklearn.model_selection import KFold
+  >>> from sklearn.grid_search import ParameterGrid
+  >>> import numpy as np
+  >>> import time
+  >>> X, y = make_regression(n_samples=500, n_features=1000, random_state=0)
+  >>> list_params = {"alpha": np.arange(0.01, 1, 0.01)}
+  >>> def cross_selection(Estimator, params_grid, warm_start=False):
+  ...     list_score = []
+  ...     list_exec_time = []
+  ...     list_params = list(ParameterGrid(params_grid))
+  ...     start_time = time.time()
+  ...     for train_index, test_index in KFold(n_splits=10).split(X):
+  ...         score = []
+  ...         exec_time = []
+  ...         clf = Estimator()
+  ...         clf.set_params(warm_start=warm_start)
+  ...
+  ...         for params in list_params:
+  ...             X_train, X_test = X[train_index], X[test_index]
+  ...             y_train, y_test = y[train_index], y[test_index]
+  ...             clf.set_params(**params)
+  ...             clf.fit(X_train, y_train)
+  ...             score.append(mean_squared_error(y_test, clf.predict(X_test)))
+  ...         list_score.append(score)
+  ...
+  ...     exec_time = time.time() - start_time
+  ...     best_scores = np.mean(list_score, 0)
+  ...     print("Lasso(warm_start=%s)" % str(warm_start))
+  ...     print("   Best param: ", list_params[best_scores.argmax()])
+  ...     print("   Best score: %s" % str(best_scores.max()))
+  ...     return exec_time
+  >>> exec_time = cross_selection(linear_model.Lasso, list_params, warm_start=False)
+  Lasso(warm_start=False)
+     Best param:  {'alpha': 0.98999999999999999}
+     Best score: 11.2408676492
+  >>> exec_time_warm = cross_selection(linear_model.Lasso, list_params, warm_start=True)
+  Lasso(warm_start=True)
+     Best param:  {'alpha': 0.98999999999999999}
+     Best score: 11.2385630064
+  >>> exec_time_warm < exec_time
+  True
