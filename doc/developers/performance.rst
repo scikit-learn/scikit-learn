@@ -403,7 +403,7 @@ by the next fit and so leads to faster training.
 :class:`sklearn.linear_model.ElasticNetCV` and other *CV
 (:class:`sklearn.linear_model.LogisticRegressionCV`, ...)
 class already use this technique. The following code shows
-the performance warm starting for parameter search.
+the performance of warm starting during parameter search.
 
   >>> from sklearn import linear_model
   >>> from sklearn.datasets.samples_generator import make_regression
