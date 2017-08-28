@@ -5,9 +5,10 @@ Testing for Clustering methods
 
 import numpy as np
 
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import (
-    assert_equal, assert_false, assert_true, assert_array_equal, assert_raises
-)
+    assert_equal, assert_false, assert_true, assert_array_equal, assert_raises,
+    assert_warns, assert_warns_message, assert_no_warnings)
 
 from sklearn.cluster.affinity_propagation_ import AffinityPropagation
 from sklearn.cluster.affinity_propagation_ import (
@@ -89,8 +90,9 @@ def test_affinity_propagation_fit_non_convergence():
     X = np.array([[0, 0], [1, 1], [-2, -2]])
 
     # Force non-convergence by allowing only a single iteration
-    af = AffinityPropagation(preference=-10, max_iter=1).fit(X)
+    af = AffinityPropagation(preference=-10, max_iter=1)
 
+    assert_warns(ConvergenceWarning, af.fit, X)
     assert_array_equal(np.empty((0, 2)), af.cluster_centers_)
     assert_array_equal(np.array([0, 1, 2]), af.labels_)
 
@@ -100,23 +102,24 @@ def test_affinity_propagation_equal_mutual_similarities():
     S = -euclidean_distances(X, squared=True)
 
     # setting preference > similarity
-    res = affinity_propagation(S, preference=0)
-    cluster_center_indices, labels = res
+    cluster_center_indices, labels = assert_warns_message(
+        UserWarning, "mutually equal", affinity_propagation, S, preference=0)
 
     # expect every sample to become an exemplar
     assert_array_equal([0, 1], cluster_center_indices)
     assert_array_equal([0, 1], labels)
 
     # setting preference < similarity
-    cluster_center_indices, labels = affinity_propagation(S, preference=-10)
+    cluster_center_indices, labels = assert_warns_message(
+        UserWarning, "mutually equal", affinity_propagation, S, preference=-10)
 
     # expect one cluster, with arbitrary (first) sample as exemplar
     assert_array_equal([0], cluster_center_indices)
     assert_array_equal([0, 0], labels)
 
     # setting different preferences
-    cluster_center_indices, labels = affinity_propagation(
-        S, preference=[-20, -10])
+    cluster_center_indices, labels = assert_no_warnings(
+        affinity_propagation, S, preference=[-20, -10])
 
     # expect one cluster, with highest-preference sample as exemplar
     assert_array_equal([1], cluster_center_indices)
