@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import numbers
 
 from .base import SelectorMixin
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
@@ -140,7 +141,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         if self.max_features is None or self.max_features == 'all':
             return
 
-        if isinstance(self.max_features, int):
+        if isinstance(self.max_features, numbers.Integral):
             if 0 <= self.max_features <= X.shape[1]:
                 return
 
