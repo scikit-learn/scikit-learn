@@ -110,8 +110,8 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     if n_samples == 1 or _equal_similarities_and_preferences(S, preference):
         # It makes no sense to run the algorithm in this case, so return 1 or
         # n_samples clusters, depending on preferences
-        warnings.warn("All samples have mutually equal similarities, "
-                      "returning arbitrary cluster center(s).")
+        warnings.warn("All samples have mutually equal similarities. "
+                      "Returning arbitrary cluster center(s).")
         if np.array(preference).flat[0] >= S.flat[n_samples - 1]:
             return (np.arange(n_samples), np.arange(n_samples), 0) \
                 if return_n_iter \
