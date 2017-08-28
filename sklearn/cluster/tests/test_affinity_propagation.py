@@ -134,7 +134,10 @@ def test_affinity_propagation_predict_non_convergence():
     # Force non-convergence by allowing only a single iteration
     af = AffinityPropagation(preference=-10, max_iter=1).fit(X)
 
-    assert_array_equal(np.array([0, 1, 2]), af.predict(X))
+    # At prediction time, consider new samples as noise since there are no
+    # clusters
+    assert_array_equal(np.array([-1, -1, -1]),
+                       af.predict(np.array([[2, 2], [3, 3], [4, 4]])))
 
 
 def test_equal_similarities_and_preferences():
