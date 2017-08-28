@@ -110,6 +110,8 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
 
     max_features : int, between 0 and number of features, optional.
         Select at most this many features that score above the threshold.
+        To disable the threshold, and only select based on max_features,
+        set threshold = -np.inf.
 
     norm_order : non-zero int, inf, -inf, default 1
         Order of the norm used to filter the vectors of coefficients below
@@ -135,16 +137,17 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         self.norm_order = norm_order
 
     def _check_max_features(self, X, max_features):
-        if self.max_features is not None:
-            if isinstance(self.max_features, int):
-                if 0 <= self.max_features <= X.shape[1]:
-                    return
-            elif self.max_features == 'all':
-                    return
-            raise ValueError(
-                    "max_features should be >=0, <= n_features or 'all';"
-                    " got %r. Use max_features='all' to return all features."
-                    % self.max_features)
+        if self.max_features is None or self.max_features == 'all':
+            return
+
+        if isinstance(self.max_features, int):
+            if 0 <= self.max_features <= X.shape[1]:
+                return
+
+        raise ValueError(
+            "max_features should be >=0, <= n_features or 'all';"
+            " got %r. Use max_features='all' to return all features."
+            % self.max_features)
 
     def _check_params(self, X, y):
         X, y = check_X_y(X, y)

@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils.testing import assert_raises_regexp
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
@@ -47,7 +48,8 @@ def check_invalid_max_features(est, X, y):
         transformer = SelectFromModel(estimator=est,
                                       max_features=invalid_max_n_feature,
                                       threshold=-np.inf)
-        assert_raises(ValueError, transformer.fit, X, y)
+        assert_raises_regexp(ValueError, "max_features should be >=0, <="
+                             " n_features or 'all'", transformer.fit, X, y)
 
 
 def check_valid_max_features(est, X, y):
@@ -70,9 +72,13 @@ class FixedImportanceEstimator(BaseEstimator):
         self.feature_importances_ = np.array(self.importances)
 
 
-def check_max_features(est, X, y):
-    X = X.copy()
+def test_max_features():
+    # Test max_features parameter using various values
+    X, y = datasets.make_classification(
+        n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
+        n_repeated=0, shuffle=False, random_state=0)
     max_features = X.shape[1]
+    est = RandomForestClassifier(n_estimators=50, random_state=0)
 
     check_valid_max_features(est, X, y)
     check_invalid_max_features(est, X, y)
@@ -88,7 +94,7 @@ def check_max_features(est, X, y):
 
     # Test max_features against actual model.
     transformer1 = SelectFromModel(estimator=Lasso(alpha=0.025,
-                                   random_state=42))
+                                                   random_state=42))
     X_new1 = transformer1.fit_transform(X, y)
     scores1 = np.abs(transformer1.estimator_.coef_)
     candidate_indices1 = np.argsort(-scores1, kind='mergesort')
@@ -106,7 +112,13 @@ def check_max_features(est, X, y):
     assert_array_equal(transformer1.estimator_.coef_,
                        transformer2.estimator_.coef_)
 
+
+def test_max_features_tiebreak():
     # Test if max_features can break tie among feature importance
+    X, y = datasets.make_classification(
+        n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
+        n_repeated=0, shuffle=False, random_state=0)
+    max_features = X.shape[1]
 
     feature_importances = np.array([4, 4, 4, 4, 3, 3, 3, 2, 2, 1])
     for n_features in range(1, max_features + 1):
@@ -120,7 +132,22 @@ def check_max_features(est, X, y):
         assert_equal(X_new.shape[1], n_features)
 
 
-def check_threshold_and_max_features(est, X, y):
+def test_threshold_and_max_features():
+    X, y = datasets.make_classification(
+        n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
+        n_repeated=0, shuffle=False, random_state=0)
+
+    check_diff_models_threshold_and_max_features(
+        RandomForestClassifier(n_estimators=50, random_state=0), X, y)
+    check_diff_models_threshold_and_max_features(
+        Lasso(alpha=0.1, random_state=42), X, y)
+
+
+def check_diff_models_threshold_and_max_features(est, X, y):
+    """
+    If threshold and max_features are not provided, the default threshold
+    is used. Set threshold=-np.inf to ignore threshold.
+    """
     transformer1 = SelectFromModel(estimator=est, max_features=3,
                                    threshold=-np.inf)
     X_new1 = transformer1.fit_transform(X, y)
@@ -135,34 +162,6 @@ def check_threshold_and_max_features(est, X, y):
     selected_indices = \
         transformer3.transform(np.arange(X.shape[1])[np.newaxis, :])
     assert_array_equal(X_new3, X[:, selected_indices[0]])
-
-    """
-    If threshold and max_features are not provided, all features are
-    returned, use threshold=-np.inf if it is not required.
-    """
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                  random_state=42), threshold=-np.inf)
-    X_new = transformer.fit_transform(X, y)
-    assert_array_equal(X, X_new)
-
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                  random_state=42), max_features=3,
-                                  threshold=-np.inf)
-    X_new = transformer.fit_transform(X, y)
-    assert_equal(X_new.shape[1], 3)
-
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                  random_state=42), threshold=1e-5)
-    X_new = transformer.fit_transform(X, y)
-    mask = np.abs(transformer.estimator_.coef_) > 1e-5
-    assert_array_equal(X_new, X[:, mask])
-
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                  random_state=42), threshold=1e-5,
-                                  max_features=4)
-    X_new = transformer.fit_transform(X, y)
-    mask = np.abs(transformer.estimator_.coef_) > 1e-5
-    assert_array_equal(X_new, X[:, mask])
 
 
 @skip_if_32bit
@@ -203,10 +202,6 @@ def test_feature_importances():
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
     assert_array_equal(X_new, X[:, mask])
-
-    # Test max_features parameter using various values
-    check_max_features(est, X, y)
-    check_threshold_and_max_features(est, X, y)
 
 
 @skip_if_32bit
