@@ -145,6 +145,10 @@ Classifiers and regressors
   during the first epochs of ridge and logistic regression.
   :issue:`8446` by `Arthur Mensch`_.
 
+- Added :class:`naive_bayes.ComplementNB`, which implements the Complement
+  Naive Bayes classifier described in Rennie et al. (2003).
+  By :user:`Michael A. Alcorn <airalcorn2>`.
+
 Other estimators
 
 - Added the :class:`neighbors.LocalOutlierFactor` class for anomaly
