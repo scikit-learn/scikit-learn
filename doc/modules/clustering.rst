@@ -427,7 +427,7 @@ Spectral clustering
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
 dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <http://pyamg.org/>`_ module is installed.
+sparse and the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.
 SpectralClustering requires the number of clusters to be specified. It
 works well for a small number of clusters but is not advised when using
 many clusters.
