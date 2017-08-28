@@ -133,6 +133,46 @@ in further computations.
 Setting :math:`\alpha = 1` is called Laplace smoothing,
 while :math:`\alpha < 1` is called Lidstone smoothing.
 
+.. _complement_naive_bayes:
+
+Complement Naive Bayes
+-----------------------
+
+:class:`ComplementNB` implements the complement naive Bayes (CNB) algorithm.
+CNB is an adaptation of the standard multinomial naive Bayes (MNB) algorithm
+that is particularly suited for imbalanced data sets. Specifically, CNB uses
+statistics from the *complement* of each class to compute the model's weights.
+The inventors of CNB show empirically that the parameter estimates for CNB are
+more stable than those for MNB. Further, CNB regularly outperforms MNB (often
+by a considerable margin) on text classification tasks. The procedure for
+calculating the weights is as follows:
+
+.. math::
+
+    \hat{\theta}_{ci} = \frac{\sum{j:y_j \neq c} d_{ij} + \alpha_i}
+                             {\sum{j:y_j \neq c} \sum{k} d_{kj} + \alpha}
+    w_{ci} = \log \hat{\theta}_{ci}
+    w_{ci} = \frac{w_{ci}{\sum{j} w_{cj}}
+
+where the summation is over all documents :math:`j` not in class :math:`c`,
+:math:`d_{ij}` is either the count or tf-idf value of term :math:`i` in document
+:math:`j`, and :math:`\alpha` is a smoothing hyperparameter like that found in
+MNB. The second normalization addresses the tendency for longer documents to
+dominate parameter estimates in MNB. The classification rule is:
+
+.. math::
+
+    \hat{c} = \arg\min_c \sum{i} t_i w_{ci}
+
+i.e., a document is assigned to the class that is the *poorest* complement
+match.
+
+.. topic:: References:
+
+ * Rennie, J. D., Shih, L., Teevan, J., & Karger, D. R. (2003).
+   `Tackling the poor assumptions of naive bayes text classifiers.
+   <http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf>`_
+   In ICML (Vol. 3, pp. 616-623).
 
 .. _bernoulli_naive_bayes:
 
