@@ -196,8 +196,8 @@ def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
         n_nodes = 2 * n_samples - 1
     else:
         if n_clusters > n_samples:
-            raise ValueError('Cannot provide more clusters than samples. %i '
-                             'n_clusters was asked, and there are %i samples.'
+            raise ValueError('Cannot provide more clusters than samples. '
+                             '%i n_clusters was asked, and there are %i samples.'
                              % (n_clusters, n_samples))
         n_nodes = 2 * n_samples - n_clusters
 

@@ -875,16 +875,12 @@ def test_pipeline_wrong_memory():
 
 
 class DummyMemory(object):
-    def __init__(self):
-        pass
-
     def cache(self, func):
         return func
 
 
 class WrongDummyMemory(object):
-    def __init__(self):
-        pass
+    pass
 
 
 def test_pipeline_with_cache_attribute():
@@ -894,7 +890,10 @@ def test_pipeline_with_cache_attribute():
     pipe.fit(X, y=None)
     pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
                     memory=WrongDummyMemory())
-    assert_raises(ValueError, pipe.fit, X)
+    assert_raises_regex(ValueError, "'memory' is not a string or a Memory"
+                        " instance implementing a cache method. Got a <class"
+                        " 'sklearn.tests.test_pipeline."
+                        "WrongDummyMemory'> instance, instead.", pipe.fit, X)
 
 
 def test_pipeline_memory():

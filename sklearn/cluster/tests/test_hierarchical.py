@@ -50,7 +50,6 @@ def test_deprecation_of_n_components_in_linkage_tree():
     assert_equal(n_leaves, n_leaves_t)
     assert_equal(parent, parent_t)
 
-
 def test_linkage_misc():
     # Misc tests on linkage
     rng = np.random.RandomState(42)

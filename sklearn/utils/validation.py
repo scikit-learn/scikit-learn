@@ -157,20 +157,24 @@ def _shape_repr(shape):
 
 
 def check_memory(memory):
-    """Check that the memory is an instance of joblib.Memory.
+    """Check that the ``memory`` is Memory-like.
 
-    Raises a ValueError if the passed object does not have a
-    cache attribute.
+    Memory-like means that ``memory`` can be converted into a
+    sklearn.externals.joblib.Memory instance (typically a str denoting the
+    ``cachedir``) or has the same interface.
 
     Parameters
     ----------
-    memory : string or None or Memory instance.
-        Any object with a cache method will be accepted as a Memory instance.
+    memory : Memory-like or None
 
     Returns
     -------
-    memory : Memory
-        Validated memory instance.
+    memory : object with the sklearn.externals.joblib.Memory interface
+
+    Raises
+    ------
+    ValueError
+        if ``memory`` is not Memory-like
     """
 
     if memory is None:
@@ -178,9 +182,9 @@ def check_memory(memory):
     elif isinstance(memory, six.string_types):
         memory = Memory(cachedir=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
-            raise ValueError("'memory' is not a string or a Memory instance "
-                             "implementing a cache method. Got a {} instance,"
-                             " instead.".format(type(memory)))
+        raise ValueError("'memory' is not a string or a Memory instance "
+                         "implementing a cache method. Got a {} instance,"
+                         " instead.".format(type(memory)))
     return memory
 
 
