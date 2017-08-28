@@ -42,7 +42,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.naive_bayes import BernoulliNB, MultinomialNB
+from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
 from sklearn.ensemble import RandomForestClassifier
@@ -283,6 +283,7 @@ print('=' * 80)
 print("Naive Bayes")
 results.append(benchmark(MultinomialNB(alpha=.01)))
 results.append(benchmark(BernoulliNB(alpha=.01)))
+results.append(benchmark(ComplementNB(alpha=.1)))
 
 print('=' * 80)
 print("LinearSVC with L1-based feature selection")
