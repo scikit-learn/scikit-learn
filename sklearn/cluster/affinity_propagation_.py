@@ -22,10 +22,11 @@ def _equal_similarities_and_preferences(S, preference):
         return np.all(multi_preferences == multi_preferences.flat[0])
 
     def all_equal_similarities():
-        # Fill "diagonal" of S with first similarity value in S
-        S.flat[::S.shape[0] + 1] = S.flat[1]
+        # Create mask to ignore diagonal of S
+        mask = np.ones(S.shape, dtype=bool)
+        np.fill_diagonal(mask, 0)
 
-        return np.all(S.flat == S.flat[0])
+        return np.all(S[mask].flat == S[mask].flat[0])
 
     return all_equal_preferences() and all_equal_similarities()
 
