@@ -99,7 +99,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         optimizer taking as arguments the current solution and the number of
         iterations.
 
-
     verbose : int, optional (default=0)
         If 0, no progress messages will be printed.
         If 1, progress messages will be printed to stdout.
@@ -108,7 +107,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         verbose - 2.
 
     random_state : int or numpy.RandomState or None, optional (default=None)
-        A pseudo random number generator used to sample from the constraints.
+        A pseudo random number generator object or a seed for it if int.
 
     n_jobs : int, optional (default=1)
         The number of parallel jobs to run for neighbors search.
@@ -125,24 +124,33 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         to  min(number of elements in each class).
 
     n_features_out_ : int
-        The dimensionality of a sample after applying to it the
-        linear transformation.
+        The dimensionality of input samples after the linear transformation
+        has been applied to them.
 
     classes_non_singleton_ : array-like, shape (n_classes_non_singleton,)
         The appearing classes that have more than one sample.
 
     n_funcalls_ : int
-        The number of times the optimizer computes the loss and the gradient.
+        Counts the number of times the optimizer computes the loss and the
+        gradient.
 
     n_iter_ : int
-        The number of iterations of the optimizer. Falls back to
-        `n_funcalls` if the version of :meth:`fmin_l_bfgs_b` of
-        `scipy.optimize` (< 0.12.0) does not store the number of iterations.
+        Counts the number of iterations of the optimizer.
 
     details_ : dict
         A dictionary of information created by the L-BFGS optimizer during
         fitting.
 
+        * details_['warnflag'] is
+
+          - 0 if converged,
+          - 1 if too many function evaluations or too many iterations,
+          - 2 if stopped for another reason, given in d['task']
+
+        * details_['grad'] is the gradient at the minimum (should be 0 ish)
+        * details_['funcalls'] is the number of function calls made.
+        * details_['nit'] is the number of iterations.
+        * details_['loss'] is the value of the objective at the minimum.
 
     Examples
     --------
@@ -167,10 +175,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    Large margin nearest neighbor (LMNN) is a machine learning
-    algorithm for metric learning. It learns a (pseudo-)metric in a
-    supervised fashion to improve the classification accuracy of the k-nearest
-    neighbor rule.
+    Large margin nearest neighbor (LMNN) is a machine learning algorithm for
+    metric learning. It learns a (pseudo-)metric in a supervised fashion to
+    improve the classification accuracy of the k-nearest neighbor rule.
     The main intuition behind LMNN is to learn a pseudometric under which all
     data instances in the training set are surrounded by at least k instances
     that share the same class label. If this is achieved, the leave-one-out
@@ -409,15 +416,15 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         check_scalar(self.warm_start, 'warm_start', bool)
         if self.warm_start and hasattr(self, 'transformation_'):
             if set(classes) != set(self.classes_non_singleton_):
-                raise ValueError("warm_start can only be used where `y` has "
+                raise ValueError("warm_start can only be used if `y` has "
                                  "the same classes as in the previous call "
                                  "to fit. Previously got {}, `y` has {}"
                                  .format(self.classes_non_singleton_, classes))
 
             if len(self.transformation_[0]) != n_features:
                 raise ValueError('The new inputs dimensionality ({}) does not '
-                                 'match the previously learned transformation '
-                                 'input dimensionality ({}).'
+                                 'match the input dimensionality of the '
+                                 'previously learned transformation ({}).'
                                  .format(len(self.transformation_[0]),
                                          n_features))
 
@@ -811,7 +818,7 @@ def select_target_neighbors(X, y, n_neighbors, algorithm='auto', n_jobs=1,
         sys.stdout.flush()
         t = time.time()
 
-    target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=int)
+    target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=np.int64)
 
     nn = NearestNeighbors(n_neighbors=n_neighbors, algorithm=algorithm,
                           n_jobs=n_jobs)
@@ -906,10 +913,12 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
                 except TypeError:
                     dist.append(dist_chunk)
 
+    imp_ind = np.asarray(imp_ind)
+
     if return_distance:
-        return np.asarray(imp_ind), np.asarray(dist)
+        return imp_ind, np.asarray(dist)
     else:
-        return np.asarray(imp_ind)
+        return imp_ind
 
 
 def paired_distances_batch(X, ind_a, ind_b, mem_budget=int(1e7)):
@@ -927,7 +936,7 @@ def paired_distances_batch(X, ind_a, ind_b, mem_budget=int(1e7)):
         Memory budget (in bytes) for computing distances.
     Returns
     -------
-    dist: array, shape (n_indices,)
+    distances: array, shape (n_indices,)
         An array of pairwise distances.
     """
 
@@ -935,11 +944,11 @@ def paired_distances_batch(X, ind_a, ind_b, mem_budget=int(1e7)):
     batch_size = int(mem_budget // bytes_per_row)
 
     n_pairs = len(ind_a)
-    dist = np.zeros(n_pairs)
+    distances = np.zeros(n_pairs)
     for chunk in gen_batches(n_pairs, batch_size):
-        dist[chunk] = row_norms(X[ind_a[chunk]] - X[ind_b[chunk]], True)
+        distances[chunk] = row_norms(X[ind_a[chunk]] - X[ind_b[chunk]], True)
 
-    return dist
+    return distances
 
 
 def sum_outer_products(X, weights):
