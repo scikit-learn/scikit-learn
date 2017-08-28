@@ -16,7 +16,7 @@ from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
 
 
-def equal_similarities_and_preferences(S, preference):
+def _equal_similarities_and_preferences(S, preference):
     def all_equal_preferences():
         multi_preferences = np.array(preference)
         return np.all(multi_preferences == multi_preferences.flat[0])
@@ -106,7 +106,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     if damping < 0.5 or damping >= 1:
         raise ValueError('damping must be >= 0.5 and < 1')
 
-    if n_samples == 1 or equal_similarities_and_preferences(S, preference):
+    if n_samples == 1 or _equal_similarities_and_preferences(S, preference):
         # It makes no sense to run the algorithm in this case, so return 1 or
         # n_samples clusters, depending on preferences
         warnings.warn("All samples have mutually equal similarities, "
