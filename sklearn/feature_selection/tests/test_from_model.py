@@ -44,23 +44,21 @@ def test_input_estimator_unchanged():
 
 def check_invalid_max_features(est, X, y):
     max_features = X.shape[1]
-    for invalid_max_n_feature in [-1, max_features + 1, 'gobbledigook']:
+    for invalid_max_n_feature in [-1, max_features + 1, 'gobbledigook', 'all']:
         transformer = SelectFromModel(estimator=est,
                                       max_features=invalid_max_n_feature,
                                       threshold=-np.inf)
-        assert_raises_regexp(ValueError, "max_features should be >=0, <="
-                             " n_features or 'all'", transformer.fit, X, y)
+        assert_raises_regexp(ValueError, "max_features should be >=0",
+                             transformer.fit, X, y)
 
 
 def check_valid_max_features(est, X, y):
     max_features = X.shape[1]
-    for valid_max_n_feature in [0, max_features, 'all', 5]:
+    for valid_max_n_feature in [0, max_features, 5]:
         transformer = SelectFromModel(estimator=est,
                                       max_features=valid_max_n_feature,
                                       threshold=-np.inf)
         X_new = transformer.fit_transform(X, y)
-        if valid_max_n_feature == 'all':
-            valid_max_n_feature = max_features
         assert_equal(X_new.shape[1], valid_max_n_feature)
 
 
@@ -83,7 +81,7 @@ def test_max_features():
     check_valid_max_features(est, X, y)
     check_invalid_max_features(est, X, y)
 
-    transformer1 = SelectFromModel(estimator=est, max_features='all',
+    transformer1 = SelectFromModel(estimator=est,
                                    threshold=-np.inf)
     transformer2 = SelectFromModel(estimator=est,
                                    max_features=max_features,
@@ -136,18 +134,8 @@ def test_threshold_and_max_features():
     X, y = datasets.make_classification(
         n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
         n_repeated=0, shuffle=False, random_state=0)
+    est = RandomForestClassifier(n_estimators=50, random_state=0)
 
-    check_diff_models_threshold_and_max_features(
-        RandomForestClassifier(n_estimators=50, random_state=0), X, y)
-    check_diff_models_threshold_and_max_features(
-        Lasso(alpha=0.1, random_state=42), X, y)
-
-
-def check_diff_models_threshold_and_max_features(est, X, y):
-    """
-    If threshold and max_features are not provided, the default threshold
-    is used. Set threshold=-np.inf to ignore threshold.
-    """
     transformer1 = SelectFromModel(estimator=est, max_features=3,
                                    threshold=-np.inf)
     X_new1 = transformer1.fit_transform(X, y)

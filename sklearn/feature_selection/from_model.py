@@ -137,8 +137,10 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         self.max_features = max_features
         self.norm_order = norm_order
 
-    def _check_max_features(self, X, max_features):
-        if self.max_features is None or self.max_features == 'all':
+    def _check_params(self, X, y):
+        X, y = check_X_y(X, y)
+
+        if self.max_features is None:
             return
 
         if isinstance(self.max_features, numbers.Integral):
@@ -146,13 +148,8 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
                 return
 
         raise ValueError(
-            "max_features should be >=0, <= n_features or 'all';"
-            " got %r. Use max_features='all' to return all features."
-            % self.max_features)
-
-    def _check_params(self, X, y):
-        X, y = check_X_y(X, y)
-        self._check_max_features(X, self.max_features)
+            "max_features should be >=0 and <= n_features;"
+            " got %r." % self.max_features)
 
     def _get_support_mask(self):
         # SelectFromModel can directly call on transform.
@@ -167,12 +164,12 @@ class SelectFromModel(BaseEstimator, SelectorMixin, MetaEstimatorMixin):
         scores = _get_feature_importances(estimator, self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         mask = np.zeros_like(scores, dtype=bool)
-        n_features_to_select = self.max_features
-        if self.max_features == 'all':
-            n_features_to_select = scores.size
-        candidate_indices = np.argsort(-scores,
-                                       kind='mergesort')[:n_features_to_select]
-        mask[candidate_indices] = True
+        if self.max_features is not None:
+            candidate_indices = \
+                np.argsort(-scores, kind='mergesort')[:self.max_features]
+            mask[candidate_indices] = True
+        else:
+            mask = np.logical_not(mask)
         mask[scores < threshold] = False
         return mask
 
