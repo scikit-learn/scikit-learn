@@ -763,10 +763,10 @@ def _check_transformer(name, transformer_orig, X, y):
         # raises error on malformed input for transform
         if hasattr(X, 'T'):
             # If it's not an array, it does not have a 'T' property
-            with assert_raises(ValueError, msg= "The transformer {name} does not"
-                               " raise an error when the number of features "
-                               "in transform is different from the number of"
-                               " features in fit"):
+            with assert_raises(ValueError, msg="The transformer {name} does "
+                               "not raise an error when the number of featur"
+                               "es in transform is different from the number"
+                               " of features in fit"):
                 transformer.transform(X.T)
 
 
@@ -1126,9 +1126,9 @@ def check_classifiers_train(name, classifier_orig):
 
         # raises error on malformed input for predict
         with assert_raises(ValueError, msg="The classifier {name} does not"
-                               " raise an error when the number of features "
-                               "in predict is different from the number of"
-                               " features in fit"):
+                           " raise an error when the number of features "
+                           "in predict is different from the number of"
+                           " features in fit"):
             classifier.predict(X.T)
         if hasattr(classifier, "decision_function"):
             try:
@@ -1148,10 +1148,10 @@ def check_classifiers_train(name, classifier_orig):
                 with assert_raises(ValueError, msg="Malformed inputs"):
                     classifier.decision_function(X.T)
                 # raises error on malformed input for decision_function
-                with assert_raises(ValueError, msg="The classifier {name} does not"
-                               " raise an error when the number of features "
-                               "in decision_function is different from the number of"
-                               " features in fit"):
+                with assert_raises(ValueError, msg="The classifier {name} does"
+                                   " not raise an error when the number of fea"
+                                   "tures in decision_function is different "
+                                   "from the number of features in fit"):
                     classifier.decision_function(X.T)
             except NotImplementedError:
                 pass
@@ -1165,8 +1165,8 @@ def check_classifiers_train(name, classifier_orig):
             # raises error on malformed input
             with assert_raises(ValueError, msg="The classifier {name} does not"
                                " raise an error when the number of features "
-                               "in predict_proba is different from the number of"
-                               " features in fit"):
+                               "in predict_proba is different from the number "
+                               "of features in fit"):
                 classifier.predict_proba(X.T)
             # raises error on malformed input for predict_proba
             with assert_raises(ValueError,
