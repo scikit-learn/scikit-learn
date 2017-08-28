@@ -184,7 +184,7 @@ def check_memory(memory):
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' is not a string or a Memory instance "
                          "implementing a cache method. Got a {} instance,"
-                         " instead.".format(type(memory)))
+                         " instead.".format(memory))
     return memory
 
 
