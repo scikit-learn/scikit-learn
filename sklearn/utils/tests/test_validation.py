@@ -546,16 +546,12 @@ def test_suppress_validation():
 
 
 class DummyMemory(object):
-    def __init__(self):
-        pass
-
     def cache(self, func):
         return func
 
 
 class WrongDummyMemory(object):
-    def __init__(self):
-        pass
+    pass
 
 
 def test_check_memory():
