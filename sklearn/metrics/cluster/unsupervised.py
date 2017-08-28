@@ -9,7 +9,6 @@ import numpy as np
 
 from ...utils import check_random_state
 from ...utils import check_X_y
-from ...utils.fixes import bincount
 from ..pairwise import pairwise_distances
 from ...preprocessing import LabelEncoder
 
@@ -29,7 +28,7 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
     b)``.  To clarify, ``b`` is the distance between a sample and the nearest
     cluster that the sample is not a part of.
-    Note that Silhouette Coefficent is only defined if number of labels
+    Note that Silhouette Coefficient is only defined if number of labels
     is 2 <= n_labels <= n_samples - 1.
 
     This function returns the mean Silhouette Coefficient over all samples.
@@ -115,7 +114,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     distance (``a``) and the mean nearest-cluster distance (``b``) for each
     sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
     b)``.
-    Note that Silhouette Coefficent is only defined if number of labels
+    Note that Silhouette Coefficient is only defined if number of labels
     is 2 <= n_labels <= n_samples - 1.
 
     This function returns the Silhouette Coefficient for each sample.
@@ -169,7 +168,7 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
 
     distances = pairwise_distances(X, metric=metric, **kwds)
     unique_labels = le.classes_
-    n_samples_per_label = bincount(labels, minlength=len(unique_labels))
+    n_samples_per_label = np.bincount(labels, minlength=len(unique_labels))
 
     # For sample i, store the mean distance of the cluster to which
     # it belongs in intra_clust_dists[i]

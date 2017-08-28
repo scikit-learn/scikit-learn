@@ -149,7 +149,7 @@ def test_deprecated_grid_scores(random_state=1):
 
     depr_message = ("Attribute grid_scores was deprecated in version "
                     "0.19 and will be removed in 0.21. Use "
-                    "'grid_scores_' instead")
+                    "``grid_scores_`` instead")
 
     assert_warns_message(DeprecationWarning, depr_message,
                          lambda: graph_lasso.grid_scores)

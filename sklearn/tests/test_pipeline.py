@@ -67,12 +67,12 @@ class NoTrans(NoFit):
 
 
 class NoInvTransf(NoTrans):
-    def transform(self, X, y=None):
+    def transform(self, X):
         return X
 
 
 class Transf(NoInvTransf):
-    def transform(self, X, y=None):
+    def transform(self, X):
         return X
 
     def inverse_transform(self, X):
@@ -206,6 +206,18 @@ def test_pipeline_init():
     params2.pop('svc')
     params2.pop('anova')
     assert_equal(params, params2)
+
+
+def test_pipeline_init_tuple():
+    # Pipeline accepts steps as tuple
+    X = np.array([[1, 2]])
+    pipe = Pipeline((('transf', Transf()), ('clf', FitParamT())))
+    pipe.fit(X, y=None)
+    pipe.score(X)
+
+    pipe.set_params(transf=None)
+    pipe.fit(X, y=None)
+    pipe.score(X)
 
 
 def test_pipeline_methods_anova():
@@ -424,6 +436,10 @@ def test_feature_union():
                         'transform.*\\bNoTrans\\b',
                         FeatureUnion,
                         [("transform", Transf()), ("no_transform", NoTrans())])
+
+    # test that init accepts tuples
+    fs = FeatureUnion((("svd", svd), ("select", select)))
+    fs.fit(X, y)
 
 
 def test_make_union():
@@ -874,7 +890,7 @@ def test_pipeline_memory():
         # Memoize the transformer at the first fit
         cached_pipe.fit(X, y)
         pipe.fit(X, y)
-        # Get the time stamp of the tranformer in the cached pipeline
+        # Get the time stamp of the transformer in the cached pipeline
         ts = cached_pipe.named_steps['transf'].timestamp_
         # Check that cached_pipe and pipe yield identical results
         assert_array_equal(pipe.predict(X), cached_pipe.predict(X))

@@ -29,6 +29,7 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
+from sklearn.metrics import ndcg_score
 
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -100,7 +101,13 @@ def _auc(y_true, y_score):
 
 def _average_precision(y_true, y_score):
     """Alternative implementation to check for correctness of
-    `average_precision_score`."""
+    `average_precision_score`.
+
+    Note that this implementation fails on some edge cases.
+    For example, for constant predictions e.g. [0.5, 0.5, 0.5],
+    y_true = [1, 0, 0] returns an average precision of 0.33...
+    but y_true = [0, 0, 1] returns 1.0.
+    """
     pos_label = np.unique(y_true)[1]
     n_pos = np.sum(y_true == pos_label)
     order = np.argsort(y_score)[::-1]
@@ -120,6 +127,25 @@ def _average_precision(y_true, y_score):
             score += prec
 
     return score / n_pos
+
+
+def _average_precision_slow(y_true, y_score):
+    """A second alternative implementation of average precision that closely
+    follows the Wikipedia article's definition (see References). This should
+    give identical results as `average_precision_score` for all inputs.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Average precision
+       <http://en.wikipedia.org/wiki/Average_precision>`_
+    """
+    precision, recall, threshold = precision_recall_curve(y_true, y_score)
+    precision = list(reversed(precision))
+    recall = list(reversed(recall))
+    average_precision = 0
+    for i in range(1, len(precision)):
+        average_precision += precision[i] * (recall[i] - recall[i - 1])
+    return average_precision
 
 
 def test_roc_curve():
@@ -470,19 +496,17 @@ def test_precision_recall_curve_pos_label():
 def _test_precision_recall_curve(y_true, probas_pred):
     # Test Precision-Recall and aread under PR curve
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
-    precision_recall_auc = auc(r, p)
-    assert_array_almost_equal(precision_recall_auc, 0.85, 2)
+    precision_recall_auc = _average_precision_slow(y_true, probas_pred)
+    assert_array_almost_equal(precision_recall_auc, 0.859, 3)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
     assert_almost_equal(_average_precision(y_true, probas_pred),
-                        precision_recall_auc, 1)
+                        precision_recall_auc, decimal=3)
     assert_equal(p.size, r.size)
     assert_equal(p.size, thresholds.size + 1)
     # Smoke test in the case of proba having only one value
     p, r, thresholds = precision_recall_curve(y_true,
                                               np.zeros_like(probas_pred))
-    precision_recall_auc = auc(r, p)
-    assert_array_almost_equal(precision_recall_auc, 0.75, 3)
     assert_equal(p.size, r.size)
     assert_equal(p.size, thresholds.size + 1)
 
@@ -510,7 +534,10 @@ def test_precision_recall_curve_toydata():
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 0., 1.])
         assert_array_almost_equal(r, [1., 0.,  0.])
-        assert_almost_equal(auc_prc, 0.25)
+        # Here we are doing a terrible prediction: we are always getting
+        # it wrong, hence the average_precision_score is the accuracy at
+        # chance: 50%
+        assert_almost_equal(auc_prc, 0.5)
 
         y_true = [1, 0]
         y_score = [1, 1]
@@ -518,7 +545,7 @@ def test_precision_recall_curve_toydata():
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1])
         assert_array_almost_equal(r, [1., 0])
-        assert_almost_equal(auc_prc, .75)
+        assert_almost_equal(auc_prc, .5)
 
         y_true = [1, 0]
         y_score = [1, 0]
@@ -534,7 +561,7 @@ def test_precision_recall_curve_toydata():
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1])
         assert_array_almost_equal(r, [1, 0.])
-        assert_almost_equal(auc_prc, .75)
+        assert_almost_equal(auc_prc, .5)
 
         y_true = [0, 0]
         y_score = [0.25, 0.75]
@@ -567,31 +594,45 @@ def test_precision_recall_curve_toydata():
         assert_raises(Exception, average_precision_score, y_true, y_score,
                       average="weighted")
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.625)
+                            average="samples"), 0.75)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.625)
+                            average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0, 1], [1, 0]])
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.25)
+                            average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.25)
+                            average="weighted"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.25)
+                            average="samples"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.25)
+                            average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0.5, 0.5], [0.5, 0.5]])
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.75)
+                            average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.75)
+                            average="weighted"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.75)
+                            average="samples"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.75)
+                            average="micro"), 0.5)
+
+
+def test_average_precision_constant_values():
+    # Check the average_precision_score of a constant predictor is
+    # the TPR
+
+    # Generate a dataset with 25% of positives
+    y_true = np.zeros(100, dtype=int)
+    y_true[::4] = 1
+    # And a constant score
+    y_score = np.ones(100)
+    # The precision is then the fraction of positive whatever the recall
+    # is, as there is only one threshold:
+    assert_equal(average_precision_score(y_true, y_score), .25)
 
 
 def test_score_scale_invariance():
@@ -695,6 +736,38 @@ def check_zero_or_all_relevant_labels(lrap_score):
     # Degenerate case: only one label
     assert_almost_equal(lrap_score([[1], [0], [1], [0]],
                                    [[0.5], [0.5], [0.5], [0.5]]), 1.)
+
+
+def test_ndcg_score():
+    # Check perfect ranking
+    y_true = [1, 0, 2]
+    y_score = [
+        [0.15, 0.55, 0.2],
+        [0.7, 0.2, 0.1],
+        [0.06, 0.04, 0.9]
+    ]
+    perfect = ndcg_score(y_true, y_score)
+    assert_equal(perfect, 1.0)
+
+    # Check bad ranking with a small K
+    y_true = [0, 2, 1]
+    y_score = [
+        [0.15, 0.55, 0.2],
+        [0.7, 0.2, 0.1],
+        [0.06, 0.04, 0.9]
+    ]
+    short_k = ndcg_score(y_true, y_score, k=1)
+    assert_equal(short_k, 0.0)
+
+    # Check a random scoring
+    y_true = [2, 1, 0]
+    y_score = [
+        [0.15, 0.55, 0.2],
+        [0.7, 0.2, 0.1],
+        [0.06, 0.04, 0.9]
+    ]
+    average_ranking = ndcg_score(y_true, y_score, k=2)
+    assert_almost_equal(average_ranking, 0.63092975)
 
 
 def check_lrap_error_raised(lrap_score):

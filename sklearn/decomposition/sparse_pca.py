@@ -57,8 +57,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     V_init : array of shape (n_components, n_features),
         Initial values for the components for warm restart scenarios.
 
-    verbose :
-        Degree of verbosity of the printed output.
+    verbose : int
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -151,7 +151,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
-        ridge_alpha: float, default: 0.01
+        ridge_alpha : float, default: 0.01
             Amount of ridge shrinkage to apply in order to improve
             conditioning.
 
@@ -209,14 +209,14 @@ class MiniBatchSparsePCA(SparsePCA):
     n_iter : int,
         number of iterations to perform for each mini batch
 
-    callback : callable,
+    callback : callable or None, optional (default: None)
         callable that gets invoked every five iterations
 
     batch_size : int,
         the number of features to take in each mini batch
 
-    verbose :
-        degree of output the procedure will print
+    verbose : int
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
 
     shuffle : boolean,
         whether to shuffle the data before splitting it in batches
@@ -257,18 +257,14 @@ class MiniBatchSparsePCA(SparsePCA):
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
                  shuffle=True, n_jobs=1, method='lars', random_state=None):
-
-        self.n_components = n_components
-        self.alpha = alpha
-        self.ridge_alpha = ridge_alpha
+        super(MiniBatchSparsePCA, self).__init__(
+            n_components=n_components, alpha=alpha, verbose=verbose,
+            ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
+            random_state=random_state)
         self.n_iter = n_iter
         self.callback = callback
         self.batch_size = batch_size
-        self.verbose = verbose
         self.shuffle = shuffle
-        self.n_jobs = n_jobs
-        self.method = method
-        self.random_state = random_state
 
     def fit(self, X, y=None):
         """Fit the model from data in X.

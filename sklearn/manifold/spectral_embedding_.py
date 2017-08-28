@@ -5,17 +5,17 @@
 # License: BSD 3 clause
 
 import warnings
+
 import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
-from scipy.sparse.linalg import lobpcg
+from scipy.sparse.linalg import eigsh, lobpcg
+from scipy.sparse.csgraph import connected_components
+
 from ..base import BaseEstimator
 from ..externals import six
 from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
-from ..utils.graph import graph_laplacian
-from ..utils.sparsetools import connected_components
-from ..utils.arpack import eigsh
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 
@@ -178,14 +178,14 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
 
+    norm_laplacian : bool, optional, default=True
+        If True, then compute normalized Laplacian.
+
     drop_first : bool, optional, default=True
         Whether to drop the first eigenvector. For spectral embedding, this
         should be True as the first eigenvector should be constant vector for
         connected graph, but for spectral clustering, this should be kept as
         False to retain the first eigenvector.
-
-    norm_laplacian : bool, optional, default=True
-        If True, then compute normalized Laplacian.
 
     Returns
     -------
@@ -234,8 +234,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
 
-    laplacian, dd = graph_laplacian(adjacency,
-                                    normed=norm_laplacian, return_diag=True)
+    laplacian, dd = sparse.csgraph.laplacian(adjacency, normed=norm_laplacian,
+                                             return_diag=True)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
@@ -343,19 +343,6 @@ class SpectralEmbedding(BaseEstimator):
     n_components : integer, default: 2
         The dimension of the projected subspace.
 
-    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG requires pyamg
-        to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities.
-
-    random_state : int, RandomState instance or None, optional, default: None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors.  If int, random_state is the seed used by the
-        random number generator; If RandomState instance, random_state is the
-        random number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``solver`` ==
-        'amg'.
-
     affinity : string or callable, default : "nearest_neighbors"
         How to construct the affinity matrix.
          - 'nearest_neighbors' : construct affinity matrix by knn graph
@@ -367,6 +354,19 @@ class SpectralEmbedding(BaseEstimator):
 
     gamma : float, optional, default : 1/n_features
         Kernel coefficient for rbf kernel.
+
+    random_state : int, RandomState instance or None, optional, default: None
+        A pseudo random number generator used for the initialization of the
+        lobpcg eigenvectors.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``solver`` ==
+        'amg'.
+
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities.
 
     n_neighbors : int, default : max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.

@@ -12,10 +12,12 @@ from scipy.sparse import coo_matrix
 
 from sklearn import datasets
 from sklearn.base import clone
+from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
 from sklearn.metrics import mean_squared_error
+from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -705,7 +707,14 @@ def test_warm_start():
         est_ws.set_params(n_estimators=200)
         est_ws.fit(X, y)
 
-        assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+        if Cls is GradientBoostingRegressor:
+            assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+        else:
+            # Random state is preserved and hence predict_proba must also be
+            # same
+            assert_array_equal(est_ws.predict(X), est.predict(X))
+            assert_array_almost_equal(est_ws.predict_proba(X),
+                                      est.predict_proba(X))
 
 
 def test_warm_start_n_estimators():
@@ -1106,3 +1115,74 @@ def test_sparse_input():
 
     for EstimatorClass, sparse_matrix in product(ests, sparse_matrices):
         yield check_sparse_input, EstimatorClass, X, sparse_matrix(X), y
+
+
+def test_gradient_boosting_early_stopping():
+    X, y = make_classification(n_samples=1000, random_state=0)
+
+    gbc = GradientBoostingClassifier(n_estimators=1000,
+                                     n_iter_no_change=10,
+                                     learning_rate=0.1, max_depth=3,
+                                     random_state=42)
+
+    gbr = GradientBoostingRegressor(n_estimators=1000, n_iter_no_change=10,
+                                    learning_rate=0.1, max_depth=3,
+                                    random_state=42)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        random_state=42)
+    # Check if early_stopping works as expected
+    for est, tol, early_stop_n_estimators in ((gbc, 1e-1, 24), (gbr, 1e-1, 13),
+                                              (gbc, 1e-3, 36),
+                                              (gbr, 1e-3, 28)):
+        est.set_params(tol=tol)
+        est.fit(X_train, y_train)
+        assert_equal(est.n_estimators_, early_stop_n_estimators)
+        assert est.score(X_test, y_test) > 0.7
+
+    # Without early stopping
+    gbc = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1,
+                                     max_depth=3, random_state=42)
+    gbc.fit(X, y)
+    gbr = GradientBoostingRegressor(n_estimators=200, learning_rate=0.1,
+                                    max_depth=3, random_state=42)
+    gbr.fit(X, y)
+
+    assert gbc.n_estimators_ == 100
+    assert gbr.n_estimators_ == 200
+
+
+def test_gradient_boosting_validation_fraction():
+    X, y = make_classification(n_samples=1000, random_state=0)
+
+    gbc = GradientBoostingClassifier(n_estimators=100,
+                                     n_iter_no_change=10,
+                                     validation_fraction=0.1,
+                                     learning_rate=0.1, max_depth=3,
+                                     random_state=42)
+    gbc2 = clone(gbc).set_params(validation_fraction=0.3)
+    gbc3 = clone(gbc).set_params(n_iter_no_change=20)
+
+    gbr = GradientBoostingRegressor(n_estimators=100, n_iter_no_change=10,
+                                    learning_rate=0.1, max_depth=3,
+                                    validation_fraction=0.1,
+                                    random_state=42)
+    gbr2 = clone(gbr).set_params(validation_fraction=0.3)
+    gbr3 = clone(gbr).set_params(n_iter_no_change=20)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+    # Check if validation_fraction has an effect
+    gbc.fit(X_train, y_train)
+    gbc2.fit(X_train, y_train)
+    assert gbc.n_estimators_ != gbc2.n_estimators_
+
+    gbr.fit(X_train, y_train)
+    gbr2.fit(X_train, y_train)
+    assert gbr.n_estimators_ != gbr2.n_estimators_
+
+    # Check if n_estimators_ increase monotonically with n_iter_no_change
+    # Set validation
+    gbc3.fit(X_train, y_train)
+    gbr3.fit(X_train, y_train)
+    assert gbr.n_estimators_ < gbr3.n_estimators_
+    assert gbc.n_estimators_ < gbc3.n_estimators_

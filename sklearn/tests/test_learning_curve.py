@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_false
 from sklearn.datasets import make_classification
 
 with warnings.catch_warnings():
@@ -91,6 +92,18 @@ class MockEstimatorFailing(BaseEstimator):
 
     def score(self, X=None, y=None):
         return None
+
+
+class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
+    """Dummy classifier that disallows repeated calls of fit method"""
+
+    def fit(self, X_subset, y_subset):
+        assert_false(
+            hasattr(self, 'fit_called_'),
+            'fit is called the second time'
+        )
+        self.fit_called_ = True
+        return super(type(self), self).fit(X_subset, y_subset)
 
 
 def test_learning_curve():
@@ -208,7 +221,8 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     train_sizes = np.linspace(0.2, 1.0, 5)
-    estimator = PassiveAggressiveClassifier(n_iter=1, shuffle=False)
+    estimator = PassiveAggressiveClassifier(max_iter=1, tol=None,
+                                            shuffle=False)
 
     train_sizes_inc, train_scores_inc, test_scores_inc = \
         learning_curve(
@@ -284,3 +298,15 @@ def test_validation_curve():
 
     assert_array_almost_equal(train_scores.mean(axis=1), param_range)
     assert_array_almost_equal(test_scores.mean(axis=1), 1 - param_range)
+
+
+def test_validation_curve_clone_estimator():
+    X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+
+    param_range = np.linspace(1, 0, 10)
+    _, _ = validation_curve(
+        MockEstimatorWithSingleFitCallAllowed(), X, y,
+        param_name="param", param_range=param_range, cv=2
+    )

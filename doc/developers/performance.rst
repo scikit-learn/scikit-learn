@@ -84,38 +84,6 @@ C/C++ generated files are embedded in distributed stable packages. The goal is
 to make it possible to install scikit-learn stable version
 on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
-Fast matrix multiplications
-===========================
-
-Matrix multiplications (matrix-matrix and matrix-vector) are usually handled
-using the NumPy function ``np.dot``, but in versions of NumPy before 1.7.2
-this function is suboptimal when the inputs are not both in the C (row-major)
-layout; in that case, the inputs may be implicitly copied to obtain the right
-layout. This obviously consumes memory and takes time.
-
-The function ``fast_dot`` in ``sklearn.utils.extmath`` offers a fast
-replacement for ``np.dot`` that prevents copies from being made in some cases.
-In all other cases, it dispatches to ``np.dot`` and when the NumPy version is
-new enough, it is in fact an alias for that function, making it a drop-in
-replacement. Example usage of ``fast_dot``::
-
-  >>> import numpy as np
-  >>> from sklearn.utils.extmath import fast_dot
-  >>> X = np.random.random_sample([2, 10])
-  >>> np.allclose(np.dot(X, X.T), fast_dot(X, X.T))
-  True
-
-This function operates optimally on 2-dimensional arrays, both of the same
-dtype, which should be either single or double precision float. If these
-requirements aren't met or the BLAS package is not available, the call is
-silently dispatched to ``numpy.dot``. If you want to be sure when the original
-``numpy.dot`` has been invoked in a situation where it is suboptimal, you can
-activate the related warning::
-
-  >>> import warnings
-  >>> from sklearn.exceptions import NonBLASDotWarning
-  >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
-
 .. _profiling-python-code:
 
 Profiling Python code
@@ -425,4 +393,3 @@ A sample algorithmic trick: warm restarts for cross validation
 
 TODO: demonstrate the warm restart tricks for cross validation of linear
 regression with Coordinate Descent.
-
