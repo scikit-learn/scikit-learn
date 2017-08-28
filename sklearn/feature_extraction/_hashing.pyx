@@ -38,7 +38,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
     # Since Python array does not understand Numpy dtypes, we grow the indices
     # and values arrays ourselves. Use a Py_ssize_t capacity for safety.
     cdef Py_ssize_t capacity = 8192     # arbitrary
-    cdef np.int32_t size = 0
+    cdef np.uint64_t size = 0
     cdef np.ndarray values = np.empty(capacity, dtype=dtype)
 
     for x in raw_X:
