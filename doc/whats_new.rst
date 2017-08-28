@@ -36,6 +36,10 @@ Classifiers and regressors
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
 
+- Added :class:`naive_bayes.ComplementNB`, which implements the Complement
+  Naive Bayes classifier described in Rennie et al. (2003).
+  By :user:`Michael A. Alcorn <airalcorn2>`.
+
 Enhancements
 ............
 
@@ -144,10 +148,6 @@ Classifiers and regressors
   multinomial logistic loss, and behaves marginally better than 'sag'
   during the first epochs of ridge and logistic regression.
   :issue:`8446` by `Arthur Mensch`_.
-
-- Added :class:`naive_bayes.ComplementNB`, which implements the Complement
-  Naive Bayes classifier described in Rennie et al. (2003).
-  By :user:`Michael A. Alcorn <airalcorn2>`.
 
 Other estimators
 
