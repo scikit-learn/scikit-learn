@@ -436,7 +436,7 @@ the performance of warm starting during parameter search.
   ...     exec_time = time.time() - start_time
   ...     best_scores = np.mean(list_score, 0)
   ...     print("Lasso(warm_start=%s)" % str(warm_start))
-  ...     print("   Best param: %" % list_params[best_scores.argmax()])
+  ...     print("   Best param: %s" % list_params[best_scores.argmax()])
   ...     print("   Best score: %s" % str(best_scores.max()))
   ...     return exec_time
   >>> exec_time = cross_selection(linear_model.Lasso, list_params, warm_start=False)
