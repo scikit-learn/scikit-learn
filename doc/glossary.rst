@@ -20,6 +20,13 @@ General Concepts
     affinity
         TODO
 
+    API
+        TODO
+
+        The specific interfaces for estimators implemented in Scikit-learn and
+        the generalized conventions across types of estimators as described in
+        this glossary.
+
     array-like
 
         The most common data format for *input* to Scikit-learn estimators and
@@ -173,6 +180,21 @@ General Concepts
     fitted
         TODO
 
+	function
+		TODO
+
+		Talk about where estimator fit or fit_transform functionality is present in a function.
+
+	joblib
+		TODO
+
+	leakage
+	data leakage
+		TODO
+
+	memory map
+		TODO
+
     missing values
         TODO
 
@@ -187,6 +209,9 @@ General Concepts
 
     ``n_targets``
         Synonym for :term:`n_outputs`.
+
+	out-of-core
+		TODO
 
     outputs
         TODO?
@@ -264,6 +289,7 @@ General Concepts
 
         Dependent variable or outcome variable.
 
+    unlabeled
     unlabeled data
         TODO
 
@@ -280,6 +306,9 @@ Class APIs and Estimator Types
 
     estimator
         TODO
+
+        The core functionality of some estimators may also be available as a
+        :term:`function`.
 
     feature extractor
         A :term:`tranformer` which takes input where each sample is not
@@ -311,11 +340,14 @@ Class APIs and Estimator Types
     vectorizer
         See :term:`feature extractor`.
 
-There are further APIs specific to a small family of estimators, such as:
+There are further APIs specifically related to a small family of estimators,
+such as:
 
 * :class:`neighbors.DistanceMetric`
 * :class:`gaussian_process.kernels.Kernel`
 * ``tree.Criterion``
+
+.. _glossary_target_types:
 
 Target Types
 ============
@@ -344,6 +376,9 @@ Target Types
 
         We may also support other orderable, hashable objects as class labels.
 
+        For semi-supervised classification, :term:`unlabeled` samples should
+        have the special label -1 in ``y``.
+
         Within sckit-learn, all estimators supporting binary classification
         also support multiclass classification, using One-vs-Rest by default.
 
@@ -354,7 +389,7 @@ Target Types
         'binary' in the degenerate case) for multiclass input.
 
     multilabel
-        A multi-output target where each output is :term:`binary`.  This may be
+        A multioutput target where each output is :term:`binary`.  This may be
         represented as a 2d (dense) array or sparse matrix of integers, such
         that each column is a separate binary target, where positive labels are
         indicated with 1 and negative labels are usually -1 or 0.
@@ -368,10 +403,10 @@ Target Types
         :func:`~utils.multiclass.type_of_target` will return
         'multilabel-indicator' for multilabel input, whether sparse or dense.
 
-    multi-output continuous
+    multioutput continuous
         TODO
 
-    multi-output multiclass
+    multioutput multiclass
         A classification problem .
 
         TODO
@@ -383,19 +418,38 @@ Methods
 
     ``decision_function``
 
+        In a fitted :term:`classifier` or :term:`outlier detector`, predicts a
+        "soft" score for each sample in relation to each class, rather than the
+        "hard" categorical prediction produced by :term:`predict`.
+
         Output conventions:
 
-        classifier
-            TODO
+        binary classification
+            A 1-dimensional array, where values strictly greater than zero
+            indicate the positive class (i.e. the last class in
+            :term:`classes_`).
+        multiclass classification
+            A 2-dimensional array, where the row-wise arg-maximum is the
+            predicted class.  Columns are ordered according to
+            :term:`classes_`.
+        multilabel classification
+            Scikit-learn is inconsistent in its representation of multilabel
+            decision functions.  Some represent it like multioutput multiclass,
+            i.e. a list of 2d arrays, each with two columns. Others represent
+            it with a single 2d array, whose columns correspond to the
+            individual binary classification decisions. The latter
+            representation is ambiguously identical to the multiclass
+            classification format, though its semantics differ: it should be
+            interpreted, like in the binary case, by thresholding at 0.
 
-            Binary
-            Multiclass
-            OvO
-            Multioutput
-            Multilabel either like multiclass or like multioutput
-
-        outlier detector
-            TODO
+            ..
+            see https://gist.github.com/jnothman/4807b1b0266613c20ba4d1f88d0f8cf5
+        multioutput classification
+            A list of 2d arrays, corresponding to each multiclass decision
+            function.
+        outlier detection
+            A 1-dimensional array, where a value greater than or equal to zero
+            (TODO: check equality case) indicates an inlier.
 
     ``get_feature_names``
         TODO
@@ -419,6 +473,9 @@ Methods
         ``transform`` may not be available.
         ``fit_transform`` can be different, as in stacking.
 
+        Ordinarily should not be applied to the entirety of a dataset, only the
+        training data, to avoid :term:`leakage`.
+
     ``fit``
         The ``fit`` method is provided on every estimator. It usually takes some
         :term:`samples` ``X``, :term:`targets` ``y`` if the model is supervised,
@@ -435,12 +492,23 @@ Methods
         * return the now :term:`fitted` estimator to facilitate method
           chaining.
 
+        :ref:`glossary_target_types` describes possible formats for ``y``.
+
     ``partial_fit``
         Facilitates fitting an estimator in an online fashion.  Unlike ``fit``,
         repeatedly calling ``partial_fit`` does not clear the model, but
         updates it with respect to the data provided. The portion of data
         provided to ``partial_fit`` may be called a mini-batch.
         Each mini-batch must be of consistent shape, etc.
+
+        ``partial_fit`` may also be used for :term:`out-of-core` learning,
+        although limited to the case where learning can be performed online,
+        i.e. the model is usable after each ``partial_fit`` and there is no
+        separate processing needed to finalize the model.
+        :class:`cluster.Birch` introduces the convention that calling
+        ``partial_fit(X)`` will produce a model that is not finalized, but the
+        model can be finalized by calling ``partial_fit()`` i.e. without
+        passing a further mini-batch.
 
         Generally, estimator parameters should not be modified between calls
         to ``partial_fit``, although ``partial_fit`` should validate them
@@ -451,6 +519,31 @@ Methods
         To clear the model, a new estimator should be constructed, for instance
         with :func:`base.clone`.
 
+    ``predict``
+        Makes a prediction for each sample. In a :term:`classifier` or
+        :term:`regressor`, this prediction is in the same target space used in
+        fitting (e.g. one of {'red', 'amber', 'green'} if the `y` in fitting
+        consisted of these strings).  In a :term:`clusterer` or :term:`outlier
+        detector` the prediction is an integer.
+
+        TODO
+
+        Return type is array ...
+
+        classifier
+            TODO
+
+        clusterer
+            TODO
+            -1 in DBSCAN
+
+        outlier detector
+            TODO
+
+        regressor
+
+        Mention ``return_std``
+
     ``predict_log_proba``
         TODO
 
@@ -459,22 +552,6 @@ Methods
 
         Output conventions are like those for ``decision_function`` except
         in the :term:`binary` case.
-
-    ``predict``
-        TODO
-
-        Return type is array ...
-
-        classifier
-            TODO
-            Mention ``return_std``
-
-        clusterer
-
-        outlier detector
-            TODO
-
-        regressor
 
     ``score``
         TODO
@@ -504,7 +581,7 @@ non-estimator parameters with similar semantics.
         of the :term:`target` class.  Where the :term:`sample_weight`
         :term:`sample property` is also supported and given, it is multiplied
         by the ``class_weight`` contribution. Similarly, where ``class_weight``
-        is used in a :term:`multi-output` (including :term:`multilabel`) tasks,
+        is used in a :term:`multioutput` (including :term:`multilabel`) tasks,
         the weights are multiplied across outputs (i.e. columns of ``y``).
 
         By default all samples have equal weight such that classes are
@@ -542,7 +619,7 @@ non-estimator parameters with similar semantics.
           validation. K-fold will be stratified over classes if the estimator
           is a classifier (determined by :func:`base.is_classifier`) and the
           :term:`targets` may represent a binary or multiclass (but not
-          multi-output) classification problem (determined by
+          multioutput) classification problem (determined by
           :func:`utils.multiclass.type_of_target`).
         - A :term:`cross validation splitter` instance. Refer to the
           :ref:`User Guide <cross_validation>` for splitters available
