@@ -1154,10 +1154,10 @@ def check_classifiers_train(name, classifier_orig):
                 # raises error on malformed input for decision_function
                 with assert_raises(ValueError, msg="The classifer {name} does "
                                    "not raise an error when incorrect/malforme"
-                                   "d input for predict is passed. Number of f"
-                                   "eatures in predict dataset does not match "
-                                   "the number of features in fit dataset. "
-                                   "Perhaps use check_array"):
+                                   "d input for decision_function is passed. N"
+                                   "umber of features in predict dataset does "
+                                   "not match the number of features in fit da"
+                                   "taset. Perhaps use check_array"):
                     classifier.decision_function(X.T)
             except NotImplementedError:
                 pass
@@ -1171,9 +1171,9 @@ def check_classifiers_train(name, classifier_orig):
             # raises error on malformed input
             with assert_raises(ValueError, msg="The classifer {name} does not"
                                " raise an error when incorrect/malformed inpu"
-                               "t  for predict is passed. Number of features "
-                               "in predict dataset does not match the number "
-                               "of features in fit dataset. "
+                               "t  for predict_proba is passed. Number of fea"
+                               "tures in predict dataset does not match the n"
+                               "umber of features in fit dataset. "
                                "Perhaps use check_array"):
                 classifier.predict_proba(X.T)
             # raises error on malformed input for predict_proba
