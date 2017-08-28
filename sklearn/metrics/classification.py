@@ -1911,19 +1911,12 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
-    check_consistent_length(y_true, y_prob)
-
-    if y_prob.max() > 1:
-        raise ValueError("y_prob contains values greater than 1.")
-    if y_prob.min() < 0:
-        raise ValueError("y_prob contains values less than 0.")
 
     # currently, we only support binary classification
-    classes = np.unique(y_true)
-    if len(classes) > 2:
-        raise ValueError("Only binary classification is supported.")
+    _check_binary_probabilistic_predictions(y_true, y_prob)
 
     # ensure valid y_true if pos_label is not specified
+    classes = np.unique(y_true)
     if pos_label is None:
         if (np.array_equal(classes, [0]) or
            np.array_equal(classes, [-1]) or
