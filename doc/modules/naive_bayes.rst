@@ -136,7 +136,7 @@ while :math:`\alpha < 1` is called Lidstone smoothing.
 .. _complement_naive_bayes:
 
 Complement Naive Bayes
------------------------
+----------------------
 
 :class:`ComplementNB` implements the complement naive Bayes (CNB) algorithm.
 CNB is an adaptation of the standard multinomial naive Bayes (MNB) algorithm
@@ -149,20 +149,23 @@ calculating the weights is as follows:
 
 .. math::
 
-    \hat{\theta}_{ci} = \frac{\sum{j:y_j \neq c} d_{ij} + \alpha_i}
-                             {\sum{j:y_j \neq c} \sum{k} d_{kj} + \alpha}
-    w_{ci} = \log \hat{\theta}_{ci}
-    w_{ci} = \frac{w_{ci}{\sum{j} w_{cj}}
+    \hat{\theta}_{ci} = \frac{\alpha_i + \sum_{j:y_j \neq c} d_{ij}}
+                             {\alpha + \sum_{j:y_j \neq c} \sum_{k} d_{kj}}
 
-where the summation is over all documents :math:`j` not in class :math:`c`,
+    w_{ci} = \log \hat{\theta}_{ci}
+
+    w_{ci} = \frac{w_{ci}}{\sum_{j} w_{cj}}
+
+where the summations are over all documents :math:`j` not in class :math:`c`,
 :math:`d_{ij}` is either the count or tf-idf value of term :math:`i` in document
-:math:`j`, and :math:`\alpha` is a smoothing hyperparameter like that found in
-MNB. The second normalization addresses the tendency for longer documents to
-dominate parameter estimates in MNB. The classification rule is:
+:math:`j`, :math:`\alpha_i` is a smoothing hyperparameter like that found in
+MNB, and :math:`\alpha = \sum_{i} \alpha_i`. The second normalization addresses
+the tendency for longer documents to dominate parameter estimates in MNB. The
+classification rule is:
 
 .. math::
 
-    \hat{c} = \arg\min_c \sum{i} t_i w_{ci}
+    \hat{c} = \arg\min_c \sum_{i} t_i w_{ci}
 
 i.e., a document is assigned to the class that is the *poorest* complement
 match.
