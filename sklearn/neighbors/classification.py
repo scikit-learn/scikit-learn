@@ -435,9 +435,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         inliers = [i for i, nind in enumerate(neigh_ind) if len(nind) != 0]
-        mask = np.ones(n_samples, np.bool)
-        mask[inliers] = False
-        outliers = np.arange(n_samples)[mask]
+        outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
 
         classes_ = self.classes_
         _y = self._y
