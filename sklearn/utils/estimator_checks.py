@@ -689,9 +689,9 @@ def check_transformers_unfitted(name, transformer):
 
     transformer = clone(transformer)
     with assert_raises((AttributeError, ValueError), msg="The unfitted "
-                       "transformer {} does not raise an error when tra"
-                       "nsform is called. Perhaps use check_is_fitted."
-                       .format(name)):
+                       "transformer {} does not raise an error when "
+                       "transform is called. Perhaps use "
+                       "check_is_fitted.".format(name)):
         transformer.transform(X)
 
 
@@ -765,9 +765,10 @@ def _check_transformer(name, transformer_orig, X, y):
         if hasattr(X, 'T'):
             # If it's not an array, it does not have a 'T' property
             with assert_raises(ValueError, msg="The transformer {} does "
-                               "not raise an error when the number of featur"
-                               "es in transform is different from the number"
-                               " of features in fit.".format(name)):
+                               "not raise an error when the number of "
+                               "features in transform is different from"
+                               " the number of features in "
+                               "fit.".format(name)):
                 transformer.transform(X.T)
 
 
@@ -863,8 +864,8 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     # validated first. Let us test the type of exception only:
     with assert_raises(ValueError, msg="The estimator {} does not"
                        " raise an error when an empty data is used "
-                       "to train. "
-                       "Perhaps use check_array.".format(name)):
+                       "to train. Perhaps use "
+                       "check_array.".format(name)):
         e.fit(X_zero_samples, [])
 
     X_zero_features = np.empty(0).reshape(3, 0)
@@ -1003,8 +1004,8 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
     with assert_raises(ValueError,
                        msg="The estimator {} does not raise an"
                            " error when number of features changes "
-                           "between calls to partial_"
-                           "fit.".format(name)):
+                           "between calls to "
+                           "partial_fit.".format(name)):
         estimator.partial_fit(X[:, :-1], y)
 
 
@@ -1111,10 +1112,9 @@ def check_classifiers_train(name, classifier_orig):
         # raises error on malformed input for fit
         with assert_raises(ValueError, msg="The classifer {} does not"
                            " raise an error when incorrect/malformed input "
-                           "data for fit is passed. Number of training exam"
-                           "ples is not the same as the number of "
-                           "labels. Perhapse use "
-                           "check_X_y.".format(name)):
+                           "data for fit is passed. Number of training "
+                           "examples is not the same as the number of "
+                           "labels. Perhapse use check_X_y.".format(name)):
             classifier.fit(X, y[:-1])
 
         # fit
@@ -1150,10 +1150,10 @@ def check_classifiers_train(name, classifier_orig):
 
                 # raises error on malformed input for decision_function
                 with assert_raises(ValueError, msg="The classifier {} does"
-                                   " not raise an error when the number of fea"
-                                   "tures in decision_function is different "
-                                   "from the number of features in "
-                                   "fit.".format(name)):
+                                   " not raise an error when the number of "
+                                   "features in decision_function is "
+                                   "different from the number of features"
+                                   " in fit.".format(name)):
                     classifier.decision_function(X.T)
             except NotImplementedError:
                 pass
@@ -1335,8 +1335,8 @@ def check_regressors_train(name, regressor_orig):
     # raises error on malformed input for fit
     with assert_raises(ValueError, msg="The classifer {} does not"
                        " raise an error when incorrect/malformed input "
-                       "data for fit is passed. Number of training exam"
-                       "ples is not the same as the number of "
+                       "data for fit is passed. Number of training "
+                       "examples is not the same as the number of "
                        "labels. Perhapse use check_X_y.".format(name)):
         regressor.fit(X, y[:-1])
     # fit
