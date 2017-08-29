@@ -174,7 +174,7 @@ def check_memory(memory):
     Raises
     ------
     ValueError
-        if ``memory`` is not joblib.Memory-like
+        If ``memory`` is not joblib.Memory-like.
     """
 
     if memory is None or isinstance(memory, six.string_types):

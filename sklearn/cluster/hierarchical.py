@@ -26,7 +26,6 @@ from ..utils.fast_dict import IntFloatDict
 
 from ..externals.six.moves import xrange
 
-
 ###############################################################################
 # For non fully-connected graphs
 
