@@ -887,11 +887,12 @@ def test_pipeline_with_cache_attribute():
     pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
                     memory=DummyMemory())
     pipe.fit(X, y=None)
+    dummy = WrongDummyMemory()
     pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
-                    memory=WrongDummyMemory())
+                    memory=dummy)
     assert_raises_regex(ValueError, "'memory' is not a string or a Memory"
                         " instance implementing a cache method. Got {} "
-                        "instead.".format(WrongDummyMemory()), pipe.fit, X)
+                        "instead.".format(dummy), pipe.fit, X)
 
 
 def test_pipeline_memory():
