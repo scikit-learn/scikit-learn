@@ -691,7 +691,7 @@ def check_transformers_unfitted(name, transformer):
     with assert_raises((AttributeError, ValueError), msg="The unfitted "
                        "transformer {} does not raise an error when "
                        "transform is called. Perhaps use "
-                       "check_is_fitted.".format(name)):
+                       "check_is_fitted in transform.".format(name)):
         transformer.transform(X)
 
 
@@ -865,7 +865,7 @@ def check_estimators_empty_data_messages(name, estimator_orig):
     with assert_raises(ValueError, msg="The estimator {} does not"
                        " raise an error when an empty data is used "
                        "to train. Perhaps use "
-                       "check_array.".format(name)):
+                       "check_array in train.".format(name)):
         e.fit(X_zero_samples, [])
 
     X_zero_features = np.empty(0).reshape(3, 0)
@@ -1003,8 +1003,8 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
 
     with assert_raises(ValueError,
                        msg="The estimator {} does not raise an"
-                           " error when number of features changes "
-                           "between calls to "
+                           " error when the number of features"
+                           " changes between calls to "
                            "partial_fit.".format(name)):
         estimator.partial_fit(X[:, :-1], y)
 
@@ -1112,9 +1112,9 @@ def check_classifiers_train(name, classifier_orig):
         # raises error on malformed input for fit
         with assert_raises(ValueError, msg="The classifer {} does not"
                            " raise an error when incorrect/malformed input "
-                           "data for fit is passed. Number of training "
-                           "examples is not the same as the number of "
-                           "labels. Perhapse use check_X_y.".format(name)):
+                           "data for fit is passed. The number of training "
+                           "examples is not the same as the number of labels."
+                           " Perhaps use check_X_y in fit.".format(name)):
             classifier.fit(X, y[:-1])
 
         # fit
@@ -1335,9 +1335,9 @@ def check_regressors_train(name, regressor_orig):
     # raises error on malformed input for fit
     with assert_raises(ValueError, msg="The classifer {} does not"
                        " raise an error when incorrect/malformed input "
-                       "data for fit is passed. Number of training "
+                       "data for fit is passed. The number of training "
                        "examples is not the same as the number of "
-                       "labels. Perhapse use check_X_y.".format(name)):
+                       "labels. Perhaps use check_X_y in fit.".format(name)):
         regressor.fit(X, y[:-1])
     # fit
     if name in CROSS_DECOMPOSITION:
