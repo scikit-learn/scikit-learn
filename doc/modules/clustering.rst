@@ -301,7 +301,9 @@ is given.
 Affinity Propagation can be interesting as it chooses the number of
 clusters based on the data provided. For this purpose, the two important
 parameters are the *preference*, which controls how many exemplars are
-used, and the *damping factor*.
+used, and the *damping factor* which damps the responsibility and 
+availability messages to avoid numerical oscillations when updating these
+messages.
 
 The main drawback of Affinity Propagation is its complexity. The
 algorithm has a time complexity of the order :math:`O(N^2 T)`, where :math:`N`
@@ -350,6 +352,13 @@ to be the exemplar of sample :math:`i` is given by:
 
 To begin with, all values for :math:`r` and :math:`a` are set to zero,
 and the calculation of each iterates until convergence.
+As discussed above, in order to avoid numerical oscillations when updating the 
+messages, the damping factor :math:`\lambda` is introduced to iteration process:
+
+.. math:: r_{t+1}(i, k) = \lambda\cdot r_{t}(i, k) + (1-\lambda)\cdot r_{t+1}(i, k)
+.. math:: a_{t+1}(i, k) = \lambda\cdot a_{t}(i, k) + (1-\lambda)\cdot a_{t+1}(i, k)
+
+where :math:`t` indicates the iteration times.
 
 .. _mean_shift:
 
@@ -418,7 +427,7 @@ Spectral clustering
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
 dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <http://pyamg.org/>`_ module is installed.
+sparse and the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.
 SpectralClustering requires the number of clusters to be specified. It
 works well for a small number of clusters but is not advised when using
 many clusters.
@@ -1334,7 +1343,7 @@ mean of homogeneity and completeness**:
 
 .. topic:: References
 
- .. [RH2007] `V-Measure: A conditional entropy-based external cluster evaluation
+ * `V-Measure: A conditional entropy-based external cluster evaluation
    measure <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
