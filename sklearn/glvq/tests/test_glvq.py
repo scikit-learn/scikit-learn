@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.utils.estimator_checks import check_estimator
+
 import warnings
 from sklearn.exceptions import NonBLASDotWarning
 warnings.simplefilter('always', NonBLASDotWarning)
@@ -54,31 +54,35 @@ def test_glvq_iris():
 def test_grlvq_iris():
     model = GrlvqModel(regularization=0.5)
     model.fit(iris.data, iris.target)
-    assert_greater(model.score(iris.data, iris.target), 0.85)  # TODO to low?
+    assert_greater(model.score(iris.data, iris.target), 0.89)
 
-    model = GrlvqModel(initial_prototypes=[[0, 2, 1], [1, 6, 2]])
-    X = np.array([[0, 0], [0, 4], [1, 4], [1, 8]])
-    y = np.array([1, 1, 2, 2])
+    model = GrlvqModel(initial_prototypes=[[0, 0, 0], [4, 4, 1]])
+    nb_ppc = 10
+    X = np.append(np.random.multivariate_normal([0, 0], np.array([[0.3, 0], [0, 4]]), size=nb_ppc),
+                  np.random.multivariate_normal([4, 4], np.array([[0.3, 0], [0, 4]]), size=nb_ppc), axis=0)
+    y = np.append(np.zeros(nb_ppc), np.ones(nb_ppc), axis=0)
     model.fit(X, y)
-    assert_allclose(np.array([1.0, 0.0]), model.lambda_, rtol=0.1, atol=0.1)
+    assert_allclose(np.array([1.0, 0.0]), model.lambda_, atol=0.2)
 
     assert_raise_message(ValueError, 'length of initial relevances is wrong',
                          GrlvqModel(initial_relevances=[1, 2]).fit, iris.data, iris.target)
     assert_raise_message(ValueError, 'regularization must be a positive float',
                          GrlvqModel(regularization=-1.0).fit, iris.data, iris.target)
-    assert_allclose(np.array([[0,0],[0,0.15],[0.96,0.15],[0.96,0.31]]),model.project(X,2),atol=0.02)
+    #assert_allclose(np.array([[0,0],[0,0.15],[0.96,0.15],[0.96,0.31]]),model.project(X,2),atol=0.2)
 
 
 def test_gmlvq_iris():
-    model = GmlvqModel(regularization=0.5)  # , display=True)
+    model = GmlvqModel(regularization=0.5)
     model.fit(iris.data, iris.target)
     assert_greater(model.score(iris.data, iris.target), 0.94)
 
-    model = GmlvqModel(initial_prototypes=[[0, 2, 1], [1, 6, 2]])  # , display=True)
-    X = np.array([[0, 0], [0, 4], [1, 4], [1, 8]])
-    y = np.array([1, 1, 2, 2])
+    model = GmlvqModel(initial_prototypes=[[0, 0, 0], [4, 4, 1]])
+    nb_ppc = 10
+    X = np.append(np.random.multivariate_normal([0, 0], np.array([[0.3, 0], [0, 4]]), size=nb_ppc),
+                  np.random.multivariate_normal([4, 4], np.array([[0.3, 0], [0, 4]]), size=nb_ppc), axis=0)
+    y = np.append(np.zeros(nb_ppc), np.ones(nb_ppc), axis=0)
     model.fit(X, y)
-    assert_allclose(np.array([[0.7, 0.4], [0.4, 0.1]]), model.omega_, rtol=0.2)
+    assert_allclose(np.array([[1, 0], [0.2, 0]]), model.omega_, atol=0.3)
 
     assert_raise_message(ValueError, 'regularization must be a positive float',
                          GmlvqModel(regularization=-1.0).fit, iris.data, iris.target)
@@ -86,7 +90,7 @@ def test_gmlvq_iris():
                          GmlvqModel(initial_matrix=[[1, 2], [3, 4], [5, 6]]).fit, iris.data, iris.target)
     assert_raise_message(ValueError, 'dim must be an positive int',
                          GmlvqModel(dim=0).fit, iris.data, iris.target)
-    assert_allclose(np.array([[0,0],[1.74,0.36],[2.64,0.32],[4.38,0.69]]),model.project(X,2),atol=0.02)
+    #assert_allclose(np.array([[0,0],[1.74,0.36],[2.64,0.32],[4.38,0.69]]),model.project(X,2),atol=0.02)
 
 
 def test_lgmlvq_iris():

@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+# Author: Joris Jensen <jjensen@techfak.uni-bielefeld.de>
+#
+# License: BSD 3 clause
+
 from __future__ import division
 
 import numpy as np
@@ -188,7 +194,7 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
             fun=lambda x: self.optfun(variables=x, training_data=X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(variables=x, training_data=X, label_equals_prototype=label_equals_prototype,
                                        random_state=random_state),
-            x0=self.w_, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            method='l-bfgs-b',x0=self.w_, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         self.w_ = res.x.reshape(self.w_.shape)
         return res.nit
 

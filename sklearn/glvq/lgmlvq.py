@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+# Author: Joris Jensen <jjensen@techfak.uni-bielefeld.de>
+#
+# License: BSD 3 clause
+
 from __future__ import division
 
 import numpy as np

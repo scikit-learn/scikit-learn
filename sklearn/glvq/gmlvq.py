@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+# Author: Joris Jensen <jjensen@techfak.uni-bielefeld.de>
+#
+# License: BSD 3 clause
+
 from __future__ import division
 
 import math
@@ -183,23 +189,24 @@ class GmlvqModel(GlvqModel):
 
         variables = np.append(self.w_, self.omega_, axis=0)
         label_equals_prototype = y[np.newaxis].T == self.c_w_
+        method = 'l-bfgs-b'
         res = minimize(
             fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
                                        lr_prototypes=1, lr_relevances=0),
-            x0=variables, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            method=method, x0=variables, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = res.nit
         res = minimize(
             fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
                                        lr_prototypes=0, lr_relevances=1),
-            x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            method=method, x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         res = minimize(
             fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
                                        lr_prototypes=1, lr_relevances=1),
-            x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            method=method,x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         out = res.x.reshape(res.x.size // nb_features, nb_features)
         self.w_ = out[:nb_prototypes]

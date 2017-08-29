@@ -47,8 +47,8 @@ project_plot2d(grlvq,toy_data,toy_label,2)
 print('grlvq:',grlvq.score(toy_data,toy_label))
 print('gvlq:', glvq.score(toy_data,toy_label))
 
-#toy_data = np.append(np.random.multivariate_normal([0, 0], np.array([[5,4],[4,6]]), size=nb_ppc),
-#                     np.random.multivariate_normal([9, 0], np.array([[5,4],[4,6]]), size=nb_ppc), axis=0)
+toy_data = np.append(np.random.multivariate_normal([0, 0], np.array([[5,4],[4,6]]), size=nb_ppc),
+                    np.random.multivariate_normal([9, 0], np.array([[5,4],[4,6]]), size=nb_ppc), axis=0)
 gmlvq = GmlvqModel()
 gmlvq.fit(toy_data,toy_label)
 project_plot2d(gmlvq,toy_data,toy_label,3)

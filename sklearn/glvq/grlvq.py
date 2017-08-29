@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+# Author: Joris Jensen <jjensen@techfak.uni-bielefeld.de>
+#
+# License: BSD 3 clause
+
 from __future__ import division
 
 from math import log
@@ -167,25 +173,26 @@ class GrlvqModel(GlvqModel):
         self.lambda_ /= np.sum(self.lambda_)
         variables = np.append(self.w_, np.diag(np.sqrt(self.lambda_)), axis=0)
         label_equals_prototype = y[np.newaxis].T == self.c_w_
+        method = 'l-bfgs-b'
         res = minimize(
             fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
                                        lr_relevances=0, random_state=random_state),
-            method='BFGS', x0=variables,
+            method=method, x0=variables,
             options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = res.nit
         res = minimize(
             fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=0,
                                        lr_relevances=1, random_state=random_state),
-            method='BFGS', x0=variables,
+            method=method, x0=variables,
             options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         res = minimize(
             fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
                                        lr_relevances=1, random_state=random_state),
-            method='BFGS', x0=variables,
+            method=method, x0=variables,
             options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         out = res.x.reshape(res.x.size // nb_features, nb_features)
