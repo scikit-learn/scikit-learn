@@ -28,7 +28,7 @@ class GmlvqModel(GlvqModel):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    initial_prototypes : array-like, shape =  [n_samples, n_features + 1], optional
+    initial_prototypes : array-like, shape =  [n_prototypes, n_features + 1], optional
         Prototypes to start with. If not given initialization near the class means.
         Class label must be placed as last entry of each prototype
 
@@ -42,10 +42,11 @@ class GmlvqModel(GlvqModel):
         The maximum number of iterations
 
     gtol: float, optional (default=1e-5)
-        Gradient norm must be less than gtol before successful termination of bfgs
+        Gradient norm must be less than gtol before successful termination of l-bfgs-b
 
     regularization: float, optional (default=0.0)
-        Value between 0 and 1 (treat with care)
+        Value between 0 and 1. Regularization is done by the log determinant of the relevance matrix.
+        Without regularization relevances may degenerate to zero.
 
     initial_matrix: array-like, shape = [dim, n_features], optional
         Relevance matrix to start with.
@@ -79,10 +80,9 @@ class GmlvqModel(GlvqModel):
     GLVQ, GRLVQ, LGMLVQ
     """
 
-    def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
-                 display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrix=None, dim=None):
-        super(GmlvqModel, self).__init__(random_state, initial_prototypes, prototypes_per_class,
-                                         display, max_iter, gtol)
+    def __init__(self, prototypes_per_class=1, initial_prototypes=None, initial_matrix=None, regularization=0.0,
+                 dim=None, max_iter=2500, gtol=1e-5, display=False, random_state=None):
+        super(GmlvqModel, self).__init__(prototypes_per_class, initial_prototypes, max_iter, gtol, display, random_state)
         self.regularization = regularization
         self.initial_matrix = initial_matrix
         self.initialdim = dim
@@ -206,7 +206,7 @@ class GmlvqModel(GlvqModel):
             fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
                                        lr_prototypes=1, lr_relevances=1),
-            method=method,x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            method=method, x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         out = res.x.reshape(res.x.size // nb_features, nb_features)
         self.w_ = out[:nb_prototypes]

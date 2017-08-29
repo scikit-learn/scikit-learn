@@ -8,6 +8,16 @@ import matplotlib.pyplot as plt
 
 
 def project_plot2d(model, X, y, figure, title=""):
+    """
+    Projects the input data to two dimensions and plots it. The projection is done using the relevances of the given
+    glvq model.
+    :param model: GlvqModel that has relevances (GrlvqModel,GmlvqModel,LgmlvqModel)
+    :param X: Input data
+    :param y: Input data target
+    :param figure: the figure to plot on
+    :param title: the title to use, optional
+    :return: None
+    """
     dim = 2
     f = plt.figure(figure)
     f.suptitle(title)

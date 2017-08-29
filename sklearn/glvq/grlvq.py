@@ -29,7 +29,7 @@ class GrlvqModel(GlvqModel):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    initial_prototypes : array-like, shape =  [n_samples, n_features + 1], optional
+    initial_prototypes : array-like, shape =  [n_prototypes, n_features + 1], optional
         Prototypes to start with. If not given initialization near the class means.
         Class label must be placed as last entry of each prototype
 
@@ -43,10 +43,11 @@ class GrlvqModel(GlvqModel):
         The maximum number of iterations
 
     gtol: float, optional (default=1e-5)
-        Gradient norm must be less than gtol before successful termination of bfgs.
+        Gradient norm must be less than gtol before successful termination of l-bfgs-b.
 
     regularization: float, optional (default=0.0)
-        Value between 0 and 1 (treat with care)
+        Value between 0 and 1. Regularization is done by the log determinant of the relevance matrix.
+        Without regularization relevances may degenerate to zero.
 
     initial_relevances: array-like, shape = [n_prototypes], optional
         Relevances to start with. If not given all relevances are equal
@@ -73,10 +74,9 @@ class GrlvqModel(GlvqModel):
     GLVQ, GMLVQ, LGMLVQ
     """
 
-    def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
-                 display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_relevances=None):
-        super(GrlvqModel, self).__init__(random_state, initial_prototypes, prototypes_per_class,
-                                        display, max_iter, gtol)
+    def __init__(self, prototypes_per_class=1, initial_prototypes=None, initial_relevances=None, regularization=0.0,
+                 max_iter=2500, gtol=1e-5, display=False, random_state=None):
+        super(GrlvqModel, self).__init__(prototypes_per_class, initial_prototypes, max_iter, gtol, display, random_state)
         self.regularization = regularization
         self.initial_relevances = initial_relevances
 

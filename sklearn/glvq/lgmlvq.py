@@ -25,7 +25,7 @@ class LgmlvqModel(GlvqModel):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    initial_prototypes : array-like, shape =  [n_samples, n_features + 1], optional
+    initial_prototypes : array-like, shape =  [n_prototypes, n_features + 1], optional
         Prototypes to start with. If not given initialization near the class means.
         Class label must be placed as last entry of each prototype
 
@@ -39,16 +39,18 @@ class LgmlvqModel(GlvqModel):
         The maximum number of iterations
 
     gtol: float, optional (default=1e-5)
-        Gradient norm must be less than gtol before successful termination of bfgs.
+        Gradient norm must be less than gtol before successful termination of l-bfgs-b.
 
     regularization: float or array-like, shape = [n_classes/n_prototypes], optional (default=0.0)
-        Values between 0 and 1 (treat with care)
+        Values between 0 and 1. Regularization is done by the log determinant of the relevance matrix.
+        Without regularization relevances may degenerate to zero.
 
-    initial_matrices: list of array-like, optional TODO
+    initial_matrices: list of array-like, optional
         Matrices to start with. If not given random initialization
 
     classwise: boolean, optional
-        Values between 0 and 1 (treat with care)
+        If true, each class has one relevance matrix.
+        If false, each prototype has one relevance matrix.
 
     dim: int, optional
         Maximum rank or projection dimensions
@@ -67,7 +69,7 @@ class LgmlvqModel(GlvqModel):
     classes_ : array-like, shape = [n_classes]
         Array containing labels.
 
-    psis_ : list of array-like
+    omegas_ : list of array-like
         Relevance Matrices
 
     dim_ : list of int
@@ -81,11 +83,9 @@ class LgmlvqModel(GlvqModel):
     GLVQ, GRLVQ, GMLVQ
     """
 
-    def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
-                 display=False, max_iter=2500, gtol=1e-5, regularization=0.0, initial_matrices=None, classwise=False,
-                 dim=None):
-        super(LgmlvqModel, self).__init__(random_state, initial_prototypes, prototypes_per_class,
-                                          display, max_iter, gtol)
+    def __init__(self, prototypes_per_class=1, initial_prototypes=None, initial_matrices=None, regularization=0.0,
+                 dim=None, classwise=False, max_iter=2500, gtol=1e-5, display=False, random_state=None):
+        super(LgmlvqModel, self).__init__(prototypes_per_class, initial_prototypes, max_iter, gtol, display, random_state)
         self.regularization = regularization
         self.initial_matrices = initial_matrices
         self.classwise = classwise
@@ -217,32 +217,32 @@ class LgmlvqModel(GlvqModel):
 
         # initialize psis (psis is list of arrays)
         if self.initial_matrices is None:
-            self.psis_ = []
+            self.omegas_ = []
             for d in self.dim_:
-                self.psis_.append(random_state.rand(d, nb_features) * 2.0 - 1.0)
+                self.omegas_.append(random_state.rand(d, nb_features) * 2.0 - 1.0)
         else:
             if not isinstance(self.initial_matrices, list):
                 raise ValueError("initial matrices must be a list")
-            self.psis_ = list(map(lambda x: validation.check_array(x), self.initial_matrices))
+            self.omegas_ = list(map(lambda x: validation.check_array(x), self.initial_matrices))
             if self.classwise:
-                if len(self.psis_) != nb_classes:
+                if len(self.omegas_) != nb_classes:
                     raise ValueError("length of matrices wrong\n"
                                      "found=%d\n"
-                                     "expected=%d" % (len(self.psis_), nb_classes))
-                elif np.sum(map(lambda x: x.shape[1], self.psis_)) != nb_features * len(
-                        self.psis_):
+                                     "expected=%d" % (len(self.omegas_), nb_classes))
+                elif np.sum(map(lambda x: x.shape[1], self.omegas_)) != nb_features * len(
+                        self.omegas_):
                     raise ValueError("each matrix should have %d columns" % nb_features)
-            elif len(self.psis_) != nb_prototypes:
+            elif len(self.omegas_) != nb_prototypes:
                 raise ValueError("length of matrices wrong\n"
                                  "found=%d\n"
-                                 "expected=%d" % (len(self.psis_), nb_classes))
-            elif np.sum([x.shape[1] for x in self.psis_]) != nb_features * len(self.psis_):
+                                 "expected=%d" % (len(self.omegas_), nb_classes))
+            elif np.sum([x.shape[1] for x in self.omegas_]) != nb_features * len(self.omegas_):
                 raise ValueError("each matrix should have %d columns" % nb_features)
 
         if isinstance(self.regularization, float):
             if self.regularization < 0:
                 raise ValueError('regularization must be a positive float')
-            self.regularization_ = np.repeat(self.regularization, len(self.psis_))
+            self.regularization_ = np.repeat(self.regularization, len(self.omegas_))
         else:
             self.regularization_ = validation.column_or_1d(self.regularization)
             if self.classwise:
@@ -252,7 +252,7 @@ class LgmlvqModel(GlvqModel):
                 if self.regularization_.size != self.w_.shape[0]:
                     raise ValueError("length of regularization must be number of prototypes")
 
-        variables = np.append(self.w_, np.concatenate(self.psis_), axis=0)
+        variables = np.append(self.w_, np.concatenate(self.omegas_), axis=0)
         label_equals_prototype = y[np.newaxis].T == self.c_w_
         res = minimize(
             fun=lambda x: self.f(x, X, label_equals_prototype=label_equals_prototype),
@@ -280,14 +280,14 @@ class LgmlvqModel(GlvqModel):
         indices = []
         for i in range(len(self.dim_)):
             indices.append(sum(self.dim_[:i + 1]))
-        self.psis_ = np.split(out[nb_prototypes:], indices[:-1])  # .conj().T
+        self.omegas_ = np.split(out[nb_prototypes:], indices[:-1])  # .conj().T
         return n_iter
 
     def _compute_distance(self, X, w=None, psis=None):  # catch case where omega is not initialized
         if w is None:
             w = self.w_
         if psis is None:
-            psis = self.psis_
+            psis = self.omegas_
         nb_samples = X.shape[0]
         nb_prototypes = w.shape[0]
         distance = np.zeros([nb_prototypes, nb_samples])
@@ -302,10 +302,10 @@ class LgmlvqModel(GlvqModel):
 
     def project(self, X, prototype_idx, dims):
         nb_prototypes = self.w_.shape[0]
-        if len(self.psis_) != nb_prototypes or self.prototypes_per_class != 1:
+        if len(self.omegas_) != nb_prototypes or self.prototypes_per_class != 1:
             print('project only possible with classwise relevance matrix')
         # y = self.predict(X)
-        v, u = np.linalg.eig(self.psis_[prototype_idx].T.dot(self.psis_[prototype_idx]))
+        v, u = np.linalg.eig(self.omegas_[prototype_idx].T.dot(self.omegas_[prototype_idx]))
         idx = v.argsort()[::-1]
         # out[y == self.c_w_[prototype_idx]] = X[y == self.c_w_[prototype_idx]].dot(
         #    u[:, idx][:, -dims:].dot(np.diag(np.sqrt(v[idx][-dims:]))))

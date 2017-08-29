@@ -36,7 +36,7 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    initial_prototypes : array-like, shape =  [n_samples, n_features + 1], optional
+    initial_prototypes : array-like, shape =  [n_prototypes, n_features + 1], optional
         Prototypes to start with. If not given initialization near the class means.
         Class label must be placed as last entry of each prototype
 
@@ -70,8 +70,9 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
     --------
     GRLVQ, GMLVQ, LGMLVQ
     """
-    def __init__(self, random_state=None, initial_prototypes=None, prototypes_per_class=1,
-                 display=False, max_iter=2500, gtol=1e-5):
+
+    def __init__(self, prototypes_per_class=1, initial_prototypes=None, max_iter=2500, gtol=1e-5,
+                 display=False, random_state=None):
         self.random_state = random_state
         self.initial_prototypes = initial_prototypes
         self.prototypes_per_class = prototypes_per_class
@@ -151,7 +152,7 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
 
         # set prototypes per class
         if isinstance(self.prototypes_per_class, int):
-            if self.prototypes_per_class < 0 or not isinstance(self.prototypes_per_class,int):
+            if self.prototypes_per_class < 0 or not isinstance(self.prototypes_per_class, int):
                 raise ValueError("prototypes_per_class must be a positive int")
             nb_ppc = np.ones([nb_classes], dtype='int') * self.prototypes_per_class
         else:
@@ -194,12 +195,12 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
             fun=lambda x: self.optfun(variables=x, training_data=X, label_equals_prototype=label_equals_prototype),
             jac=lambda x: self.optgrad(variables=x, training_data=X, label_equals_prototype=label_equals_prototype,
                                        random_state=random_state),
-            method='l-bfgs-b',x0=self.w_, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            method='l-bfgs-b', x0=self.w_, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         self.w_ = res.x.reshape(self.w_.shape)
         return res.nit
 
     def fit(self, X, y):
-        """Fit the GLVQ model to the given training data and parameters using bfgs.
+        """Fit the GLVQ model to the given training data and parameters using l-bfgs-b.
 
         Parameters
         ----------
