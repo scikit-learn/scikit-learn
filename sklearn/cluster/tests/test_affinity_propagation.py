@@ -94,7 +94,7 @@ def test_affinity_propagation_fit_non_convergence():
 
     assert_warns(ConvergenceWarning, af.fit, X)
     assert_array_equal(np.empty((0, 2)), af.cluster_centers_)
-    assert_array_equal(np.array([0, 1, 2]), af.labels_)
+    assert_array_equal(np.array([-1, -1, -1]), af.labels_)
 
 
 def test_affinity_propagation_equal_mutual_similarities():
