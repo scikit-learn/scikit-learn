@@ -570,4 +570,4 @@ def test_check_memory():
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
                         "sklearn.externals.joblib.Memory. Got memory='{}' "
-                        "instead.".format(dummy),check_memory, dummy)
+                        "instead.".format(dummy), check_memory, dummy)
