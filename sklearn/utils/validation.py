@@ -178,7 +178,7 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, six.string_types):
-        memory = Memory(cachedir=None, verbose=0)
+        memory = Memory(cachedir=memory, verbose=0)
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
                          " interface as sklearn.externals.joblib.Memory."
