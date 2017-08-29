@@ -151,6 +151,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         * details_['funcalls'] is the number of function calls made.
         * details_['nit'] is the number of iterations.
         * details_['loss'] is the value of the objective at the minimum.
+        * details_['time'] is the time it took to train the model.
 
     Examples
     --------
@@ -253,6 +254,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         self.random_state_ = check_random_state(self.random_state)
 
+        # Measure the total training time
+        t_start = time.time()
+
         # Initialize transformer
         transformation, self.n_features_out_ = self._init_transformer(X_valid)
 
@@ -292,14 +296,17 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         # Call optimizer
         transformation, loss, info = fmin_l_bfgs_b(**optimizer_params)
 
-        # Reshape result from optimizer
+        # Reshape the solution found by the optimizer
         d = transformation.size // self.n_features_out_
         self.transformation_ = transformation.reshape(self.n_features_out_, d)
 
-        # Store information dict from the optimizer
+        # Store information dictionary from the optimizer
         self.details_ = info
         self.details_['loss'] = loss
         self.n_iter_ = info['nit']
+
+        # Store the total training time
+        self.details_['time'] = time.time() - t_start
 
         if self.verbose:
             termination_reason = info['warnflag']
@@ -310,6 +317,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 print('Too many function evaluations ({}).'.format(n_funcalls))
             elif termination_reason == 2:
                 print('Optimization stopped: {}'.format(info['task']))
+
+            print('Training took {:8.2f}s'.format(self.details_['time']))
 
         return self
 
@@ -379,7 +388,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         targets = self.targets
         if targets is not None:
             check_consistent_length(X, targets)
-            check_array(targets)
+            check_array(targets, dtype=np.int64)
 
             # Check that target neighbors belong to the correct class
             y_targets = y_inverse[targets]
@@ -545,7 +554,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         return transformation, n_features_out
 
     @staticmethod
-    def _compute_grad_static(X, targets, verbose=False):
+    def _compute_grad_static(X, targets, verbose=0):
         """Compute the gradient component due to the target neighbors that
         stays fixed throughout training
 
@@ -557,8 +566,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         targets : array, shape (n_samples, n_neighbors)
             The k nearest neighbors of each sample from the same class.
 
-        verbose : bool, optional (default=False)
-            Whether to print progress info.
+        verbose : int, optional (default=0)
+            If not 0, progress info will be printed.
 
         Returns
         -------
