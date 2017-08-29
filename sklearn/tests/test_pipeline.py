@@ -871,7 +871,7 @@ def test_pipeline_wrong_memory():
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
                         "sklearn.externals.joblib.Memory."
-                        " Got 1 instead.", cached_pipe.fit, X, y)
+                        " Got memory='1' instead.", cached_pipe.fit, X, y)
 
 
 class DummyMemory(object):
@@ -894,7 +894,7 @@ def test_pipeline_with_cache_attribute():
     assert_raises_regex(ValueError, "'memory' should be None, a string or"
                         " have the same interface as "
                         "sklearn.externals.joblib.Memory."
-                        " Got {} instead.".format(dummy), pipe.fit, X)
+                        " Got memory='{}' instead.".format(dummy), pipe.fit, X)
 
 
 def test_pipeline_memory():

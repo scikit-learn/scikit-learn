@@ -182,7 +182,7 @@ def check_memory(memory):
     elif not hasattr(memory, 'cache'):
         raise ValueError("'memory' should be None, a string or have the same"
                          " interface as sklearn.externals.joblib.Memory."
-                         " Got {} instead.".format(memory))
+                         " Got memory='{}' instead.".format(memory))
     return memory
 
 
