@@ -95,16 +95,18 @@ FOREST_ESTIMATORS.update(FOREST_REGRESSORS)
 FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
 
 
-def check_classification_toy(name):
+def check_classification_toy(name, max_samples):
     """Check classification on a toy dataset."""
     ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    clf = ForestClassifier(n_estimators=10, random_state=1)
+    clf = ForestClassifier(n_estimators=10, random_state=1,
+                           max_samples=max_samples)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
 
-    clf = ForestClassifier(n_estimators=10, max_features=1, random_state=1)
+    clf = ForestClassifier(n_estimators=10, max_features=1, random_state=1,
+                           max_samples=max_samples)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(10, len(clf))
@@ -115,8 +117,8 @@ def check_classification_toy(name):
 
 
 def test_classification_toy():
-    for name in FOREST_CLASSIFIERS:
-        yield check_classification_toy, name
+    for name, max_samples in product(FOREST_CLASSIFIERS, (1.0, 0.5, 3)):
+        yield check_classification_toy, name, max_samples
 
 
 def check_iris_criterion(name, criterion):
@@ -183,12 +185,12 @@ def test_regressor_attributes():
         yield check_regressor_attributes, name
 
 
-def check_probability(name):
+def check_probability(name, max_samples):
     # Predict probabilities.
     ForestClassifier = FOREST_CLASSIFIERS[name]
     with np.errstate(divide="ignore"):
         clf = ForestClassifier(n_estimators=10, random_state=1, max_features=1,
-                               max_depth=1)
+                               max_depth=1, max_samples=max_samples)
         clf.fit(iris.data, iris.target)
         assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                                   np.ones(iris.data.shape[0]))
@@ -197,8 +199,8 @@ def check_probability(name):
 
 
 def test_probability():
-    for name in FOREST_CLASSIFIERS:
-        yield check_probability, name
+    for name, max_samples in product(FOREST_CLASSIFIERS, (1.0, 0.8, 0.5, 0.3, 0.1)):
+        yield check_probability, name, max_samples
 
 
 def check_importances(name, criterion, dtype, tolerance):
@@ -356,14 +358,26 @@ def test_unfitted_feature_importances():
     for name in FOREST_ESTIMATORS:
         yield check_unfitted_feature_importances, name
 
+def check_max_samples_equal_0(name):
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    clf = ForestClassifier(n_estimators=10, random_state=1, max_features=1,
+                           max_depth=1, max_samples=0)
+        
+    assert_raises(ValueError, getattr, clf.fit(iris.data, iris.target),
+                  "max_samples = 0 ")
 
-def check_oob_score(name, X, y, n_estimators=20):
+
+def check_max_samples_equal_0():
+    for name in FOREST_ESTIMATORS:
+        yield check_unfitted_feature_importances, name
+
+def check_oob_score(name, X, y, n_estimators=20, max_samples = 1.0):
     # Check that oob prediction is a good estimation of the generalization
     # error.
 
     # Proper behavior
     est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
-                                  n_estimators=n_estimators, bootstrap=True)
+                                  n_estimators=n_estimators, bootstrap=True, max_samples = max_samples)
     n_samples = X.shape[0]
     est.fit(X[:n_samples // 2, :], y[:n_samples // 2])
     test_score = est.score(X[n_samples // 2:, :], y[n_samples // 2:])
@@ -377,25 +391,25 @@ def check_oob_score(name, X, y, n_estimators=20):
     # Check warning if not enough estimators
     with np.errstate(divide="ignore", invalid="ignore"):
         est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
-                                      n_estimators=1, bootstrap=True)
+                                      n_estimators=1, bootstrap=True, max_samples = max_samples)
         assert_warns(UserWarning, est.fit, X, y)
 
 
 def test_oob_score():
-    for name in FOREST_CLASSIFIERS:
-        yield check_oob_score, name, iris.data, iris.target
+    for name, max_samples in product(FOREST_CLASSIFIERS, (1.0, 0.8, 0.5)):
+        yield check_oob_score, name, iris.data, iris.target, 20, max_samples
 
         # csc matrix
-        yield check_oob_score, name, csc_matrix(iris.data), iris.target
+        yield check_oob_score, name, csc_matrix(iris.data), iris.target, 20, max_samples
 
         # non-contiguous targets in classification
-        yield check_oob_score, name, iris.data, iris.target * 2 + 1
+        yield check_oob_score, name, iris.data, iris.target * 2 + 1, 20, max_samples
 
-    for name in FOREST_REGRESSORS:
-        yield check_oob_score, name, boston.data, boston.target, 50
+    for name, max_samples in product(FOREST_REGRESSORS, (1.0, 0.8, 0.5)):
+        yield check_oob_score, name, boston.data, boston.target, 50, max_samples
 
         # csc matrix
-        yield check_oob_score, name, csc_matrix(boston.data), boston.target, 50
+        yield check_oob_score, name, csc_matrix(boston.data), boston.target, 50, max_samples
 
 
 def check_oob_score_raise_error(name):
@@ -438,27 +452,27 @@ def test_gridsearch():
         yield check_gridsearch, name
 
 
-def check_parallel(name, X, y):
+def check_parallel(name, X, y, max_samples=1.0):
     """Check parallel computations in classification"""
     ForestEstimator = FOREST_ESTIMATORS[name]
-    forest = ForestEstimator(n_estimators=10, n_jobs=3, random_state=0)
+    forest = ForestEstimator(n_estimators=10, max_samples=max_samples, n_jobs=3, random_state=0)
 
     forest.fit(X, y)
     assert_equal(len(forest), 10)
 
-    forest.set_params(n_jobs=1)
+    forest.set_params(max_samples=max_samples, n_jobs=1)
     y1 = forest.predict(X)
-    forest.set_params(n_jobs=2)
+    forest.set_params(max_samples=max_samples, n_jobs=2)
     y2 = forest.predict(X)
     assert_array_almost_equal(y1, y2, 3)
 
 
 def test_parallel():
-    for name in FOREST_CLASSIFIERS:
-        yield check_parallel, name, iris.data, iris.target
+    for name, max_samples in product(FOREST_CLASSIFIERS, (1.0, 0.8, 0.5, 0.3, 0.1)):
+        yield check_parallel, name, iris.data, iris.target, max_samples
 
-    for name in FOREST_REGRESSORS:
-        yield check_parallel, name, boston.data, boston.target
+    for name, max_samples in product(FOREST_REGRESSORS, (1.0, 0.8, 0.5, 0.3, 0.1)):
+        yield check_parallel, name, boston.data, boston.target, max_samples
 
 
 def check_pickle(name, X, y):
