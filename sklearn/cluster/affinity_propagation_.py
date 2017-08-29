@@ -90,6 +90,16 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
     <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
 
+    When the algorithm does not converge, it returns an empty array as
+    ``cluster_center_indices`` and ``-1`` as label for each training sample.
+
+    When all training samples have equal similarities and equal preferences,
+    the assignment of cluster centers and labels depends on the preference.
+    If the preference is smaller than the similarities, a single cluster center
+    and label ``0`` for every sample will be returned. Otherwise, every
+    training sample becomes its own cluster center and is assigned a unique
+    label.
+
     References
     ----------
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
@@ -287,6 +297,17 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
+
+    When ``fit`` does not converge, ``cluster_centers_`` becomes an empty
+    array and all training samples will be labelled as ``-1``. In addition,
+    ``predict`` will then label every sample as ``-1``.
+
+    When all training samples have equal similarities and equal preferences,
+    the assignment of cluster centers and labels depends on the preference.
+    If the preference is smaller than the similarities, ``fit`` will result in
+    a single cluster center and label ``0`` for every sample. Otherwise, every
+    training sample becomes its own cluster center and is assigned a unique
+    label.
 
     References
     ----------
