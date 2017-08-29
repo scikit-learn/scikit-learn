@@ -154,8 +154,10 @@ and tasks.
 
 - `xgboost <https://github.com/dmlc/xgboost>`_ Optimised gradient boosted decision
   tree library.
-  
-- `ML-Ensemble <http://mlens.readthedocs.io/en/latest/>`_ Generalized ensemble learning (stacking, blending, subsemble, deep ensembles, etc.). 
+
+- `ML-Ensemble <http://mlens.readthedocs.io/en/latest/>`_ Generalized
+  ensemble learning (stacking, blending, subsemble, deep ensembles,
+  etc.).
 
 - `lightning <https://github.com/scikit-learn-contrib/lightning>`_ Fast
   state-of-the-art linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
