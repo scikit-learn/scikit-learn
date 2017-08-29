@@ -237,7 +237,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
 
     See also
     --------
-    average_precision_score : Area under the precision-recall curve
+    average_precision_score : Average precision (AP) from prediction scores
 
     roc_curve : Compute Receiver operating characteristic (ROC)
 
