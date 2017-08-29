@@ -1192,7 +1192,8 @@ def check_cross_val_predict_with_method(est, X, y, method):
                     # Get here for binary decision functions
                     expected_predictions[i_out][test] = preds
                 else:
-                    expected_predictions[i_out][np.ix_(test, col)] = preds[i_out]
+                    indices = np.ix_(test, col)
+                    expected_predictions[i_out][indices] = preds[i_out]
         else:
             if isinstance(classes, list):
                 # In this case, we'll assume all classes are present
@@ -1292,7 +1293,8 @@ def test_cross_val_predict_with_method_multilabel_rf():
                                           random_state=42)
     y[:, 0] += y[:, 1]  # Put three classes in the first column
     est = RandomForestClassifier(n_estimators=5, random_state=0)
-    out = check_cross_val_predict_with_method(est, X, y, method='predict_proba')
+    out = check_cross_val_predict_with_method(est, X, y,
+                                              method='predict_proba')
     assert_array_equal(out[0].shape, (len(X), 3))
     for i_output in range(1, n_classes):
         assert_array_equal(out[i_output].shape, (len(X), 2))
@@ -1323,7 +1325,8 @@ def test_cross_val_predict_with_method_multilabel_rf_rare_class():
     X = rng.normal(0, 1, size=(5, 10))
     y = np.array([[0, 0], [1, 1], [2, 1], [0, 1], [1, 0]])
     est = RandomForestClassifier(n_estimators=5, random_state=0)
-    out = check_cross_val_predict_with_method(est, X, y, method='predict_proba')
+    out = check_cross_val_predict_with_method(est, X, y,
+                                              method='predict_proba')
     assert_array_equal(out[0].shape, (len(X), 3))
     assert_array_equal(out[1].shape, (len(X), 2))
 
