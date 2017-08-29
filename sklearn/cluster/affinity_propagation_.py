@@ -212,7 +212,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     else:
         warnings.warn("Affinity propagation did not converge, this model "
                       "will not have any cluster centers.", ConvergenceWarning)
-        labels = np.array([-1] * S.shape[0])
+        labels = np.array([-1] * n_samples)
         cluster_centers_indices = []
 
     if return_n_iter:
