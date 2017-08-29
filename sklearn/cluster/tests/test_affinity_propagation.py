@@ -86,7 +86,8 @@ def test_affinity_propagation_predict_error():
 
 def test_affinity_propagation_fit_non_convergence():
     # In case of non-convergence of affinity_propagation(), the cluster
-    # centers should be an empty array
+    # centers should be an empty array and training samples should be labelled
+    # as noise (-1)
     X = np.array([[0, 0], [1, 1], [-2, -2]])
 
     # Force non-convergence by allowing only a single iteration
