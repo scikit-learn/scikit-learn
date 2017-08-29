@@ -564,9 +564,9 @@ def test_check_memory():
     assert memory is dummy
     assert_raises_regex(ValueError, "'memory' is not a string "
                         "or a Memory instance implementing a"
-                        " cache method. Got a 1 "
+                        " cache method. Got 1 "
                         "instead.", check_memory, 1)
     assert_raises_regex(ValueError, "'memory' is not a string or a Memory"
-                        " instance implementing a cache method. Got a "
+                        " instance implementing a cache method. Got "
                         "{} instead.".format(WrongDummyMemory),
                         check_memory, WrongDummyMemory())
