@@ -18,6 +18,7 @@ from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
+from sklearn.svm import SVC
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -254,5 +255,6 @@ def test_check_no_fit_attributes_set_in_init():
 
 def test_check_estimator_pairwise():
     # check that check_estimator() works on estimator with _pairwise
-    # attribute set_random_state
-    pass
+    # attribute set
+    est = SVC(kernel='precomputed')
+    check_estimator(est)
