@@ -868,8 +868,9 @@ def test_pipeline_wrong_memory():
     memory = 1
     cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
                            memory=memory)
-    assert_raises_regex(ValueError, "'memory' is not a string or a "
-                        "Memory instance implementing a cache method."
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.externals.joblib.Memory."
                         " Got 1 instead.", cached_pipe.fit, X, y)
 
 
@@ -890,9 +891,10 @@ def test_pipeline_with_cache_attribute():
     dummy = WrongDummyMemory()
     pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
                     memory=dummy)
-    assert_raises_regex(ValueError, "'memory' is not a string or a Memory"
-                        " instance implementing a cache method. Got {} "
-                        "instead.".format(dummy), pipe.fit, X)
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.externals.joblib.Memory."
+                        " Got {} instead.".format(dummy), pipe.fit, X)
 
 
 def test_pipeline_memory():
