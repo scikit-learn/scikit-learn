@@ -891,7 +891,7 @@ def test_pipeline_with_cache_attribute():
                     memory=WrongDummyMemory())
     assert_raises_regex(ValueError, "'memory' is not a string or a Memory"
                         " instance implementing a cache method. Got {} "
-                        "instead.".format(WrongDummyMemory), pipe.fit, X)
+                        "instead.".format(WrongDummyMemory()), pipe.fit, X)
 
 
 def test_pipeline_memory():
