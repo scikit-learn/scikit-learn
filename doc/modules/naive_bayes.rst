@@ -149,7 +149,8 @@ calculating the weights is as follows:
 
 .. math::
 
-    \hat{\theta}_{ci} = \frac{\alpha_i + \sum_{j:y_j \neq c} d_{ij}}{\alpha + \sum_{j:y_j \neq c} \sum_{k} d_{kj}}
+    \hat{\theta}_{ci} = \frac{\alpha_i + \sum_{j:y_j \neq c} d_{ij}}
+                             {\alpha + \sum_{j:y_j \neq c} \sum_{k} d_{kj}}
 
     w_{ci} = \log \hat{\theta}_{ci}
 
