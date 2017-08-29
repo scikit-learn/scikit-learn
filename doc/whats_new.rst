@@ -63,10 +63,9 @@ Decomposition, manifold learning and clustering
   division on Python 2 versions. :issue:`9492` by
   :user:`James Bourbeau <jrbourbeau>`.
 
-- Fixed a bug allowing user-specific Memory using duck-typing.
-  :func:`utils.validation.check_memory` has been created to validate the
-  memory instance. :issue:`9563` by
-  :user:`Kumar Ashutosh <thechargedneutron>`.
+- Add  :func:`utils.validation.check_memory` to validate that input is
+  ``joblib.Memory``-like. issue:`9563` by
+  :user:`Kumar Ashutosh <thechargedneutron>`
 
 Version 0.19
 ============
