@@ -11,6 +11,7 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
+from sklearn.externals.funcsigs import signature
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -23,6 +24,8 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import _named_check
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -1110,3 +1113,41 @@ def test_no_averaging_labels():
             score_labels = metric(y_true, y_pred, labels=labels, average=None)
             score = metric(y_true, y_pred, average=None)
             assert_array_equal(score_labels, score[inverse_labels])
+
+
+def test_check_labels_subset():
+    y = [1, 1, 2, 2, 3, 3]
+    labels1 = np.array([1, 2])
+    labels2 = np.array([1, 2, 4])
+    expected_msg1 = ("The labels argument [1 2] was a subset of the "
+                     "present classes [1 2 3]. If you want to compute a metric"
+                     " on thesubset of the classes, set "
+                     "allow_label_subset=True. This warning was introduced in "
+                     "0.20 and will turninto an error in version 0.22")
+    expected_msg2 = ("The labels argument [1 2 4] was a subset of the present "
+                     "classes [1 2 3]. If you want to compute a metric on "
+                     "thesubset of the classes, set allow_label_subset=True. "
+                     "This warning was introduced in 0.20 and will turninto an"
+                     " error in version 0.22")
+
+    for name in METRICS_WITH_LABELS:
+        scorer = ALL_METRICS[name]
+        kwargs = {}
+        params = signature(scorer).parameters
+        if 'average' in params:
+            kwargs['average'] = 'micro'
+        if 'beta' in params:
+            kwargs['beta'] = 2
+
+        assert_warns_message(DeprecationWarning,
+                             expected_msg1,
+                             scorer, y, y, labels=labels1, **kwargs)
+
+        assert_no_warnings(scorer, y, y, labels=labels1,
+                           allow_label_subset=True,
+                           **kwargs)
+
+        if scorer != log_loss:
+            assert_warns_message(DeprecationWarning,
+                                 expected_msg2,
+                                 scorer, y, y, labels=labels2, **kwargs)

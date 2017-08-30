@@ -12,7 +12,6 @@ from sklearn import svm
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import label_binarize
 from sklearn.utils.validation import check_random_state
-from sklearn.externals.funcsigs import signature
 
 from sklearn.utils.testing import assert_raises, clean_warning_registry
 from sklearn.utils.testing import assert_raise_message
@@ -1581,40 +1580,3 @@ def test_brier_score_loss():
     # calculate even if only single class in y_true (#6980)
     assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
-
-
-def test_check_labels_subset():
-    y = [1, 1, 2, 2, 3, 3]
-    labels1 = np.array([1, 2])
-    labels2 = np.array([1, 2, 4])
-    expected_msg1 = ("The labels argument [1 2] was a subset of the "
-                     "present classes [1 2 3]. If you want to compute a metric"
-                     " on thesubset of the classes, set "
-                     "allow_label_subset=True. This warning was introduced in "
-                     "0.20 and will turninto an error in version 0.22")
-    expected_msg2 = ("The labels argument [1 2 4] was a subset of the present "
-                     "classes [1 2 3]. If you want to compute a metric on "
-                     "thesubset of the classes, set allow_label_subset=True. "
-                     "This warning was introduced in 0.20 and will turninto an"
-                     " error in version 0.22")
-
-    scorers_to_check = [confusion_matrix, cohen_kappa_score, recall_score,
-                        precision_score, precision_recall_fscore_support,
-                        fbeta_score, f1_score, classification_report,
-                        hamming_loss, log_loss]
-
-    for scorer in scorers_to_check:
-        kwargs = {}
-        params = signature(scorer).parameters
-        if 'average' in params:
-            kwargs['average'] = 'micro'
-        if 'beta' in params:
-            kwargs['beta'] = 2
-
-        assert_warns_message(DeprecationWarning,
-                             expected_msg1,
-                             scorer, y, y, labels=labels1, **kwargs)
-        if scorer != log_loss:
-            assert_warns_message(DeprecationWarning,
-                                 expected_msg2,
-                                 scorer, y, y, labels=labels2, **kwargs)
