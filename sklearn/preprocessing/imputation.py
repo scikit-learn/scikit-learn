@@ -556,8 +556,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         # clip the values (np.clip ignores np.nans)
         imputed_values = np.clip(imputed_values,
-                                 self.min_value,
-                                 self.max_value)
+                                 self.min_value_,
+                                 self.max_value_)
 
         # update the feature
         X_filled[missing_row_mask, this_feat_ind] = imputed_values
@@ -712,10 +712,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         X = np.asarray(X, order="F")
 
         # parse min and max values
-        if self.min_value is None:
-            self.min_value = np.nan
-        if self.max_value is None:
-            self.max_value = np.nan
+        self.min_value_ = np.nan if self.min_value is None else self.min_value
+        self.max_value_ = np.nan if self.max_value is None else self.max_value
 
         # initial imputation
         mask_missing_values = _get_mask(X, self.missing_values)
