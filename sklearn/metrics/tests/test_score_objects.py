@@ -565,8 +565,8 @@ def test_pass_classes():
 
     # by default, labels should be set
     scorer = make_scorer(DummyScorerWithLabels, labels=[1, 2, 3])
-    expected_msg = ("`estimator classes=[0 1]` is not the"
-                    "superset of `scorer labels=[1, 2, 3]`")
+    expected_msg = ("LogisticRegression classes=[0 1] is not thesuperset of "
+                    "scorer labels=[1, 2, 3]")
     assert_raise_message(ValueError, expected_msg,
                          scorer, clf, X, y)
 

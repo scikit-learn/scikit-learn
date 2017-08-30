@@ -1587,16 +1587,16 @@ def test_check_labels_subset():
     y = [1, 1, 2, 2, 3, 3]
     labels1 = np.array([1, 2])
     labels2 = np.array([1, 2, 4])
-    expected_msg1 = ("The `allow_labels_subset` argument should be True "
-                     "if a subset of available classes=[1 2 3] was passed in "
-                     " the labels=[1 2] argument. `allow_labels_subset` was "
-                     " added in version 0.20 and this behavior will "
-                     "result in error from version 0.22.")
-    expected_msg2 = ("The `allow_labels_subset` argument should be True "
-                     "if a subset of available classes=[1 2 3] was passed in "
-                     " the labels=[1 2 4] argument. `allow_labels_subset` was "
-                     " added in version 0.20 and this behavior will "
-                     "result in error from version 0.22.")
+    expected_msg1 = ("The labels argument [1 2] was a subset of the "
+                     "present classes [1 2 3]. If you want to compute a metric"
+                     " on thesubset of the classes, set "
+                     "allow_label_subset=True. This warning was introduced in "
+                     "0.20 and will turninto an error in version 0.22")
+    expected_msg2 = ("The labels argument [1 2 4] was a subset of the present "
+                     "classes [1 2 3]. If you want to compute a metric on "
+                     "thesubset of the classes, set allow_label_subset=True. "
+                     "This warning was introduced in 0.20 and will turninto an"
+                     " error in version 0.22")
 
     scorers_to_check = [confusion_matrix, cohen_kappa_score, recall_score,
                         precision_score, precision_recall_fscore_support,

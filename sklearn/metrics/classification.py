@@ -118,10 +118,10 @@ def _check_labels_subset(present_labels, labels, allow_label_subset):
 
     if present_labels_ - labels_:
         if not allow_label_subset:
-            warnings.warn("The labels argument %s was a subset of the present"
+            warnings.warn("The labels argument %s was a subset of the present "
                           "classes %s. If you want to compute a metric on the"
                           "subset of the classes, set allow_label_subset=True."
-                          "This warning was introduced in 0.20 and will turn"
+                          " This warning was introduced in 0.20 and will turn"
                           "into an error in version 0.22" %
                           (labels, present_labels), DeprecationWarning)
 
