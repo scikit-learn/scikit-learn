@@ -63,6 +63,10 @@ Decomposition, manifold learning and clustering
   division on Python 2 versions. :issue:`9492` by
   :user:`James Bourbeau <jrbourbeau>`.
 
+- Added ability for :func:`model_selection.cross_val_predict` to handle multi-label
+  (and multioutput-multiclass) targets with ``predict_proba``-type methods.
+  :issue:`8773` by:user:`Stephen Hoover <stephen-hoover>`.
+
 Version 0.19
 ============
 
@@ -415,10 +419,6 @@ Miscellaneous
 
 - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`
   now accept non-finite features. :issue:`8931` by :user:`Attractadore`.
-
-   - Added ability for :func:`model_selection.cross_val_predict` to handle multi-label
-     (and multioutput-multiclass) targets with ``predict_proba``-type methods.
-     :issue:`8773` by:user:`Stephen Hoover <stephen-hoover>`.
 
 Bug fixes
 .........
