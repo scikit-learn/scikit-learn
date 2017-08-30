@@ -9,6 +9,8 @@ Version 0.19.1
 
 **September, 2017**
 
+This is a bug-fix release with some minor documentation improvements.
+
 Changelog
 ---------
 
@@ -18,6 +20,10 @@ Bug fixes
 - Fix regression in :func:`model_selection.cross_val_predict` where it no
   longer accepted ``X`` as a list. :issue:`9600` by :user:`Rasul Kerimov
   <CoderINusE>`.
+
+- Fix regression in :func:`model_selection.cross_val_predict` where it
+  raised an error with ``method='predict_proba'`` for some probabilistic
+  classifiers. :issue:`9641` by :user:`James Bourbeau <jrbourbeau>`.
 
 - Fix regression in :class:`pipeline.Pipeline` where it no longer accepted
   ``steps`` as a tuple. :issue:`9604` by :user:`Joris Van den Bossche
@@ -29,7 +35,6 @@ Bug fixes
   :class:`linear_model.PassiveAggressiveClassifier`,
   :class:`linear_model.PassiveAggressiveRegressor` and
   :class:`linear_model.Perceptron`. :issue:`9558` by `Andreas Müller`_.
-
 
 Version 0.19
 ============
