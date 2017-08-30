@@ -1175,13 +1175,13 @@ def check_cross_val_predict_with_method(est, X, y, method):
         classes = [np.unique(y[:, i]) for i in range(y.shape[1])]
     else:
         classes = np.unique(y)
-    func = getattr(est, method)
 
     # Naive loop (should be same as cross_val_predict):
     # This loop doesn't handle the case where the method is
     # decision_function and there's a class missing from one fold.
     for train, test in kfold.split(X, y):
         est.fit(X[train], y[train])
+        func = getattr(est, method)
         preds = func(X[test])
         if isinstance(predictions, list):
             for i_out in range(y.shape[1]):
@@ -1259,8 +1259,12 @@ def test_cross_val_predict_with_method():
 def test_cross_val_predict_method_checking():
     # Regression test for issue #9639. Tests that cross_val_predict does not
     # check estimator methods (e.g. predict_proba) before fitting
-    est = SGDClassifier(loss='log', random_state=2)
-    check_cross_val_predict_with_method(est)
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=0)
+    for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        est = SGDClassifier(loss='log', random_state=2)
+        check_cross_val_predict_with_method(est, X, y, method)
 
 
 def test_gridsearchcv_cross_val_predict_with_method():
