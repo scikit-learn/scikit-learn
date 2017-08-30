@@ -33,7 +33,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Column indices of ignored features. (Example: Categorical features.)
         If ``None``, all features will be discretized.
 
-    encode : string {'onehot', 'onehot-sparse', 'ordinal'} (default='ordinal')
+    encode : string {'onehot', 'onehot-dense', 'ordinal'} (default='ordinal')
         method used to encode the transformed result.
 
         onehot:
