@@ -868,9 +868,33 @@ def test_pipeline_wrong_memory():
     memory = 1
     cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
                            memory=memory)
-    assert_raises_regex(ValueError, "'memory' should either be a string or a"
-                        " sklearn.externals.joblib.Memory instance, got",
-                        cached_pipe.fit, X, y)
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.externals.joblib.Memory."
+                        " Got memory='1' instead.", cached_pipe.fit, X, y)
+
+
+class DummyMemory(object):
+    def cache(self, func):
+        return func
+
+
+class WrongDummyMemory(object):
+    pass
+
+
+def test_pipeline_with_cache_attribute():
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
+                    memory=DummyMemory())
+    pipe.fit(X, y=None)
+    dummy = WrongDummyMemory()
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
+                    memory=dummy)
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.externals.joblib.Memory."
+                        " Got memory='{}' instead.".format(dummy), pipe.fit, X)
 
 
 def test_pipeline_memory():
