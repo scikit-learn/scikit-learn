@@ -63,10 +63,6 @@ Decomposition, manifold learning and clustering
   division on Python 2 versions. :issue:`9492` by
   :user:`James Bourbeau <jrbourbeau>`.
 
-- Add  :func:`utils.validation.check_memory` to validate that input is
-  ``joblib.Memory``-like. issue:`9563` by
-  :user:`Kumar Ashutosh <thechargedneutron>`
-
 Version 0.19
 ============
 
