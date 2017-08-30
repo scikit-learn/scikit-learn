@@ -161,7 +161,7 @@ def check_memory(memory):
 
     joblib.Memory-like means that ``memory`` can be converted into a
     sklearn.externals.joblib.Memory instance (typically a str denoting the
-    ``cachedir``) or has the same interface.
+    ``cachedir``) or has the same interface (has a ``cache`` method).
 
     Parameters
     ----------
