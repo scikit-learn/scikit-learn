@@ -673,7 +673,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         """
         # at each stage all but one of the features is used as input
         n_features = X_filled.shape[1]
-        if self.n_nearest_features > n_features - 1:
+        if (self.n_nearest_features is None or
+                self.n_nearest_features > n_features - 1):
             return None
         abs_correlation_matrix = np.abs(np.corrcoef(X_filled.T))
         # np.corrcoef is not defined for features with zero std
