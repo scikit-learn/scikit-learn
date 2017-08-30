@@ -184,25 +184,25 @@ General Concepts
     fitted
         The state of an estimator after :term:`fitting`.
 
-	function
-		TODO
+    function
+        TODO
 
-		Talk about where estimator fit or fit_transform functionality is present in a function.
+        Talk about where estimator fit or fit_transform functionality is present in a function.
 
-	joblib
+    joblib
         A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
         facilite simple parallelism and caching.  Joblib is oriented towards
         efficiently working with numpy arrays, such as through use of
         :term:`memory mapping`.
 
-	leakage
-	data leakage
-		TODO
+    leakage
+    data leakage
+        TODO
 
-	memmapping
-	memory map
-	memory mapping
-		TODO
+    memmapping
+    memory map
+    memory mapping
+        TODO
 
     missing values
         TODO
@@ -219,8 +219,8 @@ General Concepts
     ``n_targets``
         Synonym for :term:`n_outputs`.
 
-	out-of-core
-		TODO
+    out-of-core
+        TODO
 
     outputs
         TODO?
