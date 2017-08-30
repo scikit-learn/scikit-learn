@@ -428,7 +428,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     if (not hasattr(est, '_estimator_type') or
             est._estimator_type not in ('classifier', 'regressor')):
         raise ValueError('est must be a fitted regressor or classifier model.')
-    if method != 'recursion' and est._estimator_type == 'classifier':
+    if (method != 'recursion' and est._estimator_type == 'classifier' and
+            not hasattr(est, 'predict_proba')):
         raise ValueError('est requires a predict_proba method for '
                          'method="exact" or "estimated" for classification.')
     if method == 'recursion':
@@ -464,7 +465,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     # convert feature_names to list
     if feature_names is None:
         # if not feature_names use fx indices as name
-        feature_names = [str(i) for i in range(est.n_features_)]
+        feature_names = [str(i) for i in range(n_features)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
 
