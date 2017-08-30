@@ -46,10 +46,8 @@ from sklearn.model_selection import cross_val_score
 rng = np.random.RandomState(0)
 
 dataset_name = 'diabetes'  # 'boston' for another examples
-if dataset_name == 'boston':
-    dataset = load_boston()
-elif dataset_name == 'diabetes':
-    dataset = load_diabetes()
+dataset = load_diabetes() if dataset_name == 'diabetes' else load_boston()
+
 X_full, y_full = dataset.data, dataset.target
 n_samples = X_full.shape[0]
 n_features = X_full.shape[1]
