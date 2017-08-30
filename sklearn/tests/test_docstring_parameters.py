@@ -147,7 +147,7 @@ def test_docstring_parameters():
                 incorrect += check_docstring_parameters(func)
     msg = '\n' + '\n'.join(sorted(list(set(incorrect))))
     if len(incorrect) > 0:
-        raise AssertionError(msg)
+        raise AssertionError("Docstring Error: " + msg)
 
 
 @ignore_warnings(category=DeprecationWarning)
