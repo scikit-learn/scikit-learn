@@ -1915,18 +1915,5 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     # currently, we only support binary classification
     _check_binary_probabilistic_predictions(y_true, y_prob)
 
-    # ensure valid y_true if pos_label is not specified
-    classes = np.unique(y_true)
-    if pos_label is None:
-        if (np.array_equal(classes, [0]) or
-           np.array_equal(classes, [-1]) or
-           np.array_equal(classes, [1])):
-            pos_label = 1.
-        elif len(classes) == 1:
-            raise ValueError("Data is not binary "
-                             "and pos_label is not specified")
-        else:
-            pos_label = max(y_true)
-
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
