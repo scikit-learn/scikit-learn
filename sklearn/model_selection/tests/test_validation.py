@@ -51,7 +51,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics.scorer import check_scoring
 
-from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -1192,6 +1192,13 @@ def check_cross_val_predict_with_method(est):
 
 def test_cross_val_predict_with_method():
     check_cross_val_predict_with_method(LogisticRegression())
+
+
+def test_cross_val_predict_method_checking():
+    # Regression test for issue #9639. Tests that cross_val_predict does not
+    # check estimator methods (e.g. predict_proba) before fitting
+    est = SGDClassifier(loss='log', random_state=2)
+    check_cross_val_predict_with_method(est)
 
 
 def test_gridsearchcv_cross_val_predict_with_method():
