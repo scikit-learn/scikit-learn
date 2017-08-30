@@ -46,6 +46,28 @@ from ..externals.funcsigs import signature
 
 class _BaseScorer(six.with_metaclass(ABCMeta, object)):
     def __init__(self, score_func, sign, pass_classes, kwargs):
+        """ Initialize scorers
+
+        Parameters
+        ----------
+        score_func : callable
+            Sklearn style metric function to be used for scoring
+
+        sign : integer 1 or -1
+            1 to be passed if higher score is better for the score_func
+            -1 to be passed otherwise
+
+        pass_classes : string or None
+            The name of the scorer parameter into which the ``classes_``
+            attribute of the estimator will be passed through. If None is
+            passed, then the ``classes_`` atribute will not be copied.
+
+            It should be set only if a user-defined metric function is being
+            used and left as default in case of a scikit-learn API metric.
+
+        kwargs : additional arguments
+            Additional parameters to be passed to score_func.
+        """
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
@@ -70,9 +92,23 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
                    self._factory_args(), kwargs_string))
 
     def _get_labels_from_estimator(self, estimator, target_type):
-        """Check if estimator has a classes argument and if scorer has a
-        labels argument and return new kwargs for scorer if label not already
-        set in make score initialization"""
+        """ Updates kwargs with ``self._pass_classes``
+
+        Checks if estimator has a classes argument and if scorer has a
+        ``self._pass_classes`` argument. If both exist, it return new kwargs
+        with ``self._pass_classes`` set as the classes_ attrbiute of estimator.
+        This is done only if ``self._pass_classes`` was not already set in
+        ``make_scorer`` initialization
+
+        Parameters
+        ----------
+        estimator : sklearn style estimator
+            The estimator from which classes_ attribute is to be extracted
+
+        target_type : string
+            The type of target y. Should be obtained using ``type_of_target``
+            from ``sklearn.utils.multiclass``
+        """
         classes = getattr(estimator, "classes_", None)
 
         # if classes_ parameter doesn't exist
@@ -86,9 +122,10 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
                     # labels should be a subset of classes
                     if not set(classes).issuperset(
                                         set(self._kwargs[self._pass_classes])):
-                        raise ValueError("`estimator classes=%s` is not the"
-                                         "superset of `scorer %s=%s`" %
-                                         (classes,
+                        raise ValueError("%s classes=%s is not the"
+                                         "superset of scorer %s=%s" %
+                                         (type(estimator).__name__,
+                                          classes,
                                           self._pass_classes,
                                           self._kwargs['labels']))
                 return self._kwargs

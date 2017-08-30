@@ -112,18 +112,18 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
         return sample_score.sum()
 
 
-def _check_labels_subset(present_labels, labels, allow_labels_subset):
+def _check_labels_subset(present_labels, labels, allow_label_subset):
     present_labels_ = set(present_labels)
     labels_ = set(labels)
 
     if present_labels_ - labels_:
-        if not allow_labels_subset:
-            warnings.warn("The `allow_labels_subset` argument should be True "
-                          "if a subset of available classes=%s was passed in "
-                          " the labels=%s argument. `allow_labels_subset` was "
-                          " added in version 0.20 and this behavior will "
-                          "result in error from version 0.22." %
-                          (present_labels, labels), DeprecationWarning)
+        if not allow_label_subset:
+            warnings.warn("The labels argument %s was a subset of the present"
+                          "classes %s. If you want to compute a metric on the"
+                          "subset of the classes, set allow_label_subset=True."
+                          "This warning was introduced in 0.20 and will turn"
+                          "into an error in version 0.22" %
+                          (labels, present_labels), DeprecationWarning)
 
 
 def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
@@ -198,7 +198,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
 
 def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
-                     allow_labels_subset=False):
+                     allow_label_subset=False):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
@@ -228,10 +228,11 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    allow_labels_subset : bool, optional default = False
+    allow_label_subset : bool, optional default = False
         This should be set to True if scoring on a subset of labels is
         required. The subset of labels to score on should be passed in the
-        ``labels`` argument.
+        ``labels`` argument. If not True and labels contains only a subset of
+        the present classes, an error will be raised starting version 0.22.
 
         .. versionadded:: 0.20
 
@@ -277,7 +278,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
     if labels is None:
         labels = present_labels
     else:
-        _check_labels_subset(present_labels, labels, allow_labels_subset)
+        _check_labels_subset(present_labels, labels, allow_label_subset)
         labels = np.asarray(labels)
         if np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
@@ -316,7 +317,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
 
 
 def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None,
-                      allow_labels_subset=False):
+                      allow_label_subset=False):
     """Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -355,7 +356,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    allow_labels_subset : bool, optional default = False
+    allow_label_subset : bool, optional default = False
         This should be set to True if scoring on a subset of labels is
         required. The subset of labels to score on should be passed in the
         ``labels`` argument.
@@ -645,7 +646,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
 
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
-             sample_weight=None, allow_labels_subset=False):
+             sample_weight=None, allow_label_subset=False):
     """Compute the F1 score, also known as balanced F-score or F-measure
 
     The F1 score can be interpreted as a weighted average of the precision and
@@ -714,7 +715,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    allow_labels_subset : bool, optional default = False
+    allow_label_subset : bool, optional default = False
         This should be set to True if scoring on a subset of labels is
         required. The subset of labels to score on should be passed in the
         ``labels`` argument.
@@ -751,12 +752,12 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     return fbeta_score(y_true, y_pred, 1, labels=labels,
                        pos_label=pos_label, average=average,
                        sample_weight=sample_weight,
-                       allow_labels_subset=allow_labels_subset)
+                       allow_label_subset=allow_label_subset)
 
 
 def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
                 average='binary', sample_weight=None,
-                allow_labels_subset=False):
+                allow_label_subset=False):
     """Compute the F-beta score
 
     The F-beta score is the weighted harmonic mean of precision and recall,
@@ -826,7 +827,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    allow_labels_subset : bool, optional default = False
+    allow_label_subset : bool, optional default = False
         This should be set to True if scoring on a subset of labels is
         required. The subset of labels to score on should be passed in the
         ``labels`` argument.
@@ -875,7 +876,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
                                  average=average,
                                  warn_for=('f-score',),
                                  sample_weight=sample_weight,
-                                 allow_labels_subset=allow_labels_subset)
+                                 allow_label_subset=allow_label_subset)
     return f
 
 
@@ -928,7 +929,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                                     warn_for=('precision', 'recall',
                                               'f-score'),
                                     sample_weight=None,
-                                    allow_labels_subset=False):
+                                    allow_label_subset=False):
     """Compute precision, recall, F-measure and support for each class
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -1012,7 +1013,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    allow_labels_subset : bool, optional default = False
+    allow_label_subset : bool, optional default = False
         This should be set to True if scoring on a subset of labels is
         required. The subset of labels to score on should be passed in the
         ``labels`` argument.
@@ -1083,7 +1084,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     present_labels = unique_labels(y_true, y_pred)
     if labels is not None:
-        _check_labels_subset(present_labels, labels, allow_labels_subset)
+        _check_labels_subset(present_labels, labels, allow_label_subset)
 
     if average == 'binary':
         if y_type == 'binary':
@@ -1224,7 +1225,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
 def precision_score(y_true, y_pred, labels=None, pos_label=1,
                     average='binary', sample_weight=None,
-                    allow_labels_subset=False):
+                    allow_label_subset=False):
     """Compute the precision
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -1290,7 +1291,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    allow_labels_subset : bool, optional default = False
+    allow_label_subset : bool, optional default = False
         This should be set to True if scoring on a subset of labels is
         required. The subset of labels to score on should be passed in the
         ``labels`` argument.
@@ -1328,12 +1329,12 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
                                      average=average,
                                      warn_for=('precision',),
                                      sample_weight=sample_weight,
-                                     allow_labels_subset=allow_labels_subset)
+                                     allow_label_subset=allow_label_subset)
     return p
 
 
 def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
-                 sample_weight=None, allow_labels_subset=False):
+                 sample_weight=None, allow_label_subset=False):
     """Compute the recall
 
     The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
@@ -1398,7 +1399,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    allow_labels_subset : bool, optional default = False
+    allow_label_subset : bool, optional default = False
         This should be set to True if scoring on a subset of labels is
         required. The subset of labels to score on should be passed in the
         ``labels`` argument.
@@ -1435,13 +1436,13 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
                                      average=average,
                                      warn_for=('recall',),
                                      sample_weight=sample_weight,
-                                     allow_labels_subset=allow_labels_subset)
+                                     allow_label_subset=allow_label_subset)
     return r
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
                           sample_weight=None, digits=2,
-                          allow_labels_subset=False):
+                          allow_label_subset=False):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1466,7 +1467,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     digits : int
         Number of digits for formatting output floating point values
 
-    allow_labels_subset : bool, optional default = False
+    allow_label_subset : bool, optional default = False
         This should be set to True if scoring on a subset of labels is
         required. The subset of labels to score on should be passed in the
         ``labels`` argument.
@@ -1508,7 +1509,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     if labels is None:
         labels = present_labels
     else:
-        _check_labels_subset(present_labels, labels, allow_labels_subset)
+        _check_labels_subset(present_labels, labels, allow_label_subset)
         labels = np.asarray(labels)
 
     if target_names is not None and len(labels) != len(target_names):
@@ -1553,7 +1554,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
 
 def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
-                 classes=None, allow_labels_subset=False):
+                 classes=None, allow_label_subset=False):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1586,7 +1587,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
            This parameter has been deprecated in favor of ``labels`` in
            version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
-    allow_labels_subset : bool, optional default = False
+    allow_label_subset : bool, optional default = False
         This should be set to True if scoring on a subset of labels is
         required. The subset of labels to score on should be passed in the
         ``labels`` argument.
@@ -1651,7 +1652,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     if labels is None:
         labels = present_labels
     else:
-        _check_labels_subset(present_labels, labels, allow_labels_subset)
+        _check_labels_subset(present_labels, labels, allow_label_subset)
         labels = np.asarray(labels)
 
     if sample_weight is None:
@@ -1672,7 +1673,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
 
 
 def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
-             labels=None, allow_labels_subset=False):
+             labels=None, allow_label_subset=False):
     """Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
@@ -1716,7 +1717,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
         assumed to be binary and are inferred from ``y_true``.
         .. versionadded:: 0.18
 
-    allow_labels_subset : bool, optional default = False
+    allow_label_subset : bool, optional default = False
         This should be set to True if scoring on a subset of labels is
         required. The subset of labels to score on should be passed in the
         ``labels`` argument.
@@ -1749,7 +1750,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
 
     if labels is not None:
         _check_labels_subset(np.unique(y_true),
-                             labels, allow_labels_subset)
+                             labels, allow_label_subset)
         lb.fit(labels)
     else:
         lb.fit(y_true)
