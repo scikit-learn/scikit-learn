@@ -9,6 +9,7 @@ import numpy as np
 import warnings
 
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing.data import _transform_selected
 from sklearn.utils.validation import check_array
 from sklearn.utils.validation import check_is_fitted
@@ -31,6 +32,18 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ignored_features : int array-like (default=None)
         Column indices of ignored features. (Example: Categorical features.)
         If ``None``, all features will be discretized.
+
+    encode : string {'onehot', 'onehot-sparse', 'ordinal'} (default='ordinal')
+        method used to encode the transformed result.
+
+        onehot:
+            encode the transformed result with one-hot encoding
+            and return a sparse matrix.
+        onehot-dense:
+            encode the transformed result with one-hot encoding
+            and return a dense matrix.
+        ordinal:
+            do not encode the transformed result.
 
     Attributes
     ----------
@@ -55,7 +68,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ...      [-1, 2, -3, -0.5],
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
-    >>> est = KBinsDiscretizer(n_bins=3)
+    >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal')
     >>> est.fit(X)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     KBinsDiscretizer(...)
     >>> Xt = est.transform(X)
@@ -94,7 +107,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ``1`` based on a parameter ``threshold``.
     """
 
-    def __init__(self, n_bins=2, ignored_features=None):
+    def __init__(self, n_bins=2, ignored_features=None, encode='ordinal'):
         self.n_bins = n_bins
         self.ignored_features = ignored_features
 
@@ -114,6 +127,12 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, dtype='numeric')
 
+        valid_encode = ['onehot', 'onehot-dense', 'ordinal']
+        if self.encode not in valid_encode:
+            raise ValueError('Invalid encode value. '
+                             'Valid options are %s'
+                             % (sorted(valid_encode)))
+ 
         n_features = X.shape[1]
         ignored = self._validate_ignored_features(n_features)
         self.transformed_features_ = np.delete(np.arange(n_features), ignored)
@@ -199,15 +218,31 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Xt : numeric array-like, shape (n_samples, n_features)
+        Xt : numeric array-like
             Data in the binned space.
         """
         check_is_fitted(self, ["offset_", "bin_width_"])
         X = self._validate_X_post_fit(X)
 
-        return _transform_selected(X, self._transform,
-                                   self.transformed_features_, copy=True,
-                                   retain_order=True)
+        Xt = _transform_selected(X, self._transform,
+                                 self.transformed_features_, copy=True,
+                                 retain_order=True)
+        
+        # only one hot encode discretized features
+        mask = np.array([True] * X.shape[1])
+        if self.ignored_features != None:
+            mask[self.ignored_features] = False
+
+		if self.encode == 'onehot':
+            return OneHotEncoder(n_values=np.array(self.n_bins_)[mask],
+                                 categorical_features=mask,
+                                 sparse=True).fit_transform(Xt)      
+        elif self.encode == 'onehot-dense':
+            return OneHotEncoder(n_values=np.array(self.n_bins_)[mask],
+                                 categorical_features=mask, 
+                                 sparse=False).fit_transform(Xt)
+        else:
+            return Xt
 
     def _validate_X_post_fit(self, X):
         X = check_array(X, dtype='numeric')
@@ -259,6 +294,12 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             Data in the original feature space.
         """
         check_is_fitted(self, ["offset_", "bin_width_"])
+        
+        # currently, preprocessing.OneHotEncoder 
+        # don't support inverse_transform
+        if self.encode != 'ordinal':
+            raise ValueError("inverse_transform only support encode='ordinal'.")
+        
         Xt = self._validate_X_post_fit(Xt)
         trans = self.transformed_features_
         Xinv = Xt.copy()

@@ -5,6 +5,7 @@ from six.moves import range
 import warnings
 
 from sklearn.preprocessing import KBinsDiscretizer
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.testing import (
     assert_array_equal,
     assert_raises,
@@ -174,3 +175,37 @@ def test_numeric_stability():
         X = X_init / 10**i
         Xt = KBinsDiscretizer(n_bins=2).fit_transform(X)
         assert_array_equal(Xt_expected, Xt)
+
+
+def test_encode():
+    # test invalid encode
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='invalid-encode')
+    assert_raises(ValueError, est.fit, X)
+
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
+                           encode='ordinal').fit(X)
+    expected1 = est.transform(X)
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
+                           encode='onehot-dense').fit(X)
+    expected2 = est.transform(X)
+    assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=False)
+                       .fit_transform(expected1),
+                       expected2)
+    assert_raises(ValueError, est.inverse_transform, X)
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
+                           encode='onehot').fit(X)
+    expected3 = est.transform(X)
+    assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=True)
+                       .fit_transform(expected1).toarray(),
+                       expected3.toarray())
+    assert_raises(ValueError, est.inverse_transform, X)
+
+    est = KBinsDiscretizer(n_bins=3, ignored_features=[1,2],
+                           encode='onehot-dense').fit(X)
+    expected1 = est.transform(X)
+    expected2 = np.array([[1, 0, 0, 1, 0, 0, 1.5, -4],
+                          [0, 1, 0, 1, 0, 0, 2.5, -3],
+                          [0, 0, 1, 0, 1, 0, 3.5, -2],
+                          [0, 0, 1, 0, 0, 1, 4.5, -1]])
+    assert_array_equal(expected1, expected2)
+
