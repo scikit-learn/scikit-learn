@@ -122,7 +122,7 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
                     # labels should be a subset of classes
                     if not set(classes).issuperset(
                                         set(self._kwargs[self._pass_classes])):
-                        raise ValueError("%s classes=%s is not the"
+                        raise ValueError("%s classes=%s is not the "
                                          "superset of scorer %s=%s" %
                                          (type(estimator).__name__,
                                           classes,

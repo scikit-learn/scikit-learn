@@ -549,7 +549,7 @@ def test_scoring_is_not_metric():
 
 
 def test_pass_classes():
-    # Test the various properties of pass_classes parameter added
+    # Test the various properties of pass_classes parameter
 
     X, y = make_blobs(random_state=0, centers=2)
     clf = LogisticRegression(random_state=0)
@@ -563,9 +563,8 @@ def test_pass_classes():
     scorer = make_scorer(DummyScorerWithLabels)
     assert_equal(scorer(clf, X, y), 1)
 
-    # by default, labels should be set
     scorer = make_scorer(DummyScorerWithLabels, labels=[1, 2, 3])
-    expected_msg = ("LogisticRegression classes=[0 1] is not thesuperset of "
+    expected_msg = ("LogisticRegression classes=[0 1] is not the superset of "
                     "scorer labels=[1, 2, 3]")
     assert_raise_message(ValueError, expected_msg,
                          scorer, clf, X, y)
