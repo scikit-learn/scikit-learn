@@ -13,13 +13,13 @@ Link: http://matthewdhoffman.com/code/onlineldavb.tar
 
 import numpy as np
 import scipy.sparse as sp
-from scipy.misc import logsumexp
 from scipy.special import gammaln
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_random_state, check_array,
                      gen_batches, gen_even_slices, _get_n_jobs)
+from ..utils.fixes import logsumexp
 from ..utils.validation import check_non_negative
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
@@ -187,9 +187,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
     max_iter : integer, optional (default=10)
         The maximum number of iterations.
 
-    total_samples : int, optional (default=1e6)
-        Total number of documents. Only used in the `partial_fit` method.
-
     batch_size : int, optional (default=128)
         Number of documents to use in each EM iteration. Only used in online
         learning.
@@ -201,6 +198,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         in training process, but it will also increase total training time.
         Evaluating perplexity in every iteration might increase training time
         up to two-fold.
+
+    total_samples : int, optional (default=1e6)
+        Total number of documents. Only used in the `partial_fit` method.
 
     perp_tol : float, optional (default=1e-1)
         Perplexity tolerance in batch learning. Only used when
@@ -559,12 +559,15 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
                     bound = self._perplexity_precomp_distr(X, doc_topics_distr,
                                                            sub_sampling=False)
                     if self.verbose:
-                        print('iteration: %d, perplexity: %.4f'
-                              % (i + 1, bound))
+                        print('iteration: %d of max_iter: %d, perplexity: %.4f'
+                              % (i + 1, max_iter, bound))
 
                     if last_bound and abs(last_bound - bound) < self.perp_tol:
                         break
                     last_bound = bound
+
+                elif self.verbose:
+                    print('iteration: %d of max_iter: %d' % (i + 1, max_iter))
                 self.n_iter_ += 1
 
         # calculate final perplexity value on train set
@@ -791,6 +794,9 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
             This argument is deprecated and is currently being ignored.
 
             .. deprecated:: 0.19
+
+        sub_sampling : bool
+            Do sub-sampling or not.
 
         Returns
         -------

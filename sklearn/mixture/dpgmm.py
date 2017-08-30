@@ -21,11 +21,11 @@ import numpy as np
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
 from scipy.linalg import pinvh
-from scipy.misc import logsumexp
 from scipy.spatial.distance import cdist
 
 from ..externals.six.moves import xrange
 from ..utils import check_random_state, check_array, deprecated
+from ..utils.fixes import logsumexp
 from ..utils.extmath import squared_norm, stable_cumsum
 from ..utils.validation import check_is_fitted
 from .. import cluster
@@ -47,7 +47,7 @@ def gammaln(x):
 @deprecated("The function log_normalize is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def log_normalize(v, axis=0):
-    """Normalized probabilities from unnormalized log-probabilites"""
+    """Normalized probabilities from unnormalized log-probabilities"""
     v = np.rollaxis(v, axis)
     v = v.copy()
     v -= v.max(axis=0)
@@ -672,7 +672,7 @@ class VBGMM(_DPGMMBase):
     Initialization is with normally-distributed means and identity
     covariance, for proper convergence.
 
-    Read more in the :ref:`User Guide <vbgmm>`.
+    Read more in the :ref:`User Guide <bgmm>`.
 
     Parameters
     ----------

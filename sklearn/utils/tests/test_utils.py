@@ -1,9 +1,10 @@
-from itertools import chain
+from itertools import chain, product
 import warnings
 
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import pinv2
+from scipy.sparse.csgraph import laplacian
 
 from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
                                    assert_almost_equal, assert_array_equal,
@@ -20,7 +21,6 @@ from sklearn.utils import gen_even_slices
 from sklearn.utils.extmath import pinvh
 from sklearn.utils.arpack import eigsh
 from sklearn.utils.mocking import MockDataFrame
-from sklearn.utils.graph import graph_laplacian
 
 
 def test_make_rng():
@@ -140,7 +140,7 @@ def test_arpack_eigsh_initialization():
 
     A = random_state.rand(50, 50)
     A = np.dot(A.T, A)  # create s.p.d. matrix
-    A = graph_laplacian(A) + 1e-7 * np.identity(A.shape[0])
+    A = laplacian(A) + 1e-7 * np.identity(A.shape[0])
     k = 5
 
     # Test if eigsh is working correctly
@@ -200,10 +200,15 @@ def test_safe_indexing_pandas():
     # this happens in joblib memmapping
     X.setflags(write=False)
     X_df_readonly = pd.DataFrame(X)
-    with warnings.catch_warnings(record=True):
-        X_df_ro_indexed = safe_indexing(X_df_readonly, inds)
+    inds_readonly = inds.copy()
+    inds_readonly.setflags(write=False)
 
-    assert_array_equal(np.array(X_df_ro_indexed), X_indexed)
+    for this_df, this_inds in product([X_df, X_df_readonly],
+                                      [inds, inds_readonly]):
+        with warnings.catch_warnings(record=True):
+            X_df_indexed = safe_indexing(this_df, this_inds)
+
+        assert_array_equal(np.array(X_df_indexed), X_indexed)
 
 
 def test_safe_indexing_mock_pandas():

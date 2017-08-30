@@ -569,7 +569,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         reduced_distance += self._subcluster_norms
         return self.subcluster_labels_[np.argmin(reduced_distance, axis=1)]
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """
         Transform X into subcluster centroids dimension.
 

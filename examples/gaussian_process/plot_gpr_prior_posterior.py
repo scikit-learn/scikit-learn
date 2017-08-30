@@ -44,7 +44,7 @@ for fig_index, kernel in enumerate(kernels):
     y_mean, y_std = gp.predict(X_[:, np.newaxis], return_std=True)
     plt.plot(X_, y_mean, 'k', lw=3, zorder=9)
     plt.fill_between(X_, y_mean - y_std, y_mean + y_std,
-                     alpha=0.5, color='k')
+                     alpha=0.2, color='k')
     y_samples = gp.sample_y(X_[:, np.newaxis], 10)
     plt.plot(X_, y_samples, lw=1)
     plt.xlim(0, 5)
@@ -63,11 +63,11 @@ for fig_index, kernel in enumerate(kernels):
     y_mean, y_std = gp.predict(X_[:, np.newaxis], return_std=True)
     plt.plot(X_, y_mean, 'k', lw=3, zorder=9)
     plt.fill_between(X_, y_mean - y_std, y_mean + y_std,
-                     alpha=0.5, color='k')
+                     alpha=0.2, color='k')
 
     y_samples = gp.sample_y(X_[:, np.newaxis], 10)
     plt.plot(X_, y_samples, lw=1)
-    plt.scatter(X[:, 0], y, c='r', s=50, zorder=10)
+    plt.scatter(X[:, 0], y, c='r', s=50, zorder=10, edgecolors=(0, 0, 0))
     plt.xlim(0, 5)
     plt.ylim(-3, 3)
     plt.title("Posterior (kernel: %s)\n Log-Likelihood: %.3f"

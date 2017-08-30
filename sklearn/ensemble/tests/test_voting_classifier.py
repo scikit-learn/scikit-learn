@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_equal, assert_true, assert_false
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns_message
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import GaussianNB
@@ -16,6 +17,7 @@ from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 
 # Load the iris dataset and randomly permute it
@@ -223,7 +225,7 @@ def test_gridsearch():
     grid.fit(iris.data, iris.target)
 
 
-def test_parallel_predict():
+def test_parallel_fit():
     """Check parallel backend of VotingClassifier on toy dataset."""
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(random_state=123)
@@ -271,6 +273,20 @@ def test_sample_weight():
         voting='soft')
     msg = ('Underlying estimator \'knn\' does not support sample weights.')
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
+
+
+def test_sample_weight_kwargs():
+    """Check that VotingClassifier passes sample_weight as kwargs"""
+    class MockClassifier(BaseEstimator, ClassifierMixin):
+        """Mock Classifier to check that sample_weight is received as kwargs"""
+        def fit(self, X, y, *args, **sample_weight):
+            assert_true('sample_weight' in sample_weight)
+
+    clf = MockClassifier()
+    eclf = VotingClassifier(estimators=[('mock', clf)], voting='soft')
+
+    # Should not raise an error.
+    eclf.fit(X, y, sample_weight=np.ones((len(y),)))
 
 
 def test_set_params():
@@ -364,3 +380,38 @@ def test_estimator_weights_format():
     eclf1.fit(X, y)
     eclf2.fit(X, y)
     assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+
+
+def test_transform():
+    """Check transform method of VotingClassifier on toy dataset."""
+    clf1 = LogisticRegression(random_state=123)
+    clf2 = RandomForestClassifier(random_state=123)
+    clf3 = GaussianNB()
+    X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
+    y = np.array([1, 1, 2, 2])
+
+    eclf1 = VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft').fit(X, y)
+    eclf2 = VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft',
+        flatten_transform=True).fit(X, y)
+    eclf3 = VotingClassifier(estimators=[
+        ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
+        voting='soft',
+        flatten_transform=False).fit(X, y)
+
+    warn_msg = ("'flatten_transform' default value will be "
+                "changed to True in 0.21."
+                "To silence this warning you may"
+                " explicitly set flatten_transform=False.")
+    res = assert_warns_message(DeprecationWarning, warn_msg,
+                               eclf1.transform, X)
+    assert_array_equal(res.shape, (3, 4, 2))
+    assert_array_equal(eclf2.transform(X).shape, (4, 6))
+    assert_array_equal(eclf3.transform(X).shape, (3, 4, 2))
+    assert_array_equal(res.swapaxes(0, 1).reshape((4, 6)),
+                       eclf2.transform(X))
+    assert_array_equal(eclf3.transform(X).swapaxes(0, 1).reshape((4, 6)),
+                       eclf2.transform(X))

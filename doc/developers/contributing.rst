@@ -224,16 +224,15 @@ rules before submitting a pull request:
       practice and, if possible, compare it to other methods available in
       scikit-learn.
 
-    * Documentation and high-coverage tests are necessary for enhancements
-      to be accepted.
-      Bug-fixes or new features should be provided with
-      [non-regression tests](https://en.wikipedia.org/wiki/Non-regression_testing).
-      These tests verify the correct behavior of the fix or feature. In this
-      manner, further modifications on the code base are granted to be consistent
-      with the desired behavior.
-      For the Bug-fixes case, at the time of the PR, this tests should fail for
-      the code base in master and pass for the PR code.
-
+    * Documentation and high-coverage tests are necessary for enhancements to be
+      accepted. Bug-fixes or new features should be provided with
+      `non-regression tests
+      <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
+      verify the correct behavior of the fix or feature. In this manner, further
+      modifications on the code base are granted to be consistent with the
+      desired behavior. For the case of bug fixes, at the time of the PR, the
+      non-regression tests should fail for the code base in the master branch
+      and pass for the PR code.
 
     * At least one paragraph of narrative documentation with links to
       references in the literature (with PDF links when possible) and
@@ -333,7 +332,7 @@ following rules before submitting:
 
 -  Please include your operating system type and version number, as well
    as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by runnning the following code snippet::
+   can be found by running the following code snippet::
 
      import platform; print(platform.platform())
      import sys; print("Python", sys.version)
@@ -429,7 +428,7 @@ opposed to how it works "under the hood".
 You may also be asked to show your changes when it's built. When you create
 a pull request or make changes in an existing one modifying the docs, CircleCI
 automatically builds them. Thus, you can easily view your changes in the built
-artifacts using the following formula:
+artifacts using the following URL:
 
 ``http://scikit-learn.org/circle?{BUILD_NUMBER}``
 

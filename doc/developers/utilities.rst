@@ -43,6 +43,11 @@ should be used when applicable.
   be sliced or indexed using safe_index.  This is used to validate input for
   cross-validation.
 
+- :func:`validation.check_memory` checks that input is ``joblib.Memory``-like,
+  which means that it can be converted into a
+  ``sklearn.externals.joblib.Memory`` instance (typically a str denoting
+  the ``cachedir``) or has the same interface.
+
 If your code relies on a random number generator, it should never use
 functions like ``numpy.random.random`` or ``numpy.random.normal``.  This
 approach can lead to repeatability issues in unit tests.  Instead, a
@@ -68,6 +73,15 @@ For example::
     >>> random_state.rand(4)
     array([ 0.5488135 ,  0.71518937,  0.60276338,  0.54488318])
 
+When developing your own scikit-learn compatible estimator, the following
+helpers are available.
+
+- :func:`validation.check_is_fitted`: check that the estimator has been fitted
+  before calling ``transform``, ``predict``, or similar methods. This helper
+  allows to raise a standardized error message across estimator.
+
+- :func:`validation.has_fit_parameter`: check that a given parameter is
+  supported in the ``fit`` method of a given estimator.
 
 Efficient Linear Algebra & Array Operations
 ===========================================
@@ -149,11 +163,6 @@ Graph Routines
   <https://networkx.github.io/>`_.
   If this is ever needed again, it would be far faster to use a single
   iteration of Dijkstra's algorithm from ``graph_shortest_path``.
-
-- :func:`graph.graph_laplacian`:
-  (used in :func:`sklearn.cluster.spectral.spectral_embedding`)
-  Return the Laplacian of a given graph.  There is specialized code for
-  both dense and sparse connectivity matrices.
 
 - :func:`graph_shortest_path.graph_shortest_path`:
   (used in :class:`sklearn.manifold.Isomap`)

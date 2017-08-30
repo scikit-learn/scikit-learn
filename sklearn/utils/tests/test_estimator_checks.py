@@ -2,13 +2,21 @@ import scipy.sparse as sp
 import numpy as np
 import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.externals import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import assert_raises_regex, assert_true
+from sklearn.utils.testing import (assert_raises_regex, assert_true,
+                                   assert_equal, ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import set_random_state
+from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_no_fit_attributes_set_in_init
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
+from sklearn.linear_model import LinearRegression, SGDClassifier
+from sklearn.mixture import GaussianMixture
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.utils.validation import check_X_y, check_array
 
@@ -120,12 +128,17 @@ def test_check_estimator():
     # check that we have a set_params and can clone
     msg = "it does not implement a 'get_params' methods"
     assert_raises_regex(TypeError, msg, check_estimator, object)
+    assert_raises_regex(TypeError, msg, check_estimator, object())
     # check that we have a fit method
     msg = "object has no attribute 'fit'"
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
+    assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
     msg = "TypeError not raised"
-    assert_raises_regex(AssertionError, msg, check_estimator, BaseBadClassifier)
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        BaseBadClassifier)
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        BaseBadClassifier())
     # check that sample_weights in fit accepts pandas.Series type
     try:
         from pandas import Series  # noqa
@@ -138,6 +151,8 @@ def test_check_estimator():
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
     assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        NoCheckinPredict())
     # check that estimator state does not change
     # at transform/predict/predict_proba time
     msg = 'Estimator changes __dict__ during predict'
@@ -158,7 +173,7 @@ def test_check_estimator():
                         check_estimator, SetsWrongAttribute)
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
-    msg = "Estimator " + name + " doesn't seem to fail gracefully on sparse data"
+    msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
     # the check for sparse input handling prints to the stdout,
     # instead of raising an error, so as not to remove the original traceback.
     # that means we need to jump through some hoops to catch it.
@@ -175,7 +190,39 @@ def test_check_estimator():
 
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)
+    check_estimator(AdaBoostClassifier())
     check_estimator(MultiTaskElasticNet)
+    check_estimator(MultiTaskElasticNet())
+
+
+def test_check_estimator_clones():
+    # check that check_estimator doesn't modify the estimator it receives
+    from sklearn.datasets import load_iris
+    iris = load_iris()
+
+    for Estimator in [GaussianMixture, LinearRegression,
+                      RandomForestClassifier, NMF, SGDClassifier,
+                      MiniBatchKMeans]:
+        with ignore_warnings(category=FutureWarning):
+            # when 'est = SGDClassifier()'
+            est = Estimator()
+        set_checking_parameters(est)
+        set_random_state(est)
+        # without fitting
+        old_hash = joblib.hash(est)
+        check_estimator(est)
+        assert_equal(old_hash, joblib.hash(est))
+
+        with ignore_warnings(category=FutureWarning):
+            # when 'est = SGDClassifier()'
+            est = Estimator()
+        set_checking_parameters(est)
+        set_random_state(est)
+        # with fitting
+        est.fit(iris.data + 10, iris.target)
+        old_hash = joblib.hash(est)
+        check_estimator(est)
+        assert_equal(old_hash, joblib.hash(est))
 
 
 def test_check_estimators_unfitted():
@@ -183,11 +230,11 @@ def test_check_estimators_unfitted():
     # on an unfitted estimator
     msg = "AttributeError or ValueError not raised by predict"
     assert_raises_regex(AssertionError, msg, check_estimators_unfitted,
-                        "estimator", NoSparseClassifier)
+                        "estimator", NoSparseClassifier())
 
     # check that CorrectNotFittedError inherit from either ValueError
     # or AttributeError
-    check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier)
+    check_estimators_unfitted("estimator", CorrectNotFittedErrorClassifier())
 
 
 def test_check_no_fit_attributes_set_in_init():

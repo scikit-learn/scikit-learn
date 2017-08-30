@@ -16,9 +16,11 @@ import scipy.sparse as sp
 
 from ..externals import six
 from ..utils.fixes import signature
+from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
+from ..externals.joblib import Memory
 
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -30,6 +32,8 @@ warnings.simplefilter('ignore', NonBLASDotWarning)
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
+    if _get_config()['assume_finite']:
+        return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
@@ -43,12 +47,15 @@ def _assert_all_finite(X):
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
 
-    Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
+    Parameters
+    ----------
+    X : array or sparse matrix
+    """
     _assert_all_finite(X.data if sp.issparse(X) else X)
 
 
 def as_float_array(X, copy=True, force_all_finite=True):
-    """Converts an array-like to an array of floats
+    """Converts an array-like to an array of floats.
 
     The new dtype will be np.float32 or np.float64, depending on the original
     type. The function can create a copy or modify the argument depending
@@ -147,6 +154,36 @@ def _shape_repr(shape):
         # special notation for singleton tuples
         joined += ','
     return "(%s)" % joined
+
+
+def check_memory(memory):
+    """Check that ``memory`` is joblib.Memory-like.
+
+    joblib.Memory-like means that ``memory`` can be converted into a
+    sklearn.externals.joblib.Memory instance (typically a str denoting the
+    ``cachedir``) or has the same interface (has a ``cache`` method).
+
+    Parameters
+    ----------
+    memory : joblib.Memory-like or string or None
+
+    Returns
+    -------
+    memory : object with the joblib.Memory interface
+
+    Raises
+    ------
+    ValueError
+        If ``memory`` is not joblib.Memory-like.
+    """
+
+    if memory is None or isinstance(memory, six.string_types):
+        memory = Memory(cachedir=memory, verbose=0)
+    elif not hasattr(memory, 'cache'):
+        raise ValueError("'memory' should be None, a string or have the same"
+                         " interface as sklearn.externals.joblib.Memory."
+                         " Got memory='{}' instead.".format(memory))
+    return memory
 
 
 def check_consistent_length(*arrays):
@@ -357,7 +394,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         accept_sparse = False
 
     # store whether originally we wanted numeric dtype
-    dtype_numeric = dtype == "numeric"
+    dtype_numeric = isinstance(dtype, six.string_types) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
     if not hasattr(dtype_orig, 'kind'):
@@ -398,9 +435,10 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         if ensure_2d:
             if array.ndim == 1:
                 raise ValueError(
-                    "Got X with X.ndim=1. Reshape your data either using "
-                    "X.reshape(-1, 1) if your data has a single feature or "
-                    "X.reshape(1, -1) if it contains a single sample.")
+                    "Expected 2D array, got 1D array instead:\narray={}.\n"
+                    "Reshape your data either using array.reshape(-1, 1) if "
+                    "your data has a single feature or array.reshape(1, -1) "
+                    "if it contains a single sample.".format(array))
             array = np.atleast_2d(array)
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
@@ -579,10 +617,13 @@ def column_or_1d(y, warn=False):
 def check_random_state(seed):
     """Turn seed into a np.random.RandomState instance
 
-    If seed is None, return the RandomState singleton used by np.random.
-    If seed is an int, return a new RandomState instance seeded with seed.
-    If seed is already a RandomState instance, return it.
-    Otherwise raise ValueError.
+    Parameters
+    ----------
+    seed : None | int | instance of RandomState
+        If seed is None, return the RandomState singleton used by np.random.
+        If seed is an int, return a new RandomState instance seeded with seed.
+        If seed is already a RandomState instance, return it.
+        Otherwise raise ValueError.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -596,6 +637,20 @@ def check_random_state(seed):
 
 def has_fit_parameter(estimator, parameter):
     """Checks whether the estimator's fit method supports the given parameter.
+
+    Parameters
+    ----------
+    estimator : object
+        An estimator to inspect.
+
+    parameter: str
+        The searched parameter.
+
+    Returns
+    -------
+    is_parameter: bool
+        Whether the parameter was found to be a named parameter of the
+        estimator's fit method.
 
     Examples
     --------
@@ -675,7 +730,8 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         estimator instance for which the check is performed.
 
     attributes : attribute name(s) given as string or a list/tuple of strings
-        Eg. : ["coef_", "estimator_", ...], "coef_"
+        Eg.:
+            ``["coef_", "estimator_", ...], "coef_"``
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
@@ -688,6 +744,15 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
     all_or_any : callable, {all, any}, default all
         Specify whether all or any of the given attributes must exist.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    NotFittedError
+        If the attributes are not found.
     """
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "
