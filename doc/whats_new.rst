@@ -36,6 +36,14 @@ Bug fixes
   :class:`linear_model.PassiveAggressiveRegressor` and
   :class:`linear_model.Perceptron`. :issue:`9558` by `Andreas Müller`_.
 
+Enhancements
+............
+
+- To improve usability of version 0.19's :class:`pipeline.Pipeline`
+  caching, ``memory`` now allows ``joblib.Memory`` instances.
+  This make use of the new :func:`utils.validation.check_memory` helper.
+  issue:`9584` by :user:`Kumar Ashutosh <thechargedneutron>`
+
 Version 0.19
 ============
 
