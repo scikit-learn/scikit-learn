@@ -83,12 +83,6 @@ General Concepts
     categorical feature
         TODO
 
-    classifier
-        TODO
-        Mention that within scikit-learn, all support multi-class
-        classification, defaulting to OvR.
-        Mention :func:`~base.is_classifier`.
-
     clone
         To copy an :term:`estimator instance` and create a new one with
         identical :term:`parameters`, but without any fitted
@@ -306,6 +300,12 @@ Class APIs and Estimator Types
 ==============================
 
 .. glossary::
+
+    classifier
+        TODO
+        Mention that within scikit-learn, all support multi-class
+        classification, defaulting to OvR.
+        Mention :func:`~base.is_classifier`.
 
     clusterer
         TODO
