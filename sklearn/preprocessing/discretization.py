@@ -110,6 +110,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     def __init__(self, n_bins=2, ignored_features=None, encode='ordinal'):
         self.n_bins = n_bins
         self.ignored_features = ignored_features
+        self.encode = encode
 
     def fit(self, X, y=None):
         """Fits the estimator.
@@ -228,7 +229,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                                  self.transformed_features_, copy=True,
                                  retain_order=True)
         
-        # only one hot encode discretized features
+        # only one-hot encode discretized features
         mask = np.array([True] * X.shape[1])
         if self.ignored_features != None:
             mask[self.ignored_features] = False
