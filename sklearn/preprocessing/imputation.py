@@ -409,7 +409,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         - "arabic" - Right to left.
         - "random" - A random order for each round.
 
-    n_imputations : int, optional (defaults = 100)
+    n_imputations : int, optional (defaults=100)
         Number of MICE rounds to perform the results of which will be
         used in the final average.
 
