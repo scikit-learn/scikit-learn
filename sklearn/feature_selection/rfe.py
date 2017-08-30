@@ -381,7 +381,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.verbose = verbose
         self.n_jobs = n_jobs
 
-    def fit(self, X, y):
+    def fit(self, X, y, groups=None):
         """Fit the RFE model and automatically tune the number of selected
            features.
 
@@ -394,6 +394,10 @@ class RFECV(RFE, MetaEstimatorMixin):
         y : array-like, shape = [n_samples]
             Target values (integers for classification, real numbers for
             regression).
+
+        groups : array-like, shape = [n_samples], optional
+            Group labels for the samples used while splitting the dataset into
+            train/test set.
         """
         X, y = check_X_y(X, y, "csr")
 
@@ -433,7 +437,7 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         scores = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)
-            for train, test in cv.split(X, y))
+            for train, test in cv.split(X, y, groups))
 
         scores = np.sum(scores, axis=0)
         n_features_to_select = max(
