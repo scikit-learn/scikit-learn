@@ -609,7 +609,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : joblib.Memory-like or string, optional
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
@@ -769,7 +769,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : joblib.Memory-like or string, optional
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
