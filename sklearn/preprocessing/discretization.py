@@ -133,7 +133,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             raise ValueError('Invalid encode value. '
                              'Valid options are %s'
                              % (sorted(valid_encode)))
- 
+
         n_features = X.shape[1]
         ignored = self._validate_ignored_features(n_features)
         self.transformed_features_ = np.delete(np.arange(n_features), ignored)
@@ -228,19 +228,19 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Xt = _transform_selected(X, self._transform,
                                  self.transformed_features_, copy=True,
                                  retain_order=True)
-        
+
         # only one-hot encode discretized features
         mask = np.array([True] * X.shape[1])
-        if self.ignored_features != None:
+        if self.ignored_features is not None:
             mask[self.ignored_features] = False
 
-		if self.encode == 'onehot':
+        if self.encode == 'onehot':
             return OneHotEncoder(n_values=np.array(self.n_bins_)[mask],
                                  categorical_features=mask,
-                                 sparse=True).fit_transform(Xt)      
+                                 sparse=True).fit_transform(Xt)
         elif self.encode == 'onehot-dense':
             return OneHotEncoder(n_values=np.array(self.n_bins_)[mask],
-                                 categorical_features=mask, 
+                                 categorical_features=mask,
                                  sparse=False).fit_transform(Xt)
         else:
             return Xt
@@ -295,12 +295,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             Data in the original feature space.
         """
         check_is_fitted(self, ["offset_", "bin_width_"])
-        
-        # currently, preprocessing.OneHotEncoder 
+
+        # currently, preprocessing.OneHotEncoder
         # don't support inverse_transform
         if self.encode != 'ordinal':
-            raise ValueError("inverse_transform only support encode='ordinal'.")
-        
+            raise ValueError("inverse_transform only support "
+                             "encode='ordinal'.")
+
         Xt = self._validate_X_post_fit(Xt)
         trans = self.transformed_features_
         Xinv = Xt.copy()
