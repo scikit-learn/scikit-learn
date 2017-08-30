@@ -109,6 +109,10 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
             The type of target y. Should be obtained using ``type_of_target``
             from ``sklearn.utils.multiclass``
         """
+
+        if self._pass_classes is None:
+            return self._kwargs
+
         classes = getattr(estimator, "classes_", None)
 
         # if classes_ parameter doesn't exist
@@ -175,11 +179,8 @@ class _PredictScorer(_BaseScorer):
         super(_PredictScorer, self).__call__(estimator, X, y_true,
                                              sample_weight=sample_weight)
         y_pred = estimator.predict(X)
-        if self._pass_classes is None:
-            kwargs = self._kwargs
-        else:
-            kwargs = self._get_labels_from_estimator(estimator,
-                                                     type_of_target(y_true))
+        kwargs = self._get_labels_from_estimator(estimator,
+                                                 type_of_target(y_true))
 
         if sample_weight is not None:
             return self._sign * self._score_func(y_true, y_pred,
@@ -219,11 +220,8 @@ class _ProbaScorer(_BaseScorer):
                                            sample_weight=sample_weight)
         y_pred = clf.predict_proba(X)
 
-        if self._pass_classes is None:
-            kwargs = self._kwargs
-        else:
-            kwargs = self._get_labels_from_estimator(clf,
-                                                     type_of_target(y))
+        kwargs = self._get_labels_from_estimator(clf,
+                                                 type_of_target(y))
 
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
@@ -287,11 +285,8 @@ class _ThresholdScorer(_BaseScorer):
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
-        if self._pass_classes is None:
-            kwargs = self._kwargs
-        else:
-            kwargs = self._get_labels_from_estimator(clf,
-                                                     type_of_target(y))
+        kwargs = self._get_labels_from_estimator(clf,
+                                                 type_of_target(y))
 
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
