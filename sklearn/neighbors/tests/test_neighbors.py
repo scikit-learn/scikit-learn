@@ -658,6 +658,9 @@ def test_radius_neighbors_regressor(n_samples=40,
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
             assert_true(np.all(abs(y_pred - y_target) < radius / 2))
 
+            # test fix for issue #9654
+            # test that nan is returned when no nearby observations
+            assert_true(np.isnan(neigh.predict([[-1]])[0,0]))
 
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
     # Test radius neighbors in multi-output regression (uniform weight)
