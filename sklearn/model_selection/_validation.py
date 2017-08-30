@@ -639,11 +639,6 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
-    # Ensure the estimator has implemented the passed decision function
-    if not callable(getattr(estimator, method)):
-        raise AttributeError('{} not implemented in estimator'
-                             .format(method))
-
     # If classification methods produce multiple columns of output,
     # we need to manually encode classes to ensure consistent column ordering.
     encode = method in ['decision_function', 'predict_proba',
