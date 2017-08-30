@@ -827,7 +827,7 @@ See concept :term:`sample property`.
         integers, a weighted model or score should be equivalent to that
         calculated when repeating the sample the number of times specified in
         the weight.  Weights may be specified as floats, so that
-        ``sample_weight``s are usually equivalent up to a constant positive 
+        sample weights are usually equivalent up to a constant positive
         scaling factor.
 
         FIXME  Is this interpretation always the case in practice? We have no
