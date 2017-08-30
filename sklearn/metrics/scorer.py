@@ -529,10 +529,10 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     pass_classes : string or None, default='labels'
         The name of the scorer parameter into which the ``classes_`` attribute
         of the estimator will be passed through. If None is passed, then the
-        ``classes_`` atribute will not be copied.
+        ``classes_`` atribute will not be passed.
 
         It should be set only if a user-defined metric function is being used
-        and left as default in case of a scikit-learn API metric.
+        and left as default in case of a scikit-learn metric.
 
     **kwargs : additional arguments
         Additional parameters to be passed to score_func.

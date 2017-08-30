@@ -381,7 +381,8 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None,
             <https://en.wikipedia.org/wiki/Cohen%27s_kappa>`_
     """
     confusion = confusion_matrix(y1, y2, labels=labels,
-                                 sample_weight=sample_weight)
+                                 sample_weight=sample_weight,
+                                 allow_label_subset=allow_label_subset)
     n_classes = confusion.shape[0]
     sum0 = np.sum(confusion, axis=0)
     sum1 = np.sum(confusion, axis=1)
