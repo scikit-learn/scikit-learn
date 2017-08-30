@@ -20,6 +20,7 @@ from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
+from ..externals.joblib import Memory
 
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -153,6 +154,36 @@ def _shape_repr(shape):
         # special notation for singleton tuples
         joined += ','
     return "(%s)" % joined
+
+
+def check_memory(memory):
+    """Check that ``memory`` is joblib.Memory-like.
+
+    joblib.Memory-like means that ``memory`` can be converted into a
+    sklearn.externals.joblib.Memory instance (typically a str denoting the
+    ``cachedir``) or has the same interface (has a ``cache`` method).
+
+    Parameters
+    ----------
+    memory : joblib.Memory-like or string or None
+
+    Returns
+    -------
+    memory : object with the joblib.Memory interface
+
+    Raises
+    ------
+    ValueError
+        If ``memory`` is not joblib.Memory-like.
+    """
+
+    if memory is None or isinstance(memory, six.string_types):
+        memory = Memory(cachedir=memory, verbose=0)
+    elif not hasattr(memory, 'cache'):
+        raise ValueError("'memory' should be None, a string or have the same"
+                         " interface as sklearn.externals.joblib.Memory."
+                         " Got memory='{}' instead.".format(memory))
+    return memory
 
 
 def check_consistent_length(*arrays):
