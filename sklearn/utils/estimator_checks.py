@@ -115,12 +115,12 @@ def _yield_classifier_checks(name, classifier):
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
-    if (name not in
-        ["MultinomialNB", "LabelPropagation", "LabelSpreading"] and
+    if (name not in ["MultinomialNB", "ComplementNB", "LabelPropagation",
+                     "LabelSpreading"] and
         # TODO some complication with -1 label
-       name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
-            # We don't raise a warning in these classifiers, as
-            # the column y interface is used by the forests.
+            name not in ["DecisionTreeClassifier", "ExtraTreeClassifier"]):
+        # We don't raise a warning in these classifiers, as
+        # the column y interface is used by the forests.
 
         yield check_supervised_y_2d
     # test if NotFittedError is raised
@@ -1088,7 +1088,7 @@ def check_classifiers_train(name, classifier_orig):
         n_classes = len(classes)
         n_samples, n_features = X.shape
         classifier = clone(classifier_orig)
-        if name in ['BernoulliNB', 'MultinomialNB']:
+        if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB']:
             X -= X.min()
         set_random_state(classifier)
         # raises error on malformed input for fit
@@ -1102,7 +1102,7 @@ def check_classifiers_train(name, classifier_orig):
         y_pred = classifier.predict(X)
         assert_equal(y_pred.shape, (n_samples,))
         # training set performance
-        if name not in ['BernoulliNB', 'MultinomialNB']:
+        if name not in ['BernoulliNB', 'MultinomialNB', 'ComplementNB']:
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
@@ -1245,8 +1245,8 @@ def check_classifiers_classes(name, classifier_orig):
 
         classes = np.unique(y_)
         classifier = clone(classifier_orig)
-        if name == 'BernoulliNB':
-            classifier.set_params(binarize=X.mean())
+        if name in ['BernoulliNB', 'ComplementNB']:
+            X = X > X.mean()
         set_random_state(classifier)
         # fit
         classifier.fit(X, y_)
