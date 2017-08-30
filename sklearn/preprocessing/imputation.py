@@ -431,10 +431,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         Valid values: {"mean", "median", or "most_frequent"}.
         Uses :class:sklearn.preprocessing.Imputer.
 
-    min_value : float (default=np.nan)
+    min_value : float (default=None)
         Minimum possible imputed value.
 
-    max_value : float (default=np.nan)
+    max_value : float (default=None)
         Maximum possible imputed value.
 
     verbose : boolean, optional (default=False)
@@ -466,10 +466,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             estimator=None,
             n_nearest_features=None,
             initial_fill_method="mean",
-            min_value=np.nan,
-            max_value=np.nan,
+            min_value=None,
+            max_value=None,
             verbose=False,
             random_state=None):
+
         self.missing_values = missing_values
         self.imputation_order = imputation_order
         self.n_imputations = n_imputations
@@ -699,28 +700,35 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         else:
             self.estimator_ = clone(self.estimator)
 
-        X = check_array(X, dtype=np.float64, force_all_finite=False)
         # check that the estimator's predict method has return_std argument
         if not ('return_std' in signature(self.estimator_.predict).parameters):
             raise Exception("The regression estimator is %s and its predict "
                             "method does not support 'return_std=True'. "
                             "This is required for MICE." %
                             type(self.estimator_))
+
+        # pre-processing of X
+        X = check_array(X, dtype=np.float64, force_all_finite=False)
         X = np.asarray(X, order="F")
-        mask_missing_values = _get_mask(X, self.missing_values)
-        self._trained_estimator_triplets = []
+
+        # parse min and max values
+        if self.min_value is None:
+            self.min_value = np.nan
+        if self.max_value is None:
+            self.max_value = np.nan
 
         # initial imputation
+        mask_missing_values = _get_mask(X, self.missing_values)
         self.initial_imputer_ = Imputer(missing_values=self.missing_values,
                                         strategy=self.initial_fill_method,
                                         axis=0)
         X_filled = self.initial_imputer_.fit_transform(X)
         self._val_inds = self.initial_imputer_._valid_statistics_inds
-
         X = X[:, self._val_inds]
         mask_missing_values = mask_missing_values[:, self._val_inds]
 
         # perform imputations
+        self._trained_estimator_triplets = []
         n_samples, n_features = X_filled.shape
         total_rounds = self.n_burn_in + self.n_imputations
         results_list = []
