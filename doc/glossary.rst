@@ -27,6 +27,8 @@ General Concepts
         the generalized conventions across types of estimators as described in
         this glossary.
 
+        Conventions about what's public and what's not.
+
     array-like
 
         The most common data format for *input* to Scikit-learn estimators and
@@ -172,13 +174,15 @@ General Concepts
         distributions (categorical, ordinal, count-valued, real-valued,
         interval). See also :term`categorical feature`.
 
-        Elsewhere known as predictors, regressors, independent variables, attributes.
+        Elsewhere known as predictors, regressors, independent variables,
+        attributes.
 
     fitting
-        Calling :term:`fit` on an estimator.
+        Calling :term:`fit` (or :term:`fit_transform`, :term:`fit_predict`,
+        etc.) on an estimator.
 
     fitted
-        TODO
+        The state of an estimator after :term:`fitting`.
 
 	function
 		TODO
@@ -186,13 +190,18 @@ General Concepts
 		Talk about where estimator fit or fit_transform functionality is present in a function.
 
 	joblib
-		TODO
+        A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
+        facilite simple parallelism and caching.  Joblib is oriented towards
+        efficiently working with numpy arrays, such as through use of
+        :term:`memory mapping`.
 
 	leakage
 	data leakage
 		TODO
 
+	memmapping
 	memory map
+	memory mapping
 		TODO
 
     missing values
@@ -302,6 +311,7 @@ Class APIs and Estimator Types
         TODO
 
     cross validation splitter
+    CV splitter
         TODO
 
     estimator
@@ -318,7 +328,9 @@ Class APIs and Estimator Types
 
     meta-estimator
         TODO
-        Mention duck typing. Mention lenient validation.
+
+        Mention duck typing. Mention that duck typing of methods only works
+        after fitting. Mention lenient validation. ?Mention sample props.
 
     outlier detector
         TODO
@@ -576,6 +588,9 @@ non-estimator parameters with similar semantics.
 
 .. glossary::
 
+    ``affinity``
+        TODO
+
     ``class_weight``
         Used to specify sample weights when fitting classifiers as a function
         of the :term:`target` class.  Where the :term:`sample_weight`
@@ -631,6 +646,9 @@ non-estimator parameters with similar semantics.
 
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
+    ``kernel``
+        TODO
+
     ``max_iter``
         For estimators involving iterative optimization, this determines the
         maximum number of iterations to be performed in :term:`fit`.  If
@@ -647,13 +665,15 @@ non-estimator parameters with similar semantics.
         store partial solutions during fitting. Thus when ``fit`` is called
         again, those partial solutions have been memoized and can be reused.
 
-        FIXME: we should use ducktyping
-
         A ``memory`` parameter can be specified as a string with a path to a
-        directory, or a :class:`joblib.Memory` instance can be used. In the
-        latter case, ``Memory`` should be imported from
-        ``sklearn.externals.joblib``, which may differ from the installed
-        ``joblib`` package.
+        directory, or a :class:`joblib.Memory` instance (or an object with a
+        similar interface, i.e. a ``cache`` method) can be used.
+
+        ``memory`` values are validated and interpreted with
+        :func:`utils.validation.check_memory`.
+
+    ``metric``
+        TODO
 
     ``n_jobs``
         This is used to specify how many concurrent processes/threads should be
@@ -795,7 +815,11 @@ See concept :term:`sample property`.
 .. glossary::
 
     ``groups``
-        TODO
+        Used in cross validation routines to identify samples which are
+        correlated.  Each value is an identifier such that, in a supporting
+        :term:`CV splitter`, samples from some ``groups`` value may not
+        appear in both a training set and its corresponding test set.
+        See :ref:`group_cv`.
 
     ``sample_weight``
 
