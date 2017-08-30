@@ -165,7 +165,7 @@ def check_memory(memory):
 
     Parameters
     ----------
-    memory : joblib.Memory-like
+    memory : joblib.Memory-like or string or None
 
     Returns
     -------
