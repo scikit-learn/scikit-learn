@@ -164,7 +164,7 @@ def _estimate_gaussian_covariances_full(resp, X, nk, means, reg_covar):
     covariances = np.empty((n_components, n_features, n_features))
     for k in range(n_components):
         diff = X - means[k]
-        covariances[k] = np.dot(resp[:, k] * diff.T, diff) / nk[k]
+        covariances[k] = np.ma.dot(resp[:, k] * diff.T, diff).data / nk[k]
         covariances[k].flat[::n_features + 1] += reg_covar
     return covariances
 
@@ -277,7 +277,7 @@ def _estimate_gaussian_parameters(X, resp, reg_covar, covariance_type):
         The shape depends of the covariance_type.
     """
     nk = resp.sum(axis=0) + 10 * np.finfo(resp.dtype).eps
-    means = np.dot(resp.T, X) / nk[:, np.newaxis]
+    means = np.ma.dot(resp.T, X).data / nk[:, np.newaxis]
     covariances = {"full": _estimate_gaussian_covariances_full,
                    "tied": _estimate_gaussian_covariances_tied,
                    "diag": _estimate_gaussian_covariances_diag,

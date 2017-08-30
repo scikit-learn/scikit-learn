@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 
 from .gaussian_mixture import GaussianMixture, _compute_precision_cholesky, \
-    _estimate_gaussian_parameters
+    _estimate_gaussian_parameters, _estimate_gaussian_covariances_full
 from .base import _check_X
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
@@ -16,10 +16,10 @@ def _check_empty_axis(X_mask):
     ----------
     X_mask : array-like, shape (n_samples, n_features)
     """
-    if X_mask.sum(axis=0) == X_mask.shape[0]:
+    if np.any(X_mask.sum(axis=0) == X_mask.shape[0]):
         raise ValueError("Please remove empty column(s) present in the "
                          "dataset.")
-    if X_mask.sum(axis=1) == X_mask.shape[1]:
+    if np.any(X_mask.sum(axis=1) == X_mask.shape[1]):
         raise ValueError("Please remove empty row(s) present in the "
                          "dataset.")
     return X_mask
@@ -47,8 +47,11 @@ def _get_mask(X, value_to_mask):
 
 # See Rubin (2002) p. 148
 # The _sweep() function below is an adaptation of the code by Jaime at
-# https://stackoverflow.com/questions/15767435
+# https://stackoverflow.com/questions/15767435/python-implementation-of-
+# statistical-sweep-operator/15770157#15770157
 def _sweep(g, k_index, reverse=False):
+    if not np.allclose(g - g.T, 0):
+        raise ValueError('Not a symmetrical array')
     r = -1 if reverse else 1
     k_index = np.array(
         [k_index]) if type(k_index) == int else np.array(k_index)
@@ -73,37 +76,44 @@ def _M(s, R):
     return np.where(~R[s, ])[0]
 
 
-def _exp_sufficient_stats(X, theta, T, S):
+def _exp_sufficient_stats(X, theta, T, feature_status_in_patterns,
+                          row_index_of_patterns, resp):
     # Based on the algorithm by Schafer (1997)
     _, p = X.shape  # Feature count
     c = np.zeros(p)
+    S, _ = feature_status_in_patterns.shape
     for s in range(S):
         for j in range(0, p):
-            if j in _O(s) and np.diag(theta)[j + 1] > 0:  # j to j+1
+            if j in _O(s, feature_status_in_patterns) and np.diag(
+                    theta)[j + 1] > 0:  # j to j+1
                 theta = _sweep(theta, j + 1)
-            if j in _M(s) and np.diag(theta)[j + 1] < 0:
+            if j in _M(s, feature_status_in_patterns) and np.diag(
+                    theta)[j + 1] < 0:
                 theta = _sweep(theta, j + 1, reverse=True)
-        for i in _I(s):
-            for j in _M(s):
+        for i in _I(s, row_index_of_patterns):
+            for j in _M(s, feature_status_in_patterns):
                 c[j] = theta[0, j + 1]
-                for k in _O(s):
-                    c[j] = c[j] + theta[k + 1, j + 1] * X[i, k]  # CHECK
-            for j in _M(s):
+                for k in _O(s, feature_status_in_patterns):
+                    # CHECK FOLLOWING
+                    c[j] = c[j] + resp[i] * theta[k + 1, j + 1] * X[i, k]
+            for j in _M(s, feature_status_in_patterns):
                 T[0, j + 1] = T[0, j + 1] + c[j]
                 T[j + 1, 0] = T[0, j + 1]  # Added to maintain symmetry
-                for k in _O(s):
-                    T[k + 1, j + 1] = T[k + 1, j + 1] + c[j] * X[i, k]
+                for k in _O(s, feature_status_in_patterns):
+                    T[k + 1, j + 1] = T[k + 1, j + 1] + resp[i] * c[j] * X[
+                        i, k]
                     T[j + 1, k + 1] = T[k + 1, j + 1]  # Added
-                for k in _M(s):
+                for k in _M(s, feature_status_in_patterns):
                     if k >= j:
-                        T[k + 1, j + 1] = T[k + 1, j + 1] + theta[
-                            k + 1, j + 1] + c[k] * c[j]
+                        T[k + 1, j + 1] = T[k + 1, j + 1] + resp[i] * (theta[
+                            k + 1, j + 1] + c[k] * c[j])
                         T[j + 1, k + 1] = T[k + 1, j + 1]  # Added
     return T
 
 
 def _estimate_masked_gaussian_parameters(X, resp, reg_covar,
-                                         covariance_type, sufficient_stats):
+                                         covariance_type, sufficient_stats,
+                                         init=False):
     """Estimate the Gaussian distribution parameters.
 
     Parameters
@@ -140,10 +150,11 @@ def _estimate_masked_gaussian_parameters(X, resp, reg_covar,
     # Note: Following returns full covariance matrices
     # TODO: Add support for tied, diag, and spherical covariances
     for comp in range(n_components):
-        sufficient_stats_div_nk = sufficient_stats[comp] / nk
+        sufficient_stats_div_nk = sufficient_stats[comp] / nk[comp]
         augmented_covariance = _sweep(sufficient_stats_div_nk, 0)
-        means[comp] = augmented_covariance[comp, 0, 1:]
-        covariances[comp] = augmented_covariance[comp, 1:, 1:]
+        means[comp] = augmented_covariance[0, 1:]
+        covariances[comp] = augmented_covariance[1:, 1:]
+        covariances[comp].flat[::n_features + 1] += reg_covar
     #
     # means = np.dot(resp.T, X) / nk[:, np.newaxis]
     # covariances = {"full": _estimate_gaussian_covariances_full,
@@ -155,7 +166,7 @@ def _estimate_masked_gaussian_parameters(X, resp, reg_covar,
 
 class MaskedGaussianMixture(GaussianMixture):
     def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
-                 reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
+                 reg_covar=1e-6, max_iter=100, n_init=1, init_params='random',
                  weights_init=None, means_init=None, precisions_init=None,
                  random_state=None, warm_start=False,
                  verbose=0, verbose_interval=10):
@@ -183,28 +194,37 @@ class MaskedGaussianMixture(GaussianMixture):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
+        n_samples, n_features = X.shape
         # Step 1: Calculate responsibilities
-        log_prob_norm = np.empty(X.shape[0], self.n_components)
-        log_resp = np.empty(X.shape[0], self.n_components)
+        log_prob_norm = np.empty((n_samples, self.n_components))
+        log_resp = np.empty((n_samples, self.n_components))
 
         for s in range(self.n_missing_patterns):
             s_rows = _I(s, self.row_index_of_patterns)
             s_cols = _O(s, self.feature_status_in_patterns)
-            log_prob_norm[s_rows, :], log_resp[s_rows, :] = \
+            mean_temp = np.copy(self.means_)
+            prec_chol_temp = np.copy(self.precisions_cholesky_)
+            self.means_ = self.means_[:, s_cols]
+            self.precisions_cholesky_ = self.precisions_cholesky_[:,
+                                        s_cols, :][:, :, s_cols]
+            log_prob_norm, log_resp[s_rows, :] = \
                 self._estimate_log_prob_resp(X[s_rows, :][:, s_cols])
+            self.means_ = mean_temp
+            self.precisions_cholesky_ = prec_chol_temp
         # log_prob_norm, log_resp = self._estimate_log_prob_resp(X)
         resp = np.exp(log_resp)
 
         # Step 2: Calculate E(z * x_mis | x_obs, theta)
-        T = np.empty((self.n_components, X.shape[1]+1, X.shape[1]+1))
+        T = np.empty((self.n_components, n_features + 1, X.shape[1]+1))
         for comp in range(self.n_components):
             X_weighted = np.copy(X)
-            X_weighted = X_weighted * resp[:, comp]
+            # X_weighted = X_weighted * (resp[:, comp]).reshape((n_samples, 1))
+            X_weighted = np.ma.array(X_weighted, mask=X.mask)
 
             # Setup theta
             # Covariance and augmented covariance matrix
             cov = self.covariances_[comp]
-            means = self.means_[comp]
+            means = (self.means_[comp]).reshape((-1, len(self.means_[comp])))
 
             theta = np.concatenate((means, cov), axis=0)
             theta = np.concatenate((np.insert(means, 0, 1, axis=1).T, theta),
@@ -212,18 +232,21 @@ class MaskedGaussianMixture(GaussianMixture):
 
             # Setup Tobs, or the T-matrix with sums of the observed data and
             # also sums of their products (See Schafer, p. 215)
-            vecOne = np.ones(X_weighted.shape[0]).reshape((-1, 1))
-
-            top = np.insert(np.ma.dot(vecOne.T, X_weighted).data, 0,
-                            X.shape[0], axis=1)
-            bottom = np.concatenate((np.ma.dot(X_weighted.T, vecOne).data,
-                                     np.ma.dot(X_weighted.T, X_weighted).data),
-                                    axis=1)
-            Tobs = np.concatenate((top, bottom), axis=0)
+            # ones = np.ones(X_weighted.shape[0]).reshape((-1, 1))
+            #
+            # top = np.insert(np.ma.dot(ones.T, X_weighted).data, 0,
+            #                 X.shape[0], axis=1)
+            # bottom = np.concatenate((np.ma.dot(X_weighted.T, ones).data,
+            #                          np.ma.dot(X_weighted.T, X_weighted).data),
+            #                         axis=1)
+            # Tobs = np.concatenate((top, bottom), axis=0)
+            Tobs = _sweep(theta, 0, reverse=True)
 
             # Calculate the matrix of expected sufficient statistics
-            T[comp] = _exp_sufficient_stats(X, theta, np.copy(Tobs),
-                                      self.n_missing_patterns)
+            T[comp] = _exp_sufficient_stats(X_weighted, theta, np.copy(Tobs),
+                                            self.feature_status_in_patterns,
+                                            self.row_index_of_patterns,
+                                            resp[:, comp])
             # n_weighted = np.sum(resp[:, comp])
             # T[comp] = T_exp / n_weighted
         self.sufficient_stats = T
@@ -273,7 +296,6 @@ class MaskedGaussianMixture(GaussianMixture):
         X = _check_inf(_check_X(X, self.n_components, force_all_finite=False))
         self._check_initial_parameters(X)
         mask = _check_empty_axis(_get_mask(X, "NaN"))
-
         # if we enable warm_start, we will have a unique initialisation
         do_init = not(self.warm_start and hasattr(self, 'converged_'))
         n_init = self.n_init if do_init else 1
