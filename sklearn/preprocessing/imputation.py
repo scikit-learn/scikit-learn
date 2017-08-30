@@ -437,7 +437,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
     max_value : float (default=None)
         Maximum possible imputed value.
 
-    verbose : integer, optional (default=False)
+    verbose : boolean, optional (default=False)
         Controls the verbosity of the imputer.
 
     random_state : int seed, RandomState instance (default=None)
@@ -700,7 +700,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         """
         if self.estimator is None:
             from ..linear_model import BayesianRidge
-            self.estimator_ = BayesianRidge(random_state=self.random_state)
+            self.estimator_ = BayesianRidge()
         else:
             self.estimator_ = clone(self.estimator)
 
