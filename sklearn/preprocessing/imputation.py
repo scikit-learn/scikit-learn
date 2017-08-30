@@ -431,10 +431,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         Valid values: {"mean", "median", or "most_frequent"}.
         Uses :class:sklearn.preprocessing.Imputer.
 
-    min_value : float (default=None)
+    min_value : float (default=np.nan)
         Minimum possible imputed value.
 
-    max_value : float (default=None)
+    max_value : float (default=np.nan)
         Maximum possible imputed value.
 
     verbose : boolean, optional (default=False)
@@ -466,8 +466,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             estimator=None,
             n_nearest_features=None,
             initial_fill_method="mean",
-            min_value=None,
-            max_value=None,
+            min_value=np.nan,
+            max_value=np.nan,
             verbose=False,
             random_state=None):
         self.missing_values = missing_values
@@ -477,14 +477,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         self.estimator = estimator
         self.n_nearest_features = n_nearest_features
         self.initial_fill_method = initial_fill_method
-        if min_value is None:
-            self.min_value = np.nan
-        else:
-            self.min_value = min_value
-        if max_value is None:
-            self.max_value = np.nan
-        else:
-            self.max_value = max_value
+        self.min_value = min_value
+        self.max_value = max_value
         self.verbose = verbose
         self.random_state = random_state
 
