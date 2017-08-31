@@ -1260,12 +1260,24 @@ def test_rfe_cv():
     iris = load_iris()
     number_groups = 4
     groups = np.floor(np.linspace(0, number_groups, len(iris.target)))
+    X = iris.data
+    y = (iris.target > 0).astype(int)
+
+    # test basic cv
     est = RFECV(
+        estimator=DecisionTreeClassifier(),
+        step=1,
+        scoring='accuracy',
+        cv=2,
+    )
+    est.fit(X, y)
+
+    # test cv with groups
+    est_groups = RFECV(
         estimator=DecisionTreeClassifier(),
         step=1,
         scoring='accuracy',
         cv=GroupKFold(n_splits=2)
     )
-    binary_target = (iris.target > 0).astype(int)
-    est.fit(iris.data, binary_target, groups=groups)
-    assert(est.n_features_ > 0)
+    est_groups.fit(X, y, groups=groups)
+    assert(est_groups.n_features_ > 0)
