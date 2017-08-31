@@ -293,7 +293,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         else:
             y_pred = np.array([np.average(_y[ind, :], axis=0,
                                           weights=weights[i])
-                               if len(ind) else np.nan
+                               if len(ind) else np.full(_y.shape[1], np.nan)
                                for (i, ind) in enumerate(neigh_ind)])
 
         if self._y.ndim == 1:

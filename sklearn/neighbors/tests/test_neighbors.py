@@ -660,7 +660,16 @@ def test_radius_neighbors_regressor(n_samples=40,
 
             # test fix for issue #9654
             # test that nan is returned when no nearby observations
-            assert_true(np.isnan(neigh.predict([[-1]])[0,0]))
+            try:
+                y_pred_alt = neigh.predict([[-1]])
+                y_pred_alt_isnan = np.all(np.isnan(y_pred_alt))
+                raise_zero_div_error = False
+
+            except ZeroDivisionError:
+                raise_zero_div_error = True
+
+            assert_false(raise_zero_div_error)
+            assert_true(y_pred_alt_isnan)
 
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
     # Test radius neighbors in multi-output regression (uniform weight)
