@@ -48,12 +48,12 @@ from sklearn.externals import joblib
 from sklearn.utils import deprecated
 
 try:
-    from nose.tools import raises as nose_raises
+    from nose.tools import raises as _nose_raises
     deprecation_message = (
         'sklearn.utils.testing.raises has been deprecated in version 0.20 '
         'and will be removed in 0.22. Use nose.tools.raises instead '
         'or consider moving to pytest.')
-    raises = deprecated(deprecation_message)(nose_raises)
+    raises = deprecated(deprecation_message)(_nose_raises)
 except ImportError:
     pass
 from nose import with_setup
