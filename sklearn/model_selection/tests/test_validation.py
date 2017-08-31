@@ -805,8 +805,15 @@ def test_cross_val_predict():
 
     ind = np.argsort(y)
     X, y = X[ind], y[ind]
-    assert_raises(ValueError, cross_val_predict, est, X, y,
-                  cv=KFold(), method='decision_function')
+    assert_raise_message(ValueError,
+                         'Shape of output predictions does not '
+                         'match number of classes in fold. '
+                         'Cannot reconcile different number of '
+                         'classes in different folds. To fix this, '
+                         'use a cross-validation technique resulting '
+                         'in properly stratified folds.',
+                         cross_val_predict, est, X, y,
+                         cv=KFold(), method='decision_function')
 
 
 def test_cross_val_predict_input_types():
