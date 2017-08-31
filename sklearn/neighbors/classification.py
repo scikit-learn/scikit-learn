@@ -393,8 +393,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
             if outliers:
                 if self.outlier_label == 'uniform':
-                    y_pred[outliers, k] = np.random.randint(classes_k.size,
-                                                            size=len(outliers))
+                    y_pred[outliers, k] = np.random.choice(classes_k,
+                                                           size=len(outliers))
                 elif self.outlier_label == 'prior':
                     prior = np.bincount(_y[:, k]) / float(_y.shape[0])
                     y_pred[outliers, k] = np.random.choice(classes_k,
