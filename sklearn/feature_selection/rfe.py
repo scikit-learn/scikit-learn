@@ -459,5 +459,5 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
         # here, the scores are normalized by get_n_splits(X, y)
-        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y)
+        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y, groups)
         return self
