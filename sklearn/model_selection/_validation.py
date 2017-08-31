@@ -733,11 +733,21 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         n_classes = len(set(y))
         if n_classes != len(estimator.classes_):
+            if len(predictions.shape) == 2 and \
+                    predictions.shape[1] != len(estimator.classes_):
+                raise ValueError('Shape of output predictions does not '
+                                 'match number of classes in fold. '
+                                 'Cannot reconcile different number of '
+                                 'classes in different folds. To fix this, '
+                                 'use a cross-validation technique resulting '
+                                 'in properly stratified folds.')
             predictions_ = np.zeros((_num_samples(X_test), n_classes))
-            if method == 'decision_function' and len(estimator.classes_) == 2:
+            if method == 'decision_function' and len(estimator.classes_) <= 2:
                 predictions_[:, estimator.classes_[-1]] = predictions
             else:
                 predictions_[:, estimator.classes_] = predictions
+            if method == 'decision_function' and n_classes == 2:
+                predictions_ = predictions_[:, 1]
             predictions = predictions_
     return predictions, test
 

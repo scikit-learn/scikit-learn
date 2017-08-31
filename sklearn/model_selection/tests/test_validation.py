@@ -52,7 +52,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics.scorer import check_scoring
 
-from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.linear_model import Ridge, LogisticRegression, RidgeClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -789,13 +789,24 @@ def test_cross_val_predict():
                               method='decision_function')
     assert_equal(preds.shape, (150, 3))
 
-    X, y = load_digits(return_X_y=True)
+    X = X[:100]
+    y = y[:100]
+    preds = cross_val_predict(RidgeClassifier(), X, y,
+                              method='decision_function', cv=KFold())
+    assert_equal(preds.shape, (100,))
 
-    preds = cross_val_predict(SVC(kernel='linear',
-                                  decision_function_shape='ovo'),
+    X, y = load_digits(return_X_y=True)
+    est = SVC(kernel='linear', decision_function_shape='ovo')
+
+    preds = cross_val_predict(est,
                               X, y,
                               method='decision_function')
     assert_equal(preds.shape, (1797, 45))
+
+    ind = np.argsort(y)
+    X, y = X[ind], y[ind]
+    assert_raises(ValueError, cross_val_predict, est, X, y,
+                  cv=KFold(), method='decision_function')
 
 
 def test_cross_val_predict_input_types():
