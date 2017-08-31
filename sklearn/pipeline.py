@@ -17,9 +17,9 @@ from scipy import sparse
 from .base import clone, TransformerMixin
 from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
-from .utils import tosequence
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
+from .utils.validation import check_memory
 
 from .utils.metaestimators import _BaseComposition
 
@@ -52,8 +52,7 @@ class Pipeline(_BaseComposition):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
-    memory : Instance of sklearn.external.joblib.Memory or string, optional \
-            (default=None)
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -112,7 +111,7 @@ class Pipeline(_BaseComposition):
 
     def __init__(self, steps, memory=None):
         # shallow copy of steps
-        self.steps = tosequence(steps)
+        self.steps = list(steps)
         self._validate_steps()
         self.memory = memory
 
@@ -187,16 +186,7 @@ class Pipeline(_BaseComposition):
     def _fit(self, X, y=None, **fit_params):
         self._validate_steps()
         # Setup the memory
-        memory = self.memory
-        if memory is None:
-            memory = Memory(cachedir=None, verbose=0)
-        elif isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory, verbose=0)
-        elif not isinstance(memory, Memory):
-            raise ValueError("'memory' should either be a string or"
-                             " a sklearn.externals.joblib.Memory"
-                             " instance, got 'memory={!r}' instead.".format(
-                                 type(memory)))
+        memory = check_memory(self.memory)
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
@@ -210,7 +200,7 @@ class Pipeline(_BaseComposition):
             if transformer is None:
                 pass
             else:
-                if memory.cachedir is None:
+                if hasattr(memory, 'cachedir') and memory.cachedir is None:
                     # we do not clone when caching is disabled to preserve
                     # backward compatibility
                     cloned_transformer = transformer
@@ -538,8 +528,7 @@ def make_pipeline(*steps, **kwargs):
     ----------
     *steps : list of estimators,
 
-    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
-            (default=None)
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -624,7 +613,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
-        self.transformer_list = tosequence(transformer_list)
+        self.transformer_list = list(transformer_list)
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self._validate_transformers()

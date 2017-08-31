@@ -158,7 +158,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         if verbose:
             print("Did not converge")
 
-    I = np.where(np.diag(A + R) > 0)[0]
+    I = np.flatnonzero(E)
     K = I.size  # Identify exemplars
 
     if K > 0:
@@ -197,14 +197,18 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     Parameters
     ----------
     damping : float, optional, default: 0.5
-        Damping factor between 0.5 and 1.
+        Damping factor (between 0.5 and 1) is the extent to
+        which the current value is maintained relative to
+        incoming values (weighted 1 - damping). This in order
+        to avoid numerical oscillations when updating these
+        values (messages).
+
+    max_iter : int, optional, default: 200
+        Maximum number of iterations.
 
     convergence_iter : int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
-
-    max_iter : int, optional, default: 200
-        Maximum number of iterations.
 
     copy : boolean, optional, default: True
         Make a copy of input data.

@@ -80,6 +80,10 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         n_features is only required if ``offset`` or ``length`` are passed a
         non-default value.
 
+    dtype : numpy data type, default np.float64
+        Data type of dataset to be loaded. This will be the data type of the
+        output numpy arrays ``X`` and ``y``.
+
     multilabel : boolean, optional, default False
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
@@ -98,10 +102,6 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 
     query_id : boolean, default False
         If True, will return the query_id array for each file.
-
-    dtype : numpy data type, default np.float64
-        Data type of dataset to be loaded. This will be the data type of the
-        output numpy arrays ``X`` and ``y``.
 
     offset : integer, optional, default 0
         Ignore the offset first bytes by seeking forward, then
@@ -224,6 +224,10 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         in any of the input files, but setting it to a lower value will cause
         an exception to be raised.
 
+    dtype : numpy data type, default np.float64
+        Data type of dataset to be loaded. This will be the data type of the
+        output numpy arrays ``X`` and ``y``.
+
     multilabel : boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
@@ -242,10 +246,6 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
 
     query_id : boolean, defaults to False
         If True, will return the query_id array for each file.
-
-    dtype : numpy data type, default np.float64
-        Data type of dataset to be loaded. This will be the data type of the
-        output numpy arrays ``X`` and ``y``.
 
     offset : integer, optional, default 0
         Ignore the offset first bytes by seeking forward, then

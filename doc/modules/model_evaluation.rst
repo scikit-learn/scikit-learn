@@ -60,6 +60,7 @@ Scoring                           Function                                      
 **Classification**
 'accuracy'                        :func:`metrics.accuracy_score`
 'average_precision'               :func:`metrics.average_precision_score`
+'brier_score_loss'                :func:`metrics.brier_score_loss`
 'f1'                              :func:`metrics.f1_score`                          for binary targets
 'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
 'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
@@ -81,6 +82,7 @@ Scoring                           Function                                      
 'v_measure_score'                 :func:`metrics.v_measure_score`
 
 **Regression**
+'explained_variance'              :func:`metrics.explained_variance_score`
 'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
 'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
 'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
@@ -101,7 +103,7 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'completeness_score', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'brier_score_loss', 'completeness_score', 'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
 
 .. note::
 
@@ -212,8 +214,8 @@ the following two rules:
 
 .. _multimetric_scoring:
 
-Using mutiple metric evaluation
--------------------------------
+Using multiple metric evaluation
+--------------------------------
 
 Scikit-learn also permits evaluation of multiple metrics in ``GridSearchCV``,
 ``RandomizedSearchCV`` and ``cross_validate``.
@@ -242,14 +244,14 @@ permitted and will require a wrapper to return a single metric::
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
     >>> svm = LinearSVC(random_state=0)
-    >>> tp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
-    >>> tn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 0]
-    >>> fp = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[1, 0]
-    >>> fn = lambda y_true, y_pred: confusion_matrix(y_true, y_pred)[0, 1]
+    >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
+    >>> def tn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
+    >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
+    >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
     >>> scoring = {'tp' : make_scorer(tp), 'tn' : make_scorer(tn),
     ...            'fp' : make_scorer(fp), 'fn' : make_scorer(fn)}
     >>> cv_results = cross_validate(svm.fit(X, y), X, y, scoring=scoring)
-    >>> # Getting the test set false positive scores
+    >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])          # doctest: +NORMALIZE_WHITESPACE
     [12 13 15]
     >>> # Getting the test set false negative scores
@@ -669,10 +671,6 @@ binary classification and multilabel indicator format.
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_precision_recall.py`
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
-
-  * See :ref:`sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py`
-    for an example of :func:`precision_recall_curve` usage to select
-    features for sparse linear models.
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^

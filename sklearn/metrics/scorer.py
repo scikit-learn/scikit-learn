@@ -26,7 +26,8 @@ import numpy as np
 from . import (r2_score, median_absolute_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
-               precision_score, recall_score, log_loss)
+               precision_score, recall_score, log_loss,
+               explained_variance_score, brier_score_loss)
 
 from .cluster import adjusted_rand_score
 from .cluster import homogeneity_score
@@ -134,7 +135,10 @@ class _ProbaScorer(_BaseScorer):
         """
         super(_ProbaScorer, self).__call__(clf, X, y,
                                            sample_weight=sample_weight)
+        y_type = type_of_target(y)
         y_pred = clf.predict_proba(X)
+        if y_type == "binary":
+            y_pred = y_pred[:, 1]
         if sample_weight is not None:
             return self._sign * self._score_func(y, y_pred,
                                                  sample_weight=sample_weight,
@@ -209,6 +213,18 @@ class _ThresholdScorer(_BaseScorer):
 
 
 def get_scorer(scoring):
+    """Get a scorer from string
+
+    Parameters
+    ----------
+    scoring : str | callable
+        scoring method as string. If callable it is returned as is.
+
+    Returns
+    -------
+    scorer : callable
+        The scorer.
+    """
     valid = True
     if isinstance(scoring, six.string_types):
         try:
@@ -308,7 +324,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
         value. Metric functions returning a list/array of values can be wrapped
         into multiple scorers that return one value each.
 
-        See :ref:`multivalued_scorer_wrapping` for an example.
+        See :ref:`multimetric_grid_search` for an example.
 
         If None the estimator's default scorer (if available) is used.
         The return value in that case will be ``{'score': <default_scorer>}``.
@@ -451,6 +467,7 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 
 
 # Standard regression scores
+explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
 neg_mean_squared_error_scorer = make_scorer(mean_squared_error,
                                             greater_is_better=False)
@@ -500,6 +517,9 @@ deprecation_msg = ('Scoring method log_loss was renamed to '
 log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
                               needs_proba=True)
 log_loss_scorer._deprecation_msg = deprecation_msg
+brier_score_loss_scorer = make_scorer(brier_score_loss,
+                                      greater_is_better=False,
+                                      needs_proba=True)
 
 
 # Clustering scores
@@ -513,7 +533,8 @@ normalized_mutual_info_scorer = make_scorer(normalized_mutual_info_score)
 fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
 
-SCORERS = dict(r2=r2_scorer,
+SCORERS = dict(explained_variance=explained_variance_scorer,
+               r2=r2_scorer,
                neg_median_absolute_error=neg_median_absolute_error_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
                neg_mean_squared_error=neg_mean_squared_error_scorer,
@@ -525,6 +546,7 @@ SCORERS = dict(r2=r2_scorer,
                average_precision=average_precision_scorer,
                log_loss=log_loss_scorer,
                neg_log_loss=neg_log_loss_scorer,
+               brier_score_loss=brier_score_loss_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
                homogeneity_score=homogeneity_scorer,

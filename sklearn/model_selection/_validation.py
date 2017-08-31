@@ -69,7 +69,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         value. Metric functions returning a list/array of values can be wrapped
         into multiple scorers that return one value each.
 
-        See :ref:`multivalued_scorer_wrapping` for an example.
+        See :ref:`multimetric_grid_search` for an example.
 
         If None, the estimator's default scorer (if available) is used.
 
@@ -144,7 +144,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     Examples
     --------
     >>> from sklearn import datasets, linear_model
-    >>> from sklearn.model_selection import cross_val_score
+    >>> from sklearn.model_selection import cross_validate
     >>> from sklearn.metrics.scorer import make_scorer
     >>> from sklearn.metrics import confusion_matrix
     >>> from sklearn.svm import LinearSVC
@@ -153,15 +153,17 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
 
-    # single metric evaluation using cross_validate
+    Single metric evaluation using ``cross_validate``
+
     >>> cv_results = cross_validate(lasso, X, y, return_train_score=False)
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     array([ 0.33...,  0.08...,  0.03...])
 
-    # Multiple metric evaluation using cross_validate
-    # (Please refer the ``scoring`` parameter doc for more information)
+    Multiple metric evaluation using ``cross_validate``
+    (please refer the ``scoring`` parameter doc for more information)
+
     >>> scores = cross_validate(lasso, X, y,
     ...                         scoring=('r2', 'neg_mean_squared_error'))
     >>> print(scores['test_neg_mean_squared_error'])      # doctest: +ELLIPSIS
@@ -171,7 +173,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     See Also
     ---------
-    :func:`sklearn.metrics.cross_val_score`:
+    :func:`sklearn.model_selection.cross_val_score`:
         Run cross-validation for single metric evaluation.
 
     :func:`sklearn.metrics.make_scorer`:
@@ -637,11 +639,6 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
-    # Ensure the estimator has implemented the passed decision function
-    if not callable(getattr(estimator, method)):
-        raise AttributeError('{} not implemented in estimator'
-                             .format(method))
-
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         le = LabelEncoder()
         y = le.fit_transform(y)
@@ -730,7 +727,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     predictions = func(X_test)
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         n_classes = len(set(y))
-        predictions_ = np.zeros((X_test.shape[0], n_classes))
+        predictions_ = np.zeros((_num_samples(X_test), n_classes))
         if method == 'decision_function' and len(estimator.classes_) == 2:
             predictions_[:, estimator.classes_[-1]] = predictions
         else:
@@ -803,8 +800,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
         the dataset into train/test set.
 
     scoring : string, callable or None, optional, default: None
-        A single string (see :ref:`_scoring_parameter`) or a callable
-        (see :ref:`_scoring`) to evaluate the predictions on the test set.
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
 
         If None the estimator's default scorer, if available, is used.
 
