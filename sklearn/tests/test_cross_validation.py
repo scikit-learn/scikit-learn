@@ -24,6 +24,10 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.feature_selection import RFECV
+from sklearn.model_selection import GroupKFold
+
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     from sklearn import cross_validation as cval
@@ -43,11 +47,7 @@ from sklearn.linear_model import Ridge
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
-
-from sklearn.feature_selection import RFECV
-from sklearn.model_selection import GroupKFold
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
