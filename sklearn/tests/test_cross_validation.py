@@ -1266,5 +1266,6 @@ def test_rfe_cv():
         scoring='roc_auc',
         cv=GroupKFold(n_splits=2)
     )
-    est.fit(iris.data, iris.target, groups=groups)
+    binary_target = (iris.target > 0).astype(int)
+    est.fit(iris.data, binary_target, groups=groups)
     assert(est.n_features_ > 0)
