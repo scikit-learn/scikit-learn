@@ -23,8 +23,8 @@ from ..utils import gen_batches
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted, check_array, check_X_y, \
-    check_consistent_length
+from ..utils.validation import check_is_fitted, check_array, check_X_y
+from ..utils.validation import check_consistent_length
 from ..exceptions import DataDimensionalityWarning
 
 
@@ -272,7 +272,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         grad_static = self._compute_grad_static(X_valid, targets, self.verbose)
 
         # Initialize number of optimizer iterations and objective funcalls
-        self.n_iter_ = 0
+        self.n_iter_ = 1
         self.n_funcalls_ = 0
         iprint = self.verbose - 2 if self.verbose > 1 else -1
 
@@ -288,10 +288,11 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                             }
 
         if self.verbose:
-            print('\n{:>10} {:>10} {:>15} {:>10}'.
-                  format('Iteration', 'Func.Call', 'Func.Value', 'Time(s)'))
-            print('-' * 48)
-            print('{:>10}'.format(self.n_iter_ + 1))
+            header_fields = ['Iteration', 'Function Call', 'Objective Value',
+                             'Time(s)']
+            header_fmt = '{:>10} {:>15} {:>20} {:>10}'
+            header = header_fmt.format(*header_fields)
+            print('\n{}\n{}'.format(header, '-'*len(header)))
 
         # Call optimizer
         transformation, loss, info = fmin_l_bfgs_b(**optimizer_params)
@@ -309,16 +310,18 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         self.details_['time'] = time.time() - t_start
 
         if self.verbose:
+            print('\nOptimization stopped: ')
             termination_reason = info['warnflag']
             n_funcalls = info['funcalls']
+
             if termination_reason == 0:
                 print('Converged after {} function calls.'.format(n_funcalls))
             elif termination_reason == 1:
                 print('Too many function evaluations ({}).'.format(n_funcalls))
             elif termination_reason == 2:
-                print('Optimization stopped: {}'.format(info['task']))
+                print('{}'.format(info['task']))
 
-            print('Training took {:8.2f}s'.format(self.details_['time']))
+            print('Training took {:8.2f}s.'.format(self.details_['time']))
 
         return self
 
@@ -388,7 +391,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         targets = self.targets
         if targets is not None:
             check_consistent_length(X, targets)
-            check_array(targets, dtype=np.int64)
+            targets = check_array(targets, dtype=int)
 
             # Check that target neighbors belong to the correct class
             y_targets = y_inverse[targets]
@@ -586,11 +589,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         return sum_outer_products(X, targets_sparse)
 
     def _lbfgs_callback(self, transformation):
-        self.n_iter_ += 1
-        if self.verbose:
-            print('{:>10}'.format(self.n_iter_ + 1))
         if self.callback is not None:
             self.callback(transformation, self.n_iter_)
+
+        self.n_iter_ += 1
 
     def _loss_grad(self, transformation, X, y, targets, grad_static):
         """Compute the loss under a given ``transformation`` and the
@@ -663,11 +665,11 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         metric = self.transformation_.T.dot(self.transformation_)
         loss = loss + (grad_static * metric).sum()
 
-        toc = time.time()
+        t = time.time() - tic
         self.n_funcalls_ += 1
         if self.verbose:
-            print('{:10} {:>10} {:>15.6e} {:>10.2f}'
-                  .format('', self.n_funcalls_, loss, toc - tic))
+            values_fmt = '{:>10} {:>15} {:>20.6e} {:>10.2f}'
+            print(values_fmt.format(self.n_iter_, self.n_funcalls_, loss, t))
             sys.stdout.flush()
 
         return loss, grad.ravel()
@@ -827,7 +829,7 @@ def select_target_neighbors(X, y, n_neighbors, algorithm='auto', n_jobs=1,
         sys.stdout.flush()
         t = time.time()
 
-    target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=np.int64)
+    target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=int)
 
     nn = NearestNeighbors(n_neighbors=n_neighbors, algorithm=algorithm,
                           n_jobs=n_jobs)

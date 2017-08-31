@@ -326,24 +326,22 @@ def test_random_state():
     the same constraints will be sampled given the same random_state and
     different constraints will be sampled given a different random_state"""
 
-    X = iris.data
+    X = iris.data.astype(float)
     y = iris.target
-    n_constr = 5
+    params = {'n_neighbors': 3, 'max_constraints': 5, 'random_state': 1}
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=n_constr,
-                                      random_state=1)
+    lmnn = LargeMarginNearestNeighbor(**params)
     lmnn.fit(X, y)
     transformation_1 = lmnn.transformation_
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=n_constr,
-                                      random_state=1)
+    lmnn = LargeMarginNearestNeighbor(**params)
     lmnn.fit(X, y)
     transformation_2 = lmnn.transformation_
 
     assert_allclose(transformation_1, transformation_2)
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=n_constr,
-                                      random_state=2)
+    params['random_state'] = 2
+    lmnn = LargeMarginNearestNeighbor(**params)
     lmnn.fit(X, y)
     transformation_3 = lmnn.transformation_
 
