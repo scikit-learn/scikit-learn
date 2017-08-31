@@ -52,8 +52,8 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics.scorer import check_scoring
 
-from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier, RidgeClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
+from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
