@@ -43,7 +43,11 @@ from sklearn.linear_model import Ridge
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
+
+from sklearn.feature_selection import RFECV
+from sklearn.model_selection import GroupKFold
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
@@ -1250,3 +1254,17 @@ def test_cross_val_predict_sparse_prediction():
     preds_sparse = cval.cross_val_predict(classif, X_sparse, y_sparse, cv=10)
     preds_sparse = preds_sparse.toarray()
     assert_array_almost_equal(preds_sparse, preds)
+
+
+def test_rfe_cv():
+    iris = load_iris()
+    number_groups = 4
+    groups = np.floor(np.linspace(0, number_groups, len(iris.target)))
+    est = RFECV(
+        estimator=DecisionTreeClassifier(),
+        step=1,
+        scoring='roc_auc',
+        cv=GroupKFold(n_splits=2)
+    )
+    est.fit(iris.data, iris.target, groups=groups)
+    assert(est.n_features_ > 0)
