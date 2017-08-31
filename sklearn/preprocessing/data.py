@@ -1169,12 +1169,24 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
     RobustScaler: Performs centering and scaling using the ``Transformer`` API
         (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
     """
+    X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
+                    ensure_2d=False, dtype=FLOAT_DTYPES)
+    original_ndim = X.ndim
+
+    if original_ndim == 1:
+        X = X.reshape(X.shape[0], 1)
+
     s = RobustScaler(with_centering=with_centering, with_scaling=with_scaling,
                      quantile_range=quantile_range, copy=copy)
     if axis == 0:
-        return s.fit_transform(X)
+        X = s.fit_transform(X)
     else:
-        return s.fit_transform(X.T).T
+        X = s.fit_transform(X.T).T
+
+    if original_ndim == 1:
+        X = X.ravel()
+
+    return X
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
