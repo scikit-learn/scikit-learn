@@ -24,7 +24,8 @@ random_state = 0
 faces = datasets.fetch_olivetti_faces()
 X, y = faces.data, faces.target
 X_train, X_test, y_train, y_test = model_selection.\
-    train_test_split(X, y, test_size=0.5, stratify=y, random_state=random_state)
+    train_test_split(X, y, test_size=0.5, stratify=y,
+                     random_state=random_state)
 
 dim = len(X[0])
 n_classes = len(np.unique(y))
