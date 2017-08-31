@@ -1263,7 +1263,7 @@ def test_rfe_cv():
     est = RFECV(
         estimator=DecisionTreeClassifier(),
         step=1,
-        scoring='roc_auc',
+        scoring='accuracy',
         cv=GroupKFold(n_splits=2)
     )
     binary_target = (iris.target > 0).astype(int)
