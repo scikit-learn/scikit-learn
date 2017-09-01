@@ -10,7 +10,6 @@ estimator, as a chain of transforms and estimators.
 # License: BSD
 
 from collections import defaultdict
-from abc import ABCMeta, abstractmethod
 import time
 
 import numpy as np
@@ -43,65 +42,7 @@ def _pretty_print(step_info):
     print('%s%s%s' % (name, '.' * (70 - len(name + elapsed)), elapsed))
 
 
-class _BasePipeline(six.with_metaclass(ABCMeta, _BaseComposition)):
-    """Handles parameter management for classifiers composed of named steps.
-    """
-
-    @abstractmethod
-    def __init__(self):
-        pass
-
-    def _replace_step(self, steps_attr, name, new_val):
-        # assumes `name` is a valid step name
-        new_steps = getattr(self, steps_attr)[:]
-        for i, (step_name, _) in enumerate(new_steps):
-            if step_name == name:
-                new_steps[i] = (name, new_val)
-                break
-        setattr(self, steps_attr, new_steps)
-
-    def _get_params(self, steps_attr, deep=True):
-        out = super(_BasePipeline, self).get_params(deep=False)
-        if not deep:
-            return out
-        steps = getattr(self, steps_attr)
-        out.update(steps)
-        for name, estimator in steps:
-            if estimator is None:
-                continue
-            for key, value in six.iteritems(estimator.get_params(deep=True)):
-                out['%s__%s' % (name, key)] = value
-        return out
-
-    def _set_params(self, steps_attr, **params):
-        # Ensure strict ordering of parameter setting:
-        # 1. All steps
-        if steps_attr in params:
-            setattr(self, steps_attr, params.pop(steps_attr))
-        # 2. Step replacement
-        step_names, _ = zip(*getattr(self, steps_attr))
-        for name in list(six.iterkeys(params)):
-            if '__' not in name and name in step_names:
-                self._replace_step(steps_attr, name, params.pop(name))
-        # 3. Step parameters and other initilisation arguments
-        super(_BasePipeline, self).set_params(**params)
-        return self
-
-    def _validate_names(self, names):
-        if len(set(names)) != len(names):
-            raise ValueError('Names provided are not unique: '
-                             '{0!r}'.format(list(names)))
-        invalid_names = set(names).intersection(self.get_params(deep=False))
-        if invalid_names:
-            raise ValueError('Step names conflict with constructor arguments: '
-                             '{0!r}'.format(sorted(invalid_names)))
-        invalid_names = [name for name in names if '__' in name]
-        if invalid_names:
-            raise ValueError('Step names must not contain __: got '
-                             '{0!r}'.format(invalid_names))
-
-
-class Pipeline(_BasePipeline):
+class Pipeline(_BaseComposition):
     """Pipeline of transforms with a final estimator.
 
     Sequentially apply a list of transforms and a final estimator.
@@ -721,7 +662,7 @@ def _fit_transform_one(trans, weight, X, y, verbose=False, idx=None,
     return res * weight, trans
 
 
-class FeatureUnion(_BasePipeline, TransformerMixin):
+class FeatureUnion(_BaseComposition, TransformerMixin):
     """Concatenates results of multiple transformer objects.
 
     This estimator applies a list of transformer objects in parallel to the
