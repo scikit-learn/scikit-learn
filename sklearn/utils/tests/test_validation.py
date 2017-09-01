@@ -437,6 +437,46 @@ def test_check_array_min_samples_and_features_messages():
     assert_array_equal(y, y_checked)
 
 
+def test_check_array_complex_data_error():
+    # np array
+    X = np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]])
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # list of lists
+    X = [[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]]
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # tuple of tuples
+    X = ((1 + 2j, 3 + 4j, 5 + 7j), (2 + 3j, 4 + 5j, 6 + 7j))
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # list of np arrays
+    X = [np.array([1 + 2j, 3 + 4j, 5 + 7j]),
+         np.array([2 + 3j, 4 + 5j, 6 + 7j])]
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # tuple of np arrays
+    X = (np.array([1 + 2j, 3 + 4j, 5 + 7j]),
+         np.array([2 + 3j, 4 + 5j, 6 + 7j]))
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # dataframe
+    X = MockDataFrame(
+        np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]]))
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # sparse matrix
+    X = sp.coo_matrix([[0, 1 + 2j], [0, 0]])
+    assert_raises_regexp(
+        ValueError, "Complex data not supported", check_array, X)
+
+
 def test_has_fit_parameter():
     assert_false(has_fit_parameter(KNeighborsClassifier, "sample_weight"))
     assert_true(has_fit_parameter(RandomForestRegressor, "sample_weight"))
