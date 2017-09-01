@@ -6,7 +6,7 @@ from sklearn.externals import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
-                                   assert_equal)
+                                   assert_equal, ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
@@ -203,7 +203,9 @@ def test_check_estimator_clones():
     for Estimator in [GaussianMixture, LinearRegression,
                       RandomForestClassifier, NMF, SGDClassifier,
                       MiniBatchKMeans]:
-        est = Estimator()
+        with ignore_warnings(category=FutureWarning):
+            # when 'est = SGDClassifier()'
+            est = Estimator()
         set_checking_parameters(est)
         set_random_state(est)
         # without fitting
@@ -211,7 +213,9 @@ def test_check_estimator_clones():
         check_estimator(est)
         assert_equal(old_hash, joblib.hash(est))
 
-        est = Estimator()
+        with ignore_warnings(category=FutureWarning):
+            # when 'est = SGDClassifier()'
+            est = Estimator()
         set_checking_parameters(est)
         set_random_state(est)
         # with fitting
