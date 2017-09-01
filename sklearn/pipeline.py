@@ -676,10 +676,11 @@ def make_pipeline(*steps, **kwargs):
     p : Pipeline
     """
     memory = kwargs.pop('memory', None)
+    verbose = kwargs.pop('verbose', False)
     if kwargs:
         raise TypeError('Unknown keyword arguments: "{}"'
                         .format(list(kwargs.keys())[0]))
-    return Pipeline(_name_estimators(steps), memory=memory)
+    return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
 def _fit_one_transformer(trans, X, y, verbose=False, idx=None,
