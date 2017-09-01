@@ -20,7 +20,7 @@ from .base import clone, TransformerMixin
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils.metaestimators import if_delegate_has_method, _BaseComposition
-from .utils import Bunch
+from .utils import Bunch, tosequence
 from .utils.validation import check_memory
 
 
@@ -934,10 +934,10 @@ class FeatureUnion(_BasePipeline, TransformerMixin):
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
-        self.transformer_list[:] = [
+        self.transformer_list = tosequence([
             (name, None if old is None else next(transformers))
             for name, old in self.transformer_list
-        ]
+        ])
 
 
 def make_union(*transformers, **kwargs):
