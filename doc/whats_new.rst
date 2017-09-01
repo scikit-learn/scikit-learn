@@ -236,10 +236,6 @@ Trees and ensembles
   removed by setting it to ``None``.
   :issue:`7674` by :user:`Yichuan Liu <yl565>`.
 
-- Add `named_estimators_` parameter in
-  :class:`sklearn.ensemble.voting_classifier` to access fitted 
-  estimators. :issue:`9157` by :user:`Herilalaina Rakotoarison <herilalaina>`.
-
 - :func:`tree.export_graphviz` now shows configurable number of decimal
   places. :issue:`8698` by :user:`Guillaume Lemaitre <glemaitre>`.
 
