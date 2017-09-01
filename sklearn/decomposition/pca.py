@@ -220,7 +220,7 @@ class PCA(_BasePCA):
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
-        Equal to `X.mean(axis=1)`.
+        Equal to `X.mean(axis=0)`.
 
     n_components_ : int
         The estimated number of components. When n_components is set
