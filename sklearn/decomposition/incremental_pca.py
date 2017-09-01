@@ -158,7 +158,7 @@ class IncrementalPCA(_BasePCA):
             Training data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y : Passthrough for ``Pipeline`` compatibility.
+        y : Ignored.
 
         Returns
         -------
@@ -198,6 +198,8 @@ class IncrementalPCA(_BasePCA):
             n_features is the number of features.
         check_input : bool
             Run check_array on X.
+
+        y : Ignored.
 
         Returns
         -------
