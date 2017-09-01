@@ -51,8 +51,8 @@ try:
     from nose.tools import raises as _nose_raises
     deprecation_message = (
         'sklearn.utils.testing.raises has been deprecated in version 0.20 '
-        'and will be removed in 0.22. Use nose.tools.raises instead '
-        'or consider moving to pytest.')
+        'and will be removed in 0.22. Please use '
+        'sklearn.utils.testing.assert_raises instead.')
     raises = deprecated(deprecation_message)(_nose_raises)
 except ImportError:
     pass
