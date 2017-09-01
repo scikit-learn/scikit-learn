@@ -130,9 +130,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         valid_encode = ['onehot', 'onehot-dense', 'ordinal']
         if self.encode not in valid_encode:
-            raise ValueError('Invalid encode value. '
-                             'Valid options are %s'
-                             % (sorted(valid_encode)))
+            raise ValueError("Valid options for 'encode' are {}. "
+                             "Got 'encode = {}' instead."
+                             .format(sorted(valid_encode), self.encode))
 
         n_features = X.shape[1]
         ignored = self._validate_ignored_features(n_features)
@@ -230,7 +230,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                                  retain_order=True)
 
         # only one-hot encode discretized features
-        mask = np.array([True] * X.shape[1])
+        mask = np.repeat(True, X.shape[1])
         if self.ignored_features is not None:
             mask[self.ignored_features] = False
 
@@ -300,7 +300,9 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         # don't support inverse_transform
         if self.encode != 'ordinal':
             raise ValueError("inverse_transform only support "
-                             "encode='ordinal'.")
+                             "'encode = ordinal'. "
+                             "Got 'encode = {}' instead."
+                             .format(self.encode))
 
         Xt = self._validate_X_post_fit(Xt)
         trans = self.transformed_features_

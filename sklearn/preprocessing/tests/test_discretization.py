@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import numpy as np
 from six.moves import range
 import warnings
+import scipy.sparse as sp
 
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
@@ -189,6 +190,7 @@ def test_encode():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='onehot-dense').fit(X)
     expected2 = est.transform(X)
+    assert not sp.issparse(expected2)
     assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=False)
                        .fit_transform(expected1),
                        expected2)
@@ -196,6 +198,7 @@ def test_encode():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='onehot').fit(X)
     expected3 = est.transform(X)
+    assert sp.issparse(expected3)
     assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=True)
                        .fit_transform(expected1).toarray(),
                        expected3.toarray())
