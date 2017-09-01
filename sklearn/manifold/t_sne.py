@@ -851,6 +851,8 @@ class TSNE(BaseEstimator):
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
 
+        y : Ignored.
+
         Returns
         -------
         X_new : array, shape (n_samples, n_components)
@@ -870,6 +872,8 @@ class TSNE(BaseEstimator):
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
             or 'coo'.
+
+        y : Ignored.
         """
         self.fit_transform(X)
         return self
