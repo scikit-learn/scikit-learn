@@ -82,11 +82,15 @@ class Imputer(BaseEstimator, TransformerMixin):
         - If "most_frequent", then replace missing using the most frequent
           value along the axis.
 
-    axis : integer, optional (default=0)
+    axis : integer, optional (default=None)
         The axis along which to impute.
 
         - If `axis=0`, then impute along columns.
         - If `axis=1`, then impute along rows.
+
+        .. deprecated:: 0.20
+           ``axis`` will be removed from ``Imputer``, and it will only impute
+           along columns (axis=0) in 0.22.
 
     verbose : integer, optional (default=0)
         Controls the verbosity of the imputer.
@@ -115,12 +119,17 @@ class Imputer(BaseEstimator, TransformerMixin):
       contain missing values).
     """
     def __init__(self, missing_values="NaN", strategy="mean",
-                 axis=0, verbose=0, copy=True):
+                 axis=None, verbose=0, copy=True):
         self.missing_values = missing_values
         self.strategy = strategy
-        self.axis = axis
         self.verbose = verbose
         self.copy = copy
+
+        self.axis = axis
+        if axis is not None:
+            warnings.warn("'axis' will be removed from Imputer, and it will "
+                          "only impute along columns (axis=0) in 0.22",
+                          DeprecationWarning)
 
     def fit(self, X, y=None):
         """Fit the imputer on X.
@@ -143,14 +152,14 @@ class Imputer(BaseEstimator, TransformerMixin):
                              " got strategy={1}".format(allowed_strategies,
                                                         self.strategy))
 
-        if self.axis not in [0, 1]:
+        if self.axis not in [None, 0, 1]:
             raise ValueError("Can only impute missing values on axis 0 and 1, "
                              " got axis={0}".format(self.axis))
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data will be computed in transform()
         # when the imputation is done per sample (i.e., when axis=1).
-        if self.axis == 0:
+        if self.axis == 0 or self.axis is None:
             X = check_array(X, accept_sparse='csc', dtype=np.float64,
                             force_all_finite=False)
 
@@ -169,8 +178,12 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     def _sparse_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on sparse data."""
+        if axis is None:
+            axis = 0
+
         # Imputation is done "by column", so if we want to do it
         # by row we only need to convert the matrix to csr format.
+
         if axis == 1:
             X = X.tocsr()
         else:
@@ -249,6 +262,9 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     def _dense_fit(self, X, strategy, missing_values, axis):
         """Fit the transformer on dense data."""
+        if axis is None:
+            axis = 0
+
         X = check_array(X, force_all_finite=False)
         mask = _get_mask(X, missing_values)
         masked_X = ma.masked_array(X, mask=mask)
@@ -306,7 +322,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
         """
-        if self.axis == 0:
+        if self.axis is None or self.axis == 0:
             check_is_fitted(self, 'statistics_')
             X = check_array(X, accept_sparse='csc', dtype=FLOAT_DTYPES,
                             force_all_finite=False, copy=self.copy)
@@ -341,7 +357,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         valid_statistics_indexes = np.where(valid_mask)[0]
         missing = np.arange(X.shape[not self.axis])[invalid_mask]
 
-        if self.axis == 0 and invalid_mask.any():
+        if (self.axis is None or self.axis == 0) and invalid_mask.any():
             if self.verbose:
                 warnings.warn("Deleting features without "
                               "observed values: %s" % missing)
@@ -366,7 +382,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             n_missing = np.sum(mask, axis=self.axis)
             values = np.repeat(valid_statistics, n_missing)
 
-            if self.axis == 0:
+            if self.axis is None or self.axis == 0:
                 coordinates = np.where(mask.transpose())[::-1]
             else:
                 coordinates = mask
