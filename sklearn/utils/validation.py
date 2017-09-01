@@ -13,6 +13,7 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
+from numpy.core.numeric import ComplexWarning
 
 from ..externals import six
 from ..utils.fixes import signature
@@ -307,6 +308,13 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     return spmatrix
 
 
+def _ensure_no_complex_data(array):
+    if hasattr(array, 'dtype') and array.dtype is not None \
+            and hasattr(array.dtype, 'kind') and array.dtype.kind == "c":
+        raise ValueError("Complex data not supported\n"
+                         "{}\n".format(array))
+
+
 def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                 copy=False, force_all_finite=True, ensure_2d=True,
                 allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
@@ -427,10 +435,28 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     context = " by %s" % estimator_name if estimator is not None else ""
 
     if sp.issparse(array):
+        _ensure_no_complex_data(array)
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
     else:
-        array = np.array(array, dtype=dtype, order=order, copy=copy)
+        # If np.array(..) gives ComplexWarning, then we convert the warning
+        # to an error. This is needed because specifying a non complex
+        # dtype to the function converts complex to real dtype,
+        # thereby passing the test made in the lines following the scope
+        # of warnings context manager.
+        with warnings.catch_warnings():
+            try:
+                warnings.simplefilter('error', ComplexWarning)
+                array = np.array(array, dtype=dtype, order=order, copy=copy)
+            except ComplexWarning:
+                raise ValueError("Complex data not supported\n"
+                                 "{}\n".format(array))
+
+        # It is possible that the np.array(..) gave no warning. This happens
+        # when no dtype conversion happend, for example dtype = None. The
+        # result is that np.array(..) produces an array of complex dtype
+        # and we need to catch and raise exception for such cases.
+        _ensure_no_complex_data(array)
 
         if ensure_2d:
             if array.ndim == 1:
