@@ -43,6 +43,14 @@ Classifiers and regressors
 Enhancements
 ............
 
+Classifiers and regressors
+
+- In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
+  is faster when using ``return_std=True`` in particular more when called
+  several times in a row. :issue:`9234` by :user:`andrewww <andrewww>`
+  and :user:`Minghui Liu <minghui-liu>`.
+
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
