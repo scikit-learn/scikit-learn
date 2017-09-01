@@ -54,6 +54,11 @@ Miscellaneous
   :class:`pipeline.FeatureUnion` for showing progress and timing of each
      step. :issue:`8568` by :user:`Karan Desai <karandesai-96>`.
 
+- Added optional parameter ``verbose`` in functions `pipeline.make_pipeline`
+  and `pipeline.make_union` to extend the same functionality as the
+  corresponding classes. :issue:`9668` by
+  :user:`Baze Petrushev <petrushev>`.
+
 
 Bug fixes
 .........

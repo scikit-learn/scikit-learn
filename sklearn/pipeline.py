@@ -601,6 +601,9 @@ def make_pipeline(*steps, **kwargs):
         inspect estimators within the pipeline. Caching the
         transformers is advantageous when fitting is time consuming.
 
+    verbose : boolean, optional
+        Verbosity mode.
+
     Examples
     --------
     >>> from sklearn.naive_bayes import GaussianNB
@@ -896,6 +899,9 @@ def make_union(*transformers, **kwargs):
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
+    verbose : boolean, optional
+         Verbosity mode.
+
     Returns
     -------
     f : FeatureUnion
@@ -917,9 +923,11 @@ def make_union(*transformers, **kwargs):
            transformer_weights=None, verbose=False)
     """
     n_jobs = kwargs.pop('n_jobs', 1)
+    verbose = kwargs.pop('verbose', False)
     if kwargs:
         # We do not currently support `transformer_weights` as we may want to
         # change its type spec in make_union
         raise TypeError('Unknown keyword arguments: "{}"'
                         .format(list(kwargs.keys())[0]))
-    return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs)
+    return FeatureUnion(_name_estimators(transformers), n_jobs=n_jobs,
+                        verbose=verbose)
