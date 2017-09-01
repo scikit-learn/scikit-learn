@@ -406,46 +406,41 @@ class already use this technique. The following code shows
 the performance of warm starting during parameter search.
 
   >>> from sklearn import linear_model
+  >>> from sklearn.model_selection import train_test_split
   >>> from sklearn.datasets.samples_generator import make_regression
   >>> from sklearn.metrics import mean_squared_error
-  >>> from sklearn.model_selection import KFold
-  >>> from sklearn.grid_search import ParameterGrid
   >>> import numpy as np
   >>> import time
-  >>> X, y = make_regression(n_samples=500, n_features=1000, random_state=0)
-  >>> list_params = {"alpha": np.arange(0.01, 1, 0.01)}
-  >>> def cross_selection(Estimator, params_grid, warm_start=False):
-  ...     list_score = []
-  ...     list_exec_time = []
-  ...     list_params = list(ParameterGrid(params_grid))
+  >>>
+  >>> X, y = make_regression(n_samples=100, n_features=120, random_state=0)
+  >>> list_alphas = np.arange(0.1, 1, 0.01)
+  >>>
+  >>> def cross_selection(Estimator, list_alphas, X, y, warm_start=False):
+  ...     scores = []
+  ...     X_train, X_test, y_train, y_test = train_test_split(X, y,
+  ...                                                         test_size=0.33, random_state=42)
+  ...     clf = Estimator()
+  ...     clf.set_params(warm_start=warm_start)
+  ...
   ...     start_time = time.time()
-  ...     for train_index, test_index in KFold(n_splits=10).split(X):
-  ...         score = []
-  ...         exec_time = []
-  ...         clf = Estimator()
-  ...         clf.set_params(warm_start=warm_start)
-  ...
-  ...         for params in list_params:
-  ...             X_train, X_test = X[train_index], X[test_index]
-  ...             y_train, y_test = y[train_index], y[test_index]
-  ...             clf.set_params(**params)
-  ...             clf.fit(X_train, y_train)
-  ...             score.append(mean_squared_error(y_test, clf.predict(X_test)))
-  ...         list_score.append(score)
-  ...
+  ...     for alpha in list_alphas:
+  ...         clf.set_params(alpha=alpha)
+  ...         clf.fit(X_train, y_train)
+  ...         scores.append(mean_squared_error(y_test, clf.predict(X_test)))
   ...     exec_time = time.time() - start_time
-  ...     best_scores = np.mean(list_score, 0)
+  ...
   ...     print("Lasso(warm_start=%s)" % str(warm_start))
-  ...     print("   Best param: %s" % list_params[best_scores.argmax()])
-  ...     print("   Best score: %s" % str(best_scores.max()))
+  ...     print("   Best param: alpha=%s" % list_alphas[np.argmax(scores)])
+  ...     print("   Best score: %s" % str(np.max(scores)))
   ...     return exec_time
-  >>> exec_time = cross_selection(linear_model.Lasso, list_params, warm_start=False)
+  >>>
+  >>> exec_time = cross_selection(linear_model.Lasso, list_alphas, X, y, warm_start=False)
   Lasso(warm_start=False)
-     Best param: {'alpha': 0.98999999999999999}
-     Best score: 11.2408676492
-  >>> exec_time_warm = cross_selection(linear_model.Lasso, list_params, warm_start=True)
+     Best param: alpha=0.99
+     Best score: 9.08513720743
+  >>> exec_time_warm = cross_selection(linear_model.Lasso, list_alphas, X, y, warm_start=True)
   Lasso(warm_start=True)
-     Best param: {'alpha': 0.98999999999999999}
-     Best score: 11.2385630064
+     Best param: alpha=0.99
+     Best score: 9.02047525048
   >>> exec_time_warm < exec_time
   True
