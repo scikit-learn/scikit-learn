@@ -201,7 +201,7 @@ def test_encode():
                        expected3.toarray())
     assert_raises(ValueError, est.inverse_transform, X)
 
-    # test one hot encode with ignored features
+    # test one-hot encode with ignored features
     est = KBinsDiscretizer(n_bins=3, ignored_features=[1, 2],
                            encode='onehot-dense').fit(X)
     expected1 = est.transform(X)
