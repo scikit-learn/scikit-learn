@@ -339,7 +339,7 @@ class PCA(_BasePCA):
             and n_features is the number of features.
 
         y : Ignored.
-        
+
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
