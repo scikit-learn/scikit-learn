@@ -1,3 +1,5 @@
+from __future__ import division
+
 import pickle
 from io import BytesIO
 import numpy as np
@@ -18,7 +20,8 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
 
-from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
+from sklearn.naive_bayes import GaussianNB, BernoulliNB
+from sklearn.naive_bayes import MultinomialNB, ComplementNB
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -528,6 +531,68 @@ def test_bnb():
                                       0.02194787379972565]])
     predict_proba = unnorm_predict_proba / np.sum(unnorm_predict_proba)
     assert_array_almost_equal(clf.predict_proba(X_test), predict_proba)
+
+
+def test_cnb():
+    # Tests ComplementNB when alpha=1.0 for the toy example in Manning,
+    # Raghavan, and Schuetze's "Introduction to Information Retrieval" book:
+    # http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
+
+    # Training data points are:
+    # Chinese Beijing Chinese (class: China)
+    # Chinese Chinese Shanghai (class: China)
+    # Chinese Macao (class: China)
+    # Tokyo Japan Chinese (class: Japan)
+
+    # Features are Beijing, Chinese, Japan, Macao, Shanghai, and Tokyo.
+    X = np.array([[1, 1, 0, 0, 0, 0],
+                  [0, 1, 0, 0, 1, 0],
+                  [0, 1, 0, 1, 0, 0],
+                  [0, 1, 1, 0, 0, 1]])
+
+    # Classes are China (0), Japan (1).
+    Y = np.array([0, 0, 0, 1])
+
+    # Verify inputs are nonnegative.
+    clf = ComplementNB(alpha=1.0)
+    assert_raises(ValueError, clf.fit, -X, Y)
+
+    clf.fit(X, Y)
+
+    # Check that counts are correct.
+    feature_count = np.array([[1, 3, 0, 1, 1, 0], [0, 1, 1, 0, 0, 1]])
+    assert_array_equal(clf.feature_count_, feature_count)
+    class_count = np.array([3, 1])
+    assert_array_equal(clf.class_count_, class_count)
+    feature_all = np.array([1, 4, 1, 1, 1, 1])
+    assert_array_equal(clf.feature_all_, feature_all)
+
+    # Check that weights are correct. See steps 4-6 in Table 4 of
+    # Rennie et al. (2003).
+    theta = np.array([
+        [
+            (0 + 1) / (3 + 6),
+            (1 + 1) / (3 + 6),
+            (1 + 1) / (3 + 6),
+            (0 + 1) / (3 + 6),
+            (0 + 1) / (3 + 6),
+            (1 + 1) / (3 + 6)
+        ],
+        [
+            (1 + 1) / (6 + 6),
+            (3 + 1) / (6 + 6),
+            (0 + 1) / (6 + 6),
+            (1 + 1) / (6 + 6),
+            (1 + 1) / (6 + 6),
+            (0 + 1) / (6 + 6)
+        ]])
+
+    weights = np.zeros(theta.shape)
+    for i in range(2):
+        weights[i] = np.log(theta[i])
+        weights[i] /= weights[i].sum()
+
+    assert_array_equal(clf.feature_log_prob_, weights)
 
 
 def test_naive_bayes_scale_invariance():

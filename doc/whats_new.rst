@@ -38,6 +38,9 @@ Classifiers and regressors
 
 - Add support for sparse multilabel ``y`` in :class:`NeighborsBase`
   :issue:`8057` by :user:`Aman Dalmia <dalmia>`, :user:`Joan Massich <massich>`.
+- Added :class:`naive_bayes.ComplementNB`, which implements the Complement
+  Naive Bayes classifier described in Rennie et al. (2003).
+  By :user:`Michael A. Alcorn <airalcorn2>`.
 
 Enhancements
 ............
