@@ -54,17 +54,17 @@ from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..metrics import r2_score
-from ..preprocessing import OneHotEncoder, LabelEncoder
+from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
-from ..utils import _check_y_classes
 from ..exceptions import DataConversionWarning, NotFittedError
 from .base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import parallel_helper
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted, _check_classes
+from ..utils.validation import check_is_fitted
+from ..utils.classifier_helpers import _set_classes
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -475,33 +475,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         if self.class_weight is not None:
             y_original = np.copy(y)
 
-        self.classes_ = []
-        self.n_classes_ = []
-
-        y_store_unique_indices = np.zeros(y.shape, dtype=np.int)
-        if self.classes is None:
-            for k in range(self.n_outputs_):
-                classes_k, y_store_unique_indices[:, k] = np.unique(
-                                                        y[:, k],
-                                                        return_inverse=True)
-                self.classes_.append(classes_k)
-                self.n_classes_.append(classes_k.shape[0])
-        else:
-            _check_classes(self.classes, self.n_outputs_)
-            if self.n_outputs_ == 1:
-                classes_ = np.atleast_2d(self.classes)
-            else:
-                classes_ = np.asarray(self.classes)
-            # encode y:
-            for k in range(self.n_outputs_):
-                classes_k = np.asarray(classes_[k])
-                # check y has subset of classes:
-                _check_y_classes(np.unique(y[:, k]), classes_k)
-                le = LabelEncoder().fit(classes_k)
-                y_store_unique_indices[:, k] = le.transform(y[:, k])
-                self.classes_.append(classes_k)
-                self.n_classes_.append(classes_k.shape[0])
-        y = y_store_unique_indices
+        self.classes_, self.n_classes_, y = _set_classes(self.classes, y,
+                                                         multioutput=True)
 
         if self.class_weight is not None:
             valid_presets = ('balanced', 'balanced_subsample')
