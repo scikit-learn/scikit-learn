@@ -49,8 +49,8 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     transformed_features_ : int array, shape (n_features,)
         Features which are transformed.
 
-    Example
-    -------
+    Examples
+    --------
     >>> X = [[-2, 1, -4,   -1],
     ...      [-1, 2, -3, -0.5],
     ...      [ 0, 3, -2,  0.5],
