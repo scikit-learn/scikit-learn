@@ -6,7 +6,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
 from ..utils import check_X_y
-from ..utils.validation import _num_samples, _check_classes, _check_y_classes
+from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
 
 
