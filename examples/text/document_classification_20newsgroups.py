@@ -42,7 +42,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.naive_bayes import BernoulliNB, MultinomialNB
+from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
 from sklearn.ensemble import RandomForestClassifier
@@ -100,7 +100,7 @@ op.print_help()
 print()
 
 
-###############################################################################
+# #############################################################################
 # Load some categories from the training set
 if opts.all_categories:
     categories = None
@@ -152,7 +152,7 @@ y_train, y_test = data_train.target, data_test.target
 print("Extracting features from the training data using a sparse vectorizer")
 t0 = time()
 if opts.use_hashing:
-    vectorizer = HashingVectorizer(stop_words='english', non_negative=True,
+    vectorizer = HashingVectorizer(stop_words='english', alternate_sign=False,
                                    n_features=opts.n_features)
     X_train = vectorizer.transform(data_train.data)
 else:
@@ -201,7 +201,7 @@ def trim(s):
     return s if len(s) <= 80 else s[:77] + "..."
 
 
-###############################################################################
+# #############################################################################
 # Benchmark classifiers
 def benchmark(clf):
     print('_' * 80)
@@ -283,6 +283,7 @@ print('=' * 80)
 print("Naive Bayes")
 results.append(benchmark(MultinomialNB(alpha=.01)))
 results.append(benchmark(BernoulliNB(alpha=.01)))
+results.append(benchmark(ComplementNB(alpha=.1)))
 
 print('=' * 80)
 print("LinearSVC with L1-based feature selection")

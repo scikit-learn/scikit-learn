@@ -70,7 +70,7 @@ evaluated and the best combination is retained.
 
 .. topic:: Examples:
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py` for an example of
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
       Grid Search computation on the digits dataset.
 
     - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` for an example
@@ -83,6 +83,10 @@ evaluated and the best combination is retained.
       for an example of Grid Search within a cross validation loop on the iris
       dataset. This is the best practice for evaluating the performance of a
       model with grid search.
+
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
+      for an example of :class:`GridSearchCV` being used to evaluate multiple
+      metrics simultaneously.
 
 .. _randomized_parameter_search:
 
@@ -131,7 +135,7 @@ increasing ``n_iter`` will always lead to a finer search.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_model_selection_randomized_search.py` compares the usage and efficiency
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_randomized_search.py` compares the usage and efficiency
       of randomized search and grid search.
 
 .. topic:: References:
@@ -160,6 +164,27 @@ scoring function can be specified via the ``scoring`` parameter to
 :class:`GridSearchCV`, :class:`RandomizedSearchCV` and many of the
 specialized cross-validation tools described below.
 See :ref:`scoring_parameter` for more details.
+
+.. _multimetric_grid_search:
+
+Specifying multiple metrics for evaluation
+------------------------------------------
+
+``GridSearchCV`` and ``RandomizedSearchCV`` allow specifying multiple metrics
+for the ``scoring`` parameter.
+
+Multimetric scoring can either be specified as a list of strings of predefined
+scores names or a dict mapping the scorer name to the scorer function and/or
+the predefined scorer name(s). See :ref:`multimetric_scoring` for more details.
+
+When specifying multiple metrics, the ``refit`` parameter must be set to the
+metric (string) for which the ``best_params_`` will be found and used to build
+the ``best_estimator_`` on the whole dataset. If the search should not be
+refit, set ``refit=False``. Leaving refit to the default value ``None`` will
+result in an error when using multiple metrics.
+
+See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
+for an example usage.
 
 Composite estimators and parameter spaces
 -----------------------------------------

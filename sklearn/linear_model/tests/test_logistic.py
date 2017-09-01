@@ -16,7 +16,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import raises
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model.logistic import (
@@ -74,6 +74,11 @@ def test_error():
     assert_raise_message(ValueError, msg,
                          LogisticRegression(C="test").fit, X, Y1)
 
+    msg = "is not a valid scoring value"
+    assert_raise_message(ValueError, msg,
+                         LogisticRegressionCV(scoring='bad-scorer', cv=2).fit,
+                         X, Y1)
+
     for LR in [LogisticRegression, LogisticRegressionCV]:
         msg = "Tolerance for stopping criteria must be positive"
         assert_raise_message(ValueError, msg, LR(tol=-1).fit, X, Y1)
@@ -82,6 +87,18 @@ def test_error():
         msg = "Maximum number of iteration must be positive"
         assert_raise_message(ValueError, msg, LR(max_iter=-1).fit, X, Y1)
         assert_raise_message(ValueError, msg, LR(max_iter="test").fit, X, Y1)
+
+
+def test_lr_liblinear_warning():
+    n_samples, n_features = iris.data.shape
+    target = iris.target_names[iris.target]
+
+    lr = LogisticRegression(solver='liblinear', n_jobs=2)
+    assert_warns_message(UserWarning,
+                         "'n_jobs' > 1 does not have any effect when"
+                         " 'solver' is set to 'liblinear'. Got 'n_jobs'"
+                         " = 2.",
+                         lr.fit, iris.data, target)
 
 
 def test_predict_3_classes():
@@ -132,8 +149,8 @@ def test_check_solver_option():
     X, y = iris.data, iris.target
     for LR in [LogisticRegression, LogisticRegressionCV]:
 
-        msg = ("Logistic Regression supports only liblinear, newton-cg, lbfgs"
-               " and sag solvers, got wrong_name")
+        msg = ('Logistic Regression supports only liblinear, newton-cg, '
+               'lbfgs, sag and saga solvers, got wrong_name')
         lr = LR(solver="wrong_name")
         assert_raise_message(ValueError, msg, lr.fit, X, y)
 
@@ -231,13 +248,13 @@ def test_write_parameters():
     assert_array_almost_equal(clf.decision_function(X), 0)
 
 
-@raises(ValueError)
 def test_nan():
     # Test proper NaN handling.
     # Regression test for Issue #252: fit used to go into an infinite loop.
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
-    LogisticRegression(random_state=0).fit(Xnan, Y1)
+    logistic = LogisticRegression(random_state=0)
+    assert_raises(ValueError, logistic.fit, Xnan, Y1)
 
 
 def test_consistency_path():
@@ -973,7 +990,7 @@ def test_logreg_predict_proba_multinomial():
     X, y = make_classification(n_samples=10, n_features=20, random_state=0,
                                n_classes=3, n_informative=10)
 
-    # Predicted probabilites using the true-entropy loss should give a
+    # Predicted probabilities using the true-entropy loss should give a
     # smaller loss than those using the ovr method.
     clf_multi = LogisticRegression(multi_class="multinomial", solver="lbfgs")
     clf_multi.fit(X, y)
@@ -983,7 +1000,7 @@ def test_logreg_predict_proba_multinomial():
     clf_ovr_loss = log_loss(y, clf_ovr.predict_proba(X))
     assert_greater(clf_ovr_loss, clf_multi_loss)
 
-    # Predicted probabilites using the soft-max function should give a
+    # Predicted probabilities using the soft-max function should give a
     # smaller loss than those using the logistic function.
     clf_multi_loss = log_loss(y, clf_multi.predict_proba(X))
     clf_wrong_loss = log_loss(y, clf_multi._predict_proba_lr(X))
