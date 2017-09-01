@@ -176,7 +176,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
           method, you can use a subset of ``X`` or a more coarse grid.
         - If 'estimated', the function will be calculated by calling the
           ``predict_proba`` method of ``est`` for classification or ``predict``
-          for regression on the mean of ``X``.
+          for regression on the median of ``X``.
         - If 'auto', then 'recursion' will be used if ``est`` is
           BaseGradientBoosting or ForestRegressor, and 'exact' used for other
           estimators.
@@ -301,7 +301,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
             pdp = pdp[np.newaxis]
     elif method == 'estimated':
         n_samples = grid.shape[0]
-        X_eval = np.tile(X.mean(0), [n_samples, 1])
+        X_eval = np.tile(np.median(X, 0), [n_samples, 1])
         for i, variable in enumerate(target_variables):
             X_eval[:, variable] = grid[:, i]
         pdp = _predict(est, X_eval, output=output)
@@ -318,7 +318,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
 
 def plot_partial_dependence(est, X, features, feature_names=None,
                             label=None, n_cols=3, grid_resolution=100,
-                            method='auto', percentiles=(0.05, 0.95), n_jobs=1,
+                            percentiles=(0.05, 0.95), method='auto', n_jobs=1,
                             verbose=0, ax=None, line_kw=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
@@ -351,11 +351,11 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         Only if est is a multi-class model. Must be in ``est.classes_``.
     n_cols : int
         The number of columns in the grid plot (default: 3).
+    grid_resolution : int, default=100
+        The number of equally spaced points on the axes.
     percentiles : (low, high), default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes.
-    grid_resolution : int, default=100
-        The number of equally spaced points on the axes.
     method : {'recursion', 'exact', 'estimated', 'auto'}, default='auto'
         The method to use to calculate the partial dependence function:
 
@@ -368,7 +368,7 @@ def plot_partial_dependence(est, X, features, feature_names=None,
           method, you can use a subset of ``X`` or a more coarse grid.
         - If 'estimated', the function will be calculated by calling the
           ``predict_proba`` method of ``est`` for classification or ``predict``
-          for regression on the mean of ``X``.
+          for regression on the median of ``X``.
         - If 'auto', then 'recursion' will be used if ``est`` is
           BaseGradientBoosting or ForestRegressor, and 'exact' used for other
           estimators.
