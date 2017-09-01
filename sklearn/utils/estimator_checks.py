@@ -143,7 +143,7 @@ def _yield_classifier_classes_param_checks(name, estimator):
                                'ExtraTreeClassifier',
                                'RandomForestClassifier',
                                'ExtraTreesClassifier',
-                               'GradientBoostingClassifier',
+                               # 'GradientBoostingClassifier',
                                'LinearSVC',
                                'LogisticRegression',
                                'LogisticRegressionCV'
