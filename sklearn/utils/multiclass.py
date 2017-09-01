@@ -17,7 +17,7 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
-from ..utils import _check_classes
+from . import _check_classes
 from ..externals.six import string_types
 from .validation import check_array
 

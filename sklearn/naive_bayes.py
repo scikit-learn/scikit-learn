@@ -617,7 +617,7 @@ class BaseDiscreteNB(BaseNB):
         # case when not set, infer from y
         if self.classes is None:
             # np.unique should not be used here becasue unique_labels performs
-            # some checkes as well
+            # some checks as well
             self.classes_ = unique_labels(y)
         # case when set at intialization
         else:
