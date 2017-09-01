@@ -19,7 +19,7 @@ from .base import clone, TransformerMixin
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils.metaestimators import if_delegate_has_method, _BaseComposition
-from .utils import Bunch, tosequence
+from .utils import Bunch
 from .utils.validation import check_memory
 
 
@@ -696,7 +696,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None,
                  verbose=False):
-        self.transformer_list = tosequence(transformer_list)
+        self.transformer_list = list(transformer_list)
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self.verbose = verbose
@@ -876,10 +876,10 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
-        self.transformer_list = tosequence([
+        self.transformer_list[:] = [
             (name, None if old is None else next(transformers))
             for name, old in self.transformer_list
-        ])
+        ]
 
 
 def make_union(*transformers, **kwargs):
