@@ -15,7 +15,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_in
 from sklearn.utils.fixes import sp_version
 
@@ -138,20 +137,17 @@ def test_load_compressed():
     assert_array_equal(y, ybz)
 
 
-@raises(ValueError)
 def test_load_invalid_file():
-    load_svmlight_file(invalidfile)
+    assert_raises(ValueError, load_svmlight_file, invalidfile)
 
 
-@raises(ValueError)
 def test_load_invalid_order_file():
-    load_svmlight_file(invalidfile2)
+    assert_raises(ValueError, load_svmlight_file, invalidfile2)
 
 
-@raises(ValueError)
 def test_load_zero_based():
     f = BytesIO(b("-1 4:1.\n1 0:1\n"))
-    load_svmlight_file(f, zero_based=False)
+    assert_raises(ValueError, load_svmlight_file, f, zero_based=False)
 
 
 def test_load_zero_based_auto():
@@ -186,21 +182,19 @@ def test_load_with_qid():
         assert_array_equal(X.toarray(), [[.53, .12], [.13, .1], [.87, .12]])
 
 
-@raises(ValueError)
 def test_load_invalid_file2():
-    load_svmlight_files([datafile, invalidfile, datafile])
+    assert_raises(ValueError, load_svmlight_files,
+                  [datafile, invalidfile, datafile])
 
 
-@raises(TypeError)
 def test_not_a_filename():
     # in python 3 integers are valid file opening arguments (taken as unix
     # file descriptors)
-    load_svmlight_file(.42)
+    assert_raises(TypeError, load_svmlight_file, .42)
 
 
-@raises(IOError)
 def test_invalid_filename():
-    load_svmlight_file("trou pic nic douille")
+    assert_raises(IOError, load_svmlight_file, "trou pic nic douille")
 
 
 def test_dump():
