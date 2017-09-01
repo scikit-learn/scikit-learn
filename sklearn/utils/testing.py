@@ -56,7 +56,18 @@ try:
     raises = deprecated(deprecation_message)(_nose_raises)
 except ImportError:
     pass
-from nose import with_setup
+
+try:
+    from nose.tools import with_setup as _with_setup
+    deprecation_message = (
+        'sklearn.utils.testing.with_setup has been deprecated in version 0.20 '
+        'and will be removed in 0.22.'
+        'If your code relies on with_setup, please use'
+        ' nose.tools.with_setup instead.')
+    with_setup = deprecated(deprecation_message)(_with_setup)
+except ImportError:
+    pass
+
 
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
@@ -752,10 +763,6 @@ class TempMemmap(object):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         _delete_folder(self.temp_folder)
-
-
-with_network = with_setup(check_skip_network)
-with_travis = with_setup(check_skip_travis)
 
 
 class _named_check(object):
