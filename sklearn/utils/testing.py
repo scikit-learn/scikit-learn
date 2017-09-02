@@ -45,8 +45,17 @@ except NameError:
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
+from sklearn.utils import deprecated
 
-from nose.tools import raises
+try:
+    from nose.tools import raises as _nose_raises
+    deprecation_message = (
+        'sklearn.utils.testing.raises has been deprecated in version 0.20 '
+        'and will be removed in 0.22. Please use '
+        'sklearn.utils.testing.assert_raises instead.')
+    raises = deprecated(deprecation_message)(_nose_raises)
+except ImportError:
+    pass
 from nose import with_setup
 
 from numpy.testing import assert_almost_equal
