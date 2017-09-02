@@ -30,7 +30,6 @@ from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.validation import check_random_state
@@ -394,11 +393,10 @@ def test_importances():
                        clf2.feature_importances_)
 
 
-@raises(ValueError)
 def test_importances_raises():
     # Check if variable importance before fit raises ValueError.
     clf = DecisionTreeClassifier()
-    clf.feature_importances_
+    assert_raises(ValueError, getattr, clf, 'feature_importances_')
 
 
 def test_importances_gini_equal_mse():

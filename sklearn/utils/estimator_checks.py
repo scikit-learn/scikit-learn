@@ -76,6 +76,7 @@ def _yield_non_meta_checks(name, estimator):
     yield check_sample_weights_pandas_series
     yield check_sample_weights_list
     yield check_estimators_fit_returns_self
+    yield check_complex_data
 
     # Check that all estimator yield informative messages when
     # trained on empty datasets
@@ -456,6 +457,16 @@ def check_dtype_object(name, estimator_orig):
     X[0, 0] = {'foo': 'bar'}
     msg = "argument must be a string or a number"
     assert_raises_regex(TypeError, msg, estimator.fit, X, y)
+
+
+def check_complex_data(name, estimator_orig):
+    # check that estimators raise an exception on providing complex data
+    X = np.random.sample(10) + 1j * np.random.sample(10)
+    X = X.reshape(-1, 1)
+    y = np.random.sample(10) + 1j * np.random.sample(10)
+    estimator = clone(estimator_orig)
+    assert_raises_regex(ValueError, "Complex data not supported",
+                        estimator.fit, X, y)
 
 
 @ignore_warnings

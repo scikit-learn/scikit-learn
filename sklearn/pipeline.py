@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
-from .externals.joblib import Parallel, delayed, Memory
+from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
@@ -52,7 +52,7 @@ class Pipeline(_BaseComposition):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
-    memory : joblib.Memory-like or string, optional
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
@@ -528,7 +528,7 @@ def make_pipeline(*steps, **kwargs):
     ----------
     *steps : list of estimators,
 
-    memory : joblib.Memory-like or string, optional
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the fitted transformers of the pipeline. By default,
         no caching is performed. If a string is given, it is the path to
         the caching directory. Enabling caching triggers a clone of
