@@ -43,7 +43,7 @@ regression is also supported.
 
   The set of labels can be different for each output variable.
   For instance, a sample could be assigned "pear" for an output variable that
-  takes possible values in a finite set of species such as "pear", "apple"; 
+  takes possible values in a finite set of species such as "pear", "apple";
   and "blue" or "green" for a second output variable that takes possible values
   in a finite set of colors such as "green", "red", "blue", "yellow"...
 
@@ -167,7 +167,7 @@ This strategy, also known as **one-vs-all**, is implemented in
 per class. For each classifier, the class is fitted against all the other
 classes. In addition to its computational efficiency (only `n_classes`
 classifiers are needed), one advantage of this approach is its
-interpretability. Since each class is represented by one and only one classifier, 
+interpretability. Since each class is represented by one and only one classifier,
 it is possible to gain knowledge about the class by inspecting its
 corresponding classifier. This is the most commonly used strategy and is a fair
 default choice.
@@ -196,7 +196,9 @@ Multilabel learning
 
 :class:`OneVsRestClassifier` also supports multilabel classification.
 To use this feature, feed the classifier an indicator matrix, in which cell
-[i, j] indicates the presence of label j in sample i.
+[i, j] indicates the presence of label j in sample i. When used in this way,
+one classifier is trained for each label independent of the other labels. This
+method is known as the **binary relevance** method.
 
 
 .. figure:: ../auto_examples/images/sphx_glr_plot_multilabel_001.png
@@ -370,7 +372,7 @@ that are trained on a single X predictor matrix to predict a series
 of reponses (y1,y2,y3...,yn).
 
 Below is an example of multioutput classification:
-    
+
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
     >>> from sklearn.ensemble import RandomForestClassifier
