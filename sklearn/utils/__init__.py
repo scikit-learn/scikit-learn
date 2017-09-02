@@ -90,7 +90,7 @@ def safe_mask(X, mask):
         mask
     """
     mask = np.asarray(mask)
-    if np.issubdtype(mask.dtype, np.signedinteger):
+    if np.issubdtype(mask.dtype, np.int):
         return mask
 
     if hasattr(X, "toarray"):

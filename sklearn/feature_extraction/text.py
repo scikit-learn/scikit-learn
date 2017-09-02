@@ -1086,7 +1086,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         -------
         vectors : sparse matrix, [n_samples, n_features]
         """
-        if hasattr(X, 'dtype') and np.issubdtype(X.dtype, np.floating):
+        if hasattr(X, 'dtype') and np.issubdtype(X.dtype, np.float):
             # preserve float family dtype
             X = sp.csr_matrix(X, copy=copy)
         else:
