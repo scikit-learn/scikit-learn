@@ -15,7 +15,8 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import BaseGradientBoosting
 from sklearn.ensemble.forest import ForestRegressor
-from sklearn import datasets
+from sklearn.datasets import load_boston, load_iris
+from sklearn.datasets import make_classification, make_regression
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -23,36 +24,53 @@ y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
 
-# Load the boston, iris & breast cancer datasets
-boston = datasets.load_boston()
-iris = datasets.load_iris()
-breast_cancer = datasets.load_breast_cancer()
+# Make some sample data to test output shapes
+X_c, y_c = make_classification(n_features=10, n_informative=5, random_state=0)
+# Non-negative for MultinomialNB
+X_c = X_c + np.abs(X_c.min())
+X_r, y_r = make_regression(n_features=10, n_informative=5, random_state=0)
+
+# Load the boston & iris datasets
+boston = load_boston()
+iris = load_iris()
 
 
+@ignore_warnings()
 def test_output_shape_recursion():
     # Test recursion partial_dependence has same output shape for everything
     for name, Estimator in all_estimators():
         est = Estimator()
         if not (isinstance(est, BaseGradientBoosting) or
-                isinstance(est, ForestRegressor)):
+                    isinstance(est, ForestRegressor)):
             continue
         if est._estimator_type == 'classifier':
-            est.fit(breast_cancer.data, breast_cancer.target)
+            est.fit(X_c, y_c)
             pdp, axes = partial_dependence(est,
                                            target_variables=[1],
-                                           X=breast_cancer.data,
+                                           X=X_c,
                                            method='recursion',
                                            grid_resolution=10)
+            assert (pdp.shape == (1, 10))
+            pdp, axes = partial_dependence(est,
+                                           target_variables=[1, 2],
+                                           X=X_c,
+                                           method='recursion',
+                                           grid_resolution=10)
+            assert (pdp.shape == (1, 100))
         elif est._estimator_type == 'regressor':
-            est.fit(boston.data, boston.target)
+            est.fit(X_r, y_r)
             pdp, axes = partial_dependence(est,
                                            target_variables=[1],
-                                           X=boston.data,
+                                           X=X_r,
                                            method='recursion',
                                            grid_resolution=10)
-        else:
-            continue
-        assert(pdp.shape == (1, 10))
+            assert (pdp.shape == (1, 10))
+            pdp, axes = partial_dependence(est,
+                                           target_variables=[1, 2],
+                                           X=X_r,
+                                           method='recursion',
+                                           grid_resolution=10)
+            assert (pdp.shape == (1, 100))
 
 
 @ignore_warnings()
@@ -65,27 +83,38 @@ def test_output_shape_exact():
         if est._estimator_type == 'classifier':
             if not hasattr(est, 'predict_proba'):
                 continue
-            est.fit(breast_cancer.data, breast_cancer.target)
+            est.fit(X_c, y_c)
             pdp, axes = partial_dependence(est,
                                            target_variables=[1],
-                                           X=breast_cancer.data,
+                                           X=X_c,
                                            method='exact',
                                            grid_resolution=10)
+            assert (pdp.shape == (1, 10))
+            pdp, axes = partial_dependence(est,
+                                           target_variables=[1, 2],
+                                           X=X_c,
+                                           method='exact',
+                                           grid_resolution=10)
+            assert (pdp.shape == (1, 100))
         elif est._estimator_type == 'regressor':
-            est.fit(boston.data, boston.target)
+            est.fit(X_r, y_r)
             pdp, axes = partial_dependence(est,
                                            target_variables=[1],
-                                           X=boston.data,
+                                           X=X_r,
                                            method='exact',
                                            grid_resolution=10)
-        else:
-            continue
-        assert(pdp.shape == (1, 10))
+            assert (pdp.shape == (1, 10))
+            pdp, axes = partial_dependence(est,
+                                           target_variables=[1, 2],
+                                           X=X_r,
+                                           method='exact',
+                                           grid_resolution=10)
+            assert (pdp.shape == (1, 100))
 
 
 @ignore_warnings()
 def test_output_shape_estimated():
-    # Test exact partial_dependence has same output shape for everything
+    # Test estimated partial_dependence has same output shape for everything
     for name, Estimator in all_estimators():
         est = Estimator()
         if not hasattr(est, '_estimator_type') or 'MultiTask' in name:
@@ -93,22 +122,33 @@ def test_output_shape_estimated():
         if est._estimator_type == 'classifier':
             if not hasattr(est, 'predict_proba'):
                 continue
-            est.fit(breast_cancer.data, breast_cancer.target)
+            est.fit(X_c, y_c)
             pdp, axes = partial_dependence(est,
                                            target_variables=[1],
-                                           X=breast_cancer.data,
+                                           X=X_c,
                                            method='estimated',
                                            grid_resolution=10)
+            assert (pdp.shape == (1, 10))
+            pdp, axes = partial_dependence(est,
+                                           target_variables=[1, 2],
+                                           X=X_r,
+                                           method='estimated',
+                                           grid_resolution=10)
+            assert (pdp.shape == (1, 100))
         elif est._estimator_type == 'regressor':
-            est.fit(boston.data, boston.target)
+            est.fit(X_r, y_r)
             pdp, axes = partial_dependence(est,
                                            target_variables=[1],
-                                           X=boston.data,
+                                           X=X_r,
                                            method='estimated',
                                            grid_resolution=10)
-        else:
-            continue
-        assert(pdp.shape == (1, 10))
+            assert (pdp.shape == (1, 10))
+            pdp, axes = partial_dependence(est,
+                                           target_variables=[1, 2],
+                                           X=X_r,
+                                           method='estimated',
+                                           grid_resolution=10)
+            assert (pdp.shape == (1, 100))
 
 
 def test_partial_dependence_classifier():
