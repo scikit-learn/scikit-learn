@@ -882,7 +882,9 @@ class GridSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
-    return_train_score : boolean, default=True
+    return_train_score : boolean or 'warn', default='warn'
+        If ```warn```, the ``cv_results_`` attribute will include training
+        scores. It will raise a warning if scoring training set takes time.
         If ``'False'``, the ``cv_results_`` attribute will not include training
         scores.
 
@@ -1044,7 +1046,7 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
-                 return_train_score=True):
+                 return_train_score='warn'):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,

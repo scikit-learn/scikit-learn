@@ -388,8 +388,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     Returns
     -------
     train_scores : dict of scorer name -> float, optional
-        Score on training set (for all the scorers),
-        returned only if `return_train_score` is `True`.
+        Score on training set (for all the scorers), returned
+        only if `return_train_score` is `True` or `warn`.
 
     test_scores : dict of scorer name -> float, optional
         Score on testing set (for all the scorers).
@@ -468,9 +468,18 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         # _score will return dict if is_multimetric is True
         test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
         score_time = time.time() - start_time - fit_time
-        if return_train_score:
+        if return_train_score is True:
             train_scores = _score(estimator, X_train, y_train, scorer,
                                   is_multimetric)
+        if return_train_score is 'warn':
+            train_scores = _score(estimator, X_train, y_train, scorer,
+                                  is_multimetric)
+            score_train_time = time.time() - start_time - fit_time - score_time
+            if (score_train_time >= 0.1*fit_time and
+               time.time() - start_time) > 5:
+                warnings.warn("More time required due to large size of "
+                              "training set. Set ``return_train_score=True``"
+                              " to avoid warning")
 
     if verbose > 2:
         if is_multimetric:
