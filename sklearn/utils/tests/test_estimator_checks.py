@@ -252,8 +252,6 @@ def test_check_estimators_unfitted():
 
 
 def test_check_no_attributes_set_in_init():
-    if sys.version_info < (3, 5):
-        raise SkipTest("Skipping test_check_no_attributes_set_in_init.")
     class NonConformantEstimator(object):
         def __init__(self):
             self.you_should_not_set_this_ = None

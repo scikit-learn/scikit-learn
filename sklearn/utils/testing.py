@@ -760,6 +760,8 @@ def _get_args(function, varargs=False):
     """Helper to get function arguments"""
 
     if sys.version_info < (3, 5):
+        if not inspect.isfunction(function):
+            return []
         params = inspect.getargspec(function)
         if varargs:
             return params.args, params.varargs
@@ -781,10 +783,6 @@ def _get_args(function, varargs=False):
 
 def _get_parent_args(Estimator):
     """Helper to get list of parents properties"""
-    # NOTE this works only in python3.5
-    if sys.version_info < (3, 5):
-        NotImplementedError("_get_parent_args is not available "
-                            "for python < 3.5")
     list_args = []
     for parent in Estimator.__bases__:
         list_args.extend(_get_args(parent.__init__))
