@@ -760,13 +760,11 @@ def _get_args(function, varargs=False):
     """Helper to get function arguments"""
 
     if sys.version_info < (3, 5):
-        if not inspect.isfunction(function):
-            return []
-        params = inspect.getargspec(function)
-        if varargs:
-            return params.args, params.varargs
+        if hasattr(function, "func_code"):
+            argcount = function.func_code.co_argcount
+            return function.func_code.co_varnames[:argcount]
         else:
-            return params.args
+            return []
     else:
         params = inspect.signature(function).parameters
         args = [key for key, param in params.items()

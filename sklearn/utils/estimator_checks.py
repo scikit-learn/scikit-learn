@@ -1641,8 +1641,8 @@ def check_estimators_overwrite_params(name, estimator_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_no_attributes_set_in_init(name, estimator):
-    """Check that Estimator.__init__ doesn't set any attributes apart from
-       the init parameters.
+    """Check that parameters are correctly setted during init and
+       there is no additional attribute apart from init parameters. .
     """
 
     if (name in ["GaussianProcess", "RandomizedLasso",
@@ -1655,11 +1655,20 @@ def check_no_attributes_set_in_init(name, estimator):
     base_params = (_get_parent_args(type(estimator)) +
                    [a for a in dir(type(estimator))
                     if not a.startswith("__")])
+
+    # Test for no setting apart from parameters during init
     for attr, val in vars(estimator).items():
         if attr not in base_params:
             assert_in(attr, init_params,
                       "Estimator %s should not add new parameter"
                       " %s during init." % (name, attr))
+    # Ensure that each parameter is setted in init
+    list_attr = [attr for (attr, _) in vars(estimator).items()]
+    for param in init_params:
+        if param != "self":
+            assert_in(param, list_attr,
+                      "Estimator %s should set the parameter"
+                      " %s during init." % (name, param))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

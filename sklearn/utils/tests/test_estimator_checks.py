@@ -9,7 +9,6 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
                                    assert_equal, ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
@@ -252,16 +251,26 @@ def test_check_estimators_unfitted():
 
 
 def test_check_no_attributes_set_in_init():
-    class NonConformantEstimator(object):
+    class NonConformantEstimatorPrivateSet(object):
         def __init__(self):
             self.you_should_not_set_this_ = None
 
-    msg = ("Estimator estimator_name should not add new parameter "
-           "you_should_not_set_this_ during init.")
-    assert_raises_regex(AssertionError, msg,
+    class NonConformantEstimatorNoParamSet(object):
+        def __init__(self, you_should_set_this_=None):
+            pass
+
+    assert_raises_regex(AssertionError,
+                        "Estimator estimator_name should not add new "
+                        "parameter you_should_not_set_this_ during init.",
                         check_no_attributes_set_in_init,
                         'estimator_name',
-                        NonConformantEstimator)
+                        NonConformantEstimatorPrivateSet)
+    assert_raises_regex(AssertionError,
+                        "Estimator estimator_name should set the "
+                        "parameter you_should_set_this_ during init.",
+                        check_no_attributes_set_in_init,
+                        'estimator_name',
+                        NonConformantEstimatorNoParamSet)
 
 
 def test_check_estimator_pairwise():
