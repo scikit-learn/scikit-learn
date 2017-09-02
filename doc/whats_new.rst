@@ -50,6 +50,10 @@ Classifiers and regressors
   several times in a row. :issue:`9234` by :user:`andrewww <andrewww>`
   and :user:`Minghui Liu <minghui-liu>`.
 
+- Add `named_estimators_` parameter in
+  :class:`sklearn.ensemble.voting_classifier` to access fitted
+  estimators. :issue:`9157` by :user:`Herilalaina Rakotoarison <herilalaina>`.
+
 
 Model evaluation and meta-estimators
 
