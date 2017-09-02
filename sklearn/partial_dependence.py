@@ -223,6 +223,8 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
             not hasattr(est, 'predict_proba')):
         raise ValueError('est requires a predict_proba method for '
                          'method="exact" or "estimated" for classification.')
+    if X is not None:
+        X = check_array(X, dtype=DTYPE, order='C')
     if method == 'recursion':
         check_is_fitted(est, 'estimators_', msg='Call %s.fit before '
                                                 'partial_dependence' %
@@ -243,7 +245,6 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
                          % (n_features - 1))
 
     if X is not None:
-        X = check_array(X, dtype=DTYPE, order='C')
         grid, axes = _grid_from_X(X[:, target_variables], percentiles,
                                   grid_resolution)
     else:
@@ -432,6 +433,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
             not hasattr(est, 'predict_proba')):
         raise ValueError('est requires a predict_proba method for '
                          'method="exact" or "estimated" for classification.')
+    if X is not None:
+        X = check_array(X, dtype=DTYPE, order='C')
     if method == 'recursion':
         check_is_fitted(est, 'estimators_', msg='Call %s.fit before '
                                                 'partial_dependence' %
@@ -453,7 +456,6 @@ def plot_partial_dependence(est, X, features, feature_names=None,
         # regression and binary classification
         label_idx = 0
 
-    X = check_array(X, dtype=DTYPE, order='C')
     if hasattr(est, 'n_features_') and est.n_features_ != X.shape[1]:
         raise ValueError('X.shape[1] does not match est.n_features_')
 

@@ -41,7 +41,7 @@ def test_output_shape_recursion():
     for name, Estimator in all_estimators():
         est = Estimator()
         if not (isinstance(est, BaseGradientBoosting) or
-                    isinstance(est, ForestRegressor)):
+                isinstance(est, ForestRegressor)):
             continue
         if est._estimator_type == 'classifier':
             est.fit(X_c, y_c)
