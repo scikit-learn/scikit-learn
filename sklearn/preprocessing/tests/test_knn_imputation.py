@@ -11,7 +11,6 @@ from sklearn.preprocessing.imputation import KNNImputer
 from sklearn.neighbors import NearestNeighbors
 from sklearn.random_projection import sparse_random_matrix
 
-
 def test_knn_imputation_shape():
     # Verify the shapes of the imputed matrix for different weights and
     # number of neighbors.
@@ -328,6 +327,13 @@ def test_weight_type():
     imputer = KNNImputer(weights="uniform")
     assert_array_equal(imputer.fit_transform(X), X_imputed_uniform)
 
+    # Test with "callable" weight
+    def no_weight(dist):
+        return None
+
+    imputer = KNNImputer(weights=no_weight)
+    assert_array_equal(imputer.fit_transform(X), X_imputed_uniform)
+
     # Test with "distance" weight
     nn = NearestNeighbors(metric="masked_euclidean")
     nn.fit(X)
@@ -389,6 +395,21 @@ def test_weight_type():
                               decimal=4)
     assert_array_equal(imputer.statistics_, statistics_mean)
 
+
+def test_metric_type():
+    X = np.array([
+        [0,      0],
+        [np.nan, 2],
+        [4,      3],
+        [5,      6],
+        [7,      7],
+        [9,      8],
+        [11,     10]
+    ])
+
+    # Test with a metric type without NaN support
+    imputer = KNNImputer(metric="euclidean")
+    assert_raises(ValueError, imputer.fit, X)
 
 def test_imputation_copy():
     # Test imputation with copy

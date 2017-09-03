@@ -388,7 +388,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    missing_values : integer or "NaN", optional (default="NaN")
+    missing_values : integer or "NaN", optional (default = "NaN")
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For missing values encoded as np.nan,
         use the string value "NaN".
@@ -399,8 +399,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         remaining n_neighbors-1 neighbors are used and, if need be, the
         process repeats until a single neighbor remains.
 
-    weights : str or callable
-        weight function used in prediction.  Possible values:
+    weights : str or callable, optional (default = "uniform")
+        Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
           are weighted equally.
@@ -411,10 +411,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
           array of distances, and returns an array of the same shape
           containing the weights.
 
-        Uniform weights are used by default.
-
-    metric : string or callable, optional (default = 'masked_euclidean')
-        metric to use for distance computation.
+    metric : string, optional (default = 'masked_euclidean')
+        Metric to use for distance computation.
 
     row_max_missing : float, optional (default = 0.5)
         The maximum percentage of columns (i.e. features) that can be missing
@@ -427,7 +425,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         The maximum percentage of rows (or samples) that can be missing
         for a given feature beyond which an error is raised.
 
-    copy : boolean, optional (default=True)
+    copy : boolean, optional (default = True)
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible. Note that, if metric is
         "masked_euclidean" and copy=False then missing_values in the
@@ -435,10 +433,9 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    statistics_ : {tuple}
-        A tuple whose first element is the input dataset used to fit the
-        KNNImputer object and the second element is the column means of that
-        dataset using observed (i.e. non-missing) values.
+    statistics_ : 1-D array of length {n_features}
+        The 1-D array contains the mean of each feature calculated using
+        observed (i.e. non-missing) values.
 
     References
     ----------
@@ -660,8 +657,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         return self.fit(X)._transform(X, n_neighbors_new=self.n_neighbors + 1)
 
     def transform(self, X):
-        """Impute all missing values in X. This method should be used if the
-        data to be fitted is different from the data to be transformed.
+        """Impute all missing values in X. This method should only be used
+        if the data to be fitted is different from the data to be transformed.
 
         WARNING: If the same dataset is passed in fit() and transform(),
         one of the returned "neighbors" maybe the sample itself. Use
