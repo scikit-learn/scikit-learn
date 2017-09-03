@@ -33,17 +33,17 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Column indices of ignored features. (Example: Categorical features.)
         If ``None``, all features will be discretized.
 
-    encode : {'ordinal', 'onehot', 'onehot-dense'} (default='ordinal')
-        method used to encode the transformed result.
+    encode : {'ordinal', 'onehot', 'onehot-dense'}, (default='ordinal')
+        Method used to encode the transformed result.
 
         onehot:
-            encode the transformed result with one-hot encoding
+            Encode the transformed result with one-hot encoding
             and return a sparse matrix.
         onehot-dense:
-            encode the transformed result with one-hot encoding
+            Encode the transformed result with one-hot encoding
             and return a dense array.
         ordinal:
-            return the bin identifier encoded as an integer value.
+            Return the bin identifier encoded as an integer value.
 
     Attributes
     ----------
@@ -128,11 +128,11 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, dtype='numeric')
 
-        valid_encode = ['onehot', 'onehot-dense', 'ordinal']
+        valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:
             raise ValueError("Valid options for 'encode' are {}. "
                              "Got 'encode = {}' instead."
-                             .format(sorted(valid_encode), self.encode))
+                             .format(valid_encode, self.encode))
 
         n_features = X.shape[1]
         ignored = self._validate_ignored_features(n_features)
@@ -230,7 +230,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                                  retain_order=True)
 
         # only one-hot encode discretized features
-        mask = np.repeat(True, X.shape[1])
+        mask = np.ones(X.shape[1], dtype=bool)
         if self.ignored_features is not None:
             mask[self.ignored_features] = False
 

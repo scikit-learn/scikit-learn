@@ -178,12 +178,13 @@ def test_numeric_stability():
         assert_array_equal(Xt_expected, Xt)
 
 
-def test_encode():
-    # test invalid encode option
+def test_invalid_encode_option():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='invalid-encode')
     assert_raises(ValueError, est.fit, X)
 
-    # test encode options through comparison
+
+def test_encode_options():
+    # test valid encode options through comparison
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='ordinal').fit(X)
     expected1 = est.transform(X)
@@ -204,7 +205,8 @@ def test_encode():
                        expected3.toarray())
     assert_raises(ValueError, est.inverse_transform, X)
 
-    # test one-hot encode with ignored features
+
+def test_one_hot_encode_with_ignored_features():
     est = KBinsDiscretizer(n_bins=3, ignored_features=[1, 2],
                            encode='onehot-dense').fit(X)
     expected1 = est.transform(X)
