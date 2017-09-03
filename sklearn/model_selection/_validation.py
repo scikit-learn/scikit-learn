@@ -639,11 +639,6 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
-    # Ensure the estimator has implemented the passed decision function
-    if not callable(getattr(estimator, method)):
-        raise AttributeError('{} not implemented in estimator'
-                             .format(method))
-
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         le = LabelEncoder()
         y = le.fit_transform(y)
@@ -732,7 +727,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     predictions = func(X_test)
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         n_classes = len(set(y))
-        predictions_ = np.zeros((X_test.shape[0], n_classes))
+        predictions_ = np.zeros((_num_samples(X_test), n_classes))
         if method == 'decision_function' and len(estimator.classes_) == 2:
             predictions_[:, estimator.classes_[-1]] = predictions
         else:

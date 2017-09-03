@@ -41,6 +41,30 @@ Classifiers and regressors
   back to the original space via an inverse transform. :issue:`9041` by
   `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Added :class:`naive_bayes.ComplementNB`, which implements the Complement
+  Naive Bayes classifier described in Rennie et al. (2003).
+  By :user:`Michael A. Alcorn <airalcorn2>`.
+
+Enhancements
+............
+
+Classifiers and regressors
+
+- In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
+  is faster when using ``return_std=True`` in particular more when called
+  several times in a row. :issue:`9234` by :user:`andrewww <andrewww>`
+  and :user:`Minghui Liu <minghui-liu>`.
+
+- Add `named_estimators_` parameter in
+  :class:`sklearn.ensemble.voting_classifier` to access fitted
+  estimators. :issue:`9157` by :user:`Herilalaina Rakotoarison <herilalaina>`.
+
+
+Model evaluation and meta-estimators
+
+- A scorer based on :func:`metrics.brier_score_loss` is also available.
+  :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 Bug fixes
 .........
 
@@ -190,9 +214,6 @@ Model selection and evaluation
   :class:`model_selection.RepeatedStratifiedKFold`.
   :issue:`8120` by `Neeraj Gangwar`_.
 
-- Added a scorer based on :class:`metrics.explained_variance_score`.
-  :issue:`9259` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
-
 Miscellaneous
 
 - Validation that input data contains no NaN or inf can now be suppressed
@@ -292,9 +313,6 @@ Decomposition, manifold learning and clustering
   ``singular_values_``, like in :class:`decomposition.IncrementalPCA`.
   :issue:`7685` by :user:`Tommy Löfstedt <tomlof>`
 
-- Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
-  :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
-
 - :class:`decomposition.NMF` now faster when ``beta_loss=0``.
   :issue:`9277` by :user:`hongkahjun`.
 
@@ -384,6 +402,9 @@ Model evaluation and meta-estimators
 
 - More clustering metrics are now available through :func:`metrics.get_scorer`
   and ``scoring`` parameters. :issue:`8117` by `Raghav RV`_.
+
+- A scorer based on :func:`metrics.explained_variance_score` is also available.
+  :issue:`9259` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 Metrics
 
