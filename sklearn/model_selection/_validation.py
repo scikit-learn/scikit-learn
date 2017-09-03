@@ -377,6 +377,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_train_score : boolean, optional, default: False
         Compute and return score on training set.
 
+    grid_search_start_time: time.time() instance, default: None
+        Indicates the starting time of GridSearch.
+
     return_parameters : boolean, optional, default: False
         Return parameters that has been used for the estimator.
 
