@@ -273,7 +273,7 @@ validation strategies.
 .. _iid_cv:
 
 Cross-validation iterators for i.i.d. data
-==========================================
+------------------------------------------
 
 Assuming that some data is Independent and Identically Distributed (i.i.d.) is
 making the assumption that all samples stem from the same generative process
@@ -291,6 +291,17 @@ use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`
 Similarly if we know that the generative process has a group structure
 (samples from collected from different subjects, experiments, measurement
 devices) it safer to use :ref:`group-wise cross-validation <group_cv>`.
+
+
+Cross-validation iterators with stratification based on class labels.
+---------------------------------------------------------------------
+
+Some classification problems can exhibit a large imbalance in the distribution
+of the target classes: for instance there could be several times more negative
+samples than positive samples. In such cases it is recommended to use
+stratified sampling as implemented in :class:`StratifiedKFold` and
+:class:`StratifiedShuffleSplit` to ensure that relative class frequencies is
+approximately preserved in each train and validation fold.
 
 
 K-fold
@@ -463,16 +474,6 @@ Here is a usage example::
 :class:`ShuffleSplit` is thus a good alternative to :class:`KFold` cross
 validation that allows a finer control on the number of iterations and
 the proportion of samples on each side of the train / test split.
-
-Cross-validation iterators with stratification based on class labels.
-=====================================================================
-
-Some classification problems can exhibit a large imbalance in the distribution
-of the target classes: for instance there could be several times more negative
-samples than positive samples. In such cases it is recommended to use
-stratified sampling as implemented in :class:`StratifiedKFold` and
-:class:`StratifiedShuffleSplit` to ensure that relative class frequencies is
-approximately preserved in each train and validation fold.
 
 Stratified k-fold
 -----------------
