@@ -260,14 +260,15 @@ def test_check_no_attributes_set_in_init():
             pass
 
     assert_raises_regex(AssertionError,
-                        "Estimator estimator_name should not add new "
-                        "parameter you_should_not_set_this_ during init.",
+                        "Estimator estimator_name should not set "
+                        "attribute you_should_not_set_this_ during init.",
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorPrivateSet)
     assert_raises_regex(AssertionError,
-                        "Estimator estimator_name should set the "
-                        "parameter you_should_set_this_ during init.",
+                        "Estimator estimator_name should store the "
+                        "parameter you_should_set_this_ as an attribute"
+                        " during init.",
                         check_no_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimatorNoParamSet)

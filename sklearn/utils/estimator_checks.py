@@ -1641,14 +1641,9 @@ def check_estimators_overwrite_params(name, estimator_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_no_attributes_set_in_init(name, estimator):
-    """Check that parameters are correctly setted during init and
-       there is no additional attribute apart from init parameters. .
-    """
+    """Check setting during init. """
 
-    if (name in ["GaussianProcess", "RandomizedLasso",
-                 "RandomizedLogisticRegression",
-                 "RandomizedPCA"]):
-        # To not check decorated (eg: deprecated) estimator
+    if hasattr(type(estimator).__init__, "deprecated_original"):
         return
 
     init_params = _get_args(type(estimator).__init__)
@@ -1660,15 +1655,15 @@ def check_no_attributes_set_in_init(name, estimator):
     for attr, val in vars(estimator).items():
         if attr not in base_params:
             assert_in(attr, init_params,
-                      "Estimator %s should not add new parameter"
+                      "Estimator %s should not set attribute"
                       " %s during init." % (name, attr))
-    # Ensure that each parameter is setted in init
+    # Ensure that each parameter is set in init
     list_attr = [attr for (attr, _) in vars(estimator).items()]
     for param in init_params:
         if param != "self":
             assert_in(param, list_attr,
-                      "Estimator %s should set the parameter"
-                      " %s during init." % (name, param))
+                      "Estimator %s should store the parameter"
+                      " %s as an attribute during init." % (name, param))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
