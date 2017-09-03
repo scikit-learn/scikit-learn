@@ -5,6 +5,7 @@ from sklearn.base import clone
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import assert_array_equal
 
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import TransformTargetRegressor
@@ -203,19 +204,18 @@ def test_transform_target_regressor_2d_transformer_multioutput():
     assert_allclose(regr.regressor_.coef_, lr.coef_)
 
 
-def test_transform_target_regressor_single_to_multi():
-    X = friedman[0]
-    y = friedman[1] + 1j * (friedman[1] ** 2 + 1)
+# def test_transform_target_regressor_single_to_multi():
+#     X = friedman[0]
+#     y = (friedman[1], (friedman[1] ** 2 + 1))
 
-    def func(y):
-        """Stack the real and imaginary part."""
-        return np.hstack((np.real(y), np.imag(y)))
+#     def func(y):
+#         return np.hstack((y[:, 0], y[:, 1]))
 
-    # transform only with the forward
-    tt = TransformTargetRegressor(func=func, check_inverse=False)
-    tt.fit(X, y)
-    y_pred = tt.predict(X)
-    assert_equal(y_pred.shape, (100, 2))
+#     # transform only with the forward
+#     tt = TransformTargetRegressor(func=func, check_inverse=False)
+#     tt.fit(X, y)
+#     y_pred = tt.predict(X)
+#     assert_equal(y_pred.shape, (100, 2))
 
 
 def test_transform_target_regressor_multi_to_single():
@@ -228,13 +228,16 @@ def test_transform_target_regressor_multi_to_single():
 
     tt = TransformTargetRegressor(func=func, check_inverse=False)
     tt.fit(X, y)
-    y_pred = tt.predict(X)
-    assert_equal(y_pred.shape, (100,))
+    y_pred_2d_func = tt.predict(X)
+    assert_equal(y_pred_2d_func.shape, (100,))
 
     # force that the function only return a 1D array
     def func(y):
         return np.sqrt(y[:, 0] ** 2 + y[:, 1] ** 2)
 
+    tt = TransformTargetRegressor(func=func, check_inverse=False)
     tt.fit(X, y)
-    y_pred = tt.predict(X)
-    assert_equal(y_pred.shape, (100,))
+    y_pred_1d_func = tt.predict(X)
+    assert_equal(y_pred_1d_func.shape, (100,))
+
+    assert_array_equal(y_pred_1d_func, y_pred_2d_func)
