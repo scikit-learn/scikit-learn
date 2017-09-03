@@ -475,6 +475,7 @@ Here is a usage example::
 validation that allows a finer control on the number of iterations and
 the proportion of samples on each side of the train / test split.
 
+
 Stratified k-fold
 -----------------
 
