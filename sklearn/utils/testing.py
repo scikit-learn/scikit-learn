@@ -45,6 +45,7 @@ except NameError:
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
+from sklearn.externals.funcsigs import signature
 from sklearn.utils import deprecated
 
 additional_names_in_all = []
@@ -759,24 +760,21 @@ class TempMemmap(object):
 def _get_args(function, varargs=False):
     """Helper to get function arguments"""
 
-    if sys.version_info < (3, 5):
-        if hasattr(function, "func_code"):
-            argcount = function.func_code.co_argcount
-            return function.func_code.co_varnames[:argcount]
-        else:
-            return []
+    try:
+        params = signature(function).parameters
+    except ValueError:
+        # Error on builtin C function
+        return []
+    args = [key for key, param in params.items()
+            if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
+    if varargs:
+        varargs = [param.name for param in params.values()
+                   if param.kind == param.VAR_POSITIONAL]
+        if len(varargs) == 0:
+            varargs = None
+        return args, varargs
     else:
-        params = inspect.signature(function).parameters
-        args = [key for key, param in params.items()
-                if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
-        if varargs:
-            varargs = [param.name for param in params.values()
-                       if param.kind == param.VAR_POSITIONAL]
-            if len(varargs) == 0:
-                varargs = None
-            return args, varargs
-        else:
-            return args
+        return args
 
 
 def _get_parent_args(Estimator):
