@@ -287,6 +287,9 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         X : array-like, shape (n_samples, n_features) or (n_samples, n_samples)
             Data matrix or, if affinity is ``precomputed``, matrix of
             similarities / affinities.
+
+        y : Ignored
+
         """
         X = check_array(X, accept_sparse='csr')
         if self.affinity == "precomputed":
