@@ -326,7 +326,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
-                   return_parameters=False, return_n_test_samples=False,
+                   grid_search_start_time=None, return_parameters=False,
+                   return_n_test_samples=False,
                    return_times=False, error_score='raise'):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -475,8 +476,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             train_scores = _score(estimator, X_train, y_train, scorer,
                                   is_multimetric)
             score_train_time = time.time() - start_time - fit_time - score_time
-            if (score_train_time >= 0.1*fit_time and
-               time.time() - start_time) > 5:
+            if score_train_time >= 0.1*fit_time and time.time() - grid_search_start_time> 5:
                 warnings.warn("More time required due to large size of "
                               "training set. Set ``return_train_score=True``"
                               " to avoid warning")

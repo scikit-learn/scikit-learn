@@ -18,6 +18,7 @@ from functools import partial, reduce
 from itertools import product
 import operator
 import warnings
+import time
 
 import numpy as np
 from scipy.stats import rankdata
@@ -623,6 +624,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         base_estimator = clone(self.estimator)
         pre_dispatch = self.pre_dispatch
+        start_time = time.time()
 
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
@@ -631,6 +633,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   test, self.verbose, parameters,
                                   fit_params=fit_params,
                                   return_train_score=self.return_train_score,
+                                  grid_search_start_time=start_time,
                                   return_n_test_samples=True,
                                   return_times=True, return_parameters=False,
                                   error_score=self.error_score)
