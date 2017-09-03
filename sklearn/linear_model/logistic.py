@@ -1213,7 +1213,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             _dtype = np.float64
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
-                         order="C")
+                         order="C",accept_large_sparse=True)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
