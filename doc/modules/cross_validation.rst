@@ -294,7 +294,7 @@ devices) it safer to use :ref:`group-wise cross-validation <group_cv>`.
 
 
 K-fold
-------
+^^^^^^
 
 :class:`KFold` divides all the samples in :math:`k` groups of samples,
 called folds (if :math:`k = n`, this is equivalent to the *Leave One
@@ -323,7 +323,7 @@ Thus, one can create the training/test sets using numpy indexing::
 
 
 Repeated K-Fold
----------------
+^^^^^^^^^^^^^^^
 
 :class:`RepeatedKFold` repeats K-Fold n times. It can be used when one
 requires to run :class:`KFold` n times, producing different splits in
@@ -350,7 +350,7 @@ with different randomization in each repetition.
 
 
 Leave One Out (LOO)
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 :class:`LeaveOneOut` (or LOO) is a simple cross-validation. Each learning
 set is created by taking all the samples except one, the test set being
@@ -408,7 +408,7 @@ fold cross validation should be preferred to LOO.
 
 
 Leave P Out (LPO)
------------------
+^^^^^^^^^^^^^^^^^
 
 :class:`LeavePOut` is very similar to :class:`LeaveOneOut` as it creates all
 the possible training/test sets by removing :math:`p` samples from the complete
@@ -435,7 +435,7 @@ Example of Leave-2-Out on a dataset with 4 samples::
 .. _ShuffleSplit:
 
 Random permutations cross-validation a.k.a. Shuffle & Split
------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :class:`ShuffleSplit`
 
@@ -475,7 +475,7 @@ stratified sampling as implemented in :class:`StratifiedKFold` and
 approximately preserved in each train and validation fold.
 
 Stratified k-fold
------------------
+^^^^^^^^^^^^^^^^^
 
 :class:`StratifiedKFold` is a variation of *k-fold* which returns *stratified*
 folds: each set contains approximately the same percentage of samples of each
@@ -500,7 +500,7 @@ with different randomization in each repetition.
 
 
 Stratified Shuffle Split
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 :class:`StratifiedShuffleSplit` is a variation of *ShuffleSplit*, which returns
 stratified splits, *i.e* which creates splits by preserving the same
@@ -530,7 +530,7 @@ parameter.
 
 
 Group k-fold
-------------
+^^^^^^^^^^^^
 
 :class:`GroupKFold` is a variation of k-fold which ensures that the same group is
 not represented in both testing and training sets. For example if the data is
@@ -560,7 +560,7 @@ size due to the imbalance in the data.
 
 
 Leave One Group Out
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 :class:`LeaveOneGroupOut` is a cross-validation scheme which holds out
 the samples according to a third-party provided array of integer groups. This
@@ -591,7 +591,7 @@ groups could be the year of collection of the samples and thus allow
 for cross-validation against time-based splits.
 
 Leave P Groups Out
-------------------
+^^^^^^^^^^^^^^^^^^
 
 :class:`LeavePGroupsOut` is similar as :class:`LeaveOneGroupOut`, but removes
 samples related to :math:`P` groups for each training/test set.
@@ -611,7 +611,7 @@ Example of Leave-2-Group Out::
   [0 1] [2 3 4 5]
 
 Group Shuffle Split
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 The :class:`GroupShuffleSplit` iterator behaves as a combination of
 :class:`ShuffleSplit` and :class:`LeavePGroupsOut`, and generates a
@@ -671,7 +671,7 @@ solution is provided by :class:`TimeSeriesSplit`.
 
 
 Time Series Split
------------------
+^^^^^^^^^^^^^^^^^
 
 :class:`TimeSeriesSplit` is a variation of *k-fold* which
 returns first :math:`k` folds as train set and the :math:`(k+1)` th
