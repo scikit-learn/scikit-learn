@@ -57,7 +57,7 @@ Miscellaneous
 - Added optional parameter ``verbose`` in functions `pipeline.make_pipeline`
   and `pipeline.make_union` to extend the same functionality as the
   corresponding classes. :issue:`9668` by
-  :user:`Baze Petrushev <petrushev>`.
+  :user:`Baze Petrushev <petrushev>` and :user:`Karan Desai <karandesai-96>`.
 
 
 Bug fixes
@@ -5766,5 +5766,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Neeraj Gangwar: http://neerajgangwar.in
 .. _Arthur Mensch: https://amensch.fr
-
 .. _Karan Desai: https://www.github.com/karandesai-96

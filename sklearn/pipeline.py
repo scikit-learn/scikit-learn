@@ -18,10 +18,11 @@ from scipy import sparse
 from .base import clone, TransformerMixin
 from .externals.joblib import Parallel, delayed
 from .externals import six
-from .utils.metaestimators import if_delegate_has_method, _BaseComposition
+from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
 from .utils.validation import check_memory
 
+from .utils.metaestimators import _BaseComposition
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
@@ -627,16 +628,16 @@ def make_pipeline(*steps, **kwargs):
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
-def _fit_one_transformer(trans, X, y, verbose=False, idx=None,
+def _fit_one_transformer(transformer, X, y, verbose=False, idx=None,
                          total_steps=None, name=None):
     # idx, total_steps and name are not required when verbosity is disabled
     step_start_time = time.time()
-    trans = trans.fit(X, y)
+    transformer = transformer.fit(X, y)
     step_time_elapsed = time.time() - step_start_time
     if verbose:
         _pretty_print('[FeatureUnion] (step %d of %d) %s ... %.5fs' %
                       (idx + 1, total_steps, name, step_time_elapsed))
-    return trans
+    return transformer
 
 
 def _transform_one(transformer, weight, X):
@@ -647,22 +648,22 @@ def _transform_one(transformer, weight, X):
     return res * weight
 
 
-def _fit_transform_one(trans, weight, X, y, verbose=False, idx=None,
+def _fit_transform_one(transformer, weight, X, y, verbose=False, idx=None,
                        total_steps=None, name=None, **fit_params):
     # idx, total_steps and name are not required when verbosity is disabled
     step_start_time = time.time()
-    if hasattr(trans, 'fit_transform'):
-        res = trans.fit_transform(X, y, **fit_params)
+    if hasattr(transformer, 'fit_transform'):
+        res = transformer.fit_transform(X, y, **fit_params)
     else:
-        res = trans.fit(X, y, **fit_params).transform(X)
+        res = transformer.fit(X, y, **fit_params).transform(X)
     step_time_elapsed = time.time() - step_start_time
     if verbose:
         _pretty_print('[FeatureUnion] (step %d of %d) %s ... %.5fs' %
                       (idx + 1, total_steps, name, step_time_elapsed))
     # if we have a weight for this transformer, multiply output
     if weight is None:
-        return res, trans
-    return res * weight, trans
+        return res, transformer
+    return res * weight, transformer
 
 
 class FeatureUnion(_BaseComposition, TransformerMixin):
@@ -792,15 +793,14 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             This estimator
         """
         self._validate_transformers()
-        all_transformers = [(name, trans, weight) for name, trans, weight in
-                            self._iter()]
+        all_transformers = list(self._iter())
         total_steps = len(all_transformers)
         # Keep a record of time elapsed
         start_time = time.time()
         transformers = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_one_transformer)(trans, X, y, self.verbose, idx,
-                                          total_steps, name)
-            for idx, (name, trans, _) in enumerate(all_transformers))
+            delayed(_fit_one_transformer)(transformer, X, y, self.verbose,
+                                          idx, total_steps, name)
+            for idx, (name, transformer, _) in enumerate(all_transformers))
         time_elapsed = time.time() - start_time
         if self.verbose:
             _pretty_print(
@@ -826,15 +826,15 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             sum of n_components (output dimension) over transformers.
         """
         self._validate_transformers()
-        all_transformers = [(name, trans, weight) for name, trans, weight in
-                            self._iter()]
+        all_transformers = list(self._iter())
         total_steps = len(all_transformers)
         # Keep a record of time elapsed
         start_time = time.time()
         result = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_transform_one)(trans, weight, X, y, self.verbose,
-                                        idx, total_steps, name)
-            for idx, (name, trans, weight) in enumerate(all_transformers))
+            delayed(_fit_transform_one)(transformer, weight, X, y,
+                                        self.verbose, idx, total_steps, name,
+                                        **fit_params)
+            for idx, (name, transformer, weight) in enumerate(all_transformers))
         time_elapsed = time.time() - start_time
         if self.verbose:
             _pretty_print(
