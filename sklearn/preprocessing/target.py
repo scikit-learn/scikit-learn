@@ -11,10 +11,10 @@ from ..utils.validation import check_is_fitted
 from ..utils import check_X_y, safe_indexing
 from ._function_transformer import FunctionTransformer
 
-__all__ = ['TransformTargetRegressor']
+__all__ = ['TransformedTargetRegressor']
 
 
-class TransformTargetRegressor(BaseEstimator, RegressorMixin):
+class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     """Meta-estimator to regress on a transformed target.
 
     Useful for applying a non-linear transformation in regression
@@ -82,13 +82,13 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     --------
     >>> import numpy as np
     >>> from sklearn.linear_model import LinearRegression
-    >>> from sklearn.preprocessing import TransformTargetRegressor
-    >>> tt = TransformTargetRegressor(regressor=LinearRegression(),
+    >>> from sklearn.preprocessing import TransformedTargetRegressor
+    >>> tt = TransformedTargetRegressor(regressor=LinearRegression(),
     ...                               func=np.log, inverse_func=np.exp)
     >>> X = np.arange(4).reshape(-1, 1)
     >>> y = np.exp(2 * X).ravel()
     >>> tt.fit(X, y) # doctest: +ELLIPSIS
-    TransformTargetRegressor(...)
+    TransformedTargetRegressor(...)
     >>> tt.score(X, y)
     1.0
     >>> tt.regressor_.coef_

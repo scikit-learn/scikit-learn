@@ -9,14 +9,14 @@ Transforming the prediction target (``y``)
 Transforming target in regression
 ---------------------------------
 
-:class:`TransformTargetRegressor` transforms the targets ``y`` before fitting a
+:class:`TransformedTargetRegressor` transforms the targets ``y`` before fitting a
 regression model. The predictions are mapped back to the original space via an
 inverse transform. It takes as an argument the regressor that will be used for
 prediction, and the transformer that will be applied to the target variable::
 
   >>> import numpy as np
   >>> from sklearn.datasets import load_boston
-  >>> from sklearn.preprocessing import (TransformTargetRegressor,
+  >>> from sklearn.preprocessing import (TransformedTargetRegressor,
   ...                                    QuantileTransformer)
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
@@ -25,11 +25,11 @@ prediction, and the transformer that will be applied to the target variable::
   >>> y = boston.target
   >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
-  >>> regr = TransformTargetRegressor(regressor=regressor,
+  >>> regr = TransformedTargetRegressor(regressor=regressor,
   ...                                 transformer=transformer)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
-  TransformTargetRegressor(...)
+  TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
   R2 score: 0.67
   >>> raw_target_regr = LinearRegression().fit(X_train, y_train)
@@ -47,11 +47,11 @@ functions can be passed, defining the transformation and its inverse mapping::
 
 Subsequently, the object is created as::
 
-  >>> regr = TransformTargetRegressor(regressor=regressor,
+  >>> regr = TransformedTargetRegressor(regressor=regressor,
   ...                                 func=func,
   ...                                 inverse_func=inverse_func)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
-  TransformTargetRegressor(...)
+  TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
   R2 score: 0.65
 
@@ -61,12 +61,12 @@ each other. However, it is possible to bypass this checking by setting
 
   >>> def inverse_func(x):
   ...     return x
-  >>> regr = TransformTargetRegressor(regressor=regressor,
+  >>> regr = TransformedTargetRegressor(regressor=regressor,
   ...                                 func=func,
   ...                                 inverse_func=inverse_func,
   ...                                 check_inverse=False)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
-  TransformTargetRegressor(...)
+  TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
   R2 score: -4.50
 

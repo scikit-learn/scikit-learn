@@ -9,7 +9,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.preprocessing import TransformTargetRegressor
+from sklearn.preprocessing import TransformedTargetRegressor
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.linear_model import LinearRegression, Lasso
@@ -23,21 +23,21 @@ def test_transform_target_regressor_error():
     X = friedman[0]
     y = friedman[1]
     # provide a transformer and functions at the same time
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    transformer=StandardScaler(),
-                                    func=np.exp, inverse_func=np.log)
+    regr = TransformedTargetRegressor(regressor=LinearRegression(),
+                                      transformer=StandardScaler(),
+                                      func=np.exp, inverse_func=np.log)
     assert_raises_regex(ValueError, "'transformer' and functions"
                         " 'func'/'inverse_func' cannot both be set.",
                         regr.fit, X, y)
     # fit with sample_weight with a regressor which does not support it
     sample_weight = np.ones((y.shape[0],))
-    regr = TransformTargetRegressor(regressor=Lasso(),
-                                    transformer=StandardScaler())
+    regr = TransformedTargetRegressor(regressor=Lasso(),
+                                      transformer=StandardScaler())
     assert_raises_regex(TypeError, "fit\(\) got an unexpected keyword argument"
                         " 'sample_weight'", regr.fit, X, y,
                         sample_weight=sample_weight)
     # func is given but inverse_func is not
-    regr = TransformTargetRegressor(func=np.exp)
+    regr = TransformedTargetRegressor(func=np.exp)
     assert_raises_regex(ValueError, "When 'func' is not None, 'inverse_func'"
                         " cannot be None.")
 
@@ -45,15 +45,15 @@ def test_transform_target_regressor_error():
 def test_transform_target_regressor_invertible():
     X = friedman[0]
     y = friedman[1]
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    func=np.sqrt, inverse_func=np.log,
-                                    check_inverse=True)
+    regr = TransformedTargetRegressor(regressor=LinearRegression(),
+                                      func=np.sqrt, inverse_func=np.log,
+                                      check_inverse=True)
     assert_warns_message(UserWarning, "The provided functions or transformer"
                          " are not strictly inverse of each other.",
                          regr.fit, X, y)
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    func=np.sqrt, inverse_func=np.log,
-                                    check_inverse=False)
+    regr = TransformedTargetRegressor(regressor=LinearRegression(),
+                                      func=np.sqrt, inverse_func=np.log,
+                                      check_inverse=False)
     # the transformer/functions are not checked to be invertible the fitting
     # should pass
     assert_no_warnings(regr.fit, X, y)
@@ -72,8 +72,8 @@ def _check_custom_scaler(y, y_pred):
 def test_transform_target_regressor_functions():
     X = friedman[0]
     y = friedman[1]
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    func=np.log, inverse_func=np.exp)
+    regr = TransformedTargetRegressor(regressor=LinearRegression(),
+                                      func=np.log, inverse_func=np.exp)
     y_pred = regr.fit(X, y).predict(X)
     # check the transformer output
     y_tran = regr.transformer_.transform(y.reshape(-1, 1)).squeeze()
@@ -90,8 +90,8 @@ def test_transform_target_regressor_functions():
 def test_transform_target_regressor_functions_multioutput():
     X = friedman[0]
     y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    func=np.log, inverse_func=np.exp)
+    regr = TransformedTargetRegressor(regressor=LinearRegression(),
+                                      func=np.log, inverse_func=np.exp)
     y_pred = regr.fit(X, y).predict(X)
     # check the transformer output
     y_tran = regr.transformer_.transform(y)
@@ -110,8 +110,8 @@ def test_transform_target_regressor_1d_transformer():
     transformer = FunctionTransformer(func=lambda x: x + 1,
                                       inverse_func=lambda x: x - 1,
                                       validate=False)
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    transformer=transformer)
+    regr = TransformedTargetRegressor(regressor=LinearRegression(),
+                                      transformer=transformer)
     y_pred = regr.fit(X, y).predict(X)
     assert_equal(y.shape, y_pred.shape)
     # consistency forward transform
@@ -136,8 +136,8 @@ def test_transform_target_regressor_1d_transformer_multioutput():
     transformer = FunctionTransformer(func=lambda x: x + 1,
                                       inverse_func=lambda x: x - 1,
                                       validate=False)
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    transformer=transformer)
+    regr = TransformedTargetRegressor(regressor=LinearRegression(),
+                                      transformer=transformer)
     y_pred = regr.fit(X, y).predict(X)
     assert_equal(y.shape, y_pred.shape)
     # consistency forward transform
@@ -160,8 +160,8 @@ def test_transform_target_regressor_2d_transformer():
     X = friedman[0]
     y = friedman[1]
     transformer = StandardScaler()
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    transformer=transformer)
+    regr = TransformedTargetRegressor(regressor=LinearRegression(),
+                                      transformer=transformer)
     y_pred = regr.fit(X, y).predict(X)
     assert_equal(y.shape, y_pred.shape)
     # consistency forward transform
@@ -184,8 +184,8 @@ def test_transform_target_regressor_2d_transformer_multioutput():
     X = friedman[0]
     y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
     transformer = StandardScaler()
-    regr = TransformTargetRegressor(regressor=LinearRegression(),
-                                    transformer=transformer)
+    regr = TransformedTargetRegressor(regressor=LinearRegression(),
+                                      transformer=transformer)
     y_pred = regr.fit(X, y).predict(X)
     assert_equal(y.shape, y_pred.shape)
     # consistency forward transform
@@ -215,8 +215,8 @@ def test_transform_target_regressor_multi_to_single():
     def inverse_func(y):
         return y
 
-    tt = TransformTargetRegressor(func=func, inverse_func=inverse_func,
-                                  check_inverse=False)
+    tt = TransformedTargetRegressor(func=func, inverse_func=inverse_func,
+                                    check_inverse=False)
     tt.fit(X, y)
     y_pred_2d_func = tt.predict(X)
     assert_equal(y_pred_2d_func.shape, (100,))
@@ -225,8 +225,8 @@ def test_transform_target_regressor_multi_to_single():
     def func(y):
         return np.sqrt(y[:, 0] ** 2 + y[:, 1] ** 2)
 
-    tt = TransformTargetRegressor(func=func, inverse_func=inverse_func,
-                                  check_inverse=False)
+    tt = TransformedTargetRegressor(func=func, inverse_func=inverse_func,
+                                    check_inverse=False)
     tt.fit(X, y)
     y_pred_1d_func = tt.predict(X)
     assert_equal(y_pred_1d_func.shape, (100,))

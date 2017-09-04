@@ -35,8 +35,8 @@ Classifiers and regressors
   :class:`ensemble.GradientBoostingRegressor` now support early stopping
   via ``n_iter_no_change``, ``validation_fraction`` and ``tol``. :issue:`7071`
   by `Raghav RV`_
-  
-- Added the :class:`preprocessing.TransformTargetRegressor` which transforms
+
+- Added the :class:`preprocessing.TransformedTargetRegressor` which transforms
   the target y before fitting a regression model. The predictions are mapped
   back to the original space via an inverse transform. :issue:`9041` by
   `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.

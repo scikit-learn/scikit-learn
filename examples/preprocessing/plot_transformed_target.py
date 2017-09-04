@@ -7,7 +7,7 @@ Effect of transforming the targets in regression model
 ======================================================
 
 In this example, we give an overview of the
-:class:`sklearn.preprocessing.TransformTargetRegressor`. Two examples
+:class:`sklearn.preprocessing.TransformedTargetRegressor`. Two examples
 illustrate the benefit of transforming the targets before learning a linear
 regression model. The first example uses synthetic data while the second
 example is based on the Boston housing data set.
@@ -31,7 +31,7 @@ print(__doc__)
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import RidgeCV
-from sklearn.preprocessing import TransformTargetRegressor
+from sklearn.preprocessing import TransformedTargetRegressor
 from sklearn.metrics import median_absolute_error, r2_score
 
 ###############################################################################
@@ -99,9 +99,9 @@ ax0.text(100, 1750, r'$R^2$=%.2f, MAE=%.2f' % (
 ax0.set_xlim([0, 2000])
 ax0.set_ylim([0, 2000])
 
-regr_trans = TransformTargetRegressor(regressor=RidgeCV(),
-                                      func=log_transform,
-                                      inverse_func=exp_transform)
+regr_trans = TransformedTargetRegressor(regressor=RidgeCV(),
+                                        func=log_transform,
+                                        inverse_func=exp_transform)
 regr_trans.fit(X_train, y_train)
 y_pred = regr_trans.predict(X_test)
 
@@ -176,7 +176,7 @@ ax0.text(1, 9, r'$R^2$=%.2f, MAE=%.2f' % (
 ax0.set_xlim([0, 10])
 ax0.set_ylim([0, 10])
 
-regr_trans = TransformTargetRegressor(
+regr_trans = TransformedTargetRegressor(
     regressor=RidgeCV(),
     transformer=QuantileTransformer(output_distribution='normal'))
 regr_trans.fit(X_train, y_train)
