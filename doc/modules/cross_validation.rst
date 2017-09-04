@@ -700,7 +700,7 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
 
 
 A note on shuffling
--------------------
+===================
 
 If the data ordering is not arbitrary (e.g. samples with the same class label
 are contiguous), shuffling it first may be essential to get a meaningful cross-
@@ -726,7 +726,7 @@ to shuffle the data indices before splitting them. Note that:
 * To get identical results for each split, set ``random_state`` to an integer.
 
 Cross validation and model selection
-------------------------------------
+====================================
 
 Cross validation iterators can also be used to directly perform model
 selection using Grid Search for the optimal hyperparameters of the
