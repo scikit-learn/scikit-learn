@@ -37,7 +37,7 @@ from sklearn.metrics import median_absolute_error, r2_score
 ###############################################################################
 # A synthetic random regression problem is generated. The targets ``y`` are
 # modified by: (i) translating all targets such that all entries are
-# non-negative and (ii) an exponential function is applied to obtain non-linear
+# non-negative and (ii) applying an exponential function to obtain non-linear
 # targets which cannot be fitted using a simple linear model.
 #
 # Therefore, a logarithmic and an exponential functions will be used to
@@ -67,7 +67,7 @@ ax0.hist(y, bins='auto', normed=True)
 ax0.set_xlim([0, 2000])
 ax0.set_ylabel('Probability')
 ax0.set_xlabel('Target')
-ax0.set_title('Target distribution')
+ax0.set_title('Target distribution (synthetic data)')
 
 ax1.hist(y_trans, bins='auto', normed=True)
 ax1.set_ylabel('Probability')
@@ -109,7 +109,8 @@ ax1.scatter(y_test, y_pred)
 ax1.plot([0, 2000], [0, 2000], '--k')
 ax1.set_ylabel('Target predicted')
 ax1.set_xlabel('True Target')
-ax1.set_title('Ridge regression \n with target transformation')
+ax1.set_title('Ridge regression \n with target transformation on synthetic'
+              ' data')
 ax1.text(100, 1750, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
 ax1.set_xlim([0, 2000])
@@ -123,7 +124,7 @@ ax1.set_ylim([0, 2000])
 # In a similar manner, the boston housing data set is used to show the impact
 # of transforming the targets before learning a model. In this example, the
 # targets to be predicted corresponds to the weighted distances to the five
-# Boston emplyment centres.
+# Boston employment centers.
 
 from sklearn.datasets import load_boston
 from sklearn.preprocessing import QuantileTransformer, quantile_transform
@@ -145,7 +146,7 @@ f, (ax0, ax1) = plt.subplots(1, 2)
 ax0.hist(y, bins='auto', normed=True)
 ax0.set_ylabel('Probability')
 ax0.set_xlabel('Target')
-ax0.set_title('Target distribution')
+ax0.set_title('Target distribution: \n distance to Boston employment centers')
 
 ax1.hist(y_trans, bins='auto', normed=True)
 ax1.set_ylabel('Probability')
@@ -168,7 +169,8 @@ ax0.scatter(y_test, y_pred)
 ax0.plot([0, 10], [0, 10], '--k')
 ax0.set_ylabel('Target predicted')
 ax0.set_xlabel('True Target')
-ax0.set_title('Ridge regression \n without target transformation')
+ax0.set_title('Ridge regression \n without target transformation \n (distance'
+              ' to Boston employment centers)')
 ax0.text(1, 9, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
 ax0.set_xlim([0, 10])

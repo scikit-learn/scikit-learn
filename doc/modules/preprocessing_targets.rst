@@ -32,6 +32,9 @@ prediction, and the transformer that will be applied to the target variable::
   TransformTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
   R2 score: 0.67
+  >>> raw_target_regr = LinearRegression().fit(X_train, y_train)
+  >>> print('R2 score: {0:.2f}'.format(raw_target_regr.score(X_test, y_test)))
+  R2 score: 0.64
 
 For simple transformations, instead of a Transformer object, a pair of
 functions can be passed, defining the transformation and its inverse mapping::

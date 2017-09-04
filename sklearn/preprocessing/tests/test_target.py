@@ -5,7 +5,8 @@ from sklearn.base import clone
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import TransformTargetRegressor
@@ -40,6 +41,10 @@ def test_transform_target_regressor_error():
     assert_raises_regex(TypeError, "The regressor LogisticRegression is of"
                         " type classifier. Provide a regressor instead.",
                         regr.fit, X, y)
+    # func is given but inverse_func is not
+    regr = TransformTargetRegressor(func=np.exp)
+    assert_raises_regex(ValueError, "When 'func' is not None, 'inverse_func'"
+                        " cannot be None.")
 
 
 def test_transform_target_regressor_invertible():
@@ -48,15 +53,15 @@ def test_transform_target_regressor_invertible():
     regr = TransformTargetRegressor(regressor=LinearRegression(),
                                     func=np.sqrt, inverse_func=np.log,
                                     check_inverse=True)
-    assert_raises_regex(ValueError, "The provided functions or transformer"
-                        " are not strictly inverse of each other.",
-                        regr.fit, X, y)
+    assert_warns_message(UserWarning, "The provided functions or transformer"
+                         " are not strictly inverse of each other.",
+                         regr.fit, X, y)
     regr = TransformTargetRegressor(regressor=LinearRegression(),
                                     func=np.sqrt, inverse_func=np.log,
                                     check_inverse=False)
     # the transformer/functions are not checked to be invertible the fitting
     # should pass
-    regr.fit(X, y)
+    assert_no_warnings(regr.fit, X, y)
 
 
 def _check_standard_scaler(y, y_pred):
@@ -212,7 +217,11 @@ def test_transform_target_regressor_multi_to_single():
         out = np.sqrt(y[:, 0] ** 2 + y[:, 1] ** 2)
         return out[:, np.newaxis]
 
-    tt = TransformTargetRegressor(func=func, check_inverse=False)
+    def inverse_func(y):
+        return y
+
+    tt = TransformTargetRegressor(func=func, inverse_func=inverse_func,
+                                  check_inverse=False)
     tt.fit(X, y)
     y_pred_2d_func = tt.predict(X)
     assert_equal(y_pred_2d_func.shape, (100,))
@@ -221,7 +230,8 @@ def test_transform_target_regressor_multi_to_single():
     def func(y):
         return np.sqrt(y[:, 0] ** 2 + y[:, 1] ** 2)
 
-    tt = TransformTargetRegressor(func=func, check_inverse=False)
+    tt = TransformTargetRegressor(func=func, inverse_func=inverse_func,
+                                  check_inverse=False)
     tt.fit(X, y)
     y_pred_1d_func = tt.predict(X)
     assert_equal(y_pred_1d_func.shape, (100,))

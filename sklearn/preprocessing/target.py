@@ -2,6 +2,8 @@
 #          Guillaume Lemaitre <guillaume.lemaitre@inria.fr>
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 
 from ..base import BaseEstimator, RegressorMixin, is_regressor, clone
@@ -40,11 +42,11 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-    regressor : object, (default=LinearRegression())
+    regressor : object, default=LinearRegression()
         Regressor object such as derived from ``RegressorMixin``. This
-        regressor will be cloned during fitting.
+        regressor will automatically be cloned each time prior to fitting.
 
-    transformer : object, (default=None)
+    transformer : object, default=None
         Estimator object such as derived from ``TransformerMixin``. Cannot be
         set at the same time as ``func`` and ``inverse_func``. If
         ``transformer`` is ``None`` as well as ``func`` and ``inverse_func``,
@@ -61,11 +63,10 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     inverse_func : function, optional
         Function to apply to the prediction of the regressor. Cannot be set at
         the same time as ``transformer`` as well. The function needs to return
-        a 2-dimensional array. If ``inverse_func is ``None``, the function used
-        will be the identity function. The inverse function is used to return
-        to the same space of the original training labels during prediction.
+        a 2-dimensional array. The inverse function is used to return
+        predictions to the same space of the original training labels.
 
-    check_inverse : bool, (default=True)
+    check_inverse : bool, default=True
         Whether to check that ``transform`` followed by ``inverse_transform``
         or ``func`` followed by ``inverse_func`` leads to the original targets.
 
@@ -86,16 +87,8 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     ...                               func=np.log, inverse_func=np.exp)
     >>> X = np.arange(4).reshape(-1, 1)
     >>> y = np.exp(2 * X).ravel()
-    >>> tt.fit(X, y)
-    ... # doctest: +NORMALIZE_WHITESPACE
-    TransformTargetRegressor(check_inverse=True,
-                             func=<ufunc 'log'>,
-                             inverse_func=<ufunc 'exp'>,
-                             regressor=LinearRegression(copy_X=True,
-                                                        fit_intercept=True,
-                                                        n_jobs=1,
-                                                        normalize=False),
-                             transformer=None)
+    >>> tt.fit(X, y) # doctest: +ELLIPSIS
+    TransformTargetRegressor(...)
     >>> tt.score(X, y)
     1.0
     >>> tt.regressor_.coef_
@@ -105,7 +98,7 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
     -----
     Internally, the target ``y`` is always converted into a 2-dimensional array
     to be used by scikit-learn transformers. At the time of prediction, the
-    output will be reshape to a have the same number of dimension than ``y``.
+    output will be reshaped to a have the same number of dimension as ``y``.
 
     See :ref:`examples/preprocessing/plot_transform_target.py
     <sphx_glr_auto_examples_preprocessing_plot_transform_target.py> `.
@@ -127,6 +120,9 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
         elif self.transformer is not None:
             self.transformer_ = clone(self.transformer)
         else:
+            if self.func is not None and self.inverse_func is None:
+                raise ValueError("When 'func' is not None, 'inverse_func'"
+                                 " cannot be None.")
             self.transformer_ = FunctionTransformer(
                 func=self.func, inverse_func=self.inverse_func, validate=True)
         # XXX: sample_weight is not currently passed to the
@@ -141,10 +137,10 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
                     self.transformer_.inverse_transform(
                         self.transformer_.transform(
                             safe_indexing(y, idx_selected)))):
-                raise ValueError("The provided functions or transformer are"
-                                 " not strictly inverse of each other. If"
-                                 " you are sure you want to proceed regardless"
-                                 ", set 'check_inverse=False'")
+                warnings.warn("The provided functions or transformer are"
+                              " not strictly inverse of each other. If"
+                              " you are sure you want to proceed regardless"
+                              ", set 'check_inverse=False'", UserWarning)
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
