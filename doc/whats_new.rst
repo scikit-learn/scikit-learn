@@ -41,10 +41,10 @@ Bug fixes
 
 Preprocessing
 
-- Fix a bug to ensure that ``func`` and ``inverse_func`` return a 2-dimensional
-  array when ``validate=True`` in :class:`FunctionTransformer` to agree with
-  the scikit-learn estimator API. :issue:`9595`. By :user:`Guillaume Lemaitre
-  <glemaitre>`.
+- Raise warning to ensure that ``func`` and ``inverse_func`` return a
+  2-dimensional array when ``validate=True`` in :class:`FunctionTransformer` to
+  agree with the scikit-learn estimator API. :issue:`9595`. By :user:`Guillaume
+  Lemaitre <glemaitre>`.
 
 Decomposition, manifold learning and clustering
 
