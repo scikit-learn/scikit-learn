@@ -851,7 +851,7 @@ class TSNE(BaseEstimator):
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
 
-        y : Ignored.
+        y : Ignored
 
         Returns
         -------
@@ -873,7 +873,7 @@ class TSNE(BaseEstimator):
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
             or 'coo'.
 
-        y : Ignored.
+        y : Ignored
         """
         self.fit_transform(X)
         return self
