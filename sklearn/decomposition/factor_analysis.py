@@ -149,7 +149,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : Ignored.
+        y : Ignored
 
         Returns
         -------
@@ -340,7 +340,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         X : array, shape (n_samples, n_features)
             The data
 
-        y : Ignored.
+        y : Ignored
 
         Returns
         -------
