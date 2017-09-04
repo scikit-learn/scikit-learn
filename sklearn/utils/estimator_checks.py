@@ -1660,7 +1660,7 @@ def check_no_attributes_set_in_init(name, estimator):
     invalid_attr = (set(init_params) - set(vars(estimator))
                     - set(["self"]))
     assert_false(invalid_attr,
-                 "Estimator %s should store all parameters "
+                 "Estimator %s should store all parameters"
                  " as an attribute during init. It is not the"
                  " case for %s." % (name, list(invalid_attr)))
 
