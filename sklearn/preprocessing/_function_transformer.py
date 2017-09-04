@@ -86,12 +86,15 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
         msg = (" transforms a 2D array into a 1D array"
                " which do not follow the estimator API of"
                " scikit-learn. If you are sure you want to"
-               " proceed, set 'validate=False'.")
-        if self.transform(safe_indexing(X, idx_selected)).ndim != 2:
-            raise ValueError("'func'" + msg)
-        if (self.inverse_transform(
+               " proceed, set 'validate=False'. This warning will"
+               " be turned to an error in 0.22")
+        if (self.func is not None and
+                self.transform(safe_indexing(X, idx_selected)).ndim != 2):
+            warnings.warn("'func'" + msg, FutureWarning)
+        if (self.inverse_func is not None and
+            self.inverse_transform(
                 self.transform(safe_indexing(X, idx_selected))).ndim != 2):
-            raise ValueError("'inverse_func'" + msg)
+            warnings.warn("'inverse_func'" + msg, FutureWarning)
 
     def fit(self, X, y=None):
         """Fit transformer by checking X.

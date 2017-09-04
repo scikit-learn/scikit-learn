@@ -130,25 +130,24 @@ def test_inverse_transform():
 
 
 def test_function_transformer_1d_function():
-    X = np.random.random((100, 2))
+    X = np.random.random((100, 1))
+    print(X.shape)
 
     def func_1d(X):
-        return X[:, 0] + 1j * X[:, 1]
+        return np.ravel(X[:, 0] + X[:, 0])
 
     transformer = FunctionTransformer(func=func_1d, validate=True)
-    assert_raises_regex(ValueError, "'func' transforms a 2D array into a 1D"
-                        " array", transformer.fit, X)
-
-    X = (X[:, 0] + 1j * X[:, 1]).reshape(-1, 1)
+    assert_warns_message(FutureWarning, "'func' transforms a 2D array into a"
+                         " 1D array", transformer.fit, X)
 
     def func_2d(X):
-        return np.hstack((np.real(X), np.imag(X)))
+        return np.hstack((X, X))
 
     def inverse_func_1d(X):
-        return X[:, 0] + 1j * X[:, 1]
+        return np.ravel(X[:, 0])
 
     transformer = FunctionTransformer(func=func_2d,
                                       inverse_func=inverse_func_1d,
                                       validate=True)
-    assert_raises_regex(ValueError, "'inverse_func' transforms a 2D array into"
-                        " a 1D array", transformer.fit, X)
+    assert_warns_message(FutureWarning, "'inverse_func' transforms a 2D array"
+                         " into a 1D array", transformer.fit, X)
