@@ -165,7 +165,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                     csc_matrix(mode.reshape(-1, 1)))
 
             # Old versions of scipy hstack returns COO formatted matrix
-            y_pred = sparse.hstack(y_pred_sparse_multilabel).tocsc()
+            y_pred = sparse.hstack(y_pred_sparse_multilabel, format='csc')
 
         else:
             y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
@@ -401,7 +401,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                     csc_matrix(y_pred_k.reshape(-1, 1)))
 
             # Old versions of scipy hstack returns COO formatted matrix
-            y_pred = sparse.hstack(y_pred_sparse_multilabel).tocsc()
+            y_pred = sparse.hstack(y_pred_sparse_multilabel, format='csc')
 
         else:
             y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
