@@ -6,7 +6,7 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, RegressorMixin, is_regressor, clone
+from ..base import BaseEstimator, RegressorMixin, clone
 from ..utils.validation import check_is_fitted
 from ..utils import check_X_y, safe_indexing
 from ._function_transformer import FunctionTransformer
@@ -177,11 +177,6 @@ class TransformTargetRegressor(BaseEstimator, RegressorMixin):
             from ..linear_model import LinearRegression
             self.regressor_ = LinearRegression()
         else:
-            if not is_regressor(self.regressor):
-                raise TypeError("The regressor {} is of type {}. Provide"
-                                " a regressor instead.".format(
-                                    self.regressor.__class__.__name__,
-                                    self.regressor._estimator_type))
             self.regressor_ = clone(self.regressor)
 
         # transform y and convert back to 1d array if needed

@@ -12,7 +12,7 @@ from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import TransformTargetRegressor
 from sklearn.preprocessing import StandardScaler
 
-from sklearn.linear_model import LinearRegression, LogisticRegression, Lasso
+from sklearn.linear_model import LinearRegression, Lasso
 
 from sklearn import datasets
 
@@ -36,11 +36,6 @@ def test_transform_target_regressor_error():
     assert_raises_regex(TypeError, "fit\(\) got an unexpected keyword argument"
                         " 'sample_weight'", regr.fit, X, y,
                         sample_weight=sample_weight)
-    # provide a classifier instead of a regressor
-    regr = TransformTargetRegressor(regressor=LogisticRegression())
-    assert_raises_regex(TypeError, "The regressor LogisticRegression is of"
-                        " type classifier. Provide a regressor instead.",
-                        regr.fit, X, y)
     # func is given but inverse_func is not
     regr = TransformTargetRegressor(func=np.exp)
     assert_raises_regex(ValueError, "When 'func' is not None, 'inverse_func'"
