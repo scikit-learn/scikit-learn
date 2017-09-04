@@ -778,12 +778,10 @@ def _get_args(function, varargs=False):
 
 
 def _get_parent_args(Estimator):
-    """Helper to get list of parents properties"""
+    """Helper to get list of parents's init parameters"""
     list_args = []
-    for parent in Estimator.__bases__:
+    for parent in Estimator.__mro__:
         list_args.extend(_get_args(parent.__init__))
-        list_args.extend([a for a in dir(parent) if not a.startswith("__")])
-        list_args.extend(_get_parent_args(parent))
     return list_args
 
 

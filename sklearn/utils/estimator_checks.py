@@ -1647,13 +1647,11 @@ def check_no_attributes_set_in_init(name, estimator):
         return
 
     init_params = _get_args(type(estimator).__init__)
-    base_params = (_get_parent_args(type(estimator)) +
-                   [a for a in dir(type(estimator))
-                    if not a.startswith("__")])
+    parents_init_params = _get_parent_args(type(estimator))
 
     # Test for no setting apart from parameters during init
     for attr, val in vars(estimator).items():
-        if attr not in base_params:
+        if attr not in parents_init_params:
             assert_in(attr, init_params,
                       "Estimator %s should not set attribute"
                       " %s during init." % (name, attr))
