@@ -459,7 +459,8 @@ K-bins discretization
   >>> est.bin_width_
   array([ 3.,  1.,  2.])
 
-By default the output is one-hot encoded into a sparse matrix (See :class:`OneHotEncoder`)
+By default the output is one-hot encoded into a sparse matrix
+(See :ref:`preprocessing_categorical_features`)
 and this can be configured with the ``encode`` parameter.
 For each feature, the bin width is computed during ``fit`` and together with
 the number of bins, they will define the intervals. Therefore, for the current
