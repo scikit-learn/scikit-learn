@@ -198,7 +198,7 @@ def test_encode_options():
     assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=False)
                        .fit_transform(expected1),
                        expected2)
-    assert_raises(ValueError, est.inverse_transform, X)
+    assert_raises(ValueError, est.inverse_transform, expected2)
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='onehot').fit(X)
     expected3 = est.transform(X)
@@ -206,7 +206,7 @@ def test_encode_options():
     assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=True)
                        .fit_transform(expected1).toarray(),
                        expected3.toarray())
-    assert_raises(ValueError, est.inverse_transform, X)
+    assert_raises(ValueError, est.inverse_transform, expected3)
 
 
 def test_one_hot_encode_with_ignored_features():
