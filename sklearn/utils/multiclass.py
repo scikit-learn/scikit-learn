@@ -38,6 +38,12 @@ _FN_UNIQUE_LABELS = {
     'multilabel-indicator': _unique_indicator,
 }
 
+_VALID_CLASSIFICATION_TARGET_TYPES = ('binary',
+                                      'multiclass',
+                                      'multiclass-multioutput',
+                                      'multilabel-indicator',
+                                      'multilabel-sequences')
+
 
 def unique_labels(*ys):
     """Extract an ordered array of unique labels
@@ -154,6 +160,25 @@ def is_multilabel(y):
                                     _is_integral_float(labels))
 
 
+def is_valid_classification_targets(y):
+    """Check that target y is of a non-regression type.
+
+    Only the following target types (as defined in type_of_target) are allowed:
+        'binary', 'multiclass', 'multiclass-multioutput',
+        'multilabel-indicator', 'multilabel-sequences'
+
+    Parameters
+    ----------
+    y : array-like
+
+    Returns
+    -------
+    is_valid : boolean
+    """
+    y_type = type_of_target(y)
+    return y_type in _VALID_CLASSIFICATION_TARGET_TYPES
+
+
 def check_classification_targets(y):
     """Ensure that target y is of a non-regression type.
 
@@ -166,8 +191,7 @@ def check_classification_targets(y):
     y : array-like
     """
     y_type = type_of_target(y)
-    if y_type not in ['binary', 'multiclass', 'multiclass-multioutput',
-                      'multilabel-indicator', 'multilabel-sequences']:
+    if y_type not in _VALID_CLASSIFICATION_TARGET_TYPES:
         raise ValueError("Unknown label type: %r" % y_type)
 
 

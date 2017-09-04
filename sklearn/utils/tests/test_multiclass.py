@@ -27,6 +27,7 @@ from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.multiclass import check_classification_targets
+from sklearn.utils.multiclass import is_valid_classification_targets
 
 from sklearn.utils.metaestimators import _safe_split
 from sklearn.model_selection import ShuffleSplit
@@ -280,6 +281,16 @@ def test_check_classification_targets():
         else:
             for example in EXAMPLES[y_type]:
                 check_classification_targets(example)
+
+
+def test_is_valid_classification_targets():
+    for y_type in EXAMPLES.keys():
+        if y_type in ["unknown", "continuous", 'continuous-multioutput']:
+            for example in EXAMPLES[y_type]:
+                assert_false(is_valid_classification_targets(example))
+        else:
+            for example in EXAMPLES[y_type]:
+                assert_true(is_valid_classification_targets(example))
 
 
 # @ignore_warnings

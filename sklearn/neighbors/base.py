@@ -18,7 +18,7 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
-from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import is_valid_classification_targets
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..exceptions import NotFittedError
@@ -776,15 +776,14 @@ class SupervisedIntegerMixin(object):
         else:
             self.outputs_2d_ = True
 
-        try:
-            check_classification_targets(y)
-        except ValueError as e:
+        if not is_valid_classification_targets(y):
+            # specialize the ValueError message with a more informative error.
             if issparse(y) and self.outputs_2d_:
                 raise ValueError("Sparse y is only supported for multilabel"
                                  " case (multioutput multiclass is not"
-                                 " supported)")
+                                 " supported). Got: %r" % y)
             else:
-                raise
+                raise ValueError("Unknown label type: %r" % y)
 
         self.classes_ = []
 
