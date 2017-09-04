@@ -36,15 +36,15 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     encode : {'onehot', 'onehot-dense', 'ordinal'}, (default='onehot')
         Method used to encode the transformed result.
 
-        onehot:
+        onehot
             Encode the transformed result with one-hot encoding
             and return a sparse matrix. Ignored features are always
             stacked to the right.
-        onehot-dense:
+        onehot-dense
             Encode the transformed result with one-hot encoding
             and return a dense array. Ignored features are always
             stacked to the right.
-        ordinal:
+        ordinal
             Return the bin identifier encoded as an integer value.
 
     Attributes
@@ -221,7 +221,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Xt : numeric array-like
+        Xt : numeric array-like or sparse matrix
             Data in the binned space.
         """
         check_is_fitted(self, ["offset_", "bin_width_"])
@@ -238,11 +238,13 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         if self.encode == 'onehot':
             return OneHotEncoder(n_values=np.array(self.n_bins_)[mask],
-                                 categorical_features=mask,
+                                 categorical_features='all'
+                                 if self.ignored_features is None else mask,
                                  sparse=True).fit_transform(Xt)
         elif self.encode == 'onehot-dense':
             return OneHotEncoder(n_values=np.array(self.n_bins_)[mask],
-                                 categorical_features=mask,
+                                 categorical_features='all'
+                                 if self.ignored_features is None else mask,
                                  sparse=False).fit_transform(Xt)
         else:
             return Xt
