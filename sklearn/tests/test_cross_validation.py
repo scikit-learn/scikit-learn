@@ -24,10 +24,6 @@ from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.feature_selection import RFECV
-from sklearn.model_selection import GroupKFold
-
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     from sklearn import cross_validation as cval
@@ -1254,30 +1250,3 @@ def test_cross_val_predict_sparse_prediction():
     preds_sparse = cval.cross_val_predict(classif, X_sparse, y_sparse, cv=10)
     preds_sparse = preds_sparse.toarray()
     assert_array_almost_equal(preds_sparse, preds)
-
-
-def test_rfe_cv():
-    iris = load_iris()
-    number_groups = 4
-    groups = np.floor(np.linspace(0, number_groups, len(iris.target)))
-    X = iris.data
-    y = (iris.target > 0).astype(int)
-
-    # test basic cv
-    est = RFECV(
-        estimator=DecisionTreeClassifier(),
-        step=1,
-        scoring='accuracy',
-        cv=2,
-    )
-    est.fit(X, y)
-
-    # test cv with groups
-    est_groups = RFECV(
-        estimator=DecisionTreeClassifier(),
-        step=1,
-        scoring='accuracy',
-        cv=GroupKFold(n_splits=2)
-    )
-    est_groups.fit(X, y, groups=groups)
-    assert(est_groups.n_features_ > 0)
