@@ -37,7 +37,8 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=1, verbose=0, fit_params=None,
-                   pre_dispatch='2*n_jobs', return_train_score=True):
+                   pre_dispatch='2*n_jobs', return_train_score=True,
+                   return_estimator=False):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -119,6 +120,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Whether to include train scores in the return dict if ``scoring`` is
         of multimetric type.
 
+    return_estimator : boolean, default False
+        Whether to return the estimators fitted on each split.
+
     Returns
     -------
     scores : dict of float arrays of shape=(n_splits,)
@@ -140,6 +144,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                 The time for scoring the estimator on the test set for each
                 cv split. (Note time for scoring on the train set is not
                 included even if ``return_train_score`` is set to ``True``
+            ``estimator``
+                The list of estimator objects for each cv split.
 
     Examples
     --------
@@ -191,19 +197,29 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         delayed(_fit_and_score)(
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
-            return_times=True)
+            return_times=True, return_estimator=return_estimator)
         for train, test in cv.split(X, y, groups))
 
     if return_train_score:
-        train_scores, test_scores, fit_times, score_times = zip(*scores)
+        if return_estimator:
+            (train_scores, test_scores, fit_times, score_times,
+             fitted_est) = zip(*scores)
+        else:
+            train_scores, test_scores, fit_times, score_times = zip(*scores)
         train_scores = _aggregate_score_dicts(train_scores)
     else:
-        test_scores, fit_times, score_times = zip(*scores)
+        if return_estimator:
+            test_scores, fit_times, score_times, fitted_est = zip(*scores)
+        else:
+            test_scores, fit_times, score_times = zip(*scores)
     test_scores = _aggregate_score_dicts(test_scores)
 
     ret = dict()
     ret['fit_time'] = np.array(fit_times)
     ret['score_time'] = np.array(score_times)
+
+    if return_estimator:
+        ret['estimator'] = fitted_est
 
     for name in scorers:
         ret['test_%s' % name] = np.array(test_scores[name])
@@ -325,7 +341,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
-                   return_times=False, error_score='raise'):
+                   return_times=False, return_estimator=False,
+                   error_score='raise'):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -383,6 +400,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_times : boolean, optional, default: False
         Whether to return the fit/score times.
 
+    return_estimator : boolean, optimal, default: False
+        Whether to return the fitted estimator.
+
     Returns
     -------
     train_scores : dict of scorer name -> float, optional
@@ -403,6 +423,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     parameters : dict or None, optional
         The parameters that have been evaluated.
+
+    estimator : estimator object
+        The fitted estimator
     """
     if verbose > 1:
         if parameters is None:
@@ -489,6 +512,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         ret.extend([fit_time, score_time])
     if return_parameters:
         ret.append(parameters)
+    if return_estimator:
+        ret.append(estimator)
     return ret
 
 
