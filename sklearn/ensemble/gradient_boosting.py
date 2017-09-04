@@ -153,7 +153,7 @@ class ZeroEstimator(object):
     """An estimator that simply predicts zero. """
 
     def fit(self, X, y, sample_weight=None):
-        if np.issubdtype(y.dtype, int):
+        if np.issubdtype(y.dtype, np.signedinteger):
             # classification
             self.n_classes = np.unique(y).shape[0]
             if self.n_classes == 2:
