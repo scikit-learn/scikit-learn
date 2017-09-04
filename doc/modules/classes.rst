@@ -1193,6 +1193,7 @@ See the :ref:`metrics` section of the user guide for further details.
    preprocessing.FunctionTransformer
    preprocessing.Imputer
    preprocessing.KernelCenterer
+   preprocessing.KNNImputer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
    preprocessing.MultiLabelBinarizer

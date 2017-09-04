@@ -1299,8 +1299,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     Valid values for metric are:
 
     - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-      'manhattan']. These metrics support sparse matrix
-      inputs.
+      'manhattan']. These metrics support sparse matrix inputs.
       Also, ['masked_euclidean'] but it does not yet support sparse matrices.
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
@@ -1381,7 +1380,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
-            func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
+        func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)
     else:

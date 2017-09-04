@@ -145,6 +145,11 @@ def test_masked_unsupervised_kneighbors():
     assert_array_equal(X2_neigh, N3)
     assert_array_equal(XY2_neigh, N4)
 
+    # Test 3: Sparse matrix with NaN
+    neigh_sparse = neighbors.NearestNeighbors(n_neighbors=2,
+                                              metric="masked_euclidean")
+    assert_raises(ValueError, neigh_sparse.fit, csr_matrix(X))
+
 
 def test_unsupervised_inputs():
     # test the types of valid input into NearestNeighbors
