@@ -78,6 +78,8 @@ General Concepts
         We may sometimes assume that all optional parameters other than X and y
         are passed as keyword arguments only and may be positionally reordered.
 
+        Backwards compatibility for ``check_estimator``.
+
         See also :term:`deprecation`.
 
     categorical feature
