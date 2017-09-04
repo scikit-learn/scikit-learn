@@ -17,6 +17,7 @@ from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 
 # Load the iris dataset and randomly permute it
@@ -274,6 +275,20 @@ def test_sample_weight():
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
 
 
+def test_sample_weight_kwargs():
+    """Check that VotingClassifier passes sample_weight as kwargs"""
+    class MockClassifier(BaseEstimator, ClassifierMixin):
+        """Mock Classifier to check that sample_weight is received as kwargs"""
+        def fit(self, X, y, *args, **sample_weight):
+            assert_true('sample_weight' in sample_weight)
+
+    clf = MockClassifier()
+    eclf = VotingClassifier(estimators=[('mock', clf)], voting='soft')
+
+    # Should not raise an error.
+    eclf.fit(X, y, sample_weight=np.ones((len(y),)))
+
+
 def test_set_params():
     """set_params should be able to set estimators"""
     clf1 = LogisticRegression(random_state=123, C=1.0)
@@ -281,7 +296,14 @@ def test_set_params():
     clf3 = GaussianNB()
     eclf1 = VotingClassifier([('lr', clf1), ('rf', clf2)], voting='soft',
                              weights=[1, 2])
+    assert_true('lr' in eclf1.named_estimators)
+    assert_true(eclf1.named_estimators.lr is eclf1.estimators[0][1])
+    assert_true(eclf1.named_estimators.lr is eclf1.named_estimators['lr'])
     eclf1.fit(X, y)
+    assert_true('lr' in eclf1.named_estimators_)
+    assert_true(eclf1.named_estimators_.lr is eclf1.estimators_[0])
+    assert_true(eclf1.named_estimators_.lr is eclf1.named_estimators_['lr'])
+
     eclf2 = VotingClassifier([('lr', clf1), ('nb', clf3)], voting='soft',
                              weights=[1, 2])
     eclf2.set_params(nb=clf2).fit(X, y)

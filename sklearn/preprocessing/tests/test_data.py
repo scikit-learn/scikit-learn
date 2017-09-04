@@ -1233,6 +1233,15 @@ def test_robust_scale_axis1():
     assert_array_almost_equal(iqr, 1)
 
 
+def test_robust_scale_1d_array():
+    X = iris.data[:, 1]
+    X_trans = robust_scale(X)
+    assert_array_almost_equal(np.median(X_trans), 0)
+    q = np.percentile(X_trans, q=(25, 75))
+    iqr = q[1] - q[0]
+    assert_array_almost_equal(iqr, 1)
+
+
 def test_robust_scaler_zero_variance_features():
     # Check RobustScaler on toy data with zero variance features
     X = [[0., 1., +0.5],

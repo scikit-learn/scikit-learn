@@ -529,6 +529,50 @@ def test_pca_score3():
     assert_true(ll.argmax() == 1)
 
 
+def test_pca_score_with_different_solvers():
+    digits = datasets.load_digits()
+    X_digits = digits.data
+
+    pca_dict = {svd_solver: PCA(n_components=30, svd_solver=svd_solver,
+                                random_state=0)
+                for svd_solver in solver_list}
+
+    for pca in pca_dict.values():
+        pca.fit(X_digits)
+        # Sanity check for the noise_variance_. For more details see
+        # https://github.com/scikit-learn/scikit-learn/issues/7568
+        # https://github.com/scikit-learn/scikit-learn/issues/8541
+        # https://github.com/scikit-learn/scikit-learn/issues/8544
+        assert np.all((pca.explained_variance_ - pca.noise_variance_) >= 0)
+
+    # Compare scores with different svd_solvers
+    score_dict = {svd_solver: pca.score(X_digits)
+                  for svd_solver, pca in pca_dict.items()}
+    assert_almost_equal(score_dict['full'], score_dict['arpack'])
+    assert_almost_equal(score_dict['full'], score_dict['randomized'],
+                        decimal=3)
+
+
+def test_pca_zero_noise_variance_edge_cases():
+    # ensure that noise_variance_ is 0 in edge cases
+    # when n_components == min(n_samples, n_features)
+    n, p = 100, 3
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
+    # arpack raises ValueError for n_components == min(n_samples,
+    # n_features)
+    svd_solvers = ['full', 'randomized']
+
+    for svd_solver in svd_solvers:
+        pca = PCA(svd_solver=svd_solver, n_components=p)
+        pca.fit(X)
+        assert pca.noise_variance_ == 0
+
+        pca.fit(X.T)
+        assert pca.noise_variance_ == 0
+
+
 def test_svd_solver_auto():
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(1000, 50))
