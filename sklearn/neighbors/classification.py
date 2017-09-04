@@ -343,6 +343,19 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 
+    def _mode(self, pred_labels, weights, inliers):
+        if weights is None:
+            mode = np.array([stats.mode(pl)[0]
+                             for pl in pred_labels], dtype=np.int)
+        else:
+            mode = np.array([weighted_mode(pl, w)[0]
+                             for (pl, w)
+                             in zip(pred_labels, weights[inliers])],
+                            dtype=np.int)
+
+        mode = mode.ravel()
+        return mode
+
     def predict(self, X):
         """Predict the class labels for the provided data
 
@@ -418,16 +431,3 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 y_pred = y_pred.ravel()
 
         return y_pred
-
-    def _mode(self, pred_labels, weights, inliers):
-        if weights is None:
-            mode = np.array([stats.mode(pl)[0]
-                             for pl in pred_labels], dtype=np.int)
-        else:
-            mode = np.array([weighted_mode(pl, w)[0]
-                             for (pl, w)
-                             in zip(pred_labels, weights[inliers])],
-                            dtype=np.int)
-
-        mode = mode.ravel()
-        return mode
