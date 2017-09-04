@@ -1650,18 +1650,19 @@ def check_no_attributes_set_in_init(name, estimator):
     parents_init_params = _get_parent_args(type(estimator))
 
     # Test for no setting apart from parameters during init
-    for attr, val in vars(estimator).items():
-        if attr not in parents_init_params:
-            assert_in(attr, init_params,
-                      "Estimator %s should not set attribute"
-                      " %s during init." % (name, attr))
+    invalid_attr = (set(vars(estimator)) - set(init_params)
+                    - set(parents_init_params))
+    assert_false(invalid_attr,
+                 "Estimator %s should not set any attribute apart"
+                 " from parameters during init. It is not the"
+                 " case for %s." % (name, list(invalid_attr)))
     # Ensure that each parameter is set in init
-    list_attr = [attr for (attr, _) in vars(estimator).items()]
-    for param in init_params:
-        if param != "self":
-            assert_in(param, list_attr,
-                      "Estimator %s should store the parameter"
-                      " %s as an attribute during init." % (name, param))
+    invalid_attr = (set(init_params) - set(vars(estimator))
+                    - set(["self"]))
+    assert_false(invalid_attr,
+                 "Estimator %s should store all parameters "
+                 " as an attribute during init. It is not the"
+                 " case for %s." % (name, list(invalid_attr)))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
