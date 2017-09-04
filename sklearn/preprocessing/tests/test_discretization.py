@@ -21,7 +21,7 @@ X = np.array([[-2, 1.5, -4, -1],
 
 
 def test_fit_transform():
-    est = KBinsDiscretizer(n_bins=3).fit(X)
+    est = KBinsDiscretizer(n_bins=3, encode='ordinal').fit(X)
     expected = [[0, 0, 0, 0],
                 [1, 1, 1, 0],
                 [2, 2, 2, 1],
@@ -76,7 +76,7 @@ def test_invalid_n_bins_array():
 
 
 def test_fit_transform_n_bins_array():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3]).fit(X)
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='ordinal').fit(X)
     expected = [[0, 0, 0, 0],
                 [0, 1, 1, 0],
                 [1, 2, 2, 1],
@@ -94,7 +94,8 @@ def test_invalid_n_features():
 
 def test_ignored_transform():
     # Feature at col_idx=1 should not change
-    est = KBinsDiscretizer(n_bins=3, ignored_features=[1]).fit(X)
+    est = KBinsDiscretizer(n_bins=3, ignored_features=[1],
+                           encode='ordinal').fit(X)
 
     expected = [[0., 1.5, 0., 0.],
                 [1., 2.5, 1., 0.],
@@ -131,7 +132,8 @@ def test_same_min_max():
                   [1, 1]])
     est = assert_warns_message(UserWarning,
                                "Features 0 are constant and will be replaced "
-                               "with 0.", KBinsDiscretizer(n_bins=3).fit, X)
+                               "with 0.", KBinsDiscretizer
+                               (n_bins=3, encode='ordinal').fit, X)
     Xt = est.transform(X)
 
     expected = [[0, 0],
@@ -152,7 +154,8 @@ def test_transform_1d_behavior():
 
 
 def test_inverse_transform_with_ignored():
-    est = KBinsDiscretizer(n_bins=[2, 3, 0, 3], ignored_features=[1, 2]).fit(X)
+    est = KBinsDiscretizer(n_bins=[2, 3, 0, 3], ignored_features=[1, 2],
+                           encode='ordinal').fit(X)
     Xt = [[0, 1, -4.5, 0],
           [0, 2, -3.5, 0],
           [1, 3, -2.5, 1],
@@ -174,7 +177,7 @@ def test_numeric_stability():
     # Test up to discretizing nano units
     for i in range(1, 9):
         X = X_init / 10**i
-        Xt = KBinsDiscretizer(n_bins=2).fit_transform(X)
+        Xt = KBinsDiscretizer(n_bins=2, encode='ordinal').fit_transform(X)
         assert_array_equal(Xt_expected, Xt)
 
 

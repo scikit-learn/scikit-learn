@@ -33,7 +33,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         Column indices of ignored features. (Example: Categorical features.)
         If ``None``, all features will be discretized.
 
-    encode : {'ordinal', 'onehot', 'onehot-dense'}, (default='ordinal')
+    encode : {'onehot', 'onehot-dense', 'ordinal'}, (default='onehot')
         Method used to encode the transformed result.
 
         onehot:
@@ -68,7 +68,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     ...      [-1, 2, -3, -0.5],
     ...      [ 0, 3, -2,  0.5],
     ...      [ 1, 4, -1,    2]]
-    >>> est = KBinsDiscretizer(n_bins=3)
+    >>> est = KBinsDiscretizer(n_bins=3, encode='ordinal')
     >>> est.fit(X)  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     KBinsDiscretizer(...)
     >>> Xt = est.transform(X)
@@ -107,7 +107,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         ``1`` based on a parameter ``threshold``.
     """
 
-    def __init__(self, n_bins=2, ignored_features=None, encode='ordinal'):
+    def __init__(self, n_bins=2, ignored_features=None, encode='onehot'):
         self.n_bins = n_bins
         self.ignored_features = ignored_features
         self.encode = encode

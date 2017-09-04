@@ -455,7 +455,7 @@ K-bins discretization
   >>> X = np.array([[ -3., 5., 15 ],
   ...               [  0., 6., 14 ],
   ...               [  6., 3., 11 ]])
-  >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 3, 2]).fit(X)
+  >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 3, 2], encode='ordinal').fit(X)
   >>> est.bin_width_
   array([ 3.,  1.,  2.])
 
