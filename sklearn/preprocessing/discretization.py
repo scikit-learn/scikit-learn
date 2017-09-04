@@ -38,10 +38,12 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
 
         onehot:
             Encode the transformed result with one-hot encoding
-            and return a sparse matrix.
+            and return a sparse matrix. Ignored features are always
+            stacked to the right.
         onehot-dense:
             Encode the transformed result with one-hot encoding
-            and return a dense array.
+            and return a dense array. Ignored features are always
+            stacked to the right.
         ordinal:
             Return the bin identifier encoded as an integer value.
 

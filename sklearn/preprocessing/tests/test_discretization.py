@@ -190,31 +190,30 @@ def test_encode_options():
     # test valid encode options through comparison
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='ordinal').fit(X)
-    expected1 = est.transform(X)
+    Xt_1 = est.transform(X)
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='onehot-dense').fit(X)
-    expected2 = est.transform(X)
-    assert not sp.issparse(expected2)
+    Xt_2 = est.transform(X)
+    assert not sp.issparse(Xt_2)
     assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=False)
-                       .fit_transform(expected1),
-                       expected2)
-    assert_raises(ValueError, est.inverse_transform, expected2)
+                       .fit_transform(Xt_1), Xt_2)
+    assert_raises(ValueError, est.inverse_transform, Xt_2)
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='onehot').fit(X)
-    expected3 = est.transform(X)
-    assert sp.issparse(expected3)
+    Xt_3 = est.transform(X)
+    assert sp.issparse(Xt_3)
     assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=True)
-                       .fit_transform(expected1).toarray(),
-                       expected3.toarray())
-    assert_raises(ValueError, est.inverse_transform, expected3)
+                       .fit_transform(Xt_1).toarray(),
+                       Xt_3.toarray())
+    assert_raises(ValueError, est.inverse_transform, Xt_3)
 
 
 def test_one_hot_encode_with_ignored_features():
     est = KBinsDiscretizer(n_bins=3, ignored_features=[1, 2],
                            encode='onehot-dense').fit(X)
-    expected1 = est.transform(X)
-    expected2 = np.array([[1, 0, 0, 1, 0, 0, 1.5, -4],
-                          [0, 1, 0, 1, 0, 0, 2.5, -3],
-                          [0, 0, 1, 0, 1, 0, 3.5, -2],
-                          [0, 0, 1, 0, 0, 1, 4.5, -1]])
-    assert_array_equal(expected1, expected2)
+    Xt_1 = est.transform(X)
+    Xt_2 = np.array([[1, 0, 0, 1, 0, 0, 1.5, -4],
+                     [0, 1, 0, 1, 0, 0, 2.5, -3],
+                     [0, 0, 1, 0, 1, 0, 3.5, -2],
+                     [0, 0, 1, 0, 0, 1, 4.5, -1]])
+    assert_array_equal(Xt_1, Xt_2)
