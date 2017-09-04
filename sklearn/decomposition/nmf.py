@@ -1211,7 +1211,7 @@ class NMF(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be decomposed
 
-        y : Ignored.
+        y : Ignored
 
         W : array-like, shape (n_samples, n_components)
             If init='custom', it is used as initial guess for the solution.
@@ -1251,7 +1251,7 @@ class NMF(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Data matrix to be decomposed
 
-        y : Ignored.
+        y : Ignored
 
         Returns
         -------
