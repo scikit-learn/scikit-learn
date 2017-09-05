@@ -6,6 +6,7 @@ PYTHON ?= python
 CYTHON ?= cython
 NOSETESTS ?= nosetests
 CTAGS ?= ctags
+PYTEST ?= pytest
 
 # skip doctests on 32bit python
 BITS := $(shell python -c 'import struct; print(8 * struct.calcsize("P"))')
@@ -37,6 +38,11 @@ ifeq ($(BITS),64)
 	$(NOSETESTS) -s -v doc/*.rst doc/modules/ doc/datasets/ \
 	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
 	doc/tutorial/text_analytics
+endif
+
+test-doc-pytest:
+ifeq ($(BITS),64)
+	$(PYTEST) doc/
 endif
 
 test-coverage:
