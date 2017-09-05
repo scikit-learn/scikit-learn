@@ -240,7 +240,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
             mask[self.ignored_features] = False
 
         encode_sparse = self.encode == 'onehot'
-        return OneHotEncoder(n_values=np.array(self.n_bins_)[mask],
+        return OneHotEncoder(n_values=self.n_bins_[mask],
                              categorical_features='all'
                              if self.ignored_features is None else mask,
                              sparse=encode_sparse).fit_transform(Xt)
