@@ -38,7 +38,7 @@ def _check_shape(param, param_shape, name):
                          "but got %s" % (name, param_shape, param.shape))
 
 
-def _check_X(X, n_components=None, n_features=None):
+def _check_X(X, n_components=None, n_features=None, ensure_min_samples=1):
     """Check the input data X.
 
     Parameters
@@ -51,7 +51,8 @@ def _check_X(X, n_components=None, n_features=None):
     -------
     X : array, shape (n_samples, n_features)
     """
-    X = check_array(X, dtype=[np.float64, np.float32])
+    X = check_array(X, dtype=[np.float64, np.float32],
+                    ensure_min_samples=ensure_min_samples)
     if n_components is not None and X.shape[0] < n_components:
         raise ValueError('Expected n_samples >= n_components '
                          'but got n_components = %d, n_samples = %d'
@@ -187,7 +188,7 @@ class BaseMixture(six.with_metaclass(ABCMeta, DensityMixin, BaseEstimator)):
         -------
         self
         """
-        X = _check_X(X, self.n_components)
+        X = _check_X(X, self.n_components, ensure_min_samples=2)
         self._check_initial_parameters(X)
 
         # if we enable warm_start, we will have a unique initialisation

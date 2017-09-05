@@ -706,6 +706,8 @@ class TSNE(BaseEstimator):
                             'the array is small enough for it to fit in '
                             'memory. Otherwise consider dimensionality '
                             'reduction techniques (e.g. TruncatedSVD)')
+        if self.method == 'barnes_hut':
+            X = check_array(X, ensure_min_samples=2, dtype=np.float64)
         else:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                             dtype=np.float64)
