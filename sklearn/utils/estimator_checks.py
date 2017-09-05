@@ -13,7 +13,7 @@ import struct
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
-from sklearn.utils.testing import assert_raises, _get_args, _get_parent_args
+from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
@@ -1647,22 +1647,25 @@ def check_no_attributes_set_in_init(name, estimator):
         return
 
     init_params = _get_args(type(estimator).__init__)
-    parents_init_params = _get_parent_args(type(estimator))
+    parents_init_params = [param for params_parent in
+                           (_get_args(parent) for parent in
+                            type(estimator).__mro__)
+                           for param in params_parent]
 
     # Test for no setting apart from parameters during init
     invalid_attr = (set(vars(estimator)) - set(init_params)
                     - set(parents_init_params))
     assert_false(invalid_attr,
                  "Estimator %s should not set any attribute apart"
-                 " from parameters during init. It is not the"
-                 " case for %s." % (name, list(invalid_attr)))
+                 " from parameters during init. Found attributes %s."
+                 % (name, sorted(invalid_attr)))
     # Ensure that each parameter is set in init
     invalid_attr = (set(init_params) - set(vars(estimator))
                     - set(["self"]))
     assert_false(invalid_attr,
                  "Estimator %s should store all parameters"
-                 " as an attribute during init. It is not the"
-                 " case for %s." % (name, list(invalid_attr)))
+                 " as an attribute during init. Did not find "
+                 "attributes %s." % (name, sorted(invalid_attr)))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
