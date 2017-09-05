@@ -231,23 +231,19 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
                                  self.transformed_features_, copy=True,
                                  retain_order=True)
 
-        # only one-hot encode discretized features
+        if self.encode == 'ordinal':
+            return Xt
+
+        # Only one-hot encode discretized features
         mask = np.ones(X.shape[1], dtype=bool)
         if self.ignored_features is not None:
             mask[self.ignored_features] = False
 
-        if self.encode == 'onehot':
-            return OneHotEncoder(n_values=np.array(self.n_bins_)[mask],
-                                 categorical_features='all'
-                                 if self.ignored_features is None else mask,
-                                 sparse=True).fit_transform(Xt)
-        elif self.encode == 'onehot-dense':
-            return OneHotEncoder(n_values=np.array(self.n_bins_)[mask],
-                                 categorical_features='all'
-                                 if self.ignored_features is None else mask,
-                                 sparse=False).fit_transform(Xt)
-        else:
-            return Xt
+        encode_sparse = (self.encode == 'onehot')
+        return OneHotEncoder(n_values=np.array(self.n_bins_)[mask],
+                             categorical_features='all'
+                             if self.ignored_features is None else mask,
+                             sparse=encode_sparse).fit_transform(Xt)
 
     def _validate_X_post_fit(self, X):
         X = check_array(X, dtype='numeric')
@@ -300,10 +296,10 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, ["offset_", "bin_width_"])
 
-        # currently, preprocessing.OneHotEncoder
-        # don't support inverse_transform
+        # Currently, preprocessing.OneHotEncoder
+        # doesn't support inverse_transform
         if self.encode != 'ordinal':
-            raise ValueError("inverse_transform only support "
+            raise ValueError("inverse_transform only supports "
                              "'encode = ordinal'. "
                              "Got 'encode = {}' instead."
                              .format(self.encode))

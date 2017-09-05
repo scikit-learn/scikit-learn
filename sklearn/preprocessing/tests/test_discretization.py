@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 
 import numpy as np
+import scipy.sparse as sp
 from six.moves import range
 import warnings
-import scipy.sparse as sp
 
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
@@ -211,9 +211,9 @@ def test_encode_options():
 def test_one_hot_encode_with_ignored_features():
     est = KBinsDiscretizer(n_bins=3, ignored_features=[1, 2],
                            encode='onehot-dense').fit(X)
-    Xt_1 = est.transform(X)
-    Xt_2 = np.array([[1, 0, 0, 1, 0, 0, 1.5, -4],
-                     [0, 1, 0, 1, 0, 0, 2.5, -3],
-                     [0, 0, 1, 0, 1, 0, 3.5, -2],
-                     [0, 0, 1, 0, 0, 1, 4.5, -1]])
-    assert_array_equal(Xt_1, Xt_2)
+    Xt = est.transform(X)
+    Xt_expected = [[1, 0, 0, 1, 0, 0, 1.5, -4],
+                   [0, 1, 0, 1, 0, 0, 2.5, -3],
+                   [0, 0, 1, 0, 1, 0, 3.5, -2],
+                   [0, 0, 1, 0, 0, 1, 4.5, -1]]
+    assert_array_equal(Xt_expected, Xt)
