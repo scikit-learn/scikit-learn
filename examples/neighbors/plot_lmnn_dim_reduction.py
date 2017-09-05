@@ -21,8 +21,11 @@ print(__doc__)
 n_neighbors = 3
 random_state = 0
 
+# Load Olivetti Faces dataset
 faces = datasets.fetch_olivetti_faces()
 X, y = faces.data, faces.target
+
+# Split into train/test
 X_train, X_test, y_train, y_test = model_selection.\
     train_test_split(X, y, test_size=0.5, stratify=y,
                      random_state=random_state)
@@ -34,27 +37,27 @@ cmap_bold = None
 # Put the result into a color plot
 fig = plt.figure()
 
-# Reduce dimensions with PCA
+# Reduce dimension to 2 with PCA
 pca = decomposition.PCA(n_components=2, random_state=random_state)
 X_pca = pca.fit_transform(np.concatenate((X_train, X_test)))
 
-# Compute nearest neighbor accuracy
+# Compute nearest neighbor accuracy after PCA
 knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
 knn.fit(X_pca[:len(X_train)], y_train)
 acc_pca = knn.score(X_pca[len(X_train):], y_test)
 
-# Plot the points after PCA
+# Plot the points after transformation with PCA
 fig.add_subplot(131)
 plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap=cmap_bold)
 plt.title("PCA (3-nn test acc. = {:5.2f}%)".format(acc_pca * 100))
 
 
-# Reduce dimensions with LinearDiscriminantAnalysis
+# Reduce dimension to 2 with LinearDiscriminantAnalysis
 lda = LinearDiscriminantAnalysis(n_components=2)
 lda = lda.fit(X_train, y_train)
 LX = lda.transform(X)
 
-# Compute nearest neighbor accuracy
+# Compute nearest neighbor accuracy after LinearDiscriminantAnalysis
 knn.fit(lda.transform(X_train), y_train)
 acc_lda = knn.score(lda.transform(X_test), y_test)
 
@@ -63,7 +66,7 @@ fig.add_subplot(132)
 plt.scatter(LX[:, 0], LX[:, 1], c=y, cmap=cmap_bold)
 plt.title("LDA (test acc. = {:5.2f}%)".format(acc_lda * 100))
 
-# Reduce dimensions with LargeMarginNearestNeighbor
+# Reduce dimension to 2 with LargeMarginNearestNeighbor
 lmnn = neighbors.LargeMarginNearestNeighbor(n_neighbors=n_neighbors,
                                             n_features_out=2,
                                             verbose=1,
@@ -72,7 +75,7 @@ lmnn = neighbors.LargeMarginNearestNeighbor(n_neighbors=n_neighbors,
 lmnn = lmnn.fit(X_train, y_train)
 LX = lmnn.transform(X)
 
-# Compute nearest neighbor accuracy
+# Compute nearest neighbor accuracy after LargeMarginNearestNeighbor
 knn.fit(lmnn.transform(X_train), y_train)
 acc_lmnn = knn.score(lmnn.transform(X_test), y_test)
 
