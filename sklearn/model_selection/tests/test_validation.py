@@ -777,6 +777,8 @@ def test_cross_val_predict():
 
     assert_raises(ValueError, cross_val_predict, est, X, y, cv=BadCV())
 
+
+def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50)
 
     preds = cross_val_predict(LogisticRegression(), X, y,
@@ -789,10 +791,14 @@ def test_cross_val_predict():
                               method='decision_function')
     assert_equal(preds.shape, (150, 3))
 
+    # This specifically tests imbalanced splits for binary
+    # classification with decision_function. This is only
+    # applicable to classifiers that can be fit on a single
+    # class.
     X = X[:100]
     y = y[:100]
     preds = cross_val_predict(RidgeClassifier(), X, y,
-                              method='decision_function', cv=KFold())
+                              method='decision_function', cv=KFold(2))
     assert_equal(preds.shape, (100,))
 
     X, y = load_digits(return_X_y=True)
@@ -814,6 +820,20 @@ def test_cross_val_predict():
                          'in properly stratified folds.',
                          cross_val_predict, est, X, y,
                          cv=KFold(), method='decision_function')
+
+
+def test_cross_val_predict_predict_proba_shape():
+    X, y = make_classification(n_classes=2, n_samples=50)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_proba')
+    assert_equal(preds.shape, (50, 2))
+
+    X, y = load_iris(return_X_y=True)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_proba')
+    assert_equal(preds.shape, (150, 3))
 
 
 def test_cross_val_predict_input_types():

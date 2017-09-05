@@ -730,6 +730,10 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
         if n_classes != len(estimator.classes_):
             if len(predictions.shape) == 2 and \
                     predictions.shape[1] != len(estimator.classes_):
+                # This handles the case when the shape of predictions
+                # does not match the number of classes used to train
+                # it with. This case is found when sklearn.svm.SVC is
+                # set to `decision_function_shape='ovo'`.
                 raise ValueError('Shape of output predictions does not '
                                  'match number of classes in fold. '
                                  'Cannot reconcile different number of '
