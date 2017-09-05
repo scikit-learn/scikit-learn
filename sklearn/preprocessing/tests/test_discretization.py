@@ -183,11 +183,13 @@ def test_numeric_stability():
 
 def test_invalid_encode_option():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='invalid-encode')
-    assert_raises(ValueError, est.fit, X)
+    assert_raise_message(ValueError, "Valid options for 'encode' are "
+                         "('onehot', 'onehot-dense', 'ordinal'). "
+                         "Got 'encode = invalid-encode' instead.",
+                         est.fit, X)
 
 
 def test_encode_options():
-    # test valid encode options through comparison
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='ordinal').fit(X)
     Xt_1 = est.transform(X)
@@ -197,7 +199,9 @@ def test_encode_options():
     assert not sp.issparse(Xt_2)
     assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=False)
                        .fit_transform(Xt_1), Xt_2)
-    assert_raises(ValueError, est.inverse_transform, Xt_2)
+    assert_raise_message(ValueError, "inverse_transform only supports "
+                         "'encode = ordinal'. Got 'encode = onehot-dense' "
+                         "instead.", est.inverse_transform, Xt_2)
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
                            encode='onehot').fit(X)
     Xt_3 = est.transform(X)
@@ -205,7 +209,9 @@ def test_encode_options():
     assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=True)
                        .fit_transform(Xt_1).toarray(),
                        Xt_3.toarray())
-    assert_raises(ValueError, est.inverse_transform, Xt_3)
+    assert_raise_message(ValueError, "inverse_transform only supports "
+                         "'encode = ordinal'. Got 'encode = onehot' "
+                         "instead.", est.inverse_transform, Xt_2)
 
 
 def test_one_hot_encode_with_ignored_features():

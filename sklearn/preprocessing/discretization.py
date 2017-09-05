@@ -239,7 +239,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         if self.ignored_features is not None:
             mask[self.ignored_features] = False
 
-        encode_sparse = (self.encode == 'onehot')
+        encode_sparse = self.encode == 'onehot'
         return OneHotEncoder(n_values=np.array(self.n_bins_)[mask],
                              categorical_features='all'
                              if self.ignored_features is None else mask,
@@ -296,8 +296,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, ["offset_", "bin_width_"])
 
-        # Currently, preprocessing.OneHotEncoder
-        # doesn't support inverse_transform
+        # Currently, OneHotEncoder doesn't support inverse_transform
         if self.encode != 'ordinal':
             raise ValueError("inverse_transform only supports "
                              "'encode = ordinal'. "
