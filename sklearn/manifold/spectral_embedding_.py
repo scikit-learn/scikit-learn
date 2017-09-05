@@ -275,12 +275,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             eigen_solver = "lobpcg"
             # Revert the laplacian to its opposite to have lobpcg work
             laplacian *= -1
-        except ValueError as e:
-            if (laplacian.shape == (1, 1) and
-                    "k must be between 1 and the order of the square "
-                    "input matrix." in repr(e)):
-                msg = 'X might contain only one sample'
-                raise ValueError(msg).with_traceback(e.__traceback__)
 
     if eigen_solver == 'amg':
         # Use AMG to get a preconditioner and speed up the eigenvalue
