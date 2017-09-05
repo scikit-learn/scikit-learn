@@ -75,6 +75,13 @@ Decomposition, manifold learning and clustering
   division on Python 2 versions. :issue:`9492` by
   :user:`James Bourbeau <jrbourbeau>`.
 
+- Fixed a bug where the ``fit`` method of
+  :class:`cluster.affinity_propagation_.AffinityPropagation` stored cluster
+  centers as 3d array instead of 2d array in case of non-convergence. For the
+  same class, fixed undefined and arbitrary behavior in case of training data
+  where all samples had equal similarity.
+  :issue:`9612`. By :user:`Jonatan Samoocha <jsamoocha>`.
+
 Version 0.19
 ============
 
