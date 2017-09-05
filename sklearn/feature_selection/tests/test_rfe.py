@@ -332,7 +332,7 @@ def test_rfe_cv_n_jobs():
 
 
 def test_rfe_cv_groups():
-    # test cv with groups
+    generator = check_random_state(0)
     iris = load_iris()
     number_groups = 4
     groups = np.floor(np.linspace(0, number_groups, len(iris.target)))
@@ -340,10 +340,10 @@ def test_rfe_cv_groups():
     y = (iris.target > 0).astype(int)
 
     est_groups = RFECV(
-        estimator=RandomForestClassifier(),
+        estimator=RandomForestClassifier(random_state=generator),
         step=1,
         scoring='accuracy',
         cv=GroupKFold(n_splits=2)
     )
     est_groups.fit(X, y, groups=groups)
-    assert(est_groups.n_features_ > 0)
+    assert est_groups.n_features_ > 0
