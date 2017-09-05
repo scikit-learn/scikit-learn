@@ -167,7 +167,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     2
 
     In the multilabel case with binary label indicators:
-    
+
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
@@ -527,7 +527,8 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
 
-    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight
+    ).astype(np.float64)        # bug#9622
     t_sum = C.sum(axis=1)
     p_sum = C.sum(axis=0)
     n_correct = np.trace(C)
