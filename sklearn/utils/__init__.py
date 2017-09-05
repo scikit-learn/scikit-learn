@@ -14,7 +14,7 @@ from .validation import (as_float_array,
                          check_consistent_length, check_X_y, indexable,
                          check_symmetric)
 from .class_weight import compute_class_weight, compute_sample_weight
-from ..externals.joblib import cpu_count
+from ..externals.joblib import cpu_count, logger
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 
@@ -506,3 +506,23 @@ def indices_to_mask(indices, mask_length):
     mask[indices] = True
 
     return mask
+
+
+def message_with_time(source, message, time_):
+    """Create one line message for logging purposes
+
+    Parameters
+    ----------
+    source: str
+        String indicating the source or the reference of the message
+
+    message: str
+        Short message
+
+    time_: int
+        Time in seconds
+    """
+    start_message = '[%s]' % (source,)
+    end_message = "%s, total=%s" % (message, logger.short_format_time(time_))
+    dots_len = (68 - len(start_message) - len(end_message))
+    return ("%s %s %s" % (start_message, dots_len * '.', end_message))

@@ -983,10 +983,11 @@ def check_pipeline_verbosity_fit_predict(pipe_method):
     # check output
     verbose_output.seek(0)
     lines = verbose_output.readlines()
-    assert_true('[Pipeline] (step 1 of 2) transf ...' in lines[0])
-    assert_true('[Pipeline] (step 2 of 2) clf ...' in lines[1])
-    assert_true('[Pipeline] Total time elapsed: ' in lines[2])
-
+    assert_true('(step 1 of 2) transf' in lines[0])
+    assert_true('(step 2 of 2) clf' in lines[1])
+    assert_true('Total time elapsed' in lines[2])
+    for line in lines:
+        assert line.startswith('[Pipeline]')
 
 def test_pipeline_fit_verbosity():
     pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())], verbose=True)
@@ -1007,12 +1008,13 @@ def check_pipeline_verbosity_fit_transform(pipe_method, last_was_none=False):
     # check output
     verbose_output.seek(0)
     lines = verbose_output.readlines()
-    assert_true('[Pipeline] (step 1 of 2) mult1 ...' in lines[0])
+    assert_true('(step 1 of 2) mult1' in lines[0])
+    assert_true(lines[0].startswith('[Pipeline]'))
     if last_was_none:
-        assert_true('[Pipeline] Step mult2 is NoneType ...' in lines[1])
+        assert_true('Step mult2 is NoneType' in lines[1])
     else:
-        assert_true('[Pipeline] (step 2 of 2) mult2 ...' in lines[1])
-    assert_true('[Pipeline] Total time elapsed: ' in lines[2])
+        assert_true('(step 2 of 2) mult2' in lines[1])
+    assert_true('Total time elapsed' in lines[2])
 
 
 def test_pipeline_verbosity_fit_transform():
@@ -1037,9 +1039,12 @@ def check_feature_union_verbosity(feature_union_method):
     # check output
     verbose_output.seek(0)
     lines = verbose_output.readlines()
-    assert_true('[FeatureUnion] (step 1 of 2) mult1 ...' in lines[0])
-    assert_true('[FeatureUnion] (step 2 of 2) mult2 ...' in lines[1])
-    assert_true('[FeatureUnion] Total time elapsed: ' in lines[2])
+    assert_true('(step 1 of 2) mult1' in lines[0])
+    assert_true('(step 2 of 2) mult2' in lines[1])
+    assert_true('Total time elapsed' in lines[2])
+    assert_true(lines[0].startswith('[FeatureUnion]'))
+    assert_true(lines[1].startswith('[FeatureUnion]'))
+    assert_true(lines[2].startswith('[FeatureUnion]'))
 
 
 def test_feature_union_verbosity():

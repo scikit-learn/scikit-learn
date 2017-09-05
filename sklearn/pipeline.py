@@ -19,28 +19,12 @@ from .base import clone, TransformerMixin
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils.metaestimators import if_delegate_has_method
-from .utils import Bunch
+from .utils import Bunch, message_with_time
 from .utils.validation import check_memory
 
 from .utils.metaestimators import _BaseComposition
 
 __all__ = ['Pipeline', 'FeatureUnion']
-
-
-def _pretty_print(step_info):
-    """Helper method to print the information about execution of a particular
-    step of Pipeline / FeatureUnion (if verbosity is enabled). It receives a
-    string having information about current step and prints it in such a way
-    that its length is 70 characters.
-
-    Parameters
-    ----------
-    step_info : str
-        String of form '[ClassName] (step x of y) step_name ... time_elapsed'
-
-    """
-    name, elapsed = step_info.split('...')
-    print('%s%s%s' % (name, '.' * (70 - len(name + elapsed)), elapsed))
 
 
 class Pipeline(_BaseComposition):
@@ -190,11 +174,11 @@ class Pipeline(_BaseComposition):
                             % (estimator, type(estimator)))
 
     def _print_final_step(self, final_step_time_elapsed, time_elapsed_so_far):
-        _pretty_print('[Pipeline] (step %d of %d) %s ... %.5fs' %
-                      (len(self.steps), len(self.steps), self.steps[-1][0],
-                       final_step_time_elapsed))
-        _pretty_print('[Pipeline] Total time elapsed: ... %.5fs' %
-                      time_elapsed_so_far)
+        message = '(step %d of %d) %s' % (
+            len(self.steps), len(self.steps), self.steps[-1][0])
+        print(message_with_time('Pipeline', message, final_step_time_elapsed))
+        print(message_with_time(
+            'Pipeline', 'Total time elapsed:', time_elapsed_so_far))
 
     @property
     def _estimator_type(self):
@@ -250,9 +234,9 @@ class Pipeline(_BaseComposition):
             time_elapsed_so_far += step_time_elapsed
             # Logging time elapsed for current step to stdout
             if self.verbose:
-                _pretty_print('[Pipeline] (step %d of %d) %s ... %.5fs' %
-                              (step_idx + 1, len(self.steps), name,
-                               step_time_elapsed))
+                message = '(step %d of %d) %s' % (
+                    step_idx + 1, len(self.steps), name)
+                print(message_with_time('Pipeline', message, step_time_elapsed))
         if self._final_estimator is None:
             return Xt, {}, time_elapsed_so_far
         return Xt, fit_params_steps[self.steps[-1][0]], time_elapsed_so_far
@@ -326,10 +310,10 @@ class Pipeline(_BaseComposition):
         final_step_start_time = time.time()
         if last_step is None:
             if self.verbose:
-                _pretty_print('[Pipeline] Step %s is NoneType ...' %
-                              self.steps[-1][0])
-                _pretty_print('[Pipeline] Total time elapsed: ... %.5fs' %
-                              time_elapsed_so_far)
+                message = 'Step %s is NoneType' % (self.steps[-1][0],)
+                print(message_with_time('Pipeline', message, 0))
+                print(message_with_time(
+                    'Pipeline', 'Total time elapsed', time_elapsed_so_far))
             return Xt
         elif hasattr(last_step, 'fit_transform'):
             Xt = last_step.fit_transform(Xt, y, **fit_params)
@@ -635,8 +619,8 @@ def _fit_one_transformer(transformer, X, y, verbose=False, idx=None,
     transformer = transformer.fit(X, y)
     step_time_elapsed = time.time() - step_start_time
     if verbose:
-        _pretty_print('[FeatureUnion] (step %d of %d) %s ... %.5fs' %
-                      (idx + 1, total_steps, name, step_time_elapsed))
+        message = '(step %d of %d) %s' % (idx + 1, total_steps, name)
+        print(message_with_time('FeatureUnion', message, step_time_elapsed))
     return transformer
 
 
@@ -658,8 +642,8 @@ def _fit_transform_one(transformer, weight, X, y, verbose=False, idx=None,
         res = transformer.fit(X, y, **fit_params).transform(X)
     step_time_elapsed = time.time() - step_start_time
     if verbose:
-        _pretty_print('[FeatureUnion] (step %d of %d) %s ... %.5fs' %
-                      (idx + 1, total_steps, name, step_time_elapsed))
+        message = '(step %d of %d) %s' % (idx + 1, total_steps, name)
+        print(message_with_time('FeatureUnion', message, step_time_elapsed))
     # if we have a weight for this transformer, multiply output
     if weight is None:
         return res, transformer
@@ -803,8 +787,9 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             for idx, (name, transformer, _) in enumerate(all_transformers))
         time_elapsed = time.time() - start_time
         if self.verbose:
-            _pretty_print(
-                '[FeatureUnion] Total time elapsed: ... %.5fs' % time_elapsed)
+            print(message_with_time(
+                'FeatureUnion', 'Total time elapsed:', time_elapsed))
+
         self._update_transformer_list(transformers)
         return self
 
@@ -837,8 +822,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             for idx, (name, transformer, weight) in enumerate(all_transformers))
         time_elapsed = time.time() - start_time
         if self.verbose:
-            _pretty_print(
-                '[FeatureUnion] Total time elapsed: ... %.5fs' % time_elapsed)
+            print(message_with_time(
+                'FeatureUnion', 'Total time elapsed:', time_elapsed))
 
         if not result:
             # All transformers are None
