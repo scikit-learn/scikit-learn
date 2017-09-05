@@ -120,9 +120,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
          multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
          verbose=0)
     >>> print(clf.coef_)
-    [[ 0.08551385  0.39414796  0.49847831  0.37513797]]
+    [[ 0.08551956  0.39414641  0.49848001  0.37514411]]
     >>> print(clf.intercept_)
-    [ 0.28418066]
+    [ 0.2841812]
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
 
@@ -331,11 +331,11 @@ class LinearSVR(LinearModel, RegressorMixin):
          intercept_scaling=1.0, loss='epsilon_insensitive', max_iter=1000,
          random_state=0, tol=0.0001, verbose=0)
     >>> print(regr.coef_)
-    [ 16.35750999  26.91499923  42.30652207  60.47843124]
+    [ 16.36245986  26.91619359  42.30787928  60.47656073]
     >>> print(regr.intercept_)
-    [-4.29756543]
+    [-4.30039433]
     >>> print(regr.predict([[0, 0, 0, 0]]))
-    [-4.29756543]
+    [-4.30039433]
 
     See also
     --------
