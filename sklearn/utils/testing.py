@@ -65,8 +65,9 @@ try:
         'If your code relies on with_setup, please use'
         ' nose.tools.with_setup instead.')
     with_setup = deprecated(deprecation_message)(_with_setup)
+    additional_symbols_to_export = ['raises', 'with_setup']
 except ImportError:
-    pass
+    additional_symbols_to_export = []
 
 
 from numpy.testing import assert_almost_equal
@@ -81,12 +82,13 @@ from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
 from sklearn.utils._unittest_backport import TestCase
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
-           "assert_raises_regexp", "raises", "with_setup", "assert_true",
+           "assert_raises_regexp", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "SkipTest"]
+__all__.extend(additional_symbols_to_export)
 
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
