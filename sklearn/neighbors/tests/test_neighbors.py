@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
@@ -660,16 +661,13 @@ def test_radius_neighbors_regressor(n_samples=40,
 
             # test fix for issue #9654
             # test that nan is returned when no nearby observations
-            try:
-                y_pred_alt = neigh.predict([[-1]])
-                y_pred_alt_isnan = np.all(np.isnan(y_pred_alt))
-                raise_zero_div_error = False
+            X_test_nan = np.ones((1,n_features))*-1
+            if weights=='uniform':
+                assert_warns_message(RuntimeWarning, "Mean of empty slice.",
+                                     neigh.predict, X_test_nan)
 
-            except ZeroDivisionError:
-                raise_zero_div_error = True
+            assert_true(np.all(np.isnan(neigh.predict(X_test_nan))))
 
-            assert_false(raise_zero_div_error)
-            assert_true(y_pred_alt_isnan)
 
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
     # Test radius neighbors in multi-output regression (uniform weight)
