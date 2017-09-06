@@ -5794,7 +5794,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 ===============
 Release History
 ===============
-.. include:: whats_mew/v0.20.rst
+.. include:: whats_new/v0.20.rst
 .. include:: whats_new/v0.19.rst
 
 =================
