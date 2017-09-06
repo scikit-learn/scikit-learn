@@ -527,8 +527,8 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
 
-    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight
-    ).astype(np.float64)        # bug#9622
+    C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+    C = C.astype(np.float64)    # Bug#9622
     t_sum = C.sum(axis=1)
     p_sum = C.sum(axis=0)
     n_correct = np.trace(C)
