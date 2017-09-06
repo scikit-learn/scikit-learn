@@ -1025,6 +1025,10 @@ class OneClassSVM(BaseLibSVM):
         generator; If None, the random number generator is the RandomState
         instance used by `np.random`.
 
+        .. deprecated:: 0.20
+           ``random_state`` has been deprecated in 0.20 and will be removed in
+           0.22.
+
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
@@ -1080,6 +1084,11 @@ class OneClassSVM(BaseLibSVM):
         If X is not a C-ordered contiguous array it is copied.
 
         """
+
+        if self.random_state is not None:
+            warnings.warn("The random_state parameter is deprecated and will"
+                          " be removed in version 0.22.", DeprecationWarning)
+
         super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
                                      sample_weight=sample_weight, **params)
         return self
