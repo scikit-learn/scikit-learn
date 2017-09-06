@@ -484,12 +484,14 @@ def test_matthews_corrcoef_multiclass():
 
 
 def test_matthews_corrcoef_overflow():  # Bug#9622
+    rng = np.random.RandomState(20170906)
+
     def mcc_safe(y_true, y_pred):
         conf_matrix = confusion_matrix(y_true, y_pred)
         true_pos = conf_matrix[1,1]
         false_pos = conf_matrix[1,0]
         false_neg = conf_matrix[0,1]
-        n_points = float(conf_matrix.sum())
+        n_points = len(y_true)
         pos_rate = (true_pos + false_neg) / n_points
         activity = (true_pos + false_pos) / n_points
         mcc_numerator = true_pos / n_points - pos_rate * activity
@@ -497,15 +499,14 @@ def test_matthews_corrcoef_overflow():  # Bug#9622
         return mcc_numerator / np.sqrt(mcc_denominator)
 
     def random_ys(n_points):
-        x_true = np.random.sample(n_points)
-        x_pred = x_true + 0.2 * (np.random.sample(n_points) - 0.5)
-        y_true = (x_true > 0.5) * 1.0
-        y_pred = (x_pred > 0.5) * 1.0
+        x_true = rng.random_sample(n_points)
+        x_pred = x_true + 0.2 * (rng.random_sample(n_points) - 0.5)
+        y_true = (x_true > 0.5)
+        y_pred = (x_pred > 0.5)
         return y_true, y_pred
 
     for n_points in [100, 10000, 1000000]:
         y_true, y_pred = random_ys(n_points)
-        print(n_points)
         assert_almost_equal(matthews_corrcoef(y_true, y_true), 1.0)
         assert_almost_equal(matthews_corrcoef(y_true, y_pred),
                             mcc_safe(y_true, y_pred))
