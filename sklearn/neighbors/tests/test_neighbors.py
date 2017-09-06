@@ -21,7 +21,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
@@ -662,8 +661,8 @@ def test_radius_neighbors_regressor(n_samples=40,
 
             # test fix for issue #9654
             # test that nan is returned when no nearby observations
-            X_test_nan = np.ones((1,n_features))*-1
-            if weights=='uniform':
+            X_test_nan = np.ones((1, n_features))*-1
+            if weights == 'uniform':
                 assert_warns_message(RuntimeWarning, "Mean of empty slice.",
                                      neigh.predict, X_test_nan)
 
