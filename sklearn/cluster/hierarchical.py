@@ -687,6 +687,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         X : array-like, shape = [n_samples, n_features]
             The samples a.k.a. observations.
 
+        y : Ignored
+
         Returns
         -------
         self
@@ -833,6 +835,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         ----------
         X : array-like, shape = [n_samples, n_features]
             The data
+
+        y : Ignored
 
         Returns
         -------

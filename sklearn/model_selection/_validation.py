@@ -1015,6 +1015,7 @@ def learning_curve(estimator, X, y, groups=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``shuffle`` == 'True'.
 
+    Returns
     -------
     train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
@@ -1112,7 +1113,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     n_ticks = train_sizes_abs.shape[0]
     n_min_required_samples = np.min(train_sizes_abs)
     n_max_required_samples = np.max(train_sizes_abs)
-    if np.issubdtype(train_sizes_abs.dtype, np.float):
+    if np.issubdtype(train_sizes_abs.dtype, np.floating):
         if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
             raise ValueError("train_sizes has been interpreted as fractions "
                              "of the maximum number of training samples and "

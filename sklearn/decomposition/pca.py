@@ -220,7 +220,7 @@ class PCA(_BasePCA):
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
-        Equal to `X.mean(axis=1)`.
+        Equal to `X.mean(axis=0)`.
 
     n_components_ : int
         The estimated number of components. When n_components is set
@@ -319,6 +319,8 @@ class PCA(_BasePCA):
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         self : object
@@ -335,6 +337,8 @@ class PCA(_BasePCA):
         X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------
@@ -550,6 +554,8 @@ class PCA(_BasePCA):
         X : array, shape(n_samples, n_features)
             The data.
 
+        y : Ignored
+
         Returns
         -------
         ll : float
@@ -676,6 +682,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         self : object
@@ -761,6 +769,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------

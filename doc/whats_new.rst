@@ -43,6 +43,18 @@ Classifiers and regressors
 Enhancements
 ............
 
+Classifiers and regressors
+
+- In :class:`gaussian_process.GaussianProcessRegressor`, method ``predict``
+  is faster when using ``return_std=True`` in particular more when called
+  several times in a row. :issue:`9234` by :user:`andrewww <andrewww>`
+  and :user:`Minghui Liu <minghui-liu>`.
+
+- Add `named_estimators_` parameter in
+  :class:`sklearn.ensemble.voting_classifier` to access fitted
+  estimators. :issue:`9157` by :user:`Herilalaina Rakotoarison <herilalaina>`.
+
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -62,6 +74,13 @@ Decomposition, manifold learning and clustering
   :class:`decomposition.IncrementalPCA` used integer division instead of float
   division on Python 2 versions. :issue:`9492` by
   :user:`James Bourbeau <jrbourbeau>`.
+
+- Fixed a bug where the ``fit`` method of
+  :class:`cluster.affinity_propagation_.AffinityPropagation` stored cluster
+  centers as 3d array instead of 2d array in case of non-convergence. For the
+  same class, fixed undefined and arbitrary behavior in case of training data
+  where all samples had equal similarity.
+  :issue:`9612`. By :user:`Jonatan Samoocha <jsamoocha>`.
 
 Version 0.19
 ============
