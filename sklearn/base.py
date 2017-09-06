@@ -50,16 +50,16 @@ def clone(estimator, safe=True, deepcopy=None):
            Use ``deepcopy=True`` to get the previous behavior.
 
     deepcopy : boolean, optional
-        Whether to make a deep copy or a simple copy of the objects that ware
+        Whether to make a deep copy or a simple copy of the objects that are
         not estimators.
 
         .. versionadded:: 0.20
 
     """
-    if deepcopy is None:
+    if not safe and deepcopy is None:
         warnings.warn("A simple copy will be performed after 0.22 instead of a"
                       " deep copy. Set 'deepcopy=True' if you wish to make a"
-                      " deep copy of the objects which are not estimators.",
+                      " deep copy of the parameters which are not estimators.",
                       ChangedBehaviorWarning)
         deepcopy = True
 
