@@ -25,6 +25,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
 from sklearn.utils import deprecated
+from sklearn.exceptions import ChangedBehaviorWarning
 
 from sklearn.base import TransformerMixin
 from sklearn.utils.mocking import MockDataFrame
@@ -186,6 +187,12 @@ def test_clone_sparse_matrices():
         clf_cloned = clone(clf)
         assert_true(clf.empty.__class__ is clf_cloned.empty.__class__)
         assert_array_equal(clf.empty.toarray(), clf_cloned.empty.toarray())
+
+
+def test_clone_change_behavior_warning():
+    assert_warns_message(ChangedBehaviorWarning,
+                         "A simple copy will be performed after 0.22",
+                         clone, MyEstimator())
 
 
 def test_repr():
