@@ -10,6 +10,7 @@ import numpy as np
 from scipy import sparse
 from .externals import six
 from .utils.fixes import signature
+from .exceptions import ChangedBehaviorWarning
 from . import __version__
 
 
@@ -26,7 +27,7 @@ def _first_and_last_element(arr):
         return arr[0, 0], arr[-1, -1]
 
 
-def clone(estimator, safe=True):
+def clone(estimator, safe=True, deepcopy=None):
     """Constructs a new estimator with the same parameters.
 
     Clone does a deep copy of the model in an estimator
@@ -39,17 +40,39 @@ def clone(estimator, safe=True):
         The estimator or group of estimators to be cloned
 
     safe : boolean, optional
-        If safe is false, clone will fall back to a deep copy on objects
-        that are not estimators.
+
+        If safe is false, clone will fall back to a copy (deep copy or simple
+        copy depending of the ``deepcopy`` parameter) on objects that are not
+        estimators.
+
+        .. deprecated:: 0.20
+           From 0.22, only a simple copy will be done instead of a deep copy.
+           Use ``deepcopy=True`` to get the previous behavior.
+
+    deepcopy : boolean, optional
+        Whether to make a deep copy or a simple copy of the objects that ware
+        not estimators.
+
+        .. versionadded:: 0.20
 
     """
+    if deepcopy is None:
+        warnings.warn("A simple copy will be performed after 0.22 instead of a"
+                      " deep copy. Set 'deepcopy=True' if you wish to make a"
+                      " deep copy of the objects which are not estimators.",
+                      ChangedBehaviorWarning)
+        deepcopy = True
+
     estimator_type = type(estimator)
     # XXX: not handling dictionaries
     if estimator_type in (list, tuple, set, frozenset):
         return estimator_type([clone(e, safe=safe) for e in estimator])
     elif not hasattr(estimator, 'get_params'):
         if not safe:
-            return copy.deepcopy(estimator)
+            if deepcopy:
+                return copy.deepcopy(estimator)
+            else:
+                return copy.copy(estimator)
         else:
             raise TypeError("Cannot clone object '%s' (type %s): "
                             "it does not seem to be a scikit-learn estimator "
