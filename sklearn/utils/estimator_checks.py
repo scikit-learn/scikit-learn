@@ -36,11 +36,13 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 from sklearn.base import (clone, TransformerMixin, ClusterMixin,
-                          BaseEstimator, is_classifier, is_regressor)
+                          BaseEstimator, is_classifier, is_regressor,
+                          is_pairwise)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
+from sklearn.svm import SVC
 from sklearn.svm.base import BaseLibSVM
 from sklearn.linear_model.stochastic_gradient import BaseSGD
 from sklearn.pipeline import make_pipeline
@@ -48,6 +50,8 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
+from sklearn.metrics.pairwise import (rbf_kernel, cosine_similarity,
+                                      linear_kernel)
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
@@ -353,10 +357,22 @@ def _is_32bit():
     return struct.calcsize('P') * 8 == 32
 
 
+def gram_matrix_if_pairwise(X, estimator, kernel=linear_kernel):
+    if is_pairwise(estimator):
+        return kernel(X, X)
+    return X
+
+
 def check_estimator_sparse_data(name, estimator_orig):
+
+    # Sparse precomputed kernels aren't supported
+    if getattr(estimator_orig, 'kernel', None) == 'precomputed':
+        return
+
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
+    X = gram_matrix_if_pairwise(X, estimator_orig)
     X_csr = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
     # catch deprecation warnings
@@ -404,6 +420,7 @@ def check_sample_weights_pandas_series(name, estimator_orig):
         try:
             import pandas as pd
             X = pd.DataFrame([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
+            X = gram_matrix_if_pairwise(X, estimator_orig)
             y = pd.Series([1, 1, 1, 2, 2, 2])
             weights = pd.Series([1] * 6)
             try:
@@ -424,7 +441,7 @@ def check_sample_weights_list(name, estimator_orig):
     if has_fit_parameter(estimator_orig, "sample_weight"):
         estimator = clone(estimator_orig)
         rnd = np.random.RandomState(0)
-        X = rnd.uniform(size=(10, 3))
+        X = gram_matrix_if_pairwise(rnd.uniform(size=(10, 3)), estimator_orig)
         y = np.arange(10) % 3
         y = multioutput_estimator_convert_y_2d(estimator, y)
         sample_weight = [3] * 10
@@ -436,7 +453,8 @@ def check_sample_weights_list(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = rng.rand(40, 10).astype(object)
+    X = gram_matrix_if_pairwise(rng.rand(40, 10), estimator_orig)
+    X = X.astype(object)
     y = (X[:, 0] * 4).astype(np.int)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -483,6 +501,8 @@ def check_dict_unchanged(name, estimator_orig):
     else:
         X = 2 * rnd.uniform(size=(20, 3))
 
+    X = gram_matrix_if_pairwise(X, estimator_orig)
+
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -520,6 +540,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
     estimator = clone(estimator_orig)
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
+    X = gram_matrix_if_pairwise(X, estimator_orig)
     y = X[:, 0].astype(np.int)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
@@ -566,6 +587,7 @@ def check_fit2d_predict1d(name, estimator_orig):
     # check by fitting a 2d array and predicting with a 1d array
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
+    X = gram_matrix_if_pairwise(X, estimator_orig)
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -798,6 +820,7 @@ def check_pipeline_consistency(name, estimator_orig):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X -= X.min()
+    X = gram_matrix_if_pairwise(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
     set_random_state(estimator)
@@ -822,6 +845,7 @@ def check_fit_score_takes_y(name, estimator_orig):
     # in fit and score so they can be used in pipelines
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
+    X = gram_matrix_if_pairwise(X, estimator_orig)
     y = np.arange(10) % 3
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -847,6 +871,7 @@ def check_fit_score_takes_y(name, estimator_orig):
 def check_estimators_dtypes(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
+    X_train_32 = gram_matrix_if_pairwise(X_train_32, estimator_orig)
     X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
@@ -892,7 +917,8 @@ def check_estimators_empty_data_messages(name, estimator_orig):
 def check_estimators_nan_inf(name, estimator_orig):
     # Checks that Estimator X's do not contain NaN or inf.
     rnd = np.random.RandomState(0)
-    X_train_finite = rnd.uniform(size=(10, 3))
+    X_train_finite = gram_matrix_if_pairwise(rnd.uniform(size=(10, 3)),
+                                             estimator_orig)
     X_train_nan = rnd.uniform(size=(10, 3))
     X_train_nan[0, 0] = np.nan
     X_train_inf = rnd.uniform(size=(10, 3))
@@ -969,6 +995,7 @@ def check_estimators_pickle(name, estimator_orig):
 
     # some estimators can't do features less than 0
     X -= X.min()
+    X = gram_matrix_if_pairwise(X, estimator_orig, kernel=rbf_kernel)
 
     estimator = clone(estimator_orig)
 
@@ -1119,6 +1146,7 @@ def check_classifiers_train(name, classifier_orig):
         classifier = clone(classifier_orig)
         if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB']:
             X -= X.min()
+        X = gram_matrix_if_pairwise(X, classifier_orig)
         set_random_state(classifier)
         # raises error on malformed input for fit
         with assert_raises(ValueError, msg="The classifer {} does not"
@@ -1140,11 +1168,12 @@ def check_classifiers_train(name, classifier_orig):
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
-        with assert_raises(ValueError, msg="The classifier {} does not"
-                           " raise an error when the number of features "
-                           "in predict is different from the number of"
-                           " features in fit.".format(name)):
-            classifier.predict(X.T)
+        if not is_pairwise(classifier):
+            with assert_raises(ValueError, msg="The classifier {} does not"
+                               " raise an error when the number of features "
+                               "in predict is different from the number of"
+                               " features in fit.".format(name)):
+                classifier.predict(X.T)
         if hasattr(classifier, "decision_function"):
             try:
                 # decision_function agrees with predict
@@ -1160,12 +1189,13 @@ def check_classifiers_train(name, classifier_orig):
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
 
                 # raises error on malformed input for decision_function
-                with assert_raises(ValueError, msg="The classifier {} does"
-                                   " not raise an error when the number of "
-                                   "features in decision_function is "
-                                   "different from the number of features"
-                                   " in fit.".format(name)):
-                    classifier.decision_function(X.T)
+                if not is_pairwise(classifier):
+                    with assert_raises(ValueError, msg="The classifier {} does"
+                                       " not raise an error when the number of "
+                                       "features in decision_function is "
+                                       "different from the number of features"
+                                       " in fit.".format(name)):
+                        classifier.decision_function(X.T)
             except NotImplementedError:
                 pass
         if hasattr(classifier, "predict_proba"):
@@ -1194,6 +1224,7 @@ def check_estimators_fit_returns_self(name, estimator_orig):
     X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
     # some want non-negative input
     X -= X.min()
+    X = gram_matrix_if_pairwise(X, estimator_orig)
 
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -1241,7 +1272,7 @@ def check_supervised_y_2d(name, estimator_orig):
         # These only work on 2d, so this test makes no sense
         return
     rnd = np.random.RandomState(0)
-    X = rnd.uniform(size=(10, 3))
+    X = gram_matrix_if_pairwise(rnd.uniform(size=(10, 3)), estimator_orig)
     y = np.arange(10) % 3
     estimator = clone(estimator_orig)
     set_random_state(estimator)
@@ -1275,6 +1306,7 @@ def check_classifiers_classes(name, classifier_orig):
     # We need to make sure that we have non negative data, for things
     # like NMF
     X -= X.min() - .1
+    X = gram_matrix_if_pairwise(X, classifier_orig)
     y_names = np.array(["one", "two", "three"])[y]
 
     for y_names in [y_names, y_names.astype('O')]:
@@ -1408,6 +1440,11 @@ def check_class_weight_classifiers(name, classifier_orig):
         X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
                                                             random_state=0)
+
+        X_train = gram_matrix_if_pairwise(X_train, classifier_orig,
+                                          kernel=rbf_kernel)
+        X_test = gram_matrix_if_pairwise(X_test, classifier_orig,
+                                         kernel=rbf_kernel)
         n_centers = len(np.unique(y_train))
 
         if n_centers == 2:
@@ -1491,6 +1528,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
     X, y = make_blobs(random_state=0, n_samples=9)
     # some want non-negative input
     X -= X.min()
+    X = gram_matrix_if_pairwise(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
@@ -1565,6 +1603,7 @@ def check_sparsify_coefficients(name, estimator_orig):
 @ignore_warnings(category=DeprecationWarning)
 def check_classifier_data_not_an_array(name, estimator_orig):
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1]])
+    X = gram_matrix_if_pairwise(X, estimator_orig)
     y = [1, 1, 1, 2, 2, 2]
     y = multioutput_estimator_convert_y_2d(estimator_orig, y)
     check_estimators_data_not_an_array(name, estimator_orig, X, y)
@@ -1573,6 +1612,7 @@ def check_classifier_data_not_an_array(name, estimator_orig):
 @ignore_warnings(category=DeprecationWarning)
 def check_regressor_data_not_an_array(name, estimator_orig):
     X, y = _boston_subset(n_samples=50)
+    X = gram_matrix_if_pairwise(X, estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator_orig, y)
     check_estimators_data_not_an_array(name, estimator_orig, X, y)
 
@@ -1795,3 +1835,8 @@ def check_decision_proba_consistency(name, estimator_orig):
         a = estimator.predict_proba(X_test)[:, 1]
         b = estimator.decision_function(X_test)
         assert_array_equal(rankdata(a), rankdata(b))
+
+
+def check_pairwise_estimator():
+    est = SVC(kernel='precomputed')
+    check_estimator(est)
