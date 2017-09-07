@@ -66,7 +66,8 @@ MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',
                 'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression',
                 'RANSACRegressor', 'RadiusNeighborsRegressor',
-                'RandomForestRegressor', 'Ridge', 'RidgeCV']
+                'RandomForestRegressor', 'Ridge', 'RidgeCV',
+                "BaggingRegressor"]
 
 
 def _yield_non_meta_checks(name, estimator):
