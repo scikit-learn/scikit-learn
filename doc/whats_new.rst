@@ -60,6 +60,11 @@ Model evaluation and meta-estimators
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
   :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+- The ``axis`` parameter in
+  :class:`preprocessing.Imputer <preprocessing.Imputer>` is deprecated. Its
+  removal is planned for 0.22 release. :issue:`9672` by
+  :user:`Baze Petrushev <petrushev>`.
+
 Bug fixes
 .........
 
