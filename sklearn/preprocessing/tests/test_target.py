@@ -20,8 +20,7 @@ friedman = datasets.make_friedman1(random_state=0)
 
 
 def test_transform_target_regressor_error():
-    X = friedman[0]
-    y = friedman[1]
+    X, y = friedman
     # provide a transformer and functions at the same time
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       transformer=StandardScaler(),
@@ -43,8 +42,7 @@ def test_transform_target_regressor_error():
 
 
 def test_transform_target_regressor_invertible():
-    X = friedman[0]
-    y = friedman[1]
+    X, y = friedman
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       func=np.sqrt, inverse_func=np.log,
                                       check_inverse=True)
@@ -59,19 +57,18 @@ def test_transform_target_regressor_invertible():
     assert_no_warnings(regr.fit, X, y)
 
 
-def _check_standard_scaler(y, y_pred):
+def _check_standard_scaled(y, y_pred):
     y_mean = np.mean(y, axis=0)
     y_std = np.std(y, axis=0)
     assert_allclose((y - y_mean) / y_std, y_pred)
 
 
-def _check_custom_scaler(y, y_pred):
+def _check_shifted_by_one(y, y_pred):
     assert_allclose(y + 1, y_pred)
 
 
 def test_transform_target_regressor_functions():
-    X = friedman[0]
-    y = friedman[1]
+    X, y = friedman
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       func=np.log, inverse_func=np.exp)
     y_pred = regr.fit(X, y).predict(X)
@@ -105,8 +102,7 @@ def test_transform_target_regressor_functions_multioutput():
 
 
 def test_transform_target_regressor_1d_transformer():
-    X = friedman[0]
-    y = friedman[1]
+    X, y = friedman
     transformer = FunctionTransformer(func=lambda x: x + 1,
                                       inverse_func=lambda x: x - 1,
                                       validate=False)
@@ -116,7 +112,7 @@ def test_transform_target_regressor_1d_transformer():
     assert_equal(y.shape, y_pred.shape)
     # consistency forward transform
     y_tran = regr.transformer_.transform(y)
-    _check_custom_scaler(y, y_tran)
+    _check_shifted_by_one(y, y_tran)
     assert_equal(y.shape, y_pred.shape)
     # consistency inverse transform
     assert_allclose(y, regr.transformer_.inverse_transform(
@@ -142,7 +138,7 @@ def test_transform_target_regressor_1d_transformer_multioutput():
     assert_equal(y.shape, y_pred.shape)
     # consistency forward transform
     y_tran = regr.transformer_.transform(y)
-    _check_custom_scaler(y, y_tran)
+    _check_shifted_by_one(y, y_tran)
     assert_equal(y.shape, y_pred.shape)
     # consistency inverse transform
     assert_allclose(y, regr.transformer_.inverse_transform(
@@ -157,8 +153,7 @@ def test_transform_target_regressor_1d_transformer_multioutput():
 
 
 def test_transform_target_regressor_2d_transformer():
-    X = friedman[0]
-    y = friedman[1]
+    X, y = friedman
     transformer = StandardScaler()
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       transformer=transformer)
@@ -166,7 +161,7 @@ def test_transform_target_regressor_2d_transformer():
     assert_equal(y.shape, y_pred.shape)
     # consistency forward transform
     y_tran = regr.transformer_.transform(y.reshape(-1, 1)).squeeze()
-    _check_standard_scaler(y, y_tran)
+    _check_standard_scaled(y, y_tran)
     assert_equal(y.shape, y_pred.shape)
     # consistency inverse transform
     assert_allclose(y, regr.transformer_.inverse_transform(
@@ -190,7 +185,7 @@ def test_transform_target_regressor_2d_transformer_multioutput():
     assert_equal(y.shape, y_pred.shape)
     # consistency forward transform
     y_tran = regr.transformer_.transform(y)
-    _check_standard_scaler(y, y_tran)
+    _check_standard_scaled(y, y_tran)
     assert_equal(y.shape, y_pred.shape)
     # consistency inverse transform
     assert_allclose(y, regr.transformer_.inverse_transform(
