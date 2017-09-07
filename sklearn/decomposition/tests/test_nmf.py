@@ -163,7 +163,7 @@ def test_nmf_sparse_input():
     for solver in ('cd', 'mu'):
         est1 = NMF(solver=solver, n_components=5, init='random',
                    random_state=0, tol=1e-2)
-        est2 = clone(est1)
+        est2 = clone(est1, deepcopy=False)
 
     W1 = est1.fit_transform(A)
     W2 = est2.fit_transform(A_sparse)

@@ -313,7 +313,7 @@ def test_sag_pobj_matches_logistic_regression():
     clf1 = LogisticRegression(solver='sag', fit_intercept=False, tol=.0000001,
                               C=1. / alpha / n_samples, max_iter=max_iter,
                               random_state=10)
-    clf2 = clone(clf1)
+    clf2 = clone(clf1, deepcopy=False)
     clf3 = LogisticRegression(fit_intercept=False, tol=.0000001,
                               C=1. / alpha / n_samples, max_iter=max_iter,
                               random_state=10)
@@ -346,7 +346,7 @@ def test_sag_pobj_matches_ridge_regression():
 
     clf1 = Ridge(fit_intercept=fit_intercept, tol=.00000000001, solver='sag',
                  alpha=alpha, max_iter=n_iter, random_state=42)
-    clf2 = clone(clf1)
+    clf2 = clone(clf1, deepcopy=False)
     clf3 = Ridge(fit_intercept=fit_intercept, tol=.00001, solver='lsqr',
                  alpha=alpha, max_iter=n_iter, random_state=42)
 
@@ -380,7 +380,7 @@ def test_sag_regressor_computed_correctly():
 
     clf1 = Ridge(fit_intercept=fit_intercept, tol=tol, solver='sag',
                  alpha=alpha * n_samples, max_iter=max_iter)
-    clf2 = clone(clf1)
+    clf2 = clone(clf1, deepcopy=False)
 
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -468,7 +468,7 @@ def test_sag_regressor():
 
     clf1 = Ridge(tol=tol, solver='sag', max_iter=max_iter,
                  alpha=alpha * n_samples)
-    clf2 = clone(clf1)
+    clf2 = clone(clf1, deepcopy=False)
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
     score1 = clf1.score(X, y)
@@ -481,7 +481,7 @@ def test_sag_regressor():
 
     clf1 = Ridge(tol=tol, solver='sag', max_iter=max_iter,
                  alpha=alpha * n_samples)
-    clf2 = clone(clf1)
+    clf2 = clone(clf1, deepcopy=False)
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
     score1 = clf1.score(X, y)
@@ -510,7 +510,7 @@ def test_sag_classifier_computed_correctly():
     clf1 = LogisticRegression(solver='sag', C=1. / alpha / n_samples,
                               max_iter=n_iter, tol=tol, random_state=77,
                               fit_intercept=fit_intercept)
-    clf2 = clone(clf1)
+    clf2 = clone(clf1, deepcopy=False)
 
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -550,7 +550,7 @@ def test_sag_multiclass_computed_correctly():
     clf1 = LogisticRegression(solver='sag', C=1. / alpha / n_samples,
                               max_iter=max_iter, tol=tol, random_state=77,
                               fit_intercept=fit_intercept)
-    clf2 = clone(clf1)
+    clf2 = clone(clf1, deepcopy=False)
 
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -608,7 +608,7 @@ def test_classifier_results():
     y = np.sign(y)
     clf1 = LogisticRegression(solver='sag', C=1. / alpha / n_samples,
                               max_iter=max_iter, tol=tol, random_state=77)
-    clf2 = clone(clf1)
+    clf2 = clone(clf1, deepcopy=False)
 
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -639,7 +639,7 @@ def test_binary_classifier_class_weight():
                               max_iter=n_iter, tol=tol, random_state=77,
                               fit_intercept=fit_intercept,
                               class_weight=class_weight)
-    clf2 = clone(clf1)
+    clf2 = clone(clf1, deepcopy=False)
 
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
@@ -686,7 +686,7 @@ def test_multiclass_classifier_class_weight():
                               max_iter=max_iter, tol=tol, random_state=77,
                               fit_intercept=fit_intercept,
                               class_weight=class_weight)
-    clf2 = clone(clf1)
+    clf2 = clone(clf1, deepcopy=False)
     clf1.fit(X, y)
     clf2.fit(sp.csr_matrix(X), y)
 

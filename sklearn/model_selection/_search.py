@@ -621,13 +621,14 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                   " {2} fits".format(n_splits, n_candidates,
                                      n_candidates * n_splits))
 
-        base_estimator = clone(self.estimator)
+        base_estimator = clone(self.estimator, deepcopy=False)
         pre_dispatch = self.pre_dispatch
 
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch
-        )(delayed(_fit_and_score)(clone(base_estimator), X, y, scorers, train,
+        )(delayed(_fit_and_score)(clone(base_estimator, deepcopy=False),
+                                  X, y, scorers, train,
                                   test, self.verbose, parameters,
                                   fit_params=fit_params,
                                   return_train_score=self.return_train_score,
@@ -719,7 +720,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 self.best_index_]
 
         if self.refit:
-            self.best_estimator_ = clone(base_estimator).set_params(
+            self.best_estimator_ = clone(base_estimator,
+                                         deepcopy=False).set_params(
                 **self.best_params_)
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)

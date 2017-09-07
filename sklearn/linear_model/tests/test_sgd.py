@@ -198,7 +198,7 @@ class CommonTest(object):
     def test_clone(self):
         # Test whether clone works ok.
         clf = self.factory(alpha=0.01, penalty='l1')
-        clf = clone(clf)
+        clf = clone(clf, deepcopy=False)
         clf.set_params(penalty='l2')
         clf.fit(X, Y)
 

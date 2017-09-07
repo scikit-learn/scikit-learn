@@ -559,7 +559,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                       " {2} fits".format(len(cv), n_candidates,
                                          n_candidates * len(cv)))
 
-        base_estimator = clone(self.estimator)
+        base_estimator = clone(self.estimator, deepcopy=False)
 
         pre_dispatch = self.pre_dispatch
 
@@ -567,7 +567,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch
         )(
-            delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
+            delayed(_fit_and_score)(clone(base_estimator, deepcopy=False),
+                                    X, y, self.scorer_,
                                     train, test, self.verbose, parameters,
                                     self.fit_params, return_parameters=True,
                                     error_score=self.error_score)
@@ -614,7 +615,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = clone(base_estimator).set_params(
+            best_estimator = clone(base_estimator, deepcopy=False).set_params(
                 **best.parameters)
             if y is not None:
                 best_estimator.fit(X, y, **self.fit_params)

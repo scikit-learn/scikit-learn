@@ -191,7 +191,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                         pre_dispatch=pre_dispatch)
     scores = parallel(
         delayed(_fit_and_score)(
-            clone(estimator), X, y, scorers, train, test, verbose, None,
+            clone(estimator, deepcopy=False), X, y, scorers,
+            train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
             return_times=True)
         for train, test in cv.split(X, y, groups))
@@ -648,7 +649,8 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     prediction_blocks = parallel(delayed(_fit_and_predict)(
-        clone(estimator), X, y, train, test, verbose, fit_params, method)
+        clone(estimator, deepcopy=False), X, y,
+        train, test, verbose, fit_params, method)
         for train, test in cv.split(X, y, groups))
 
     # Concatenate the predictions
@@ -875,7 +877,8 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     score = _permutation_test_score(clone(estimator), X, y, groups, cv, scorer)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_permutation_test_score)(
-            clone(estimator), X, _shuffle(y, groups, random_state),
+            clone(estimator, deepcopy=False),
+            X, _shuffle(y, groups, random_state),
             groups, cv, scorer)
         for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
@@ -1058,7 +1061,7 @@ def learning_curve(estimator, X, y, groups=None,
                 train_test_proportions.append((train[:n_train_samples], test))
 
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train, test,
+            clone(estimator, deepcopy=False), X, y, scorer, train, test,
             verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in train_test_proportions)
         out = np.array(out)
@@ -1240,7 +1243,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
-        clone(estimator), X, y, scorer, train, test, verbose,
+        clone(estimator, deepcopy=False), X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)

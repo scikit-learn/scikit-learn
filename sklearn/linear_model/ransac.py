@@ -251,7 +251,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         check_consistent_length(X, y)
 
         if self.base_estimator is not None:
-            base_estimator = clone(self.base_estimator)
+            base_estimator = clone(self.base_estimator, deepcopy=False)
         else:
             base_estimator = LinearRegression()
 

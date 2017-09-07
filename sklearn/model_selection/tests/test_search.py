@@ -1159,10 +1159,10 @@ def test_fit_grid_point():
     for params in ({'C': 0.1}, {'C': 0.01}, {'C': 0.001}):
         for train, test in cv.split(X, y):
             this_scores, this_params, n_test_samples = fit_grid_point(
-                X, y, clone(svc), params, train, test,
+                X, y, clone(svc, deepcopy=False), params, train, test,
                 scorer, verbose=False)
 
-            est = clone(svc).set_params(**params)
+            est = clone(svc, deepcopy=False).set_params(**params)
             est.fit(X[train], y[train])
             expected_score = scorer(est, X[test], y[test])
 

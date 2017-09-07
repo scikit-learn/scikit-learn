@@ -122,7 +122,7 @@ class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        estimator = clone(self.base_estimator_)
+        estimator = clone(self.base_estimator_, deepcopy=False)
         estimator.set_params(**dict((p, getattr(self, p))
                                     for p in self.estimator_params))
 

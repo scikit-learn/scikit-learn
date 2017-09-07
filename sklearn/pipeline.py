@@ -205,7 +205,7 @@ class Pipeline(_BaseComposition):
                     # backward compatibility
                     cloned_transformer = transformer
                 else:
-                    cloned_transformer = clone(transformer)
+                    cloned_transformer = clone(transformer, deepcopy=False)
                 # Fit or load from cache the current transfomer
                 Xt, fitted_transformer = fit_transform_one_cached(
                     cloned_transformer, None, Xt, y,

@@ -166,7 +166,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
             features = np.arange(n_features)[support_]
 
             # Rank the remaining features
-            estimator = clone(self.estimator)
+            estimator = clone(self.estimator, deepcopy=False)
             if self.verbose > 0:
                 print("Fitting estimator with %d features." % np.sum(support_))
 
@@ -204,7 +204,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         # Set final attributes
         features = np.arange(n_features)[support_]
-        self.estimator_ = clone(self.estimator)
+        self.estimator_ = clone(self.estimator, deepcopy=False)
         self.estimator_.fit(X[:, features], y)
 
         # Compute step score when only n_features_to_select features left
@@ -450,7 +450,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.support_ = rfe.support_
         self.n_features_ = rfe.n_features_
         self.ranking_ = rfe.ranking_
-        self.estimator_ = clone(self.estimator)
+        self.estimator_ = clone(self.estimator, deepcopy=False)
         self.estimator_.fit(self.transform(X), y)
 
         # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1

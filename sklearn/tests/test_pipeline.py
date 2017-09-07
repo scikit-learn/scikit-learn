@@ -187,7 +187,7 @@ def test_pipeline_init():
     assert_raises(ValueError, pipe.set_params, anova__C=0.1)
 
     # Test clone
-    pipe2 = clone(pipe)
+    pipe2 = clone(pipe, deepcopy=False)
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
     # Check that apart from estimators, the parameters are the same
@@ -907,7 +907,8 @@ def test_pipeline_memory():
         # Test with Transformer + SVC
         clf = SVC(probability=True, random_state=0)
         transf = DummyTransf()
-        pipe = Pipeline([('transf', clone(transf)), ('svc', clf)])
+        pipe = Pipeline([('transf', clone(transf, deepcopy=False)),
+                         ('svc', clf)])
         cached_pipe = Pipeline([('transf', transf), ('svc', clf)],
                                memory=memory)
 

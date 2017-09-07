@@ -172,7 +172,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                     check_consistent_length(y, sample_weight)
                 base_estimator_sample_weight = sample_weight
             for train, test in cv.split(X, y):
-                this_estimator = clone(base_estimator)
+                this_estimator = clone(base_estimator, deepcopy=False)
                 if base_estimator_sample_weight is not None:
                     this_estimator.fit(
                         X[train], y[train],

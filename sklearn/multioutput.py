@@ -32,7 +32,7 @@ __all__ = ["MultiOutputRegressor", "MultiOutputClassifier", "ClassifierChain"]
 
 
 def _fit_estimator(estimator, X, y, sample_weight=None):
-    estimator = clone(estimator)
+    estimator = clone(estimator, deepcopy=False)
     if sample_weight is not None:
         estimator.fit(X, y, sample_weight=sample_weight)
     else:
@@ -43,7 +43,7 @@ def _fit_estimator(estimator, X, y, sample_weight=None):
 def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
                            first_time=True):
     if first_time:
-        estimator = clone(estimator)
+        estimator = clone(estimator, deepcopy=False)
 
     if sample_weight is not None:
         if classes is not None:
@@ -467,7 +467,7 @@ class ClassifierChain(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         elif sorted(self.order_) != list(range(Y.shape[1])):
                 raise ValueError("invalid order")
 
-        self.estimators_ = [clone(self.base_estimator)
+        self.estimators_ = [clone(self.base_estimator, deepcopy=False)
                             for _ in range(Y.shape[1])]
 
         self.classes_ = []

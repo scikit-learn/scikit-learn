@@ -137,7 +137,7 @@ def _yield_classifier_checks(name, classifier):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_supervised_y_no_nan(name, estimator_orig):
     # Checks that the Estimator targets are not NaN.
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     rng = np.random.RandomState(888)
     X = rng.randn(10, 5)
     y = np.ones(10) * np.inf
@@ -361,16 +361,17 @@ def check_estimator_sparse_data(name, estimator_orig):
     y = (4 * rng.rand(40)).astype(np.int)
     # catch deprecation warnings
     with ignore_warnings(category=DeprecationWarning):
-        estimator = clone(estimator_orig)
+        estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
     for sparse_format in ['csr', 'csc', 'dok', 'lil', 'coo', 'dia', 'bsr']:
         X = X_csr.asformat(sparse_format)
         # catch deprecation warnings
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
             if name in ['Scaler', 'StandardScaler']:
-                estimator = clone(estimator).set_params(with_mean=False)
+                estimator = clone(estimator,
+                                  deepcopy=False).set_params(with_mean=False)
             else:
-                estimator = clone(estimator)
+                estimator = clone(estimator, deepcopy=False)
         # fit and predict
         try:
             with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
@@ -399,7 +400,7 @@ def check_estimator_sparse_data(name, estimator_orig):
 def check_sample_weights_pandas_series(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type pandas.Series in the 'fit' function.
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     if has_fit_parameter(estimator, "sample_weight"):
         try:
             import pandas as pd
@@ -422,7 +423,7 @@ def check_sample_weights_list(name, estimator_orig):
     # check that estimators will accept a 'sample_weight' parameter of
     # type list in the 'fit' function.
     if has_fit_parameter(estimator_orig, "sample_weight"):
-        estimator = clone(estimator_orig)
+        estimator = clone(estimator_orig, deepcopy=False)
         rnd = np.random.RandomState(0)
         X = rnd.uniform(size=(10, 3))
         y = np.arange(10) % 3
@@ -438,7 +439,7 @@ def check_dtype_object(name, estimator_orig):
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10).astype(object)
     y = (X[:, 0] * 4).astype(np.int)
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     estimator.fit(X, y)
@@ -464,7 +465,7 @@ def check_complex_data(name, estimator_orig):
     X = np.random.sample(10) + 1j * np.random.sample(10)
     X = X.reshape(-1, 1)
     y = np.random.sample(10) + 1j * np.random.sample(10)
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     assert_raises_regex(ValueError, "Complex data not supported",
                         estimator.fit, X, y)
 
@@ -484,7 +485,7 @@ def check_dict_unchanged(name, estimator_orig):
         X = 2 * rnd.uniform(size=(20, 3))
 
     y = X[:, 0].astype(np.int)
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
@@ -517,7 +518,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
     if hasattr(estimator_orig.__init__, "deprecated_original"):
         # to not check deprecated classes
         return
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     y = X[:, 0].astype(np.int)
@@ -567,7 +568,7 @@ def check_fit2d_predict1d(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     y = X[:, 0].astype(np.int)
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     if hasattr(estimator, "n_components"):
@@ -591,7 +592,7 @@ def check_fit2d_1sample(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
     y = X[:, 0].astype(np.int)
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     if hasattr(estimator, "n_components"):
@@ -612,7 +613,7 @@ def check_fit2d_1feature(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
     y = X[:, 0].astype(np.int)
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     if hasattr(estimator, "n_components"):
@@ -633,7 +634,7 @@ def check_fit1d_1feature(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20))
     y = X.astype(np.int)
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     if hasattr(estimator, "n_components"):
@@ -655,7 +656,7 @@ def check_fit1d_1sample(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20))
     y = np.array([1])
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     if hasattr(estimator, "n_components"):
@@ -698,7 +699,7 @@ def check_transformer_data_not_an_array(name, transformer):
 def check_transformers_unfitted(name, transformer):
     X, y = _boston_subset()
 
-    transformer = clone(transformer)
+    transformer = clone(transformer, deepcopy=False)
     with assert_raises((AttributeError, ValueError), msg="The unfitted "
                        "transformer {} does not raise an error when "
                        "transform is called. Perhaps use "
@@ -716,7 +717,7 @@ def _check_transformer(name, transformer_orig, X, y):
         msg = name + ' is non deterministic on 32bit Python'
         raise SkipTest(msg)
     n_samples, n_features = np.asarray(X).shape
-    transformer = clone(transformer_orig)
+    transformer = clone(transformer_orig, deepcopy=False)
     set_random_state(transformer)
 
     # fit
@@ -729,7 +730,7 @@ def _check_transformer(name, transformer_orig, X, y):
 
     transformer.fit(X, y_)
     # fit_transform method should work on non fitted estimator
-    transformer_clone = clone(transformer)
+    transformer_clone = clone(transformer, deepcopy=False)
     X_pred = transformer_clone.fit_transform(X, y=y_)
 
     if isinstance(X_pred, tuple):
@@ -798,7 +799,7 @@ def check_pipeline_consistency(name, estimator_orig):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X -= X.min()
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
     set_random_state(estimator)
     pipeline = make_pipeline(estimator)
@@ -823,7 +824,7 @@ def check_fit_score_takes_y(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
     y = np.arange(10) % 3
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
     set_random_state(estimator)
 
@@ -856,7 +857,7 @@ def check_estimators_dtypes(name, estimator_orig):
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
-        estimator = clone(estimator_orig)
+        estimator = clone(estimator_orig, deepcopy=False)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
 
@@ -867,7 +868,7 @@ def check_estimators_dtypes(name, estimator_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_estimators_empty_data_messages(name, estimator_orig):
-    e = clone(estimator_orig)
+    e = clone(estimator_orig, deepcopy=False)
     set_random_state(e, 1)
 
     X_zero_samples = np.empty(0).reshape(0, 3)
@@ -908,7 +909,7 @@ def check_estimators_nan_inf(name, estimator_orig):
     for X_train in [X_train_nan, X_train_inf]:
         # catch deprecation warnings
         with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-            estimator = clone(estimator_orig)
+            estimator = clone(estimator_orig, deepcopy=False)
             set_random_state(estimator, 1)
             # try to fit
             try:
@@ -970,7 +971,7 @@ def check_estimators_pickle(name, estimator_orig):
     # some estimators can't do features less than 0
     X -= X.min()
 
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
 
     # some estimators only take multioutputs
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -999,7 +1000,7 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
     # check if number of features changes between calls to partial_fit.
     if not hasattr(estimator_orig, 'partial_fit'):
         return
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     X, y = make_blobs(n_samples=50, random_state=1)
     X -= X.min()
 
@@ -1022,7 +1023,7 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_clustering(name, clusterer_orig):
-    clusterer = clone(clusterer_orig)
+    clusterer = clone(clusterer_orig, deepcopy=False)
     X, y = make_blobs(n_samples=50, random_state=1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
@@ -1057,7 +1058,7 @@ def check_clustering(name, clusterer_orig):
 def check_clusterer_compute_labels_predict(name, clusterer_orig):
     """Check that predict is invariant of compute_labels"""
     X, y = make_blobs(n_samples=20, random_state=0)
-    clusterer = clone(clusterer_orig)
+    clusterer = clone(clusterer_orig, deepcopy=False)
 
     if hasattr(clusterer, "compute_labels"):
         # MiniBatchKMeans
@@ -1081,7 +1082,7 @@ def check_classifiers_one_label(name, classifier_orig):
     y = np.ones(10)
     # catch deprecation warnings
     with ignore_warnings(category=(DeprecationWarning, FutureWarning)):
-        classifier = clone(classifier_orig)
+        classifier = clone(classifier_orig, deepcopy=False)
         # try to fit
         try:
             classifier.fit(X_train, y)
@@ -1116,7 +1117,7 @@ def check_classifiers_train(name, classifier_orig):
         classes = np.unique(y)
         n_classes = len(classes)
         n_samples, n_features = X.shape
-        classifier = clone(classifier_orig)
+        classifier = clone(classifier_orig, deepcopy=False)
         if name in ['BernoulliNB', 'MultinomialNB', 'ComplementNB']:
             X -= X.min()
         set_random_state(classifier)
@@ -1195,7 +1196,7 @@ def check_estimators_fit_returns_self(name, estimator_orig):
     # some want non-negative input
     X -= X.min()
 
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     set_random_state(estimator)
@@ -1215,7 +1216,7 @@ def check_estimators_unfitted(name, estimator_orig):
     # Common test for Regressors as well as Classifiers
     X, y = _boston_subset()
 
-    est = clone(estimator_orig)
+    est = clone(estimator_orig, deepcopy=False)
 
     msg = "fit"
     if hasattr(est, 'predict'):
@@ -1243,7 +1244,7 @@ def check_supervised_y_2d(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 3))
     y = np.arange(10) % 3
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     set_random_state(estimator)
     # fit
     estimator.fit(X, y)
@@ -1285,7 +1286,7 @@ def check_classifiers_classes(name, classifier_orig):
             y_ = y_names
 
         classes = np.unique(y_)
-        classifier = clone(classifier_orig)
+        classifier = clone(classifier_orig, deepcopy=False)
         if name in ['BernoulliNB', 'ComplementNB']:
             X = X > X.mean()
         set_random_state(classifier)
@@ -1310,8 +1311,8 @@ def check_regressors_int(name, regressor_orig):
     y = multioutput_estimator_convert_y_2d(regressor_orig, y)
     rnd = np.random.RandomState(0)
     # separate estimators to control random seeds
-    regressor_1 = clone(regressor_orig)
-    regressor_2 = clone(regressor_orig)
+    regressor_1 = clone(regressor_orig, deepcopy=False)
+    regressor_2 = clone(regressor_orig, deepcopy=False)
     set_random_state(regressor_1)
     set_random_state(regressor_2)
 
@@ -1334,7 +1335,7 @@ def check_regressors_train(name, regressor_orig):
     X, y = _boston_subset()
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
     y = y.ravel()
-    regressor = clone(regressor_orig)
+    regressor = clone(regressor_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(regressor, y)
     rnd = np.random.RandomState(0)
     if not hasattr(regressor, 'alphas') and hasattr(regressor, 'alpha'):
@@ -1374,7 +1375,7 @@ def check_regressors_no_decision_function(name, regressor_orig):
     # checks whether regressors have decision_function or predict_proba
     rng = np.random.RandomState(0)
     X = rng.normal(size=(10, 4))
-    regressor = clone(regressor_orig)
+    regressor = clone(regressor_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(regressor, X[:, 0])
 
     if hasattr(regressor, "n_components"):
@@ -1415,7 +1416,7 @@ def check_class_weight_classifiers(name, classifier_orig):
         else:
             class_weight = {0: 1000, 1: 0.0001, 2: 0.0001}
 
-        classifier = clone(classifier_orig).set_params(
+        classifier = clone(classifier_orig, deepcopy=False).set_params(
             class_weight=class_weight)
         if hasattr(classifier, "n_iter"):
             classifier.set_params(n_iter=100)
@@ -1435,7 +1436,7 @@ def check_class_weight_classifiers(name, classifier_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_class_weight_balanced_classifiers(name, classifier_orig, X_train,
                                             y_train, X_test, y_test, weights):
-    classifier = clone(classifier_orig)
+    classifier = clone(classifier_orig, deepcopy=False)
     if hasattr(classifier, "n_iter"):
         classifier.set_params(n_iter=100)
     if hasattr(classifier, "max_iter"):
@@ -1491,7 +1492,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
     X, y = make_blobs(random_state=0, n_samples=9)
     # some want non-negative input
     X -= X.min()
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     y = multioutput_estimator_convert_y_2d(estimator, y)
 
     set_random_state(estimator)
@@ -1544,7 +1545,7 @@ def check_sparsify_coefficients(name, estimator_orig):
     X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1],
                   [-1, -2], [2, 2], [-2, -2]])
     y = [1, 1, 1, 2, 2, 2, 3, 3, 3]
-    est = clone(estimator_orig)
+    est = clone(estimator_orig, deepcopy=False)
 
     est.fit(X, y)
     pred_orig = est.predict(X)
@@ -1584,8 +1585,8 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y):
                        "for cross decomposition module as estimators "
                        "are not deterministic.")
     # separate estimators to control random seeds
-    estimator_1 = clone(estimator_orig)
-    estimator_2 = clone(estimator_orig)
+    estimator_1 = clone(estimator_orig, deepcopy=False)
+    estimator_2 = clone(estimator_orig, deepcopy=False)
     set_random_state(estimator_1)
     set_random_state(estimator_2)
 
@@ -1611,7 +1612,7 @@ def check_parameters_default_constructible(name, Estimator):
         else:
             estimator = Estimator()
         # test cloning
-        clone(estimator)
+        clone(estimator, deepcopy=False)
         # test __repr__
         repr(estimator)
         # test that set_params returns self
@@ -1695,9 +1696,9 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
 
     # LassoLars stops early for the default alpha=1.0 the iris dataset.
     if name == 'LassoLars':
-        estimator = clone(estimator_orig).set_params(alpha=0.)
+        estimator = clone(estimator_orig, deepcopy=False).set_params(alpha=0.)
     else:
-        estimator = clone(estimator_orig)
+        estimator = clone(estimator_orig, deepcopy=False)
     if hasattr(estimator, 'max_iter'):
         iris = load_iris()
         X, y_ = iris.data, iris.target
@@ -1719,7 +1720,7 @@ def check_non_transformer_estimators_n_iter(name, estimator_orig):
 def check_transformer_n_iter(name, estimator_orig):
     # Test that transformers with a parameter max_iter, return the
     # attribute of n_iter_ at least 1.
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
     if hasattr(estimator, "max_iter"):
         if name in CROSS_DECOMPOSITION:
             # Check using default data
@@ -1757,7 +1758,7 @@ def check_get_params_invariance(name, estimator_orig):
         def transform(self, X):
             return X
 
-    e = clone(estimator_orig)
+    e = clone(estimator_orig, deepcopy=False)
 
     shallow_params = e.get_params(deep=False)
     deep_params = e.get_params(deep=True)
@@ -1772,7 +1773,7 @@ def check_classifiers_regression_target(name, estimator_orig):
 
     boston = load_boston()
     X, y = boston.data, boston.target
-    e = clone(estimator_orig)
+    e = clone(estimator_orig, deepcopy=False)
     msg = 'Unknown label type: '
     assert_raises_regex(ValueError, msg, e.fit, X, y)
 
@@ -1786,7 +1787,7 @@ def check_decision_proba_consistency(name, estimator_orig):
     X, y = make_blobs(n_samples=100, random_state=0, n_features=4,
                       centers=centers, cluster_std=1.0, shuffle=True)
     X_test = np.random.randn(20, 2) + 4
-    estimator = clone(estimator_orig)
+    estimator = clone(estimator_orig, deepcopy=False)
 
     if (hasattr(estimator, "decision_function") and
             hasattr(estimator, "predict_proba")):

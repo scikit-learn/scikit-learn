@@ -200,7 +200,7 @@ class Kernel(six.with_metaclass(ABCMeta)):
 
     def clone_with_theta(self, theta):
         """Returns a clone of self with given hyperparameters theta. """
-        cloned = clone(self)
+        cloned = clone(self, deepcopy=False)
         cloned.theta = theta
         return cloned
 

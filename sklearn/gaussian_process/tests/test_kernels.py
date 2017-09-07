@@ -195,7 +195,7 @@ def check_hyperparameters_equal(kernel1, kernel2):
 def test_kernel_clone():
     # Test that sklearn's clone works correctly on kernels.
     for kernel in kernels:
-        kernel_cloned = clone(kernel)
+        kernel_cloned = clone(kernel, deepcopy=False)
 
         # XXX: Should this be fixed?
         # This differs from the sklearn's estimators equality check.
@@ -218,7 +218,7 @@ def test_kernel_clone_after_set_params():
     # for more details.
     bounds = (1e-5, 1e5)
     for kernel in kernels:
-        kernel_cloned = clone(kernel)
+        kernel_cloned = clone(kernel, deepcopy=False)
         params = kernel.get_params()
         # RationalQuadratic kernel is isotropic.
         isotropic_kernels = (ExpSineSquared, RationalQuadratic)
@@ -232,7 +232,7 @@ def test_kernel_clone_after_set_params():
                 params['length_scale'] = [length_scale] * 2
                 params['length_scale_bounds'] = bounds * 2
             kernel_cloned.set_params(**params)
-            kernel_cloned_clone = clone(kernel_cloned)
+            kernel_cloned_clone = clone(kernel_cloned, deepcopy=False)
             assert_equal(kernel_cloned_clone.get_params(),
                          kernel_cloned.get_params())
             assert_not_equal(id(kernel_cloned_clone), id(kernel_cloned))

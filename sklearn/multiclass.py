@@ -76,7 +76,7 @@ def _fit_binary(estimator, X, y, classes=None):
                           str(classes[c]))
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:
-        estimator = clone(estimator)
+        estimator = clone(estimator, deepcopy=False)
         estimator.fit(X, y)
     return estimator
 
@@ -247,7 +247,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             if not hasattr(self.estimator, "partial_fit"):
                 raise ValueError(("Base estimator {0}, doesn't have "
                                  "partial_fit method").format(self.estimator))
-            self.estimators_ = [clone(self.estimator) for _ in range
+            self.estimators_ = [clone(self.estimator, deepcopy=False)
+                                for _ in range
                                 (self.n_classes_)]
 
             # A sparse LabelBinarizer, with sparse_output=True, has been
@@ -541,7 +542,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self
         """
         if _check_partial_fit_first_call(self, classes):
-            self.estimators_ = [clone(self.estimator) for i in
+            self.estimators_ = [clone(self.estimator, deepcopy=False) for i in
                                 range(self.n_classes_ *
                                       (self.n_classes_ - 1) // 2)]
 

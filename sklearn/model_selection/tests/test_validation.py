@@ -361,7 +361,7 @@ def test_cross_validate():
         train_r2_scores = []
         test_r2_scores = []
         for train, test in cv.split(X, y):
-            est = clone(reg).fit(X[train], y[train])
+            est = clone(reg, deepcopy=False).fit(X[train], y[train])
             train_mse_scores.append(mse_scorer(est, X[train], y[train]))
             train_r2_scores.append(r2_scorer(est, X[train], y[train]))
             test_mse_scores.append(mse_scorer(est, X[test], y[test]))

@@ -173,7 +173,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             self.kernel_ = C(1.0, constant_value_bounds="fixed") \
                 * RBF(1.0, length_scale_bounds="fixed")
         else:
-            self.kernel_ = clone(self.kernel)
+            self.kernel_ = clone(self.kernel, deepcopy=False)
 
         self.rng = check_random_state(self.random_state)
 

@@ -46,7 +46,7 @@ def _check_behavior_2d(clf):
     # 1d case
     X = np.array([[0], [0], [0], [0]])  # ignored
     y = np.array([1, 2, 1, 1])
-    est = clone(clf)
+    est = clone(clf, deepcopy=False)
     est.fit(X, y)
     y_pred = est.predict(X)
     assert_equal(y.shape, y_pred.shape)
@@ -56,7 +56,7 @@ def _check_behavior_2d(clf):
                   [2, 0],
                   [1, 0],
                   [1, 3]])
-    est = clone(clf)
+    est = clone(clf, deepcopy=False)
     est.fit(X, y)
     y_pred = est.predict(X)
     assert_equal(y.shape, y_pred.shape)
@@ -69,7 +69,7 @@ def _check_behavior_2d_for_constant(clf):
                   [2, 0, 1, 2, 5],
                   [1, 0, 4, 5, 2],
                   [1, 3, 3, 2, 0]])
-    est = clone(clf)
+    est = clone(clf, deepcopy=False)
     est.fit(X, y)
     y_pred = est.predict(X)
     assert_equal(y.shape, y_pred.shape)

@@ -195,7 +195,7 @@ def test_multi_output_classification_partial_fit():
     # predictions are equal after first partial_fit and second partial_fit
     for i in range(3):
         # create a clone with the same state
-        sgd_linear_clf = clone(sgd_linear_clf)
+        sgd_linear_clf = clone(sgd_linear_clf, deepcopy=False)
         sgd_linear_clf.partial_fit(
             X[:half_index], y[:half_index, i], classes=classes[i])
         assert_array_equal(sgd_linear_clf.predict(X), first_predictions[:, i])
@@ -235,7 +235,8 @@ def test_multi_output_classification():
 
     # train the forest with each column and assert that predictions are equal
     for i in range(3):
-        forest_ = clone(forest)  # create a clone with the same state
+        # create a clone with the same state
+        forest_ = clone(forest, deepcopy=False)
         forest_.fit(X, y[:, i])
         assert_equal(list(forest_.predict(X)), list(predictions[:, i]))
         assert_array_equal(list(forest_.predict_proba(X)),
@@ -255,7 +256,8 @@ def test_multiclass_multioutput_estimator():
 
     # train the forest with each column and assert that predictions are equal
     for i in range(3):
-        multi_class_svc_ = clone(multi_class_svc)  # create a clone
+        # create a clone
+        multi_class_svc_ = clone(multi_class_svc, deepcopy=False)
         multi_class_svc_.fit(X, y[:, i])
         assert_equal(list(multi_class_svc_.predict(X)),
                      list(predictions[:, i]))

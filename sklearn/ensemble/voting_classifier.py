@@ -193,7 +193,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         transformed_y = self.le_.transform(y)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
+                delayed(_parallel_fit_estimator)(clone(clf, deepcopy=False),
+                                                 X, transformed_y,
                                                  sample_weight=sample_weight)
                 for clf in clfs if clf is not None)
 

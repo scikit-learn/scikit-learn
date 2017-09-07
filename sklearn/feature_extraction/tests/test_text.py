@@ -980,7 +980,7 @@ def test_tfidfvectorizer_export_idf():
 
 def test_vectorizer_vocab_clone():
     vect_vocab = TfidfVectorizer(vocabulary=["the"])
-    vect_vocab_clone = clone(vect_vocab)
+    vect_vocab_clone = clone(vect_vocab, deepcopy=False)
     vect_vocab.fit(ALL_FOOD_DOCS)
     vect_vocab_clone.fit(ALL_FOOD_DOCS)
     assert_equal(vect_vocab_clone.vocabulary_, vect_vocab.vocabulary_)

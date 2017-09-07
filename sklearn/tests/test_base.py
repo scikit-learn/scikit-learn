@@ -130,7 +130,7 @@ def test_clone_2():
 
     selector = SelectFpr(f_classif, alpha=0.1)
     selector.own_attribute = "test"
-    new_selector = clone(selector)
+    new_selector = clone(selector, deepcopy=False)
     assert_false(hasattr(new_selector, "own_attribute"))
 
 
@@ -138,30 +138,30 @@ def test_clone_buggy():
     # Check that clone raises an error on buggy estimators.
     buggy = Buggy()
     buggy.a = 2
-    assert_raises(RuntimeError, clone, buggy)
+    assert_raises(RuntimeError, clone, buggy, deepcopy=False)
 
     no_estimator = NoEstimator()
-    assert_raises(TypeError, clone, no_estimator)
+    assert_raises(TypeError, clone, no_estimator, deepcopy=False)
 
     varg_est = VargEstimator()
-    assert_raises(RuntimeError, clone, varg_est)
+    assert_raises(RuntimeError, clone, varg_est, deepcopy=False)
 
 
 def test_clone_empty_array():
     # Regression test for cloning estimators with empty arrays
     clf = MyEstimator(empty=np.array([]))
-    clf2 = clone(clf)
+    clf2 = clone(clf, deepcopy=False)
     assert_array_equal(clf.empty, clf2.empty)
 
     clf = MyEstimator(empty=sp.csr_matrix(np.array([[0]])))
-    clf2 = clone(clf)
+    clf2 = clone(clf, deepcopy=False)
     assert_array_equal(clf.empty.data, clf2.empty.data)
 
 
 def test_clone_nan():
     # Regression test for cloning estimators with default parameter as np.nan
     clf = MyEstimator(empty=np.nan)
-    clf2 = clone(clf)
+    clf2 = clone(clf, deepcopy=False)
 
     assert_true(clf.empty is clf2.empty)
 
@@ -173,7 +173,8 @@ def test_clone_copy_init_params():
                "This behavior is deprecated as of 0.18 and support "
                "for this behavior will be removed in 0.20.")
 
-    assert_warns_message(DeprecationWarning, message, clone, est)
+    assert_warns_message(DeprecationWarning, message, clone, est,
+                         deepcopy=False)
 
 
 def test_clone_sparse_matrices():
@@ -184,7 +185,7 @@ def test_clone_sparse_matrices():
     for cls in sparse_matrix_classes:
         sparse_matrix = cls(np.eye(5))
         clf = MyEstimator(empty=sparse_matrix)
-        clf_cloned = clone(clf)
+        clf_cloned = clone(clf, deepcopy=False)
         assert_true(clf.empty.__class__ is clf_cloned.empty.__class__)
         assert_array_equal(clf.empty.toarray(), clf_cloned.empty.toarray())
 
@@ -314,7 +315,7 @@ def test_clone_pandas_dataframe():
     d = np.arange(10)
     df = MockDataFrame(d)
     e = DummyEstimator(df, scalar_param=1)
-    cloned_e = clone(e)
+    cloned_e = clone(e, deepcopy=False)
 
     # the test
     assert_true((e.df == cloned_e.df).values.all())

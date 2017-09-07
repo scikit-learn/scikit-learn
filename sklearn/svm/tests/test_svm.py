@@ -810,7 +810,7 @@ def test_svc_clone_with_callable_kernel():
                            probability=True, random_state=0,
                            decision_function_shape='ovr')
     # clone for checking clonability with lambda functions..
-    svm_cloned = base.clone(svm_callable)
+    svm_cloned = base.clone(svm_callable, deepcopy=False)
     svm_cloned.fit(iris.data, iris.target)
 
     svm_builtin = svm.SVC(kernel='linear', probability=True, random_state=0,

@@ -312,7 +312,7 @@ def test_sparse_svc_clone_with_callable_kernel():
     # meaning that everything works fine.
     a = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
                 random_state=0)
-    b = base.clone(a)
+    b = base.clone(a, deepcopy=False)
 
     b.fit(X_sp, Y)
     pred = b.predict(X_sp)
