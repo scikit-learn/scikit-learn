@@ -67,12 +67,15 @@ ax0.hist(y, bins='auto', normed=True)
 ax0.set_xlim([0, 2000])
 ax0.set_ylabel('Probability')
 ax0.set_xlabel('Target')
-ax0.set_title('Target distribution \n (synthetic data)')
+ax0.set_title('Target distribution')
 
 ax1.hist(y_trans, bins='auto', normed=True)
 ax1.set_ylabel('Probability')
 ax1.set_xlabel('Target')
 ax1.set_title('Transformed target distribution')
+
+f.suptitle("Synthetic data", y=0.035)
+f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
@@ -93,8 +96,7 @@ ax0.scatter(y_test, y_pred)
 ax0.plot([0, 2000], [0, 2000], '--k')
 ax0.set_ylabel('Target predicted')
 ax0.set_xlabel('True Target')
-ax0.set_title('Ridge regression \n without target transformation \n (synthetic'
-              ' data)')
+ax0.set_title('Ridge regression \n without target transformation')
 ax0.text(100, 1750, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
 ax0.set_xlim([0, 2000])
@@ -115,6 +117,9 @@ ax1.text(100, 1750, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
 ax1.set_xlim([0, 2000])
 ax1.set_ylim([0, 2000])
+
+f.suptitle("Synthetic data", y=0.035)
+f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 ###############################################################################
 # Real-world data set
@@ -146,13 +151,15 @@ f, (ax0, ax1) = plt.subplots(1, 2)
 ax0.hist(y, bins='auto', normed=True)
 ax0.set_ylabel('Probability')
 ax0.set_xlabel('Target')
-ax0.set_title('Target distribution: \n distance to employment centers \n'
-              '(Boston housing data)')
+ax0.set_title('Target distribution')
 
 ax1.hist(y_trans, bins='auto', normed=True)
 ax1.set_ylabel('Probability')
 ax1.set_xlabel('Target')
 ax1.set_title('Transformed target distribution')
+
+f.suptitle("Boston housing data: distance to employment centers", y=0.035)
+f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
@@ -170,8 +177,7 @@ ax0.scatter(y_test, y_pred)
 ax0.plot([0, 10], [0, 10], '--k')
 ax0.set_ylabel('Target predicted')
 ax0.set_xlabel('True Target')
-ax0.set_title('Ridge regression \n without target transformation \n'
-              ' distance to employment centers\n(Boston data housing)')
+ax0.set_title('Ridge regression \n without target transformation')
 ax0.text(1, 9, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
 ax0.set_xlim([0, 10])
@@ -192,5 +198,8 @@ ax1.text(1, 9, r'$R^2$=%.2f, MAE=%.2f' % (
     r2_score(y_test, y_pred), median_absolute_error(y_test, y_pred)))
 ax1.set_xlim([0, 10])
 ax1.set_ylim([0, 10])
+
+f.suptitle("Boston housing data: distance to employment centers", y=0.035)
+f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 plt.show()
