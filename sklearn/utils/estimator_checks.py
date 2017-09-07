@@ -50,8 +50,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
-from sklearn.metrics.pairwise import (rbf_kernel, cosine_similarity,
-                                      linear_kernel)
+from sklearn.metrics.pairwise import rbf_kernel, linear_kernel
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
@@ -1191,8 +1190,8 @@ def check_classifiers_train(name, classifier_orig):
                 # raises error on malformed input for decision_function
                 if not is_pairwise(classifier):
                     with assert_raises(ValueError, msg="The classifier {} does"
-                                       " not raise an error when the number of "
-                                       "features in decision_function is "
+                                       " not raise an error when the number "
+                                       "of features in decision_function is "
                                        "different from the number of features"
                                        " in fit.".format(name)):
                         classifier.decision_function(X.T)
