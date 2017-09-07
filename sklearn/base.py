@@ -390,9 +390,9 @@ class RegressorMixin(object):
     
     def score_mse(self, X, y):
         """Returns the mean squared error of the prediction.
-        
+
         The mean squared error is provided in the unit of the domain.
-        
+
         Parameters
         ----------
         X : array-like, shape = (n_samples, n_features)
@@ -400,7 +400,7 @@ class RegressorMixin(object):
 
         y : array-like, shape = (n_samples) or (n_samples, n_outputs)
             True values for X.
-        
+
         Returns
         -------
         score : float
