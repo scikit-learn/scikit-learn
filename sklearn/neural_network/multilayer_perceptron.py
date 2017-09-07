@@ -49,7 +49,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
     @abstractmethod
     def __init__(self, hidden_layer_sizes, activation, solver,
                  alpha, batch_size, learning_rate, learning_rate_init, power_t,
-                 max_iter, loss, shuffle, random_state, tol, verbose,
+                 max_iter, max_fun, loss, shuffle, random_state, tol, verbose,
                  warm_start, momentum, nesterovs_momentum, early_stopping,
                  validation_fraction, beta_1, beta_2, epsilon):
         self.activation = activation
@@ -60,6 +60,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.learning_rate_init = learning_rate_init
         self.power_t = power_t
         self.max_iter = max_iter
+        self.max_fun = max_fun
         self.loss = loss
         self.hidden_layer_sizes = hidden_layer_sizes
         self.shuffle = shuffle
@@ -177,7 +178,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._unpack(packed_coef_inter)
         loss, coef_grads, intercept_grads = self._backprop(
             X, y, activations, deltas, coef_grads, intercept_grads)
-        self.n_iter_ += 1
         grad = _pack(coef_grads, intercept_grads)
         return loss, grad
 
@@ -389,6 +389,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                              self.shuffle)
         if self.max_iter <= 0:
             raise ValueError("max_iter must be > 0, got %s." % self.max_iter)
+        if self.max_fun <= 0:
+            raise ValueError("max_fun must be > 0, got %s." % self.max_fun)
         if self.alpha < 0.0:
             raise ValueError("alpha must be >= 0, got %s." % self.alpha)
         if (self.learning_rate in ["constant", "invscaling", "adaptive"] and
@@ -464,11 +466,12 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         optimal_parameters, self.loss_, d = fmin_l_bfgs_b(
             x0=packed_coef_inter,
             func=self._loss_grad_lbfgs,
-            maxfun=self.max_iter,
+            maxfun=self.max_fun,
             maxiter=self.max_iter,
             iprint=iprint,
             pgtol=self.tol,
             args=(X, y, activations, deltas, coef_grads, intercept_grads))
+        self.n_iter_ = d['nit']
 
         self._unpack(optimal_parameters)
 
@@ -769,6 +772,11 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         (how many times each data point will be used), not the number of
         gradient steps.
 
+    max_fun : int, optional, default 200
+        Maximum number of function calls. The solver iterates until convergence
+        (determined by 'tol') or this number of function calls.
+        Only used when solver='lbfgs'.
+
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
         solver='sgd' or 'adam'.
@@ -887,7 +895,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001, power_t=0.5, max_iter=200,
-                 shuffle=True, random_state=None, tol=1e-4,
+                 max_fun=200, shuffle=True, random_state=None, tol=1e-4,
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
@@ -898,9 +906,9 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                      activation=activation, solver=solver, alpha=alpha,
                      batch_size=batch_size, learning_rate=learning_rate,
                      learning_rate_init=learning_rate_init, power_t=power_t,
-                     max_iter=max_iter, loss='log_loss', shuffle=shuffle,
-                     random_state=random_state, tol=tol, verbose=verbose,
-                     warm_start=warm_start, momentum=momentum,
+                     max_iter=max_iter, max_fun=max_fun, loss='log_loss',
+                     shuffle=shuffle, random_state=random_state, tol=tol,
+                     verbose=verbose, warm_start=warm_start, momentum=momentum,
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
@@ -1146,6 +1154,11 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         (how many times each data point will be used), not the number of
         gradient steps.
 
+    max_fun : int, optional, default 200
+        Maximum number of function calls. The solver iterates until convergence
+        (determined by 'tol') or this number of function calls.
+        Only used when solver='lbfgs'.
+
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
         solver='sgd' or 'adam'.
@@ -1261,7 +1274,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001,
-                 power_t=0.5, max_iter=200, shuffle=True,
+                 power_t=0.5, max_iter=200, max_fun=200, shuffle=True,
                  random_state=None, tol=1e-4,
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
@@ -1273,9 +1286,9 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                      activation=activation, solver=solver, alpha=alpha,
                      batch_size=batch_size, learning_rate=learning_rate,
                      learning_rate_init=learning_rate_init, power_t=power_t,
-                     max_iter=max_iter, loss='squared_loss', shuffle=shuffle,
-                     random_state=random_state, tol=tol, verbose=verbose,
-                     warm_start=warm_start, momentum=momentum,
+                     max_iter=max_iter, max_fun=max_fun, loss='squared_loss',
+                     shuffle=shuffle, random_state=random_state, tol=tol,
+                     verbose=verbose, warm_start=warm_start, momentum=momentum,
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
