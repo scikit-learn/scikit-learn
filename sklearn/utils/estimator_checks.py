@@ -214,11 +214,17 @@ def _yield_clustering_checks(name, clusterer):
 
 
 def _yield_outliers_checks(name, estimator):
-    # test if NotFittedError is raised
-    yield check_estimators_unfitted
+    # some estimators like LocalOutlierFactor are not meant to be used on
+    # a test set and do not have (public) predict, decision_function and
+    # score_samples methods.
+    NO_TEST_SET = ['LocalOutlierFactor']
 
-    # predict and decision_function are private in LocalOutlierFactor
-    if name != 'LocalOutlierFactor':
+    # checks for all outlier detection estimators
+    yield check_outliers_fit_predict
+
+    # checks for estimators that can be used on a test set and that have public
+    # predict, decision_function and score_samples methods
+    if name not in NO_TEST_SET:
         yield check_outliers_train
         # test outlier detection estimators can handle non-array data
         yield check_classifier_data_not_an_array
@@ -228,6 +234,8 @@ def _yield_outliers_checks(name, estimator):
         # test that predict returns int and decision_function and score_samples
         # return float
         yield check_outliers_output_dtypes
+        # test if NotFittedError is raised
+        yield check_estimators_unfitted
 
 
 def _yield_all_checks(name, estimator):
@@ -1469,7 +1477,7 @@ def check_estimators_unfitted(name, estimator_orig):
     therefore be adequately raised for that purpose.
     """
 
-    # Common test for Regressors as well as Classifiers
+    # Common test for Regressors, Classifiers and Outlier detection estimators
     X, y = _boston_subset()
 
     est = clone(estimator_orig)
@@ -2122,3 +2130,19 @@ def check_outliers_output_dtypes(name, estimator_orig):
 
     score = estimator.score_samples(X)
     assert_equal(score.dtype, np.dtype('float'))
+
+
+def check_outliers_fit_predict(name, estimator_orig):
+    # Check fit_predict for outlier detection estimators
+
+    X, _ = make_blobs(n_samples=300, random_state=0)
+    X = shuffle(X, random_state=7)
+    n_samples, n_features = X.shape
+    estimator = clone(estimator_orig)
+
+    set_random_state(estimator)
+
+    y_pred = estimator.fit_predict(X)
+    assert_equal(y_pred.shape, (n_samples,))
+    assert_equal(y_pred.dtype, np.dtype('int'))
+    assert_equal(len(np.unique(y_pred)), 2)
