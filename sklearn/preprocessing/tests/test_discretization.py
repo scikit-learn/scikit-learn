@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 
 import numpy as np
-from six.moves import range
+import scipy.sparse as sp
 import warnings
 
+from sklearn.externals.six.moves import xrange as range
 from sklearn.preprocessing import KBinsDiscretizer
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils.testing import (
     assert_array_equal,
     assert_raises,
@@ -19,7 +21,7 @@ X = np.array([[-2, 1.5, -4, -1],
 
 
 def test_fit_transform():
-    est = KBinsDiscretizer(n_bins=3).fit(X)
+    est = KBinsDiscretizer(n_bins=3, encode='ordinal').fit(X)
     expected = [[0, 0, 0, 0],
                 [1, 1, 1, 0],
                 [2, 2, 2, 1],
@@ -74,7 +76,7 @@ def test_invalid_n_bins_array():
 
 
 def test_fit_transform_n_bins_array():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3]).fit(X)
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='ordinal').fit(X)
     expected = [[0, 0, 0, 0],
                 [0, 1, 1, 0],
                 [1, 2, 2, 1],
@@ -92,7 +94,8 @@ def test_invalid_n_features():
 
 def test_ignored_transform():
     # Feature at col_idx=1 should not change
-    est = KBinsDiscretizer(n_bins=3, ignored_features=[1]).fit(X)
+    est = KBinsDiscretizer(n_bins=3, ignored_features=[1],
+                           encode='ordinal').fit(X)
 
     expected = [[0., 1.5, 0., 0.],
                 [1., 2.5, 1., 0.],
@@ -129,7 +132,8 @@ def test_same_min_max():
                   [1, 1]])
     est = assert_warns_message(UserWarning,
                                "Features 0 are constant and will be replaced "
-                               "with 0.", KBinsDiscretizer(n_bins=3).fit, X)
+                               "with 0.", KBinsDiscretizer
+                               (n_bins=3, encode='ordinal').fit, X)
     Xt = est.transform(X)
 
     expected = [[0, 0],
@@ -150,7 +154,8 @@ def test_transform_1d_behavior():
 
 
 def test_inverse_transform_with_ignored():
-    est = KBinsDiscretizer(n_bins=[2, 3, 0, 3], ignored_features=[1, 2]).fit(X)
+    est = KBinsDiscretizer(n_bins=[2, 3, 0, 3], ignored_features=[1, 2],
+                           encode='ordinal').fit(X)
     Xt = [[0, 1, -4.5, 0],
           [0, 2, -3.5, 0],
           [1, 3, -2.5, 1],
@@ -172,5 +177,49 @@ def test_numeric_stability():
     # Test up to discretizing nano units
     for i in range(1, 9):
         X = X_init / 10**i
-        Xt = KBinsDiscretizer(n_bins=2).fit_transform(X)
+        Xt = KBinsDiscretizer(n_bins=2, encode='ordinal').fit_transform(X)
         assert_array_equal(Xt_expected, Xt)
+
+
+def test_invalid_encode_option():
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='invalid-encode')
+    assert_raise_message(ValueError, "Valid options for 'encode' are "
+                         "('onehot', 'onehot-dense', 'ordinal'). "
+                         "Got 'encode = invalid-encode' instead.",
+                         est.fit, X)
+
+
+def test_encode_options():
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
+                           encode='ordinal').fit(X)
+    Xt_1 = est.transform(X)
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
+                           encode='onehot-dense').fit(X)
+    Xt_2 = est.transform(X)
+    assert not sp.issparse(Xt_2)
+    assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=False)
+                       .fit_transform(Xt_1), Xt_2)
+    assert_raise_message(ValueError, "inverse_transform only supports "
+                         "'encode = ordinal'. Got 'encode = onehot-dense' "
+                         "instead.", est.inverse_transform, Xt_2)
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
+                           encode='onehot').fit(X)
+    Xt_3 = est.transform(X)
+    assert sp.issparse(Xt_3)
+    assert_array_equal(OneHotEncoder(n_values=[2, 3, 3, 3], sparse=True)
+                       .fit_transform(Xt_1).toarray(),
+                       Xt_3.toarray())
+    assert_raise_message(ValueError, "inverse_transform only supports "
+                         "'encode = ordinal'. Got 'encode = onehot' "
+                         "instead.", est.inverse_transform, Xt_2)
+
+
+def test_one_hot_encode_with_ignored_features():
+    est = KBinsDiscretizer(n_bins=3, ignored_features=[1, 2],
+                           encode='onehot-dense').fit(X)
+    Xt = est.transform(X)
+    Xt_expected = [[1, 0, 0, 1, 0, 0, 1.5, -4],
+                   [0, 1, 0, 1, 0, 0, 2.5, -3],
+                   [0, 0, 1, 0, 1, 0, 3.5, -2],
+                   [0, 0, 1, 0, 0, 1, 4.5, -1]]
+    assert_array_equal(Xt_expected, Xt)
