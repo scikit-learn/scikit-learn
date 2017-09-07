@@ -18,7 +18,6 @@ from functools import partial, reduce
 from itertools import product
 import operator
 import warnings
-import time
 
 import numpy as np
 from scipy.stats import rankdata
@@ -624,7 +623,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         base_estimator = clone(self.estimator)
         pre_dispatch = self.pre_dispatch
-        start_time = time.time()
 
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
@@ -633,7 +631,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                   test, self.verbose, parameters,
                                   fit_params=fit_params,
                                   return_train_score=self.return_train_score,
-                                  grid_search_start_time=start_time,
                                   return_n_test_samples=True,
                                   return_times=True, return_parameters=False,
                                   error_score=self.error_score)
@@ -885,9 +882,7 @@ class GridSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
-    return_train_score : boolean or 'warn', default='warn'
-        If ```warn```, the ``cv_results_`` attribute will include training
-        scores. It will raise a warning if scoring training set takes time.
+    return_train_score : boolean, default=True
         If ``'False'``, the ``cv_results_`` attribute will not include training
         scores.
 
@@ -1049,7 +1044,7 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
-                 return_train_score='warn'):
+                 return_train_score=True):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,

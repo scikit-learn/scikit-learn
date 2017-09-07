@@ -326,8 +326,7 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
-                   grid_search_start_time=None, return_parameters=False,
-                   return_n_test_samples=False,
+                   return_parameters=False, return_n_test_samples=False,
                    return_times=False, error_score='raise'):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -377,9 +376,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_train_score : boolean, optional, default: False
         Compute and return score on training set.
 
-    grid_search_start_time: time.time() instance, default: None
-        Indicates the starting time of GridSearch.
-
     return_parameters : boolean, optional, default: False
         Return parameters that has been used for the estimator.
 
@@ -392,8 +388,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     Returns
     -------
     train_scores : dict of scorer name -> float, optional
-        Score on training set (for all the scorers), returned
-        only if `return_train_score` is `True` or `warn`.
+        Score on training set (for all the scorers),
+         returned only if `return_train_score` is `True`.
 
     test_scores : dict of scorer name -> float, optional
         Score on testing set (for all the scorers).
@@ -472,17 +468,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         # _score will return dict if is_multimetric is True
         test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
         score_time = time.time() - start_time - fit_time
-        if return_train_score is True:
+        if return_train_score:
             train_scores = _score(estimator, X_train, y_train, scorer,
                                   is_multimetric)
-        if return_train_score is 'warn':
-            train_scores = _score(estimator, X_train, y_train, scorer,
-                                  is_multimetric)
-            score_train_time = time.time() - start_time - fit_time - score_time
-            if score_train_time >= 0.1*fit_time and time.time() - grid_search_start_time> 5:
-                warnings.warn("More time required due to large size of "
-                              "training set. Set ``return_train_score=True``"
-                              " to avoid warning")
 
     if verbose > 2:
         if is_multimetric:
