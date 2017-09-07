@@ -908,10 +908,10 @@ class GridSearchCV(BaseSearchCV):
            scoring=..., verbose=...)
     >>> sorted(clf.cv_results_.keys())
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ['mean_fit_time', 'mean_score_time', 'mean_test_score','param_C',
-     'param_kernel', 'params', 'rank_test_score', 'split0_test_score',
-     'split1_test_score', 'split2_test_score', 'std_fit_time',
-     'std_score_time', 'std_test_score',]
+    ['mean_fit_time', 'mean_score_time', 'mean_test_score','param_C',...
+     'param_kernel', 'params', 'rank_test_score', 'split0_test_score',...
+     'split1_test_score', 'split2_test_score', 'std_fit_time',...
+     'std_score_time', 'std_test_score'...]
 
     Attributes
     ----------
