@@ -389,7 +389,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     -------
     train_scores : dict of scorer name -> float, optional
         Score on training set (for all the scorers),
-         returned only if `return_train_score` is `True`.
+        returned only if `return_train_score` is `True`.
 
     test_scores : dict of scorer name -> float, optional
         Score on testing set (for all the scorers).
