@@ -915,8 +915,8 @@ def test_search_iid_param():
 
     # once with iid=False
     grid_search = GridSearchCV(SVC(),
-                               param_grid={'C': [1, 10]},
-                               cv=cv, iid=False)
+                               param_grid={'C': [1, 10]},cv=cv,
+                               iid=False, return_train_score=True)
     random_search = RandomizedSearchCV(SVC(), n_iter=2,
                                        param_distributions={'C': [1, 10]},
                                        cv=cv, iid=False)
