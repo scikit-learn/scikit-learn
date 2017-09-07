@@ -8,39 +8,17 @@ Large Margin Nearest Neighbor
 
 .. currentmodule:: sklearn.neighbors
 
-Large Margin Nearest Neighbor (:class:`lmnn.LargeMarginNearestNeighbor`) is
-a distance metric learning algorithm.
+Large Margin Nearest Neighbor (LMNN, :class:`LargeMarginNearestNeighbor`) is a distance metric learning algorithm which aims to improve the accuracy of nearest neighbors classification compared to the standard Euclidean distance.
 
-This transformer aims to learn a Mahalanobis metric that improves the
-accuracy of k-nearest neighbor classification compared to the standard
-Euclidean metric.
+For each training sample, the algorithm fixes :math:`k` "target neighbors", namely the :math:`k`-nearest training samples (as measured by the Euclidean distance) that share
+the same label. Given these target neighbors, LMNN learns a linear transformation of the data by optimizing a trade-off between two goals. The first one is to make each (transformed) point closer to its target neighbors than to any differently-labeled point by a large margin, thereby enclosing the target neighbors in a sphere around the reference sample. Data samples from different classes that violate this margin are called "impostors". The second goal is to minimize the distances of
+each sample to its target neighbors, which can be seen as some sort of regularization.
 
-As in support vector machines (SVMs), this method attempts to maximize the
-margin between data samples that belong to different classes, therefore the
-name of the method. Instead of a set of hyper-planes in a high or infinite
-dimensional space, LMNN constructs a set of hyper-spheres centered at each
-training point that are supposed to contain only samples that share the same
-label as the central point.
-
-In the beginning of the algorithm each training sample fixes :math:`k`
-target neighbors, namely the :math:`k` nearest training samples that share
-the same label according to some initial metric - most commonly the Euclidean.
-
-The first goal of the algorithm is to find a metric such that the distances of
-each sample to its target neighbors are minimized. The second goal of the
-algorithm is to create a large margin between the farthest target neighbor
-of each sample and data samples that belong to different classes, thereby
-enclosing the target neighbors in a sphere around the reference sample. Data
-samples from different classes that violate this margin are called impostors.
-
-Combined with a nearest neighbors classifier (:class:`classification.KNeighborsClassifier`)
-this method is attractive for classification because it requires no
-modification or extension for multi-class (as opposed to binary) problems
-and only a single parameter (``n_neighbors``) has to be selected by the user
+Combined with a nearest neighbors classifier (:class:`KNeighborsClassifier`), this method is attractive for classification because it can naturally handle multi-class problems without any increase in the model size, and only a single parameter (``n_neighbors``) has to be selected by the user
 before training.
 
-Large Margin Nearest Neighbor classification has been proven to work well in
-practice for data sets of varying size and difficulty.
+Large Margin Nearest Neighbor classification has been shown to work well in
+practice for data sets of varying size and difficulty. In contrast to related methods such as LDA, LMNN does not make any assumptions about the class distributions. The nearest neighbor classification can naturally produce highly irregular decision boundaries.
 
 
 .. Enter ../auto_examples/classification/images/sphx_glr_plot_lda_lmnn_001.png
@@ -61,15 +39,9 @@ practice for data sets of varying size and difficulty.
 Dimensionality reduction
 ========================
 
-:class:`lmnn.LargeMarginNearestNeighbor` can be used to
+:class:`LargeMarginNearestNeighbor` can be used to
 perform supervised dimensionality reduction. The input data are projected
-onto a linear subspace consisting of the directions which maximize the nearest
-neighbor classification accuracy. Therefore the separation between clusters
-of samples of the same class is also maximized.
-
-This is implemented in :func:`lmnn.LargeMarginNearestNeighbor.transform`.
-The desired dimensionality can be set using the ``n_features_out`` parameter
-in the constructor.
+onto a linear subspace consisting of the directions which maximize the LMNN objective. The desired dimensionality can be set using the parameter ``n_features_out``.
 
 .. Comment topic:: Examples:
     ..
@@ -80,72 +52,59 @@ in the constructor.
 Mathematical formulation
 ========================
 
-The LMNN objective function consists of two competing terms, the pull loss
-that pulls target neighbors closer to their reference samples and the push
-loss that pushes impostors away:
+LMNN learns a linear transformation matrix :math:`L` of size ``(n_features, n_features_out)``.
+
+The objective function consists of two competing terms, the pull loss that pulls target neighbors closer to their reference sample and the push loss that pushes impostors away:
 
 .. math::
 
-    \varepsilon_{\text{pull}} (L) = \sum_{i, j \rightsquigarrow i} ||L(x_i -
-     x_j)||^2
+    \varepsilon_{\text{pull}} (L) = \sum_{i, j \rightsquigarrow i} ||L(x_i - x_j)||^2,
+
+.. math::
 
     \varepsilon_{\text{push}} (L) = \sum_{i, j \rightsquigarrow i}
     \sum_{l} (1 - y_{il}) [1 + || L(x_i - x_j)||^2 - || L
-    (x_i - x_l)||^2]_+
-    \text{ where } y_{il} = 1 \text{ if } $y_i = y_l$ \text{ and 0 otherwise}.
+    (x_i - x_l)||^2]_+,
 
-    \varepsilon(L) = (1 - \mu) \varepsilon_{\text{pull}} (L) +
-    \mu \varepsilon_{\text{push}} (L) \text{, } \quad \mu \in [0,1]
+where :math:`y_{il} = 1` if :math:`y_i = y_l` and :math:`0` otherwise, :math:`[x]_+ = \max(0, x)` is the hinge loss, and :math:`j \rightsquigarrow i` means that the :math:`j^{th}` sample is a target neighbor of the :math:`i^{th}` sample.
 
+LMNN solves the following (nonconvex) minimization problem:
 
-The term inside the sum of the push loss is called the hingle loss and
-the notation amounts to :math:`[x]_+ = \max(0, x)`.
+.. math::
+
+    \min_L \varepsilon(L) = (1 - \mu) \varepsilon_{\text{pull}} (L) +
+    \mu \varepsilon_{\text{push}} (L) \text{, } \quad \mu \in [0,1].
+
 The parameter :math:`\mu` is a trade-off between penalizing large distances
 to target neighbors and penalizing margin violations by impostors. In practice,
 the two terms are weighted equally.
 
-To use this model for classification, we just need to use a nearest neighbors
-classifier (:class:`classification.KNeighborsClassifier`) on the data
-transformed by the linear transformation :math:`L` found by LMNN.
+To use this model for classification, one can simply fit a nearest neighbors
+classifier (:class:`KNeighborsClassifier`) on the data
+transformed by the linear transformation :math:`L` found by LMNN (this is implemented by :func:`LargeMarginNearestNeighbor.transform`).
 
-The loss function is not convex in :math:`L`, but there is an alternative
-formulation:
+
+Mahalanobis distance
+--------------------
+
+LMNN can be seen as learning a (squared) Mahalanobis distance metric:
 
 .. math::
 
-    \varepsilon_{\text{pull}} (M) = \sum_{i, j \rightsquigarrow i} (x_i-x_j)
-    ^T M (x_i-x_j)
+    || L(x_i - x_j)||^2 = (x_i - x_j)^TM(x_i - x_j),
 
-    \varepsilon_{\text{push}} (M) = \sum_{i, j \rightsquigarrow i}
-    \sum_{l} (1 - y_{il}) [1 + (x_i-x_j)^T M (x_i-x_j) - (x_i-x_l)^T M (x_i-x_l)]_+
-    \text{ where } y_{il} = 1 \text{ if } $y_i = y_l$ \text{ and 0 otherwise}.
-
-    \varepsilon(M) = (1 - \mu) \varepsilon_{\text{pull}} (M) +
-    \mu \varepsilon_{\text{push}} (M) \text{, } \quad \mu \in [0,1]
-
-
-This objective is now convex in :math:`M` but the matrix :math:`M = L^T L`
-must be constrained to be positive semidefinite as opposed to :math:`L`
-which could be any real matrix.
-
-
-In contrast to related methods such as LDA, LMNN does not make any
-assumptions about the class distributions. The nearest neighbor
-classification can naturally produce highly irregular decision boundaries.
-See [#1]_ for more details.
-
-
+where :math:`M = L L^T` is a symmetric positive semi-definite matrix of size ``(n_features, n_features)``. The objective function of LMNN can be rewritten and solved with respect to :math:`M` directly. This results in a convex but constrained problem (since :math:`M` must be symmetric positive semi-definite). See [#1]_ for more details.
 
 Implementation
 ==============
 
 This implementation follows closely the MATLAB implementation found at
 https://bitbucket.org/mlcircus/lmnn which solves the unconstrained problem.
-It finds a linear transformation :math:`L` by optimisation with
+It finds a linear transformation :math:`L` by optimization with
 L-BFGS instead of solving the constrained problem that finds the globally
-optimal metric. Different from the paper, the problem solved by this
-implementation is with the squared hinge loss (to make the problem
-differentiable).
+optimal distance metric. Different from the paper, the problem solved by this
+implementation is with the *squared* hinge loss (to make the problem
+differentiable). The parameter :math:`\mu` is fixed to :math:`0.5`.
 
 
 .. topic:: References:
