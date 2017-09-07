@@ -88,8 +88,10 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
-        the data for the dual coordinate descent (if ``dual=True``). If int,
-        random_state is the seed used by the random number generator; If
+        the data for the dual coordinate descent (if ``dual=True``). When
+        ``dual=False`` the underlying implementation of :class:`LinearSVC`
+        is not random and ``random_state`` has no effect on the results. If
+        int, random_state is the seed used by the random number generator; If
         RandomState instance, random_state is the random number generator; If
         None, the random number generator is the RandomState instance used by
         `np.random`.
@@ -1020,11 +1022,7 @@ class OneClassSVM(BaseLibSVM):
         Hard limit on iterations within solver, or -1 for no limit.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Ignored.
 
         .. deprecated:: 0.20
            ``random_state`` has been deprecated in 0.20 and will be removed in

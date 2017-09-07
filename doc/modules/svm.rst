@@ -428,7 +428,7 @@ Tips on Practical Use
     ``probability`` is set to ``True``). This randomness can be controlled
     with the ``random_state`` parameter. If ``probability`` is set to ``False``
     these estimators are not random and ``random_state`` has no effect on the
-    results.  The underlying :class:`OneClassSVM` implementation is similar to
+    results. The underlying :class:`OneClassSVM` implementation is similar to
     the ones of :class:`SVC` and :class:`NuSVC`. As no probability estimation
     is provided for :class:`OneClassSVM`, it is not random.
 
