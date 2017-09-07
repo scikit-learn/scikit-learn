@@ -19,6 +19,8 @@ from sklearn.utils.validation import column_or_1d
 class KBinsDiscretizer(BaseEstimator, TransformerMixin):
     """Bins continuous data into k equal width intervals.
 
+    Read more in the :ref:`User Guide <discretization>`.
+
     Parameters
     ----------
     n_bins : int or array-like, shape (n_features,) (default=2)
