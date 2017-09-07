@@ -60,6 +60,12 @@ Model evaluation and meta-estimators
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
   :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+Linear, kernelized and related models
+
+- Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
+  underlying implementation is not random.
+  :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
 Bug fixes
 .........
 
@@ -81,6 +87,15 @@ Decomposition, manifold learning and clustering
   same class, fixed undefined and arbitrary behavior in case of training data
   where all samples had equal similarity.
   :issue:`9612`. By :user:`Jonatan Samoocha <jsamoocha>`.
+
+API changes summary
+-------------------
+
+Linear, kernelized and related models
+
+- Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
+  underlying implementation is not random.
+  :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
 
 Version 0.19
 ============
