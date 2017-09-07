@@ -927,9 +927,9 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
         Parameters
         ----------
-        X : Ignored.
+        X : Ignored
 
-        y : Ignored.
+        y : Ignored
 
         Returns
         -------
@@ -1081,7 +1081,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : Ignored.
+        y : Ignored
 
         Returns
         -------
@@ -1253,7 +1253,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : Ignored.
+        y : Ignored
 
         Returns
         -------
@@ -1288,7 +1288,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : Ignored.
+        y : Ignored
 
         iter_offset : integer, optional
             The number of iteration on data batches that has been
