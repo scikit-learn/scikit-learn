@@ -870,7 +870,8 @@ def test_search_iid_param():
     # create "cv" for splits
     cv = [[mask, ~mask], [~mask, mask]]
     # once with iid=True (default)
-    grid_search = GridSearchCV(SVC(), param_grid={'C': [1, 10]}, cv=cv)
+    grid_search = GridSearchCV(SVC(), param_grid={'C': [1, 10]}, cv=cv,
+                               return_train_score=True)
     random_search = RandomizedSearchCV(SVC(), n_iter=2,
                                        param_distributions={'C': [1, 10]},
                                        cv=cv, return_train_score=True)
@@ -1463,7 +1464,8 @@ def test_grid_search_cv_splits_consistency():
     # Check consistency of folds across the parameters
     gs = GridSearchCV(LinearSVC(random_state=0),
                       param_grid={'C': [0.1, 0.1, 0.2, 0.2]},
-                      cv=KFold(n_splits=n_splits, shuffle=True))
+                      cv=KFold(n_splits=n_splits, shuffle=True),
+                      return_train_score=True)
     gs.fit(X, y)
 
     # As the first two param settings (C=0.1) and the next two param
