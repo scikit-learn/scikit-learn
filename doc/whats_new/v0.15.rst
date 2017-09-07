@@ -620,3 +620,4 @@ List of contributors for release 0.15 by number of commits.
 *   1	Andrew Ash
 *   1	Pietro Zambelli
 *   1	staubda
+

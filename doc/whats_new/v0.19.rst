@@ -480,7 +480,7 @@ Decomposition, manifold learning and clustering
   reported in :issue:`8992`.
 - Improve the learning schedule to match the one from the reference
   implementation `lvdmaaten/bhtsne <https://github.com/lvdmaaten/bhtsne>`_.
-     by :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
+  by :user:`Thomas Moreau <tomMoral>` and `Olivier Grisel`_.
 
 - Fix a bug in :class:`decomposition.LatentDirichletAllocation`
   where the ``perplexity`` method was returning incorrect results because
@@ -500,7 +500,7 @@ Decomposition, manifold learning and clustering
   :class:`decomposition.IncrementalPCA`.
   :issue:`9105` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
-- Fixed the implementation of noise_variance_ in :class:`decomposition.PCA`.
+- Fixed the implementation of ``noise_variance_`` in :class:`decomposition.PCA`.
   :issue:`9108` by `Hanmin Qin <https://github.com/qinhanmin2014>`_.
 
 - Fixed a bug where :class:`cluster.DBSCAN` gives incorrect
@@ -920,3 +920,4 @@ Dai, Greg Stupp, Grzegorz Szpak, Bertrand Thirion, Hadrien Bertrand, Harizo
 Rajaona, zxcvbnius, Henry Lin, Holger Peters, Icyblade Dai, Igor
 Andriushchenko, Ilya, Isaac Laughlin, Iván Vallés, Aurélien Bellet, JPFrancoia,
 Jacob Schreiber, Asish Mahapatra
+
