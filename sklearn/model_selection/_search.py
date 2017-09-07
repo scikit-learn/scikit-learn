@@ -1045,6 +1045,9 @@ class GridSearchCV(BaseSearchCV):
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
                  return_train_score=False):
+        warnings.warn(
+            "return_train_score will be set to False from 0.22",
+            FutureWarning)
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
