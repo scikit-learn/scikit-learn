@@ -483,14 +483,15 @@ def test_matthews_corrcoef_multiclass():
     assert_almost_equal(mcc, 0.)
 
 
-def test_matthews_corrcoef_overflow():  # Bug#9622
+def test_matthews_corrcoef_overflow():
+    # https://github.com/scikit-learn/scikit-learn/issues/9622
     rng = np.random.RandomState(20170906)
 
     def mcc_safe(y_true, y_pred):
         conf_matrix = confusion_matrix(y_true, y_pred)
-        true_pos = conf_matrix[1,1]
-        false_pos = conf_matrix[1,0]
-        false_neg = conf_matrix[0,1]
+        true_pos = conf_matrix[1, 1]
+        false_pos = conf_matrix[1, 0]
+        false_neg = conf_matrix[0, 1]
         n_points = len(y_true)
         pos_rate = (true_pos + false_neg) / n_points
         activity = (true_pos + false_pos) / n_points
@@ -498,7 +499,7 @@ def test_matthews_corrcoef_overflow():  # Bug#9622
         mcc_denominator = activity * pos_rate * (1 - activity) * (1 - pos_rate)
         return mcc_numerator / np.sqrt(mcc_denominator)
 
-    def random_ys(n_points):
+    def random_ys(n_points):    # binary
         x_true = rng.random_sample(n_points)
         x_pred = x_true + 0.2 * (rng.random_sample(n_points) - 0.5)
         y_true = (x_true > 0.5)
@@ -506,6 +507,11 @@ def test_matthews_corrcoef_overflow():  # Bug#9622
         return y_true, y_pred
 
     for n_points in [100, 10000, 1000000]:
+        arr = np.repeat([0., 1.], n_points)  # binary
+        assert_almost_equal(matthews_corrcoef(arr, arr), 1.0)
+        arr = np.repeat([0., 1., 2.], n_points)  # multiclass
+        assert_almost_equal(matthews_corrcoef(arr, arr), 1.0)
+
         y_true, y_pred = random_ys(n_points)
         assert_almost_equal(matthews_corrcoef(y_true, y_true), 1.0)
         assert_almost_equal(matthews_corrcoef(y_true, y_pred),
