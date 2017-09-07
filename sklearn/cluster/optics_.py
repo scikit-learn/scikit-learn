@@ -99,7 +99,9 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     rejection_ratio: float, optional
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
-        reject based on rejection_ratio.
+        reject based on rejection_ratio. Higher values will result in points
+        being more readily classified as noise; conversely, lower values will
+        result in more points being classified.
 
     similarity_threshold: float, optional
         Used to check if nodes can be moved up one level, that is, if the
@@ -113,7 +115,8 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
 
     significant_min: float, optional
         Sets a lower threshold on how small a significant maxima can be
-        min_cluster_size_ratio: float, optional
+
+    min_cluster_size_ratio: float, optional
         Minimum percentage of dataset expected for cluster membership.
 
     min_maxima_ratio: float, optional
@@ -212,7 +215,9 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
     rejection_ratio: float, optional
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
-        reject based on rejection_ratio.
+        reject based on rejection_ratio. Higher values will result in points
+        being more readily classified as noise; conversely, lower values will
+        result in more points being classified.
 
     similarity_threshold: float, optional
         Used to check if nodes can be moved up one level, that is, if the
@@ -226,7 +231,8 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
 
     significant_min: float, optional
         Sets a lower threshold on how small a significant maxima can be
-        min_cluster_size_ratio: float, optional
+
+    min_cluster_size_ratio: float, optional
         Minimum percentage of dataset expected for cluster membership.
 
     min_maxima_ratio: float, optional
@@ -497,7 +503,9 @@ def extract_optics(ordering, reachability, maxima_ratio=.75,
     rejection_ratio: float, optional
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
-        reject based on rejection_ratio.
+        reject based on rejection_ratio. Higher values will result in points
+        being more readily classified as noise; conversely, lower values will
+        result in more points being classified.
 
     similarity_threshold: float, optional
         Used to check if nodes can be moved up one level, that is, if the
@@ -511,7 +519,8 @@ def extract_optics(ordering, reachability, maxima_ratio=.75,
 
     significant_min: float, optional
         Sets a lower threshold on how small a significant maxima can be
-        min_cluster_size_ratio: float, optional
+
+    min_cluster_size_ratio: float, optional
         Minimum percentage of dataset expected for cluster membership.
 
     min_maxima_ratio: float, optional
