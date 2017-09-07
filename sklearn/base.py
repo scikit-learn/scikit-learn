@@ -386,6 +386,28 @@ class RegressorMixin(object):
         from .metrics import r2_score
         return r2_score(y, self.predict(X), sample_weight=sample_weight,
                         multioutput='variance_weighted')
+    
+    
+    def score_mse(self, X, y):
+        """Returns the mean squared error of the prediction.
+        
+        The mean squared error is provided in the unit of the domain.
+        
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+
+        y : array-like, shape = (n_samples) or (n_samples, n_outputs)
+            True values for X.
+        
+        Returns
+        -------
+        score : float
+            MSE of self.predict(X) wrt. y.
+        """
+        from .metrics import mean_squared_error
+        return mean_squared_error(y, self.predict(X))
 
 
 ###############################################################################
