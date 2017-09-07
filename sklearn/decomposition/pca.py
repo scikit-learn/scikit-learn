@@ -201,6 +201,9 @@ class PCA(_BasePCA):
     explained_variance_ : array, shape (n_components,)
         The amount of variance explained by each of the selected components.
 
+        Equal to n_components largest eigenvalues
+        of the covariance matrix of X.
+
         .. versionadded:: 0.18
 
     explained_variance_ratio_ : array, shape (n_components,)
@@ -217,7 +220,7 @@ class PCA(_BasePCA):
     mean_ : array, shape (n_features,)
         Per-feature empirical mean, estimated from the training set.
 
-        Equal to `X.mean(axis=1)`.
+        Equal to `X.mean(axis=0)`.
 
     n_components_ : int
         The estimated number of components. When n_components is set
@@ -231,6 +234,9 @@ class PCA(_BasePCA):
         Machine Learning" by C. Bishop, 12.2.1 p. 574 or
         http://www.miketipping.com/papers/met-mppca.pdf. It is required to
         computed the estimated data covariance and score samples.
+
+        Equal to the average of (min(n_features, n_samples) - n_components)
+        smallest eigenvalues of the covariance matrix of X.
 
     References
     ----------
@@ -313,6 +319,8 @@ class PCA(_BasePCA):
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         self : object
@@ -329,6 +337,8 @@ class PCA(_BasePCA):
         X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------
@@ -494,9 +504,10 @@ class PCA(_BasePCA):
         self.explained_variance_ratio_ = \
             self.explained_variance_ / total_var.sum()
         self.singular_values_ = S.copy()  # Store the singular values.
-        if self.n_components_ < n_features:
+        if self.n_components_ < min(n_features, n_samples):
             self.noise_variance_ = (total_var.sum() -
                                     self.explained_variance_.sum())
+            self.noise_variance_ /= min(n_features, n_samples) - n_components
         else:
             self.noise_variance_ = 0.
 
@@ -542,6 +553,8 @@ class PCA(_BasePCA):
         ----------
         X : array, shape(n_samples, n_features)
             The data.
+
+        y : Ignored
 
         Returns
         -------
@@ -669,6 +682,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         self : object
@@ -754,6 +769,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------

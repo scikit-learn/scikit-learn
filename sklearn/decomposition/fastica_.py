@@ -509,6 +509,8 @@ class FastICA(BaseEstimator, TransformerMixin):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
@@ -523,6 +525,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------
@@ -539,11 +543,11 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Data to transform, where n_samples is the number of samples
             and n_features is the number of features.
-        copy : bool (optional)
-            If False, data passed to fit are overwritten. Defaults to True.
         y : (ignored)
             .. deprecated:: 0.19
                This parameter will be removed in 0.21.
+        copy : bool (optional)
+            If False, data passed to fit are overwritten. Defaults to True.
 
         Returns
         -------

@@ -15,10 +15,10 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import fetch_mldata
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.externals.joblib import cpu_count
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import SGDClassifier
@@ -29,6 +29,7 @@ from sklearn.multioutput import ClassifierChain
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
+from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 
 
@@ -166,8 +167,9 @@ def test_multi_output_classification_partial_fit_parallelism():
     est1 = mor.estimators_[0]
     mor.partial_fit(X, y)
     est2 = mor.estimators_[0]
-    # parallelism requires this to be the case for a sane implementation
-    assert_false(est1 is est2)
+    if cpu_count() > 1:
+        # parallelism requires this to be the case for a sane implementation
+        assert_false(est1 is est2)
 
 
 def test_multi_output_classification_partial_fit():
@@ -356,7 +358,8 @@ def generate_multilabel_dataset_with_correlations():
     X, y = make_classification(n_samples=1000,
                                n_features=100,
                                n_classes=16,
-                               n_informative=10)
+                               n_informative=10,
+                               random_state=0)
 
     Y_multi = np.array([[int(yyy) for yyy in format(yy, '#06b')[2:]]
                         for yy in y])
@@ -378,6 +381,8 @@ def test_classifier_chain_fit_and_predict_with_logistic_regression():
 
     assert_equal([c.coef_.size for c in classifier_chain.estimators_],
                  list(range(X.shape[1], X.shape[1] + Y.shape[1])))
+
+    assert isinstance(classifier_chain, ClassifierMixin)
 
 
 def test_classifier_chain_fit_and_predict_with_linear_svc():
@@ -470,22 +475,17 @@ def test_classifier_chain_vs_independent_models():
     # Verify that an ensemble of classifier chains (each of length
     # N) can achieve a higher Jaccard similarity score than N independent
     # models
-    yeast = fetch_mldata('yeast')
-    X = yeast['data']
-    Y = yeast['target'].transpose().toarray()
-    X_train = X[:2000, :]
-    X_test = X[2000:, :]
-    Y_train = Y[:2000, :]
-    Y_test = Y[2000:, :]
+    X, Y = generate_multilabel_dataset_with_correlations()
+    X_train = X[:600, :]
+    X_test = X[600:, :]
+    Y_train = Y[:600, :]
+    Y_test = Y[600:, :]
 
     ovr = OneVsRestClassifier(LogisticRegression())
     ovr.fit(X_train, Y_train)
     Y_pred_ovr = ovr.predict(X_test)
 
-    chain = ClassifierChain(LogisticRegression(),
-                            order=np.array([0, 2, 4, 6, 8, 10,
-                                            12, 1, 3, 5, 7, 9,
-                                            11, 13]))
+    chain = ClassifierChain(LogisticRegression())
     chain.fit(X_train, Y_train)
     Y_pred_chain = chain.predict(X_test)
 
