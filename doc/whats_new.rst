@@ -242,6 +242,12 @@ Miscellaneous
   function/class signature. :issue:`9206` by `Alexandre Gramfort`_ and
   `Raghav RV`_.
 
+   - Introduced the :class:`datasets.ValueDropper` transformer to artificially
+     introduce missing values based on per-class or per-feature
+     drop-probabilities (for introducing NMAR missingness) or global
+     drop-probability (for introducing MCAR missingness).
+     :issue:`7084` by `Raghav RV`_.
+
 Enhancements
 ............
 
