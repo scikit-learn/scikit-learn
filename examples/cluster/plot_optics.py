@@ -66,8 +66,8 @@ ax1.plot(space[C == 3], R[C == 3], 'b.', alpha=0.3)
 ax1.plot(space[C == 4], R[C == 4], 'y.', alpha=0.3)
 ax1.plot(space[C == 5], R[C == 5], 'c.', alpha=0.3)
 ax1.plot(space[C == -1], R[C == -1], 'k.', alpha=0.3)
-ax1.plot(space, np.ones_like(space)*0.75, 'k-', alpha=0.5)
-ax1.plot(space, np.ones_like(space)*0.25, 'k-.', alpha=0.5)
+ax1.plot(space, np.ones_like(space) * 0.75, 'k-', alpha=0.5)
+ax1.plot(space, np.ones_like(space) * 0.25, 'k-.', alpha=0.5)
 
 # OPTICS
 ax2.plot(X[clust.labels_ == 1, 0], X[clust.labels_ == 1, 1], 'g.', alpha=0.3)
