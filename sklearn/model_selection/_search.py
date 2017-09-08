@@ -587,6 +587,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                               'the "fit" method.', RuntimeWarning)
             else:
                 fit_params = self.fit_params
+        if self.return_train_score is None:
+            warnings.warn("return_train_score will default to False from 0.22,"
+                          " please explicitly set return_train_score=True "
+                          "to maintain current behaviour", FutureWarning)
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
@@ -882,7 +886,7 @@ class GridSearchCV(BaseSearchCV):
         FitFailedWarning is raised. This parameter does not affect the refit
         step, which will always raise the error.
 
-    return_train_score : boolean, default=False
+    return_train_score : boolean, default=None
         If ``'False'``, the ``cv_results_`` attribute will not include training
         scores.
 
@@ -1042,10 +1046,7 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
-                 return_train_score=False):
-        warnings.warn(
-            "return_train_score will be set to False from 0.22",
-            FutureWarning)
+                 return_train_score=None):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
