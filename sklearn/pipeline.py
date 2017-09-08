@@ -110,7 +110,6 @@ class Pipeline(_BaseComposition):
     # BaseEstimator interface
 
     def __init__(self, steps, memory=None):
-        # shallow copy of steps
         self.steps = steps
         self._validate_steps()
         self.memory = memory
