@@ -7,6 +7,7 @@ from __future__ import division
 import numpy as np
 import scipy as sp
 from warnings import warn
+from sklearn.utils.fixes import euler_gamma
 
 from scipy.sparse import issparse
 
@@ -56,6 +57,7 @@ class IsolationForest(BaseBagging):
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
             - If "auto", then `max_samples=min(256, n_samples)`.
+
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
@@ -149,14 +151,15 @@ class IsolationForest(BaseBagging):
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
 
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
+
         Returns
         -------
         self : object
             Returns self.
         """
-        # ensure_2d=False because there are actually unit test checking we fail
-        # for 1d.
-        X = check_array(X, accept_sparse=['csc'], ensure_2d=False)
+        X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
             # ensemble sorts the indices.
@@ -250,17 +253,28 @@ class IsolationForest(BaseBagging):
         """
         # code structure from ForestClassifier/predict_proba
         # Check data
-        X = self.estimators_[0]._validate_X_predict(X, check_input=True)
+        X = check_array(X, accept_sparse='csr')
         n_samples = X.shape[0]
 
         n_samples_leaf = np.zeros((n_samples, self.n_estimators), order="f")
         depths = np.zeros((n_samples, self.n_estimators), order="f")
 
-        for i, tree in enumerate(self.estimators_):
-            leaves_index = tree.apply(X)
-            node_indicator = tree.decision_path(X)
+        if self._max_features == X.shape[1]:
+            subsample_features = False
+        else:
+            subsample_features = True
+
+        for i, (tree, features) in enumerate(zip(self.estimators_,
+                                                 self.estimators_features_)):
+            if subsample_features:
+                X_subset = X[:, features]
+            else:
+                X_subset = X
+            leaves_index = tree.apply(X_subset)
+            node_indicator = tree.decision_path(X_subset)
             n_samples_leaf[:, i] = tree.tree_.n_node_samples[leaves_index]
-            depths[:, i] = np.asarray(node_indicator.sum(axis=1)).reshape(-1) - 1
+            depths[:, i] = np.ravel(node_indicator.sum(axis=1))
+            depths[:, i] -= 1
 
         depths += _average_path_length(n_samples_leaf)
 
@@ -291,7 +305,7 @@ def _average_path_length(n_samples_leaf):
         if n_samples_leaf <= 1:
             return 1.
         else:
-            return 2. * (np.log(n_samples_leaf) + 0.5772156649) - 2. * (
+            return 2. * (np.log(n_samples_leaf - 1.) + euler_gamma) - 2. * (
                 n_samples_leaf - 1.) / n_samples_leaf
 
     else:
@@ -305,7 +319,7 @@ def _average_path_length(n_samples_leaf):
 
         average_path_length[mask] = 1.
         average_path_length[not_mask] = 2. * (
-            np.log(n_samples_leaf[not_mask]) + 0.5772156649) - 2. * (
+            np.log(n_samples_leaf[not_mask] - 1.) + euler_gamma) - 2. * (
                 n_samples_leaf[not_mask] - 1.) / n_samples_leaf[not_mask]
 
         return average_path_length.reshape(n_samples_leaf_shape)

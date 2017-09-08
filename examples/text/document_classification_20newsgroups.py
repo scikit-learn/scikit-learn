@@ -34,6 +34,7 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_selection import SelectFromModel
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
 from sklearn.pipeline import Pipeline
@@ -41,7 +42,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.naive_bayes import BernoulliNB, MultinomialNB
+from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
 from sklearn.ensemble import RandomForestClassifier
@@ -83,7 +84,13 @@ op.add_option("--filtered",
               help="Remove newsgroup information that is easily overfit: "
                    "headers, signatures, and quoting.")
 
-(opts, args) = op.parse_args()
+
+def is_interactive():
+    return not hasattr(sys.modules['__main__'], '__file__')
+
+# work-around for Jupyter notebook and IPython console
+argv = [] if is_interactive() else sys.argv[1:]
+(opts, args) = op.parse_args(argv)
 if len(args) > 0:
     op.error("this script takes no arguments.")
     sys.exit(1)
@@ -93,7 +100,7 @@ op.print_help()
 print()
 
 
-###############################################################################
+# #############################################################################
 # Load some categories from the training set
 if opts.all_categories:
     categories = None
@@ -145,7 +152,7 @@ y_train, y_test = data_train.target, data_test.target
 print("Extracting features from the training data using a sparse vectorizer")
 t0 = time()
 if opts.use_hashing:
-    vectorizer = HashingVectorizer(stop_words='english', non_negative=True,
+    vectorizer = HashingVectorizer(stop_words='english', alternate_sign=False,
                                    n_features=opts.n_features)
     X_train = vectorizer.transform(data_train.data)
 else:
@@ -194,7 +201,7 @@ def trim(s):
     return s if len(s) <= 80 else s[:77] + "..."
 
 
-###############################################################################
+# #############################################################################
 # Benchmark classifiers
 def benchmark(clf):
     print('_' * 80)
@@ -253,8 +260,8 @@ for penalty in ["l2", "l1"]:
     print('=' * 80)
     print("%s penalty" % penalty.upper())
     # Train Liblinear model
-    results.append(benchmark(LinearSVC(loss='l2', penalty=penalty,
-                                            dual=False, tol=1e-3)))
+    results.append(benchmark(LinearSVC(penalty=penalty, dual=False,
+                                       tol=1e-3)))
 
     # Train SGD model
     results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
@@ -276,15 +283,16 @@ print('=' * 80)
 print("Naive Bayes")
 results.append(benchmark(MultinomialNB(alpha=.01)))
 results.append(benchmark(BernoulliNB(alpha=.01)))
+results.append(benchmark(ComplementNB(alpha=.1)))
 
 print('=' * 80)
 print("LinearSVC with L1-based feature selection")
 # The smaller C, the stronger the regularization.
 # The more regularization, the more sparsity.
 results.append(benchmark(Pipeline([
-  ('feature_selection', LinearSVC(penalty="l1", dual=False, tol=1e-3)),
-  ('classification', LinearSVC())
-])))
+  ('feature_selection', SelectFromModel(LinearSVC(penalty="l1", dual=False,
+                                                  tol=1e-3))),
+  ('classification', LinearSVC(penalty="l2"))])))
 
 # make some plots
 

@@ -17,15 +17,16 @@ sy-kit learn. sci stands for science!
 
 Why scikit?
 ------------
-There are multiple scikits, which are scientific toolboxes build around SciPy.
+There are multiple scikits, which are scientific toolboxes built around SciPy.
 You can find a list at `<https://scikits.appspot.com/scikits>`_.
 Apart from scikit-learn, another popular one is `scikit-image <http://scikit-image.org/>`_.
 
 How can I contribute to scikit-learn?
 -----------------------------------------
 See :ref:`contributing`. Before wanting to add a new algorithm, which is
-usually a major and lengthy undertaking, it is recommended to start with :ref:`known
-issues <easy_issues>`.
+usually a major and lengthy undertaking, it is recommended to start with
+:ref:`known issues <new_contributors>`. Please do not contact the contributors
+of scikit-learn directly regarding contributing to scikit-learn.
 
 What's the best way to get help on scikit-learn usage?
 --------------------------------------------------------------
@@ -281,6 +282,9 @@ GPUs for efficient computing. However, neither of these fit within
 the design constraints of scikit-learn; as a result, deep learning
 and reinforcement learning are currently out of scope for what
 scikit-learn seeks to achieve.
+
+You can find more information about addition of gpu support at
+`Will you add GPU support?`_.
 
 Why is my pull request not getting any attention?
 -------------------------------------------------

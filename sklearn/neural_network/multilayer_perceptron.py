@@ -13,6 +13,7 @@ from scipy.optimize import fmin_l_bfgs_b
 import warnings
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
 from ..model_selection import train_test_split
@@ -268,7 +269,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.n_layers_ = len(layer_units)
 
         # Output for regression
-        if not isinstance(self, ClassifierMixin):
+        if not is_classifier(self):
             self.out_activation_ = 'identity'
         # Output for multi class
         elif self._label_binarizer.y_type_ == 'multiclass':
@@ -491,7 +492,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             X, X_val, y, y_val = train_test_split(
                 X, y, random_state=self._random_state,
                 test_size=self.validation_fraction)
-            if isinstance(self, ClassifierMixin):
+            if is_classifier(self):
                 y_val = self._label_binarizer.inverse_transform(y_val)
         else:
             X_val = None
@@ -557,10 +558,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                     break
 
                 if self.n_iter_ == self.max_iter:
-                    warnings.warn('Stochastic Optimizer: Maximum iterations'
-                                  ' reached and the optimization hasn\'t '
-                                  'converged yet.'
-                                  % (), ConvergenceWarning)
+                    warnings.warn(
+                        "Stochastic Optimizer: Maximum iterations (%d) "
+                        "reached and the optimization hasn't converged yet."
+                        % self.max_iter, ConvergenceWarning)
         except KeyboardInterrupt:
             warnings.warn("Training interrupted by user.")
 
@@ -601,15 +602,16 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 self.best_loss_ = self.loss_curve_[-1]
 
     def fit(self, X, y):
-        """Fit the model to data matrix X and target y.
+        """Fit the model to data matrix X and target(s) y.
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             The input data.
 
-        y : array-like, shape (n_samples,)
-            The target values.
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels in classification, real numbers in
+            regression).
 
         Returns
         -------
@@ -639,7 +641,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  % self.solver)
         return self._partial_fit
 
-    def _partial_fit(self, X, y, classes=None):
+    def _partial_fit(self, X, y):
         return self._fit(X, y, incremental=True)
 
     def _predict(self, X):
@@ -750,23 +752,6 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
         Only used when ``solver='sgd'``.
 
-    max_iter : int, optional, default 200
-        Maximum number of iterations. The solver iterates until convergence
-        (determined by 'tol') or this number of iterations.
-
-    random_state : int or RandomState, optional, default None
-        State or seed for random number generator.
-
-    shuffle : bool, optional, default True
-        Whether to shuffle samples in each iteration. Only used when
-        solver='sgd' or 'adam'.
-
-    tol : float, optional, default 1e-4
-        Tolerance for the optimization. When the loss or score is not improving
-        by at least tol for two consecutive iterations, unless `learning_rate`
-        is set to 'adaptive', convergence is considered to be reached and
-        training stops.
-
     learning_rate_init : double, optional, default 0.001
         The initial learning rate used. It controls the step-size
         in updating the weights. Only used when solver='sgd' or 'adam'.
@@ -775,6 +760,29 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
         is set to 'invscaling'. Only used when solver='sgd'.
+
+    max_iter : int, optional, default 200
+        Maximum number of iterations. The solver iterates until convergence
+        (determined by 'tol') or this number of iterations. For stochastic
+        solvers ('sgd', 'adam'), note that this determines the number of epochs
+        (how many times each data point will be used), not the number of
+        gradient steps.
+
+    shuffle : bool, optional, default True
+        Whether to shuffle samples in each iteration. Only used when
+        solver='sgd' or 'adam'.
+
+    random_state : int, RandomState instance or None, optional, default None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    tol : float, optional, default 1e-4
+        Tolerance for the optimization. When the loss or score is not improving
+        by at least tol for two consecutive iterations, unless `learning_rate`
+        is set to 'adaptive', convergence is considered to be reached and
+        training stops.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
@@ -818,17 +826,17 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     Attributes
     ----------
-    `classes_` : array or list of array of shape (n_classes,)
+    classes_ : array or list of array of shape (n_classes,)
         Class labels for each output.
 
-    `loss_` : float
+    loss_ : float
         The current loss computed with the loss function.
 
-    `coefs_` : list, length n_layers - 1
+    coefs_ : list, length n_layers - 1
         The ith element in the list represents the weight matrix corresponding
         to layer i.
 
-    `intercepts_` : list, length n_layers - 1
+    intercepts_ : list, length n_layers - 1
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
@@ -838,10 +846,10 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
     n_layers_ : int
         Number of layers.
 
-    `n_outputs_` : int
+    n_outputs_ : int
         Number of outputs.
 
-    `out_activation_` : string
+    out_activation_ : string
         Name of the output activation function.
 
     Notes
@@ -907,6 +915,13 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             self._label_binarizer = LabelBinarizer()
             self._label_binarizer.fit(y)
             self.classes_ = self._label_binarizer.classes_
+        elif self.warm_start:
+            classes = unique_labels(y)
+            if set(classes) != set(self.classes_):
+                raise ValueError("warm_start can only be used where `y` has "
+                                 "the same classes as in the previous "
+                                 "call to fit. Previously got %s, `y` has %s" %
+                                 (self.classes_, classes))
         else:
             classes = unique_labels(y)
             if np.setdiff1d(classes, self.classes_, assume_unique=True):
@@ -937,6 +952,25 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
             y_pred = y_pred.ravel()
 
         return self._label_binarizer.inverse_transform(y_pred)
+
+    def fit(self, X, y):
+        """Fit the model to data matrix X and target(s) y.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            The input data.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+            The target values (class labels in classification, real numbers in
+            regression).
+
+        Returns
+        -------
+        self : returns a trained MLP model.
+        """
+        return self._fit(X, y, incremental=(self.warm_start and
+                                            hasattr(self, "classes_")))
 
     @property
     def partial_fit(self):
@@ -1095,23 +1129,6 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
         Only used when solver='sgd'.
 
-    max_iter : int, optional, default 200
-        Maximum number of iterations. The solver iterates until convergence
-        (determined by 'tol') or this number of iterations.
-
-    random_state : int or RandomState, optional, default None
-        State or seed for random number generator.
-
-    shuffle : bool, optional, default True
-        Whether to shuffle samples in each iteration. Only used when
-        solver='sgd' or 'adam'.
-
-    tol : float, optional, default 1e-4
-        Tolerance for the optimization. When the loss or score is not improving
-        by at least tol for two consecutive iterations, unless `learning_rate`
-        is set to 'adaptive', convergence is considered to be reached and
-        training stops.
-
     learning_rate_init : double, optional, default 0.001
         The initial learning rate used. It controls the step-size
         in updating the weights. Only used when solver='sgd' or 'adam'.
@@ -1120,6 +1137,29 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         The exponent for inverse scaling learning rate.
         It is used in updating effective learning rate when the learning_rate
         is set to 'invscaling'. Only used when solver='sgd'.
+
+    max_iter : int, optional, default 200
+        Maximum number of iterations. The solver iterates until convergence
+        (determined by 'tol') or this number of iterations. For stochastic
+        solvers ('sgd', 'adam'), note that this determines the number of epochs
+        (how many times each data point will be used), not the number of
+        gradient steps.
+
+    shuffle : bool, optional, default True
+        Whether to shuffle samples in each iteration. Only used when
+        solver='sgd' or 'adam'.
+
+    random_state : int, RandomState instance or None, optional, default None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    tol : float, optional, default 1e-4
+        Tolerance for the optimization. When the loss or score is not improving
+        by at least tol for two consecutive iterations, unless `learning_rate`
+        is set to 'adaptive', convergence is considered to be reached and
+        training stops.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
@@ -1163,14 +1203,14 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     Attributes
     ----------
-    `loss_` : float
+    loss_ : float
         The current loss computed with the loss function.
 
-    `coefs_` : list, length n_layers - 1
+    coefs_ : list, length n_layers - 1
         The ith element in the list represents the weight matrix corresponding
         to layer i.
 
-    `intercepts_` : list, length n_layers - 1
+    intercepts_ : list, length n_layers - 1
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
@@ -1180,10 +1220,10 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     n_layers_ : int
         Number of layers.
 
-    `n_outputs_` : int
+    n_outputs_ : int
         Number of outputs.
 
-    `out_activation_` : string
+    out_activation_ : string
         Name of the output activation function.
 
     Notes

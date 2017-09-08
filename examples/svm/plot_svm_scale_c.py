@@ -106,8 +106,8 @@ X_1, y_1 = datasets.make_classification(n_samples=n_samples,
 
 # l2 data: non sparse, but less features
 y_2 = np.sign(.5 - rnd.rand(n_samples))
-X_2 = rnd.randn(n_samples, n_features / 5) + y_2[:, np.newaxis]
-X_2 += 5 * rnd.randn(n_samples, n_features / 5)
+X_2 = rnd.randn(n_samples, n_features // 5) + y_2[:, np.newaxis]
+X_2 += 5 * rnd.randn(n_samples, n_features // 5)
 
 clf_sets = [(LinearSVC(penalty='l1', loss='squared_hinge', dual=False,
                        tol=1e-3),

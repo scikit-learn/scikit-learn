@@ -19,7 +19,7 @@ from sklearn.preprocessing import LabelEncoder
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
-from .utils.validation import check_is_fitted
+from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.fixes import signature
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
@@ -167,6 +167,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
                               " itself." % estimator_name)
                 base_estimator_sample_weight = None
             else:
+                if sample_weight is not None:
+                    sample_weight = check_array(sample_weight, ensure_2d=False)
+                    check_consistent_length(y, sample_weight)
                 base_estimator_sample_weight = sample_weight
             for train, test in cv.split(X, y):
                 this_estimator = clone(base_estimator)
@@ -509,6 +512,8 @@ class _SigmoidCalibration(BaseEstimator, RegressorMixin):
 
 def calibration_curve(y_true, y_prob, normalize=False, n_bins=5):
     """Compute true and predicted probabilities for a calibration curve.
+
+     Calibration curves may also be referred to as reliability diagrams.
 
     Read more in the :ref:`User Guide <calibration>`.
 

@@ -29,7 +29,7 @@ import numpy as np
 from numpy.core.umath_tests import inner1d
 
 from .base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin, is_regressor
+from ..base import ClassifierMixin, RegressorMixin, is_regressor, is_classifier
 from ..externals import six
 from ..externals.six.moves import zip
 from ..externals.six.moves import xrange as range
@@ -231,7 +231,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         z : float
         """
         for y_pred in self.staged_predict(X):
-            if isinstance(self, ClassifierMixin):
+            if is_classifier(self):
                 yield accuracy_score(y, y_pred, sample_weight=sample_weight)
             else:
                 yield r2_score(y, y_pred, sample_weight=sample_weight)
@@ -755,6 +755,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         n_classes = self.n_classes_
         X = self._validate_X_predict(X)
+
+        if n_classes == 1:
+            return np.ones((X.shape[0], 1))
 
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R

@@ -551,7 +551,7 @@ Only the isotropic variant where :math:`l` is a scalar is supported at the momen
 The kernel is given by:
 
 .. math::
-   k(x_i, x_j) = \left(1 + \frac{d(x_i, x_j)^2}{2\alpha l^2}\right)^\alpha
+   k(x_i, x_j) = \left(1 + \frac{d(x_i, x_j)^2}{2\alpha l^2}\right)^{-\alpha}
 
 The prior and posterior of a GP resulting from an RBF kernel are shown in
 the following figure:
@@ -569,7 +569,7 @@ It is parameterized by a length-scale parameter :math:`l>0` and a periodicity pa
 The kernel is given by:
 
 .. math::
-   k(x_i, x_j) = \text{exp}\left(-2 \text{sin}(\pi / p * d(x_i, x_j)) / l\right)^2
+   k(x_i, x_j) = \text{exp}\left(-2 \left(\text{sin}(\pi / p * d(x_i, x_j)) / l\right)^2\right)
 
 The prior and posterior of a GP resulting from an ExpSineSquared kernel are shown in
 the following figure:
@@ -601,12 +601,7 @@ shown in the following figure:
 References
 ----------
 
-    * `[RW2006]
-      <http://www.gaussianprocess.org/gpml/chapters/>`_
-      **Gaussian Processes for Machine Learning**,
-      Carl Eduard Rasmussen and Christopher K.I. Williams, MIT Press 2006.
-      Link to an official complete PDF version of the book
-      `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
+.. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams, "Gaussian Processes for Machine Learning", MIT Press 2006, Link to an official complete PDF version of the book `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
 
 .. currentmodule:: sklearn.gaussian_process
 
