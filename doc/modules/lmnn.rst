@@ -52,7 +52,7 @@ onto a linear subspace consisting of the directions which maximize the LMNN obje
 Mathematical formulation
 ========================
 
-LMNN learns a linear transformation matrix :math:`L` of size ``(n_features, n_features_out)``.
+LMNN learns a linear transformation matrix :math:`L` of size ``(n_features_out, n_features)``.
 
 The objective function consists of two competing terms, the pull loss that pulls target neighbors closer to their reference sample and the push loss that pushes impostors away:
 
@@ -93,7 +93,7 @@ LMNN can be seen as learning a (squared) Mahalanobis distance metric:
 
     || L(x_i - x_j)||^2 = (x_i - x_j)^TM(x_i - x_j),
 
-where :math:`M = L L^T` is a symmetric positive semi-definite matrix of size ``(n_features, n_features)``. The objective function of LMNN can be rewritten and solved with respect to :math:`M` directly. This results in a convex but constrained problem (since :math:`M` must be symmetric positive semi-definite). See [#1]_ for more details.
+where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size ``(n_features, n_features)``. The objective function of LMNN can be rewritten and solved with respect to :math:`M` directly. This results in a convex but constrained problem (since :math:`M` must be symmetric positive semi-definite). See [#1]_ for more details.
 
 Implementation
 ==============
