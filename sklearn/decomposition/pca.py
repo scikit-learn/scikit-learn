@@ -226,7 +226,8 @@ class PCA(_BasePCA):
         The estimated number of components. When n_components is set
         to 'mle' or a number between 0 and 1 (with svd_solver == 'full') this
         number is estimated from input data. Otherwise it equals the parameter
-        n_components, or n_features if n_components is None.
+        n_components, or n_features if n_components is None. For PCA to work
+        properly, keep n_samples > n_components.
 
     noise_variance_ : float
         The estimated noise covariance following the Probabilistic PCA model
