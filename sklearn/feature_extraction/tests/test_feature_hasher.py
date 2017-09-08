@@ -112,7 +112,7 @@ def test_hasher_zeros():
 
 @ignore_warnings(category=DeprecationWarning)
 def test_hasher_alternate_sign():
-    X = [["a", "b", "c", "d", "e", "f", "g", "h"]]
+    X = [list("Thequickbrownfoxjumped")]
 
     Xt = FeatureHasher(alternate_sign=True, non_negative=False,
                        input_type='string').fit_transform(X)
@@ -134,7 +134,7 @@ def test_hasher_alternate_sign():
 
 @ignore_warnings(category=DeprecationWarning)
 def test_hash_collisions():
-    X = [["a", "b", "c", "d", "e", "f", "g", "h"]]
+    X = [list("Thequickbrownfoxjumped")]
 
     Xt = FeatureHasher(alternate_sign=True, non_negative=False,
                        n_features=1, input_type='string').fit_transform(X)
