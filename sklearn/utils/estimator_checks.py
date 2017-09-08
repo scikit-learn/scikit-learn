@@ -1516,7 +1516,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
         # fixed the random_state params recursively to be integer seeds.
         assert_equal(hash(new_value), hash(original_value),
                      "Estimator %s should not change or mutate "
-                     " the parameter %s from %s to %s during fit."
+                     "the parameter %s from %s to %s during fit."
                      % (name, param_name, original_value, new_value))
 
 

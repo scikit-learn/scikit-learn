@@ -184,7 +184,8 @@ class Pipeline(_BaseComposition):
 
     def _fit(self, X, y=None, **fit_params):
         # shallow copy of steps - this should really be steps_
-        self.steps = list(self.steps)
+        if not isinstance(self.steps, list):
+            self.steps = list(self.steps)
         self._validate_steps()
         # Setup the memory
         memory = check_memory(self.memory)
@@ -250,6 +251,7 @@ class Pipeline(_BaseComposition):
             self._final_estimator.fit(Xt, y, **fit_params)
         return self
 
+    @if_delegate_has_method(delegate='_final_estimator')
     def fit_transform(self, X, y=None, **fit_params):
         """Fit the model and transform with the final estimator
 
@@ -708,7 +710,8 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self : FeatureUnion
             This estimator
         """
-        self.transformer_list = list(self.transformer_list)
+        if not isinstance(self.transformer_list, list):
+            self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
         transformers = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_one_transformer)(trans, X, y)

@@ -10,11 +10,16 @@ from sklearn.datasets import make_classification
 
 from sklearn.utils.testing import assert_true, assert_false, assert_raises
 from sklearn.utils.validation import check_is_fitted
-from sklearn.pipeline import Pipeline
+from sklearn.utils.estimator_checks import check_estimator
+from sklearn.pipeline import Pipeline, make_pipeline, make_union
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from sklearn.feature_selection import RFE, RFECV
+from sklearn.feature_selection import RFE, RFECV, SelectFromModel
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
 
 
 class DelegatorData(object):
@@ -45,6 +50,30 @@ DELEGATING_METAESTIMATORS = [
                                 'predict_proba', 'predict_log_proba',
                                 'predict'])
 ]
+
+
+def test_metaestimators_check_estimator():
+    estimators = [
+        # pipeline
+        # this fails because tuple is converted to list in fit:
+        # Pipeline((('ss', StandardScaler()),)),
+        Pipeline([('ss', StandardScaler())]),
+        make_pipeline(StandardScaler(), LogisticRegression()),
+        # union
+        make_union(StandardScaler()),
+        # union and pipeline
+        make_pipeline(make_union(PCA(), StandardScaler()),
+                      LogisticRegression()),
+        # pipeline with clustering
+        make_pipeline(KMeans()),
+        # SelectFromModel
+        make_pipeline(SelectFromModel(LogisticRegression()),
+                      LogisticRegression()),
+        # grid-search
+        GridSearchCV(LogisticRegression(), {'C': [0.1, 1]})
+    ]
+    for estimator in estimators:
+        yield check_estimator, estimator
 
 
 def test_metaestimator_delegation():
