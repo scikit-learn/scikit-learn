@@ -235,11 +235,11 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples in the number of samples and
+            Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, n_targets]
-            Target vectors, where n_samples in the number of samples and
+        Y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
 
@@ -374,13 +374,13 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, p]
-            Training vectors, where n_samples in the number of samples and
-            p is the number of predictors.
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, q], optional
-            Training vectors, where n_samples in the number of samples and
-            q is the number of response variables.
+        Y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
+            n_targets is the number of response variables.
 
         copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
@@ -412,9 +412,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, p]
-            Training vectors, where n_samples in the number of samples and
-            p is the number of predictors.
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
 
         copy : boolean, default True
             Whether to copy X and Y, or perform in-place normalization.
@@ -432,27 +432,24 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         Ypred = np.dot(X, self.coef_)
         return Ypred + self.y_mean_
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, p]
-            Training vectors, where n_samples in the number of samples and
-            p is the number of predictors.
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, q], optional
-            Training vectors, where n_samples in the number of samples and
-            q is the number of response variables.
-
-        copy : boolean, default True
-            Whether to copy X and Y, or perform in-place normalization.
+        y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
+            n_targets is the number of response variables.
 
         Returns
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
-        return self.fit(X, y, **fit_params).transform(X, y)
+        return self.fit(X, y).transform(X, y)
 
 
 class PLSRegression(_PLS):
@@ -607,7 +604,11 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    scale : boolean, scale data? (default True)
+    n_components : int, (default 2).
+        Number of components to keep
+
+    scale : boolean, (default True)
+        Option to scale data
 
     algorithm : string, "nipals" or "svd"
         The algorithm used to estimate the weights. It will be called
@@ -623,8 +624,6 @@ class PLSCanonical(_PLS):
     copy : boolean, default True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
-
-    n_components : int, number of components to keep. (default 2).
 
     Attributes
     ----------
@@ -784,6 +783,18 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, Y):
+        """Fit model to data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
+
+        Y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
+            n_targets is the number of response variables.
+        """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
         X = check_array(X, dtype=np.float64, copy=self.copy)
@@ -820,7 +831,19 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, Y=None):
-        """Apply the dimension reduction learned on the train data."""
+        """
+        Apply the dimension reduction learned on the train data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
+
+        Y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
+            n_targets is the number of response variables.
+        """
         check_is_fitted(self, 'x_mean_')
         X = check_array(X, dtype=np.float64)
         Xr = (X - self.x_mean_) / self.x_std_
@@ -833,21 +856,21 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             return x_scores, y_scores
         return x_scores
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
 
         Parameters
         ----------
-        X : array-like of predictors, shape = [n_samples, p]
-            Training vectors, where n_samples in the number of samples and
-            p is the number of predictors.
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of predictors.
 
-        Y : array-like of response, shape = [n_samples, q], optional
-            Training vectors, where n_samples in the number of samples and
-            q is the number of response variables.
+        y : array-like, shape = [n_samples, n_targets]
+            Target vectors, where n_samples is the number of samples and
+            n_targets is the number of response variables.
 
         Returns
         -------
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
-        return self.fit(X, y, **fit_params).transform(X, y)
+        return self.fit(X, y).transform(X, y)

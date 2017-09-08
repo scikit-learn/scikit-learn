@@ -195,8 +195,6 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     is known as stability selection. In short, features selected more
     often are considered good features.
 
-    Read more in the :ref:`User Guide <randomized_l1>`.
-
     Parameters
     ----------
     alpha : float, 'aic', or 'bic', optional
@@ -206,7 +204,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     scaling : float, optional
         The s parameter used to randomly scale the penalty of different
-        features (See :ref:`User Guide <randomized_l1>` for details ).
+        features.
         Should be between 0 and 1.
 
     sample_fraction : float, optional
@@ -280,7 +278,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+    memory : None, str or object with the joblib.Memory interface, optional \
             (default=None)
         Used for internal caching. By default, no caching is done.
         If a string is given, it is the path to the caching directory.
@@ -299,11 +297,6 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     --------
     >>> from sklearn.linear_model import RandomizedLasso
     >>> randomized_lasso = RandomizedLasso()
-
-    Notes
-    -----
-    For an example, see :ref:`examples/linear_model/plot_sparse_recovery.py
-    <sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py>`.
 
     References
     ----------
@@ -407,8 +400,6 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     randomizations. This is known as stability selection. In short,
     features selected more often are considered good features.
 
-    Read more in the :ref:`User Guide <randomized_l1>`.
-
     Parameters
     ----------
     C : float or array-like of shape [n_reg_parameter], optional, default=1
@@ -420,7 +411,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     scaling : float, optional, default=0.5
         The s parameter used to randomly scale the penalty of different
-        features (See :ref:`User Guide <randomized_l1>` for details ).
+        features.
         Should be between 0 and 1.
 
     sample_fraction : float, optional, default=0.75
@@ -481,7 +472,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
+    memory : None, str or object with the joblib.Memory interface, optional \
             (default=None)
         Used for internal caching. By default, no caching is done.
         If a string is given, it is the path to the caching directory.
@@ -500,11 +491,6 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     --------
     >>> from sklearn.linear_model import RandomizedLogisticRegression
     >>> randomized_logistic = RandomizedLogisticRegression()
-
-    Notes
-    -----
-    For an example, see :ref:`examples/linear_model/plot_sparse_recovery.py
-    <sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py>`.
 
     References
     ----------
@@ -590,8 +576,6 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
                          verbose=False):
     """Stability path based on randomized Lasso estimates
 
-    Read more in the :ref:`User Guide <randomized_l1>`.
-
     Parameters
     ----------
     X : array-like, shape = [n_samples, n_features]
@@ -638,11 +622,6 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
 
     scores_path : array, shape = [n_features, n_grid]
         The scores for each feature along the path.
-
-    Notes
-    -----
-    For an example, see :ref:`examples/linear_model/plot_sparse_recovery.py
-    <sphx_glr_auto_examples_linear_model_plot_sparse_recovery.py>`.
     """
     X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'])
     rng = check_random_state(random_state)

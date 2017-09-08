@@ -97,6 +97,20 @@ def test_pickle():
                        " after pickling (classification).")
 
 
+def test_shrinkage_correct():
+    # Ensure that the shrinking is correct.
+    # The expected result is calculated by R (pamr),
+    # which is implemented by the author of the original paper.
+    # (One need to modify the code to output the new centroid in pamr.predict)
+
+    X = np.array([[0, 1], [1, 0], [1, 1], [2, 0], [6, 8]])
+    y = np.array([1, 1, 2, 2, 2])
+    clf = NearestCentroid(shrink_threshold=0.1)
+    clf.fit(X, y)
+    expected_result = np.array([[0.7787310, 0.8545292], [2.814179, 2.763647]])
+    np.testing.assert_array_almost_equal(clf.centroids_, expected_result)
+
+
 def test_shrinkage_threshold_decoded_y():
     clf = NearestCentroid(shrink_threshold=0.01)
     y_ind = np.asarray(y)
