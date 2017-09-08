@@ -225,18 +225,13 @@ def get_scorer(scoring):
     scorer : callable
         The scorer.
     """
-    valid = True
     if isinstance(scoring, six.string_types):
         try:
             scorer = SCORERS[scoring]
         except KeyError:
-            scorers = [scorer for scorer in SCORERS
-                       if SCORERS[scorer]._deprecation_msg is None]
-            valid = False  # Don't raise here to make the error message elegant
-        if not valid:
             raise ValueError('%r is not a valid scoring value. '
                              'Valid options are %s'
-                             % (scoring, sorted(scorers)))
+                             % (scoring, sorted(SCORERS.keys())))
     else:
         scorer = scoring
     return scorer
@@ -513,11 +508,6 @@ recall_scorer = make_scorer(recall_score)
 # Score function for probabilistic classification
 neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
                                   needs_proba=True)
-deprecation_msg = ('Scoring method log_loss was renamed to '
-                   'neg_log_loss in version 0.18 and will be removed in 0.20.')
-log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
-                              needs_proba=True)
-log_loss_scorer._deprecation_msg = deprecation_msg
 brier_score_loss_scorer = make_scorer(brier_score_loss,
                                       greater_is_better=False,
                                       needs_proba=True)
@@ -546,7 +536,6 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
                balanced_accuracy=balanced_accuracy_scorer,
                average_precision=average_precision_scorer,
-               log_loss=log_loss_scorer,
                neg_log_loss=neg_log_loss_scorer,
                brier_score_loss=brier_score_loss_scorer,
                # Cluster metrics that use supervised evaluation
