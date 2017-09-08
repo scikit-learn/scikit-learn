@@ -39,8 +39,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     coefficients of a linear model), the goal of recursive feature elimination
     (RFE) is to select features by recursively considering smaller and smaller
     sets of features. First, the estimator is trained on the initial set of
-    features and weights are assigned to each one of them. Then, features whose
-    absolute weights are the smallest are pruned from the current set features.
+    features and the importance of each feature is obtained either through a
+    ``coef_`` attribute or through a ``feature_importances_`` attribute.
+    Then, the least important features are pruned from current set of features.
     That procedure is recursively repeated on the pruned set until the desired
     number of features to select is eventually reached.
 
@@ -49,13 +50,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     Parameters
     ----------
     estimator : object
-        A supervised learning estimator with a `fit` method that updates a
-        `coef_` attribute that holds the fitted parameters. Important features
-        must correspond to high absolute values in the `coef_` array.
-
-        For instance, this is the case for most supervised learning
-        algorithms such as Support Vector Classifiers and Generalized
-        Linear Models from the `svm` and `linear_model` modules.
+        A supervised learning estimator with a ``fit`` method that provides
+        information about feature importance either through a ``coef_``
+        attribute or through a ``feature_importances_`` attribute.
 
     n_features_to_select : int or None (default=None)
         The number of features to select. If `None`, half of the features
@@ -282,13 +279,9 @@ class RFECV(RFE, MetaEstimatorMixin):
     Parameters
     ----------
     estimator : object
-        A supervised learning estimator with a `fit` method that updates a
-        `coef_` attribute that holds the fitted parameters. Important features
-        must correspond to high absolute values in the `coef_` array.
-
-        For instance, this is the case for most supervised learning
-        algorithms such as Support Vector Classifiers and Generalized
-        Linear Models from the `svm` and `linear_model` modules.
+        A supervised learning estimator with a ``fit`` method that provides
+        information about feature importance either through a ``coef_``
+        attribute or through a ``feature_importances_`` attribute.
 
     step : int or float, optional (default=1)
         If greater than or equal to 1, then `step` corresponds to the (integer)
