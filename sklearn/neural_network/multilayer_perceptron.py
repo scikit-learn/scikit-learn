@@ -772,10 +772,12 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         (how many times each data point will be used), not the number of
         gradient steps.
 
-    max_fun : int, optional, default 200
+    max_fun : int, optional, default 15000
         Maximum number of function calls. The solver iterates until convergence
-        (determined by 'tol') or this number of function calls.
-        Only used when solver='lbfgs'.
+        (determined by 'tol'), number of iterations reaches max_iter, or this
+        number of function calls. Note that number of function calls will be
+        greater than or equal to the number of iterations for the
+        MLPClassifier. Only used when solver='lbfgs'.
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
@@ -895,7 +897,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001, power_t=0.5, max_iter=200,
-                 max_fun=200, shuffle=True, random_state=None, tol=1e-4,
+                 max_fun=15000, shuffle=True, random_state=None, tol=1e-4,
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
@@ -1154,9 +1156,11 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         (how many times each data point will be used), not the number of
         gradient steps.
 
-    max_fun : int, optional, default 200
+    max_fun : int, optional, default 15000
         Maximum number of function calls. The solver iterates until convergence
-        (determined by 'tol') or this number of function calls.
+        (determined by 'tol'), number of iterations reaches max_iter, or this
+        number of function calls. Note that number of function calls will be
+        greater than or equal to the number of iterations for the MLPRegressor.
         Only used when solver='lbfgs'.
 
     shuffle : bool, optional, default True
@@ -1274,7 +1278,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001,
-                 power_t=0.5, max_iter=200, max_fun=200, shuffle=True,
+                 power_t=0.5, max_iter=200, max_fun=15000, shuffle=True,
                  random_state=None, tol=1e-4,
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,

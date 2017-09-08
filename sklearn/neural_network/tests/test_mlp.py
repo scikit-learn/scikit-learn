@@ -272,18 +272,18 @@ def test_lbfgs_maxfun():
     # number of iterations for lbfgs
     max_fun = 10
     expected_num_iter = 10 
+    # classification tests
     for X, y in classification_datasets:
         X_train = X[:150]
         y_train = y[:150]
         X_test = X[150:]
-
-
         for activation in ACTIVATION_TYPES:
             mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=50,
                                 max_iter=150, max_fun=max_fun, shuffle=True, 
                                 random_state=1, activation=activation)
             mlp.fit(X_train, y_train)
             assert_greater(expected_num_iter, mlp.n_iter_)
+    # regression tests
     X = Xboston
     y = yboston 
     for activation in ACTIVATION_TYPES:
