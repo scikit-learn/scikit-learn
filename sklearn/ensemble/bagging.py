@@ -280,7 +280,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, y = check_X_y(X, y, ['csr', 'csc'], force_all_finite=False)
+        X, y = check_X_y(X, y, ['csr', 'csc'], dtype=None, force_all_finite=False, multi_output=True)
         if sample_weight is not None:
             sample_weight = check_array(sample_weight, ensure_2d=False)
             check_consistent_length(y, sample_weight)
@@ -390,8 +390,10 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         """Calculate out of bag predictions and score."""
 
     def _validate_y(self, y):
-        # Default implementation
-        return column_or_1d(y, warn=True)
+        if len(y.shape) == 1 or y.shape[1] == 1:
+            return column_or_1d(y, warn=True)
+        else:
+            return y
 
     def _get_estimators_indices(self):
         # Get drawn indices along both sample and feature axes
@@ -667,7 +669,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         """
         check_is_fitted(self, "classes_")
         # Check data
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(X, accept_sparse=['csr', 'csc'], dtype=None, force_all_finite=False)
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -714,7 +716,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         check_is_fitted(self, "classes_")
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
-            X = check_array(X, accept_sparse=['csr', 'csc'])
+            X = check_array(X, accept_sparse=['csr', 'csc'], dtype=None, force_all_finite=False)
 
             if self.n_features_ != X.shape[1]:
                 raise ValueError("Number of features of the model must "
@@ -769,7 +771,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         check_is_fitted(self, "classes_")
 
         # Check data
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(X, accept_sparse=['csr', 'csc'], dtype=None, force_all_finite=False)
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
@@ -945,7 +947,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         """
         check_is_fitted(self, "estimators_features_")
         # Check data
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = check_array(X, accept_sparse=['csr', 'csc'], dtype=None, force_all_finite=False)
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(self.n_estimators,

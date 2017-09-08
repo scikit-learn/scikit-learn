@@ -33,6 +33,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
+from sklearn.preprocessing import Imputer
 
 from scipy.sparse import csc_matrix, csr_matrix
 
@@ -748,3 +749,51 @@ def test_set_oob_score_label_encoding():
     x3 = BaggingClassifier(oob_score=True,
                            random_state=random_state).fit(X, Y3).oob_score_
     assert_equal([x1, x2], [x3, x3])
+
+
+def test_bagging_pipeline_with_sparse_inputs():
+    # Check that BaggingRegressor can accept sparse pipelines inputs
+    X = [
+        [1, 3, 5],
+        [2, None, 6],
+    ]
+    Y = [
+        [2, 1, 9],
+        [3, 6, 8],
+    ]
+    regressor = DecisionTreeRegressor()
+    pipeline = make_pipeline(Imputer(), regressor)
+    pipeline.fit(X, Y).predict(X)
+    bagging_regressor = BaggingRegressor(pipeline)
+    bagging_regressor.fit(X, Y).predict(X)
+
+    # Also verify that it fails on bad pipelines
+    regressor = DecisionTreeRegressor()
+    pipeline = make_pipeline(regressor)
+    assert_raises(ValueError, pipeline.fit, X, Y)
+    bagging_regressor = BaggingRegressor(pipeline)
+    assert_raises(ValueError, bagging_regressor.fit, X, Y)
+
+
+def test_bagging_classifier_with_sparse_inputs():
+    # Check that BaggingRegressor can accept sparse pipelines inputs
+    X = [
+        [1, 3, 5],
+        [2, None, 6],
+    ]
+    Y = [3, 6]
+    classifier = DecisionTreeClassifier()
+    pipeline = make_pipeline(Imputer(), classifier)
+    pipeline.fit(X, Y).predict(X)
+    bagging_classifier = BaggingClassifier(pipeline)
+    bagging_classifier.fit(X, Y)
+    bagging_classifier.predict(X)
+    bagging_classifier.predict_log_proba(X)
+    bagging_classifier.predict_proba(X)
+
+    # Also verify that it fails on bad pipelines
+    classifier = DecisionTreeClassifier()
+    pipeline = make_pipeline(classifier)
+    assert_raises(ValueError, pipeline.fit, X, Y)
+    bagging_classifier = BaggingClassifier(pipeline)
+    assert_raises(ValueError, bagging_classifier.fit, X, Y)
