@@ -705,8 +705,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         if self.iid is None:
             if len(np.unique(test_sample_counts)) > 1:
                 warnings.warn("The default of the `iid` parameter will change "
-                              "from True to False in version 0.21 and will be"
-                              " removed in 0.23. This will change numeric"
+                              "from True to False in version 0.22 and will be"
+                              " removed in 0.24. This will change numeric"
                               " results when test-set sizes are unequal.",
                               DeprecationWarning)
             iid = True
@@ -850,9 +850,9 @@ class GridSearchCV(BaseSearchCV):
         and not the mean loss across the folds. Default is True,
         but will change to False in version 0.21.
 
-        ..versionchanged:: 0.19
+        ..versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
-            version 0.21, and will be removed in 0.23.
+            version 0.22, and will be removed in 0.24.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -1164,10 +1164,9 @@ class RandomizedSearchCV(BaseSearchCV):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
-        ..deprecated:: 0.19
-            Parameter ``iid`` has been deprecated in version 0.19 and
-            will be removed in 0.21.
-            Future (and default) behavior is equivalent to `iid=true`.
+        ..versionchanged:: 0.20
+            Parameter ``iid`` will change from True to False by default in
+            version 0.22, and will be removed in 0.24.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
