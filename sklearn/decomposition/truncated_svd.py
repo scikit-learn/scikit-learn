@@ -100,7 +100,6 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     See also
     --------
     PCA
-    RandomizedPCA
 
     References
     ----------
