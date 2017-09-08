@@ -61,19 +61,6 @@ class ModifyInitParams(BaseEstimator):
         self.a = a.copy()
 
 
-class DeprecatedAttributeEstimator(BaseEstimator):
-    def __init__(self, a=None, b=None):
-        self.a = a
-        if b is not None:
-            DeprecationWarning("b is deprecated and renamed 'a'")
-            self.a = b
-
-    @property
-    @deprecated("Parameter 'b' is deprecated and renamed to 'a'")
-    def b(self):
-        return self._b
-
-
 class Buggy(BaseEstimator):
     " A buggy estimator that does not set its parameters right. "
 
@@ -217,19 +204,6 @@ def test_get_params():
     test.set_params(a__d=2)
     assert_true(test.a.d == 2)
     assert_raises(ValueError, test.set_params, a__a=2)
-
-
-def test_get_params_deprecated():
-    # deprecated attribute should not show up as params
-    est = DeprecatedAttributeEstimator(a=1)
-
-    assert_true('a' in est.get_params())
-    assert_true('a' in est.get_params(deep=True))
-    assert_true('a' in est.get_params(deep=False))
-
-    assert_true('b' not in est.get_params())
-    assert_true('b' not in est.get_params(deep=True))
-    assert_true('b' not in est.get_params(deep=False))
 
 
 def test_is_classifier():
