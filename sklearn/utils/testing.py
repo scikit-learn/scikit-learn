@@ -47,6 +47,7 @@ from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 from sklearn.utils import deprecated
 
+additional_names_in_all = []
 try:
     from nose.tools import raises as _nose_raises
     deprecation_message = (
@@ -54,6 +55,7 @@ try:
         'and will be removed in 0.22. Please use '
         'sklearn.utils.testing.assert_raises instead.')
     raises = deprecated(deprecation_message)(_nose_raises)
+    additional_names_in_all.append('raises')
 except ImportError:
     pass
 
@@ -65,10 +67,9 @@ try:
         'If your code relies on with_setup, please use'
         ' nose.tools.with_setup instead.')
     with_setup = deprecated(deprecation_message)(_with_setup)
-    additional_symbols_to_export = ['raises', 'with_setup']
+    additional_names_in_all.append('with_setup')
 except ImportError:
-    additional_symbols_to_export = []
-
+    pass
 
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
@@ -88,7 +89,7 @@ __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "SkipTest"]
-__all__.extend(additional_symbols_to_export)
+__all__.extend(additional_names_in_all)
 
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
