@@ -436,7 +436,7 @@ features, one has to explicitly set ``n_values``. For example,
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as integers.
 
-.. _discretization:
+.. _preprocessing_discretization:
 
 Discretization
 ==============
