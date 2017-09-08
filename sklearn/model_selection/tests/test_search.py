@@ -1494,7 +1494,7 @@ def test_transform_inverse_transform_round_trip():
 
 def test_deprecated_grid_search_iid():
     depr_message = ("The default of the `iid` parameter will change from True "
-                    "to False in version 0.21")
+                    "to False in version 0.22")
     X, y = make_blobs(n_samples=54, random_state=0, centers=2)
     grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=3)
     # no warning with equally sized test sets
