@@ -51,7 +51,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics.scorer import check_scoring
 
-from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -452,8 +452,8 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
             assert type(cv_results['test_r2']) == np.ndarray
             assert (type(cv_results['test_neg_mean_squared_error']) ==
                     np.ndarray)
-            assert type(cv_results['fit_time'] == np.ndarray)
-            assert type(cv_results['score_time'] == np.ndarray)
+            assert type(cv_results['fit_time']) == np.ndarray
+            assert type(cv_results['score_time']) == np.ndarray
 
             # Ensure all the times are within sane limits
             assert np.all(cv_results['fit_time'] >= 0)
@@ -807,6 +807,12 @@ def test_cross_val_predict_input_types():
 
     clf = CheckingClassifier(check_y=list_check)
     predictions = cross_val_predict(clf, X, y.tolist())
+
+    # test with X and y as list and non empty method
+    predictions = cross_val_predict(LogisticRegression(), X.tolist(),
+                                    y.tolist(), method='decision_function')
+    predictions = cross_val_predict(LogisticRegression(), X,
+                                    y.tolist(), method='decision_function')
 
     # test with 3d X and
     X_3d = X[:, :, np.newaxis]
@@ -1186,6 +1192,13 @@ def check_cross_val_predict_with_method(est):
 
 def test_cross_val_predict_with_method():
     check_cross_val_predict_with_method(LogisticRegression())
+
+
+def test_cross_val_predict_method_checking():
+    # Regression test for issue #9639. Tests that cross_val_predict does not
+    # check estimator methods (e.g. predict_proba) before fitting
+    est = SGDClassifier(loss='log', random_state=2)
+    check_cross_val_predict_with_method(est)
 
 
 def test_gridsearchcv_cross_val_predict_with_method():

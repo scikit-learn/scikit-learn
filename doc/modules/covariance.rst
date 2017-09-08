@@ -95,7 +95,7 @@ bias/variance trade-off, and is discussed below.
 Ledoit-Wolf shrinkage
 ---------------------
 
-In their 2004 paper [1], O. Ledoit and M. Wolf propose a formula so as
+In their 2004 paper [1]_, O. Ledoit and M. Wolf propose a formula so as
 to compute the optimal shrinkage coefficient :math:`\alpha` that
 minimizes the Mean Squared Error between the estimated and the real
 covariance matrix.
@@ -112,10 +112,11 @@ fitting a :class:`LedoitWolf` object to the same sample.
      for visualizing the performances of the Ledoit-Wolf estimator in
      terms of likelihood.
 
+.. topic:: References:
 
-[1] O. Ledoit and M. Wolf, "A Well-Conditioned Estimator for Large-Dimensional
-    Covariance Matrices", Journal of Multivariate Analysis, Volume 88, Issue 2,
-    February 2004, pages 365-411.
+    .. [1] O. Ledoit and M. Wolf, "A Well-Conditioned Estimator for Large-Dimensional
+           Covariance Matrices", Journal of Multivariate Analysis, Volume 88, Issue 2,
+           February 2004, pages 365-411.
 
 .. _oracle_approximating_shrinkage:
 
@@ -123,7 +124,7 @@ Oracle Approximating Shrinkage
 ------------------------------
 
 Under the assumption that the data are Gaussian distributed, Chen et
-al. [2] derived a formula aimed at choosing a shrinkage coefficient that
+al. [2]_ derived a formula aimed at choosing a shrinkage coefficient that
 yields a smaller Mean Squared Error than the one given by Ledoit and
 Wolf's formula. The resulting estimator is known as the Oracle
 Shrinkage Approximating estimator of the covariance.
@@ -141,8 +142,10 @@ object to the same sample.
    Bias-variance trade-off when setting the shrinkage: comparing the
    choices of Ledoit-Wolf and OAS estimators
 
-[2] Chen et al., "Shrinkage Algorithms for MMSE Covariance Estimation",
-    IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
+.. topic:: References:
+
+    .. [2] Chen et al., "Shrinkage Algorithms for MMSE Covariance Estimation",
+           IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
 .. topic:: Examples:
 
@@ -266,14 +269,14 @@ perform outlier detection and discard/downweight some observations
 according to further processing of the data.
 
 The ``sklearn.covariance`` package implements a robust estimator of covariance,
-the Minimum Covariance Determinant [3].
+the Minimum Covariance Determinant [3]_.
 
 
 Minimum Covariance Determinant
 ------------------------------
 
 The Minimum Covariance Determinant estimator is a robust estimator of
-a data set's covariance introduced by P.J. Rousseeuw in [3].  The idea
+a data set's covariance introduced by P.J. Rousseeuw in [3]_.  The idea
 is to find a given proportion (h) of "good" observations which are not
 outliers and compute their empirical covariance matrix.  This
 empirical covariance matrix is then rescaled to compensate the
@@ -283,7 +286,7 @@ weights to observations according to their Mahalanobis distance,
 leading to a reweighted estimate of the covariance matrix of the data
 set ("reweighting step").
 
-Rousseeuw and Van Driessen [4] developed the FastMCD algorithm in order
+Rousseeuw and Van Driessen [4]_ developed the FastMCD algorithm in order
 to compute the Minimum Covariance Determinant. This algorithm is used
 in scikit-learn when fitting an MCD object to data. The FastMCD
 algorithm also computes a robust estimate of the data set location at
@@ -292,11 +295,13 @@ the same time.
 Raw estimates can be accessed as ``raw_location_`` and ``raw_covariance_``
 attributes of a :class:`MinCovDet` robust covariance estimator object.
 
-[3] P. J. Rousseeuw. Least median of squares regression.
-    J. Am Stat Ass, 79:871, 1984.
-[4] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
-    1999, American Statistical Association and the American Society
-    for Quality, TECHNOMETRICS.
+.. topic:: References:
+
+    .. [3] P. J. Rousseeuw. Least median of squares regression.
+           J. Am Stat Ass, 79:871, 1984.
+    .. [4] A Fast Algorithm for the Minimum Covariance Determinant Estimator,
+           1999, American Statistical Association and the American Society
+           for Quality, TECHNOMETRICS.
 
 .. topic:: Examples:
 
