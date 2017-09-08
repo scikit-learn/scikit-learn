@@ -122,10 +122,9 @@ class GaussianNB(BaseNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
-    min_variance : float, optional (default=None)
-        Minimum variance of a single feature within a target class. By default
-        minimum variance is set to 1e-9 of the variance of the
-        largest dimension.
+    epsilon : float, optional (default=1e-9)
+        Portion of the largest variance of all features that is added to variances
+        for calculation stability
 
     Attributes
     ----------
@@ -141,6 +140,9 @@ class GaussianNB(BaseNB):
     sigma_ : array, shape (n_classes, n_features)
         variance of each feature per class
 
+    epsilon_ : float
+        absolute additive value to variances
+
     Examples
     --------
     >>> import numpy as np
@@ -149,19 +151,19 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(min_variance=None, priors=None)
+    GaussianNB(epsilon=1e-9, priors=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB(min_variance=None, priors=None)
+    GaussianNB(epsilon=1e-9, priors=None)
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
 
-    def __init__(self, priors=None, min_variance=None):
+    def __init__(self, priors=None, epsilon=1e-9):
         self.priors = priors
-        self.min_variance = min_variance
+        self.epsilon = epsilon
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -346,12 +348,9 @@ class GaussianNB(BaseNB):
 
         # If the ratio of data variance between dimensions is too small, it
         # will cause numerical errors. To address this, we artificially
-        # set the minimum variance to a small fraction of the variance
-        # of the largest dimension.
-        if self.min_variance is not None:
-            self.min_variance_ = self.min_variance
-        else:
-            self.min_variance_ = 1e-9 * np.var(X, axis=0).max()
+        # boost the variance by epsilon, a small fraction of the standard
+        # deviation of the largest dimension.
+        self.epsilon_ = self.epsilon * np.var(X, axis=0).max()
 
         if _refit:
             self.classes_ = None
@@ -363,9 +362,6 @@ class GaussianNB(BaseNB):
             n_classes = len(self.classes_)
             self.theta_ = np.zeros((n_classes, n_features))
             self.sigma_ = np.zeros((n_classes, n_features))
-            # create a 2d-array of uncorrected variances for further use
-            # in _update_mean_variance()
-            self.sigma_uncorrected_ = np.zeros((n_classes, n_features))
 
             self.class_count_ = np.zeros(n_classes, dtype=np.float64)
 
@@ -392,6 +388,8 @@ class GaussianNB(BaseNB):
             if X.shape[1] != self.theta_.shape[1]:
                 msg = "Number of features %d does not match previous data %d."
                 raise ValueError(msg % (X.shape[1], self.theta_.shape[1]))
+            # Put epsilon back in each time
+            self.sigma_[:, :] -= self.epsilon_
 
         classes = self.classes_
 
@@ -415,17 +413,14 @@ class GaussianNB(BaseNB):
                 N_i = X_i.shape[0]
 
             new_theta, new_sigma = self._update_mean_variance(
-                self.class_count_[i],
-                self.theta_[i, :],
-                self.sigma_uncorrected_[i, :],
+                self.class_count_[i], self.theta_[i, :], self.sigma_[i, :],
                 X_i, sw_i)
 
             self.theta_[i, :] = new_theta
-            self.sigma_[i, :] = np.maximum(new_sigma,
-                                           [self.min_variance_]*len(new_sigma))
-            # save uncorrected sigma for further use in _update_mean_variance()
-            self.sigma_uncorrected_[i, :] = new_sigma
+            self.sigma_[i, :] = new_sigma
             self.class_count_[i] += N_i
+
+        self.sigma_[:, :] += self.epsilon_
 
         # Update if only no priors is provided
         if self.priors is None:
