@@ -111,7 +111,7 @@ class Pipeline(_BaseComposition):
 
     def __init__(self, steps, memory=None):
         # shallow copy of steps
-        self.steps = list(steps)
+        self.steps = steps
         self._validate_steps()
         self.memory = memory
 
@@ -184,6 +184,8 @@ class Pipeline(_BaseComposition):
     # Estimator interface
 
     def _fit(self, X, y=None, **fit_params):
+        # shallow copy of steps - this should really be steps_
+        self.steps = list(self.steps)
         self._validate_steps()
         # Setup the memory
         memory = check_memory(self.memory)

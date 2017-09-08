@@ -188,7 +188,7 @@ def test_pipeline_init():
     assert_raises(ValueError, pipe.set_params, anova__C=0.1)
 
     # Test clone
-    pipe2 = assert_no_warnings(clone(pipe))
+    pipe2 = assert_no_warnings(clone, pipe)
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
     # Check that apart from estimators, the parameters are the same
