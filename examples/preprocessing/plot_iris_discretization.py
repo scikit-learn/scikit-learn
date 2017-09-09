@@ -10,13 +10,6 @@ visualize the effect of discretization. Next, several classifiers are trained
 using the original data and the transformed data. The results through cross
 validation shows that discretization leads to some increase in accuracy.
 
-References
-----------
-
-.. [1] Duda J. Supervised and Unsupervised Discretization of Continuous
-       Features[J]. Machine Learning Proceedings, 1995(2):194-202.
-       <http://robotics.stanford.edu/users/sahami/papers-dir/disc.pdf>`_
-
 """
 
 # Author: Hanmin Qin <qinhanmin2005@sina.com>
