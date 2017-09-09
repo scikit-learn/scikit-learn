@@ -486,8 +486,9 @@ class PCA(_BasePCA):
             S = S[::-1]
             # flip eigenvectors' sign to enforce deterministic output
             U, V = svd_flip(U[:, ::-1], V[::-1])
-        else:
-            # for randomized svd_solver, sign flipping is done inside
+
+        elif svd_solver == 'randomized':
+            # sign flipping is done inside
             U, S, V = randomized_svd(X, n_components=n_components,
                                      n_iter=self.iterated_power,
                                      flip_sign=True,

@@ -47,7 +47,7 @@ alphas_positive_enet, coefs_positive_enet, _ = enet_path(
 # Display results
 
 plt.figure(1)
-ax = plt.gca()
+plt.gca()
 
 colors = cycle(['b', 'r', 'g', 'c', 'k'])
 neg_log_alphas_lasso = -np.log10(alphas_lasso)
@@ -64,7 +64,7 @@ plt.axis('tight')
 
 
 plt.figure(2)
-ax = plt.gca()
+plt.gca()
 neg_log_alphas_positive_lasso = -np.log10(alphas_positive_lasso)
 for coef_l, coef_pl, c in zip(coefs_lasso, coefs_positive_lasso, colors):
     l1 = plt.plot(neg_log_alphas_lasso, coef_l, c=c)
@@ -78,7 +78,7 @@ plt.axis('tight')
 
 
 plt.figure(3)
-ax = plt.gca()
+plt.gca()
 neg_log_alphas_positive_enet = -np.log10(alphas_positive_enet)
 for (coef_e, coef_pe, c) in zip(coefs_enet, coefs_positive_enet, colors):
     l1 = plt.plot(neg_log_alphas_enet, coef_e, c=c)
