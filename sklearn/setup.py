@@ -58,7 +58,8 @@ def configuration(parent_package='', top_path=None):
 
     # add the regression trees which do not have to do anything here yet
     config.add_subpackage('regression_tree')
-    config.add_subpackage('regression_tree/tests')
+    # we created a setup.py to compile the cython code
+    # config.add_subpackage('regression_tree/tests')
 
     # add cython extension module for isotonic regression
     config.add_extension('_isotonic',

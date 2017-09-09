@@ -16,10 +16,9 @@ from ..base import RegressorMixin
 from ..utils.validation import check_array, check_random_state, check_X_y
 from ..externals import six
 
-from .splitter import Splitter
-from .split_record import SplitRecord
-from .stats_node import StatsNode
-from .criterion import _impurity_mse
+from ._splitter import Splitter
+from ._split_record import SplitRecord
+from ._criterion import impurity_mse
 
 from ..tree._tree import Tree
 from ..tree import _tree
@@ -344,6 +343,9 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
             raise ValueError("min_impurity_split must be greater than "
                              "or equal to 0")
 
+        # FIXME: to have cython buffer compatibility
+        y = np.squeeze(y)
+
         # If multiple trees are built on the same dataset, we only want to
         # presort once. Splitters now can accept presorted indices if desired,
         # but do not handle any presorting themselves. Ensemble algorithms
@@ -379,18 +381,26 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
         split_record_map = defaultdict(lambda: None)
 
         # create the root node statistics
-        root_stats = StatsNode(
-            sum_y=np.sum(np.ravel(y) * sample_weight),
-            sum_sq_y=np.sum(np.ravel(y ** 2) * sample_weight),
-            n_samples=n_samples,
-            sum_weighted_samples=weighted_n_samples)
+        root_sum_y = np.sum(np.ravel(y) * sample_weight)
+        root_sum_sq_y = np.sum(np.ravel(y ** 2) * sample_weight)
+        root_n_samples = n_samples
+        root_sum_weighted_samples = weighted_n_samples
         # create the parent split record
         parent_split_record = SplitRecord()
         # affect the stats to the record
-        parent_split_record.c_stats = root_stats
+        parent_split_record.init_stats(root_sum_y, root_sum_sq_y,
+                                       root_n_samples,
+                                       root_sum_weighted_samples,
+                                       0., 0., 0, 0.,
+                                       root_sum_y, root_sum_sq_y,
+                                       root_n_samples,
+                                       root_sum_weighted_samples,)
         # compute the impurity for the parent node
         # FIXME only MSE impurity for the moment
-        parent_split_record.impurity = _impurity_mse(root_stats)
+        parent_split_record.impurity = impurity_mse(root_sum_y,
+                                                    root_sum_sq_y,
+                                                    root_n_samples,
+                                                    root_sum_weighted_samples)
 
         parent_split_record.nid = self.tree_._add_node_py(
             parent=TREE_UNDEFINED,
@@ -400,8 +410,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
             impurity=parent_split_record.impurity,
             n_node_samples=n_samples,
             weighted_n_node_samples=weighted_n_samples,
-            node_value=(root_stats.sum_y /
-                        root_stats.sum_weighted_samples))
+            node_value=(root_sum_y /
+                        root_sum_weighted_samples))
 
         # create a list to keep track of the constant features
         # constant_features = []

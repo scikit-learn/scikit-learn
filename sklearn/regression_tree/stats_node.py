@@ -1,3 +1,7 @@
+#cython: boundscheck=False
+#cython: cdivision=True
+#cython: warparound=False
+
 from __future__ import division, print_function
 
 from numpy import all

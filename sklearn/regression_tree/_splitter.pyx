@@ -1,13 +1,17 @@
-from __future__ import division, print_function
+#cython: boundscheck=False
+#cython: cdivision=True
+#cython: warparound=False
 
-from ._stats_node import StatsNode
-from ._split_record import SplitRecord
-from ._criterion import impurity_improvement
+from libc.math cimport abs
 
-FEATURE_THRESHOLD = 1e-7
+from sklearn.regression_tree._stats_node cimport StatsNode
+from sklearn.regression_tree._split_record cimport SplitRecord
+from sklearn.regression_tree._criterion cimport impurity_improvement
+
+cdef double FEATURE_THRESHOLD = 1e-7
 
 
-class Splitter(object):
+cdef class Splitter:
     """New type of splitter driven by data
 
     Parameters
@@ -21,7 +25,7 @@ class Splitter(object):
     sample_weight: ndarray, shape (n_samples,)
         The weight associated to each samples.
 
-    sum_total_weighted_samples: float,
+    sum_total_weighted_samples: double,
         The sum of the weights for all samples.
 
     split_record: SplitRecord,
@@ -30,19 +34,21 @@ class Splitter(object):
     min_samples_leaf: int,
         The minimum number of samples to have a proper split record.
 
-    min_weight_leaf: float,
+    min_weight_leaf: double,
         The minimum weight to have a proper split record.
-
     Attributes
+
     -------
     best_split_record: SplitRecord,
         The best split record found after iterating all the samples.
     """
 
-    def __init__(self, X, y, sample_weight, sum_total_weighted_samples,
-                 feature_idx, start_idx,
-                 split_record,
-                 min_samples_leaf, min_weight_leaf):
+    def __init__(self, float[:, ::1] X, double[::1] y,
+                 double[::1] sample_weight,
+                 double sum_total_weighted_samples,
+                 int feature_idx, int start_idx,
+                 SplitRecord split_record,
+                 int min_samples_leaf, double min_weight_leaf):
         # store the information related to the dataset
         self.X = X
         self.y = y
@@ -56,13 +62,12 @@ class Splitter(object):
 
         # split record to work with
         self.split_record = SplitRecord()
-
         split_record.copy_to(self.split_record)
         self.split_record.feature = self.feature_idx
         self.split_record.pos = self.start_idx
 
-        self.best_split_record = SplitRecord()
         # split to store the best split record
+        self.best_split_record = SplitRecord()
         split_record.copy_to(self.best_split_record)
         # set the right stats node equal to the left stats node
         split_record.c_stats.copy_to(split_record.r_stats)
@@ -75,7 +80,8 @@ class Splitter(object):
         # used in update_stats
         self.stats_samples = StatsNode(0., 0., 0, 0.)
 
-    def reset(self, feature_idx, start_idx, split_record):
+    cpdef void reset(self, int feature_idx, int start_idx,
+                     SplitRecord split_record):
         """Reset a splitter with a new samples set.
         It could correspond to a new feature to be scanned.
         """
@@ -93,8 +99,7 @@ class Splitter(object):
         # set the right stats node equal to the left stats node
         split_record.c_stats.copy_to(split_record.r_stats)
 
-    def update_stats(self, sample_idx):
-
+    cpdef void update_stats(self, int sample_idx):
         # make an update of the statistics
         # collect the statistics to add to the left node
         self.stats_samples.reset(
@@ -109,16 +114,16 @@ class Splitter(object):
         # update the statistics of the right child
         self.split_record.r_stats -= self.stats_samples
 
-    def node_evaluate_split(self, sample_idx):
+    cpdef void node_evaluate_split(self, int sample_idx):
         """Update the impurity and check the corresponding split should be
         kept.
         """
-        feat_i = self.feature_idx
+        cdef int feat_i = self.feature_idx
 
         # check that the two consecutive samples are not the same
-        b_samples_var = (abs(self.X[sample_idx, feat_i] -
-                             self.X[self.prev_idx, feat_i]) >
-                         FEATURE_THRESHOLD)
+        cdef double diff_samples = abs(self.X[sample_idx, feat_i] -
+                                       self.X[self.prev_idx, feat_i])
+        b_samples_var = diff_samples > FEATURE_THRESHOLD
 
         # check that there is enough samples to make a split
         b_n_samples = not (
@@ -135,6 +140,7 @@ class Splitter(object):
             self.min_weight_leaf)
 
         # try to split if necessary
+        cdef double c_impurity_improvement = 0.0
         if b_samples_var and b_n_samples and b_weight_samples:
 
             # compute the impurity improvement
