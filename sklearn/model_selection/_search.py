@@ -587,7 +587,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                               'the "fit" method.', RuntimeWarning)
             else:
                 fit_params = self.fit_params
-        if self.return_train_score is None:
+        if self.return_train_score == "warn":
             warnings.warn("return_train_score will default to False from 0.22."
                           " Please explicitly set return_train_score=True "
                           "to maintain current behaviour", FutureWarning)
@@ -1049,7 +1049,7 @@ class GridSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
                  n_jobs=1, iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
-                 return_train_score=None):
+                 return_train_score="warn"):
         super(GridSearchCV, self).__init__(
             estimator=estimator, scoring=scoring, fit_params=fit_params,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,

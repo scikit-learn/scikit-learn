@@ -790,8 +790,7 @@ def test_grid_search_cv_results():
     n_candidates = n_grid_points
 
     for iid in (False, True):
-        search = GridSearchCV(SVC(), cv=n_splits, iid=iid, param_grid=params,
-                              return_train_score=True)
+        search = GridSearchCV(SVC(), cv=n_splits, iid=iid, param_grid=params)
         search.fit(X, y)
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
@@ -870,11 +869,10 @@ def test_search_iid_param():
     # create "cv" for splits
     cv = [[mask, ~mask], [~mask, mask]]
     # once with iid=True (default)
-    grid_search = GridSearchCV(SVC(), param_grid={'C': [1, 10]}, cv=cv,
-                               return_train_score=True)
+    grid_search = GridSearchCV(SVC(), param_grid={'C': [1, 10]}, cv=cv)
     random_search = RandomizedSearchCV(SVC(), n_iter=2,
                                        param_distributions={'C': [1, 10]},
-                                       cv=cv, return_train_score=True)
+                                       cv=cv)
     for search in (grid_search, random_search):
         search.fit(X, y)
         assert_true(search.iid)
@@ -915,8 +913,8 @@ def test_search_iid_param():
 
     # once with iid=False
     grid_search = GridSearchCV(SVC(),
-                               param_grid={'C': [1, 10]}, cv=cv,
-                               iid=False, return_train_score=True)
+                               param_grid={'C': [1, 10]},
+                               cv=cv, iid=False)
     random_search = RandomizedSearchCV(SVC(), n_iter=2,
                                        param_distributions={'C': [1, 10]},
                                        cv=cv, iid=False)
@@ -1059,8 +1057,7 @@ def test_search_cv_results_rank_tie_breaking():
     # which would result in a tie of their mean cv-scores
     param_grid = {'C': [1, 1.001, 0.001]}
 
-    grid_search = GridSearchCV(SVC(), param_grid=param_grid,
-                               return_train_score=True)
+    grid_search = GridSearchCV(SVC(), param_grid=param_grid)
     random_search = RandomizedSearchCV(SVC(), n_iter=3,
                                        param_distributions=param_grid)
 
@@ -1411,14 +1408,12 @@ def test_grid_search_cv_splits_consistency():
     gs = GridSearchCV(LinearSVC(random_state=0),
                       param_grid={'C': [0.1, 0.2, 0.3]},
                       cv=OneTimeSplitter(n_splits=n_splits,
-                                         n_samples=n_samples),
-                      return_train_score=True)
+                                         n_samples=n_samples))
     gs.fit(X, y)
 
     gs2 = GridSearchCV(LinearSVC(random_state=0),
                        param_grid={'C': [0.1, 0.2, 0.3]},
-                       cv=KFold(n_splits=n_splits),
-                       return_train_score=True)
+                       cv=KFold(n_splits=n_splits))
     gs2.fit(X, y)
 
     # Give generator as a cv parameter
@@ -1428,15 +1423,13 @@ def test_grid_search_cv_splits_consistency():
     gs3 = GridSearchCV(LinearSVC(random_state=0),
                        param_grid={'C': [0.1, 0.2, 0.3]},
                        cv=KFold(n_splits=n_splits, shuffle=True,
-                                random_state=0).split(X, y),
-                       return_train_score=True)
+                                random_state=0).split(X, y))
     gs3.fit(X, y)
 
     gs4 = GridSearchCV(LinearSVC(random_state=0),
                        param_grid={'C': [0.1, 0.2, 0.3]},
                        cv=KFold(n_splits=n_splits, shuffle=True,
-                                random_state=0),
-                       return_train_score=True)
+                                random_state=0))
     gs4.fit(X, y)
 
     def _pop_time_keys(cv_results):
@@ -1464,8 +1457,7 @@ def test_grid_search_cv_splits_consistency():
     # Check consistency of folds across the parameters
     gs = GridSearchCV(LinearSVC(random_state=0),
                       param_grid={'C': [0.1, 0.1, 0.2, 0.2]},
-                      cv=KFold(n_splits=n_splits, shuffle=True),
-                      return_train_score=True)
+                      cv=KFold(n_splits=n_splits, shuffle=True))
     gs.fit(X, y)
 
     # As the first two param settings (C=0.1) and the next two param
