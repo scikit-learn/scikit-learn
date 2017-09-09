@@ -196,7 +196,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             return_times=True)
         for train, test in cv.split(X, y, groups))
 
-    if return_train_score:
+    if return_train_score or return_train_score is None:
         train_scores, test_scores, fit_times, score_times = zip(*scores)
         train_scores = _aggregate_score_dicts(train_scores)
     else:
@@ -209,7 +209,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     for name in scorers:
         ret['test_%s' % name] = np.array(test_scores[name])
-        if return_train_score:
+        if return_train_score or return_train_score is None:
             ret['train_%s' % name] = np.array(train_scores[name])
 
     return ret
@@ -448,12 +448,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             if is_multimetric:
                 test_scores = dict(zip(scorer.keys(),
                                    [error_score, ] * n_scorers))
-                if return_train_score:
+                if return_train_score or return_train_score is None:
                     train_scores = dict(zip(scorer.keys(),
                                         [error_score, ] * n_scorers))
             else:
                 test_scores = error_score
-                if return_train_score:
+                if return_train_score or return_train_score is None:
                     train_scores = error_score
             warnings.warn("Classifier fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
@@ -468,7 +468,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         # _score will return dict if is_multimetric is True
         test_scores = _score(estimator, X_test, y_test, scorer, is_multimetric)
         score_time = time.time() - start_time - fit_time
-        if return_train_score:
+        if return_train_score or return_train_score is None:
             train_scores = _score(estimator, X_train, y_train, scorer,
                                   is_multimetric)
 
@@ -483,7 +483,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         end_msg = "%s, total=%s" % (msg, logger.short_format_time(total_time))
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
-    ret = [train_scores, test_scores] if return_train_score else [test_scores]
+    ret = [train_scores, test_scores] if return_train_score \
+        or return_train_score is None else [test_scores]
 
     if return_n_test_samples:
         ret.append(_num_samples(X_test))
