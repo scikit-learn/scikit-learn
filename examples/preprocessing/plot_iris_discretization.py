@@ -38,12 +38,13 @@ Xt = KBinsDiscretizer(n_bins=10, encode='ordinal').fit_transform(X)
 # plot the data before and after discretization
 plt.figure(figsize=(10, 5))
 plt.subplot(121)
-plt.scatter(X[:, 0], X[:, 1], c=y, alpha=.3)
+plt.scatter(X[:, 0], X[:, 1], c=y, alpha=.3, cmap=plt.cm.RdYlBu,
+            edgecolor='black')
 plt.title('before discretization')
 plt.xlabel('petal length (cm)')
 plt.ylabel('petal width (cm)')
 plt.subplot(122)
-plt.scatter(Xt[:, 0], Xt[:, 1], c=y)
+plt.scatter(Xt[:, 0], Xt[:, 1], c=y, cmap=plt.cm.RdYlBu, edgecolor='black')
 plt.title('after discretization')
 plt.xlabel('petal length (group)')
 plt.ylabel('petal width (group)')
@@ -62,7 +63,7 @@ print("DecisionTreeClassifier average score after discretization : {}"
 print("DecisionTreeClassifier score std after discretization : {}"
       .format(np.std(cv_result_2)))
 
-clf2 = SVC()
+clf2 = SVC(random_state=0)
 cv_result_1 = cross_val_score(clf2, X, y, cv=5)
 print("SVC average score before discretization : {}"
       .format(np.mean(cv_result_1)))
