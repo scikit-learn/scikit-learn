@@ -486,9 +486,8 @@ class PCA(_BasePCA):
             S = S[::-1]
             # flip eigenvectors' sign to enforce deterministic output
             U, V = svd_flip(U[:, ::-1], V[::-1])
-
-        elif svd_solver == 'randomized':
-            # sign flipping is done inside
+        else:
+            # for randomized svd_solver, sign flipping is done inside
             U, S, V = randomized_svd(X, n_components=n_components,
                                      n_iter=self.iterated_power,
                                      flip_sign=True,
@@ -535,7 +534,6 @@ class PCA(_BasePCA):
         X = check_array(X)
         Xr = X - self.mean_
         n_features = X.shape[1]
-        log_like = np.zeros(X.shape[0])
         precision = self.get_precision()
         log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
         log_like -= .5 * (n_features * log(2. * np.pi) -
