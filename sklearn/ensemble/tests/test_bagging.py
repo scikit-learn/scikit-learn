@@ -28,6 +28,7 @@ from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
+from sklearn.random_projection import SparseRandomProjection
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
@@ -719,6 +720,34 @@ def test_estimators_samples():
     new_coefs = estimator.coef_
 
     assert_array_almost_equal(orig_coefs, new_coefs)
+
+
+def test_estimators_samples_deterministic():
+    # This test is a regression test to check that with a random step
+    # (e.g. SparseRandomProjection) and a given random state, the results
+    # generated at fit time can be identically reproduced at a later time using
+    # data saved in object attributes.
+
+    iris = load_iris()
+    X, y = iris.data, iris.target
+
+    base_pipeline = make_pipeline(SparseRandomProjection(n_components=2),
+                                  LogisticRegression())
+    clf = BaggingClassifier(base_estimator=base_pipeline,
+                            max_samples=0.5,
+                            random_state=0)
+    clf.fit(X, y)
+    pipeline_estimator_coef = clf.estimators_[0].steps[-1][1].coef_.copy()
+
+    estimator = clf.estimators_[0]
+    estimator_sample = clf.estimators_samples_[0]
+    estimator_feature = clf.estimators_features_[0]
+
+    X_train = (X[estimator_sample])[:, estimator_feature]
+    y_train = y[estimator_sample]
+
+    estimator.fit(X_train, y_train)
+    assert_array_equal(estimator.steps[-1][1].coef_, pipeline_estimator_coef)
 
 
 def test_max_samples_consistency():

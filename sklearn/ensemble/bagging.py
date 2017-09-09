@@ -95,6 +95,11 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                                                       n_samples, max_features,
                                                       max_samples)
 
+        # Convert sample indices to a masked array; it is the same behavior
+        # than estimators_samples_ and necessary to obtain deterministic
+        # results when the random state is set.
+        sample_mask = indices_to_mask(indices, n_samples)
+
         # Draw samples, using sample weights, and then fit
         if support_sample_weight:
             if sample_weight is None:
@@ -113,7 +118,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
         # Draw samples, using a mask, and then fit
         else:
-            estimator.fit((X[indices])[:, features], y[indices])
+            estimator.fit((X[sample_mask])[:, features], y[sample_mask])
 
         estimators.append(estimator)
         estimators_features.append(features)
