@@ -1596,5 +1596,10 @@ def test_brier_score_loss():
     # calculate correctly if only single class in y_true
     assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
+    assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
     assert_almost_equal(brier_score_loss([0], [0.4]), 0.16)
     assert_almost_equal(brier_score_loss([1], [0.4]), 0.36)
+    assert_almost_equal(brier_score_loss(['True'], [0.4], pos_label='True'),
+                        0.36)
+    assert_almost_equal(brier_score_loss(['True'], [0.4], pos_label='False'),
+                        0.16)
