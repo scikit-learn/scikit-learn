@@ -170,6 +170,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
 
+        if sample_weight.shape[0] > 0 and np.min(sample_weight) < 0:
+            raise ValueError("Sample weights must not be negative")
+
         if self.gamma == 'auto':
             self._gamma = 1.0 / X.shape[1]
         else:

@@ -975,3 +975,10 @@ def test_ovr_decision_function():
     # Test if the first point has lower decision value on every quadrant
     # compared to the second point
     assert_true(np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1]))
+
+
+def test_negative_weights():
+    sample_weights = np.array([1, 1, 1, -1, -1, -1])
+
+    clf = svm.SVC(kernel='linear')
+    assert_raises(ValueError, clf.fit, X, Y, sample_weight=sample_weights)
