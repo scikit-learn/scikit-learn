@@ -19,6 +19,10 @@ random sampling procedures.
 - :class:`isotonic.IsotonicRegression` (bug fix)
 - :class:`metrics.roc_auc_score` (bug fix)
 
+- Classes dervied from :class:`ensemble.BaseBagging`. The base estimator may be
+  presented with the same samples in a different order in previous versions;
+  now the samples will always be in input order.
+
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we

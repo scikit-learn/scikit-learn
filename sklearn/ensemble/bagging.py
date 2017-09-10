@@ -96,7 +96,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                                                       max_samples)
 
         # Convert sample indices to a masked array; it is the same behavior
-        # than estimators_samples_ and necessary to obtain deterministic
+        # as estimators_samples_ and necessary to obtain deterministic
         # results when the random state is set.
         sample_mask = indices_to_mask(indices, n_samples)
 
