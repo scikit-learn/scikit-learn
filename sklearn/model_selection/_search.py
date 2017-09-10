@@ -887,7 +887,9 @@ class GridSearchCV(BaseSearchCV):
         step, which will always raise the error.
 
     return_train_score : boolean, optional
-        Current default is ``'True'``, will be changed to ``'False'`` in 0.22.
+        Current default is ``'warn'``, which behaves as ``'True'`` in addition
+         to raising a warning that default will be changed to ``'False'``
+         in 0.22.
         If ``'False'``, the ``cv_results_`` attribute will not include training
         scores.
 
