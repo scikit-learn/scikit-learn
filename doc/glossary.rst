@@ -73,14 +73,42 @@ General Concepts
         Common attributes are listed :ref:`below <glossary_attributes>`.
 
     backwards compatibility
-        TODO
+        We generally try to maintain backwards compatibility (i.e. interfaces
+        and behaviors may be extended but not changed or removed) from release
+        to release but this comes with some exceptions:
 
-        We may sometimes assume that all optional parameters other than X and y
-        are passed as keyword arguments only and may be positionally reordered.
+        Public API only
+            The behaviour of objects accessed through private identifiers
+            (those beginning ``_``) may be changed arbitrarily between
+            versions.
+        As documented
+            We will generally assume that the users have adhered to the
+            documented parameter types and ranges.
+        Deprecation
+            Behaviors may change following a :term:`deprecation` period
+            (usually two releases long).  Warnings are issued using Python's
+            :mod:`warnings` module.
+        Keyword arguments
+            We may sometimes assume that all optional parameters (other than X
+            and y to :term:`fit` and similar methods) are passed as keyword
+            arguments only and may be positionally reordered.
+        Bug fixes and enhancements
+            Bug fixes and -- less often -- enhancements may change the behavior
+            of estimators, including the predictions of an estimator trained on
+            the same data and :term:`random_state`.  When this happens, we
+            attempt to note it clearly in the changelog.
+        Serialization
+            We make no assurances that pickling an estimator in one version
+            will allow it to be unpickled to an equivalent model in the
+            subsequent version.  See :ref:`persistence_limitations`.
+        :func:`utils.estimator_checks.check_estimator`
+            TODO We provide limited backwards compatibility assurances for the
+            estimator checks. TODO
 
-        Backwards compatibility for ``check_estimator``.
-
-        See also :term:`deprecation`.
+        Despite this informal contract with our users, the software is provided
+        as is, as stated in the licence.  When a release inadvertently
+        introduces changes that are not backwards compatible, these are known
+        as software regressions.
 
     categorical feature
         TODO
@@ -108,7 +136,19 @@ General Concepts
         tags`.
 
     deprecation
-        TODO
+        We use deprecation to slowly violate our :term:`backwards
+        compatibility` assurances, usually to to:
+
+        * change the semantics of the default value of a parameter; or
+        * remove a parameter, attribute, method, class, etc.
+
+        We will ordinarily issue a warning when a deprecated element is used,
+        although there may be limitations to this.  For instance, we will raise
+        a warning when someone sets a parameter that has been deprecated, but
+        may not when they access that parameter's attribute on the estimator
+        instance.
+
+        See the :ref:`Contributors' Guide <contributing_deprecation>`.
 
     double underscore notation
         When specifying parameter names for nested estimators, ``__`` may be

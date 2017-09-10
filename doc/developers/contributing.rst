@@ -699,6 +699,8 @@ when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
 
+.. _contributing_deprecation:
+
 Deprecation
 -----------
 
