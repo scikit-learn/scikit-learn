@@ -17,9 +17,6 @@ General Concepts
 
 .. glossary::
 
-    affinity
-        TODO
-
     API
         TODO
 
@@ -233,7 +230,14 @@ General Concepts
 
     leakage
     data leakage
-        TODO
+        A problem in cross validation where generalization performance can be
+        over-estimated since knowledge of the test data was inadvertently
+        included in training a model.  This is a risk, for instance, when
+        applying a :term:`transformer` to the entirety of a dataset rather
+        than each training portion in a cross validation split.
+
+        We aim to provide interfaces (such as :mod:`pipeline` and
+        :mod:`model_selection`) that shield the user from data leakage.
 
     memmapping
     memory map
