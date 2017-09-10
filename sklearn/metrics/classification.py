@@ -1822,23 +1822,43 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     return np.average(losses, weights=sample_weight)
 
 
-def _check_binary_probabilistic_predictions(y_true, y_prob):
+def _check_binary_probabilistic_predictions(y_true, y_prob, pos_label=None):
     """Check that y_true is binary and y_prob contains valid probabilities"""
     check_consistent_length(y_true, y_prob)
 
-    labels = np.unique(y_true)
-
-    if len(labels) > 2:
-        raise ValueError("Only binary classification is supported. "
-                         "Provided labels %s." % labels)
-
     if y_prob.max() > 1:
         raise ValueError("y_prob contains values greater than 1.")
-
     if y_prob.min() < 0:
         raise ValueError("y_prob contains values less than 0.")
 
-    return label_binarize(y_true, labels)[:, 0]
+    labels = np.unique(y_true)
+    if len(labels) > 2:
+        raise ValueError("Only binary classification is supported. "
+                         "Provided labels %s." % labels)
+    elif len(labels) == 1:
+        if pos_label is None:
+            if labels[0] == 1:
+                return np.ones(len(y_true))
+            elif labels[0] == 0 or labels[0] == -1:
+                return np.zeros(len(y_true))
+            else:
+                raise ValueError("Data is not binary "
+                                 "and pos_label is not specified") 
+        else:
+            if labels[0] == pos_label:
+                return np.ones(len(y_true))
+            else:
+                return np.zeros(len(y_true))
+
+    out = label_binarize(y_true, labels)[:, 0]
+    if pos_label is not None:
+        if pos_label != labels[1]:
+            if pos_label != labels[0]:
+                raise ValueError("Invalid pos_label provided. "
+                                 "Valid options are {}".format(labels))
+            out = 1 - out
+
+    return out
 
 
 def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
@@ -1913,9 +1933,6 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     assert_all_finite(y_prob)
 
     # currently, we only support binary classification
-    _check_binary_probabilistic_predictions(y_true, y_prob)
+    y_true = _check_binary_probabilistic_predictions(y_true, y_prob, pos_label)
 
-    if pos_label is None:
-        pos_label = y_true.max()
-    y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
