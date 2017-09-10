@@ -1843,7 +1843,7 @@ def _check_binary_probabilistic_predictions(y_true, y_prob, pos_label=None):
                 return np.zeros(len(y_true))
             else:
                 raise ValueError("Data is not binary "
-                                 "and pos_label is not specified") 
+                                 "and pos_label is not specified")
         else:
             if labels[0] == pos_label:
                 return np.ones(len(y_true))

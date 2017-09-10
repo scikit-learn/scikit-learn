@@ -1587,7 +1587,7 @@ def test_brier_score_loss():
     y_pred = np.array([0, 0, 0, 0])
     assert_raises(ValueError, brier_score_loss, y_true, y_pred)
 
-	# ensure valid pos_label
+    # ensure valid pos_label
     y_true = np.array(['True', 'False', 'False', 'False'])
     y_pred = np.array([1, 0, 0, 0])
     assert_raises(ValueError, brier_score_loss, y_true, y_pred,
