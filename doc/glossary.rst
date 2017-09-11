@@ -267,7 +267,8 @@ General Concepts
 
     parameter
     parameters
-
+    param
+    params
         We mostly use *parameter* to refer to the aspects of an estimator that
         can be specified in its construction. For example, ``max_depth`` and
         ``random_state`` are parameters of :class:`RandomForestClassifier`.
