@@ -30,6 +30,8 @@ from scipy.optimize import check_grad
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import manhattan_distances
+from sklearn.metrics.pairwise import cosine_distances
 
 
 x = np.linspace(0, 1, 10)
@@ -764,3 +766,22 @@ def test_bh_match_exact():
     assert n_iter['exact'] == n_iter['barnes_hut']
     assert_array_almost_equal(X_embeddeds['exact'], X_embeddeds['barnes_hut'],
                               decimal=3)
+
+
+def test_tsne_with_different_distance_metrics():
+    """Make sure that TSNE works for different distance metrics"""
+    random_state = check_random_state(0)
+    n_components_original = 3
+    n_components_embedding = 2
+    X = random_state.randn(50, n_components_original).astype(np.float32)
+    metrics = ['manhattan', 'cosine']
+    dist_fkts = [manhattan_distances, cosine_distances]
+    for metric, dist_fkt in zip(metrics, dist_fkts):
+        tsne_1 = TSNE(metric=metric, 
+                  n_components=n_components_embedding, 
+                  random_state=0).fit_transform(X)
+        tsne_2 = TSNE(metric=metric, 
+                  n_components=n_components_embedding, 
+                  random_state=0).fit_transform(dist_fkt(X))
+        t = trustworthiness(tsne_1, tsne_2, n_neighbors=1)
+        assert_greater(t, 0.9)
