@@ -4,7 +4,6 @@ Large Margin Nearest Neighbor Classification
 """
 
 # Author: John Chiotellis <johnyc.code@gmail.com>
-#
 # License: BSD 3 clause
 
 from __future__ import print_function
