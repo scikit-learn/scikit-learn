@@ -23,34 +23,22 @@ from ..utils import gen_batches
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted, check_array, check_X_y
-from ..utils.validation import check_consistent_length
-from ..exceptions import DataDimensionalityWarning
+from ..utils.validation import check_is_fitted, check_array, check_X_y, \
+    check_consistent_length
 
 
 class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
-    """Distance Metric Learning for Large Margin Classification
+    """Distance Metric Learning for Large Margin Classification.
 
     Parameters
     ----------
-    init_transformation : array, shape (n_features_out, n_features_in),
-    optional (default=None)
-        An initial linear transformation. If None (default), the initial
-        transformation is set to the identity, except if ``warm_start`` or
-        ``init_pca`` is True.
-
-    init_pca : bool, optional (default=True)
-        Whether to use PCA to initialize the linear transformation.
-        If False, the identity will be used, except if ``warm_start`` is True.
-
-    warm_start : bool, optional (default=False)
-        If True and :meth:`fit` has been called before, the solution of the
-        previous call to :meth:`fit` is used as the initial linear
-        transformation.
-
     n_features_out : int, optional (default=None)
-        Preferred dimensionality of the inputs after the transformation.
-        If None it is inferred from ``init_pca`` and ``init_transformation``.
+        Preferred dimensionality of the embedding.
+        If None it is inferred from ``init``.
+
+    init : string or numpy array, optional (default='pca')
+        Initialization of linear transformation. Possible options are 'pca',
+        'warm_start' and a numpy array of shape (n_features_out, n_features).
 
     n_neighbors : int, optional (default=3)
         Number of neighbors to use as target neighbors for each sample.
@@ -70,7 +58,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     targets : array, shape (n_samples, n_neighbors), optional (default=None)
         The `n_neighbors` target neighbors of each sample, namely the k
         nearest neighbors that belong to the same class. If None (default),
-        the target neighbors will be computed on the fly.
+        the target neighbors will be computed on the fly based on the
+        euclidean metric.
 
     max_constraints : int, optional (default=500000)
         Maximum number of constraints to enforce per iteration.
@@ -116,19 +105,19 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    transformation_ : array, shape (n_features_out, n_features_in).
+    transformation_ : array, shape (n_features_out, n_features).
         The linear transformation learned during fitting.
 
     n_neighbors_ : int
         The provided n_neighbors is decreased if it is greater than or equal
         to  min(number of elements in each class).
 
-    n_features_out_ : int
-        The dimensionality of input samples after the linear transformation
-        has been applied to them.
+    classes_ : array-like, shape (n_classes,)
+        The appearing classes.
 
-    classes_non_singleton_ : array-like, shape (n_classes_non_singleton,)
-        The appearing classes that have more than one sample.
+    classes_inverse_non_singleton_ : array, shape (n_classes_non_singleton,)
+        The appearing classes that have more than one sample, re-indexed to
+        be integers in the interval [0, n_classes).
 
     n_funcalls_ : int
         Counts the number of times the optimizer computes the loss and the
@@ -203,17 +192,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, init_transformation=None, init_pca=True,
-                 warm_start=False, n_features_out=None, n_neighbors=3,
+    def __init__(self, n_features_out=None, init=None, n_neighbors=3,
                  algorithm='auto', targets=None, max_constraints=500000,
                  use_sparse=True, max_iter=50, tol=1e-5, max_corrections=100,
                  callback=None, verbose=0, random_state=None, n_jobs=1):
 
         # Parameters
-        self.init_transformation = init_transformation
-        self.init_pca = init_pca
-        self.warm_start = warm_start
         self.n_features_out = n_features_out
+        self.init = init
         self.n_neighbors = n_neighbors
         self.algorithm = algorithm
         self.targets = targets
@@ -234,7 +220,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features_in)
+        X : array-like, shape (n_samples, n_features)
             The training samples.
 
         y : array-like, shape (n_samples,)
@@ -250,7 +236,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         check_classification_targets(y)
 
         # Check inputs consistency
-        X_valid, y_valid, targets = self._validate_params(X, y)
+        X_valid, y_valid, targets, init = self._validate_params(X, y)
 
         self.random_state_ = check_random_state(self.random_state)
 
@@ -258,7 +244,23 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         t_start = time.time()
 
         # Initialize transformer
-        transformation, self.n_features_out_ = self._init_transformer(X_valid)
+        if isinstance(init, np.ndarray):
+            transformation = init
+        elif init == 'warm_start':
+            transformation = self.transformation_
+        elif init == 'pca':
+            pca = PCA(n_components=self.n_features_out,
+                      random_state=self.random_state_)
+            t_pca = time.time()
+            if self.verbose:
+                print('Finding principal components... ', end='')
+                sys.stdout.flush()
+
+            pca.fit(X_valid)
+            if self.verbose:
+                print('done in {:5.2f}s'.format(time.time() - t_pca))
+
+            transformation = pca.components_
 
         # Find the target neighbors
         if targets is None:
@@ -298,8 +300,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         transformation, loss, info = fmin_l_bfgs_b(**optimizer_params)
 
         # Reshape the solution found by the optimizer
-        d = transformation.size // self.n_features_out_
-        self.transformation_ = transformation.reshape(self.n_features_out_, d)
+        self.transformation_ = transformation.reshape(-1, X_valid.shape[1])
 
         # Store information dictionary from the optimizer
         self.details_ = info
@@ -330,7 +331,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features_in)
+        X : array-like, shape (n_samples, n_features)
             Data samples.
 
         check_input: bool, optional (default=True)
@@ -359,7 +360,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features_in)
+        X : array-like, shape (n_samples, n_features)
             The training samples.
 
         y : array-like, shape (n_samples,)
@@ -367,7 +368,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X : array, shape (n_samples, n_features_in)
+        X : array, shape (n_samples, n_features)
             The validated training samples.
 
         y : array, shape (n_samples,)
@@ -385,7 +386,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Find the appearing classes and the class index for each sample
         classes, y_inverse = np.unique(y, return_inverse=True)
-        classes = np.arange(len(classes))
+        classes_inverse = np.arange(len(classes))
 
         # Validate the target neighbors if they are given by the user
         targets = self.targets
@@ -424,72 +425,79 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                              "non-singleton classes, got {}."
                              .format(n_classes_non_singleton))
 
-        n_features = len(X[0])
-        check_scalar(self.warm_start, 'warm_start', bool)
-        if self.warm_start and hasattr(self, 'transformation_'):
-            if set(classes) != set(self.classes_non_singleton_):
-                raise ValueError("warm_start can only be used if `y` has "
-                                 "the same classes as in the previous call "
-                                 "to fit. Previously got {}, `y` has {}"
-                                 .format(self.classes_non_singleton_, classes))
-
-            if len(self.transformation_[0]) != n_features:
-                raise ValueError('The new inputs dimensionality ({}) does not '
-                                 'match the input dimensionality of the '
-                                 'previously learned transformation ({}).'
-                                 .format(len(self.transformation_[0]),
-                                         n_features))
-
-        self.classes_non_singleton_ = classes[~mask_singleton_class]
+        self.classes_inverse_non_singleton_ = \
+            classes_inverse[~mask_singleton_class]
 
         if self.n_features_out is not None:
             check_scalar(self.n_features_out, 'n_features_out', int, 1)
+
+            if self.n_features_out > X.shape[1]:
+                raise ValueError('Preferred outputs dimensionality ({}) '
+                                 'cannot be greater than the given data '
+                                 'dimensionality {}!'
+                                 .format(self.n_features_out, X.shape[1]))
+
         check_scalar(self.n_neighbors, 'n_neighbors', int, 1, len(X) - 1)
         check_scalar(self.max_iter, 'max_iter', int, 1)
-        check_scalar(self.max_constraints, 'max_constraints', int, 1)
         check_scalar(self.max_corrections, 'max_corrections', int, 1)
-        check_scalar(self.n_jobs, 'n_jobs', int, -1)
         check_scalar(self.tol, 'tol', float, 0.)
-        check_scalar(self.init_pca, 'init_pca', bool)
+        check_scalar(self.max_constraints, 'max_constraints', int, 1)
         check_scalar(self.use_sparse, 'use_sparse', bool)
+        check_scalar(self.n_jobs, 'n_jobs', int, -1)
         check_scalar(self.verbose, 'verbose', int, 0)
 
         if self.callback is not None:
             if not callable(self.callback):
                 raise ValueError('callback is not callable.')
 
-        # Check linear transformation dimensions
-        if self.init_transformation is not None:
-            check_array(self.init_transformation)
-            if len(self.init_transformation[0]) != n_features:
+        # Check initial linear transformation
+        init = self.init
+        if isinstance(init, np.ndarray):
+            init = check_array(init)
+
+            # Assert that init.shape[1] = X.shape[1]
+            if init.shape[1] != X.shape[1]:
                 raise ValueError('Transformation input dimensionality ({}) '
                                  'must match the inputs dimensionality ({}).'
-                                 .format(len(self.init_transformation[0]),
-                                         n_features))
+                                 .format(init.shape[1], X.shape[1]))
 
-            if len(self.init_transformation) > \
-                    len(self.init_transformation[0]):
+            # Assert that init.shape[0] < init.shape[1]
+            if init.shape[0] > init.shape[1]:
                 raise ValueError('Transformation output dimensionality ({}) '
                                  'cannot be greater than the '
-                                 'transformation input dimensionality ({}).'.
-                                 format(len(self.init_transformation),
-                                        len(self.init_transformation[0])))
+                                 'transformation input dimensionality ({}).'
+                                 .format(init.shape[0], init.shape[1]))
 
-        # Check preferred output dimensionality
-        if self.n_features_out is not None:
-            if self.init_transformation is not None:
-                if self.n_features_out != len(self.init_transformation):
+            if self.n_features_out is not None:
+                # Assert that self.n_features_out = init.shape[0]
+                if self.n_features_out != init.shape[0]:
                     raise ValueError('Preferred outputs dimensionality ({}) '
                                      'does not match the given linear '
                                      'transformation {}!'.format(
-                                        self.n_features_out,
-                                        len(self.init_transformation)))
+                                        self.n_features_out, init.shape[0]))
+        elif init == 'warm_start':
+            check_is_fitted(self, ['transformation_', 'classes_'])
 
-            elif self.n_features_out > n_features:
-                raise ValueError('Preferred outputs dimensionality ({}) '
-                                 'cannot be greater than the given data '
-                                 'dimensionality {}!'.format(
-                                    self.n_features_out, n_features))
+            if set(classes) != set(self.classes_):
+                raise ValueError("warm_start can only be used if `y` has "
+                                 "the same classes as in the previous call "
+                                 "to fit. Previously got {}, `y` has {}"
+                                 .format(self.classes_, classes))
+
+            if self.transformation_.shape[1] != X.shape[1]:
+                raise ValueError('The new inputs dimensionality ({}) does not '
+                                 'match the input dimensionality of the '
+                                 'previously learned transformation ({}).'
+                                 .format(self.transformation_.shape[1],
+                                         X.shape[1]))
+        elif init == 'pca':
+            pass
+        else:
+            raise ValueError("'init' must be 'pca', 'warm_start', or "
+                             "a numpy array")
+
+        # Store appearing classes
+        self.classes_ = classes
 
         # Check preferred number of neighbors
         if targets is None:
@@ -497,64 +505,15 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             if self.n_neighbors >= min_non_singleton_size:
                 warn("n_neighbors (={}) is not less than the number of samples"
                      " in the smallest non-singleton class (={}). n_neighbors "
-                     "will be set to (min_non_singleton_size - 1) for "
-                     "estimation.".format(self.n_neighbors,
-                                          min_non_singleton_size))
+                     "will be set to {} for estimation."
+                     .format(self.n_neighbors, min_non_singleton_size,
+                             min_non_singleton_size-1))
 
             self.n_neighbors_ = min(self.n_neighbors, min_non_singleton_size-1)
         else:
             self.n_neighbors_ = targets.shape[1]
 
-        return X, y_inverse, targets
-
-    def _init_transformer(self, X):
-        """Initialize the linear transformation by setting to user specified
-        parameter, loading from a file, applying PCA or setting to identity.
-
-        Parameters
-        ----------
-        X : array, shape (n_samples, n_features_in)
-            Data samples.
-
-        Returns
-        -------
-        transformation : array, shape (n_features_out, n_features_in)
-            The initial linear transformation.
-        """
-
-        if self.init_transformation is not None:
-            transformation = np.asarray(self.init_transformation)
-        elif self.warm_start and hasattr(self, 'transformation_'):
-            transformation = self.transformation_
-        elif self.init_pca and X.shape[1] > 1:
-            pca = PCA(random_state=self.random_state_)
-            if self.verbose:
-                print('Finding principal components... ', end='')
-                sys.stdout.flush()
-                t = time.time()
-
-            pca.fit(X)
-
-            if self.verbose:
-                print('done in {:5.2f}s'.format(time.time() - t))
-
-            transformation = pca.components_
-        else:
-            transformation = np.eye(X.shape[1])
-
-        if self.n_features_out is None:
-            n_features_out = transformation.shape[0]
-        else:
-            n_features_out = self.n_features_out
-            if transformation.shape[0] > n_features_out:
-                warn('Decreasing the initial linear transformation output '
-                     'dimensionality ({}) to the preferred output '
-                     'dimensionality ({}).'.format(transformation.shape[0],
-                                                   n_features_out),
-                     DataDimensionalityWarning)
-                transformation = transformation[:n_features_out]
-
-        return transformation, n_features_out
+        return X, y_inverse, targets, init
 
     @staticmethod
     def _compute_grad_static(X, targets, verbose=0):
@@ -563,7 +522,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array, shape (n_samples, n_features_in)
+        X : array, shape (n_samples, n_features)
             The training samples.
 
         targets : array, shape (n_samples, n_neighbors)
@@ -574,7 +533,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        array, shape (n_features_in, n_features_in)
+        array, shape (n_features, n_features)
             An array with the sum of all weighted outer products.
         """
         if verbose:
@@ -600,10 +559,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        transformation : array, shape (n_features_out * n_features_in,)
+        transformation : array, shape (n_features_out * n_features,)
             The current (flattened) linear transformation.
 
-        X : array-like, shape (n_samples, n_features_in)
+        X : array-like, shape (n_samples, n_features)
             The training samples.
 
         y : array, shape (n_samples,)
@@ -612,7 +571,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         targets : array, shape (n_samples, n_neighbors)
             The target neighbors of each sample.
 
-        grad_static : array, shape (n_features_in, n_features_in)
+        grad_static : array, shape (n_features, n_features)
             The gradient component caused by target neighbors, that stays
             fixed throughout the algorithm.
 
@@ -620,13 +579,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         -------
         loss: float
             The new loss.
-        grad: array, shape (n_features_out * n_features_in,)
+        grad: array, shape (n_features_out * n_features,)
             The new (flattened) gradient.
         """
 
-        n_samples, n_features_in = X.shape
-        self.transformation_ = transformation.reshape(self.n_features_out_,
-                                                      n_features_in)
+        n_samples, n_features = X.shape
+        self.transformation_ = transformation.reshape(-1, n_features)
 
         tic = time.time()
         Lx = self.transform(X, check_input=False)
@@ -707,7 +665,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             # Initialize impostors matrix
             impostors_sp = csr_matrix((n_samples, n_samples), dtype=np.int8)
 
-            for class_id in self.classes_non_singleton_[:-1]:
+            for class_id in self.classes_inverse_non_singleton_[:-1]:
                 ind_in, = np.where(y == class_id)
                 ind_out, = np.where(y > class_id)
 
@@ -739,7 +697,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         else:
             # Initialize impostors vectors
             imp_row, imp_col, imp_dist = [], [], []
-            for class_id in self.classes_non_singleton_[:-1]:
+            for class_id in self.classes_inverse_non_singleton_[:-1]:
                 ind_in, = np.where(y == class_id)
                 ind_out, = np.where(y > class_id)
 
@@ -789,7 +747,7 @@ def select_target_neighbors(X, y, n_neighbors, algorithm='auto', n_jobs=1,
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features_in)
+    X : array, shape (n_samples, n_features)
         The training samples.
 
     y : array, shape (n_samples,)
@@ -937,7 +895,7 @@ def paired_distances_batch(X, ind_a, ind_b, mem_budget=int(1e7)):
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features_in)
+    X : array, shape (n_samples, n_features)
         An array of data samples.
     ind_a : array, shape (n_indices,)
         An array of sample indices.
@@ -968,7 +926,7 @@ def sum_outer_products(X, weights):
 
     Parameters
     ----------
-    X : array, shape (n_samples, n_features_in)
+    X : array, shape (n_samples, n_features)
         An array of data samples.
 
     weights : csr_matrix, shape (n_samples, n_samples)
@@ -977,7 +935,7 @@ def sum_outer_products(X, weights):
 
     Returns
     -------
-    sum_outer_prods : array, shape (n_features_in, n_features_in)
+    sum_outer_prods : array, shape (n_features, n_features)
         The sum of all weighted outer products.
     """
 
