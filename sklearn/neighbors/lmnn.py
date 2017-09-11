@@ -506,7 +506,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             pass
         else:
             raise ValueError("'init' must be 'pca', 'identity', or a numpy "
-                             "array")
+                             "array of shape (n_features_out, n_features).")
 
         # Store appearing classes
         self.classes_ = classes
