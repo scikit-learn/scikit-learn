@@ -37,7 +37,7 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
 
 def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                    n_jobs=1, verbose=0, fit_params=None,
-                   pre_dispatch='2*n_jobs', return_train_score=True):
+                   pre_dispatch='2*n_jobs', return_train_score="warn"):
     """Evaluate metric(s) by cross-validation and also record fit/score times.
 
     Read more in the :ref:`User Guide <multimetric_cross_validation>`.
@@ -115,9 +115,12 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    return_train_score : boolean, default True
+    return_train_score : boolean, optional
         Whether to include train scores in the return dict if ``scoring`` is
         of multimetric type.
+        Current default is ``'warn'``, which behaves as ``'True'`` in addition
+         to raising a warning that default will be changed to ``'False'``
+         in 0.22.
 
     Returns
     -------
@@ -180,6 +183,11 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Make a scorer from a performance metric or loss function.
 
     """
+    if return_train_score == "warn":
+            warnings.warn("return_train_score will default to False from 0.22."
+                          " Please explicitly set return_train_score=True "
+                          "to maintain current behaviour", FutureWarning)
+
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
