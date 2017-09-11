@@ -1,8 +1,8 @@
 from __future__ import division, print_function
 
-from ._stats_node import StatsNode
-from ._split_record import SplitRecord
-from ._criterion import impurity_improvement
+from .stats_node import StatsNode
+from .split_record import SplitRecord
+from .criterion import impurity_improvement
 
 FEATURE_THRESHOLD = 1e-7
 

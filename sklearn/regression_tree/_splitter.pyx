@@ -4,9 +4,9 @@
 
 from libc.math cimport abs
 
-from sklearn.regression_tree._stats_node cimport StatsNode
-from sklearn.regression_tree._split_record cimport SplitRecord
-from sklearn.regression_tree._criterion cimport impurity_improvement
+from ._stats_node cimport StatsNode
+from ._split_record cimport SplitRecord
+from ._criterion cimport impurity_improvement
 
 cdef double FEATURE_THRESHOLD = 1e-7
 

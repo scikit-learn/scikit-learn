@@ -4,7 +4,7 @@
 from ._stats_node cimport StatsNode
 
 
-cdef float _impurity_mse(StatsNode stats_node):
+cdef double _impurity_mse(StatsNode stats_node):
     """Compute the impurity in MSE sense
 
     Parameters
@@ -14,10 +14,10 @@ cdef float _impurity_mse(StatsNode stats_node):
 
     Returns
     -------
-    impurity: float,
+    impurity: double,
         The impurity.
     """
-    cdef float impurity
+    cdef double impurity
     impurity = (stats_node.sum_sq_y /
                 stats_node.sum_weighted_samples)
     impurity -= ((stats_node.sum_y /
@@ -26,8 +26,8 @@ cdef float _impurity_mse(StatsNode stats_node):
     return impurity
 
 
-cpdef float impurity_mse(float sum_y, float sum_sq_y, int n_samples,
-                         float sum_weighted_samples):
+cpdef double impurity_mse(double sum_y, double sum_sq_y, int n_samples,
+                          double sum_weighted_samples):
     """Compute the impurity in MSE sense
 
     Parameters
@@ -37,7 +37,7 @@ cpdef float impurity_mse(float sum_y, float sum_sq_y, int n_samples,
 
     Returns
     -------
-    impurity: float,
+    impurity: double,
         The impurity.
     """
 
@@ -46,11 +46,11 @@ cpdef float impurity_mse(float sum_y, float sum_sq_y, int n_samples,
     return _impurity_mse(stats_node)
 
 
-cpdef float impurity_improvement(StatsNode c_stats,
-                                 StatsNode r_stats,
-                                 StatsNode l_stats,
-                                 float sum_total_weighted_samples,
-                                 criterion):
+cpdef double impurity_improvement(StatsNode c_stats,
+                                  StatsNode r_stats,
+                                  StatsNode l_stats,
+                                  double sum_total_weighted_samples,
+                                  criterion):
     """Compute the impurity improvement.
 
     Parameters
@@ -58,7 +58,7 @@ cpdef float impurity_improvement(StatsNode c_stats,
     c_split_record: SplitRecord,
         Split record of the current node.
 
-    sum_total_weighted_samples: float,
+    sum_total_weighted_samples: double,
         The sum of all the weights for all samples.
 
     criterion: str, optional(default='mse')
@@ -66,7 +66,7 @@ cpdef float impurity_improvement(StatsNode c_stats,
 
     Returns
     -------
-    impurity_improvement: float,
+    impurity_improvement: double,
         Impurity improvement
     """
     if criterion == 'mse':

@@ -110,12 +110,14 @@ cdef class SplitRecord:
         # create the left child split record
         left_sr = SplitRecord()
         self.l_stats.copy_to(left_sr.c_stats)
+        self.l_stats.copy_to(left_sr.r_stats)
         # FIXME stuck with impurity mse for the moment
         left_sr.impurity = _impurity_mse(left_sr.c_stats)
 
         # create the right child split record
         right_sr = SplitRecord()
         self.r_stats.copy_to(right_sr.c_stats)
+        self.r_stats.copy_to(right_sr.r_stats)
         # FIXME stuck with impurity mse for the moment
         right_sr.impurity = _impurity_mse(right_sr.c_stats)
 
