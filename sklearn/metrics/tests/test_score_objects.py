@@ -144,8 +144,8 @@ class DummyScorer(object):
         return 1
 
 
-def DummyScorerWithLabels(y_true, y_pred, labels=None):
-    """A dummy scorer function which returns 1 if labels argument was set
+def dummy_scorer_with_labels(y_true, y_pred, labels=None):
+    """A dummy metric function which returns 1 if labels argument was set
     else returns 0"""
     if labels is None:
         return 0
@@ -153,9 +153,9 @@ def DummyScorerWithLabels(y_true, y_pred, labels=None):
         return 1
 
 
-def DummyScorerWithLabelsNamedDifferent(y_true, y_pred,
-                                        labels_other_name=None):
-    """A dummy scorer function which returns 1 if labels argument was set
+def dummy_scorer_with_labels_named_different(y_true, y_pred,
+                                             labels_other_name=None):
+    """A dummy metric function which returns 1 if labels argument was set
     else returns 0"""
     if labels_other_name is None:
         return 0
@@ -556,14 +556,14 @@ def test_pass_classes():
     clf.fit(X, y)
 
     # copy_classes=None should not set labels
-    scorer = make_scorer(DummyScorerWithLabels, pass_classes=None)
+    scorer = make_scorer(dummy_scorer_with_labels, pass_classes=None)
     assert_equal(scorer(clf, X, y), 0)
 
     # by default, labels should be set
-    scorer = make_scorer(DummyScorerWithLabels)
+    scorer = make_scorer(dummy_scorer_with_labels)
     assert_equal(scorer(clf, X, y), 1)
 
-    scorer = make_scorer(DummyScorerWithLabels, labels=[1, 2, 3])
+    scorer = make_scorer(dummy_scorer_with_labels, labels=[1, 2, 3])
     expected_msg = ("LogisticRegression classes=[0 1] is not the superset of "
                     "scorer labels=[1, 2, 3]")
     assert_raise_message(ValueError, expected_msg,
@@ -571,13 +571,13 @@ def test_pass_classes():
 
     # if an argument other than labels passed, then it should be present in
     # scorer's signature
-    scorer = make_scorer(DummyScorerWithLabels, pass_classes='label_names')
+    scorer = make_scorer(dummy_scorer_with_labels, pass_classes='label_names')
     expected_msg = ("the scorer doesn't have label_names as a parameter,"
                     "as passed in pass_classes parameter")
     assert_raise_message(ValueError, expected_msg,
                          scorer, clf, X, y)
 
     # if custom scorer has another name for labels, it should be set
-    scorer = make_scorer(DummyScorerWithLabelsNamedDifferent,
+    scorer = make_scorer(dummy_scorer_with_labels_named_different,
                          pass_classes='labels_other_name')
     assert_equal(scorer(clf, X, y), 1)
