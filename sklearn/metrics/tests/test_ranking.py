@@ -397,6 +397,13 @@ def test_roc_auc_score_pos_label():
     roc_auc_score_3 = roc_auc_score(y_true_3, y_pred, pos_label='False')
     assert_almost_equal(roc_auc_score_1, 1 - roc_auc_score_3)
 
+    # raise an error for multilabel-indicator y_true with pos_label
+    y_true_1 = np.array([['True', 'False'], ['False', 'True'],
+                         ['False', 'True'], ['True', 'False']])
+    y_pred = np.array([[0.9, 0.1], [0.1, 0.9], [0.8, 0.2], [0.2, 0.8]])
+    assert_raises(ValueError, roc_auc_score, y_true_1, y_pred,
+                  pos_label='True')
+
 
 def test_auc():
     # Test Area Under Curve (AUC) computation
