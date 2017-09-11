@@ -89,22 +89,22 @@ def test_params_validation():
     assert_raises(TypeError, LMNN(max_corrections=1e3).fit, X, y)
     assert_raises(TypeError, LMNN(tol=1).fit, X, y)
     assert_raises(TypeError, LMNN(n_features_out='invalid').fit, X, y)
-    assert_raises(TypeError, LMNN(init_pca=1).fit, X, y)
     assert_raises(TypeError, LMNN(n_jobs='yes').fit, X, y)
     assert_raises(TypeError, LMNN(warm_start=1).fit, X, y)
     assert_raises(TypeError, LMNN(use_sparse=0.5).fit, X, y)
 
     # ValueError
+    assert_raises(ValueError, LMNN(init=1).fit, X, y)
     assert_raises(ValueError, LMNN(n_neighbors=-1).fit, X, y)
     assert_raises(ValueError, LMNN(n_neighbors=len(X)).fit, X, y)
     assert_raises(ValueError, LMNN(max_iter=-1).fit, X, y)
     assert_raises(ValueError, LMNN(max_constraints=-1).fit, X, y)
     assert_raises(ValueError, LMNN(max_corrections=-1).fit, X, y)
 
-    fit_func = LMNN(init_transformation=np.random.rand(5, 3)).fit
+    fit_func = LMNN(init=np.random.rand(5, 3)).fit
     assert_raises(ValueError, fit_func, X, y)
     assert_raises(ValueError, LMNN(n_features_out=10).fit, X, y)
-    assert_raises(ValueError, LMNN(n_jobs=-2).fit, X, y)
+    assert_raises(ValueError, LMNN(n_jobs=0).fit, X, y)
 
     # test min_class_size < 2
     y = [1, 1, 1, 2]
@@ -139,18 +139,18 @@ def test_transformation_dimensions():
     # Fail if transformation input dimension does not match inputs dimensions
     transformation = [[1, 2], [3, 4]]  # len(transformation[0]) != len(X[0])
     assert_raises(ValueError, LargeMarginNearestNeighbor(
-        init_transformation=transformation, n_neighbors=1).fit, X, y)
+        init=transformation, n_neighbors=1).fit, X, y)
 
     # Fail if transformation output dimension is larger than
     # transformation input dimension
     transformation = [[1, 2], [3, 4], [5, 6]]
     # len(transformation) > len(transformation[0])
     assert_raises(ValueError, LargeMarginNearestNeighbor(
-        init_transformation=transformation, n_neighbors=1).fit, X, y)
+        init=transformation, n_neighbors=1).fit, X, y)
 
     # Pass otherwise
     transformation = np.arange(9).reshape(3, 3)
-    LargeMarginNearestNeighbor(init_transformation=transformation,
+    LargeMarginNearestNeighbor(init=transformation,
                                n_neighbors=1).fit(X, y)
 
 
@@ -181,18 +181,18 @@ def test_n_features_out():
 
     transformation = [[1, 2, 3], [4, 5, 6]]
     # len(transformation) != n_features_out
-    lmnn = LargeMarginNearestNeighbor(init_transformation=transformation,
+    lmnn = LargeMarginNearestNeighbor(init=transformation,
                                       n_neighbors=1, n_features_out=5)
     assert_raises(ValueError, lmnn.fit, X, y)
 
     # n_features_out > len(X[0])
-    lmnn = LargeMarginNearestNeighbor(init_transformation=transformation,
+    lmnn = LargeMarginNearestNeighbor(init=transformation,
                                       n_neighbors=1, n_features_out=5)
     assert_raises(ValueError, lmnn.fit, X, y)
 
     # n_features_out < len(transformation) = np.eye(len(X[0])).shape[0]
     lmnn = LargeMarginNearestNeighbor(n_neighbors=1, n_features_out=2,
-                                      init_pca=False)
+                                      init='identity')
     lmnn.fit(X, y)
 
 
@@ -201,11 +201,11 @@ def test_init_pca():
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init_pca=False)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init='identity')
     lmnn.fit(X_train, y_train)
     n_iter_no_pca = lmnn.n_iter_
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init_pca=True)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init='pca')
     lmnn.fit(X_train, y_train)
     n_iter_pca = lmnn.n_iter_
 
@@ -358,7 +358,7 @@ def test_singleton_class():
 
     # one singleton class
     singleton_class = 1
-    ind_singleton, = np.where(np.equal(y_tr, singleton_class))
+    ind_singleton, = np.where(y_tr == singleton_class)
     y_tr[ind_singleton] = 2
     y_tr[ind_singleton[0]] = singleton_class
 
@@ -367,8 +367,8 @@ def test_singleton_class():
 
     # One non-singleton class
     X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y)
-    ind_1, = np.where(np.equal(y_tr, 1))
-    ind_2, = np.where(np.equal(y_tr, 2))
+    ind_1, = np.where(y_tr == 1)
+    ind_2, = np.where(y_tr == 2)
     y_tr[ind_1] = 0
     y_tr[ind_1[0]] = 1
     y_tr[ind_2] = 0

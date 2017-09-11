@@ -38,7 +38,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     init : string or numpy array, optional (default='pca')
         Initialization of linear transformation. Possible options are 'pca',
-        'warm_start' and a numpy array of shape (n_features_out, n_features).
+        'identity' and a numpy array of shape (n_features_out, n_features).
+
+    warm_start : bool, optional, (default=False)
+        If True and :meth:`fit` has been called before, the solution of the
+        previous call to :meth:`fit` is used as the initial linear
+        transformation.
 
     n_neighbors : int, optional (default=3)
         Number of neighbors to use as target neighbors for each sample.
@@ -117,7 +122,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     classes_inverse_non_singleton_ : array, shape (n_classes_non_singleton,)
         The appearing classes that have more than one sample, re-indexed to
-        be integers in the interval [0, n_classes).
+        be integers in the range(0, n_classes).
 
     n_funcalls_ : int
         Counts the number of times the optimizer computes the loss and the
@@ -192,14 +197,16 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     """
 
-    def __init__(self, n_features_out=None, init=None, n_neighbors=3,
-                 algorithm='auto', targets=None, max_constraints=500000,
-                 use_sparse=True, max_iter=50, tol=1e-5, max_corrections=100,
-                 callback=None, verbose=0, random_state=None, n_jobs=1):
+    def __init__(self, n_features_out=None, init='pca', warm_start=False,
+                 n_neighbors=3, algorithm='auto', targets=None,
+                 max_constraints=500000, use_sparse=True, max_iter=50,
+                 tol=1e-5, max_corrections=100, callback=None, verbose=0,
+                 random_state=None, n_jobs=1):
 
         # Parameters
         self.n_features_out = n_features_out
         self.init = init
+        self.warm_start = warm_start
         self.n_neighbors = n_neighbors
         self.algorithm = algorithm
         self.targets = targets
@@ -244,10 +251,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         t_start = time.time()
 
         # Initialize transformer
-        if isinstance(init, np.ndarray):
-            transformation = init
-        elif init == 'warm_start':
+        if self.warm_start and hasattr(self, 'transformation_'):
             transformation = self.transformation_
+        elif isinstance(init, np.ndarray):
+            transformation = init
         elif init == 'pca':
             pca = PCA(n_components=self.n_features_out,
                       random_state=self.random_state_)
@@ -261,6 +268,11 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 print('done in {:5.2f}s'.format(time.time() - t_pca))
 
             transformation = pca.components_
+        elif init == 'identity':
+            if self.n_features_out is None:
+                transformation = np.eye(X_valid.shape[1])
+            else:
+                transformation = np.eye(self.n_features_out, X_valid.shape[1])
 
         # Find the target neighbors
         if targets is None:
@@ -437,13 +449,28 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                  'dimensionality {}!'
                                  .format(self.n_features_out, X.shape[1]))
 
+        check_scalar(self.warm_start, 'warm_start', bool)
+        if self.warm_start and hasattr(self, 'transformation_'):
+            if set(classes) != set(self.classes_):
+                raise ValueError("warm_start can only be used if `y` has "
+                                 "the same classes as in the previous call "
+                                 "to fit. Previously got {}, `y` has {}"
+                                 .format(self.classes_, classes))
+
+            if len(self.transformation_[0]) != X.shape[1]:
+                raise ValueError('The new inputs dimensionality ({}) does not '
+                                 'match the input dimensionality of the '
+                                 'previously learned transformation ({}).'
+                                 .format(len(self.transformation_[0]),
+                                         X.shape[1]))
+
         check_scalar(self.n_neighbors, 'n_neighbors', int, 1, len(X) - 1)
         check_scalar(self.max_iter, 'max_iter', int, 1)
         check_scalar(self.max_corrections, 'max_corrections', int, 1)
         check_scalar(self.tol, 'tol', float, 0.)
         check_scalar(self.max_constraints, 'max_constraints', int, 1)
         check_scalar(self.use_sparse, 'use_sparse', bool)
-        check_scalar(self.n_jobs, 'n_jobs', int, -1)
+        check_scalar(self.n_jobs, 'n_jobs', int)
         check_scalar(self.verbose, 'verbose', int, 0)
 
         if self.callback is not None:
@@ -475,26 +502,11 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                      'does not match the given linear '
                                      'transformation {}!'.format(
                                         self.n_features_out, init.shape[0]))
-        elif init == 'warm_start':
-            check_is_fitted(self, ['transformation_', 'classes_'])
-
-            if set(classes) != set(self.classes_):
-                raise ValueError("warm_start can only be used if `y` has "
-                                 "the same classes as in the previous call "
-                                 "to fit. Previously got {}, `y` has {}"
-                                 .format(self.classes_, classes))
-
-            if self.transformation_.shape[1] != X.shape[1]:
-                raise ValueError('The new inputs dimensionality ({}) does not '
-                                 'match the input dimensionality of the '
-                                 'previously learned transformation ({}).'
-                                 .format(self.transformation_.shape[1],
-                                         X.shape[1]))
-        elif init == 'pca':
+        elif init in ['pca', 'identity']:
             pass
         else:
-            raise ValueError("'init' must be 'pca', 'warm_start', or "
-                             "a numpy array")
+            raise ValueError("'init' must be 'pca', 'identity', or a numpy "
+                             "array")
 
         # Store appearing classes
         self.classes_ = classes
@@ -586,7 +598,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
         self.transformation_ = transformation.reshape(-1, n_features)
 
-        tic = time.time()
+        t_start = time.time()
         Lx = self.transform(X, check_input=False)
 
         # Compute distances to target neighbors (plus margin)
@@ -623,7 +635,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         metric = self.transformation_.T.dot(self.transformation_)
         loss = loss + (grad_static * metric).sum()
 
-        t = time.time() - tic
+        t = time.time() - t_start
         self.n_funcalls_ += 1
         if self.verbose:
             values_fmt = '{:>10} {:>15} {:>20.6e} {:>10.2f}'
@@ -782,10 +794,10 @@ def select_target_neighbors(X, y, n_neighbors, algorithm='auto', n_jobs=1,
         An array of neighbors indices for each sample.
     """
 
+    t_start = time.time()
     if verbose:
         print('Finding the target neighbors... ', end='')
         sys.stdout.flush()
-        t = time.time()
 
     target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=int)
 
@@ -800,7 +812,7 @@ def select_target_neighbors(X, y, n_neighbors, algorithm='auto', n_jobs=1,
         target_neighbors[ind_class] = ind_class[neigh_ind]
 
     if verbose:
-        print('done in {:5.2f}s'.format(time.time() - t))
+        print('done in {:5.2f}s'.format(time.time() - t_start))
 
     return target_neighbors
 
