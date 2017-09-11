@@ -122,16 +122,6 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
         if self._pass_classes in signature(self._score_func).parameters:
             # if labels passed as kwargs, return kwargs as is
             if self._pass_classes in self._kwargs:
-                if classes is not None:
-                    # labels should be a subset of classes
-                    if not set(classes).issuperset(
-                                        set(self._kwargs[self._pass_classes])):
-                        raise ValueError("%s classes=%s is not the "
-                                         "superset of scorer %s=%s" %
-                                         (type(estimator).__name__,
-                                          classes,
-                                          self._pass_classes,
-                                          self._kwargs['labels']))
                 return self._kwargs
             else:
                 kwargs = self._kwargs.copy()

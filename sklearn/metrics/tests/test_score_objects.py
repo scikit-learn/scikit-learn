@@ -563,12 +563,6 @@ def test_pass_classes():
     scorer = make_scorer(dummy_scorer_with_labels)
     assert_equal(scorer(clf, X, y), 1)
 
-    scorer = make_scorer(dummy_scorer_with_labels, labels=[1, 2, 3])
-    expected_msg = ("LogisticRegression classes=[0 1] is not the superset of "
-                    "scorer labels=[1, 2, 3]")
-    assert_raise_message(ValueError, expected_msg,
-                         scorer, clf, X, y)
-
     # if an argument other than labels passed, then it should be present in
     # scorer's signature
     scorer = make_scorer(dummy_scorer_with_labels, pass_classes='label_names')
