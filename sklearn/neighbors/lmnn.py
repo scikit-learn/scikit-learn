@@ -157,9 +157,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     LargeMarginNearestNeighbor(...)
     >>> print(lmnn.transform(X))
     [[ 0.        ]
-     [ 0.52704628]
-     [ 1.05409255]
-     [ 1.58113883]]
+     [-0.52704628]
+     [-1.05409255]
+     [-1.58113883]]
     >>> knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
     >>> knn.fit(lmnn.transform(X), y) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
