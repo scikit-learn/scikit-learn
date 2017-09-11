@@ -175,7 +175,7 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
     """
     data_home = get_data_home(data_home=data_home)
-    kddcup99 = _fetch_brute_kddcup99(data_home=data_home, shuffle=shuffle,
+    kddcup99 = _fetch_brute_kddcup99(data_home=data_home,
                                      percent10=percent10,
                                      download_if_missing=download_if_missing)
 
@@ -224,6 +224,9 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
         if subset == 'SF':
             data = np.c_[data[:, 0], data[:, 2], data[:, 4], data[:, 5]]
+
+    if shuffle:
+        data, target = shuffle_method(data, target, random_state=random_state)
 
     return Bunch(data=data, target=target)
 

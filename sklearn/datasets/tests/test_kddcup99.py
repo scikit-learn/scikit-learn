@@ -37,3 +37,8 @@ def test_percent10():
     data = fetch_kddcup99('smtp')
     assert_equal(data.data.shape, (9571, 3))
     assert_equal(data.target.shape, (9571,))
+
+
+def test_shuffle():
+    dataset = fetch_kddcup99(subset='SA', shuffle=True, percent10=True)
+    assert(any(dataset.target[-100:] == b'normal.'))
