@@ -643,8 +643,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                             pre_dispatch=self.pre_dispatch)
 
-        all_results = []
-
         # Regenerate parameter iterable for each fit
         candidate_generator = self._generate_candidates()
         candidate_params = list(next(candidate_generator))
@@ -657,6 +655,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                     error_score=self.error_score,
                                     verbose=self.verbose)
         with parallel:
+            all_candidate_params = []
+            all_out = []
             while True:
                 n_candidates = len(candidate_params)
 
@@ -673,44 +673,16 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                for parameters, (train, test)
                                in product(candidate_params,
                                           cv.split(X, y, groups)))
-                results = self._format_results(candidate_params, scorers,
-                                               n_splits, out)
-                all_results.append(results)
+
+                all_candidate_params.extend(candidate_params)
+                all_out.extend(out)
+                results = self._format_results(all_candidate_params, scorers,
+                                               n_splits, all_out)
 
                 try:
                     candidate_params = list(candidate_generator.send(results))
                 except StopIteration:
                     break
-
-        # Merge all_results into a single dict
-        if len(all_results) == 1:
-            results = all_results[0]
-        else:
-            results = {}
-            keys = set()
-            for some_results in all_results:
-                keys.update(some_results)
-            for k in keys:
-                to_concat = []
-                for some_results in all_results:
-                    try:
-                        v = some_results[k]
-                    except KeyError:
-                        assert k.startswith('param_')
-                        v = np.ma.masked_all(len(some_results['params']),
-                                             dtype='O')
-                    to_concat.append(v)
-
-                if hasattr(v, 'mask'):
-                    results[k] = np.ma.concatenate(to_concat)
-                else:
-                    results[k] = np.concatenate(to_concat)
-
-        results.update({"rank_%s" % k[5:]:
-                        np.asarray(rankdata(-v, method='min'),
-                                   dtype=np.int32)
-                        for k, v in results.items()
-                        if k.startswith('mean_test_')})
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
@@ -756,7 +728,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         results = dict()
 
-        def _store(key_name, array, weights=None, splits=False):
+        def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
             # When iterated first by splits, then by parameters
             # We want `array` to have `n_candidates` rows and `n_splits` cols.
@@ -775,6 +747,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                              array_means[:, np.newaxis]) ** 2,
                                             axis=1, weights=weights))
             results['std_%s' % key_name] = array_stds
+
+            if rank:
+                results["rank_%s" % key_name] = np.asarray(
+                    rankdata(-array_means, method='min'), dtype=np.int32)
 
         _store('fit_time', fit_time)
         _store('score_time', score_time)
@@ -802,7 +778,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
             _store('test_%s' % scorer_name, test_scores[scorer_name],
-                   splits=True,
+                   splits=True, rank=True,
                    weights=test_sample_counts if self.iid else None)
             if self.return_train_score:
                 _store('train_%s' % scorer_name, train_scores[scorer_name],

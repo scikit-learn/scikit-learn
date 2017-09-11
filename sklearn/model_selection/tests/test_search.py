@@ -1490,9 +1490,7 @@ def test_transform_inverse_transform_round_trip():
 def test_generate_candidates():
     def check_results(results, gscv):
         exp_results = gscv.cv_results_
-        assert_equal(sorted(results.keys()),
-                     sorted(k for k in exp_results
-                            if not k.startswith('rank_')))
+        assert_equal(sorted(results.keys()), sorted(exp_results))
         for k in results:
             if not k.endswith('_time'):
                 # XXX: results['params'] is a list :|
@@ -1516,7 +1514,8 @@ def test_generate_candidates():
             check_results(results, fit_grid({'max_depth': [1, 2]}))
             results = yield [{'min_samples_split': 5},
                              {'min_samples_split': 10}]
-            check_results(results, fit_grid({'min_samples_split': [5, 10]}))
+            check_results(results, fit_grid([{'max_depth': [1, 2]},
+                                             {'min_samples_split': [5, 10]}]))
 
     # Using regressor to make sure each score differs
     clf = DecisionTreeRegressor(random_state=0)
@@ -1527,9 +1526,7 @@ def test_generate_candidates():
                      {'min_samples_split': [5, 10]}])
 
     results = mycv.cv_results_
-    rank = results.pop('rank_test_score')
     check_results(results, gscv)
-    assert_array_equal(rank, gscv.cv_results_['rank_test_score'])
     for attr in dir(gscv):
         if attr[0].islower() and attr[-1:] == '_' and \
            attr not in {'cv_results_', 'best_estimator_',
