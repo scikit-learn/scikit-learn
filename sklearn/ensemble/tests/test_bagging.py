@@ -752,20 +752,27 @@ def test_set_oob_score_label_encoding():
 
 
 def test_bagging_regressor_with_missing_inputs_and_1d_output():
-    # Check that BaggingRegressor can accept X with missing data
+    # Check that BaggingRegressor can accept X with missing/infinite data
     X = [
         [1, 3, 5],
         [2, None, 6],
         [2, np.nan, 6],
+        [2, np.inf, 6],
+        [2, np.NINF, 6],
     ]
-    Y = [2, 3, 3]
+    Y = [2, 3, 3, 3, 3]
     regressor = DecisionTreeRegressor()
-    pipeline = make_pipeline(Imputer(), regressor)
+    pipeline = make_pipeline(
+        Imputer(),
+        Imputer(missing_values=np.inf),
+        Imputer(missing_values=np.NINF),
+        regressor
+    )
     pipeline.fit(X, Y).predict(X)
     bagging_regressor = BaggingRegressor(pipeline)
     bagging_regressor.fit(X, Y).predict(X)
 
-    # Also verify that it fails on bad pipelines
+    # Also verify that exceptions can be raised by regressor inside of the BaggingRegressor
     regressor = DecisionTreeRegressor()
     pipeline = make_pipeline(regressor)
     assert_raises(ValueError, pipeline.fit, X, Y)
@@ -774,24 +781,33 @@ def test_bagging_regressor_with_missing_inputs_and_1d_output():
 
 
 def test_bagging_regressor_with_missing_inputs_and_2d_output():
-    # Check that BaggingRegressor can accept X with missing data
+    # Check that BaggingRegressor can accept X with missing/infinite data
     X = [
         [1, 3, 5],
         [2, None, 6],
         [2, np.nan, 6],
+        [2, np.inf, 6],
+        [2, np.NINF, 6],
     ]
     Y = [
         [2, 1, 9],
         [3, 6, 8],
         [3, 6, 8],
+        [3, 6, 8],
+        [3, 6, 8],
     ]
     regressor = DecisionTreeRegressor()
-    pipeline = make_pipeline(Imputer(), regressor)
+    pipeline = make_pipeline(
+        Imputer(),
+        Imputer(missing_values=np.inf),
+        Imputer(missing_values=np.NINF),
+        regressor
+    )
     pipeline.fit(X, Y).predict(X)
     bagging_regressor = BaggingRegressor(pipeline)
     bagging_regressor.fit(X, Y).predict(X)
 
-    # Also verify that it fails on bad pipelines
+    # Also verify that exceptions can be raised by regressor inside of the BaggingRegressor
     regressor = DecisionTreeRegressor()
     pipeline = make_pipeline(regressor)
     assert_raises(ValueError, pipeline.fit, X, Y)
@@ -800,15 +816,22 @@ def test_bagging_regressor_with_missing_inputs_and_2d_output():
 
 
 def test_bagging_classifier_with_missing_inputs():
-    # Check that BaggingClassifier can accept X with missing data
+    # Check that BaggingClassifier can accept X with missing/infinite data
     X = [
         [1, 3, 5],
         [2, None, 6],
         [2, np.nan, 6],
+        [2, np.inf, 6],
+        [2, np.NINF, 6],
     ]
-    Y = [3, 6, 6]
+    Y = [3, 6, 6, 6, 6]
     classifier = DecisionTreeClassifier()
-    pipeline = make_pipeline(Imputer(), classifier)
+    pipeline = make_pipeline(
+        Imputer(),
+        Imputer(missing_values=np.inf),
+        Imputer(missing_values=np.NINF),
+        classifier
+    )
     pipeline.fit(X, Y).predict(X)
     bagging_classifier = BaggingClassifier(pipeline)
     bagging_classifier.fit(X, Y)
@@ -816,7 +839,7 @@ def test_bagging_classifier_with_missing_inputs():
     bagging_classifier.predict_log_proba(X)
     bagging_classifier.predict_proba(X)
 
-    # Also verify that it fails on bad pipelines
+    # Also verify that exceptions can be raised by classifier inside of the BaggingClassifier
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(classifier)
     assert_raises(ValueError, pipeline.fit, X, Y)
