@@ -42,6 +42,9 @@ Bug fixes
 Enhancements
 ............
 
+- Our test suite and :func:`utils.estimator_checks.check_estimators` can now be
+  run without Nose installed. :issue:`9697` by :user:`Joan Massich <massich>`.
+
 - To improve usability of version 0.19's :class:`pipeline.Pipeline`
   caching, ``memory`` now allows ``joblib.Memory`` instances.
   This make use of the new :func:`utils.validation.check_memory` helper.
