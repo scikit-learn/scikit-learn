@@ -581,6 +581,12 @@ class StratifiedKFold(_BaseKFold):
     def _make_test_folds(self, X, y=None):
         rng = self.random_state
         y = np.asarray(y)
+        type_of_target_y = type_of_target(y)
+        if type_of_target_y not in ('binary', 'multiclass'):
+            raise ValueError("Unsupported target type {}".format(
+                type_of_target_y))
+
+        y = column_or_1d(y)
         n_samples = y.shape[0]
         unique_y, y_inversed = np.unique(y, return_inverse=True)
         y_counts = np.bincount(y_inversed)

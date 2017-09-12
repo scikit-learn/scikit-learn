@@ -199,6 +199,30 @@ def test_cross_validator_with_default_params():
                          lpo.get_n_splits, None, y, groups)
 
 
+def test_2d_y():
+    # smoke test for 2d y and multi-label
+    n_samples = 30
+    rng = np.random.RandomState(1)
+    X = rng.randint(0, 3, size=(n_samples, 2))
+    y = rng.randint(0, 3, size=(n_samples,))
+    y_2d = y.reshape(-1, 1)
+    y_multilabel = rng.randint(0, 2, size=(n_samples, 3))
+    groups = rng.randint(0, 3, size=(n_samples,))
+    splitters = [LeaveOneOut(), LeavePOut(p=2), KFold(), StratifiedKFold(),
+                 RepeatedKFold(), RepeatedStratifiedKFold(),
+                 ShuffleSplit(), StratifiedShuffleSplit(test_size=.5),
+                 GroupShuffleSplit(), LeaveOneGroupOut(),
+                 LeavePGroupsOut(n_groups=2), GroupKFold(), TimeSeriesSplit(),
+                 PredefinedSplit(test_fold=groups)]
+    for splitter in splitters:
+        list(splitter.split(X, y, groups))
+        list(splitter.split(X, y_2d, groups))
+        try:
+            list(splitter.split(X, y_multilabel, groups))
+        except Exception as e:
+            assert_true("multilabel" in str(e))
+
+
 def check_valid_split(train, test, n_samples=None):
     # Use python sets to get more informative assertion failure messages
     train, test = set(train), set(test)
@@ -724,7 +748,7 @@ def test_group_shuffle_split():
     for groups_i in test_groups:
         X = y = np.ones(len(groups_i))
         n_splits = 6
-        test_size = 1./3
+        test_size = 1. / 3
         slo = GroupShuffleSplit(n_splits, test_size=test_size, random_state=0)
 
         # Make sure the repr works
@@ -1138,6 +1162,11 @@ def test_check_cv():
     cv = check_cv(3, y_multiclass, classifier=True)
     np.testing.assert_equal(list(StratifiedKFold(3).split(X, y_multiclass)),
                             list(cv.split(X, y_multiclass)))
+    # also works with 2d multiclass
+    y_multiclass_2d = y_multiclass.reshape(-1, 1)
+    cv = check_cv(3, y_multiclass_2d, classifier=True)
+    np.testing.assert_equal(list(StratifiedKFold(3).split(X, y_multiclass_2d)),
+                            list(cv.split(X, y_multiclass_2d)))
 
     X = np.ones(5)
     y_multilabel = np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 1],
