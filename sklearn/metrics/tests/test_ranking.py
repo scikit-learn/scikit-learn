@@ -372,37 +372,41 @@ def test_roc_curve_drop_intermediate():
 
 
 def test_roc_auc_score_pos_label():
-    # ensure the correctness of pos_label parameter in roc_auc_score
+    # Ensure the correctness of pos_label parameter in roc_auc_score
     y_true_1 = [0, 1, 1, 0]
     y_true_2 = [1, 2, 2, 1]
     y_true_3 = ['False', 'True', 'True', 'False']
     y_pred = [0.1, 0.9, 0.2, 0.8]
     roc_auc_score_1 = roc_auc_score(y_true_1, y_pred)
 
-    # int pos_label and binary y_true
+    # Test int pos_label and binary y_true
     roc_auc_score_2 = roc_auc_score(y_true_1, y_pred, pos_label=1)
     assert_almost_equal(roc_auc_score_1, roc_auc_score_2)
     roc_auc_score_3 = roc_auc_score(y_true_1, y_pred, pos_label=0)
     assert_almost_equal(roc_auc_score_1, 1 - roc_auc_score_3)
 
-    # int pos_label and binary y_true
+    # Test int pos_label and binary y_true
     roc_auc_score_2 = roc_auc_score(y_true_2, y_pred, pos_label=2)
     assert_almost_equal(roc_auc_score_1, roc_auc_score_2)
     roc_auc_score_3 = roc_auc_score(y_true_2, y_pred, pos_label=1)
     assert_almost_equal(roc_auc_score_1, 1 - roc_auc_score_3)
 
-    # str pos_label and binary y_true
+    # Test str pos_label and binary y_true
     roc_auc_score_2 = roc_auc_score(y_true_3, y_pred, pos_label='True')
     assert_almost_equal(roc_auc_score_1, roc_auc_score_2)
     roc_auc_score_3 = roc_auc_score(y_true_3, y_pred, pos_label='False')
     assert_almost_equal(roc_auc_score_1, 1 - roc_auc_score_3)
 
-    # raise an error for multilabel-indicator y_true with pos_label
-    y_true_1 = np.array([['True', 'False'], ['False', 'True'],
-                         ['False', 'True'], ['True', 'False']])
+    # Raise an error for multilabel-indicator y_true with
+    # pos_label other than None or 1
+    y_true_1 = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
     y_pred = np.array([[0.9, 0.1], [0.1, 0.9], [0.8, 0.2], [0.2, 0.8]])
+    roc_auc_score_2 = roc_auc_score(y_true_1, y_pred, pos_label=None)
+    assert_almost_equal(roc_auc_score_1, roc_auc_score_2)
+    roc_auc_score_3 = roc_auc_score(y_true_1, y_pred, pos_label=1)
+    assert_almost_equal(roc_auc_score_1, roc_auc_score_3)
     assert_raises(ValueError, roc_auc_score, y_true_1, y_pred,
-                  pos_label='True')
+                  pos_label=0)
 
 
 def test_auc():

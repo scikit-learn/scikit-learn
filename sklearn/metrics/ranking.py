@@ -274,10 +274,11 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
             _partial_binary_roc_auc_score, y_true, y_score, average,
             sample_weight=sample_weight)
     else:
-        if pos_label is not None:
+        if pos_label is not None and pos_label != 1:
             raise ValueError("Parameter pos_label doesn't make sense for "
                              "multilabel-indicator y_true. Do not set "
-                             "pos_label or set pos_label to None.")
+                             "pos_label or set pos_label to either None "
+                             "or 1.")
         return _average_binary_score(
             _binary_roc_auc_score, y_true, y_score, average,
             sample_weight=sample_weight)
