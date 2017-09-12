@@ -414,6 +414,7 @@ class Pipeline(_BaseComposition):
         Xt : array-like, shape = [n_samples, n_transformed_features]
         """
         # _final_estimator is None or has transform, otherwise attribute error
+        # XXX: Handling the None case means we can't use if_delegate_has_method
         if self._final_estimator is not None:
             self._final_estimator.transform
         return self._transform
@@ -444,6 +445,7 @@ class Pipeline(_BaseComposition):
         Xt : array-like, shape = [n_samples, n_features]
         """
         # raise AttributeError if necessary for hasattr behaviour
+        # XXX: Handling the None case means we can't use if_delegate_has_method
         for name, transform in self.steps:
             if transform is not None:
                 transform.inverse_transform
