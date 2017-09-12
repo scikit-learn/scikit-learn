@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -187,7 +188,7 @@ def test_pipeline_init():
     assert_raises(ValueError, pipe.set_params, anova__C=0.1)
 
     # Test clone
-    pipe2 = clone(pipe)
+    pipe2 = assert_no_warnings(clone, pipe)
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
     # Check that apart from estimators, the parameters are the same
@@ -420,6 +421,10 @@ def test_feature_union():
     X_sp = sparse.csr_matrix(X)
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
+
+    # Test clone
+    fs2 = assert_no_warnings(clone, fs)
+    assert_false(fs.transformer_list[0][1] is fs2.transformer_list[0][1])
 
     # test setting parameters
     fs.set_params(select__k=2)
