@@ -36,6 +36,9 @@ Bug fixes
   :class:`linear_model.PassiveAggressiveRegressor` and
   :class:`linear_model.Perceptron`. :issue:`9558` by `Andreas Müller`_.
 
+- Avoid integer overflows in :func:`metrics.matthews_corrcoef`.
+  :issue:`9693` by :user:`Sam Steingold <sam-s>`.
+
 Enhancements
 ............
 
