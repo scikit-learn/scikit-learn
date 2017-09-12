@@ -772,7 +772,7 @@ def test_bagging_regressor_with_missing_inputs_and_1d_output():
     bagging_regressor = BaggingRegressor(pipeline)
     bagging_regressor.fit(X, Y).predict(X)
 
-    # Also verify that exceptions can be raised by regressor inside of the BaggingRegressor
+    # Verify that exceptions can be raised by wrapper regressor
     regressor = DecisionTreeRegressor()
     pipeline = make_pipeline(regressor)
     assert_raises(ValueError, pipeline.fit, X, Y)
@@ -807,7 +807,7 @@ def test_bagging_regressor_with_missing_inputs_and_2d_output():
     bagging_regressor = BaggingRegressor(pipeline)
     bagging_regressor.fit(X, Y).predict(X)
 
-    # Also verify that exceptions can be raised by regressor inside of the BaggingRegressor
+    # Verify that exceptions can be raised by wrapper regressor
     regressor = DecisionTreeRegressor()
     pipeline = make_pipeline(regressor)
     assert_raises(ValueError, pipeline.fit, X, Y)
@@ -839,7 +839,7 @@ def test_bagging_classifier_with_missing_inputs():
     bagging_classifier.predict_log_proba(X)
     bagging_classifier.predict_proba(X)
 
-    # Also verify that exceptions can be raised by classifier inside of the BaggingClassifier
+    # Verify that exceptions can be raised by wrapper classifier
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(classifier)
     assert_raises(ValueError, pipeline.fit, X, Y)
