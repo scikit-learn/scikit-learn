@@ -775,13 +775,13 @@ def test_tsne_with_different_distance_metrics():
     n_components_embedding = 2
     X = random_state.randn(50, n_components_original).astype(np.float32)
     metrics = ['manhattan', 'cosine']
-    dist_fkts = [manhattan_distances, cosine_distances]
-    for metric, dist_fkt in zip(metrics, dist_fkts):
+    dist_funcs = [manhattan_distances, cosine_distances]
+    for metric, dist_func in zip(metrics, dist_funcs):
         tsne_1 = TSNE(metric=metric, 
                   n_components=n_components_embedding, 
                   random_state=0).fit_transform(X)
-        tsne_2 = TSNE(metric=metric, 
+        tsne_2 = TSNE(metric='precomputed', 
                   n_components=n_components_embedding, 
-                  random_state=0).fit_transform(dist_fkt(X))
+                  random_state=0).fit_transform(dist_func(X))
         t = trustworthiness(tsne_1, tsne_2, n_neighbors=1)
         assert_greater(t, 0.9)
