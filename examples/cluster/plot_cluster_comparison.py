@@ -68,8 +68,6 @@ plt.figure(figsize=(12.5, 10 * 2 + 3))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
                     hspace=.01)
 
-plot_num = 1
-
 default_base = {'quantile': .3,
                 'eps': .3,
                 'damping': .9,
@@ -167,7 +165,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
             y_pred = algorithm.predict(X)
 
         plt.subplot(len(clustering_algorithms), len(datasets),
-                    i_dataset + (plotn*6) +1)
+                    i_dataset + (plotn * 6) + 1)
         if i_dataset == 0:
             plt.ylabel(name)
 
@@ -186,6 +184,5 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         plt.text(.99, .9, ('%.2fs' % (t1 - t0)).lstrip('0'),
                  transform=plt.gca().transAxes, size=15,
                  horizontalalignment='right')
-        plot_num += 1
 
 plt.show()

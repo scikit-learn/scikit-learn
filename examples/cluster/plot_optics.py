@@ -35,7 +35,7 @@ X = np.r_[X, [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)]
 X = np.r_[X, [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)]
 
 
-clust = OPTICS(min_samples=9)
+clust = OPTICS(min_samples=9, rejection_ratio=.5)
 
 # Run the fit
 clust.fit(X)
