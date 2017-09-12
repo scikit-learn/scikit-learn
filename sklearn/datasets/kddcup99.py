@@ -233,7 +233,7 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
 def _fetch_brute_kddcup99(data_home=None,
                           download_if_missing=True, random_state=None,
-                          shuffle=False, percent10=True):
+                          percent10=True):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -253,9 +253,6 @@ def _fetch_brute_kddcup99(data_home=None,
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
-
-    shuffle : bool, default=False
-        Whether to shuffle dataset.
 
     percent10 : bool, default=True
         Whether to load only 10 percent of the data.
@@ -374,9 +371,6 @@ def _fetch_brute_kddcup99(data_home=None,
     except NameError:
         X = joblib.load(samples_path)
         y = joblib.load(targets_path)
-
-    if shuffle:
-        X, y = shuffle_method(X, y, random_state=random_state)
 
     return Bunch(data=X, target=y, DESCR=__doc__)
 
