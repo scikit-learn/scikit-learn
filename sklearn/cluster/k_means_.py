@@ -879,6 +879,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Training instances to cluster.
+
+        y : Ignored
+
         """
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
@@ -904,6 +907,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to transform.
 
+        u : Ignored
+
         Returns
         -------
         labels : array, shape [n_samples,]
@@ -920,6 +925,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to transform.
+
+        y : Ignored
 
         Returns
         -------
@@ -989,6 +996,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data.
+
+        y : Ignored
 
         Returns
         -------
@@ -1336,6 +1345,9 @@ class MiniBatchKMeans(KMeans):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Training instances to cluster.
+
+        y : Ignored
+
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X, accept_sparse="csr", order='C',
@@ -1498,6 +1510,9 @@ class MiniBatchKMeans(KMeans):
         ----------
         X : array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster.
+
+        y : Ignored
+
         """
 
         X = check_array(X, accept_sparse="csr")
