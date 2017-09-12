@@ -88,10 +88,13 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        the data for the dual coordinate descent (if ``dual=True``). When
+        ``dual=False`` the underlying implementation of :class:`LinearSVC`
+        is not random and ``random_state`` has no effect on the results. If
+        int, random_state is the seed used by the random number generator; If
+        RandomState instance, random_state is the random number generator; If
+        None, the random number generator is the RandomState instance used by
+        `np.random`.
 
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
@@ -509,11 +512,11 @@ class SVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        The seed of the pseudo random number generator used when shuffling
+        the data for probability estimates. If int, random_state is the
+        seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random
+        number generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -665,11 +668,11 @@ class NuSVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        The seed of the pseudo random number generator used when shuffling
+        the data for probability estimates. If int, random_state is the seed
+        used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random
+        number generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -1019,11 +1022,11 @@ class OneClassSVM(BaseLibSVM):
         Hard limit on iterations within solver, or -1 for no limit.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Ignored.
+
+        .. deprecated:: 0.20
+           ``random_state`` has been deprecated in 0.20 and will be removed in
+           0.22.
 
     Attributes
     ----------
@@ -1080,6 +1083,11 @@ class OneClassSVM(BaseLibSVM):
         If X is not a C-ordered contiguous array it is copied.
 
         """
+
+        if self.random_state is not None:
+            warnings.warn("The random_state parameter is deprecated and will"
+                          " be removed in version 0.22.", DeprecationWarning)
+
         super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
                                      sample_weight=sample_weight, **params)
         return self
