@@ -110,8 +110,7 @@ class Pipeline(_BaseComposition):
     # BaseEstimator interface
 
     def __init__(self, steps, memory=None):
-        # shallow copy of steps
-        self.steps = list(steps)
+        self.steps = steps
         self._validate_steps()
         self.memory = memory
 
@@ -184,6 +183,8 @@ class Pipeline(_BaseComposition):
     # Estimator interface
 
     def _fit(self, X, y=None, **fit_params):
+        # shallow copy of steps - this should really be steps_
+        self.steps = list(self.steps)
         self._validate_steps()
         # Setup the memory
         memory = check_memory(self.memory)
@@ -613,7 +614,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
-        self.transformer_list = list(transformer_list)
+        self.transformer_list = transformer_list
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self._validate_transformers()
@@ -704,6 +705,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self : FeatureUnion
             This estimator
         """
+        self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
         transformers = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_one_transformer)(trans, X, y)
