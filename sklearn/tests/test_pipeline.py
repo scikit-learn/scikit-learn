@@ -424,7 +424,7 @@ def test_feature_union():
 
     # Test clone
     fs2 = assert_no_warnings(clone, fs)
-    assert_false(fs.named_steps['svd'] is fs2.named_steps['svd'])
+    assert_false(fs.transformer_list[0][1] is fs2.transformer_list[0][1])
 
     # test setting parameters
     fs.set_params(select__k=2)
