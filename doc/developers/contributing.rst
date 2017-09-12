@@ -43,6 +43,30 @@ ticket to the
 also welcome to post feature requests or pull requests.
 
 
+Ways to contribute
+==================
+
+There are many ways to contribute to scikit-learn, with
+the most common ones being contribution of code or documentation to
+the project. Improving the documentation is no less important than
+improving the library itself.
+If you find a typo in the documentation, or have made improvements, do not
+hesitate to send an email to the mailing list or submit a GitHub pull request.
+Full documentation can be found under the doc/ directory.
+
+But there are many other ways to help. In particular answering
+querries on the issue tracker, investigating bugs, and reviewing other
+developers' pull requests are very valuabe contributions that decrease
+the burden on the project maintainers.
+
+It also helps us if you spread the word: reference the project from your blog
+and articles, link to it from your website, or simply say "I use it":
+
+.. raw:: html
+
+   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+
+
 .. _git_repo:
 
 Retrieving the latest code
@@ -542,24 +566,6 @@ There are three other tags to help new contributors:
     contributors will have this tag.
 
 
-Other ways to contribute
-========================
-
-Code is not the only way to contribute to scikit-learn. For instance,
-documentation is also a very important part of the project and often
-doesn't get as much attention as it deserves. If you find a typo in
-the documentation, or have made improvements, do not hesitate to send
-an email to the mailing list or submit a GitHub pull request. Full
-documentation can be found under the doc/ directory.
-
-It also helps us if you spread the word: reference the project from your blog
-and articles, link to it from your website, or simply say "I use it":
-
-.. raw:: html
-
-   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
-
-
 .. _coding-guidelines:
 
 Coding guidelines
@@ -777,6 +783,52 @@ the Python standard library.
 The `six <http://pythonhosted.org/six/>`_ package helps with
 cross-compatibility and is included in scikit-learn as
 ``sklearn.externals.six``.
+
+
+Code Review Guidelines
+======================
+Reviewing code contributed to the project as PRs is a cruicial component
+of scikit-learn development. We encourage anyone to start reviewing code of other
+developers. The code review process is often highly educational for everybody involved.
+While each pull request needs to be signed off by two core developers, you can
+speed up this process can be sped up by providing your feedback.
+
+Here are a few important aspects that need to be covered in any code review,
+from high-level questions to a more detailed check-list.
+
+- Do we want this in the library? Is it likely to be used? Is it in the scope
+  of scikit-learn and does the benefit of the addition warrant the maintenance burden?
+
+- Does the enhancement define a good API? Are public
+  functions/classes/parameters well named and intuitively designed?
+
+- Are all public functions/classes and their parameters, return types, and
+  stored attributes documented clearly?
+
+- Is any new functionality described in the user-guide and illustrated with examples?
+
+- Is every public function/class tested? Are a reasonable set of parameters,
+  their values, value types, and combinations tested? Do the tests pass in the
+  continuous integration build?
+
+- Do the tests validate that the code is correct, i.e. doing what the
+  documentation says it does?
+
+- Do the tests cover every line of code (see the coverage report in the build
+  log)? If not, are the lines missing coverage good exceptions?
+
+- Is the code easy to read and low on redundancy? Should variable names be
+  improved for clarity or consistency? Should comments be added?
+
+- Could the code easily be rewritten to run more efficiently?
+
+- Is the code backwards compatible with previous versions? (Or is a deprecation cycle necessary?)
+
+- Will the new code add any dependencies? (This is unlikely to be accepted)
+
+- If the change is a bug-fix, is a non-regression test included?
+
+- Does the documentation render properly, and are the plots instructive?
 
 
 APIs of scikit-learn objects
