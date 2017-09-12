@@ -228,7 +228,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
         Sample weights.
 
     pos_label : int or str, default=None
-        The label of the positive class
+        The label of the positive class. Only make sense for binary y_true.
 
     Returns
     -------

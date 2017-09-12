@@ -385,7 +385,6 @@ def test_roc_auc_score_pos_label():
     roc_auc_score_3 = roc_auc_score(y_true_1, y_pred, pos_label=0)
     assert_almost_equal(roc_auc_score_1, 1 - roc_auc_score_3)
 
-    # Test int pos_label and binary y_true
     roc_auc_score_2 = roc_auc_score(y_true_2, y_pred, pos_label=2)
     assert_almost_equal(roc_auc_score_1, roc_auc_score_2)
     roc_auc_score_3 = roc_auc_score(y_true_2, y_pred, pos_label=1)
