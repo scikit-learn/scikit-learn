@@ -24,7 +24,7 @@ General Concepts
         the generalized conventions across types of estimators as described in
         this glossary.
 
-        Conventions about what's public and what's not.
+        TODO: Conventions about what's public and what's not.
 
     array-like
 
@@ -80,7 +80,9 @@ General Concepts
             versions.
         As documented
             We will generally assume that the users have adhered to the
-            documented parameter types and ranges.
+            documented parameter types and ranges. If the documentation asks
+            for a list and the user gives a tuple, we do not assure consistent
+            behavior from version to version.
         Deprecation
             Behaviors may change following a :term:`deprecation` period
             (usually two releases long).  Warnings are issued using Python's
@@ -147,6 +149,9 @@ General Concepts
 
         See the :ref:`Contributors' Guide <contributing_deprecation>`.
 
+    docstring
+        TODO
+
     double underscore notation
         When specifying parameter names for nested estimators, ``__`` may be
         used to separate between parent and child.
@@ -170,6 +175,18 @@ General Concepts
             cls = RandomForestClassifier
             est1 = cls()
             est2 = RandomForestClassifier()
+
+    examples
+        We try to give examples of basic usage for most functions and
+        classes in the API:
+
+        * as doctests in their docstrings (i.e. within the ``sklearn/`` library
+          code itself).
+        * as examples in the :ref:`example gallery <general_examples>`
+          rendered from scripts in the ``examples/`` directory, exemplifying
+          key features or parameters of the estimator/function.
+        * sometimes in the :ref:`User Guide <user_guide>` (built from ``doc/``)
+          alongside a technical description of the estimator.
 
     evaluation metric
         TODO
@@ -255,6 +272,11 @@ General Concepts
 
     missing values
         TODO
+
+    narrative docs
+    narrative documentation
+        An alias for :ref:`User Guide <user_guide>`, i.e. documentation written
+        in ``doc/modules/``.
 
     ``n_features``
         The number of :term:`features`.
@@ -658,6 +680,7 @@ non-estimator parameters with similar semantics.
 
     ``affinity``
         TODO
+        See also :term:`kernel`
 
     ``class_weight``
         Used to specify sample weights when fitting classifiers as a function
@@ -716,6 +739,7 @@ non-estimator parameters with similar semantics.
 
     ``kernel``
         TODO
+        See also :term:`affinity`
 
     ``max_iter``
         For estimators involving iterative optimization, this determines the
@@ -862,6 +886,9 @@ See concept :term:`attribute`.
 .. glossary::
 
     ``classes_``
+        TODO
+
+    ``components_``
         TODO
 
     ``n_iter_``
