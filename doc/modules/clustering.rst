@@ -91,6 +91,12 @@ Overview of clustering methods
      - Non-flat geometry, uneven cluster sizes
      - Distances between nearest points
 
+   * - :ref:`OPTICS <optics>`
+     - minimum cluster membership
+     - Very large ``n_samples``, large ``n_clusters``
+     - Non-flat geometry, uneven cluster sizes, varible density clusters
+     - Distances between points
+   
    * - :ref:`Gaussian mixtures <mixture>`
      - many
      - Not scalable
