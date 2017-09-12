@@ -201,14 +201,23 @@ General Concepts
 
     feature
     features
-        TODO
+        A feature is a function mapping a sampled object to a numeric or
+        categorical quantity.  "Feature" is also commonly used to refer to
+        these quantities, being the individual elements of a vector
+        representing a sample. In a data matrix, features are represented as
+        columns: each column contains the result of applying a feature
+        function to a set of samples.
 
-        Expected to be numeric, even when semantically distinct domains and
+        Elsewhere features are known as attributes, predictors, regressors, or
+        independent variables.
+
+        Features in scikit-learn are generally expected to be numeric and
+        finite, even when they have semantically distinct domains and
         distributions (categorical, ordinal, count-valued, real-valued,
-        interval). See also :term`categorical feature`.
+        interval). See also :term`categorical feature` and :term:`missing
+        values`.
 
-        Elsewhere known as predictors, regressors, independent variables,
-        attributes.
+        ``n_features`` indicates the number of features in a dataset.
 
     fitting
         Calling :term:`fit` (or :term:`fit_transform`, :term:`fit_predict`,
@@ -312,11 +321,21 @@ General Concepts
     precomputed
         TODO
 
+    rectangular
+        Data that can be represented as a matrix with :term:`samples` on the
+        first axis and a fixed, finite set of :term:`features` on the second
+        is called rectangular.
+
+        This term excludes samples with non-vectorial structure, such as text,
+        an image of arbitrary size, a time series of arbitrary length, a set of
+        vectors, etc. The purpose of a :term:`vectorizer` is to produce
+        rectangular forms of such data.
+
     sample
     samples
-        We usually use this term as a noun to indicate a single instance or
-        feature vector.  Thus ``n_samples`` indicates the number of instances
-        in a dataset.
+        We usually use this term as a noun to indicate a single feature vector.
+        Elsewhere a sample is called an instance, data point, or observation.
+        ``n_samples`` indicates the number of samples in a dataset.
 
     sample property
     sample properties
@@ -370,8 +389,10 @@ Class APIs and Estimator Types
     feature extractor
         A :term:`tranformer` which takes input where each sample is not
         represented as an :term:`array-like` object of fixed length, and
-        produces an `array-like` object for each sample (and thus a
-        2-dimensional array-like for a set of samples).
+        produces an `array-like` object of :term:`features` for each sample
+        (and thus a 2-dimensional array-like for a set of samples).  In other
+        words, it (lossily) maps a non-rectangular data representation into
+        :term:`rectangular` data.
 
     meta-estimator
         TODO
