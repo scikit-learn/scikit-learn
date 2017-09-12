@@ -614,7 +614,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
-        self.transformer_list = list(transformer_list)
+        self.transformer_list = transformer_list
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self._validate_transformers()
@@ -705,6 +705,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self : FeatureUnion
             This estimator
         """
+        self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
         transformers = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_one_transformer)(trans, X, y)

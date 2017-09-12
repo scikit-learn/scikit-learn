@@ -422,6 +422,10 @@ def test_feature_union():
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
 
+    # Test clone
+    fs2 = assert_no_warnings(clone, fs)
+    assert_false(fs.named_steps['svd'] is fs2.named_steps['svd'])
+
     # test setting parameters
     fs.set_params(select__k=2)
     assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
