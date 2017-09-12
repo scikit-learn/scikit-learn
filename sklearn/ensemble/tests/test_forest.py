@@ -450,7 +450,8 @@ def check_parallel(name, X, y):
     y1 = forest.predict(X)
     forest.set_params(n_jobs=2)
     y2 = forest.predict(X)
-    assert_array_almost_equal(y1, y2, 3)
+    # decimals=3 failed on some platforms due to parallel summation imprecision
+    assert_array_almost_equal(y1, y2, 2)
 
 
 def test_parallel():
