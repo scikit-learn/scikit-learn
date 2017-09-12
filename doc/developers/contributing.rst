@@ -54,10 +54,11 @@ If you find a typo in the documentation, or have made improvements, do not
 hesitate to send an email to the mailing list or submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
-But there are many other ways to help. In particular answering
-querries on the issue tracker, investigating bugs, and reviewing other
-developers' pull requests are very valuabe contributions that decrease
-the burden on the project maintainers.
+But there are many other ways to help. In particular answering querries on the
+`issue tracker<https://github.com/scikit-learn/scikit-learn/issues>`_,
+investigating bugs, and :ref:`reviewing other developers' pull requests
+<code_review>`_ are very valuabe contributions that decrease the burden on the
+project maintainers.
 
 It also helps us if you spread the word: reference the project from your blog
 and articles, link to it from your website, or simply say "I use it":
@@ -784,6 +785,8 @@ The `six <http://pythonhosted.org/six/>`_ package helps with
 cross-compatibility and is included in scikit-learn as
 ``sklearn.externals.six``.
 
+
+.. _code_review:
 
 Code Review Guidelines
 ======================
