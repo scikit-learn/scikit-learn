@@ -276,7 +276,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         # Find the target neighbors
         if targets is None:
             targets = select_target_neighbors(X_valid, y_valid,
-                                              self.n_neighbors_,
+                                              n_neighbors=self.n_neighbors_,
                                               algorithm=self.algorithm,
                                               n_jobs=self.n_jobs,
                                               verbose=self.verbose)
@@ -408,8 +408,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             # Check that target neighbors belong to the correct class
             y_targets = y_inverse[targets]
             if (y_targets - y_inverse[:, None]).any():
-                raise ValueError("The `targets` labels are not "
-                                 "consistent with the input labels `y`")
+                raise ValueError('The `targets` labels are not '
+                                 'consistent with the given input labels `y`')
 
         # Ignore classes that have less than 2 samples
         class_sizes = np.bincount(y_inverse)
@@ -432,8 +432,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         # Check number of non-singleton classes > 1
         n_classes_non_singleton = len(classes) - len(singleton_classes)
         if n_classes_non_singleton < 2:
-            raise ValueError("LargeMarginNearestNeighbor needs at least 2 "
-                             "non-singleton classes, got {}."
+            raise ValueError('LargeMarginNearestNeighbor needs at least 2 '
+                             'non-singleton classes, got {}.'
                              .format(n_classes_non_singleton))
 
         self.classes_inverse_non_singleton_ = \
@@ -443,17 +443,17 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             check_scalar(self.n_features_out, 'n_features_out', int, 1)
 
             if self.n_features_out > X.shape[1]:
-                raise ValueError('Preferred outputs dimensionality ({}) '
-                                 'cannot be greater than the given data '
-                                 'dimensionality {}!'
+                raise ValueError('The preferred embedding dimensionality '
+                                 '`n_features_out` ({}) cannot be greater '
+                                 'than the given data dimensionality ({})!'
                                  .format(self.n_features_out, X.shape[1]))
 
         check_scalar(self.warm_start, 'warm_start', bool)
         if self.warm_start and hasattr(self, 'transformation_'):
             if set(classes) != set(self.classes_):
-                raise ValueError("warm_start can only be used if `y` has "
-                                 "the same classes as in the previous call "
-                                 "to fit. Previously got {}, `y` has {}"
+                raise ValueError('`warm_start` can only be used if `y` has '
+                                 'the same classes as in the previous call '
+                                 'to fit. Previously got {}, `y` has {}'
                                  .format(self.classes_, classes))
 
             if len(self.transformation_[0]) != X.shape[1]:
@@ -483,28 +483,31 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
             # Assert that init.shape[1] = X.shape[1]
             if init.shape[1] != X.shape[1]:
-                raise ValueError('Transformation input dimensionality ({}) '
-                                 'must match the inputs dimensionality ({}).'
+                raise ValueError('The input dimensionality ({}) of the given '
+                                 'linear transformation `init` must match the '
+                                 'dimensionality of the given inputs `X` ({}).'
                                  .format(init.shape[1], X.shape[1]))
 
-            # Assert that init.shape[0] < init.shape[1]
+            # Assert that init.shape[0] <= init.shape[1]
             if init.shape[0] > init.shape[1]:
-                raise ValueError('Transformation output dimensionality ({}) '
-                                 'cannot be greater than the '
-                                 'transformation input dimensionality ({}).'
+                raise ValueError('The output dimensionality ({}) of the given '
+                                 'linear transformation `init` cannot be '
+                                 'greater than its input dimensionality ({}).'
                                  .format(init.shape[0], init.shape[1]))
 
             if self.n_features_out is not None:
                 # Assert that self.n_features_out = init.shape[0]
                 if self.n_features_out != init.shape[0]:
-                    raise ValueError('Preferred outputs dimensionality ({}) '
-                                     'does not match the given linear '
-                                     'transformation {}!'.format(
-                                        self.n_features_out, init.shape[0]))
+                    raise ValueError('The preferred embedding dimensionality '
+                                     '`n_features_out` ({}) does not match '
+                                     'the output dimensionality of the given '
+                                     'linear transformation `init` ({})!'
+                                     .format(self.n_features_out,
+                                             init.shape[0]))
         elif init in ['pca', 'identity']:
             pass
         else:
-            raise ValueError("'init' must be 'pca', 'identity', or a numpy "
+            raise ValueError("`init` must be 'pca', 'identity', or a numpy "
                              "array of shape (n_features_out, n_features).")
 
         # Store appearing classes
@@ -514,9 +517,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         if targets is None:
             min_non_singleton_size = class_sizes[~mask_singleton_class].min()
             if self.n_neighbors >= min_non_singleton_size:
-                warn("n_neighbors (={}) is not less than the number of samples"
-                     " in the smallest non-singleton class (={}). n_neighbors "
-                     "will be set to {} for estimation."
+                warn('`n_neighbors` (={}) is not less than the number of '
+                     'samples in the smallest non-singleton class (={}). '
+                     '`n_neighbors_` will be set to {} for estimation.'
                      .format(self.n_neighbors, min_non_singleton_size,
                              min_non_singleton_size-1))
 

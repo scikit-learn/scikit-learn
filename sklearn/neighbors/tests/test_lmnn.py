@@ -137,21 +137,20 @@ def test_transformation_dimensions():
     y = [1, 1, 2, 2]
 
     # Fail if transformation input dimension does not match inputs dimensions
-    transformation = [[1, 2], [3, 4]]  # len(transformation[0]) != len(X[0])
+    transformation = np.array([[1, 2], [3, 4]])
     assert_raises(ValueError, LargeMarginNearestNeighbor(
         init=transformation, n_neighbors=1).fit, X, y)
 
     # Fail if transformation output dimension is larger than
     # transformation input dimension
-    transformation = [[1, 2], [3, 4], [5, 6]]
+    transformation = np.array([[1, 2], [3, 4], [5, 6]])
     # len(transformation) > len(transformation[0])
     assert_raises(ValueError, LargeMarginNearestNeighbor(
         init=transformation, n_neighbors=1).fit, X, y)
 
     # Pass otherwise
     transformation = np.arange(9).reshape(3, 3)
-    LargeMarginNearestNeighbor(init=transformation,
-                               n_neighbors=1).fit(X, y)
+    LargeMarginNearestNeighbor(init=transformation, n_neighbors=1).fit(X, y)
 
 
 def test_n_neighbors():
@@ -179,24 +178,25 @@ def test_n_features_out():
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
 
-    transformation = [[1, 2, 3], [4, 5, 6]]
-    # len(transformation) != n_features_out
+    transformation = np.array([[1, 2, 3], [4, 5, 6]])
+
+    # n_features_out = X.shape[1] != transformation.shape[0]
+    lmnn = LargeMarginNearestNeighbor(init=transformation,
+                                      n_neighbors=1, n_features_out=3)
+    assert_raises(ValueError, lmnn.fit, X, y)
+
+    # n_features_out > X.shape[1]
     lmnn = LargeMarginNearestNeighbor(init=transformation,
                                       n_neighbors=1, n_features_out=5)
     assert_raises(ValueError, lmnn.fit, X, y)
 
-    # n_features_out > len(X[0])
-    lmnn = LargeMarginNearestNeighbor(init=transformation,
-                                      n_neighbors=1, n_features_out=5)
-    assert_raises(ValueError, lmnn.fit, X, y)
-
-    # n_features_out < len(transformation) = np.eye(len(X[0])).shape[0]
+    # n_features_out < X.shape[1]
     lmnn = LargeMarginNearestNeighbor(n_neighbors=1, n_features_out=2,
                                       init='identity')
     lmnn.fit(X, y)
 
 
-def test_init_pca():
+def test_init_transformation():
     X, y = datasets.make_classification(n_samples=30, n_features=5,
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
@@ -243,7 +243,7 @@ def test_use_sparse():
     knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
     acc_dense = knn.score(lmnn.transform(X_test), y_test)
 
-    err_msg = 'Toggling use_sparse results in different accuracy.'
+    err_msg = 'Toggling `use_sparse` results in different accuracy.'
     assert_equal(acc_dense, acc_sparse, msg=err_msg)
 
 
