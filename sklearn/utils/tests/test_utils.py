@@ -1,4 +1,4 @@
-from itertools import chain, product
+from itertools import chain
 import warnings
 
 import numpy as np
@@ -200,15 +200,10 @@ def test_safe_indexing_pandas():
     # this happens in joblib memmapping
     X.setflags(write=False)
     X_df_readonly = pd.DataFrame(X)
-    inds_readonly = inds.copy()
-    inds_readonly.setflags(write=False)
+    with warnings.catch_warnings(record=True):
+        X_df_ro_indexed = safe_indexing(X_df_readonly, inds)
 
-    for this_df, this_inds in product([X_df, X_df_readonly],
-                                      [inds, inds_readonly]):
-        with warnings.catch_warnings(record=True):
-            X_df_indexed = safe_indexing(this_df, this_inds)
-
-        assert_array_equal(np.array(X_df_indexed), X_indexed)
+    assert_array_equal(np.array(X_df_ro_indexed), X_indexed)
 
 
 def test_safe_indexing_mock_pandas():

@@ -45,31 +45,9 @@ except NameError:
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
-from sklearn.utils import deprecated
 
-additional_names_in_all = []
-try:
-    from nose.tools import raises as _nose_raises
-    deprecation_message = (
-        'sklearn.utils.testing.raises has been deprecated in version 0.20 '
-        'and will be removed in 0.22. Please use '
-        'sklearn.utils.testing.assert_raises instead.')
-    raises = deprecated(deprecation_message)(_nose_raises)
-    additional_names_in_all.append('raises')
-except ImportError:
-    pass
-
-try:
-    from nose.tools import with_setup as _with_setup
-    deprecation_message = (
-        'sklearn.utils.testing.with_setup has been deprecated in version 0.20 '
-        'and will be removed in 0.22.'
-        'If your code relies on with_setup, please use'
-        ' nose.tools.with_setup instead.')
-    with_setup = deprecated(deprecation_message)(_with_setup)
-    additional_names_in_all.append('with_setup')
-except ImportError:
-    pass
+from nose.tools import raises
+from nose import with_setup
 
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
@@ -80,18 +58,17 @@ import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
-from sklearn.utils._unittest_backport import TestCase
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
-           "assert_raises_regexp", "assert_true",
+           "assert_raises_regexp", "raises", "with_setup", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "SkipTest"]
-__all__.extend(additional_names_in_all)
 
-_dummy = TestCase('__init__')
+
+_dummy = unittest.TestCase('__init__')
 assert_equal = _dummy.assertEqual
 assert_not_equal = _dummy.assertNotEqual
 assert_true = _dummy.assertTrue
@@ -106,7 +83,12 @@ assert_greater = _dummy.assertGreater
 assert_less_equal = _dummy.assertLessEqual
 assert_greater_equal = _dummy.assertGreaterEqual
 
-assert_raises_regex = _dummy.assertRaisesRegex
+
+try:
+    assert_raises_regex = _dummy.assertRaisesRegex
+except AttributeError:
+    # Python 2.7
+    assert_raises_regex = _dummy.assertRaisesRegexp
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
@@ -768,6 +750,10 @@ class TempMemmap(object):
         _delete_folder(self.temp_folder)
 
 
+with_network = with_setup(check_skip_network)
+with_travis = with_setup(check_skip_travis)
+
+
 class _named_check(object):
     """Wraps a check to show a useful description
 
@@ -895,8 +881,7 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
             # If there was no space between name and the colon
             # "verbose:" -> len(["verbose", ""][0]) -> 7
             # If "verbose:"[7] == ":", then there was no space
-            if (':' not in param_name or
-                    param_name[len(param_name.split(':')[0].strip())] == ':'):
+            if param_name[len(param_name.split(':')[0].strip())] == ':':
                 incorrect += [func_name +
                               ' There was no space between the param name and '
                               'colon ("%s")' % name]

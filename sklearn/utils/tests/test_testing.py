@@ -20,8 +20,7 @@ from sklearn.utils.testing import (
     assert_raise_message,
     ignore_warnings,
     check_docstring_parameters,
-    assert_allclose_dense_sparse,
-    assert_raises_regex)
+    assert_allclose_dense_sparse)
 
 from sklearn.utils.testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
@@ -77,12 +76,6 @@ def test_assert_allclose_dense_sparse():
 
     assert_raise_message(AssertionError, "Arrays are not equal",
                          assert_allclose_dense_sparse, B, A)
-
-
-def test_assert_raises_msg():
-    with assert_raises_regex(AssertionError, 'Hello world'):
-        with assert_raises(ValueError, msg='Hello world'):
-            pass
 
 
 def test_assert_raise_message():

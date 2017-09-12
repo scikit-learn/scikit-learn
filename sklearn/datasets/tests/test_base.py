@@ -27,6 +27,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import with_setup
 
 
 DATA_HOME = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
@@ -84,42 +85,33 @@ def test_default_empty_load_files():
     assert_equal(res.DESCR, None)
 
 
+@with_setup(setup_load_files, teardown_load_files)
 def test_default_load_files():
-    try:
-        setup_load_files()
-        res = load_files(LOAD_FILES_ROOT)
-        assert_equal(len(res.filenames), 1)
-        assert_equal(len(res.target_names), 2)
-        assert_equal(res.DESCR, None)
-        assert_equal(res.data, [b("Hello World!\n")])
-    finally:
-        teardown_load_files()
+    res = load_files(LOAD_FILES_ROOT)
+    assert_equal(len(res.filenames), 1)
+    assert_equal(len(res.target_names), 2)
+    assert_equal(res.DESCR, None)
+    assert_equal(res.data, [b("Hello World!\n")])
 
 
+@with_setup(setup_load_files, teardown_load_files)
 def test_load_files_w_categories_desc_and_encoding():
-    try:
-        setup_load_files()
-        category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
-        res = load_files(LOAD_FILES_ROOT, description="test",
-                         categories=category, encoding="utf-8")
-        assert_equal(len(res.filenames), 1)
-        assert_equal(len(res.target_names), 1)
-        assert_equal(res.DESCR, "test")
-        assert_equal(res.data, [u("Hello World!\n")])
-    finally:
-        teardown_load_files()
+    category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
+    res = load_files(LOAD_FILES_ROOT, description="test",
+                     categories=category, encoding="utf-8")
+    assert_equal(len(res.filenames), 1)
+    assert_equal(len(res.target_names), 1)
+    assert_equal(res.DESCR, "test")
+    assert_equal(res.data, [u("Hello World!\n")])
 
 
+@with_setup(setup_load_files, teardown_load_files)
 def test_load_files_wo_load_content():
-    try:
-        setup_load_files()
-        res = load_files(LOAD_FILES_ROOT, load_content=False)
-        assert_equal(len(res.filenames), 1)
-        assert_equal(len(res.target_names), 2)
-        assert_equal(res.DESCR, None)
-        assert_equal(res.get('data'), None)
-    finally:
-        teardown_load_files()
+    res = load_files(LOAD_FILES_ROOT, load_content=False)
+    assert_equal(len(res.filenames), 1)
+    assert_equal(len(res.target_names), 2)
+    assert_equal(res.DESCR, None)
+    assert_equal(res.get('data'), None)
 
 
 def test_load_sample_images():

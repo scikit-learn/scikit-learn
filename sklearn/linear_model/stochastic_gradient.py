@@ -66,12 +66,30 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.power_t = power_t
         self.warm_start = warm_start
         self.average = average
-        self.n_iter = n_iter
-        self.max_iter = max_iter
+
+        if n_iter is not None:
+            warnings.warn("n_iter parameter is deprecated in 0.19 and will be"
+                          " removed in 0.21. Use max_iter and tol instead.",
+                          DeprecationWarning)
+            # Same behavior as before 0.19
+            self.max_iter = n_iter
+            tol = None
+
+        elif tol is None and max_iter is None:
+            warnings.warn(
+                "max_iter and tol parameters have been added in %s in 0.19. If"
+                " both are left unset, they default to max_iter=5 and tol=None"
+                ". If tol is not None, max_iter defaults to max_iter=1000. "
+                "From 0.21, default max_iter will be 1000, "
+                "and default tol will be 1e-3." % type(self), FutureWarning)
+            # Before 0.19, default was n_iter=5
+            self.max_iter = 5
+        else:
+            self.max_iter = max_iter if max_iter is not None else 1000
+
         self.tol = tol
-        # current tests expect init to do parameter validation
-        # but we are not allowed to set attributes
-        self._validate_params(set_max_iter=False)
+
+        self._validate_params()
 
     def set_params(self, *args, **kwargs):
         super(BaseSGD, self).set_params(*args, **kwargs)
@@ -82,11 +100,11 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     def fit(self, X, y):
         """Fit model."""
 
-    def _validate_params(self, set_max_iter=True):
+    def _validate_params(self):
         """Validate input params. """
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
-        if self.max_iter is not None and self.max_iter <= 0:
+        if self.max_iter <= 0:
             raise ValueError("max_iter must be > zero. Got %f" % self.max_iter)
         if not (0.0 <= self.l1_ratio <= 1.0):
             raise ValueError("l1_ratio must be in [0, 1]")
@@ -106,31 +124,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
-
-        if not set_max_iter:
-            return
-        # n_iter deprecation, set self._max_iter, self._tol
-        self._tol = self.tol
-        if self.n_iter is not None:
-            warnings.warn("n_iter parameter is deprecated in 0.19 and will be"
-                          " removed in 0.21. Use max_iter and tol instead.",
-                          DeprecationWarning)
-            # Same behavior as before 0.19
-            max_iter = self.n_iter
-            self._tol = None
-
-        elif self.tol is None and self.max_iter is None:
-            warnings.warn(
-                "max_iter and tol parameters have been added in %s in 0.19. If"
-                " both are left unset, they default to max_iter=5 and tol=None"
-                ". If tol is not None, max_iter defaults to max_iter=1000. "
-                "From 0.21, default max_iter will be 1000, "
-                "and default tol will be 1e-3." % type(self), FutureWarning)
-            # Before 0.19, default was n_iter=5
-            max_iter = 5
-        else:
-            max_iter = self.max_iter if self.max_iter is not None else 1000
-        self._max_iter = max_iter
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
@@ -372,6 +365,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         n_samples, n_features = X.shape
 
+        self._validate_params()
         _check_partial_fit_first_call(self, classes)
 
         n_classes = self.classes_.shape[0]
@@ -411,7 +405,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
-        self._validate_params()
         if hasattr(self, "classes_"):
             self.classes_ = None
 
@@ -440,11 +433,11 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # Clear iteration count for multiple call to fit.
         self.t_ = 1.0
 
-        self._partial_fit(X, y, alpha, C, loss, learning_rate, self._max_iter,
+        self._partial_fit(X, y, alpha, C, loss, learning_rate, self.max_iter,
                           classes, sample_weight, coef_init, intercept_init)
 
-        if (self._tol is not None and self._tol > -np.inf
-                and self.n_iter_ == self._max_iter):
+        if (self.tol is not None and self.tol > -np.inf
+                and self.n_iter_ == self.max_iter):
             warnings.warn("Maximum number of iteration reached before "
                           "convergence. Consider increasing max_iter to "
                           "improve the fit.",
@@ -537,7 +530,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        self._validate_params()
         if self.class_weight in ['balanced']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
@@ -761,7 +753,7 @@ class SGDClassifier(BaseSGDClassifier):
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
            eta0=0.0, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='optimal', loss='hinge', max_iter=None, n_iter=None,
+           learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
            n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
            shuffle=True, tol=None, verbose=0, warm_start=False)
 
@@ -941,6 +933,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         n_samples, n_features = X.shape
 
+        self._validate_params()
+
         # Allocate datastructures from input arguments
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
@@ -982,7 +976,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        self._validate_params()
         return self._partial_fit(X, y, self.alpha, C=1.0,
                                  loss=self.loss,
                                  learning_rate=self.learning_rate, max_iter=1,
@@ -991,7 +984,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
-        self._validate_params()
         if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
                 coef_init = self.coef_
@@ -1011,11 +1003,11 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self.t_ = 1.0
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate,
-                          self._max_iter, sample_weight, coef_init,
+                          self.max_iter, sample_weight, coef_init,
                           intercept_init)
 
-        if (self._tol is not None and self._tol > -np.inf
-                and self.n_iter_ == self._max_iter):
+        if (self.tol is not None and self.tol > -np.inf
+                and self.n_iter_ == self.max_iter):
             warnings.warn("Maximum number of iteration reached before "
                           "convergence. Consider increasing max_iter to "
                           "improve the fit.",
@@ -1104,7 +1096,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-        tol = self._tol if self._tol is not None else -np.inf
+        tol = self.tol if self.tol is not None else -np.inf
 
         if self.average > 0:
             self.standard_coef_, self.standard_intercept_, \
@@ -1314,7 +1306,7 @@ class SGDRegressor(BaseSGDRegressor):
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDRegressor(alpha=0.0001, average=False, epsilon=0.1, eta0=0.01,
            fit_intercept=True, l1_ratio=0.15, learning_rate='invscaling',
-           loss='squared_loss', max_iter=None, n_iter=None, penalty='l2',
+           loss='squared_loss', max_iter=5, n_iter=None, penalty='l2',
            power_t=0.25, random_state=None, shuffle=True, tol=None,
            verbose=0, warm_start=False)
 

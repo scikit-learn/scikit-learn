@@ -432,9 +432,6 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features)
             OR, if affinity==`precomputed`, a precomputed affinity
             matrix of shape (n_samples, n_samples)
-
-        y : Ignored
-
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=np.float64)

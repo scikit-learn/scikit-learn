@@ -144,7 +144,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     Examples
     --------
     >>> from sklearn import datasets, linear_model
-    >>> from sklearn.model_selection import cross_validate
+    >>> from sklearn.model_selection import cross_val_score
     >>> from sklearn.metrics.scorer import make_scorer
     >>> from sklearn.metrics import confusion_matrix
     >>> from sklearn.svm import LinearSVC
@@ -153,17 +153,15 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
 
-    Single metric evaluation using ``cross_validate``
-
+    # single metric evaluation using cross_validate
     >>> cv_results = cross_validate(lasso, X, y, return_train_score=False)
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
     array([ 0.33...,  0.08...,  0.03...])
 
-    Multiple metric evaluation using ``cross_validate``
-    (please refer the ``scoring`` parameter doc for more information)
-
+    # Multiple metric evaluation using cross_validate
+    # (Please refer the ``scoring`` parameter doc for more information)
     >>> scores = cross_validate(lasso, X, y,
     ...                         scoring=('r2', 'neg_mean_squared_error'))
     >>> print(scores['test_neg_mean_squared_error'])      # doctest: +ELLIPSIS
@@ -173,7 +171,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     See Also
     ---------
-    :func:`sklearn.model_selection.cross_val_score`:
+    :func:`sklearn.metrics.cross_val_score`:
         Run cross-validation for single metric evaluation.
 
     :func:`sklearn.metrics.make_scorer`:
@@ -639,6 +637,11 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
+    # Ensure the estimator has implemented the passed decision function
+    if not callable(getattr(estimator, method)):
+        raise AttributeError('{} not implemented in estimator'
+                             .format(method))
+
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         le = LabelEncoder()
         y = le.fit_transform(y)
@@ -727,7 +730,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     predictions = func(X_test)
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         n_classes = len(set(y))
-        predictions_ = np.zeros((_num_samples(X_test), n_classes))
+        predictions_ = np.zeros((X_test.shape[0], n_classes))
         if method == 'decision_function' and len(estimator.classes_) == 2:
             predictions_[:, estimator.classes_[-1]] = predictions
         else:
@@ -1000,7 +1003,6 @@ def learning_curve(estimator, X, y, groups=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``shuffle`` == 'True'.
 
-    Returns
     -------
     train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
@@ -1098,7 +1100,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     n_ticks = train_sizes_abs.shape[0]
     n_min_required_samples = np.min(train_sizes_abs)
     n_max_required_samples = np.max(train_sizes_abs)
-    if np.issubdtype(train_sizes_abs.dtype, np.floating):
+    if np.issubdtype(train_sizes_abs.dtype, np.float):
         if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
             raise ValueError("train_sizes has been interpreted as fractions "
                              "of the maximum number of training samples and "

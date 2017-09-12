@@ -18,7 +18,7 @@ import numpy as np
 import scipy.sparse as sp
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
-from .base import RegressorMixin, ClassifierMixin, is_classifier
+from .base import RegressorMixin, ClassifierMixin
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.fixes import parallel_helper
@@ -152,7 +152,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
                          multi_output=True,
                          accept_sparse=True)
 
-        if is_classifier(self):
+        if isinstance(self, ClassifierMixin):
             check_classification_targets(y)
 
         if y.ndim == 1:
@@ -316,7 +316,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
     def predict_proba(self, X):
         """Probability estimates.
-        Returns prediction probabilities for each class of each output.
+        Returns prediction probabilites for each class of each output.
 
         Parameters
         ----------
@@ -368,7 +368,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return np.mean(np.all(y == y_pred, axis=1))
 
 
-class ClassifierChain(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+class ClassifierChain(BaseEstimator):
     """A multi-label model that arranges binary classifiers into a chain.
 
     Each model makes a prediction in the order specified by the chain using

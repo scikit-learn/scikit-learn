@@ -428,8 +428,6 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
-        Y: Ignored
-
         Returns
         -------
         affinity_matrix, shape (n_samples, n_samples)
@@ -476,8 +474,6 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
-        Y: Ignored
-
         Returns
         -------
         self : object
@@ -517,8 +513,6 @@ class SpectralEmbedding(BaseEstimator):
             X : array-like, shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
-
-        Y: Ignored
 
         Returns
         -------

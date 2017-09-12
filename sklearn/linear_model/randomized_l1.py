@@ -278,7 +278,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    memory : None, str or object with the joblib.Memory interface, optional \
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
             (default=None)
         Used for internal caching. By default, no caching is done.
         If a string is given, it is the path to the caching directory.
@@ -472,7 +472,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    memory : None, str or object with the joblib.Memory interface, optional \
+    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
             (default=None)
         Used for internal caching. By default, no caching is done.
         If a string is given, it is the path to the caching directory.

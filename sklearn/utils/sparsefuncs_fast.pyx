@@ -18,9 +18,6 @@ from cython cimport floating
 
 np.import_array()
 
-ctypedef fused integral:
-    int
-    long long
 
 ctypedef np.float64_t DOUBLE
 
@@ -33,11 +30,11 @@ def csr_row_norms(X):
 
 def _csr_row_norms(np.ndarray[floating, ndim=1, mode="c"] X_data,
                    shape,
-                   np.ndarray[integral, ndim=1, mode="c"] X_indices,
-                   np.ndarray[integral, ndim=1, mode="c"] X_indptr):
+                   np.ndarray[int, ndim=1, mode="c"] X_indices,
+                   np.ndarray[int, ndim=1, mode="c"] X_indptr):
     cdef:
-        unsigned long long n_samples = shape[0]
-        unsigned long long n_features = shape[1]
+        unsigned int n_samples = shape[0]
+        unsigned int n_features = shape[1]
         np.ndarray[DOUBLE, ndim=1, mode="c"] norms
 
         np.npy_intp i, j
@@ -329,16 +326,17 @@ def inplace_csr_row_normalize_l1(X):
 
 def _inplace_csr_row_normalize_l1(np.ndarray[floating, ndim=1] X_data,
                                   shape,
-                                  np.ndarray[integral, ndim=1] X_indices,
-                                  np.ndarray[integral, ndim=1] X_indptr):
-    cdef unsigned long long n_samples = shape[0]
-    cdef unsigned long long n_features = shape[1]
+                                  np.ndarray[int, ndim=1] X_indices,
+                                  np.ndarray[int, ndim=1] X_indptr):
+    cdef unsigned int n_samples = shape[0]
+    cdef unsigned int n_features = shape[1]
 
     # the column indices for row i are stored in:
     #    indices[indptr[i]:indices[i+1]]
     # and their corresponding values are stored in:
     #    data[indptr[i]:indptr[i+1]]
-    cdef np.npy_intp i, j
+    cdef unsigned int i
+    cdef unsigned int j
     cdef double sum_
 
     for i in xrange(n_samples):
@@ -363,12 +361,13 @@ def inplace_csr_row_normalize_l2(X):
 
 def _inplace_csr_row_normalize_l2(np.ndarray[floating, ndim=1] X_data,
                                   shape,
-                                  np.ndarray[integral, ndim=1] X_indices,
-                                  np.ndarray[integral, ndim=1] X_indptr):
-    cdef integral n_samples = shape[0]
-    cdef integral n_features = shape[1]
+                                  np.ndarray[int, ndim=1] X_indices,
+                                  np.ndarray[int, ndim=1] X_indptr):
+    cdef unsigned int n_samples = shape[0]
+    cdef unsigned int n_features = shape[1]
 
-    cdef np.npy_intp i, j
+    cdef unsigned int i
+    cdef unsigned int j
     cdef double sum_
 
     for i in xrange(n_samples):

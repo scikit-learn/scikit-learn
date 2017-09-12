@@ -3,11 +3,6 @@
 
     >>> import numpy as np
     >>> import os
-    >>> import tempfile
-    >>> # Create a temporary folder for the data fetcher
-    >>> custom_data_home = tempfile.mkdtemp()
-    >>> os.makedirs(os.path.join(custom_data_home, 'mldata'))
-
 
 .. _mldata:
 
@@ -75,8 +70,3 @@ defaults to individual datasets:
     ...                      data_home=custom_data_home)
     >>> iris3 = fetch_mldata('datasets-UCI iris', target_name='class',
     ...                      data_name='double0', data_home=custom_data_home)
-
-
-..
-    >>> import shutil
-    >>> shutil.rmtree(custom_data_home)

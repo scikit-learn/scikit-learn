@@ -22,26 +22,29 @@ consists of 64x64 images.
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: BSD 3 clause
 
+from io import BytesIO
 from os.path import exists
-from os import makedirs, remove
+from os import makedirs
+try:
+    # Python 2
+    import urllib2
+    urlopen = urllib2.urlopen
+except ImportError:
+    # Python 3
+    import urllib.request
+    urlopen = urllib.request.urlopen
 
 import numpy as np
 from scipy.io.matlab import loadmat
 
 from .base import get_data_home
-from .base import _fetch_remote
-from .base import RemoteFileMetadata
 from .base import _pkl_filepath
 from ..utils import check_random_state, Bunch
 from ..externals import joblib
 
-# The original data can be found at:
-# http://cs.nyu.edu/~roweis/data/olivettifaces.mat
-FACES = RemoteFileMetadata(
-    filename='olivettifaces.mat',
-    url='https://ndownloader.figshare.com/files/5976027',
-    checksum=('b612fb967f2dc77c9c62d3e1266e0c73'
-              'd5fca46a4b8906c18e454d41af987794'))
+
+DATA_URL = "http://cs.nyu.edu/~roweis/data/olivettifaces.mat"
+TARGET_FILENAME = "olivetti.pkz"
 
 # Grab the module-level docstring to use as a description of the
 # dataset
@@ -110,18 +113,16 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     data_home = get_data_home(data_home=data_home)
     if not exists(data_home):
         makedirs(data_home)
-    filepath = _pkl_filepath(data_home, 'olivetti.pkz')
+    filepath = _pkl_filepath(data_home, TARGET_FILENAME)
     if not exists(filepath):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
 
         print('downloading Olivetti faces from %s to %s'
-              % (FACES.url, data_home))
-        mat_path = _fetch_remote(FACES, dirname=data_home)
-        mfile = loadmat(file_name=mat_path)
-        # delete raw .mat data
-        remove(mat_path)
-
+              % (DATA_URL, data_home))
+        fhandle = urlopen(DATA_URL)
+        buf = BytesIO(fhandle.read())
+        mfile = loadmat(buf)
         faces = mfile['faces'].T.copy()
         joblib.dump(faces, filepath, compress=6)
         del mfile

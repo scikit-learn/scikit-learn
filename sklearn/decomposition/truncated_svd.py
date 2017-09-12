@@ -132,8 +132,6 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
 
-        y : Ignored
-
         Returns
         -------
         self : object
@@ -149,8 +147,6 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
-
-        y : Ignored
 
         Returns
         -------

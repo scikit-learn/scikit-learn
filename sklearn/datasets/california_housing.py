@@ -2,7 +2,7 @@
 
 The original database is available from StatLib
 
-    http://lib.stat.cmu.edu/datasets/
+    http://lib.stat.cmu.edu/
 
 The data contains 20,640 observations on 9 variables.
 
@@ -21,33 +21,33 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
+from io import BytesIO
 from os.path import exists
-from os import makedirs, remove
+from os import makedirs
 import tarfile
 
+try:
+    # Python 2
+    from urllib2 import urlopen
+except ImportError:
+    # Python 3+
+    from urllib.request import urlopen
+
 import numpy as np
-import logging
 
 from .base import get_data_home
-from .base import _fetch_remote
-from .base import _pkl_filepath
-from .base import RemoteFileMetadata
 from ..utils import Bunch
+from .base import _pkl_filepath
 from ..externals import joblib
 
-# The original data can be found at:
-# http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
-ARCHIVE = RemoteFileMetadata(
-    filename='cal_housing.tgz',
-    url='https://ndownloader.figshare.com/files/5976036',
-    checksum=('aaa5c9a6afe2225cc2aed2723682ae40'
-              '3280c4a3695a2ddda4ffb5d8215ea681'))
+
+DATA_URL = "http://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz"
+TARGET_FILENAME = "cal_housing.pkz"
 
 # Grab the module-level docstring to use as a description of the
 # dataset
 MODULE_DOCS = __doc__
 
-logger = logging.getLogger(__name__)
 
 def fetch_california_housing(data_home=None, download_if_missing=True):
     """Loader for the California housing dataset from StatLib.
@@ -89,20 +89,17 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     if not exists(data_home):
         makedirs(data_home)
 
-    filepath = _pkl_filepath(data_home, 'cal_housing.pkz')
+    filepath = _pkl_filepath(data_home, TARGET_FILENAME)
     if not exists(filepath):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
 
-        logger.info('Downloading Cal. housing from {} to {}'.format(
-            ARCHIVE.url, data_home))
-        archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
-
+        print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
+        archive_fileobj = BytesIO(urlopen(DATA_URL).read())
         fileobj = tarfile.open(
             mode="r:gz",
-            name=archive_path).extractfile(
+            fileobj=archive_fileobj).extractfile(
                 'CaliforniaHousing/cal_housing.data')
-        remove(archive_path)
 
         cal_housing = np.loadtxt(fileobj, delimiter=',')
         # Columns are not in the same order compared to the previous

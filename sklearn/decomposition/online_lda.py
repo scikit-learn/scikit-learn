@@ -473,8 +473,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
-        y : Ignored
-
         Returns
         -------
         self
@@ -516,8 +514,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
-
-        y : Ignored
 
         Returns
         -------
@@ -717,8 +713,6 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
-
-        y : Ignored
 
         Returns
         -------

@@ -4,7 +4,6 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
 
 from sklearn import datasets
 from sklearn.decomposition import PCA, IncrementalPCA
@@ -74,41 +73,10 @@ def test_incremental_pca_inverse():
 
 def test_incremental_pca_validation():
     # Test that n_components is >=1 and <= n_features.
-    X = np.array([[0, 1, 0], [1, 0, 0]])
-    n_samples, n_features = X.shape
-    for n_components in [-1, 0, .99, 4]:
-        assert_raises_regex(ValueError,
-                            "n_components={} invalid for n_features={}, need"
-                            " more rows than columns for IncrementalPCA "
-                            "processing".format(n_components, n_features),
-                            IncrementalPCA(n_components, batch_size=10).fit, X)
-
-    # Tests that n_components is also <= n_samples.
-    n_components = 3
-    assert_raises_regex(ValueError,
-                        "n_components={} must be less or equal to "
-                        "the batch number of samples {}".format(
-                            n_components, n_samples),
-                        IncrementalPCA(
-                            n_components=n_components).partial_fit, X)
-
-
-def test_n_components_none():
-    # Ensures that n_components == None is handled correctly
-    rng = np.random.RandomState(1999)
-    for n_samples, n_features in [(50, 10), (10, 50)]:
-        X = rng.rand(n_samples, n_features)
-        ipca = IncrementalPCA(n_components=None)
-
-        # First partial_fit call, ipca.n_components_ is inferred from
-        # min(X.shape)
-        ipca.partial_fit(X)
-        assert ipca.n_components_ == min(X.shape)
-
-        # Second partial_fit call, ipca.n_components_ is inferred from
-        # ipca.components_ computed from the first partial_fit call
-        ipca.partial_fit(X)
-        assert ipca.n_components_ == ipca.components_.shape[0]
+    X = [[0, 1], [1, 0]]
+    for n_components in [-1, 0, .99, 3]:
+        assert_raises(ValueError, IncrementalPCA(n_components,
+                                                 batch_size=10).fit, X)
 
 
 def test_incremental_pca_set_params():
@@ -305,27 +273,3 @@ def test_whitening():
         assert_almost_equal(X, Xinv_ipca, decimal=prec)
         assert_almost_equal(X, Xinv_pca, decimal=prec)
         assert_almost_equal(Xinv_pca, Xinv_ipca, decimal=prec)
-
-
-def test_incremental_pca_partial_fit_float_division():
-    # Test to ensure float division is used in all versions of Python
-    # (non-regression test for issue #9489)
-
-    rng = np.random.RandomState(0)
-    A = rng.randn(5, 3) + 2
-    B = rng.randn(7, 3) + 5
-
-    pca = IncrementalPCA(n_components=2)
-    pca.partial_fit(A)
-    # Set n_samples_seen_ to be a floating point number instead of an int
-    pca.n_samples_seen_ = float(pca.n_samples_seen_)
-    pca.partial_fit(B)
-    singular_vals_float_samples_seen = pca.singular_values_
-
-    pca2 = IncrementalPCA(n_components=2)
-    pca2.partial_fit(A)
-    pca2.partial_fit(B)
-    singular_vals_int_samples_seen = pca2.singular_values_
-
-    np.testing.assert_allclose(singular_vals_float_samples_seen,
-                               singular_vals_int_samples_seen)

@@ -20,7 +20,7 @@ from sklearn.linear_model import LinearRegression, TheilSenRegressor
 from sklearn.linear_model.theil_sen import _spatial_median, _breakdown_point
 from sklearn.linear_model.theil_sen import _modified_weiszfeld_step
 from sklearn.utils.testing import (
-        assert_almost_equal, assert_greater, assert_less, assert_raises,
+        assert_almost_equal, assert_greater, assert_less, raises,
 )
 
 
@@ -202,31 +202,31 @@ def test_calc_breakdown_point():
     assert_less(np.abs(bp - 1 + 1 / (np.sqrt(2))), 1.e-6)
 
 
+@raises(ValueError)
 def test_checksubparams_negative_subpopulation():
     X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(max_subpopulation=-1, random_state=0)
-    assert_raises(ValueError, theil_sen.fit, X, y)
+    TheilSenRegressor(max_subpopulation=-1, random_state=0).fit(X, y)
 
 
+@raises(ValueError)
 def test_checksubparams_too_few_subsamples():
     X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(n_subsamples=1, random_state=0)
-    assert_raises(ValueError, theil_sen.fit, X, y)
+    TheilSenRegressor(n_subsamples=1, random_state=0).fit(X, y)
 
 
+@raises(ValueError)
 def test_checksubparams_too_many_subsamples():
     X, y, w, c = gen_toy_problem_1d()
-    theil_sen = TheilSenRegressor(n_subsamples=101, random_state=0)
-    assert_raises(ValueError, theil_sen.fit, X, y)
+    TheilSenRegressor(n_subsamples=101, random_state=0).fit(X, y)
 
 
+@raises(ValueError)
 def test_checksubparams_n_subsamples_if_less_samples_than_features():
     random_state = np.random.RandomState(0)
     n_samples, n_features = 10, 20
     X = random_state.normal(size=(n_samples, n_features))
     y = random_state.normal(size=n_samples)
-    theil_sen = TheilSenRegressor(n_subsamples=9, random_state=0)
-    assert_raises(ValueError, theil_sen.fit, X, y)
+    TheilSenRegressor(n_subsamples=9, random_state=0).fit(X, y)
 
 
 def test_subpopulation():

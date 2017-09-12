@@ -34,8 +34,8 @@ Examples
 >>> from sklearn.semi_supervised import LabelPropagation
 >>> label_prop_model = LabelPropagation()
 >>> iris = datasets.load_iris()
->>> rng = np.random.RandomState(42)
->>> random_unlabeled_points = rng.rand(len(iris.target)) < 0.3
+>>> random_unlabeled_points = np.where(np.random.randint(0, 2,
+...        size=len(iris.target)))
 >>> labels = np.copy(iris.target)
 >>> labels[random_unlabeled_points] = -1
 >>> label_prop_model.fit(iris.data, labels)
@@ -53,7 +53,6 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 """
 
 # Authors: Clay Woolam <clay@woolam.org>
-#          Utkarsh Upadhyay <mail@musicallyut.in>
 # License: BSD
 from abc import ABCMeta, abstractmethod
 
@@ -68,7 +67,13 @@ from ..neighbors.unsupervised import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_X_y, check_is_fitted, check_array
-from ..exceptions import ConvergenceWarning
+
+
+# Helper functions
+
+def _not_converged(y_truth, y_prediction, tol=1e-3):
+    """basic convergence check"""
+    return np.abs(y_truth - y_prediction).sum() > tol
 
 
 class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
@@ -92,7 +97,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     alpha : float
         Clamping factor
 
-    max_iter : integer
+    max_iter : float
         Change maximum number of iterations allowed
 
     tol : float
@@ -259,14 +264,12 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
+        remaining_iter = self.max_iter
         unlabeled = unlabeled[:, np.newaxis]
         if sparse.isspmatrix(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
-
-        for self.n_iter_ in range(self.max_iter):
-            if np.abs(self.label_distributions_ - l_previous).sum() < self.tol:
-                break
-
+        while (_not_converged(self.label_distributions_, l_previous, self.tol)
+               and remaining_iter > 1):
             l_previous = self.label_distributions_
             self.label_distributions_ = safe_sparse_dot(
                 graph_matrix, self.label_distributions_)
@@ -282,12 +285,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
                 # clamp
                 self.label_distributions_ = np.multiply(
                     alpha, self.label_distributions_) + y_static
-        else:
-            warnings.warn(
-                'max_iter=%d was reached without convergence.' % self.max_iter,
-                category=ConvergenceWarning
-            )
-            self.n_iter_ += 1
+            remaining_iter -= 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         self.label_distributions_ /= normalizer
@@ -296,6 +294,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
         transduction = self.classes_[np.argmax(self.label_distributions_,
                                                axis=1)]
         self.transduction_ = transduction.ravel()
+        self.n_iter_ = self.max_iter - remaining_iter
         return self
 
 
@@ -325,7 +324,7 @@ class LabelPropagation(BaseLabelPropagation):
             This parameter will be removed in 0.21.
             'alpha' is fixed to zero in 'LabelPropagation'.
 
-    max_iter : integer
+    max_iter : float
         Change maximum number of iterations allowed
 
     tol : float
@@ -359,8 +358,8 @@ class LabelPropagation(BaseLabelPropagation):
     >>> from sklearn.semi_supervised import LabelPropagation
     >>> label_prop_model = LabelPropagation()
     >>> iris = datasets.load_iris()
-    >>> rng = np.random.RandomState(42)
-    >>> random_unlabeled_points = rng.rand(len(iris.target)) < 0.3
+    >>> random_unlabeled_points = np.where(np.random.randint(0, 2,
+    ...    size=len(iris.target)))
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)
@@ -442,7 +441,7 @@ class LabelSpreading(BaseLabelPropagation):
       alpha=0 means keeping the initial label information; alpha=1 means
       replacing all initial information.
 
-    max_iter : integer
+    max_iter : float
       maximum number of iterations allowed
 
     tol : float
@@ -476,8 +475,8 @@ class LabelSpreading(BaseLabelPropagation):
     >>> from sklearn.semi_supervised import LabelSpreading
     >>> label_prop_model = LabelSpreading()
     >>> iris = datasets.load_iris()
-    >>> rng = np.random.RandomState(42)
-    >>> random_unlabeled_points = rng.rand(len(iris.target)) < 0.3
+    >>> random_unlabeled_points = np.where(np.random.randint(0, 2,
+    ...    size=len(iris.target)))
     >>> labels = np.copy(iris.target)
     >>> labels[random_unlabeled_points] = -1
     >>> label_prop_model.fit(iris.data, labels)

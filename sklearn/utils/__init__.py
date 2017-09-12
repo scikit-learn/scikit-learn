@@ -90,7 +90,7 @@ def safe_mask(X, mask):
         mask
     """
     mask = np.asarray(mask)
-    if np.issubdtype(mask.dtype, np.signedinteger):
+    if np.issubdtype(mask.dtype, np.int):
         return mask
 
     if hasattr(X, "toarray"):
@@ -142,8 +142,6 @@ def safe_indexing(X, indices):
     not supported.
     """
     if hasattr(X, "iloc"):
-        # Work-around for indexing with read-only indices in pandas
-        indices = indices if indices.flags.writeable else indices.copy()
         # Pandas Dataframes and Series
         try:
             return X.iloc[indices]

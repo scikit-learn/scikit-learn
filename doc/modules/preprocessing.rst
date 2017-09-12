@@ -239,11 +239,11 @@ data.
   or :class:`sklearn.decomposition.RandomizedPCA` with ``whiten=True``
   to further remove the linear correlation across features.
 
-.. topic:: Scaling a 1D array
+.. topic:: Scaling target variables in regression
 
-   All above functions (i.e. :func:`scale`, :func:`minmax_scale`,
-   :func:`maxabs_scale`, and :func:`robust_scale`) accept 1D array which can be
-   useful in some specific case.
+    :func:`scale` and :class:`StandardScaler` work out-of-the-box with 1d arrays.
+    This is very useful for scaling the target / response variables used
+    for regression.
 
 .. _kernel_centering:
 

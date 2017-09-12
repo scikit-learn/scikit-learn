@@ -389,9 +389,6 @@ class MeanShift(BaseEstimator, ClusterMixin):
         -----------
         X : array-like, shape=[n_samples, n_features]
             Samples to cluster.
-
-        y : Ignored
-
         """
         X = check_array(X)
         self.cluster_centers_, self.labels_ = \
