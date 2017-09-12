@@ -3164,8 +3164,8 @@ People
 
 List of contributors for release 0.15 by number of commits.
 
-* 312  Olivier Grisel
-* 275  Lars Buitinck
+* 312 Olivier Grisel
+* 275 Lars Buitinck
 * 221  Gael Varoquaux
 * 148  Arnaud Joly
 * 134  Johannes Schönberger
