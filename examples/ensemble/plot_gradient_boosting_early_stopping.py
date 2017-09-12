@@ -102,8 +102,6 @@ bar1 = plt.bar(index, score_gb, bar_width, label='Without early stopping',
 bar2 = plt.bar(index + bar_width, score_gbes, bar_width,
                label='With early stopping', color='coral')
 
-max_y = np.amax(np.maximum(score_gb, score_gbes))
-
 plt.xticks(index + bar_width, names)
 plt.yticks(np.arange(0, 1.3, 0.1))
 
