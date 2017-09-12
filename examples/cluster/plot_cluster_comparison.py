@@ -166,7 +166,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         else:
             y_pred = algorithm.predict(X)
 
-        plt.subplot(len(datasets), len(clustering_algorithms),
+        plt.subplot(len(clustering_algorithms), len(datasets),
                     i_dataset + (plotn*6) +1)
         if i_dataset == 0:
             plt.ylabel(name)
