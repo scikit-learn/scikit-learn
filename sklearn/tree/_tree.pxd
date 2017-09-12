@@ -60,6 +60,11 @@ cdef class Tree:
                                  double impurity, SIZE_t feature,
                                  SIZE_t n_node_samples,
                                  double weighted_n_node_samples)
+    cdef SIZE_t _update_node(self, SIZE_t node_id, SIZE_t left_child,
+                             SIZE_t right_child, double threshold,
+                             double impurity, SIZE_t feature,
+                             SIZE_t n_node_samples,
+                             double weighted_n_node_samples)
     cpdef SIZE_t _add_node_py(self, SIZE_t parent, bint is_left, bint is_leaf,
                               SIZE_t feature, double threshold,
                               double impurity,
@@ -70,6 +75,12 @@ cdef class Tree:
                           SIZE_t feature, double threshold, double impurity,
                           SIZE_t n_node_samples,
                           double weighted_n_samples) nogil except -1
+    cdef SIZE_t _add_node_with_value(self, SIZE_t parent, bint is_left, bint is_leaf,
+                              SIZE_t feature, double threshold,
+                              double impurity,
+                              SIZE_t n_node_samples,
+                              double weighted_n_samples,
+                              double node_value)
     cpdef int _resize_py(self, SIZE_t capacity)
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cpdef int _resize_c_py(self, SIZE_t capacity=*)
