@@ -1708,12 +1708,16 @@ class PredefinedSplit(BaseCrossValidator):
 
     Provides train/test indices to split data into train/test sets using a
     predefined scheme specified by the user with the ``test_fold`` parameter.
-    The entry ``test_fold[i]`` represents the index of the test set that
-    sample ``i`` belongs to. It is possible to exclude sample ``i`` from any
-    test set (i.e. include sample ``i`` in every training set) by setting
-    ``test_fold[i]`` equal to -1.
 
     Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    test_fold : array-like, shape (n_samples,)        
+        The entry ``test_fold[i]`` represents the index of the test set that
+        sample ``i`` belongs to. It is possible to exclude sample ``i`` from any
+        test set (i.e. include sample ``i`` in every training set) by setting
+        ``test_fold[i]`` equal to -1.
 
     Examples
     --------
