@@ -92,7 +92,6 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         model.fit(X, y)
 
         scores = model.score(X, y)
-
         # Create a title for each column and the console by using str() and
         # slicing away useless parts of the string
         model_title = str(type(model)).split(
