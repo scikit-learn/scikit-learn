@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -349,11 +350,58 @@ def test_pca_inverse():
 
 
 def test_pca_validation():
-    X = [[0, 1], [1, 0]]
+    # Ensures that solver-specific extreme inputs for the n_components
+    # parameter raise errors
+    X = np.array([[0, 1, 0], [1, 0, 0]])
+    smallest_d = 2  # The smallest dimension
+    lower_limit = {'randomized': 1, 'arpack': 1, 'full': 0, 'auto': 0}
+
     for solver in solver_list:
-        for n_components in [-1, 3]:
-            assert_raises(ValueError,
-                          PCA(n_components, svd_solver=solver).fit, X)
+        # We conduct the same test on X.T so that it is invariant to axis.
+        for data in [X, X.T]:
+            for n_components in [-1, 3]:
+
+                if solver == 'auto':
+                    solver_reported = 'full'
+                else:
+                    solver_reported = solver
+
+                assert_raises_regex(ValueError,
+                                    "n_components={}L? must be between "
+                                    "{}L? and min\(n_samples, n_features\)="
+                                    "{}L? with svd_solver=\'{}\'"
+                                    .format(n_components,
+                                            lower_limit[solver],
+                                            smallest_d,
+                                            solver_reported),
+                                    PCA(n_components,
+                                        svd_solver=solver).fit, data)
+            if solver == 'arpack':
+
+                n_components = smallest_d
+
+                assert_raises_regex(ValueError,
+                                    "n_components={}L? must be "
+                                    "strictly less than "
+                                    "min\(n_samples, n_features\)={}L?"
+                                    " with svd_solver=\'arpack\'"
+                                    .format(n_components, smallest_d),
+                                    PCA(n_components, svd_solver=solver)
+                                    .fit, data)
+
+
+def test_n_components_none():
+    # Ensures that n_components == None is handled correctly
+    X = iris.data
+    # We conduct the same test on X.T so that it is invariant to axis.
+    for data in [X, X.T]:
+        for solver in solver_list:
+            pca = PCA(svd_solver=solver)
+            pca.fit(data)
+            if solver == 'arpack':
+                assert_equal(pca.n_components_, min(data.shape) - 1)
+            else:
+                assert_equal(pca.n_components_, min(data.shape))
 
 
 def test_randomized_pca_check_projection():
