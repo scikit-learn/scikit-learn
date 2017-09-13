@@ -100,6 +100,9 @@ Decomposition, manifold learning and clustering
   Similarly, the ``n_components=None`` case now selects the minimum of
   n_samples and n_features. :issue:`8484`. By :user:`Wally Gauze <wallygauze>`.
 
+- Fixed a bug in :func:`datasets.fetch_kddcup99`, where data were not properly
+  shuffled. :issue:`9731` by `Nicolas Goix`_.
+
 API changes summary
 -------------------
 
