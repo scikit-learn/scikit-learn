@@ -385,6 +385,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         y : array, shape (n_samples,)
             The validated corresponding training labels.
 
+        targets : array, shape (n_samples, n_neighbors) or None
+            The validated target neighbors.
+
+        init : string or numpy array
+            The validated initialization of the linear transformation.
+
         Raises
         -------
         TypeError
@@ -678,7 +684,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         if use_sparse:
             # Initialize impostors matrix
             impostors_sp = csr_matrix((n_samples, n_samples), dtype=np.int8)
-
             for class_id in self.classes_inverse_non_singleton_[:-1]:
                 ind_in, = np.where(y == class_id)
                 ind_out, = np.where(y > class_id)
@@ -861,7 +866,7 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
     imp_ind, dist = [], []
 
     # X_in squared norm stays constant, so pre-compute it to get a speed-up
-    X_in_norm_squared = row_norms(X_in, squared=True)
+    X_in_norm_squared = row_norms(X_in, squared=True)[np.newaxis, :]
     for chunk in gen_batches(n_samples_out, batch_size):
 
         # dist_out_in = euclidean_distances(X_out[chunk], X_in, squared=True,
