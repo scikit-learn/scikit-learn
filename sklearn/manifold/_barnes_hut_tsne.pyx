@@ -51,8 +51,7 @@ cdef float compute_gradient(float[:] val_P,
                             quad_tree._QuadTree qt,
                             float theta,
                             float dof,
-                            long start,
-                            long stop) nogil:
+                            long start) nogil:
     # Having created the tree, calculate the gradient
     # in two components, the positive and negative forces
     cdef:
@@ -73,7 +72,7 @@ cdef float compute_gradient(float[:] val_P,
     sum_Q[0] = 0.0
     t1 = clock()
     compute_gradient_negative(pos_reference, neg_f, qt, sum_Q,
-                              dof, theta, start, stop)
+                              dof, theta, start)
     t2 = clock()
     if qt.verbose > 15:
         printf("[t-SNE] Computing negative gradient: %e ticks\n", ((float) (t2 - t1)))
@@ -153,15 +152,13 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
                                     double* sum_Q,
                                     float dof,
                                     float theta,
-                                    long start,
-                                    long stop) nogil:
-    if stop == -1:
-        stop = pos_reference.shape[0]
+                                    long start) nogil:
     cdef:
         int ax
         int n_dimensions = qt.n_dimensions
         long i, j, idx
-        long n = stop - start
+        long n_samples = pos_reference.shape[0]
+        long n = n_samples - start
         long dta = 0
         long dtb = 0
         long offset = n_dimensions + 2
@@ -174,7 +171,7 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
 
     summary = <float*> malloc(sizeof(float) * n * offset)
 
-    for i in range(start, stop):
+    for i in range(start, n_samples):
         # Clear the arrays
         for ax in range(n_dimensions):
             force[ax] = 0.0
@@ -249,7 +246,7 @@ def gradient(float[:] val_P,
         # and -Werror=format-security
         printf("[t-SNE] Computing gradient\n%s", EMPTY_STRING)
     C = compute_gradient(val_P, pos_output, neighbors, indptr, forces,
-                         qt, theta, dof, skip_num_points, -1)
+                         qt, theta, dof, skip_num_points)
     if verbose > 10:
         # XXX: format hack to workaround lack of `const char *` type
         # in the generated C code
