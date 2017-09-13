@@ -134,8 +134,12 @@ class PCA(_BasePCA):
         to guess the dimension
         if ``0 < n_components < 1`` and svd_solver == 'full', select the number
         of components such that the amount of variance that needs to be
-        explained is greater than the percentage specified by n_components
-        n_components cannot be equal to n_features for svd_solver == 'arpack'.
+        explained is greater than the percentage specified by n_components.
+        If svd_solver == 'arpack', the number of components must be strictly
+        less than the minimum of n_features and n_samples.
+        Hence, the None case results in:
+
+            n_components == min(n_samples, n_features) - 1
 
     copy : bool (default True)
         If False, data passed to fit are overwritten and running
@@ -166,7 +170,7 @@ class PCA(_BasePCA):
         arpack :
             run SVD truncated to n_components calling ARPACK solver via
             `scipy.sparse.linalg.svds`. It requires strictly
-            0 < n_components < X.shape[1]
+            0 < n_components < min(X.shape)
         randomized :
             run randomized SVD by the method of Halko et al.
 
@@ -210,7 +214,7 @@ class PCA(_BasePCA):
         Percentage of variance explained by each of the selected components.
 
         If ``n_components`` is not set then all components are stored and the
-        sum of explained variances is equal to 1.0.
+        sum of the ratios is equal to 1.0.
 
     singular_values_ : array, shape (n_components,)
         The singular values corresponding to each of the selected components.
@@ -226,7 +230,8 @@ class PCA(_BasePCA):
         The estimated number of components. When n_components is set
         to 'mle' or a number between 0 and 1 (with svd_solver == 'full') this
         number is estimated from input data. Otherwise it equals the parameter
-        n_components, or n_features if n_components is None.
+        n_components, or the lesser value of n_features and n_samples
+        if n_components is None.
 
     noise_variance_ : float
         The estimated noise covariance following the Probabilistic PCA model
@@ -371,7 +376,10 @@ class PCA(_BasePCA):
 
         # Handle n_components==None
         if self.n_components is None:
-            n_components = X.shape[1]
+            if self.svd_solver != 'arpack':
+                n_components = min(X.shape)
+            else:
+                n_components = min(X.shape) - 1
         else:
             n_components = self.n_components
 
@@ -404,10 +412,11 @@ class PCA(_BasePCA):
             if n_samples < n_features:
                 raise ValueError("n_components='mle' is only supported "
                                  "if n_samples >= n_features")
-        elif not 0 <= n_components <= n_features:
+        elif not 0 <= n_components <= min(n_samples, n_features):
             raise ValueError("n_components=%r must be between 0 and "
-                             "n_features=%r with svd_solver='full'"
-                             % (n_components, n_features))
+                             "min(n_samples, n_features)=%r with "
+                             "svd_solver='full'"
+                             % (n_components, min(n_samples, n_features)))
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -462,14 +471,19 @@ class PCA(_BasePCA):
             raise ValueError("n_components=%r cannot be a string "
                              "with svd_solver='%s'"
                              % (n_components, svd_solver))
-        elif not 1 <= n_components <= n_features:
+        elif not 1 <= n_components <= min(n_samples, n_features):
             raise ValueError("n_components=%r must be between 1 and "
-                             "n_features=%r with svd_solver='%s'"
-                             % (n_components, n_features, svd_solver))
-        elif svd_solver == 'arpack' and n_components == n_features:
-            raise ValueError("n_components=%r must be stricly less than "
-                             "n_features=%r with svd_solver='%s'"
-                             % (n_components, n_features, svd_solver))
+                             "min(n_samples, n_features)=%r with "
+                             "svd_solver='%s'"
+                             % (n_components, min(n_samples, n_features),
+                                svd_solver))
+        elif svd_solver == 'arpack' and n_components == min(n_samples,
+                                                            n_features):
+            raise ValueError("n_components=%r must be strictly less than "
+                             "min(n_samples, n_features)=%r with "
+                             "svd_solver='%s'"
+                             % (n_components, min(n_samples, n_features),
+                                svd_solver))
 
         random_state = check_random_state(self.random_state)
 
@@ -504,6 +518,7 @@ class PCA(_BasePCA):
         self.explained_variance_ratio_ = \
             self.explained_variance_ / total_var.sum()
         self.singular_values_ = S.copy()  # Store the singular values.
+
         if self.n_components_ < min(n_features, n_samples):
             self.noise_variance_ = (total_var.sum() -
                                     self.explained_variance_.sum())

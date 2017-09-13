@@ -43,10 +43,13 @@ run_tests() {
     fi
     $TEST_CMD sklearn
 
-    # Test doc (only with nose until we switch completely to pytest)
-    if [[ "$USE_PYTEST" != "true" ]]; then
-        # Going back to git checkout folder needed for make test-doc
-        cd $OLDPWD
+    # Going back to git checkout folder needed to test documentation
+    cd $OLDPWD
+
+    if [[ "$USE_PYTEST" == "true" ]]; then
+        pytest $(find doc -name '*.rst' | sort)
+    else
+        # Makefile is using nose
         make test-doc
     fi
 }

@@ -59,11 +59,12 @@ is to position the labels minimizing overlap. For this we use an
 heuristic based on the direction of the nearest neighbor along each
 axis.
 """
-print(__doc__)
+from __future__ import print_function
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
 
+import sys
 from datetime import datetime
 
 import numpy as np
@@ -73,6 +74,7 @@ from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urlencode
 from sklearn import cluster, covariance, manifold
 
+print(__doc__)
 
 # #############################################################################
 # Retrieve the data from Internet
@@ -170,7 +172,7 @@ symbol_dict = {
     'BAC': 'Bank of America',
     'GS': 'Goldman Sachs',
     'AAPL': 'Apple',
-    'SAP': 'SAP',
+    'NYSE:SAP': 'SAP',
     'CSCO': 'Cisco',
     'TXN': 'Texas Instruments',
     'XRX': 'Xerox',
@@ -192,9 +194,11 @@ symbols, names = np.array(list(symbol_dict.items())).T
 
 # retry is used because quotes_historical_google can temporarily fail
 # for various reasons (e.g. empty result from Google API).
-quotes = [
-    retry(quotes_historical_google)(symbol, d1, d2) for symbol in symbols
-]
+quotes = []
+
+for symbol in sorted(symbols):
+    print('Fetching quote history for %r' % symbol, file=sys.stderr)
+    quotes.append(retry(quotes_historical_google)(symbol, d1, d2))
 
 close_prices = np.vstack([q['close'] for q in quotes])
 open_prices = np.vstack([q['open'] for q in quotes])
