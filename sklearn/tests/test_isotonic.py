@@ -172,7 +172,6 @@ def test_isotonic_regression_with_ties_in_differently_sized_groups():
     https://github.com/scikit-learn/scikit-learn/issues/9432
 
     Compare against output in R:
-    > require('isotone') || (install.packages('isotone') && require('isotone'))
     > library("isotone")
     > x <- c(0, 1, 1, 2, 3, 4)
     > y <- c(0, 0, 1, 0, 0, 1)
@@ -187,8 +186,8 @@ def test_isotonic_regression_with_ties_in_differently_sized_groups():
     y_true = np.array([0., 0.25, 0.25, 0.25, 0.25, 1.])
     ir = IsotonicRegression()
     ir.fit(x, y)
-    assert_array_almost_equal(ir.transform(x), y_true, 4)
-    assert_array_almost_equal(ir.fit_transform(x, y), y_true, 4)
+    assert_array_almost_equal(ir.transform(x), y_true)
+    assert_array_almost_equal(ir.fit_transform(x, y), y_true)
 
 
 def test_isotonic_regression_reversed():
