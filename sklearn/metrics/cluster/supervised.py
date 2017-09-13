@@ -150,7 +150,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     Examples
     --------
 
-    Perfectly maching labelings have a score of 1 even
+    Perfectly matching labelings have a score of 1 even
 
       >>> from sklearn.metrics.cluster import adjusted_rand_score
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 0, 1, 1])
@@ -812,6 +812,9 @@ def fowlkes_mallows_score(labels_true, labels_pred, sparse=False):
 
     labels_pred : array, shape = (``n_samples``, )
         A clustering of the data into disjoint subsets.
+
+    sparse : bool
+        Compute contingency matrix internally with sparse matrix.
 
     Returns
     -------

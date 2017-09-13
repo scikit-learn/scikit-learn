@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
@@ -99,38 +98,58 @@ def test_logsumexp():
     assert_array_almost_equal(np.exp(logsumexp(logX, axis=1)), X.sum(axis=1))
 
 
-def test_randomized_svd_low_rank():
+def check_randomized_svd_low_rank(dtype):
     # Check that extmath.randomized_svd is consistent with linalg.svd
     n_samples = 100
     n_features = 500
     rank = 5
     k = 10
+    decimal = 5 if dtype == np.float32 else 7
+    dtype = np.dtype(dtype)
 
     # generate a matrix X of approximate effective rank `rank` and no noise
     # component (very structured signal):
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
                              effective_rank=rank, tail_strength=0.0,
-                             random_state=0)
+                             random_state=0).astype(dtype, copy=False)
     assert_equal(X.shape, (n_samples, n_features))
 
     # compute the singular values of X using the slow exact method
     U, s, V = linalg.svd(X, full_matrices=False)
 
+    # Convert the singular values to the specific dtype
+    U = U.astype(dtype, copy=False)
+    s = s.astype(dtype, copy=False)
+    V = V.astype(dtype, copy=False)
+
     for normalizer in ['auto', 'LU', 'QR']:  # 'none' would not be stable
         # compute the singular values of X using the fast approximate method
-        Ua, sa, Va = \
-            randomized_svd(X, k, power_iteration_normalizer=normalizer,
-                           random_state=0)
+        Ua, sa, Va = randomized_svd(
+            X, k, power_iteration_normalizer=normalizer, random_state=0)
+
+        # If the input dtype is float, then the output dtype is float of the
+        # same bit size (f32 is not upcast to f64)
+        # But if the input dtype is int, the output dtype is float64
+        if dtype.kind == 'f':
+            assert Ua.dtype == dtype
+            assert sa.dtype == dtype
+            assert Va.dtype == dtype
+        else:
+            assert Ua.dtype == np.float64
+            assert sa.dtype == np.float64
+            assert Va.dtype == np.float64
+
         assert_equal(Ua.shape, (n_samples, k))
         assert_equal(sa.shape, (k,))
         assert_equal(Va.shape, (k, n_features))
 
         # ensure that the singular values of both methods are equal up to the
         # real rank of the matrix
-        assert_almost_equal(s[:k], sa)
+        assert_almost_equal(s[:k], sa, decimal=decimal)
 
         # check the singular vectors too (while not checking the sign)
-        assert_almost_equal(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va))
+        assert_almost_equal(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va),
+                            decimal=decimal)
 
         # check the sparse matrix representation
         X = sparse.csr_matrix(X)
@@ -139,7 +158,21 @@ def test_randomized_svd_low_rank():
         Ua, sa, Va = \
             randomized_svd(X, k, power_iteration_normalizer=normalizer,
                            random_state=0)
-        assert_almost_equal(s[:rank], sa[:rank])
+        if dtype.kind == 'f':
+            assert Ua.dtype == dtype
+            assert sa.dtype == dtype
+            assert Va.dtype == dtype
+        else:
+            assert Ua.dtype.kind == 'f'
+            assert sa.dtype.kind == 'f'
+            assert Va.dtype.kind == 'f'
+
+        assert_almost_equal(s[:rank], sa[:rank], decimal=decimal)
+
+
+def test_randomized_svd_low_rank_all_dtypes():
+    for dtype in (np.int32, np.int64, np.float32, np.float64):
+        yield check_randomized_svd_low_rank, dtype
 
 
 @ignore_warnings  # extmath.norm is deprecated to be removed in 0.21
@@ -173,10 +206,19 @@ def test_row_norms():
                                   precision)
         assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X), precision)
 
-        Xcsr = sparse.csr_matrix(X, dtype=dtype)
-        assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
-                                  precision)
-        assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr), precision)
+        for csr_index_dtype in [np.int32, np.int64]:
+            Xcsr = sparse.csr_matrix(X, dtype=dtype)
+            # csr_matrix will use int32 indices by default,
+            # up-casting those to int64 when necessary
+            if csr_index_dtype is np.int64:
+                Xcsr.indptr = Xcsr.indptr.astype(csr_index_dtype)
+                Xcsr.indices = Xcsr.indices.astype(csr_index_dtype)
+            assert Xcsr.indices.dtype == csr_index_dtype
+            assert Xcsr.indptr.dtype == csr_index_dtype
+            assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
+                                      precision)
+            assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr),
+                                      precision)
 
 
 def test_randomized_svd_low_rank_with_noise():

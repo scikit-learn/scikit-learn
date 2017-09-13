@@ -206,7 +206,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     n_ticks = train_sizes_abs.shape[0]
     n_min_required_samples = np.min(train_sizes_abs)
     n_max_required_samples = np.max(train_sizes_abs)
-    if np.issubdtype(train_sizes_abs.dtype, np.float):
+    if np.issubdtype(train_sizes_abs.dtype, np.floating):
         if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
             raise ValueError("train_sizes has been interpreted as fractions "
                              "of the maximum number of training samples and "
@@ -348,7 +348,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
-        estimator, X, y, scorer, train, test, verbose,
+        clone(estimator), X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
         for train, test in cv for v in param_range)
 

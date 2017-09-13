@@ -172,6 +172,20 @@ def test_no_path_all_precomputed():
     assert_true(alpha_ == alphas_[-1])
 
 
+def test_lars_precompute():
+    # Check for different values of precompute
+    X, y = diabetes.data, diabetes.target
+    G = np.dot(X.T, X)
+    for classifier in [linear_model.Lars, linear_model.LarsCV,
+                       linear_model.LassoLarsIC]:
+        clf = classifier(precompute=G)
+        output_1 = ignore_warnings(clf.fit)(X, y).coef_
+        for precompute in [True, False, 'auto', None]:
+            clf = classifier(precompute=precompute)
+            output_2 = clf.fit(X, y).coef_
+            assert_array_almost_equal(output_1, output_2, decimal=8)
+
+
 def test_singular_matrix():
     # Test when input is a singular matrix
     X1 = np.array([[1, 1.], [1., 1.]])

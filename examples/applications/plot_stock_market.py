@@ -59,11 +59,12 @@ is to position the labels minimizing overlap. For this we use an
 heuristic based on the direction of the nearest neighbor along each
 axis.
 """
-print(__doc__)
+from __future__ import print_function
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
 
+import sys
 from datetime import datetime
 
 import numpy as np
@@ -73,9 +74,22 @@ from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urlencode
 from sklearn import cluster, covariance, manifold
 
+print(__doc__)
 
-###############################################################################
+# #############################################################################
 # Retrieve the data from Internet
+
+def retry(f, n_attempts=3):
+    "Wrapper function to retry function calls in case of exceptions"
+    def wrapper(*args, **kwargs):
+        for i in range(n_attempts):
+            try:
+                return f(*args, **kwargs)
+            except Exception as e:
+                if i == n_attempts - 1:
+                    raise
+    return wrapper
+
 
 def quotes_historical_google(symbol, date1, date2):
     """Get the historical data from Google finance.
@@ -102,15 +116,15 @@ def quotes_historical_google(symbol, date1, date2):
         'output': 'csv'
     })
     url = 'http://www.google.com/finance/historical?' + params
-    with urlopen(url) as response:
-        dtype = {
-            'names': ['date', 'open', 'high', 'low', 'close', 'volume'],
-            'formats': ['object', 'f4', 'f4', 'f4', 'f4', 'f4']
-        }
-        converters = {0: lambda s: datetime.strptime(s.decode(), '%d-%b-%y')}
-        return np.genfromtxt(response, delimiter=',', skip_header=1,
-                             dtype=dtype, converters=converters,
-                             missing_values='-', filling_values=-1)
+    response = urlopen(url)
+    dtype = {
+        'names': ['date', 'open', 'high', 'low', 'close', 'volume'],
+        'formats': ['object', 'f4', 'f4', 'f4', 'f4', 'f4']
+    }
+    converters = {0: lambda s: datetime.strptime(s.decode(), '%d-%b-%y')}
+    return np.genfromtxt(response, delimiter=',', skip_header=1,
+                         dtype=dtype, converters=converters,
+                         missing_values='-', filling_values=-1)
 
 
 # Choose a time period reasonably calm (not too long ago so that we get
@@ -119,6 +133,7 @@ d1 = datetime(2003, 1, 1)
 d2 = datetime(2008, 1, 1)
 
 symbol_dict = {
+<<<<<<< HEAD
     'NYSE:TOT': 'Total',
     'NYSE:XOM': 'Exxon',
     'NYSE:CVX': 'Chevron',
@@ -174,21 +189,83 @@ symbol_dict = {
     'NYSE:CVS': 'CVS',
     'NYSE:CAT': 'Caterpillar',
     'NYSE:DD-B': 'DuPont de Nemours'}
+=======
+    'TOT': 'Total',
+    'XOM': 'Exxon',
+    'CVX': 'Chevron',
+    'COP': 'ConocoPhillips',
+    'VLO': 'Valero Energy',
+    'MSFT': 'Microsoft',
+    'IBM': 'IBM',
+    'TWX': 'Time Warner',
+    'CMCSA': 'Comcast',
+    'CVC': 'Cablevision',
+    'YHOO': 'Yahoo',
+    'DELL': 'Dell',
+    'HPQ': 'HP',
+    'AMZN': 'Amazon',
+    'TM': 'Toyota',
+    'CAJ': 'Canon',
+    'SNE': 'Sony',
+    'F': 'Ford',
+    'HMC': 'Honda',
+    'NAV': 'Navistar',
+    'NOC': 'Northrop Grumman',
+    'BA': 'Boeing',
+    'KO': 'Coca Cola',
+    'MMM': '3M',
+    'MCD': 'McDonald\'s',
+    'PEP': 'Pepsi',
+    'K': 'Kellogg',
+    'UN': 'Unilever',
+    'MAR': 'Marriott',
+    'PG': 'Procter Gamble',
+    'CL': 'Colgate-Palmolive',
+    'GE': 'General Electrics',
+    'WFC': 'Wells Fargo',
+    'JPM': 'JPMorgan Chase',
+    'AIG': 'AIG',
+    'AXP': 'American express',
+    'BAC': 'Bank of America',
+    'GS': 'Goldman Sachs',
+    'AAPL': 'Apple',
+    'NYSE:SAP': 'SAP',
+    'CSCO': 'Cisco',
+    'TXN': 'Texas Instruments',
+    'XRX': 'Xerox',
+    'WMT': 'Wal-Mart',
+    'HD': 'Home Depot',
+    'GSK': 'GlaxoSmithKline',
+    'PFE': 'Pfizer',
+    'SNY': 'Sanofi-Aventis',
+    'NVS': 'Novartis',
+    'KMB': 'Kimberly-Clark',
+    'R': 'Ryder',
+    'GD': 'General Dynamics',
+    'RTN': 'Raytheon',
+    'CVS': 'CVS',
+    'CAT': 'Caterpillar',
+    'DD': 'DuPont de Nemours'}
+>>>>>>> 8c82943af13d80db6b9a79539cb5f4d36c88ce85
 
 symbols, names = np.array(list(symbol_dict.items())).T
 
-quotes = [
-    quotes_historical_google(symbol, d1, d2) for symbol in symbols
-]
+# retry is used because quotes_historical_google can temporarily fail
+# for various reasons (e.g. empty result from Google API).
+quotes = []
 
-close_prices = np.stack([q['close'] for q in quotes])
-open_prices = np.stack([q['open'] for q in quotes])
+for symbol in sorted(symbols):
+    print('Fetching quote history for %r' % symbol, file=sys.stderr)
+    quotes.append(retry(quotes_historical_google)(symbol, d1, d2))
+
+close_prices = np.vstack([q['close'] for q in quotes])
+open_prices = np.vstack([q['open'] for q in quotes])
 
 # The daily variations of the quotes are what carry most information
 variation = close_prices - open_prices
 
 
-###############################################################################
+# #############################################################################
 # Learn a graphical structure from the correlations
 edge_model = covariance.GraphLassoCV()
 
@@ -198,7 +275,7 @@ X = variation.copy().T
 X /= X.std(axis=0)
 edge_model.fit(X)
 
-###############################################################################
+# #############################################################################
 # Cluster using affinity propagation
 
 _, labels = cluster.affinity_propagation(edge_model.covariance_)
@@ -207,7 +284,7 @@ n_labels = labels.max()
 for i in range(n_labels + 1):
     print('Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i])))
 
-###############################################################################
+# #############################################################################
 # Find a low-dimension embedding for visualization: find the best position of
 # the nodes (the stocks) on a 2D plane
 
@@ -219,7 +296,7 @@ node_position_model = manifold.LocallyLinearEmbedding(
 
 embedding = node_position_model.fit_transform(X.T).T
 
-###############################################################################
+# #############################################################################
 # Visualization
 plt.figure(1, facecolor='w', figsize=(10, 8))
 plt.clf()
