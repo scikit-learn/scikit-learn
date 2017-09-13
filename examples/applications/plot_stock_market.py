@@ -142,7 +142,6 @@ symbol_dict = {
     'NYSE:IBM': 'IBM',
     'NYSE:TWX': 'Time Warner',
     'NASDAQ:CMCSA': 'Comcast',
-    'NYSE:CVC': 'Cablevision',
     'NASDAQ:AABA': 'Altaba',
     'NYSE:HPQ': 'HP',
     'NASDAQ:AMZN': 'Amazon',
