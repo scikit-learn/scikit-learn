@@ -16,6 +16,7 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
+- :class:`isotonic.IsotonicRegression` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -67,6 +68,13 @@ Linear, kernelized and related models
 
 Bug fixes
 .........
+
+Classifiers and regressors
+
+- Fixed a bug in :class:`isotonic.IsotonicRegression` which incorrectly
+  combined weights when fitting a model to data involving points with
+  identical X values.
+  :issue:`9432` by :user:`Dallas Card <dallascard>`
 
 Decomposition, manifold learning and clustering
 
