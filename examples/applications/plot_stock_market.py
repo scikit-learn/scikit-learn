@@ -190,13 +190,13 @@ symbol_dict = {
     'CAT': 'Caterpillar',
     'DD': 'DuPont de Nemours'}
 
-symbols, names = np.array(list(symbol_dict.items())).T
+symbols, names = np.array(sorted(symbol_dict.items())).T
 
 # retry is used because quotes_historical_google can temporarily fail
 # for various reasons (e.g. empty result from Google API).
 quotes = []
 
-for symbol in sorted(symbols):
+for symbol in symbols:
     print('Fetching quote history for %r' % symbol, file=sys.stderr)
     quotes.append(retry(quotes_historical_google)(symbol, d1, d2))
 
