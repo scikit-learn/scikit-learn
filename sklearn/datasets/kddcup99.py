@@ -140,7 +140,9 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
         Whether to shuffle dataset.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Random state for shuffling the dataset.
+        Random state for shuffling the dataset. If subset='SA', this random
+        state is also used to randomly select the small proportion of abnormal
+        samples.
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
