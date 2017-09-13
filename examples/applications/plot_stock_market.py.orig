@@ -186,9 +186,13 @@ symbol_dict = {
     'NYSE:GD': 'General Dynamics',
     'NYSE:RTN': 'Raytheon',
     'NYSE:CAT': 'Caterpillar',
+<<<<<<< HEAD
     'NYSE:DD-B': 'DuPont de Nemours'
-}
+ }
 
+=======
+    'NYSE:DD-B': 'DuPont de Nemours'}
+>>>>>>> 7babdf1307b45140db81e50801fd1716d02e037c
 
 symbols, names = np.array(list(symbol_dict.items())).T
 
