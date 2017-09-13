@@ -46,6 +46,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
+from sklearn import clone
 from sklearn.datasets import load_iris
 from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
                               AdaBoostClassifier)
@@ -89,18 +90,19 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         X = (X - mean) / std
 
         # Train
-        clf = model.fit(X, y)
+        clf = clone(model)
+        clf.fit(X, y)
 
         scores = clf.score(X, y)
         # Create a title for each column and the console by using str() and
         # slicing away useless parts of the string
-        model_title = str(type(model)).split(
+        model_title = str(type(clf)).split(
             ".")[-1][:-2][:-len("Classifier")]
 
         model_details = model_title
-        if hasattr(model, "estimators_"):
+        if hasattr(clf, "estimators_"):
             model_details += " with {} estimators".format(
-                len(model.estimators_))
+                len(clf.estimators_))
         print(model_details + " with features", pair,
               "has a score of", scores)
 
@@ -118,8 +120,8 @@ for pair in ([0, 1], [0, 2], [2, 3]):
 
         # Plot either a single DecisionTreeClassifier or alpha blend the
         # decision surfaces of the ensemble of classifiers
-        if isinstance(model, DecisionTreeClassifier):
-            Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+        if isinstance(clf, DecisionTreeClassifier):
+            Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
             Z = Z.reshape(xx.shape)
             cs = plt.contourf(xx, yy, Z, cmap=cmap)
         else:
@@ -127,8 +129,8 @@ for pair in ([0, 1], [0, 2], [2, 3]):
             # of estimators
             # that are in use (noting that AdaBoost can use fewer estimators
             # than its maximum if it achieves a good enough fit early on)
-            estimator_alpha = 1.0 / len(model.estimators_)
-            for tree in model.estimators_:
+            estimator_alpha = 1.0 / len(clf.estimators_)
+            for tree in clf.estimators_:
                 Z = tree.predict(np.c_[xx.ravel(), yy.ravel()])
                 Z = Z.reshape(xx.shape)
                 cs = plt.contourf(xx, yy, Z, alpha=estimator_alpha, cmap=cmap)
@@ -140,9 +142,9 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         xx_coarser, yy_coarser = np.meshgrid(
             np.arange(x_min, x_max, plot_step_coarser),
             np.arange(y_min, y_max, plot_step_coarser))
-        Z_points_coarser = model.predict(np.c_[xx_coarser.ravel(),
-                                         yy_coarser.ravel()]
-                                         ).reshape(xx_coarser.shape)
+        Z_points_coarser = clf.predict(np.c_[xx_coarser.ravel(),
+                                       yy_coarser.ravel()]
+                                       ).reshape(xx_coarser.shape)
         cs_points = plt.scatter(xx_coarser, yy_coarser, s=15,
                                 c=Z_points_coarser, cmap=cmap,
                                 edgecolors="none")
