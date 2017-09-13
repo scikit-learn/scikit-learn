@@ -225,21 +225,7 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            # We need deprecation warnings to always be on in order to
-            # catch deprecated param values.
-            # This is set in utils/__init__.py but it gets overwritten
-            # when running under python3 somehow.
-            warnings.simplefilter("always", DeprecationWarning)
-            try:
-                with warnings.catch_warnings(record=True) as w:
-                    value = getattr(self, key, None)
-                if len(w) and w[0].category == DeprecationWarning:
-                    # if the parameter is deprecated, don't show it
-                    continue
-            finally:
-                warnings.filters.pop(0)
-
-            # XXX: should we rather test if instance of estimator?
+            value = getattr(self, key, None)
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -314,7 +300,6 @@ class BaseEstimator(object):
             super(BaseEstimator, self).__setstate__(state)
         except AttributeError:
             self.__dict__.update(state)
-
 
 
 ###############################################################################
@@ -428,6 +413,11 @@ class BiclusterMixin(object):
 
         Only works if ``rows_`` and ``columns_`` attributes exist.
 
+        Parameters
+        ----------
+        i : int
+            The index of the cluster.
+
         Returns
         -------
         row_ind : np.array, dtype=np.intp
@@ -443,6 +433,11 @@ class BiclusterMixin(object):
     def get_shape(self, i):
         """Shape of the i'th bicluster.
 
+        Parameters
+        ----------
+        i : int
+            The index of the cluster.
+
         Returns
         -------
         shape : (int, int)
@@ -454,9 +449,22 @@ class BiclusterMixin(object):
     def get_submatrix(self, i, data):
         """Returns the submatrix corresponding to bicluster `i`.
 
+        Parameters
+        ----------
+        i : int
+            The index of the cluster.
+        data : array
+            The data.
+
+        Returns
+        -------
+        submatrix : array
+            The submatrix corresponding to bicluster i.
+
+        Notes
+        -----
         Works with sparse matrices. Only works if ``rows_`` and
         ``columns_`` attributes exist.
-
         """
         from .utils.validation import check_array
         data = check_array(data, accept_sparse='csr')
@@ -525,10 +533,33 @@ class MetaEstimatorMixin(object):
 ###############################################################################
 
 def is_classifier(estimator):
-    """Returns True if the given estimator is (probably) a classifier."""
+    """Returns True if the given estimator is (probably) a classifier.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a classifier and False otherwise.
+    """
     return getattr(estimator, "_estimator_type", None) == "classifier"
 
 
 def is_regressor(estimator):
-    """Returns True if the given estimator is (probably) a regressor."""
+    """Returns True if the given estimator is (probably) a regressor.
+
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a regressor and False otherwise.
+    """
     return getattr(estimator, "_estimator_type", None) == "regressor"

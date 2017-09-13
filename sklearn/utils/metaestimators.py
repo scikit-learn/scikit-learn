@@ -51,7 +51,7 @@ class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _replace_estimator(self, attr, name, new_val):
         # assumes `name` is a valid estimator name
-        new_estimators = getattr(self, attr)[:]
+        new_estimators = list(getattr(self, attr))
         for i, (estimator_name, _) in enumerate(new_estimators):
             if estimator_name == name:
                 new_estimators[i] = (name, new_val)
@@ -129,7 +129,7 @@ def if_delegate_has_method(delegate):
     delegate : string, list of strings or tuple of strings
         Name of the sub-estimator that can be accessed as an attribute of the
         base object. If a list or a tuple of names are provided, the first
-        sub-estimator that is an attribute of the base object  will be used.
+        sub-estimator that is an attribute of the base object will be used.
 
     """
     if isinstance(delegate, list):
