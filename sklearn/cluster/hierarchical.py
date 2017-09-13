@@ -685,7 +685,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            The samples a.k.a. observations.
+            Training data. Shape [n_samples, n_features], or [n_samples,
+            n_samples] if affinity=='precomputed'.
 
         y : Ignored
 
