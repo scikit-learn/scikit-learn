@@ -331,6 +331,11 @@ Preprocessing and feature selection
   :class:`kernel_approximation.Nystroem`.
   :issue:`5229` by :user:`Saurabh Bansod <mth4saurabh>` and `Andreas Müller`_.
 
+- Added select K best features functionality to
+  :class:`feature_selection.SelectFromModel`.
+  :issue:`6689` by :user:`Nihar Sheth <nsheth12>` and
+  :user:`Quazi Rahman <qmaruf>`.
+
 Model evaluation and meta-estimators
 
 - :class:`pipeline.Pipeline` is now able to cache transformers
