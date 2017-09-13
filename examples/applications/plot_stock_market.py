@@ -133,7 +133,6 @@ d1 = datetime(2003, 1, 1)
 d2 = datetime(2008, 1, 1)
 
 symbol_dict = {
-<<<<<<< HEAD
     'NYSE:TOT': 'Total',
     'NYSE:XOM': 'Exxon',
     'NYSE:CVX': 'Chevron',
@@ -178,7 +177,7 @@ symbol_dict = {
     'NYSE:XRX': 'Xerox',
     'NYSE:WMT': 'Wal-Mart',
     'NYSE:HD': 'Home Depot',
-    'LON:GSK': 'GlaxoSmithKline',
+    'NYSE:GSK': 'GlaxoSmithKline',
     'NYSE:PFE': 'Pfizer',
     'NYSE:SNY': 'Sanofi-Aventis',
     'NYSE:NVS': 'Novartis',
@@ -186,67 +185,10 @@ symbol_dict = {
     'NYSE:R': 'Ryder',
     'NYSE:GD': 'General Dynamics',
     'NYSE:RTN': 'Raytheon',
-    'NYSE:CVS': 'CVS',
     'NYSE:CAT': 'Caterpillar',
-    'NYSE:DD-B': 'DuPont de Nemours'}
-=======
-    'TOT': 'Total',
-    'XOM': 'Exxon',
-    'CVX': 'Chevron',
-    'COP': 'ConocoPhillips',
-    'VLO': 'Valero Energy',
-    'MSFT': 'Microsoft',
-    'IBM': 'IBM',
-    'TWX': 'Time Warner',
-    'CMCSA': 'Comcast',
-    'CVC': 'Cablevision',
-    'YHOO': 'Yahoo',
-    'DELL': 'Dell',
-    'HPQ': 'HP',
-    'AMZN': 'Amazon',
-    'TM': 'Toyota',
-    'CAJ': 'Canon',
-    'SNE': 'Sony',
-    'F': 'Ford',
-    'HMC': 'Honda',
-    'NAV': 'Navistar',
-    'NOC': 'Northrop Grumman',
-    'BA': 'Boeing',
-    'KO': 'Coca Cola',
-    'MMM': '3M',
-    'MCD': 'McDonald\'s',
-    'PEP': 'Pepsi',
-    'K': 'Kellogg',
-    'UN': 'Unilever',
-    'MAR': 'Marriott',
-    'PG': 'Procter Gamble',
-    'CL': 'Colgate-Palmolive',
-    'GE': 'General Electrics',
-    'WFC': 'Wells Fargo',
-    'JPM': 'JPMorgan Chase',
-    'AIG': 'AIG',
-    'AXP': 'American express',
-    'BAC': 'Bank of America',
-    'GS': 'Goldman Sachs',
-    'AAPL': 'Apple',
-    'NYSE:SAP': 'SAP',
-    'CSCO': 'Cisco',
-    'TXN': 'Texas Instruments',
-    'XRX': 'Xerox',
-    'WMT': 'Wal-Mart',
-    'HD': 'Home Depot',
-    'GSK': 'GlaxoSmithKline',
-    'PFE': 'Pfizer',
-    'SNY': 'Sanofi-Aventis',
-    'NVS': 'Novartis',
-    'KMB': 'Kimberly-Clark',
-    'R': 'Ryder',
-    'GD': 'General Dynamics',
-    'RTN': 'Raytheon',
-    'CVS': 'CVS',
-    'CAT': 'Caterpillar',
-    'DD': 'DuPont de Nemours'}
->>>>>>> 8c82943af13d80db6b9a79539cb5f4d36c88ce85
+    'NYSE:DD-B': 'DuPont de Nemours'
+ }
+
 
 symbols, names = np.array(list(symbol_dict.items())).T
 
