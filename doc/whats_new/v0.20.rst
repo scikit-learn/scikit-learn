@@ -65,6 +65,13 @@ Linear, kernelized and related models
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
 
+Preprocessing and feature selection
+
+- Added select K best features functionality to
+  :class:`feature_selection.SelectFromModel`.
+  :issue:`6689` by :user:`Nihar Sheth <nsheth12>` and
+  :user:`Quazi Rahman <qmaruf>`.
+
 Bug fixes
 .........
 
