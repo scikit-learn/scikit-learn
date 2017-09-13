@@ -20,8 +20,8 @@ from ._splitter import Splitter
 from ._split_record import SplitRecord
 from ._criterion import impurity_mse
 
-from ..tree._tree import Tree
-from ..tree import _tree
+from ._tree import Tree
+from . import _tree
 
 TREE_UNDEFINED, TREE_LEAF, FEAT_UNKNOWN = -2, -1, -3
 DTYPE = _tree.DTYPE

@@ -57,7 +57,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('svm')
 
     # add the regression trees which do not have to do anything here yet
-    config.add_subpackage('regression_tree')
+    # config.add_subpackage('regression_tree')
+    config.add_subpackage('exact_tree')
     # we created a setup.py to compile the cython code
     # config.add_subpackage('regression_tree/tests')
 

@@ -5,7 +5,16 @@
 from libc.math cimport abs
 
 from ._stats_node cimport StatsNode
+from ._stats_node cimport stats_node_reset
+from ._stats_node cimport stats_node_clear
+from ._stats_node cimport stats_node_iadd
+from ._stats_node cimport stats_node_isub
+from ._stats_node cimport stats_node_copy_to
+
 from ._split_record cimport SplitRecord
+from ._split_record cimport split_record_reset
+from ._split_record cimport split_record_copy_to
+
 from ._criterion cimport impurity_improvement
 
 cdef double FEATURE_THRESHOLD = 1e-7
@@ -61,16 +70,14 @@ cdef class Splitter:
         self.prev_idx = start_idx
 
         # split record to work with
-        self.split_record = SplitRecord()
-        split_record.copy_to(self.split_record)
+        split_record_copy_to(split_record, self.split_record)
         self.split_record.feature = self.feature_idx
         self.split_record.pos = self.start_idx
 
         # split to store the best split record
-        self.best_split_record = SplitRecord()
-        split_record.copy_to(self.best_split_record)
+        split_record_copy_to(split_record, self.best_split_record)
         # set the right stats node equal to the left stats node
-        split_record.c_stats.copy_to(split_record.r_stats)
+        stats_node_copy_to(split_record.c_stats, split_record.r_stats)
 
         # parameters for early stop of split
         self.min_samples_leaf = min_samples_leaf
@@ -78,7 +85,7 @@ cdef class Splitter:
 
         # create a stats_node to get information about a single sample
         # used in update_stats
-        self.stats_samples = StatsNode(0., 0., 0, 0.)
+        stats_node_clear(self.stats_samples)
 
     cpdef void reset(self, int feature_idx, int start_idx,
                      SplitRecord split_record):
@@ -91,18 +98,19 @@ cdef class Splitter:
         self.prev_idx = start_idx
 
         # split record to work with
-        split_record.copy_to(self.split_record)
+        split_record_copy_to(split_record, self.split_record)
         self.split_record.feature = self.feature_idx
         self.split_record.pos = self.start_idx
         # split to store the best split record
-        split_record.copy_to(self.best_split_record)
+        split_record_copy_to(split_record, self.best_split_record)
         # set the right stats node equal to the left stats node
-        split_record.c_stats.copy_to(split_record.r_stats)
+        stats_node_copy_to(split_record.c_stats, split_record.r_stats)
 
     cpdef void update_stats(self, int sample_idx):
         # make an update of the statistics
         # collect the statistics to add to the left node
-        self.stats_samples.reset(
+        stats_node_reset(
+            self.stats_samples,
             sum_y=self.y[sample_idx] * self.sample_weight[sample_idx],
             sum_sq_y=(self.y[sample_idx] ** 2.0 *
                       self.sample_weight[sample_idx]),
@@ -110,9 +118,9 @@ cdef class Splitter:
             sum_weighted_samples=self.sample_weight[sample_idx])
 
         # add these statistics to the left child
-        self.split_record.l_stats += self.stats_samples
+        stats_node_iadd(self.split_record.l_stats, self.stats_samples)
         # update the statistics of the right child
-        self.split_record.r_stats -= self.stats_samples
+        stats_node_isub(self.split_record.r_stats, self.stats_samples)
 
     cpdef void node_evaluate_split(self, int sample_idx):
         """Update the impurity and check the corresponding split should be
@@ -156,7 +164,8 @@ cdef class Splitter:
             if (c_impurity_improvement >
                     self.best_split_record.impurity_improvement):
                 # update the best split
-                self.best_split_record.reset(
+                split_record_reset(
+                    self.best_split_record,
                     feature=feat_i,
                     pos=self.prev_idx,
                     threshold=((self.X[sample_idx, feat_i] +
