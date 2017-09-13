@@ -8,6 +8,7 @@
 # * Fast Optimization for t-SNE:
 #   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+import warnings
 from time import time
 import numpy as np
 from scipy import linalg
@@ -377,7 +378,8 @@ def _gradient_descent(objective, p0, it, n_iter,
     return p, error, i
 
 
-def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
+def trustworthiness(X, X_embedded, n_neighbors=5,
+                    precomputed=None, metric='euclidean'):
     """Expresses to what extent the local structure is retained.
 
     The trustworthiness is within [0, 1]. It is defined as
@@ -398,6 +400,10 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     * "Learning a Parametric Embedding by Preserving Local Structure"
       L.J.P. van der Maaten
 
+    ..deprecated:: 0.20
+        The boolean flag ``precomputed`` is deprecated in version 0.20 and will
+        be removed in version 0.22. Use parameter ``metric`` instead.
+
     Parameters
     ----------
     X : array, shape (n_samples, n_features) or (n_samples, n_samples)
@@ -410,18 +416,32 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     n_neighbors : int, optional (default: 5)
         Number of neighbors k that will be considered.
 
-    precomputed : bool, optional (default: False)
-        Set this flag if X is a precomputed square distance matrix.
+    metric : string, or callable, optional, default 'euclidean'
+        Which metric to use for computing pairwise distances between samples
+        from the original input space. If metric is 'precomputed', X must be a
+        matrix of pairwise distances. Otherwise, see the documentation of
+        argument metric in sklearn.pairwise.pairwise_distances for a list of
+        available metrics. However, using a metric different from 'euclidean'
+        and 'precomputed' seems not standard for this task.
 
     Returns
     -------
     trustworthiness : float
         Trustworthiness of the low-dimensional embedding.
     """
-    if precomputed:
+    if precomputed is not None:
+        warnings.warn("The flag 'precomputed' is deprecated in version 0.20 "
+                      "and will be removed in 0.22. See 'metric' parameter "
+                      "instead.", DeprecationWarning)
+        metric = 'precomputed' if precomputed else metric
+    if metric == 'precomputed':
         dist_X = X
+    elif metric == 'euclidean':
+        dist_X = pairwise_distances(X, metric='euclidean', squared=True)
     else:
-        dist_X = pairwise_distances(X, squared=True)
+        warnings.warn("The metric '{}' seems not standard for computing"
+                      "trustworthiness.".format(metric))
+        dist_X = pairwise_distances(X, metric=metric)
     dist_X_embedded = pairwise_distances(X_embedded, squared=True)
     ind_X = np.argsort(dist_X, axis=1)
     ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, 1:n_neighbors + 1]

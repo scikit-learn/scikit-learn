@@ -286,8 +286,7 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
                     early_exaggeration=2.0, metric="precomputed",
                     random_state=i, verbose=0)
         X_embedded = tsne.fit_transform(D)
-        t = trustworthiness(D, X_embedded, n_neighbors=1,
-                            precomputed=True)
+        t = trustworthiness(D, X_embedded, n_neighbors=1, metric="precomputed")
         assert t > .95
 
 
