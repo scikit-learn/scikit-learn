@@ -550,7 +550,6 @@ class PCA(_BasePCA):
         X = check_array(X)
         Xr = X - self.mean_
         n_features = X.shape[1]
-        log_like = np.zeros(X.shape[0])
         precision = self.get_precision()
         log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
         log_like -= .5 * (n_features * log(2. * np.pi) -
