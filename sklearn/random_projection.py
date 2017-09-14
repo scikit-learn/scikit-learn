@@ -51,16 +51,16 @@ __all__ = ["SparseRandomProjection",
 
 
 def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
-    """Find a 'safe' number of components to randomly project to
+    """Finds a 'safe' number of components to randomly project to
 
     The distortion introduced by a random projection `p` only changes the
-    distance between two points by a factor (1 +- eps) in an euclidean space
-    with good probability. The projection `p` is an eps-embedding as defined
+    distance between two points by a factor (1 +- eps) in a euclidean space
+    with high probability. The projection `p` is an eps-embedding as defined
     by:
 
       (1 - eps) ||u - v||^2 < ||p(u) - p(v)||^2 < (1 + eps) ||u - v||^2
 
-    Where u and v are any rows taken from a dataset of shape [n_samples,
+    Where u and v are rows taken from a dataset of shape [n_samples,
     n_features], eps is in ]0, 1[ and p is a projection by a random Gaussian
     N(0, 1) matrix with shape [n_components, n_features] (or a sparse
     Achlioptas matrix).
@@ -91,7 +91,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     Returns
     -------
     n_components : int or numpy array of int,
-        The minimum number of components to guarantee with high probability
+        The minimum number of components which guarantee with high probability
         an eps-embedding with n_samples.
 
     Examples
@@ -221,7 +221,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         Dimensionality of the original source space.
 
     density : float in range ]0, 1] or 'auto', optional (default='auto')
-        Ratio of non-zero component in the random projection matrix.
+        Ratio of non-zero components in the random projection matrix.
 
         If density = 'auto', the value is set to the minimum density
         as recommended by Ping Li et al.: 1 / sqrt(n_features).
@@ -402,8 +402,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Returns
         -------
-        X_new : numpy array or scipy sparse of shape [n_samples, n_components]
-            Projected array.
+        X_new : Project numpy array or scipy.sparse of shape [n_samples, n_components].
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
@@ -523,7 +522,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
         n_components can be automatically adjusted according to the
         number of samples in the dataset and the bound given by the
-        Johnson-Lindenstrauss lemma. In that case the quality of the
+        Johnson-Lindenstrauss lemma. In the latter case the quality of the
         embedding is controlled by the ``eps`` parameter.
 
         It should be noted that Johnson-Lindenstrauss lemma can yield
@@ -531,7 +530,7 @@ class SparseRandomProjection(BaseRandomProjection):
         as it makes no assumptions about the structure of the dataset.
 
     density : float in range ]0, 1], optional (default='auto')
-        Ratio of non-zero component in the random projection matrix.
+        Ratio of non-zero components in the random projection matrix.
 
         If density = 'auto', the value is set to the minimum density
         as recommended by Ping Li et al.: 1 / sqrt(n_features).
