@@ -76,8 +76,6 @@ from sklearn import cluster, covariance, manifold
 
 print(__doc__)
 
-# #############################################################################
-# Retrieve the data from Internet
 
 def retry(f, n_attempts=3):
     "Wrapper function to retry function calls in case of exceptions"
@@ -85,7 +83,7 @@ def retry(f, n_attempts=3):
         for i in range(n_attempts):
             try:
                 return f(*args, **kwargs)
-            except Exception as e:
+            except Exception:
                 if i == n_attempts - 1:
                     raise
     return wrapper
@@ -122,15 +120,27 @@ def quotes_historical_google(symbol, date1, date2):
         'formats': ['object', 'f4', 'f4', 'f4', 'f4', 'f4']
     }
     converters = {0: lambda s: datetime.strptime(s.decode(), '%d-%b-%y')}
-    return np.genfromtxt(response, delimiter=',', skip_header=1,
+    data = np.genfromtxt(response, delimiter=',', skip_header=1,
                          dtype=dtype, converters=converters,
                          missing_values='-', filling_values=-1)
+    expected_len_data = 1258
+    len_data = len(data)
+    min_date = data['date'].min()
+    max_date = data['date'].max()
+    if (len_data != expected_len_data or min_date != d1 or max_date != d2):
+        raise ValueError('min_date, max_date, len(data) should be {}, {}, {} '
+                         'Got {}, {}, {} instead.'.format(
+                             d1, d2, expected_len_data,
+                             min_date, max_date, len_data))
+    return data
 
+# #############################################################################
+# Retrieve the data from Internet
 
 # Choose a time period reasonably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
-d1 = datetime(2003, 1, 1)
-d2 = datetime(2008, 1, 1)
+d1 = datetime(2003, 1, 2)
+d2 = datetime(2007, 12, 31)
 
 symbol_dict = {
     'TOT': 'Total',
