@@ -287,20 +287,6 @@ def test_warm_start():
     assert_true(diff_cold > diff_warm, err_msg)
 
 
-def test_warm_start_diff_classes():
-    make_cla = datasets.make_classification
-    X, y = make_cla(n_samples=30, n_features=3, n_classes=3, n_redundant=0,
-                    n_informative=3, random_state=0)
-
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=1, warm_start=True,
-                                      max_iter=5)
-    lmnn.fit(X, y)
-
-    X, y_less_classes = make_cla(n_samples=30, n_features=3, n_classes=2,
-                                 n_redundant=0, random_state=0)
-    assert_raises(ValueError, lmnn.fit, X, y_less_classes)
-
-
 def test_warm_start_diff_inputs():
     make_cla = datasets.make_classification
     X, y = make_cla(n_samples=30, n_features=5, n_classes=4, n_redundant=0,
