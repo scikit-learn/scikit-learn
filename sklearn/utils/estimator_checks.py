@@ -365,7 +365,7 @@ def gram_matrix_if_pairwise(X, estimator, kernel=linear_kernel):
 def check_estimator_sparse_data(name, estimator_orig):
 
     # Sparse precomputed kernels aren't supported
-    if getattr(estimator_orig, 'kernel', None) == 'precomputed':
+    if is_pairwise(estimator_orig):
         return
 
     rng = np.random.RandomState(0)
