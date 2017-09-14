@@ -1266,20 +1266,19 @@ label per sample, label ranking average precision is equivalent to the `mean
 reciprocal rank <https://en.wikipedia.org/wiki/Mean_reciprocal_rank>`_.
 
 Formally, given a binary indicator matrix of the ground truth labels
-:math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the
+:math:`y \in \left\{0, 1\right\}^{n_\text{samples} \times n_\text{labels}}` and the
 score associated with each label
-:math:`\hat{f} \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}`,
+:math:`\hat{f} \in \mathbb{R}^{n_\text{samples} \times n_\text{labels}}`,
 the average precision is defined as
 
 .. math::
   LRAP(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
-    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{|y_i|}
+    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0}
     \sum_{j:y_{ij} = 1} \frac{|\mathcal{L}_{ij}|}{\text{rank}_{ij}}
 
 
-with :math:`\mathcal{L}_{ij} = \left\{k: y_{ik} = 1, \hat{f}_{ik} \geq \hat{f}_{ij} \right\}`,
-:math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`
-and :math:`|\cdot|` is the l0 norm or the cardinality of the set.
+where :math:`\mathcal{L}_{ij} = \left\{k: y_{ik} = 1, \hat{f}_{ik} \geq \hat{f}_{ij} \right\}`,
+:math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`, :math:`|\cdot|` computes the cardinality of the set (i.e., the number of elements in the set), and :math:`||\cdot||_0` is the :math:`\ell_0` "norm" (which computes the number of nonzero elements in a vector).
 
 Here is a small example of usage of this function::
 
@@ -1298,7 +1297,7 @@ Ranking loss
 The :func:`label_ranking_loss` function computes the ranking loss which
 averages over the samples the number of label pairs that are incorrectly
 ordered, i.e. true labels have a lower score than false labels, weighted by
-the inverse number of false and true labels. The lowest achievable
+the inverse of the number of ordered pairs of false and true labels. The lowest achievable
 ranking loss is zero.
 
 Formally, given a binary indicator matrix of the ground truth labels
@@ -1309,10 +1308,10 @@ the ranking loss is defined as
 
 .. math::
   \text{ranking\_loss}(y, \hat{f}) =  \frac{1}{n_{\text{samples}}}
-    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{|y_i|(n_\text{labels} - |y_i|)}
+    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{||y_i||_0(n_\text{labels} - ||y_i||_0)}
     \left|\left\{(k, l): \hat{f}_{ik} < \hat{f}_{il}, y_{ik} = 1, y_{il} = 0 \right\}\right|
 
-where :math:`|\cdot|` is the :math:`\ell_0` norm or the cardinality of the set.
+where :math:`|\cdot|` computes the cardinality of the set (i.e., the number of elements in the set) and :math:`||\cdot||_0` is the :math:`\ell_0` "norm" (which computes the number of nonzero elements in a vector).
 
 Here is a small example of usage of this function::
 
