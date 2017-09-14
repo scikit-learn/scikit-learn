@@ -15,10 +15,10 @@ data.columns = iris.feature_names
 
 # som written entirely in python, som_f written by fortran,
 # which is much faster than python
-algorithm = "som" 
+algorithm = "som"
 
 # Build a map
-m = som.build(data,labels,algorithm=algorithm) 
+m = som.build(data,labels,algorithm=algorithm)
 
-# display marginal distribution of 3rd dimension 
-som.marginal(m,2)		
+# display marginal distribution of 3rd dimension
+som.marginal(m,2)

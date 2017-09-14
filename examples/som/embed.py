@@ -15,10 +15,10 @@ data.columns = iris.feature_names
 
 # som written entirely in python, som_f written by fortran,
 # which is much faster than python
-algorithm = "som" 
+algorithm = "som"
 
 # Build a map
-m = som.build(data,labels,algorithm=algorithm) 
+m = som.build(data,labels,algorithm=algorithm)
 
 # display the embedding accuracy of the map
 som.embed(m)
