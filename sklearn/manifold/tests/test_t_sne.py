@@ -719,9 +719,13 @@ def test_accessible_kl_divergence():
 def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
     """Make sure that TSNE can approximately recover a uniform 2D grid"""
     for seed in seeds:
+        # Add small perturbation noise to break ties for nearest neighbors
+        rng = check_random_state(seed)
+        X = X_2d_grid + 1e-5 * rng.normal(size=X_2d_grid.shape)
+
         tsne = TSNE(n_components=2, init='random', random_state=seed,
                     perplexity=10, n_iter=n_iter, method=method)
-        Y = tsne.fit_transform(X_2d_grid)
+        Y = tsne.fit_transform(X)
 
         # Ensure that the convergence criterion has been triggered
         assert tsne.n_iter_ < n_iter
