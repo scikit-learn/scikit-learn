@@ -444,11 +444,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Normalize input
             X = (X - self.X_mean) / self.X_std
 
-            # Initialize output
-            y = np.zeros(n_eval)
-            if eval_MSE:
-                MSE = np.zeros(n_eval)
-
             # Get pairwise componentwise L1-distances to the input training set
             dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
             # Get regression function and correlation
