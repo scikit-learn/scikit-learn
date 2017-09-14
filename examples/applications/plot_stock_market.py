@@ -158,7 +158,9 @@ symbol_dict = {
     'NYSE:IBM': 'IBM',
     'NYSE:TWX': 'Time Warner',
     'NASDAQ:CMCSA': 'Comcast',
-    'NASDAQ:AABA': 'Altaba',
+    'NYSE:CVC': 'Cablevision',
+    'NASDAQ:YHOO': 'Yahoo',
+    'NASDAQ:DELL': 'Dell',
     'NYSE:HPQ': 'HP',
     'NASDAQ:AMZN': 'Amazon',
     'NYSE:TM': 'Toyota',
@@ -200,8 +202,9 @@ symbol_dict = {
     'NYSE:R': 'Ryder',
     'NYSE:GD': 'General Dynamics',
     'NYSE:RTN': 'Raytheon',
+    'NYSE:CVS': 'CVS',
     'NYSE:CAT': 'Caterpillar',
-    'NYSE:DD-B': 'DuPont de Nemours'}
+    'NYSE:DD': 'DuPont de Nemours'}
 
 
 symbols, names = np.array(sorted(symbol_dict.items())).T
