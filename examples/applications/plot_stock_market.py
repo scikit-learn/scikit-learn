@@ -128,10 +128,16 @@ def quotes_historical_google(symbol, date1, date2):
     min_date = data['date'].min()
     max_date = data['date'].max()
     if (len_data != expected_len_data or min_date != d1 or max_date != d2):
-        raise ValueError('min_date, max_date, len(data) should be {}, {}, {} '
-                         'Got {}, {}, {} instead.'.format(
-                             d1, d2, expected_len_data,
-                             min_date, max_date, len_data))
+        message = (
+            'Got wrong data for symbol {}, url {}\n'
+            '  - min_date should be {}, got {}\n'
+            '  - max_date should be {}, got {}\n'
+            '  - len(data) should be {}, got {}'.format(
+                symbol, url,
+                d1.date(), min_date.date(),
+                d2.date(), max_date.date(),
+                expected_len_data, len_data))
+        raise ValueError(message)
     return data
 
 # #############################################################################
