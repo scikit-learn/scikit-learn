@@ -86,7 +86,7 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
                                                     random_state=0)
 
 # Models we will use
-logistic = linear_model.LogisticRegression()
+logistic = linear_model.LogisticRegression(max_iter=100)
 rbm = BernoulliRBM(random_state=0, verbose=True)
 
 classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
@@ -108,7 +108,7 @@ logistic.C = 6000.0
 classifier.fit(X_train, Y_train)
 
 # Training Logistic regression
-logistic_classifier = linear_model.LogisticRegression(C=100.0)
+logistic_classifier = linear_model.LogisticRegression(C=100.0, max_iter=100)
 logistic_classifier.fit(X_train, Y_train)
 
 # #############################################################################
