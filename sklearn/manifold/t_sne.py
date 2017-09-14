@@ -421,8 +421,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     if precomputed:
         dist_X = X
     else:
-        dist_X = pairwise_distances(X, squared=True)
-    dist_X_embedded = pairwise_distances(X_embedded, squared=True)
+        dist_X = NearestNeighbors.fit(X)
+    dist_X_embedded = NearestNeighbors.fit(X_embedded)
     ind_X = np.argsort(dist_X, axis=1)
     ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, 1:n_neighbors + 1]
 
