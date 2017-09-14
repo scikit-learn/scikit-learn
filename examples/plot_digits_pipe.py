@@ -27,7 +27,7 @@ from sklearn import linear_model, decomposition, datasets
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 
-logistic = linear_model.LogisticRegression()
+logistic = linear_model.LogisticRegression(max_iter=100)
 
 pca = decomposition.PCA()
 pipe = Pipeline(steps=[('pca', pca), ('logistic', logistic)])

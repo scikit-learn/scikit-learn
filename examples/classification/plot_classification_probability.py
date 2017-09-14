@@ -36,12 +36,12 @@ kernel = 1.0 * RBF([1.0, 1.0])  # for GPC
 
 # Create different classifiers. The logistic regression cannot do
 # multiclass out of the box.
-classifiers = {'L1 logistic': LogisticRegression(C=C, penalty='l1'),
-               'L2 logistic (OvR)': LogisticRegression(C=C, penalty='l2'),
+classifiers = {'L1 logistic': LogisticRegression(C=C, penalty='l1', max_iter=100),
+               'L2 logistic (OvR)': LogisticRegression(C=C, penalty='l2', max_iter=100),
                'Linear SVC': SVC(kernel='linear', C=C, probability=True,
                                  random_state=0),
                'L2 logistic (Multinomial)': LogisticRegression(
-                C=C, solver='lbfgs', multi_class='multinomial'),
+                C=C, solver='lbfgs', multi_class='multinomial', max_iter=100),
                'GPC': GaussianProcessClassifier(kernel)
                }
 
