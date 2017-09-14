@@ -38,8 +38,6 @@
 #
 # ##
 
-print(__doc__)
-
 import sys
 
 import numpy as np
