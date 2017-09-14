@@ -111,7 +111,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
             For kernel="precomputed", the expected shape of X is
@@ -121,7 +121,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             Target values (class labels in classification, real numbers in
             regression)
 
-        sample_weight : array-like, shape (n_samples,)
+        sample_weight : array-like, shape =  [n_samples]
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
@@ -297,13 +297,13 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             For kernel="precomputed", the expected shape of X is
             (n_samples_test, n_samples_train).
 
         Returns
         -------
-        y_pred : array, shape (n_samples,)
+        y_pred : array, shape = [n_samples]
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
@@ -371,12 +371,12 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape = [n_samples, n_features]
 
         Returns
         -------
-        X : array-like, shape (n_samples, n_class * (n_class-1) / 2)
-            Returns the decision function of the sample for each class
+        X : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
+            Returns a decision function of the sample for each class
             in the model.
         """
         # NOTE: _validate_for_predict contains check for is_fitted
@@ -514,15 +514,15 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape = [n_samples, n_features]
 
         Returns
         -------
-        X : array-like, shape (n_samples, n_classes * (n_classes-1) / 2)
+        X : array-like, shape = [n_samples, n_classes * (n_classes-1) / 2]
             Returns the decision function of the sample for each class
             in the model.
-            If decision_function_shape='ovr', the shape is (n_samples,
-            n_classes)
+            If decision_function_shape='ovr', the shape is [n_samples,
+            n_classes]
         """
         dec = self._decision_function(X)
         if self.decision_function_shape == 'ovr' and len(self.classes_) > 2:
@@ -536,13 +536,13 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train]
 
         Returns
         -------
-        y_pred : array, shape (n_samples,)
+        y_pred : array, shape = [n_samples]
             Class labels for samples in X.
         """
         y = super(BaseSVC, self).predict(X)
@@ -569,13 +569,13 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape = [n_samples, n_features]
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train]
 
         Returns
         -------
-        T : array-like, shape (n_samples, n_classes)
+        T : array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
@@ -608,13 +608,13 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like, shape = [n_samples, n_features]
             For kernel="precomputed", the expected shape of X is
             [n_samples_test, n_samples_train]
 
         Returns
         -------
-        T : array-like, shape (n_samples, n_classes)
+        T : array-like, shape = [n_samples, n_classes]
             Returns the log-probabilities of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
@@ -758,11 +758,11 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
         Training vector, where n_samples in the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape (n_samples,)
+    y : array-like, shape = [n_samples]
         Target vector relative to X
 
     C : float
