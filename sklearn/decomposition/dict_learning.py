@@ -824,7 +824,6 @@ class SparseCodingMixin(TransformerMixin):
         check_is_fitted(self, 'components_')
 
         X = check_array(X)
-        n_samples, n_features = X.shape
 
         code = sparse_encode(
             X, self.components_, algorithm=self.transform_algorithm,
