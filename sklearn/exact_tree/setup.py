@@ -5,7 +5,7 @@ from numpy.distutils.misc_util import Configuration
 
 
 def configuration(parent_package="", top_path=None):
-    config = Configuration("regression_tree", parent_package, top_path)
+    config = Configuration("exact_tree", parent_package, top_path)
     libraries = []
     if os.name == 'posix':
         libraries.append('m')
@@ -14,21 +14,21 @@ def configuration(parent_package="", top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          extra_compile_args=["-O3"])
-    # config.add_extension("_criterion",
-    #                      sources=["_criterion.pyx"],
-    #                      include_dirs=[numpy.get_include()],
-    #                      libraries=libraries,
-    #                      extra_compile_args=["-O3"])
-    # config.add_extension("_split_record",
-    #                      sources=["_split_record.pyx"],
-    #                      include_dirs=[numpy.get_include()],
-    #                      libraries=libraries,
-    #                      extra_compile_args=["-O3"])
-    # config.add_extension("_splitter",
-    #                      sources=["_splitter.pyx"],
-    #                      include_dirs=[numpy.get_include()],
-    #                      libraries=libraries,
-    #                      extra_compile_args=["-O3"])
+    config.add_extension("_criterion",
+                         sources=["_criterion.pyx"],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries,
+                         extra_compile_args=["-O3"])
+    config.add_extension("_split_record",
+                         sources=["_split_record.pyx"],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries,
+                         extra_compile_args=["-O3"])
+    config.add_extension("_splitter",
+                         sources=["_splitter.pyx"],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries,
+                         extra_compile_args=["-O3"])
     # config.add_extension("_tree",
     #                      sources=["_tree.pyx"],
     #                      include_dirs=[numpy.get_include()],
