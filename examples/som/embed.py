@@ -1,7 +1,6 @@
 import som
 import pandas as pd
-import vsom
-from   sklearn import datasets
+from sklearn import datasets
 
 # import iris datasets
 iris = datasets.load_iris()
@@ -18,10 +17,10 @@ data.columns = iris.feature_names
 algorithm = "som"
 
 # Build a map
-m = som.build(data,labels,algorithm=algorithm)
+m = som.build(data, labels, algorithm=algorithm)
 
 # display the embedding accuracy of the map
 som.embed(m)
 
 # display the embedding accuracies of the individual features
-som.embed(m,verb=True)
+som.embed(m, verb=True)

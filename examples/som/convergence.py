@@ -1,7 +1,6 @@
 import som
 import pandas as pd
-import vsom
-from   sklearn import datasets
+from sklearn import datasets
 
 # import iris datasets
 iris = datasets.load_iris()
@@ -18,7 +17,7 @@ data.columns = iris.feature_names
 algorithm = "som"
 
 # Build a map
-m = som.build(data,labels,algorithm=algorithm)
+m = som.build(data, labels, algorithm=algorithm)
 
 # map quality
 som.convergence(m)
