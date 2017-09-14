@@ -25,14 +25,14 @@ digits = datasets.load_digits()
 X, y = digits.data, digits.target
 
 classifiers = [
-    ("SGD", SGDClassifier()),
-    ("ASGD", SGDClassifier(average=True)),
-    ("Perceptron", Perceptron()),
-    ("Passive-Aggressive I", PassiveAggressiveClassifier(loss='hinge',
+    ("SGD", SGDClassifier(max_iter=100)),
+    ("ASGD", SGDClassifier(max_iter=100, average=True)),
+    ("Perceptron", Perceptron(max_iter=100)),
+    ("Passive-Aggressive I", PassiveAggressiveClassifier(max_iter=100, loss='hinge',
                                                          C=1.0)),
-    ("Passive-Aggressive II", PassiveAggressiveClassifier(loss='squared_hinge',
+    ("Passive-Aggressive II", PassiveAggressiveClassifier(max_iter=100, loss='squared_hinge',
                                                           C=1.0)),
-    ("SAG", LogisticRegression(solver='sag', tol=1e-1, C=1.e4 / X.shape[0]))
+    ("SAG", LogisticRegression(max_iter=100, solver='sag', tol=1e-1, C=1.e4 / X.shape[0]))
 ]
 
 xx = 1. - np.array(heldout)
