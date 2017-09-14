@@ -76,8 +76,6 @@ from sklearn import cluster, covariance, manifold
 
 print(__doc__)
 
-# #############################################################################
-# Retrieve the data from Internet
 
 def retry(f, n_attempts=3):
     "Wrapper function to retry function calls in case of exceptions"
@@ -85,7 +83,7 @@ def retry(f, n_attempts=3):
         for i in range(n_attempts):
             try:
                 return f(*args, **kwargs)
-            except Exception as e:
+            except Exception:
                 if i == n_attempts - 1:
                     raise
     return wrapper
@@ -122,15 +120,33 @@ def quotes_historical_google(symbol, date1, date2):
         'formats': ['object', 'f4', 'f4', 'f4', 'f4', 'f4']
     }
     converters = {0: lambda s: datetime.strptime(s.decode(), '%d-%b-%y')}
-    return np.genfromtxt(response, delimiter=',', skip_header=1,
+    data = np.genfromtxt(response, delimiter=',', skip_header=1,
                          dtype=dtype, converters=converters,
                          missing_values='-', filling_values=-1)
+    expected_len_data = 1258
+    len_data = len(data)
+    min_date = data['date'].min()
+    max_date = data['date'].max()
+    if (len_data != expected_len_data or min_date != d1 or max_date != d2):
+        message = (
+            'Got wrong data for symbol {}, url {}\n'
+            '  - min_date should be {}, got {}\n'
+            '  - max_date should be {}, got {}\n'
+            '  - len(data) should be {}, got {}'.format(
+                symbol, url,
+                d1.date(), min_date.date(),
+                d2.date(), max_date.date(),
+                expected_len_data, len_data))
+        raise ValueError(message)
+    return data
 
+# #############################################################################
+# Retrieve the data from Internet
 
 # Choose a time period reasonably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
-d1 = datetime(2003, 1, 1)
-d2 = datetime(2008, 1, 1)
+d1 = datetime(2003, 1, 2)
+d2 = datetime(2007, 12, 31)
 
 symbol_dict = {
     'NYSE:TOT': 'Total',
@@ -188,13 +204,13 @@ symbol_dict = {
     'NYSE:DD-B': 'DuPont de Nemours'}
 
 
-symbols, names = np.array(list(symbol_dict.items())).T
+symbols, names = np.array(sorted(symbol_dict.items())).T
 
 # retry is used because quotes_historical_google can temporarily fail
 # for various reasons (e.g. empty result from Google API).
 quotes = []
 
-for symbol in sorted(symbols):
+for symbol in symbols:
     print('Fetching quote history for %r' % symbol, file=sys.stderr)
     quotes.append(retry(quotes_historical_google)(symbol, d1, d2))
 
