@@ -104,7 +104,7 @@ def quotes_historical_google(symbol, date1, date2):
     Returns
     -------
     X : array
-        The columns are ``date`` -- datetime, ``open``, ``high``,
+        The columns are ``date`` -- date, ``open``, ``high``,
         ``low``, ``close`` and ``volume`` of type float.
     """
     params = urlencode({
@@ -119,14 +119,15 @@ def quotes_historical_google(symbol, date1, date2):
         'names': ['date', 'open', 'high', 'low', 'close', 'volume'],
         'formats': ['object', 'f4', 'f4', 'f4', 'f4', 'f4']
     }
-    converters = {0: lambda s: datetime.strptime(s.decode(), '%d-%b-%y')}
+    converters = {
+        0: lambda s: datetime.strptime(s.decode(), '%d-%b-%y').date()}
     data = np.genfromtxt(response, delimiter=',', skip_header=1,
                          dtype=dtype, converters=converters,
                          missing_values='-', filling_values=-1)
     expected_len_data = 1258
     len_data = len(data)
-    min_date = data['date'].min()
-    max_date = data['date'].max()
+    min_date = min(data['date'], default=None)
+    max_date = min(data['date'], default=None)
     if (len_data != expected_len_data or min_date != d1 or max_date != d2):
         message = (
             'Got wrong data for symbol {}, url {}\n'
@@ -134,8 +135,8 @@ def quotes_historical_google(symbol, date1, date2):
             '  - max_date should be {}, got {}\n'
             '  - len(data) should be {}, got {}'.format(
                 symbol, url,
-                d1.date(), min_date.date(),
-                d2.date(), max_date.date(),
+                d1, min_date,
+                d2, max_date,
                 expected_len_data, len_data))
         raise ValueError(message)
     return data
@@ -145,8 +146,8 @@ def quotes_historical_google(symbol, date1, date2):
 
 # Choose a time period reasonably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
-d1 = datetime(2003, 1, 2)
-d2 = datetime(2007, 12, 31)
+d1 = datetime(2003, 1, 2).date()
+d2 = datetime(2007, 12, 31).date()
 
 symbol_dict = {
     'NYSE:TOT': 'Total',
