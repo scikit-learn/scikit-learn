@@ -751,80 +751,56 @@ def test_set_oob_score_label_encoding():
     assert_equal([x1, x2], [x3, x3])
 
 
-def test_bagging_regressor_with_missing_inputs_and_1d_output():
+def test_bagging_regressor_with_missing_inputs():
     # Check that BaggingRegressor can accept X with missing/infinite data
-    X = [
+    X = np.array([
         [1, 3, 5],
         [2, None, 6],
         [2, np.nan, 6],
         [2, np.inf, 6],
         [2, np.NINF, 6],
+    ])
+    y_values = [
+        np.array([2, 3, 3, 3, 3]),
+        np.array([
+            [2, 1, 9],
+            [3, 6, 8],
+            [3, 6, 8],
+            [3, 6, 8],
+            [3, 6, 8],
+        ])
     ]
-    Y = [2, 3, 3, 3, 3]
-    regressor = DecisionTreeRegressor()
-    pipeline = make_pipeline(
-        Imputer(),
-        Imputer(missing_values=np.inf),
-        Imputer(missing_values=np.NINF),
-        regressor
-    )
-    pipeline.fit(X, Y).predict(X)
-    bagging_regressor = BaggingRegressor(pipeline)
-    bagging_regressor.fit(X, Y).predict(X)
+    for y in y_values:
+        regressor = DecisionTreeRegressor()
+        pipeline = make_pipeline(
+            Imputer(),
+            Imputer(missing_values=np.inf),
+            Imputer(missing_values=np.NINF),
+            regressor
+        )
+        pipeline.fit(X, y).predict(X)
+        bagging_regressor = BaggingRegressor(pipeline)
+        y_hat = bagging_regressor.fit(X, y).predict(X)
+        assert_equal(y.shape, y_hat.shape)
 
-    # Verify that exceptions can be raised by wrapper regressor
-    regressor = DecisionTreeRegressor()
-    pipeline = make_pipeline(regressor)
-    assert_raises(ValueError, pipeline.fit, X, Y)
-    bagging_regressor = BaggingRegressor(pipeline)
-    assert_raises(ValueError, bagging_regressor.fit, X, Y)
-
-
-def test_bagging_regressor_with_missing_inputs_and_2d_output():
-    # Check that BaggingRegressor can accept X with missing/infinite data
-    X = [
-        [1, 3, 5],
-        [2, None, 6],
-        [2, np.nan, 6],
-        [2, np.inf, 6],
-        [2, np.NINF, 6],
-    ]
-    Y = [
-        [2, 1, 9],
-        [3, 6, 8],
-        [3, 6, 8],
-        [3, 6, 8],
-        [3, 6, 8],
-    ]
-    regressor = DecisionTreeRegressor()
-    pipeline = make_pipeline(
-        Imputer(),
-        Imputer(missing_values=np.inf),
-        Imputer(missing_values=np.NINF),
-        regressor
-    )
-    pipeline.fit(X, Y).predict(X)
-    bagging_regressor = BaggingRegressor(pipeline)
-    bagging_regressor.fit(X, Y).predict(X)
-
-    # Verify that exceptions can be raised by wrapper regressor
-    regressor = DecisionTreeRegressor()
-    pipeline = make_pipeline(regressor)
-    assert_raises(ValueError, pipeline.fit, X, Y)
-    bagging_regressor = BaggingRegressor(pipeline)
-    assert_raises(ValueError, bagging_regressor.fit, X, Y)
+        # Verify that exceptions can be raised by wrapper regressor
+        regressor = DecisionTreeRegressor()
+        pipeline = make_pipeline(regressor)
+        assert_raises(ValueError, pipeline.fit, X, y)
+        bagging_regressor = BaggingRegressor(pipeline)
+        assert_raises(ValueError, bagging_regressor.fit, X, y)
 
 
 def test_bagging_classifier_with_missing_inputs():
     # Check that BaggingClassifier can accept X with missing/infinite data
-    X = [
+    X = np.array([
         [1, 3, 5],
         [2, None, 6],
         [2, np.nan, 6],
         [2, np.inf, 6],
         [2, np.NINF, 6],
-    ]
-    Y = [3, 6, 6, 6, 6]
+    ])
+    y = np.array([3, 6, 6, 6, 6])
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(
         Imputer(),
@@ -832,16 +808,17 @@ def test_bagging_classifier_with_missing_inputs():
         Imputer(missing_values=np.NINF),
         classifier
     )
-    pipeline.fit(X, Y).predict(X)
+    pipeline.fit(X, y).predict(X)
     bagging_classifier = BaggingClassifier(pipeline)
-    bagging_classifier.fit(X, Y)
-    bagging_classifier.predict(X)
+    bagging_classifier.fit(X, y)
+    y_hat = bagging_classifier.predict(X)
+    assert_equal(y.shape, y_hat.shape)
     bagging_classifier.predict_log_proba(X)
     bagging_classifier.predict_proba(X)
 
     # Verify that exceptions can be raised by wrapper classifier
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(classifier)
-    assert_raises(ValueError, pipeline.fit, X, Y)
+    assert_raises(ValueError, pipeline.fit, X, y)
     bagging_classifier = BaggingClassifier(pipeline)
-    assert_raises(ValueError, bagging_classifier.fit, X, Y)
+    assert_raises(ValueError, bagging_classifier.fit, X, y)
