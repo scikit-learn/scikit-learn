@@ -1,78 +1,120 @@
+# som.py
+# version 1.0
+# (c) 2017-2017 Lutz Hamel, Li Yuan, University of Rhode Island
+#
+# This file constitues a set of routines which are useful in constructing
+# and evaluating self-organizing maps (SOMs).
+# The main utilities available in this file are:
+# build --------- constructs a map
+# convergence --- reports the map convergence index
+# embed --------- reports the embedding of the map in terms of modeling the
+#                 underlying data distribution (100% if all feature
+#                 distributions are modeled correctly, 0% if none are)
+# embed_ks ------ reports the embedding of the map using the
+#                 Kolmogorov-Smirnov Test
+# topo ---------- reports the estimated topographic accuracy
+# significance -- graphically reports the significance of each feature with
+#                 respect to the self-organizing map model
+# starburst ----- displays the starburst representation of the SOM model,
+#                 the centers of starbursts are the centers of clusters
+# projection ---- print a table with the associations of labels with map
+#                 elements
+# neuron -------- returns the contents of a neuron at (x,y) on the map as a
+#                 vector
+# marginal ------ displays a density plot of a training dataframe dimension
+#                 overlayed with the neuron density for that same dimension
+#                 or index.
+#
+#
+# ## License
+# This program is free software; you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+# more details.
+#
+# ##
+
 import sys
 
 import numpy as np
 import pandas as pd
-import math
-import random
 import matplotlib.pyplot as plt
-import seaborn as sns                   # Plot density by map.marginal
+import seaborn as sns                   # Plot density by marginal
 import vsom                             # Call vsom.f90 (Fortran package)
 import statsmodels.stats.api as sms     # t-test
 import statistics as stat               # F-test
-from matplotlib.mlab import PCA as PCA
-from random import randint              # Get rotation and Standard deviations via PCA
+from random import randint
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.neighbors import KNeighborsClassifier
 from scipy import stats                 # KS Test
 from scipy.stats import f               # F-test
 from itertools import combinations
 
 
-def map_build(data, labels, xdim=10, ydim=5, alpha=.3, train=1000, algorithm="som"):
-    """ map_build -- construct a SOM, returns an object of class 'map'
+def build(data, labels, xdim=10, ydim=5, alpha=.3, train=1000,
+          algorithm="som"):
+    """ build -- construct a SOM, returns an object of class 'map'
 
      parameters:
-     - data - a dataframe where each row contains an unlabeled training 
-              instance
-     - labels - a vector or dataframe with one label for each observation 
+     - data   - a dataframe where each row contains an unlabeled training
+                instance
+     - labels - a vector or dataframe with one label for each observation
                 in data
      - xdim, ydim - the dimensions of the map
-     - alpha - the learning rate, should be a positive non-zero real number
-     - train - number of training iterations
+     - alpha  - the learning rate, should be a positive non-zero real number
+     - train  - number of training iterations
      - algorithm - selection switch
+
      retuns:
      - an object of type 'map' -- see below
 
+     Example:
+     - m = som.build(data,labels,algorithm=algorithm)
+
      NOTE: default algorithm: "som" also available: "som_f"
 
-	"""
-    algorithms = ["som","som_f"]
+    """
+    algorithms = ["som", "som_f"]
 
-	# check if the dims are reasonable
+    # check if the dims are reasonable
     if (xdim < 3 or ydim < 3):
-        sys.exit("map.build: map is too small.")
+        sys.exit("build: map is too small.")
 
     try:
         index_algorithm = algorithms.index(algorithm)
     except ValueError:
-        sys.exit("map_build only supports 'som','som_f'")
+        sys.exit("build only supports 'som','som_f'")
 
-    if index_algorithm == 0 :     # som by Fortran
-        neurons = vsom_r(data,
+    if index_algorithm == 0:        # som by python
+        neurons = vsom_p(data,
                          xdim=xdim,
                          ydim=ydim,
                          alpha=alpha,
                          train=train)
 
-    elif index_algorithm == 1 :       # som by python
+    elif index_algorithm == 1:      # som by Fortran
         neurons = vsom_f(data,
-                          xdim=xdim,
-                          ydim=ydim,
-                          alpha=alpha,
-                          train=train)
+                         xdim=xdim,
+                         ydim=ydim,
+                         alpha=alpha,
+                         train=train)
 
-    else:		
-        sys.exit("map.build only supports 'som','som_f'")
+    else:
+        sys.exit("build only supports 'som','som_f'")
 
-    map = {	'data':data,
-       		'labels':labels,
-        	'xdim':xdim,
-        	'ydim':ydim,
-        	'alpha':alpha,
-        	'train':train,
-        	'algorithm':algorithm,
-        	'neurons':neurons}
-    
+    map = {
+            'data': data,
+            'labels': labels,
+            'xdim': xdim,
+            'ydim': ydim,
+            'alpha': alpha,
+            'train': train,
+            'algorithm': algorithm,
+            'neurons': neurons}
+
     visual = []
 
     for i in range(data.shape[0]):
@@ -84,74 +126,90 @@ def map_build(data, labels, xdim=10, ydim=5, alpha=.3, train=1000, algorithm="so
     return(map)
 
 
-def map_convergence(map, conf_int=.95, k=50, verb=False, ks=False):
+def convergence(map, conf_int=.95, k=50, verb=False, ks=False):
     """ map.convergence - the convergence index of a map
 
      parameters:
      - map is an object if type 'map'
-     - conf_int is the confidence interval of the quality assessment (default 95%)
-     - k is the number of samples used for the estimated topographic accuracy computation
-     - verb if true reports the two convergence components separately, otherwise it will
-            report the linear combination of the two
+     - conf_int is the confidence interval of the quality assessment
+                (default 95%)
+     - k is the number of samples used for the estimated topographic accuracy
+         computation
+     - verb if true reports the two convergence components separately,
+            otherwise it will report the linear combination of the two
      - ks is a switch, true for ks-test, false for standard var and means test
 
      - return value is the convergence index
+
+     Example:
+     - som.convergence(m)
     """
     if ks:
-        embed = map_embed_ks(map, conf_int, verb=False)
+        embed = embed_ks(map, conf_int, verb=False)
     else:
-        embed = map_embed_vm(map, conf_int, verb=False)
+        embed = embed_vm(map, conf_int, verb=False)
 
-    topo = map_topo(map, k, conf_int, verb=False, interval=False)
+    topo_ = topo(map, k, conf_int, verb=False, interval=False)
 
     if verb:
-        return {"embed": embed, "topo": topo}
+        return {"embed": embed, "topo": topo_}
     else:
-        return (0.5*embed + 0.5*topo)
+        return (0.5*embed + 0.5*topo_)
 
 
-def map_embed(map, conf_int=.95, verb=False, ks=False):
+def embed(map, conf_int=.95, verb=False, ks=False):
     """ map.embed - evaluate the embedding of a map using the F-test and
                     a Bayesian estimate of the variance in the training data.
     parameters:
     - map is an object if type 'map'
     - conf_int is the confidence interval of the convergence test (default 95%)
-    - verb is switch that governs the return value false: single convergence value
-      is returned, true: a vector of individual feature congences is returned.
+    - verb is switch that governs the return value false: single convergence
+      value is returned, true: a vector of individual feature congences is
+      returned.
 
-    - return value is the cembedding of the map (variance captured by the map so far)
+    - return value is the cembedding of the map (variance captured by the map
+      so far)
 
-    Hint: the embedding index is the variance of the training data captured by the map;
-          maps with convergence of less than 90% are typically not trustworthy.  Of course,
-          the precise cut-off depends on the noise level in your training data.
+    Example:
+    - som.embed(m)
+    - som.embed(m,verb=True)
+
+    Hint: the embedding index is the variance of the training data captured by
+          the map; maps with convergence of less than 90% are typically not
+          trustworthy. Of course, the precise cut-off depends on the noise
+          level in your training data.
     """
 
     if ks:
-        return map_embed_ks(map, conf_int, verb)
+        return embed_ks(map, conf_int, verb)
     else:
-        return map_embed_vm(map, conf_int, verb)
+        return embed_vm(map, conf_int, verb)
 
 
-def map_topo(map, k=50, conf_int=.95, verb=False, interval=True):
-    """ map_topo - measure the topographic accuracy of the map using sampling
+def topo(map, k=50, conf_int=.95, verb=False, interval=True):
+    """ topo - measure the topographic accuracy of the map using sampling
 
     parameters:
     - map is an object if type 'map'
     - k is the number of samples used for the accuracy computation
     - conf.int is the confidence interval of the accuracy test (default 95%)
-    - verb is switch that governs the return value, false: single accuracy value
-      is returned, true: a vector of individual feature accuracies is returned.
-    - interval is a switch that controls whether the confidence interval is computed.
+    - verb is switch that governs the return value, false: single accuracy
+      value is returned, true: a vector of individual feature accuracies is
+      returned.
+    - interval is a switch that controls whether the confidence interval is
+      computed.
 
     return value is the estimated topographic accuracy
 
+    Example:
+    - som.topo(m)
     """
 
     # data.df is a matrix that contains the training data
     data_df = map['data']
 
     if (k > data_df.shape[0]):
-        sys.exit("map_topo: sample larger than training data.")
+        sys.exit("topo: sample larger than training data.")
 
     data_sample_ix = [randint(1, data_df.shape[0]) for _ in range(k)]
 
@@ -159,18 +217,16 @@ def map_topo(map, k=50, conf_int=.95, verb=False, interval=True):
     # is 1 if the best matching unit is a neighbor otherwise it is 0
     acc_v = []
     for i in range(k):
-        acc_v.append(accuracy(map, data_df.iloc[data_sample_ix[i]-1], data_sample_ix[i]))
-    
-    # ###########################################################################
-    #                                                                           #
-    #       Notice:  if you see the system Error, please remove the -1 above    #
-    #                                                                           #
-    # ###########################################################################
+        acc_v.append(accuracy(map,
+                              data_df.iloc[data_sample_ix[i]-1],
+                              data_sample_ix[i]))
+
     # compute the confidence interval values using the bootstrap
     if interval:
         bval = bootstrap(map, conf_int, data_df, k, acc_v)
 
-    # the sum topographic accuracy is scaled by the number of samples - estimated
+    # the sum topographic accuracy is scaled by the number of samples -
+    # estimated
     # topographic accuracy
     if verb:
         return acc_v
@@ -182,26 +238,36 @@ def map_topo(map, k=50, conf_int=.95, verb=False, interval=True):
             return val
 
 
-def map_starburst(map, explicit=False, smoothing=2, merge_clusters=True, merge_range=.25):
-    """ map_starburst - compute and display the starburst representation of clusters
-    
+def starburst(map, explicit=False, smoothing=2, merge_clusters=True,
+              merge_range=.25):
+    """ starburst - compute and display the starburst representation of clusters
+
     parameters:
     - map is an object if type 'map'
     - explicit controls the shape of the connected components
     - smoothing controls the smoothing level of the umat (NULL,0,>0)
-    - merge_clusters is a switch that controls if the starburst clusters are merged together
-    - merge_range - a range that is used as a percentage of a certain distance in the code
-                    to determine whether components are closer to their centroids or
-                    centroids closer to each other.
+    - merge_clusters is a switch that controls if the starburst clusters are
+                     merged together
+    - merge_range - a range that is used as a percentage of a certain distance
+                    in the code to determine whether components are closer to
+                    their centroids or centroids closer to each other.
+
+    Example:
+    - som.starburst(m)
 
     """
 
     umat = compute_umat(map, smoothing=smoothing)
-    plot_heat(map, umat, explicit=explicit, comp=True, merge=merge_clusters, merge_range=merge_range)
+    plot_heat(map,
+              umat,
+              explicit=explicit,
+              comp=True,
+              merge=merge_clusters,
+              merge_range=merge_range)
 
 
-def map_projection(map):
-    """ map_projection - print the association of labels with map elements
+def projection(map):
+    """ projection - print the association of labels with map elements
 
     parameters:
     - map is an object if type 'map'
@@ -209,10 +275,10 @@ def map_projection(map):
     return values:
     - a dataframe containing the projection onto the map for each observation
 
-    """
+    Example:
+    - som.projection(m)
 
-    # if not (map['labels'] is None) and (len(map['labels']) != 0):
-    #    sys.exit("map.projection: no labels available")
+    """
 
     labels_v = map['labels']
     x_v = []
@@ -228,16 +294,21 @@ def map_projection(map):
     return pd.DataFrame({'labels': labels_v, 'x': x_v, 'y': y_v})
 
 
-def map_significance(map, graphics=True, feature_labels=False):
-    """ map_significance - compute the relative significance of each feature and plot it
-    
+def significance(map, graphics=True, feature_labels=False):
+    """ significance - compute the relative significance of each feature and
+                       plot it
+
     parameters:
     - map is an object if type 'map'
     - graphics is a switch that controls whether a plot is generated or not
-    - feature.labels is a switch to allow the plotting of feature names vs feature indices
+    - feature.labels is a switch to allow the plotting of feature names vs
+      feature indices
 
     return value:
     - a vector containing the significance for each feature
+
+    Example:
+    - som.significance(m)
 
     """
 
@@ -281,8 +352,9 @@ def map_significance(map, graphics=True, feature_labels=False):
         return prob_v
 
 
-def map_neuron(map, x, y):
-    """ map_neuron - returns the contents of a neuron at (x, y) on the map as a vector
+def neuron(map, x, y):
+    """ neuron - returns the contents of a neuron at (x, y) on the map as
+                 a vector
 
     parameters:
       map - the neuron map
@@ -292,18 +364,25 @@ def map_neuron(map, x, y):
     return value:
       a vector representing the neuron
 
+    Example:
+    - som.neuron(m,3,3)
+
     """
 
     ix = rowix(map, x, y)
     return map['neurons'][ix]
 
 
-def map_marginal(map, marginal):
-    """ map_marginal - plot that shows the marginal probability distribution of the neurons and data
+def marginal(map, marginal):
+    """ marginal - plot that shows the marginal probability distribution
+                   of the neurons and data
 
     parameters:
     - map is an object of type 'map'
     - marginal is the name of a training data frame dimension or index
+
+    Example:
+    - som.marginal(m,2)
 
     """
 
@@ -316,12 +395,16 @@ def map_marginal(map, marginal):
         neurons = map['neurons'][:, f_ind]
         plt.ylabel('Density')
         plt.xlabel(f_name)
-        sns.kdeplot(np.ravel(train), label="training data", shade=True, color="b")
+        sns.kdeplot(np.ravel(train),
+                    label="training data",
+                    shade=True,
+                    color="b")
         sns.kdeplot(neurons, label="neurons", shade=True, color="r")
         plt.legend(fontsize=15)
         plt.show()
 
-    elif type(marginal) == int and marginal < map['ydim'] - 1 and marginal >= 0:
+    elif (type(marginal) == int and marginal < map['ydim'] - 1 and
+          marginal >= 0):
 
         f_ind = marginal
         f_name = list(map['data'])[marginal]
@@ -329,19 +412,26 @@ def map_marginal(map, marginal):
         neurons = map['neurons'][:, f_ind]
         plt.ylabel('Density')
         plt.xlabel(f_name)
-        sns.kdeplot(np.ravel(train), label="training data", shade=True, color="b")
+        sns.kdeplot(np.ravel(train),
+                    label="training data",
+                    shade=True,
+                    color="b")
         sns.kdeplot(neurons, label="neurons", shade=True, color="r")
         plt.legend(fontsize=15)
         plt.show()
 
     else:
-        sys.exit("map.marginal: second argument is not the name of a training data frame dimension or index")
+        sys.exit("marginal: second argument is not the name of a training \
+                 data frame dimension or index")
 
 # --------------------- local functions ---------------------------#
 
 
-def map_embed_vm(map, conf_int=.95, verb=False):
-    """ map_embed_vm -- using variance test and mean test to evaluate the map quality """
+def embed_vm(map, conf_int=.95, verb=False):
+    """ embed_vm -- using variance test and mean test to evaluate the
+                    map quality
+
+    """
 
     # map_df is a dataframe that contains the neurons
     map_df = map['neurons']
@@ -355,14 +445,17 @@ def map_embed_vm(map, conf_int=.95, verb=False):
     # do the t-test on a pair of datasets
     ml = df_mean_test(map_df, data_df, conf=conf_int)
 
-    # compute the variance captured by the map -- but only if the means have converged as well.
+    # compute the variance captured by the map --
+    # but only if the means have converged as well.
     nfeatures = map_df.shape[1]
-    prob_v = map_significance(map, graphics=False)
+    prob_v = significance(map, graphics=False)
     var_sum = 0
 
     for i in range(nfeatures):
 
-        if (vl['conf_int_lo'][i] <= 1.0 and vl['conf_int_hi'][i] >= 1.0 and ml['conf_int_lo'][i] <= 0.0 and ml['conf_int_hi'][i] >= 0.0):
+        if (vl['conf_int_lo'][i] <= 1.0 and vl['conf_int_hi'][i] >= 1.0 and
+           ml['conf_int_lo'][i] <= 0.0 and ml['conf_int_hi'][i] >= 0.0):
+
             var_sum = var_sum + prob_v[i]
         else:
             # not converged - zero out the probability
@@ -375,8 +468,11 @@ def map_embed_vm(map, conf_int=.95, verb=False):
         return var_sum
 
 
-def map_embed_ks(map, conf_int=0.95, verb=False):
-    """ map_embed_ks -- using the kolgomorov-smirnov test to evaluate the map quality """
+def embed_ks(map, conf_int=0.95, verb=False):
+    """ embed_ks -- using the kolgomorov-smirnov test to evaluate the map
+                    quality
+
+    """
 
     # map_df is a dataframe that contains the neurons
     map_df = map['neurons']
@@ -386,13 +482,14 @@ def map_embed_ks(map, conf_int=0.95, verb=False):
 
     nfeatures = map_df.shape[1]
 
-    # use the Kolmogorov-Smirnov Test to test whether the neurons and training data appear
+    # use the Kolmogorov-Smirnov Test to test whether the neurons and training
+    # data appear
     # to come from the same distribution
     ks_vector = []
     for i in range(nfeatures):
         ks_vector.append(stats.mstats.ks_2samp(map_df[:, i], data_df[:, i]))
 
-    prob_v = map_significance(map, graphics=False)
+    prob_v = significance(map, graphics=False)
     var_sum = 0
 
     # compute the variance captured by the map
@@ -413,7 +510,9 @@ def map_embed_ks(map, conf_int=0.95, verb=False):
 
 
 def bootstrap(map, conf_int, data_df, k, sample_acc_v):
-    """ bootstrap -- compute the topographic accuracies for the given confide """
+    """ bootstrap -- compute the topographic accuracies for the given confide
+
+    """
 
     ix = int(100 - conf_int*100)
     bn = 200
@@ -435,7 +534,9 @@ def bootstrap(map, conf_int, data_df, k, sample_acc_v):
 
 
 def best_match(map, obs, full=False):
-    """ best_match -- given observation obs, return the best matching neuron  """
+    """ best_match -- given observation obs, return the best matching neuron
+
+    """
 
     # NOTE: replicate obs so that there are nr rows of obs
     obs_m = np.tile(obs, (map['neurons'].shape[0], 1))
@@ -452,8 +553,9 @@ def best_match(map, obs, full=False):
 
 
 def accuracy(map, sample, data_ix):
-    """ accuracy -- the topographic accuracy of a single sample is 1 is the best matching unit
-                    and the second best matching unit are are neighbors otherwise it is 0
+    """ accuracy -- the topographic accuracy of a single sample is 1 is the
+                    best matching unit and the second best matching unit are
+                    neighbors otherwise it is 0
 
     """
 
@@ -503,10 +605,11 @@ def rowix(map, x, y):
     return rix
 
 
-def plot_heat(map, heat, explicit=False, comp=True, merge=False, merge_range=0.25):
-
-    """ plot_heat - plot a heat map based on a 'map', this plot also contains the connected
-                    components of the map based on the landscape of the heat map
+def plot_heat(map, heat, explicit=False, comp=True,
+              merge=False, merge_range=0.25):
+    """ plot_heat - plot a heat map based on a 'map', this plot also contains
+                    the connected components of the map based on the landscape
+                    of the heat map
 
     parameters:
     - map is an object if type 'map'
@@ -515,9 +618,9 @@ def plot_heat(map, heat, explicit=False, comp=True, merge=False, merge_range=0.2
     - explicit controls the shape of the connected components
     - comp controls whether we plot the connected components on the heat map
     - merge controls whether we merge the starbursts together.
-    - merge_range - a range that is used as a percentage of a certain distance in the code
-                    to determine whether components are closer to their centroids or
-                    centroids closer to each other.
+    - merge_range - a range that is used as a percentage of a certain distance
+                    in the code to determine whether components are closer to
+                    their centroids or centroids closer to each other.
 
     """
 
@@ -532,7 +635,7 @@ def plot_heat(map, heat, explicit=False, comp=True, merge=False, merge_range=0.2
 
     # need to make sure the map doesn't have a dimension of 1
     if (x <= 1 or y <= 1):
-        sys.exit("plot.heat: map dimensions too small")
+        sys.exit("plot_heat: map dimensions too small")
 
     tmp = pd.cut(heat, bins=100, labels=False)
 
@@ -552,17 +655,26 @@ def plot_heat(map, heat, explicit=False, comp=True, merge=False, merge_range=0.2
     if comp:
         if not merge:
             # find the centroid for each neuron on the map
-            centroids = compute_centroids(map, heat, explicit)
+            centroids = compute_centroids(map,
+                                          heat,
+                                          explicit)
         else:
             # find the unique centroids for the neurons on the map
-            centroids = compute_combined_clusters(map, umat, explicit, merge_range)
+            centroids = compute_combined_clusters(map,
+                                                  umat,
+                                                  explicit,
+                                                  merge_range)
 
         # connect each neuron to its centroid
         for ix in range(x):
             for iy in range(y):
                 cx = centroids['centroid_x'][ix, iy]
                 cy = centroids['centroid_y'][ix, iy]
-                plt.plot([ix+0.5, cx+0.5], [iy+0.5, cy+0.5], color='grey', linestyle='-', linewidth=1.0)
+                plt.plot([ix+0.5, cx+0.5],
+                         [iy+0.5, cy+0.5],
+                         color='grey',
+                         linestyle='-',
+                         linewidth=1.0)
 
     # put the labels on the map if available
     if not (map['labels'] is None) and (len(map['labels']) != 0):
@@ -853,9 +965,12 @@ def compute_centroids(map, heat, explicit=False):
                 min_y = iy
 
         # if successful
-        # move to the square with the smaller value, i_e_, call compute_centroid on this new square
-        # note the RETURNED x-y coords in the centroid.x and centroid.y matrix at the current location
+        # move to the square with the smaller value, i_e_, call
+        # compute_centroid on this new square
+        # note the RETURNED x-y coords in the centroid_x and
+        # centroid_y matrix at the current location
         # return the RETURNED x-y coordinates
+
         if min_x != ix or min_y != iy:
             r_val = compute_centroid(min_x, min_y)
 
@@ -890,10 +1005,11 @@ def compute_umat(map, smoothing=None):
 
     parameters:
     - map is an object if type 'map'
-    - smoothing is either NULL, 0, or a positive floating point value controlling the
-                smoothing of the umat representation
+    - smoothing is either NULL, 0, or a positive floating point value
+      controlling the smoothing of the umat representation
     return value:
-    - a matrix with the same x-y dims as the original map containing the umat values
+    - a matrix with the same x-y dims as the original map containing
+      the umat values
 
     """
 
@@ -904,13 +1020,14 @@ def compute_umat(map, smoothing=None):
 
 
 def compute_heat(map, d, smoothing=None):
-    """ compute_heat -- compute a heat value map representation of the given distance matrix
+    """ compute_heat -- compute a heat value map representation of the
+                        given distance matrix
 
     parameters:
     - map is an object if type 'map'
     - d is a distance matrix computed via the 'dist' function
-    - smoothing is either NULL, 0, or a positive floating point value controlling the
-            smoothing of the umat representation
+    - smoothing is either NULL, 0, or a positive floating point value
+      controlling the smoothing of the umat representation
     return value:
     - a matrix with the same x-y dims as the original map containing the heat
 
@@ -921,44 +1038,73 @@ def compute_heat(map, d, smoothing=None):
     heat = np.matrix([[0.0] * y for _ in range(x)])
 
     if x == 1 or y == 1:
-        sys.exit("compute_heat: heat map can not be computed for a map with a dimension of 1")
+        sys.exit("compute_heat: heat map can not be computed for a map \
+                 with a dimension of 1")
 
     # this function translates our 2-dim map coordinates
     # into the 1-dim coordinates of the neurons
     def xl(ix, iy):
 
-        return ix + iy * x    # Python start with 0, so we should minus 1 at the end
+        return ix + iy * x
 
     # check if the map is larger than 2 x 2 (otherwise it is only corners)
     if x > 2 and y > 2:
         # iterate over the inner nodes and compute their umat values
         for ix in range(1, x-1):
             for iy in range(1, y-1):
-                sum = d[xl(ix, iy), xl(ix-1, iy-1)] + d[xl(ix, iy), xl(ix, iy-1)] + d[xl(ix, iy), xl(ix+1, iy-1)] + d[xl(ix, iy), xl(ix+1, iy)] + d[xl(ix, iy), xl(ix+1, iy+1)] + d[xl(ix, iy), xl(ix, iy+1)] + d[xl(ix, iy), xl(ix-1, iy+1)] + d[xl(ix, iy), xl(ix-1, iy)]
+                sum = (d[xl(ix, iy), xl(ix-1, iy-1)] +
+                       d[xl(ix, iy), xl(ix, iy-1)] +
+                       d[xl(ix, iy), xl(ix+1, iy-1)] +
+                       d[xl(ix, iy), xl(ix+1, iy)] +
+                       d[xl(ix, iy), xl(ix+1, iy+1)] +
+                       d[xl(ix, iy), xl(ix, iy+1)] +
+                       d[xl(ix, iy), xl(ix-1, iy+1)] +
+                       d[xl(ix, iy), xl(ix-1, iy)])
+
                 heat[ix, iy] = sum/8
 
         # iterate over bottom x axis
         for ix in range(1, x-1):
             iy = 0
-            sum = d[xl(ix, iy), xl(ix+1, iy)] + d[xl(ix, iy), xl(ix+1, iy+1)] + d[xl(ix, iy), xl(ix, iy+1)] + d[xl(ix, iy), xl(ix-1, iy+1)] + d[xl(ix, iy), xl(ix-1, iy)]
+            sum = (d[xl(ix, iy), xl(ix+1, iy)] +
+                   d[xl(ix, iy), xl(ix+1, iy+1)] +
+                   d[xl(ix, iy), xl(ix, iy+1)] +
+                   d[xl(ix, iy), xl(ix-1, iy+1)] +
+                   d[xl(ix, iy), xl(ix-1, iy)])
+
             heat[ix, iy] = sum/5
 
         # iterate over top x axis
         for ix in range(1, x-1):
             iy = y-1
-            sum = d[xl(ix, iy), xl(ix-1, iy-1)] + d[xl(ix, iy), xl(ix, iy-1)] + d[xl(ix, iy), xl(ix+1, iy-1)] + d[xl(ix, iy), xl(ix+1, iy)] + d[xl(ix, iy), xl(ix-1, iy)]
+            sum = (d[xl(ix, iy), xl(ix-1, iy-1)] +
+                   d[xl(ix, iy), xl(ix, iy-1)] +
+                   d[xl(ix, iy), xl(ix+1, iy-1)] +
+                   d[xl(ix, iy), xl(ix+1, iy)] +
+                   d[xl(ix, iy), xl(ix-1, iy)])
+
             heat[ix, iy] = sum/5
 
         # iterate over the left y-axis
         for iy in range(1, y-1):
             ix = 0
-            sum = d[xl(ix, iy), xl(ix, iy-1)] + d[xl(ix, iy), xl(ix+1, iy-1)] + d[xl(ix, iy), xl(ix+1, iy)] + d[xl(ix, iy), xl(ix+1, iy+1)] + d[xl(ix, iy), xl(ix, iy+1)]
+            sum = (d[xl(ix, iy), xl(ix, iy-1)] +
+                   d[xl(ix, iy), xl(ix+1, iy-1)] +
+                   d[xl(ix, iy), xl(ix+1, iy)] +
+                   d[xl(ix, iy), xl(ix+1, iy+1)] +
+                   d[xl(ix, iy), xl(ix, iy+1)])
+
             heat[ix, iy] = sum/5
 
         # iterate over the right y-axis
         for iy in range(1, y-1):
             ix = x-1
-            sum = d[xl(ix, iy), xl(ix-1, iy-1)] + d[xl(ix, iy), xl(ix, iy-1)] + d[xl(ix, iy), xl(ix, iy+1)] + d[xl(ix, iy), xl(ix-1, iy+1)] + d[xl(ix, iy), xl(ix-1, iy)]
+            sum = (d[xl(ix, iy), xl(ix-1, iy-1)] +
+                   d[xl(ix, iy), xl(ix, iy-1)] +
+                   d[xl(ix, iy), xl(ix, iy+1)] +
+                   d[xl(ix, iy), xl(ix-1, iy+1)] +
+                   d[xl(ix, iy), xl(ix-1, iy)])
+
             heat[ix, iy] = sum/5
 
     # compute umat values for corners
@@ -966,25 +1112,34 @@ def compute_heat(map, d, smoothing=None):
         # bottom left corner
         ix = 0
         iy = 0
-        sum = d[xl(ix, iy), xl(ix+1, iy)] + d[xl(ix, iy), xl(ix+1, iy+1)] + d[xl(ix, iy), xl(ix, iy+1)]
+        sum = (d[xl(ix, iy), xl(ix+1, iy)] +
+               d[xl(ix, iy), xl(ix+1, iy+1)] +
+               d[xl(ix, iy), xl(ix, iy+1)])
+
         heat[ix, iy] = sum/3
 
         # bottom right corner
         ix = x-1
         iy = 0
-        sum = d[xl(ix, iy), xl(ix, iy+1)] + d[xl(ix, iy), xl(ix-1, iy+1)] + d[xl(ix, iy), xl(ix-1, iy)]
+        sum = (d[xl(ix, iy), xl(ix, iy+1)] +
+               d[xl(ix, iy), xl(ix-1, iy+1)] +
+               d[xl(ix, iy), xl(ix-1, iy)])
         heat[ix, iy] = sum/3
 
         # top left corner
         ix = 0
         iy = y-1
-        sum = d[xl(ix, iy), xl(ix, iy-1)] + d[xl(ix, iy), xl(ix+1, iy-1)] + d[xl(ix, iy), xl(ix+1, iy)]
+        sum = (d[xl(ix, iy), xl(ix, iy-1)] +
+               d[xl(ix, iy), xl(ix+1, iy-1)] +
+               d[xl(ix, iy), xl(ix+1, iy)])
         heat[ix, iy] = sum/3
 
         # top right corner
         ix = x-1
         iy = y-1
-        sum = d[xl(ix, iy), xl(ix-1, iy-1)] + d[xl(ix, iy), xl(ix, iy-1)] + d[xl(ix, iy), xl(ix-1, iy)]
+        sum = (d[xl(ix, iy), xl(ix-1, iy-1)] +
+               d[xl(ix, iy), xl(ix, iy-1)] +
+               d[xl(ix, iy), xl(ix-1, iy)])
         heat[ix, iy] = sum/3
 
     # smooth the heat map
@@ -996,16 +1151,23 @@ def compute_heat(map, d, smoothing=None):
 
     if smoothing is not None:
         if smoothing == 0:
-            heat = smooth_2d(heat, nrow=x, ncol=y, surface=False)
+            heat = smooth_2d(heat,
+                             nrow=x,
+                             ncol=y,
+                             surface=False)
         elif smoothing > 0:
-            heat = smooth_2d(heat, nrow=x, ncol=y, surface=False, theta=smoothing)
+            heat = smooth_2d(heat,
+                             nrow=x,
+                             ncol=y,
+                             surface=False,
+                             theta=smoothing)
         else:
-            sys.exit("compute.heat: bad value for smoothing parameter")
+            sys.exit("compute_heat: bad value for smoothing parameter")
 
     return heat
 
 
-def df_var_test1(df1, df2, conf):
+def df_var_test1(df1, df2, conf=.95):
     """ df_var_test -- a function that applies the F-test testing the ratio
                        of the variances of the two data frames
 
@@ -1016,7 +1178,7 @@ def df_var_test1(df1, df2, conf):
     """
 
     if df1.shape[1] != df2.shape[1]:
-        sys.exit("df.var.test: cannot compare variances of data frames")
+        sys.exit("df_var_test: cannot compare variances of data frames")
 
     # init our working arrays
     var_ratio_v = [randint(1, 1) for _ in range(df1.shape[1])]
@@ -1033,7 +1195,8 @@ def df_var_test1(df1, df2, conf):
         ESTIMATE = V_x / V_y
 
         BETA = (1 - conf_level) / 2
-        CINT = [ESTIMATE / f.ppf(1 - BETA, DF_x, DF_y), ESTIMATE / f.ppf(BETA, DF_x, DF_y)]
+        CINT = [ESTIMATE / f.ppf(1 - BETA, DF_x, DF_y),
+                ESTIMATE / f.ppf(BETA, DF_x, DF_y)]
 
         return {"estimate": ESTIMATE, "conf_int": CINT}
 
@@ -1046,7 +1209,9 @@ def df_var_test1(df1, df2, conf):
         var_confinthi_v[i] = t['conf_int'][1]
 
     # return a list with the ratios and conf intervals for each feature
-    return {"ratio": var_ratio_v, "conf_int_lo": var_confintlo_v, "conf_int_hi": var_confinthi_v}
+    return {"ratio": var_ratio_v,
+            "conf_int_lo": var_confintlo_v,
+            "conf_int_hi": var_confinthi_v}
 
 
 def df_mean_test(df1, df2, conf=0.95):
@@ -1061,7 +1226,7 @@ def df_mean_test(df1, df2, conf=0.95):
     """
 
     if df1.shape[1] != df2.shape[1]:
-        sys.exit("df.mean.test: cannot compare means of data frames")
+        sys.exit("df_mean_test: cannot compare means of data frames")
 
     # init our working arrays
     mean_diff_v = [randint(1, 1) for _ in range(df1.shape[1])]
@@ -1075,7 +1240,8 @@ def df_mean_test(df1, df2, conf=0.95):
         conf_int_lo = cm.tconfint_diff(alpha=1-conf_level, usevar='unequal')[0]
         conf_int_hi = cm.tconfint_diff(alpha=1-conf_level, usevar='unequal')[1]
 
-        return {"estimate": [estimate_x, estimate_y], "conf_int": [conf_int_lo, conf_int_hi]}
+        return {"estimate": [estimate_x, estimate_y],
+                "conf_int": [conf_int_lo, conf_int_hi]}
 
     # compute the F-test on each feature in our populations
     for i in range(df1.shape[1]):
@@ -1085,12 +1251,14 @@ def df_mean_test(df1, df2, conf=0.95):
         mean_confinthi_v[i] = t['conf_int'][1]
 
     # return a list with the ratios and conf intervals for each feature
-    return {"diff": mean_diff_v, "conf_int_lo": mean_confintlo_v, "conf_int_hi": mean_confinthi_v}
+    return {"diff": mean_diff_v,
+            "conf_int_lo": mean_confintlo_v,
+            "conf_int_hi": mean_confinthi_v}
 
 
-def vsom_r(data, xdim, ydim, alpha, train):
-    """ vsom_r - vectorized, unoptimized version of the stochastic SOM
-                 training algorithm written entirely in R
+def vsom_p(data, xdim, ydim, alpha, train):
+    """ vsom_p - vectorized, unoptimized version of the stochastic SOM
+                 training algorithm written entirely in python
 
     """
     # some constants
@@ -1186,12 +1354,21 @@ def vsom_f(data, xdim, ydim, alpha, train):
 
     # build and initialize the matrix holding the neurons
     cells = nr * nc        # no. of neurons times number of data dimensions
-    v = np.random.uniform(-1, 1, cells)  # vector with small init values for all neurons
+
+    # vector with small init values for all neurons
+    v = np.random.uniform(-1, 1, cells)
 
     # NOTE: each row represents a neuron, each column represents a dimension.
     neurons = np.reshape(v, (nr, nc))  # rearrange the vector as matrix
 
-    neurons = vsom.vsom(neurons, np.array(data), xdim, ydim, alpha, train, dr, dc)
+    neurons = vsom.vsom(neurons,
+                        np.array(data),
+                        xdim,
+                        ydim,
+                        alpha,
+                        train,
+                        dr,
+                        dc)
 
     return neurons
 
@@ -1208,13 +1385,24 @@ def compute_combined_clusters(map, heat, explicit, rang):
     # Get unique centroids
     unique_centroids = get_unique_centroids(map, centroids)
     # Get distance from centroid to cluster elements for all centroids
-    within_cluster_dist = distance_from_centroids(map, centroids, unique_centroids, heat)
+    within_cluster_dist = distance_from_centroids(map,
+                                                  centroids,
+                                                  unique_centroids,
+                                                  heat)
     # Get average pairwise distance between clusters
-    between_cluster_dist = distance_between_clusters(map, centroids, unique_centroids, heat)
+    between_cluster_dist = distance_between_clusters(map,
+                                                     centroids,
+                                                     unique_centroids,
+                                                     heat)
     # Get a boolean matrix of whether two components should be combined
-    combine_cluster_bools = combine_decision(within_cluster_dist, between_cluster_dist, rang)
+    combine_cluster_bools = combine_decision(within_cluster_dist,
+                                             between_cluster_dist,
+                                             rang)
     # Create the modified connected components grid
-    ne_centroid = new_centroid(combine_cluster_bools, centroids, unique_centroids, map)
+    ne_centroid = new_centroid(combine_cluster_bools,
+                               centroids,
+                               unique_centroids,
+                               map)
 
     return ne_centroid
 
@@ -1326,15 +1514,15 @@ def distance_between_clusters(map, centroids, unique_centroids, umat):
     parameters:
     - map is an object of type 'map'
     - centroids - a matrix of the centroid locations in the map
-    - unique.centroids - a list of unique centroid locations
+    - unique_centroids - a list of unique centroid locations
     - umat - a unified distance matrix
 
     """
 
     cluster_elements = list_clusters(map, centroids, unique_centroids, umat)
 
-    tmp_1 = np.zeros(shape=(max([len(cluster_elements[i]) for i in range(len(cluster_elements))]), len(cluster_elements)))
-    # tmp_2 = np.zeros(shape=(max([len(cluster_elements[i]) for i in range(len(cluster_elements))]),len(cluster_elements)))
+    tmp_1 = np.zeros(shape=(max([len(cluster_elements[i]) for i in range(
+            len(cluster_elements))]), len(cluster_elements)))
 
     for i in range(len(cluster_elements)):
         for j in range(len(cluster_elements[i])):
@@ -1342,12 +1530,14 @@ def distance_between_clusters(map, centroids, unique_centroids, umat):
 
     columns = tmp_1.shape[1]
 
-    tmp = np.matrix.transpose(np.array(list(combinations([i for i in range(columns)], 2))))
+    tmp = np.matrix.transpose(np.array(list(combinations(
+          [i for i in range(columns)], 2))))
 
     tmp_3 = np.zeros(shape=(tmp_1.shape[0], tmp.shape[1]))
 
     for i in range(tmp.shape[1]):
-        tmp_3[:, i] = np.where(tmp_1[:, tmp[1, i]]*tmp_1[:, tmp[0, i]] != 0, abs(tmp_1[:, tmp[0, i]] - tmp_1[:, tmp[1, i]]), 0)
+        tmp_3[:, i] = np.where(tmp_1[:, tmp[1, i]]*tmp_1[:, tmp[0, i]] != 0,
+                               abs(tmp_1[:, tmp[0, i]]-tmp_1[:, tmp[1, i]]), 0)
         # both are not equals 0
 
     mean = np.true_divide(tmp_3.sum(0), (tmp_3 != 0).sum(0))
@@ -1443,7 +1633,8 @@ def combine_decision(within_cluster_dist, distance_between_clusters, rang):
             if cdist != 0:
                 rx = centroid_dist[xi] * rang
                 ry = centroid_dist[yi] * rang
-                if cdist < centroid_dist[xi] + rx or cdist < centroid_dist[yi] + ry:
+                if (cdist < centroid_dist[xi] + rx or
+                   cdist < centroid_dist[yi] + ry):
                     to_combine[xi, yi] = True
 
     return to_combine
@@ -1552,75 +1743,14 @@ def smooth_2d(Y, ind=None, weight_obj=None, grid=None, nrow=64, ncol=64,
 
     temp = np.zeros((weight_obj['M'], weight_obj['N']))
     temp[0:m, 0:n] = Y
-    temp2 = np.fft.ifft2(np.fft.fft2(temp) * weight_obj['wght']).real[0:weight_obj['m'], 0:weight_obj['n']]
+    temp2 = np.fft.ifft2(np.fft.fft2(temp) *
+                         weight_obj['wght']).real[0:weight_obj['m'],
+                                                  0:weight_obj['n']]
 
     temp = np.zeros((weight_obj['M'], weight_obj['N']))
     temp[0:m, 0:n] = NN
-    temp3 = np.fft.ifft2(np.fft.fft2(temp) * weight_obj['wght']).real[0:weight_obj['m'], 0:weight_obj['n']]
+    temp3 = np.fft.ifft2(np.fft.fft2(temp) *
+                         weight_obj['wght']).real[0:weight_obj['m'],
+                                                  0:weight_obj['n']]
 
     return temp2/temp3
-
-
-def som_init(data, xdim, ydim, init="linear"):
-    """ som_init -- initiate the neurals for iteration  """
-
-    if (xdim == 1 and ydim == 1):
-        sys.exit("Need at least two map cells.")
-
-    INIT = ["random", "linear"]
-
-    try:
-        init_type = INIT.index(init)
-    except ValueError:
-        sys.exit("Init only supports `random', and `linear'")
-
-    def RandomInit(xdim, ydim):
-        # uniformly random in (min, max) for each dimension
-        ans = np.zeros((xdim * ydim, data.shape[1]))
-        mi = data.min(axis=0)
-        ma = data.max(axis=0)
-
-        for i in range(xdim*ydim):
-            ans[i, ] = mi + (ma - mi) * random.uniform(0, 1)
-
-        return ans
-
-    def LinearInit(xdim, ydim):
-        # get the first two principle components
-
-        pcm = PCA(data)
-        pc = pcm.Wt[:, :2]
-        sd = pcm.sigma[0:2]
-        mn = data.mean(axis=0)
-        ans = np.zeros((xdim * ydim, data.shape[1]))
-        # give the 1st pc to the bigger dimension
-        if (xdim >= ydim):
-            xtick = sd[0] * pc[:, 0]
-            ytick = sd[1] * pc[:, 1]
-        else:
-            xtick = sd[1] * pc[:, 1]
-            ytick = sd[0] * pc[:, 0]
-
-        if xdim == 1:
-            xis = np.linspace(0, 0, xdim-1)
-        else:
-            xis = np.linspace(-2, 2, xdim)
-
-        if ydim == 1:
-            yis = np.linspace(0, 0, ydim-1)
-        else:
-            yis = np.linspace(-2, 2, ydim)
-
-        for i in range(xdim*ydim):
-            xi = i % xdim
-            yi = i // xdim
-            ans[i, ] = mn + xis[xi] * xtick + yis[yi] * ytick
-
-        return ans
-
-    if init_type == 0:
-        code = RandomInit(xdim, ydim)
-    elif init_type == 1:
-        code = LinearInit(xdim, ydim)
-
-    return code
