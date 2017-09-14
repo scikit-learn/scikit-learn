@@ -42,6 +42,9 @@ import sys
 
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use("Qt5Agg")
+import matplotlib.pyplot as plt
 import matplotlib.pyplot as plt
 import seaborn as sns                   # Plot density by marginal
 import vsom                             # Call vsom.f90 (Fortran package)
