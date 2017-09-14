@@ -29,7 +29,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier
 
-clf1 = LogisticRegression(random_state=123)
+clf1 = LogisticRegression(random_state=123, max_iter=100)
 clf2 = RandomForestClassifier(random_state=123)
 clf3 = GaussianNB()
 X = np.array([[-1.0, -1.0], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
