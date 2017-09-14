@@ -91,7 +91,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     Returns
     -------
     n_components : int or numpy array of int,
-        The minimal number of components to guarantee with good probability
+        The minimum number of components to guarantee with high probability
         an eps-embedding with n_samples.
 
     Examples
@@ -438,8 +438,8 @@ class GaussianRandomProjection(BaseRandomProjection):
         embedding is controlled by the ``eps`` parameter.
 
         It should be noted that Johnson-Lindenstrauss lemma can yield
-        very conservative estimated of the required number of components
-        as it makes no assumption on the structure of the dataset.
+        a very conservative estimate of the required number of components
+        as it makes no assumptions about the structure of the dataset.
 
     eps : strictly positive float, optional (default=0.1)
         Parameter to control the quality of the embedding according to
@@ -527,8 +527,8 @@ class SparseRandomProjection(BaseRandomProjection):
         embedding is controlled by the ``eps`` parameter.
 
         It should be noted that Johnson-Lindenstrauss lemma can yield
-        very conservative estimated of the required number of components
-        as it makes no assumption on the structure of the dataset.
+        a very conservative estimate of the required number of components
+        as it makes no assumptions about the structure of the dataset.
 
     density : float in range ]0, 1], optional (default='auto')
         Ratio of non-zero component in the random projection matrix.
