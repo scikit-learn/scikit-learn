@@ -588,9 +588,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 fit_params = self.fit_params
         if self.return_train_score == "warn":
-            warnings.warn("return_train_score will default to False from 0.22."
-                          " Please explicitly set return_train_score=True "
-                          "to maintain current behaviour", FutureWarning)
+            warnings.warn("return_train_score will default to False from 0.22. "
+                          "Obtaining training score impacts performance. If "
+                          "desired, please explicitly set return_train_score=True "
+                          "to include training scores in cv_results_.", FutureWarning)
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
