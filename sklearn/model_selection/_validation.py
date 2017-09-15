@@ -118,9 +118,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return_train_score : boolean, optional
         Whether to include train scores in the return dict if ``scoring`` is
         of multimetric type.
-        Current default is ``'warn'``, which behaves as ``'True'`` in addition
-         to raising a warning that default will be changed to ``'False'``
-         in 0.22.
+        Current default is ``'warn'``, which behaves as ``True`` in addition
+        to raising a warning that default will be changed to ``False``
+        in 0.22.
 
     Returns
     -------
@@ -1009,7 +1009,7 @@ def learning_curve(estimator, X, y, groups=None,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == 'True'.
+        by `np.random`. Used when ``shuffle`` == True.
 
     Returns
     -------
