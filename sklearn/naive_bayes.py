@@ -122,7 +122,7 @@ class GaussianNB(BaseNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
-    epsilon : float, optional (default=1e-9)
+    var_smoothing : float, optional (default=1e-9)
         Portion of the largest variance of all features that is added to
         variances for calculation stability.
 
@@ -151,19 +151,19 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(epsilon=1e-09, priors=None)
+    GaussianNB(var_smoothing=1e-09, priors=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB(epsilon=1e-09, priors=None)
+    GaussianNB(var_smoothing=1e-09, priors=None)
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
 
-    def __init__(self, priors=None, epsilon=1e-9):
+    def __init__(self, priors=None, var_smoothing=1e-9):
         self.priors = priors
-        self.epsilon = epsilon
+        self.var_smoothing = var_smoothing
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -350,7 +350,7 @@ class GaussianNB(BaseNB):
         # will cause numerical errors. To address this, we artificially
         # boost the variance by epsilon, a small fraction of the standard
         # deviation of the largest dimension.
-        self.epsilon_ = self.epsilon * np.var(X, axis=0).max()
+        self.epsilon_ = self.var_smoothing * np.var(X, axis=0).max()
 
         if _refit:
             self.classes_ = None
