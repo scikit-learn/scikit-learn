@@ -64,7 +64,7 @@ def test_parallel():
     ms2 = MeanShift()
     ms2.fit(X)
 
-    assert_array_equal(ms1.cluster_centers_, ms2.cluster_centers_)
+    assert_array_almost_equal(ms1.cluster_centers_, ms2.cluster_centers_)
     assert_array_equal(ms1.labels_, ms2.labels_)
 
 
