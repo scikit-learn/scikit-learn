@@ -218,14 +218,14 @@ def check_partial_fit(cls):
 
     clf2 = cls()
     clf2.partial_fit([[0, 1], [1, 0]], [0, 1], classes=[0, 1])
-    assert_array_almost_equal(clf1.class_count_, clf2.class_count_)
-    assert_array_almost_equal(clf1.feature_count_, clf2.feature_count_)
+    assert_array_equal(clf1.class_count_, clf2.class_count_)
+    assert_array_equal(clf1.feature_count_, clf2.feature_count_)
 
     clf3 = cls()
     clf3.partial_fit([[0, 1]], [0], classes=[0, 1])
     clf3.partial_fit([[1, 0]], [1])
-    assert_array_almost_equal(clf1.class_count_, clf3.class_count_)
-    assert_array_almost_equal(clf1.feature_count_, clf3.feature_count_)
+    assert_array_equal(clf1.class_count_, clf3.class_count_)
+    assert_array_equal(clf1.feature_count_, clf3.feature_count_)
 
 
 def test_discretenb_partial_fit():
@@ -561,11 +561,11 @@ def test_cnb():
 
     # Check that counts are correct.
     feature_count = np.array([[1, 3, 0, 1, 1, 0], [0, 1, 1, 0, 0, 1]])
-    assert_array_almost_equal(clf.feature_count_, feature_count)
+    assert_array_equal(clf.feature_count_, feature_count)
     class_count = np.array([3, 1])
-    assert_array_almost_equal(clf.class_count_, class_count)
+    assert_array_equal(clf.class_count_, class_count)
     feature_all = np.array([1, 4, 1, 1, 1, 1])
-    assert_array_almost_equal(clf.feature_all_, feature_all)
+    assert_array_equal(clf.feature_all_, feature_all)
 
     # Check that weights are correct. See steps 4-6 in Table 4 of
     # Rennie et al. (2003).
@@ -601,8 +601,8 @@ def test_naive_bayes_scale_invariance():
     X, y = iris.data, iris.target
     labels = [GaussianNB().fit(f * X, y).predict(f * X)
               for f in [1E-10, 1, 1E10]]
-    assert_array_almost_equal(labels[0], labels[1])
-    assert_array_almost_equal(labels[1], labels[2])
+    assert_array_equal(labels[0], labels[1])
+    assert_array_equal(labels[1], labels[2])
 
 
 def test_alpha():
