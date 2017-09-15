@@ -387,31 +387,6 @@ def load_iris(return_X_y=False):
                                 'petal length (cm)', 'petal width (cm)'])
 
 
-def load_segmentation(return_X_y=False):
-    """
-    Loads segmentation data
-    :param return_X_y:
-    :return:
-    """
-    module_path = dirname(__file__)
-
-    with open(join(module_path, 'data/segmentation.csv')) as csv_file:
-        data_file = csv.reader(csv_file)
-        target_temp = []
-        data_temp = []
-        for i, ir in enumerate(data_file):
-            target_temp.append(ir[0])
-            data_temp.append(ir[1:])
-        data = np.asarray(data_temp, dtype=np.float)
-        target_names = list(set(target_temp))
-        target = np.asarray(list(map(target_names.index, target_temp)), dtype=np.int)
-
-    if return_X_y:
-        return data, target
-
-    return Bunch(data=data, target=target, target_names=target_names)
-
-
 def load_breast_cancer(return_X_y=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
