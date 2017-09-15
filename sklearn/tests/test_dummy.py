@@ -39,7 +39,7 @@ def _check_predict_proba(clf, X, y):
         assert_equal(proba[k].shape[1], len(np.unique(y[:, k])))
         assert_array_equal(proba[k].sum(axis=1), np.ones(len(X)))
         # We know that we can have division by zero
-        assert_array_equal(np.log(proba[k]), log_proba[k])
+        assert_array_almost_equal(np.log(proba[k]), log_proba[k])
 
 
 def _check_behavior_2d(clf):
@@ -77,9 +77,9 @@ def _check_behavior_2d_for_constant(clf):
 
 def _check_equality_regressor(statistic, y_learn, y_pred_learn,
                               y_test, y_pred_test):
-    assert_array_equal(np.tile(statistic, (y_learn.shape[0], 1)),
+    assert_array_almost_equal(np.tile(statistic, (y_learn.shape[0], 1)),
                        y_pred_learn)
-    assert_array_equal(np.tile(statistic, (y_test.shape[0], 1)),
+    assert_array_almost_equal(np.tile(statistic, (y_test.shape[0], 1)),
                        y_pred_test)
 
 
@@ -94,10 +94,10 @@ def test_most_frequent_and_prior_strategy():
         _check_predict_proba(clf, X, y)
 
         if strategy == "prior":
-            assert_array_equal(clf.predict_proba([X[0]]),
+            assert_array_almost_equal(clf.predict_proba([X[0]]),
                                clf.class_prior_.reshape((1, -1)))
         else:
-            assert_array_equal(clf.predict_proba([X[0]]),
+            assert_array_almost_equal(clf.predict_proba([X[0]]),
                                clf.class_prior_.reshape((1, -1)) > 0.5)
 
 
@@ -217,7 +217,7 @@ def test_mean_strategy_regressor():
 
     reg = DummyRegressor()
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [np.mean(y)] * len(X))
+    assert_array_almost_equal(reg.predict(X), [np.mean(y)] * len(X))
 
 
 def test_mean_strategy_multioutput_regressor():
@@ -256,7 +256,7 @@ def test_median_strategy_regressor():
 
     reg = DummyRegressor(strategy="median")
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [np.median(y)] * len(X))
+    assert_array_almost_equal(reg.predict(X), [np.median(y)] * len(X))
 
 
 def test_median_strategy_multioutput_regressor():
@@ -291,19 +291,19 @@ def test_quantile_strategy_regressor():
 
     reg = DummyRegressor(strategy="quantile", quantile=0.5)
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [np.median(y)] * len(X))
+    assert_array_almost_equal(reg.predict(X), [np.median(y)] * len(X))
 
     reg = DummyRegressor(strategy="quantile", quantile=0)
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [np.min(y)] * len(X))
+    assert_array_almost_equal(reg.predict(X), [np.min(y)] * len(X))
 
     reg = DummyRegressor(strategy="quantile", quantile=1)
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [np.max(y)] * len(X))
+    assert_array_almost_equal(reg.predict(X), [np.max(y)] * len(X))
 
     reg = DummyRegressor(strategy="quantile", quantile=0.3)
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [np.percentile(y, q=30)] * len(X))
+    assert_array_almost_equal(reg.predict(X), [np.percentile(y, q=30)] * len(X))
 
 
 def test_quantile_strategy_multioutput_regressor():
