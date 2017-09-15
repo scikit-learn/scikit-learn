@@ -781,14 +781,15 @@ def _enforce_prediction_order(classes, predictions, n_classes,
     (a subset of the classes in the full training set)
     and `n_classes` is the number of classes in the full training set.
     """
-    if len(classes) == n_classes:
+    if (len(classes) == n_classes or
+            (len(classes) == 1 and n_classes <= 2 and one_col_if_binary)):
         # If all classes are present in the training set, the prediction
         # columns are already ordered.
         return predictions
 
     predictions_ = np.zeros((predictions.shape[0], n_classes),
                             dtype=predictions.dtype)
-    if one_col_if_binary and len(classes) == 2:
+    if one_col_if_binary and len(classes) <= 2:
         # We only get here if the full labeled data have > 2 classes.
         predictions_[:, classes[-1]] = predictions
     else:
