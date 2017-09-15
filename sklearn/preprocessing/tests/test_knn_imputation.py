@@ -5,6 +5,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false
 
 from sklearn.preprocessing.imputation import KNNImputer
@@ -34,9 +35,9 @@ def test_knn_imputation_zero():
     imputer = KNNImputer(missing_values=missing_values,
                          n_neighbors=n_neighbors,
                          weights="uniform")
-    # imputer_nan = KNNImputer(missing_values=np.nan,
-    #                          n_neighbors=n_neighbors,
-    #                          weights="uniform")
+    imputer_nan = KNNImputer(missing_values="NaN",
+                             n_neighbors=n_neighbors,
+                             weights="uniform")
 
     # Test with missing_values=0 when NaN present
     X = np.array([
@@ -45,7 +46,8 @@ def test_knn_imputation_zero():
         [np.nan, 2, 0, 0, 0],
         [np.nan, 6, 0, 5, 13],
     ])
-    assert_raises(ValueError, imputer.fit, X)
+    msg = "Input contains NaN, infinity or a value too large for %r." % X.dtype
+    assert_raise_message(ValueError, msg, imputer.fit, X)
 
     # Test with % zeros in column > col_max_missing
     X = np.array([
@@ -54,16 +56,11 @@ def test_knn_imputation_zero():
         [3, 2, 0, 0, 0],
         [4, 6, 0, 5, 13],
     ])
-    assert_raises(ValueError, imputer.fit, X)
+    msg = "Some column(s) have more than {}% missing values".format(
+        imputer.col_max_missing * 100)
+    assert_raise_message(ValueError, msg, imputer.fit, X)
 
     # Test with an imputable matrix and also compare with missing_values="NaN"
-    # X = np.array([
-    #     [1, 0, 1, 0, 5],
-    #     [2, 1, 2, 2, 3],
-    #     [3, 2, 3, 0, 0],
-    #     [6, 6, 0, 5, 13],
-    # ])
-
     X = np.array([
         [1, 0, 1, 0, 1],
         [2, 1, 2, 2, 3],
@@ -71,64 +68,29 @@ def test_knn_imputation_zero():
         [6, 6, 0, 5, 17],
     ])
 
-    # X_nan = np.array([
-    #     [1, np.nan, 1, np.nan, 1],
-    #     [2, 1, 2, 2, 3],
-    #     [3, 2, 3, np.nan, np.nan],
-    #     [6, 6, np.nan, 5, 17],
-    # ])
+    X_nan = np.array([
+        [1, np.nan, 1, np.nan, 1],
+        [2, 1, 2, 2, 3],
+        [3, 2, 3, np.nan, np.nan],
+        [6, 6, np.nan, 5, 17],
+    ])
+    statistics_mean = np.nanmean(X_nan, axis=0)
 
-    statistics_mean = [3, 3, 2, 3.5, 7]
     X_imputed = np.array([
         [1, 1.5, 1,   2, 1],
         [2, 1,   2,   2, 3],
         [3, 2,   3,   2, 2],
-        [6, 6,   1.5, 5, 17],
+        [6, 6,   2.5, 5, 17],
     ])
 
     assert_array_equal(imputer.fit_transform(X), X_imputed)
     assert_array_equal(imputer.statistics_, statistics_mean)
-    # The following fails at the moment as NearestNeighbors object does not
-    # pass missing_values=0 to pairwise_distances()
-    # assert_array_equal(imputer.fit_transform(X), imputer_nan.fit_transform(
-    #     X_nan))
+    assert_array_equal(imputer.fit_transform(X), imputer_nan.fit_transform(
+        X_nan))
 
 
 def test_knn_imputation_default():
-    # Test imputation with default values
-    # imputer = KNNImputer()
-
-    # Test with % missing in a column > col_max_missing
-    X = np.array([
-        [np.nan, 0, 0, 0, 5],
-        [np.nan, 1, 0, np.nan, 3],
-        [np.nan, 2, 0, 0, 0],
-        [np.nan, 6, 0, 5, 13],
-        [np.nan, 7, 0, 7, 8],
-        [np.nan, 8, 0, 8, 9],
-    ])
-    assert_raises(ValueError, KNNImputer().fit, X)
-
-    # Test with insufficient number of neighbors
-    imputer = KNNImputer()
-    X = np.array([
-        [1, 1, 1, 2, np.nan],
-        [2, 1, 2, 2, 3],
-        [3, 2, 3, 3, 8],
-        [6, 6, 2, 5, 13],
-    ])
-    assert_raises(ValueError, KNNImputer().fit, X)
-
-    # Test with inf present
-    X = np.array([
-        [np.inf, 1, 1, 2, np.nan],
-        [2, 1, 2, 2, 3],
-        [3, 2, 3, 3, 8],
-        [np.nan, 6, 0, 5, 13],
-        [np.nan, 7, 0, 7, 8],
-        [6, 6, 2, 5, 7],
-    ])
-    assert_raises(ValueError, KNNImputer().fit, X)
+    # Test imputation with default parameter values
 
     # Test with an imputable matrix
     X = np.array([
@@ -140,8 +102,7 @@ def test_knn_imputation_default():
         [8,      8,      8,      8],
         [16,     15,     18,    19],
     ])
-
-    statistics_mean = [6, 5, 6, 8]
+    statistics_mean = np.nanmean(X, axis=0)
 
     X_imputed = np.array([
         [1,      0,      0,      1],
@@ -167,8 +128,8 @@ def test_knn_imputation_default():
         [8,      8,      8,      8],
         [np.nan, np.nan, np.nan, 19],
     ])
+    statistics_mean = np.nanmean(X, axis=0)
 
-    statistics_mean = [4, 3, 4, 8]
     X_imputed = np.array([
         [1,      0,      0,      1],
         [2,      1,      2,      5.25],
@@ -188,25 +149,26 @@ def test_knn_imputation_default():
         [1, 0, 0, np.nan],
         [2, 1, 2, np.nan],
         [3, 2, 3, np.nan],
-        [np.nan, 4, 5, 5],
-        [6, np.nan, 6, 7],
-        [8, 8, 8, 8],
-        [np.nan, np.nan, np.nan, 20],
+        [4, 4, 5, np.nan],
+        [6, 7, 6, np.nan],
+        [8, 8, 8, np.nan],
+        [20, 20, 20, 20],
+        [22, 22, 22, 22]
     ])
-
-    statistics_mean = [4, 3, 4, 10]
+    statistics_mean = np.nanmean(X, axis=0)
 
     X_imputed = np.array([
-        [1, 0, 0, 10],
-        [2, 1, 2, 10],
-        [3, 2, 3, 5],
-        [4.5, 4, 5, 5],
-        [6, 6, 6, 7],
-        [8, 8, 8, 8],
-        [4, 3, 4, 20],
+        [1, 0, 0, 21],
+        [2, 1, 2, 21],
+        [3, 2, 3, 21],
+        [4, 4, 5, 21],
+        [6, 7, 6, 21],
+        [8, 8, 8, 21],
+        [20, 20, 20, 20],
+        [22, 22, 22, 22]
     ])
 
-    imputer = KNNImputer(n_neighbors=2)
+    imputer = KNNImputer()
     assert_array_equal(imputer.fit_transform(X), X_imputed)
     assert_array_equal(imputer.statistics_, statistics_mean)
 
@@ -220,7 +182,7 @@ def test_knn_imputation_default():
         [9,      8],
         [11,     16]
     ])
-    statistics_mean = [6, 6]
+    statistics_mean = np.nanmean(X, axis=0)
 
     Y = np.array([
         [1,      0],
@@ -239,6 +201,47 @@ def test_knn_imputation_default():
     assert_array_equal(imputer.statistics_, statistics_mean)
 
 
+def test_default_with_invalid_input():
+    # Test imputation with default values and invalid input
+
+    # Test with % missing in a column > col_max_missing
+    X = np.array([
+        [np.nan, 0, 0, 0, 5],
+        [np.nan, 1, 0, np.nan, 3],
+        [np.nan, 2, 0, 0, 0],
+        [np.nan, 6, 0, 5, 13],
+        [np.nan, 7, 0, 7, 8],
+        [np.nan, 8, 0, 8, 9],
+    ])
+    imputer = KNNImputer()
+    msg = "Some column(s) have more than {}% missing values".format(
+        imputer.col_max_missing * 100)
+    assert_raise_message(ValueError, msg, imputer.fit, X)
+
+    # Test with insufficient number of neighbors
+    X = np.array([
+        [1, 1, 1, 2, np.nan],
+        [2, 1, 2, 2, 3],
+        [3, 2, 3, 3, 8],
+        [6, 6, 2, 5, 13],
+    ])
+    msg = "There are only %d samples, but n_neighbors=%d." % \
+          (X.shape[0], imputer.n_neighbors)
+    assert_raise_message(ValueError, msg, imputer.fit, X)
+
+    # Test with inf present
+    X = np.array([
+        [np.inf, 1, 1, 2, np.nan],
+        [2, 1, 2, 2, 3],
+        [3, 2, 3, 3, 8],
+        [np.nan, 6, 0, 5, 13],
+        [np.nan, 7, 0, 7, 8],
+        [6, 6, 2, 5, 7],
+    ])
+    msg = "+/- inf values are not allowed."
+    assert_raise_message(ValueError, msg, KNNImputer().fit, X)
+
+
 def test_knn_n_neighbors():
 
     X = np.array([
@@ -250,7 +253,7 @@ def test_knn_n_neighbors():
         [np.nan, 8],
         [14,      13]
     ])
-    statistics_mean = [6, 5.5]
+    statistics_mean = np.nanmean(X, axis=0)
 
     # Test with 1 neighbor
     X_imputed_1NN = np.array([
@@ -349,7 +352,7 @@ def test_weight_type():
     # Manual calculation
     X_imputed_distance1 = np.array([
         [0,                 0],
-        [3.850393700787402, 2],
+        [3.850394,          2],
         [4,                 3],
         [5,                 6],
         [7,                 7],
@@ -381,8 +384,7 @@ def test_weight_type():
         [3,      2,      3],
         [4,      5,      5],
     ])
-
-    statistics_mean = [3, 2, 2.5]
+    statistics_mean = np.nanmean(X, axis=0)
 
     X_imputed = np.array([
         [2.3828, 0,     0],

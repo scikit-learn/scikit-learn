@@ -502,11 +502,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         # Check if % missing in any column > col_max_missing
         mask = _get_mask(X, self.missing_values)
         if np.any(mask.sum(axis=0) > (X.shape[0] * self.col_max_missing)):
-            raise ValueError("The following columns have, "
-                             "more than {0}% missing values: {1}"
-                             .format(self.col_max_missing*100, np.where(
-                              mask.sum(axis=0) > (X.shape[0] *
-                                                  self.col_max_missing))))
+            raise ValueError("Some column(s) have more than {}% missing values"
+                             .format(self.col_max_missing*100))
         X_col_means = np.ma.array(X, mask=mask).mean(axis=0).data
 
         # Check if % missing in any row > col_max_missing
@@ -522,13 +519,14 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         # Check if sufficient neighboring samples available
         if X.shape[0] < self.n_neighbors:
-            raise ValueError("There are only %d samples, "
-                             "but n_neighbors=%d."
+            raise ValueError("There are only %d samples, but n_neighbors=%d."
                              % (X.shape[0], self.n_neighbors))
 
         # Instantiate NN object, get column means, and store in statistics_
         neigh = NearestNeighbors(n_neighbors=self.n_neighbors,
-                                 metric=self.metric)
+                                 metric=self.metric,
+                                 metric_params={"missing_values":
+                                                self.missing_values})
         self._fitted_neighbors = neigh.fit(X)
         self.statistics_ = X_col_means
 

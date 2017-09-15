@@ -60,7 +60,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         Valid values for metric are:
 
         - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
+          'manhattan', 'masked_euclidean]
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
