@@ -43,7 +43,7 @@ import sys
 import numpy as np
 import pandas as pd
 import seaborn as sns                   # Plot density by marginal
-import vsom                             # Call vsom.f90 (Fortran package)
+# import vsom                           # Call vsom.f90 (Fortran package)
 import statsmodels.stats.api as sms     # t-test
 import statistics as stat               # F-test
 from random import randint
