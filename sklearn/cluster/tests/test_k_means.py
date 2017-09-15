@@ -678,7 +678,7 @@ def test_transform():
 def test_fit_transform():
     X1 = KMeans(n_clusters=3, random_state=51).fit(X).transform(X)
     X2 = KMeans(n_clusters=3, random_state=51).fit_transform(X)
-    assert_array_equal(X1, X2)
+    assert_array_almost_equal(X1, X2)
 
 
 def test_predict_equal_labels():
