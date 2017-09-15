@@ -52,7 +52,10 @@ from scipy.stats import f               # F-test
 from itertools import combinations
 
 import matplotlib.pyplot as plt
-matplotlib.use('Agg')
+
+if os.environ.get('DISPLAY','') == '':
+    matplotlib.use('Agg')
+
 
 def build(data, labels, xdim=10, ydim=5, alpha=.3, train=1000,
           algorithm="som"):
