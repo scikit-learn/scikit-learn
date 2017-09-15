@@ -583,9 +583,9 @@ composite estimator that supports imputation.
 See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
 .. [#] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
-Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, Missing value
-estimation methods for DNA microarrays, BIOINFORMATICS Vol. 17 no. 6, 2001
-Pages 520-525.
+    Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, Missing value
+    estimation methods for DNA microarrays, BIOINFORMATICS Vol. 17 no. 6, 2001
+    Pages 520-525.
 
 .. _polynomial_features:
 

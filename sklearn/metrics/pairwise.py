@@ -1381,7 +1381,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         X, _ = check_pairwise_arrays(X, Y, precomputed=True)
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
-            func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
+        func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)
     else:

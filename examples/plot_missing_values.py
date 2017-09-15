@@ -10,14 +10,15 @@ cross-validation.  Sometimes dropping rows or using marker values is
 more effective.
 
 Imputer:
-Missing values can be replaced by the mean, the median or the most frequent
+Using Imputer, missing values can be replaced by the mean, the median or the
+most frequent
 value using the ``strategy`` hyper-parameter.
 The median is a more robust estimator for data with high magnitude variables
 which could dominate results (otherwise known as a 'long tail').
 
 KNNImputer:
-Missing values can be imputed using the weighted or unweighted mean of the
-desired number of nearest neighbors.
+Using KNNImputer, missing values can be imputed using the weighted or
+unweighted mean of the desired number of nearest neighbors, if available.
 
 Script output::
 

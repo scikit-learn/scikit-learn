@@ -396,8 +396,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
     n_neighbors : int, optional (default = 5)
         Maximum number of neighboring samples to use for imputation. When any
         of the neighbors themselves have the feature value missing then the
-        remaining n_neighbors-1 neighbors are used and, if need be, the
-        process repeats until a single neighbor remains.
+        remaining neighbors, if any, that have the feature value available are
+        used.
 
     weights : str or callable, optional (default = "uniform")
         Weight function used in prediction.  Possible values:
@@ -410,9 +410,6 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.
-
-    metric : string, optional (default = 'masked_euclidean')
-        Metric to use for distance computation.
 
     row_max_missing : float, optional (default = 0.5)
         The maximum percentage of columns (i.e. features) that can be missing
@@ -514,7 +511,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             warnings.warn(
                 "There are rows with more than {0}% missing values. These "
                 "rows are not included as donor neighbors."
-                    .format(self.row_max_missing*100))
+                    .format(self.row_max_missing * 100))
 
             # Remove rows that have more than row_max_missing % missing
             X = X[~bad_rows, :]
@@ -533,7 +530,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def _transform(self, X, n_neighbors_new):
+    def _transform(self, X, adjusted_n_neighbors):
         """Impute all missing values in X.
 
         Parameters
@@ -541,7 +538,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         X : {array-like}, shape = [n_samples, n_features]
             The input data to complete.
 
-        n_neighbors_new : int
+        adjusted_n_neighbors : int
             Indicates whether to pass n_neighbors or n_neighbors+1 to
             _tranform().
             Calling transform() automatically sets this to self.n_neighbors
@@ -585,12 +582,12 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
         if np.any(row_has_missing):
             neighbors = self._fitted_neighbors.kneighbors(
-                X[row_has_missing, :], n_neighbors=n_neighbors_new)
+                X[row_has_missing, :], n_neighbors=adjusted_n_neighbors)
 
             # Get row index, distance, and weights of donors
             knn_distances, knn_row_index = neighbors
             # Remove self from list of donors
-            if n_neighbors_new > self.n_neighbors:
+            if adjusted_n_neighbors > self.n_neighbors:
                 row_index = np.arange(X.shape[0]).reshape((X.shape[0], 1))
                 row_index = row_index[row_has_missing, :]
                 not_duplicate_index = np.where(~(row_index == knn_row_index))
@@ -639,9 +636,10 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         return X
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit KNNImputer and impute all missing values in X. This method
-        should be used if the data to be fitted is the same as the data to
-        be transformed.
+        """Fit KNNImputer and impute all missing values in X.
+
+        This method should *only* be used if the data to be fitted is the
+        same as the data to be transformed.
 
         Parameters
         ----------
@@ -654,11 +652,14 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         X : {array-like}, shape (n_samples, n_features)
             Returns imputed dataset.
         """
-        return self.fit(X)._transform(X, n_neighbors_new=self.n_neighbors + 1)
+        return self.fit(X)._transform(
+            X, adjusted_n_neighbors=self.n_neighbors + 1)
 
     def transform(self, X):
-        """Impute all missing values in X. This method should only be used
-        if the data to be fitted is different from the data to be transformed.
+        """Impute all missing values in X.
+
+        This method should *only* be used if the data to be fitted is different
+        from the data to be transformed.
 
         WARNING: If the same dataset is passed in fit() and transform(),
         one of the returned "neighbors" maybe the sample itself. Use
@@ -675,4 +676,4 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             Returns imputed dataset.
         """
         check_is_fitted(self, 'statistics_')
-        return self._transform(X, n_neighbors_new=self.n_neighbors)
+        return self._transform(X, adjusted_n_neighbors=self.n_neighbors)
