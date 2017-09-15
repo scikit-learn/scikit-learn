@@ -37,9 +37,9 @@ def _check_predict_proba(clf, X, y):
     for k in range(n_outputs):
         assert_equal(proba[k].shape[0], n_samples)
         assert_equal(proba[k].shape[1], len(np.unique(y[:, k])))
-        assert_array_equal(proba[k].sum(axis=1), np.ones(len(X)))
+        assert_array_almost_equal(proba[k].sum(axis=1), np.ones(len(X)))
         # We know that we can have division by zero
-        assert_array_equal(np.log(proba[k]), log_proba[k])
+        assert_array_almost_equal(np.log(proba[k]), log_proba[k])
 
 
 def _check_behavior_2d(clf):
@@ -77,10 +77,10 @@ def _check_behavior_2d_for_constant(clf):
 
 def _check_equality_regressor(statistic, y_learn, y_pred_learn,
                               y_test, y_pred_test):
-    assert_array_equal(np.tile(statistic, (y_learn.shape[0], 1)),
-                       y_pred_learn)
-    assert_array_equal(np.tile(statistic, (y_test.shape[0], 1)),
-                       y_pred_test)
+    assert_array_almost_equal(np.tile(statistic, (y_learn.shape[0], 1)),
+                              y_pred_learn)
+    assert_array_almost_equal(np.tile(statistic, (y_test.shape[0], 1)),
+                              y_pred_test)
 
 
 def test_most_frequent_and_prior_strategy():
@@ -90,15 +90,15 @@ def test_most_frequent_and_prior_strategy():
     for strategy in ("most_frequent", "prior"):
         clf = DummyClassifier(strategy=strategy, random_state=0)
         clf.fit(X, y)
-        assert_array_equal(clf.predict(X), np.ones(len(X)))
+        assert_array_almost_equal(clf.predict(X), np.ones(len(X)))
         _check_predict_proba(clf, X, y)
 
         if strategy == "prior":
-            assert_array_equal(clf.predict_proba([X[0]]),
-                               clf.class_prior_.reshape((1, -1)))
+            assert_array_almost_equal(clf.predict_proba([X[0]]),
+                                      clf.class_prior_.reshape((1, -1)))
         else:
-            assert_array_equal(clf.predict_proba([X[0]]),
-                               clf.class_prior_.reshape((1, -1)) > 0.5)
+            assert_array_almost_equal(clf.predict_proba([X[0]]),
+                                      clf.class_prior_.reshape((1, -1)) > 0.5)
 
 
 def test_most_frequent_and_prior_strategy_multioutput():
@@ -113,9 +113,9 @@ def test_most_frequent_and_prior_strategy_multioutput():
     for strategy in ("prior", "most_frequent"):
         clf = DummyClassifier(strategy=strategy, random_state=0)
         clf.fit(X, y)
-        assert_array_equal(clf.predict(X),
-                           np.hstack([np.ones((n_samples, 1)),
-                                      np.zeros((n_samples, 1))]))
+        assert_array_almost_equal(clf.predict(X),
+                                  np.hstack([np.ones((n_samples, 1)),
+                                             np.zeros((n_samples, 1))]))
         _check_predict_proba(clf, X, y)
         _check_behavior_2d(clf)
 
@@ -450,7 +450,7 @@ def test_constant_strategy():
 
     clf = DummyClassifier(strategy="constant", random_state=0, constant=1)
     clf.fit(X, y)
-    assert_array_equal(clf.predict(X), np.ones(len(X)))
+    assert_array_almost_equal(clf.predict(X), np.ones(len(X)))
     _check_predict_proba(clf, X, y)
 
     X = [[0], [0], [0], [0]]  # ignored
@@ -473,9 +473,9 @@ def test_constant_strategy_multioutput():
     clf = DummyClassifier(strategy="constant", random_state=0,
                           constant=[1, 0])
     clf.fit(X, y)
-    assert_array_equal(clf.predict(X),
-                       np.hstack([np.ones((n_samples, 1)),
-                                  np.zeros((n_samples, 1))]))
+    assert_array_almost_equal(clf.predict(X),
+                              np.hstack([np.ones((n_samples, 1)),
+                                         np.zeros((n_samples, 1))]))
     _check_predict_proba(clf, X, y)
 
 
@@ -512,8 +512,9 @@ def test_constant_strategy_sparse_target():
     clf.fit(X, y)
     y_pred = clf.predict(X)
     assert_true(sp.issparse(y_pred))
-    assert_array_equal(y_pred.toarray(), np.hstack([np.ones((n_samples, 1)),
-                                                    np.zeros((n_samples, 1))]))
+    assert_array_almost_equal(y_pred.toarray(),
+                              np.hstack([np.ones((n_samples, 1)),
+                                         np.zeros((n_samples, 1))]))
 
 
 def test_uniform_strategy_sparse_target_warning():
@@ -578,7 +579,7 @@ def test_most_frequent_and_prior_strategy_sparse_target():
 
         y_pred = clf.predict(X)
         assert_true(sp.issparse(y_pred))
-        assert_array_equal(y_pred.toarray(), y_expected)
+        assert_array_almost_equal(y_pred.toarray(), y_expected)
 
 
 def test_dummy_regressor_sample_weight(n_samples=10):
