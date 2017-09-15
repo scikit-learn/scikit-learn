@@ -184,10 +184,12 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     """
     if return_train_score == "warn":
-            warnings.warn("return_train_score will default to False from 0.22. "
-                          "Obtaining training score impacts performance. If "
-                          "desired, please explicitly set return_train_score=True "
-                          "to include training scores in cv_results_.", FutureWarning)
+            warnings.warn("Computing training scores is likely to affect "
+                          "performance significantly. This is the reason "
+                          "return_train_score will change its default value "
+                          "from True (current behaviour) to False in 0.22. "
+                          "Please set explicitly return_train_score to get "
+                          "rid of this warning.", FutureWarning)
 
     X, y, groups = indexable(X, y, groups)
 
