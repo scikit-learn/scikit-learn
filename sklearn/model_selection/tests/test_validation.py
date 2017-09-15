@@ -389,7 +389,7 @@ def test_cross_validate_future_warnings():
 
     def init(estimator, X, y, return_train_score):
         cross_validate(estimator, X, y,
-                                   return_train_score=return_train_score)
+                       return_train_score=return_train_score)
 
     msg = "Computing training scores is likely to affect performance "
     "significantly. This is the reason return_train_score will "
