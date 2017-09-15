@@ -158,7 +158,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     Single metric evaluation using ``cross_validate``
 
-    >>> cv_results = cross_validate(lasso, X, y, return_train_score=False)
+    >>> cv_results = cross_validate(lasso, X, y, return_train_score="warn")
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
