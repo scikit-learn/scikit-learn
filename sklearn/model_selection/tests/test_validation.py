@@ -379,6 +379,26 @@ def test_cross_validate():
         yield check_cross_validate_multi_metric, est, X, y, scores
 
 
+def test_cross_validate_future_warnings():
+    # Test that warnings are raised. Will be removed in 0.22
+
+    X, y = make_classification(random_state=0)
+    estimator = MockClassifier()
+
+    def init(estimator, X, y, return_train_score):
+        cross_val = cross_validate(estimator, X, y,
+                                        return_train_score=return_train_score)
+
+    msg = "Computing training scores is likely to affect performance "
+    "significantly. This is the reason return_train_score will "
+    "change its default value from True (current behaviour) to "
+    "False in 0.22. Please set explicitly return_train_score to "
+    "get rid of this warning."
+    assert_warns_message(FutureWarning, msg, init, estimator, X, y, "warn")
+    assert_no_warnings(FutureWarning, msg, init, estimator, X, y, True)
+    assert_no_warnings(FutureWarning, msg, init, estimator, X, y, False)
+
+
 def check_cross_validate_single_metric(clf, X, y, scores):
     (train_mse_scores, test_mse_scores, train_r2_scores,
      test_r2_scores) = scores
