@@ -62,7 +62,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     pip install statsmodels
 
-    pip install statistics
 
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
