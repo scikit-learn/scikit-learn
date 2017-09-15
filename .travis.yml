@@ -62,6 +62,8 @@ matrix:
 
 before_install:
   - sudo apt-get install python-matplotlib
+  - sudo apt-get install python-scipy python-pandas
+  - sudo apt-get install seaborn
 
 install: source build_tools/travis/install.sh
 script: bash build_tools/travis/test_script.sh
