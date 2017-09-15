@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 
@@ -41,8 +42,8 @@ def test_partial_fit():
     brc_partial = Birch(n_clusters=None)
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
-    assert_array_equal(brc_partial.subcluster_centers_,
-                       brc.subcluster_centers_)
+    assert_array_almost_equal(brc_partial.subcluster_centers_,
+                              brc.subcluster_centers_)
 
     # Test that same global labels are obtained after calling partial_fit
     # with None
@@ -106,8 +107,8 @@ def test_sparse_X():
     brc_sparse.fit(csr)
 
     assert_array_equal(brc.labels_, brc_sparse.labels_)
-    assert_array_equal(brc.subcluster_centers_,
-                       brc_sparse.subcluster_centers_)
+    assert_array_almost_equal(brc.subcluster_centers_,
+                              brc_sparse.subcluster_centers_)
 
 
 def check_branching_factor(node, branching_factor):
