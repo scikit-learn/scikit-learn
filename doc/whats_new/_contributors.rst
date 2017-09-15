@@ -177,3 +177,5 @@
 .. _Nicolas Hug: https://github.com/NicolasHug
 
 .. _Guillaume Lemaitre: https://github.com/glemaitre
+
+.. _Ivan Nazarov: https://github.com/ivannz

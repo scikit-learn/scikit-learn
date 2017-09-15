@@ -1486,6 +1486,10 @@ Support for Python 3.3 has been officially dropped.
   version 0.22 to account better for unscaled features. :issue:`8361` by
   :user:`Gaurav Dhingra <gxyd>` and :user:`Ting Neo <neokt>`.
 
+- |Feature| Added the :class:`svm.SVDD` class for novelty detection based on
+  soft minimal volume hypersphere around the sample data.
+  :user:`Ivan Nazarov <ivannz>`.
+
 
 :mod:`sklearn.tree`
 ...................
