@@ -16,6 +16,8 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -387,7 +389,7 @@ def test_cross_validate_future_warnings():
 
     def init(estimator, X, y, return_train_score):
         cross_val = cross_validate(estimator, X, y,
-                                        return_train_score=return_train_score)
+                                   return_train_score=return_train_score)
 
     msg = "Computing training scores is likely to affect performance "
     "significantly. This is the reason return_train_score will "
