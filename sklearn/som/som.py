@@ -42,8 +42,6 @@ import sys
 
 import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
-# import matplotlib.pyplot as plt
 import seaborn as sns                   # Plot density by marginal
 import vsom                             # Call vsom.f90 (Fortran package)
 import statsmodels.stats.api as sms     # t-test
@@ -53,6 +51,7 @@ from sklearn.metrics.pairwise import euclidean_distances
 from scipy import stats                 # KS Test
 from scipy.stats import f               # F-test
 from itertools import combinations
+import matplotlib.pyplot as plt
 
 
 def build(data, labels, xdim=10, ydim=5, alpha=.3, train=1000,
