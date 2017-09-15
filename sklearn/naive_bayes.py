@@ -151,12 +151,12 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(var_smoothing=1e-09, priors=None)
+    GaussianNB(priors=None, var_smoothing=1e-09)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB(var_smoothing=1e-09, priors=None)
+    GaussianNB(priors=None, var_smoothing=1e-09)
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
