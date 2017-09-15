@@ -411,6 +411,10 @@ class KNNImputer(BaseEstimator, TransformerMixin):
           array of distances, and returns an array of the same shape
           containing the weights.
 
+    metric : str, optional (default = "masked_euclidean")
+        Distance metric for searching neighbors. Possible values:
+        - 'masked_euclidean'
+
     row_max_missing : float, optional (default = 0.5)
         The maximum percentage of columns (i.e. features) that can be missing
         before the sample is excluded from nearest neighbor imputation. It
