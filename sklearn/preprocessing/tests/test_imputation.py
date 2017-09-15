@@ -290,10 +290,12 @@ def test_imputation_pickle():
 
         imputer_pickled = pickle.loads(pickle.dumps(imputer))
 
-        assert_array_almost_equal(imputer.transform(X.copy()),
-                                  imputer_pickled.transform(X.copy()),
-                                  err_msg="Fail to transform the data after pickling "
-                                  "(strategy = %s)" % (strategy))
+        assert_array_almost_equal(
+            imputer.transform(X.copy()),
+            imputer_pickled.transform(X.copy()),
+            err_msg="Fail to transform the data after pickling "
+            "(strategy = %s)" % (strategy)
+        )
 
 
 def test_imputation_copy():

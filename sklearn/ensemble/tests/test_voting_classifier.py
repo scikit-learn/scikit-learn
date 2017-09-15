@@ -1,7 +1,8 @@
 """Testing for the VotingClassifier"""
 
 import numpy as np
-from sklearn.utils.testing import assert_almost_equal, assert_array_equal, assert_array_almost_equal
+from sklearn.utils.testing import assert_almost_equal, assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal, assert_true, assert_false
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
@@ -423,5 +424,7 @@ def test_transform():
     assert_array_equal(eclf3.transform(X).shape, (3, 4, 2))
     assert_array_almost_equal(res.swapaxes(0, 1).reshape((4, 6)),
                               eclf2.transform(X))
-    assert_array_almost_equal(eclf3.transform(X).swapaxes(0, 1).reshape((4, 6)),
-                              eclf2.transform(X))
+    assert_array_almost_equal(
+            eclf3.transform(X).swapaxes(0, 1).reshape((4, 6)),
+            eclf2.transform(X)
+    )
