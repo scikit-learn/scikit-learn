@@ -64,7 +64,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     pip install statistics
 
-    pip install itertools
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
