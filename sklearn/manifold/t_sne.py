@@ -433,8 +433,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
         Trustworthiness of the low-dimensional embedding.
     """
     if precomputed:
-        warnings.warn("The flag 'precomputed' has been deprecated in version"
-                      "0.20 and will be removed in 0.22. See 'metric'"
+        warnings.warn("The flag 'precomputed' has been deprecated in version "
+                      "0.20 and will be removed in 0.22. See 'metric' "
                       "parameter instead.", DeprecationWarning)
         metric = 'precomputed'
     if metric == 'precomputed':
@@ -442,8 +442,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
     elif metric == 'euclidean':
         dist_X = pairwise_distances(X, metric='euclidean', squared=True)
     else:
-        warnings.warn("The metric '{}' seems not standard for computing"
-                      "trustworthiness.".format(metric))
+        warnings.warn("The metric '{}' seems not standard for computing "
+                      "trustworthiness.".format(metric), RuntimeWarning)
         dist_X = pairwise_distances(X, metric=metric)
     dist_X_embedded = pairwise_distances(X_embedded, squared=True)
     ind_X = np.argsort(dist_X, axis=1)

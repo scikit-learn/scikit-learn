@@ -14,6 +14,8 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_in
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities
@@ -288,6 +290,44 @@ def test_preserve_trustworthiness_approximately_with_precomputed_distances():
         X_embedded = tsne.fit_transform(D)
         t = trustworthiness(D, X_embedded, n_neighbors=1, metric="precomputed")
         assert t > .95
+
+
+def test_trustworthiness_precomputed_deprecation():
+    # NOTE: Remove this test in v0.23
+
+    # Use of the flag `precomputed` in trustworthiness parameters has been
+    # deprecated, but will still work until v0.23.
+    X = np.arange(100).reshape(50, 2)
+    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
+                              pairwise_distances(X), X, precomputed=True), 1.)
+    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
+                              pairwise_distances(X), X, metric='precomputed',
+                              precomputed=True), 1.)
+    # If a 'metric' different from 'precomputed' is specified, but the flag
+    # 'precomputed' is set to True, the flag overwrites the parameter 'metric'
+    # and so the 'precomputed' metric will be used. Indeed, in
+    # http://scikit-learn.org/stable/developers/contributing.html#deprecation,
+    # the old parameter overwrites the new parameter.
+    assert_raises(Exception, assert_warns, DeprecationWarning,
+                  trustworthiness, X, X, metric='euclidean', precomputed=True)
+    assert_equal(assert_warns(DeprecationWarning, trustworthiness,
+                              pairwise_distances(X), X, metric='euclidean',
+                              precomputed=True), 1.)
+
+
+def test_trustworthiness_unusual_metric():
+    # Other metrics than 'euclidean' and 'precomputed' are unusual and must
+    # raise a warning
+    X = np.arange(100).reshape(50, 2)
+    assert_warns(RuntimeWarning, trustworthiness, X, X, metric='manhattan')
+    # The example below illustrates why using a custom metric other than
+    # euclidean can be misleading, while testing the function in this case.
+    X = np.array([[1, 1], [1, 0], [2, 2]])
+    assert_equal(trustworthiness(X, X, n_neighbors=1, metric='euclidean'), 1.)
+    assert_almost_equal(assert_warns(RuntimeWarning, trustworthiness, X, X,
+                                     n_neighbors=1,
+                                     metric='cosine'),
+                        0.6, decimal=1)
 
 
 def test_early_exaggeration_too_small():
