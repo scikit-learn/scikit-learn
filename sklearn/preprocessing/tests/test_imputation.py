@@ -31,7 +31,7 @@ def _check_statistics(X, X_true,
               "axis = {0}, sparse = {1}" % (strategy, missing_values)
 
     assert_ae = assert_array_equal
-    if issubclass(X.dtype.type, np.float) or issubclass(X_true.dtype.type, np.float):
+    if X.dtype.kind == 'f' or X_true.dtype.kind == 'f':
         assert_ae = assert_array_almost_equal
 
     # Normal matrix, axis = 0
