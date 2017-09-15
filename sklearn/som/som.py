@@ -51,10 +51,11 @@ from scipy import stats                 # KS Test
 from scipy.stats import f               # F-test
 from itertools import combinations
 import matplotlib
-import matplotlib.pyplot as plt
-
 if os.environ.get('DISPLAY', '') == '':
     matplotlib.use('Agg')
+
+import matplotlib.pyplot as plt
+
 
 
 def build(data, labels, xdim=10, ydim=5, alpha=.3, train=1000,
