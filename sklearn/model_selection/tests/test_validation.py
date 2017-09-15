@@ -1152,80 +1152,78 @@ def test_cross_val_predict_sparse_prediction():
     assert_array_almost_equal(preds_sparse, preds)
 
 
-def check_cross_val_predict_with_method(est, X, y, method):
-    kfold = KFold()
+def check_cross_val_predict_with_method_binary(est, X, y, method):
+    """Helper for tests of cross_val_predict with binary classification"""
+    cv = KFold(n_splits=3, shuffle=False)
 
-    predictions = cross_val_predict(est, X, y, method=method)
-
-    # Check output sizes and prepare an empty array to hold
-    # expected predictions.
-    if isinstance(predictions, list):
-        assert_equal(len(predictions), y.shape[1])
-        for i in range(y.shape[1]):
-            assert_equal(len(predictions[i]), len(y))
-        expected_predictions = [np.zeros([len(y), len(set(y[:, i]))])
-                                for i in range(y.shape[1])]
+    # Generate expected outputs
+    if y.ndim == 1:
+        exp_shape = (len(X),) if method == 'decision_function' else (len(X), 2)
     else:
-        assert_equal(len(predictions), len(y))
-        expected_predictions = np.zeros_like(predictions)
+        exp_shape = y.shape
+    expected_predictions = np.zeros(exp_shape)
+    for train, test in cv.split(X, y):
+        est = clone(est).fit(X[train], y[train])
+        expected_predictions[test] = getattr(est, method)(X[test])
 
-    # Store classes in the full training set so we can properly
-    # order columns in predictions on subsets.
-    if y.ndim == 2:
-        classes = [np.unique(y[:, i]) for i in range(y.shape[1])]
-    else:
-        classes = np.unique(y)
+    # Check actual outputs for several representations of y
+    for tg in [y, y + 1, y - 2, y.astype('str')]:
+        assert_array_equal(cross_val_predict(est, X, tg, method=method, cv=cv),
+                           expected_predictions)
 
-    # Naive loop (should be same as cross_val_predict):
-    # This loop doesn't handle the case where the method is
-    # decision_function and there's a class missing from one fold.
-    for train, test in kfold.split(X, y):
-        est.fit(X[train], y[train])
-        func = getattr(est, method)
-        preds = func(X[test])
-        if isinstance(predictions, list):
-            for i_out in range(y.shape[1]):
-                col = np.searchsorted(classes[i_out],
-                                      np.unique(y[train, i_out]))
-                if preds[i_out].ndim == 1 and \
-                        expected_predictions[i_out].ndim == 1:
-                    # Get here for binary decision functions
-                    expected_predictions[i_out][test] = preds
-                else:
-                    indices = np.ix_(test, col)
-                    expected_predictions[i_out][indices] = preds[i_out]
+
+def check_cross_val_predict_with_method_multiclass(est, X, y, method):
+    """Helper for tests of cross_val_predict with multiclass classification"""
+    cv = KFold(n_splits=3, shuffle=False)
+
+    # Generate expected outputs
+    expected_predictions = np.zeros((len(X), len(set(y))))
+    _, y_enc = np.unique(y, return_inverse=True)
+    for train, test in cv.split(X, y_enc):
+        est = clone(est).fit(X[train], y_enc[train])
+        fold_preds = getattr(est, method)(X[test])
+        i_cols_fit = np.unique(y_enc[train])
+        expected_predictions[np.ix_(test, i_cols_fit)] = fold_preds
+
+    # Check actual outputs for several representations of y
+    for tg in [y, y + 1, y - 2, y.astype('str')]:
+        assert_array_equal(cross_val_predict(est, X, tg, method=method, cv=cv),
+                           expected_predictions)
+
+
+def check_cross_val_predict_with_method_multilabel(est, X, y, method):
+    """Check the output of cross_val_predict for 2D targets using
+    Estimators which provide a predictions as a list with one
+    element per class.
+    """
+    cv = KFold(n_splits=3, shuffle=False)
+
+    # Create empty arrays of the correct size to hold outputs
+    n_targets = y.shape[1]
+    expected_preds = []
+    for i_col in range(n_targets):
+        n_classes_in_label = len(set(y[:, i_col]))
+        if n_classes_in_label == 2 and method == 'decision_function':
+            exp_shape = (len(X),)
         else:
-            if isinstance(classes, list):
-                # In this case, we'll assume all classes are present
-                # in each CV fold.
-                col = np.arange(len(classes))
-                assert_equal(expected_predictions.shape[1], preds.shape[1])
-            else:
-                col = np.searchsorted(classes, np.unique(y[train]))
-            if preds.ndim == 1 and expected_predictions.ndim == 1:
-                # Get here for binary decision functions
-                expected_predictions[test] = preds
-            else:
-                expected_predictions[np.ix_(test, col)] = preds
+            exp_shape = (len(X), n_classes_in_label)
+        expected_preds.append(np.zeros(exp_shape))
 
-    predictions = cross_val_predict(est, X, y, method=method,
-                                    cv=kfold)
-    assert_array_equal_maybe_list(expected_predictions, predictions)
+    # Generate expected outputs
+    y_enc_cols = [np.unique(y[:, i], return_inverse=True)[1][:, np.newaxis]
+                  for i in range(y.shape[1])]
+    y_enc = np.concatenate(y_enc_cols, axis=1)
+    for train, test in cv.split(X, y_enc):
+        est = clone(est).fit(X[train], y_enc[train])
+        fold_preds = getattr(est, method)(X[test])
+        for i_col in range(n_targets):
+            i_cols_fit = np.unique(y_enc[train][:, i_col])
+            expected_preds[i_col][np.ix_(test, i_cols_fit)] = fold_preds[i_col]
 
-    # Test alternative representations of y
-    predictions_y1 = cross_val_predict(est, X, y + 1, method=method,
-                                       cv=kfold)
-    assert_array_equal_maybe_list(predictions, predictions_y1)
-
-    predictions_y2 = cross_val_predict(est, X, y - 2, method=method,
-                                       cv=kfold)
-    assert_array_equal_maybe_list(predictions, predictions_y2)
-
-    predictions_ystr = cross_val_predict(est, X, y.astype('str'),
-                                         method=method, cv=kfold)
-    assert_array_equal_maybe_list(predictions, predictions_ystr)
-
-    return predictions
+    # Check actual outputs for several representations of y
+    for tg in [y, y + 1, y - 2, y.astype('str')]:
+        cv_predict_output = cross_val_predict(est, X, tg, method=method, cv=cv)
+        assert_array_equal_maybe_list(cv_predict_output, expected_preds)
 
 
 def assert_array_equal_maybe_list(x, y):
@@ -1237,23 +1235,22 @@ def assert_array_equal_maybe_list(x, y):
         assert_array_equal(x, y)
 
 
-def test_cross_val_predict_binary_decision_function():
-    # The decision_function with two classes is a special case:
-    # it has only one column of output.
+def test_cross_val_predict_with_method_binary():
+    # This test includes the decision_function with two classes.
+    # This is a special case: it has only one column of output.
     X, y = make_classification(n_classes=2, random_state=0)
-    est = LogisticRegression()
-    out = check_cross_val_predict_with_method(est, X, y, 'decision_function')
-    assert_array_equal(out.shape, (len(X),))
+    for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
+        est = LogisticRegression()
+        check_cross_val_predict_with_method_binary(est, X, y, method)
 
 
-def test_cross_val_predict_with_method():
+def test_cross_val_predict_with_method_multiclass():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         est = LogisticRegression()
-        out = check_cross_val_predict_with_method(est, X, y, method)
-        assert_array_equal(out.shape, (len(X), len(set(y))))
+        check_cross_val_predict_with_method_multiclass(est, X, y, method)
 
 
 def test_cross_val_predict_method_checking():
@@ -1264,7 +1261,7 @@ def test_cross_val_predict_method_checking():
     X, y = shuffle(X, y, random_state=0)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         est = SGDClassifier(loss='log', random_state=2)
-        check_cross_val_predict_with_method(est, X, y, method)
+        check_cross_val_predict_with_method_multiclass(est, X, y, method)
 
 
 def test_gridsearchcv_cross_val_predict_with_method():
@@ -1275,8 +1272,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
                        {'C': [0.1, 1]},
                        cv=2)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
-        out = check_cross_val_predict_with_method(est, X, y, method)
-        assert_array_equal(out.shape, (len(X), len(set(y))))
+        check_cross_val_predict_with_method_multiclass(est, X, y, method)
 
 
 def test_cross_val_predict_with_method_multilabel_ovr():
@@ -1290,8 +1286,7 @@ def test_cross_val_predict_with_method_multilabel_ovr():
                                           random_state=42)
     est = OneVsRestClassifier(LogisticRegression(random_state=0))
     for method in ['predict_proba', 'decision_function']:
-        out = check_cross_val_predict_with_method(est, X, y, method=method)
-        assert_array_equal(out.shape, (n_samp, n_classes))
+        check_cross_val_predict_with_method_binary(est, X, y, method=method)
 
 
 def test_cross_val_predict_with_method_multilabel_rf():
@@ -1303,12 +1298,13 @@ def test_cross_val_predict_with_method_multilabel_rf():
                                           n_classes=n_classes, n_features=5,
                                           random_state=42)
     y[:, 0] += y[:, 1]  # Put three classes in the first column
-    est = RandomForestClassifier(n_estimators=5, random_state=0)
-    out = check_cross_val_predict_with_method(est, X, y,
-                                              method='predict_proba')
-    assert_array_equal(out[0].shape, (len(X), 3))
-    for i_output in range(1, n_classes):
-        assert_array_equal(out[i_output].shape, (len(X), 2))
+    for method in ['predict_proba', 'predict_log_proba']:
+        est = RandomForestClassifier(n_estimators=5, random_state=0)
+        with warnings.catch_warnings():
+            # Suppress "RuntimeWarning: divide by zero encountered in log"
+            warnings.simplefilter('ignore')
+            check_cross_val_predict_with_method_multilabel(
+                est, X, y, method=method)
 
 
 def test_cross_val_predict_with_method_rare_class():
@@ -1322,8 +1318,7 @@ def test_cross_val_predict_with_method_rare_class():
         with warnings.catch_warnings():
             # Suppress warning about too few examples of a class
             warnings.simplefilter('ignore')
-            out = check_cross_val_predict_with_method(est, X, y, method)
-        assert_array_equal(out.shape, (len(X), len(set(y))))
+            check_cross_val_predict_with_method_multiclass(est, X, y, method)
 
 
 def test_cross_val_predict_with_method_multilabel_rf_rare_class():
@@ -1335,11 +1330,13 @@ def test_cross_val_predict_with_method_multilabel_rf_rare_class():
     rng = np.random.RandomState(0)
     X = rng.normal(0, 1, size=(5, 10))
     y = np.array([[0, 0], [1, 1], [2, 1], [0, 1], [1, 0]])
-    est = RandomForestClassifier(n_estimators=5, random_state=0)
-    out = check_cross_val_predict_with_method(est, X, y,
-                                              method='predict_proba')
-    assert_array_equal(out[0].shape, (len(X), 3))
-    assert_array_equal(out[1].shape, (len(X), 2))
+    for method in ['predict_proba', 'predict_log_proba']:
+        est = RandomForestClassifier(n_estimators=5, random_state=0)
+        with warnings.catch_warnings():
+            # Suppress "RuntimeWarning: divide by zero encountered in log"
+            warnings.simplefilter('ignore')
+            check_cross_val_predict_with_method_multilabel(
+                est, X, y, method=method)
 
 
 def get_expected_predictions(X, y, cv, classes, est, method):
