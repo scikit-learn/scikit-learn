@@ -43,7 +43,6 @@ import sys
 import numpy as np
 import pandas as pd
 import seaborn as sns                   # Plot density by marginal
-# import vsom                           # Call vsom.f90 (Fortran package)
 import statsmodels.stats.api as sms     # t-test
 import statistics as stat               # F-test
 from random import randint
@@ -54,7 +53,7 @@ from itertools import combinations
 import matplotlib.pyplot as plt
 
 
-def build(data, labels, xdim=10, ydim=5, alpha=.3, train=1000,
+def build(data, labels, xdim=10, ydim=5, alpha=.3, train=100,
           algorithm="som"):
     """ build -- construct a SOM, returns an object of class 'map'
 
@@ -77,7 +76,7 @@ def build(data, labels, xdim=10, ydim=5, alpha=.3, train=1000,
      NOTE: default algorithm: "som" also available: "som_f"
 
     """
-    algorithms = ["som", "som_f"]
+    algorithms = ["som"]
 
     # check if the dims are reasonable
     if (xdim < 3 or ydim < 3):
@@ -95,15 +94,8 @@ def build(data, labels, xdim=10, ydim=5, alpha=.3, train=1000,
                          alpha=alpha,
                          train=train)
 
-    elif index_algorithm == 1:      # som by Fortran
-        neurons = vsom_f(data,
-                         xdim=xdim,
-                         ydim=ydim,
-                         alpha=alpha,
-                         train=train)
-
     else:
-        sys.exit("build only supports 'som','som_f'")
+        sys.exit("build only supports 'som'")
 
     map = {
             'data': data,
@@ -1336,39 +1328,6 @@ def vsom_p(data, xdim, ydim, alpha, train):
         # update step
         gamma_m = np.outer(Gamma(c), np.linspace(1, 1, nc))
         neurons = neurons - diff * gamma_m
-
-    return neurons
-
-
-def vsom_f(data, xdim, ydim, alpha, train):
-    """ vsom_f - vectorized and optimized version of the stochastic SOM
-                 training algorithm written in Fortran90
-
-    """
-
-    # some constants
-    dr = data.shape[0]
-    dc = data.shape[1]
-    nr = xdim*ydim
-    nc = dc  # dim of data and neurons is the same
-
-    # build and initialize the matrix holding the neurons
-    cells = nr * nc        # no. of neurons times number of data dimensions
-
-    # vector with small init values for all neurons
-    v = np.random.uniform(-1, 1, cells)
-
-    # NOTE: each row represents a neuron, each column represents a dimension.
-    neurons = np.reshape(v, (nr, nc))  # rearrange the vector as matrix
-
-    neurons = vsom.vsom(neurons,
-                        np.array(data),
-                        xdim,
-                        ydim,
-                        alpha,
-                        train,
-                        dr,
-                        dc)
 
     return neurons
 
