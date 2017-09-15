@@ -6,23 +6,22 @@ This example shows the different glvq algorithms and how they project
 different data sets. The data sets are chosen to show the strength of each algorithm.
 Each plot shows for each datapoint which class it belongs to (big circle) and
 which class it was classified to (smaller circle). It also shows the
-prototypes (light blue circle). The projected data is shown in the right plot
+prototypes (light blue circle). The projected data is shown in the right plot.
 
 """
 print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.glvq.plotting import project_plot2d
-from sklearn.utils.multiclass import unique_labels
+from sklearn.glvq import project_plot2d
+from sklearn.glvq import GlvqModel
+from sklearn.glvq import GrlvqModel
+from sklearn.glvq import GmlvqModel
+from sklearn.glvq import LgmlvqModel
 
-from sklearn.glvq.gmlvq import GmlvqModel
-from sklearn.glvq.grlvq import GrlvqModel
-from sklearn.glvq.lgmlvq import LgmlvqModel
-
-from sklearn.glvq.glvq import GlvqModel
 
 nb_ppc = 100
+print('GLVQ:')
 toy_data = np.append(np.random.multivariate_normal([0, 0], np.eye(2)/2, size=nb_ppc),
                      np.random.multivariate_normal([5, 0], np.eye(2)/2, size=nb_ppc), axis=0)
 toy_label = np.append(np.zeros(nb_ppc), np.ones(nb_ppc), axis=0)
@@ -38,30 +37,32 @@ plt.scatter(glvq.w_[:, 0], glvq.w_[:, 1])
 plt.axis('equal')
 f.show()
 
+print('classification accuracy:', glvq.score(toy_data,toy_label))
+
+print('GRLVQ:')
 toy_data = np.append(np.random.multivariate_normal([0, 0], np.array([[0.3,0],[0,4]]), size=nb_ppc),
                      np.random.multivariate_normal([4, 4], np.array([[0.3,0],[0,4]]), size=nb_ppc), axis=0)
 grlvq = GrlvqModel()
 grlvq.fit(toy_data,toy_label)
-project_plot2d(grlvq,toy_data,toy_label,2)
+project_plot2d(grlvq,toy_data,toy_label,2, 'grlvq')
 
-print('grlvq:',grlvq.score(toy_data,toy_label))
-print('gvlq:', glvq.score(toy_data,toy_label))
+print('classification accuracy:',grlvq.score(toy_data,toy_label))
 
+print('GMLVQ:')
 toy_data = np.append(np.random.multivariate_normal([0, 0], np.array([[5,4],[4,6]]), size=nb_ppc),
                     np.random.multivariate_normal([9, 0], np.array([[5,4],[4,6]]), size=nb_ppc), axis=0)
 gmlvq = GmlvqModel()
 gmlvq.fit(toy_data,toy_label)
-project_plot2d(gmlvq,toy_data,toy_label,3)
+project_plot2d(gmlvq,toy_data,toy_label,3, 'gmlvq')
 
-print('gmlvq:',gmlvq.score(toy_data,toy_label))
-print('gvlq:', glvq.score(toy_data,toy_label))
+print('classification accuracy:',gmlvq.score(toy_data,toy_label))
 
+print('LGMLVQ:')
 toy_data = np.append(np.random.multivariate_normal([0, 1], np.array([[5,-4],[-4,6]]), size=nb_ppc),
                      np.random.multivariate_normal([0, 0], np.array([[5,4],[4,6]]), size=nb_ppc), axis=0)
 lgmlvq = LgmlvqModel()
 lgmlvq.fit(toy_data,toy_label)
-project_plot2d(lgmlvq, toy_data, toy_label, 4)
+project_plot2d(lgmlvq, toy_data, toy_label, 4, 'lgmlvq')
 
-print('lgmlvq:',lgmlvq.score(toy_data,toy_label))
-print('gvlq:', glvq.score(toy_data,toy_label))
+print('classification accuracy:',lgmlvq.score(toy_data,toy_label))
 plt.show()

@@ -77,7 +77,7 @@ class GmlvqModel(GlvqModel):
 
     See also
     --------
-    GLVQ, GRLVQ, LGMLVQ
+    GlvqModel, GrlvqModel, LgmlvqModel
     """
 
     def __init__(self, prototypes_per_class=1, initial_prototypes=None, initial_matrix=None, regularization=0.0,
@@ -87,7 +87,7 @@ class GmlvqModel(GlvqModel):
         self.initial_matrix = initial_matrix
         self.initialdim = dim
 
-    def optgrad(self, variables, training_data, label_equals_prototype, random_state, lr_relevances=0, lr_prototypes=1):
+    def _optgrad(self, variables, training_data, label_equals_prototype, random_state, lr_relevances=0, lr_prototypes=1):
         n_data, n_dim = training_data.shape
         variables = variables.reshape(variables.size // n_dim, n_dim)
         nb_prototypes = self.c_w_.shape[0]
@@ -138,7 +138,7 @@ class GmlvqModel(GlvqModel):
         G = G * (1 + 0.0001 * random_state.rand(*G.shape) - 0.5)
         return G.ravel()
 
-    def optfun(self, variables, training_data, label_equals_prototype):
+    def _optfun(self, variables, training_data, label_equals_prototype):
         n_data, n_dim = training_data.shape
         variables = variables.reshape(variables.size // n_dim, n_dim)
         nb_prototypes = self.c_w_.shape[0]
@@ -191,20 +191,20 @@ class GmlvqModel(GlvqModel):
         label_equals_prototype = y[np.newaxis].T == self.c_w_
         method = 'l-bfgs-b'
         res = minimize(
-            fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
-            jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
+            fun=lambda x: self._optfun(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self._optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
                                        lr_prototypes=1, lr_relevances=0),
             method=method, x0=variables, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = res.nit
         res = minimize(
-            fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
-            jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
+            fun=lambda x: self._optfun(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self._optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
                                        lr_prototypes=0, lr_relevances=1),
             method=method, x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         res = minimize(
-            fun=lambda x: self.optfun(x, X, label_equals_prototype=label_equals_prototype),
-            jac=lambda x: self.optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
+            fun=lambda x: self._optfun(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self._optgrad(x, X, label_equals_prototype=label_equals_prototype, random_state=random_state,
                                        lr_prototypes=1, lr_relevances=1),
             method=method, x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
@@ -226,8 +226,9 @@ class GmlvqModel(GlvqModel):
             distance[i] = np.sum((X - w[i]).dot(omega.T) ** 2, 1)
         return distance.T
 
-    def project(self, X, dims):
+    def project(self, X, dims, print_variance_coverd=False):
         v, u = np.linalg.eig(self.omega_.conj().T.dot(self.omega_))
         idx = v.argsort()[::-1]
-        print('projection procent:', v[idx][:dims].sum() / v.sum())
+        if print_variance_coverd:
+            print('variance coverd by projection:', v[idx][:dims].sum() / v.sum() * 100)
         return X.dot(u[:, idx][:, :dims].dot(np.diag(np.sqrt(v[idx][:dims]))))

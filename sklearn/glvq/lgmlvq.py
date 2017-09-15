@@ -80,7 +80,7 @@ class LgmlvqModel(GlvqModel):
 
     See also
     --------
-    GLVQ, GRLVQ, GMLVQ
+    GlvqModel, GrlvqModel, GmlvqModel
     """
 
     def __init__(self, prototypes_per_class=1, initial_prototypes=None, initial_matrices=None, regularization=0.0,
@@ -91,7 +91,7 @@ class LgmlvqModel(GlvqModel):
         self.classwise = classwise
         self.initialdim = dim
 
-    def g(self, variables, training_data, label_equals_prototype, random_state, lr_relevances=0,
+    def _g(self, variables, training_data, label_equals_prototype, random_state, lr_relevances=0,
           lr_prototypes=1):
         # print("g")
         nb_samples, nb_features = training_data.shape
@@ -155,7 +155,7 @@ class LgmlvqModel(GlvqModel):
         G = G * (1 + 0.0001 * random_state.rand(*G.shape) - 0.5)
         return G.ravel()
 
-    def f(self, variables, training_data, label_equals_prototype):
+    def _f(self, variables, training_data, label_equals_prototype):
         # print("f")
         nb_samples, nb_features = training_data.shape
         nb_prototypes = self.c_w_.shape[0]
@@ -255,22 +255,22 @@ class LgmlvqModel(GlvqModel):
         variables = np.append(self.w_, np.concatenate(self.omegas_), axis=0)
         label_equals_prototype = y[np.newaxis].T == self.c_w_
         res = minimize(
-            fun=lambda x: self.f(x, X, label_equals_prototype=label_equals_prototype),
-            jac=lambda x: self.g(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
+            fun=lambda x: self._f(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self._g(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
                                  lr_relevances=0, random_state=random_state),
             method='L-BFGS-B',
             x0=variables, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = res.nit
         res = minimize(
-            fun=lambda x: self.f(x, X, label_equals_prototype=label_equals_prototype),
-            jac=lambda x: self.g(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=0,
+            fun=lambda x: self._f(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self._g(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=0,
                                  lr_relevances=1, random_state=random_state),
             method='L-BFGS-B',
             x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         res = minimize(
-            fun=lambda x: self.f(x, X, label_equals_prototype=label_equals_prototype),
-            jac=lambda x: self.g(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
+            fun=lambda x: self._f(x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self._g(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
                                  lr_relevances=1, random_state=random_state),
             method='L-BFGS-B',
             x0=res.x, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
@@ -300,7 +300,7 @@ class LgmlvqModel(GlvqModel):
             distance[i] = np.sum(np.dot(X - w[i], psis[matrixIdx].conj().T) ** 2, 1)
         return np.transpose(distance)
 
-    def project(self, X, prototype_idx, dims):
+    def project(self, X, prototype_idx, dims, print_variance_coverd=False):
         nb_prototypes = self.w_.shape[0]
         if len(self.omegas_) != nb_prototypes or self.prototypes_per_class != 1:
             print('project only possible with classwise relevance matrix')
@@ -309,5 +309,6 @@ class LgmlvqModel(GlvqModel):
         idx = v.argsort()[::-1]
         # out[y == self.c_w_[prototype_idx]] = X[y == self.c_w_[prototype_idx]].dot(
         #    u[:, idx][:, -dims:].dot(np.diag(np.sqrt(v[idx][-dims:]))))
-        print('projection procent:', v[idx][:dims].sum() / v.sum())
+        if print_variance_coverd:
+            print('variance coverd by projection:', v[idx][:dims].sum() / v.sum() * 100)
         return X.dot(u[:, idx][:, :dims].dot(np.diag(np.sqrt(v[idx][:dims]))))

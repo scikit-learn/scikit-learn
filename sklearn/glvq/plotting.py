@@ -23,7 +23,7 @@ def project_plot2d(model, X, y, figure, title=""):
     f.suptitle(title)
     pred = model.predict(X)
 
-    if hasattr(model, 'psis_'):
+    if hasattr(model, 'omegas_'):
         nb_prototype = model.w_.shape[0]
         ax = f.add_subplot(1, nb_prototype + 1, 1)
         ax.scatter(X[:, 0], X[:, 1], c=y, alpha=0.5)
@@ -31,7 +31,7 @@ def project_plot2d(model, X, y, figure, title=""):
         ax.scatter(model.w_[:, 0], model.w_[:, 1])
         ax.axis('equal')
         for i in range(nb_prototype):
-            X_p = model.project(X, i, dim)
+            X_p = model.project(X, i, dim, print_variance_coverd=True)
             w_p = model.project(model.w_[i], i, dim)
 
             ax = f.add_subplot(1, nb_prototype + 1, i + 2)
@@ -46,7 +46,7 @@ def project_plot2d(model, X, y, figure, title=""):
         ax.scatter(X[:, 0], X[:, 1], c=pred, marker='.')
         ax.scatter(model.w_[:, 0], model.w_[:, 1])
         ax.axis('equal')
-        X_p = model.project(X, dim)
+        X_p = model.project(X, dim, print_variance_coverd=True)
         w_p = model.project(model.w_, dim)
 
         ax = f.add_subplot(122)

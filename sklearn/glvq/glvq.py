@@ -68,7 +68,7 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
 
     See also
     --------
-    GRLVQ, GMLVQ, LGMLVQ
+    GrlvqModel, GmlvqModel, LgmlvqModel
     """
 
     def __init__(self, prototypes_per_class=1, initial_prototypes=None, max_iter=2500, gtol=1e-5,
@@ -80,7 +80,7 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         self.max_iter = max_iter
         self.gtol = gtol
 
-    def optgrad(self, variables, training_data, label_equals_prototype, random_state):
+    def _optgrad(self, variables, training_data, label_equals_prototype, random_state):
         n_data, n_dim = training_data.shape
         nb_prototypes = self.c_w_.size
         prototypes = variables.reshape(nb_prototypes, n_dim)
@@ -114,7 +114,7 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         G = G * (1 + 0.0001 * random_state.rand(*G.shape) - 0.5)
         return G.ravel()
 
-    def optfun(self, variables, training_data, label_equals_prototype):
+    def _optfun(self, variables, training_data, label_equals_prototype):
         n_data, n_dim = training_data.shape
         nb_prototypes = self.c_w_.size
         prototypes = variables.reshape(nb_prototypes, n_dim)
@@ -192,8 +192,8 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
     def _optimize(self, X, y, random_state):
         label_equals_prototype = y[np.newaxis].T == self.c_w_
         res = minimize(
-            fun=lambda x: self.optfun(variables=x, training_data=X, label_equals_prototype=label_equals_prototype),
-            jac=lambda x: self.optgrad(variables=x, training_data=X, label_equals_prototype=label_equals_prototype,
+            fun=lambda x: self._optfun(variables=x, training_data=X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self._optgrad(variables=x, training_data=X, label_equals_prototype=label_equals_prototype,
                                        random_state=random_state),
             method='l-bfgs-b', x0=self.w_, options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
         self.w_ = res.x.reshape(self.w_.shape)
