@@ -764,7 +764,7 @@ class TSNE(BaseEstimator):
         # Laurens van der Maaten, 2009.
         degrees_of_freedom = max(self.n_components - 1.0, 1)
 
-        return self._tsne(P, degrees_of_freedom, n_samples, random_state,
+        return self._tsne(P, degrees_of_freedom, n_samples,
                           X_embedded=X_embedded,
                           neighbors=neighbors_nn,
                           skip_num_points=skip_num_points)
@@ -775,7 +775,7 @@ class TSNE(BaseEstimator):
     def n_iter_final(self):
         return self.n_iter_
 
-    def _tsne(self, P, degrees_of_freedom, n_samples, random_state, X_embedded,
+    def _tsne(self, P, degrees_of_freedom, n_samples, X_embedded,
               neighbors=None, skip_num_points=0):
         """Runs t-SNE."""
         # t-SNE minimizes the Kullback-Leiber divergence of the Gaussians P
