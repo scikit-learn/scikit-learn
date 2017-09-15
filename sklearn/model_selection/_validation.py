@@ -118,7 +118,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return_train_score : boolean, optional
         Whether to include train scores in the return dict if ``scoring`` is
         of multimetric type.
-        Current default is ``'warn'``, which behaves as ``True`` in addition
+        Current default is ``'warn'``, which behaves as ``False`` in addition
         to raising a warning that default will be changed to ``False``
         in 0.22.
 
@@ -158,7 +158,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     Single metric evaluation using ``cross_validate``
 
-    >>> cv_results = cross_validate(lasso, X, y, return_train_score="warn")
+    >>> cv_results = cross_validate(lasso, X, y, return_train_score=False)
     >>> sorted(cv_results.keys())                         # doctest: +ELLIPSIS
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']    # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
