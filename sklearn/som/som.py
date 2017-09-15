@@ -39,7 +39,7 @@
 # ##
 
 import sys
-
+import os
 import numpy as np
 import pandas as pd
 import seaborn as sns                   # Plot density by marginal
@@ -50,10 +50,10 @@ from sklearn.metrics.pairwise import euclidean_distances
 from scipy import stats                 # KS Test
 from scipy.stats import f               # F-test
 from itertools import combinations
-
+import matplotlib
 import matplotlib.pyplot as plt
 
-if os.environ.get('DISPLAY','') == '':
+if os.environ.get('DISPLAY', '') == '':
     matplotlib.use('Agg')
 
 
