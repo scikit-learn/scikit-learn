@@ -60,6 +60,9 @@ matrix:
     # We are using this to allow failures for DISTRIB=scipy-dev-wheels
     - python: 3.5
 
+before_install:
+  - sudo apt-get install python-matplotlib
+
 install: source build_tools/travis/install.sh
 script: bash build_tools/travis/test_script.sh
 after_success: source build_tools/travis/after_success.sh
