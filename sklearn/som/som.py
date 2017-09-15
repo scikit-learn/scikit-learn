@@ -42,7 +42,6 @@ import sys
 
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns                   # Plot density by marginal
 import statsmodels.stats.api as sms     # t-test
 import statistics as stat               # F-test
@@ -52,6 +51,8 @@ from scipy import stats                 # KS Test
 from scipy.stats import f               # F-test
 from itertools import combinations
 
+import matplotlib.pyplot as plt
+matplotlib.use('Agg')
 
 def build(data, labels, xdim=10, ydim=5, alpha=.3, train=1000,
           algorithm="som"):
