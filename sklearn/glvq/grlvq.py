@@ -29,28 +29,32 @@ class GrlvqModel(GlvqModel):
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    initial_prototypes : array-like, shape =  [n_prototypes, n_features + 1], optional
-        Prototypes to start with. If not given initialization near the class means.
-        Class label must be placed as last entry of each prototype
+    initial_prototypes : array-like, shape = [n_prototypes, n_features + 1],
+    optional
+        Prototypes to start with. If not given initialization near the class
+         means. Class label must be placed as last entry of each prototype.
 
     prototypes_per_class : int or list of int, optional (default=1)
-        Number of prototypes per class. Use list to specify different numbers per class
+        Number of prototypes per class. Use list to specify different
+        numbers per class.
 
     display: boolean, optional (default=False)
-        Print information about the bfgs steps
+        Print information about the bfgs steps.
 
     max_iter: int, optional (default=2500)
-        The maximum number of iterations
+        The maximum number of iterations.
 
     gtol: float, optional (default=1e-5)
-        Gradient norm must be less than gtol before successful termination of l-bfgs-b.
+        Gradient norm must be less than gtol before successful termination
+        of l-bfgs-b.
 
     regularization: float, optional (default=0.0)
-        Value between 0 and 1. Regularization is done by the log determinant of the relevance matrix.
-        Without regularization relevances may degenerate to zero.
+        Value between 0 and 1. Regularization is done by the log determinant
+        of the relevance matrix. Without regularization relevances may
+        degenerate to zero.
 
     initial_relevances: array-like, shape = [n_prototypes], optional
-        Relevances to start with. If not given all relevances are equal
+        Relevances to start with. If not given all relevances are equal.
 
 
     Attributes
@@ -74,18 +78,23 @@ class GrlvqModel(GlvqModel):
     GlvqModel, GmlvqModel, LgmlvqModel
     """
 
-    def __init__(self, prototypes_per_class=1, initial_prototypes=None, initial_relevances=None, regularization=0.0,
+    def __init__(self, prototypes_per_class=1, initial_prototypes=None,
+                 initial_relevances=None, regularization=0.0,
                  max_iter=2500, gtol=1e-5, display=False, random_state=None):
-        super(GrlvqModel, self).__init__(prototypes_per_class, initial_prototypes, max_iter, gtol, display, random_state)
+        super(GrlvqModel, self).__init__(prototypes_per_class,
+                                         initial_prototypes, max_iter, gtol,
+                                         display, random_state)
         self.regularization = regularization
         self.initial_relevances = initial_relevances
 
-    def _optgrad(self, variables, training_data, label_equals_prototype, random_state, lr_relevances=0, lr_prototypes=1):
+    def _optgrad(self, variables, training_data, label_equals_prototype,
+                 random_state, lr_relevances=0, lr_prototypes=1):
         n_data, n_dim = training_data.shape
         variables = variables.reshape(variables.size // n_dim, n_dim)
         nb_prototypes = self.c_w_.shape[0]
         omegaT = variables[nb_prototypes:].conj().T
-        dist = _squared_euclidean(training_data.dot(omegaT), variables[:nb_prototypes].dot(omegaT))
+        dist = _squared_euclidean(training_data.dot(omegaT),
+                                  variables[:nb_prototypes].dot(omegaT))
         d_wrong = dist.copy()
         d_wrong[label_equals_prototype] = np.inf
         distwrong = d_wrong.min(1)
@@ -113,8 +122,9 @@ class GrlvqModel(GlvqModel):
             if lr_relevances > 0:
                 difc = training_data[idxc] - variables[i]
                 difw = training_data[idxw] - variables[i]
-                Gw = Gw - np.dot(difw * dcd[np.newaxis].T, omegaT).T.dot(difw) + \
-                     np.dot(difc * dwd[np.newaxis].T, omegaT).T.dot(difc)
+                Gw = Gw - np.dot(difw * dcd[np.newaxis].T, omegaT).T \
+                    .dot(difw) + np.dot(difc * dwd[np.newaxis].T,
+                                        omegaT).T.dot(difc)
                 if lr_prototypes > 0:
                     G[i] = dcd.dot(difw) - dwd.dot(difc)
             elif lr_prototypes > 0:
@@ -125,9 +135,11 @@ class GrlvqModel(GlvqModel):
         if self.regularization:
             f3 = np.linalg.pinv(omegaT.conj().T).conj().T
         if lr_relevances > 0:
-            G[nb_prototypes:] = 2 / n_data * lr_relevances * Gw - self.regularization * f3
+            G[nb_prototypes:] = 2 / n_data * lr_relevances * \
+                                Gw - self.regularization * f3
         if lr_prototypes > 0:
-            G[:nb_prototypes] = 1 / n_data * lr_prototypes * G[:nb_prototypes].dot(omegaT.dot(omegaT.T))
+            G[:nb_prototypes] = 1 / n_data * lr_prototypes * \
+                                G[:nb_prototypes].dot(omegaT.dot(omegaT.T))
         G = G * (1 + 0.0001 * random_state.rand(*G.shape) - 0.5)
         return G.ravel()
 
@@ -137,9 +149,8 @@ class GrlvqModel(GlvqModel):
         nb_prototypes = self.c_w_.shape[0]
         omegaT = variables[nb_prototypes:]  # .conj().T
 
-        # dist = self._compute_distance(training_data, variables[:nb_prototypes],
-        #                          np.diag(omegaT))  # change dist function ?
-        dist = _squared_euclidean(training_data.dot(omegaT), variables[:nb_prototypes].dot(omegaT))
+        dist = _squared_euclidean(training_data.dot(omegaT),
+                                  variables[:nb_prototypes].dot(omegaT))
         d_wrong = dist.copy()
         d_wrong[label_equals_prototype] = np.inf
         distwrong = d_wrong.min(1)
@@ -153,47 +164,60 @@ class GrlvqModel(GlvqModel):
         mu = distcorectminuswrong / distcorrectpluswrong
 
         if self.regularization > 0:
-            regTerm = self.regularization * log(np.linalg.det(omegaT.conj().T.dot(omegaT)))
+            regTerm = self.regularization * log(
+                np.linalg.det(omegaT.conj().T.dot(omegaT)))
             return mu.sum(0) - regTerm  # f
         return mu.sum(0)
 
     def _optimize(self, X, y, random_state):
-        if not isinstance(self.regularization, float) or self.regularization < 0:
+        if not isinstance(self.regularization,
+                          float) or self.regularization < 0:
             raise ValueError("regularization must be a positive float")
         nb_prototypes, nb_features = self.w_.shape
         if self.initial_relevances is None:
             self.lambda_ = np.ones([nb_features])
         else:
             self.lambda_ = validation.column_or_1d(
-                validation.check_array(self.initial_relevances, dtype='float', ensure_2d=False))
+                validation.check_array(self.initial_relevances, dtype='float',
+                                       ensure_2d=False))
             if self.lambda_.size != nb_features:
                 raise ValueError("length of initial relevances is wrong"
                                  "features=%d"
-                                 "length=%d" % (nb_features, self.lambda_.size))
+                                 "length=%d" % (
+                                     nb_features, self.lambda_.size))
         self.lambda_ /= np.sum(self.lambda_)
         variables = np.append(self.w_, np.diag(np.sqrt(self.lambda_)), axis=0)
         label_equals_prototype = y[np.newaxis].T == self.c_w_
         method = 'l-bfgs-b'
         res = minimize(
-            fun=lambda x: self._optfun(x, X, label_equals_prototype=label_equals_prototype),
-            jac=lambda x: self._optgrad(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
-                                       lr_relevances=0, random_state=random_state),
+            fun=lambda x: self._optfun(
+                x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self._optgrad(
+                x, X, label_equals_prototype=label_equals_prototype,
+                lr_prototypes=1, lr_relevances=0, random_state=random_state),
             method=method, x0=variables,
-            options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            options={'disp': self.display, 'gtol': self.gtol,
+                     'maxiter': self.max_iter})
         n_iter = res.nit
         res = minimize(
-            fun=lambda x: self._optfun(x, X, label_equals_prototype=label_equals_prototype),
-            jac=lambda x: self._optgrad(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=0,
-                                       lr_relevances=1, random_state=random_state),
+            fun=lambda x: self._optfun(
+                x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self._optgrad(
+                x, X, label_equals_prototype=label_equals_prototype,
+                lr_prototypes=0, lr_relevances=1, random_state=random_state),
             method=method, x0=variables,
-            options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            options={'disp': self.display, 'gtol': self.gtol,
+                     'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         res = minimize(
-            fun=lambda x: self._optfun(x, X, label_equals_prototype=label_equals_prototype),
-            jac=lambda x: self._optgrad(x, X, label_equals_prototype=label_equals_prototype, lr_prototypes=1,
-                                       lr_relevances=1, random_state=random_state),
+            fun=lambda x: self._optfun(
+                x, X, label_equals_prototype=label_equals_prototype),
+            jac=lambda x: self._optgrad(
+                x, X, label_equals_prototype=label_equals_prototype,
+                lr_prototypes=1, lr_relevances=1, random_state=random_state),
             method=method, x0=variables,
-            options={'disp': self.display, 'gtol': self.gtol, 'maxiter': self.max_iter})
+            options={'disp': self.display, 'gtol': self.gtol,
+                     'maxiter': self.max_iter})
         n_iter = max(n_iter, res.nit)
         out = res.x.reshape(res.x.size // nb_features, nb_features)
         self.w_ = out[:nb_prototypes]
@@ -217,5 +241,6 @@ class GrlvqModel(GlvqModel):
     def project(self, X, dims, print_variance_coverd=False):
         idx = self.lambda_.argsort()[::-1]
         if print_variance_coverd:
-            print('variance coverd by projection:', self.lambda_[idx][:dims].sum() / self.lambda_.sum() * 100)
+            print('variance coverd by projection:',
+                  self.lambda_[idx][:dims].sum() / self.lambda_.sum() * 100)
         return X.dot(np.diag(self.lambda_)[idx][:, :dims])
