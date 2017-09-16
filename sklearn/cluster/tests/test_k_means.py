@@ -212,6 +212,20 @@ def test_k_means_plus_plus_init_2_jobs():
     _check_fitted_model(km)
 
 
+@if_safe_multiprocessing_with_blas
+def test_k_means_1_job_multiple_jobs():
+    # Regression test to ensure that n_jobs=1 and n_jobs!=1 give the same
+    # results (e.g. inertia_, cluster_centers_). See issue #9784.
+    if sys.version_info[:2] < (3, 4):
+        raise SkipTest(
+            "Possible multi-process bug with some BLAS under Python < 3.4")
+
+    km_1 = KMeans(n_clusters=n_clusters, n_jobs=1, random_state=42).fit(X)
+    km_2 = KMeans(n_clusters=n_clusters, n_jobs=2, random_state=42).fit(X)
+    assert km_1.inertia_ == km_2.inertia_
+    np.testing.assert_array_equal(km_1.cluster_centers_, km_2.cluster_centers_)
+
+
 def test_k_means_precompute_distances_flag():
     # check that a warning is raised if the precompute_distances flag is not
     # supported
