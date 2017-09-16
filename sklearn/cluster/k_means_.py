@@ -335,15 +335,18 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
     else:
         raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
                          " %s" % str(algorithm))
+
+    # Change seed to ensure variety for each n_init run
+    seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
     if n_jobs == 1:
         # For a single thread, less memory is needed if we just store one set
         # of the best results (as opposed to one set per run per thread).
-        for it in range(n_init):
+        for it, seed in zip(range(n_init), seeds):
             # run a k-means once
             labels, inertia, centers, n_iter_ = kmeans_single(
                 X, n_clusters, max_iter=max_iter, init=init, verbose=verbose,
                 precompute_distances=precompute_distances, tol=tol,
-                x_squared_norms=x_squared_norms, random_state=random_state)
+                x_squared_norms=x_squared_norms, random_state=seed)
             # determine if these results are the best so far
             if best_inertia is None or inertia < best_inertia:
                 best_labels = labels.copy()
@@ -352,13 +355,11 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
                 best_n_iter = n_iter_
     else:
         # parallelisation of k-means runs
-        seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         results = Parallel(n_jobs=n_jobs, verbose=0)(
             delayed(kmeans_single)(X, n_clusters, max_iter=max_iter, init=init,
                                    verbose=verbose, tol=tol,
                                    precompute_distances=precompute_distances,
                                    x_squared_norms=x_squared_norms,
-                                   # Change seed to ensure variety
                                    random_state=seed)
             for seed in seeds)
         # Get results with the lowest inertia
