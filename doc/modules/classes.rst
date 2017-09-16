@@ -604,7 +604,6 @@ Kernels:
    :toctree: generated/
    :template: function.rst
 
-   glvq.project_plot2d
 
 .. _isotonic_ref:
 

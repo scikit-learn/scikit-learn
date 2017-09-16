@@ -184,10 +184,7 @@ Dimensionality Reducation
 The relevances learned by a :class:`GrlvqModel` and the relevance matrices
 learned by a :class:`GmlvqModel` or a :class:`LgmlvqModel` can be applied for
 dimensionality reduction by projecting the data on the eigenvectors of
-the relevance matrix which correspond to the largest eigenvalues. This
-is the basis for the :func:`project_plot2d` function which can be used to obtain
-a 2D-visualization of data and a fitted model, even if the underlying
-data is high-dimensional.
+the relevance matrix which correspond to the largest eigenvalues.
 
 Implementation Details
 ======================

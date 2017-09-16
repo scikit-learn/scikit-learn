@@ -13,6 +13,5 @@ from .glvq import GlvqModel
 from .grlvq import GrlvqModel
 from .gmlvq import GmlvqModel
 from .lgmlvq import LgmlvqModel
-from .plotting import project_plot2d
 
-__all__ = ['GlvqModel','GrlvqModel','GmlvqModel','LgmlvqModel','project_plot2d']
+__all__ = ['GlvqModel','GrlvqModel','GmlvqModel','LgmlvqModel']
