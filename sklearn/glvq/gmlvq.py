@@ -22,44 +22,43 @@ class GmlvqModel(GlvqModel):
     Parameters
     ----------
 
-    random_state: int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    prototypes_per_class : int or list of int, optional (default=1)
+        Number of prototypes per class. Use list to specify different numbers
+        per class.
 
     initial_prototypes : array-like,
      shape =  [n_prototypes, n_features + 1], optional
         Prototypes to start with. If not given initialization near the class
         means. Class label must be placed as last entry of each prototype
 
-    prototypes_per_class : int or list of int, optional (default=1)
-        Number of prototypes per class. Use list to specify different numbers
-         per class.
-
-    display: boolean, optional (default=False)
-        Print information about the bfgs steps.
-
-    max_iter: int, optional (default=2500)
-        The maximum number of iterations.
-
-    gtol: float, optional (default=1e-5)
-        Gradient norm must be less than gtol before successful
-        termination of l-bfgs-b.
-
-    regularization: float, optional (default=0.0)
-        Value between 0 and 1. Regularization is done by the log determinant
-        of the relevance matrix. Without regularization relevances may
-        degenerate to zero.
-
-    initial_matrix: array-like, shape = [dim, n_features], optional
+    initial_matrix : array-like, shape = [dim, n_features], optional
         Relevance matrix to start with.
         If not given random initialization for rectangular matrix and unity
         for squared matrix.
 
-    dim: int, optional (default=nb_features)
+    regularization : float, optional (default=0.0)
+        Value between 0 and 1. Regularization is done by the log determinant
+        of the relevance matrix. Without regularization relevances may
+        degenerate to zero.
+
+    dim : int, optional (default=nb_features)
         Maximum rank or projection dimensions
 
+    max_iter : int, optional (default=2500)
+        The maximum number of iterations.
+
+    gtol : float, optional (default=1e-5)
+        Gradient norm must be less than gtol before successful
+        termination of l-bfgs-b.
+
+    display : boolean, optional (default=False)
+        Print information about the bfgs steps.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -258,10 +257,27 @@ class GmlvqModel(GlvqModel):
             distance[i] = np.sum((X - w[i]).dot(omega.T) ** 2, 1)
         return distance.T
 
-    def project(self, X, dims, print_variance_coverd=False):
+    def project(self, X, dims, print_variance_covered=False):
+        """Projects the data input data X using the relevance matrix of trained
+        model to dimension dim
+
+        Parameters
+        ----------
+        X : array-like, shape = [n,n_features]
+          input data for project
+        dims : int
+          dimension to project to
+        print_variance_covered : boolean
+          flag to print the covered variance of the projection
+
+        Returns
+        --------
+        C : array, shape = [n,n_features]
+            Returns predicted values.
+        """
         v, u = np.linalg.eig(self.omega_.conj().T.dot(self.omega_))
         idx = v.argsort()[::-1]
-        if print_variance_coverd:
+        if print_variance_covered:
             print('variance coverd by projection:',
                   v[idx][:dims].sum() / v.sum() * 100)
         return X.dot(u[:, idx][:, :dims].dot(np.diag(np.sqrt(v[idx][:dims]))))

@@ -1,11 +1,3 @@
-import numpy as np
-import matplotlib.pyplot as plt
-
-from sklearn.glvq import GlvqModel
-from sklearn.glvq import GrlvqModel
-from sklearn.glvq import GmlvqModel
-from sklearn.glvq import LgmlvqModel
-
 """
 =========================================================
 Generalized Learning Vector Quantization Example
@@ -18,6 +10,14 @@ shows the prototypes (light blue circle). The projected data is shown in the
 right plot.
 
 """
+import numpy as np
+import matplotlib.pyplot as plt
+
+from sklearn.glvq import GlvqModel
+from sklearn.glvq import GrlvqModel
+from sklearn.glvq import GmlvqModel
+from sklearn.glvq import LgmlvqModel
+
 print(__doc__)
 
 
@@ -47,7 +47,7 @@ def project_plot2d(model, X, y, figure, title=""):
         ax.scatter(model.w_[:, 0], model.w_[:, 1])
         ax.axis('equal')
         for i in range(nb_prototype):
-            X_p = model.project(X, i, dim, print_variance_coverd=True)
+            X_p = model.project(X, i, dim, print_variance_covered=True)
             w_p = model.project(model.w_[i], i, dim)
 
             ax = f.add_subplot(1, nb_prototype + 1, i + 2)
@@ -62,7 +62,7 @@ def project_plot2d(model, X, y, figure, title=""):
         ax.scatter(X[:, 0], X[:, 1], c=pred, marker='.')
         ax.scatter(model.w_[:, 0], model.w_[:, 1])
         ax.axis('equal')
-        X_p = model.project(X, dim, print_variance_coverd=True)
+        X_p = model.project(X, dim, print_variance_covered=True)
         w_p = model.project(model.w_, dim)
 
         ax = f.add_subplot(122)

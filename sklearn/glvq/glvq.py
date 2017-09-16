@@ -32,31 +32,30 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
     Parameters
     ----------
 
-    random_state: int, RandomState instance or None, optional
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    prototypes_per_class : int or list of int, optional (default=1)
+        Number of prototypes per class. Use list to specify different
+        numbers per class.
 
     initial_prototypes : array-like, shape =  [n_prototypes, n_features + 1],
      optional
         Prototypes to start with. If not given initialization near the class
         means. Class label must be placed as last entry of each prototype.
 
-    prototypes_per_class : int or list of int, optional (default=1)
-        Number of prototypes per class. Use list to specify different
-        numbers per class.
-
-    display: boolean, optional (default=False)
-        Print information about the bfgs steps.
-
-    max_iter: int, optional (default=2500)
+    max_iter : int, optional (default=2500)
         The maximum number of iterations.
 
-    gtol: float, optional (default=1e-5)
+    gtol : float, optional (default=1e-5)
         Gradient norm must be less than gtol before successful termination
         of bfgs.
 
+    display : boolean, optional (default=False)
+        Print information about the bfgs steps.
+
+    random_state : int, RandomState instance or None, optional
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -230,7 +229,7 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         X : array-like, shape = [n_samples, n_features]
           Training vector, where n_samples in the number of samples and
           n_features is the number of features.
-        Y : array, shape = [n_samples]
+        y : array, shape = [n_samples]
           Target values (integers in classification, real numbers in
           regression)
 

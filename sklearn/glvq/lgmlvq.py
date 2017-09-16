@@ -19,47 +19,46 @@ class LgmlvqModel(GlvqModel):
     Parameters
     ----------
 
-    random_state: int, RandomState instance or None, optional
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    prototypes_per_class : int or list of int, optional (default=1)
+        Number of prototypes per class. Use list to specify different numbers
+        per class.
 
     initial_prototypes : array-like, shape =  [n_prototypes, n_features + 1],
      optional
         Prototypes to start with. If not given initialization near the class
         means. Class label must be placed as last entry of each prototype.
 
-    prototypes_per_class : int or list of int, optional (default=1)
-        Number of prototypes per class. Use list to specify different numbers
-        per class.
+    initial_matrices : list of array-like, optional
+        Matrices to start with. If not given random initialization
 
-    display: boolean, optional (default=False)
-        Print information about the bfgs steps.
-
-    max_iter: int, optional (default=2500)
-        The maximum number of iterations.
-
-    gtol: float, optional (default=1e-5)
-        Gradient norm must be less than gtol before successful termination
-        of l-bfgs-b.
-
-    regularization: float or array-like, shape = [n_classes/n_prototypes],
+    regularization : float or array-like, shape = [n_classes/n_prototypes],
      optional (default=0.0)
         Values between 0 and 1. Regularization is done by the log determinant
         of the relevance matrix. Without regularization relevances may
         degenerate to zero.
 
-    initial_matrices: list of array-like, optional
-        Matrices to start with. If not given random initialization
+    dim : int, optional
+        Maximum rank or projection dimensions
 
-    classwise: boolean, optional
+    classwise : boolean, optional
         If true, each class has one relevance matrix.
         If false, each prototype has one relevance matrix.
 
-    dim: int, optional
-        Maximum rank or projection dimensions
+    max_iter : int, optional (default=2500)
+        The maximum number of iterations.
 
+    gtol : float, optional (default=1e-5)
+        Gradient norm must be less than gtol before successful termination
+        of l-bfgs-b.
+
+    display : boolean, optional (default=False)
+        Print information about the bfgs steps.
+
+    random_state : int, RandomState instance or None, optional
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -349,7 +348,26 @@ class LgmlvqModel(GlvqModel):
                 np.dot(X - w[i], psis[matrixIdx].conj().T) ** 2, 1)
         return np.transpose(distance)
 
-    def project(self, X, prototype_idx, dims, print_variance_coverd=False):
+    def project(self, X, prototype_idx, dims, print_variance_covered=False):
+        """Projects the data input data X using the relevance matrix of the
+        prototype specified by prototype_idx to dimension dim
+
+        Parameters
+        ----------
+        X : array-like, shape = [n,n_features]
+          input data for project
+        prototype_idx : int
+          index of the prototype
+        dims : int
+          dimension to project to
+        print_variance_covered : boolean
+          flag to print the covered variance of the projection
+
+        Returns
+        --------
+        C : array, shape = [n,n_features]
+            Returns predicted values.
+        """
         nb_prototypes = self.w_.shape[0]
         if len(self.omegas_) != nb_prototypes \
                 or self.prototypes_per_class != 1:
@@ -358,7 +376,7 @@ class LgmlvqModel(GlvqModel):
         v, u = np.linalg.eig(
             self.omegas_[prototype_idx].T.dot(self.omegas_[prototype_idx]))
         idx = v.argsort()[::-1]
-        if print_variance_coverd:
+        if print_variance_covered:
             print('variance coverd by projection:',
                   v[idx][:dims].sum() / v.sum() * 100)
         return X.dot(u[:, idx][:, :dims].dot(np.diag(np.sqrt(v[idx][:dims]))))
