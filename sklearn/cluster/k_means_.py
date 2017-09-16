@@ -804,12 +804,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     ...               [4, 2], [4, 4], [4, 0]])
     >>> kmeans = KMeans(n_clusters=2, random_state=0).fit(X)
     >>> kmeans.labels_
-    array([0, 0, 0, 1, 1, 1], dtype=int32)
+    array([1, 0, 1, 0, 0, 1], dtype=int32)
     >>> kmeans.predict([[0, 0], [4, 4]])
-    array([0, 1], dtype=int32)
+    array([1, 0], dtype=int32)
     >>> kmeans.cluster_centers_
-    array([[ 1.,  2.],
-           [ 4.,  2.]])
+    array([[ 3.        ,  3.33333333],
+           [ 2.        ,  0.66666667]])
 
     See also
     --------
