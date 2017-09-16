@@ -1264,8 +1264,17 @@ def check_cross_val_predict_with_method_multilabel(est, X, y, method):
         est = clone(est).fit(X[train], y_enc[train])
         fold_preds = getattr(est, method)(X[test])
         for i_col in range(n_targets):
-            i_cols_fit = np.unique(y_enc[train][:, i_col])
-            expected_preds[i_col][np.ix_(test, i_cols_fit)] = fold_preds[i_col]
+            fold_cols = np.unique(y_enc[train][:, i_col])
+            if expected_preds[i_col].ndim == 1:
+                # Decision function with <=2 classes
+                expected_preds[i_col][test] = fold_preds[i_col]
+            elif method == 'decision_function' and len(fold_cols) == 2:
+                # Decision function, > 2 classes in full data, but <=2 classes
+                # in this CV fold's test set
+                expected_preds[i_col][test, fold_cols[-1]] = fold_preds[i_col]
+            else:
+                idx = np.ix_(test, fold_cols)
+                expected_preds[i_col][idx] = fold_preds[i_col]
 
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype('str')]:
@@ -1336,6 +1345,19 @@ def test_cross_val_predict_with_method_multilabel_ovr():
         check_cross_val_predict_with_method_binary(est, X, y, method=method)
 
 
+class RFWithDecisionFunction(RandomForestClassifier):
+    # None of the current multioutput-multiclass estimators have
+    # decision function methods. Create a mock decision function
+    # to test the cross_val_predict function's handling of this case.
+    def decision_function(self, X):
+        probs = self.predict_proba(X)
+        if isinstance(probs, list):
+            probs = [p[:, -1] if p.shape[1] == 2 else p for p in probs]
+        elif probs.shape[1] == 2:
+            probs = probs[:, -1]
+        return probs
+
+
 def test_cross_val_predict_with_method_multilabel_rf():
     # The RandomForest allows multiple classes in each label.
     # Output of predict_proba is a list of outputs of predict_proba
@@ -1345,8 +1367,8 @@ def test_cross_val_predict_with_method_multilabel_rf():
                                           n_classes=n_classes, n_features=5,
                                           random_state=42)
     y[:, 0] += y[:, 1]  # Put three classes in the first column
-    for method in ['predict_proba', 'predict_log_proba']:
-        est = RandomForestClassifier(n_estimators=5, random_state=0)
+    for method in ['predict_proba', 'predict_log_proba', 'decision_function']:
+        est = RFWithDecisionFunction(n_estimators=5, random_state=0)
         with warnings.catch_warnings():
             # Suppress "RuntimeWarning: divide by zero encountered in log"
             warnings.simplefilter('ignore')
@@ -1377,8 +1399,8 @@ def test_cross_val_predict_with_method_multilabel_rf_rare_class():
     rng = np.random.RandomState(0)
     X = rng.normal(0, 1, size=(5, 10))
     y = np.array([[0, 0], [1, 1], [2, 1], [0, 1], [1, 0]])
-    for method in ['predict_proba', 'predict_log_proba']:
-        est = RandomForestClassifier(n_estimators=5, random_state=0)
+    for method in ['predict_proba', 'predict_log_proba', 'decision_function']:
+        est = RFWithDecisionFunction(n_estimators=5, random_state=0)
         with warnings.catch_warnings():
             # Suppress "RuntimeWarning: divide by zero encountered in log"
             warnings.simplefilter('ignore')
