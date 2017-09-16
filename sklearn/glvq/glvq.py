@@ -238,10 +238,10 @@ class GlvqModel(BaseEstimator, ClassifierMixin):
         --------
         self
         """
+        X, y, random_state = self._validate_train_parms(X, y)
         if len(np.unique(y)) == 1:
             raise ValueError("fitting " + type(
                 self).__name__ + " with only one class is not possible")
-        X, y, random_state = self._validate_train_parms(X, y)
         self.n_iter_ = self._optimize(X, y, random_state)
         return self
 
