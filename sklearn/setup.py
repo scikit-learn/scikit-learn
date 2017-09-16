@@ -76,6 +76,7 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('linear_model')
     config.add_subpackage('utils')
     config.add_subpackage('glvq')
+    config.add_subpackage('glvq/tests')
 
     # add the test directory
     config.add_subpackage('tests')
