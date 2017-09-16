@@ -198,12 +198,6 @@ METRIC_UNDEFINED_BINARY = [
     "samples_recall_score",
     "coverage_error",
 
-    "roc_auc_score",
-    "micro_roc_auc",
-    "weighted_roc_auc",
-    "macro_roc_auc",
-    "samples_roc_auc",
-
     "average_precision_score",
     "weighted_average_precision_score",
     "micro_average_precision_score",
@@ -218,6 +212,11 @@ METRIC_UNDEFINED_BINARY = [
 METRIC_UNDEFINED_MULTICLASS = [
     "brier_score_loss",
 
+    "roc_auc_score",
+    "micro_roc_auc",
+    "weighted_roc_auc",
+    "macro_roc_auc",
+    "samples_roc_auc",
     # with default average='binary', multiclass is prohibited
     "precision_score",
     "recall_score",
@@ -996,9 +995,10 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                  (weighted_score_zeroed, weighted_score_subset, name)))
 
     if not name.startswith('unnormalized'):
-        # check that the score is invariant under scaling of the weights by a
-        # common factor
-        for scaling in [2, 0.3]:
+        # Check that the score is invariant under scaling of the weights by a
+        # common factor. The scaling value is carefully chosen to reduce minor
+        # errors introduced by python when doing floating operations.
+        for scaling in [5, 0.5]:
             assert_almost_equal(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
