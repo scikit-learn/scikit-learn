@@ -171,12 +171,19 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     data instances in the training set are surrounded by at least k instances
     that share the same class label. If this is achieved, the leave-one-out
     error is minimized.
+
     This implementation follows closely Kilian Weinberger's MATLAB code found
     at <https://bitbucket.org/mlcircus/lmnn> which solves the unconstrained
     problem, finding a linear transformation with L-BFGS instead of solving the
     constrained problem that finds the globally optimal metric. Different from
     the paper, the problem solved by this implementation is with the squared
     hinge loss (to make the problem differentiable).
+
+    At least for 32bit systems, one cannot expect precise reproducibility of
+    PCA and therefore the transformations in 2 identical runs can diverge even
+    before the first iteration of LargeMarginNearestNeighbor. Therefore, one
+    should not expect any reproducibility of the transformations found by
+    `LargeMarginNearestNeighbor` when initializing with PCA (`init`='pca').
 
 
     References
@@ -539,7 +546,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        array, shape (n_features, n_features)
+        grad_static, shape (n_features, n_features)
             An array with the sum of all weighted outer products.
         """
         if verbose:

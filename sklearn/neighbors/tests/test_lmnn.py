@@ -310,12 +310,13 @@ def test_verbose():
 def test_random_state():
     """Assert that when having more than max_constraints (forcing sampling),
     the same constraints will be sampled given the same random_state and
-    different constraints will be sampled given a different random_state"""
+    different constraints will be sampled given a different random_state
+    leading to a different transformation"""
 
-    X = digits.data
-    y = digits.target
+    X = iris.data
+    y = iris.target
     params = {'n_neighbors': 3, 'max_constraints': 5, 'random_state': 1,
-              'max_iter': 10}
+              'max_iter': 10, 'init': 'identity'}
 
     lmnn = LargeMarginNearestNeighbor(**params)
     lmnn.fit(X, y)
@@ -325,8 +326,7 @@ def test_random_state():
     lmnn.fit(X, y)
     transformation_2 = lmnn.transformation_
 
-    # This assertion fails for the iris dataset (distances are different for
-    # 32 vs 64 bit float inputs but still that is not a sufficient reason)
+    # This assertion fails on 32bit systems if init='pca'
     assert_allclose(transformation_1, transformation_2)
 
     params['random_state'] = 2
