@@ -443,16 +443,14 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             _y = self._y.reshape((-1, 1))
             classes_ = [self.classes_]
 
-        if self.outlier_label is not None:
-            neigh_dist[outliers] = 1e-6
-        elif outliers:
+        if outliers and self.outlier_label is None:
             raise ValueError('No neighbors found for test samples %r, '
                              'you can try using larger radius, '
                              'consider removing them from your dataset '
                              'or change oulier_label parameter.'
                              % outliers)
 
-        weights = _get_weights(neigh_dist, self.weights)
+        weights = _get_weights(neigh_dist, self.weights)[inliers]
 
         probabilities = []
         for k, classes_k in enumerate(classes_):
