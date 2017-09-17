@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import sparse as sp
-from scipy.stats import spearmanr, scoreatpercentile
+from scipy.stats import spearmanr
 
 from numpy.testing import assert_array_equal
 
@@ -125,9 +125,6 @@ def test_featurewise_scorer():
     skb = SelectKBest(featurewise_scorer(spearmanr, axis=0), k=10)
     skb.fit(X, y)
     new_X = skb.transform(X)
-    skb1 = SelectKBest(featurewise_scorer(scoreatpercentile), k=10)
-    skb1.fit(X, y)
-    new_X1 = skb1.transform(X)
 
     # Check if the feature selectors behave as expected
     assert_equal(new_X.shape[1], 10)
