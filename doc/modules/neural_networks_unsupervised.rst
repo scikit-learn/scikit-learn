@@ -135,7 +135,7 @@ negative gradient, however, is intractable. Its goal is to lower the energy of
 joint states that the model prefers, therefore making it stay true to the data.
 It can be approximated by Markov chain Monte Carlo using block Gibbs sampling by
 iteratively sampling each of :math:`v` and :math:`h` given the other, until the
-chain mixes. Samples generated in this way are sometimes refered as fantasy
+chain mixes. Samples generated in this way are sometimes referred as fantasy
 particles. This is inefficient and it is difficult to determine whether the
 Markov chain mixes.
 
