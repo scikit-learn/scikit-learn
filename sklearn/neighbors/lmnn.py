@@ -69,10 +69,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     use_sparse : bool, optional (default=True)
         Whether to use a sparse matrix (default) or a dense matrix for the
-        impostor-pairs storage. Using a sparse matrix, the distance to
-        impostors is computed twice, but it is faster for larger data sets
-        than using a dense matrix. With a dense matrix, the unique impostor
-        pairs have to be identified explicitly.
+        impostor-pairs storage. Using a sparse matrix, the (squared)
+        distance to impostors is computed twice, but it is faster for larger
+        data sets than using a dense matrix. With a dense matrix, the unique
+        impostor pairs have to be identified explicitly.
 
     max_iter : int, optional (default=50)
         Maximum number of iterations in the optimization.
@@ -350,7 +350,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Lx: array-like, shape (n_samples, n_features_out)
+        X_embedded: array-like, shape (n_samples, n_features_out)
             The data samples transformed.
 
         Raises
@@ -600,18 +600,19 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         self.transformation_ = transformation.reshape(-1, n_features)
 
         t_start = time.time()
-        Lx = self.transform(X, check_input=False)
+        X_embedded = self.transform(X, check_input=False)
 
-        # Compute distances to target neighbors (plus margin)
+        # Compute squared distances to target neighbors (plus margin)
         n_neighbors = targets.shape[1]
         dist_tn = np.zeros((n_samples, n_neighbors))
         for k in range(n_neighbors):
-            dist_tn[:, k] = row_norms(Lx - Lx[targets[:, k]], True) + 1
+            dist_tn[:, k] = row_norms(X_embedded - X_embedded[targets[:, k]],
+                                      squared=True) + 1
 
-        # Compute distances to impostors under the current transformation
+        # Compute impostors and squared distances to them
         margin_radii = dist_tn[:, -1] + 1
         imp_row, imp_col, dist_imp = \
-            self._find_impostors(Lx, y, margin_radii, self.use_sparse)
+            self._find_impostors(X_embedded, y, margin_radii, self.use_sparse)
 
         loss = 0
         shape = (n_samples, n_samples)
@@ -645,12 +646,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         return loss, grad.ravel()
 
-    def _find_impostors(self, Lx, y, margin_radii, use_sparse=True):
+    def _find_impostors(self, X_embedded, y, margin_radii, use_sparse=True):
         """Compute all impostor pairs exactly.
 
         Parameters
         ----------
-        Lx : array, shape (n_samples, n_features_out)
+        X_embedded : array, shape (n_samples, n_features_out)
             An array of transformed samples.
 
         y : array, shape (n_samples,)
@@ -669,10 +670,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         imp_col : array, shape (n_impostors,)
             Corresponding sample indices that violate a margin.
         imp_dist : array, shape (n_impostors,)
-            imp_dist[i] is the squared distance between Lx[imp_row[i]] and
-            Lx[imp_col[i]].
+            imp_dist[i] is the squared distance between X_embedded[imp_row[i]]
+            and X_embedded[imp_col[i]].
         """
-        n_samples = Lx.shape[0]
+        n_samples = X_embedded.shape[0]
 
         if use_sparse:
             # Initialize impostors matrix
@@ -683,7 +684,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
                 # Subdivide ind_out x ind_in to chunks of a size that is
                 # fitting in memory
-                imp_ind = _find_impostors_batch(Lx[ind_out], Lx[ind_in],
+                imp_ind = _find_impostors_batch(X_embedded[ind_out],
+                                                X_embedded[ind_in],
                                                 margin_radii[ind_out],
                                                 margin_radii[ind_in])
 
@@ -705,7 +707,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             impostors_sp = impostors_sp.tocoo(copy=False)
             imp_row = impostors_sp.row
             imp_col = impostors_sp.col
-            imp_dist = paired_distances_batch(Lx, imp_row, imp_col)
+            imp_dist = paired_distances_batch(X_embedded, imp_row, imp_col)
         else:
             # Initialize impostors vectors
             imp_row, imp_col, imp_dist = [], [], []
@@ -716,8 +718,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 # Subdivide ind_out x ind_in to chunks of a size that is
                 # fitting in memory
                 imp_ind, dist_batch = _find_impostors_batch(
-                    Lx[ind_out], Lx[ind_in], margin_radii[ind_out],
-                    margin_radii[ind_in], return_distance=True)
+                    X_embedded[ind_out], X_embedded[ind_in],
+                    margin_radii[ind_out], margin_radii[ind_in],
+                    return_distance=True)
 
                 if len(imp_ind):
                     # sample constraints if they are too many
@@ -827,29 +830,29 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
         An array of transformed data samples from multiple classes.
 
     X_in : array, shape (n_samples_in, n_features_out)
-        Transformed data samples from one class not present in X_out,
+        Transformed data samples from one class, not present in X_out,
         so probably n_samples_in < n_samples_out.
 
     margin_radii_out : array, shape (n_samples_out,)
-        Distances of the samples in ``X_out`` to their margins.
+        Squared distances of the samples in ``X_out`` to their margins.
 
     margin_radii_in : array, shape (n_samples_in,)
-        Distances of the samples in ``X_in`` to their margins.
+        Squared distances of the samples in ``X_in`` to their margins.
 
     mem_budget : int, optional (default=int(1e7))
         Memory budget (in bytes) for computing distances.
 
     return_distance : bool, optional (default=False)
-        Whether to return the distances to the impostors.
+        Whether to return the squared distances to the impostors.
 
     Returns
     -------
     imp_ind : array, shape (n_impostors,)
         Linear indices of impostor pairs in euclidean_distances(X_out, X_in)
     dist : array, shape (n_impostors,), optional
-        dist[i] is the distance between samples imp_row[i] and imp_col[i],
-        where imp_row, imp_col = np.unravel_index(imp_ind, dims=(len(X_out),
-        len(X_in)))
+        dist[i] is the squared distance between samples imp_row[i] and
+        imp_col[i], where
+        imp_row, imp_col = np.unravel_index(imp_ind, (len(X_out), len(X_in)))
     """
 
     n_samples_out = X_out.shape[0]
@@ -918,7 +921,7 @@ def paired_distances_batch(X, ind_a, ind_b, mem_budget=int(1e7)):
     Returns
     -------
     distances: array, shape (n_indices,)
-        An array of pairwise distances.
+        An array of pairwise squared distances.
     """
 
     bytes_per_row = X.shape[1] * X.itemsize
