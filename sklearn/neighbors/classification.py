@@ -450,7 +450,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                              'or change oulier_label parameter.'
                              % outliers)
 
-        weights = _get_weights(neigh_dist, self.weights)[inliers]
+        weights = _get_weights(neigh_dist, self.weights)
+        if weights is not None:
+            weights = weights[inliers]
 
         probabilities = []
         for k, classes_k in enumerate(classes_):
@@ -463,13 +465,13 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             # samples have different size of neighbors within the same radius
             if weights is None:
                 for i, idx in enumerate(pred_labels[inliers]):
-                    proba_inl[i, :] += np.bincount(idx,
-                                                   minlength=classes_k.size)
+                    proba_inl[i, :] = np.bincount(idx,
+                                                  minlength=classes_k.size)
             else:
                 for i, idx in enumerate(pred_labels[inliers]):
-                    proba_inl[i, :] += np.bincount(idx,
-                                                   weights[i],
-                                                   minlength=classes_k.size)
+                    proba_inl[i, :] = np.bincount(idx,
+                                                  weights[i],
+                                                  minlength=classes_k.size)
             proba_k[inliers, :] = proba_inl
 
             if outliers:
@@ -480,8 +482,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                             / float(_y.shape[0]))
                 elif isinstance(self.outlier_label, (numbers.Integral,
                                                      np.integer)):
+                    classes_k = classes_k.tolist()
                     if self.outlier_label in classes_k:
-                        proba_k[outliers, self.outlier_label] = 1.0
+                        proba_k[outliers,
+                                classes_k.index(self.outlier_label)] = 1.0
                     else:
                         proba_k[outliers, :] = 0.0
                         warns.warn('No neighbors found for test samples %r, '
