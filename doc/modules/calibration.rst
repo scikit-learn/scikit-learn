@@ -56,7 +56,7 @@ with different biases per method:
    than 0 for this case, thus moving the average prediction of the bagged
    ensemble away from 0. We observe this effect most strongly with random
    forests because the base-level trees trained with random forests have
-   relatively high variance due to feature subseting." As a result, the
+   relatively high variance due to feature subsetting." As a result, the
    calibration curve also referred to as the reliability diagram (Wilks 1995 [5]_) shows a
    characteristic sigmoid shape, indicating that the classifier could trust its
    "intuition" more and return probabilties closer to 0 or 1 typically.
@@ -78,7 +78,7 @@ The class :class:`CalibratedClassifierCV` uses a cross-validation generator and
 estimates for each split the model parameter on the train samples and the
 calibration of the test samples. The probabilities predicted for the
 folds are then averaged. Already fitted classifiers can be calibrated by
-:class:`CalibratedClassifierCV` via the paramter cv="prefit". In this case,
+:class:`CalibratedClassifierCV` via the parameter cv="prefit". In this case,
 the user has to take care manually that data for model fitting and calibration
 are disjoint.
 
