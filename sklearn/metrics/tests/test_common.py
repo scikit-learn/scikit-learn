@@ -217,6 +217,7 @@ METRIC_UNDEFINED_MULTICLASS = [
     "weighted_roc_auc",
     "macro_roc_auc",
     "samples_roc_auc",
+
     # with default average='binary', multiclass is prohibited
     "precision_score",
     "recall_score",

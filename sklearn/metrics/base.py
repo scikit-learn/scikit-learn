@@ -67,11 +67,11 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         raise ValueError('average has to be one of {0}'
                          ''.format(average_options))
 
-    check_consistent_length(y_true, y_score, sample_weight)
-
     y_type = type_of_target(y_true)
     if y_type not in ("binary", "multilabel-indicator"):
         raise ValueError("{0} format is not supported".format(y_type))
+
+    check_consistent_length(y_true, y_score, sample_weight)
 
     if y_type == "binary":
         return binary_metric(y_true, y_score, sample_weight=sample_weight)
