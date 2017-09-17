@@ -461,9 +461,12 @@ Finally, follow the formatting rules below to make it consistently good:
 .. warning:: **Sphinx version**
 
    While we do our best to have the documentation build under as many
-   version of Sphinx as possible, the different versions tend to behave
-   slightly differently. To get the best results, you should use version
-   1.0.
+   version of Sphinx as possible, the different versions tend to
+   behave slightly differently. To get the best results, you should
+   use the same version as the one we used on CircleCI. Look at this
+   `github search <https://github.com/search?utf8=%E2%9C%93&q=sphinx+repo%3Ascikit-learn%2Fscikit-learn+extension%3Ash+path%3Abuild_tools%2Fcircle&type=Code>`_
+   to know the exact version.
+
 
 .. _testing_coverage:
 
