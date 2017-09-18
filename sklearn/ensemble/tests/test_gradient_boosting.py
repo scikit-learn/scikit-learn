@@ -442,7 +442,7 @@ def test_staged_predict():
     for y in clf.staged_predict(X_test):
         assert_equal(y.shape, y_pred.shape)
 
-    assert_array_equal(y_pred, y)
+    assert_array_almost_equal(y_pred, y)
 
 
 def test_staged_predict_proba():
@@ -470,7 +470,7 @@ def test_staged_predict_proba():
         assert_equal(y_test.shape[0], staged_proba.shape[0])
         assert_equal(2, staged_proba.shape[1])
 
-    assert_array_equal(clf.predict_proba(X_test), staged_proba)
+    assert_array_almost_equal(clf.predict_proba(X_test), staged_proba)
 
 
 def test_staged_functions_defensive():

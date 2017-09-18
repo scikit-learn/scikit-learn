@@ -171,7 +171,7 @@ def test_make_multilabel_classification_return_indicator():
         n_samples=25, n_features=20, n_classes=3, random_state=0,
         allow_unlabeled=allow_unlabeled, return_distributions=True)
 
-    assert_array_equal(X, X2)
+    assert_array_almost_equal(X, X2)
     assert_array_equal(Y, Y2)
     assert_equal(p_c.shape, (3,))
     assert_almost_equal(p_c.sum(), 1)
@@ -371,7 +371,7 @@ def test_make_checkerboard():
                                  shuffle=True, random_state=0)
     X2, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
                                  shuffle=True, random_state=0)
-    assert_array_equal(X1, X2)
+    assert_array_almost_equal(X1, X2)
 
 
 def test_make_moons():
