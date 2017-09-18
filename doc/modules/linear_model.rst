@@ -880,14 +880,14 @@ Generalized linear regression
 =============================
 
 :class:`GeneralizedLinearRegressor` generalizes the :ref:`elastic_net` in two
-ways [1]_. First, the predicted values :math:`\hat{y}` are linked to a linear
+ways [8]_. First, the predicted values :math:`\hat{y}` are linked to a linear
 combination of the input variables :math:`X` via an inverse link function
 :math:`h` as
 
 .. math::    \hat{y}(w, x) = h(xw) = h(w_0 + w_1 x_1 + ... + w_p x_p).
 
 Secondly, the squared loss function is replaced by the deviance :math:`D` of an
-exponential dispersion model (EDM) [2]_. The objective function beeing minimized
+exponential dispersion model (EDM) [9]_. The objective function beeing minimized
 becomes
 
 .. math::    \frac{1}{2s}D(y, \hat{y}) + \alpha \rho ||P_1w||_1
@@ -914,16 +914,20 @@ it is convenient to apply a link function different from the identity link
 :math:`h(Xw)=\exp(Xw)`.
 
 Note that the feature matrix `X` should be standardized before fitting. This
-ensures that the penalty treats features equally.
+ensures that the penalty treats features equally. The estimator can be used as
+follows::
 
-    >>> from sklearn import linear_model
-    >>> reg = linear_model.GeneralizedLinearRegressor(alpha=0.5, l1_ratio=0)
-    >>> reg = linear_model.GeneralizedLinearRegressor(alpha=0.5, family='poisson', link='log')
+    >>> from sklearn.linear_model import GeneralizedLinearRegressor
+    >>> reg = GeneralizedLinearRegressor(alpha=0.5, family='poisson', link='log')
     >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
+    GeneralizedLinearRegressor(alpha=0.5, copy_X=True, family='poisson',
+                  fit_dispersion='chisqr', fit_intercept=True, l1_ratio=0,
+                  link='log', max_iter=100, solver='irls', start_params=None,
+                  tol=0.0001, verbose=0, warm_start=False)
     >>> reg.coef_
     array([ 0.24630255,  0.43373521])
-    >>> reg.intercept_
-    -0.76383575123143277
+    >>> reg.intercept_ #doctest: +ELLIPSIS
+    -0.76383575...
 
 Mathematical formulation
 ------------------------
@@ -969,7 +973,7 @@ Two remarks:
 
 * The deviances for at least Normal, Poisson and Gamma distributions are
   strictly consistent scoring functions for the mean :math:`\mu`, see Eq.
-  (19)-(20) in [3]_.
+  (19)-(20) in [10]_.
 
 * If you want to model a frequency, i.e. counts per exposure (time, volume, ...)
   you can do so by a Poisson distribution and passing
@@ -979,12 +983,12 @@ Two remarks:
 
 .. topic:: References:
 
-    .. [1] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models, Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
+    .. [8] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models, Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
 
-    .. [2] Jørgensen, B. (1992). The theory of exponential dispersion models and analysis of deviance. Monografias de matemática, no. 51.
+    .. [9] Jørgensen, B. (1992). The theory of exponential dispersion models and analysis of deviance. Monografias de matemática, no. 51.
            See also `Exponential dispersion model. <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
 
-    .. [3] Gneiting, T. (2010). `Making and Evaluating Point Forecasts. <https://arxiv.org/pdf/0912.0902.pdf>`_
+    .. [10] Gneiting, T. (2010). `Making and Evaluating Point Forecasts. <https://arxiv.org/pdf/0912.0902.pdf>`_
 
 Stochastic Gradient Descent - SGD
 =================================

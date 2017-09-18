@@ -2,7 +2,7 @@ import numpy as np
 
 from sklearn.linear_model.glm import (
     Link,
-    IdentityLink,
+    # IdentityLink,
     LogLink,
     TweedieDistribution,
     NormalDistribution, PoissonDistribution,
@@ -21,8 +21,9 @@ def test_link_properties():
     """
     rng = np.random.RandomState(0)
     x = rng.rand(100)*100
-    from sklearn.linear_model.glm import Link
-    for link in vars()['Link'].__subclasses__():
+    # from sklearn.linear_model.glm import Link
+    # for link in vars()['Link'].__subclasses__():
+    for link in Link.__subclasses__():
         link = link()
         assert_almost_equal(link.link(link.inverse(x)), x, decimal=10)
         assert_almost_equal(link.inverse_derivative(link.link(x)),
