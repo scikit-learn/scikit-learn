@@ -128,7 +128,7 @@ def quotes_historical_google(symbol, start_date, end_date,
     if expected is not None:
         len_data = len(data)
         min_date = min(data['date'], default=None)
-        max_date = min(data['date'], default=None)
+        max_date = max(data['date'], default=None)
         if (len_data != expected['len_data'] or
             min_date != expected['min_date'] or
                 max_date != expected['max_date']):
