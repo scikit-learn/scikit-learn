@@ -111,7 +111,7 @@ def test_gnb_priors():
     assert_array_almost_equal(clf.predict_proba([[-0.1, -0.1]]),
                               np.array([[0.825303662161683,
                                          0.174696337838317]]), 8)
-    assert_array_equal(clf.class_prior_, np.array([0.3, 0.7]))
+    assert_array_almost_equal(clf.class_prior_, np.array([0.3, 0.7]))
 
 
 def test_gnb_wrong_nb_priors():
@@ -345,7 +345,7 @@ def test_discretenb_uniform_prior():
         clf.set_params(fit_prior=False)
         clf.fit([[0], [0], [1]], [0, 0, 1])
         prior = np.exp(clf.class_log_prior_)
-        assert_array_equal(prior, np.array([.5, .5]))
+        assert_array_almost_equal(prior, np.array([.5, .5]))
 
 
 def test_discretenb_provide_prior():
@@ -355,7 +355,7 @@ def test_discretenb_provide_prior():
         clf = cls(class_prior=[0.5, 0.5])
         clf.fit([[0], [0], [1]], [0, 0, 1])
         prior = np.exp(clf.class_log_prior_)
-        assert_array_equal(prior, np.array([.5, .5]))
+        assert_array_almost_equal(prior, np.array([.5, .5]))
 
         # Inconsistent number of classes with prior
         assert_raises(ValueError, clf.fit, [[0], [1], [2]], [0, 1, 2])
@@ -592,7 +592,7 @@ def test_cnb():
         weights[i] = np.log(theta[i])
         weights[i] /= weights[i].sum()
 
-    assert_array_equal(clf.feature_log_prob_, weights)
+    assert_array_almost_equal(clf.feature_log_prob_, weights)
 
 
 def test_naive_bayes_scale_invariance():
