@@ -222,7 +222,7 @@ def _yield_all_checks(name, estimator):
         for check in _yield_clustering_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
-    if name != 'GaussianProcess' and name != 'SpectralClustering':  # FIXME
+    if name != 'GaussianProcess':  # FIXME
         # XXX GaussianProcess deprecated in 0.20
         yield check_fit2d_1sample
     yield check_fit2d_1feature
@@ -578,8 +578,9 @@ def check_fit2d_predict1d(name, estimator_orig):
 
 @ignore_warnings
 def check_fit2d_1sample(name, estimator_orig):
-    # check fitting a 2d array with only one sample either works or returns
-    # informative message
+    # Check that fitting a 2d array with only one sample either works or
+    # returns an informative message. The error message should either mention
+    # the number of samples or the number of classes.
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
     y = X[:, 0].astype(np.int)
@@ -593,17 +594,8 @@ def check_fit2d_1sample(name, estimator_orig):
 
     set_random_state(estimator, 1)
 
-    msgs = ["Found array with 1 sample(s)",
-            "number of classes has to be greater than one",
-            "greater than the number of samples: 1",
-            "requires 2 classes",
-            "requires 2 or more distinct classes",
-            "n_samples = 1",
-            "n_samples=1",
-            "one sample",
-            "one class",
-            "less than 2 classes",
-            ]
+    msgs = ["1 sample", "n_samples = 1", "n_samples=1", "one sample",
+            "1 class", "one class"]
 
     try:
         estimator.fit(X, y)
@@ -636,7 +628,7 @@ def check_fit2d_1feature(name, estimator_orig):
     y = multioutput_estimator_convert_y_2d(estimator, y)
     set_random_state(estimator, 1)
 
-    msgs = ["Found array with 1 feature(s)", "n_features = 1"]
+    msgs = ["1 feature(s)", "n_features = 1", "n_features=1"]
 
     try:
         estimator.fit(X, y)

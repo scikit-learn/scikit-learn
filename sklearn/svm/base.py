@@ -503,6 +503,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
+                " class"
                 % len(cls))
 
         self.classes_ = cls

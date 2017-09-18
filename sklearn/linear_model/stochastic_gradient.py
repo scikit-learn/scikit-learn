@@ -399,8 +399,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                              max_iter=max_iter)
         else:
             raise ValueError(
-                "The number of classes has to be greater than one; got %d"
-                % n_classes)
+                "The number of classes has to be greater than one;"
+                " got %d class" % n_classes)
 
         return self
 
