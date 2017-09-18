@@ -59,4 +59,4 @@ def test_is_deprecated():
 
 
 def test_pickle():
-    pickle.dumps(mock_function)
+    pickle.loads(pickle.dumps(mock_function))
