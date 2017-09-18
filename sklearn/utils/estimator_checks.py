@@ -103,8 +103,7 @@ def _yield_non_meta_checks(name, estimator):
 
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
-    if name not in ['GaussianProcess']:
-        yield check_estimators_pickle
+    yield check_estimators_pickle
 
 
 def _yield_classifier_checks(name, classifier):
