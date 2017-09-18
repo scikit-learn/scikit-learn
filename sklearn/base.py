@@ -578,4 +578,3 @@ def is_pairwise(estimator):
         True if _pairwise is set to True and False otherwise.
     """
     return bool(getattr(estimator, "_pairwise", False))
-
