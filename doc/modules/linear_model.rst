@@ -786,7 +786,7 @@ non-smooth `penalty="l1"`. This is therefore the solver of choice for sparse
 multinomial logistic regression. It is also the only solver that supports
 `penalty="elasticnet"`.
 
-The "lbfgs" is an optimization algorithm that approximates the 
+The "lbfgs" is an optimization algorithm that approximates the
 Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, which belongs to
 quasi-Newton methods. The "lbfgs" solver is recommended for use for
 small data-sets but for larger datasets its performance suffers. [9]_
@@ -874,6 +874,117 @@ to warm-starting (see :term:`Glossary <warm_start>`).
     .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
             <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
 
+.. _Generalized_linear_regression:
+
+Generalized linear regression
+=============================
+
+:class:`GeneralizedLinearRegressor` generalizes the :ref:`elastic_net` in two
+ways [1]_. First, the predicted values :math:`\hat{y}` are linked to a linear
+combination of the input variables :math:`X` via an inverse link function
+:math:`h` as
+
+.. math::    \hat{y}(w, x) = h(xw) = h(w_0 + w_1 x_1 + ... + w_p x_p).
+
+Secondly, the squared loss function is replaced by the deviance :math:`D` of an
+exponential dispersion model (EDM) [2]_. The objective function beeing minimized
+becomes
+
+.. math::    \frac{1}{2s}D(y, \hat{y}) + \alpha \rho ||P_1w||_1
+            +\frac{\alpha(1-\rho)}{2} w^T P_2 w
+
+with sample weights :math:`s`.
+:math:`P_1` can be used to exclude some of the coefficients in the L1
+penalty, :math:`P_2` (must be positive semi-definite) allows for a more
+versatile L2 penalty.
+
+Use cases, where a loss different from the squared loss might be appropriate,
+are the following:
+
+  * If the target values :math:`y` are counts (integer valued) or frequencies, you might try a Poisson deviance.
+
+  * If the target values are positive valued and skewed, you might try a Gamma deviance.
+
+  * If the target values seem to be heavy tailed, you might try an Inverse Gaussian deviance (or even higher variance power of the Tweedie family).
+
+Since the linear predictor :math:`Xw` can be negative and
+Poisson, Gamma and Inverse Gaussian distributions don't have negative values,
+it is convenient to apply a link function different from the identity link
+:math:`h(x)=x` that guarantees the non-negativeness, e.g. the log-link with
+:math:`h(Xw)=\exp(Xw)`.
+
+Note that the feature matrix `X` should be standardized before fitting. This
+ensures that the penalty treats features equally.
+
+    >>> from sklearn import linear_model
+    >>> reg = linear_model.GeneralizedLinearRegressor(alpha=0.5, l1_ratio=0)
+    >>> reg = linear_model.GeneralizedLinearRegressor(alpha=0.5, family='poisson', link='log')
+    >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
+    >>> reg.coef_
+    array([ 0.24630255,  0.43373521])
+    >>> reg.intercept_
+    -0.76383575123143277
+
+Mathematical formulation
+------------------------
+
+In the unpenalized case, the assumptions are the folowing:
+
+    * The target values :math:`y_i` are realizations of random variables
+      :math:`Y_i \overset{i.i.d}{\sim} \mathrm{EDM}(\mu_i, \frac{\phi}{s_i})`
+      with expectation :math:`\mu_i=\mathrm{E}[Y]`, dispersion parameter
+      :math:`\phi` and sample weights :math:`s_i`.
+    * The aim is to predict the expectation :math:`\mu_i` with
+      :math:`\hat{y_i} = h(\eta_i)`, linear predictor
+      :math:`\eta_i=(Xw)_i` and inverse link function :math:`h(\eta)`.
+
+Note that the first assumption implies
+:math:`\mathrm{Var}[Y_i]=\frac{\phi}{s_i} v(\mu_i)` with unit variance
+function :math:`v(\mu)`. Specifying a particular distribution of an EDM is the
+same as specifying a unit variance function (they are one-to-one).
+
+Including penalties helps to avoid overfitting or, in case of L1 penalty, to
+obtain sparse solutions. But there are also other motivations to include them,
+e.g. accounting fo dependence structure of :math:`y`.
+
+The objective function, which is independent of :math:`\phi`, is minimized with
+respect to the coefficients :math:`w`.
+
+The deviance is defined by
+
+.. math::     D(y, \mu) = -2\phi\cdot
+              \left(loglike(y,\mu,\frac{\phi}{s})
+              - loglike(y,y,\frac{\phi}{s})\right)
+
+=====================================  =================================
+Distribution                           Variance Function :math:`v(\mu)`
+=====================================  =================================
+Normal ("normal")                      :math:`1`
+Poisson ("poisson")                    :math:`\mu`
+Gamma ("gamma")                        :math:`\mu^2`
+Inverse Gaussian ("inverse.gaussian")  :math:`\mu^3`
+=====================================  =================================
+
+Two remarks:
+
+* The deviances for at least Normal, Poisson and Gamma distributions are
+  strictly consistent scoring functions for the mean :math:`\mu`, see Eq.
+  (19)-(20) in [3]_.
+
+* If you want to model a frequency, i.e. counts per exposure (time, volume, ...)
+  you can do so by a Poisson distribution and passing
+  :math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values together
+  with :math:`s=\mathrm{exposure}` as sample weights.
+
+
+.. topic:: References:
+
+    .. [1] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models, Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
+
+    .. [2] Jørgensen, B. (1992). The theory of exponential dispersion models and analysis of deviance. Monografias de matemática, no. 51.
+           See also `Exponential dispersion model. <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
+
+    .. [3] Gneiting, T. (2010). `Making and Evaluating Point Forecasts. <https://arxiv.org/pdf/0912.0902.pdf>`_
 
 Stochastic Gradient Descent - SGD
 =================================

@@ -6,15 +6,15 @@ Generalized Linear Models with Exponential Dispersion Family
 # License: BSD 3 clause
 
 # TODO: Write more tests
-# TODO: Which name/symbol for coefficients and weights in docu?
-#       sklearn.linear_models uses w for coefficients.
-#       So far, coefficients=beta and weights=w (as standard literature)
-# TODO: Add l2-penalty (maybe more general w.P.w with P penalty matrix)
 # TODO: Add l1-penalty (elastic net)
+# TODO: deal with option self.copy_X
+# TODO: Should the option `normalize` be included (like other linear models)?
+#       So far, it is not included. User must pass a normalized X.
 # TODO: Add cross validation
-# TODO: Write docu and examples
+# TODO: Write examples and more docu
 # TODO: Make it as much consistent to other estimators in linear_model as
 #       possible
+# TODO: options P1 and P2 in fit() or in __init__()???
 
 # Design Decisions:
 # - Which name? GeneralizedLinearModel vs GeneralizedLinearRegressor.
@@ -22,10 +22,21 @@ Generalized Linear Models with Exponential Dispersion Family
 #   Linear Model does both depending on the chosen distribution, e.g. Normal =>
 #   regressor, Bernoulli/Binomial => classifier.
 #   Solution: GeneralizedLinearRegressor since this is the focus.
+# - Allow for finer control of penalty terms:
+#   L1: ||P1*w||_1 with P1*w a componentwise product, this allows to exclude
+#       factors from the L1 penalty.
+#   L2: w*P2*w with P2 a (demi-) positive definite matrix, e.g. P2 could be
+#   a 1st or 2nd order difference matrix (compare B-spline penalties and
+#   Tikhonov regularization).
 # - The link funtion (instance of class Link) is necessary for the evaluation
 #   of deviance, score, Fisher and Hessian matrix as functions of the
 #   coefficients, which is needed by optimizers.
 #   Solution: link as argument in those functions
+# - Which name/symbol for sample_weight in docu?
+#   sklearn.linear_models uses w for coefficients, standard literature on
+#   GLMs use beta for coefficients and w for (sample) weights.
+#   So far, coefficients=w and sample weights=s.
+
 
 from __future__ import division
 from abc import ABCMeta, abstractmethod, abstractproperty
@@ -34,6 +45,8 @@ import numpy as np
 from scipy import linalg, optimize, sparse
 import warnings
 from .base import LinearRegression
+from .coordinate_descent import ElasticNet
+from .ridge import Ridge
 from ..base import BaseEstimator, RegressorMixin
 from ..exceptions import ConvergenceWarning
 from ..externals import six
@@ -164,7 +177,8 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
 
     References
     ----------
-    See https://en.wikipedia.org/wiki/Exponential_dispersion_model.
+
+    https://en.wikipedia.org/wiki/Exponential_dispersion_model.
     """
 
     @abstractproperty
@@ -192,7 +206,7 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         raise NotImplementedError()
 
     def in_y_range(self, x):
-        """Returns true if x is in the valid range of Y~EDM.
+        """Returns true if `x` is in the valid range of Y~EDM.
         """
         if self.include_lower_bound:
             if self.include_upper_bound:
@@ -211,33 +225,36 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
 
     @abstractmethod
     def unit_variance(self, mu):
-        r"""The unit variance :math:`v(mu)` determines the variance as
-        a function of the mean mu by
-        :math:`\mathrm{Var}[Y_i] = \phi/w_i*v(\mu_i)`.
+        r"""The unit variance :math:`v(\mu)` determines the variance as
+        a function of the mean :math:`\mu` by
+        :math:`\mathrm{Var}[Y_i] = \phi/s_i*v(\mu_i)`.
         It can also be derived from the unit deviance :math:`d(y,\mu)` as
 
         .. math:: v(\mu) = \frac{2}{\frac{\partial^2 d(y,\mu)}{
             \partial\mu^2}}\big|_{y=\mu}
+
+        See also :func:`variance`.
         """
         raise NotImplementedError()
 
     @abstractmethod
     def unit_variance_derivative(self, mu):
-        r"""The derivative of the unit variance w.r.t. mu, :math:`v'(\mu)`.
+        r"""The derivative of the unit variance w.r.t. `mu`, :math:`v'(\mu)`.
         """
         raise NotImplementedError()
 
     def variance(self, mu, phi=1, weights=1):
-        r"""The variance of :math:`Y \sim \mathrm{EDM}(\mu,\phi)` is
-        :math:`\mathrm{Var}[Y_i]=\phi/w_i*v(\mu_i)`,
-        with unit variance v(mu).
+        r"""The variance of :math:`Y_i \sim \mathrm{EDM}(\mu_i,\phi/s_i)` is
+        :math:`\mathrm{Var}[Y_i]=\phi/s_i*v(\mu_i)`,
+        with unit variance :math:`v(\mu)` and weights :math:`s_i`.
         """
         return phi/weights * self.unit_variance(mu)
 
     def variance_derivative(self, mu, phi=1, weights=1):
-        r"""The derivative of the variance w.r.t. mu,
+        r"""The derivative of the variance w.r.t. `mu`,
         :math:`\frac{\partial}{\partial\mu}\mathrm{Var}[Y_i]
-        =phi/w_i*v'(\mu_i)`, with unit variance v(mu).
+        =phi/s_i*v'(\mu_i)`, with unit variance :math:`v(\mu)`
+        and weights :math:`s_i`.
         """
         return phi/weights * self.unit_variance_derivative(mu)
 
@@ -251,8 +268,8 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         raise NotImplementedError()
 
     def unit_deviance_derivative(self, y, mu):
-        r"""The derivative w.r.t. mu of the unit_deviance
-        :math:`\frac{d}{d\mu}d(y,\mu) = -2\frac{y-\mu}{v(\mu)}`
+        r"""The derivative w.r.t. `mu` of the unit deviance
+        :math:`\frac{\partial}{\partial\mu}d(y,\mu) = -2\frac{y-\mu}{v(\mu)}`
         with unit variance :math:`v(\mu)`.
 
         Returns
@@ -262,39 +279,39 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         return -2*(y-mu)/self.unit_variance(mu)
 
     def deviance(self, y, mu, weights=1):
-        r"""The deviance is given by :math:`D = \sum_i w_i \cdot d(y, \mu)
-        with weights :math:`w_i` and unit_deviance :math:`d(y,mu)`.
+        r"""The deviance is given by :math:`D = \sum_i s_i \cdot d(y, \mu)
+        with weights :math:`s_i` and unit deviance :math:`d(y,\mu)`.
         In terms of the likelihood it is :math:`D = -2\phi\cdot
-        \left(loglike(y,\mu,\frac{phi}{w})
-        - loglike(y,y,\frac{phi}{w})\right).`
+        \left(loglike(y,\mu,\frac{phi}{s})
+        - loglike(y,y,\frac{phi}{s})\right)`.
         """
         return np.sum(weights*self.unit_deviance(y, mu))
 
     def _deviance(self, coef, X, y, weights, link):
-        """The deviance as a function of the coefficients ``coef``
-        (:math:`beta`).
+        """The deviance as a function of the coefficients `coef`
+        (:math:`w`).
         """
         lin_pred = safe_sparse_dot(X, coef, dense_output=True)
         mu = link.inverse(lin_pred)
         return self.deviance(y, mu, weights)
 
     def deviance_derivative(self, y, mu, weights=1):
-        """The derivative w.r.t. mu of the deviance.`
+        """The derivative w.r.t. `mu` of the deviance.
         """
         return weights*self.unit_deviance_derivative(y, mu)
 
     def _score(self, coef, phi, X, y, weights, link):
-        r"""The score function :math:`s` is the derivative of the
-        log-likelihood w.r.t. the ``coef`` (:math:`\beta`).
+        r"""The score function is the derivative of the
+        log-likelihood w.r.t. `coef` (:math:`w`).
         It is given by
 
         .. math:
 
-            \mathbf{s}(\boldsymbol{\beta}) = \mathbf{X}^T \mathbf{D}
+            \mathbf{score}(\boldsymbol{w}) = \mathbf{X}^T \mathbf{D}
             \boldsymbol{\Sigma}^-1 (\mathbf{y} - \boldsymbol{\mu})\,,
 
         with :math:`\mathbf{D}=\mathrm{diag}(h'(\eta_1),\ldots)` and
-        :math:`\boldsymbol{\Sigma}=\mathrm{diag}(\mathbf{V}(y_1),\ldots)`.
+        :math:`\boldsymbol{\Sigma}=\mathrm{diag}(\mathbf{V}[y_1],\ldots)`.
         """
         n_samples = X.shape[0]
         lin_pred = safe_sparse_dot(X, coef, dense_output=True)
@@ -303,23 +320,27 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         d = link.inverse_derivative(lin_pred)
         d_sigma_inv = sparse.dia_matrix((sigma_inv*d, 0),
                                         shape=(n_samples, n_samples))
-        temp = safe_sparse_dot(d_sigma_inv, (y-mu), dense_output=False)
-        score = safe_sparse_dot(X.T, temp, dense_output=False)
+        temp = safe_sparse_dot(d_sigma_inv, (y-mu), dense_output=True)
+        score = safe_sparse_dot(X.T, temp, dense_output=True)
         return score
 
     def _fisher_matrix(self, coef, phi, X, y, weights, link):
-        r"""The Fisher information matrix, also known as expected
-        information matrix. It is given by
+        r"""The Fisher information matrix.
+        The Fisher information matrix, also known as expected information
+        matrix is given by
 
         .. math:
 
-            \mathbf{F}(\boldsymbol{\beta}) = \mathrm{E}\left[
-            -\frac{\partial^2 loglike}{\partial\boldsymbol{\beta}
-            \partial\boldsymbol{\beta}^T}\right]
+            \mathbf{F}(\boldsymbol{w}) =
+            \mathrm{E}\left[-\frac{\partial\mathbf{score}}{\partial
+            \boldsymbol{w}} \right]
+            = \mathrm{E}\left[
+            -\frac{\partial^2 loglike}{\partial\boldsymbol{w}
+            \partial\boldsymbol{w}^T}\right]
             = \mathbf{X}^T W \mathbf{X} \,,
 
         with :math:`\mathbf{W} = \mathbf{D}^2 \boldsymbol{\Sigma}^{-1}`,
-        see score function.
+        see func:`score_function`.
         """
         n_samples = X.shape[0]
         lin_pred = safe_sparse_dot(X, coef, dense_output=True)
@@ -333,14 +354,15 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         return fisher_matrix
 
     def _observed_information(self, coef, phi, X, y, weights, link):
-        r"""The observed information matrix, also known as the negative of
+        r"""The observed information matrix.
+        The observed information matrix, also known as the negative of
         the Hessian matrix of the log-likelihood. It is given by
 
         .. math:
 
-            \mathbf{H}(\boldsymbol{\beta}) =
-            -\frac{\partial^2 loglike}{\partial\boldsymbol{\beta}
-            \partial\boldsymbol{\beta}^T}
+            \mathbf{H}(\boldsymbol{w}) =
+            -\frac{\partial^2 loglike}{\partial\boldsymbol{w}
+            \partial\boldsymbol{w}^T}
             = \mathbf{X}^T \legt[
             - \mathbf{D}' \mathbf{R}
             + \mathbf{D}^2 \mathbf{V} \mathbf{R}
@@ -351,7 +373,7 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         :math:`\mathbf{V} = \mathrm{diag}\left(\frac{v'(\mu_i)}{
         v(\mu_i)}
         \right)`,
-        see score function and Fisher matrix.
+        see :func:`score_` function and :func:`_fisher_matrix`.
         """
         n_samples = X.shape[0]
         lin_pred = safe_sparse_dot(X, coef, dense_output=True)
@@ -368,18 +390,18 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         return observed_information
 
     def _deviance_derivative(self, coef, X, y, weights, link):
-        r"""The derivative w.r.t. ``coef`` (:math:`\beta`) of the deviance as a
-        function of the coefficients ``coef``.
+        r"""The derivative w.r.t. `coef` (:math:`w`) of the deviance as a
+        function of the coefficients `coef`.
         This is equivalent to :math:`-2\phi` times the score function
-        :math:`s` (derivative of the log-likelihood).
+        :func:`score_function` (derivative of the log-likelihood).
         """
         score = self._score(coef=coef, phi=1, X=X, y=y, weights=weights,
                             link=link)
         return -2*score
 
     def _deviance_hessian(self, coef, X, y, weights, link):
-        r"""The hessian matrix w.r.t. ``coef`` (:math:`\beta`) of the deviance
-        as a function of the coefficients ``coef``.
+        r"""The hessian matrix w.r.t. `coef` (:math:`w`) of the deviance
+        as a function of the coefficients `coef`.
         This is equivalent to :math:`+2\phi` times the observed information
         matrix.
         """
@@ -388,20 +410,21 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         return 2*info_matrix
 
     def starting_mu(self, y, weights=1):
-        """Starting values for the mean mu_i in IRLS."""
-        return ((weights*y+np.mean(weights*y))
-                / (2.*np.sum(np.ones_like(y)*weights)))
+        """Starting values for the mean mu_i in (unpenalized) IRLS."""
+        return ((weights*y+np.mean(weights*y)) /
+                (2.*np.sum(np.ones_like(y)*weights)))
 
 
 class TweedieDistribution(ExponentialDispersionModel):
     r"""A class for the Tweedie distribution.
-    They have mu=E[X] and Var[X] \propto mu**power.
+    They have :math:`\mu=\mathrm{E}[Y]` and
+    :math:`\mathrm{Var}[Y] \propto \mu^power.
 
     Attributes
     ----------
     power : float
             The variance power of the unit_variance
-            :math:`v(mu) = mu^{power}`.
+            :math:`v(\mu) = \mu^{power}`.
     """
     def __init__(self, power=0):
         self.power = power
@@ -497,7 +520,7 @@ class TweedieDistribution(ExponentialDispersionModel):
             return 2 * (np.power(np.maximum(y, 0), 2-p)/((1-p)*(2-p)) -
                         y*np.power(mu, 1-p)/(1-p) + np.power(mu, 2-p)/(2-p))
 
-    def likelihood(self, y, X, beta, phi, weights=1):
+    def likelihood(self, y, X, w, phi, weights=1):
         raise NotImplementedError('This function is not (yet) implemented.')
 
 
@@ -563,51 +586,135 @@ class GeneralizedHyperbolicSecand(ExponentialDispersionModel):
                 np.log((1+mu**2)/(1+y**2)))
 
 
-class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
-    r"""
-    Class to fit a Generalized Linear Model (GLM) based on reproductive
-    Exponential Dispersion Models (EDM).
+def _irls_step(X, W, P2, z):
+    """One step in iteratively reweighted least squares
 
-    #TODO: This belongs to User Guide
-    Assumptions:
+    Solve A w = b for w with
+    A = (X' W X + P2)
+    b = X' W z
+    z = eta + D^-1 (y-mu)
 
-    - The target values y_i are realizations of random variables
-      :math:`Y_i \sim \mathrm{EDM}(\mu_i, \frac{\phi}{w_i})` with dispersion
-      parameter :math:`\phi` and weights :math:`w_i`.
-    - The expectation of :math:`Y_i` is :math:`\mu_i=\mathrm{E}[Y]=h(\eta_i)`
-      whith the linear predictor :math:`\eta=X*\beta`, inverse link function
-      :math:`h(\eta)`, design matrix :math:`X` and parameters :math:`\beta`
-      to be estimated.
-
-    Note that the first assumption implies
-    :math:`\mathrm{Var}[Y_i]=\frac{\phi}{w_i} v(\mu_i)` with uni variance
-    function :math:`v(\mu)`.
-
-    The fit itself does not need Y to be from an EDM, but only assumes
-    the first two moments :math:`E[Y_i]=\mu_i=h(\eta_i)` and
-    :math:`Var[Y_i]=\frac{\phi}{w_i} v(\mu_i)`
-
-    The parameters :math:`\beta` are estimated by maximum likelihood which is
-    equivalent to minimizing the deviance.
-
-    TODO: Estimation of the dispersion parameter phi.
-
-    TODO: Notes on weights and 'scaled' Poisson, e.g. fit y = x/w with
-    with x=counts and w=exposure (time, money, persons, ...) => y is a
-    ratio with weights w.
+    See also fit method of :class:`GeneralizedLinearRegressor`.
 
     Parameters
     ----------
+    X : numpy array or sparse matrix of shape (n_samples, n_features)
+        Training data (with intercept included if present)
+
+    W : numpy array of shape (n_samples, )
+
+    P2 : numpy array or sparse matrix of shape (n_features, n_features)
+        The l2-penalty matrix or vector (=diagonal matrix)
+
+    z  : numpy array of shape (n_samples, )
+        Working observations
+
+    Returns
+    -------
+    coef: array, shape = (X.shape[1])
+    """
+    # TODO: scipy.linalg.solve if faster, but ordinary least squares uses
+    #       scipy.linalg.lstsq. What is more appropriate?
+    n_samples, n_features = X.shape
+    if sparse.issparse(X):
+        W = sparse.dia_matrix((W, 0), shape=(n_samples, n_samples)).tocsr()
+        if P2.ndim == 1:
+            L2 = (sparse.dia_matrix((P2, 0), shape=(n_features, n_features))
+                  ).tocsr()
+        else:
+            L2 = sparse.csr_matrix(P2)
+        XtW = X.transpose() * W
+        A = XtW * X + L2
+        b = XtW * z
+        coef = sparse.linalg.spsolve(A, b)
+    else:
+        XtW = (X.T * W)
+        A = XtW.dot(X)
+        if P2.ndim == 1:
+            A[np.diag_indices_from(A)] += P2
+        else:
+            A += P2
+        b = XtW.dot(z)
+        coef = linalg.solve(A, b)
+    return coef
+
+
+class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
+    """Regression via a Generalized Linear Model (GLM) based on reproductive
+    Exponential Dispersion Models (EDM) with combined L1 and L2 priors as
+    regularizer.
+
+    Minimizes the objective function::
+
+            1/(2s) * deviance(y, h(X*w))
+            + alpha * l1_ratio * ||P1*w||_1
+            + 1/2 * alpha * (1 - l1_ratio) * w*P2*w
+
+    with inverse link function `h` and s=sum of `sample_weight` (which equals
+    n_samples for `sample_weight=None`).
+    For `P1`=`P2`=identity, the penalty is the elastic net::
+
+            alpha * l1_ratio * ||w||_1
+            + 1/2 * alpha * (1 - l1_ratio) * ||w||_2^2
+
+    If you are interested in controlling the L1 and L2 penalty
+    separately, keep in mind that this is equivalent to::
+
+            a * L1 + b * L2
+
+    where::
+
+            alpha = a + b and l1_ratio = a / (a + b)
+
+    The parameter `l1_ratio` corresponds to alpha in the glmnet R package while
+    alpha corresponds to the lambda parameter in glmnet. Specifically, l1_ratio
+    = 1 is the lasso penalty.
+
+    Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+
+    The fit itself does not need Y to be from an EDM, but only assumes
+    the first two moments :math:`E[Y_i]=\\mu_i=h(\\eta_i)` and
+    :math:`Var[Y_i]=\\frac{\\phi}{w_i} v(\\mu_i)`.
+
+    The parameters :math:`w` (`coef_` and `intercept_`) are estimated by
+    (penalized) maximum likelihood which is equivalent to minimizing the
+    deviance.
+
+    TODO: For `alpha` > 0, the feature matrix `X` is assumed to be
+    standardized. Call
+    :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``.
+
+    TODO: Estimation of the dispersion parameter phi.
+
+    TODO: Notes on weights and 'scaled' distributions. For Poisson, this means
+    to fit y = z/w with z=counts and w=exposure (time, money, persons, ...)
+    => y is a ratio with weights w. Same for other distributions.
+
+    Parameters
+    ----------
+    alpha : float, optional (default=1)
+        Constant that multiplies the penalty terms und thus determines the
+        regularization strength.
+        See the notes for the exact mathematical meaning of this
+        parameter.``alpha = 0`` is equivalent to unpenalized GLMs. In this
+        case, the design matrix X must have full column rank
+        (no collinearities).
+
+    l1_ratio : float, optional (defaul=0)
+        The elastic net mixing parameter, with ``0 <= l1_ratio <= 1``. For
+        ``l1_ratio = 0`` the penalty is an L2 penalty. ``For l1_ratio = 1`` it
+        is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
+        combination of L1 and L2.
+
     fit_intercept : boolean, optional (default=True)
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X*coef+intercept).
 
-    family : {'normal', 'poisson', 'gamma', 'inverse.gaussian'} or an instance
-        of a subclass of ExponentialDispersionModel, optional
-        (default='normal')
+    family : {'normal', 'poisson', 'gamma', 'inverse.gaussian'} or an instance\
+            of class ExponentialDispersionModel, optional(default='normal')
         the distributional assumption of the GLM.
 
-    link : {'identity', 'log'} or an instance of a subclass of Link,
+    link : {'identity', 'log'} or an instance of class Link,
         optional (default='identity')
         the link function of the GLM, i.e. mapping from linear predictor
         (X*coef) to expectation (mu).
@@ -634,28 +741,41 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         where ``g_i`` is the i-th component of the gradient (derivative of
         the deviance).
 
-    start_params : {array shape (n_features, ), 'ols'}, optional (default=None)
-        sets the start values for coef_ in the fit.
-        If None, default values are taken.
-        If 'ols' the result of an ordinary least squares in the link space
-        (linear predictor) is taken.
-        If an array is given, these values are taken as coef_ to start with.
-        If fit_intercept is true, the first value is assumed to be the start
-        value for the intercept_.
+    warm_start : boolean, optional (default=False)
+        If set to ``True``, reuse the solution of the previous call to fit as
+        initialization for ``coef_`` and ``intercept_`` (supersedes option
+        ``start_params``). If set to ``True`` or if the attribute ``coef_``
+        does not exit (first call to fit), option ``start_params`` sets the
+        starting values for ``coef_`` and ``intercept_``.
+
+    start_params : None or array of shape (n_features, ) or 'least_squares'}, \
+            optional (default=None)
+        If an array of size n_features is supplied, use these as start values
+        for ``coef_`` in the fit. If ``fit_intercept=True``, the first element
+        is assumed to be the start value for the ``intercept_``.
+        If 'least_squares' is set, the result of a least squares fit in the
+        link space (linear predictor) is taken. If ``None``, the start values
+        are calculated by setting mu to family.starting_mu(..) and one step of
+        irls.
+        This option only applies if ``warm_start=False`` or if fit is called
+        the first time (``self.coef_`` does not exist).
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
 
     verbose : int, optional (default=0)
         For the lbfgs solver set verbose to any positive number for verbosity.
 
     Attributes
     ----------
-    coef_ : array, shape (1, n_features)
+    coef_ : array, shape (n_features, )
         Estimated coefficients for the linear predictor (X*coef_) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
 
     dispersion_ : float
-        The dispersion parameter :math:`\phi` if fit_dispersion is set.
+        The dispersion parameter :math:`\\phi` if fit_dispersion is set.
 
     n_iter_ : int
         Actual number of iterations of the solver.
@@ -667,10 +787,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     ----------
     TODO
     """
-
-    def __init__(self, fit_intercept=True, family='normal',
-                 link='identity', fit_dispersion='chisqr', solver='irls',
-                 max_iter=100, tol=1e-4, start_params=None, verbose=0):
+    def __init__(self, alpha=1.0, l1_ratio=0,
+                 fit_intercept=True, family='normal', link='identity',
+                 fit_dispersion='chisqr', solver='irls', max_iter=100,
+                 tol=1e-4, warm_start=False, start_params=None, copy_X=True,
+                 verbose=0):
+        self.alpha = alpha
+        self.l1_ratio = l1_ratio
         self.fit_intercept = fit_intercept
         self.family = family
         self.link = link
@@ -678,31 +801,86 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         self.solver = solver
         self.max_iter = max_iter
         self.tol = tol
+        self.warm_start = warm_start
         self.start_params = start_params
+        self.copy_X = copy_X
         self.verbose = verbose
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, P1=None, P2=None,
+            check_input=True):
         """Fit a generalized linear model.
 
         Parameters
         ----------
-        X : numpy array or sparse matrix of shape [n_samples,n_features]
+        X : numpy array or sparse matrix of shape (n_samples, n_features)
             Training data
 
-        y : numpy array of shape [n_samples]
+        y : numpy array of shape (n_samples, )
             Target values
 
-        sample_weight : numpy array of shape [n_samples]
+        sample_weight : array of shape (n_samples, ) or None,\
+                optinal (default=None)
             Individual weights for each sample.
             Var[Y_i]=phi/weight_i * v(mu)
             If Y_i ~ EDM(mu, phi/w_i) then
             sum(w*Y)/sum(w) ~ EDM(mu, phi/sum(w)), i.e. the mean of y is a
             weighted average with weights=sample_weight.
 
+        P1 : None or array of shape (n_features*, ), optional\
+                (default=None)
+            With this array, you can exclude coefficients from ths L1 penalty.
+            Set the corresponding value to 1 (include) or 0 (exclude). The
+            default value ``None`` is the same as an array of ones.
+            Note that n_features* = X.shape[1] = length of coef_ (intercept
+            always excluded from counting).
+
+        P2 : None or array of shape (n_features*, n_features*)
+            With this square matrix the L2 penalty is calculated as `w P2 w`.
+            This gives a fine control over this penalty (Tikhonov
+            regularization).
+            Note that n_features* = X.shape[1] = length of coef_ (intercept
+            always excluded from counting).
+
+        check_input : boolean, optional (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
         Returns
         -------
         self : returns an instance of self.
         """
+        #######################################################################
+        # 1. input validation                                                 #
+        #######################################################################
+        # 1.1 validate arguments of fit #######################################
+        _dtype = [np.float64, np.float32]
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                         dtype=_dtype, y_numeric=True, multi_output=False)
+        y = y.astype(np.float64)
+
+        if sample_weight is None:
+            weights = np.ones_like(y)
+        elif np.isscalar(sample_weight):
+            weights = sample_weight*np.ones_like(y)
+        else:
+            weights = np.atleast_1d(sample_weight)
+            if weights.ndim > 1:
+                raise ValueError("Sample weight must be 1D array or scalar")
+            elif weights.shape[0] != y.shape[0]:
+                raise ValueError("Sample weights must have the same length as"
+                                 " y")
+        # IMPORTANT NOTE: Since we want to minimize
+        # 1/(2*sum(sample_weight)) * deviance + L1 + L2,
+        # deviance = sum(sample_weight * unit_deviance),
+        # we rescale weights such that sum(weights) = 1 and this becomes
+        # 1/2*deviance + L1 + L2 with deviance=sum(weights * unit_deviance)
+        weights = weights/np.sum(weights)
+
+        if not isinstance(check_input, bool):
+            raise ValueError("The argument check_input must be bool; got "
+                             "(check_input={0})".format(check_input))
+
+        # 1.2 validate arguments of __init__ ##################################
         # Garantee that self._family_instance is an instance of class
         # ExponentialDispersionModel
         if isinstance(self.family, ExponentialDispersionModel):
@@ -720,7 +898,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError(
                     "The family must be an instance of class"
                     " ExponentialDispersionModel or an element of"
-                    " ['normal', 'poisson', 'gamma', 'inverse.gaussian'].")
+                    " ['normal', 'poisson', 'gamma', 'inverse.gaussian'];"
+                    " got (family={0})".format(self.family))
 
         # Garantee that self._link_instance is set to an instance of class Link
         if isinstance(self.link, Link):
@@ -733,52 +912,85 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             else:
                 raise ValueError(
                     "The link must be an instance of class Link or"
-                    " an element of ['identity', 'log'].")
+                    " an element of ['identity', 'log']; got (link={0})"
+                    .format(self.link))
 
+        if not isinstance(self.alpha, numbers.Number) or self.alpha < 0:
+            raise ValueError("Penalty term must be non-negative;"
+                             " got (alpha={0})".format(self.alpha))
+        if (not isinstance(self.l1_ratio, numbers.Number) or
+                self.l1_ratio < 0 or self.l1_ratio > 1):
+            raise ValueError("l1_ratio must be in interval [0, 1]; got"
+                             " (l1_ratio={0]})".format(self.l1_ratio))
         if not isinstance(self.fit_intercept, bool):
-            raise ValueError("The argument fit_intercept must be bool,"
+            raise ValueError("The argument fit_intercept must be bool;"
                              " got {0}".format(self.fit_intercept))
         if self.solver not in ['irls', 'lbfgs', 'newton-cg']:
             raise ValueError("GLM Regression supports only irls, lbfgs and"
                              "newton-cg solvers, got {0}".format(self.solver))
+        if self.alpha > 0:
+            if (self.l1_ratio > 0 and
+                    self.solver not in []):
+                # TODO: Add solver for L1
+                # raise ValueError("The solver option (solver={0}) is not "
+                #                  "appropriate for the chosen penalty which"
+                #                  " includes L1 (alpha={1})."
+                #                  .format(self.solver, self.alpha))
+                raise NotImplementedError("Currently, no solver is implemented"
+                                          " that can deal with L1 penalties.")
         if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
             raise ValueError("Maximum number of iteration must be positive;"
                              " got (max_iter={0!r})".format(self.max_iter))
         if not isinstance(self.tol, numbers.Number) or self.tol < 0:
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol={0!r})".format(self.tol))
+        if not isinstance(self.warm_start, bool):
+            raise ValueError("The argument warm_start must be bool;"
+                             " got {0}".format(self.warm_start))
         start_params = self.start_params
-        if start_params is not None and start_params is not 'ols':
+        if start_params is not None and start_params is not 'least_squares':
             start_params = np.atleast_1d(start_params)
-            if start_params.shape[0] != X.shape[1] + self.fit_intercept:
+            if ((start_params.shape[0] != X.shape[1] + self.fit_intercept) or
+                    (start_params.ndim != 1)):
                 raise ValueError("Start values for parameters must have the"
-                                 "right length; required length {0}, got {1}"
+                                 "right length and dimension; required (length"
+                                 "={0}, ndim=1), got (length={1}, ndim={2})."
                                  .format(X.shape[1] + self.fit_intercept,
-                                         start_params.shape[0]))
+                                         start_params.shape[0],
+                                         start_params.ndim))
+        if not isinstance(self.copy_X, bool):
+            raise ValueError("The argument copy_X must be bool;"
+                             " got {0}".format(self.copy_X))
 
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         y_numeric=True, multi_output=False)
-        y = y.astype(np.float64)
+        if P1 is None:
+            P1 = np.ones(X.shape[1])
+        else:
+            P1 = np.atleast_1d(P1)
+            if (P1.shape[0] != X.shape[1]) or (P1.ndim != 1):
+                raise ValueError("P1 must be either None or an 1D array with "
+                                 "the length of X.shape[1]; "
+                                 "got (P1.shape[0]={0}), "
+                                 "needed (X.shape[1]={1})."
+                                 .format(P1.shape[0], X.shape[1]))
+        if P2 is None:
+            P2 = np.ones(X.shape[1])
+            if sparse.issparse(X):
+                P2 = (sparse.dia_matrix((np.ones(X.shape[1]), 0),
+                      shape=(X.shape[1], X.shape[1]))).tocsr()
+        else:
+            P2 = check_array(P2, accept_sparse=['csr', 'csc', 'coo'],
+                             dtype="numeric", ensure_2d=True)
+            if ((P2.shape[0] != P2.shape[1]) or
+                (P2.shape[0] != X.shape[1]) or
+                    (P2.ndim != 2)):
+                raise ValueError("P2 must be either None or an array of shape "
+                                 "(n_features, n_features) with "
+                                 "n_features=X.shape[1]; "
+                                 "got (P2.shape=({0},{1})), needed ({3},{3})"
+                                 .format(P2.shape[0], P2.shape[1], X.shape[1]))
 
         family = self._family_instance
         link = self._link_instance
-
-        if not np.all(family.in_y_range(y)):
-            raise ValueError("Some value(s) of y are out of the valid "
-                             "range for family {0}"
-                             .format(family.__class__.__name__))
-
-        if sample_weight is None:
-            weights = np.ones_like(y)
-        elif np.isscalar(sample_weight):
-            weights = sample_weight*np.ones_like(y)
-        else:
-            weights = np.atleast_1d(sample_weight)
-            if weights.ndim > 1:
-                raise ValueError("Sample weight must be 1D array or scalar")
-            elif weights.shape[0] != y.shape[0]:
-                raise ValueError("Sample weights must have the same length as"
-                                 " y")
 
         if self.fit_intercept:
             # intercept is first column <=> coef[0] is for intecept
@@ -786,79 +998,146 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 Xnew = sparse.hstack([np.ones([X.shape[0], 1]), X])
             else:
                 Xnew = np.concatenate((np.ones((X.shape[0], 1)), X), axis=1)
+            P1 = np.concatenate((np.array([0]), P1))
+            if P2.ndim == 1:
+                P2 = np.concatenate((np.array([0]), P2))
+            elif sparse.issparse(P2):
+                P2 = sparse.block_diag((sparse.dia_matrix((1, 1)), P2),
+                                       dtype=P2.dtype).tocsr()
+            else:
+                P2 = np.block([[np.zeros((1, 1)), np.zeros((1, X.shape[1]))],
+                               [np.zeros((X.shape[1], 1)), P2]])
         else:
             Xnew = X
 
         n_samples, n_features = Xnew.shape
+        l1 = self.alpha * self.l1_ratio
+        l2 = self.alpha * (1-self.l1_ratio)
+        P1 *= l1
+        P2 *= l2
 
-        # Note: Since dispersion_ alias phi does not enter the estimation
-        #       of mu_i=E[y_i] set it to 1 where convenient.
+        # 1.3 additional validations ##########################################
+        if check_input:
+            if not np.all(family.in_y_range(y)):
+                raise ValueError("Some value(s) of y are out of the valid "
+                                 "range for family {0}"
+                                 .format(family.__class__.__name__))
+            # TODO: if alpha=0 check that Xnew is not rank deficient
+            # TODO: what else to check?
+
+        #######################################################################
+        # 2. initialization of coef = (intercept_, coef_)                     #
+        #######################################################################
+        # Note: Since phi=self.dispersion_ does not enter the estimation
+        #       of mu_i=E[y_i], set it to 1.
 
         # set start values for coef
         coef = None
-        if start_params is None:
-            # Use mu_start and apply one irls step to calculate coef
-            mu = family.starting_mu(y, weights)
-            # linear predictor
-            eta = link.link(mu)
-            # h'(eta)
-            hp = link.inverse_derivative(eta)
-            # working weights w, in principle a diagonal matrix
-            # therefore here just as 1d array
-            w = (hp**2 / family.variance(mu, phi=1, weights=weights))
-            wroot = np.sqrt(w)
-            # working observations
-            yw = eta + (y-mu)/hp
-            # least squares rescaled with wroot
-            wroot = sparse.dia_matrix((wroot, 0), shape=(n_samples, n_samples))
-            X_rescale = safe_sparse_dot(wroot, Xnew, dense_output=True)
-            yw_rescale = safe_sparse_dot(wroot, y, dense_output=True)
-            coef = linalg.lstsq(X_rescale, yw_rescale)[0]
-        elif start_params is 'ols':
-            reg = LinearRegression(copy_X=False, fit_intercept=False)
-            reg.fit(Xnew, link.link(y))
-            coef = reg.coef_
+        if self.warm_start and hasattr(self, "coef_"):
+            if self.fit_intercept:
+                coef = np.concatenate((self.intercept_, self.coef_))
+            else:
+                coef = self.coef_
+        elif self.start_params is None:
+            if self.l1_ratio == 0:
+                # See 3.1 IRLS
+                # Use mu_start and apply one irls step to calculate coef
+                mu = family.starting_mu(y, weights)
+                # linear predictor
+                eta = link.link(mu)
+                # h'(eta)
+                hp = link.inverse_derivative(eta)
+                # working weights W, in principle a diagonal matrix
+                # therefore here just as 1d array
+                W = (hp**2 / family.variance(mu, phi=1, weights=weights))
+                # working observations
+                z = eta + (y-mu)/hp
+                # solve A*coef = b
+                # A = X' W X + l2 P2, b = X' W z
+                coef = _irls_step(Xnew, W, P2, z)
+            else:
+                # with L1 penalty, start with coef = 0
+                coef = np.zeros(n_features)
+        elif self.start_params is 'least_squares':
+            if self.alpha == 0:
+                reg = LinearRegression(copy_X=True, fit_intercept=False)
+                reg.fit(Xnew, link.link(y))
+                coef = reg.coef_
+            elif self.l1_ratio <= 0.01:
+                # ElasticNet says l1_ratio <= 0.01 is not reliable, use Ridge
+                reg = Ridge(copy_X=True, fit_intercept=False,
+                            alpha=self.alpha)
+                reg.fit(Xnew, link.link(y))
+                coef = reg.coef_
+            else:
+                # TODO: Does this make sense?
+                reg = ElasticNet(copy_X=True, fit_intercept=False,
+                                 alpha=self.alpha, l1_ratio=self.l1_ratio)
+                reg.fit(Xnew, link.link(y))
+                coef = reg.coef_
         else:
             coef = start_params
 
+        #######################################################################
+        # 3. fit                                                              #
+        #######################################################################
         # algorithms for optimiation
         # TODO: Parallelize it
         self.n_iter_ = 0
         converged = False
+        # 3.1 IRLS ############################################################
+        # Solve Newton-Raphson (1): Obj'' (w - w_old) = -Obj'
+        #   Obj = objective function = 1/2 Dev + l2/2 w P2 w
+        #   Dev = deviance, s = normalized weights, variance V(mu) but phi=1
+        #   D   = link.inverse_derivative(eta) = diag_matrix(h'(X w))
+        #   D2  = link.inverse_derivative(eta)^2 = D^2
+        #   W   = D2/V(mu)
+        #   l2  = alpha * (1 - l1_ratio)
+        #   Obj' = d(Obj)/d(w) = 1/2 Dev' + P2 w
+        #        = -X' D (y-mu)/V(mu) + l2 P2 w
+        #   Obj''= d2(Obj)/d(w)d(w') = Hessian = -X'(...) X + l2 P2
+        #   Use Fisher matrix instead of full info matrix -X'(...) X,
+        #    i.e. E[Dev''] with E[y-mu]=0:
+        #   Obj'' ~ X' W X + l2 P2
+        # (1): w = (X' W X + l2 P2)^-1 X' W z, with z = eta + D^-1 (y-mu)
+        # Note: P2 = l2*P2, see above
         if self.solver == 'irls':
-            # linear predictor
+            # eta = linear predictor
             eta = safe_sparse_dot(Xnew, coef, dense_output=True)
             mu = link.inverse(eta)
+            # D = h'(eta)
+            hp = link.inverse_derivative(eta)
+            V = family.variance(mu, phi=1, weights=weights)
             while self.n_iter_ < self.max_iter:
                 self.n_iter_ += 1
                 # coef_old not used so far.
                 # coef_old = coef
-                # h'(eta)
-                hp = link.inverse_derivative(eta)
-                # working weights w, in principle a diagonal matrix
+                # working weights W, in principle a diagonal matrix
                 # therefore here just as 1d array
-                w = (hp**2 / family.variance(mu, phi=1, weights=weights))
-                wroot = np.sqrt(w)
+                W = (hp**2 / V)
                 # working observations
-                yw = eta + (y-mu)/hp
-                # least squares rescaled with wroot
-                wroot = sparse.dia_matrix((wroot, 0),
-                                          shape=(n_samples, n_samples))
-                X_rescale = safe_sparse_dot(wroot, Xnew, dense_output=True)
-                yw_rescale = safe_sparse_dot(wroot, yw, dense_output=True)
-                coef, residues, rank, singular_ = (
-                    linalg.lstsq(X_rescale, yw_rescale))
+                z = eta + (y-mu)/hp
+                # solve A*coef = b
+                # A = X' W X + l2 P2, b = X' W z
+                coef = _irls_step(Xnew, W, P2, z)
 
                 # updated linear predictor
                 # do it here for updated values for tolerance
                 eta = safe_sparse_dot(Xnew, coef, dense_output=True)
                 mu = link.inverse(eta)
+                hp = link.inverse_derivative(eta)
+                V = family.variance(mu, phi=1, weights=weights)
 
                 # which tolerace? |coef - coef_old| or gradient?
                 # use gradient for compliance with newton-cg and lbfgs
-                # TODO: faster computation of gradient, use mu and eta directly
-                gradient = family._deviance_derivative(
-                    coef=coef, X=Xnew, y=y, weights=weights, link=link)
+                # gradient = family._deviance_derivative(
+                #     coef=coef, X=Xnew, y=y, weights=weights, link=link)
+                # gradient = -X' D (y-mu)/V(mu) + l2 P2 w
+                gradient = -safe_sparse_dot(Xnew.T, hp*(y-mu)/V)
+                if P2.ndim == 1:
+                    gradient += P2*coef
+                else:
+                    gradient += safe_sparse_dot(P2, coef)
                 if (np.max(np.abs(gradient)) <= self.tol):
                     converged = True
                     break
@@ -868,50 +1147,73 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                               "of iterations (currently {0})"
                               .format(self.max_iter), ConvergenceWarning)
 
+        # 3.2 L-BFGS and Newton-CG ############################################
         # TODO: performance: make one function return both deviance and
         #       gradient of deviance
-        elif self.solver == 'lbfgs':
-            func = family._deviance
-            fprime = family._deviance_derivative
-            args = (Xnew, y, weights, link)
-            coef, loss, info = optimize.fmin_l_bfgs_b(
-                func, coef, fprime=fprime,
-                args=args,
-                iprint=(self.verbose > 0) - 1, pgtol=self.tol,
-                maxiter=self.max_iter)
-            if self.verbose > 0:
-                if info["warnflag"] == 1:
-                    warnings.warn("lbfgs failed to converge."
-                                  " Increase the number of iterations.",
-                                  ConvergenceWarning)
-                elif info["warnflag"] == 2:
-                    warnings.warn("lbfgs failed for the reason: {0}".format(
-                        info["task"]))
-            self.n_iter_ = info['nit']
-        elif self.solver == 'newton-cg':
-            func = family._deviance
-            grad = family._deviance_derivative
+        elif self.solver in ['lbfgs', 'newton-cg']:
+            def func(coef, *args):
+                if P2.ndim == 1:
+                    L2 = safe_sparse_dot(coef.T, P2*coef)
+                else:
+                    L2 = safe_sparse_dot(coef.T, safe_sparse_dot(P2, coef))
+                    # A[np.diag_indices_from(A)] += P2
+                return 0.5*family._deviance(coef, *args) + 0.5*L2
+
+            def fprime(coef, *args):
+                if P2.ndim == 1:
+                    L2 = P2*coef
+                else:
+                    L2 = safe_sparse_dot(P2, coef)
+                return 0.5*family._deviance_derivative(coef, *args) + L2
 
             def grad_hess(coef, X, y, weights, link):
-                grad = (family._deviance_derivative(
-                    coef, X, y, weights, link))
-                hessian = (family._deviance_hessian(
-                    coef, X, y, weights, link))
+                if P2.ndim == 1:
+                    L2 = P2*coef
+                else:
+                    L2 = safe_sparse_dot(P2, coef)
+                grad = 0.5*family._deviance_derivative(
+                    coef, X, y, weights, link) + L2
+                hessian = 0.5*family._deviance_hessian(
+                    coef, X, y, weights, link)
+                if P2.ndim == 1:
+                    hessian[np.diag_indices_from(hessian)] += P2
+                else:
+                    hessian += P2
 
                 def Hs(s):
-                    ret = np.dot(hessian, s)
+                    ret = safe_sparse_dot(hessian, s)
                     return ret
                 return grad, Hs
-            hess = grad_hess
-            args = (Xnew, y, weights, link)
-            coef, n_iter_i = newton_cg(hess, func, grad, coef, args=args,
-                                       maxiter=self.max_iter, tol=self.tol)
-            self.coef_ = coef
 
+            args = (Xnew, y, weights, link)
+
+            if self.solver == 'lbfgs':
+                coef, loss, info = optimize.fmin_l_bfgs_b(
+                    func, coef, fprime=fprime, args=args,
+                    iprint=(self.verbose > 0) - 1, pgtol=self.tol,
+                    maxiter=self.max_iter)
+                if self.verbose > 0:
+                    if info["warnflag"] == 1:
+                        warnings.warn("lbfgs failed to converge."
+                                      " Increase the number of iterations.",
+                                      ConvergenceWarning)
+                    elif info["warnflag"] == 2:
+                        warnings.warn("lbfgs failed for the reason: {0}"
+                                      .format(info["task"]))
+                self.n_iter_ = info['nit']
+            elif self.solver == 'newton-cg':
+                coef, n_iter_i = newton_cg(grad_hess, func, fprime, coef,
+                                           args=args, maxiter=self.max_iter,
+                                           tol=self.tol)
+
+        #######################################################################
+        # 4. postprocessing                                                   #
+        #######################################################################
         if self.fit_intercept:
             self.intercept_ = coef[0]
             self.coef_ = coef[1:]
         else:
+            # set intercept to zero as the other linear models do
             self.intercept_ = 0.
             self.coef_ = coef
 
@@ -988,8 +1290,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         :math:`D^2 = 1-\frac{D(y_{true},y_{pred})}{D_{null}}`, :math:`D_{null}`
         is the null deviance, i.e. the deviance of a model with intercept
         alone which corresponds to :math:`y_{pred} = \bar{y}`. The mean
-        :math:`\bar{y}` is average by sample_weight. In the case of a Normal
-        distribution, this D^2 equals R^2.
+        :math:`\bar{y}` is averaged by sample_weight. In the case of a Normal
+        distribution, D^2 equals R^2.
         Best possible score is 1.0 and it can be negative (because the
         model can be arbitrarily worse).
 
