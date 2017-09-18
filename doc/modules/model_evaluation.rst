@@ -1257,9 +1257,12 @@ implements label ranking average precision (LRAP). This metric is linked to
 the :func:`average_precision_score` function, but is based on the notion of
 label ranking instead of precision and recall.
 
-Label ranking average precision (LRAP) is the average over each ground truth
-label assigned to each sample, of the ratio of true vs. total labels with lower
-score. This metric will yield better scores if you are able to give better rank
+Label ranking average precision (LRAP) averages over the samples the answer to
+the following question: for each ground truth label, what fraction of higher-ranked
+labels were true labels? ("Higher-ranked" means that the algorithm assigned a higher
+score :math:`\hat{f}_{ik}` and a lower value of
+:math:`\text{rank}_{ik} = \left|\left\{l: \hat{f}_{il} \geq \hat{f}_{ik} \right\}\right|`.)
+This metric will yield better scores if you are able to give better rank
 to the labels associated with each sample. The obtained score is always strictly
 greater than 0, and the best value is 1. If there is exactly one relevant
 label per sample, label ranking average precision is equivalent to the `mean
