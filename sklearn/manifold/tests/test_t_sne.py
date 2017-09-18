@@ -327,7 +327,7 @@ def test_trustworthiness_unusual_metric():
     assert_almost_equal(assert_warns(RuntimeWarning, trustworthiness, X, X,
                                      n_neighbors=1,
                                      metric='cosine'),
-                        0.6, decimal=1)
+                        0.66, decimal=1)
 
 
 def test_early_exaggeration_too_small():
