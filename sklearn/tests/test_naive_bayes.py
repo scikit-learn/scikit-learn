@@ -461,6 +461,9 @@ def test_check_accuracy_on_digits():
     scores = cross_val_score(GaussianNB(), X, y, cv=10)
     assert_greater(scores.mean(), 0.77)
 
+    scores = cross_val_score(GaussianNB(var_smoothing=0.1), X, y, cv=10)
+    assert_greater(scores.mean(), 0.89)
+
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert_greater(scores.mean(), 0.86)
 
