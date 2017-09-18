@@ -999,10 +999,10 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         # check that the score is invariant under scaling of the weights by a
         # common factor
         for scaling in [2, 0.3]:
-            assert_almost_equal(
+            np.testing.assert_allclose(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
-                decimal=1,
+                atol=1e-2,
                 err_msg="%s sample_weight is not invariant "
                         "under scaling" % name)
 
