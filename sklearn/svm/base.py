@@ -151,7 +151,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                                    else sample_weight, dtype=np.float64)
         X, y = check_X_y(X, y, dtype=np.float64, order='C',
                          accept_sparse='csr')
-        y = self._validate_targets(y, sample_weight)
         solver_type = LIBSVM_IMPL.index(self._impl)
 
         # input validation
@@ -169,6 +168,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "Note: Sparse matrices cannot be indexed w/"
                              "boolean masks (use `indices=True` in CV)."
                              % (sample_weight.shape, X.shape))
+
+        y = self._validate_targets(y, sample_weight)
 
         if self.gamma == 'auto':
             self._gamma = 1.0 / X.shape[1]

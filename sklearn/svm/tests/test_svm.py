@@ -442,14 +442,14 @@ def test_zero_sample_weights():
     clf = svm.SVC()
     clf.fit(X, Y)
     assert_array_equal(clf.predict([X[2]]), [2.])
-    assert_array_equal(clf.class_weight_, [1,1,1])
-    assert_array_equal(clf.classes_, [1,2,3])
+    assert_array_equal(clf.class_weight_, [1, 1, 1])
+    assert_array_equal(clf.classes_, [1, 2, 3])
 
     # use sample_weight 0 for class 1
     sample_weight = [0.] * 2 + [10] * 4
     clf.fit(X, Y, sample_weight=sample_weight)
-    assert_array_equal(clf.class_weight_, [1,1])
-    assert_array_equal(clf.classes_, [2,3])
+    assert_array_equal(clf.class_weight_, [1, 1])
+    assert_array_equal(clf.classes_, [2, 3])
     assert_array_equal(clf.predict([X[2]]), [2.])
 
 
