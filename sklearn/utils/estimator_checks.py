@@ -419,7 +419,10 @@ def check_sample_weights_pandas_series(name, estimator_orig):
         try:
             import pandas as pd
             X = pd.DataFrame([[1, 1], [1, 2], [1, 3], [2, 1], [2, 2], [2, 3]])
-            X = gram_matrix_if_pairwise(X, estimator_orig)
+            # if _pairwise, feed estimator a pandas dataframe of the gram
+            # matrix
+            if is_pairwise(estimator_orig):
+                X = pd.DataFrame(rbf_kernel(X.values, X.values))
             y = pd.Series([1, 1, 1, 2, 2, 2])
             weights = pd.Series([1] * 6)
             try:
@@ -1835,4 +1838,3 @@ def check_decision_proba_consistency(name, estimator_orig):
         a = estimator.predict_proba(X_test)[:, 1]
         b = estimator.decision_function(X_test)
         assert_array_equal(rankdata(a), rankdata(b))
-
