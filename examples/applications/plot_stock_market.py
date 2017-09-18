@@ -89,8 +89,7 @@ def retry(f, n_attempts=3):
     return wrapper
 
 
-def quotes_historical_google(symbol, start_date, end_date,
-                             expected=None):
+def quotes_historical_google(symbol, start_date, end_date):
     """Get the historical data from Google finance.
 
     Parameters
@@ -125,23 +124,26 @@ def quotes_historical_google(symbol, start_date, end_date,
     data = np.genfromtxt(response, delimiter=',', skip_header=1,
                          dtype=dtype, converters=converters,
                          missing_values='-', filling_values=-1)
-    if expected is not None:
-        len_data = len(data)
-        min_date = min(data['date'], default=None)
-        max_date = max(data['date'], default=None)
-        if (len_data != expected['len_data'] or
-            min_date != expected['min_date'] or
-                max_date != expected['max_date']):
-            message = (
-                'Got wrong data for symbol {}, url {}\n'
-                '  - min_date should be {}, got {}\n'
-                '  - max_date should be {}, got {}\n'
-                '  - len(data) should be {}, got {}'.format(
-                    symbol, url,
-                    expected['min_date'], min_date,
-                    expected['max_date'], max_date,
-                    expected['len_data'], len_data))
-            raise ValueError(message)
+    min_date = min(data['date'], default=datetime.min.date())
+    max_date = max(data['date'], default=datetime.max.date())
+    start_end_diff = (end_date - start_date).days
+    min_max_diff = (max_date - min_date).days
+    data_is_fine = (
+        start_date <= min_date <= end_date and
+        start_date <= max_date <= end_date and
+        start_end_diff - 7 <= min_max_diff <= start_end_diff)
+
+    if not data_is_fine:
+        message = (
+            'Data looks wrong for symbol {}, url {}\n'
+            '  - start_date: {}, end_date: {}\n'
+            '  - min_date:   {}, max_date: {}\n'
+            '  - start_end_diff: {}, min_max_diff: {}'.format(
+                symbol, url,
+                start_date, end_date,
+                min_date, max_date,
+                start_end_diff, min_max_diff))
+        raise RuntimeError(message)
     return data
 
 # #############################################################################
@@ -149,8 +151,8 @@ def quotes_historical_google(symbol, start_date, end_date,
 
 # Choose a time period reasonably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
-start_date = datetime(2003, 1, 2).date()
-end_date = datetime(2007, 12, 31).date()
+start_date = datetime(2003, 1, 1).date()
+end_date = datetime(2008, 1, 1).date()
 
 symbol_dict = {
     'NYSE:TOT': 'Total',
@@ -216,13 +218,11 @@ symbols, names = np.array(sorted(symbol_dict.items())).T
 # retry is used because quotes_historical_google can temporarily fail
 # for various reasons (e.g. empty result from Google API).
 quotes = []
-# expected min_date, max_date and length for each stock timeseries
-expected = {'min_date': start_date, 'max_date': end_date, 'len_data': 1258}
 
 for symbol in symbols:
     print('Fetching quote history for %r' % symbol, file=sys.stderr)
-    quotes.append(retry(quotes_historical_google)(symbol, start_date, end_date,
-                                                  expected=expected))
+    quotes.append(retry(quotes_historical_google)(
+        symbol, start_date, end_date))
 
 close_prices = np.vstack([q['close'] for q in quotes])
 open_prices = np.vstack([q['open'] for q in quotes])
