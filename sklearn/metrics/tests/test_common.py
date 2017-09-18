@@ -997,12 +997,12 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
     if not name.startswith('unnormalized'):
         # Check that the score is invariant under scaling of the weights by a
-        # common factor. The scaling value is carefully chosen to reduce minor
-        # errors introduced by python when doing floating operations.
-        for scaling in [5, 0.5]:
+        # common factor
+        for scaling in [2, 0.3]:
             assert_almost_equal(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
+                decimal=2,
                 err_msg="%s sample_weight is not invariant "
                         "under scaling" % name)
 
