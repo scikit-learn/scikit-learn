@@ -347,12 +347,13 @@ def test_grid_search_future_warnings():
                                    return_train_score=return_train_score)
         grid_search.fit(X, y)
 
-    msg = "Computing training scores is likely to affect performance "
+    msg = "Computing training scores may affect performance "
     "significantly. This is the reason return_train_score will "
     "change its default value from True (current behaviour) to "
     "False in 0.22. Please set explicitly return_train_score to "
     "get rid of this warning."
     assert_warns_message(FutureWarning, msg, init, clf, grid, "warn")
+    assert_true("mean_train_score" in clf.cv_results_.keys())
     assert_no_warnings(FutureWarning, msg, init, clf, grid, True)
     assert_no_warnings(FutureWarning, msg, init, clf, grid, False)
 

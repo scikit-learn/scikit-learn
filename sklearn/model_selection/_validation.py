@@ -119,7 +119,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Whether to include train scores in the return dict if ``scoring`` is
         of multimetric type.
         Current default is ``'warn'``, which behaves as ``False`` in addition
-        to raising a warning that default will be changed to ``False``
+        to raising a warning. That default will be changed to ``False``
         in 0.22.
 
     Returns
@@ -184,7 +184,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     """
     if return_train_score == "warn":
-            warnings.warn("Computing training scores is likely to affect "
+            warnings.warn("Computing training scores may affect "
                           "performance significantly. This is the reason "
                           "return_train_score will change its default value "
                           "from True (current behaviour) to False in 0.22. "
