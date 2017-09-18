@@ -340,7 +340,8 @@ def test_future_warnings():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = LinearSVC(random_state=0)
-    grid = {'C': [.1]}
+    array = np.ones(10)
+    grid = {'C': array}
 
     for searchcv in [GridSearchCV, RandomizedSearchCV]:
         def init(clf, parameters, return_train_score):
