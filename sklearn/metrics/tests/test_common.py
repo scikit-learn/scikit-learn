@@ -1002,7 +1002,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
             assert_almost_equal(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
-                decimal=2,
+                decimal=1,
                 err_msg="%s sample_weight is not invariant "
                         "under scaling" % name)
 
