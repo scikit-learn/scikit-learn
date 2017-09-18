@@ -143,23 +143,30 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    >>> X = [[0], [1], [2], [3]]
-    >>> y = [0, 0, 1, 1]
     >>> from sklearn.neighbors import LargeMarginNearestNeighbor
     >>> from sklearn.neighbors import KNeighborsClassifier
-    >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=1)
-    >>> lmnn.fit(X, y) # doctest: +ELLIPSIS
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    stratify=y, test_size=0.7, random_state=42)
+    >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
+    >>> lmnn.fit(X_train, y_train) # doctest: +ELLIPSIS
     LargeMarginNearestNeighbor(...)
-    >>> print(lmnn.transform(X))
-    [[ 0.        ]
-     [-0.52704628]
-     [-1.05409255]
-     [-1.58113883]]
+    >>> print(lmnn.transformation_)
+    [[ 0.31515095  0.04163395  0.75730485  1.13602404]
+     [-0.28354308 -0.11255437  0.102604    0.21393139]
+     [ 0.44674234  0.19562166 -0.35246784 -0.6381634 ]
+     [ 0.14574449  0.01586291  0.38593999  0.58165202]]
     >>> knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
-    >>> knn.fit(lmnn.transform(X), y) # doctest: +ELLIPSIS
+    >>> knn.fit(X_train, y_train) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
-    >>> print(knn.score(lmnn.transform(X), y))
-    1.0
+    >>> print(knn.score(X_test, y_test))
+    0.933333333333
+    >>> knn.fit(lmnn.transform(X_train), y_train) # doctest: +ELLIPSIS
+    KNeighborsClassifier(...)
+    >>> print(knn.score(lmnn.transform(X_test), y_test))
+    0.971428571429
 
 
     Notes
@@ -171,7 +178,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     data instances in the training set are surrounded by at least k instances
     that share the same class label. If this is achieved, the leave-one-out
     error is minimized.
-
     This implementation follows closely Kilian Weinberger's MATLAB code found
     at <https://bitbucket.org/mlcircus/lmnn> which solves the unconstrained
     problem, finding a linear transformation with L-BFGS instead of solving the
@@ -179,11 +185,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     the paper, the problem solved by this implementation is with the squared
     hinge loss (to make the problem differentiable).
 
-    At least for 32bit systems, one cannot expect precise reproducibility of
-    PCA and therefore the transformations in 2 identical runs can diverge even
-    before the first iteration of LargeMarginNearestNeighbor. Therefore, one
-    should not expect any reproducibility of the transformations found by
-    `LargeMarginNearestNeighbor` when initializing with PCA (`init`='pca').
+    .. warning::
+
+        At least for 32bit systems, one cannot expect precise reproducibility
+        of PCA and therefore the transformations in 2 identical runs can
+        diverge even before the first iteration of LargeMarginNearestNeighbor.
+        Therefore, one should not expect any reproducibility of the
+        transformations found by `LargeMarginNearestNeighbor` when
+        initializing with PCA (`init`='pca').
 
 
     References
