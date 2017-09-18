@@ -1440,10 +1440,11 @@ def check_class_weight_classifiers(name, classifier_orig):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
                                                             random_state=0)
 
-        X_train = gram_matrix_if_pairwise(X_train, classifier_orig,
-                                          kernel=rbf_kernel)
-        X_test = gram_matrix_if_pairwise(X_test, classifier_orig,
-                                         kernel=rbf_kernel)
+        # can't use gram_if_pairwise() here, setting up gram matrix manually
+        if is_pairwise(classifier_orig):
+            X_test = rbf_kernel(X_test, X_train)
+            X_train = rbf_kernel(X_train, X_train)
+
         n_centers = len(np.unique(y_train))
 
         if n_centers == 2:
