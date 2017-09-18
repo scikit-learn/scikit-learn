@@ -56,7 +56,7 @@ Classifiers and regressors
 
 - Add `var_smoothing` parameter in
   :class:`sklearn.naive_bayes.GaussianNB` to give a precise control over
-  variances calculation. By :user:`Dmitry Mottl <Mottl>`.
+  variances calculation. :issue:`9681` by :user:`Dmitry Mottl <Mottl>`.
 
 
 
