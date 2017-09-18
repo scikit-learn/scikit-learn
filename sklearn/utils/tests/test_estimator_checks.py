@@ -259,3 +259,4 @@ def test_check_estimator_pairwise():
     # attribute set
     est = SVC(kernel='precomputed')
     check_estimator(est)
+
