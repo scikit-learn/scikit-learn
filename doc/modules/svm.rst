@@ -653,7 +653,7 @@ support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
 
-It can be shown that the :math:`\nu`-SVC formulation is a reparametrization
+It can be shown that the :math:`\nu`-SVC formulation is a reparameterization
 of the :math:`C`-SVC and therefore mathematically equivalent.
 
 
