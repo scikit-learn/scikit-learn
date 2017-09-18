@@ -432,6 +432,27 @@ def test_sample_weights():
     assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
 
 
+def test_zero_sample_weights():
+    # Test weights on individual samples
+    # TODO: check on NuSVR, OneClass, etc.
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    Y = [1, 1, 2, 2, 3, 3]
+
+    # Test without weights
+    clf = svm.SVC()
+    clf.fit(X, Y)
+    assert_array_equal(clf.predict([X[2]]), [2.])
+    assert_array_equal(clf.class_weight_, [1,1,1])
+    assert_array_equal(clf.classes_, [1,2,3])
+
+    # use sample_weight 0 for class 1
+    sample_weight = [0.] * 2 + [10] * 4
+    clf.fit(X, Y, sample_weight=sample_weight)
+    assert_array_equal(clf.class_weight_, [1,1])
+    assert_array_equal(clf.classes_, [2,3])
+    assert_array_equal(clf.predict([X[2]]), [2.])
+
+
 def test_auto_weight():
     # Test class weights for imbalanced data
     from sklearn.linear_model import LogisticRegression
