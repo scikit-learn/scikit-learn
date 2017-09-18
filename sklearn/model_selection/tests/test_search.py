@@ -346,7 +346,7 @@ def test_future_warnings():
     for searchcv in [GridSearchCV, RandomizedSearchCV]:
         def init(clf, parameters, return_train_score):
             search = searchcv(clf, parameters,
-                                       return_train_score=return_train_score)
+                              return_train_score=return_train_score)
             search.fit(X, y)
             return search
 
