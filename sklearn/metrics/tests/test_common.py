@@ -996,7 +996,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                  (weighted_score_zeroed, weighted_score_subset, name)))
 
     if not name.startswith('unnormalized'):
-        # Check that the score is invariant under scaling of the weights by a
+        # check that the score is invariant under scaling of the weights by a
         # common factor
         for scaling in [2, 0.3]:
             assert_almost_equal(
