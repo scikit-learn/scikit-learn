@@ -707,7 +707,8 @@ class TSNE(BaseEstimator):
                             'memory. Otherwise consider dimensionality '
                             'reduction techniques (e.g. TruncatedSVD)')
         if self.method == 'barnes_hut':
-            X = check_array(X, ensure_min_samples=2, dtype=np.float64)
+            X = check_array(X, ensure_min_samples=2,
+                            dtype=[np.float32, np.float64])
         else:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                             dtype=np.float64)
