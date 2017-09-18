@@ -390,6 +390,7 @@ def test_cross_validate_future_warnings():
     def init(estimator, X, y, return_train_score):
         cv_results = cross_validate(estimator, X, y,
                        return_train_score=return_train_score)
+        return cv_results
 
     msg = "Computing training scores may affect performance "
     "significantly. This is the reason return_train_score will "
@@ -397,7 +398,7 @@ def test_cross_validate_future_warnings():
     "False in 0.22. Please set explicitly return_train_score to "
     "get rid of this warning."
     assert_warns_message(FutureWarning, msg, init, estimator, X, y, "warn")
-    assert_true("train_score" in cv_results.keys())
+    assert_true("train_score" in init(estimator, X, y, "warn").cv_results_.keys())
     assert_no_warnings(FutureWarning, msg, init, estimator, X, y, True)
     assert_no_warnings(FutureWarning, msg, init, estimator, X, y, False)
 

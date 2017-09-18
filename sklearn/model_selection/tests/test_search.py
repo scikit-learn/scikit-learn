@@ -346,6 +346,7 @@ def test_grid_search_future_warnings():
         grid_search = GridSearchCV(clf, parameters,
                                    return_train_score=return_train_score)
         grid_search.fit(X, y)
+        return grid_search
 
     msg = "Computing training scores may affect performance "
     "significantly. This is the reason return_train_score will "
@@ -353,7 +354,7 @@ def test_grid_search_future_warnings():
     "False in 0.22. Please set explicitly return_train_score to "
     "get rid of this warning."
     assert_warns_message(FutureWarning, msg, init, clf, grid, "warn")
-    assert_true("mean_train_score" in clf.cv_results_.keys())
+    assert_true("mean_train_score" in init(clf, grid, "warn").cv_results_.keys())
     assert_no_warnings(FutureWarning, msg, init, clf, grid, True)
     assert_no_warnings(FutureWarning, msg, init, clf, grid, False)
 
