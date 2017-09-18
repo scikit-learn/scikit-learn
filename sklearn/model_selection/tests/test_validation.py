@@ -398,7 +398,7 @@ def test_cross_validate_future_warnings():
     "False in 0.22. Please set explicitly return_train_score to "
     "get rid of this warning."
     assert_warns_message(FutureWarning, msg, init, estimator, X, y, "warn")
-    assert_true("train_score" in init(estimator, X, y, "warn").cv_results_.keys())
+    assert_true("train_score" in init(estimator, X, y, "warn").keys())
     assert_no_warnings(FutureWarning, msg, init, estimator, X, y, True)
     assert_no_warnings(FutureWarning, msg, init, estimator, X, y, False)
 
