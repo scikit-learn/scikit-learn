@@ -108,13 +108,13 @@ def quotes_historical_google(symbol, start_date, end_date,
         The columns are ``date`` -- date, ``open``, ``high``,
         ``low``, ``close`` and ``volume`` of type float.
     """
-    params = urlencode({
+    params = {
         'q': symbol,
-        'startdate': start_date.strftime('%b %d, %Y'),
-        'enddate': end_date.strftime('%b %d, %Y'),
-        'output': 'csv'
-    })
-    url = 'http://www.google.com/finance/historical?' + params
+        'startdate': start_date.strftime('%Y-%m-%d'),
+        'enddate': end_date.strftime('%Y-%m-%d'),
+        'output': 'csv',
+    }
+    url = 'https://finance.google.com/finance/historical?' + urlencode(params)
     response = urlopen(url)
     dtype = {
         'names': ['date', 'open', 'high', 'low', 'close', 'volume'],
@@ -128,7 +128,7 @@ def quotes_historical_google(symbol, start_date, end_date,
     if expected is not None:
         len_data = len(data)
         min_date = min(data['date'], default=None)
-        max_date = min(data['date'], default=None)
+        max_date = max(data['date'], default=None)
         if (len_data != expected['len_data'] or
             min_date != expected['min_date'] or
                 max_date != expected['max_date']):
