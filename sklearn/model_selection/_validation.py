@@ -200,18 +200,17 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             return_times=True, return_estimator=return_estimator)
         for train, test in cv.split(X, y, groups))
 
+    zipped_scores = list(zip(*scores))
+    unpacked = 0
     if return_train_score:
-        if return_estimator:
-            (train_scores, test_scores, fit_times, score_times,
-             fitted_est) = zip(*scores)
-        else:
-            train_scores, test_scores, fit_times, score_times = zip(*scores)
+        train_scores = zipped_scores[0]
         train_scores = _aggregate_score_dicts(train_scores)
+        unpacked += 1
+    if return_estimator:
+        (test_scores, fit_times, score_times,
+         fitted_estimators) = zipped_scores[unpacked:]
     else:
-        if return_estimator:
-            test_scores, fit_times, score_times, fitted_est = zip(*scores)
-        else:
-            test_scores, fit_times, score_times = zip(*scores)
+        test_scores, fit_times, score_times = zipped_scores[unpacked:]
     test_scores = _aggregate_score_dicts(test_scores)
 
     ret = dict()
@@ -219,7 +218,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     ret['score_time'] = np.array(score_times)
 
     if return_estimator:
-        ret['estimator'] = fitted_est
+        ret['estimator'] = fitted_estimators
 
     for name in scorers:
         ret['test_%s' % name] = np.array(test_scores[name])
