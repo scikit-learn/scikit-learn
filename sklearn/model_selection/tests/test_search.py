@@ -333,7 +333,7 @@ def test_grid_search_groups():
         gs.fit(X, y)
 
 
-def test_grid_search_future_warnings():
+def test_future_warnings():
     # Test that warnings are raised. Will be removed in 0.22
 
     X = np.arange(100).reshape(10, 10)
@@ -342,49 +342,23 @@ def test_grid_search_future_warnings():
     clf = LinearSVC(random_state=0)
     grid = {'C': [.1]}
 
-    def init(clf, parameters, return_train_score):
-        grid_search = GridSearchCV(clf, parameters,
-                                   return_train_score=return_train_score)
-        grid_search.fit(X, y)
-        return grid_search
+    for searchcv in [GridSearchCV, RandomizedSearchCV]:
+        def init(clf, parameters, return_train_score):
+            search = searchcv(clf, parameters,
+                                       return_train_score=return_train_score)
+            search.fit(X, y)
+            return search
 
-    msg = ("Computing training scores may affect performance "
-    "significantly. This is the reason return_train_score will "
-    "change its default value from True (current behaviour) to "
-    "False in 0.22. Please set explicitly return_train_score to "
-    "get rid of this warning.")
-    assert_warns_message(FutureWarning, msg, init, clf, grid, "warn")
-    assert_true("mean_train_score"
-                in init(clf, grid, "warn").cv_results_.keys())
-    assert_no_warnings(FutureWarning, msg, init, clf, grid, True)
-    assert_no_warnings(FutureWarning, msg, init, clf, grid, False)
-
-
-def test_random_search_future_warnings():
-    # Test that warnings are raised. Will be removed in 0.22
-
-    X = np.arange(100).reshape(10, 10)
-    y = np.array([0] * 5 + [1] * 5)
-
-    clf = LinearSVC(random_state=0)
-    grid = {'C': [.1]}
-
-    def init(clf, parameters, return_train_score):
-        random_search = RandomizedSearchCV(clf, parameters,
-                                   return_train_score=return_train_score)
-        random_search.fit(X, y)
-        return random_search
-
-    msg = ("Computing training scores may affect performance "
-    "significantly. This is the reason return_train_score will "
-    "change its default value from True (current behaviour) to "
-    "False in 0.22. Please set explicitly return_train_score to "
-    "get rid of this warning.")
-    assert_warns_message(FutureWarning, msg, init, clf, grid, "warn")
-    assert_true("mean_train_score"
-                in init(clf, grid, "warn").cv_results_.keys())
-    assert_no_warnings(FutureWarning, msg, init, clf, grid, True)
-    assert_no_warnings(FutureWarning, msg, init, clf, grid, False)
+        msg = ("Computing training scores may affect performance "
+               "significantly. This is the reason return_train_score will "
+               "change its default value from True (current behaviour) to "
+               "False in 0.22. Please set explicitly return_train_score to "
+               "get rid of this warning.")
+        assert_warns_message(FutureWarning, msg, init, clf, grid, "warn")
+        assert_true("mean_train_score"
+                    in init(clf, grid, "warn").cv_results_)
+        assert_no_warnings(FutureWarning, msg, init, clf, grid, True)
+        assert_no_warnings(FutureWarning, msg, init, clf, grid, False)
 
 
 def test_classes__property():
