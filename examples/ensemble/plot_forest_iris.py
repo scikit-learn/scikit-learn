@@ -46,7 +46,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
-from sklearn import clone
 from sklearn.datasets import load_iris
 from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
                               AdaBoostClassifier)
@@ -90,10 +89,9 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         X = (X - mean) / std
 
         # Train
-        clf = clone(model)
-        clf = model.fit(X, y)
+        model.fit(X, y)
 
-        scores = clf.score(X, y)
+        scores = model.score(X, y)
         # Create a title for each column and the console by using str() and
         # slicing away useless parts of the string
         model_title = str(type(model)).split(
