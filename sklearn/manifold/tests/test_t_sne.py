@@ -717,7 +717,17 @@ def test_accessible_kl_divergence():
 
 
 def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
-    """Make sure that TSNE can approximately recover a uniform 2D grid"""
+    """Make sure that TSNE can approximately recover a uniform 2D grid
+
+    Due to ties in distances between point in X_2d_grid, this test is platform
+    dependent for ``method='barnes_hut'`` due to numerical imprecision.
+
+    Also, t-SNE is not assured to converge to the right solution because bad
+    initialization can lead to convergence to bad local minimum (the
+    optimization problem is non-convex). To avoid breaking the test too often,
+    we re-run t-SNE from the final point when the convergence is not good
+    enough.
+    """
     for seed in seeds:
         tsne = TSNE(n_components=2, init='random', random_state=seed,
                     perplexity=20, n_iter=n_iter, method=method)
@@ -728,7 +738,9 @@ def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
             assert_uniform_grid(Y, try_name)
         except AssertionError:
             # If the test fails a first time, re-run with init=Y to see if
-            # this was caused by a bad initialization
+            # this was caused by a bad initialization. Note that this will
+            # also run an early_exaggeration step.
+            try_name += ":rerun"
             tsne.init = Y
             Y = tsne.fit_transform(X_2d_grid)
             assert_uniform_grid(Y, try_name)
