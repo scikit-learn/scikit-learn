@@ -253,6 +253,7 @@ def test_check_no_fit_attributes_set_in_init():
                         'estimator_name',
                         NonConformantEstimator)
 
+
 def test_check_estimator_pairwise():
     # check that check_estimator() works on estimator with _pairwise
     # attribute set

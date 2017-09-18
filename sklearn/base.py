@@ -551,7 +551,6 @@ def is_classifier(estimator):
 def is_regressor(estimator):
     """Returns True if the given estimator is (probably) a regressor.
 
-
     Parameters
     ----------
     estimator : object
@@ -566,9 +565,7 @@ def is_regressor(estimator):
 
 
 def is_pairwise(estimator):
-    """Returns True if the given estimator has a _pairwise attribute
-    set to True.
-
+    """Returns True if estimator has a _pairwise attribute set to True.
 
     Parameters
     ----------
@@ -580,4 +577,5 @@ def is_pairwise(estimator):
     out : bool
         True if _pairwise is set to True and False otherwise.
     """
-    return getattr(estimator, "_pairwise", False)
+    return bool(getattr(estimator, "_pairwise", False))
+

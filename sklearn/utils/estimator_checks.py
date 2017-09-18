@@ -1836,7 +1836,3 @@ def check_decision_proba_consistency(name, estimator_orig):
         b = estimator.decision_function(X_test)
         assert_array_equal(rankdata(a), rankdata(b))
 
-
-def check_pairwise_estimator():
-    est = SVC(kernel='precomputed')
-    check_estimator(est)
