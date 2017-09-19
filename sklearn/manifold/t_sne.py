@@ -23,7 +23,7 @@ from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
-from ..six import string_types
+from ..externals.six import string_types
 from ..utils import deprecated
 
 
