@@ -65,6 +65,15 @@ Linear, kernelized and related models
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
 
+Decomposition, manifold learning and clustering
+
+- Deprecate ``precomputed`` parameter in function
+  :func:`manifold.t_sne.trustworthiness`. Instead, the new parameter
+  ``metric`` should be used with any compatible metric including
+  'precomputed', in which case the input matrix ``X`` should be a matrix of
+  pairwise distances or squared distances. :issue:`9736` by
+  :user:`Joel Nothman <jnothman>`.
+
 Bug fixes
 .........
 
@@ -100,3 +109,12 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Decomposition, manifold learning and clustering
+
+- Deprecate ``precomputed`` parameter in function
+  :func:`manifold.t_sne.trustworthiness`. Instead, the new parameter
+  ``metric`` should be used with any compatible metric including
+  'precomputed', in which case the input matrix ``X`` should be a matrix of
+  pairwise distances or squared distances. :issue:`9736` by
+  :user:`Joel Nothman <jnothman>`.

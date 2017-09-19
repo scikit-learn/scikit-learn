@@ -303,30 +303,18 @@ def test_trustworthiness_precomputed_deprecation():
     assert_equal(assert_warns(DeprecationWarning, trustworthiness,
                               pairwise_distances(X), X, metric='precomputed',
                               precomputed=True), 1.)
-    # If a 'metric' different from 'precomputed' is specified, but the flag
-    # 'precomputed' is set to True, the flag overwrites the parameter 'metric'
-    # and so the 'precomputed' metric will be used. Indeed, in
-    # http://scikit-learn.org/stable/developers/contributing.html#deprecation,
-    # the old parameter overwrites the new parameter.
-    assert_raises(Exception, assert_warns, DeprecationWarning,
+    assert_raises(IndexError, assert_warns, DeprecationWarning,
                   trustworthiness, X, X, metric='euclidean', precomputed=True)
     assert_equal(assert_warns(DeprecationWarning, trustworthiness,
                               pairwise_distances(X), X, metric='euclidean',
                               precomputed=True), 1.)
 
 
-def test_trustworthiness_unusual_metric():
-    # Other metrics than 'euclidean' and 'precomputed' are unusual and must
-    # raise a warning
-    X = np.arange(100).reshape(50, 2)
-    assert_warns(RuntimeWarning, trustworthiness, X, X, metric='manhattan')
-    # The example below illustrates why using a custom metric other than
-    # euclidean can be misleading, while testing the function in this case.
+def test_trustworthiness_not_euclidean_metric():
+    # Test trustworthiness with a metric different from 'euclidean' and
+    # 'precomputed'
     X = np.array([[1, 1], [1, 0], [2, 2]])
-    assert_equal(trustworthiness(X, X, n_neighbors=1, metric='euclidean'), 1.)
-    assert_almost_equal(assert_warns(RuntimeWarning, trustworthiness, X, X,
-                                     n_neighbors=1,
-                                     metric='cosine'),
+    assert_almost_equal(trustworthiness(X, X, n_neighbors=1, metric='cosine'),
                         0.66, decimal=1)
 
 

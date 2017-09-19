@@ -422,10 +422,9 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
     metric : string, or callable, optional, default 'euclidean'
         Which metric to use for computing pairwise distances between samples
         from the original input space. If metric is 'precomputed', X must be a
-        matrix of pairwise distances. Otherwise, see the documentation of
-        argument metric in sklearn.pairwise.pairwise_distances for a list of
-        available metrics. However, using a metric different from 'euclidean'
-        and 'precomputed' seems not standard for this task.
+        matrix of pairwise distances or squared distances. Otherwise, see the
+        documentation of argument metric in sklearn.pairwise.pairwise_distances
+        for a list of available metrics.
 
     Returns
     -------
@@ -442,8 +441,6 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
     elif metric == 'euclidean':
         dist_X = pairwise_distances(X, metric='euclidean', squared=True)
     else:
-        warnings.warn("The metric '{}' seems not standard for computing "
-                      "trustworthiness.".format(metric), RuntimeWarning)
         dist_X = pairwise_distances(X, metric=metric)
     dist_X_embedded = pairwise_distances(X_embedded, squared=True)
     ind_X = np.argsort(dist_X, axis=1)
