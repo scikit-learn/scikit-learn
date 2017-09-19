@@ -34,8 +34,8 @@ def test_estimate_bandwidth():
 
 
 def test_estimate_bandwidth_1sample():
-    # Test estimate_bandwidth when n_samples=1 and quantile<1 such that
-    # n_neighors is set to 1.
+    # Test estimate_bandwidth when n_samples=1 and quantile<1, so that
+    # n_neighbors is set to 1.
     bandwidth = estimate_bandwidth(X, n_samples=1, quantile=0.3)
     assert_equal(bandwidth, 0.)
 
