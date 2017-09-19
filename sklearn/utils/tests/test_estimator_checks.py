@@ -19,6 +19,7 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
 from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -258,4 +259,11 @@ def test_check_estimator_pairwise():
     # check that check_estimator() works on estimator with _pairwise
     # attribute set
     est = SVC(kernel='precomputed')
+    check_estimator(est)
+
+def test_check_estimator_metric_and_kernel():
+    # check that check_estimator works for estimator that is based on
+    # a metric as well as a kernel
+
+    est = KNeighborsRegressor()
     check_estimator(est)
