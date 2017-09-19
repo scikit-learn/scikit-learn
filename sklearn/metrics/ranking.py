@@ -227,8 +227,11 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    pos_label : int or str, default=None
-        The label of the positive class. Only make sense for binary y_true.
+    pos_label : int or str, optional
+        Default is ``None``. If ``None``, pos_label is considered to be 1.
+
+        The label of the positive class. For multilabel-indicator y_true,
+        pos_label is fixed to 1.
 
     Returns
     -------
@@ -275,7 +278,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
             sample_weight=sample_weight)
     else:
         if pos_label is not None and pos_label != 1:
-            raise ValueError("Parameter pos_label doesn't make sense for "
+            raise ValueError("Parameter pos_label is fixed to 1 for"
                              "multilabel-indicator y_true. Do not set "
                              "pos_label or set pos_label to either None "
                              "or 1.")
