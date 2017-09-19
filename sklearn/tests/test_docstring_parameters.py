@@ -41,7 +41,6 @@ IGNORED_MODULES = (
     'kernel_approximation',
     'model_selection',
     'multioutput',
-    'random_projection',
     'setup',
     'svm',
     'utils',
