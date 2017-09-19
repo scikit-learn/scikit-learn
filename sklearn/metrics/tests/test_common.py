@@ -998,13 +998,17 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     if not name.startswith('unnormalized'):
         # check that the score is invariant under scaling of the weights by a
         # common factor
+
+        # FIXME: roc_auc scores are more unstable than other scores
+        kwargs = {'atol': 1e-2} if 'roc_auc' in name else {}
+
         for scaling in [2, 0.3]:
             np.testing.assert_allclose(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
-                atol=1e-2,
                 err_msg="%s sample_weight is not invariant "
-                        "under scaling" % name)
+                        "under scaling" % name,
+                **kwargs)
 
     # Check that if sample_weight.shape[0] != y_true.shape[0], it raised an
     # error
