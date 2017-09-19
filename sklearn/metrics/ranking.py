@@ -21,6 +21,7 @@ from __future__ import division
 
 import warnings
 import numpy as np
+from functools import partial
 from scipy.sparse import csr_matrix
 from scipy.stats import rankdata
 
@@ -189,7 +190,8 @@ def average_precision_score(y_true, y_score, average="macro",
 
 
 
-def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
+def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
+                  pos_label=None):
     """Compute Area Under the Curve (AUC) from prediction scores
 
     Note: this implementation is restricted to the binary classification task
@@ -226,6 +228,9 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    pos_label : int, optional (default=None)
+        The label of the positive class
+
     Returns
     -------
     auc : float
@@ -251,18 +256,21 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     0.75
 
     """
-    def _binary_roc_auc_score(y_true, y_score, sample_weight=None):
+    def _binary_roc_auc_score(y_true, y_score, sample_weight=None,
+                              pos_label=None):
         if len(np.unique(y_true)) != 2:
             raise ValueError("Only one class present in y_true. ROC AUC score "
                              "is not defined in that case.")
 
-        fpr, tpr, tresholds = roc_curve(y_true, y_score,
+        fpr, tpr, tresholds = roc_curve(y_true, y_score, pos_label=pos_label,
                                         sample_weight=sample_weight)
         return auc(fpr, tpr, reorder=True)
 
-    return _average_binary_score(
-        _binary_roc_auc_score, y_true, y_score, average,
-        sample_weight=sample_weight)
+    _partial_binary_roc_auc_score = partial(_binary_roc_auc_score,
+                                            pos_label=pos_label)
+    return _average_binary_score(_partial_binary_roc_auc_score,
+                                 y_true, y_score, average,
+                                 sample_weight=sample_weight)
 
 
 def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
