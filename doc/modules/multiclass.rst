@@ -367,7 +367,7 @@ classifier per target.  This allows multiple target variable
 classifications. The purpose of this class is to extend estimators
 to be able to estimate a series of target functions (f1,f2,f3...,fn)
 that are trained on a single X predictor matrix to predict a series
-of reponses (y1,y2,y3...,yn).
+of responses (y1,y2,y3...,yn).
 
 Below is an example of multioutput classification:
     
