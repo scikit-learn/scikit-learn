@@ -21,7 +21,7 @@ print(__doc__)
 np.random.seed(2)
 
 # datasets available: ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
-datasets = ['shuttle']
+datasets = ['SA', 'SF', 'shuttle']
 
 novelty_detection = True  # if False, training set polluted by outliers
 
@@ -61,24 +61,20 @@ for dataset_name in datasets:
 
     if dataset_name == 'SF':
         lb = LabelBinarizer()
-        lb.fit(X[:, 1])
-        x1 = lb.transform(X[:, 1])
+        x1 = lb.fit_transform(X[:, 1].astype(str))
         X = np.c_[X[:, :1], x1, X[:, 2:]]
-        y = (y != 'normal.').astype(int)
+        y = (y != b'normal.').astype(int)
 
     if dataset_name == 'SA':
         lb = LabelBinarizer()
-        lb.fit(X[:, 1])
-        x1 = lb.transform(X[:, 1])
-        lb.fit(X[:, 2])
-        x2 = lb.transform(X[:, 2])
-        lb.fit(X[:, 3])
-        x3 = lb.transform(X[:, 3])
+        x1 = lb.fit_transform(X[:, 1].astype(str))
+        x2 = lb.fit_transform(X[:, 2].astype(str))
+        x3 = lb.fit_transform(X[:, 3].astype(str))
         X = np.c_[X[:, :1], x1, x2, x3, X[:, 4:]]
-        y = (y != 'normal.').astype(int)
+        y = (y != b'normal.').astype(int)
 
     if dataset_name == 'http' or dataset_name == 'smtp':
-        y = (y != 'normal.').astype(int)
+        y = (y != b'normal.').astype(int)
 
     n_samples, n_features = np.shape(X)
     n_samples_train = n_samples // 2
@@ -101,7 +97,7 @@ for dataset_name in datasets:
     fit_time = time() - tstart
     tstart = time()
 
-    scoring = -model.decision_function(X_test)  # the lower, the more normal
+    scoring = -model._decision_function(X_test)  # the lower, the more normal
     predict_time = time() - tstart
     fpr, tpr, thresholds = roc_curve(y_test, scoring)
     AUC = auc(fpr, tpr)
