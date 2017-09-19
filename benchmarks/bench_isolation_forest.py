@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_mldata
-from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle as sh
 
 print(__doc__)
@@ -38,7 +38,7 @@ with_decision_function_histograms = False
 
 # Removed the shuttle dataset because as of 2017-03-23 mldata.org is down:
 # datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
-datasets = ['http', 'smtp', 'SA', 'SF', 'forestcover']
+datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
 
 # Loop over all datasets for fitting and scoring the estimator:
 for dat in datasets:
@@ -79,17 +79,17 @@ for dat in datasets:
     print('--- Vectorizing data...')
 
     if dat == 'SF':
-        lb = MultiLabelBinarizer()
-        x1 = lb.fit_transform(X[:, 1])
+        lb = LabelBinarizer()
+        x1 = lb.fit_transform(X[:, 1].astype(str))
         X = np.c_[X[:, :1], x1, X[:, 2:]]
         y = (y != b'normal.').astype(int)
         print_outlier_ratio(y)
 
     if dat == 'SA':
-        lb = MultiLabelBinarizer()
-        x1 = lb.fit_transform(X[:, 1])
-        x2 = lb.fit_transform(X[:, 2])
-        x3 = lb.fit_transform(X[:, 3])
+        lb = LabelBinarizer()
+        x1 = lb.fit_transform(X[:, 1].astype(str))
+        x2 = lb.fit_transform(X[:, 2].astype(str))
+        x3 = lb.fit_transform(X[:, 3].astype(str))
         X = np.c_[X[:, :1], x1, x2, x3, X[:, 4:]]
         y = (y != b'normal.').astype(int)
         print_outlier_ratio(y)
