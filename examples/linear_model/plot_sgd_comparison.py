@@ -29,10 +29,10 @@ classifiers = [
     ("ASGD", SGDClassifier(average=True, max_iter=5, tol=None)),
     ("Perceptron", Perceptron(max_iter=5, tol=None)),
     ("Passive-Aggressive I", PassiveAggressiveClassifier(loss='hinge',
-                                                         C=1.0,max_iter=5,
+                                                         C=1.0, max_iter=5,
                                                          tol=None)),
     ("Passive-Aggressive II", PassiveAggressiveClassifier(loss='squared_hinge',
-                                                         C=1.0,max_iter=5,
+                                                         C=1.0, max_iter=5,
                                                          tol=None)),
     ("SAG", LogisticRegression(solver='sag', tol=1e-1, C=1.e4 / X.shape[0]))
 ]
