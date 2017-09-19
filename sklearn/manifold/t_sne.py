@@ -23,7 +23,7 @@ from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
-from ..externals.six import string_types
+from ..six import string_types
 from ..utils import deprecated
 
 
@@ -418,13 +418,13 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     trustworthiness : float
         Trustworthiness of the low-dimensional embedding.
     """
-    if precomputed:
-        dist_X = X
-    else:
-        dist_X = pairwise_distances(X, squared=True)
-    dist_X_embedded = pairwise_distances(X_embedded, squared=True)
-    ind_X = np.argsort(dist_X, axis=1)
-    ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, 1:n_neighbors + 1]
+    nbrs=NearestNeighbors(n_neighbors, algorithm='auto').fit(X)
+    nbrs_embedded=NearestNeighbors(n_neighbors, algorithm='auto').fit(X_embedded)
+
+
+
+    ind_X = nbrs.kneighbors(X, return_distance=False)
+    ind_X_embedded = nbrs_embedded.kneighbors(X_embedded, return_distance=False)[:, 1:n_neighbors + 1]
 
     n_samples = X.shape[0]
     t = 0.0
