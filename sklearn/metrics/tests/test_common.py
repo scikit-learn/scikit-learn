@@ -943,7 +943,7 @@ def test_averaging_multilabel_all_ones():
 
 @ignore_warnings
 def check_sample_weight_invariance(name, metric, y1, y2):
-    rng = np.random.RandomState(10)
+    rng = np.random.RandomState(0)
     sample_weight = rng.randint(1, 10, size=len(y1))
 
     # check that unit weights gives the same score as no weight
@@ -999,9 +999,10 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         # check that the score is invariant under scaling of the weights by a
         # common factor
         for scaling in [2, 0.3]:
-            assert_almost_equal(
+            np.testing.assert_allclose(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
+                atol=1e-2,
                 err_msg="%s sample_weight is not invariant "
                         "under scaling" % name)
 
@@ -1026,7 +1027,7 @@ def test_sample_weight_invariance(n_samples=50):
             metric, y_true, y_pred
 
     # binary
-    random_state = check_random_state(10)
+    random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(n_samples, ))
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples,))
