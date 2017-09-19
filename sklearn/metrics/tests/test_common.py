@@ -1000,15 +1000,16 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         # common factor
 
         # FIXME: roc_auc scores are more unstable than other scores
-        kwargs = {'atol': 1e-2} if 'roc_auc' in name else {}
+        if 'roc_auc' in name:
+            y2 = np.round(y2, 1)
+            weighted_score = metric(y1, y2, sample_weight=sample_weight)
 
         for scaling in [2, 0.3]:
-            np.testing.assert_allclose(
+            assert_almost_equal(
                 weighted_score,
                 metric(y1, y2, sample_weight=sample_weight * scaling),
                 err_msg="%s sample_weight is not invariant "
-                        "under scaling" % name,
-                **kwargs)
+                        "under scaling" % name)
 
     # Check that if sample_weight.shape[0] != y_true.shape[0], it raised an
     # error
@@ -1031,7 +1032,7 @@ def test_sample_weight_invariance(n_samples=50):
             metric, y_true, y_pred
 
     # binary
-    random_state = check_random_state(0)
+    random_state = check_random_state(10)
     y_true = random_state.randint(0, 2, size=(n_samples, ))
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples,))
