@@ -209,10 +209,10 @@ positive_class = 'acq'
 
 # Here are some classifiers that support the `partial_fit` method
 partial_fit_classifiers = {
-    'SGD': SGDClassifier(),
-    'Perceptron': Perceptron(),
+    'SGD': SGDClassifier(max_iter=5, tol=None),
+    'Perceptron': Perceptron(max_iter=5, tol=None),
     'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(),
+    'Passive-Aggressive': PassiveAggressiveClassifier(max_iter=5, tol=None),
 }
 
 
