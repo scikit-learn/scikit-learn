@@ -73,7 +73,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip install nose nose-timer cython
+    pip install nose nose-timer cython==$CYTHON_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
     # Set up our own virtualenv environment to avoid travis' numpy.
@@ -85,8 +85,8 @@ elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
 
     echo "Installing numpy and scipy master wheels"
     dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
-    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy
-    pip install nose nose-timer cython
+    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy cython
+    pip install nose nose-timer
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
