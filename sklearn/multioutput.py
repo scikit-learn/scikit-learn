@@ -448,16 +448,17 @@ class BaseChain(BaseEstimator):
     def predict(self, X):
         """Predict on the data matrix X using the ClassifierChain model.
 
-         Parameters
+        Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data.
+
         Returns
         -------
         Y_pred : array-like, shape (n_samples, n_classes)
-        The predicted values.
+            The predicted values.
 
-    """
+        """
         X = check_array(X, accept_sparse=True)
         Y_pred_chain = np.zeros((X.shape[0], len(self.estimators_)))
         for chain_idx, estimator in enumerate(self.estimators_):
