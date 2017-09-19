@@ -72,6 +72,9 @@ def test_metaestimators_check_estimator():
         # grid-search
         GridSearchCV(LogisticRegression(), {'C': [0.1, 1]})
     ]
+    none_pipe = make_pipeline(StandardScaler(), KMeans())
+    none_pipe.set_params(kmeans=None)
+    estimators.append(none_pipe)
     for estimator in estimators:
         yield check_estimator, estimator
 
