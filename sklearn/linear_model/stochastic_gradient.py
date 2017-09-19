@@ -69,13 +69,14 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.n_iter = n_iter
         self.max_iter = max_iter
         self.tol = tol
+        self.set_future_warning = set_future_warning
         # current tests expect init to do parameter validation
         # but we are not allowed to set attributes
-        self._validate_params(set_max_iter=False)
+        self._validate_params(set_max_iter=False, set_future_warning=True)
 
     def set_params(self, *args, **kwargs):
         super(BaseSGD, self).set_params(*args, **kwargs)
-        self._validate_params()
+        self._validate_params(set_future_warning=True)
         return self
 
     @abstractmethod
@@ -120,14 +121,15 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             self._tol = None
 
         elif self.tol is None and self.max_iter is None:
-            warnings.warn(
-                "max_iter and tol parameters have been added in %s in 0.19. If"
-                " both are left unset, they default to max_iter=5 and tol=None"
-                ". If tol is not None, max_iter defaults to max_iter=1000. "
-                "From 0.21, default max_iter will be 1000, "
-                "and default tol will be 1e-3." % type(self), FutureWarning)
-            # Before 0.19, default was n_iter=5
-            max_iter = 5
+            if not self.set_future_warning:
+                warnings.warn(
+                    "max_iter and tol parameters have been added in %s in 0.19. If"
+                    " both are left unset, they default to max_iter=5 and tol=None"
+                    ". If tol is not None, max_iter defaults to max_iter=1000. "
+                    "From 0.21, default max_iter will be 1000, "
+                    "and default tol will be 1e-3." % type(self), FutureWarning)
+                # Before 0.19, default was n_iter=5
+                max_iter = 5
         else:
             max_iter = self.max_iter if self.max_iter is not None else 1000
         self._max_iter = max_iter
