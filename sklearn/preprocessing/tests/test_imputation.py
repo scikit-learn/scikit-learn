@@ -306,7 +306,8 @@ def test_imputation_copy():
     for imputer_est, params in imputers.items():
         for copy in [True, False]:
             X = X_orig.copy().toarray()
-            imputer = imputer_est(copy=copy, **params)
+            params["copy"] = copy
+            imputer = imputer_est(**params)
             Xt = imputer.fit(X).transform(X)
             Xt[0, 0] = -1
             if copy:
