@@ -301,8 +301,8 @@ def test_imputation_copy():
     imputers = {Imputer: {"missing_values": 0, "strategy": "mean"},
                 KNNImputer: {"missing_values": 0}}
 
-    # 1) copy=True, dense => copy
-    # 2) copy=False, dense => no copy
+    # copy=True, dense => copy
+    # copy=False, dense => no copy
     for imputer_est, params in imputers.items():
         for copy in [True, False]:
             X = X_orig.copy().toarray()
@@ -312,7 +312,7 @@ def test_imputation_copy():
             if copy:
                 assert_false(np.all(X == Xt))
             else:
-                assert_array_equal(X, Xt)
+                assert_array_almost_equal(X, Xt)
 
     # copy=True, sparse csr => copy
     X = X_orig.copy()
@@ -616,6 +616,7 @@ def test_default_with_invalid_input():
     ])
     msg = "+/- inf values are not allowed in data to be transformed."
     assert_raise_message(ValueError, msg, KNNImputer().fit(X_fit).transform, X)
+
 
 def test_knn_n_neighbors():
 
