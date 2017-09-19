@@ -297,15 +297,22 @@ def test_imputation_pickle():
 
 def test_imputation_copy():
     # Test imputation with copy
-    X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
-    X_orig_knn = sparse_random_matrix(10, 10, density=0.75, random_state=0)
+    X_orig = sparse_random_matrix(10, 10, density=0.75, random_state=0)
+    imputers = {Imputer: {"missing_values": 0, "strategy": "mean"},
+                KNNImputer: {"missing_values": 0}}
 
-    # copy=True, dense => copy
-    X = X_orig.copy().toarray()
-    imputer = Imputer(missing_values=0, strategy="mean", copy=True)
-    Xt = imputer.fit(X).transform(X)
-    Xt[0, 0] = -1
-    assert_false(np.all(X == Xt))
+    # 1) copy=True, dense => copy
+    # 2) copy=False, dense => no copy
+    for imputer_est, params in imputers.items():
+        for copy in [True, False]:
+            X = X_orig.copy().toarray()
+            imputer = imputer_est(copy=copy, **params)
+            Xt = imputer.fit(X).transform(X)
+            Xt[0, 0] = -1
+            if copy:
+                assert_false(np.all(X == Xt))
+            else:
+                assert_array_equal(X, Xt)
 
     # copy=True, sparse csr => copy
     X = X_orig.copy()
@@ -313,25 +320,6 @@ def test_imputation_copy():
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
-
-    X = X_orig_knn.copy().toarray()
-    imputer = KNNImputer(missing_values=0, copy=True)
-    Xt = imputer.fit_transform(X)
-    Xt[0, 0] = -1
-    assert_false(np.all(X == Xt))
-
-    # copy=False, dense => no copy
-    X = X_orig.copy().toarray()
-    imputer = Imputer(missing_values=0, strategy="mean", copy=False)
-    Xt = imputer.fit(X).transform(X)
-    Xt[0, 0] = -1
-    assert_array_equal(X, Xt)
-
-    X = X_orig_knn.copy().toarray()
-    imputer = KNNImputer(missing_values=0, copy=False)
-    Xt = imputer.fit_transform(X)
-    Xt[0, 0] = -1
-    assert_array_equal(X, Xt)
 
     # copy=False, sparse csr, axis=1 => no copy
     X = X_orig.copy()
@@ -376,7 +364,8 @@ def test_imputation_copy():
     # made, even if copy=False.
 
 
-"""--------------------- BEGIN KNNIMPUTER TEST ---------------------"""
+#############################################################################
+# BEGIN KNNIMPUTER TEST
 
 
 def test_knn_imputation_shape():
@@ -607,6 +596,26 @@ def test_default_with_invalid_input():
     msg = "+/- inf values are not allowed."
     assert_raise_message(ValueError, msg, KNNImputer().fit, X)
 
+    # Test with inf present in matrix passed in tranform
+    X = np.array([
+        [np.inf, 1, 1, 2, np.nan],
+        [2, 1, 2, 2, 3],
+        [3, 2, 3, 3, 8],
+        [np.nan, 6, 0, 5, 13],
+        [np.nan, 7, 0, 7, 8],
+        [6, 6, 2, 5, 7],
+    ])
+
+    X_fit = np.array([
+        [0, 1, 1, 2, np.nan],
+        [2, 1, 2, 2, 3],
+        [3, 2, 3, 3, 8],
+        [np.nan, 6, 0, 5, 13],
+        [np.nan, 7, 0, 7, 8],
+        [6, 6, 2, 5, 7],
+    ])
+    msg = "+/- inf values are not allowed in data to be transformed."
+    assert_raise_message(ValueError, msg, KNNImputer().fit(X_fit).transform, X)
 
 def test_knn_n_neighbors():
 

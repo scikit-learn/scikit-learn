@@ -506,7 +506,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                              .format(self.col_max_missing*100))
         X_col_means = np.ma.array(X, mask=mask).mean(axis=0).data
 
-        # Check if % missing in any row > col_max_missing
+        # Check if % missing in any row > row_max_missing
         bad_rows = mask.sum(axis=1) > (mask.shape[1] * self.row_max_missing)
         if np.any(bad_rows):
             warnings.warn(
@@ -556,7 +556,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                         force_all_finite=force_all_finite, copy=self.copy)
         # Check for +/- inf
         if np.any(np.isinf(X)):
-            raise ValueError("+/- inf values are not allowed.")
+            raise ValueError("+/- inf values are not allowed in data to be "
+                             "transformed.")
 
         # Get fitted data and ensure correct dimension
         fitted_X = self._fitted_neighbors._fit_X
@@ -566,7 +567,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         mask = _get_mask(X, self.missing_values)
         n_rows_X, n_cols_X = X.shape
         row_total_missing = mask.sum(axis=1)
-        if not np.any(row_total_missing > 0):
+        if not np.any(row_total_missing):
             return X
 
         # Check for excessive missingness in rows
@@ -578,7 +579,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                     .format(self.row_max_missing*100))
             X_bad = X[bad_rows, :]
             X = X[~bad_rows, :]
-            mask = _get_mask(X, self.missing_values)
+            mask = mask[~bad_rows]
             row_total_missing = mask.sum(axis=1)
         row_has_missing = row_total_missing.astype(np.bool)
 
@@ -614,8 +615,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             donors = fitted_X[
                 (knn_row_index, knn_col_index)].reshape((-1, self.n_neighbors))
             donors_mask = _get_mask(donors, self.missing_values)
-            donors = np.ma.array(
-                donors, mask=donors_mask)
+            donors = np.ma.array(donors, mask=donors_mask)
             imputed = np.ma.average(donors, axis=1, weights=weights)
             X[mask] = imputed.data
             unimputed_index = np.where(
