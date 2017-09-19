@@ -313,9 +313,10 @@ def test_trustworthiness_precomputed_deprecation():
 def test_trustworthiness_not_euclidean_metric():
     # Test trustworthiness with a metric different from 'euclidean' and
     # 'precomputed'
-    X = np.array([[1, 1], [1, 0], [2, 2]])
-    assert_almost_equal(trustworthiness(X, X, n_neighbors=1, metric='cosine'),
-                        0.66, decimal=1)
+    X = np.arange(100).reshape(50, 2)
+    assert_equal(trustworthiness(X, X, metric='cosine'),
+                 trustworthiness(pairwise_distances(X, metric='cosine'), X,
+                                 metric='precomputed'))
 
 
 def test_early_exaggeration_too_small():
