@@ -63,10 +63,11 @@ varied = datasets.make_blobs(n_samples=n_samples,
 # ============
 # Set up cluster parameters
 # ============
-plt.figure(figsize=(12.5, 10 * 2 + 3))
-# multiplier += 1 for adding new algorithm
+plt.figure(figsize=(9 * 2 + 3, 12.5))
 plt.subplots_adjust(left=.02, right=.98, bottom=.001, top=.96, wspace=.05,
                     hspace=.01)
+
+plot_num = 1
 
 default_base = {'quantile': .3,
                 'eps': .3,
@@ -116,7 +117,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         affinity="nearest_neighbors")
     dbscan = cluster.DBSCAN(eps=params['eps'])
     optics = cluster.OPTICS(min_samples=30, maxima_ratio=.8,
-                            rejection_ratio=.4)
+                            rejection_ratio=.2)
     affinity_propagation = cluster.AffinityPropagation(
         damping=params['damping'], preference=params['preference'])
     average_linkage = cluster.AgglomerativeClustering(
@@ -138,7 +139,6 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         ('Birch', birch),
         ('GaussianMixture', gmm)
     )
-    plotn = 0
 
     for name, algorithm in clustering_algorithms:
         t0 = time.time()
@@ -164,25 +164,23 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         else:
             y_pred = algorithm.predict(X)
 
-        plt.subplot(len(clustering_algorithms), len(datasets),
-                    i_dataset + (plotn * 6) + 1)
+        plt.subplot(len(datasets), len(clustering_algorithms), plot_num)
         if i_dataset == 0:
-            plt.ylabel(name)
+            plt.title(name, size=18)
 
         colors = np.array(list(islice(cycle(['#377eb8', '#ff7f00', '#4daf4a',
                                              '#f781bf', '#a65628', '#984ea3',
                                              '#999999', '#e41a1c', '#dede00']),
                                       int(max(y_pred) + 1))))
-        plt.scatter(X[y_pred >= 0, 0], X[y_pred >= 0, 1], s=10,
-                    color=colors[y_pred[y_pred >= 0]])
-        plt.scatter(X[y_pred < 0, 0], X[y_pred < 0, 1], s=6, color='k')
+        plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
 
         plt.xlim(-2.5, 2.5)
         plt.ylim(-2.5, 2.5)
         plt.xticks(())
         plt.yticks(())
-        plt.text(.99, .9, ('%.2fs' % (t1 - t0)).lstrip('0'),
+        plt.text(.99, .01, ('%.2fs' % (t1 - t0)).lstrip('0'),
                  transform=plt.gca().transAxes, size=15,
                  horizontalalignment='right')
+        plot_num += 1
 
 plt.show()
