@@ -5,6 +5,12 @@ LocalOutlierFactor benchmark
 
 A test of LocalOutlierFactor on classical anomaly detection datasets.
 
+Note that LocalOutlierFactor is not meant to predict on a test set and its
+performance is assessed in an outlier detection context:
+1. The model is trained on a dataset containing outliers.
+2. The ROC curve is computed on the whole dataset using the knowledge of the
+labels.
+
 """
 
 from time import time
@@ -21,9 +27,7 @@ print(__doc__)
 np.random.seed(2)
 
 # datasets available: ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
-datasets = ['SA', 'SF', 'shuttle']
-
-novelty_detection = True  # if False, training set polluted by outliers
+datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
 
 for dataset_name in datasets:
     # loading and vectorization
@@ -76,30 +80,16 @@ for dataset_name in datasets:
     if dataset_name == 'http' or dataset_name == 'smtp':
         y = (y != b'normal.').astype(int)
 
-    n_samples, n_features = np.shape(X)
-    n_samples_train = n_samples // 2
-    n_samples_test = n_samples - n_samples_train
-
-    X = X.astype(float)
-    X_train = X[:n_samples_train, :]
-    X_test = X[n_samples_train:, :]
-    y_train = y[:n_samples_train]
-    y_test = y[n_samples_train:]
-
-    if novelty_detection:
-        X_train = X_train[y_train == 0]
-        y_train = y_train[y_train == 0]
-
     print('LocalOutlierFactor processing...')
     model = LocalOutlierFactor(n_neighbors=20)
     tstart = time()
-    model.fit(X_train)
+    model.fit(X)
     fit_time = time() - tstart
     tstart = time()
 
-    scoring = -model._decision_function(X_test)  # the lower, the more normal
+    scoring = -model.negative_outlier_factor_  # the lower, the more normal
     predict_time = time() - tstart
-    fpr, tpr, thresholds = roc_curve(y_test, scoring)
+    fpr, tpr, thresholds = roc_curve(y, scoring)
     AUC = auc(fpr, tpr)
     plt.plot(fpr, tpr, lw=1,
              label=('ROC for %s (area = %0.3f, train-time: %0.2fs,'
