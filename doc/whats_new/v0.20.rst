@@ -17,6 +17,7 @@ random sampling procedures.
 
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 - :class:`isotonic.IsotonicRegression` (bug fix)
+- :class:`metrics.roc_auc_score` (enhancement)
 
 Details are listed in the changelog below.
 
@@ -54,11 +55,14 @@ Classifiers and regressors
   :class:`sklearn.ensemble.voting_classifier` to access fitted
   estimators. :issue:`9157` by :user:`Herilalaina Rakotoarison <herilalaina>`.
 
-
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
   :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- Improve the efficiency and stability of :func:`metrics.roc_auc_score`
+  through removing unnecessary sorting process.
+  :issue:`9786` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 Linear, kernelized and related models
 
