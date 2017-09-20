@@ -88,8 +88,8 @@ def auc(x, y, reorder=False):
         x, y = x[order], y[order]
     else:
         dx = np.diff(x)
-        if np.any(dx < 0):
-            if np.all(dx <= 0):
+        if np.any(dx < -1e-10):
+            if np.all(dx <= 1e-10):
                 direction = -1
             else:
                 raise ValueError("Reordering is not turned on, and "
@@ -258,7 +258,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
 
         fpr, tpr, tresholds = roc_curve(y_true, y_score,
                                         sample_weight=sample_weight)
-        return auc(fpr, tpr, reorder=True)
+        return auc(fpr, tpr, reorder=False)
 
     return _average_binary_score(
         _binary_roc_auc_score, y_true, y_score, average,
