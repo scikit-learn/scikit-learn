@@ -387,10 +387,11 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
         T(k) = 1 - \frac{2}{nk (2n - 3k - 1)} \sum^n_{i=1}
             \sum_{j \in U^{(k)}_i} (r(i, j) - k)
 
-    where :math:`r(i, j)` is the rank of datapoint j according to the pairwise
-    distances between the datapoints in the original space, :math:`U^{(k)}_i`
-    is the set of points that are in the k nearest neighbors in the embedded
-    space but not in the original space.
+    where for each sample i, :math:`U^{(k)}_i` are all samples j that are in
+    the k-nearest neighbor of i in the embedded space but are the :math:`r(i,
+    j)`-th nearest neighbor of i in the input space with r(i, j) > k. In other
+    words, any unexpected nearest neighbors in the embedded space are penalised
+    in proportion to their rank in the original space.
 
     * "Neighborhood Preservation in Nonlinear Projection Methods: An
       Experimental Study"
