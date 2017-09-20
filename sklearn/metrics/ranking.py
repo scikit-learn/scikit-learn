@@ -117,7 +117,7 @@ def average_precision_score(y_true, y_score, average="macro",
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary label indicators.
+        True binary labels (either {0, 1} or {-1, 1}).
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -181,7 +181,7 @@ def average_precision_score(y_true, y_score, average="macro",
             y_true, y_score, sample_weight=sample_weight)
         # Return the step function integral
         # The following works because the last entry of precision is
-        # garantee to be 1, as returned by precision_recall_curve
+        # guaranteed to be 1, as returned by precision_recall_curve
         return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
     return _average_binary_score(_binary_uninterpolated_average_precision,
@@ -201,7 +201,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary label indicators.
+        True binary labels (either {0, 1} or {-1, 1}).
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -460,8 +460,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     ----------
 
     y_true : array, shape = [n_samples]
-        True binary labels in range {0, 1} or {-1, 1}.  If labels are not
-        binary, pos_label should be explicitly given.
+        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
+        pos_label should be explicitly given.
 
     y_score : array, shape = [n_samples]
         Target scores, can either be probability estimates of the positive

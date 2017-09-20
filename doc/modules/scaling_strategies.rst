@@ -34,7 +34,7 @@ different :ref:`feature extraction <feature_extraction>` methods supported by
 scikit-learn. However, when working with data that needs vectorization and
 where the set of features or values is not known in advance one should take
 explicit care. A good example is text classification where unknown terms are
-likely to be found during training. It is possible to use a statefull
+likely to be found during training. It is possible to use a stateful
 vectorizer if making multiple passes over the data is reasonable from an
 application point of view. Otherwise, one can turn up the difficulty by using
 a stateless feature extractor. Currently the preferred way to do this is to

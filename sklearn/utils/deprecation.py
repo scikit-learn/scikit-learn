@@ -1,5 +1,6 @@
 import sys
 import warnings
+import functools
 
 __all__ = ["deprecated", ]
 
@@ -71,13 +72,12 @@ class deprecated(object):
         if self.extra:
             msg += "; %s" % self.extra
 
+        @functools.wraps(fun)
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=DeprecationWarning)
             return fun(*args, **kwargs)
 
-        wrapped.__name__ = fun.__name__
-        wrapped.__dict__ = fun.__dict__
-        wrapped.__doc__ = self._update_doc(fun.__doc__)
+        wrapped.__doc__ = self._update_doc(wrapped.__doc__)
 
         return wrapped
 
