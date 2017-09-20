@@ -68,7 +68,6 @@ Model evaluation and meta-estimators
   through removing unnecessary sorting process.
   :issue:`9786` by :user:`Hanmin Qin <qinhanmin2014>`.
 
-
 Linear, kernelized and related models
 
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
