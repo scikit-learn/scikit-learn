@@ -388,9 +388,9 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
             \sum_{j \in U^{(k)}_i} (r(i, j) - k)
 
     where for each sample i, :math:`U^{(k)}_i` are all samples j that are in
-    the k-nearest neighbor of i in the embedded space but are the :math:`r(i,
+    the k-nearest neighbor of i in the output space but are the :math:`r(i,
     j)`-th nearest neighbor of i in the input space with r(i, j) > k. In other
-    words, any unexpected nearest neighbors in the embedded space are penalised
+    words, any unexpected nearest neighbors in the output space are penalised
     in proportion to their rank in the input space.
 
     * "Neighborhood Preservation in Nonlinear Projection Methods: An
