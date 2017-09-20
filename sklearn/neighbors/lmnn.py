@@ -64,14 +64,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     imp_store : {'auto', 'list', 'sparse'}, optional
         Data structure used to store the impostors:
 
-        - 'list' will use lists to store the indices of (sample, impostor)
-          pairs and their distances.
+        - 'list' will use 3 lists to store the indices of samples,
+           their impostors and the distance between them.
         - 'sparse' will use a sparse indicator matrix to store the (sample,
           impostor) pairs. The distances to the impostors will be computed
-          twice, but this tends to be more efficient than 'list' as the data
-          set size increases.
+          twice, but this option tends to be more efficient than 'list' as the
+          data set size increases.
         - 'auto' will attempt to decide the most appropriate approach
-          based on the values passed to :meth:`fit` method.
+          based on the values passed to :meth:`fit`.
 
     max_iter : int, optional (default=50)
         Maximum number of iterations in the optimization.
@@ -99,8 +99,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         If 0, no progress messages will be printed.
         If 1, progress messages will be printed to stdout.
         If >1, progress messages will be printed and the ``iprint``
-        parameter of :meth:`fmin_l_bfgs_b` of `scipy.optimize` will be set to
-        verbose - 2.
+        parameter of :meth:`_minimize_lbfgsb` of `scipy.optimize` will be set
+        to verbose - 2.
 
     random_state : int or numpy.RandomState or None, optional (default=None)
         A pseudo random number generator object or a seed for it if int.
@@ -127,8 +127,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         Counts the number of iterations performed by the optimizer.
 
     result_ : OptimizeResult (optional)
-        A dictionary of information returned by the optimizer, representing
-        the optimization result, stored if ``store_result`` is True.
+        If ``store_result`` is True, this will be a dictionary of information
+        representing the optimization result.
 
     Examples
     --------
@@ -254,29 +254,37 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Find the target neighbors
         targets = _select_target_neighbors(X_valid, y_valid, self.n_neighbors_,
-                                           self.verbose, n_jobs=self.n_jobs,
+                                           verbose=self.verbose,
+                                           n_jobs=self.n_jobs,
                                            algorithm=self.algorithm)
 
-        # Compute the gradient contributed by the target neighbors
+        # Compute the gradient part contributed by the target neighbors
         if self.verbose:
             print('Computing static part of the gradient...')
 
         grad_static = _compute_grad_static(X_valid, targets)
 
+        # Decide how to store the impostors
+        if self.imp_store == 'auto':
+            # Use a heuristic based on the data set size
+            use_sparse = X_valid.shape[0] > 10000
+        elif self.imp_store == 'list':
+            use_sparse = False
+        else:
+            use_sparse = True
+
         # Create a dictionary of parameters to be passed to the optimizer
         disp = self.verbose - 2 if self.verbose > 1 else -1
-        optimizer_params = {'x0': transformation,
-                            'args': (X_valid, y_valid, targets, grad_static),
+        optimizer_params = {'method': 'L-BFGS-B',
+                            'fun': self._loss_grad_lbfgs,
+                            'jac': True,
+                            'args': (X_valid, y_valid, targets, grad_static,
+                                     use_sparse),
+                            'x0': transformation,
                             'tol': self.tol,
                             'options': dict(maxiter=self.max_iter, disp=disp),
                             'callback': self._callback
                             }
-
-        # L-BFGS-B specific options
-        optimizer_params['method'] = 'L-BFGS-B'
-        optimizer_params['fun'] = self._loss_grad_lbfgs
-        optimizer_params['jac'] = True  # fun computes function and gradient
-        optimizer_params['options']['maxcor'] = self.max_corrections
 
         # Call the optimizer
         self.n_iter_ = 0
@@ -549,7 +557,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         self.n_iter_ += 1
 
-    def _loss_grad_lbfgs(self, transformation, X, y, targets, grad_static):
+    def _loss_grad_lbfgs(self, transformation, X, y, targets, grad_static,
+                         use_sparse):
         """Compute the loss and the loss gradient w.r.t. ``transformation``.
 
         Parameters
@@ -569,6 +578,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         grad_static : array, shape (n_features, n_features)
             The gradient component caused by target neighbors, that stays
             fixed throughout the algorithm.
+
+        use_sparse : bool
+            Whether to use a sparse matrix to store the impostors.
 
         Returns
         -------
@@ -595,7 +607,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Find the impostors and compute (squared) distances to them
         margin_radii = dist_tn[:, -1] + 1
-        use_sparse = n_samples > 10000
         imp_row, imp_col, dist_imp = \
             self._find_impostors(X_embedded, y, margin_radii, use_sparse)
 
@@ -603,6 +614,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         shape = (n_samples, n_samples)
         A0 = csr_matrix(shape)
         for k in range(n_neighbors-1, -1, -1):
+            print('imp_row type: {}, shape: {}'.format(imp_row.dtype,
+                                                       imp_row.shape))
             loss1 = np.maximum(dist_tn[imp_row, k] - dist_imp, 0)
             ac, = np.where(loss1 > 0)
             A1 = csr_matrix((2*loss1[ac], (imp_row[ac], imp_col[ac])), shape)
@@ -738,8 +751,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                         imp_col.append(ind_in_batch)
                         imp_dist.append(dist_batch)
 
-            imp_row = np.asarray(imp_row)
-            imp_col = np.asarray(imp_col)
+            imp_row = np.asarray(imp_row, dtype=int)
+            imp_col = np.asarray(imp_col, dtype=int)
             imp_dist = np.asarray(imp_dist)
 
         return imp_row, imp_col, imp_dist
@@ -750,7 +763,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 #########################
 
 
-def _select_target_neighbors(X, y, n_neighbors, verbose, **kwargs):
+def _select_target_neighbors(X, y, n_neighbors, verbose=0, **kwargs):
     """Find the target neighbors of each data sample.
 
     Parameters
@@ -764,7 +777,7 @@ def _select_target_neighbors(X, y, n_neighbors, verbose, **kwargs):
     n_neighbors : int
         The number of target neighbors to select for each sample in X.
 
-    verbose : int
+    verbose : int, optional (default=0)
         Whether to print progress info.
 
     Returns
