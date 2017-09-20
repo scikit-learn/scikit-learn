@@ -552,7 +552,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
         Returns
         -------
         self : object
-        Returns self.
+            Returns self.
         """
         super(ClassifierChain, self).fit(X, Y)
         self.classes_ = []
