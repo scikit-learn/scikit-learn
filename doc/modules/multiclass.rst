@@ -430,5 +430,5 @@ Regressor Chain
 ================
 
 Regressor chains (see :class:`RegressorChain`) are a way of combining a
-number of regressions into a single multi-label model that is capable
+number of regressions into a single multi-target model that is capable
  of exploiting correlations among targets.

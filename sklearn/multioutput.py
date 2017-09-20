@@ -369,7 +369,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return np.mean(np.all(y == y_pred, axis=1))
 
 
-class BaseChain(BaseEstimator):
+class _BaseChain(BaseEstimator):
     def __init__(self, base_estimator, order=None, cv=None, random_state=None):
         self.base_estimator = base_estimator
         self.order = order
@@ -407,8 +407,6 @@ class BaseChain(BaseEstimator):
         self.estimators_ = [clone(self.base_estimator)
                             for _ in range(Y.shape[1])]
 
-        self.classes_ = []
-
         if self.cv is None:
             Y_pred_chain = Y[:, self.order_]
             if sp.issparse(X):
@@ -440,7 +438,6 @@ class BaseChain(BaseEstimator):
                 else:
                     X_aug[:, col_idx] = cv_result
 
-            self.classes_.append(estimator.classes_)
         return self
 
     def predict(self, X):
@@ -477,7 +474,7 @@ class BaseChain(BaseEstimator):
         return Y_pred
 
 
-class ClassifierChain(BaseChain, ClassifierMixin):
+class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
     """A multi-label model that arranges binary classifiers into a chain.
 
     Each model makes a prediction in the order specified by the chain using
@@ -542,6 +539,27 @@ class ClassifierChain(BaseChain, ClassifierMixin):
     Chains for Multi-label Classification", 2009.
 
     """
+
+    def fit(self, X, Y):
+            """Fit the model to data matrix X and targets Y.
+            Parameters
+            ----------
+            X : {array-like, sparse matrix}, shape (n_samples, n_features)
+                The input data.
+            Y : array-like, shape (n_samples, n_classes)
+                The target values.
+
+            Returns
+            -------
+            self : object
+            Returns self.
+            """
+            super(ClassifierChain, self).fit(X, Y)
+            self.classes_ = []
+            for chain_idx, estimator in enumerate(self.estimators_):
+                self.classes_.append(estimator.classes_)
+            return self
+
 
     @if_delegate_has_method('base_estimator')
     def predict_proba(self, X):
@@ -609,7 +627,7 @@ class ClassifierChain(BaseChain, ClassifierMixin):
         return Y_decision
 
 
-class RegressorChain(BaseChain, RegressorMixin):
+class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
     """A multi-label model that arranges regressions into a chain.
 
     Each model makes a prediction in the order specified by the chain using
@@ -665,67 +683,3 @@ class RegressorChain(BaseChain, RegressorMixin):
         The order of labels in the classifier chain.
 
     """
-
-    def fit(self, X, Y):
-        """Fit the model to data matrix X and targets Y.
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            The input data.
-        Y : array-like, shape (n_samples, n_classes)
-            The target values.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        X, Y = check_X_y(X, Y, multi_output=True, accept_sparse=True)
-
-        random_state = check_random_state(self.random_state)
-        check_array(X, accept_sparse=True)
-        self.order_ = self.order
-        if self.order_ is None:
-            self.order_ = np.array(range(Y.shape[1]))
-        elif isinstance(self.order_, str):
-            if self.order_ == 'random':
-                self.order_ = random_state.permutation(Y.shape[1])
-        elif sorted(self.order_) != list(range(Y.shape[1])):
-                raise ValueError("invalid order")
-
-        self.estimators_ = [clone(self.base_estimator)
-                            for _ in range(Y.shape[1])]
-
-        if self.cv is None:
-            Y_pred_chain = Y[:, self.order_]
-            if sp.issparse(X):
-                X_aug = sp.hstack((X, Y_pred_chain), format='lil')
-                X_aug = X_aug.tocsr()
-            else:
-                X_aug = np.hstack((X, Y_pred_chain))
-
-        elif sp.issparse(X):
-            Y_pred_chain = sp.lil_matrix((X.shape[0], Y.shape[1]))
-            X_aug = sp.hstack((X, Y_pred_chain), format='lil')
-
-        else:
-            Y_pred_chain = np.zeros((X.shape[0], Y.shape[1]))
-            X_aug = np.hstack((X, Y_pred_chain))
-
-        del Y_pred_chain
-
-        for chain_idx, estimator in enumerate(self.estimators_):
-            y = Y[:, self.order_[chain_idx]]
-            estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y)
-            if self.cv is not None and chain_idx < len(self.estimators_) - 1:
-                col_idx = X.shape[1] + chain_idx
-                cv_result = cross_val_predict(
-                    self.base_estimator, X_aug[:, :col_idx],
-                    y=y, cv=self.cv)
-                if sp.issparse(X_aug):
-                    X_aug[:, col_idx] = np.expand_dims(cv_result, 1)
-                else:
-                    X_aug[:, col_idx] = cv_result
-
-        return self
