@@ -8,6 +8,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
                                    assert_equal, ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
+from sklearn.utils.estimator_checks import is_pairwise
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
@@ -259,6 +260,7 @@ def test_check_estimator_pairwise():
     # check that check_estimator() works on estimator with _pairwise
     # attribute set
     est = SVC(kernel='precomputed')
+    assert(is_pairwise(est))
     check_estimator(est)
 
 
