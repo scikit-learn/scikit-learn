@@ -85,16 +85,12 @@ for dataset_name in datasets:
     tstart = time()
     model.fit(X)
     fit_time = time() - tstart
-    tstart = time()
-
     scoring = -model.negative_outlier_factor_  # the lower, the more normal
-    predict_time = time() - tstart
     fpr, tpr, thresholds = roc_curve(y, scoring)
     AUC = auc(fpr, tpr)
     plt.plot(fpr, tpr, lw=1,
-             label=('ROC for %s (area = %0.3f, train-time: %0.2fs,'
-                    'test-time: %0.2fs)' % (dataset_name, AUC, fit_time,
-                                            predict_time)))
+             label=('ROC for %s (area = %0.3f, train-time: %0.2fs)'
+                    % (dataset_name, AUC, fit_time)))
 
 plt.xlim([-0.05, 1.05])
 plt.ylim([-0.05, 1.05])
