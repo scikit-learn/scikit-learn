@@ -299,7 +299,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     thresholds : array, shape = [n_thresholds]
         Decreasing score values.
     """
-    check_consistent_length(y_true, y_score)
+    check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
     assert_all_finite(y_true)
