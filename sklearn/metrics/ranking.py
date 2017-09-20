@@ -258,6 +258,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
 
         fpr, tpr, tresholds = roc_curve(y_true, y_score,
                                         sample_weight=sample_weight)
+
         return np.trapz(tpr, fpr)
 
     return _average_binary_score(
