@@ -60,6 +60,8 @@ investigating bugs, and :ref:`reviewing other developers' pull requests
 <code_review>` are very valuabe contributions that decrease the burden on the
 project maintainers.
 
+Another way to contribute is to report issues you're facing, and give a +1
+on issues that others reported and that are relevant to you.
 It also helps us if you spread the word: reference the project from your blog
 and articles, link to it from your website, or simply say "I use it":
 
@@ -794,7 +796,7 @@ Reviewing code contributed to the project as PRs is a cruicial component
 of scikit-learn development. We encourage anyone to start reviewing code of other
 developers. The code review process is often highly educational for everybody involved.
 While each pull request needs to be signed off by two core developers, you can
-speed up this process can be sped up by providing your feedback.
+speed up this process by providing your feedback.
 
 Here are a few important aspects that need to be covered in any code review,
 from high-level questions to a more detailed check-list.
@@ -802,11 +804,11 @@ from high-level questions to a more detailed check-list.
 - Do we want this in the library? Is it likely to be used? Is it in the scope
   of scikit-learn and does the benefit of the addition warrant the maintenance burden?
 
-- Does the enhancement define a good API? Are public
+- Is the code consistent with the API of scikit-learn? Are public
   functions/classes/parameters well named and intuitively designed?
 
 - Are all public functions/classes and their parameters, return types, and
-  stored attributes documented clearly?
+  stored attributes named according to scikit-learn conventions and documented clearly?
 
 - Is any new functionality described in the user-guide and illustrated with examples?
 
@@ -823,15 +825,17 @@ from high-level questions to a more detailed check-list.
 - Is the code easy to read and low on redundancy? Should variable names be
   improved for clarity or consistency? Should comments be added?
 
-- Could the code easily be rewritten to run more efficiently?
+- Could the code easily be rewritten to run much more efficiently for relevant settings?
 
 - Is the code backwards compatible with previous versions? (Or is a deprecation cycle necessary?)
 
-- Will the new code add any dependencies? (This is unlikely to be accepted)
+- Will the new code add any dependencies on other libraries? (This is unlikely to be accepted)
 
 - If the change is a bug-fix, is a non-regression test included?
 
 - Does the documentation render properly, and are the plots instructive?
+
+- Do you like and intend to use the change?
 
 
 APIs of scikit-learn objects
