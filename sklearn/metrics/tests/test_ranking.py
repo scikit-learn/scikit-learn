@@ -371,6 +371,19 @@ def test_roc_curve_drop_intermediate():
                               [1.0, 0.9, 0.7, 0.6, 0.])
 
 
+def test_roc_auc_score_pos_label_multilabel_indicator():
+    # Raise an error for multilabel-indicator y_true with
+    # pos_label other than None or 1
+    y_true = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
+    y_pred = np.array([[0.9, 0.1], [0.1, 0.9], [0.8, 0.2], [0.2, 0.8]])
+    roc_auc_score_1 = roc_auc_score(y_true, y_pred, pos_label=None)
+    assert_almost_equal(roc_auc_score_1, 0.75)
+    roc_auc_score_2 = roc_auc_score(y_true, y_pred, pos_label=1)
+    assert_almost_equal(roc_auc_score_2, 0.75)
+    assert_raises(ValueError, roc_auc_score, y_true, y_pred,
+                  pos_label=0)
+
+
 def test_auc():
     # Test Area Under Curve (AUC) computation
     x = [0, 1]
