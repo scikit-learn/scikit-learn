@@ -106,7 +106,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     Attributes
     ----------
     negative_outlier_factor_ : numpy array, shape (n_samples,)
-        The opposite LOF of the training samples. The lower, the more normal.
+        The opposite LOF of the training samples. The lower, the more abnormal.
         Inliers tend to have a LOF score close to 1, while outliers tend
         to have a larger LOF score.
 
