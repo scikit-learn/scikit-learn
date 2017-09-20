@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn import datasets
 from sklearn.neighbors import LargeMarginNearestNeighbor, KNeighborsClassifier
-from sklearn.neighbors.lmnn import select_target_neighbors
 
 
 rng = np.random.RandomState(0)
@@ -91,7 +90,7 @@ def test_params_validation():
     assert_raises(TypeError, LMNN(n_features_out='invalid').fit, X, y)
     assert_raises(TypeError, LMNN(n_jobs='yes').fit, X, y)
     assert_raises(TypeError, LMNN(warm_start=1).fit, X, y)
-    assert_raises(TypeError, LMNN(use_sparse=0.5).fit, X, y)
+    assert_raises(TypeError, LMNN(imp_store=0.5).fit, X, y)
 
     # ValueError
     assert_raises(ValueError, LMNN(init=1).fit, X, y)
@@ -161,18 +160,6 @@ def test_n_neighbors():
     assert_warns(UserWarning, lmnn.fit, X, y)
 
 
-def test_target_neighbors():
-    X, y = iris.data, iris.target
-
-    targets = select_target_neighbors(X, y, n_neighbors=3)
-    lmnn = LargeMarginNearestNeighbor(targets=targets)
-    lmnn.fit(X, y)
-
-    targets[0, 0] = len(iris.data) + 1
-    lmnn = LargeMarginNearestNeighbor(targets=targets)
-    assert_raises(IndexError, lmnn.fit, X, y)
-
-
 def test_n_features_out():
 
     X = np.arange(12).reshape(4, 3)
@@ -214,15 +201,15 @@ def test_init_transformation():
 
 def test_max_constraints():
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=1,
-                                      use_sparse=True)
+                                      imp_store='list')
     lmnn.fit(iris.data, iris.target)
 
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=1,
-                                      use_sparse=False)
+                                      imp_store='sparse')
     lmnn.fit(iris.data, iris.target)
 
 
-def test_use_sparse():
+def test_imp_store():
     X = iris.data
     y = iris.target
     n_samples, n_features = X.shape
@@ -232,18 +219,18 @@ def test_use_sparse():
     X_train, y_train, X_test, y_test = X[train], y[train], X[test], y[test]
 
     k = 3
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, use_sparse=False)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, imp_store='list')
     lmnn.fit(X_train, y_train)
     knn = KNeighborsClassifier(n_neighbors=k)
     knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
     acc_sparse = knn.score(lmnn.transform(X_test), y_test)
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, use_sparse=True)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, imp_store='sparse')
     lmnn.fit(X_train, y_train)
     knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
     acc_dense = knn.score(lmnn.transform(X_test), y_test)
 
-    err_msg = 'Toggling `use_sparse` results in different accuracy.'
+    err_msg = 'Toggling `imp_store` results in different accuracy.'
     assert_equal(acc_dense, acc_sparse, msg=err_msg)
 
 
