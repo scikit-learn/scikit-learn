@@ -391,7 +391,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     the k-nearest neighbor of i in the embedded space but are the :math:`r(i,
     j)`-th nearest neighbor of i in the input space with r(i, j) > k. In other
     words, any unexpected nearest neighbors in the embedded space are penalised
-    in proportion to their rank in the original space.
+    in proportion to their rank in the input space.
 
     * "Neighborhood Preservation in Nonlinear Projection Methods: An
       Experimental Study"
