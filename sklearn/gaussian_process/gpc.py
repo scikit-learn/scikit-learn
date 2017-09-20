@@ -597,7 +597,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         if self.n_classes_ == 1:
             raise ValueError("GaussianProcessClassifier requires 2 or more "
                              "distinct classes; got %d class."
-                             % (self.n_classes_, self.classes_[0]))
+                             % (self.n_classes_))
         if self.n_classes_ > 2:
             if self.multi_class == "one_vs_rest":
                 self.base_estimator_ = \
