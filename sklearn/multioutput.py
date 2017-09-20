@@ -541,24 +541,24 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
     """
 
     def fit(self, X, Y):
-            """Fit the model to data matrix X and targets Y.
-            Parameters
-            ----------
-            X : {array-like, sparse matrix}, shape (n_samples, n_features)
-                The input data.
-            Y : array-like, shape (n_samples, n_classes)
-                The target values.
+        """Fit the model to data matrix X and targets Y.
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+        Y : array-like, shape (n_samples, n_classes)
+            The target values.
 
-            Returns
-            -------
-            self : object
-            Returns self.
-            """
-            super(ClassifierChain, self).fit(X, Y)
-            self.classes_ = []
-            for chain_idx, estimator in enumerate(self.estimators_):
-                self.classes_.append(estimator.classes_)
-            return self
+        Returns
+        -------
+        self : object
+        Returns self.
+        """
+        super(ClassifierChain, self).fit(X, Y)
+        self.classes_ = []
+        for chain_idx, estimator in enumerate(self.estimators_):
+            self.classes_.append(estimator.classes_)
+        return self
 
 
     @if_delegate_has_method('base_estimator')
