@@ -436,12 +436,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5,
                       "0.20 and will be removed in 0.22. See 'metric' "
                       "parameter instead.", DeprecationWarning)
         metric = 'precomputed'
-    if metric == 'precomputed':
-        dist_X = X
-    elif metric == 'euclidean':
-        dist_X = pairwise_distances(X, metric='euclidean', squared=True)
-    else:
-        dist_X = pairwise_distances(X, metric=metric)
+    dist_X = pairwise_distances(X, metric=metric)
     dist_X_embedded = pairwise_distances(X_embedded, squared=True)
     ind_X = np.argsort(dist_X, axis=1)
     ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, 1:n_neighbors + 1]

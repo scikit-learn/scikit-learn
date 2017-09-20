@@ -303,7 +303,7 @@ def test_trustworthiness_precomputed_deprecation():
     assert_equal(assert_warns(DeprecationWarning, trustworthiness,
                               pairwise_distances(X), X, metric='precomputed',
                               precomputed=True), 1.)
-    assert_raises(IndexError, assert_warns, DeprecationWarning,
+    assert_raises(ValueError, assert_warns, DeprecationWarning,
                   trustworthiness, X, X, metric='euclidean', precomputed=True)
     assert_equal(assert_warns(DeprecationWarning, trustworthiness,
                               pairwise_distances(X), X, metric='euclidean',
