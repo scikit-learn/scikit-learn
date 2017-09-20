@@ -341,7 +341,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # accumulate the true positives with decreasing threshold
     tps = stable_cumsum(y_true * weight)[threshold_idxs]
     if sample_weight is not None:
-        fps = stable_cumsum(weight)[threshold_idxs] - tps
+        fps = stable_cumsum((1 - y_true) * weight)[threshold_idxs]
     else:
         fps = 1 + threshold_idxs - tps
     return fps, tps, y_score[threshold_idxs]
