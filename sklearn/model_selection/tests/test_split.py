@@ -1168,6 +1168,10 @@ def test_check_cv():
     np.testing.assert_equal(list(StratifiedKFold(3).split(X, y_multiclass_2d)),
                             list(cv.split(X, y_multiclass_2d)))
 
+    assert_false(np.all(
+        next(StratifiedKFold(3).split(X, y_multiclass_2d))[0] ==
+        next(KFold(3).split(X, y_multiclass_2d))[0]))
+
     X = np.ones(5)
     y_multilabel = np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 1],
                              [1, 1, 0, 1], [0, 0, 1, 0]])
