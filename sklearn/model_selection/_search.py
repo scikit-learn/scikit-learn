@@ -388,7 +388,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     @abstractmethod
     def __init__(self, estimator, scoring=None,
-                 fit_params=None, n_jobs=1, iid=None,
+                 fit_params=None, n_jobs=1, iid='warn',
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  error_score='raise', return_train_score=True):
 
@@ -702,7 +702,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
         iid = self.iid
-        if self.iid is None:
+        if self.iid is 'warn':
             if len(np.unique(test_sample_counts)) > 1:
                 warnings.warn("The default of the `iid` parameter will change "
                               "from True to False in version 0.22 and will be"
@@ -844,11 +844,12 @@ class GridSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default=None
+    iid : boolean, default='warn'
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds. Default is True,
-        but will change to False in version 0.21.
+        but will change to False in version 0.21, to correspond to the
+        standard definition of cross-validation.
 
         ..versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
@@ -1058,7 +1059,7 @@ class GridSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_grid, scoring=None, fit_params=None,
-                 n_jobs=1, iid=None, refit=True, cv=None, verbose=0,
+                 n_jobs=1, iid='warn', refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score='raise',
                  return_train_score=True):
         super(GridSearchCV, self).__init__(
@@ -1159,10 +1160,12 @@ class RandomizedSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : boolean, default=None
+    iid : boolean, default='warn'
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds.
+        and not the mean loss across the folds. Default is True,
+        but will change to False in version 0.21, to correspond to the
+        standard definition of cross-validation.
 
         ..versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
@@ -1345,7 +1348,7 @@ class RandomizedSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 fit_params=None, n_jobs=1, iid=None, refit=True, cv=None,
+                 fit_params=None, n_jobs=1, iid='warn', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs', random_state=None,
                  error_score='raise', return_train_score=True):
         self.param_distributions = param_distributions
