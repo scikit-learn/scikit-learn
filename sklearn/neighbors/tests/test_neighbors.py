@@ -2,7 +2,7 @@ from itertools import product
 
 import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
-                          dok_matrix, lil_matrix)
+                          dok_matrix, lil_matrix, issparse)
 
 from sklearn import metrics
 from sklearn import neighbors, datasets
@@ -1257,8 +1257,8 @@ def test_dtype_convert():
 
 def test_sparse_metric_callable():
     def sparse_metric(x, y):  # Metric accepting sparse matrix input (only)
-
-        return min(x.nnz, y.nnz) / max(x.nnz, y.nnz)
+        assert_true(issparse(x) and issparse(y))
+        return x.dot(y.T).A.item()
 
     X = csr_matrix([  # Population matrix
         [1, 1, 1, 1, 1],
@@ -1278,7 +1278,7 @@ def test_sparse_metric_callable():
     # GS indices of nearest neighbours in `X` for `sparse_metric`
     gold_standard_nn = np.array([
         [2, 1],
-        [0, 2]
+        [2, 1]
     ])
 
     assert_array_equal(N, gold_standard_nn)
