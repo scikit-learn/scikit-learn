@@ -792,7 +792,7 @@ cross-compatibility and is included in scikit-learn as
 
 Code Review Guidelines
 ======================
-Reviewing code contributed to the project as PRs is a cruicial component
+Reviewing code contributed to the project as PRs is a crucial component
 of scikit-learn development. We encourage anyone to start reviewing code of other
 developers. The code review process is often highly educational for everybody involved.
 While each pull request needs to be signed off by two core developers, you can
