@@ -576,7 +576,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             warnings.warn(
                 "There are rows with more than {0}% missing values. The "
                 "missing features in these rows are imputed with column means."
-                    .format(self.row_max_missing*100))
+                    .format(self.row_max_missing * 100))
             X_bad = X[bad_rows, :]
             X = X[~bad_rows, :]
             mask = mask[~bad_rows]
@@ -598,7 +598,6 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                     (-1, self.n_neighbors))
                 knn_distances = knn_distances[not_duplicate_index].reshape(
                     (-1, self.n_neighbors))
-            weights = _get_weights(knn_distances, self.weights)
 
             # Vertically split sets of k-donor indices and repeat each set by
             # missing count in the corresponding recipient row
@@ -606,6 +605,16 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             row_repeats = row_total_missing[row_total_missing != 0]
             knn_row_index = np.repeat(
                 knn_row_index, row_repeats, axis=0).ravel()
+
+            weight_matrix = _get_weights(knn_distances, self.weights)
+            # If weight applied, repeat and resize weight matrix
+            if self.weights is not None and self.weights != "uniform" and \
+                    weight_matrix is not None:
+                weight_matrix = np.vsplit(weight_matrix,
+                                          weight_matrix.shape[0])
+                weight_matrix = np.repeat(weight_matrix,
+                                          row_repeats, axis=0).ravel()
+                weight_matrix = weight_matrix.reshape((-1, self.n_neighbors))
 
             # Get column index of donors
             row_missing_index, col_missing_index = np.where(mask)
@@ -616,7 +625,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                 (knn_row_index, knn_col_index)].reshape((-1, self.n_neighbors))
             donors_mask = _get_mask(donors, self.missing_values)
             donors = np.ma.array(donors, mask=donors_mask)
-            imputed = np.ma.average(donors, axis=1, weights=weights)
+            imputed = np.ma.average(donors, axis=1, weights=weight_matrix)
             X[mask] = imputed.data
             unimputed_index = np.where(
                 donors_mask.sum(axis=1) == self.n_neighbors)
