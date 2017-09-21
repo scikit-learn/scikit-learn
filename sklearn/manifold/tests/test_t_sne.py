@@ -802,5 +802,4 @@ def test_tsne_with_different_distance_metrics():
         tsne_2 = TSNE(metric='precomputed',
                       n_components=n_components_embedding,
                       random_state=0).fit_transform(dist_func(X))
-        t = trustworthiness(tsne_1, tsne_2, n_neighbors=1)
-        assert_greater(t, 0.9)
+        assert_array_equal(tsne_1, tsne_2)
