@@ -80,6 +80,8 @@ for dataset_name in datasets:
     if dataset_name == 'http' or dataset_name == 'smtp':
         y = (y != b'normal.').astype(int)
 
+    X = X.astype(float)
+
     print('LocalOutlierFactor processing...')
     model = LocalOutlierFactor(n_neighbors=20)
     tstart = time()
