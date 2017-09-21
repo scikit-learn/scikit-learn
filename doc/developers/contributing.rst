@@ -54,7 +54,7 @@ If you find a typo in the documentation, or have made improvements, do not
 hesitate to send an email to the mailing list or submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
-But there are many other ways to help. In particular answering querries on the
+But there are many other ways to help. In particular answering queries on the
 `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_,
 investigating bugs, and :ref:`reviewing other developers' pull requests
 <code_review>` are very valuabe contributions that decrease the burden on the
