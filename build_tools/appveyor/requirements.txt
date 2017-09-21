@@ -10,7 +10,6 @@
 numpy==1.9.3
 scipy==0.16.0
 cython
-nose
-nose-timer
+pytest
 wheel
 wheelhouse_uploader

@@ -139,8 +139,8 @@ tools:
 -  Code with good unittest **coverage** (at least 80%), check with:
 
   ```bash
-  $ pip install nose coverage
-  $ nosetests --with-coverage path/to/tests_for_package
+  $ pip install pytest pytest-cov
+  $ pytest --cov sklearn path/to/tests_for_package
   ```
 
 -  No pyflakes warnings, check with:

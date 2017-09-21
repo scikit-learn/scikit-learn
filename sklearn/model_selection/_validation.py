@@ -948,9 +948,6 @@ def permutation_test_score(estimator, X, y, groups=None, cv=None,
     return score, permutation_scores, pvalue
 
 
-permutation_test_score.__test__ = False  # to avoid a pb with nosetests
-
-
 def _permutation_test_score(estimator, X, y, groups, cv, scorer):
     """Auxiliary function for permutation_test_score"""
     avg_score = []
