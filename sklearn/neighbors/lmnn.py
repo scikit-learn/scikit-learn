@@ -46,17 +46,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     n_neighbors : int, optional (default=3)
         Number of neighbors to use as target neighbors for each sample.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
-        Algorithm used to compute the target neighbors:
-
-        - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`KDTree`
-        - 'brute' will use a brute-force search.
-        - 'auto' will attempt to decide the most appropriate algorithm
-          based on the values passed to :meth:`fit` method.
-
-        Note: fitting on sparse input will override the setting of
-        this parameter, using brute force.
+    neighbors_algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+        Algorithm used to compute the target neighbors, passed to
+        neighbors.NearestNeighbors instance
 
     max_constraints : int, optional (default=500000)
         Maximum number of constraints to enforce per iteration.
@@ -78,12 +70,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     tol : float, optional (default=1e-5)
         Convergence tolerance for the optimization.
-
-    max_corrections : int, optional (default=100)
-        The maximum number of variable metric corrections
-        used to define the limited memory matrix. (The limited memory BFGS
-        method does not store the full hessian but uses this many terms in an
-        approximation to it.)
 
     callback : callable, optional (default=None)
         If not None, this function is called after every iteration of the
@@ -197,22 +183,21 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_features_out=None, init='pca', warm_start=False,
-                 n_neighbors=3, algorithm='auto', max_constraints=500000,
-                 imp_store='auto', max_iter=50, tol=1e-5,
-                 max_corrections=100, callback=None,
-                 store_result=False, verbose=0, random_state=None, n_jobs=1):
+                 n_neighbors=3, neighbors_algorithm='auto',
+                 max_constraints=500000, imp_store='auto', max_iter=50,
+                 tol=1e-5, callback=None, store_result=False, verbose=0,
+                 random_state=None, n_jobs=1):
 
         # Parameters
         self.n_features_out = n_features_out
         self.init = init
         self.warm_start = warm_start
         self.n_neighbors = n_neighbors
-        self.algorithm = algorithm
+        self.neighbors_algorithm = neighbors_algorithm
         self.max_constraints = max_constraints
         self.imp_store = imp_store
         self.max_iter = max_iter
         self.tol = tol
-        self.max_corrections = max_corrections
         self.callback = callback
         self.store_result = store_result
         self.verbose = verbose
@@ -256,22 +241,19 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         targets = _select_target_neighbors(X_valid, y_valid, self.n_neighbors_,
                                            verbose=self.verbose,
                                            n_jobs=self.n_jobs,
-                                           algorithm=self.algorithm)
+                                           algorithm=self.neighbors_algorithm)
 
         # Compute the gradient part contributed by the target neighbors
-        if self.verbose:
-            print('Computing static part of the gradient...')
-
-        grad_static = _compute_grad_static(X_valid, targets)
+        grad_static = _compute_grad_static(X_valid, targets, self.verbose)
 
         # Decide how to store the impostors
-        if self.imp_store == 'auto':
-            # Use a heuristic based on the data set size
-            use_sparse = X_valid.shape[0] > 10000
+        if self.imp_store == 'sparse':
+            use_sparse = True
         elif self.imp_store == 'list':
             use_sparse = False
         else:
-            use_sparse = True
+            # auto: Use a heuristic based on the data set size
+            use_sparse = X_valid.shape[0] > 6500
 
         # Create a dictionary of parameters to be passed to the optimizer
         disp = self.verbose - 2 if self.verbose > 1 else -1
@@ -352,7 +334,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         if check_input:
             X = check_array(X)
 
-        return X.dot(self.transformation_.T)
+        return np.dot(X, self.transformation_.T)
 
     def _validate_params(self, X, y):
         """Validate parameters as soon as :meth:`fit` is called.
@@ -436,7 +418,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         _check_scalar(self.n_neighbors, 'n_neighbors', int, 1, len(X) - 1)
         _check_scalar(self.max_iter, 'max_iter', int, 1)
-        _check_scalar(self.max_corrections, 'max_corrections', int, 1)
         _check_scalar(self.tol, 'tol', float, 0.)
         _check_scalar(self.max_constraints, 'max_constraints', int, 1)
         _check_scalar(self.imp_store, 'imp_store', str)
@@ -614,8 +595,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         shape = (n_samples, n_samples)
         A0 = csr_matrix(shape)
         for k in range(n_neighbors-1, -1, -1):
-            print('imp_row type: {}, shape: {}'.format(imp_row.dtype,
-                                                       imp_row.shape))
             loss1 = np.maximum(dist_tn[imp_row, k] - dist_imp, 0)
             ac, = np.where(loss1 > 0)
             A1 = csr_matrix((2*loss1[ac], (imp_row[ac], imp_col[ac])), shape)
@@ -627,13 +606,13 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             values = (A1.sum(1).ravel() + A2.sum(0)).getA1()
             A0 = A0 - A1 - A2 + csr_matrix((values, (range(n_samples),
                                                      targets[:, k])), shape)
-            loss += loss1.dot(loss1) + loss2.dot(loss2)
+            loss += np.dot(loss1, loss1) + np.dot(loss2, loss2)
 
         grad_new = _sum_outer_weighted_differences(X, A0)
-        grad = transformation.dot(grad_static + grad_new)
+        grad = np.dot(transformation, grad_static + grad_new)
         grad *= 2
-        metric = transformation.T.dot(transformation)
-        loss += grad_static.ravel().dot(metric.ravel())
+        metric = np.dot(transformation.T, transformation)
+        loss += np.dot(grad_static.ravel(), metric.ravel())
 
         t = time.time() - t_start
         if self.verbose:
@@ -715,6 +694,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             imp_row = impostors_sp.row
             imp_col = impostors_sp.col
             imp_dist = _paired_distances_batch(X_embedded, imp_row, imp_col)
+
         else:
             # Initialize lists for impostors storage
             imp_row, imp_col, imp_dist = [], [], []
@@ -808,7 +788,7 @@ def _select_target_neighbors(X, y, n_neighbors, verbose=0, **kwargs):
     return target_neighbors
 
 
-def _compute_grad_static(X, targets):
+def _compute_grad_static(X, targets, verbose=0):
     """Compute the gradient contributed by the target neighbors.
 
     Parameters
@@ -819,11 +799,17 @@ def _compute_grad_static(X, targets):
     targets : array, shape (n_samples, n_neighbors)
         The k nearest neighbors of each sample from the same class.
 
+    verbose : int, optional (default=0)
+        Whether to print progress info.
+
     Returns
     -------
     grad_static, shape (n_features, n_features)
         An array with the sum of all outer products of samples-targets.
     """
+
+    if verbose:
+        print('Computing static part of the gradient...')
 
     n_samples, n_neighbors = targets.shape
     row = np.repeat(range(n_samples), n_neighbors)
@@ -921,8 +907,8 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
         return imp_ind
 
 
-def _paired_distances_batch(X, ind_a, ind_b, squared=True, mem_budget=int(
-    1e7)):
+def _paired_distances_batch(X, ind_a, ind_b, squared=True,
+                            mem_budget=int(1e7)):
     """Equivalent to row_norms(X[ind_a] - X[ind_b], squared=squared).
 
     Parameters
@@ -983,9 +969,8 @@ def _sum_outer_weighted_differences(X, weights):
     weights_sym = weights + weights.T
     diag = spdiags(weights_sym.sum(1).ravel(), 0, *weights_sym.shape)
     laplacian = diag - weights_sym
-    sum_outer_weighted_diffs = X.T.dot(laplacian.dot(X))
 
-    return sum_outer_weighted_diffs
+    return np.dot(X.T, safe_sparse_dot(laplacian, X, dense_output=True))
 
 
 def _check_scalar(x, name, dtype, min_val=None, max_val=None):

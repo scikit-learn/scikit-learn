@@ -85,7 +85,6 @@ def test_params_validation():
     assert_raises(TypeError, LMNN(max_iter='21').fit, X, y)
     assert_raises(TypeError, LMNN(verbose='true').fit, X, y)
     assert_raises(TypeError, LMNN(max_constraints=23.1).fit, X, y)
-    assert_raises(TypeError, LMNN(max_corrections=1e3).fit, X, y)
     assert_raises(TypeError, LMNN(tol=1).fit, X, y)
     assert_raises(TypeError, LMNN(n_features_out='invalid').fit, X, y)
     assert_raises(TypeError, LMNN(n_jobs='yes').fit, X, y)
@@ -98,7 +97,6 @@ def test_params_validation():
     assert_raises(ValueError, LMNN(n_neighbors=len(X)).fit, X, y)
     assert_raises(ValueError, LMNN(max_iter=-1).fit, X, y)
     assert_raises(ValueError, LMNN(max_constraints=-1).fit, X, y)
-    assert_raises(ValueError, LMNN(max_corrections=-1).fit, X, y)
 
     fit_func = LMNN(init=np.random.rand(5, 3)).fit
     assert_raises(ValueError, fit_func, X, y)
