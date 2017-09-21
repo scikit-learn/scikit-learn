@@ -16,6 +16,7 @@ occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
+- :class:`isotonic.IsotonicRegression` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -53,6 +54,11 @@ Classifiers and regressors
   :class:`sklearn.ensemble.voting_classifier` to access fitted
   estimators. :issue:`9157` by :user:`Herilalaina Rakotoarison <herilalaina>`.
 
+- Add `var_smoothing` parameter in
+  :class:`sklearn.naive_bayes.GaussianNB` to give a precise control over
+  variances calculation. :issue:`9681` by :user:`Dmitry Mottl <Mottl>`.
+
+
 
 Model evaluation and meta-estimators
 
@@ -73,9 +79,16 @@ Linear, kernelized and related models
 Bug fixes
 .........
 
+Classifiers and regressors
+
+- Fixed a bug in :class:`isotonic.IsotonicRegression` which incorrectly
+  combined weights when fitting a model to data involving points with
+  identical X values.
+  :issue:`9432` by :user:`Dallas Card <dallascard>`
+
 Decomposition, manifold learning and clustering
 
-- Fix for uninformative error in :class:`decomposition.incremental_pca`:
+- Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
   now an error is raised if the number of components is larger than the
   chosen batch size. The ``n_components=None`` case was adapted accordingly.
   :issue:`6452`. By :user:`Wally Gauze <wallygauze>`.
@@ -91,6 +104,14 @@ Decomposition, manifold learning and clustering
   same class, fixed undefined and arbitrary behavior in case of training data
   where all samples had equal similarity.
   :issue:`9612`. By :user:`Jonatan Samoocha <jsamoocha>`.
+
+- In :class:`decomposition.PCA` selecting a n_components parameter greater than
+  the number of samples now raises an error.
+  Similarly, the ``n_components=None`` case now selects the minimum of
+  n_samples and n_features. :issue:`8484`. By :user:`Wally Gauze <wallygauze>`.
+
+- Fixed a bug in :func:`datasets.fetch_kddcup99`, where data were not properly
+  shuffled. :issue:`9731` by `Nicolas Goix`_.
 
 API changes summary
 -------------------
