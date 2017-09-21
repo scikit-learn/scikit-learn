@@ -128,11 +128,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
     >>> lmnn.fit(X_train, y_train) # doctest: +ELLIPSIS
     LargeMarginNearestNeighbor(...)
-    >>> print(lmnn.transformation_)
-    [[ 0.31515095  0.04163395  0.75730485  1.13602404]
-     [-0.28354308 -0.11255437  0.102604    0.21393139]
-     [ 0.44674234  0.19562166 -0.35246784 -0.6381634 ]
-     [ 0.14574449  0.01586291  0.38593999  0.58165202]]
     >>> knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
     >>> knn.fit(X_train, y_train) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
