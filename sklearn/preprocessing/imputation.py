@@ -608,8 +608,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
 
             weight_matrix = _get_weights(knn_distances, self.weights)
             # If weight applied, repeat and resize weight matrix
-            if self.weights is not None and self.weights != "uniform" and \
-                    weight_matrix is not None:
+            if weight_matrix is not None:
                 weight_matrix = np.vsplit(weight_matrix,
                                           weight_matrix.shape[0])
                 weight_matrix = np.repeat(weight_matrix,
