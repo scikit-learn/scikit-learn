@@ -98,13 +98,19 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
             ARCHIVE.url, data_home))
         archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
 
-        fileobj = tarfile.open(
+        tarobj = tarfile.open(
             mode="r:gz",
-            name=archive_path).extractfile(
+            name=archive_path)
+        fileobj = tarobj.extractfile(
                 'CaliforniaHousing/cal_housing.data')
-        remove(archive_path)
 
         cal_housing = np.loadtxt(fileobj, delimiter=',')
+
+        # Delete archive file
+        fileobj.close()
+        tarobj.close()
+        remove(archive_path)
+
         # Columns are not in the same order compared to the previous
         # URL resource on lib.stat.cmu.edu
         columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
