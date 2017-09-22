@@ -370,7 +370,6 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
         self.tree_._resize_py(init_capacity)
 
         weighted_n_samples = np.sum(sample_weight)
-
         # initialize the number of splitter
         n_splitters = 0
         # the array to map the samples to the correct splitter

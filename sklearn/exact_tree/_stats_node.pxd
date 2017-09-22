@@ -18,7 +18,7 @@ cdef void stats_node_iadd(StatsNode* l_stats_node,
 
 
 cdef void stats_node_isub(StatsNode* l_stats_node,
-                          StatsNode* r_stats_node)
+                         StatsNode* r_stats_node)
 
 
 cdef void stats_node_copy_to(StatsNode* src_stats_node,
