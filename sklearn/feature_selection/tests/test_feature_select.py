@@ -280,8 +280,8 @@ def test_select_heuristics_classif():
 def assert_best_scores_kept(score_filter):
     scores = score_filter.scores_
     support = score_filter.get_support()
-    assert_array_equal(np.sort(scores[support]),
-                       np.sort(scores)[-support.sum():])
+    assert_array_almost_equal(np.sort(scores[support]),
+                              np.sort(scores)[-support.sum():])
 
 
 def test_select_percentile_regression():

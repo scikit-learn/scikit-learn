@@ -42,7 +42,6 @@ y_3 = regr_3.predict(X_test)
 
 # Plot the results
 plt.figure()
-s = 50
 s = 25
 plt.scatter(y[:, 0], y[:, 1], c="navy", s=s,
             edgecolor="black", label="data")

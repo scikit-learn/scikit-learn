@@ -509,7 +509,7 @@ class FastICA(BaseEstimator, TransformerMixin):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : Ignored.
+        y : Ignored
 
         Returns
         -------
@@ -526,7 +526,7 @@ class FastICA(BaseEstimator, TransformerMixin):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : Ignored.
+        y : Ignored
 
         Returns
         -------
