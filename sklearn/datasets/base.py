@@ -352,9 +352,10 @@ def load_iris(return_X_y=False):
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, 'DESCR', the
-        full description of the dataset, 'filename' (added in version 0.19),
-        the physical location of iris csv dataset.
+        meaning of the features, 'DESCR', the full description of
+        the dataset, 'filename', the physical location of iris csv dataset.
+
+        .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -418,9 +419,11 @@ def load_breast_cancer(return_X_y=False):
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, and 'DESCR', the
-        full description of the dataset, 'filename' (added in version 0.19),
-        the physical location of breast cancer csv dataset.
+        meaning of the features, and 'DESCR', the full description of
+        the dataset, 'filename', the physical location of
+        breast cancer csv dataset.
+
+        .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -580,9 +583,11 @@ def load_diabetes(return_X_y=False):
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the regression target for each
-        sample, 'data_filename' (added in version 0.19), the physical location
-        of diabetes data csv dataset, and 'target_filename' (added in
-        version 0.19), the physical location of diabetes targets csv datataset.
+        sample, 'data_filename', the physical location
+        of diabetes data csv dataset, and 'target_filename', the physical
+        location of diabetes targets csv datataset.
+
+        .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -633,10 +638,12 @@ def load_linnerud(return_X_y=False):
         'targets', the two multivariate datasets, with 'data' corresponding to
         the exercise and 'targets' corresponding to the physiological
         measurements, as well as 'feature_names' and 'target_names'.
-        In addition, you will also have access to 'data_filename'
-        (added in version 0.19), the physical location of linnerud data csv
-        dataset, and 'target_filename' (added in version 0.19), the
-        physical location of linnerud targets csv datataset.
+        In addition, you will also have access to 'data_filename',
+        the physical location of linnerud data csv dataset, and
+        'target_filename', the physical location of
+        linnerud targets csv datataset.
+
+        ..versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -694,8 +701,9 @@ def load_boston(return_X_y=False):
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the regression targets,
         'DESCR', the full description of the dataset,
-        and 'filename' (added in version 0.19), the physical location
-        of boston csv dataset.
+        and 'filename', the physical location of boston csv dataset.
+
+        .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
