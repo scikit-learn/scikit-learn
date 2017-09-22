@@ -142,7 +142,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        self : object
+        self : Imputer
             Returns self.
         """
         # Check parameters

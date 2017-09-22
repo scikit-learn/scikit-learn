@@ -15,7 +15,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_in
 from sklearn.utils.fixes import sp_version
 
@@ -68,8 +67,8 @@ def test_load_svmlight_file_fd():
     fd = os.open(datafile, os.O_RDONLY)
     try:
         X2, y2 = load_svmlight_file(fd)
-        assert_array_equal(X1.data, X2.data)
-        assert_array_equal(y1, y2)
+        assert_array_almost_equal(X1.data, X2.data)
+        assert_array_almost_equal(y1, y2)
     finally:
         os.close(fd)
 
@@ -83,7 +82,7 @@ def test_load_svmlight_files():
     X_train, y_train, X_test, y_test = load_svmlight_files([datafile] * 2,
                                                            dtype=np.float32)
     assert_array_equal(X_train.toarray(), X_test.toarray())
-    assert_array_equal(y_train, y_test)
+    assert_array_almost_equal(y_train, y_test)
     assert_equal(X_train.dtype, np.float32)
     assert_equal(X_test.dtype, np.float32)
 
@@ -123,8 +122,8 @@ def test_load_compressed():
         # because we "close" it manually and write to it,
         # we need to remove it manually.
         os.remove(tmp.name)
-    assert_array_equal(X.toarray(), Xgz.toarray())
-    assert_array_equal(y, ygz)
+    assert_array_almost_equal(X.toarray(), Xgz.toarray())
+    assert_array_almost_equal(y, ygz)
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".bz2") as tmp:
         tmp.close()  # necessary under windows
@@ -134,24 +133,21 @@ def test_load_compressed():
         # because we "close" it manually and write to it,
         # we need to remove it manually.
         os.remove(tmp.name)
-    assert_array_equal(X.toarray(), Xbz.toarray())
-    assert_array_equal(y, ybz)
+    assert_array_almost_equal(X.toarray(), Xbz.toarray())
+    assert_array_almost_equal(y, ybz)
 
 
-@raises(ValueError)
 def test_load_invalid_file():
-    load_svmlight_file(invalidfile)
+    assert_raises(ValueError, load_svmlight_file, invalidfile)
 
 
-@raises(ValueError)
 def test_load_invalid_order_file():
-    load_svmlight_file(invalidfile2)
+    assert_raises(ValueError, load_svmlight_file, invalidfile2)
 
 
-@raises(ValueError)
 def test_load_zero_based():
     f = BytesIO(b("-1 4:1.\n1 0:1\n"))
-    load_svmlight_file(f, zero_based=False)
+    assert_raises(ValueError, load_svmlight_file, f, zero_based=False)
 
 
 def test_load_zero_based_auto():
@@ -186,21 +182,19 @@ def test_load_with_qid():
         assert_array_equal(X.toarray(), [[.53, .12], [.13, .1], [.87, .12]])
 
 
-@raises(ValueError)
 def test_load_invalid_file2():
-    load_svmlight_files([datafile, invalidfile, datafile])
+    assert_raises(ValueError, load_svmlight_files,
+                  [datafile, invalidfile, datafile])
 
 
-@raises(TypeError)
 def test_not_a_filename():
     # in python 3 integers are valid file opening arguments (taken as unix
     # file descriptors)
-    load_svmlight_file(.42)
+    assert_raises(TypeError, load_svmlight_file, .42)
 
 
-@raises(IOError)
 def test_invalid_filename():
-    load_svmlight_file("trou pic nic douille")
+    assert_raises(IOError, load_svmlight_file, "trou pic nic douille")
 
 
 def test_dump():
@@ -311,7 +305,7 @@ def test_dump_concise():
     # make sure it's correct too :)
     X2, y2 = load_svmlight_file(f)
     assert_array_almost_equal(X, X2.toarray())
-    assert_array_equal(y, y2)
+    assert_array_almost_equal(y, y2)
 
 
 def test_dump_comment():
@@ -325,7 +319,7 @@ def test_dump_comment():
 
     X2, y2 = load_svmlight_file(f, zero_based=False)
     assert_array_almost_equal(X, X2.toarray())
-    assert_array_equal(y, y2)
+    assert_array_almost_equal(y, y2)
 
     # XXX we have to update this to support Python 3.x
     utf8_comment = b("It is true that\n\xc2\xbd\xc2\xb2 = \xc2\xbc")
@@ -340,7 +334,7 @@ def test_dump_comment():
 
     X2, y2 = load_svmlight_file(f, zero_based=False)
     assert_array_almost_equal(X, X2.toarray())
-    assert_array_equal(y, y2)
+    assert_array_almost_equal(y, y2)
 
     f = BytesIO()
     assert_raises(ValueError,
@@ -416,8 +410,8 @@ def test_load_zeros():
     for zero_based in ['auto', True, False]:
         f.seek(0)
         X, y = load_svmlight_file(f, n_features=4, zero_based=zero_based)
-        assert_array_equal(y, true_y)
-        assert_array_equal(X.toarray(), true_X.toarray())
+        assert_array_almost_equal(y, true_y)
+        assert_array_almost_equal(X.toarray(), true_X.toarray())
 
 
 def test_load_with_offsets():
@@ -452,7 +446,7 @@ def test_load_with_offsets():
 
         y_concat = np.concatenate([y_0, y_1, y_2])
         X_concat = sp.vstack([X_0, X_1, X_2])
-        assert_array_equal(y, y_concat)
+        assert_array_almost_equal(y, y_concat)
         assert_array_almost_equal(X.toarray(), X_concat.toarray())
 
     # Generate a uniformly random sparse matrix
@@ -500,7 +494,7 @@ def test_load_offset_exhaustive_splits():
         q_concat = np.concatenate([q_0, q_1])
         y_concat = np.concatenate([y_0, y_1])
         X_concat = sp.vstack([X_0, X_1])
-        assert_array_equal(y, y_concat)
+        assert_array_almost_equal(y, y_concat)
         assert_array_equal(query_id, q_concat)
         assert_array_almost_equal(X.toarray(), X_concat.toarray())
 
