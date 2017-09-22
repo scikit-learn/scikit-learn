@@ -9,9 +9,9 @@ Testing for the stacking ensemble module (sklearn.ensemble.stacking).
 from copy import deepcopy
 import numpy as np
 from sklearn.utils.testing import (assert_equal, assert_array_equal)
+from sklearn.utils.testing import SkipTest
 from sklearn.ensemble import (StackingTransformer, make_stack_layer)
-from sklearn.linear_model import (RidgeClassifier, LinearRegression,
-                                  LogisticRegression)
+from sklearn.linear_model import (RidgeClassifier, LinearRegression)
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC, LinearSVR
 from sklearn import datasets
@@ -84,6 +84,7 @@ def test_classification():
 
 
 def test_multi_output_classification():
+    raise SkipTest("Test is broken while #8773 is not fixed")
     clf_base = RandomForestClassifier(random_state=RANDOM_SEED)
     clf = StackingTransformer(clf_base, method='predict_proba')
     X, y = datasets.make_multilabel_classification()
