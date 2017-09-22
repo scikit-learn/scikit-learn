@@ -5,9 +5,8 @@
 
 from ..base import (BaseEstimator, TransformerMixin, MetaEstimatorMixin)
 from ..model_selection import cross_val_predict
-from ..pipeline import (_name_estimators, FeatureUnion)
+from ..pipeline import FeatureUnion
 from ..preprocessing import FunctionTransformer
-from ..utils.metaestimators import _BaseComposition
 
 
 class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
@@ -16,25 +15,27 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
     In stacked generalization, meta estimators are combined in layers to
     improve the final result. To prevent data leaks between layers, a procedure
     similar to cross validation is adopted, where the model is trained in one
-    part of the set and predicts the other part. In `StackingTransformer`, it
-    happens during `fit_transform`, as the result of this procedure is what
-    should be used by the next layers.
+    part of the set and predicts the other part. In ``StackingTransformer``, it
+    happens during ``fit_transform``, as the result of this procedure is what
+    should be used by the next layers. Note that this behavior is different
+    from ``fit().transform()``. See the :ref:`User Guide <ensemble>` for more
+    info.
 
     Parameters
     ----------
     base_estimator : the estimator to be blended.
 
     cv : cv to be used, optional (default=3)
-        Will be passed to `cross_val_predict` during `fit_transform`.
+        Will be passed to ``cross_val_predict`` during ``fit_transform``.
 
     method : string, optional (default='auto')
         Invokes the passed method name of the passed estimator. If the method
-        is `auto`, will try to invoke, for each estimator, `predict_proba`,
-        `decision_function` or `predict` in that order.
+        is ``auto``, will try to invoke, for each estimator, ``predict_proba``,
+        ``decision_function`` or ``predict`` in that order.
 
     n_jobs : int, optional (default=1)
-        Number of jobs to be passed to `cross_val_predict` during
-        `fit_transform`.
+        Number of jobs to be passed to ``cross_val_predict`` during
+        ``fit_transform``.
 
     """
     def __init__(self, base_estimator, cv=3, method='auto', n_jobs=1):
@@ -156,11 +157,11 @@ def make_stack_layer(base_estimators, restack=False, cv=3, method='auto',
         Whether input should be concatenated to the transformation.
 
     cv : cv to be used, optional (default=3)
-        Will be passed to `StackingTransformer` for each base estimator.
+        Will be passed to ``StackingTransformer`` for each base estimator.
 
     method : string, optional (default='auto')
         Invokes the passed method name of the estimators. If the method is
-        `auto`, will try to invoke `predict_proba` or `predict` in that
+        ``auto``, will try to invoke ``predict_proba`` or ``predict`` in that
         order.
 
     n_jobs : int, optional (default=1)
