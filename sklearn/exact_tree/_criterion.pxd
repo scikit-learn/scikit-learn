@@ -7,7 +7,7 @@ cdef inline double _impurity_mse(StatsNode* stats_node):
     impurity = (stats_node[0].sum_sq_y /
                 stats_node[0].sum_weighted_samples)
     impurity -= ((stats_node[0].sum_y /
-                  stats_node[0].sum_weighted_samples) ** 2.0)
+                  stats_node[0].sum_weighted_samples) ** 2)
 
     return impurity
 
