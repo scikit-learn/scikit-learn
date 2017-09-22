@@ -3,24 +3,10 @@
 Mock urllib2 access to mldata.org and create a temporary data folder.
 """
 
-from os import makedirs
-from os.path import join
 import numpy as np
-import tempfile
-import shutil
 
-from sklearn import datasets
 from sklearn.utils.testing import install_mldata_mock
 from sklearn.utils.testing import uninstall_mldata_mock
-
-
-def globs(globs):
-    # Create a temporary folder for the data fetcher
-    global custom_data_home
-    custom_data_home = tempfile.mkdtemp()
-    makedirs(join(custom_data_home, 'mldata'))
-    globs['custom_data_home'] = custom_data_home
-    return globs
 
 
 def setup_module():
@@ -42,4 +28,3 @@ def setup_module():
 
 def teardown_module():
     uninstall_mldata_mock()
-    shutil.rmtree(custom_data_home)

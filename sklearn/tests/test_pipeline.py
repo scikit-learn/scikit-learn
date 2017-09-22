@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -187,7 +188,7 @@ def test_pipeline_init():
     assert_raises(ValueError, pipe.set_params, anova__C=0.1)
 
     # Test clone
-    pipe2 = clone(pipe)
+    pipe2 = assert_no_warnings(clone, pipe)
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
     # Check that apart from estimators, the parameters are the same
@@ -420,6 +421,10 @@ def test_feature_union():
     X_sp = sparse.csr_matrix(X)
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
+
+    # Test clone
+    fs2 = assert_no_warnings(clone, fs)
+    assert_false(fs.transformer_list[0][1] is fs2.transformer_list[0][1])
 
     # test setting parameters
     fs.set_params(select__k=2)
@@ -868,9 +873,33 @@ def test_pipeline_wrong_memory():
     memory = 1
     cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
                            memory=memory)
-    assert_raises_regex(ValueError, "'memory' should either be a string or a"
-                        " sklearn.externals.joblib.Memory instance, got",
-                        cached_pipe.fit, X, y)
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.externals.joblib.Memory."
+                        " Got memory='1' instead.", cached_pipe.fit, X, y)
+
+
+class DummyMemory(object):
+    def cache(self, func):
+        return func
+
+
+class WrongDummyMemory(object):
+    pass
+
+
+def test_pipeline_with_cache_attribute():
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
+                    memory=DummyMemory())
+    pipe.fit(X, y=None)
+    dummy = WrongDummyMemory()
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
+                    memory=dummy)
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.externals.joblib.Memory."
+                        " Got memory='{}' instead.".format(dummy), pipe.fit, X)
 
 
 def test_pipeline_memory():
