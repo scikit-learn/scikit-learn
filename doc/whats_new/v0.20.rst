@@ -40,6 +40,9 @@ Classifiers and regressors
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
 
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. By `Kumar Ashutosh <thechargedneutron>`_.
+
 Enhancements
 ............
 
