@@ -323,6 +323,13 @@ def test_imputation_copy():
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
 
+    # copy=False, dense => no copy
+    X = X_orig.copy().toarray()
+    imputer = Imputer(missing_values=0, strategy="mean", copy=False)
+    Xt = imputer.fit(X).transform(X)
+    Xt[0, 0] = -1
+    assert_array_almost_equal(X, Xt)
+
     # copy=False, sparse csr, axis=1 => no copy
     X = X_orig.copy()
     imputer = Imputer(missing_values=X.data[0], strategy="mean",
@@ -778,47 +785,52 @@ def test_weight_type():
 
     # Test with varying missingness patterns
     X = np.array([
-        [1,     0,      0,  1],
-        [0,     np.nan, 1,  np.nan],
-        [1,     1,      1,  np.nan],
-        [0,     1,      0,  0],
-        [0,     1,      0,  0],
-        [1,     1,      1,  1],
-        [10,    10,     10, 10],
+        [1,         0,      0,  1],
+        [0,         np.nan, 1,  np.nan],
+        [1,         1,      1,  np.nan],
+        [0,         1,      0,  0],
+        [0,         np.nan, 1,  0],
+        [1,         1,      1,  1],
+        [10,        10,     10, 10],
     ])
     statistics_mean = np.nanmean(X, axis=0)
 
     # Get weights of donor neighbors
     dist = masked_euclidean_distances(X)
     row1_nbor_dists = dist[1, :6]
-    row1_nbor_dists[np.array([1, 2])] = np.inf  # Degenerate neighbors
-    row1_nbor_wt = 1 / row1_nbor_dists
+    row1_nbor_dists[np.array([1, 2, 4])] = np.inf  # Degenerate neighbors
+    row1_nbor_wt = 1/row1_nbor_dists
 
     row2_nbor_dists = dist[2, :6]
     row2_nbor_dists[np.array([1, 2])] = np.inf  # Degenerate neighbors
-    row2_nbor_wt = 1 / row2_nbor_dists
-    # One of the non-denerate neighbors has zero distance so its weight=1
-    # and for others, weight=0
+    row2_nbor_wt = 1/row2_nbor_dists
+    # A non-degenerate donor has zero distance so it's weight is 1 and
+    # others have weight 0
     row2_nbor_wt[~np.isinf(row2_nbor_wt)] = 0
     row2_nbor_wt[np.isinf(row2_nbor_wt)] = 1
 
+    row4_nbor_dists = dist[4, :6]
+    row4_nbor_dists[np.array([1, 4])] = np.inf  # Degenerate neighbors
+    row4_nbor_wt = 1/row4_nbor_dists
+
     # Collect donor values
-    col1_donors = np.ma.masked_invalid(X[:6, 1].copy())
-    col3_donors = np.ma.masked_invalid(X[:6, 3].copy())
+    col1_donor_values = np.ma.masked_invalid(X[:6, 1].copy())
+    col3_donor_values = np.ma.masked_invalid(X[:6, 3].copy())
 
     # Final imputed values
-    r1c1_imp = np.ma.average(col1_donors, weights=row1_nbor_wt)
-    r1c3_imp = np.ma.average(col3_donors, weights=row1_nbor_wt)
-    r2c3_imp = np.ma.average(col3_donors, weights=row2_nbor_wt)
+    r1c1_imp = np.ma.average(col1_donor_values, weights=row1_nbor_wt)
+    r1c3_imp = np.ma.average(col3_donor_values, weights=row1_nbor_wt)
+    r2c3_imp = np.ma.average(col3_donor_values, weights=row2_nbor_wt)
+    r4c1_imp = np.ma.average(col1_donor_values, weights=row4_nbor_wt)
 
     X_imputed = np.array([
-        [1,     0,          0,  1],
-        [0,     r1c1_imp,   1,  r1c3_imp],
-        [1,     1,          1,  r2c3_imp],
-        [0,     1,          0,  0],
-        [0,     1,          0,  0],
-        [1,     1,          1,  1],
-        [10,    10,         10, 10],
+        [1,         0,          0,  1],
+        [0,         r1c1_imp,   1,  r1c3_imp],
+        [1,         1,          1,  r2c3_imp],
+        [0,         1,          0,  0],
+        [0,         r4c1_imp,   1,  0],
+        [1,         1,          1,  1],
+        [10,        10,         10, 10],
     ])
 
     imputer = KNNImputer(weights="distance")
