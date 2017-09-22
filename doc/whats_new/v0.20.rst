@@ -41,7 +41,7 @@ Classifiers and regressors
   By :user:`Michael A. Alcorn <airalcorn2>`.
 
 - Added :class:`multioutput.RegressorChain` for multi-target
-  regression. By `Kumar Ashutosh <thechargedneutron>`_.
+  regression. :issue:`9246` by :user:`Kumar Ashutosh <thechargedneutron>`_.
 
 Enhancements
 ............
