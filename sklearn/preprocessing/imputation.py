@@ -584,50 +584,62 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         row_has_missing = row_total_missing.astype(np.bool)
 
         if np.any(row_has_missing):
+            receiver_row_index = np.arange(
+                X.shape[0]).reshape((X.shape[0], 1))[row_has_missing, :]
             neighbors = self._fitted_neighbors.kneighbors(
                 X[row_has_missing, :], n_neighbors=adjusted_n_neighbors)
 
             # Get row index, distance, and weights of donors
             knn_distances, knn_row_index = neighbors
-            # Remove self from list of donors
-            if adjusted_n_neighbors > self.n_neighbors:
-                row_index = np.arange(X.shape[0]).reshape((X.shape[0], 1))
-                row_index = row_index[row_has_missing, :]
-                not_duplicate_index = np.where(~(row_index == knn_row_index))
-                knn_row_index = knn_row_index[not_duplicate_index].reshape(
-                    (-1, self.n_neighbors))
-                knn_distances = knn_distances[not_duplicate_index].reshape(
-                    (-1, self.n_neighbors))
-
-            # Vertically split sets of k-donor indices and repeat each set by
-            # missing count in the corresponding recipient row
+            # Vertically split sets of k-donor indices
             knn_row_index = np.vsplit(knn_row_index, knn_row_index.shape[0])
             row_repeats = row_total_missing[row_total_missing != 0]
+
+            # Weighting: Set self and degenerate donor(s) distance to inf
+            if self.weights not in [None, "uniform"]:
+                receiver_row_index = np.split(
+                    receiver_row_index, receiver_row_index.shape[0])
+                nbors_anti_mask = ~mask[knn_row_index, np.newaxis]
+                receiver_anti_mask = ~mask[receiver_row_index, np.newaxis]
+                # Sum anti-masks to see if both donor & receiver are missing
+                # A zero value indicates that a feature is missing in both
+                anti_masks_combined = receiver_anti_mask + nbors_anti_mask
+                anti_masks_combined = anti_masks_combined.squeeze().sum(
+                    axis=-1)  # Sum over all cols to locate degenerate donors
+                degenerate_nbors = anti_masks_combined < X.shape[1]
+                receiver_rows, _ = knn_distances.shape
+                degenerate_nbors_mask = degenerate_nbors.reshape(
+                    (receiver_rows, -1))
+                knn_distances[degenerate_nbors_mask] = np.inf
+
+            # Repeat each set of v-splitted donor indices by
+            # missing count in the corresponding recipient row
             knn_row_index = np.repeat(
                 knn_row_index, row_repeats, axis=0).ravel()
 
+            # Retreive and, if applicable, transform weight matrix
             weight_matrix = _get_weights(knn_distances, self.weights)
-            # If weight applied, repeat and resize weight matrix
             if weight_matrix is not None:
                 weight_matrix = np.vsplit(weight_matrix,
                                           weight_matrix.shape[0])
                 weight_matrix = np.repeat(weight_matrix,
                                           row_repeats, axis=0).ravel()
-                weight_matrix = weight_matrix.reshape((-1, self.n_neighbors))
+                weight_matrix = weight_matrix.reshape(
+                    (-1, adjusted_n_neighbors))
 
             # Get column index of donors
             row_missing_index, col_missing_index = np.where(mask)
-            knn_col_index = np.repeat(col_missing_index, self.n_neighbors)
+            knn_col_index = np.repeat(col_missing_index, adjusted_n_neighbors)
 
             # Calculate kNN score and impute
-            donors = fitted_X[
-                (knn_row_index, knn_col_index)].reshape((-1, self.n_neighbors))
+            donors = fitted_X[(knn_row_index, knn_col_index)].reshape(
+                (-1, adjusted_n_neighbors))
             donors_mask = _get_mask(donors, self.missing_values)
             donors = np.ma.array(donors, mask=donors_mask)
             imputed = np.ma.average(donors, axis=1, weights=weight_matrix)
             X[mask] = imputed.data
             unimputed_index = np.where(
-                donors_mask.sum(axis=1) == self.n_neighbors)
+                donors_mask.sum(axis=1) == adjusted_n_neighbors)
             if len(unimputed_index[0]) > 0:
                 unimputed_rows = row_missing_index[unimputed_index]
                 unimputed_cols = col_missing_index[unimputed_index]
@@ -672,8 +684,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
         from the data to be transformed.
 
         WARNING: If the same dataset is passed in fit() and transform(),
-        one of the returned "neighbors" maybe the sample itself. Use
-        fit_transform() to avoid this behavior.
+        one of the returned "neighbors" maybe the sample itself. If you will be
+        passing the same dataset, use fit_transform() to avoid this behavior.
 
         Parameters
         ----------

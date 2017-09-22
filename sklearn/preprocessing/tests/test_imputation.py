@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_false
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.preprocessing.imputation import KNNImputer
+from sklearn.metrics.pairwise import masked_euclidean_distances
 from sklearn.neighbors import NearestNeighbors
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
@@ -425,10 +426,10 @@ def test_knn_imputation_zero():
     ])
 
     X_nan = np.array([
-        [1, np.nan, 1, np.nan, 1],
-        [2, 1, 2, 2, 3],
-        [3, 2, 3, np.nan, np.nan],
-        [6, 6, np.nan, 5, 17],
+        [1, np.nan, 1,      np.nan, 1],
+        [2, 1,      2,      2,      3],
+        [3, 2,      3,      np.nan, np.nan],
+        [6, 6,      np.nan, 5,      17],
     ])
     statistics_mean = np.nanmean(X_nan, axis=0)
 
@@ -709,7 +710,7 @@ def test_weight_type():
     assert_array_equal(imputer.fit_transform(X), X_imputed_uniform)
 
     # Test with "callable" weight
-    def no_weight(dist):
+    def no_weight(dist=None):
         return None
 
     imputer = KNNImputer(weights=no_weight)
@@ -773,6 +774,55 @@ def test_weight_type():
     imputer = KNNImputer(n_neighbors=2, weights="distance")
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed,
                               decimal=4)
+    assert_array_equal(imputer.statistics_, statistics_mean)
+
+    # Test with varying missingness patterns
+    X = np.array([
+        [1,     0,      0,  1],
+        [0,     np.nan, 1,  np.nan],
+        [1,     1,      1,  np.nan],
+        [0,     1,      0,  0],
+        [0,     1,      0,  0],
+        [1,     1,      1,  1],
+        [10,    10,     10, 10],
+    ])
+    statistics_mean = np.nanmean(X, axis=0)
+
+    # Get weights of donor neighbors
+    dist = masked_euclidean_distances(X)
+    row1_nbor_dists = dist[1, :6]
+    row1_nbor_dists[np.array([1, 2])] = np.inf  # Degenerate neighbors
+    row1_nbor_wt = 1 / row1_nbor_dists
+
+    row2_nbor_dists = dist[2, :6]
+    row2_nbor_dists[np.array([1, 2])] = np.inf  # Degenerate neighbors
+    row2_nbor_wt = 1 / row2_nbor_dists
+    # One of the non-denerate neighbors has zero distance so its weight=1
+    # and for others, weight=0
+    row2_nbor_wt[~np.isinf(row2_nbor_wt)] = 0
+    row2_nbor_wt[np.isinf(row2_nbor_wt)] = 1
+
+    # Collect donor values
+    col1_donors = np.ma.masked_invalid(X[:6, 1].copy())
+    col3_donors = np.ma.masked_invalid(X[:6, 3].copy())
+
+    # Final imputed values
+    r1c1_imp = np.ma.average(col1_donors, weights=row1_nbor_wt)
+    r1c3_imp = np.ma.average(col3_donors, weights=row1_nbor_wt)
+    r2c3_imp = np.ma.average(col3_donors, weights=row2_nbor_wt)
+
+    X_imputed = np.array([
+        [1,     0,          0,  1],
+        [0,     r1c1_imp,   1,  r1c3_imp],
+        [1,     1,          1,  r2c3_imp],
+        [0,     1,          0,  0],
+        [0,     1,          0,  0],
+        [1,     1,          1,  1],
+        [10,    10,         10, 10],
+    ])
+
+    imputer = KNNImputer(weights="distance")
+    assert_array_almost_equal(imputer.fit_transform(X), X_imputed, decimal=6)
     assert_array_equal(imputer.statistics_, statistics_mean)
 
 
