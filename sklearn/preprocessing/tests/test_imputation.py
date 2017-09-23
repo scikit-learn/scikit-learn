@@ -328,7 +328,7 @@ def test_imputation_copy():
     imputer = Imputer(missing_values=0, strategy="mean", copy=False)
     Xt = imputer.fit(X).transform(X)
     Xt[0, 0] = -1
-    assert_array_almost_equal(X, Xt)
+    assert_array_equal(X, Xt)
 
     # copy=False, sparse csr, axis=1 => no copy
     X = X_orig.copy()
