@@ -4,9 +4,7 @@
 
 # from libc.math cimport abs
 
-from ._split_record cimport split_record_copy_to
 from ._split_record cimport split_record_expand_record
-from ._split_record cimport split_record_copy_to
 
 from ._stats_node cimport stats_node_copy_to
 from ._stats_node cimport stats_node_copy_to
@@ -39,18 +37,6 @@ cdef void splitter_init(Splitter* splitter,
 
     splitter[0].min_samples_leaf = min_samples_leaf
     splitter[0].min_weight_leaf = min_weight_leaf
-
-
-cdef void splitter_reset(Splitter* splitter,
-                         int feature_idx, int start_idx):
-    splitter[0].feature_idx = feature_idx
-    splitter[0].start_idx = start_idx
-    splitter[0].prev_idx = start_idx
-
-    split_record_copy_to(&splitter[0].original_split_record,
-                         &splitter[0].split_record)
-    splitter[0].split_record.feature = feature_idx
-    splitter[0].split_record.pos = start_idx
 
 
 cdef void splitter_expand(Splitter* parent_splitter,

@@ -2,8 +2,11 @@
 #cython: cdivision=True
 #cython: warparound=False
 
+from libc.math cimport INFINITY
+
 from ._split_record cimport SplitRecord
 from ._split_record cimport split_record_reset
+from ._split_record cimport split_record_copy_to
 
 from ._stats_node cimport StatsNode
 from ._stats_node cimport stats_node_reset
@@ -11,6 +14,7 @@ from ._stats_node cimport stats_node_iadd
 from ._stats_node cimport stats_node_isub
 
 from ._criterion cimport impurity_improvement
+from ._criterion cimport proxy_impurity_improvement
 
 
 cdef struct Splitter:
@@ -40,8 +44,17 @@ cdef void splitter_init(Splitter* splitter,
                         int min_samples_leaf, double min_weight_leaf)
 
 
-cdef void splitter_reset(Splitter* splitter,
-                         int feature_idx, int start_idx)
+cdef inline void splitter_reset(Splitter* splitter,
+                                int feature_idx, int start_idx):
+    splitter[0].feature_idx = feature_idx
+    splitter[0].start_idx = start_idx
+    splitter[0].prev_idx = start_idx
+
+    split_record_copy_to(&splitter[0].original_split_record,
+                         &splitter[0].split_record)
+    splitter[0].split_record.feature = feature_idx
+    splitter[0].split_record.pos = start_idx
+
 
 
 cdef void splitter_expand(Splitter* parent_splitter,
@@ -78,10 +91,12 @@ cdef inline void splitter_node_evaluate_split(Splitter* splitter,
                                               int sample_idx):
     cdef:
         int feat_i = splitter[0].feature_idx
-        double diff_samples = (X[sample_idx, feat_i] -
-                               X[splitter[0].prev_idx, feat_i])
-        bint b_samples_var = (diff_samples > FEATURE_THRESHOLD or
-                              diff_samples < -FEATURE_THRESHOLD)
+        # FIXME: not sure this is useful to access
+        # double diff_samples = (X[sample_idx, feat_i] -
+        #                        X[splitter[0].prev_idx, feat_i])
+        # bint b_samples_var = (diff_samples > FEATURE_THRESHOLD or
+        #                       diff_samples < -FEATURE_THRESHOLD)
+        bint b_samples_var = 1
 
         int min_samples_leaf = splitter[0].min_samples_leaf
         bint b_n_samples = not(
@@ -96,13 +111,13 @@ cdef inline void splitter_node_evaluate_split(Splitter* splitter,
             min_weight_leaf or
             splitter[0].split_record.r_stats.sum_weighted_samples <
             min_weight_leaf)
-        double current_impurity_improvement = 0.0
+        double current_impurity_improvement = -INFINITY
     if b_samples_var and b_n_samples and b_weight_samples:
-        current_impurity_improvement = impurity_improvement(
-            &splitter[0].split_record.c_stats,
+        current_impurity_improvement = proxy_impurity_improvement(
+            # &splitter[0].split_record.c_stats,
             &splitter[0].split_record.l_stats,
-            &splitter[0].split_record.r_stats,
-            sum_total_weighted_samples)
+            &splitter[0].split_record.r_stats)
+            # sum_total_weighted_samples)
 
         if (current_impurity_improvement >
                 splitter[0].best_split_record.impurity_improvement):

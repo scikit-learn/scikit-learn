@@ -6,7 +6,7 @@ from ._stats_node cimport stats_node_clear
 from ._criterion cimport _impurity_mse
 
 
-cdef inline void split_record_reset(SplitRecord* split_record, int feature,
+cdef void split_record_reset(SplitRecord* split_record, int feature,
                                     int pos, double threshold,
                                     double impurity,
                                     double impurity_improvement, int nid,
@@ -23,7 +23,7 @@ cdef inline void split_record_reset(SplitRecord* split_record, int feature,
     stats_node_copy_to(r_stats, &split_record.r_stats)
 
 
-cdef inline void split_record_clear(SplitRecord* split_record):
+cdef void split_record_clear(SplitRecord* split_record):
     split_record[0].feature = 0
     split_record[0].pos = 0
     split_record[0].threshold = NAN
@@ -36,9 +36,9 @@ cdef inline void split_record_clear(SplitRecord* split_record):
     stats_node_clear(&split_record.r_stats)
 
 
-cdef inline void split_record_expand_record(SplitRecord* split_record,
-                                            SplitRecord* left_split_record,
-                                            SplitRecord* right_split_record):
+cdef void split_record_expand_record(SplitRecord* split_record,
+                                     SplitRecord* left_split_record,
+                                     SplitRecord* right_split_record):
     split_record_clear(left_split_record)
     stats_node_copy_to(&split_record[0].l_stats, &left_split_record[0].c_stats)
     stats_node_copy_to(&split_record[0].l_stats, &left_split_record[0].r_stats)

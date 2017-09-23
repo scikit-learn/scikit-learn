@@ -28,3 +28,11 @@ cdef inline double impurity_improvement(StatsNode* c_stats,
               sum_total_weighted_samples * l_impurity) -
              (r_stats[0].sum_weighted_samples /
               sum_total_weighted_samples * r_impurity)))
+
+
+cdef inline double proxy_impurity_improvement(StatsNode* l_stats,
+                                              StatsNode* r_stats):
+    return ((l_stats[0].sum_y * l_stats[0].sum_y) /
+            l_stats[0].sum_weighted_samples +
+            (r_stats[0].sum_y * r_stats[0].sum_y) /
+            r_stats[0].sum_weighted_samples)
