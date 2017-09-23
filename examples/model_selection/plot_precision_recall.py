@@ -73,7 +73,8 @@ nth threshold. A pair :math:`(R_k, P_k)` is referred to as an
 
 AP and the trapezoidal area under the operating points
 (:func:`sklearn.metrics.auc`) are common ways to summarize a precision-recall
-curve. Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
+curve that lead to different results. Read more in the
+:ref:`User Guide <precision_recall_f_measure_metrics>`.
 
 Precision-recall curves are typically used in binary classification to study
 the output of a classifier. In order to extend the precision-recall curve and

@@ -119,7 +119,10 @@ def average_precision_score(y_true, y_score, average="macro",
         \\text{AP} = \\sum_n (R_n - R_{n-1}) P_n
 
     where :math:`P_n` and :math:`R_n` are the precision and recall at the nth
-    threshold [1]_.
+    threshold [1]_. This implementation is not interpolated and is different
+    from computing the area under the precision-recall curve with the
+    trapezoidal rule, which uses linear interpolation and can be too
+    optimistic.
 
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
@@ -167,7 +170,7 @@ def average_precision_score(y_true, y_score, average="macro",
 
     See also
     --------
-    roc_auc_score : Area under the ROC curve
+    roc_auc_score : Compute the area under the ROC curve
 
     precision_recall_curve :
         Compute precision-recall pairs for different probability thresholds
@@ -198,7 +201,8 @@ def average_precision_score(y_true, y_score, average="macro",
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
-    """Compute Area Under the Curve (AUC) from prediction scores
+    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
+    from prediction scores.
 
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task in label indicator format.
@@ -247,7 +251,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     --------
     average_precision_score : Area under the precision-recall curve
 
-    roc_curve : Compute Receiver operating characteristic (ROC)
+    roc_curve : Compute Receiver operating characteristic (ROC) curve
 
     Examples
     --------
@@ -408,6 +412,8 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     --------
     average_precision_score : Compute average precision from prediction scores
 
+    roc_curve : Compute Receiver operating characteristic (ROC) curve
+
     Examples
     --------
     >>> import numpy as np
@@ -489,7 +495,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
 
     See also
     --------
-    roc_auc_score : Compute Area Under the Curve (AUC) from prediction scores
+    roc_auc_score : Compute the area under the ROC curve
 
     Notes
     -----
