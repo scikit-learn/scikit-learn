@@ -2,7 +2,6 @@
 #cython: cdivision=True
 #cython: warparound=False
 
-from libcpp.map cimport map
 from libc.stdlib cimport malloc, free, realloc
 from libc.math cimport NAN, INFINITY, isnan
 
@@ -24,8 +23,6 @@ from ._stats_node cimport stats_node_reset
 from ._stats_node cimport stats_node_clear
 
 from ._criterion cimport _impurity_mse
-
-# from ..tree._utils cimport safe_realloc
 
 # from sklearn.utils import check_random_state
 
@@ -77,6 +74,7 @@ cdef class ExactTreeBuilder(TreeBuilder):
             int max_n_splitter
             Splitter* splitters_
             int* expanding_splitters
+            int n_expanding_splitter
             int next_n_splitter
             int expanding_n_splitter
             int start_expanding_splitter
@@ -166,11 +164,16 @@ cdef class ExactTreeBuilder(TreeBuilder):
             int X_idx_init
             float X_init
             double threshold
+
+        #######################################################################
+        # Tree growing
+        #######################################################################
         while current_depth < self.max_depth:
             # shuffled_feature_idx = rng.permutation(range(n_features)).astype(np.int32)
 
             n_visited_feature = 0
 
+            # ENUMERATE ALL SPLITS
             for i in range(n_features):
                 # feat_idx = shuffled_feature_idx[i]
                 feat_idx = i
@@ -186,7 +189,6 @@ cdef class ExactTreeBuilder(TreeBuilder):
                     splitter_reset(&splitters_[expanding_splitters[
                         j + start_expanding_splitter]],
                                    feat_idx, X_idx_init, X_init)
-
                 # evaluate all possible split for the different samples
                 for j in range(n_samples):
                     sample_idx_sorted = X_idx_sorted[j, feat_idx]
@@ -199,7 +201,7 @@ cdef class ExactTreeBuilder(TreeBuilder):
 
                 n_visited_feature += 1
 
-            # expand the splitter if needed
+            # EXPAND SPLITTERS
             start_reset_count_X = max_n_splitter
             max_n_splitter += 2 * n_splitter
             n_expanding_splitter = 0
@@ -209,104 +211,39 @@ cdef class ExactTreeBuilder(TreeBuilder):
             for i in range(n_splitter):
                 splitter_idx = expanding_splitters[i + start_expanding_splitter]
                 if isnan(splitters_[splitter_idx].best_split_record.threshold):
-                    tree._update_node(
-                        splitters_[splitter_idx].split_record.nid,
-                        TREE_LEAF, TREE_LEAF,
-                        TREE_UNDEFINED,
-                        splitters_[splitter_idx].original_split_record.impurity,
-                        TREE_UNDEFINED,
-                        splitters_[splitter_idx].original_split_record.c_stats.n_samples,
-                        splitters_[splitter_idx].original_split_record.c_stats.sum_weighted_samples)
+                    tree._set_node_as_leaf(&splitters_[splitter_idx])
                 else:
                     splitter_expand(&splitters_[splitter_idx],
                                     &splitters_[next_n_splitter],
                                     &splitters_[next_n_splitter + 1])
-                    # add the left node
-                    left_nid = tree._add_node_with_value(
-                        splitters_[splitter_idx].split_record.nid,
-                        1, TREE_NOT_LEAF, FEAT_UNKNOWN, TREE_UNDEFINED,
-                        splitters_[next_n_splitter].split_record.impurity,
-                        splitters_[next_n_splitter].split_record.c_stats.n_samples,
-                        splitters_[next_n_splitter].split_record.c_stats.sum_weighted_samples,
-                        splitters_[next_n_splitter].split_record.c_stats.sum_y /
-                        splitters_[next_n_splitter].split_record.c_stats.sum_weighted_samples)
-                    # add the right node
-                    right_nid = tree._add_node_with_value(
-                        splitters_[splitter_idx].split_record.nid,
-                        0, TREE_NOT_LEAF, FEAT_UNKNOWN, TREE_UNDEFINED,
-                        splitters_[next_n_splitter + 1].split_record.impurity,
-                        splitters_[next_n_splitter + 1].split_record.c_stats.n_samples,
-                        splitters_[next_n_splitter + 1].split_record.c_stats.sum_weighted_samples,
-                        splitters_[next_n_splitter + 1].split_record.c_stats.sum_y /
-                        splitters_[next_n_splitter + 1].split_record.c_stats.sum_weighted_samples)
-                    # add the id to the different split_record
-                    splitter_set_nid(&splitters_[next_n_splitter], left_nid)
-                    splitter_set_nid(&splitters_[next_n_splitter + 1], right_nid)
+                    parent_nid = splitters_[splitter_idx].split_record.nid
+                    left_nid = tree._add_node_set_id(
+                        parent_nid, &splitters_[next_n_splitter], 1)
+                    right_nid = tree._add_node_set_id(
+                        parent_nid, &splitters_[next_n_splitter + 1], 0)
 
-                    # only consider the new splitter if there is enough data
-                    # or that the impurity is large enough
-                    b_impurity = (
-                        splitters_[next_n_splitter].split_record.impurity >
-                        self.min_impurity_split)
-                    b_samples_split = (
-                        splitters_[next_n_splitter].split_record.c_stats.n_samples >=
-                        self.min_samples_split)
-                    b_samples_leaf = (
-                        splitters_[next_n_splitter].split_record.c_stats.n_samples >=
-                        self.min_samples_leaf)
-
-                    if b_impurity and b_samples_leaf and b_samples_split:
+                    if self._check_minimum_stats(&splitters_[next_n_splitter]):
                         b_grow = 1
                         expanding_splitters[start_expanding_splitter + n_splitter +
                                             n_expanding_splitter] = left_nid
                         n_expanding_splitter += 1
                     else:
-                        tree._update_node(
-                            left_nid,
-                            TREE_LEAF, TREE_LEAF,
-                            TREE_UNDEFINED,
-                            splitters_[next_n_splitter].original_split_record.impurity,
-                            TREE_UNDEFINED,
-                            splitters_[next_n_splitter].original_split_record.c_stats.n_samples,
-                            splitters_[next_n_splitter].original_split_record.c_stats.sum_weighted_samples)
+                        tree._set_node_as_leaf(&splitters_[next_n_splitter])
 
-                    b_impurity = (
-                        splitters_[next_n_splitter + 1].split_record.impurity >
-                        self.min_impurity_split)
-                    b_samples_split = (
-                        splitters_[next_n_splitter + 1].split_record.c_stats.n_samples >=
-                        self.min_samples_split)
-                    b_samples_leaf = (
-                        splitters_[next_n_splitter + 1].split_record.c_stats.n_samples >=
-                        self.min_samples_leaf)
-
-                    if b_impurity and b_samples_leaf and b_samples_split:
+                    if self._check_minimum_stats(&splitters_[next_n_splitter + 1]):
                         b_grow = 1
                         expanding_splitters[start_expanding_splitter + n_splitter +
                                             n_expanding_splitter] = right_nid
                         n_expanding_splitter += 1
                     else:
-                        tree._update_node(
-                            right_nid,
-                            TREE_LEAF, TREE_LEAF,
-                            TREE_UNDEFINED,
-                            splitters_[next_n_splitter + 1].original_split_record.impurity,
-                            TREE_UNDEFINED,
-                            splitters_[next_n_splitter + 1].original_split_record.c_stats.n_samples,
-                            splitters_[next_n_splitter + 1].original_split_record.c_stats.sum_weighted_samples)
+                        tree._set_node_as_leaf(&splitters_[next_n_splitter + 1])
 
                     next_n_splitter += 2
 
-                    # update the parent node
-                    tree._update_node(
-                        splitters_[splitter_idx].split_record.nid,
-                        left_nid, right_nid,
-                        splitters_[splitter_idx].best_split_record.threshold,
-                        splitters_[splitter_idx].best_split_record.impurity,
-                        splitters_[splitter_idx].best_split_record.feature,
-                        splitters_[splitter_idx].best_split_record.c_stats.n_samples,
-                        splitters_[splitter_idx].best_split_record.c_stats.sum_weighted_samples)
+                    tree._update_parent_splitter(&splitters_[splitter_idx],
+                                                 left_nid, right_nid)
 
+            # REASSIGN SPLITTERS ID TO SAMPLE
             if b_grow:
                 for i in range(n_samples):
                     parent_nid = X_nid[i]
@@ -343,19 +280,13 @@ cdef class ExactTreeBuilder(TreeBuilder):
         # Set all remaining nodes as leaf
         for i in range(n_splitter):
             splitter_idx = start_expanding_splitter + i
-            tree._update_node(splitters_[splitter_idx].split_record.nid,
-                              TREE_LEAF, TREE_LEAF,
-                              TREE_UNDEFINED,
-                              splitters_[splitter_idx].best_split_record.impurity,
-                              TREE_UNDEFINED,
-                              splitters_[splitter_idx].best_split_record.c_stats.n_samples,
-                              splitters_[splitter_idx].best_split_record.c_stats.sum_weighted_samples)
+            tree._set_node_as_leaf(&splitters_[splitter_idx])
 
         # Deallocate X_nid and splitters_
         free(splitters_)
         free(X_nid)
 
-        rc = tree._resize_c_py(tree.node_count)
+        rc = tree._resize_c(tree.node_count)
 
         if rc >= 0:
             tree.max_depth = current_depth

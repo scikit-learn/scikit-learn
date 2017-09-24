@@ -54,8 +54,8 @@ cdef int IS_NOT_FIRST = 0
 cdef int IS_LEFT = 1
 cdef int IS_NOT_LEFT = 0
 
-TREE_LEAF = -1
-TREE_UNDEFINED = -2
+cdef int TREE_LEAF = -1
+cdef int TREE_UNDEFINED = -2
 cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef SIZE_t INITIAL_STACK_SIZE = 10
@@ -295,9 +295,6 @@ cdef class Tree:
         value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
                        self.capacity * self.value_stride * sizeof(double))
 
-    cpdef int _resize_py(self, SIZE_t capacity):
-        return self._resize(capacity)
-
     cdef int _resize(self, SIZE_t capacity) nogil except -1:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
@@ -309,9 +306,6 @@ cdef class Tree:
             # Acquire gil only if we need to raise
             with gil:
                 raise MemoryError()
-
-    cpdef int _resize_c_py(self, SIZE_t capacity=<SIZE_t>(-1)):
-        return self._resize_c(capacity)
 
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
     # (i.e., older MSVC).
@@ -345,104 +339,6 @@ cdef class Tree:
 
         self.capacity = capacity
         return 0
-
-    cpdef SIZE_t _update_node_py(self, SIZE_t node_id, SIZE_t left_child,
-                                 SIZE_t right_child, double threshold,
-                                 double impurity, SIZE_t feature,
-                                 SIZE_t n_node_samples,
-                                 double weighted_n_node_samples):
-        cdef Node* node = &self.nodes[node_id]
-        node.left_child = left_child
-        node.right_child = right_child
-        node.threshold = threshold
-        node.feature = feature
-        node.impurity = impurity
-        node.n_node_samples = n_node_samples
-        node.weighted_n_node_samples = weighted_n_node_samples
-
-    cdef SIZE_t _update_node(self, SIZE_t node_id, SIZE_t left_child,
-                              SIZE_t right_child, double threshold,
-                              double impurity, SIZE_t feature,
-                              SIZE_t n_node_samples,
-                              double weighted_n_node_samples):
-        cdef Node* node = &self.nodes[node_id]
-        node.left_child = left_child
-        node.right_child = right_child
-        node.threshold = threshold
-        node.feature = feature
-        node.impurity = impurity
-        node.n_node_samples = n_node_samples
-        node.weighted_n_node_samples = weighted_n_node_samples
-
-    cpdef SIZE_t _add_node_py(self, SIZE_t parent, bint is_left, bint is_leaf,
-                              SIZE_t feature, double threshold,
-                              double impurity,
-                              SIZE_t n_node_samples,
-                              double weighted_n_node_samples,
-                              # FIXME must be an array for multioutput
-                              double node_value):
-        node_id = self._add_node(parent, is_left, is_leaf, feature, threshold,
-                                 impurity, n_node_samples,
-                                 weighted_n_node_samples)
-        self.value[node_id * self.value_stride] = node_value
-        return node_id
-
-    cdef SIZE_t _add_node_with_value(self, SIZE_t parent, bint is_left, bint is_leaf,
-                                     SIZE_t feature, double threshold,
-                                     double impurity,
-                                     SIZE_t n_node_samples,
-                                     double weighted_n_node_samples,
-                                     # FIXME must be an array for multioutput
-                                     double node_value):
-        node_id = self._add_node(parent, is_left, is_leaf, feature, threshold,
-                             impurity, n_node_samples,
-                             weighted_n_node_samples)
-        self.value[node_id * self.value_stride] = node_value
-        return node_id
-
-    cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
-                          SIZE_t feature, double threshold, double impurity,
-                          SIZE_t n_node_samples,
-                          double weighted_n_node_samples) nogil except -1:
-        """Add a node to the tree.
-
-        The new node registers itself as the child of its parent.
-
-        Returns (size_t)(-1) on error.
-        """
-        cdef SIZE_t node_id = self.node_count
-
-        if node_id >= self.capacity:
-            if self._resize_c() != 0:
-                return <SIZE_t>(-1)
-
-        cdef Node* node = &self.nodes[node_id]
-        node.impurity = impurity
-        node.n_node_samples = n_node_samples
-        node.weighted_n_node_samples = weighted_n_node_samples
-
-        if parent != _TREE_UNDEFINED:
-            if is_left:
-                self.nodes[parent].left_child = node_id
-            else:
-                self.nodes[parent].right_child = node_id
-
-        if is_leaf:
-            node.left_child = _TREE_LEAF
-            node.right_child = _TREE_LEAF
-            node.feature = _TREE_UNDEFINED
-            node.threshold = _TREE_UNDEFINED
-
-        else:
-            # left_child and right_child will be set later
-            node.feature = feature
-            node.threshold = threshold
-            node.left_child = _TREE_UNDEFINED
-            node.right_child = _TREE_UNDEFINED
-
-        self.node_count += 1
-
-        return node_id
 
     cpdef np.ndarray predict(self, object X):
         """Predict target for X."""
