@@ -73,7 +73,7 @@ ax.add_artist(margin_circle)
 p1 = ref_pos + np.array([0, -r])
 p2 = p1 + np.array([0, -margin])
 plt.plot([p1[0], p2[0]], [p1[1], p2[1]], color='k', linestyle='-', linewidth=2)
-ax.annotate('margin', xy=(p1 + p2)/2, xytext=(-5, -5), style='italic',
+ax.annotate('margin', xy=(p1 + p2) / 2, xytext=(-5, -5), style='italic',
             arrowprops=dict(facecolor='black', arrowstyle='->',
                             connectionstyle="arc3,rad=-0.3"))
 
