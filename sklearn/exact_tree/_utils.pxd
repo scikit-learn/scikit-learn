@@ -1,4 +1,5 @@
 from ._tree cimport Node
+from ._splitter cimport Splitter
 
 import numpy as np
 cimport numpy as np
@@ -23,6 +24,7 @@ ctypedef fused realloc_ptr:
     (DOUBLE_t**)
     (Node*)
     (Node**)
+    (Splitter*)
 
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *

@@ -437,6 +437,8 @@ cdef class Tree:
             # left_child and right_child will be set later
             node.feature = feature
             node.threshold = threshold
+            node.left_child = _TREE_UNDEFINED
+            node.right_child = _TREE_UNDEFINED
 
         self.node_count += 1
 

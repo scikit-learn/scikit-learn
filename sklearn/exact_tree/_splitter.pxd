@@ -7,6 +7,7 @@ from libc.math cimport INFINITY
 from ._split_record cimport SplitRecord
 from ._split_record cimport split_record_reset
 from ._split_record cimport split_record_copy_to
+from ._split_record cimport split_record_expand_record
 
 from ._stats_node cimport StatsNode
 from ._stats_node cimport stats_node_reset
@@ -21,6 +22,7 @@ cdef struct Splitter:
     int feature_idx
     int start_idx
     int prev_idx
+    float X_prev
     SplitRecord split_record
     SplitRecord original_split_record
     SplitRecord best_split_record
@@ -35,7 +37,10 @@ cdef:
     int FEAT_UNKNOWN = -3
 
 
-cdef void splitter_set_nid(Splitter* splitter, int nid)
+cdef inline void splitter_set_nid(Splitter* splitter, int nid):
+    splitter[0].split_record.nid = nid
+    splitter[0].original_split_record.nid = nid
+    splitter[0].best_split_record.nid = nid
 
 
 cdef void splitter_init(Splitter* splitter,
@@ -45,10 +50,12 @@ cdef void splitter_init(Splitter* splitter,
 
 
 cdef inline void splitter_reset(Splitter* splitter,
-                                int feature_idx, int start_idx):
+                                int feature_idx, int start_idx,
+                                float X_prev):
     splitter[0].feature_idx = feature_idx
     splitter[0].start_idx = start_idx
     splitter[0].prev_idx = start_idx
+    splitter[0].X_prev = X_prev
 
     split_record_copy_to(&splitter[0].original_split_record,
                          &splitter[0].split_record)
@@ -56,10 +63,20 @@ cdef inline void splitter_reset(Splitter* splitter,
     splitter[0].split_record.pos = start_idx
 
 
-
-cdef void splitter_expand(Splitter* parent_splitter,
-                          Splitter* left_splitter,
-                          Splitter* right_splitter)
+cdef inline void splitter_expand(Splitter* parent_splitter,
+                                 Splitter* left_splitter,
+                                 Splitter* right_splitter):
+    cdef SplitRecord left_split_record, right_split_record
+    split_record_expand_record(&parent_splitter[0].best_split_record,
+                               &left_split_record, &right_split_record)
+    splitter_init(left_splitter, FEAT_UNKNOWN, TREE_UNDEFINED,
+                  &left_split_record,
+                  parent_splitter[0].min_samples_leaf,
+                  parent_splitter[0].min_weight_leaf)
+    splitter_init(right_splitter, FEAT_UNKNOWN, TREE_UNDEFINED,
+                  &right_split_record,
+                  parent_splitter[0].min_samples_leaf,
+                  parent_splitter[0].min_weight_leaf)
 
 
 cdef void splitter_copy_to(Splitter* src_splitter,
@@ -70,10 +87,12 @@ cdef inline void splitter_update_stats(Splitter* splitter, double[::1] y,
                                        double[::1] sample_weight,
                                        int sample_idx):
     cdef:
-        double sum_y = (y[sample_idx] * sample_weight[sample_idx])
-        double sum_sq_y = sum_y * y[sample_idx]
+        double y_sample_idx = y[sample_idx]
+        double sample_weight_sample_idx = sample_weight[sample_idx]
+        double sum_y = (y_sample_idx * sample_weight_sample_idx)
+        double sum_sq_y = sum_y * y_sample_idx
         int n_samples = 1
-        double sum_weighted_samples = sample_weight[sample_idx]
+        double sum_weighted_samples = sample_weight_sample_idx
 
     stats_node_reset(&splitter[0].stats_sample, sum_y, sum_sq_y,
                      n_samples, sum_weighted_samples)
@@ -91,12 +110,12 @@ cdef inline void splitter_node_evaluate_split(Splitter* splitter,
                                               int sample_idx):
     cdef:
         int feat_i = splitter[0].feature_idx
+        float X_curr = X[sample_idx, feat_i]
         # FIXME: not sure this is useful to access
-        # double diff_samples = (X[sample_idx, feat_i] -
-        #                        X[splitter[0].prev_idx, feat_i])
-        # bint b_samples_var = (diff_samples > FEATURE_THRESHOLD or
-        #                       diff_samples < -FEATURE_THRESHOLD)
-        bint b_samples_var = 1
+        double diff_samples = (X_curr - splitter[0].X_prev)
+        bint b_samples_var = (diff_samples > FEATURE_THRESHOLD or
+                              diff_samples < -FEATURE_THRESHOLD)
+        # bint b_samples_var = 1
 
         int min_samples_leaf = splitter[0].min_samples_leaf
         bint b_n_samples = not(
@@ -124,9 +143,7 @@ cdef inline void splitter_node_evaluate_split(Splitter* splitter,
             split_record_reset(&splitter[0].best_split_record,
                                feature=feat_i,
                                pos=splitter[0].prev_idx,
-                               threshold=((X[sample_idx, feat_i] +
-                                           X[splitter[0].prev_idx, feat_i]) /
-                                          2.0),
+                               threshold=((X_curr + splitter[0].X_prev) / 2.0),
                                impurity=splitter[0].split_record.impurity,
                                impurity_improvement=current_impurity_improvement,
                                nid=splitter[0].split_record.nid,
@@ -135,4 +152,5 @@ cdef inline void splitter_node_evaluate_split(Splitter* splitter,
                                r_stats=&splitter[0].split_record.r_stats)
 
     splitter_update_stats(splitter, y, sample_weight, sample_idx)
+    splitter[0].X_prev = X_curr
     splitter[0].prev_idx = sample_idx

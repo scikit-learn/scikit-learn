@@ -3,7 +3,7 @@
 #cython: warparound=False
 
 from libcpp.map cimport map
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport malloc, free, realloc
 from libc.math cimport NAN, INFINITY, isnan
 
 from ._tree cimport Node
@@ -24,6 +24,8 @@ from ._stats_node cimport stats_node_reset
 from ._stats_node cimport stats_node_clear
 
 from ._criterion cimport _impurity_mse
+
+# from ..tree._utils cimport safe_realloc
 
 # from sklearn.utils import check_random_state
 
@@ -73,11 +75,11 @@ cdef class ExactTreeBuilder(TreeBuilder):
             int init_capacity
             int n_splitter
             int max_n_splitter
-            map[int, int] nid_to_splitter_idx_
             Splitter* splitters_
+            int* expanding_splitters
             int next_n_splitter
-            int next_max_n_splitter
-            Splitter* next_splitters_
+            int expanding_n_splitter
+            int start_expanding_splitter
 
         if tree.max_depth <= 10:
             init_capacity = (2 ** (tree.max_depth + 1)) - 1
@@ -89,9 +91,13 @@ cdef class ExactTreeBuilder(TreeBuilder):
         ##################################################################
         # Initialization
         ##################################################################
+        start_expanding_splitter = 0
         n_splitter = 1
+        n_expanding_splitter = 1
         max_n_splitter = 1
-        splitters_ = <Splitter*> malloc(max_n_splitter * sizeof(Splitter))
+        next_n_splitter = 1
+        splitters_ = <Splitter*> malloc(n_splitter * sizeof(Splitter))
+        expanding_splitters = <int*> malloc(n_splitter * sizeof(int))
 
         # compute the stats for the root node
         cdef:
@@ -104,20 +110,23 @@ cdef class ExactTreeBuilder(TreeBuilder):
         # the splitter
         cdef:
             SplitRecord split_record
-            StatsNode left_stats_node, right_stats_node
+            StatsNode current_stats_node, left_stats_node, right_stats_node
         stats_node_clear(&left_stats_node)
         stats_node_reset(&right_stats_node, root_sum_y,
+                         root_sum_sq_y, root_n_samples,
+                         root_sum_weighted_samples)
+        stats_node_reset(&current_stats_node, root_sum_y,
                          root_sum_sq_y, root_n_samples,
                          root_sum_weighted_samples)
         split_record_reset(&split_record, 0, 0, NAN,
                            _impurity_mse(&right_stats_node),
                            -INFINITY, 0,
-                           &right_stats_node, &left_stats_node,
+                           &current_stats_node, &left_stats_node,
                            &right_stats_node)
         # create the tree node
         split_record.nid = tree._add_node_with_value(
             TREE_UNDEFINED,
-            1, TREE_NOT_LEAF,
+            0, TREE_NOT_LEAF,
             FEAT_UNKNOWN,
             TREE_UNDEFINED,
             split_record.impurity,
@@ -130,18 +139,22 @@ cdef class ExactTreeBuilder(TreeBuilder):
                       &split_record, self.min_samples_leaf,
                       self.min_weight_leaf)
         # add the correspondence nid to splitter idx
-        nid_to_splitter_idx_[split_record.nid] = 0
+        expanding_splitters[0] = 0
+        # nid_to_splitter_idx_[split_record.nid] = 0
         # initialize an array storing the correspondance between
         # each sample and node id
         cdef:
             int i
             int* X_nid = <int*> malloc(n_samples * sizeof(int))
+            int* X_nid_tmp = <int*> malloc(n_samples * sizeof(int))
             bint* X_nid_visited = <bint*> malloc(n_samples * sizeof(bint))
-            int* count_X_nid_label = <int*> malloc(max_n_splitter * sizeof(int))
+            int* count_X_nid_label = <int*> malloc(n_splitter * sizeof(int))
+            int start_reset_count_X = 0
         for i in range(n_samples):
             X_nid[i] = 0
+            X_nid_tmp[i] = 0
             X_nid_visited[i] = 0
-        for i in range(max_n_splitter):
+        for i in range(n_splitter):
             count_X_nid_label[i] = 0
 
         cdef:
@@ -159,8 +172,11 @@ cdef class ExactTreeBuilder(TreeBuilder):
             bint b_impurity
             bint b_samples_split
             bint b_samples_leaf
+            int X_idx_init
+            float X_init
         while current_depth < self.max_depth:
-            #shuffled_feature_idx = rng.permutation(range(n_features)).astype(np.int32)
+            # print('Current depth {}'.format(current_depth))
+            # shuffled_feature_idx = rng.permutation(range(n_features)).astype(np.int32)
 
             n_visited_feature = 0
 
@@ -171,147 +187,176 @@ cdef class ExactTreeBuilder(TreeBuilder):
                 if n_visited_feature >= self.max_features:
                     break
 
-                X_col = X_idx_sorted[:, feat_idx]
-
                 # reset the split record for the current feature
                 # keeping the best split record untouched
+                X_idx_init = X_idx_sorted[0, feat_idx]
+                X_init = X[X_idx_init, feat_idx]
                 for j in range(n_splitter):
-                    splitter_reset(&splitters_[j], feat_idx, X_col[0])
+                    splitter_reset(&splitters_[expanding_splitters[
+                        j + start_expanding_splitter]],
+                                   feat_idx, X_idx_init, X_init)
 
                 # evaluate all possible split for the different samples
-                for j in range(X_col.shape[0]):
-                    sample_idx_sorted = X_col[j]
+                for j in range(n_samples):
+                    sample_idx_sorted = X_idx_sorted[j, feat_idx]
                     if X_nid[sample_idx_sorted] != -1:
                         # FIXME: need to incorporate constant feature
                         splitter_node_evaluate_split(
-                            &splitters_[
-                                nid_to_splitter_idx_[X_nid[sample_idx_sorted]]],
+                            &splitters_[X_nid[sample_idx_sorted]],
                             X, y, sample_weight, sum_total_weighted_samples,
                             sample_idx_sorted)
 
                 n_visited_feature += 1
 
             # expand the splitter if needed
-            next_max_n_splitter = 2 * n_splitter
-            next_n_splitter = 0
-            next_splitters_ = <Splitter*> malloc(next_max_n_splitter * sizeof(Splitter))
+            start_reset_count_X = max_n_splitter
+            max_n_splitter += 2 * n_splitter
+            n_expanding_splitter = 0
+            splitters_ = <Splitter*> realloc(splitters_, max_n_splitter * sizeof(Splitter))
+            count_X_nid_label = <int*> realloc(count_X_nid_label, max_n_splitter *sizeof(int))
+            expanding_splitters = <int*> realloc(expanding_splitters, max_n_splitter * sizeof(int))
+            for i in range(start_reset_count_X, max_n_splitter):
+                count_X_nid_label[i] = 0
             b_grow = 0
             for i in range(n_splitter):
-                if isnan(splitters_[i].best_split_record.threshold):
+                splitter_idx = expanding_splitters[i + start_expanding_splitter]
+                if isnan(splitters_[splitter_idx].best_split_record.threshold):
+                    # print('Declare node {} as NAN'.format(splitter_idx))
                     tree._update_node(
-                        splitters_[i].split_record.nid,
+                        splitters_[splitter_idx].split_record.nid,
                         TREE_LEAF, TREE_LEAF,
                         TREE_UNDEFINED,
-                        splitters_[i].original_split_record.impurity,
+                        splitters_[splitter_idx].original_split_record.impurity,
                         TREE_UNDEFINED,
-                        splitters_[i].original_split_record.c_stats.n_samples,
-                        splitters_[i].original_split_record.c_stats.sum_weighted_samples)
+                        splitters_[splitter_idx].original_split_record.c_stats.n_samples,
+                        splitters_[splitter_idx].original_split_record.c_stats.sum_weighted_samples)
                 else:
-                    splitter_expand(&splitters_[i],
-                                    &next_splitters_[next_n_splitter],
-                                    &next_splitters_[next_n_splitter + 1])
+                    splitter_expand(&splitters_[splitter_idx],
+                                    &splitters_[next_n_splitter],
+                                    &splitters_[next_n_splitter + 1])
                     # add the left node
                     left_nid = tree._add_node_with_value(
-                        splitters_[i].split_record.nid,
+                        splitters_[splitter_idx].split_record.nid,
                         1, TREE_NOT_LEAF, FEAT_UNKNOWN, TREE_UNDEFINED,
-                        next_splitters_[next_n_splitter].split_record.impurity,
-                        next_splitters_[next_n_splitter].split_record.c_stats.n_samples,
-                        next_splitters_[next_n_splitter].split_record.c_stats.sum_weighted_samples,
-                        next_splitters_[next_n_splitter].split_record.c_stats.sum_y /
-                        next_splitters_[next_n_splitter].split_record.c_stats.sum_weighted_samples)
+                        splitters_[next_n_splitter].split_record.impurity,
+                        splitters_[next_n_splitter].split_record.c_stats.n_samples,
+                        splitters_[next_n_splitter].split_record.c_stats.sum_weighted_samples,
+                        splitters_[next_n_splitter].split_record.c_stats.sum_y /
+                        splitters_[next_n_splitter].split_record.c_stats.sum_weighted_samples)
                     # add the right node
                     right_nid = tree._add_node_with_value(
-                        splitters_[i].split_record.nid,
+                        splitters_[splitter_idx].split_record.nid,
                         0, TREE_NOT_LEAF, FEAT_UNKNOWN, TREE_UNDEFINED,
-                        next_splitters_[next_n_splitter + 1].split_record.impurity,
-                        next_splitters_[next_n_splitter + 1].split_record.c_stats.n_samples,
-                        next_splitters_[next_n_splitter + 1].split_record.c_stats.sum_weighted_samples,
-                        next_splitters_[next_n_splitter + 1].split_record.c_stats.sum_y /
-                        next_splitters_[next_n_splitter + 1].split_record.c_stats.sum_weighted_samples)
+                        splitters_[next_n_splitter + 1].split_record.impurity,
+                        splitters_[next_n_splitter + 1].split_record.c_stats.n_samples,
+                        splitters_[next_n_splitter + 1].split_record.c_stats.sum_weighted_samples,
+                        splitters_[next_n_splitter + 1].split_record.c_stats.sum_y /
+                        splitters_[next_n_splitter + 1].split_record.c_stats.sum_weighted_samples)
                     # add the id to the different split_record
-                    splitter_set_nid(&next_splitters_[next_n_splitter], left_nid)
-                    splitter_set_nid(&next_splitters_[next_n_splitter + 1], right_nid)
+                    splitter_set_nid(&splitters_[next_n_splitter], left_nid)
+                    splitter_set_nid(&splitters_[next_n_splitter + 1], right_nid)
+                    # print('left node -> {} - {}'.format(left_nid, next_n_splitter))
+                    # print('right node -> {} - {}'.format(right_nid, next_n_splitter + 1))
+                    # print('\n')
+                    # print('next splitter {1} -> {0}'.format(
+                    #     splitters_[next_n_splitter], next_n_splitter))
+                    # print('\n')
+                    # print('next splitter {1} -> {0}'.format(
+                    #     splitters_[next_n_splitter + 1], next_n_splitter + 1))
 
                     # only consider the new splitter if there is enough data
                     # or that the impurity is large enough
                     b_impurity = (
-                        next_splitters_[next_n_splitter].split_record.impurity >
+                        splitters_[next_n_splitter].split_record.impurity >
                         self.min_impurity_split)
                     b_samples_split = (
-                        next_splitters_[next_n_splitter].split_record.c_stats.n_samples >=
-                        self.min_samples_leaf)
+                        splitters_[next_n_splitter].split_record.c_stats.n_samples >=
+                        self.min_samples_split)
                     b_samples_leaf = (
-                        next_splitters_[next_n_splitter].split_record.c_stats.n_samples >=
-                        self.min_weight_leaf)
+                        splitters_[next_n_splitter].split_record.c_stats.n_samples >=
+                        self.min_samples_leaf)
 
                     if b_impurity and b_samples_leaf and b_samples_split:
                         b_grow = 1
-                        nid_to_splitter_idx_[left_nid] = next_n_splitter
-                        next_n_splitter += 1
+                        expanding_splitters[start_expanding_splitter + n_splitter +
+                                            n_expanding_splitter] = left_nid
+                        # print(splitters_[next_n_splitter])
+                        # print('added left node: {} at position {}'.format(left_nid, start_expanding_splitter + n_splitter + n_expanding_splitter))
+                        n_expanding_splitter += 1
                     else:
                         tree._update_node(
                             left_nid,
                             TREE_LEAF, TREE_LEAF,
                             TREE_UNDEFINED,
-                            next_splitters_[next_n_splitter].original_split_record.impurity,
+                            splitters_[next_n_splitter].original_split_record.impurity,
                             TREE_UNDEFINED,
-                            next_splitters_[next_n_splitter].original_split_record.c_stats.n_samples,
-                            next_splitters_[next_n_splitter].original_split_record.c_stats.sum_weighted_samples)
-                        splitter_copy_to(&next_splitters_[next_n_splitter + 1],
-                                         &next_splitters_[next_n_splitter])
+                            splitters_[next_n_splitter].original_split_record.c_stats.n_samples,
+                            splitters_[next_n_splitter].original_split_record.c_stats.sum_weighted_samples)
 
                     b_impurity = (
-                        next_splitters_[next_n_splitter].split_record.impurity >
+                        splitters_[next_n_splitter + 1].split_record.impurity >
                         self.min_impurity_split)
                     b_samples_split = (
-                        next_splitters_[next_n_splitter].split_record.c_stats.n_samples >=
-                        self.min_samples_leaf)
+                        splitters_[next_n_splitter + 1].split_record.c_stats.n_samples >=
+                        self.min_samples_split)
                     b_samples_leaf = (
-                        next_splitters_[next_n_splitter].split_record.c_stats.n_samples >=
-                        self.min_weight_leaf)
+                        splitters_[next_n_splitter + 1].split_record.c_stats.n_samples >=
+                        self.min_samples_leaf)
 
                     if b_impurity and b_samples_leaf and b_samples_split:
                         b_grow = 1
-                        nid_to_splitter_idx_[right_nid] = next_n_splitter
-                        next_n_splitter += 1
+                        expanding_splitters[start_expanding_splitter + n_splitter +
+                                            n_expanding_splitter] = right_nid
+                        # print(splitters_[next_n_splitter + 1])
+                        # print('added right node: {} at position {}'.format(right_nid, start_expanding_splitter + n_splitter + n_expanding_splitter))
+                        n_expanding_splitter += 1
                     else:
                         tree._update_node(
                             right_nid,
                             TREE_LEAF, TREE_LEAF,
                             TREE_UNDEFINED,
-                            next_splitters_[next_n_splitter].original_split_record.impurity,
+                            splitters_[next_n_splitter + 1].original_split_record.impurity,
                             TREE_UNDEFINED,
-                            next_splitters_[next_n_splitter].original_split_record.c_stats.n_samples,
-                            next_splitters_[next_n_splitter].original_split_record.c_stats.sum_weighted_samples)
+                            splitters_[next_n_splitter + 1].original_split_record.c_stats.n_samples,
+                            splitters_[next_n_splitter + 1].original_split_record.c_stats.sum_weighted_samples)
+
+                    next_n_splitter += 2
 
                     # update the parent node
                     tree._update_node(
-                        splitters_[i].split_record.nid,
+                        splitters_[splitter_idx].split_record.nid,
                         left_nid, right_nid,
-                        splitters_[i].best_split_record.threshold,
-                        splitters_[i].best_split_record.impurity,
-                        splitters_[i].best_split_record.feature,
-                        splitters_[i].best_split_record.c_stats.n_samples,
-                        splitters_[i].best_split_record.c_stats.sum_weighted_samples)
+                        splitters_[splitter_idx].best_split_record.threshold,
+                        splitters_[splitter_idx].best_split_record.impurity,
+                        splitters_[splitter_idx].best_split_record.feature,
+                        splitters_[splitter_idx].best_split_record.c_stats.n_samples,
+                        splitters_[splitter_idx].best_split_record.c_stats.sum_weighted_samples)
+
+            # print('##########################')
+            # print('Info about tree')
+            # for i in range(tree.node_count):
+            #     print('Parent NID: {}'.format(i))
+            #     print('Left NID: {}'.format(tree.nodes[i].left_child))
+            #     print('Right NID: {}'.format(tree.nodes[i].right_child))
+            #     print('\n')
+            # print('##########################')
 
             # affect each samples to the right node
             if b_grow:
-                # for i in range(n_samples):
-                #     X_nid_tmp[i] = X_nid[i]
                 for i in range(n_samples):
                     for j in range(n_features):
                         X_idx = X_idx_sorted[i, j]
                         if X_nid_visited[X_idx] == 0:
                             parent_nid = X_nid[X_idx]
                             if parent_nid != -1:
-                                splitter_idx = nid_to_splitter_idx_[parent_nid]
-                                if (splitters_[splitter_idx].best_split_record.feature == j):
-                                    parent_n_left_samples = splitters_[splitter_idx].best_split_record.l_stats.n_samples
-                                    if isnan(splitters_[splitter_idx].best_split_record.threshold):
+                                # print('parent nid: {}'.format(parent_nid))
+                                if (splitters_[parent_nid].best_split_record.feature == j):
+                                    parent_n_left_samples = splitters_[parent_nid].best_split_record.l_stats.n_samples
+                                    if isnan(splitters_[parent_nid].best_split_record.threshold):
                                         X_nid[X_idx] = -1
                                     else:
-                                        count_X_nid_label[splitter_idx] += 1
-                                        if count_X_nid_label[splitter_idx] <= parent_n_left_samples:
+                                        count_X_nid_label[parent_nid] += 1
+                                        if count_X_nid_label[parent_nid] <= parent_n_left_samples:
                                             if tree.nodes[parent_nid].left_child == TREE_LEAF:
                                                 X_nid[X_idx] = -1
                                             else:
@@ -332,38 +377,55 @@ cdef class ExactTreeBuilder(TreeBuilder):
                                     X_nid_visited[X_idx] = 1
                             else:
                                 X_nid_visited[X_idx] = 1
+            # for i in range(max_n_splitter):
+            #     print('Count at node {} -> {}'.format(i, count_X_nid_label[i]))
+            #     print('Going left node {} -> {}'.format(i, splitters_[i].best_split_record.l_stats.n_samples))
 
             for i in range(n_samples):
+                # print(X_nid[i])
                 X_nid_visited[i] = 0
+                # X_nid[i] = X_nid_tmp[i]
+                # print(X_nid[i])
+
+            # for i in range(n_splitter):
+            #     print(splitters_[i])
 
             # free memory
-            free(splitters_)
-            free(count_X_nid_label)
+            # free(splitters_)
+            # free(count_X_nid_label)
 
-            splitters_ = next_splitters_
-            next_splitters_ = NULL
+            # splitters_ = next_splitters_
+            # next_splitters_ = NULL
 
-            max_n_splitter = next_max_n_splitter
-            n_splitter = next_n_splitter
+            # max_n_splitter = next_max_n_splitter
+            # n_splitter = next_n_splitter
 
-            count_X_nid_label = <int*> malloc(max_n_splitter * sizeof(int))
-            for i in range(max_n_splitter):
-                count_X_nid_label[i] = 0
+            # count_X_nid_label = <int*> malloc(max_n_splitter * sizeof(int))
+            # for i in range(max_n_splitter):
+            #     count_X_nid_label[i] = 0
 
             if b_grow:
+                start_expanding_splitter += n_splitter
+                n_splitter = n_expanding_splitter
                 current_depth += 1
             else:
+                n_splitter = n_expanding_splitter
                 break
+
+            # for i in range(n_splitter):
+            #     print(splitters_[i])
 
         # Set all remaining nodes as leaf
         for i in range(n_splitter):
-            tree._update_node(splitters_[i].split_record.nid,
+            splitter_idx = start_expanding_splitter + i
+            # print('Finish growing - declaring leaf for node {}'.format(splitter_idx))
+            tree._update_node(splitters_[splitter_idx].split_record.nid,
                               TREE_LEAF, TREE_LEAF,
                               TREE_UNDEFINED,
-                              splitters_[i].best_split_record.impurity,
+                              splitters_[splitter_idx].best_split_record.impurity,
                               TREE_UNDEFINED,
-                              splitters_[i].best_split_record.c_stats.n_samples,
-                              splitters_[i].best_split_record.c_stats.sum_weighted_samples)
+                              splitters_[splitter_idx].best_split_record.c_stats.n_samples,
+                              splitters_[splitter_idx].best_split_record.c_stats.sum_weighted_samples)
 
         # Deallocate X_nid and splitters_
         free(splitters_)
