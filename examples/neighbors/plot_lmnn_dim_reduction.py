@@ -7,13 +7,15 @@ Sample usage of Large Margin Nearest Neighbor for dimensionality reduction.
 """
 
 # Author: John Chiotellis <johnyc.code@gmail.com>
-#
 # License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn import neighbors, datasets, decomposition, model_selection
+from sklearn import datasets
+from sklearn.model_selection import train_test_split
+from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.neighbors import LargeMarginNearestNeighbor, KNeighborsClassifier
 
 
 print(__doc__)
@@ -26,7 +28,7 @@ faces = datasets.fetch_olivetti_faces()
 X, y = faces.data, faces.target
 
 # Split into train/test
-X_train, X_test, y_train, y_test = model_selection.\
+X_train, X_test, y_train, y_test = \
     train_test_split(X, y, test_size=0.5, stratify=y,
                      random_state=random_state)
 
@@ -35,21 +37,21 @@ n_classes = len(np.unique(y))
 cmap_bold = None
 
 # Put the result into a color plot
-fig = plt.figure()
+fig = plt.figure(figsize=(15, 5))
 
 # Reduce dimension to 2 with PCA
-pca = decomposition.PCA(n_components=2, random_state=random_state)
+pca = PCA(n_components=2, random_state=random_state)
 X_pca = pca.fit_transform(np.concatenate((X_train, X_test)))
 
 # Compute nearest neighbor accuracy after PCA
-knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors)
+knn = KNeighborsClassifier(n_neighbors=n_neighbors)
 knn.fit(X_pca[:len(X_train)], y_train)
 acc_pca = knn.score(X_pca[len(X_train):], y_test)
 
 # Plot the points after transformation with PCA
 fig.add_subplot(131)
 plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap=cmap_bold)
-plt.title("PCA (3-nn test acc. = {:5.2f}%)".format(acc_pca * 100))
+plt.title("PCA ({}-nn test acc.= {:5.2f}%)".format(n_neighbors, acc_pca * 100))
 
 
 # Reduce dimension to 2 with LinearDiscriminantAnalysis
@@ -64,14 +66,13 @@ acc_lda = knn.score(lda.transform(X_test), y_test)
 # Plot the points after transformation with LinearDiscriminantAnalysis
 fig.add_subplot(132)
 plt.scatter(LX[:, 0], LX[:, 1], c=y, cmap=cmap_bold)
-plt.title("LDA (test acc. = {:5.2f}%)".format(acc_lda * 100))
+plt.title("LDA ({}-nn test acc.= {:5.2f}%)".format(n_neighbors, acc_lda * 100))
+
 
 # Reduce dimension to 2 with LargeMarginNearestNeighbor
-lmnn = neighbors.LargeMarginNearestNeighbor(n_neighbors=n_neighbors,
-                                            n_features_out=2,
-                                            verbose=1,
-                                            max_iter=30,
-                                            random_state=random_state)
+lmnn = LargeMarginNearestNeighbor(n_neighbors=n_neighbors, n_features_out=2,
+                                  max_iter=30, verbose=1,
+                                  random_state=random_state)
 lmnn = lmnn.fit(X_train, y_train)
 LX = lmnn.transform(X)
 
@@ -82,10 +83,11 @@ acc_lmnn = knn.score(lmnn.transform(X_test), y_test)
 # Plot the points after transformation with LargeMarginNearestNeighbor
 fig.add_subplot(133)
 plt.scatter(LX[:, 0], LX[:, 1], c=y, cmap=cmap_bold)
-plt.title("LMNN (k = {}, test acc. = {:5.2f}%)".format(n_neighbors,
-                                                       acc_lmnn * 100))
+plt.title("LMNN ({}-nn test acc.= {:5.2f}%)".format(n_neighbors,
+                                                    acc_lmnn * 100))
 
-plt.suptitle('Dimensionality Reduction ({} dimensions, {} classes)'.format(
-    dim, n_classes), fontweight='bold', fontsize=18)
+plt.suptitle('Dimensionality Reduction \n({} dimensions, {} classes)'.format(
+    dim, n_classes), fontweight='bold', fontsize=14)
 
+plt.subplots_adjust(top=0.8)
 plt.show()

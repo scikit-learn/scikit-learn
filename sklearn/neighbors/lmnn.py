@@ -9,9 +9,9 @@ Large Margin Nearest Neighbor Classification
 from __future__ import print_function
 from warnings import warn
 
-import numpy as np
-import time
 import sys
+import time
+import numpy as np
 from scipy.optimize import minimize
 from scipy.sparse import csr_matrix, csc_matrix, spdiags
 
@@ -77,9 +77,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         iterations. This might be useful in case one wants to examine or store
         the transformation found after each iteration.
 
-    store_result : bool, optional (default=False)
+    store_opt_result : bool, optional (default=False)
         If True, the OptimizeResult object returned by :meth:`minimize` of
-        `scipy.optimize` will be stored in the attribute ``result_``.
+        `scipy.optimize` will be stored in the attribute ``opt_result_``.
 
     verbose : int, optional (default=0)
         If 0, no progress messages will be printed.
@@ -112,9 +112,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Counts the number of iterations performed by the optimizer.
 
-    result_ : OptimizeResult (optional)
-        If ``store_result`` is True, this will be a dictionary of information
-        representing the optimization result.
+    opt_result_ : OptimizeResult (optional)
+        If ``store_opt_result`` is True, this will be a dictionary of
+        information representing the optimization result.
 
     Examples
     --------
@@ -180,7 +180,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     def __init__(self, n_features_out=None, init='pca', warm_start=False,
                  n_neighbors=3, neighbors_algorithm='auto',
                  max_constraints=500000, imp_store='auto', max_iter=50,
-                 tol=1e-5, callback=None, store_result=False, verbose=0,
+                 tol=1e-5, callback=None, store_opt_result=False, verbose=0,
                  random_state=None, n_jobs=1):
 
         # Parameters
@@ -194,7 +194,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         self.max_iter = max_iter
         self.tol = tol
         self.callback = callback
-        self.store_result = store_result
+        self.store_opt_result = store_opt_result
         self.verbose = verbose
         self.random_state = random_state
         self.n_jobs = n_jobs
@@ -265,10 +265,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Call the optimizer
         self.n_iter_ = 0
-        result = minimize(**optimizer_params)
+        opt_result = minimize(**optimizer_params)
 
         # Reshape the solution found by the optimizer
-        self.transformation_ = result.x.reshape(-1, X_valid.shape[1])
+        self.transformation_ = opt_result.x.reshape(-1, X_valid.shape[1])
 
         # Stop timer
         t_train = time.time() - t_train
@@ -276,8 +276,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             print('Training took {:8.2f}s.'.format(t_train))
 
         # Optionally store information returned by the optimizer
-        if self.store_result:
-            self.result_ = result
+        if self.store_opt_result:
+            self.opt_result_ = opt_result
 
         return self
 
@@ -374,8 +374,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         singleton_classes, = np.where(mask_singleton_class)
         if len(singleton_classes):
             warn('There are {} singleton classes that will be ignored during '
-                 'training. A copy of the inputs `X` and `y` (and `targets` '
-                 'if not None) will be made.'.format(len(singleton_classes)))
+                 'training. A copy of the inputs `X` and `y` will be made.'
+                 .format(len(singleton_classes)))
             mask_singleton_sample = np.asarray([yi in singleton_classes for
                                                 yi in y_inverse])
             X = X[~mask_singleton_sample].copy()
