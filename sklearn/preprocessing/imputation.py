@@ -596,7 +596,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             row_repeats = row_total_missing[row_total_missing != 0]
 
             # Weighting: Set self and degenerate donor(s) distance to inf
-            if self.weights not in [None, "uniform"]:
+            if self.weights in ["distance"]:
                 receiver_row_index = np.split(
                     receiver_row_index, receiver_row_index.shape[0])
                 nbors_anti_mask = ~mask[knn_row_index, np.newaxis]
