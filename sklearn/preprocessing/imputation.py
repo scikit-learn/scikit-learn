@@ -596,6 +596,7 @@ class KNNImputer(BaseEstimator, TransformerMixin):
             row_repeats = row_total_missing[row_total_missing != 0]
 
             # Weighting: Set self and degenerate donor(s) distance to inf
+            weight_matrix = None
             if self.weights in ["distance"]:
                 receiver_row_index = np.split(
                     receiver_row_index, receiver_row_index.shape[0])
@@ -612,20 +613,20 @@ class KNNImputer(BaseEstimator, TransformerMixin):
                     (receiver_rows, -1))
                 knn_distances[degenerate_nbors_mask] = np.inf
 
+                # Retreive and, if applicable, transform weight matrix
+                weight_matrix = _get_weights(knn_distances, self.weights)
+                if weight_matrix is not None:
+                    weight_matrix = np.vsplit(weight_matrix,
+                                              weight_matrix.shape[0])
+                    weight_matrix = np.repeat(weight_matrix,
+                                              row_repeats, axis=0).ravel()
+                    weight_matrix = weight_matrix.reshape(
+                        (-1, adjusted_n_neighbors))
+
             # Repeat each set of v-splitted donor indices by
             # missing count in the corresponding recipient row
             knn_row_index = np.repeat(
                 knn_row_index, row_repeats, axis=0).ravel()
-
-            # Retreive and, if applicable, transform weight matrix
-            weight_matrix = _get_weights(knn_distances, self.weights)
-            if weight_matrix is not None:
-                weight_matrix = np.vsplit(weight_matrix,
-                                          weight_matrix.shape[0])
-                weight_matrix = np.repeat(weight_matrix,
-                                          row_repeats, axis=0).ravel()
-                weight_matrix = weight_matrix.reshape(
-                    (-1, adjusted_n_neighbors))
 
             # Get column index of donors
             row_missing_index, col_missing_index = np.where(mask)
