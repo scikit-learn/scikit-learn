@@ -140,22 +140,13 @@ cdef class ExactTreeBuilder(TreeBuilder):
                       self.min_weight_leaf)
         # add the correspondence nid to splitter idx
         expanding_splitters[0] = 0
-        # nid_to_splitter_idx_[split_record.nid] = 0
-        # initialize an array storing the correspondance between
-        # each sample and node id
+
         cdef:
             int i
             int* X_nid = <int*> malloc(n_samples * sizeof(int))
-            int* X_nid_tmp = <int*> malloc(n_samples * sizeof(int))
-            bint* X_nid_visited = <bint*> malloc(n_samples * sizeof(bint))
-            int* count_X_nid_label = <int*> malloc(n_splitter * sizeof(int))
             int start_reset_count_X = 0
         for i in range(n_samples):
             X_nid[i] = 0
-            X_nid_tmp[i] = 0
-            X_nid_visited[i] = 0
-        for i in range(n_splitter):
-            count_X_nid_label[i] = 0
 
         cdef:
             int j
@@ -174,8 +165,8 @@ cdef class ExactTreeBuilder(TreeBuilder):
             bint b_samples_leaf
             int X_idx_init
             float X_init
+            double threshold
         while current_depth < self.max_depth:
-            # print('Current depth {}'.format(current_depth))
             # shuffled_feature_idx = rng.permutation(range(n_features)).astype(np.int32)
 
             n_visited_feature = 0
@@ -213,15 +204,11 @@ cdef class ExactTreeBuilder(TreeBuilder):
             max_n_splitter += 2 * n_splitter
             n_expanding_splitter = 0
             splitters_ = <Splitter*> realloc(splitters_, max_n_splitter * sizeof(Splitter))
-            count_X_nid_label = <int*> realloc(count_X_nid_label, max_n_splitter *sizeof(int))
             expanding_splitters = <int*> realloc(expanding_splitters, max_n_splitter * sizeof(int))
-            for i in range(start_reset_count_X, max_n_splitter):
-                count_X_nid_label[i] = 0
             b_grow = 0
             for i in range(n_splitter):
                 splitter_idx = expanding_splitters[i + start_expanding_splitter]
                 if isnan(splitters_[splitter_idx].best_split_record.threshold):
-                    # print('Declare node {} as NAN'.format(splitter_idx))
                     tree._update_node(
                         splitters_[splitter_idx].split_record.nid,
                         TREE_LEAF, TREE_LEAF,
@@ -255,14 +242,6 @@ cdef class ExactTreeBuilder(TreeBuilder):
                     # add the id to the different split_record
                     splitter_set_nid(&splitters_[next_n_splitter], left_nid)
                     splitter_set_nid(&splitters_[next_n_splitter + 1], right_nid)
-                    # print('left node -> {} - {}'.format(left_nid, next_n_splitter))
-                    # print('right node -> {} - {}'.format(right_nid, next_n_splitter + 1))
-                    # print('\n')
-                    # print('next splitter {1} -> {0}'.format(
-                    #     splitters_[next_n_splitter], next_n_splitter))
-                    # print('\n')
-                    # print('next splitter {1} -> {0}'.format(
-                    #     splitters_[next_n_splitter + 1], next_n_splitter + 1))
 
                     # only consider the new splitter if there is enough data
                     # or that the impurity is large enough
@@ -280,8 +259,6 @@ cdef class ExactTreeBuilder(TreeBuilder):
                         b_grow = 1
                         expanding_splitters[start_expanding_splitter + n_splitter +
                                             n_expanding_splitter] = left_nid
-                        # print(splitters_[next_n_splitter])
-                        # print('added left node: {} at position {}'.format(left_nid, start_expanding_splitter + n_splitter + n_expanding_splitter))
                         n_expanding_splitter += 1
                     else:
                         tree._update_node(
@@ -307,8 +284,6 @@ cdef class ExactTreeBuilder(TreeBuilder):
                         b_grow = 1
                         expanding_splitters[start_expanding_splitter + n_splitter +
                                             n_expanding_splitter] = right_nid
-                        # print(splitters_[next_n_splitter + 1])
-                        # print('added right node: {} at position {}'.format(right_nid, start_expanding_splitter + n_splitter + n_expanding_splitter))
                         n_expanding_splitter += 1
                     else:
                         tree._update_node(
@@ -332,77 +307,30 @@ cdef class ExactTreeBuilder(TreeBuilder):
                         splitters_[splitter_idx].best_split_record.c_stats.n_samples,
                         splitters_[splitter_idx].best_split_record.c_stats.sum_weighted_samples)
 
-            # print('##########################')
-            # print('Info about tree')
-            # for i in range(tree.node_count):
-            #     print('Parent NID: {}'.format(i))
-            #     print('Left NID: {}'.format(tree.nodes[i].left_child))
-            #     print('Right NID: {}'.format(tree.nodes[i].right_child))
-            #     print('\n')
-            # print('##########################')
-
-            # affect each samples to the right node
             if b_grow:
                 for i in range(n_samples):
-                    for j in range(n_features):
-                        X_idx = X_idx_sorted[i, j]
-                        if X_nid_visited[X_idx] == 0:
-                            parent_nid = X_nid[X_idx]
-                            if parent_nid != -1:
-                                # print('parent nid: {}'.format(parent_nid))
-                                if (splitters_[parent_nid].best_split_record.feature == j):
-                                    parent_n_left_samples = splitters_[parent_nid].best_split_record.l_stats.n_samples
-                                    if isnan(splitters_[parent_nid].best_split_record.threshold):
-                                        X_nid[X_idx] = -1
-                                    else:
-                                        count_X_nid_label[parent_nid] += 1
-                                        if count_X_nid_label[parent_nid] <= parent_n_left_samples:
-                                            if tree.nodes[parent_nid].left_child == TREE_LEAF:
-                                                X_nid[X_idx] = -1
-                                            else:
-                                                if (tree.nodes[tree.nodes[parent_nid].left_child].left_child == TREE_LEAF and
-                                                    tree.nodes[tree.nodes[parent_nid].left_child].right_child == TREE_LEAF):
-                                                    X_nid[X_idx] = -1
-                                                else:
-                                                    X_nid[X_idx] = tree.nodes[parent_nid].left_child
-                                        else:
-                                            if tree.nodes[parent_nid].right_child == TREE_LEAF:
-                                                X_nid[X_idx] = -1
-                                            else:
-                                                if (tree.nodes[tree.nodes[parent_nid].right_child].left_child == TREE_LEAF and
-                                                    tree.nodes[tree.nodes[parent_nid].right_child].right_child == TREE_LEAF):
-                                                    X_nid[X_idx] = -1
-                                                else:
-                                                    X_nid[X_idx] = tree.nodes[parent_nid].right_child
-                                    X_nid_visited[X_idx] = 1
+                    parent_nid = X_nid[i]
+                    if parent_nid != -1:
+                        threshold = splitters_[parent_nid].best_split_record.threshold
+                        feat_idx = splitters_[parent_nid].best_split_record.feature
+                        if X[i, feat_idx] <= threshold:
+                            if tree.nodes[parent_nid].left_child == TREE_LEAF:
+                                X_nid[i] = -1
                             else:
-                                X_nid_visited[X_idx] = 1
-            # for i in range(max_n_splitter):
-            #     print('Count at node {} -> {}'.format(i, count_X_nid_label[i]))
-            #     print('Going left node {} -> {}'.format(i, splitters_[i].best_split_record.l_stats.n_samples))
-
-            for i in range(n_samples):
-                # print(X_nid[i])
-                X_nid_visited[i] = 0
-                # X_nid[i] = X_nid_tmp[i]
-                # print(X_nid[i])
-
-            # for i in range(n_splitter):
-            #     print(splitters_[i])
-
-            # free memory
-            # free(splitters_)
-            # free(count_X_nid_label)
-
-            # splitters_ = next_splitters_
-            # next_splitters_ = NULL
-
-            # max_n_splitter = next_max_n_splitter
-            # n_splitter = next_n_splitter
-
-            # count_X_nid_label = <int*> malloc(max_n_splitter * sizeof(int))
-            # for i in range(max_n_splitter):
-            #     count_X_nid_label[i] = 0
+                                if (tree.nodes[tree.nodes[parent_nid].left_child].left_child == TREE_LEAF and
+                                    tree.nodes[tree.nodes[parent_nid].left_child].right_child == TREE_LEAF):
+                                    X_nid[i] = -1
+                                else:
+                                    X_nid[i] = tree.nodes[parent_nid].left_child
+                        else:
+                            if tree.nodes[parent_nid].right_child == TREE_LEAF:
+                                X_nid[i] = -1
+                            else:
+                                if (tree.nodes[tree.nodes[parent_nid].right_child].left_child == TREE_LEAF and
+                                    tree.nodes[tree.nodes[parent_nid].right_child].right_child == TREE_LEAF):
+                                    X_nid[i] = -1
+                                else:
+                                    X_nid[i] = tree.nodes[parent_nid].right_child
 
             if b_grow:
                 start_expanding_splitter += n_splitter
@@ -412,13 +340,9 @@ cdef class ExactTreeBuilder(TreeBuilder):
                 n_splitter = n_expanding_splitter
                 break
 
-            # for i in range(n_splitter):
-            #     print(splitters_[i])
-
         # Set all remaining nodes as leaf
         for i in range(n_splitter):
             splitter_idx = start_expanding_splitter + i
-            # print('Finish growing - declaring leaf for node {}'.format(splitter_idx))
             tree._update_node(splitters_[splitter_idx].split_record.nid,
                               TREE_LEAF, TREE_LEAF,
                               TREE_UNDEFINED,
@@ -429,9 +353,7 @@ cdef class ExactTreeBuilder(TreeBuilder):
 
         # Deallocate X_nid and splitters_
         free(splitters_)
-        free(count_X_nid_label)
         free(X_nid)
-        free(X_nid_visited)
 
         rc = tree._resize_c_py(tree.node_count)
 
