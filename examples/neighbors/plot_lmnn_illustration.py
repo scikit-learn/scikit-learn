@@ -12,9 +12,8 @@ Illustration of Large Margin Nearest Neighbor.
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
-from sklearn import neighbors
+from sklearn.neighbors import LargeMarginNearestNeighbor
 from sklearn.neighbors.lmnn import _select_target_neighbors
-import networkx as nx
 
 
 print(__doc__)
@@ -32,22 +31,17 @@ X *= 6  # Spread out the data so that a margin of 1 is visible
 # Put the result into a color plot
 fig = plt.figure(figsize=(15, 6))
 
-# Find nearest neighbors in the original space
-nn = neighbors.NearestNeighbors(n_neighbors=n_neighbors)
-nn.fit(X)
-
 # Find the target neighbors
 tn = _select_target_neighbors(X, y, n_neighbors)
 
 # Plot the points in the original space
 ax = fig.add_subplot(121)
 
-# Construct the nearest neighbor graph
-adj_mat = nn.kneighbors_graph(X, n_neighbors=1)
-g = nx.Graph(adj_mat)
-
 # Draw the graph nodes
-nx.draw_networkx(g, edge_list=None, pos=X, ax=ax, node_color=y, alpha=0.4)
+ax.scatter(X[:, 0], X[:, 1], s=300, c=y, alpha=0.4)
+for point_id in range(len(X)):
+    ax.text(X[point_id, 0], X[point_id, 1], str(point_id), va='center',
+            ha='center')
 
 # Annotate the reference sample
 ref_pos = X[3]
@@ -79,7 +73,7 @@ ax.add_artist(margin_circle)
 p1 = ref_pos + np.array([0, -r])
 p2 = p1 + np.array([0, -margin])
 plt.plot([p1[0], p2[0]], [p1[1], p2[1]], color='k', linestyle='-', linewidth=2)
-ax.annotate('margin', xy=(p1+p2)/2, xytext=(-5, -5), style='italic',
+ax.annotate('margin', xy=(p1 + p2)/2, xytext=(-5, -5), style='italic',
             arrowprops=dict(facecolor='black', arrowstyle='->',
                             connectionstyle="arc3,rad=-0.3"))
 
@@ -92,7 +86,7 @@ ax.annotate('', xy=X[1], xytext=imp_centroid, arrowprops=imp_arrow_dict)
 ax.annotate('', xy=X[4], xytext=imp_centroid, arrowprops=imp_arrow_dict)
 ax.annotate('', xy=X[5], xytext=imp_centroid, arrowprops=imp_arrow_dict)
 ax.annotate('', xy=X[7], xytext=imp_centroid, arrowprops=imp_arrow_dict)
-ax.text(imp_centroid[0]-1, imp_centroid[1]+1, 'impostors', color='k',
+ax.text(imp_centroid[0] - 1, imp_centroid[1] + 1, 'impostors', color='k',
         style='italic')
 
 # Make axes equal so that boundaries are displayed correctly as circles
@@ -101,9 +95,8 @@ ax.set_title("Original space")
 
 
 # Learn an embedding with LargeMarginNearestNeighbor
-lmnn = neighbors.LargeMarginNearestNeighbor(n_neighbors=n_neighbors,
-                                            max_iter=30,
-                                            random_state=random_state)
+lmnn = LargeMarginNearestNeighbor(n_neighbors=n_neighbors, max_iter=30,
+                                  random_state=random_state)
 lmnn = lmnn.fit(X, y)
 
 # Plot the points after transformation with LargeMarginNearestNeighbor
@@ -111,10 +104,11 @@ ax2 = fig.add_subplot(122)
 
 # Get the embedding and find the new nearest neighbors
 X_embedded = lmnn.transform(X)
-nn.fit(X_embedded)
-adj_mat = nn.kneighbors_graph(X_embedded, n_neighbors=1)
-g = nx.Graph(adj_mat)
-nx.draw_networkx(g, pos=X_embedded, ax=ax2, node_color=y, alpha=0.4)
+
+ax2.scatter(X_embedded[:, 0], X_embedded[:, 1], s=300, c=y, alpha=0.4)
+for point_id in range(len(X)):
+    ax2.text(X_embedded[point_id, 0], X_embedded[point_id, 1],
+             str(point_id), va='center', ha='center')
 
 # Draw a circle with the radius touching the target neighbor
 tn_edge = X_embedded[3] - X_embedded[tn[3]]
