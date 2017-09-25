@@ -7,9 +7,13 @@ A test of LocalOutlierFactor on classical anomaly detection datasets.
 
 Note that LocalOutlierFactor is not meant to predict on a test set and its
 performance is assessed in an outlier detection context:
-1. The model is trained on a dataset containing outliers.
-2. The ROC curve is computed on the whole dataset using the knowledge of the
+1. The model is trained on the whole dataset which is assumed to contain
+outliers.
+2. The ROC curve is computed on the same dataset using the knowledge of the
 labels.
+In this context there is no need to shuffle the dataset because the model
+is trained and tested on the whole dataset. The randomness of this benchmark
+is only caused by the random selection of anomalies in the SA dataset.
 
 """
 
@@ -20,21 +24,21 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_mldata
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils import shuffle as sh
 
 print(__doc__)
 
-np.random.seed(2)
+SEED = 2  # to control the random selection of anomalies in the SA dataset
 
 # datasets available: ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
 datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
 
+plt.figure()
 for dataset_name in datasets:
     # loading and vectorization
     print('loading data')
     if dataset_name in ['http', 'smtp', 'SA', 'SF']:
-        dataset = fetch_kddcup99(subset=dataset_name, shuffle=True,
-                                 percent10=False)
+        dataset = fetch_kddcup99(subset=dataset_name, percent10=True,
+                                 random_state=SEED)
         X = dataset.data
         y = dataset.target
 
@@ -42,7 +46,6 @@ for dataset_name in datasets:
         dataset = fetch_mldata('shuttle')
         X = dataset.data
         y = dataset.target
-        X, y = sh(X, y)
         # we remove data with label 4
         # normal data are then those of class 1
         s = (y != 4)
@@ -51,7 +54,7 @@ for dataset_name in datasets:
         y = (y != 1).astype(int)
 
     if dataset_name == 'forestcover':
-        dataset = fetch_covtype(shuffle=True)
+        dataset = fetch_covtype()
         X = dataset.data
         y = dataset.target
         # normal data are those with attribute 2
