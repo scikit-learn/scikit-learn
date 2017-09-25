@@ -72,7 +72,7 @@ datasets = [make_moons(noise=0.3, random_state=0),
             linearly_separable
             ]
 
-figure, axs = plt.subplots(len(classifiers) + 1, len(datasets), figsize=(9, 27))
+f, axs = plt.subplots(len(classifiers) + 1, len(datasets), figsize=(9, 27))
 
 # iterate over datasets
 for ds_cnt, ds in enumerate(datasets):
