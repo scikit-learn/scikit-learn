@@ -385,13 +385,12 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     .. math::
 
         T(k) = 1 - \frac{2}{nk (2n - 3k - 1)} \sum^n_{i=1}
-            \sum_{j \in U^{(k)}_i} (r(i, j) - k)
+            \sum_{j} \max(0, (r(i, j) - k))
 
-    where for each sample i, :math:`U^{(k)}_i` are all samples j that are in
-    the k-nearest neighbor of i in the output space but are the :math:`r(i,
-    j)`-th nearest neighbor of i in the input space with r(i, j) > k. In other
-    words, any unexpected nearest neighbors in the output space are penalised
-    in proportion to their rank in the input space.
+    where for each sample i, j is among its k nearest neighbors in the output
+    space and is its :math:`r(i, j)`-th nearest neighbor in the input space. In
+    other words, any unexpected nearest neighbors in the output space are
+    penalised in proportion to their rank in the input space.
 
     * "Neighborhood Preservation in Nonlinear Projection Methods: An
       Experimental Study"
