@@ -79,14 +79,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     store_opt_result : bool, optional (default=False)
         If True, the OptimizeResult object returned by :meth:`minimize` of
-        `scipy.optimize` will be stored in the attribute ``opt_result_``.
+        scipy.optimize will be stored in the attribute ``opt_result_``.
 
     verbose : int, optional (default=0)
         If 0, no progress messages will be printed.
         If 1, progress messages will be printed to stdout.
-        If >1, progress messages will be printed and the ``iprint``
-        parameter of :meth:`_minimize_lbfgsb` of `scipy.optimize` will be set
-        to verbose - 2.
+        If > 1, progress messages will be printed and the ``iprint``
+        parameter of :meth:`_minimize_lbfgsb` of scipy.optimize will be set
+        to ``verbose - 2``.
 
     random_state : int or numpy.RandomState or None, optional (default=None)
         A pseudo random number generator object or a seed for it if int.
@@ -138,7 +138,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     >>> print(knn.score(lmnn.transform(X_test), y_test))
     0.971428571429
 
-
     Notes
     -----
     Large margin nearest neighbor (LMNN) is a machine learning algorithm for
@@ -162,8 +161,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         diverge even before the first iteration of LargeMarginNearestNeighbor.
         Therefore, one should not expect any reproducibility of the
         transformations found by `LargeMarginNearestNeighbor` when
-        initialization with PCA is used (`init`='pca').
-
+        initialization with PCA is used (``init``='pca').
 
     References
     ----------
@@ -404,14 +402,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         # If warm_start is enabled, check that the inputs are consistent
         _check_scalar(self.warm_start, 'warm_start', bool)
         if self.warm_start and hasattr(self, 'transformation_'):
-            if len(self.transformation_[0]) != X.shape[1]:
+            if self.transformation_.shape[1] != X.shape[1]:
                 raise ValueError('The new inputs dimensionality ({}) does not '
                                  'match the input dimensionality of the '
                                  'previously learned transformation ({}).'
-                                 .format(len(self.transformation_[0]),
+                                 .format(self.transformation_.shape[1],
                                          X.shape[1]))
 
-        _check_scalar(self.n_neighbors, 'n_neighbors', int, 1, len(X) - 1)
+        _check_scalar(self.n_neighbors, 'n_neighbors', int, 1, X.shape[0] - 1)
         _check_scalar(self.max_iter, 'max_iter', int, 1)
         _check_scalar(self.tol, 'tol', float, 0.)
         _check_scalar(self.max_constraints, 'max_constraints', int, 1)
@@ -844,12 +842,13 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
     -------
     imp_ind : array, shape (n_impostors,)
         Unraveled indices of (sample, impostor) pairs referring to a matrix
-        of shape (len(X_out), len(X_in)).
+        of shape (n_samples_out, n_samples_in).
 
     dist : array, shape (n_impostors,), optional
         dist[i] is the squared distance between samples imp_row[i] and
         imp_col[i], where
-        imp_row, imp_col = np.unravel_index(imp_ind, (len(X_out), len(X_in)))
+        imp_row, imp_col = np.unravel_index(imp_ind, dims=(n_samples_out,
+        n_samples_in))
     """
 
     n_samples_out = X_out.shape[0]
@@ -879,7 +878,7 @@ def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
         ind = np.unique(np.concatenate((ind1, ind2)))
 
         if len(ind):
-            ind_plus_offset = ind + chunk.start * len(X_in)
+            ind_plus_offset = ind + chunk.start * X_in.shape[0]
             try:
                 imp_ind.extend(ind_plus_offset)
             except TypeError:
