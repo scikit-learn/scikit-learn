@@ -22,7 +22,6 @@ set.
 """
 print(__doc__)
 
-
 # Code source: Gaël Varoquaux
 #              Andreas Müller
 # Modified for documentation by Jaques Grobler
@@ -73,8 +72,8 @@ datasets = [make_moons(noise=0.3, random_state=0),
             linearly_separable
             ]
 
-figure = plt.figure(figsize=(9, 27))
-i = 1
+figure, axs = plt.subplots(len(classifiers) + 1, len(datasets), figsize=(9, 27))
+
 # iterate over datasets
 for ds_cnt, ds in enumerate(datasets):
     # preprocess dataset, split into training and test part
@@ -91,7 +90,7 @@ for ds_cnt, ds in enumerate(datasets):
     # just plot the dataset first
     cm = plt.cm.RdBu
     cm_bright = ListedColormap(['#FF0000', '#0000FF'])
-    ax = plt.subplot(len(classifiers) + 1, len(datasets), i)
+    ax = axs[0, ds_cnt]
     if ds_cnt == 0:
         ax.set_ylabel('Input data')
     # Plot the training points
@@ -104,18 +103,11 @@ for ds_cnt, ds in enumerate(datasets):
     ax.set_ylim(yy.min(), yy.max())
     ax.set_xticks(())
     ax.set_yticks(())
-    i += 1
 
-# iterate over classifiers
-for clf_cnt, (name, clf) in enumerate(zip(names, classifiers)):
-    for ds_cnt, ds in enumerate(datasets):
-        # preprocess dataset, split into training and test part
-        X, y = ds
-        X = StandardScaler().fit_transform(X)
-        X_train, X_test, y_train, y_test = \
-            train_test_split(X, y, test_size=.4, random_state=42)
+    # iterate over classifiers
+    for clf_cnt, (name, clf) in enumerate(zip(names, classifiers)):
 
-        ax = plt.subplot(len(classifiers) + 1, len(datasets), i)
+        ax = axs[clf_cnt + 1, ds_cnt]
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
 
@@ -145,7 +137,6 @@ for clf_cnt, (name, clf) in enumerate(zip(names, classifiers)):
             ax.set_ylabel(name)
         ax.text(xx.max() - .3, yy.min() + .3, ('%.2f' % score).lstrip('0'),
                 size=15, horizontalalignment='right')
-        i += 1
 
 plt.tight_layout()
 plt.show()
