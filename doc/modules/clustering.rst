@@ -503,12 +503,10 @@ Spectral Clustering Graphs
 
 Spectral Clustering can also be used to cluster graphs by their spectral embeddings.
 In this case, the affinity matrix is the adjacency matrix of the graph, and SpectralClustering
-is initialized with `affinity='precomputed'`:
+is initialized with `affinity='precomputed'`::
 
-```
-SpectralClustering(k, affinity='precomputed', n_init=100, assign_labels='discretize').fit_predict(adjacency_matrix)
-```
-
+  >>> sc = SpectralClustering(k, affinity='precomputed', n_init=100, assign_labels='discretize')
+  >>> sc.fit_predict(adjacency_matrix)
 
 .. topic:: References:
 
