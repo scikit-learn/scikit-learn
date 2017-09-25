@@ -64,6 +64,14 @@ if [[ "$DISTRIB" == "conda" ]]; then
         pip install nose-timer
     fi
 
+    pip install matplotlib
+
+    pip install seaborn
+
+    pip install statsmodels
+
+
+
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
     # virtualenv but we want to use the numpy installed through apt-get
