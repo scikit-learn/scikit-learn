@@ -595,7 +595,8 @@ def test_invariance_string_vs_numbers_labels():
 
     for name, metric in THRESHOLDED_METRICS.items():
         if name in ("log_loss", "hinge_loss", "unnormalized_log_loss",
-                    "brier_score_loss"):
+                    "brier_score_loss", "roc_auc_score", "weighted_roc_auc",
+                    "samples_roc_auc", "micro_roc_auc", "macro_roc_auc"):
             # Ugly, but handle case with a pos_label and label
             metric_str = metric
             if name in METRICS_WITH_POS_LABEL:
