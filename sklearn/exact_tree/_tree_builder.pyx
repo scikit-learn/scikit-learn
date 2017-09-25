@@ -221,6 +221,8 @@ cdef class ExactTreeBuilder(TreeBuilder):
                         parent_nid, &splitters_[next_n_splitter], 1)
                     right_nid = tree._add_node_set_id(
                         parent_nid, &splitters_[next_n_splitter + 1], 0)
+                    tree._update_parent_splitter(&splitters_[splitter_idx],
+                                                 left_nid, right_nid)
 
                     if self._check_minimum_stats(&splitters_[next_n_splitter]):
                         b_grow = 1
@@ -239,9 +241,6 @@ cdef class ExactTreeBuilder(TreeBuilder):
                         tree._set_node_as_leaf(&splitters_[next_n_splitter + 1])
 
                     next_n_splitter += 2
-
-                    tree._update_parent_splitter(&splitters_[splitter_idx],
-                                                 left_nid, right_nid)
 
             # REASSIGN SPLITTERS ID TO SAMPLE
             if b_grow:
@@ -269,18 +268,17 @@ cdef class ExactTreeBuilder(TreeBuilder):
                                 else:
                                     X_nid[i] = tree.nodes[parent_nid].right_child
 
+            start_expanding_splitter += n_splitter
+            n_splitter = n_expanding_splitter
             if b_grow:
-                start_expanding_splitter += n_splitter
-                n_splitter = n_expanding_splitter
                 current_depth += 1
             else:
-                n_splitter = n_expanding_splitter
                 break
 
         # Set all remaining nodes as leaf
         for i in range(n_splitter):
             splitter_idx = start_expanding_splitter + i
-            tree._set_node_as_leaf(&splitters_[splitter_idx])
+            tree._set_node_as_leaf(&splitters_[expanding_splitters[splitter_idx]])
 
         # Deallocate X_nid and splitters_
         free(splitters_)
