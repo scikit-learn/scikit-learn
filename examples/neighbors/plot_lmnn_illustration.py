@@ -58,7 +58,7 @@ ax.annotate('target neighbor', xy=tn_pos, xytext=tn_text_pos, color='k',
 
 # Draw a circle with the radius touching the target neighbor
 tn_edge = tn_pos - ref_pos
-r = np.sqrt(tn_edge.dot(tn_edge.T))
+r = np.sqrt(np.dot(tn_edge, tn_edge))
 tn_circle = plt.Circle(ref_pos, r, color='b', linestyle='dashed',
                        fill=False, alpha=0.6)
 ax.add_artist(tn_circle)
@@ -79,8 +79,7 @@ ax.annotate('margin', xy=(p1 + p2) / 2, xytext=(-5, -5), style='italic',
 
 # Annotate the impostors (1, 4, 5, 7)
 imp_centroid = (X[1] + X[4] + X[5] + X[7]) / 4
-imp_arrow_dict = dict(facecolor='black', color='gray',
-                      arrowstyle='->',
+imp_arrow_dict = dict(facecolor='black', color='gray', arrowstyle='->',
                       connectionstyle="arc3,rad=0.3")
 ax.annotate('', xy=X[1], xytext=imp_centroid, arrowprops=imp_arrow_dict)
 ax.annotate('', xy=X[4], xytext=imp_centroid, arrowprops=imp_arrow_dict)
@@ -111,8 +110,8 @@ for point_id in range(len(X)):
              str(point_id), va='center', ha='center')
 
 # Draw a circle with the radius touching the target neighbor
-tn_edge = X_embedded[3] - X_embedded[tn[3]]
-r = np.sqrt(tn_edge.dot(tn_edge.T))
+tn_edge = X_embedded[3] - X_embedded[tn[3]][0]
+r = np.sqrt(np.dot(tn_edge, tn_edge))
 tn_circle = plt.Circle(X_embedded[3], r, color='b', linestyle='dashed',
                        fill=False, alpha=0.6)
 ax2.add_artist(tn_circle)

@@ -10,7 +10,7 @@ Large Margin Nearest Neighbor
 
 Large Margin Nearest Neighbor (LMNN, :class:`LargeMarginNearestNeighbor`) is a distance metric learning algorithm which aims to improve the accuracy of nearest neighbors classification compared to the standard Euclidean distance.
 
-.. figure:: ../auto_examples/neighbors/plot_lmnn_illustration.png
+.. figure:: ../auto_examples/neighbors/sphx_glr_plot_lmnn_illustration_001.png
    :target: ../auto_examples/neighbors/plot_lmnn_illustration.html
    :align: center
    :scale: 80%
@@ -26,26 +26,25 @@ Large Margin Nearest Neighbor classification has been shown to work well in
 practice for data sets of varying size and difficulty. In contrast to related methods such as LDA, LMNN does not make any assumptions about the class distributions. The nearest neighbor classification can naturally produce highly irregular decision boundaries.
 
 
-.. E figure:: ../auto_examples/neighbors/plot_lmnn_classification.png
+.. figure:: ../auto_examples/neighbors/sphx_glr_plot_lmnn_classification_001.png
    :target: ../auto_examples/neighbors/plot_lmnn_classification.html
    :align: center
    :scale: 80%
 
 
-.. The plot shows decision boundaries for nearest neighbor classification and large margin nearest neighbor classification. The bottom row shows the same comparison after first doing PCA on the inputs.
+The plot shows decision boundaries for nearest neighbor classification and large margin nearest neighbor classification.
 
 
 Dimensionality reduction
 ========================
 
-:class:`LargeMarginNearestNeighbor` can be used to
-perform supervised dimensionality reduction. The input data are projected
-onto a linear subspace consisting of the directions which minimize the LMNN objective. The desired dimensionality can be set using the parameter
-``n_features_out``.
-For instance, the following shows a comparison of dimensionality reduction with :class:`PCA`, :class:`LinearDiscriminantAnalysis` and :class:`LargeMarginNearestNeighbor` on the Olivetti dataset, a dataset with size :math:`n_{samples} = 400` and :math:`n_{features} = 64 \times 64 = 4096`. The data set is splitted in a training and test set of equal size. For evaluation the 3-nearest neighbor classification accuracy is computed on the 2-dimensional
- embedding found by each method.
+:class:`LargeMarginNearestNeighbor` can be used to perform supervised
+dimensionality reduction. The input data are projected onto a linear
+subspace consisting of the directions which minimize the LMNN objective. The desired dimensionality can be set using the parameter ``n_features_out``.
+For instance, the following shows a comparison of dimensionality reduction with :class:`PCA`, :class:`LinearDiscriminantAnalysis` and :class:`LargeMarginNearestNeighbor` on the Olivetti dataset, a dataset with size :math:`n_{samples} = 400` and :math:`n_{features} = 64 \times 64 = 4096`. The data set is splitted in a training and test set of equal size. For evaluation the 3-nearest neighbor classification accuracy is computed on the 2-dimensional embedding found by
+ each method.
 
-.. figure:: ../auto_examples/neighbors/plot_lmnn_dim_reduction.png
+.. figure:: ../auto_examples/neighbors/sphx_glr_plot_lmnn_dim_reduction_001.png
    :align: center
    :scale: 80%
 
