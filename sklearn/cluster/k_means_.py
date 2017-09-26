@@ -800,16 +800,15 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     >>> from sklearn.cluster import KMeans
     >>> import numpy as np
-    >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [4, 2], [4, 4], [4, 0]])
+    >>> X = np.array([[1], [2], [3], [9], [10], [11]])
     >>> kmeans = KMeans(n_clusters=2, random_state=0).fit(X)
     >>> kmeans.labels_
-    array([1, 0, 1, 0, 0, 1], dtype=int32)
-    >>> kmeans.predict([[0, 0], [4, 4]])
+    array([1, 1, 1, 0, 0, 0], dtype=int32)
+    >>> kmeans.predict([[1.5], [10.5]])
     array([1, 0], dtype=int32)
     >>> kmeans.cluster_centers_
-    array([[ 3.        ,  3.33333333],
-           [ 2.        ,  0.66666667]])
+    array([[ 10.],
+           [  2.]])
 
     See also
     --------
