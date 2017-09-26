@@ -326,8 +326,8 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
         if self.n_splits > n_samples:
             raise ValueError(
                 ("Cannot have number of splits n_splits={0} greater"
-                 " than the number of samples: {1}.").format(self.n_splits,
-                                                             n_samples))
+                 " than the number of samples: n_samples={1}.")
+                .format(self.n_splits, n_samples))
 
         for train, test in super(_BaseKFold, self).split(X, y, groups):
             yield train, test
