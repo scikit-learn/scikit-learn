@@ -34,6 +34,13 @@ def test_estimate_bandwidth():
     assert_true(0.9 <= bandwidth <= 1.5)
 
 
+def test_estimate_bandwidth_1sample():
+    # Test estimate_bandwidth when n_samples=1 and quantile<1, so that
+    # n_neighbors is set to 1.
+    bandwidth = estimate_bandwidth(X, n_samples=1, quantile=0.3)
+    assert_equal(bandwidth, 0.)
+
+
 def test_mean_shift():
     # Test MeanShift algorithm
     bandwidth = 1.2
