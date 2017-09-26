@@ -12,7 +12,7 @@ samples of the dataset.
 
 The main theoretical result behind the efficiency of random projection is the
 `Johnson-Lindenstrauss lemma (quoting Wikipedia)
-<http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma>`_:
+<https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma>`_:
 
   In mathematics, the Johnson-Lindenstrauss lemma is a result
   concerning low-distortion embeddings of points from high-dimensional
@@ -41,9 +41,8 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array
+from .utils.validation import check_array, check_is_fitted
 from .exceptions import DataDimensionalityWarning
-from .exceptions import NotFittedError
 
 
 __all__ = ["SparseRandomProjection",
@@ -110,7 +109,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     References
     ----------
 
-    .. [1] http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
+    .. [1] https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
     .. [2] Sanjoy Dasgupta and Anupam Gupta, 1999,
            "An elementary proof of the Johnson-Lindenstrauss Lemma."
@@ -155,7 +154,7 @@ def _check_input_size(n_components, n_features):
 
 
 def gaussian_random_matrix(n_components, n_features, random_state=None):
-    """ Generate a dense Gaussian random matrix.
+    """Generate a dense Gaussian random matrix.
 
     The components of the random matrix are drawn from
 
@@ -171,9 +170,12 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     n_features : int,
         Dimensionality of the original source space.
 
-    random_state : int, RandomState instance or None (default=None)
-        Control the pseudo random number generator used to generate the
-        matrix at fit time.
+    random_state : int, RandomState instance or None, optional (default=None)
+        Control the pseudo random number generator used to generate the matrix
+        at fit time.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Returns
     -------
@@ -227,13 +229,16 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-    random_state : integer, RandomState instance or None (default=None)
-        Control the pseudo random number generator used to generate the
-        matrix at fit time.
+    random_state : int, RandomState instance or None, optional (default=None)
+        Control the pseudo random number generator used to generate the matrix
+        at fit time.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Returns
     -------
-    components: numpy array or CSR matrix with shape [n_components, n_features]
+    components : array or CSR matrix with shape [n_components, n_features]
         The generated Gaussian random matrix.
 
     See Also
@@ -246,7 +251,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
     .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
            "Very Sparse Random Projections".
-           http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+           http://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
            http://www.cs.ucsc.edu/~optas/papers/jl.pdf
@@ -303,11 +308,8 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         self.dense_output = dense_output
         self.random_state = random_state
 
-        self.components_ = None
-        self.n_components_ = None
-
     @abstractmethod
-    def _make_random_matrix(n_components, n_features):
+    def _make_random_matrix(self, n_components, n_features):
         """ Generate the random projection matrix
 
         Parameters
@@ -365,7 +367,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         else:
             if self.n_components <= 0:
                 raise ValueError("n_components must be greater than 0, got %s"
-                                 % self.n_components_)
+                                 % self.n_components)
 
             elif self.n_components > n_features:
                 warnings.warn(
@@ -390,7 +392,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Project the data by using matrix product with the random matrix
 
         Parameters
@@ -398,18 +400,14 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         X : numpy array or scipy.sparse of shape [n_samples, n_features]
             The input data to project into a smaller dimensional space.
 
-        y : is not used: placeholder to allow for usage in a Pipeline.
-
         Returns
         -------
         X_new : numpy array or scipy sparse of shape [n_samples, n_components]
             Projected array.
-
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
 
-        if self.components_ is None:
-            raise NotFittedError('No random projection matrix had been fit.')
+        check_is_fitted(self, 'components_')
 
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(
@@ -451,9 +449,12 @@ class GaussianRandomProjection(BaseRandomProjection):
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
 
-    random_state : integer, RandomState instance or None (default=None)
-        Control the pseudo random number generator used to generate the
-        matrix at fit time.
+    random_state : int, RandomState instance or None, optional (default=None)
+        Control the pseudo random number generator used to generate the matrix
+        at fit time.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -557,9 +558,12 @@ class SparseRandomProjection(BaseRandomProjection):
         If False, the projected data uses a sparse representation if
         the input is sparse.
 
-    random_state : integer, RandomState instance or None (default=None)
-        Control the pseudo random number generator used to generate the
-        matrix at fit time.
+    random_state : int, RandomState instance or None, optional (default=None)
+        Control the pseudo random number generator used to generate the matrix
+        at fit time.  If int, random_state is the seed used by the random
+        number generator; If RandomState instance, random_state is the random
+        number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -581,10 +585,10 @@ class SparseRandomProjection(BaseRandomProjection):
 
     .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
            "Very Sparse Random Projections".
-           http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+           http://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
-           http://www.cs.ucsc.edu/~optas/papers/jl.pdf
+           https://users.soe.ucsc.edu/~optas/papers/jl.pdf
 
     """
     def __init__(self, n_components='auto', density='auto', eps=0.1,
@@ -596,7 +600,6 @@ class SparseRandomProjection(BaseRandomProjection):
             random_state=random_state)
 
         self.density = density
-        self.density_ = None
 
     def _make_random_matrix(self, n_components, n_features):
         """ Generate the random projection matrix

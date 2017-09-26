@@ -5,8 +5,6 @@ Exceptions
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
 
-import sys
-
 from ._compat import PY3_OR_LATER
 
 class JoblibException(Exception):
@@ -48,6 +46,13 @@ class TransportableException(JoblibException):
         JoblibException.__init__(self, message, etype)
         self.message = message
         self.etype = etype
+
+
+class WorkerInterrupt(Exception):
+    """ An exception that is not KeyboardInterrupt to allow subprocesses
+        to be interrupted.
+    """
+    pass
 
 
 _exception_mapping = dict()

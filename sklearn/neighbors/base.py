@@ -2,7 +2,7 @@
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Sparseness support by Lars Buitinck
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
@@ -18,7 +18,6 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
-from ..utils.fixes import argpartition
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
@@ -60,14 +59,14 @@ def _get_weights(dist, weights):
 
     Parameters
     ===========
-    dist: ndarray
+    dist : ndarray
         The input distances
-    weights: {'uniform', 'distance' or a callable}
+    weights : {'uniform', 'distance' or a callable}
         The kind of weighting used
 
     Returns
     ========
-    weights_arr: array of the same shape as ``dist``
+    weights_arr : array of the same shape as ``dist``
         if ``weights == 'uniform'``, then returns None
     """
     if weights in (None, 'uniform'):
@@ -126,8 +125,10 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         if algorithm == 'auto':
             if metric == 'precomputed':
                 alg_check = 'brute'
-            else:
+            elif callable(metric) or metric in VALID_METRICS['ball_tree']:
                 alg_check = 'ball_tree'
+            else:
+                alg_check = 'brute'
         else:
             alg_check = algorithm
 
@@ -229,8 +230,11 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                     self.metric != 'precomputed'):
                 if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
-                else:
+                elif (callable(self.effective_metric_) or
+                        self.effective_metric_ in VALID_METRICS['ball_tree']):
                     self._fit_method = 'ball_tree'
+                else:
+                    self._fit_method = 'brute'
             else:
                 self._fit_method = 'brute'
 
@@ -356,7 +360,7 @@ class KNeighborsMixin(object):
                     X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
                     **self.effective_metric_params_)
 
-            neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
+            neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
             # argpartition doesn't guarantee sorted order, so we sort again
             neigh_ind = neigh_ind[
@@ -583,11 +587,12 @@ class RadiusNeighborsMixin(object):
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
-                                          squared=True)
+                                          n_jobs=self.n_jobs, squared=True)
                 radius *= radius
             else:
                 dist = pairwise_distances(X, self._fit_X,
                                           self.effective_metric_,
+                                          n_jobs=self.n_jobs,
                                           **self.effective_metric_params_)
 
             neigh_ind_list = [np.where(d <= radius)[0] for d in dist]

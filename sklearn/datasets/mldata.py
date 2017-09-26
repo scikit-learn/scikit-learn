@@ -23,13 +23,25 @@ import scipy as sp
 from scipy import io
 from shutil import copyfileobj
 
-from .base import get_data_home, Bunch
+from .base import get_data_home
+from ..utils import Bunch
 
 MLDATA_BASE_URL = "http://mldata.org/repository/data/download/matlab/%s"
 
 
 def mldata_filename(dataname):
-    """Convert a raw name for a data set in a mldata.org filename."""
+    """Convert a raw name for a data set in a mldata.org filename.
+
+    Parameters
+    ----------
+    dataname : str
+        Name of dataset
+
+    Returns
+    -------
+    fname : str
+        The converted dataname.
+    """
     dataname = dataname.lower().replace(' ', '-')
     return re.sub(r'[().]', '', dataname)
 
@@ -61,23 +73,23 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     Parameters
     ----------
 
-    dataname:
+    dataname : str
         Name of the data set on mldata.org,
         e.g.: "leukemia", "Whistler Daily Snowfall", etc.
         The raw name is automatically converted to a mldata.org URL .
 
-    target_name: optional, default: 'label'
+    target_name : optional, default: 'label'
         Name or index of the column containing the target values.
 
-    data_name: optional, default: 'data'
+    data_name : optional, default: 'data'
         Name or index of the column containing the data.
 
-    transpose_data: optional, default: True
+    transpose_data : optional, default: True
         If True, transpose the downloaded data array.
 
-    data_home: optional, default: None
+    data_home : optional, default: None
         Specify another download and cache folder for the data sets. By default
-        all scikit learn data is stored in '~/scikit_learn_data' subfolders.
+        all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
     Returns
     -------
@@ -103,7 +115,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     (150, 4)
 
     Load the 'leukemia' dataset from mldata.org, which needs to be transposed
-    to respects the sklearn axes convention:
+    to respects the scikit-learn axes convention:
 
     >>> leuk = fetch_mldata('leukemia', transpose_data=True,
     ...                     data_home=test_data_home)
@@ -205,7 +217,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
             del dataset[col_names[1]]
             dataset['data'] = matlab_dict[col_names[1]]
 
-    # set axes to sklearn conventions
+    # set axes to scikit-learn conventions
     if transpose_data:
         dataset['data'] = dataset['data'].T
     if 'target' in dataset:
@@ -215,7 +227,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
     return Bunch(**dataset)
 
 
-# The following is used by nosetests to setup the docstring tests fixture
+# The following is used by test runners to setup the docstring tests fixture
 
 def setup_module(module):
     # setup mock urllib2 module to avoid downloading from mldata.org

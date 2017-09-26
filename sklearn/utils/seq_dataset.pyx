@@ -4,7 +4,7 @@
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 cimport cython
 from libc.limits cimport INT_MAX
@@ -47,7 +47,7 @@ cdef class SequentialDataset:
 
     cdef int random(self, double **x_data_ptr, int **x_ind_ptr,
                     int *nnz, double *y, double *sample_weight) nogil:
-        """Get the a random example ``x`` from the dataset.
+        """Get a random example ``x`` from the dataset.
 
         Parameters
         ----------

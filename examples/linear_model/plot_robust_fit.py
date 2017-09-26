@@ -22,14 +22,20 @@ What we can see that:
 - RANSAC is good for strong outliers in the y direction
 
 - TheilSen is good for small outliers, both in direction X and y, but has
-  a break point above which it performs worst than OLS.
+  a break point above which it performs worse than OLS.
+
+- The scores of HuberRegressor may not be compared directly to both TheilSen
+  and RANSAC because it does not attempt to completely filter the outliers
+  but lessen their effect.
 
 """
 
 from matplotlib import pyplot as plt
 import numpy as np
 
-from sklearn import linear_model, metrics
+from sklearn.linear_model import (
+    LinearRegression, TheilSenRegressor, RANSACRegressor, HuberRegressor)
+from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 
@@ -56,12 +62,14 @@ y_errors_large[::3] = 10
 X_errors_large = X.copy()
 X_errors_large[::3] = 10
 
-estimators = [('OLS', linear_model.LinearRegression()),
-              ('Theil-Sen', linear_model.TheilSenRegressor(random_state=42)),
-              ('RANSAC', linear_model.RANSACRegressor(random_state=42)), ]
-colors = {'OLS': 'turquoise', 'Theil-Sen': 'gold', 'RANSAC': 'lightgreen'}
-linestyle = {'OLS': '-', 'Theil-Sen': '-.', 'RANSAC': '--'}
+estimators = [('OLS', LinearRegression()),
+              ('Theil-Sen', TheilSenRegressor(random_state=42)),
+              ('RANSAC', RANSACRegressor(random_state=42)),
+              ('HuberRegressor', HuberRegressor())]
+colors = {'OLS': 'turquoise', 'Theil-Sen': 'gold', 'RANSAC': 'lightgreen', 'HuberRegressor': 'black'}
+linestyle = {'OLS': '-', 'Theil-Sen': '-.', 'RANSAC': '--', 'HuberRegressor': '--'}
 lw = 3
+
 x_plot = np.linspace(X.min(), X.max())
 for title, this_X, this_y in [
         ('Modeling Errors Only', X, y),
@@ -75,7 +83,7 @@ for title, this_X, this_y in [
     for name, estimator in estimators:
         model = make_pipeline(PolynomialFeatures(3), estimator)
         model.fit(this_X, this_y)
-        mse = metrics.mean_squared_error(model.predict(X_test), y_test)
+        mse = mean_squared_error(model.predict(X_test), y_test)
         y_plot = model.predict(x_plot[:, np.newaxis])
         plt.plot(x_plot, y_plot, color=colors[name], linestyle=linestyle[name],
                  linewidth=lw, label='%s: error = %.3f' % (name, mse))

@@ -16,7 +16,7 @@ For instance, in the example below, decision trees learn from data to
 approximate a sine curve with a set of if-then-else decision rules. The deeper
 the tree, the more complex the decision rules and the fitter the model.
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_001.png
    :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
@@ -126,45 +126,35 @@ Using the Iris dataset, we can construct a tree as follows::
 
 Once trained, we can export the tree in `Graphviz
 <http://www.graphviz.org/>`_ format using the :func:`export_graphviz`
-exporter. Below is an example export of a tree trained on the entire
-iris dataset::
+exporter. If you use the `conda <http://conda.io>`_ package manager, the graphviz binaries  
+and the python package can be installed with 
 
-    >>> from sklearn.externals.six import StringIO
-    >>> with open("iris.dot", 'w') as f:
-    ...     f = tree.export_graphviz(clf, out_file=f)
+    conda install python-graphviz
+   
+Alternatively binaries for graphviz can be downloaded from the graphviz project homepage,
+and the Python wrapper installed from pypi with `pip install graphviz`. 
 
-Then we can use Graphviz's ``dot`` tool to create a PDF file (or any other
-supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
+Below is an example graphviz export of the above tree trained on the entire
+iris dataset; the results are saved in an output file `iris.pdf`::
 
-::
 
-    >>> import os
-    >>> os.unlink('iris.dot')
-
-Alternatively, if we have Python module ``pydot`` installed, we can generate
-a PDF file (or any other supported file type) directly in Python::
-
-    >>> from sklearn.externals.six import StringIO  # doctest: +SKIP
-    >>> import pydot # doctest: +SKIP
-    >>> dot_data = StringIO() # doctest: +SKIP
-    >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP
-    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
-    >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
+    >>> import graphviz # doctest: +SKIP
+    >>> dot_data = tree.export_graphviz(clf, out_file=None) # doctest: +SKIP
+    >>> graph = graphviz.Source(dot_data) # doctest: +SKIP
+    >>> graph.render("iris") # doctest: +SKIP
 
 The :func:`export_graphviz` exporter also supports a variety of aesthetic
 options, including coloring nodes by their class (or value for regression) and
-using explicit variable and class names if desired. IPython notebooks can also
-render these plots inline using the `Image()` function::
+using explicit variable and class names if desired. Jupyter notebooks also
+render these plots inline automatically::
 
-    >>> from IPython.display import Image  # doctest: +SKIP
-    >>> dot_data = StringIO()  # doctest: +SKIP
-    >>> tree.export_graphviz(clf, out_file=dot_data,  # doctest: +SKIP
+    >>> dot_data = tree.export_graphviz(clf, out_file=None, # doctest: +SKIP
                              feature_names=iris.feature_names,  # doctest: +SKIP
                              class_names=iris.target_names,  # doctest: +SKIP
                              filled=True, rounded=True,  # doctest: +SKIP
                              special_characters=True)  # doctest: +SKIP
-    >>> graph = pydot.graph_from_dot_data(dot_data.getvalue())  # doctest: +SKIP
-    >>> Image(graph.create_png())  # doctest: +SKIP
+    >>> graph = graphviz.Source(dot_data)  # doctest: +SKIP
+    >>> graph # doctest: +SKIP
 
 .. only:: html
 
@@ -187,14 +177,14 @@ fraction of training samples of the same class in a leaf::
     >>> clf.predict_proba(iris.data[:1, :])
     array([[ 1.,  0.,  0.]])
 
-.. figure:: ../auto_examples/tree/images/plot_iris_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/tree/plot_iris.html
    :align: center
    :scale: 75
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_iris.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_iris.py`
 
 
 .. _tree_regression:
@@ -202,7 +192,7 @@ fraction of training samples of the same class in a leaf::
 Regression
 ==========
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_001.png
    :target: ../auto_examples/tree/plot_tree_regression.html
    :scale: 75
    :align: center
@@ -224,7 +214,7 @@ instead of integer values::
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_tree_regression.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression.py`
 
 
 .. _tree_multioutput:
@@ -263,28 +253,28 @@ of size ``[n_samples, n_outputs]`` then the resulting estimator will:
 
 
 The use of multi-output trees for regression is demonstrated in
-:ref:`example_tree_plot_tree_regression_multioutput.py`. In this example, the input
+:ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`. In this example, the input
 X is a single real value and the outputs Y are the sine and cosine of X.
 
-.. figure:: ../auto_examples/tree/images/plot_tree_regression_multioutput_001.png
+.. figure:: ../auto_examples/tree/images/sphx_glr_plot_tree_regression_multioutput_001.png
    :target: ../auto_examples/tree/plot_tree_regression_multioutput.html
    :scale: 75
    :align: center
 
 The use of multi-output trees for classification is demonstrated in
-:ref:`example_plot_multioutput_face_completion.py`. In this example, the inputs
+:ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/plot_multioutput_face_completion_001.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_multioutput_face_completion_001.png
    :target: ../auto_examples/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
 
 .. topic:: Examples:
 
- * :ref:`example_tree_plot_tree_regression_multioutput.py`
- * :ref:`example_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_tree_plot_tree_regression_multioutput.py`
+ * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
 
 .. topic:: References:
 
@@ -410,8 +400,8 @@ and threshold that yield the largest information gain at each node.
 
 scikit-learn uses an optimised version of the CART algorithm.
 
-.. _ID3: http://en.wikipedia.org/wiki/ID3_algorithm
-.. _CART: http://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees
+.. _ID3: https://en.wikipedia.org/wiki/ID3_algorithm
+.. _CART: https://en.wikipedia.org/wiki/Predictive_analytics#Classification_and_regression_trees_.28CART.29
 
 
 .. _tree_mathematical_formulation:
@@ -484,12 +474,19 @@ and Misclassification
 
     H(X_m) = 1 - \max(p_{mk})
 
+where :math:`X_m` is the training data in node :math:`m`
+
 Regression criteria
 -------------------
 
 If the target is a continuous value, then for node :math:`m`,
-representing a region :math:`R_m` with :math:`N_m` observations, a common
-criterion to minimise is the Mean Squared Error
+representing a region :math:`R_m` with :math:`N_m` observations, common
+criteria to minimise as for determining locations for future
+splits are Mean Squared Error, which minimizes the L2 error
+using mean values at terminal nodes, and Mean Absolute Error, which 
+minimizes the L1 error using median values at terminal nodes. 
+
+Mean Squared Error:
 
 .. math::
 
@@ -497,12 +494,21 @@ criterion to minimise is the Mean Squared Error
 
     H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - c_m)^2
 
+Mean Absolute Error:
+
+.. math::
+
+    \bar{y_m} = \frac{1}{N_m} \sum_{i \in N_m} y_i
+
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - \bar{y_m}|
+
+where :math:`X_m` is the training data in node :math:`m`
 
 .. topic:: References:
 
-    * http://en.wikipedia.org/wiki/Decision_tree_learning
+    * https://en.wikipedia.org/wiki/Decision_tree_learning
 
-    * http://en.wikipedia.org/wiki/Predictive_analytics
+    * https://en.wikipedia.org/wiki/Predictive_analytics
 
     * L. Breiman, J. Friedman, R. Olshen, and C. Stone. Classification and
       Regression Trees. Wadsworth, Belmont, CA, 1984.

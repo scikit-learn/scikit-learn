@@ -15,6 +15,7 @@ from sklearn.base import BaseEstimator, RegressorMixin, clone
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.utils import check_random_state
 from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils.deprecation import deprecated
 
 
 class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
@@ -23,7 +24,8 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
     The implementation is based on Algorithm 2.1 of Gaussian Processes
     for Machine Learning (GPML) by Rasmussen and Williams.
 
-    In addition to standard sklearn estimator API, GaussianProcessRegressor:
+    In addition to standard scikit-learn estimator API,
+    GaussianProcessRegressor:
 
        * allows prediction without prior fitting (based on the GP prior)
        * provides an additional method sample_y(X), which evaluates samples
@@ -31,6 +33,10 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
        * exposes a method log_marginal_likelihood(theta), which can be used
          externally for other ways of selecting hyperparameters, e.g., via
          Markov chain Monte Carlo.
+
+    Read more in the :ref:`User Guide <gaussian_process>`.
+
+    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -41,13 +47,14 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
     alpha : float or array-like, optional (default: 1e-10)
         Value added to the diagonal of the kernel matrix during fitting.
-        Larger values correspond to increased noise level in the observations
-        and reduce potential numerical issue during fitting. If an array is
-        passed, it must have the same number of entries as the data used for
-        fitting and is used as datapoint-dependent noise level. Note that this
-        is equivalent to adding a WhiteKernel with c=alpha. Allowing to specify
-        the noise level directly as a parameter is mainly for convenience and
-        for consistency with Ridge.
+        Larger values correspond to increased noise level in the observations.
+        This can also prevent a potential numerical issue during fitting, by
+        ensuring that the calculated values form a positive definite matrix.
+        If an array is passed, it must have the same number of entries as the
+        data used for fitting and is used as datapoint-dependent noise level.
+        Note that this is equivalent to adding a WhiteKernel with c=alpha.
+        Allowing to specify the noise level directly as a parameter is mainly
+        for convenience and for consistency with Ridge.
 
     optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
         Can either be one of the internally supported optimizers for optimizing
@@ -74,7 +81,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
 
             'fmin_l_bfgs_b'
 
-    n_restarts_optimizer: int, optional (default: 0)
+    n_restarts_optimizer : int, optional (default: 0)
         The number of restarts of the optimizer for finding the kernel's
         parameters which maximize the log-marginal likelihood. The first run
         of the optimizer is performed from the kernel's initial parameters,
@@ -83,7 +90,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         must be finite. Note that n_restarts_optimizer == 0 implies that one
         run is performed.
 
-    normalize_y: boolean, optional (default: False)
+    normalize_y : boolean, optional (default: False)
         Whether the target values y are normalized, i.e., the mean of the
         observed target values become zero. This parameter should be set to
         True if the target values' mean is expected to differ considerable from
@@ -97,31 +104,33 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
+    random_state : int, RandomState instance or None, optional (default: None)
+        The generator used to initialize the centers. If int, random_state is
+        the seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
     X_train_ : array-like, shape = (n_samples, n_features)
         Feature values in training data (also required for prediction)
 
-    y_train_: array-like, shape = (n_samples, [n_output_dims])
+    y_train_ : array-like, shape = (n_samples, [n_output_dims])
         Target values in training data (also required for prediction)
 
-    kernel_: kernel object
+    kernel_ : kernel object
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
-    L_: array-like, shape = (n_samples, n_samples)
+    L_ : array-like, shape = (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in ``X_train_``
 
-    alpha_: array-like, shape = (n_samples,)
+    alpha_ : array-like, shape = (n_samples,)
         Dual coefficients of training data points in kernel space
 
-    log_marginal_likelihood_value_: float
+    log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
+
     """
     def __init__(self, kernel=None, alpha=1e-10,
                  optimizer="fmin_l_bfgs_b", n_restarts_optimizer=0,
@@ -134,8 +143,20 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         self.copy_X_train = copy_X_train
         self.random_state = random_state
 
+    @property
+    @deprecated("Attribute rng was deprecated in version 0.19 and "
+                "will be removed in 0.21.")
+    def rng(self):
+        return self._rng
+
+    @property
+    @deprecated("Attribute y_train_mean was deprecated in version 0.19 and "
+                "will be removed in 0.21.")
+    def y_train_mean(self):
+        return self._y_train_mean
+
     def fit(self, X, y):
-        """Fit Gaussian process regression model
+        """Fit Gaussian process regression model.
 
         Parameters
         ----------
@@ -155,17 +176,17 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         else:
             self.kernel_ = clone(self.kernel)
 
-        self.rng = check_random_state(self.random_state)
+        self._rng = check_random_state(self.random_state)
 
         X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
         # Normalize target value
         if self.normalize_y:
-            self.y_train_mean = np.mean(y, axis=0)
+            self._y_train_mean = np.mean(y, axis=0)
             # demean y
-            y = y - self.y_train_mean
+            y = y - self._y_train_mean
         else:
-            self.y_train_mean = np.zeros(1)
+            self._y_train_mean = np.zeros(1)
 
         if np.iterable(self.alpha) \
            and self.alpha.shape[0] != y.shape[0]:
@@ -205,7 +226,7 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
                 bounds = self.kernel_.bounds
                 for iteration in range(self.n_restarts_optimizer):
                     theta_initial = \
-                        self.rng.uniform(bounds[:, 0], bounds[:, 1])
+                        self._rng.uniform(bounds[:, 0], bounds[:, 1])
                     optima.append(
                         self._constrained_optimization(obj_func, theta_initial,
                                                        bounds))
@@ -222,9 +243,18 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         # of actual query points
         K = self.kernel_(self.X_train_)
         K[np.diag_indices_from(K)] += self.alpha
-        self.L_ = cholesky(K, lower=True)  # Line 2
+        try:
+            self.L_ = cholesky(K, lower=True)  # Line 2
+            # self.L_ changed, self._K_inv needs to be recomputed
+            self._K_inv = None
+        except np.linalg.LinAlgError as exc:
+            exc.args = ("The kernel, %s, is not returning a "
+                        "positive definite matrix. Try gradually "
+                        "increasing the 'alpha' parameter of your "
+                        "GaussianProcessRegressor estimator."
+                        % self.kernel_,) + exc.args
+            raise
         self.alpha_ = cho_solve((self.L_, True), self.y_train_)  # Line 3
-
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
@@ -269,31 +299,41 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         X = check_array(X)
 
         if not hasattr(self, "X_train_"):  # Unfitted;predict based on GP prior
+            if self.kernel is None:
+                kernel = (C(1.0, constant_value_bounds="fixed") *
+                          RBF(1.0, length_scale_bounds="fixed"))
+            else:
+                kernel = self.kernel
             y_mean = np.zeros(X.shape[0])
             if return_cov:
-                y_cov = self.kernel(X)
+                y_cov = kernel(X)
                 return y_mean, y_cov
             elif return_std:
-                y_var = self.kernel.diag(X)
+                y_var = kernel.diag(X)
                 return y_mean, np.sqrt(y_var)
             else:
                 return y_mean
         else:  # Predict based on GP posterior
             K_trans = self.kernel_(X, self.X_train_)
             y_mean = K_trans.dot(self.alpha_)  # Line 4 (y_mean = f_star)
-            y_mean = self.y_train_mean + y_mean  # undo normal.
+            y_mean = self._y_train_mean + y_mean  # undo normal.
             if return_cov:
                 v = cho_solve((self.L_, True), K_trans.T)  # Line 5
                 y_cov = self.kernel_(X) - K_trans.dot(v)  # Line 6
                 return y_mean, y_cov
             elif return_std:
-                # compute inverse K_inv of K based on its Cholesky
-                # decomposition L and its inverse L_inv
-                L_inv = solve_triangular(self.L_.T, np.eye(self.L_.shape[0]))
-                K_inv = L_inv.dot(L_inv.T)
+                # cache result of K_inv computation
+                if self._K_inv is None:
+                    # compute inverse K_inv of K based on its Cholesky
+                    # decomposition L and its inverse L_inv
+                    L_inv = solve_triangular(self.L_.T,
+                                             np.eye(self.L_.shape[0]))
+                    self._K_inv = L_inv.dot(L_inv.T)
+
                 # Compute variance of predictive distribution
                 y_var = self.kernel_.diag(X)
-                y_var -= np.einsum("ki,kj,ij->k", K_trans, K_trans, K_inv)
+                y_var -= np.einsum("ij,ij->i",
+                                   np.dot(K_trans, self._K_inv), K_trans)
 
                 # Check if any of the variances is negative because of
                 # numerical issues. If yes: set the variance to 0.
@@ -317,8 +357,11 @@ class GaussianProcessRegressor(BaseEstimator, RegressorMixin):
         n_samples : int, default: 1
             The number of samples drawn from the Gaussian process
 
-        random_state: RandomState or an int seed (0 by default)
-            A random number generator instance
+        random_state : int, RandomState instance or None, optional (default=0)
+            If int, random_state is the seed used by the random number
+            generator; If RandomState instance, random_state is the
+            random number generator; If None, the random number
+            generator is the RandomState instance used by `np.random`.
 
         Returns
         -------

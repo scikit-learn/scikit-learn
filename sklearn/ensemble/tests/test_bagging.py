@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import GridSearchCV, ParameterGrid
@@ -65,7 +66,7 @@ def test_classification():
 
     for base_estimator in [None,
                            DummyClassifier(),
-                           Perceptron(),
+                           Perceptron(tol=1e-3),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),
                            SVC()]:
@@ -212,9 +213,9 @@ def test_sparse_regression():
             sparse_type = type(X_train_sparse)
             types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            assert_array_equal(sparse_results, dense_results)
+            assert_array_almost_equal(sparse_results, dense_results)
             assert all([t == sparse_type for t in types])
-            assert_array_equal(sparse_results, dense_results)
+            assert_array_almost_equal(sparse_results, dense_results)
 
 
 def test_bootstrap_samples():
@@ -375,7 +376,7 @@ def test_single_estimator():
 
     clf2 = KNeighborsRegressor().fit(X_train, y_train)
 
-    assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
+    assert_array_almost_equal(clf1.predict(X_test), clf2.predict(X_test))
 
 
 def test_error():
@@ -449,6 +450,13 @@ def test_parallel_classification():
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
 
+    X_err = np.hstack((X_test, np.zeros((X_test.shape[0], 1))))
+    assert_raise_message(ValueError, "Number of features of the model "
+                         "must match the input. Model n_features is {0} "
+                         "and input n_features is {1} "
+                         "".format(X_test.shape[1], X_err.shape[1]),
+                         ensemble.decision_function, X_err)
+
     ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
@@ -519,7 +527,7 @@ def test_base_estimator():
 
     assert_true(isinstance(ensemble.base_estimator_, DecisionTreeClassifier))
 
-    ensemble = BaggingClassifier(Perceptron(),
+    ensemble = BaggingClassifier(Perceptron(tol=1e-3),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
@@ -553,6 +561,8 @@ def test_bagging_with_pipeline():
                                                 DecisionTreeClassifier()),
                                   max_features=2)
     estimator.fit(iris.data, iris.target)
+    assert_true(isinstance(estimator[0].steps[-1][1].random_state,
+                           int))
 
 
 class DummyZeroEstimator(BaseEstimator):
@@ -663,3 +673,78 @@ def test_oob_score_removed_on_warm_start():
     clf.fit(X, y)
 
     assert_raises(AttributeError, getattr, clf, "oob_score_")
+
+
+def test_oob_score_consistency():
+    # Make sure OOB scores are identical when random_state, estimator, and
+    # training data are fixed and fitting is done twice
+    X, y = make_hastie_10_2(n_samples=200, random_state=1)
+    bagging = BaggingClassifier(KNeighborsClassifier(), max_samples=0.5,
+                                max_features=0.5, oob_score=True,
+                                random_state=1)
+    assert_equal(bagging.fit(X, y).oob_score_, bagging.fit(X, y).oob_score_)
+
+
+def test_estimators_samples():
+    # Check that format of estimators_samples_ is correct and that results
+    # generated at fit time can be identically reproduced at a later time
+    # using data saved in object attributes.
+    X, y = make_hastie_10_2(n_samples=200, random_state=1)
+    bagging = BaggingClassifier(LogisticRegression(), max_samples=0.5,
+                                max_features=0.5, random_state=1,
+                                bootstrap=False)
+    bagging.fit(X, y)
+
+    # Get relevant attributes
+    estimators_samples = bagging.estimators_samples_
+    estimators_features = bagging.estimators_features_
+    estimators = bagging.estimators_
+
+    # Test for correct formatting
+    assert_equal(len(estimators_samples), len(estimators))
+    assert_equal(len(estimators_samples[0]), len(X))
+    assert_equal(estimators_samples[0].dtype.kind, 'b')
+
+    # Re-fit single estimator to test for consistent sampling
+    estimator_index = 0
+    estimator_samples = estimators_samples[estimator_index]
+    estimator_features = estimators_features[estimator_index]
+    estimator = estimators[estimator_index]
+
+    X_train = (X[estimator_samples])[:, estimator_features]
+    y_train = y[estimator_samples]
+
+    orig_coefs = estimator.coef_
+    estimator.fit(X_train, y_train)
+    new_coefs = estimator.coef_
+
+    assert_array_almost_equal(orig_coefs, new_coefs)
+
+
+def test_max_samples_consistency():
+    # Make sure validated max_samples and original max_samples are identical
+    # when valid integer max_samples supplied by user
+    max_samples = 100
+    X, y = make_hastie_10_2(n_samples=2*max_samples, random_state=1)
+    bagging = BaggingClassifier(KNeighborsClassifier(),
+                                max_samples=max_samples,
+                                max_features=0.5, random_state=1)
+    bagging.fit(X, y)
+    assert_equal(bagging._max_samples, max_samples)
+
+
+def test_set_oob_score_label_encoding():
+    # Make sure the oob_score doesn't change when the labels change
+    # See: https://github.com/scikit-learn/scikit-learn/issues/8933
+    random_state = 5
+    X = [[-1], [0], [1]] * 5
+    Y1 = ['A', 'B', 'C'] * 5
+    Y2 = [-1, 0, 1] * 5
+    Y3 = [0, 1, 2] * 5
+    x1 = BaggingClassifier(oob_score=True,
+                           random_state=random_state).fit(X, Y1).oob_score_
+    x2 = BaggingClassifier(oob_score=True,
+                           random_state=random_state).fit(X, Y2).oob_score_
+    x3 = BaggingClassifier(oob_score=True,
+                           random_state=random_state).fit(X, Y3).oob_score_
+    assert_equal([x1, x2], [x3, x3])

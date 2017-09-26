@@ -14,12 +14,12 @@ the different items on the image upon mouseover.
 Modifying the map on the docs is currently a little bit tedious,
 so I'll try to make it as simple as possible.
 
-1. Editing the layout of the map and it's paths.
+1. Editing the layout of the map and its paths.
 ------------------------------------------------
 
 Use a Graphics editor like Inkscape Vector Graphics Editor
 to open the ml_map.svg file, in this folder. From there
-you can move objects around, ect. as you need.
+you can move objects around, etc. as you need.
 
 Save when done, and make sure to export a .PNG file
 to replace the old-outdated ml_map.png, as that file

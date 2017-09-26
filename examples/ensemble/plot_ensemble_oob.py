@@ -8,7 +8,7 @@ each new tree is fit from a bootstrap sample of the training observations
 :math:`z_i = (x_i, y_i)`. The *out-of-bag* (OOB) error is the average error for
 each :math:`z_i` calculated using predictions from the trees that do not
 contain :math:`z_i` in their respective bootstrap sample. This allows the
-``RandomForestClassifier`` to be fit and validated whilst being trained [1].
+``RandomForestClassifier`` to be fit and validated whilst being trained [1]_.
 
 The example below demonstrates how the OOB error can be measured at the
 addition of each new tree during training. The resulting plot allows a
@@ -41,7 +41,7 @@ X, y = make_classification(n_samples=500, n_features=25,
                            random_state=RANDOM_STATE)
 
 # NOTE: Setting the `warm_start` construction parameter to `True` disables
-# support for paralellised ensembles but is necessary for tracking the OOB
+# support for parallelized ensembles but is necessary for tracking the OOB
 # error trajectory during training.
 ensemble_clfs = [
     ("RandomForestClassifier, max_features='sqrt'",
