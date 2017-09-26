@@ -371,6 +371,8 @@ class MDS(BaseEstimator):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.extendible = extendible
+        self.X_train = None
+        self.D_XX = None
 
     @property
     def _pairwise(self):
@@ -395,10 +397,12 @@ class MDS(BaseEstimator):
         if not self.extendible:
             self.fit_transform(X, init=init)
         else:
+            self.X_train = X
             if self.dissimilarity == 'precomputed':
                 D = X
             elif self.dissimilarity == 'euclidean':
                 D = euclidean_distances(X)
+                self.D_XX = euclidean_distances(self.X_train, self.X_train)
             else:
                 raise ValueError("Proximity must be 'precomputed' or"
                                  "'euclidean'."
@@ -440,7 +444,7 @@ class MDS(BaseEstimator):
             ret = self._fit_transform(X, init)
         return ret
 
-    def transform(self, X, X_train=None):
+    def transform(self, X):
         """Apply the transformation on X
 
         If dissimilarity is Euclidean, apply the transformation on X.
@@ -461,9 +465,6 @@ class MDS(BaseEstimator):
             NB: similarity matrix has to be centered, use the
             make_euclidean_similarities function to create it.
 
-        X_train : array, shape [n_train_samples, n_features] \
-                if dissimilarity='euclidean'
-            Training data for Euclidean case.
 
         Returns
         -------
@@ -476,13 +477,12 @@ class MDS(BaseEstimator):
         if self.dissimilarity == 'precomputed':
             D_new = X
         elif self.dissimilarity == 'euclidean':
-            if X_train is None:
-                raise ValueError("Euclidean requires X_train, the training "
-                                 "points.")
+            if self.X_train is None or self.D_XX is None:
+                raise ValueError("Extendible MDS with Euclidean Similarities "
+                                 "must be fit first. use ``MDS.fit()``")
             else:
-                D_aX = euclidean_distances(X, X_train)
-                D_XX = euclidean_distances(X_train, X_train)
-                D_new = self.center_similarities(D_aX, D_XX)
+                D_aX = euclidean_distances(X, self.X_train)
+                D_new = self.center_similarities(D_aX, self.D_XX)
         else:
             raise ValueError("Dissimilarity not set properly: 'precomputed' "
                              "and 'euclidean' allowed.")

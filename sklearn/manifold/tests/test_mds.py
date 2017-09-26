@@ -64,4 +64,4 @@ def test_MDS():
     mds_clf.fit(sim)
     sim2 = np.array([[3, 1, 1, 2],
                      [4, 1, 2, 2]])
-    mds_clf.transform(sim2, sim)
+    mds_clf.transform(sim2)
