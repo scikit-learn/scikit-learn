@@ -5,8 +5,11 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
+#          Empty radius support by Andreas Bjerre-Nielsen
 #
-# License: BSD 3 clause (C) INRIA, University of Amsterdam
+# License: BSD 3 clause (C) INRIA, University of Amsterdam, University of Copenhagen
+
+import warnings
 
 import numpy as np
 
@@ -274,7 +277,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
         Returns
         -------
-        y : array of int, shape = [n_samples] or [n_samples, n_outputs]
+        y : array of float, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
         X = check_array(X, accept_sparse='csr')
@@ -288,13 +291,23 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
             _y = _y.reshape((-1, 1))
 
         if weights is None:
-            y_pred = np.array([np.mean(_y[ind, :], axis=0)
-                               for ind in neigh_ind])
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', "Mean of empty slice")
+                warnings.filterwarnings('ignore', "invalid value encountered in true_divide")
+
+                y_pred = np.array([np.mean(_y[ind, :], axis=0)
+                                   for ind in neigh_ind])
         else:
+            empty_obs = np.full(_y.shape[1] if _y.ndim>1 else 1, np.nan)
             y_pred = np.array([np.average(_y[ind, :], axis=0,
                                           weights=weights[i])
-                               if len(ind) else np.full(_y.shape[1], np.nan)
+                               if len(ind) else empty_obs
                                for (i, ind) in enumerate(neigh_ind)])
+
+        if np.max(np.isnan(y_pred)):
+            warnings.warn("One or more samples have no neighbors within specified radius; predicting NaN.")
+
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()

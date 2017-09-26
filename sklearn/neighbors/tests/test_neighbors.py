@@ -662,11 +662,12 @@ def test_radius_neighbors_regressor(n_samples=40,
             # test fix for issue #9654
             # test that nan is returned when no nearby observations
             X_test_nan = np.ones((1, n_features))*-1
-            if weights == 'uniform':
-                assert_warns_message(RuntimeWarning, "Mean of empty slice.",
-                                     neigh.predict, X_test_nan)
 
-            assert_true(np.all(np.isnan(neigh.predict(X_test_nan))))
+            empty_warning_msg = "One or more samples have no neighbors within specified radius; predicting NaN."
+            pred = assert_warns_message(UserWarning, empty_warning_msg,
+                                        neigh.predict, X_test_nan)
+
+            assert_true(np.all(np.isnan(pred)))
 
 
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
