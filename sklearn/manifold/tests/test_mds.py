@@ -51,7 +51,6 @@ def test_smacof_error():
                   [-.200, .524]])
     assert_raises(ValueError, mds.smacof, sim, init=Z, n_init=1)
 
-
 def test_MDS():
     sim = np.array([[0, 5, 3, 4],
                     [5, 0, 2, 2],
@@ -59,9 +58,17 @@ def test_MDS():
                     [4, 2, 1, 0]])
     mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
     mds_clf.fit(sim)
-    # Testing for extendible MDS
+
+def test_MDS_transform():
+    sim = np.array([[0, 5, 3, 4],
+                    [5, 0, 2, 2],
+                    [3, 2, 0, 1],
+                    [4, 2, 1, 0]])
+
     mds_clf = mds.MDS(dissimilarity="euclidean", extendible=True)
     mds_clf.fit(sim)
+
+    # Testing for extending MDS to new points
     sim2 = np.array([[3, 1, 1, 2],
                      [4, 1, 2, 2]])
     mds_clf.transform(sim2)
