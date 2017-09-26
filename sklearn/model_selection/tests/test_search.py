@@ -342,24 +342,27 @@ def test_future_warnings():
     clf = LinearSVC(random_state=0)
     array = np.ones(10)
     grid = {'C': array}
+    searchcv = [GridSearchCV, RandomizedSearchCV]
+    estimators = [LinearSVC(random_state=0), LinearSVC(random_state=0)]
+    array = np.ones(10)
+    grid = {'C': array}
+    msg = ("Computing training scores may affect performance "
+           "significantly. This is the reason return_train_score will "
+           "change its default value from True (current behaviour) to "
+           "False in 0.22. Please set explicitly return_train_score to "
+           "get rid of this warning.")
 
-    for searchcv in [GridSearchCV, RandomizedSearchCV]:
-        def init(clf, parameters, return_train_score):
-            search = searchcv(clf, parameters,
-                              return_train_score=return_train_score)
-            search.fit(X, y)
-            return search
-
-        msg = ("Computing training scores may affect performance "
-               "significantly. This is the reason return_train_score will "
-               "change its default value from True (current behaviour) to "
-               "False in 0.22. Please set explicitly return_train_score to "
-               "get rid of this warning.")
-        assert_warns_message(FutureWarning, msg, init, clf, grid, "warn")
-        assert_true("mean_train_score"
-                    in init(clf, grid, "warn").cv_results_)
-        assert_no_warnings(FutureWarning, msg, init, clf, grid, True)
-        assert_no_warnings(FutureWarning, msg, init, clf, grid, False)
+    for i, estimator in enumerate(estimators):
+        search = searchcv[i](clf, grid)
+        search_with_warn = search.set_params(return_train_score="warn")
+        assert_warns_message(FutureWarning, msg, search_with_warn.fit, X, y)
+        with ignore_warnings():
+            assert_true("mean_train_score" in
+                        search_with_warn.fit(X, y).cv_results_)
+        search_with_true = search.set_params(return_train_score=True)
+        assert_no_warnings(FutureWarning, msg, search_with_true.fit, X, y)
+        search_with_false = search.set_params(return_train_score=False)
+        assert_no_warnings(FutureWarning, msg, search_with_false.fit, X, y)
 
 
 def test_classes__property():
