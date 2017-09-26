@@ -381,16 +381,11 @@ class MDS(BaseEstimator):
 
         Parameters
         ----------
-<<<<<<< HEAD
-        X : array, shape=[n_samples, n_features], or [n_samples, n_samples] \
-                if dissimilarity='precomputed'
-=======
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
             Input data. If ``dissimilarity=='precomputed'``, the input should
             be the dissimilarity matrix.
 
         y: Ignored
->>>>>>> master
 
         init : ndarray, shape (n_samples,), optional, default: None
             Starting configuration of the embedding to initialize the SMACOF
