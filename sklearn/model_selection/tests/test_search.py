@@ -351,8 +351,7 @@ def test_future_warnings():
     for estimator in estimators:
         search_with_warn = estimator.set_params(return_train_score="warn")
         assert_warns_message(FutureWarning, msg, search_with_warn.fit, X, y)
-        with ignore_warnings():
-            assert_true("mean_train_score" in estimator.cv_results_)
+        assert_true("mean_train_score" in estimator.cv_results_)
         search_with_true = estimator.set_params(return_train_score=True)
         assert_no_warnings(FutureWarning, msg, search_with_true.fit, X, y)
         search_with_false = estimator.set_params(return_train_score=False)
