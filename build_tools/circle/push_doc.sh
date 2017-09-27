@@ -50,6 +50,7 @@ do
   if [ -n "$v" ]
   then
     echo "<li><a href=\"/$d\">Scikit-learn $v documentation</a>"
+    # link to pdf where available
     if git cat-file -e master:$d/_downloads/scikit-learn-docs.pdf 2>/dev/null
     then
       echo "(<a href=\"/$d/_downloads/scikit-learn-docs.pdf\">PDF</a>)"
