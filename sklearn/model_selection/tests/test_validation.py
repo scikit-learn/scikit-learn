@@ -812,8 +812,8 @@ def test_cross_val_predict_decision_function_shape():
     ind = np.argsort(y)
     X, y = X[ind], y[ind]
     assert_raise_message(ValueError,
-                         'Shape of output predictions does not '
-                         'match number of classes in fold. '
+                         'Output shape (599, 21) of decision_function '
+                         'does not match number of classes (7) in fold. '
                          'Cannot reconcile different number of '
                          'classes in different folds. To fix this, '
                          'use a cross-validation technique resulting '

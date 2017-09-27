@@ -728,24 +728,32 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         n_classes = len(set(y))
         if n_classes != len(estimator.classes_):
-            if len(predictions.shape) == 2 and \
+            if predictions.ndim == 2 and \
                     predictions.shape[1] != len(estimator.classes_):
                 # This handles the case when the shape of predictions
                 # does not match the number of classes used to train
                 # it with. This case is found when sklearn.svm.SVC is
                 # set to `decision_function_shape='ovo'`.
-                raise ValueError('Shape of output predictions does not '
-                                 'match number of classes in fold. '
+                raise ValueError('Output shape {} of {} does not '
+                                 'match number of classes ({}) in fold. '
                                  'Cannot reconcile different number of '
                                  'classes in different folds. To fix this, '
-                                 'use a cross-validation technique resulting '
-                                 'in properly stratified folds.')
+                                 'use a cross-validation technique '
+                                 'resulting in properly stratified '
+                                 'folds.'.format(predictions.shape, method,
+                                                 len(estimator.classes_)))
             predictions_ = np.zeros((_num_samples(X_test), n_classes))
             if method == 'decision_function' and len(estimator.classes_) <= 2:
+                # In this special case, `predictions` contains a 1D array.
+                # It must be handled differently to fit inside the
+                # `predictions_` temporary array.
                 predictions_[:, estimator.classes_[-1]] = predictions
             else:
                 predictions_[:, estimator.classes_] = predictions
+
             if method == 'decision_function' and n_classes == 2:
+                # In this special case, the output `predictions` must
+                # contain a 1D array.
                 predictions_ = predictions_[:, 1]
             predictions = predictions_
     return predictions, test
