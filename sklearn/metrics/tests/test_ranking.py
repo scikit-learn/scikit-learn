@@ -379,7 +379,7 @@ def test_roc_curve_fpr_tpr_increasing():
     y_score = rng.random_sample(size=(n_samples,))
     sample_weight = rng.randint(1, 10, size=(n_samples, ))
     # Construct an edge case with float y_score and sample_weight
-    # when some adjacent values of fpr and tpr are the same.
+    # when some adjacent values of fpr and tpr are actually the same.
     fpr, tpr, _ = roc_curve(y_true, y_score,
                             sample_weight=sample_weight * 0.2)
     assert_equal((np.diff(fpr) < 0).sum(), 0)
