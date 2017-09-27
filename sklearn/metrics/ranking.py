@@ -258,7 +258,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
 
         fpr, tpr, tresholds = roc_curve(y_true, y_score,
                                         sample_weight=sample_weight)
-        return auc(fpr, tpr, reorder=False)
+        return auc(fpr, tpr)
 
     return _average_binary_score(
         _binary_roc_auc_score, y_true, y_score, average,
@@ -341,6 +341,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # accumulate the true positives with decreasing threshold
     tps = stable_cumsum(y_true * weight)[threshold_idxs]
     if sample_weight is not None:
+        # express fps as a cumsum to ensure fps is increasing even in
+        # the presense of floating point errors
         fps = stable_cumsum((1 - y_true) * weight)[threshold_idxs]
     else:
         fps = 1 + threshold_idxs - tps
