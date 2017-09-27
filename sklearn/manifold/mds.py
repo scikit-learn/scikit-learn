@@ -407,10 +407,8 @@ class MDS(BaseEstimator):
                 raise ValueError("Proximity must be 'precomputed' or"
                                  "'euclidean'."
                                  " Got %s instead" % str(self.dissimilarity))
-                return self
 
             # Normalising similarities
-            K = np.zeros(np.shape(D))
             n = len(D)
             D_sq = np.square(D)
             P = np.eye(n) - 1 / n * np.ones((n, n))
@@ -547,9 +545,7 @@ class MDS(BaseEstimator):
                                            ) / N + Exp_XX)
         return new_similarities
 
-    def _mds_project(self, new_similarities, k=None):
-        if k is None:
-            k = self.n_components
+    def _mds_project(self, new_similarities, k):
 
         e_projections = np.zeros((len(new_similarities), k))
 
