@@ -39,5 +39,24 @@ git config --global push.default matching
 git add -f $dir/
 git commit -m "$MSG" $dir
 git push
-
 echo $MSG 
+
+# List all available versions of the documentation
+(echo "<html><body><h1>Available documentation for Scikit-learn<ul>"
+for d in $(git ls-tree --name-only master)
+do
+  # extract version number from Sphinx Javascript variable
+  v=$(git show master:$d/index.html 2>/dev/null | grep VERSION: | cut -d"'" -f2)
+  if [ -n "$v" ]
+  then
+      echo "<li><a href=\"/$d\">Scikit-learn $v documentation</a></li>"
+    fi
+  done
+echo "</ul></body></html>") > versions.html
+git add versions.html
+if git diff --cached --quiet
+then
+  MSG="Listing documentation versions in versions.html"
+  git commit -m $MSG
+  git push
+fi
