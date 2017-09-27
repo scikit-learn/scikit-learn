@@ -7,7 +7,8 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #          Empty radius support by Andreas Bjerre-Nielsen
 #
-# License: BSD 3 clause (C) INRIA, University of Amsterdam, University of Copenhagen
+# License: BSD 3 clause (C) INRIA, University of Amsterdam,
+#                           University of Copenhagen
 
 import warnings
 
@@ -294,12 +295,14 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', "Mean of empty slice")
-                warnings.filterwarnings('ignore', "invalid value encountered in true_divide")
+                warnings.filterwarnings('ignore', ( "invalid value "
+                                                    "encountered "
+                                                    "in true_divide"))
 
                 y_pred = np.array([np.mean(_y[ind, :], axis=0)
                                    for ind in neigh_ind])
         else:
-            empty_obs = np.full(_y.shape[1] if _y.ndim >1 else 1, np.nan)
+            empty_obs = np.full_like(_y[0], np.nan)
             y_pred = np.array([np.average(_y[ind, :], axis=0,
                                           weights=weights[i])
                                if len(ind) else empty_obs
