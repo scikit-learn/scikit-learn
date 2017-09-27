@@ -374,7 +374,7 @@ def test_roc_curve_drop_intermediate():
 def test_roc_curve_fpr_tpr_increasing():
     # Ensure that fpr and tpr returned by roc_curve are increasing.
     # Construct an edge case with float y_score and sample_weight
-    # when some adjacent values of fpr and tpr are the same.
+    # when some adjacent values of fpr and tpr are actually the same.
     y_true = [0, 0, 1, 1, 1]
     y_score = [0.1, 0.7, 0.3, 0.4, 0.5]
     sample_weight = np.repeat(0.2, 5)
