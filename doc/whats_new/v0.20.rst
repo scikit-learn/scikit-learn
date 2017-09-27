@@ -17,6 +17,7 @@ random sampling procedures.
 
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 - :class:`isotonic.IsotonicRegression` (bug fix)
+- :class:`metrics.roc_auc_score` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -57,8 +58,6 @@ Classifiers and regressors
 - Add `var_smoothing` parameter in
   :class:`sklearn.naive_bayes.GaussianNB` to give a precise control over
   variances calculation. :issue:`9681` by :user:`Dmitry Mottl <Mottl>`.
-
-
 
 Model evaluation and meta-estimators
 
@@ -107,6 +106,11 @@ Decomposition, manifold learning and clustering
 
 - Fixed a bug in :func:`datasets.fetch_kddcup99`, where data were not properly
   shuffled. :issue:`9731` by `Nicolas Goix`_.
+
+Metrics
+
+- Fixed a bug due to floating point error in :func:`metrics.roc_auc_score` with
+  non-integer sample weights. :issue:`9786` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 API changes summary
 -------------------
