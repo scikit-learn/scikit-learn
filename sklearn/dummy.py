@@ -476,7 +476,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         """
         check_is_fitted(self, "constant_")
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
+                        force_all_finite=False, dtype="None",
+                        ensure_min_features=0)
         n_samples = X.shape[0]
 
         y = np.ones((n_samples, 1)) * self.constant_
