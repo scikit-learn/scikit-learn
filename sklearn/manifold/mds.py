@@ -417,8 +417,8 @@ class MDS(BaseEstimator):
             # Sorting e-vectors and e-values according to e-val
             e_vals, e_vecs = la.eigh(K)
             ind_sort = np.argsort(e_vals)[::-1]
-            self.e_vecs = e_vecs[:, ind_sort]
-            self.e_vals = e_vals[ind_sort]
+            self._e_vecs = e_vecs[:, ind_sort]
+            self._e_vals = e_vals[ind_sort]
         return self
 
     def fit_transform(self, X, y=None, init=None):
@@ -514,8 +514,8 @@ class MDS(BaseEstimator):
 
     def _fit_transform_ext(self, X):
         self.fit(X)
-        X_new = np.dot(self.e_vecs[:, :self.n_components],
-                       np.diag(np.sqrt(self.e_vals[:self.n_components])))
+        X_new = np.dot(self._e_vecs[:, :self.n_components],
+                       np.diag(np.sqrt(self._e_vals[:self.n_components])))
         return X_new
 
     def center_similarities(self, D_aX, D_XX):
@@ -551,10 +551,10 @@ class MDS(BaseEstimator):
 
         for i in range(len(new_similarities)):
             for j in range(k):
-                e_projections[i, j] = ((np.dot(self.e_vecs[:, j],
+                e_projections[i, j] = ((np.dot(self._e_vecs[:, j],
                                                new_similarities[i]) /
-                                        np.sqrt(self.e_vals[j])))
+                                        np.sqrt(self._e_vals[j])))
         e_projections = np.dot(new_similarities,
-                               np.dot(self.e_vecs[:, :k],
-                                      np.diag(1/np.sqrt(self.e_vals[:k]))))
+                               np.dot(self._e_vecs[:, :k],
+                                      np.diag(1/np.sqrt(self._e_vals[:k]))))
         return e_projections
