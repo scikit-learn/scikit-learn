@@ -348,7 +348,7 @@ def test_future_warnings():
            "change its default value from True (current behaviour) to "
            "False in 0.22. Please set explicitly return_train_score to "
            "get rid of this warning.")
-    for i, estimator in enumerate(estimators):
+    for estimator in estimators:
         search_with_warn = estimator.set_params(return_train_score="warn")
         assert_warns_message(FutureWarning, msg, search_with_warn.fit, X, y)
         with ignore_warnings():
