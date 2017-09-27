@@ -75,7 +75,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
     def set_params(self, *args, **kwargs):
         super(BaseSGD, self).set_params(*args, **kwargs)
-        self._validate_params()
+        self._validate_params(set_max_iter=False)
         return self
 
     @abstractmethod
