@@ -295,9 +295,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', "Mean of empty slice")
-                warnings.filterwarnings('ignore', ( "invalid value "
-                                                    "encountered "
-                                                    "in true_divide"))
+                warn_div = "invalid value encountered in true_divide"
+                warnings.filterwarnings('ignore', warn_div)
 
                 y_pred = np.array([np.mean(_y[ind, :], axis=0)
                                    for ind in neigh_ind])
