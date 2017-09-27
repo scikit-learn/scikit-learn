@@ -30,8 +30,6 @@
      SCIKITLEARNORG = location.href.match(/^https?:\/\/scikit-learn.org\/([^\/]+)/);
      if (SCIKITLEARNORG)
        VERSION_SUBDIR = SCIKITLEARNORG[1];
-     else
-	   VERSION_SUBDIR = null;
   </script>
   <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
 
@@ -85,7 +83,7 @@
                  <span class="caret"></span>
               </a>
               <ul class="dropdown-menu">
-            <li class="link-title">Scikit-learn <script>document.write(DOCUMENTATION_OPTIONS.VERSION + VERSION_SUBDIR ? (" (" + VERSION_SUBDIR + ")") : "");</script></li>
+            <li class="link-title">Scikit-learn <script>document.write(DOCUMENTATION_OPTIONS.VERSION + (VERSION_SUBDIR ? " (" + VERSION_SUBDIR + ")" : ""));</script></li>
             <li><a href="{{ pathto('tutorial/index') }}">Tutorials</a></li>
             <li><a href="{{ pathto('user_guide') }}">User guide</a></li>
             <li><a href="{{ pathto('modules/classes') }}">API</a></li>
