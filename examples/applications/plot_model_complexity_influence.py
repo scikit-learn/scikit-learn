@@ -129,7 +129,8 @@ classification_data = generate_data('classification', sparse=True)
 configurations = [
     {'estimator': SGDClassifier,
      'tuned_params': {'penalty': 'elasticnet', 'alpha': 0.001, 'loss':
-                      'modified_huber', 'fit_intercept': True},
+                      'modified_huber', 'fit_intercept': True, 'max_iter': 5,
+                      'tol': None},
      'changing_param': 'l1_ratio',
      'changing_param_values': [0.25, 0.5, 0.75, 0.9],
      'complexity_label': 'non_zero coefficients',
