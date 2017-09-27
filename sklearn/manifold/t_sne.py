@@ -20,11 +20,11 @@ from ..base import BaseEstimator
 from ..utils import check_array
 from ..utils import check_random_state
 from ..decomposition import PCA
-from ..metrics.pairwise import pairwise_distances
 from . import _utils
 from . import _barnes_hut_tsne
 from ..externals.six import string_types
 from ..utils import deprecated
+from ..neighbors import kneighbors_graph
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -422,8 +422,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     if precomputed:
         dist_X = X
     else:
-        dist_X = pairwise_distances(X, squared=True)
-    dist_X_embedded = pairwise_distances(X_embedded, squared=True)
+        dist_X = kneighbors_graph(X, n_neighbors, mode='distance')
+    dist_X_embedded = kneighbors_graph(X_embedded, n_neighbors, mode='distance')
     ind_X = np.argsort(dist_X, axis=1)
     ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, 1:n_neighbors + 1]
 
@@ -688,10 +688,9 @@ class TSNE(BaseEstimator):
                     print("[t-SNE] Computing pairwise distances...")
 
                 if self.metric == "euclidean":
-                    distances = pairwise_distances(X, metric=self.metric,
-                                                   squared=True)
+                    distances = kneighbors_graph(X, n_neighbors, mode='distance')
                 else:
-                    distances = pairwise_distances(X, metric=self.metric)
+                    distances = kneighbors_graph(X, n_neighbors, mode='distance')
 
                 if np.any(distances < 0):
                     raise ValueError("All distances should be positive, the "
