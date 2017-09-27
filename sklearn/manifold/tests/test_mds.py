@@ -62,6 +62,9 @@ def test_fit_error():
     mds_clf = mds.MDS(dissimilarity="unknown")
     assert_raises(ValueError, mds_clf.fit, sim)
 
+    mds_clf = mds.MDS(dissimilarity="unknown", extendible=True)
+    assert_raises(ValueError, mds_clf.fit, sim)
+
 
 def test_fit_transform_error():
     sim = np.array([[0, 5, 3, 4],
@@ -101,9 +104,19 @@ def test_MDS_fit_transform_extend():
                     [3, 2, 0, 1],
                     [4, 2, 1, 0]])
 
+    Z = np.array([[-.266, -.539],
+                  [.451, .252],
+                  [.016, -.238],
+                  [-.200, .524]])
+
     # test fit_transform under the extendible case
     mds_clf = mds.MDS(dissimilarity="euclidean", extendible=True)
     mds_clf.fit_transform(sim)
+
+    # test fit and transform for precomputed case
+    mds_clf = mds.MDS(dissimilarity="precomputed", extendible=True)
+    mds_clf.fit(sim, init=Z)
+    mds_clf.transform(sim)
 
 
 def test_MDS_transform():
