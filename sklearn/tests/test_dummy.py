@@ -618,7 +618,7 @@ def test_dummy_regressor_on_nan_value():
     y_pred = clf.predict(X)
     assert_array_equal(y_pred, y_expected)
 
-    
+   
 def test_dummy_regressor_on_object_value():
     X = np.array(['foo', 'bar', 'baz'])
     X = np.reshape(X, (-1, 1))
