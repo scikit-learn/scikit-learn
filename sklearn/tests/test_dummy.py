@@ -619,7 +619,7 @@ def test_dummy_regressor_on_nan_value():
     assert_array_equal(y_pred, y_expected)
 
 
-def test_dummy_regressor_on_object_value():
+def test_dummy_regressor_on_string_values():
     X = np.array(['foo', 'bar', 'baz'])
     X = np.reshape(X, (-1, 1))
     y = np.array([1, 2, 3])
