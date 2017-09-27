@@ -31,7 +31,7 @@ Documentation of scikit-learn |version|
                         <script>if (VERSION_SUBDIR != "stable") document.write('<li><a href="http://scikit-learn.org/stable/documentation.html">Stable version</a></li>')</script>
                         <script>if (VERSION_SUBDIR != "dev") document.write('<li><a href="http://scikit-learn.org/dev/documentation.html">Development version</a></li>')</script>
                         <li><a href="http://scikit-learn.org/versions.html">Previous versions</a></li>
-                        <li><a href="{{ pathto('_downloads/scikit-learn-docs.pdf', 1) }}">PDF documentation</a></li>
+                        <li><a href="_downloads/scikit-learn-docs.pdf">PDF documentation</a></li>
                     </ul>
 
                 </div>
