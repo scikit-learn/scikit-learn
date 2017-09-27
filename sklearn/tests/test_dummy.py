@@ -617,3 +617,15 @@ def test_dummy_regressor_on_nan_value():
     clf.fit(X, y)
     y_pred = clf.predict(X)
     assert_array_equal(y_pred, y_expected)
+
+    
+def test_dummy_regressor_on_object_value():
+    X = np.array(['foo', 'bar', 'baz']) # X's data is of type object
+    X = np.reshape(X, (-1, 1))
+    y = np.array([1, 2, 3])
+    y_expected = np.array([2, 2, 2])
+    cls = DummyRegressor(strategy='mean')
+    cls.fit(X, y)
+    y_pred = cls.predict(X)
+    assert_array_equal(y_pred, y_expected)
+    
