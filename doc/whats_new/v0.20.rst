@@ -40,6 +40,13 @@ Classifiers and regressors
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
 
+Other estimators
+
+- Added :class:`neighbors.LargeMarginNearestNeighbor`, which implements the
+  Distance Metric Learning algorithm for Large Margin Nearest Neighbor
+  classification described in Weinberger et al. (2006).
+  :issue:`8602` by :user:`John Chiotellis <johny-c>`.
+
 Enhancements
 ............
 
