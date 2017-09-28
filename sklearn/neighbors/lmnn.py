@@ -506,7 +506,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
             pca.fit(X)
             if self.verbose:
-                print('done in {:5.2f}s'.format(time.time() - t_pca))
+                print('done in {:5.2f}s.'.format(time.time() - t_pca))
 
             transformation = pca.components_
 
@@ -601,7 +601,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                                      targets[:, k])), shape)
             loss += np.dot(loss1, loss1) + np.dot(loss2, loss2)
 
-        grad_new = _sum_outer_weighted_differences(X, A0)
+        grad_new = _sum_weighted_outer_differences(X, A0)
         grad = np.dot(transformation, grad_static + grad_new)
         grad *= 2
         metric = np.dot(transformation.T, transformation)
@@ -623,7 +623,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         return loss, grad.ravel()
 
     def _find_impostors(self, X_embedded, y, margin_radii, use_sparse=True):
-        """Compute all (sample, impostor) pairs exactly.
+        """Compute the (sample, impostor) pairs exactly.
 
         Parameters
         ----------
@@ -662,10 +662,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
                 # Split ind_out x ind_in into chunks of a size that fits
                 # in memory
-                imp_ind = _find_impostors_batch(X_embedded[ind_out],
-                                                X_embedded[ind_in],
-                                                margin_radii[ind_out],
-                                                margin_radii[ind_in])
+                imp_ind = _find_impostors_blockwise(X_embedded[ind_out],
+                                                    X_embedded[ind_in],
+                                                    margin_radii[ind_out],
+                                                    margin_radii[ind_in])
 
                 if len(imp_ind):
                     # sample constraints if they are too many
@@ -686,7 +686,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             impostors_sp = impostors_sp.tocoo(copy=False)
             imp_row = impostors_sp.row
             imp_col = impostors_sp.col
-            imp_dist = _paired_distances_batch(X_embedded, imp_row, imp_col)
+            imp_dist = _paired_distances_blockwise(X_embedded, imp_row,
+                                                   imp_col)
 
         else:
             # Initialize lists for impostors storage
@@ -697,7 +698,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
                 # Split ind_out x ind_in into chunks of a size that fits in
                 # memory
-                imp_ind, dist_batch = _find_impostors_batch(
+                imp_ind, dist_batch = _find_impostors_blockwise(
                     X_embedded[ind_out], X_embedded[ind_in],
                     margin_radii[ind_out], margin_radii[ind_in],
                     return_distance=True)
@@ -776,7 +777,7 @@ def _select_target_neighbors(X, y, n_neighbors, verbose=0, **kwargs):
         target_neighbors[ind_class] = ind_class[neigh_ind]
 
     if verbose:
-        print('done in {:5.2f}s'.format(time.time() - t_targets))
+        print('done in {:5.2f}s.'.format(time.time() - t_targets))
 
     return target_neighbors
 
@@ -797,112 +798,114 @@ def _compute_grad_static(X, targets, verbose=0):
 
     Returns
     -------
-    grad_static, shape (n_features, n_features)
+    grad_targets, shape (n_features, n_features)
         An array with the sum of all outer products of samples-targets.
     """
 
     if verbose:
-        print('Computing static part of the gradient...')
+        print('Computing static part of the gradient... ', end='')
 
     n_samples, n_neighbors = targets.shape
     row = np.repeat(range(n_samples), n_neighbors)
     col = targets.ravel()
     targets_sparse = csr_matrix((np.ones(targets.size), (row, col)),
                                 shape=(n_samples, n_samples))
+    grad_targets = _sum_weighted_outer_differences(X, targets_sparse)
 
-    return _sum_outer_weighted_differences(X, targets_sparse)
+    if verbose:
+        print('done.')
+
+    return grad_targets
 
 
-def _find_impostors_batch(X_out, X_in, margin_radii_out, margin_radii_in,
-                          return_distance=False, mem_budget=int(1e7)):
-    """Find (sample, impostor) pairs in chunks to avoid large memory usage.
+def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
+                              return_distance=False, block_size=8):
+    """Find (sample, impostor) pairs in blocks to avoid large memory usage.
 
     Parameters
     ----------
-    X_out : array, shape (n_samples_out, n_features_out)
-        An array of transformed data samples from multiple classes.
+    X_a : array, shape (n_samples_a, n_features_out)
+        Transformed data samples from class A.
 
-    X_in : array, shape (n_samples_in, n_features_out)
-        Transformed data samples from one class, not present in X_out,
-        so probably n_samples_in < n_samples_out.
+    X_b : array, shape (n_samples_b, n_features_out)
+        Transformed data samples from class B.
 
-    margin_radii_out : array, shape (n_samples_out,)
-        Squared distances of the samples in ``X_out`` to their margins.
+    radii_a : array, shape (n_samples_a,)
+        Squared distances of the samples in ``X_a`` to their margins.
 
-    margin_radii_in : array, shape (n_samples_in,)
-        Squared distances of the samples in ``X_in`` to their margins.
+    radii_b : array, shape (n_samples_b,)
+        Squared distances of the samples in ``X_b`` to their margins.
 
-    mem_budget : int, optional (default=int(1e7))
-        Memory budget (in bytes) for computing distances.
+    block_size : int, optional (default=8)
+        The maximum number of mebibytes (MiB) of memory to use at a time for
+        calculating paired distances.
 
     return_distance : bool, optional (default=False)
         Whether to return the squared distances to the impostors.
 
     Returns
     -------
-    imp_ind : array, shape (n_impostors,)
+    imp_indices : array, shape (n_impostors,)
         Unraveled indices of (sample, impostor) pairs referring to a matrix
-        of shape (n_samples_out, n_samples_in).
+        of shape (n_samples_a, n_samples_b).
 
-    dist : array, shape (n_impostors,), optional
-        dist[i] is the squared distance between samples imp_row[i] and
+    imp_distances : array, shape (n_impostors,), optional
+        imp_distances[i] is the squared distance between samples imp_row[i] and
         imp_col[i], where
-        imp_row, imp_col = np.unravel_index(imp_ind, dims=(n_samples_out,
-        n_samples_in))
+        imp_row, imp_col = np.unravel_index(imp_indices, dims=(n_samples_a,
+        n_samples_b))
     """
 
-    n_samples_out = X_out.shape[0]
-    bytes_per_row = X_in.shape[0] * X_in.itemsize
-    batch_size = int(mem_budget // bytes_per_row)
+    n_samples_a = X_a.shape[0]
+    bytes_per_row = X_b.shape[0] * X_b.itemsize
+    block_n_rows = int(block_size*1024*1024 // bytes_per_row)
 
-    imp_ind, dist = [], []
+    imp_indices, imp_distances = [], []
 
-    # X_in squared norm stays constant, so pre-compute it to get a speed-up
-    X_in_norm_squared = row_norms(X_in, squared=True)[np.newaxis, :]
-    for chunk in gen_batches(n_samples_out, batch_size):
-
-        # dist_out_in = euclidean_distances(X_out[chunk], X_in, squared=True,
-        #                                   Y_norm_squared=X_in_norm_squared)
+    # X_b squared norm stays constant, so pre-compute it to get a speed-up
+    X_b_norm_squared = row_norms(X_b, squared=True)[np.newaxis, :]
+    for chunk in gen_batches(n_samples_a, block_n_rows):
+        # from sklearn.metrics.pairwise import euclidean_distances
+        # dist_out_in = euclidean_distances(X_a[chunk], X_b, squared=True,
+        #                                   Y_norm_squared=X_b_norm_squared)
         # check_input in every chunk would add an extra ~8% time of computation
 
-        X_out_chunk = X_out[chunk]
-        XX = row_norms(X_out_chunk, squared=True)[:, np.newaxis]
-        YY = X_in_norm_squared
-        dist_out_in = safe_sparse_dot(X_out_chunk, X_in.T, dense_output=True)
-        dist_out_in *= -2
-        dist_out_in += XX
-        dist_out_in += YY
+        X_a_chunk = X_a[chunk]
+        X_a_norm_squared = row_norms(X_a_chunk, squared=True)[:, np.newaxis]
+        distances_ba = safe_sparse_dot(X_a_chunk, X_b.T, dense_output=True)
+        distances_ba *= -2
+        distances_ba += X_a_norm_squared
+        distances_ba += X_b_norm_squared
 
-        ind1, = np.where((dist_out_in < margin_radii_out[chunk, None]).ravel())
-        ind2, = np.where((dist_out_in < margin_radii_in[None, :]).ravel())
-        ind = np.unique(np.concatenate((ind1, ind2)))
+        ind_a, = np.where((distances_ba < radii_a[chunk, None]).ravel())
+        ind_b, = np.where((distances_ba < radii_b[None, :]).ravel())
+        ind = np.unique(np.concatenate((ind_a, ind_b)))
 
         if len(ind):
-            ind_plus_offset = ind + chunk.start * X_in.shape[0]
+            ind_plus_offset = ind + chunk.start * X_b.shape[0]
             try:
-                imp_ind.extend(ind_plus_offset)
+                imp_indices.extend(ind_plus_offset)
             except TypeError:
-                imp_ind.append(ind_plus_offset)
+                imp_indices.append(ind_plus_offset)
 
             if return_distance:
                 # This np.maximum would add another ~8% time of computation
-                np.maximum(dist_out_in, 0, out=dist_out_in)
-                dist_chunk = dist_out_in.ravel()[ind]
+                np.maximum(distances_ba, 0, out=distances_ba)
+                distances_chunk = distances_ba.ravel()[ind]
                 try:
-                    dist.extend(dist_chunk)
+                    imp_distances.extend(distances_chunk)
                 except TypeError:
-                    dist.append(dist_chunk)
+                    imp_distances.append(distances_chunk)
 
-    imp_ind = np.asarray(imp_ind)
+    imp_indices = np.asarray(imp_indices)
 
     if return_distance:
-        return imp_ind, np.asarray(dist)
+        return imp_indices, np.asarray(imp_distances)
     else:
-        return imp_ind
+        return imp_indices
 
 
-def _paired_distances_batch(X, ind_a, ind_b, squared=True,
-                            mem_budget=int(1e7)):
+def _paired_distances_blockwise(X, ind_a, ind_b, squared=True, block_size=8):
     """Equivalent to row_norms(X[ind_a] - X[ind_b], squared=squared).
 
     Parameters
@@ -919,8 +922,9 @@ def _paired_distances_batch(X, ind_a, ind_b, squared=True,
     squared : bool (default=True)
         Whether to return the squared distances.
 
-    mem_budget : int, optional (default=int(1e7))
-        Memory budget (in bytes) for computing distances.
+    block_size : int, optional (default=8)
+        The maximum number of mebibytes (MiB) of memory to use at a time for
+        calculating paired distances.
 
     Returns
     -------
@@ -929,7 +933,7 @@ def _paired_distances_batch(X, ind_a, ind_b, squared=True,
     """
 
     bytes_per_row = X.shape[1] * X.itemsize
-    batch_size = int(mem_budget // bytes_per_row)
+    batch_size = int(block_size*1024*1024 // bytes_per_row)
 
     n_pairs = len(ind_a)
     distances = np.zeros(n_pairs)
@@ -942,8 +946,8 @@ def _paired_distances_batch(X, ind_a, ind_b, squared=True,
     return distances
 
 
-def _sum_outer_weighted_differences(X, weights):
-    """Compute the sum of outer weighted differences.
+def _sum_weighted_outer_differences(X, weights):
+    """Compute the sum of weighted outer pairwise differences.
 
     Parameters
     ----------
@@ -951,12 +955,12 @@ def _sum_outer_weighted_differences(X, weights):
         An array of data samples.
 
     weights : csr_matrix, shape (n_samples, n_samples)
-        A sparse weights matrix (indicating target neighbors).
+        A sparse weights matrix.
 
 
     Returns
     -------
-    sum_outer_weighted_diffs : array, shape (n_features, n_features)
+    sum_weighted_outer_diffs : array, shape (n_features, n_features)
         The sum of all outer weighted differences.
     """
 
