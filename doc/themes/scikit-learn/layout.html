@@ -27,8 +27,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
   <script>
-     SCIKITLEARNORG = location.href.match(/^https?:\/\/scikit-learn.org\/([^\/]+)/);
-     VERSION_SUBDIR = SCIKITLEARNORG ? SCIKITLEARNORG[1] : null;
+     VERSION_SUBDIR = (function(groups) {
+         return groups ? groups[1] : null;
+     })(location.href.match(/^https?:\/\/scikit-learn.org\/([^\/]+)/));
   </script>
   <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
 
