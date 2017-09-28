@@ -594,7 +594,6 @@ def test_invariance_string_vs_numbers_labels():
                                        "invariance test".format(name))
 
     for name, metric in THRESHOLDED_METRICS.items():
-
         if name not in METRIC_UNDEFINED_BINARY:
             # Ugly, but handle case with a pos_label and label
             metric_str = metric
