@@ -152,7 +152,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                  max_features=None,
                  max_leaf_nodes=None,  # this parameter is not active
                  random_state=None,
-                 min_impurity_split=1e-7):
+                 min_impurity_split=1e-7,
+                 min_impurity_decrease=0.0):
         super(RegressionTree, self).__init__(
             criterion=criterion,
             splitter=splitter,
@@ -163,6 +164,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
             max_features=max_features,
             max_leaf_nodes=None,
             random_state=random_state,
+            min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
             presort=True)
 

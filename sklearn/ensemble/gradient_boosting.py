@@ -29,6 +29,7 @@ from abc import abstractmethod
 from .base import BaseEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
+from ..base import clone
 from ..externals import six
 
 from ._gradient_boosting import predict_stages
@@ -727,7 +728,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto',
                  validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-4):
+                 tol=1e-4, estimator=None):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -751,6 +752,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
+        self.estimator = estimator
 
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
                    random_state, X_idx_sorted, X_csc=None, X_csr=None):
@@ -768,19 +770,34 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                               sample_weight=sample_weight)
 
             # induce regression tree on residuals
-            tree = DecisionTreeRegressor(
-                criterion=self.criterion,
-                splitter='best',
-                max_depth=self.max_depth,
-                min_samples_split=self.min_samples_split,
-                min_samples_leaf=self.min_samples_leaf,
-                min_weight_fraction_leaf=self.min_weight_fraction_leaf,
-                min_impurity_decrease=self.min_impurity_decrease,
-                min_impurity_split=self.min_impurity_split,
-                max_features=self.max_features,
-                max_leaf_nodes=self.max_leaf_nodes,
-                random_state=random_state,
-                presort=self.presort)
+            if self.estimator is None:
+                tree = DecisionTreeRegressor(
+                    criterion=self.criterion,
+                    splitter='best',
+                    max_depth=self.max_depth,
+                    min_samples_split=self.min_samples_split,
+                    min_samples_leaf=self.min_samples_leaf,
+                    min_weight_fraction_leaf=self.min_weight_fraction_leaf,
+                    min_impurity_decrease=self.min_impurity_decrease,
+                    min_impurity_split=self.min_impurity_split,
+                    max_features=self.max_features,
+                    max_leaf_nodes=self.max_leaf_nodes,
+                    random_state=random_state,
+                    presort=self.presort)
+            else:
+                tree = clone(self.estimator)
+                tree.set_params(
+                    criterion=self.criterion,
+                    splitter='best',
+                    max_depth=self.max_depth,
+                    min_samples_split=self.min_samples_split,
+                    min_samples_leaf=self.min_samples_leaf,
+                    min_weight_fraction_leaf=self.min_weight_fraction_leaf,
+                    min_impurity_decrease=self.min_impurity_decrease,
+                    min_impurity_split=self.min_impurity_split,
+                    max_features=self.max_features,
+                    max_leaf_nodes=self.max_leaf_nodes,
+                    random_state=random_state)
 
             if self.subsample < 1.0:
                 # no inplace multiplication!
@@ -1527,7 +1544,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
                  presort='auto', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4):
+                 n_iter_no_change=None, tol=1e-4, estimator=None):
 
         super(GradientBoostingClassifier, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1542,7 +1559,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             min_impurity_split=min_impurity_split,
             warm_start=warm_start, presort=presort,
             validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol)
+            n_iter_no_change=n_iter_no_change, tol=tol, estimator=estimator)
 
     def _validate_y(self, y):
         check_classification_targets(y)
@@ -1970,7 +1987,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4):
+                 n_iter_no_change=None, tol=1e-4, estimator=None):
 
         super(GradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1984,7 +2001,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             presort=presort, validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol)
+            n_iter_no_change=n_iter_no_change, tol=tol, estimator=estimator)
 
     def predict(self, X):
         """Predict regression target for X.
