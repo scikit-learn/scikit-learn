@@ -41,6 +41,8 @@ heading = 'Available documentation for Scikit-learn'
 print(heading)
 print('=' * len(heading))
 print()
+print('Web-based documentation is available for versions listed below:')
+print()
 
 ROOT_URL = 'https://api.github.com/repos/scikit-learn/scikit-learn.github.io/contents/'  # noqa
 RAW_FMT = 'https://raw.githubusercontent.com/scikit-learn/scikit-learn.github.io/master/%s/documentation.html'  # noqa
