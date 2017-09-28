@@ -86,9 +86,9 @@ for name in (sorted(word_names) +
         seen.add(version_num)
     name_display = '' if name[:1].isdigit() else ' (%s)' % name
     path = 'http://scikit-learn.org/%s' % name
-    out = ('* `Scikit-learn %s%s documentation <%s/documentation.html>`'
+    out = ('* `Scikit-learn %s%s documentation <%s/documentation.html>`_'
            % (version_num, name_display, path))
     if pdf_size is not None:
-        out += (' (`PDF %s <%s/_downloads/scikit-learn-docs.pdf>`)'
+        out += (' (`PDF %s <%s/_downloads/scikit-learn-docs.pdf>`_)'
                 % (pdf_size, path))
     print(out)
