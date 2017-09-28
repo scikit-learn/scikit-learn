@@ -337,8 +337,21 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
             min_weight_leaf = (self.min_weight_fraction_leaf *
                                np.sum(sample_weight))
 
-        if self.min_impurity_split < 0.:
+        if self.min_impurity_split is not None:
+            warnings.warn("The min_impurity_split parameter is deprecated and"
+                          " will be removed in version 0.21. "
+                          "Use the min_impurity_decrease parameter instead.",
+                          DeprecationWarning)
+            min_impurity_split = self.min_impurity_split
+        else:
+            min_impurity_split = 1e-7
+
+        if min_impurity_split < 0.:
             raise ValueError("min_impurity_split must be greater than "
+                             "or equal to 0")
+
+        if self.min_impurity_decrease < 0.:
+            raise ValueError("min_impurity_decrease must be greater than "
                              "or equal to 0")
 
         # FIXME: to have cython buffer compatibility
