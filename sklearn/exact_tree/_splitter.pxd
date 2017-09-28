@@ -28,11 +28,11 @@ cdef struct Splitter:
     SplitRecord best_split_record
     StatsNode stats_sample
     int min_samples_leaf
-    double min_weight_leaf
+    float min_weight_leaf
 
 
 cdef:
-    double FEATURE_THRESHOLD = 1e-7
+    float FEATURE_THRESHOLD = 1e-7
     int TREE_UNDEFINED = -2
     int FEAT_UNKNOWN = -3
 
@@ -46,7 +46,7 @@ cdef inline void splitter_set_nid(Splitter* splitter, int nid):
 cdef void splitter_init(Splitter* splitter,
                         int feature_idx, int start_idx,
                         SplitRecord* split_record,
-                        int min_samples_leaf, double min_weight_leaf)
+                        int min_samples_leaf, float min_weight_leaf)
 
 
 cdef inline void splitter_reset(Splitter* splitter,
@@ -83,16 +83,16 @@ cdef void splitter_copy_to(Splitter* src_splitter,
                            Splitter* dst_splitter)
 
 
-cdef inline void splitter_update_stats(Splitter* splitter, double[::1] y,
-                                       double[::1] sample_weight,
+cdef inline void splitter_update_stats(Splitter* splitter, float[::1] y,
+                                       float[::1] sample_weight,
                                        int sample_idx):
     cdef:
-        double y_sample_idx = y[sample_idx]
-        double sample_weight_sample_idx = sample_weight[sample_idx]
-        double sum_y = (y_sample_idx * sample_weight_sample_idx)
-        double sum_sq_y = sum_y * y_sample_idx
+        float y_sample_idx = y[sample_idx]
+        float sample_weight_sample_idx = sample_weight[sample_idx]
+        float sum_y = (y_sample_idx * sample_weight_sample_idx)
+        float sum_sq_y = sum_y * y_sample_idx
         int n_samples = 1
-        double sum_weighted_samples = sample_weight_sample_idx
+        float sum_weighted_samples = sample_weight_sample_idx
 
     stats_node_reset(&splitter[0].stats_sample, sum_y, sum_sq_y,
                      n_samples, sum_weighted_samples)
@@ -104,15 +104,15 @@ cdef inline void splitter_update_stats(Splitter* splitter, double[::1] y,
 
 cdef inline void splitter_node_evaluate_split(Splitter* splitter,
                                               float[:, ::1] X,
-                                              double[::1] y,
-                                              double[::1] sample_weight,
-                                              double sum_total_weighted_samples,
+                                              float[::1] y,
+                                              float[::1] sample_weight,
+                                              float sum_total_weighted_samples,
                                               int sample_idx):
     cdef:
         int feat_i = splitter[0].feature_idx
         float X_curr = X[sample_idx, feat_i]
         # FIXME: not sure this is useful to access
-        double diff_samples = (X_curr - splitter[0].X_prev)
+        float diff_samples = (X_curr - splitter[0].X_prev)
         bint b_samples_var = (diff_samples > FEATURE_THRESHOLD or
                               diff_samples < -FEATURE_THRESHOLD)
         # bint b_samples_var = 1
@@ -124,13 +124,13 @@ cdef inline void splitter_node_evaluate_split(Splitter* splitter,
             splitter[0].split_record.r_stats.n_samples <
             min_samples_leaf)
 
-        double min_weight_leaf = splitter[0].min_weight_leaf
+        float min_weight_leaf = splitter[0].min_weight_leaf
         bint b_weight_samples = not(
             splitter[0].split_record.l_stats.sum_weighted_samples <
             min_weight_leaf or
             splitter[0].split_record.r_stats.sum_weighted_samples <
             min_weight_leaf)
-        double current_impurity_improvement = -INFINITY
+        float current_impurity_improvement = -INFINITY
     if b_samples_var and b_n_samples and b_weight_samples:
         current_impurity_improvement = proxy_impurity_improvement(
             # &splitter[0].split_record.c_stats,

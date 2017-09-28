@@ -85,8 +85,8 @@ cdef class TreeBuilder:
     """Interface for different tree building strategies."""
 
     cpdef build(self, Tree tree, float [:, ::1] X, int[::1, :] X_idx_sorted,
-                double[::1] y, double[::1] sample_weight,
-                double sum_total_weighted_samples):
+                float[::1] y, float[::1] sample_weight,
+                float sum_total_weighted_samples):
         """Build a decision tree from the training set (X, y)."""
         pass
 

@@ -34,8 +34,8 @@ cdef:
     bint TREE_NOT_LEAF = 0
 
 
-cdef void weighted_sum_y(double[::1] y, double[::1] sample_weight,
-                         double* p_sum_y, double* p_sum_sq_y):
+cdef void weighted_sum_y(float[::1] y, float[::1] sample_weight,
+                         float* p_sum_y, float* p_sum_sq_y):
     cdef int i
     p_sum_y[0] = 0.0
     p_sum_sq_y[0] = 0.0
@@ -47,8 +47,8 @@ cdef void weighted_sum_y(double[::1] y, double[::1] sample_weight,
 cdef class ExactTreeBuilder(TreeBuilder):
 
     def __cinit__(self, int min_samples_split,
-                  int min_samples_leaf, double min_weight_leaf,
-                  double min_impurity_split,
+                  int min_samples_leaf, float min_weight_leaf,
+                  float min_impurity_split,
                   int max_depth, int max_features):
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -58,8 +58,8 @@ cdef class ExactTreeBuilder(TreeBuilder):
         self.max_features = max_features
 
     cpdef build(self, Tree tree, float[:, ::1] X, int[::1, :] X_idx_sorted,
-                double[::1] y, double[::1] sample_weight,
-                double sum_total_weighted_samples):
+                float[::1] y, float[::1] sample_weight,
+                float sum_total_weighted_samples):
 
         # FIXME: don't set the random state here
         # rng = check_random_state(0)
@@ -99,10 +99,10 @@ cdef class ExactTreeBuilder(TreeBuilder):
 
         # compute the stats for the root node
         cdef:
-            double root_sum_y = 0.0
-            double root_sum_sq_y = 0.0
+            float root_sum_y = 0.0
+            float root_sum_sq_y = 0.0
             int root_n_samples = n_samples
-            double root_sum_weighted_samples = sum_total_weighted_samples
+            float root_sum_weighted_samples = sum_total_weighted_samples
         weighted_sum_y(y, sample_weight, &root_sum_y, &root_sum_sq_y)
         # init a stats_node and split_record which will be used to create
         # the splitter
@@ -163,7 +163,7 @@ cdef class ExactTreeBuilder(TreeBuilder):
             bint b_samples_leaf
             int X_idx_init
             float X_init
-            double threshold
+            float threshold
 
         #######################################################################
         # Tree growing

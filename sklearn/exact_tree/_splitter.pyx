@@ -8,7 +8,7 @@ from ._stats_node cimport stats_node_copy_to
 cdef void splitter_init(Splitter* splitter,
                         int feature_idx, int start_idx,
                         SplitRecord* split_record,
-                        int min_samples_leaf, double min_weight_leaf):
+                        int min_samples_leaf, float min_weight_leaf):
     splitter[0].feature_idx = feature_idx
     splitter[0].start_idx = start_idx
     splitter[0].prev_idx = start_idx

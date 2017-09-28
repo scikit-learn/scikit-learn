@@ -1,7 +1,7 @@
 cdef void split_record_reset(SplitRecord* split_record, int feature,
-                                    int pos, double threshold,
-                                    double impurity,
-                                    double impurity_improvement, int nid,
+                                    int pos, float threshold,
+                                    float impurity,
+                                    float impurity_improvement, int nid,
                                     StatsNode* c_stats, StatsNode* l_stats,
                                     StatsNode* r_stats):
     split_record[0].feature = feature

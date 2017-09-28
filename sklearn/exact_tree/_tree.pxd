@@ -216,8 +216,8 @@ cdef class TreeBuilder:
     # cdef double min_impurity_split  # Impurity threshold for early stopping
 
     cpdef build(self, Tree tree, float[:, ::1] X, int[::1, :] X_idx_sorted,
-                double[::1] y, double[::1] sample_weight,
-                double sum_total_weighted_samples)
+                float[::1] y, float[::1] sample_weight,
+                float sum_total_weighted_samples)
     # cpdef build(self, Tree tree, object X, np.ndarray y,
     #             np.ndarray sample_weight=*,
     #             np.ndarray X_idx_sorted=*)

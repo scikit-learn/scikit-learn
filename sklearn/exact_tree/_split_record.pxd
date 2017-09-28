@@ -10,9 +10,9 @@ from ._criterion cimport _impurity_mse
 cdef struct SplitRecord:
     int feature
     int pos
-    double threshold
-    double impurity
-    double impurity_improvement
+    float threshold
+    float impurity
+    float impurity_improvement
     int nid
     StatsNode c_stats
     StatsNode l_stats
@@ -20,9 +20,9 @@ cdef struct SplitRecord:
 
 
 cdef void split_record_reset(SplitRecord* split_record, int feature,
-                             int pos, double threshold,
-                             double impurity,
-                             double impurity_improvement, int nid,
+                             int pos, float threshold,
+                             float impurity,
+                             float impurity_improvement, int nid,
                              StatsNode* c_stats, StatsNode* l_stats,
                              StatsNode* r_stats)
 

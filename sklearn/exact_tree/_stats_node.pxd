@@ -1,13 +1,13 @@
 cdef struct StatsNode:
-    double sum_y
-    double sum_sq_y
+    float sum_y
+    float sum_sq_y
     int n_samples
-    double sum_weighted_samples
+    float sum_weighted_samples
 
 
 cdef inline void stats_node_reset(StatsNode* stats_node,
-                                  double sum_y, double sum_sq_y, int n_samples,
-                                  double sum_weighted_samples):
+                                  float sum_y, float sum_sq_y, int n_samples,
+                                  float sum_weighted_samples):
     stats_node[0].sum_y = sum_y
     stats_node[0].sum_sq_y = sum_sq_y
     stats_node[0].n_samples = n_samples

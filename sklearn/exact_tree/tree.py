@@ -205,7 +205,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
         if check_input:
             # FIXME do not accept sparse data for the moment
             X, y = check_X_y(X, y)
-            X = check_array(X, dtype=DTYPE)
+            X = check_array(X, dtype=np.float32)
             y = check_array(y, ensure_2d=False, dtype=None)
 
         # Determine output settings
@@ -226,8 +226,8 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
 
         self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
 
-        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
+        if getattr(y, "dtype", None) != np.float32 or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=np.float32)
 
         # Check parameters
         max_depth = ((2 ** 31) - 1 if self.max_depth is None
@@ -307,10 +307,10 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
                               "0 or larger than 1").format(max_leaf_nodes))
 
         if sample_weight is not None:
-            if (getattr(sample_weight, "dtype", None) != DOUBLE or
+            if (getattr(sample_weight, "dtype", None) != np.float32 or
                     not sample_weight.flags.contiguous):
                 sample_weight = np.ascontiguousarray(
-                    sample_weight, dtype=DOUBLE)
+                    sample_weight, dtype=np.float32)
             if len(sample_weight.shape) > 1:
                 raise ValueError("Sample weights array has more "
                                  "than one dimension: %d" %
