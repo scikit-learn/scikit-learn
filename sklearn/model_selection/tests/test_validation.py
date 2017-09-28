@@ -779,7 +779,7 @@ def test_cross_val_predict():
 
 
 def test_cross_val_predict_decision_function_shape():
-    X, y = make_classification(n_classes=2, n_samples=50)
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     preds = cross_val_predict(LogisticRegression(), X, y,
                               method='decision_function')
@@ -811,15 +811,15 @@ def test_cross_val_predict_decision_function_shape():
 
     ind = np.argsort(y)
     X, y = X[ind], y[ind]
-    assert_raise_message(ValueError,
-                         'Output shape (-1, 21) of decision_function '
-                         'does not match number of classes (7) in fold. '
-                         'Cannot reconcile different number of '
-                         'classes in different folds. To fix this, '
-                         'use a cross-validation technique resulting '
-                         'in properly stratified folds.',
-                         cross_val_predict, est, X, y,
-                         cv=KFold(), method='decision_function')
+    assert_raises_regex(ValueError,
+                        'Output shape \(599L?, 21L?\) of decision_function '
+                        'does not match number of classes \(7\) in fold\. '
+                        'Cannot reconcile different number of '
+                        'classes in different folds\. To fix this, '
+                        'use a cross-validation technique resulting '
+                        'in properly stratified folds\.',
+                        cross_val_predict, est, X, y,
+                        cv=KFold(), method='decision_function')
 
 
 def test_cross_val_predict_predict_proba_shape():

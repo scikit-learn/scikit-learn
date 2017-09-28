@@ -734,13 +734,13 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
                 # does not match the number of classes used to train
                 # it with. This case is found when sklearn.svm.SVC is
                 # set to `decision_function_shape='ovo'`.
-                raise ValueError('Output shape (-1, {}) of {} does not '
+                raise ValueError('Output shape {} of {} does not '
                                  'match number of classes ({}) in fold. '
                                  'Cannot reconcile different number of '
                                  'classes in different folds. To fix this, '
                                  'use a cross-validation technique '
                                  'resulting in properly stratified '
-                                 'folds.'.format(predictions.shape[1], method,
+                                 'folds.'.format(predictions.shape, method,
                                                  len(estimator.classes_)))
             predictions_ = np.zeros((_num_samples(X_test), n_classes))
             if method == 'decision_function' and len(estimator.classes_) <= 2:
