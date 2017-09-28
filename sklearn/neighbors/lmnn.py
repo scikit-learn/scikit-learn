@@ -569,6 +569,13 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         transformation = transformation.reshape(-1, n_features)
         self.transformation_ = transformation
 
+        if self.n_iter_ == 0 and self.verbose:
+            self.n_iter_ += 1
+            header_fields = ['Iteration', 'Objective Value', 'Time(s)']
+            header_fmt = '{:>10} {:>20} {:>10}'
+            header = header_fmt.format(*header_fields)
+            print('\n{}\n{}'.format(header, '-' * len(header)))
+
         t_start = time.time()
         X_embedded = self._transform(X, check_input=False)
 
@@ -609,13 +616,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         t = time.time() - t_start
         if self.verbose:
-            if self.n_iter_ == 0:
-                self.n_iter_ += 1
-                header_fields = ['Iteration', 'Objective Value', 'Time(s)']
-                header_fmt = '{:>10} {:>20} {:>10}'
-                header = header_fmt.format(*header_fields)
-                print('\n{}\n{}'.format(header, '-' * len(header)))
-
             values_fmt = '{:>10} {:>20.6e} {:>10.2f}'
             print(values_fmt.format(self.n_iter_, loss, t))
             sys.stdout.flush()
@@ -866,19 +866,19 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
     X_b_norm_squared = row_norms(X_b, squared=True)[np.newaxis, :]
     for chunk in gen_batches(n_samples_a, block_n_rows):
         # from sklearn.metrics.pairwise import euclidean_distances
-        # dist_out_in = euclidean_distances(X_a[chunk], X_b, squared=True,
-        #                                   Y_norm_squared=X_b_norm_squared)
+        # distances_ab = euclidean_distances(X_a[chunk], X_b, squared=True,
+        #                                    Y_norm_squared=X_b_norm_squared)
         # check_input in every chunk would add an extra ~8% time of computation
 
         X_a_chunk = X_a[chunk]
         X_a_norm_squared = row_norms(X_a_chunk, squared=True)[:, np.newaxis]
-        distances_ba = safe_sparse_dot(X_a_chunk, X_b.T, dense_output=True)
-        distances_ba *= -2
-        distances_ba += X_a_norm_squared
-        distances_ba += X_b_norm_squared
+        distances_ab = safe_sparse_dot(X_a_chunk, X_b.T, dense_output=True)
+        distances_ab *= -2
+        distances_ab += X_a_norm_squared
+        distances_ab += X_b_norm_squared
 
-        ind_a, = np.where((distances_ba < radii_a[chunk, None]).ravel())
-        ind_b, = np.where((distances_ba < radii_b[None, :]).ravel())
+        ind_b, = np.where((distances_ab < radii_a[chunk, None]).ravel())
+        ind_a, = np.where((distances_ab < radii_b[None, :]).ravel())
         ind = np.unique(np.concatenate((ind_a, ind_b)))
 
         if len(ind):
@@ -890,8 +890,8 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
 
             if return_distance:
                 # This np.maximum would add another ~8% time of computation
-                np.maximum(distances_ba, 0, out=distances_ba)
-                distances_chunk = distances_ba.ravel()[ind]
+                np.maximum(distances_ab, 0, out=distances_ab)
+                distances_chunk = distances_ab.ravel()[ind]
                 try:
                     imp_distances.extend(distances_chunk)
                 except TypeError:
