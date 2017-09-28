@@ -28,7 +28,8 @@ from sklearn.utils.testing import assert_greater_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import raises
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.validation import check_random_state
@@ -39,7 +40,6 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
-from sklearn.regression_tree import RegressionTree
 
 from sklearn import tree
 from sklearn.tree._tree import TREE_LEAF
@@ -63,8 +63,7 @@ REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
     "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
                                              presort=True),
-    "ExtraTreeRegressor": ExtraTreeRegressor,
-    "RegressionTree": RegressionTree,
+    "ExtraTreeRegressor": ExtraTreeRegressor
 }
 
 ALL_TREES = dict()
@@ -364,7 +363,7 @@ def test_numerical_stability():
 
 def test_importances():
     # Check variable importances.
-    X, y = datasets.make_classification(n_samples=2000,
+    X, y = datasets.make_classification(n_samples=5000,
                                         n_features=10,
                                         n_informative=3,
                                         n_redundant=0,
@@ -393,11 +392,10 @@ def test_importances():
                        clf2.feature_importances_)
 
 
-@raises(ValueError)
 def test_importances_raises():
     # Check if variable importance before fit raises ValueError.
     clf = DecisionTreeClassifier()
-    clf.feature_importances_
+    assert_raises(ValueError, getattr, clf, 'feature_importances_')
 
 
 def test_importances_gini_equal_mse():
@@ -526,6 +524,8 @@ def test_error():
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_impurity_split=-1.0).fit,
                       X, y)
+        assert_raises(ValueError,
+                      TreeEstimator(min_impurity_decrease=-1.0).fit, X, y)
 
         # Wrong dimensions
         est = TreeEstimator()
@@ -799,27 +799,33 @@ def test_min_impurity_split():
         # impurity 1e-7
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             random_state=0)
-        assert_less_equal(est.min_impurity_split, 1e-7,
-                     "Failed, min_impurity_split = {0} > 1e-7".format(
-                         est.min_impurity_split))
-        est.fit(X, y)
+        assert_true(est.min_impurity_split is None,
+                    "Failed, min_impurity_split = {0} > 1e-7".format(
+                        est.min_impurity_split))
+        try:
+            assert_warns(DeprecationWarning, est.fit, X, y)
+        except AssertionError:
+            pass
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or
-                est.tree_.children_right[node] == TREE_LEAF):
+                    est.tree_.children_right[node] == TREE_LEAF):
                 assert_equal(est.tree_.impurity[node], 0.,
                              "Failed with {0} "
                              "min_impurity_split={1}".format(
                                  est.tree_.impurity[node],
                                  est.min_impurity_split))
 
-        # verify leaf nodes have impurity [0,min_impurity_split] when using min_impurity_split
+        # verify leaf nodes have impurity [0,min_impurity_split] when using
+        # min_impurity_split
         est = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
                             min_impurity_split=min_impurity_split,
                             random_state=0)
-        est.fit(X, y)
+        assert_warns_message(DeprecationWarning,
+                             "Use the min_impurity_decrease",
+                             est.fit, X, y)
         for node in range(est.tree_.node_count):
             if (est.tree_.children_left[node] == TREE_LEAF or
-                est.tree_.children_right[node] == TREE_LEAF):
+                    est.tree_.children_right[node] == TREE_LEAF):
                 assert_greater_equal(est.tree_.impurity[node], 0,
                                      "Failed with {0}, "
                                      "min_impurity_split={1}".format(
@@ -832,7 +838,66 @@ def test_min_impurity_split():
                                       est.min_impurity_split))
 
 
-def test_pickle():
+def test_min_impurity_decrease():
+    # test if min_impurity_decrease ensure that a split is made only if
+    # if the impurity decrease is atleast that value
+    X, y = datasets.make_classification(n_samples=10000, random_state=42)
+
+    # test both DepthFirstTreeBuilder and BestFirstTreeBuilder
+    # by setting max_leaf_nodes
+    for max_leaf_nodes, name in product((None, 1000), ALL_TREES.keys()):
+        TreeEstimator = ALL_TREES[name]
+
+        # Check default value of min_impurity_decrease, 1e-7
+        est1 = TreeEstimator(max_leaf_nodes=max_leaf_nodes, random_state=0)
+        # Check with explicit value of 0.05
+        est2 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
+                             min_impurity_decrease=0.05, random_state=0)
+        # Check with a much lower value of 0.0001
+        est3 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
+                             min_impurity_decrease=0.0001, random_state=0)
+        # Check with a much lower value of 0.1
+        est4 = TreeEstimator(max_leaf_nodes=max_leaf_nodes,
+                             min_impurity_decrease=0.1, random_state=0)
+
+        for est, expected_decrease in ((est1, 1e-7), (est2, 0.05),
+                                       (est3, 0.0001), (est4, 0.1)):
+            assert_less_equal(est.min_impurity_decrease, expected_decrease,
+                              "Failed, min_impurity_decrease = {0} > {1}"
+                              .format(est.min_impurity_decrease,
+                                      expected_decrease))
+            est.fit(X, y)
+            for node in range(est.tree_.node_count):
+                # If current node is a not leaf node, check if the split was
+                # justified w.r.t the min_impurity_decrease
+                if est.tree_.children_left[node] != TREE_LEAF:
+                    imp_parent = est.tree_.impurity[node]
+                    wtd_n_node = est.tree_.weighted_n_node_samples[node]
+
+                    left = est.tree_.children_left[node]
+                    wtd_n_left = est.tree_.weighted_n_node_samples[left]
+                    imp_left = est.tree_.impurity[left]
+                    wtd_imp_left = wtd_n_left * imp_left
+
+                    right = est.tree_.children_right[node]
+                    wtd_n_right = est.tree_.weighted_n_node_samples[right]
+                    imp_right = est.tree_.impurity[right]
+                    wtd_imp_right = wtd_n_right * imp_right
+
+                    wtd_avg_left_right_imp = wtd_imp_right + wtd_imp_left
+                    wtd_avg_left_right_imp /= wtd_n_node
+
+                    fractional_node_weight = (
+                        est.tree_.weighted_n_node_samples[node] / X.shape[0])
+
+                    actual_decrease = fractional_node_weight * (
+                        imp_parent - wtd_avg_left_right_imp)
+
+                    assert_greater_equal(actual_decrease, expected_decrease,
+                                         "Failed with {0} "
+                                         "expected min_impurity_decrease={1}"
+                                         .format(actual_decrease,
+                                                 expected_decrease))
 
     for name, TreeEstimator in ALL_TREES.items():
         if "Classifier" in name:
@@ -912,11 +977,10 @@ def test_multioutput():
 
     # toy regression problem
     for name, TreeRegressor in REG_TREES.items():
-        if name != 'RegressionTree':
-            reg = TreeRegressor(random_state=0)
-            y_hat = reg.fit(X, y).predict(T)
-            assert_almost_equal(y_hat, y_true)
-            assert_equal(y_hat.shape, (4, 2))
+        reg = TreeRegressor(random_state=0)
+        y_hat = reg.fit(X, y).predict(T)
+        assert_almost_equal(y_hat, y_true)
+        assert_equal(y_hat.shape, (4, 2))
 
 
 def test_classes_shape():
@@ -1144,19 +1208,17 @@ def test_max_leaf_nodes():
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
-        # RegressionTree does not have max_leaf_nodes option for the moment
-        if name != 'RegressionTree':
-            est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
-            tree = est.tree_
-            assert_equal((tree.children_left == TREE_LEAF).sum(), k + 1)
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
+        tree = est.tree_
+        assert_equal((tree.children_left == TREE_LEAF).sum(), k + 1)
 
-            # max_leaf_nodes in (0, 1) should raise ValueError
-            est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
-            assert_raises(ValueError, est.fit, X, y)
-            est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
-            assert_raises(ValueError, est.fit, X, y)
-            est = TreeEstimator(max_depth=None, max_leaf_nodes=0.1)
-            assert_raises(ValueError, est.fit, X, y)
+        # max_leaf_nodes in (0, 1) should raise ValueError
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
+        assert_raises(ValueError, est.fit, X, y)
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
+        assert_raises(ValueError, est.fit, X, y)
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=0.1)
+        assert_raises(ValueError, est.fit, X, y)
 
 
 def test_max_leaf_nodes_max_depth():
@@ -1164,11 +1226,9 @@ def test_max_leaf_nodes_max_depth():
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
-        # RegressionTree does not have max_leaf_nodes option for the moment
-        if name != 'RegressionTree':
-            est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
-            tree = est.tree_
-            assert_greater(tree.max_depth, 1)
+        est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
+        tree = est.tree_
+        assert_greater(tree.max_depth, 1)
 
 
 def test_arrays_persist():
@@ -1192,20 +1252,17 @@ def test_only_constant_features():
         assert_equal(est.tree_.max_depth, 0)
 
 
-def test_with_constant_features_after_split():
-    X = np.transpose([[0, 0, 0, 0, 0, 1, 2, 4, 5, 6, 7]])
+def test_behaviour_constant_feature_after_splits():
+    X = np.transpose(np.vstack(([[0, 0, 0, 0, 0, 1, 2, 4, 5, 6, 7]],
+                               np.zeros((4, 11)))))
     y = [0, 0, 0, 1, 1, 2, 2, 2, 3, 3, 3]
-    for name, TreeEstimator in CLF_TREES.items():
-        est = TreeEstimator(random_state=0, max_features=1)
-        est.fit(X, y)
-        assert_equal(est.tree_.max_depth, 2)
-        assert_equal(est.tree_.node_count, 5)
-
-    for name, TreeEstimator in REG_TREES.items():
-        est = TreeEstimator(random_state=0, max_features=1)
-        est.fit(X, y)
-        assert_equal(est.tree_.max_depth, 2)
-        assert_equal(est.tree_.node_count, 5)
+    for name, TreeEstimator in ALL_TREES.items():
+        # do not check extra random trees
+        if "ExtraTree" not in name:
+            est = TreeEstimator(random_state=0, max_features=1)
+            est.fit(X, y)
+            assert_equal(est.tree_.max_depth, 2)
+            assert_equal(est.tree_.node_count, 5)
 
 
 def test_with_only_one_non_constant_features():
@@ -1614,8 +1671,7 @@ def check_no_sparse_y_support(name):
 def test_no_sparse_y_support():
     # Currently we don't support sparse y
     for name in ALL_TREES:
-        if name != 'RegressionTree':
-            yield (check_no_sparse_y_support, name)
+        yield (check_no_sparse_y_support, name)
 
 
 def test_mae():
@@ -1623,11 +1679,12 @@ def test_mae():
     # on small toy dataset
     dt_mae = DecisionTreeRegressor(random_state=0, criterion="mae",
                                    max_leaf_nodes=2)
-    dt_mae.fit([[3],[5],[3],[8],[5]],[6,7,3,4,3])
+    dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3])
     assert_array_equal(dt_mae.tree_.impurity, [1.4, 1.5, 4.0/3.0])
     assert_array_equal(dt_mae.tree_.value.flat, [4, 4.5, 4.0])
 
-    dt_mae.fit([[3],[5],[3],[8],[5]],[6,7,3,4,3], [0.6,0.3,0.1,1.0,0.3])
+    dt_mae.fit([[3], [5], [3], [8], [5]], [6, 7, 3, 4, 3],
+               [0.6, 0.3, 0.1, 1.0, 0.3])
     assert_array_equal(dt_mae.tree_.impurity, [7.0/2.3, 3.0/0.7, 4.0/1.6])
     assert_array_equal(dt_mae.tree_.value.flat, [4.0, 6.0, 4.0])
 

@@ -41,7 +41,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
 from sklearn.externals.six.moves import html_parser
-from sklearn.externals.six.moves import urllib
+from sklearn.externals.six.moves.urllib.request import urlretrieve
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model import SGDClassifier
@@ -172,8 +172,8 @@ def stream_reuters_documents(data_path=None):
                       end='')
 
         archive_path = os.path.join(data_path, ARCHIVE_FILENAME)
-        urllib.request.urlretrieve(DOWNLOAD_URL, filename=archive_path,
-                                   reporthook=progress)
+        urlretrieve(DOWNLOAD_URL, filename=archive_path,
+                    reporthook=progress)
         if _not_in_sphinx():
             print('\r', end='')
         print("untarring Reuters dataset...")
@@ -194,7 +194,7 @@ def stream_reuters_documents(data_path=None):
 # maximum
 
 vectorizer = HashingVectorizer(decode_error='ignore', n_features=2 ** 18,
-                               non_negative=True)
+                               alternate_sign=False)
 
 
 # Iterator over parsed Reuters SGML files.

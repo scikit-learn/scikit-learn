@@ -324,7 +324,8 @@ The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We shall see their use in the section on grid search, below.
 We can now train the model with a single command::
 
-  >>> text_clf = text_clf.fit(twenty_train.data, twenty_train.target)
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  Pipeline(...)
 
 
 Evaluation of the performance on the test set
@@ -351,9 +352,11 @@ classifier object into our pipeline::
   >>> text_clf = Pipeline([('vect', CountVectorizer()),
   ...                      ('tfidf', TfidfTransformer()),
   ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                                            alpha=1e-3, n_iter=5, random_state=42)),
+  ...                                            alpha=1e-3, random_state=42,
+  ...                                            max_iter=5, tol=None)),
   ... ])
-  >>> _ = text_clf.fit(twenty_train.data, twenty_train.target)
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
   0.912...
@@ -492,7 +495,7 @@ Refine the implementation and iterate until the exercise is solved.
 
 **For each exercise, the skeleton file provides all the necessary import
 statements, boilerplate code to load the data and sample code to evaluate
-the predictive accurracy of the model.**
+the predictive accuracy of the model.**
 
 
 Exercise 1: Language identification

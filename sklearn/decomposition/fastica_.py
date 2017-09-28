@@ -8,15 +8,17 @@ Independent Component Analysis, by  Hyvarinen et al.
 # Authors: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
 #          Bertrand Thirion, Alexandre Gramfort, Denis A. Engemann
 # License: BSD 3 clause
+
 import warnings
+
 import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six import moves
+from ..externals.six import string_types
 from ..utils import check_array, as_float_array, check_random_state
-from ..utils.extmath import fast_dot
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 
@@ -74,7 +76,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
         w /= np.sqrt((w ** 2).sum())
 
         for i in moves.xrange(max_iter):
-            gwtx, g_wtx = g(fast_dot(w.T, X), fun_args)
+            gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
 
             w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
 
@@ -103,12 +105,12 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     del w_init
     p_ = float(X.shape[1])
     for ii in moves.xrange(max_iter):
-        gwtx, g_wtx = g(fast_dot(W, X), fun_args)
-        W1 = _sym_decorrelation(fast_dot(gwtx, X.T) / p_
+        gwtx, g_wtx = g(np.dot(W, X), fun_args)
+        W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
                                 - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
-        lim = max(abs(abs(np.diag(fast_dot(W1, W.T))) - 1))
+        lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
         W = W1
         if lim < tol:
             break
@@ -199,8 +201,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     return_X_mean : bool, optional
         If True, X_mean is returned too.
@@ -262,7 +267,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     fun_args = {} if fun_args is None else fun_args
     # make interface compatible with other decompositions
     # a copy is required only for non whitened data
-    X = check_array(X, copy=whiten, dtype=FLOAT_DTYPES).T
+    X = check_array(X, copy=whiten, dtype=FLOAT_DTYPES,
+                    ensure_min_samples=2).T
 
     alpha = fun_args.get('alpha', 1.0)
     if not 1 <= alpha <= 2:
@@ -342,7 +348,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     if whiten:
         if compute_sources:
-            S = fast_dot(fast_dot(W, K), X).T
+            S = np.dot(np.dot(W, K), X).T
         else:
             S = None
         if return_X_mean:
@@ -358,7 +364,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     else:
         if compute_sources:
-            S = fast_dot(W, X).T
+            S = np.dot(W, X).T
         else:
             S = None
         if return_X_mean:
@@ -415,8 +421,11 @@ class FastICA(BaseEstimator, TransformerMixin):
     w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -501,6 +510,8 @@ class FastICA(BaseEstimator, TransformerMixin):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
@@ -516,6 +527,8 @@ class FastICA(BaseEstimator, TransformerMixin):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         self
@@ -523,7 +536,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         self._fit(X, compute_sources=False)
         return self
 
-    def transform(self, X, y=None, copy=True):
+    def transform(self, X, y='deprecated', copy=True):
         """Recover the sources from X (apply the unmixing matrix).
 
         Parameters
@@ -531,7 +544,9 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Data to transform, where n_samples is the number of samples
             and n_features is the number of features.
-
+        y : (ignored)
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
         copy : bool (optional)
             If False, data passed to fit are overwritten. Defaults to True.
 
@@ -539,13 +554,18 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+        if not isinstance(y, string_types) or y != 'deprecated':
+            warnings.warn("The parameter y on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21",
+                          DeprecationWarning)
+
         check_is_fitted(self, 'mixing_')
 
         X = check_array(X, copy=copy, dtype=FLOAT_DTYPES)
         if self.whiten:
             X -= self.mean_
 
-        return fast_dot(X, self.components_.T)
+        return np.dot(X, self.components_.T)
 
     def inverse_transform(self, X, copy=True):
         """Transform the sources back to the mixed data (apply mixing matrix).
@@ -565,7 +585,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'mixing_')
 
         X = check_array(X, copy=(copy and self.whiten), dtype=FLOAT_DTYPES)
-        X = fast_dot(X, self.mixing_.T)
+        X = np.dot(X, self.mixing_.T)
         if self.whiten:
             X += self.mean_
 

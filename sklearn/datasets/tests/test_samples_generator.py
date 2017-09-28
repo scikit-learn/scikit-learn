@@ -50,6 +50,17 @@ def test_make_classification():
     assert_equal(sum(y == 1), 25, "Unexpected number of samples in class #1")
     assert_equal(sum(y == 2), 65, "Unexpected number of samples in class #2")
 
+    # Test for n_features > 30
+    X, y = make_classification(n_samples=2000, n_features=31, n_informative=31,
+                               n_redundant=0, n_repeated=0, hypercube=True,
+                               scale=0.5, random_state=0)
+
+    assert_equal(X.shape, (2000, 31), "X shape mismatch")
+    assert_equal(y.shape, (2000,), "y shape mismatch")
+    assert_equal(np.unique(X.view([('', X.dtype)]*X.shape[1])).view(X.dtype)
+                 .reshape(-1, X.shape[1]).shape[0], 2000,
+                 "Unexpected number of unique rows")
+
 
 def test_make_classification_informative_features():
     """Test the construction of informative features in make_classification
@@ -160,7 +171,7 @@ def test_make_multilabel_classification_return_indicator():
         n_samples=25, n_features=20, n_classes=3, random_state=0,
         allow_unlabeled=allow_unlabeled, return_distributions=True)
 
-    assert_array_equal(X, X2)
+    assert_array_almost_equal(X, X2)
     assert_array_equal(Y, Y2)
     assert_equal(p_c.shape, (3,))
     assert_almost_equal(p_c.sum(), 1)
@@ -360,7 +371,7 @@ def test_make_checkerboard():
                                  shuffle=True, random_state=0)
     X2, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
                                  shuffle=True, random_state=0)
-    assert_array_equal(X1, X2)
+    assert_array_almost_equal(X1, X2)
 
 
 def test_make_moons():

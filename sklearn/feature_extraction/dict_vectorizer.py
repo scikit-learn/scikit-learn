@@ -13,7 +13,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils import check_array, tosequence
-from ..utils.fixes import frombuffer_empty
 
 
 def _tosequence(X):
@@ -183,7 +182,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         if len(indptr) == 1:
             raise ValueError("Sample sequence X is empty.")
 
-        indices = frombuffer_empty(indices, dtype=np.intc)
+        indices = np.frombuffer(indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
         shape = (len(indptr) - 1, len(vocab))
 
@@ -271,7 +270,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
         return dicts
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Transform feature->value dicts to array or sparse matrix.
 
         Named features not encountered during fit or fit_transform will be
@@ -282,7 +281,6 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         X : Mapping or iterable over Mappings, length = n_samples
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
-        y : (ignored)
 
         Returns
         -------
