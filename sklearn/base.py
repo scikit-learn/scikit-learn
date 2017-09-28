@@ -596,4 +596,3 @@ def is_pairwise_metric(estimator):
     metric = getattr(estimator,  "metric", None)
 
     return  metric == 'precomputed' and is_pairwise(estimator)
-
