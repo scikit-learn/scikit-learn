@@ -244,7 +244,9 @@ def test_preserve_trustworthiness_approximately():
                         method=method)
             X_embedded = tsne.fit_transform(X)
             t = trustworthiness(X, X_embedded, n_neighbors=1)
-            assert_greater(t, 0.9)
+            assert_greater(t, 0.85, msg='Trustworthiness={:0.3f} < 0.85 '
+                                        'for method={} and '
+                                        'init={}'.format(t, method, init))
 
 
 def test_optimization_minimizes_kl_divergence():
@@ -293,14 +295,14 @@ def test_early_exaggeration_too_small():
     # Early exaggeration factor must be >= 1.
     tsne = TSNE(early_exaggeration=0.99)
     assert_raises_regexp(ValueError, "early_exaggeration .*",
-                         tsne.fit_transform, np.array([[0.0]]))
+                         tsne.fit_transform, np.array([[0.0], [0.0]]))
 
 
 def test_too_few_iterations():
     # Number of gradient descent iterations must be at least 200.
     tsne = TSNE(n_iter=199)
     assert_raises_regexp(ValueError, "n_iter .*", tsne.fit_transform,
-                         np.array([[0.0]]))
+                         np.array([[0.0], [0.0]]))
 
 
 def test_non_square_precomputed_distances():

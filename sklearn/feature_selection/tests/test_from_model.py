@@ -40,7 +40,6 @@ def test_input_estimator_unchanged():
     assert_true(transformer.estimator is est)
 
 
-@skip_if_32bit
 def test_feature_importances():
     X, y = datasets.make_classification(
         n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
@@ -59,28 +58,44 @@ def test_feature_importances():
         feature_mask = np.abs(importances) > func(importances)
         assert_array_almost_equal(X_new, X[:, feature_mask])
 
+
+def test_sample_weight():
+    # Ensure sample weights are passed to underlying estimator
+    X, y = datasets.make_classification(
+        n_samples=100, n_features=10, n_informative=3, n_redundant=0,
+        n_repeated=0, shuffle=False, random_state=0)
+
     # Check with sample weights
     sample_weight = np.ones(y.shape)
     sample_weight[y == 1] *= 100
 
-    est = RandomForestClassifier(n_estimators=50, random_state=0)
+    est = LogisticRegression(random_state=0, fit_intercept=False)
     transformer = SelectFromModel(estimator=est)
+    transformer.fit(X, y, sample_weight=None)
+    mask = transformer._get_support_mask()
     transformer.fit(X, y, sample_weight=sample_weight)
-    importances = transformer.estimator_.feature_importances_
+    weighted_mask = transformer._get_support_mask()
+    assert not np.all(weighted_mask == mask)
     transformer.fit(X, y, sample_weight=3 * sample_weight)
-    importances_bis = transformer.estimator_.feature_importances_
-    assert_almost_equal(importances, importances_bis)
+    reweighted_mask = transformer._get_support_mask()
+    assert np.all(weighted_mask == reweighted_mask)
+
+
+def test_coef_default_threshold():
+    X, y = datasets.make_classification(
+        n_samples=100, n_features=10, n_informative=3, n_redundant=0,
+        n_repeated=0, shuffle=False, random_state=0)
 
     # For the Lasso and related models, the threshold defaults to 1e-5
     transformer = SelectFromModel(estimator=Lasso(alpha=0.1))
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
-    assert_array_equal(X_new, X[:, mask])
+    assert_array_almost_equal(X_new, X[:, mask])
 
 
 @skip_if_32bit
-def test_feature_importances_2d_coef():
+def test_2d_coef():
     X, y = datasets.make_classification(
         n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
         n_repeated=0, shuffle=False, random_state=0, n_classes=4)
@@ -101,7 +116,7 @@ def test_feature_importances_2d_coef():
             est.fit(X, y)
             importances = np.linalg.norm(est.coef_, axis=0, ord=order)
             feature_mask = importances > func(importances)
-            assert_array_equal(X_new, X[:, feature_mask])
+            assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
 def test_partial_fit():
@@ -118,7 +133,7 @@ def test_partial_fit():
 
     X_transform = transformer.transform(data)
     transformer.fit(np.vstack((data, data)), np.concatenate((y, y)))
-    assert_array_equal(X_transform, transformer.transform(data))
+    assert_array_almost_equal(X_transform, transformer.transform(data))
 
     # check that if est doesn't have partial_fit, neither does SelectFromModel
     transformer = SelectFromModel(estimator=RandomForestClassifier())
@@ -146,13 +161,13 @@ def test_prefit():
     X_transform = model.transform(data)
     clf.fit(data, y)
     model = SelectFromModel(clf, prefit=True)
-    assert_array_equal(model.transform(data), X_transform)
+    assert_array_almost_equal(model.transform(data), X_transform)
 
     # Check that the model is rewritten if prefit=False and a fitted model is
     # passed
     model = SelectFromModel(clf, prefit=False)
     model.fit(data, y)
-    assert_array_equal(model.transform(data), X_transform)
+    assert_array_almost_equal(model.transform(data), X_transform)
 
     # Check that prefit=True and calling fit raises a ValueError
     model = SelectFromModel(clf, prefit=True)
@@ -169,7 +184,7 @@ def test_threshold_string():
     est.fit(data, y)
     threshold = 0.5 * np.mean(est.feature_importances_)
     mask = est.feature_importances_ > threshold
-    assert_array_equal(X_transform, data[:, mask])
+    assert_array_almost_equal(X_transform, data[:, mask])
 
 
 def test_threshold_without_refitting():
