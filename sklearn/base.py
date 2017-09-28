@@ -578,3 +578,23 @@ def is_pairwise(estimator):
         True if _pairwise is set to True and False otherwise.
     """
     return bool(getattr(estimator, "_pairwise", False))
+
+
+def is_pairwise_metric(estimator):
+    """Returns True if estimator has a _pairwise attribute set to True.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if _pairwise is set to True and False otherwise.
+    """
+    metric = getattr(estimator,  "metric", None)
+    precomputed_metric = metric == 'precomputed'
+    pairwise = is_pairwise(estimator)
+
+    return precomputed_metric and pairwise

@@ -264,9 +264,9 @@ def test_check_estimator_pairwise():
     check_estimator(est)
 
 
-def test_check_estimator_metric_and_kernel():
+def test_check_estimator_pairwise_metric():
     # check that check_estimator works for estimator that is based on
     # a metric as well as a kernel
 
-    est = KNeighborsRegressor()
+    est = KNeighborsRegressor(metric='precomputed')
     check_estimator(est)

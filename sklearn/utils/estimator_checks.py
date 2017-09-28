@@ -37,9 +37,10 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 from sklearn.base import (clone, TransformerMixin, ClusterMixin,
                           BaseEstimator, is_classifier, is_regressor,
-                          is_pairwise)
+                          is_pairwise, is_pairwise_metric)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
+from sklearn.covariance import LedoitWolf
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
@@ -50,6 +51,7 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
 from sklearn.metrics.pairwise import rbf_kernel, linear_kernel
+from sklearn.metrics.pairwise import pairwise_distances
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
@@ -358,8 +360,13 @@ def _is_32bit():
 
 
 def gram_matrix_if_pairwise(X, estimator, kernel=linear_kernel):
+
+    if is_pairwise_metric(estimator):
+        return pairwise_distances(X, metric='mahalanobis')
+
     if is_pairwise(estimator):
         return kernel(X, X)
+
     return X
 
 
@@ -1332,7 +1339,7 @@ def check_classifiers_classes(name, classifier_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_regressors_int(name, regressor_orig):
     X, _ = _boston_subset()
-    X = X[:50]
+    X = gram_matrix_if_pairwise(X[:50], regressor_orig)
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
     y = multioutput_estimator_convert_y_2d(regressor_orig, y)
@@ -1360,6 +1367,7 @@ def check_regressors_int(name, regressor_orig):
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_regressors_train(name, regressor_orig):
     X, y = _boston_subset()
+    X = gram_matrix_if_pairwise(X, regressor_orig)
     y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
     y = y.ravel()
     regressor = clone(regressor_orig)
