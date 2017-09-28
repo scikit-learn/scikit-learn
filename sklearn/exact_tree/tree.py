@@ -5,6 +5,7 @@ gradient-boosting regression trees.
 from __future__ import division, print_function
 
 import numbers
+import warnings
 
 from math import ceil
 
