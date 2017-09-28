@@ -48,8 +48,10 @@ from scipy.special import expit
 from time import time
 from ..model_selection import train_test_split
 from ..tree.tree import DecisionTreeRegressor
-from ..tree._tree import DTYPE
-from ..tree._tree import TREE_LEAF
+# from ..tree._tree import DTYPE
+# from ..tree._tree import TREE_LEAF
+DTYPE = np.float32
+TREE_LEAF = -1
 
 from ..utils import check_random_state
 from ..utils import check_array

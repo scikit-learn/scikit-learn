@@ -18,12 +18,12 @@ np.import_array()
 from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 
-from sklearn.tree._tree cimport Node
-from sklearn.tree._tree cimport Tree
+from sklearn.exact_tree._tree cimport Node
+from sklearn.exact_tree._tree cimport Tree
 from sklearn.tree._tree cimport DTYPE_t
 from sklearn.tree._tree cimport SIZE_t
 from sklearn.tree._tree cimport INT32_t
-from sklearn.tree._utils cimport safe_realloc
+from sklearn.exact_tree._utils cimport safe_realloc
 
 ctypedef np.int32_t int32
 ctypedef np.float64_t float64
