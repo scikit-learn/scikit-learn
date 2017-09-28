@@ -361,6 +361,9 @@ def _is_32bit():
 
 def gram_matrix_if_pairwise(X, estimator, kernel=linear_kernel):
 
+    if len(X.shape) ==  1:
+        X = X.reshape(-1, 1)
+
     if is_pairwise_metric(estimator):
         return pairwise_distances(X, metric='mahalanobis')
 
