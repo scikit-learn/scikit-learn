@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -435,6 +436,13 @@ def test_auc_tol():
     y = [1.0, 2.0, 3.0, 3.0]
     assert_raises(ValueError, auc, x2, y, tol=0)
     assert_almost_equal(auc(x1, y, tol=0), auc(x2, y, tol=1e-8))
+
+
+def test_deprecated_auc_reorder():
+    depr_message = ("The `reorder` parameter has been deprecated "
+                    "in version 0.20 and will be removed in 0.22.")
+    assert_warns_message(DeprecationWarning, depr_message, auc,
+                         [1, 2], [2, 3], reorder=True)
 
 
 def test_auc_score_non_binary_class():

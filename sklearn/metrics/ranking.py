@@ -36,7 +36,7 @@ from ..preprocessing import LabelBinarizer
 from .base import _average_binary_score
 
 
-def auc(x, y, reorder=False, tol=0):
+def auc(x, y, reorder=None, tol=0):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     This is a general function, given points on a curve.  For computing the
@@ -47,12 +47,18 @@ def auc(x, y, reorder=False, tol=0):
     Parameters
     ----------
     x : array, shape = [n]
-        x coordinates.
+        Increasing or decreasing x coordinates.
     y : array, shape = [n]
         y coordinates.
     reorder : boolean, optional (default=False)
         If True, assume that the curve is ascending in the case of ties, as for
         an ROC curve. If the curve is non-ascending, the result will be wrong.
+
+        ..deprecated:: 0.20
+          Parameter ``reorder`` has been deprecated in version 0.20 and will
+          be removed in 0.22. Future (and default) behavior is equivalent to
+          `reorder=False`.
+
     tol : float, optional (default=0)
         Tolerance allowed when checking whether x is increasing.
         Ignored when ``reorder=True``.
@@ -86,6 +92,11 @@ def auc(x, y, reorder=False, tol=0):
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
 
+    if reorder is not None:
+        warnings.warn("The `reorder` parameter has been deprecated "
+                      "in version 0.20 and will be removed in 0.22.",
+                      DeprecationWarning)
+
     direction = 1
     if reorder:
         # reorder the data points according to the x axis and using y to
@@ -98,8 +109,11 @@ def auc(x, y, reorder=False, tol=0):
             if np.all(dx <= abs(tol)):
                 direction = -1
             else:
-                raise ValueError("Reordering is not turned on, and "
-                                 "the x array is not increasing: %s" % x)
+                raise ValueError("Reordering is not turned on, and the x "
+                                 "array is neither increasing nor decreasing"
+                                 " : {}. np.diff(x) contains {} positive "
+                                 "values and {} negative values."
+                                 .format(x, (dx > 0).sum(), (dx < 0).sum()))
 
     area = direction * np.trapz(y, x)
     if isinstance(area, np.memmap):
