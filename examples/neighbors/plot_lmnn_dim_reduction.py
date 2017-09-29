@@ -34,60 +34,51 @@ X_train, X_test, y_train, y_test = \
 
 dim = len(X[0])
 n_classes = len(np.unique(y))
-cmap_bold = None
 
 # Put the result into a color plot
 fig = plt.figure(figsize=(15, 5))
 
 # Reduce dimension to 2 with PCA
 pca = PCA(n_components=2, random_state=random_state)
-X_pca = pca.fit_transform(np.concatenate((X_train, X_test)))
-
-# Compute nearest neighbor accuracy after PCA
-knn = KNeighborsClassifier(n_neighbors=n_neighbors)
-knn.fit(X_pca[:len(X_train)], y_train)
-acc_pca = knn.score(X_pca[len(X_train):], y_test)
-
-# Plot the points after transformation with PCA
-fig.add_subplot(131)
-plt.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap=cmap_bold)
-plt.title("PCA ({}-nn test acc.= {:5.2f}%)".format(n_neighbors, acc_pca * 100))
-
 
 # Reduce dimension to 2 with LinearDiscriminantAnalysis
 lda = LinearDiscriminantAnalysis(n_components=2)
-lda = lda.fit(X_train, y_train)
-LX = lda.transform(X)
-
-# Compute nearest neighbor accuracy after LinearDiscriminantAnalysis
-knn.fit(lda.transform(X_train), y_train)
-acc_lda = knn.score(lda.transform(X_test), y_test)
-
-# Plot the points after transformation with LinearDiscriminantAnalysis
-fig.add_subplot(132)
-plt.scatter(LX[:, 0], LX[:, 1], c=y, cmap=cmap_bold)
-plt.title("LDA ({}-nn test acc.= {:5.2f}%)".format(n_neighbors, acc_lda * 100))
-
 
 # Reduce dimension to 2 with LargeMarginNearestNeighbor
 lmnn = LargeMarginNearestNeighbor(n_neighbors=n_neighbors, n_features_out=2,
                                   max_iter=30, verbose=1,
                                   random_state=random_state)
-lmnn = lmnn.fit(X_train, y_train)
-LX = lmnn.transform(X)
 
-# Compute nearest neighbor accuracy after LargeMarginNearestNeighbor
-knn.fit(lmnn.transform(X_train), y_train)
-acc_lmnn = knn.score(lmnn.transform(X_test), y_test)
+# Use a nearest neighbor classifier to evaluate the methods
+knn = KNeighborsClassifier(n_neighbors=n_neighbors)
 
-# Plot the points after transformation with LargeMarginNearestNeighbor
-fig.add_subplot(133)
-plt.scatter(LX[:, 0], LX[:, 1], c=y, cmap=cmap_bold)
-plt.title("LMNN ({}-nn test acc.= {:5.2f}%)".format(n_neighbors,
-                                                    acc_lmnn * 100))
+# Make a list of the methods to be compared
+dim_reduction_methods = [('PCA', pca), ('LDA', lda), ('LMNN', lmnn)]
+
+for i, (name, method) in enumerate(dim_reduction_methods):
+    n_subplot = i + 1
+
+    # Fit the method's model
+    method.fit(X_train, y_train)
+
+    # Fit a nearest neighbor classifier on the embedded training set
+    knn.fit(method.transform(X_train), y_train)
+
+    # Compute the nearest neighbor accuracy on the embedded test set
+    acc_knn = knn.score(method.transform(X_test), y_test)
+
+    # Embed the data set in 2 dimensions using the method
+    X_embedded = method.transform(X)
+
+    # Plot the embedding and show the evaluation score
+    ax = fig.add_subplot(1, len(dim_reduction_methods), n_subplot)
+    ax.scatter(X_embedded[:, 0], X_embedded[:, 1], c=y)
+    ax.set_title("{}, KNN (k={})".format(name, n_neighbors))
+    ax.text(0.9, 0.1, '{:.2f}'.format(acc_knn), size=15,
+            ha='center', va='center', transform=ax.transAxes)
 
 plt.suptitle('Dimensionality Reduction \n({} dimensions, {} classes)'.format(
-    dim, n_classes), fontweight='bold', fontsize=14)
+    dim, n_classes), fontweight='bold', fontsize=16)
 
 plt.subplots_adjust(top=0.8)
 plt.show()
