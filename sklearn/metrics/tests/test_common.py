@@ -198,12 +198,6 @@ METRIC_UNDEFINED_BINARY = [
     "samples_recall_score",
     "coverage_error",
 
-    "roc_auc_score",
-    "micro_roc_auc",
-    "weighted_roc_auc",
-    "macro_roc_auc",
-    "samples_roc_auc",
-
     "average_precision_score",
     "weighted_average_precision_score",
     "micro_average_precision_score",
@@ -217,6 +211,12 @@ METRIC_UNDEFINED_BINARY = [
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = [
     "brier_score_loss",
+
+    "roc_auc_score",
+    "micro_roc_auc",
+    "weighted_roc_auc",
+    "macro_roc_auc",
+    "samples_roc_auc",
 
     # with default average='binary', multiclass is prohibited
     "precision_score",
