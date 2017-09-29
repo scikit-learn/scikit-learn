@@ -571,8 +571,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         if self.n_iter_ == 0 and self.verbose:
             self.n_iter_ += 1
-            header_fields = ['Iteration', 'Objective Value', 'Time(s)']
-            header_fmt = '{:>10} {:>20} {:>10}'
+            header_fields = ['Iteration', 'Objective Value', '#Constraints',
+                                                             'Time(s)']
+            header_fmt = '{:>10} {:>20} {:>15} {:>10}'
             header = header_fmt.format(*header_fields)
             print('\n{}\n{}'.format(header, '-' * len(header)))
 
@@ -587,20 +588,22 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                       squared=True) + 1
 
         # Find the impostors and compute (squared) distances to them
-        margin_radii = dist_tn[:, -1] + 1
         imp_row, imp_col, dist_imp = \
-            self._find_impostors(X_embedded, y, margin_radii, use_sparse)
+            self._find_impostors(X_embedded, y, dist_tn[:, -1], use_sparse)
 
         loss = 0
         shape = (n_samples, n_samples)
         A0 = csr_matrix(shape)
+        n_constraints = 0
         for k in range(n_neighbors-1, -1, -1):
             loss1 = np.maximum(dist_tn[imp_row, k] - dist_imp, 0)
             ac, = np.where(loss1 > 0)
+            n_constraints += len(ac)
             A1 = csr_matrix((2*loss1[ac], (imp_row[ac], imp_col[ac])), shape)
 
             loss2 = np.maximum(dist_tn[imp_col, k] - dist_imp, 0)
             ac, = np.where(loss2 > 0)
+            n_constraints += len(ac)
             A2 = csc_matrix((2*loss2[ac], (imp_row[ac], imp_col[ac])), shape)
 
             values = (A1.sum(1).ravel() + A2.sum(0)).getA1()
@@ -616,8 +619,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         t = time.time() - t_start
         if self.verbose:
-            values_fmt = '{:>10} {:>20.6e} {:>10.2f}'
-            print(values_fmt.format(self.n_iter_, loss, t))
+            values_fmt = '{:>10} {:>20.6e} {:>15,} {:>10.2f}'
+            print(values_fmt.format(self.n_iter_, loss, n_constraints, t))
             sys.stdout.flush()
 
         return loss, grad.ravel()
