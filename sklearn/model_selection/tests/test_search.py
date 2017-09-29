@@ -334,7 +334,7 @@ def test_grid_search_groups():
 
 
 def test_future_warnings():
-    # Test that warnings are raised. Will be removed in 0.22
+    # Test that warnings are raised. Will be removed in 0.21
 
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
@@ -343,10 +343,10 @@ def test_future_warnings():
 
     estimators = [GridSearchCV(LinearSVC(random_state=0), grid),
                   RandomizedSearchCV(LinearSVC(random_state=0), grid)]
-    msg = ("Computing training scores can slow down the grid search"
+    msg = ("Computing training scores can slow down the grid search "
            "significantly. This is the reason return_train_score will "
            "change its default value from True (current behaviour) to "
-           "False in 0.22. Please set explicitly return_train_score to "
+           "False in 0.21. Please set explicitly return_train_score to "
            "get rid of this warning.")
     for estimator in estimators:
         search_with_warn = estimator.set_params(return_train_score="warn")

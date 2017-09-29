@@ -192,7 +192,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         warnings.warn("Computing training scores can slow down the grid "
                       "search significantly. This is the reason "
                       "return_train_score will change its default value "
-                      "from True (current behaviour) to False in 0.22. "
+                      "from True (current behaviour) to False in 0.21. "
                       "Please set explicitly return_train_score to get "
                       "rid of this warning.", FutureWarning)
 

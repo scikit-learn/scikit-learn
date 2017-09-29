@@ -382,7 +382,7 @@ def test_cross_validate():
 
 
 def test_cross_validate_future_warnings():
-    # Test that warnings are raised. Will be removed in 0.22
+    # Test that warnings are raised. Will be removed in 0.21
 
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
@@ -392,10 +392,10 @@ def test_cross_validate_future_warnings():
                                     return_train_score=return_train_score)
         return cv_results
 
-    msg = ("Computing training scores can slow down the grid search"
+    msg = ("Computing training scores can slow down the grid search "
            "significantly. This is the reason return_train_score will "
            "change its default value from True (current behaviour) to "
-           "False in 0.22. Please set explicitly return_train_score to "
+           "False in 0.21. Please set explicitly return_train_score to "
            "get rid of this warning.")
     assert_warns_message(FutureWarning, msg, init, estimator, X, y, "warn")
     assert_true("train_score" in init(estimator, X, y, "warn"))
