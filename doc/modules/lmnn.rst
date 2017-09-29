@@ -15,17 +15,37 @@ Large Margin Nearest Neighbor (LMNN, :class:`LargeMarginNearestNeighbor`) is a d
    :align: center
    :scale: 80%
 
+
+.. |illustration_1| image:: .
+./auto_examples/neighbors/images/sphx_glr_plot_lmnn_illustration_001.png
+   :target: ../auto_examples/neighbors/plot_lmnn_classification.html
+   :scale: 50
+
+.. |illustration_2| image:: .
+./auto_examples/neighbors/images/sphx_glr_plot_lmnn_illustration_002.png
+   :target: ../auto_examples/neighbors/plot_lmnn_classification.html
+   :scale: 50
+
+.. centered:: |illustration_1| |illustration_2|
+
+
 For each training sample, the algorithm fixes :math:`k` "target neighbors", namely the :math:`k`-nearest training samples (as measured by the Euclidean distance) that share the same label. Given these target neighbors, LMNN learns a linear transformation of the data by optimizing a trade-off between two goals. The first one is to make each (transformed) point closer to its target neighbors than to any differently-labeled point by a large margin, thereby enclosing the target neighbors in a sphere around the reference sample. Data samples from different classes that violate this margin are called "impostors". The second goal is to minimize the distances of each sample to its target neighbors, which can be seen as some sort of regularization.
 
 Combined with a nearest neighbors classifier (:class:`KNeighborsClassifier`), this method is attractive for classification because it can naturally handle multi-class problems without any increase in the model size, and only a single parameter (``n_neighbors``) has to be selected by the user before training.
 
 Large Margin Nearest Neighbor classification has been shown to work well in practice for data sets of varying size and difficulty. In contrast to related methods such as LDA, LMNN does not make any assumptions about the class distributions. The nearest neighbor classification can naturally produce highly irregular decision boundaries.
 
-
-.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_classification_001.png
+.. |classification_1| image:: .
+./auto_examples/neighbors/images/sphx_glr_plot_lmnn_classification_001.png
    :target: ../auto_examples/neighbors/plot_lmnn_classification.html
-   :align: center
-   :scale: 80%
+   :scale: 50
+
+.. |classification_2| image:: .
+./auto_examples/neighbors/images/sphx_glr_plot_lmnn_classification_002.png
+   :target: ../auto_examples/neighbors/plot_lmnn_classification.html
+   :scale: 50
+
+.. centered:: |classification_1| |classification_2|
 
 
 The plot shows decision boundaries for nearest neighbor classification and large margin nearest neighbor classification.
@@ -37,10 +57,19 @@ Dimensionality reduction
 :class:`LargeMarginNearestNeighbor` can be used to perform supervised dimensionality reduction. The input data are projected onto a linear subspace consisting of the directions which minimize the LMNN objective. The desired dimensionality can be set using the parameter ``n_features_out``.
 For instance, the following shows a comparison of dimensionality reduction with :class:`PCA`, :class:`LinearDiscriminantAnalysis` and :class:`LargeMarginNearestNeighbor` on the Olivetti dataset, a dataset with size :math:`n_{samples} = 400` and :math:`n_{features} = 64 \times 64 = 4096`. The data set is splitted in a training and test set of equal size. For evaluation the 3-nearest neighbor classification accuracy is computed on the 2-dimensional embedding found by each method.
 
-.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_001.png
+.. |dim_reduction_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_001.png
    :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :align: center
-   :scale: 80%
+   :scale: 30
+
+.. |dim_reduction_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_002.png
+   :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
+   :scale: 30
+
+.. |dim_reduction_3| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_003.png
+   :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
+   :scale: 30
+
+.. centered:: |dim_reduction_1| |dim_reduction_2| |dim_reduction_3|
 
 
 Mathematical formulation
@@ -101,7 +130,7 @@ See the examples below and the doc string of :meth:`LargeMarginNearestNeighbor.f
 .. topic:: References:
 
    * `"Distance Metric Learning for Large Margin Nearest Neighbor Classification",
-     <http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf>`_,
+     <http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf>`_
      Weinberger, Kilian Q., and Lawrence K. Saul, Journal of Machine Learning Research, Vol. 10, Feb. 2009, pp. 207-244.
 
    * `Wikipedia entry on Large Margin Nearest Neighbor

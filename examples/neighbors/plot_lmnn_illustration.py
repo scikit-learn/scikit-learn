@@ -28,17 +28,15 @@ X, y = make_classification(9, n_features=2, n_informative=2, n_redundant=0,
 
 X *= 6  # Spread out the data so that a margin of 1 is visible
 
-# Put the result into a color plot
-fig = plt.figure(figsize=(15, 6))
-
 # Find the target neighbors
 tn = _select_target_neighbors(X, y, n_neighbors)
 
 # Plot the points in the original space
-ax = fig.add_subplot(121)
+plt.figure()
+ax = plt.gca()
 
 # Draw the graph nodes
-ax.scatter(X[:, 0], X[:, 1], s=300, c=y, alpha=0.4)
+plt.scatter(X[:, 0], X[:, 1], s=300, c=y, alpha=0.4)
 for point_id in range(len(X)):
     ax.text(X[point_id, 0], X[point_id, 1], str(point_id), va='center',
             ha='center')
@@ -99,7 +97,8 @@ lmnn = LargeMarginNearestNeighbor(n_neighbors=n_neighbors, max_iter=30,
 lmnn = lmnn.fit(X, y)
 
 # Plot the points after transformation with LargeMarginNearestNeighbor
-ax2 = fig.add_subplot(122)
+plt.figure()
+ax2 = plt.gca()
 
 # Get the embedding and find the new nearest neighbors
 X_embedded = lmnn.transform(X)
@@ -126,5 +125,4 @@ plt.axis('equal')
 
 ax2.set_title("LMNN embedding")
 
-plt.suptitle('Large Margin Nearest Neighbor', fontweight='bold', fontsize=16)
 plt.show()

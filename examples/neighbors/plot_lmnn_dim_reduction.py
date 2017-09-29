@@ -35,9 +35,6 @@ X_train, X_test, y_train, y_test = \
 dim = len(X[0])
 n_classes = len(np.unique(y))
 
-# Put the result into a color plot
-fig = plt.figure(figsize=(15, 5))
-
 # Reduce dimension to 2 with PCA
 pca = PCA(n_components=2, random_state=random_state)
 
@@ -46,7 +43,7 @@ lda = LinearDiscriminantAnalysis(n_components=2)
 
 # Reduce dimension to 2 with LargeMarginNearestNeighbor
 lmnn = LargeMarginNearestNeighbor(n_neighbors=n_neighbors, n_features_out=2,
-                                  max_iter=30, verbose=1,
+                                  max_iter=20, verbose=1,
                                   random_state=random_state)
 
 # Use a nearest neighbor classifier to evaluate the methods
@@ -56,7 +53,7 @@ knn = KNeighborsClassifier(n_neighbors=n_neighbors)
 dim_reduction_methods = [('PCA', pca), ('LDA', lda), ('LMNN', lmnn)]
 
 for i, (name, method) in enumerate(dim_reduction_methods):
-    n_subplot = i + 1
+    plt.figure()
 
     # Fit the method's model
     method.fit(X_train, y_train)
@@ -71,14 +68,9 @@ for i, (name, method) in enumerate(dim_reduction_methods):
     X_embedded = method.transform(X)
 
     # Plot the embedding and show the evaluation score
-    ax = fig.add_subplot(1, len(dim_reduction_methods), n_subplot)
-    ax.scatter(X_embedded[:, 0], X_embedded[:, 1], c=y)
-    ax.set_title("{}, KNN (k={})".format(name, n_neighbors))
-    ax.text(0.9, 0.1, '{:.2f}'.format(acc_knn), size=15,
-            ha='center', va='center', transform=ax.transAxes)
+    plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=y)
+    plt.title("{}, KNN (k={})".format(name, n_neighbors))
+    plt.text(0.9, 0.1, '{:.2f}'.format(acc_knn), size=15,
+             ha='center', va='center', transform=plt.gca().transAxes)
 
-plt.suptitle('Dimensionality Reduction \n({} dimensions, {} classes)'.format(
-    dim, n_classes), fontweight='bold', fontsize=16)
-
-plt.subplots_adjust(top=0.8)
 plt.show()
