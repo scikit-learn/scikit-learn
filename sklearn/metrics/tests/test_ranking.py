@@ -429,6 +429,14 @@ def test_auc_errors():
     assert_raises(ValueError, auc, [1.0, 0.0, 0.5], [0.0, 0.0, 0.0])
 
 
+def test_auc_tol():
+    x1 = [1.0, 1.0, 3.0, 4.0]
+    x2 = [1.0 + 1e-10, 1.0 - 1e-10, 3.0, 4.0]
+    y = [1.0, 2.0, 3.0, 3.0]
+    assert_raises(ValueError, auc, x2, y, tol=0)
+    assert_almost_equal(auc(x1, y, tol=0), auc(x2, y, tol=1e-8))
+
+
 def test_auc_score_non_binary_class():
     # Test that roc_auc_score function returns an error when trying
     # to compute AUC for non-binary class values.
