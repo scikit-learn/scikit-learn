@@ -118,9 +118,14 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return_train_score : boolean, optional
         Whether to include train scores in the return dict if ``scoring`` is
         of multimetric type.
-        Current default is ``'warn'``, which behaves as ``False`` in addition
+        Current default is ``'warn'``, which behaves as ``True`` in addition
         to raising a warning. That default will be changed to ``False``
-        in 0.22.
+        in 0.21.
+        Computing training scores is used to get insights on how different
+        parameter settings impact the overfitting/underfitting trade-off.
+        However computing the scores on the training set can be computationally
+        expensive and is not strictly required evaluate the generalization
+        performance.
 
     Returns
     -------
@@ -184,8 +189,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
     """
     if return_train_score == "warn":
-        warnings.warn("Computing training scores may affect "
-                      "performance significantly. This is the reason "
+        warnings.warn("Computing training scores can slow down the grid "
+                      "search significantly. This is the reason "
                       "return_train_score will change its default value "
                       "from True (current behaviour) to False in 0.22. "
                       "Please set explicitly return_train_score to get "
@@ -1009,7 +1014,7 @@ def learning_curve(estimator, X, y, groups=None,
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``shuffle`` == True.
+        by `np.random`. Used when ``shuffle`` is True.
 
     Returns
     -------

@@ -588,8 +588,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 fit_params = self.fit_params
         if self.return_train_score == "warn":
-            warnings.warn("Computing training scores may affect "
-                          "performance significantly. This is the reason "
+            warnings.warn("Computing training scores can slow down the grid"
+                          "search significantly. This is the reason "
                           "return_train_score will change its default value "
                           "from True (current behaviour) to False in 0.22. "
                           "Please set explicitly return_train_score to get "
@@ -1213,9 +1213,14 @@ class RandomizedSearchCV(BaseSearchCV):
     return_train_score : boolean, optional
         Current default is ``'warn'``, which behaves as ``True`` in addition
         to raising a warning. That default will be changed to ``False``
-        in 0.22.
+        in 0.21.
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
+        Computing training scores is used to get insights on how different
+        parameter settings impact the overfitting/underfitting trade-off.
+        However computing the scores on the training set can be computationally
+        expensive and is not strictly required to select the parameters that
+        yield the best generalization performance.
 
     Attributes
     ----------
