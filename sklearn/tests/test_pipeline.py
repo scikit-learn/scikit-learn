@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -67,12 +68,12 @@ class NoTrans(NoFit):
 
 
 class NoInvTransf(NoTrans):
-    def transform(self, X, y=None):
+    def transform(self, X):
         return X
 
 
 class Transf(NoInvTransf):
-    def transform(self, X, y=None):
+    def transform(self, X):
         return X
 
     def inverse_transform(self, X):
@@ -187,7 +188,7 @@ def test_pipeline_init():
     assert_raises(ValueError, pipe.set_params, anova__C=0.1)
 
     # Test clone
-    pipe2 = clone(pipe)
+    pipe2 = assert_no_warnings(clone, pipe)
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
     # Check that apart from estimators, the parameters are the same
@@ -206,6 +207,18 @@ def test_pipeline_init():
     params2.pop('svc')
     params2.pop('anova')
     assert_equal(params, params2)
+
+
+def test_pipeline_init_tuple():
+    # Pipeline accepts steps as tuple
+    X = np.array([[1, 2]])
+    pipe = Pipeline((('transf', Transf()), ('clf', FitParamT())))
+    pipe.fit(X, y=None)
+    pipe.score(X)
+
+    pipe.set_params(transf=None)
+    pipe.fit(X, y=None)
+    pipe.score(X)
 
 
 def test_pipeline_methods_anova():
@@ -409,6 +422,10 @@ def test_feature_union():
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
 
+    # Test clone
+    fs2 = assert_no_warnings(clone, fs)
+    assert_false(fs.transformer_list[0][1] is fs2.transformer_list[0][1])
+
     # test setting parameters
     fs.set_params(select__k=2)
     assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
@@ -424,6 +441,10 @@ def test_feature_union():
                         'transform.*\\bNoTrans\\b',
                         FeatureUnion,
                         [("transform", Transf()), ("no_transform", NoTrans())])
+
+    # test that init accepts tuples
+    fs = FeatureUnion((("svd", svd), ("select", select)))
+    fs.fit(X, y)
 
 
 def test_make_union():
@@ -852,9 +873,33 @@ def test_pipeline_wrong_memory():
     memory = 1
     cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
                            memory=memory)
-    assert_raises_regex(ValueError, "'memory' should either be a string or a"
-                        " sklearn.externals.joblib.Memory instance, got",
-                        cached_pipe.fit, X, y)
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.externals.joblib.Memory."
+                        " Got memory='1' instead.", cached_pipe.fit, X, y)
+
+
+class DummyMemory(object):
+    def cache(self, func):
+        return func
+
+
+class WrongDummyMemory(object):
+    pass
+
+
+def test_pipeline_with_cache_attribute():
+    X = np.array([[1, 2]])
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
+                    memory=DummyMemory())
+    pipe.fit(X, y=None)
+    dummy = WrongDummyMemory()
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
+                    memory=dummy)
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.externals.joblib.Memory."
+                        " Got memory='{}' instead.".format(dummy), pipe.fit, X)
 
 
 def test_pipeline_memory():
@@ -874,7 +919,7 @@ def test_pipeline_memory():
         # Memoize the transformer at the first fit
         cached_pipe.fit(X, y)
         pipe.fit(X, y)
-        # Get the time stamp of the tranformer in the cached pipeline
+        # Get the time stamp of the transformer in the cached pipeline
         ts = cached_pipe.named_steps['transf'].timestamp_
         # Check that cached_pipe and pipe yield identical results
         assert_array_equal(pipe.predict(X), cached_pipe.predict(X))

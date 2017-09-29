@@ -28,12 +28,12 @@ labels = -np.ones(n_samples)
 labels[0] = outer
 labels[-1] = inner
 
-###############################################################################
+# #############################################################################
 # Learn with LabelSpreading
-label_spread = label_propagation.LabelSpreading(kernel='knn', alpha=1.0)
+label_spread = label_propagation.LabelSpreading(kernel='knn', alpha=0.8)
 label_spread.fit(X, labels)
 
-###############################################################################
+# #############################################################################
 # Plot output labels
 output_labels = label_spread.transduction_
 plt.figure(figsize=(8.5, 4))

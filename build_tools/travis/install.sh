@@ -13,15 +13,16 @@
 
 set -e
 
-# Fix the compilers to workaround avoid having the Python 3.4 build
-# lookup for g++44 unexpectedly.
-export CC=gcc
-export CXX=g++
-
 echo 'List files from cached directories'
 echo 'pip:'
 ls $HOME/.cache/pip
 
+export CC=/usr/lib/ccache/gcc
+export CXX=/usr/lib/ccache/g++
+# Useful for debugging how ccache is used
+# export CCACHE_LOGFILE=/tmp/ccache.log
+# ~60M is used by .ccache when compiling from scratch at the time of writing
+ccache --max-size 100M --show-stats
 
 if [[ "$DISTRIB" == "conda" ]]; then
     # Deactivate the travis-provided virtual environment and setup a
@@ -34,26 +35,35 @@ if [[ "$DISTRIB" == "conda" ]]; then
     MINICONDA_PATH=/home/travis/miniconda
     chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
     export PATH=$MINICONDA_PATH/bin:$PATH
-    conda update --yes conda
+    # Temporary work-around (2017-09-27)
+    # conda update --yes conda
 
     # Configure the conda environment and put it in the path using the
     # provided versions
+    if [[ "$USE_PYTEST" == "true" ]]; then
+        TEST_RUNNER_PACKAGE=pytest
+    else
+        TEST_RUNNER_PACKAGE=nose
+    fi
+
     if [[ "$INSTALL_MKL" == "true" ]]; then
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
-            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip \
+            $TEST_RUNNER_PACKAGE numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             mkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
             
     else
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
-            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip \
+            $TEST_RUNNER_PACKAGE numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             nomkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
     fi
     source activate testenv
 
-    # Install nose-timer via pip
-    pip install nose-timer
+    if [[ $USE_PYTEST != "true" ]]; then
+        # Install nose-timer via pip
+        pip install nose-timer
+    fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
@@ -64,7 +74,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip install nose nose-timer cython
+    pip install nose nose-timer cython==$CYTHON_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
     # Set up our own virtualenv environment to avoid travis' numpy.
@@ -76,12 +86,16 @@ elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
 
     echo "Installing numpy and scipy master wheels"
     dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
-    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy
-    pip install nose nose-timer cython
+    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy cython
+    pip install nose nose-timer
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
     pip install coverage codecov
+fi
+
+if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
+    pip install sphinx numpydoc  # numpydoc requires sphinx
 fi
 
 if [[ "$SKIP_TESTS" == "true" ]]; then
@@ -99,8 +113,10 @@ try:
 except ImportError:
     pass
 "
-
     python setup.py develop
+    ccache --show-stats
+    # Useful for debugging how ccache is used
+    # cat $CCACHE_LOGFILE
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then

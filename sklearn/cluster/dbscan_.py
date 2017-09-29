@@ -14,7 +14,6 @@ from scipy import sparse
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_array, check_consistent_length
-from ..utils.fixes import astype
 from ..neighbors import NearestNeighbors
 
 from ._dbscan_inner import dbscan_inner
@@ -90,7 +89,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     Notes
     -----
-    See examples/cluster/plot_dbscan.py for an example.
+    For an example, see :ref:`examples/cluster/plot_dbscan.py
+    <sphx_glr_auto_examples_cluster_plot_dbscan.py>`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -123,7 +123,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         neighborhoods = np.empty(X.shape[0], dtype=object)
         X.sum_duplicates()  # XXX: modifies X's internals in-place
         X_mask = X.data <= eps
-        masked_indices = astype(X.indices, np.intp, copy=False)[X_mask]
+        masked_indices = X.indices.astype(np.intp, copy=False)[X_mask]
         masked_indptr = np.concatenate(([0], np.cumsum(X_mask)))[X.indptr[1:]]
 
         # insert the diagonal: a point is its own neighbor, but 0 distance
@@ -229,7 +229,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/cluster/plot_dbscan.py for an example.
+    For an example, see :ref:`examples/cluster/plot_dbscan.py
+    <sphx_glr_auto_examples_cluster_plot_dbscan.py>`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -274,6 +275,9 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             ``min_samples`` is by itself a core sample; a sample with negative
             weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
+
+        y : Ignored
+
         """
         X = check_array(X, accept_sparse='csr')
         clust = dbscan(X, sample_weight=sample_weight,
@@ -301,6 +305,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             ``min_samples`` is by itself a core sample; a sample with negative
             weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
+
+        y : Ignored
 
         Returns
         -------

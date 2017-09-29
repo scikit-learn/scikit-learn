@@ -2,10 +2,10 @@ from __future__ import division
 
 import numpy as np
 import scipy.sparse as sp
-from scipy.misc import comb as combinations
 from numpy.testing import assert_array_almost_equal
 from sklearn.utils.random import sample_without_replacement
 from sklearn.utils.random import random_choice_csc
+from sklearn.utils.fixes import comb
 
 from sklearn.utils.testing import (
     assert_raises,
@@ -88,7 +88,7 @@ def check_sample_int_distribution(sample_without_replacement):
         # Counting the number of combinations is not as good as counting the
         # the number of permutations. However, it works with sampling algorithm
         # that does not provide a random permutation of the subset of integer.
-        n_expected = combinations(n_population, n_samples, exact=True)
+        n_expected = comb(n_population, n_samples, exact=True)
 
         output = {}
         for i in range(n_trials):

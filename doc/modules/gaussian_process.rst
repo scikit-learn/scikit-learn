@@ -280,7 +280,7 @@ of the dataset, this might be considerably faster. However, note that
 "one_vs_one" does not support predicting probability estimates but only plain
 predictions. Moreover, note that :class:`GaussianProcessClassifier` does not
 (yet) implement a true multi-class Laplace approximation internally, but
-as discussed aboved is based on solving several binary classification tasks
+as discussed above is based on solving several binary classification tasks
 internally, which are combined using one-versus-rest or one-versus-one.
 
 GPC examples
@@ -601,12 +601,7 @@ shown in the following figure:
 References
 ----------
 
-    * `[RW2006]
-      <http://www.gaussianprocess.org/gpml/chapters/>`_
-      **Gaussian Processes for Machine Learning**,
-      Carl Eduard Rasmussen and Christopher K.I. Williams, MIT Press 2006.
-      Link to an official complete PDF version of the book
-      `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
+.. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams, "Gaussian Processes for Machine Learning", MIT Press 2006, Link to an official complete PDF version of the book `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
 
 .. currentmodule:: sklearn.gaussian_process
 

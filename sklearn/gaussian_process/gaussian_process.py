@@ -444,11 +444,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Normalize input
             X = (X - self.X_mean) / self.X_std
 
-            # Initialize output
-            y = np.zeros(n_eval)
-            if eval_MSE:
-                MSE = np.zeros(n_eval)
-
             # Get pairwise componentwise L1-distances to the input training set
             dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
             # Get regression function and correlation
@@ -566,20 +561,15 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             A dictionary containing the requested Gaussian Process model
             parameters:
 
-                sigma2
-                        Gaussian Process variance.
-                beta
-                        Generalized least-squares regression weights for
-                        Universal Kriging or given beta0 for Ordinary
-                        Kriging.
-                gamma
-                        Gaussian Process weights.
-                C
-                        Cholesky decomposition of the correlation matrix [R].
-                Ft
-                        Solution of the linear equation system : [R] x Ft = F
-                G
-                        QR decomposition of the matrix Ft.
+            - ``sigma2`` is the Gaussian Process variance.
+            - ``beta`` is the generalized least-squares regression weights for
+              Universal Kriging or given beta0 for Ordinary Kriging.
+            - ``gamma`` is the Gaussian Process weights.
+            - ``C`` is the Cholesky decomposition of the correlation
+              matrix [R].
+            - ``Ft`` is the solution of the linear equation system
+              [R] x Ft = F
+            - ``G`` is the QR decomposition of the matrix Ft.
         """
         check_is_fitted(self, "X")
 
@@ -729,8 +719,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 try:
                     log10_optimal_theta = \
                         optimize.fmin_cobyla(minus_reduced_likelihood_function,
-                                             np.log10(theta0).ravel(), constraints,
-                                             iprint=0)
+                                             np.log10(theta0).ravel(),
+                                             constraints, disp=0)
                 except ValueError as ve:
                     print("Optimization failed. Try increasing the ``nugget``")
                     raise ve

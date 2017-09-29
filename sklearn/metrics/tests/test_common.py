@@ -198,12 +198,6 @@ METRIC_UNDEFINED_BINARY = [
     "samples_recall_score",
     "coverage_error",
 
-    "roc_auc_score",
-    "micro_roc_auc",
-    "weighted_roc_auc",
-    "macro_roc_auc",
-    "samples_roc_auc",
-
     "average_precision_score",
     "weighted_average_precision_score",
     "micro_average_precision_score",
@@ -217,7 +211,12 @@ METRIC_UNDEFINED_BINARY = [
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = [
     "brier_score_loss",
-    "matthews_corrcoef_score",
+
+    "roc_auc_score",
+    "micro_roc_auc",
+    "weighted_roc_auc",
+    "macro_roc_auc",
+    "samples_roc_auc",
 
     # with default average='binary', multiclass is prohibited
     "precision_score",
@@ -637,7 +636,8 @@ def test_inf_nan_input():
     for metric in CLASSIFICATION_METRICS.values():
         for y_true, y_score in invalids:
             assert_raise_message(ValueError,
-                                 "Can't handle mix of binary and continuous",
+                                 "Classification metrics can't handle a mix "
+                                 "of binary and continuous targets",
                                  metric, y_true, y_score)
 
 
@@ -772,7 +772,7 @@ def test_normalize_option_binary_classification(n_samples=20):
                             / n_samples, measure)
 
 
-def test_normalize_option_multiclasss_classification():
+def test_normalize_option_multiclass_classification():
     # Test in the multiclass case
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 4, size=(20, ))

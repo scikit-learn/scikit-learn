@@ -172,6 +172,65 @@ validation iterator instead, for instance::
 
     See :ref:`combining_estimators`.
 
+
+.. _multimetric_cross_validation:
+
+The cross_validate function and multiple metric evaluation
+----------------------------------------------------------
+
+The ``cross_validate`` function differs from ``cross_val_score`` in two ways -
+
+- It allows specifying multiple metrics for evaluation.
+
+- It returns a dict containing training scores, fit-times and score-times in
+  addition to the test score.
+
+For single metric evaluation, where the scoring parameter is a string,
+callable or None, the keys will be - ``['test_score', 'fit_time', 'score_time']``
+
+And for multiple metric evaluation, the return value is a dict with the
+following keys -
+``['test_<scorer1_name>', 'test_<scorer2_name>', 'test_<scorer...>', 'fit_time', 'score_time']``
+
+``return_train_score`` is set to ``True`` by default. It adds train score keys
+for all the scorers. If train scores are not needed, this should be set to
+``False`` explicitly.
+
+The multiple metrics can be specified either as a list, tuple or set of
+predefined scorer names::
+
+    >>> from sklearn.model_selection import cross_validate
+    >>> from sklearn.metrics import recall_score
+    >>> scoring = ['precision_macro', 'recall_macro']
+    >>> clf = svm.SVC(kernel='linear', C=1, random_state=0)
+    >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
+    ...                         cv=5, return_train_score=False)
+    >>> sorted(scores.keys())
+    ['fit_time', 'score_time', 'test_precision_macro', 'test_recall_macro']
+    >>> scores['test_recall_macro']                       # doctest: +ELLIPSIS
+    array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
+
+Or as a dict mapping scorer name to a predefined or custom scoring function::
+
+    >>> from sklearn.metrics.scorer import make_scorer
+    >>> scoring = {'prec_macro': 'precision_macro',
+    ...            'rec_micro': make_scorer(recall_score, average='macro')}
+    >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
+    ...                         cv=5, return_train_score=True)
+    >>> sorted(scores.keys())                 # doctest: +NORMALIZE_WHITESPACE
+    ['fit_time', 'score_time', 'test_prec_macro', 'test_rec_micro',
+     'train_prec_macro', 'train_rec_micro']
+    >>> scores['train_rec_micro']                         # doctest: +ELLIPSIS
+    array([ 0.97...,  0.97...,  0.99...,  0.98...,  0.98...])
+
+Here is an example of ``cross_validate`` using a single metric::
+
+    >>> scores = cross_validate(clf, iris.data, iris.target,
+    ...                         scoring='precision_macro')
+    >>> sorted(scores.keys())
+    ['fit_time', 'score_time', 'test_score', 'train_score']
+
+
 Obtaining predictions by cross-validation
 -----------------------------------------
 
@@ -186,7 +245,7 @@ These prediction can then be used to evaluate the classifier::
   >>> from sklearn.model_selection import cross_val_predict
   >>> predicted = cross_val_predict(clf, iris.data, iris.target, cv=10)
   >>> metrics.accuracy_score(iris.target, predicted) # doctest: +ELLIPSIS
-  0.966...
+  0.973...
 
 Note that the result of this computation may be slightly different from those
 obtained using :func:`cross_val_score` as the elements are grouped in different
@@ -199,7 +258,7 @@ section.
 
     * :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`,
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
-    * :ref:`sphx_glr_auto_examples_model_selection_grid_search_digits.py`,
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`,
     * :ref:`sphx_glr_auto_examples_plot_cv_predict.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
@@ -211,12 +270,12 @@ The following sections list utilities to generate indices
 that can be used to generate dataset splits according to different cross
 validation strategies.
 
-.. _iid_cv
+.. _iid_cv:
 
 Cross-validation iterators for i.i.d. data
-==========================================
+------------------------------------------
 
-Assuming that some data is Independent Identically Distributed (i.i.d.) is
+Assuming that some data is Independent and Identically Distributed (i.i.d.) is
 making the assumption that all samples stem from the same generative process
 and that the generative process is assumed to have no memory of past generated
 samples.
@@ -228,14 +287,14 @@ The following cross-validators can be used in such cases.
 While i.i.d. data is a common assumption in machine learning theory, it rarely
 holds in practice. If one knows that the samples have been generated using a
 time-dependent process, it's safer to
-use a `time-series aware cross-validation scheme <time_series_cv>`
+use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`
 Similarly if we know that the generative process has a group structure
 (samples from collected from different subjects, experiments, measurement
-devices) it safer to use `group-wise cross-validation <group_cv>`.
+devices) it safer to use :ref:`group-wise cross-validation <group_cv>`.
 
 
 K-fold
-------
+^^^^^^
 
 :class:`KFold` divides all the samples in :math:`k` groups of samples,
 called folds (if :math:`k = n`, this is equivalent to the *Leave One
@@ -264,7 +323,7 @@ Thus, one can create the training/test sets using numpy indexing::
 
 
 Repeated K-Fold
----------------
+^^^^^^^^^^^^^^^
 
 :class:`RepeatedKFold` repeats K-Fold n times. It can be used when one
 requires to run :class:`KFold` n times, producing different splits in
@@ -291,7 +350,7 @@ with different randomization in each repetition.
 
 
 Leave One Out (LOO)
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 :class:`LeaveOneOut` (or LOO) is a simple cross-validation. Each learning
 set is created by taking all the samples except one, the test set being
@@ -349,7 +408,7 @@ fold cross validation should be preferred to LOO.
 
 
 Leave P Out (LPO)
------------------
+^^^^^^^^^^^^^^^^^
 
 :class:`LeavePOut` is very similar to :class:`LeaveOneOut` as it creates all
 the possible training/test sets by removing :math:`p` samples from the complete
@@ -376,7 +435,7 @@ Example of Leave-2-Out on a dataset with 4 samples::
 .. _ShuffleSplit:
 
 Random permutations cross-validation a.k.a. Shuffle & Split
------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :class:`ShuffleSplit`
 
@@ -406,7 +465,7 @@ validation that allows a finer control on the number of iterations and
 the proportion of samples on each side of the train / test split.
 
 Cross-validation iterators with stratification based on class labels.
-=====================================================================
+---------------------------------------------------------------------
 
 Some classification problems can exhibit a large imbalance in the distribution
 of the target classes: for instance there could be several times more negative
@@ -416,7 +475,7 @@ stratified sampling as implemented in :class:`StratifiedKFold` and
 approximately preserved in each train and validation fold.
 
 Stratified k-fold
------------------
+^^^^^^^^^^^^^^^^^
 
 :class:`StratifiedKFold` is a variation of *k-fold* which returns *stratified*
 folds: each set contains approximately the same percentage of samples of each
@@ -441,16 +500,16 @@ with different randomization in each repetition.
 
 
 Stratified Shuffle Split
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 :class:`StratifiedShuffleSplit` is a variation of *ShuffleSplit*, which returns
 stratified splits, *i.e* which creates splits by preserving the same
 percentage for each target class as in the complete set.
 
-.. _group_cv
+.. _group_cv:
 
 Cross-validation iterators for grouped data.
-============================================
+--------------------------------------------
 
 The i.i.d. assumption is broken if the underlying generative process yield
 groups of dependent samples.
@@ -464,20 +523,20 @@ In this case we would like to know if a model trained on a particular set of
 groups generalizes well to the unseen groups. To measure this, we need to
 ensure that all the samples in the validation fold come from groups that are
 not represented at all in the paired training fold.
- 
+
 The following cross-validation splitters can be used to do that.
 The grouping identifier for the samples is specified via the ``groups``
 parameter.
 
 
 Group k-fold
-------------
+^^^^^^^^^^^^
 
-class:GroupKFold is a variation of k-fold which ensures that the same group is
+:class:`GroupKFold` is a variation of k-fold which ensures that the same group is
 not represented in both testing and training sets. For example if the data is
 obtained from different subjects with several samples per-subject and if the
 model is flexible enough to learn from highly person specific features it
-could fail to generalize to new subjects. class:GroupKFold makes it possible
+could fail to generalize to new subjects. :class:`GroupKFold` makes it possible
 to detect this kind of overfitting situations.
 
 Imagine you have three subjects, each with an associated number from 1 to 3::
@@ -501,7 +560,7 @@ size due to the imbalance in the data.
 
 
 Leave One Group Out
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 :class:`LeaveOneGroupOut` is a cross-validation scheme which holds out
 the samples according to a third-party provided array of integer groups. This
@@ -532,7 +591,7 @@ groups could be the year of collection of the samples and thus allow
 for cross-validation against time-based splits.
 
 Leave P Groups Out
-------------------
+^^^^^^^^^^^^^^^^^^
 
 :class:`LeavePGroupsOut` is similar as :class:`LeaveOneGroupOut`, but removes
 samples related to :math:`P` groups for each training/test set.
@@ -552,9 +611,7 @@ Example of Leave-2-Group Out::
   [0 1] [2 3 4 5]
 
 Group Shuffle Split
--------------------
-
-:class:`GroupShuffleSplit`
+^^^^^^^^^^^^^^^^^^^
 
 The :class:`GroupShuffleSplit` iterator behaves as a combination of
 :class:`ShuffleSplit` and :class:`LeavePGroupsOut`, and generates a
@@ -586,7 +643,7 @@ generated by :class:`LeavePGroupsOut`.
 
 
 Predefined Fold-Splits / Validation-Sets
-========================================
+----------------------------------------
 
 For some datasets, a pre-defined split of the data into training- and
 validation fold or into several cross-validation folds already
@@ -596,34 +653,34 @@ e.g. when searching for hyperparameters.
 For example, when using a validation set, set the ``test_fold`` to 0 for all
 samples that are part of the validation set, and to -1 for all other samples.
 
-.. _timeseries_cv
+.. _timeseries_cv:
 
 Cross validation of time series data
-====================================
+------------------------------------
 
-Time series data is characterised by the correlation between observations 
-that are near in time (*autocorrelation*). However, classical 
-cross-validation techniques such as :class:`KFold` and 
-:class:`ShuffleSplit` assume the samples are independent and 
-identically distributed, and would result in unreasonable correlation 
-between training and testing instances (yielding poor estimates of 
-generalisation error) on time series data. Therefore, it is very important 
-to evaluate our model for time series data on the "future" observations 
-least like those that are used to train the model. To achieve this, one 
+Time series data is characterised by the correlation between observations
+that are near in time (*autocorrelation*). However, classical
+cross-validation techniques such as :class:`KFold` and
+:class:`ShuffleSplit` assume the samples are independent and
+identically distributed, and would result in unreasonable correlation
+between training and testing instances (yielding poor estimates of
+generalisation error) on time series data. Therefore, it is very important
+to evaluate our model for time series data on the "future" observations
+least like those that are used to train the model. To achieve this, one
 solution is provided by :class:`TimeSeriesSplit`.
 
 
 Time Series Split
------------------
+^^^^^^^^^^^^^^^^^
 
-:class:`TimeSeriesSplit` is a variation of *k-fold* which 
-returns first :math:`k` folds as train set and the :math:`(k+1)` th 
-fold as test set. Note that unlike standard cross-validation methods, 
+:class:`TimeSeriesSplit` is a variation of *k-fold* which
+returns first :math:`k` folds as train set and the :math:`(k+1)` th
+fold as test set. Note that unlike standard cross-validation methods,
 successive training sets are supersets of those that come before them.
 Also, it adds all surplus data to the first training partition, which
 is always used to train the model.
 
-This class can be used to cross-validate time series data samples 
+This class can be used to cross-validate time series data samples
 that are observed at fixed time intervals.
 
 Example of 3-split time series cross-validation on a dataset with 6 samples::
@@ -634,7 +691,7 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
   >>> y = np.array([1, 2, 3, 4, 5, 6])
   >>> tscv = TimeSeriesSplit(n_splits=3)
   >>> print(tscv)  # doctest: +NORMALIZE_WHITESPACE
-  TimeSeriesSplit(n_splits=3)
+  TimeSeriesSplit(max_train_size=None, n_splits=3)
   >>> for train, test in tscv.split(X):
   ...     print("%s %s" % (train, test))
   [0 1 2] [3]
@@ -666,8 +723,7 @@ to shuffle the data indices before splitting them. Note that:
   shuffling will be different every time ``KFold(..., shuffle=True)`` is
   iterated. However, ``GridSearchCV`` will use the same shuffling for each set
   of parameters validated by a single call to its ``fit`` method.
-* To ensure results are repeatable (*on the same platform*), use a fixed value
-  for ``random_state``.
+* To get identical results for each split, set ``random_state`` to an integer.
 
 Cross validation and model selection
 ====================================

@@ -69,7 +69,7 @@ def make_data(random_state, n_samples_per_center, grid_size, scale):
 
 # Part 1: Quantitative evaluation of various init methods
 
-fig = plt.figure()
+plt.figure()
 plots = []
 legends = []
 
@@ -105,7 +105,7 @@ X, y = make_data(random_state, n_samples_per_center, grid_size, scale)
 km = MiniBatchKMeans(n_clusters=n_clusters, init='random', n_init=1,
                      random_state=random_state).fit(X)
 
-fig = plt.figure()
+plt.figure()
 for k in range(n_clusters):
     my_members = km.labels_ == k
     color = cm.spectral(float(k) / n_clusters, 1)

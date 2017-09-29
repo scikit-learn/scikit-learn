@@ -153,11 +153,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
         If ``loss`` is a callable, then it should be a function that takes
         two arrays as inputs, the true and predicted value and returns a 1-D
-        array with the ``i``th value of the array corresponding to the loss
-        on `X[i]`.
+        array with the i-th value of the array corresponding to the loss
+        on ``X[i]``.
 
-        If the loss on a sample is greater than the ``residual_threshold``, then
-        this sample is classified as an outlier.
+        If the loss on a sample is greater than the ``residual_threshold``,
+        then this sample is classified as an outlier.
 
     random_state : int, RandomState instance or None, optional, default None
         The generator used to initialize the centers.  If int, random_state is
@@ -270,7 +270,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                              "positive.")
         if min_samples > X.shape[0]:
             raise ValueError("`min_samples` may not be larger than number "
-                             "of samples ``X.shape[0]``.")
+                             "of samples: n_samples = %d." % (X.shape[0]))
 
         if self.stop_probability < 0 or self.stop_probability > 1:
             raise ValueError("`stop_probability` must be in range [0, 1].")
