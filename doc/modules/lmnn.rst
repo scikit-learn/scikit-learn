@@ -49,15 +49,15 @@ For instance, the following shows a comparison of dimensionality reduction with 
 
 .. |dim_reduction_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_001.png
    :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :scale: 33%
+   :width: 33%
 
 .. |dim_reduction_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_002.png
    :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :scale: 33%
+   :width: 33%
 
 .. |dim_reduction_3| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_003.png
    :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :scale: 33%
+   :width: 33%
 
 .. centered:: |dim_reduction_1| |dim_reduction_2| |dim_reduction_3|
 
