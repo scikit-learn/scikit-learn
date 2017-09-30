@@ -11,11 +11,11 @@ Large Margin Nearest Neighbor
 Large Margin Nearest Neighbor (LMNN, :class:`LargeMarginNearestNeighbor`) is a distance metric learning algorithm which aims to improve the accuracy of nearest neighbors classification compared to the standard Euclidean distance.
 
 .. |illustration_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_illustration_001.png
-   :target: ../auto_examples/neighbors/plot_lmnn_classification.html
+   :target: ../auto_examples/neighbors/plot_lmnn_illustration.html
    :scale: 50
 
 .. |illustration_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_illustration_002.png
-   :target: ../auto_examples/neighbors/plot_lmnn_classification.html
+   :target: ../auto_examples/neighbors/plot_lmnn_illustration.html
    :scale: 50
 
 .. centered:: |illustration_1| |illustration_2|
@@ -49,15 +49,15 @@ For instance, the following shows a comparison of dimensionality reduction with 
 
 .. |dim_reduction_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_001.png
    :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :scale: 50
+   :scale: 33%
 
 .. |dim_reduction_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_002.png
    :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :scale: 50
+   :scale: 33%
 
 .. |dim_reduction_3| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_dim_reduction_003.png
    :target: ../auto_examples/neighbors/plot_lmnn_dim_reduction.html
-   :scale: 50
+   :scale: 33%
 
 .. centered:: |dim_reduction_1| |dim_reduction_2| |dim_reduction_3|
 
@@ -119,9 +119,9 @@ See the examples below and the doc string of :meth:`LargeMarginNearestNeighbor.f
 
 .. topic:: References:
 
-   * `"Distance Metric Learning for Large Margin Nearest Neighbor Classification"
-     <http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf>`_,
-     Weinberger, Kilian Q., and Lawrence K. Saul, Journal of Machine Learning Research, Vol. 10, Feb. 2009, pp. 207-244.
+   * | `"Distance Metric Learning for Large Margin Nearest Neighbor Classification"
+       <http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf>`_,
+     | Weinberger, Kilian Q., and Lawrence K. Saul, Journal of Machine Learning Research, Vol. 10, Feb. 2009, pp. 207-244.
 
    * `Wikipedia entry on Large Margin Nearest Neighbor
      <https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor>`_
