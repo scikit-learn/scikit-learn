@@ -27,6 +27,11 @@ specific subject areas:
 Videos
 ======
 
+- `A Bit of Data Science and Sklearn
+  <https://www.youtube.com/watch?v=52zXNBaUKMM&list=PLgJhDSE2ZLxb33q-x5592LCiVRsHDxVf3>`_ a 2017 youtube tutorial by K. Nathaniel Tucker
+
+    A 16 part tutorial that goes over the essential parts of sklearn used in data science
+
 - An introduction to scikit-learn `Part
   I <https://conference.scipy.org/scipy2013/tutorial_detail.php?id=107>`_ and
   `Part II <https://conference.scipy.org/scipy2013/tutorial_detail.php?id=111>`_ at Scipy 2013
