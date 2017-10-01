@@ -38,12 +38,6 @@ run_tests() {
     # disk caching does not work.
     export SKLEARN_SKIP_NETWORK_TESTS=1
 
-    if [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
-        # Do not run doctests in scipy-dev-wheels build for now
-        # (broken by numpy 1.14.dev array repr/str formatting change)
-        export PYTEST_ADDOPTS="-p no:doctest"
-    fi
-
     if [[ "$COVERAGE" == "true" ]]; then
         TEST_CMD="$TEST_CMD --with-coverage"
     fi
@@ -53,15 +47,7 @@ run_tests() {
     cd $OLDPWD
 
     if [[ "$USE_PYTEST" == "true" ]]; then
-        # Do not run doctests in scipy-dev-wheels build for now
-        # (broken by numpy 1.14.dev array repr/str formatting
-        # change). Need to skip explicly like this because using -p
-        # 'no:doctest' does disable doctests but still exits with an
-        # non-zero exit code when you pass explicit rst files like
-        # this
-        if [[ "$DISTRIB" != "scipy-dev-wheels" ]]; then
-            pytest $(find doc -name '*.rst' | sort)
-        fi
+        pytest $(find doc -name '*.rst' | sort)
     else
         # Makefile is using nose
         make test-doc
