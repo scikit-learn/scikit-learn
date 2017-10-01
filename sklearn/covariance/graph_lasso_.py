@@ -208,8 +208,9 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         for i in range(max_iter):
             for idx in range(n_features):
                 if idx > 0:
-                    sub_covariance[idx-1] = covariance_[idx-1][indices != idx]
-                    sub_covariance[:, idx-1] = covariance_[:, idx-1][indices != idx]
+                    di = idx - 1
+                    sub_covariance[di] = covariance_[di][indices != idx]
+                    sub_covariance[:, di] = covariance_[:, di][indices != idx]
                 else:
                     sub_covariance[:] = covariance_[1:, 1:]
                 row = emp_cov[idx, indices != idx]
