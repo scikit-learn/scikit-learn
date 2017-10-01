@@ -49,7 +49,7 @@ run_tests() {
     if [[ "$USE_PYTEST" == "true" ]]; then
         # Do not run doctests in scipy-dev-wheels build for now
         # (broken by numpy 1.14.dev array repr/str formatting
-        # change even with np.set_printoptions(sign='legacy').
+        # change even with np.set_printoptions(sign='legacy')).
         # See https://github.com/numpy/numpy/issues/9804 for more details
         if [[ "$DISTRIB" != "scipy-dev-wheels" ]]; then
             pytest $(find doc -name '*.rst' | sort)
