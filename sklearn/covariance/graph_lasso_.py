@@ -207,14 +207,9 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         sub_covariance = np.ascontiguousarray(covariance_[1:, 1:])
         for i in range(max_iter):
             for idx in range(n_features):
-                # for each idx, the sub_covariance matrix is the covariance_
-                # matrix lacking one row/column corresponding to the r/c
-                # being solved. when the next loop occurs, the previous r/c
-                # should be inserted again and the next r/c inserted in that
-                # location. no other r/c change during this operation, except
-                # at the c/r being re-added, which leave the matrix in an
-                # identical state as if it had been reconstructed as a
-                # contiguous matrix using [indices != idx] along each axis.
+                # To keep the contiguous matrix `sub_covariance` equal to
+                # covariance_[indices != idx].T[indices != idx]
+                # we only need to update 1 column and 1 line when idx changes
                 if idx > 0:
                     di = idx - 1
                     sub_covariance[di] = covariance_[di][indices != idx]
