@@ -72,7 +72,7 @@ margin_color = 'orange'
 
 def fill_between_circles(ax, center, radii, color=margin_color):
     n = 50
-    theta = np.linspace(0, 2*np.pi, n, endpoint=True)
+    theta = np.linspace(0, 2 * np.pi, n, endpoint=True)
     xs = np.outer(radii, np.cos(theta)) + center[0]
     ys = np.outer(radii, np.sin(theta)) + center[1]
 
@@ -84,7 +84,7 @@ def fill_between_circles(ax, center, radii, color=margin_color):
     ax.fill(np.ravel(xs), np.ravel(ys), facecolor=color, alpha=0.1)
 
 
-theta_ref = -3*np.pi / 4
+theta_ref = -3 * np.pi / 4
 vec_ref = np.array([np.cos(theta_ref), np.sin(theta_ref)])
 p_inner = ref_pos + vec_ref * inner_radius
 p_outer = p_inner + vec_ref * margin
