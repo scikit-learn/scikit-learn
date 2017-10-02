@@ -13,7 +13,7 @@ import sys
 import time
 import numpy as np
 from scipy.optimize import minimize
-from scipy.sparse import csr_matrix, csc_matrix, spdiags
+from scipy.sparse import csr_matrix, csc_matrix, coo_matrix, spdiags
 
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors
@@ -569,13 +569,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         transformation = transformation.reshape(-1, n_features)
         self.transformation_ = transformation
 
-        if self.n_iter_ == 0 and self.verbose:
+        if self.n_iter_ == 0:
             self.n_iter_ += 1
-            header_fields = ['Iteration', 'Objective Value', '#Constraints',
-                                                             'Time(s)']
-            header_fmt = '{:>10} {:>20} {:>15} {:>10}'
-            header = header_fmt.format(*header_fields)
-            print('\n{}\n{}'.format(header, '-' * len(header)))
+            if self.verbose:
+                header_fields = ['Iteration', 'Objective Value',
+                                 '#Constraints', 'Time(s)']
+                header_fmt = '{:>10} {:>20} {:>15} {:>10}'
+                header = header_fmt.format(*header_fields)
+                print('\n{}\n{}'.format(header, '-' * len(header)))
 
         t_start = time.time()
         X_embedded = self._transform(X, check_input=False)
@@ -588,30 +589,11 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                       squared=True) + 1
 
         # Find the impostors and compute (squared) distances to them
-        imp_row, imp_col, dist_imp = \
+        impostors_graph = \
             self._find_impostors(X_embedded, y, dist_tn[:, -1], use_sparse)
 
-        loss = 0
-        shape = (n_samples, n_samples)
-        A0 = csr_matrix(shape)
-        n_constraints = 0
-        for k in range(n_neighbors-1, -1, -1):
-            loss1 = np.maximum(dist_tn[imp_row, k] - dist_imp, 0)
-            ac, = np.where(loss1 > 0)
-            n_constraints += len(ac)
-            A1 = csr_matrix((2*loss1[ac], (imp_row[ac], imp_col[ac])), shape)
-
-            loss2 = np.maximum(dist_tn[imp_col, k] - dist_imp, 0)
-            ac, = np.where(loss2 > 0)
-            n_constraints += len(ac)
-            A2 = csc_matrix((2*loss2[ac], (imp_row[ac], imp_col[ac])), shape)
-
-            values = (A1.sum(1).ravel() + A2.sum(0)).getA1()
-            A0 = A0 - A1 - A2 + csr_matrix((values, (range(n_samples),
-                                                     targets[:, k])), shape)
-            loss += np.dot(loss1, loss1) + np.dot(loss2, loss2)
-
-        grad_new = _sum_weighted_outer_differences(X, A0)
+        loss, grad_new, n_constraints = \
+            _compute_push_loss(X, targets, dist_tn, impostors_graph)
         grad = np.dot(transformation, grad_static + grad_new)
         grad *= 2
         metric = np.dot(transformation.T, transformation)
@@ -644,15 +626,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        imp_row : array, shape (n_impostors,)
-            Indices of samples, whose margin is violated.
+        impostors_graph : coo_matrix, shape (n_samples, n_samples)
+            Element (i, j) is the distance between samples i and j if j is an
+            impostor to i, otherwise zero.
 
-        imp_col : array, shape (n_impostors,)
-            Indices of corresponding impostors.
-
-        imp_dist : array, shape (n_impostors,)
-            imp_dist[i] is the squared distance between
-            X_embedded[imp_row[i]] and X_embedded[imp_col[i]].
         """
         n_samples = X_embedded.shape[0]
 
@@ -691,7 +668,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             imp_col = impostors_sp.col
             imp_dist = _paired_distances_blockwise(X_embedded, imp_row,
                                                    imp_col)
-
         else:
             # Initialize lists for impostors storage
             imp_row, imp_col, imp_dist = [], [], []
@@ -732,7 +708,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             imp_col = np.asarray(imp_col, dtype=int)
             imp_dist = np.asarray(imp_dist)
 
-        return imp_row, imp_col, imp_dist
+        impostors_graph = coo_matrix((imp_dist, (imp_row, imp_col)),
+                                     shape=(n_samples, n_samples))
+
+        return impostors_graph
 
 
 ##########################
@@ -947,6 +926,67 @@ def _paired_distances_blockwise(X, ind_a, ind_b, squared=True, block_size=8):
         np.sqrt(distances, distances)
 
     return distances
+
+
+def _compute_push_loss(X, targets, dist_targets, impostors_graph):
+    """
+
+    Parameters
+    ----------
+    X : array, shape (n_samples, n_features)
+        The training input samples.
+
+    targets : array, shape (n_samples, n_neighbors)
+        Indices of target neighbors of each sample.
+
+    dist_targets : array, shape (n_samples, n_neighbors)
+        Distances of samples to their target neighbors.
+
+    impostors_graph : coo_matrix, shape (n_samples, n_samples)
+        Element (i, j) is the distance between sample i and j if j is an
+        impostor to i, otherwise zero.
+
+    Returns
+    -------
+    loss : float
+        The push loss caused by the given targets and impostors.
+
+    grad : array, shape (n_features, n_features)
+        The gradient of the push loss.
+
+    n_constraints : int
+        The number of active triplet constraints.
+
+    """
+
+    n_samples, n_neighbors = dist_targets.shape
+    imp_row = impostors_graph.row
+    imp_col= impostors_graph.col
+    dist_impostors = impostors_graph.data
+
+    loss = 0
+    shape = (n_samples, n_samples)
+    A0 = csr_matrix(shape)
+    n_constraints = 0
+    for k in range(n_neighbors-1, -1, -1):
+        loss1 = np.maximum(dist_targets[imp_row, k] - dist_impostors, 0)
+        ac, = np.where(loss1 > 0)
+        n_constraints += len(ac)
+        A1 = csr_matrix((2*loss1[ac], (imp_row[ac], imp_col[ac])), shape)
+
+        loss2 = np.maximum(dist_targets[imp_col, k] - dist_impostors, 0)
+        ac, = np.where(loss2 > 0)
+        n_constraints += len(ac)
+        A2 = csc_matrix((2*loss2[ac], (imp_row[ac], imp_col[ac])), shape)
+
+        values = (A1.sum(1).ravel() + A2.sum(0)).getA1()
+        A3 = csr_matrix((values, (range(n_samples), targets[:, k])), shape)
+        A0 = A0 - A1 - A2 + A3
+        loss += np.dot(loss1, loss1) + np.dot(loss2, loss2)
+
+    grad = _sum_weighted_outer_differences(X, A0)
+
+    return loss, grad, n_constraints
 
 
 def _sum_weighted_outer_differences(X, weights):
