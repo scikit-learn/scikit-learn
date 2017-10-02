@@ -50,8 +50,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         Algorithm used to compute the target neighbors, passed to
         neighbors.NearestNeighbors instance
 
-    max_constraints : int, optional (default=500000)
-        Maximum number of constraints to enforce per iteration.
+    max_impostors : int, optional (default=500000)
+        Maximum number of impostors to consider per iteration. In the worst
+        case this will result in ``max_impostors * n_neighbors`` constraints.
 
     imp_store : {'auto', 'list', 'sparse'}, optional
         Data structure used to store the impostors:
@@ -177,7 +178,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_features_out=None, init='pca', warm_start=False,
                  n_neighbors=3, neighbors_algorithm='auto',
-                 max_constraints=500000, imp_store='auto', max_iter=50,
+                 max_impostors=500000, imp_store='auto', max_iter=50,
                  tol=1e-5, callback=None, store_opt_result=False, verbose=0,
                  random_state=None, n_jobs=1):
 
@@ -187,7 +188,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         self.warm_start = warm_start
         self.n_neighbors = n_neighbors
         self.neighbors_algorithm = neighbors_algorithm
-        self.max_constraints = max_constraints
+        self.max_impostors = max_impostors
         self.imp_store = imp_store
         self.max_iter = max_iter
         self.tol = tol
@@ -412,7 +413,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         _check_scalar(self.n_neighbors, 'n_neighbors', int, 1, X.shape[0] - 1)
         _check_scalar(self.max_iter, 'max_iter', int, 1)
         _check_scalar(self.tol, 'tol', float, 0.)
-        _check_scalar(self.max_constraints, 'max_constraints', int, 1)
+        _check_scalar(self.max_impostors, 'max_impostors', int, 1)
         _check_scalar(self.imp_store, 'imp_store', str)
         _check_scalar(self.n_jobs, 'n_jobs', int)
         _check_scalar(self.verbose, 'verbose', int, 0)
@@ -592,10 +593,15 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         impostors_graph = \
             self._find_impostors(X_embedded, y, dist_tn[:, -1], use_sparse)
 
+        # Compute the push loss and its gradient
         loss, grad_new, n_constraints = \
             _compute_push_loss(X, targets, dist_tn, impostors_graph)
+
+        # Compute the total gradient
         grad = np.dot(transformation, grad_static + grad_new)
         grad *= 2
+
+        # Add the pull loss to the total loss
         metric = np.dot(transformation.T, transformation)
         loss += np.dot(grad_static.ravel(), metric.ravel())
 
@@ -642,16 +648,15 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
                 # Split ind_out x ind_in into chunks of a size that fits
                 # in memory
-                imp_ind = _find_impostors_blockwise(X_embedded[ind_out],
-                                                    X_embedded[ind_in],
-                                                    margin_radii[ind_out],
-                                                    margin_radii[ind_in])
+                imp_ind = _find_impostors_blockwise(
+                    X_embedded[ind_out], X_embedded[ind_in],
+                    margin_radii[ind_out], margin_radii[ind_in])
 
                 if len(imp_ind):
-                    # sample constraints if they are too many
-                    if len(imp_ind) > self.max_constraints:
+                    # sample impostors if they are too many
+                    if len(imp_ind) > self.max_impostors:
                         imp_ind = self.random_state_.choice(
-                            imp_ind, self.max_constraints, replace=False)
+                            imp_ind, self.max_impostors, replace=False)
 
                     dims = (len(ind_out), len(ind_in))
                     ii, jj = np.unravel_index(imp_ind, dims=dims)
@@ -666,6 +671,15 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             impostors_sp = impostors_sp.tocoo(copy=False)
             imp_row = impostors_sp.row
             imp_col = impostors_sp.col
+
+            # Make sure we do not exceed max_impostors
+            n_impostors = len(imp_row)
+            if n_impostors > self.max_impostors:
+                ind_sampled = self.random_state_.choice(
+                    n_impostors, self.max_impostors, replace=False)
+                imp_row = imp_row[ind_sampled]
+                imp_col = imp_col[ind_sampled]
+
             imp_dist = _paired_distances_blockwise(X_embedded, imp_row,
                                                    imp_col)
         else:
@@ -683,10 +697,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                     return_distance=True)
 
                 if len(imp_ind):
-                    # sample constraints if they are too many
-                    if len(imp_ind) > self.max_constraints:
+                    # sample impostors if they are too many
+                    if len(imp_ind) > self.max_impostors:
                         ind_sampled = self.random_state_.choice(
-                            len(imp_ind), self.max_constraints, replace=False)
+                            len(imp_ind), self.max_impostors, replace=False)
                         imp_ind = imp_ind[ind_sampled]
                         dist_batch = dist_batch[ind_sampled]
 
@@ -707,6 +721,15 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             imp_row = np.asarray(imp_row, dtype=int)
             imp_col = np.asarray(imp_col, dtype=int)
             imp_dist = np.asarray(imp_dist)
+
+            # Make sure we do not exceed max_impostors
+            n_impostors = len(imp_row)
+            if n_impostors > self.max_impostors:
+                ind_sampled = self.random_state_.choice(
+                    n_impostors, self.max_impostors, replace=False)
+                imp_row = imp_row[ind_sampled]
+                imp_col = imp_col[ind_sampled]
+                imp_dist = imp_dist[ind_sampled]
 
         impostors_graph = coo_matrix((imp_dist, (imp_row, imp_col)),
                                      shape=(n_samples, n_samples))

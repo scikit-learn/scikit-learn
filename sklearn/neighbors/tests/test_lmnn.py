@@ -84,7 +84,7 @@ def test_params_validation():
     assert_raises(TypeError, LMNN(n_neighbors=1.3).fit, X, y)
     assert_raises(TypeError, LMNN(max_iter='21').fit, X, y)
     assert_raises(TypeError, LMNN(verbose='true').fit, X, y)
-    assert_raises(TypeError, LMNN(max_constraints=23.1).fit, X, y)
+    assert_raises(TypeError, LMNN(max_impostors=23.1).fit, X, y)
     assert_raises(TypeError, LMNN(tol=1).fit, X, y)
     assert_raises(TypeError, LMNN(n_features_out='invalid').fit, X, y)
     assert_raises(TypeError, LMNN(n_jobs='yes').fit, X, y)
@@ -96,7 +96,7 @@ def test_params_validation():
     assert_raises(ValueError, LMNN(n_neighbors=-1).fit, X, y)
     assert_raises(ValueError, LMNN(n_neighbors=len(X)).fit, X, y)
     assert_raises(ValueError, LMNN(max_iter=-1).fit, X, y)
-    assert_raises(ValueError, LMNN(max_constraints=-1).fit, X, y)
+    assert_raises(ValueError, LMNN(max_impostors=-1).fit, X, y)
 
     fit_func = LMNN(init=np.random.rand(5, 3)).fit
     assert_raises(ValueError, fit_func, X, y)
@@ -197,12 +197,12 @@ def test_init_transformation():
     assert_true(n_iter_pca <= n_iter_no_pca)
 
 
-def test_max_constraints():
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=1,
+def test_max_impostors():
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_impostors=1,
                                       imp_store='list')
     lmnn.fit(iris.data, iris.target)
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_constraints=1,
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_impostors=1,
                                       imp_store='sparse')
     lmnn.fit(iris.data, iris.target)
 
@@ -293,14 +293,14 @@ def test_verbose():
 
 
 def test_random_state():
-    """Assert that when having more than max_constraints (forcing sampling),
-    the same constraints will be sampled given the same random_state and
-    different constraints will be sampled given a different random_state
+    """Assert that when having more than max_impostors (forcing sampling),
+    the same impostors will be sampled given the same random_state and
+    different impostors will be sampled given a different random_state
     leading to a different transformation"""
 
     X = iris.data
     y = iris.target
-    params = {'n_neighbors': 3, 'max_constraints': 5, 'random_state': 1,
+    params = {'n_neighbors': 3, 'max_impostors': 5, 'random_state': 1,
               'max_iter': 10, 'init': 'identity'}
 
     lmnn = LargeMarginNearestNeighbor(**params)
