@@ -109,7 +109,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
        Regarding the Nearest Neighbors algorithms, if it is found that two
        neighbors, neighbor `k+1` and `k`, have identical distances but
-       but different labels, the results will depend on the ordering of the
+       different labels, the results will depend on the ordering of the
        training data.
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
