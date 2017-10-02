@@ -381,6 +381,8 @@ Multi-core parallelism using ``joblib.Parallel``
 
 TODO: give a simple teaser example here.
 
+If you just want to use local mutli-core capibilities, look for ``n_jobs`` on the scikit objects. NOTE: This is set on object creation, not per method.
+
 Checkout the official joblib documentation:
 
 - https://pythonhosted.org/joblib
