@@ -26,7 +26,8 @@ X, y = make_classification(n_samples=9, n_features=2, n_informative=2,
                            n_redundant=0, n_classes=3, n_clusters_per_class=1,
                            class_sep=1.0, random_state=random_state)
 
-X *= 6  # Spread out the data so that a margin of 1 is visible
+# Spread out the data so that a margin of 1 is visible
+X *= 6
 
 # Find the target neighbors
 target_neighbors = _select_target_neighbors(X, y, n_neighbors)
@@ -71,7 +72,7 @@ margin_color = 'orange'
 
 def fill_between_circles(ax, center, radii, color=margin_color):
     n = 50
-    theta = np.linspace(0, 2 * np.pi, n, endpoint=True)
+    theta = np.linspace(0, 2*np.pi, n, endpoint=True)
     xs = np.outer(radii, np.cos(theta)) + center[0]
     ys = np.outer(radii, np.sin(theta)) + center[1]
 
@@ -83,7 +84,7 @@ def fill_between_circles(ax, center, radii, color=margin_color):
     ax.fill(np.ravel(xs), np.ravel(ys), facecolor=color, alpha=0.1)
 
 
-theta_ref = -3 * np.pi / 4
+theta_ref = -3*np.pi / 4
 vec_ref = np.array([np.cos(theta_ref), np.sin(theta_ref)])
 p_inner = ref_pos + vec_ref * inner_radius
 p_outer = p_inner + vec_ref * margin

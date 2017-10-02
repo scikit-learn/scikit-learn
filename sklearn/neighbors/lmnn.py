@@ -961,7 +961,7 @@ def _compute_push_loss(X, targets, dist_targets, impostors_graph):
 
     n_samples, n_neighbors = dist_targets.shape
     imp_row = impostors_graph.row
-    imp_col= impostors_graph.col
+    imp_col = impostors_graph.col
     dist_impostors = impostors_graph.data
 
     loss = 0
