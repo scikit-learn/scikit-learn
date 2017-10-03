@@ -52,20 +52,20 @@ knn = KNeighborsClassifier(n_neighbors=n_neighbors)
 # Make a list of the methods to be compared
 dim_reduction_methods = [('PCA', pca), ('LDA', lda), ('LMNN', lmnn)]
 
-for i, (name, method) in enumerate(dim_reduction_methods):
+for i, (name, model) in enumerate(dim_reduction_methods):
     plt.figure()
 
     # Fit the method's model
-    method.fit(X_train, y_train)
+    model.fit(X_train, y_train)
 
     # Fit a nearest neighbor classifier on the embedded training set
-    knn.fit(method.transform(X_train), y_train)
+    knn.fit(model.transform(X_train), y_train)
 
     # Compute the nearest neighbor accuracy on the embedded test set
-    acc_knn = knn.score(method.transform(X_test), y_test)
+    acc_knn = knn.score(model.transform(X_test), y_test)
 
-    # Embed the data set in 2 dimensions using the method
-    X_embedded = method.transform(X)
+    # Embed the data set in 2 dimensions using the fitted model
+    X_embedded = model.transform(X)
 
     # Plot the embedding and show the evaluation score
     plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=y)

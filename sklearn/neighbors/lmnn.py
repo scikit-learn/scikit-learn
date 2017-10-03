@@ -707,16 +707,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                     dims = (len(ind_out), len(ind_in))
                     ii, jj = np.unravel_index(imp_ind, dims=dims)
                     # Convert indices to refer to the original data matrix
-                    ind_out_batch = ind_out[ii]
-                    ind_in_batch = ind_in[jj]
-                    try:
-                        imp_row.extend(ind_out_batch)
-                        imp_col.extend(ind_in_batch)
-                        imp_dist.extend(dist_batch)
-                    except TypeError:
-                        imp_row.append(ind_out_batch)
-                        imp_col.append(ind_in_batch)
-                        imp_dist.append(dist_batch)
+                    imp_row.extend(ind_out[ii])
+                    imp_col.extend(ind_in[jj])
+                    imp_dist.extend(dist_batch)
 
             imp_row = np.asarray(imp_row, dtype=int)
             imp_col = np.asarray(imp_col, dtype=int)
@@ -888,19 +881,14 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
 
         if len(ind):
             ind_plus_offset = ind + chunk.start * X_b.shape[0]
-            try:
-                imp_indices.extend(ind_plus_offset)
-            except TypeError:
-                imp_indices.append(ind_plus_offset)
+            imp_indices.extend(ind_plus_offset)
 
             if return_distance:
                 # This np.maximum would add another ~8% time of computation
-                np.maximum(distances_ab, 0, out=distances_ab)
+                # np.maximum(distances_ab, 0, out=distances_ab)
                 distances_chunk = distances_ab.ravel()[ind]
-                try:
-                    imp_distances.extend(distances_chunk)
-                except TypeError:
-                    imp_distances.append(distances_chunk)
+                np.maximum(distances_chunk, 0, out=distances_chunk)
+                imp_distances.extend(distances_chunk)
 
     imp_indices = np.asarray(imp_indices)
 
