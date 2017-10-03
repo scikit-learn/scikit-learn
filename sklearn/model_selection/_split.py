@@ -582,9 +582,11 @@ class StratifiedKFold(_BaseKFold):
         rng = self.random_state
         y = np.asarray(y)
         type_of_target_y = type_of_target(y)
-        if type_of_target_y not in ('binary', 'multiclass'):
-            raise ValueError("Unsupported target type {}".format(
-                type_of_target_y))
+        allowed_target_types = ('binary', 'multiclass')
+        if type_of_target_y not in allowed_target_types:
+            raise ValueError(
+                'Supported target types are: {}. Got {!r} instead.'.format(
+                    allowed_target_types, type_of_target_y))
 
         y = column_or_1d(y)
         n_samples = y.shape[0]

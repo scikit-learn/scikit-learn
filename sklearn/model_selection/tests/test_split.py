@@ -219,8 +219,11 @@ def test_2d_y():
         list(splitter.split(X, y_2d, groups))
         try:
             list(splitter.split(X, y_multilabel, groups))
-        except Exception as e:
-            assert_true("multilabel" in str(e))
+        except ValueError as e:
+            allowed_target_types = ('binary', 'multiclass')
+            msg = "Supported target types are: {}. Got 'multilabel".format(
+                allowed_target_types)
+            assert msg in str(e)
 
 
 def check_valid_split(train, test, n_samples=None):
