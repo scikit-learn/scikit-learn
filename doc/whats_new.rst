@@ -7,9 +7,14 @@ Release history
 Version 0.19.1
 ==============
 
-**September, 2017**
+**October, 2017**
 
-This is a bug-fix release with some minor documentation improvements.
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.19.0.
+
+Note there may be minor differences in TSNE output in this release (due to
+:issue:`9623`), in the case where multiple samples have equal distance to some
+sample.
 
 Changelog
 ---------
@@ -39,6 +44,20 @@ Bug fixes
 - Avoid integer overflows in :func:`metrics.matthews_corrcoef`.
   :issue:`9693` by :user:`Sam Steingold <sam-s>`.
 
+- Dataset fetchers make sure temporary files are closed before removing them,
+  which caused errors on Windows. :issue:`9847` by :user:`Joan Massich <massich>`.
+
+- Fixed a regression in :class:`manifold.TSNE` where it no longer supported
+  metrics other than 'euclidean' and 'precomputed'. :issue:`9623` by :user:`Oli
+  Blum <oliblum90>`.
+
+- Made a FutureWarning in SGD-based estimators less verbose. :issue:`9802` by
+  :user:`Vrishank Bhardwaj <vrishank97>`.
+
+- Fix ValueError in :class:`preprocessing.LabelEncoder` when using
+  ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
+  <newey01c>`.
+
 Enhancements
 ............
 
@@ -49,6 +68,8 @@ Enhancements
   caching, ``memory`` now allows ``joblib.Memory`` instances.
   This make use of the new :func:`utils.validation.check_memory` helper.
   issue:`9584` by :user:`Kumar Ashutosh <thechargedneutron>`
+
+- Some fixes to examples: :issue:`9750`, :issue:`9788`, :issue:`9815`
 
 Version 0.19
 ============
