@@ -381,15 +381,12 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
 def accumulate_prediction(predict, X, out, lock):
     prediction = predict(X, check_input=False)
-    lock.acquire()
-    try:
+    with lock:
         if len(out) == 1:
             out[0] += prediction
         else:
             for i in range(len(out)):
                 out[i] += prediction[i]
-    finally:
-        lock.release()
 
 
 class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
