@@ -427,7 +427,13 @@ def test_auc_errors():
     assert_raises(ValueError, auc, [0.0], [0.1])
 
     # x is not in order
-    assert_raises(ValueError, auc, [1.0, 0.0, 0.5], [0.0, 0.0, 0.0])
+    error_message = ("x is neither increasing nor decreasing : "
+                     "[ 2.5  1.6  3.7  4.8]. np.diff(x) contains 2 positive "
+                     "values and 1 negative values. The most positive value "
+                     "in np.diff(x) : x[2] - x[1] = 2.1. The most negative "
+                     "value in np.diff(x) : x[1] - x[0] = -0.9.")
+    assert_raise_message(ValueError, error_message, auc,
+                         [2.5, 1.6, 3.7, 4.8], [5, 6, 7, 8])
 
 
 def test_deprecated_auc_reorder():

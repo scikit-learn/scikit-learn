@@ -109,10 +109,16 @@ def auc(x, y, reorder=None):
             if np.all(dx <= 0):
                 direction = -1
             else:
-                raise ValueError("x is neither increasing nor decreasing"
-                                 " : {}. np.diff(x) contains {} positive "
-                                 "values and {} negative values."
-                                 .format(x, (dx > 0).sum(), (dx < 0).sum()))
+                raise ValueError("x is neither increasing nor decreasing "
+                                 ": {}. np.diff(x) contains {} positive "
+                                 "values and {} negative values. The most "
+                                 "positive value in np.diff(x) : x[{}] - "
+                                 "x[{}] = {}. The most negative value in "
+                                 "np.diff(x) : x[{}] - x[{}] = {}."
+                                 .format(x, (dx > 0).sum(), (dx < 0).sum(),
+                                         dx.argmax() + 1, dx.argmax(),
+                                         dx.max(), dx.argmin() + 1,
+                                         dx.argmin(), dx.min()))
 
     area = direction * np.trapz(y, x)
     if isinstance(area, np.memmap):
