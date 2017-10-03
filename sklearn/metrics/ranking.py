@@ -59,10 +59,6 @@ def auc(x, y, reorder=None):
           be removed in 0.22. Future (and default) behavior is equivalent to
           `reorder=False`.
 
-    tol : float, optional (default=0)
-        Tolerance allowed when checking whether x is increasing.
-        Ignored when ``reorder=True``.
-
     Returns
     -------
     auc : float
