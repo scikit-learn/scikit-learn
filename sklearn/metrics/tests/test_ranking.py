@@ -430,14 +430,6 @@ def test_auc_errors():
     assert_raises(ValueError, auc, [1.0, 0.0, 0.5], [0.0, 0.0, 0.0])
 
 
-def test_auc_tol():
-    x1 = [1.0, 1.0, 3.0, 4.0]
-    x2 = [1.0 + 1e-10, 1.0 - 1e-10, 3.0, 4.0]
-    y = [1.0, 2.0, 3.0, 3.0]
-    assert_raises(ValueError, auc, x2, y, tol=0)
-    assert_almost_equal(auc(x1, y, tol=0), auc(x2, y, tol=1e-8))
-
-
 def test_deprecated_auc_reorder():
     depr_message = ("The `reorder` parameter has been deprecated "
                     "in version 0.20 and will be removed in 0.22.")

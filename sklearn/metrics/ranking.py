@@ -36,7 +36,7 @@ from ..preprocessing import LabelBinarizer
 from .base import _average_binary_score
 
 
-def auc(x, y, reorder=None, tol=0):
+def auc(x, y, reorder=None):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     This is a general function, given points on a curve.  For computing the
@@ -105,8 +105,8 @@ def auc(x, y, reorder=None, tol=0):
         x, y = x[order], y[order]
     else:
         dx = np.diff(x)
-        if np.any(dx < -abs(tol)):
-            if np.all(dx <= abs(tol)):
+        if np.any(dx < 0):
+            if np.all(dx <= 0):
                 direction = -1
             else:
                 raise ValueError("Reordering is not turned on, and the x "
