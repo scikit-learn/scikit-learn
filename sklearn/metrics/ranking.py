@@ -50,7 +50,7 @@ def auc(x, y, reorder=None):
         Increasing or decreasing x coordinates.
     y : array, shape = [n]
         y coordinates.
-    reorder : boolean, optional (default=False)
+    reorder : boolean, optional (default=None)
         If True, assume that the curve is ascending in the case of ties, as for
         an ROC curve. If the curve is non-ascending, the result will be wrong.
 
