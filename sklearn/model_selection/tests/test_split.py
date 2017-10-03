@@ -845,20 +845,22 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
     assert_raise_message(ValueError, "Found array with 0 sample(s)", next,
                          LeaveOneGroupOut().split(X, y, groups))
     X = y = groups = np.ones(1)
-    msg = ("The groups parameter contains fewer than 2 unique groups ([ 1.]). "
-           "LeaveOneGroupOut expects at least 2.")
+    msg = ("The groups parameter contains fewer than 2 unique groups ({}). "
+           "LeaveOneGroupOut expects at least 2.").format(groups)
     assert_raise_message(ValueError, msg, next,
                          LeaveOneGroupOut().split(X, y, groups))
     X = y = groups = np.ones(1)
     msg = ("The groups parameter contains fewer than (or equal to) n_groups "
-           "(3) numbers of unique groups ([ 1.]). LeavePGroupsOut expects "
-           "that at least n_groups + 1 (4) unique groups be present")
+           "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
+           "that at least n_groups + 1 (4) unique groups "
+           "be present").format(groups)
     assert_raise_message(ValueError, msg, next,
                          LeavePGroupsOut(n_groups=3).split(X, y, groups))
     X = y = groups = np.arange(3)
     msg = ("The groups parameter contains fewer than (or equal to) n_groups "
-           "(3) numbers of unique groups ([0 1 2]). LeavePGroupsOut expects "
-           "that at least n_groups + 1 (4) unique groups be present")
+           "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
+           "that at least n_groups + 1 (4) unique groups "
+           "be present").format(groups)
     assert_raise_message(ValueError, msg, next,
                          LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
