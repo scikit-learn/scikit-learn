@@ -109,8 +109,7 @@ def auc(x, y, reorder=None):
             if np.all(dx <= 0):
                 direction = -1
             else:
-                raise ValueError("Reordering is not turned on, and the x "
-                                 "array is neither increasing nor decreasing"
+                raise ValueError("x is neither increasing nor decreasing"
                                  " : {}. np.diff(x) contains {} positive "
                                  "values and {} negative values."
                                  .format(x, (dx > 0).sum(), (dx < 0).sum()))
