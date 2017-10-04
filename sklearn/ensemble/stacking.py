@@ -142,7 +142,7 @@ def _identity(x):
 
 def _identity_transformer():
     """Contructs a transformer that returns its input unchanged"""
-    return FunctionTransformer(_identity)
+    return FunctionTransformer(_identity, accept_sparse=True)
 
 
 def make_stack_layer(base_estimators, restack=False, cv=3, method='auto',
