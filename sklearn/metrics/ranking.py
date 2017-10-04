@@ -105,6 +105,8 @@ def auc(x, y, reorder=None):
             if np.all(dx <= 0):
                 direction = -1
             else:
+                maxpos = dx.argmax()
+                minpos = dx.argmin()
                 raise ValueError("x is neither increasing nor decreasing "
                                  ": {}. np.diff(x) contains {} positive "
                                  "values and {} negative values. The most "
@@ -112,9 +114,8 @@ def auc(x, y, reorder=None):
                                  "x[{}] = {}. The most negative value in "
                                  "np.diff(x) : x[{}] - x[{}] = {}."
                                  .format(x, (dx > 0).sum(), (dx < 0).sum(),
-                                         dx.argmax() + 1, dx.argmax(),
-                                         dx.max(), dx.argmin() + 1,
-                                         dx.argmin(), dx.min()))
+                                         maxpos + 1, maxpos, dx.max(),
+                                         minpos + 1, minpos, dx.min()))
 
     area = direction * np.trapz(y, x)
     if isinstance(area, np.memmap):
