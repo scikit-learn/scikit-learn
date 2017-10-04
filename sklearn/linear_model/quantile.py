@@ -13,7 +13,7 @@ from ..utils import axis0_safe_slice
 from ..utils.extmath import safe_sparse_dot
 
 
-def _quantile_loss_and_gradient(w, X, y, quantile, alpha, sample_weight):
+def _quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weight):
     """Returns the quantile regression loss and its gradient.
 
     Parameters
@@ -30,10 +30,13 @@ def _quantile_loss_and_gradient(w, X, y, quantile, alpha, sample_weight):
         Target vector.
     
     quantile : float
-        Quantile to be predicted
+        Quantile to be predicted.
     
     alpha : float
-        Ridge regularization parameter.
+        ElasticNet regularization parameter.
+        
+    l1_ratio: float
+        Ratio of L1 vs L2 in regularization.
 
     sample_weight : ndarray, shape (n_samples,)
         Weight assigned to each sample.
@@ -76,13 +79,18 @@ def _quantile_loss_and_gradient(w, X, y, quantile, alpha, sample_weight):
     grad[:n_features] -= safe_sparse_dot(weighted_obs, X)
 
     # Gradient due to the ridge penalty
-    grad[:n_features] += alpha * 2. * w
+    grad[:n_features] += alpha * (1-l1_ratio) * 2. * w
+    # Gradient due to the lasso penalty
+    grad[:n_features] += alpha * l1_ratio * np.sign(w)
 
     if fit_intercept:
         grad[-1] -= np.sum(weighted_obs)
 
-    loss = np.sum(regression_loss) + alpha * np.dot(w, w)
+    loss = np.sum(regression_loss) + alpha * (1-l1_ratio) * np.dot(w, w) + alpha * l1_ratio * np.sum(np.abs(w))
     return loss, grad
+    
+# Todo: add smoothed version of the problem
+# Todo: test lasso regularization
 
 
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
@@ -105,7 +113,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         should run for.
 
     alpha : float, default 0.0001
-        Ridge regularization parameter.
+        Constant that multiplies ElasticNet penalty term.
+        
+    l1_ratio : float, defaut 0.0
+        The ElasticNet mixing parameter, with ``0 <= l1_ratio <= 1``. For
+        ``l1_ratio = 0`` the penalty is an L2 penalty. ``For l1_ratio = 1`` it
+        is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
+        combination of L1 and L2.
 
     warm_start : bool, default False
         This is useful if the stored attributes of a previously used model
@@ -138,11 +152,12 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
            Sankhyā: The Indian Journal of Statistics, 399-417.
     """
 
-    def __init__(self, quantile=0.5, max_iter=100, alpha=0.0001,
+    def __init__(self, quantile=0.5, max_iter=100, alpha=0.0001, l1_ratio=0.0
                  warm_start=False, fit_intercept=True, tol=1e-05):
         self.quantile = quantile
         self.max_iter = max_iter
         self.alpha = alpha
+        self.l1_ratio = l1_ratio
         self.warm_start = warm_start
         self.fit_intercept = fit_intercept
         self.tol = tol
@@ -194,7 +209,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         result = optimize.minimize(
             _quantile_loss_and_gradient, 
             parameters,
-            args=(X, y, self.quantile, self.alpha, sample_weight),
+            args=(X, y, self.quantile, self.alpha, self.l1_ratio, sample_weight),
             #maxiter=self.max_iter, 
             #gtol=self.tol,
             method='BFGS',
