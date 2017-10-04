@@ -36,6 +36,7 @@ from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
 
 from .ransac import RANSACRegressor
 from .theil_sen import TheilSenRegressor
+from .quantile import QuantileRegressor
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
@@ -65,6 +66,7 @@ __all__ = ['ARDRegression',
            'PassiveAggressiveClassifier',
            'PassiveAggressiveRegressor',
            'Perceptron',
+           'QuantileRegressor',
            'RandomizedLasso',
            'RandomizedLogisticRegression',
            'Ridge',
