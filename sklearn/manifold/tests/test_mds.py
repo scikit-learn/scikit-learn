@@ -77,7 +77,7 @@ def test_fit_transform_error():
                   [.016, -.238],
                   [-.200, .524]])
 
-    # fit_transform should throw an error if init is not None 
+    # fit_transform should throw an error if init is not None
     # and dissimilarity="euclidean"
     mds_clf = mds.MDS(dissimilarity="euclidean", extendible=True)
     assert_raises(ValueError, mds_clf.fit_transform, sim, init=Z)
