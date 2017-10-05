@@ -371,8 +371,6 @@ class MDS(BaseEstimator):
         self.n_jobs = n_jobs
         self.random_state = random_state
         self.extendible = extendible
-        self.X_train = None
-        self.D_XX = None
 
     @property
     def _pairwise(self):
@@ -397,12 +395,12 @@ class MDS(BaseEstimator):
         if not self.extendible:
             self.fit_transform(X, init=init)
         else:
-            self.X_train = X
+            self.X_train_ = X
             if self.dissimilarity == 'precomputed':
                 D = X
             elif self.dissimilarity == 'euclidean':
                 D = euclidean_distances(X)
-                self.D_XX = euclidean_distances(self.X_train, self.X_train)
+                self.D_XX_ = euclidean_distances(self.X_train_, self.X_train_)
             else:
                 raise ValueError("Proximity must be 'precomputed' or"
                                  "'euclidean'."
@@ -417,8 +415,8 @@ class MDS(BaseEstimator):
             # Sorting e-vectors and e-values according to e-val
             e_vals, e_vecs = la.eigh(K)
             ind_sort = np.argsort(e_vals)[::-1]
-            self._e_vecs = e_vecs[:, ind_sort]
-            self._e_vals = e_vals[ind_sort]
+            self.e_vecs_ = e_vecs[:, ind_sort]
+            self.e_vals_ = e_vals[ind_sort]
         return self
 
     def fit_transform(self, X, y=None, init=None):
@@ -475,12 +473,15 @@ class MDS(BaseEstimator):
         if self.dissimilarity == 'precomputed':
             D_new = X
         elif self.dissimilarity == 'euclidean':
-            if self.X_train is None or self.D_XX is None:
+            if not hasattr(self, 'X_train_') \
+               or not hasattr(self, 'D_XX_') \
+               or self.X_train_ is None \
+               or self.D_XX_ is None:
                 raise ValueError("Extendible MDS with Euclidean Similarities "
                                  "must be fit first. use ``MDS.fit()``")
             else:
-                D_aX = euclidean_distances(X, self.X_train)
-                D_new = self.center_similarities(D_aX, self.D_XX)
+                D_aX = euclidean_distances(X, self.X_train_)
+                D_new = self.center_similarities(D_aX, self.D_XX_)
         else:
             raise ValueError("Dissimilarity not set properly: 'precomputed' "
                              "and 'euclidean' allowed.")
@@ -514,8 +515,8 @@ class MDS(BaseEstimator):
 
     def _fit_transform_ext(self, X):
         self.fit(X)
-        X_new = np.dot(self._e_vecs[:, :self.n_components],
-                       np.diag(np.sqrt(self._e_vals[:self.n_components])))
+        X_new = np.dot(self.e_vecs_[:, :self.n_components],
+                       np.diag(np.sqrt(self.e_vals_[:self.n_components])))
         return X_new
 
     def center_similarities(self, D_aX, D_XX):
@@ -551,10 +552,10 @@ class MDS(BaseEstimator):
 
         for i in range(len(new_similarities)):
             for j in range(k):
-                e_projections[i, j] = ((np.dot(self._e_vecs[:, j],
+                e_projections[i, j] = ((np.dot(self.e_vecs_[:, j],
                                                new_similarities[i]) /
-                                        np.sqrt(self._e_vals[j])))
+                                        np.sqrt(self.e_vals_[j])))
         e_projections = np.dot(new_similarities,
-                               np.dot(self._e_vecs[:, :k],
-                                      np.diag(1/np.sqrt(self._e_vals[:k]))))
+                               np.dot(self.e_vecs_[:, :k],
+                                      np.diag(1/np.sqrt(self.e_vals_[:k]))))
         return e_projections
