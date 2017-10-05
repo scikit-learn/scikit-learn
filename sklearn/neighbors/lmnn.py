@@ -574,27 +574,30 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             self.n_iter_ += 1
             if self.verbose:
                 header_fields = ['Iteration', 'Objective Value',
-                                 '#Constraints', 'Time(s)']
-                header_fmt = '{:>10} {:>20} {:>15} {:>10}'
+                                 '#Active Triplets', 'Time(s)']
+                header_fmt = '{:>10} {:>20} {:>20} {:>10}'
                 header = header_fmt.format(*header_fields)
                 print('\n{}\n{}'.format(header, '-' * len(header)))
 
         t_start = time.time()
         X_embedded = self._transform(X, check_input=False)
 
-        # Compute squared distances to target neighbors (plus margin)
+        # Compute squared distances to the target neighbors
         n_neighbors = targets.shape[1]
         dist_tn = np.zeros((n_samples, n_neighbors))
         for k in range(n_neighbors):
             dist_tn[:, k] = row_norms(X_embedded - X_embedded[targets[:, k]],
-                                      squared=True) + 1
+                                      squared=True)
+
+        # Add the margin to all distances to target neighbors
+        dist_tn += 1
 
         # Find the impostors and compute (squared) distances to them
         impostors_graph = \
             self._find_impostors(X_embedded, y, dist_tn[:, -1], use_sparse)
 
         # Compute the push loss and its gradient
-        loss, grad_new, n_constraints = \
+        loss, grad_new, n_active_triplets = \
             _compute_push_loss(X, targets, dist_tn, impostors_graph)
 
         # Compute the total gradient
@@ -607,8 +610,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         t = time.time() - t_start
         if self.verbose:
-            values_fmt = '{:>10} {:>20.6e} {:>15,} {:>10.2f}'
-            print(values_fmt.format(self.n_iter_, loss, n_constraints, t))
+            values_fmt = '{:>10} {:>20.6e} {:>20,} {:>10.2f}'
+            print(values_fmt.format(self.n_iter_, loss, n_active_triplets, t))
             sys.stdout.flush()
 
         return loss, grad.ravel()
@@ -965,7 +968,7 @@ def _compute_push_loss(X, targets, dist_targets, impostors_graph):
     grad : array, shape (n_features, n_features)
         The gradient of the push loss.
 
-    n_constraints : int
+    n_active_triplets : int
         The number of active triplet constraints.
 
     """
@@ -978,26 +981,27 @@ def _compute_push_loss(X, targets, dist_targets, impostors_graph):
     loss = 0
     shape = (n_samples, n_samples)
     A0 = csr_matrix(shape)
-    n_constraints = 0
+    sample_range = range(n_samples)
+    n_active_triplets = 0
     for k in range(n_neighbors-1, -1, -1):
         loss1 = np.maximum(dist_targets[imp_row, k] - dist_impostors, 0)
         ac, = np.where(loss1 > 0)
-        n_constraints += len(ac)
+        n_active_triplets += len(ac)
         A1 = csr_matrix((2*loss1[ac], (imp_row[ac], imp_col[ac])), shape)
 
         loss2 = np.maximum(dist_targets[imp_col, k] - dist_impostors, 0)
         ac, = np.where(loss2 > 0)
-        n_constraints += len(ac)
+        n_active_triplets += len(ac)
         A2 = csc_matrix((2*loss2[ac], (imp_row[ac], imp_col[ac])), shape)
 
         values = (A1.sum(1).ravel() + A2.sum(0)).getA1()
-        A3 = csr_matrix((values, (range(n_samples), targets[:, k])), shape)
+        A3 = csr_matrix((values, (sample_range, targets[:, k])), shape)
         A0 = A0 - A1 - A2 + A3
         loss += np.dot(loss1, loss1) + np.dot(loss2, loss2)
 
     grad = _sum_weighted_outer_differences(X, A0)
 
-    return loss, grad, n_constraints
+    return loss, grad, n_active_triplets
 
 
 def _sum_weighted_outer_differences(X, weights):
