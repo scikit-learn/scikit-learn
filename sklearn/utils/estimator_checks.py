@@ -33,7 +33,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_dict_equal
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-
+from sklearn.manifold.mds import MDS
 
 from sklearn.base import (clone, TransformerMixin, ClusterMixin,
                           BaseEstimator, is_classifier, is_regressor)
@@ -336,6 +336,12 @@ def set_checking_parameters(estimator):
         # SelectKBest has a default of k=10
         # which is more feature than we have in most case.
         estimator.set_params(k=1)
+
+    if isinstance(estimator, MDS):
+        # MDS can optionally implement fit() and transform() functionality
+        # but doesn't by default. However, the functions are always
+        # defined so some tests fail.
+        estimator.set_params(extendible=True)
 
 
 class NotAnArray(object):
