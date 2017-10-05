@@ -786,7 +786,7 @@ class FeatureAgglomeration(_BaseClustering, AgglomerationTransform):
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         ensure_min_features=2, estimator=self)
-        super(FeatureAgglomeration, self).fit(X, Y)
+        super(FeatureAgglomeration, self).fit(X, y)
 
     @property
     def fit_predict(self):
