@@ -310,7 +310,7 @@ and Cython optimizations.
 Filing Bugs
 -----------
 
-We use Github issues to track all bugs and feature requests; feel free to
+We use GitHub issues to track all bugs and feature requests; feel free to
 open an issue if you have found a bug or wish to see a feature implemented.
 
 It is recommended to check that your issue complies with the
@@ -511,7 +511,7 @@ More information can be found on the `developer's wiki
 Issue Tracker Tags
 ------------------
 All issues and pull requests on the
-`Github issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
+`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
 should have (at least) one of the following tags:
 
 :Bug / Crash:
