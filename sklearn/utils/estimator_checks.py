@@ -371,7 +371,7 @@ def gram_matrix_if_pairwise(X, estimator, kernel=linear_kernel):
         for i in range(n_obs):
             for j in range(n_obs):
                 dist = np.sum((X_std[i] - X_std[j]) ** 2) ** .5
-                X_out[i,j] = dist
+                X_out[i, j] = dist
         return X_out
 
     if is_pairwise(estimator):
