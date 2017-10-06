@@ -40,7 +40,6 @@ from sklearn.base import (clone, TransformerMixin, ClusterMixin,
                           is_pairwise, is_pairwise_metric)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
-from sklearn.covariance import LedoitWolf
 from sklearn.random_projection import BaseRandomProjection
 from sklearn.feature_selection import SelectKBest
 from sklearn.svm.base import BaseLibSVM
@@ -654,6 +653,7 @@ def check_fit2d_1feature(name, estimator_orig):
     # informative message
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
+    print(name, X)
     X = gram_matrix_if_pairwise(X, estimator_orig)
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
