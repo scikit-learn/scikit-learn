@@ -50,7 +50,6 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
 from sklearn.metrics.pairwise import rbf_kernel, linear_kernel
-from sklearn.metrics.pairwise import pairwise_distances
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
