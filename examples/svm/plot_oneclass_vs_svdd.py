@@ -17,9 +17,9 @@ results in the case of a stationary kernel, like RBF, but produce different
 decision functions for non-stationary kernels, e.g. polynomial. This
 example demonstrates this.
 
-Note, that it is incorrect to say that the SVDD generalizes the One-Class
-SVM: these are different models, which just happen to coincide for a
-particular family of kernels.
+Note that it is incorrect to say that the SVDD is equivalent to the
+One-Class SVM: these are different models, which just happen to coincide
+for a particular family of kernels.
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -82,12 +82,13 @@ for kernel_name, kernel in kernels:
                        zorder=-97, label="learned frontier")
 
         s = 40
-        b1 = ax.scatter(X_train[:, 0], X_train[:, 1], c='white', s=s)
+        b1 = ax.scatter(X_train[:, 0], X_train[:, 1], s=s,
+                        c='white', edgecolors='k')
         b2 = ax.scatter(X_test[:, 0], X_test[:, 1], c='blueviolet', s=s)
         c = ax.scatter(X_outliers[:, 0], X_outliers[:, 1], c='gold', s=s)
         ax.axis('tight')
-        ax.set_xlim((-7, 7))
-        ax.set_ylim((-7, 7))
+        ax.set_xlim((-6, 6))
+        ax.set_ylim((-6, 6))
 
         ax.set_title("%s %s (%d/200, %d/40, %d/40)"
                      % (model_name, kernel_name, n_error_train,

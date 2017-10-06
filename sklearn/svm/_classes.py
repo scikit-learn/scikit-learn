@@ -1527,7 +1527,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Estimate the support of a high-dimensional distribution by finding the
     maximum margin soft boundary hyperplane separating a data set from the
-    origin. At most the fraction ``nu`` (``0 < nu <= 1``) of the data
+    origin. At most a fraction ``nu`` (``0 < nu <= 1``) of the data
     are permitted to be outliers.
 
     The implementation is based on libsvm.
@@ -1826,8 +1826,8 @@ class SVDD(BaseLibSVM):
     """Support Vector Data Description (SVDD) for Unsupervised Outlier Detection.
 
     Estimate the support of a high-dimensional distribution by finding the
-    tightest soft boundary hypersphere around a data set, which permits at
-    most the fraction ``nu`` (``0 < nu <= 1``) of the data as outliers.
+    tightest soft hypersphere around a data set, which permits at most a
+    fraction ``nu`` (``0 < nu <= 1``) of the data as outliers.
 
     The implementation is based on libsvm.
 
@@ -1844,7 +1844,7 @@ class SVDD(BaseLibSVM):
 
     nu : float, optional
         An upper bound on the fraction of training errors and a lower bound
-        of the fraction of support vectors. Should be in the interval (0, 1].
+        on the fraction of support vectors. Should be in the interval (0, 1].
         By default 0.5 will be taken.
 
     degree : int, optional (default=3)
@@ -1877,11 +1877,11 @@ class SVDD(BaseLibSVM):
         Hard limit on iterations within solver, or -1 for no limit.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Ignored.
+
+        .. deprecated:: 0.20
+           ``random_state`` has been deprecated in 0.20 and will be removed in
+           0.22.
 
     Attributes
     ----------
@@ -1891,18 +1891,24 @@ class SVDD(BaseLibSVM):
     support_vectors_ : array-like, shape = [nSV, n_features]
         Support vectors.
 
-    dual_coef_ : array, shape = [n_classes-1, n_SV]
+    dual_coef_ : array, shape = [1, n_SV]
         Coefficients of the support vectors in the decision function.
 
-    coef_ : array, shape = [n_classes-1, n_features]
+    coef_ : array, shape = [1, n_features]
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`
 
-    intercept_ : array, shape = [n_classes-1]
-        Constants in decision function.
+    intercept_ : array, shape = [1,]
+        The constant in the decision function.
+
+    offset_ : float
+        Offset used to define the decision function from the raw scores.
+        We have the relation: decision_function = score_samples - offset_.
+        The offset is the opposite of intercept_ and is provided for
+        consistency with other outlier detection algorithms.
 
     References
     ----------
@@ -1918,13 +1924,15 @@ class SVDD(BaseLibSVM):
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1, random_state=None):
+
         super(SVDD, self).__init__(
-            'svdd_l1', kernel, degree, gamma, coef0, tol, 0., nu, 0.,
-            shrinking, False, cache_size, None, verbose, max_iter,
-            random_state)
+            'svdd_l1', kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
+            tol=tol, C=0., nu=nu, epsilon=0., shrinking=shrinking,
+            probability=False, cache_size=cache_size, class_weight=None,
+            verbose=verbose, max_iter=max_iter, random_state=random_state)
 
     def fit(self, X, y=None, sample_weight=None, **params):
-        """Detects the soft minimum volume hypersphere around the sample X.
+        """Learns the soft minimum volume hypersphere around the sample X.
 
         Parameters
         ----------
@@ -1948,6 +1956,7 @@ class SVDD(BaseLibSVM):
         """
         super(SVDD, self).fit(X, np.ones(_num_samples(X)),
                               sample_weight=sample_weight, **params)
+        self.offset_ = -self._intercept_
         return self
 
     def decision_function(self, X):
@@ -1964,8 +1973,23 @@ class SVDD(BaseLibSVM):
         X : array-like, shape (n_samples,)
             Returns the decision function of the samples.
         """
-        dec = self._decision_function(X)
+        dec = self._decision_function(X).ravel()
         return dec
+
+    def score_samples(self, X):
+        """Raw scoring function of the samples.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        Returns
+        -------
+        score_samples : array-like, shape (n_samples,)
+            Returns the (unshifted) scoring function of the samples.
+        """
+        score_samples = self.decision_function(X) + self.offset_
+        return score_samples
 
     def predict(self, X):
         """

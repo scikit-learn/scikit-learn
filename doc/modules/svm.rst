@@ -404,11 +404,11 @@ Tips on Practical Use
     function can be configured to be almost the same as the :class:`LinearSVC`
     model.
 
-  * **Kernel cache size**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC` and
-    :class:`NuSVR`, the size of the kernel cache has a strong impact on run
-    times for larger problems.  If you have enough RAM available, it is
-    recommended to set ``cache_size`` to a higher value than the default of
-    200(MB), such as 500(MB) or 1000(MB).
+  * **Kernel cache size**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC`,
+    :class:`NuSVR`, :class:`OneClassSVM` and :class:`SVDD` the size of the
+    kernel cache has a strong impact on run times for larger problems.  If
+    you have enough RAM available, it is recommended to set ``cache_size``
+    to a higher value than the default of 200(MB), such as 500(MB) or 1000(MB).
 
 
   * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
@@ -458,9 +458,10 @@ Tips on Practical Use
     ``probability`` is set to ``True``). This randomness can be controlled
     with the ``random_state`` parameter. If ``probability`` is set to ``False``
     these estimators are not random and ``random_state`` has no effect on the
-    results. The underlying :class:`OneClassSVM` implementation is similar to
-    the ones of :class:`SVC` and :class:`NuSVC`. As no probability estimation
-    is provided for :class:`OneClassSVM`, it is not random.
+    results. The underlying :class:`OneClassSVM` and :class:`SVDD`
+    implementation is similar to the ones of :class:`SVC` and :class:`NuSVC`.
+    As no probability estimation is provided for :class:`OneClassSVM` and
+    :class:`SVDD`, they are not random.
 
     The underlying :class:`LinearSVC` implementation uses a random number
     generator to select features when fitting the model with a dual coordinate
@@ -849,7 +850,7 @@ SVDD
 ----
 
 Support Vector Data Description (SVDD), proposed by Tax and Duin (2004),
-aims at finding a spherically shaped boundary around a data set. Specifially,
+aims at finding a spherically shaped boundary around a data set. Specifically,
 it computes a minimum volume hypersphere containing the most of the data with
 the number of outliers controlled by the parameter of the model.
 
