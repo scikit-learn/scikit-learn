@@ -4,7 +4,33 @@ Large Margin Nearest Neighbor Dimensionality Reduction
 ======================================================
 
 Sample usage of Large Margin Nearest Neighbor for dimensionality reduction.
+
+This example compares different (linear) dimensionality reduction methods
+applied on the Olivetti Faces data set. Each image of dimensions 64x64 is
+reduced to a two-dimensional data point.
+
+The data set contains ten different images of each of 40 distinct
+persons. For some subjects, the images were taken at different times,
+varying the lighting, facial expressions (open / closed eyes, smiling / not
+smiling) and facial details (glasses / no glasses).
+
+Principal Component Analysis (PCA) applied to this data identifies the
+combination of attributes (principal components, or directions in the
+feature space) that account for the most variance in the data. Here we
+plot the different samples on the 2 first principal components.
+
+Linear Discriminant Analysis (LDA) tries to identify attributes that
+account for the most variance *between classes*. In particular,
+LDA, in contrast to PCA, is a supervised method, using known class labels.
+
+Large Margin Nearest Neighbor (LMNN) tries to find a feature space such that
+the nearest neighbors classification is maximized. Like LDA, it is a
+supervised method.
+
+One can see that LMNN enforces a clustering of the data that is visually
+meaningful even after the large dimensionality reduction.
 """
+
 
 # Author: John Chiotellis <johnyc.code@gmail.com>
 # License: BSD 3 clause

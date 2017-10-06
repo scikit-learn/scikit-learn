@@ -16,14 +16,14 @@ rng = np.random.RandomState(0)
 # load and shuffle iris dataset
 iris = datasets.load_iris()
 perm = rng.permutation(iris.target.size)
-iris.data = iris.data[perm]
-iris.target = iris.target[perm]
+iris_data = iris.data[perm]
+iris_target = iris.target[perm]
 
 # load and shuffle digits
 digits = datasets.load_digits()
 perm = rng.permutation(digits.target.size)
-digits.data = digits.data[perm]
-digits.target = digits.target[perm]
+digits_data = digits.data[perm]
+digits_target = digits.target[perm]
 
 
 def test_neighbors_iris():
@@ -32,20 +32,20 @@ def test_neighbors_iris():
     # nearest neighbor query on points near the decision boundary.
 
     lmnn = LargeMarginNearestNeighbor(n_neighbors=1)
-    lmnn.fit(iris.data, iris.target)
+    lmnn.fit(iris_data, iris_target)
     knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
-    LX = lmnn.transform(iris.data)
-    knn.fit(LX, iris.target)
+    LX = lmnn.transform(iris_data)
+    knn.fit(LX, iris_target)
     y_pred = knn.predict(LX)
 
-    assert_array_equal(y_pred, iris.target)
+    assert_array_equal(y_pred, iris_target)
 
     lmnn.set_params(n_neighbors=9)
-    lmnn.fit(iris.data, iris.target)
+    lmnn.fit(iris_data, iris_target)
     knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
-    knn.fit(LX, iris.target)
+    knn.fit(LX, iris_target)
 
-    assert_true(knn.score(LX, iris.target) > 0.95)
+    assert_true(knn.score(LX, iris_target) > 0.95)
 
 
 def test_neighbors_digits():
@@ -53,8 +53,8 @@ def test_neighbors_digits():
     # the 'brute' algorithm has been observed to fail if the input
     # dtype is uint8 due to overflow in distance calculations.
 
-    X = digits.data.astype('uint8')
-    y = digits.target
+    X = digits_data.astype('uint8')
+    y = digits_target
     n_samples, n_features = X.shape
     train_test_boundary = int(n_samples * 0.8)
     train = np.arange(0, train_test_boundary)
@@ -200,16 +200,16 @@ def test_init_transformation():
 def test_max_impostors():
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_impostors=1,
                                       imp_store='list')
-    lmnn.fit(iris.data, iris.target)
+    lmnn.fit(iris_data, iris_target)
 
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_impostors=1,
                                       imp_store='sparse')
-    lmnn.fit(iris.data, iris.target)
+    lmnn.fit(iris_data, iris_target)
 
 
 def test_imp_store():
-    X = iris.data
-    y = iris.target
+    X = iris_data
+    y = iris_target
     n_samples, n_features = X.shape
     train_test_boundary = int(n_samples * 0.8)
     train = np.arange(0, train_test_boundary)
@@ -289,7 +289,7 @@ def test_warm_start_diff_inputs():
 
 def test_verbose():
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, verbose=1)
-    lmnn.fit(iris.data, iris.target)
+    lmnn.fit(iris_data, iris_target)
 
 
 def test_random_state():
@@ -298,8 +298,8 @@ def test_random_state():
     different impostors will be sampled given a different random_state
     leading to a different transformation"""
 
-    X = iris.data
-    y = iris.target
+    X = iris_data
+    y = iris_target
     params = {'n_neighbors': 3, 'max_impostors': 5, 'random_state': 1,
               'max_iter': 10, 'init': 'identity'}
 
@@ -323,8 +323,8 @@ def test_random_state():
 
 
 def test_singleton_class():
-    X = iris.data
-    y = iris.target
+    X = iris_data
+    y = iris_target
     X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y)
 
     # one singleton class
@@ -350,8 +350,8 @@ def test_singleton_class():
 
 
 def test_callable():
-    X = iris.data
-    y = iris.target
+    X = iris_data
+    y = iris_target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, callback='my_cb')
@@ -369,8 +369,8 @@ def test_callable():
 
 
 def test_terminate_early():
-    X = iris.data
-    y = iris.target
+    X = iris_data
+    y = iris_target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_iter=5)

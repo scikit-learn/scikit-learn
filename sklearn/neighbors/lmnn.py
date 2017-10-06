@@ -272,7 +272,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         # Stop timer
         t_train = time.time() - t_train
         if self.verbose:
-            print('Training took {:8.2f}s.'.format(t_train))
+            print('[{}] Training took {:8.2f}s.'.format(
+                self.__class__.__name__, t_train))
 
         # Optionally store information returned by the optimizer
         if self.store_opt_result:
@@ -290,31 +291,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_embedded: array-like, shape (n_samples, n_features_out)
-            The data samples transformed.
-
-        Raises
-        ------
-        NotFittedError
-            If :meth:`fit` has not been called before.
-        """
-
-        return self._transform(X)
-
-    def _transform(self, X, check_input=True):
-        """Applies the learned transformation to the given data.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Data samples.
-
-        check_input: bool, optional (default=True)
-            Whether to validate ``X``.
-
-        Returns
-        -------
-        X_embedded: array-like, shape (n_samples, n_features_out)
+        X_embedded: array, shape (n_samples, n_features_out)
             The data samples transformed.
 
         Raises
@@ -324,10 +301,24 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         """
 
         check_is_fitted(self, ['transformation_'])
+        X = check_array(X)
 
-        if check_input:
-            X = check_array(X)
+        return np.dot(X, self.transformation_.T)
 
+    def _transform_without_checks(self, X):
+        """Same as transform but without validating the inputs.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples, n_features)
+            Data samples.
+
+        Returns
+        -------
+        X_embedded: array, shape (n_samples, n_features_out)
+            The data samples transformed.
+
+        """
         return np.dot(X, self.transformation_.T)
 
     def _validate_params(self, X, y):
@@ -541,7 +532,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         transformation : array, shape (n_features_out * n_features,)
             The current (flattened) linear transformation.
 
-        X : array-like, shape (n_samples, n_features)
+        X : array, shape (n_samples, n_features)
             The training samples.
 
         y : array, shape (n_samples,)
@@ -580,7 +571,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 print('\n{}\n{}'.format(header, '-' * len(header)))
 
         t_start = time.time()
-        X_embedded = self._transform(X, check_input=False)
+        X_embedded = self._transform_without_checks(X)
 
         # Compute squared distances to the target neighbors
         n_neighbors = targets.shape[1]

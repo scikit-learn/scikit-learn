@@ -1,10 +1,16 @@
 """
-============================================
-Large Margin Nearest Neighbor Classification
-============================================
+============================================================================
+Comparing Nearest Neighbors and Large Margin Nearest Neighbor Classification
+============================================================================
 
-Sample usage of Large Margin Nearest Neighbor classification.
-It will plot the decision boundaries for each class.
+An example comparing nearest neighbors classification with and without
+:ref:`neighbors.LargeMarginNearestNeighbor`.
+
+It will plot the decision boundaries for each class determined by a simple
+nearest neighbors classifier against the decision boundaries determined by a
+Large Margin Nearest Neighbor classifier. The latter finds a distance metric
+specifically to maximize the nearest neighbor classification accuracy on a
+given training set.
 """
 
 # Author: John Chiotellis <johnyc.code@gmail.com>
