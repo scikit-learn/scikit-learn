@@ -364,7 +364,15 @@ def gram_matrix_if_pairwise(X, estimator, kernel=linear_kernel):
         X = X.reshape(-1, 1)
 
     if is_pairwise_metric(estimator):
-        return pairwise_distances(X, metric='mahalanobis')
+        # pairwise_distance() fails for certain versions of scipy
+        n_obs = X.shape[0]
+        X_std = (X - X.mean(axis=0)) / X.std(axis=0)
+        X_out = np.zeros(shape=(n_obs, n_obs))
+        for i in range(n_obs):
+            for j in range(n_obs):
+                dist = np.sum((X_std[i] - X_std[j]) ** 2) ** .5
+                X_out[i,j] = dist
+        return X_out
 
     if is_pairwise(estimator):
         return kernel(X, X)
@@ -653,7 +661,6 @@ def check_fit2d_1feature(name, estimator_orig):
     # informative message
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
-    print(name, X)
     X = gram_matrix_if_pairwise(X, estimator_orig)
     y = X[:, 0].astype(np.int)
     estimator = clone(estimator_orig)
