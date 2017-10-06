@@ -38,6 +38,7 @@ from sklearn.model_selection import LeavePGroupsOut
 from sklearn.model_selection import ShuffleSplit
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import GroupStratifiedShuffleSplit
 from sklearn.model_selection import PredefinedSplit
 from sklearn.model_selection import check_cv
 from sklearn.model_selection import train_test_split
@@ -697,6 +698,50 @@ def test_stratified_shuffle_split_multilabel():
         expected_ratio = np.mean(y[:, 0])
         assert_equal(expected_ratio, np.mean(y_train[:, 0]))
         assert_equal(expected_ratio, np.mean(y_test[:, 0]))
+
+
+def test_group_stratified_shuffle_group_proportions(self):
+    def simulate_data():
+        def tuplist_to_integers(tup_list):
+            integers = []
+            nums = {}
+            count = 0
+            for tt in tup_list:
+                if tt not in nums:
+                    nums[tt] = count
+                    count += 1
+                integers.append(nums[tt])
+            return integers
+
+        n = 1000
+        other = np.random.binomial(1, .6, n)
+        y = np.random.binomial(1, .3, n)
+        groups = np.array(tuplist_to_integers(zip(y, other)))
+        X = np.random.randn(n, 5)
+        return X, y, other, groups
+
+    def class_proportion(x):
+        counts = np.bincount(x)
+        return 1. * counts / np.sum(counts)
+
+    n_splits = 5
+    X, y, other, groups = simulate_data()
+    y_expected = class_proportion(y)
+    groups_expected = class_proportion(groups)
+
+    for gg in [groups, None]:
+        cv = GroupStratifiedShuffleSplit(n_splits=n_splits)
+
+        for train, test in cv.split(X, y, gg):
+            yc = class_proportion(y[train])
+            gc = class_proportion(groups[train])
+
+            if gg is None:
+                _, p = stats.chisquare(yc, y_expected)
+                assert_true(p > (.05 / n_splits))
+            else:
+                _, p = stats.chisquare(gc, groups_expected)
+                assert_true(p > (.05 / n_splits))
 
 
 def test_predefinedsplit_with_kfold_split():

@@ -44,6 +44,7 @@ __all__ = ['BaseCrossValidator',
            'GroupShuffleSplit',
            'StratifiedKFold',
            'StratifiedShuffleSplit',
+           'GroupStratifiedShuffleSplit',
            'PredefinedSplit',
            'train_test_split',
            'check_cv']
@@ -1701,6 +1702,48 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
                          'train_size.' % (n_train + n_test, n_samples))
 
     return int(n_train), int(n_test)
+
+
+class GroupStratifiedShuffleSplit(StratifiedShuffleSplit):
+    def split(self, X, y, groups=None):
+        """Generate indices to split data into training and test set.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+            Note that providing ``y`` is sufficient to generate the splits and
+            hence ``np.zeros(n_samples)`` may be used as a placeholder for
+            ``X`` instead of actual training data.
+
+        y : array-like, shape (n_samples,)
+            The target variable for supervised learning problems.
+            Stratification is done based on the y labels.
+
+        groups : object
+            If provided, used instead of y to stratify.
+
+        Returns
+        -------
+        train : ndarray
+            The training set indices for that split.
+
+        test : ndarray
+            The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
+        """
+        y = check_array(y, ensure_2d=False, dtype=None)
+
+        if groups is not None:
+            y = groups
+        return super(StratifiedShuffleSplit, self).split(X, y, groups)
 
 
 class PredefinedSplit(BaseCrossValidator):
