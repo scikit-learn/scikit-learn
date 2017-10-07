@@ -55,7 +55,7 @@ please make sure to include the full traceback that you obtain when running the
 reproduction script.
 
 For bug reports or feature requests, please make use of the
-`issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_.
+`issue tracker on GitHub <https://github.com/scikit-learn/scikit-learn/issues>`_.
 
 There is also a `scikit-learn Gitter channel
 <https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
