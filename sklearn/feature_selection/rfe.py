@@ -156,6 +156,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
+        grid_ranking_ = []
 
         if step_score:
             self.scores_ = []
@@ -201,6 +202,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
                 self.scores_.append(step_score(estimator, features))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
+            grid_ranking_.append(ranking_)
 
         # Set final attributes
         features = np.arange(n_features)[support_]
@@ -213,6 +215,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
+        self.grid_ranking_ = np.array(grid_ranking_)
 
         return self
 
