@@ -386,8 +386,8 @@ class PCA(_BasePCA):
         # Handle svd_solver
         svd_solver = self.svd_solver
         if svd_solver == 'auto':
-            # Small problem, just call full PCA
-            if max(X.shape) <= 500:
+            # Small problem or n_components == 'mle', just call full PCA
+            if max(X.shape) <= 500 or n_components == 'mle':
                 svd_solver = 'full'
             elif n_components >= 1 and n_components < .8 * min(X.shape):
                 svd_solver = 'randomized'
