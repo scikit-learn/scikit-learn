@@ -102,9 +102,9 @@ def test_lle_manifold():
                         tol * reconstruction_error, msg=details)
 
 
-#Tests the use of a different metric to pick the neighboors
+# Tests the use of a different metric to pick the neighboors
 def test_lle_metrics():
-    metric='manhattan'
+    metric = 'manhattan'
     rng = np.random.RandomState(0)
     # similar test on a slightly more complex manifold
     X = np.array(list(product(np.arange(18), repeat=2)))
@@ -114,10 +114,12 @@ def test_lle_metrics():
     for method in ["standard", "hessian", "modified", "ltsa"]:
         clf = manifold.LocallyLinearEmbedding(n_neighbors=6,
                                               n_components=n_components,
-                                              method=method, random_state=0, metric=metric)
+                                              method=method, random_state=0,
+                                              metric=metric)
         tol = 1.5 if method == "standard" else 3
 
-        N = barycenter_kneighbors_graph(X, clf.n_neighbors, metric=metric).toarray()
+        N = barycenter_kneighbors_graph(X, clf.n_neighbors,
+                                        metric=metric).toarray()
         reconstruction_error = linalg.norm(np.dot(N, X) - X)
         assert_less(reconstruction_error, tol)
 

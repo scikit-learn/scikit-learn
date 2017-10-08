@@ -64,7 +64,8 @@ def barycenter_weights(X, Z, reg=1e-3):
     return B
 
 
-def barycenter_kneighbors_graph(X, n_neighbors, metric='minkowski', p=2, metric_params=None, reg=1e-3, n_jobs=1):
+def barycenter_kneighbors_graph(X, n_neighbors, metric='minkowski',
+                                p=2, metric_params=None, reg=1e-3, n_jobs=1):
     """Computes the barycenter weighted graph of k-Neighbors for points in X
 
     Parameters
@@ -109,7 +110,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, metric='minkowski', p=2, metric_
     sklearn.neighbors.kneighbors_graph
     sklearn.neighbors.radius_neighbors_graph
     """
-    knn = NearestNeighbors(n_neighbors + 1, n_jobs=n_jobs, 
+    knn = NearestNeighbors(n_neighbors + 1, n_jobs=n_jobs,
                            metric=metric, p=p, metric_params = metric_params).fit(X)
     X = knn._fit_X
     n_samples = X.shape[0]
@@ -315,7 +316,7 @@ def locally_linear_embedding(
     if method not in ('standard', 'hessian', 'modified', 'ltsa'):
         raise ValueError("unrecognized method '%s'" % method)
 
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1, 
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1,
                             metric=metric, p=p, metric_params=metric_params, n_jobs=n_jobs)
     nbrs.fit(X)
     X = nbrs._fit_X
@@ -339,7 +340,7 @@ def locally_linear_embedding(
 
     if method == 'standard':
         W = barycenter_kneighbors_graph(
-            nbrs, n_neighbors=n_neighbors, reg=reg, 
+            nbrs, n_neighbors=n_neighbors, reg=reg,
             metric=metric, p=p, metric_params=metric_params, n_jobs=n_jobs)
 
         # we'll compute M = (I-W)'(I-W)
@@ -660,8 +661,8 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-                 neighbors_algorithm='auto', random_state=None, metric='minkowski',
-                 p=2, metric_params=None, n_jobs=1):
+                 neighbors_algorithm='auto', random_state=None,
+                 metric='minkowski', p=2, metric_params=None, n_jobs=1):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.reg = reg
@@ -695,7 +696,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
-                random_state=random_state, reg=self.reg, 
+                random_state=random_state, reg=self.reg,
                 metric=self.metric, p=self.p, metric_params=self.metric_params, n_jobs=self.n_jobs)
 
     def fit(self, X, y=None):
