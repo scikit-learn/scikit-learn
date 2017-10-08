@@ -80,6 +80,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         ranking position of the i-th feature. Selected (i.e., estimated
         best) features are assigned rank 1.
 
+    grid_ranking_: array of shape [n_steps, n_features]
+        The grid representing rankings at each step, such that
+        ``grid_ranking_[i]`` corresponds to ranking_ at i-th step.
+
     estimator_ : object
         The external estimator fit on the reduced dataset.
 
