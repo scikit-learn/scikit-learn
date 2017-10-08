@@ -111,7 +111,8 @@ def barycenter_kneighbors_graph(X, n_neighbors, metric='minkowski',
     sklearn.neighbors.radius_neighbors_graph
     """
     knn = NearestNeighbors(n_neighbors + 1, n_jobs=n_jobs,
-                           metric=metric, p=p, metric_params = metric_params).fit(X)
+                           metric=metric, p=p,
+                           metric_params=metric_params).fit(X)
     X = knn._fit_X
     n_samples = X.shape[0]
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
@@ -697,7 +698,8 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
                 random_state=random_state, reg=self.reg,
-                metric=self.metric, p=self.p, metric_params=self.metric_params, n_jobs=self.n_jobs)
+                metric=self.metric, p=self.p, metric_params=self.metric_params,
+                n_jobs=self.n_jobs)
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X
