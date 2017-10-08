@@ -251,6 +251,15 @@ Note that the result of this computation may be slightly different from those
 obtained using :func:`cross_val_score` as the elements are grouped in different
 ways.
 
+Note on inappropriate usage of cross_val_predict
+================================================
+The function :func:`cross_val_score` takes an average of over cross-validation
+folds and grouped in different ways on computation in comparison to :func:`cross_val_predict`.
+Thus, any metric score on :func:`cross_val_predict` is not equivalent to the
+result of :func:`cross_val_score`. The function :func:`cross_val_predict` should
+only be used to evaluate a classifier and is not an appropriate measure of
+generalisation error.
+
 The available cross validation iterators are introduced in the following
 section.
 
