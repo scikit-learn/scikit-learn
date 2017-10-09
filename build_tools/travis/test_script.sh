@@ -43,10 +43,19 @@ run_tests() {
     fi
     $TEST_CMD sklearn
 
-    # Test doc (only with nose until we switch completely to pytest)
-    if [[ "$USE_PYTEST" != "true" ]]; then
-        # Going back to git checkout folder needed for make test-doc
-        cd $OLDPWD
+    # Going back to git checkout folder needed to test documentation
+    cd $OLDPWD
+
+    if [[ "$USE_PYTEST" == "true" ]]; then
+        # Do not run doctests in scipy-dev-wheels build for now
+        # (broken by numpy 1.14.dev array repr/str formatting
+        # change even with np.set_printoptions(sign='legacy')).
+        # See https://github.com/numpy/numpy/issues/9804 for more details
+        if [[ "$DISTRIB" != "scipy-dev-wheels" ]]; then
+            pytest $(find doc -name '*.rst' | sort)
+        fi
+    else
+        # Makefile is using nose
         make test-doc
     fi
 }

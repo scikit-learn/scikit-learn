@@ -3,6 +3,7 @@
 
 
 import sys
+import pickle
 
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.deprecation import deprecated
@@ -55,3 +56,7 @@ def test_is_deprecated():
     assert _is_deprecated(MockClass3.__init__)
     assert not _is_deprecated(MockClass4.__init__)
     assert _is_deprecated(mock_function)
+
+
+def test_pickle():
+    pickle.loads(pickle.dumps(mock_function))

@@ -40,7 +40,9 @@ def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     This is a general function, given points on a curve.  For computing the
-    area under the ROC-curve, see :func:`roc_auc_score`.
+    area under the ROC-curve, see :func:`roc_auc_score`.  For an alternative
+    way to summarize a precision-recall curve, see
+    :func:`average_precision_score`.
 
     Parameters
     ----------
@@ -68,7 +70,8 @@ def auc(x, y, reorder=False):
 
     See also
     --------
-    roc_auc_score : Computes the area under the ROC curve
+    roc_auc_score : Compute the area under the ROC curve
+    average_precision_score : Compute average precision from prediction scores
     precision_recall_curve :
         Compute precision-recall pairs for different probability thresholds
     """
@@ -108,6 +111,19 @@ def average_precision_score(y_true, y_score, average="macro",
                             sample_weight=None):
     """Compute average precision (AP) from prediction scores
 
+    AP summarizes a precision-recall curve as the weighted mean of precisions
+    achieved at each threshold, with the increase in recall from the previous
+    threshold used as the weight:
+
+    .. math::
+        \\text{AP} = \\sum_n (R_n - R_{n-1}) P_n
+
+    where :math:`P_n` and :math:`R_n` are the precision and recall at the nth
+    threshold [1]_. This implementation is not interpolated and is different
+    from computing the area under the precision-recall curve with the
+    trapezoidal rule, which uses linear interpolation and can be too
+    optimistic.
+
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task.
 
@@ -116,7 +132,7 @@ def average_precision_score(y_true, y_score, average="macro",
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary label indicators.
+        True binary labels (either {0, 1} or {-1, 1}).
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -149,17 +165,12 @@ def average_precision_score(y_true, y_score, average="macro",
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-           <http://en.wikipedia.org/wiki/Average_precision>`_
-    .. [2] `Stanford Information Retrieval book
-            <http://nlp.stanford.edu/IR-book/html/htmledition/
-            evaluation-of-ranked-retrieval-results-1.html>`_
-    .. [3] `The PASCAL Visual Object Classes (VOC) Challenge
-            <http://citeseerx.ist.psu.edu/viewdoc/
-            download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_
+           <http://en.wikipedia.org/w/index.php?title=Information_retrieval&
+           oldid=793358396#Average_precision>`_
 
     See also
     --------
-    roc_auc_score : Area under the ROC curve
+    roc_auc_score : Compute the area under the ROC curve
 
     precision_recall_curve :
         Compute precision-recall pairs for different probability thresholds
@@ -180,7 +191,7 @@ def average_precision_score(y_true, y_score, average="macro",
             y_true, y_score, sample_weight=sample_weight)
         # Return the step function integral
         # The following works because the last entry of precision is
-        # garantee to be 1, as returned by precision_recall_curve
+        # guaranteed to be 1, as returned by precision_recall_curve
         return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
     return _average_binary_score(_binary_uninterpolated_average_precision,
@@ -190,7 +201,8 @@ def average_precision_score(y_true, y_score, average="macro",
 
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
-    """Compute Area Under the Curve (AUC) from prediction scores
+    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
+    from prediction scores.
 
     Note: this implementation is restricted to the binary classification task
     or multilabel classification task in label indicator format.
@@ -200,7 +212,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary label indicators.
+        True binary labels (either {0, 1} or {-1, 1}).
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -239,7 +251,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     --------
     average_precision_score : Area under the precision-recall curve
 
-    roc_curve : Compute Receiver operating characteristic (ROC)
+    roc_curve : Compute Receiver operating characteristic (ROC) curve
 
     Examples
     --------
@@ -258,7 +270,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
 
         fpr, tpr, tresholds = roc_curve(y_true, y_score,
                                         sample_weight=sample_weight)
-        return auc(fpr, tpr, reorder=True)
+        return auc(fpr, tpr)
 
     return _average_binary_score(
         _binary_roc_auc_score, y_true, y_score, average,
@@ -299,7 +311,13 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     thresholds : array, shape = [n_thresholds]
         Decreasing score values.
     """
-    check_consistent_length(y_true, y_score)
+    # Check to make sure y_true is valid
+    y_type = type_of_target(y_true)
+    if not (y_type == "binary" or
+            (y_type == "multiclass" and pos_label is not None)):
+        raise ValueError("{0} format is not supported".format(y_type))
+
+    check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
     assert_all_finite(y_true)
@@ -341,7 +359,9 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # accumulate the true positives with decreasing threshold
     tps = stable_cumsum(y_true * weight)[threshold_idxs]
     if sample_weight is not None:
-        fps = stable_cumsum(weight)[threshold_idxs] - tps
+        # express fps as a cumsum to ensure fps is increasing even in
+        # the presense of floating point errors
+        fps = stable_cumsum((1 - y_true) * weight)[threshold_idxs]
     else:
         fps = 1 + threshold_idxs - tps
     return fps, tps, y_score[threshold_idxs]
@@ -396,6 +416,12 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
         Increasing thresholds on the decision function used to compute
         precision and recall.
 
+    See also
+    --------
+    average_precision_score : Compute average precision from prediction scores
+
+    roc_curve : Compute Receiver operating characteristic (ROC) curve
+
     Examples
     --------
     >>> import numpy as np
@@ -438,8 +464,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     ----------
 
     y_true : array, shape = [n_samples]
-        True binary labels in range {0, 1} or {-1, 1}.  If labels are not
-        binary, pos_label should be explicitly given.
+        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
+        pos_label should be explicitly given.
 
     y_score : array, shape = [n_samples]
         Target scores, can either be probability estimates of the positive
@@ -477,7 +503,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
 
     See also
     --------
-    roc_auc_score : Compute Area Under the Curve (AUC) from prediction scores
+    roc_auc_score : Compute the area under the ROC curve
 
     Notes
     -----

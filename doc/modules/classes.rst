@@ -1081,6 +1081,7 @@ Model validation
    naive_bayes.BernoulliNB
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
+   naive_bayes.ComplementNB
 
 
 .. _neighbors_ref:
@@ -1377,6 +1378,7 @@ Low-level methods
    utils.sparsefuncs.inplace_swap_column
    utils.sparsefuncs.mean_variance_axis
    utils.validation.check_is_fitted
+   utils.validation.check_memory
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter

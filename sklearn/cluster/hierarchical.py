@@ -15,10 +15,10 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
-from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
+from ..utils.validation import check_memory
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -369,7 +369,7 @@ def linkage_tree(X, connectivity=None, n_components='deprecated',
     ward_tree : hierarchical clustering with ward linkage
     """
     if n_components != 'deprecated':
-        warnings.warn("n_components was deprecated in 0.18"
+        warnings.warn("n_components was deprecated in 0.19"
                       "will be removed in 0.21", DeprecationWarning)
 
     X = np.asarray(X)
@@ -609,8 +609,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
-            (default=None)
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
@@ -686,23 +685,17 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            The samples a.k.a. observations.
+            Training data. Shape [n_samples, n_features], or [n_samples,
+            n_samples] if affinity=='precomputed'.
+
+        y : Ignored
 
         Returns
         -------
         self
         """
         X = check_array(X, ensure_min_samples=2, estimator=self)
-        memory = self.memory
-        if memory is None:
-            memory = Memory(cachedir=None, verbose=0)
-        elif isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory, verbose=0)
-        elif not isinstance(memory, Memory):
-            raise ValueError("'memory' should either be a string or"
-                             " a sklearn.externals.joblib.Memory"
-                             " instance, got 'memory={!r}' instead.".format(
-                                 type(memory)))
+        memory = check_memory(self.memory)
 
         if self.n_clusters <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."
@@ -779,8 +772,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
-            (default=None)
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
@@ -844,6 +836,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         ----------
         X : array-like, shape = [n_samples, n_features]
             The data
+
+        y : Ignored
 
         Returns
         -------
