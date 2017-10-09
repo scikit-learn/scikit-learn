@@ -141,7 +141,6 @@ def test_invalid_metric():
     rand = np.random.RandomState(0)
     X = rand.randint(0, 100, size=(20, 3))
     NN = neighbors.NearestNeighbors(2, metric='manhattan').fit(X)
-    print(NN.metric)
 
     msg = "metric must be euclidean or equivalent"
     assert_raise_message(ValueError, msg, manifold.locally_linear_embedding,
