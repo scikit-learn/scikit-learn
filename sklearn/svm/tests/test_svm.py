@@ -447,7 +447,7 @@ def test_oneclass_and_svdd():
     mesh = np.c_[xx.ravel(), yy.ravel()]
 
     svdd_df = svdd.decision_function(mesh)
-    ocsvm_df = ocsvm.decision_function(mesh)
+    ocsvm_df = ocsvm.decision_function(mesh).ravel()
     assert_array_almost_equal(svdd_df, ocsvm_df)
 
 
