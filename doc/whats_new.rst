@@ -58,6 +58,10 @@ Bug fixes
   ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
   <newey01c>`.
 
+- Fixed a bug in the objective function for :class:`manifold.TSNE` (both exact
+  and with the Barnes-Hut approximation) when ``n_components >= 3``.
+  :issue:`9711` by :user:`goncalo-rodrigues`.
+
 Enhancements
 ............
 
