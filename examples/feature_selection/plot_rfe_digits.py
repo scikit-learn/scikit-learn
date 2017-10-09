@@ -32,7 +32,7 @@ ranking = rfe.ranking_.reshape(digits.images[0].shape)
 # Plot pixel in grid_ranking_ every 10 steps
 rankings = [r.reshape(digits.images[0].shape) for r in rfe.grid_ranking_]
 for n, r in enumerate(rankings):
-    if n%10==0:
+    if n % 10 == 0:
         plt.matshow(r, cmap=plt.cm.Blues)
         plt.colorbar()
         plt.title("Ranking of pixels at step {}".format(n))
