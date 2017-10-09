@@ -461,14 +461,17 @@ def test_n_components_mle():
     n_samples = 600
     n_features = 10
     X = rng.randn(n_samples, n_features)
+    n_components_dict = {}
     for solver in solver_list:
         pca = PCA(n_components='mle', svd_solver=solver)
         if solver in ['auto', 'full']:
             pca.fit(X)
+            n_components_dict[solver] = pca.n_components_
         else:  # arpack/randomized solver
             error_message = ("n_components='mle' cannot be a string with "
                              "svd_solver='{}'".format(solver))
             assert_raise_message(ValueError, error_message, pca.fit, X)
+    assert_equal(n_components_dict['auto'], n_components_dict['full'])
 
 
 def test_pca_dim():

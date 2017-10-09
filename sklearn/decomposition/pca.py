@@ -131,9 +131,8 @@ class PCA(_BasePCA):
             n_components == min(n_samples, n_features)
 
         If ``n_components == 'mle'`` and ``svd_solver == 'full'``, Minka\'s
-        MLE is used to guess the dimension. ``n_components == 'mle'`` only
-        works for full svd_solver or auto svd_solver (equivalent to full
-        svd_solver in this case).
+        MLE is used to guess the dimension. Use of ``n_components == 'mle'``
+        will interpret ``svd_solver == 'auto'`` as ``svd_solver == 'full'``.
 
         If ``0 < n_components < 1`` and ``svd_solver == 'full'``, select the
         number of components such that the amount of variance that needs to be
