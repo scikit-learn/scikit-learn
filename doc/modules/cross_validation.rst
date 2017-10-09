@@ -240,25 +240,18 @@ prediction that was obtained for that element when it was in the test set. Only
 cross-validation strategies that assign all elements to a test set exactly once
 can be used (otherwise, an exception is raised).
 
-These prediction can then be used to evaluate the classifier::
-
-  >>> from sklearn.model_selection import cross_val_predict
-  >>> predicted = cross_val_predict(clf, iris.data, iris.target, cv=10)
-  >>> metrics.accuracy_score(iris.target, predicted) # doctest: +ELLIPSIS
-  0.973...
-
-Note that the result of this computation may be slightly different from those
-obtained using :func:`cross_val_score` as the elements are grouped in different
-ways.
 
 Note on inappropriate usage of cross_val_predict
 ================================================
 The function :func:`cross_val_score` takes an average of over cross-validation
-folds and grouped in different ways on computation in comparison to :func:`cross_val_predict`.
-Thus, any metric score on :func:`cross_val_predict` is not equivalent to the
-result of :func:`cross_val_score`. The function :func:`cross_val_predict` should
-only be used to evaluate a classifier and is not an appropriate measure of
-generalisation error.
+folds and is grouped in different ways on computation in comparison to :func:`cross_val_predict`.
+Any metric score on :func:`cross_val_predict` is not equivalent to the
+result of :func:`cross_val_score`. Thus, the function :func:`cross_val_score` is
+not an appropriate measure of generalisation error.
+
+The apt usage of :func:`cross_val_predict` is only for visualization of
+training set predictions and model blending techniques.
+
 
 The available cross validation iterators are introduced in the following
 section.
