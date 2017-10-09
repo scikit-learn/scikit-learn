@@ -240,28 +240,26 @@ def fetch_species_distributions(data_home=None,
         logger.info('Downloading species data from %s to %s' % (
             SAMPLES.url, data_home))
         samples_path = _fetch_remote(SAMPLES, dirname=data_home)
-        X = np.load(samples_path)  # samples.zip is a valid npz
+        with np.load(samples_path) as X:  # samples.zip is a valid npz
+            for f in X.files:
+                fhandle = BytesIO(X[f])
+                if 'train' in f:
+                    train = _load_csv(fhandle)
+                if 'test' in f:
+                    test = _load_csv(fhandle)
         remove(samples_path)
-
-        for f in X.files:
-            fhandle = BytesIO(X[f])
-            if 'train' in f:
-                train = _load_csv(fhandle)
-            if 'test' in f:
-                test = _load_csv(fhandle)
 
         logger.info('Downloading coverage data from %s to %s' % (
             COVERAGES.url, data_home))
         coverages_path = _fetch_remote(COVERAGES, dirname=data_home)
-        X = np.load(coverages_path)  # coverages.zip is a valid npz
+        with np.load(coverages_path) as X:  # coverages.zip is a valid npz
+            coverages = []
+            for f in X.files:
+                fhandle = BytesIO(X[f])
+                logger.debug(' - converting {}'.format(f))
+                coverages.append(_load_coverage(fhandle))
+            coverages = np.asarray(coverages, dtype=dtype)
         remove(coverages_path)
-
-        coverages = []
-        for f in X.files:
-            fhandle = BytesIO(X[f])
-            logger.debug(' - converting {}'.format(f))
-            coverages.append(_load_coverage(fhandle))
-        coverages = np.asarray(coverages, dtype=dtype)
 
         bunch = Bunch(coverages=coverages,
                       test=test,

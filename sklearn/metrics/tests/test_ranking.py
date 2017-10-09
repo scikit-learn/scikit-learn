@@ -371,6 +371,18 @@ def test_roc_curve_drop_intermediate():
                               [1.0, 0.9, 0.7, 0.6, 0.])
 
 
+def test_roc_curve_fpr_tpr_increasing():
+    # Ensure that fpr and tpr returned by roc_curve are increasing.
+    # Construct an edge case with float y_score and sample_weight
+    # when some adjacent values of fpr and tpr are actually the same.
+    y_true = [0, 0, 1, 1, 1]
+    y_score = [0.1, 0.7, 0.3, 0.4, 0.5]
+    sample_weight = np.repeat(0.2, 5)
+    fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
+    assert_equal((np.diff(fpr) < 0).sum(), 0)
+    assert_equal((np.diff(tpr) < 0).sum(), 0)
+
+
 def test_auc():
     # Test Area Under Curve (AUC) computation
     x = [0, 1]
@@ -457,6 +469,14 @@ def test_auc_score_non_binary_class():
         assert_raise_message(ValueError, "multiclass format is not supported",
                              roc_auc_score, y_true, y_pred)
 
+
+def test_binary_clf_curve():
+    rng = check_random_state(404)
+    y_true = rng.randint(0, 3, size=10)
+    y_pred = rng.rand(10)
+    msg = "multiclass format is not supported"
+    assert_raise_message(ValueError, msg, precision_recall_curve,
+                         y_true, y_pred)
 
 def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
