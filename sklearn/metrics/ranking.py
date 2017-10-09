@@ -47,10 +47,11 @@ def auc(x, y, reorder=None):
     Parameters
     ----------
     x : array, shape = [n]
-        Increasing or decreasing x coordinates.
+        x coordinates. These must be either monotonic increasing or monotonic
+        decreasing.
     y : array, shape = [n]
         y coordinates.
-    reorder : boolean, optional (default=None)
+    reorder : boolean, optional (default='deprecated')
         If True, assume that the curve is ascending in the case of ties, as for
         an ROC curve. If the curve is non-ascending, the result will be wrong.
 
@@ -88,13 +89,13 @@ def auc(x, y, reorder=None):
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
 
-    if reorder is not None:
+    if reorder != 'deprecated':
         warnings.warn("The `reorder` parameter has been deprecated "
                       "in version 0.20 and will be removed in 0.22.",
                       DeprecationWarning)
 
     direction = 1
-    if reorder:
+    if reorder is True:
         # reorder the data points according to the x axis and using y to
         # break ties
         order = np.lexsort((y, x))
@@ -105,16 +106,15 @@ def auc(x, y, reorder=None):
             if np.all(dx <= 0):
                 direction = -1
             else:
+                # Output the most positive value and most negative value in
+                # np.diff(x) for debugging.
                 maxpos = dx.argmax()
                 minpos = dx.argmin()
                 raise ValueError("x is neither increasing nor decreasing "
-                                 ": {}. np.diff(x) contains {} positive "
-                                 "values and {} negative values. The most "
-                                 "positive value in np.diff(x) : x[{}] - "
-                                 "x[{}] = {}. The most negative value in "
-                                 "np.diff(x) : x[{}] - x[{}] = {}."
-                                 .format(x, (dx > 0).sum(), (dx < 0).sum(),
-                                         maxpos + 1, maxpos, dx.max(),
+                                 ": {}. The most positive value in np.diff(x)"
+                                 " : x[{}] - x[{}] = {}. The most negative "
+                                 "value in np.diff(x) : x[{}] - x[{}] = {}."
+                                 .format(x, maxpos + 1, maxpos, dx.max(),
                                          minpos + 1, minpos, dx.min()))
 
     area = direction * np.trapz(y, x)
