@@ -456,7 +456,7 @@ def test_randomized_pca_inverse():
 
 def test_n_components_mle():
     # Ensure that n_components == 'mle' doesn't raise error for auto/full
-    # svd_solver and raises error for arpack/randomized solver
+    # svd_solver and raises error for arpack/randomized svd_solver
     rng = np.random.RandomState(0)
     n_samples = 600
     n_features = 10
