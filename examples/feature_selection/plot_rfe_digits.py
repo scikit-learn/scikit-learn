@@ -36,7 +36,6 @@ for n, r in enumerate(rankings):
         plt.matshow(r, cmap=plt.cm.Blues)
         plt.colorbar()
         plt.title("Ranking of pixels at step {}".format(n))
-plt.show()
 
 # Plot pixel ranking
 plt.matshow(ranking, cmap=plt.cm.Blues)
