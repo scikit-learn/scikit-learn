@@ -29,6 +29,15 @@ rfe = RFE(estimator=svc, n_features_to_select=1, step=1)
 rfe.fit(X, y)
 ranking = rfe.ranking_.reshape(digits.images[0].shape)
 
+# Plot pixel in grid_ranking_ every 10 steps
+rankings = [r.reshape(digits.images[0].shape) for r in rfe.grid_ranking_]
+for n, r in enumerate(rankings):
+    if n%10==0:
+        plt.matshow(r, cmap=plt.cm.Blues)
+        plt.colorbar()
+        plt.title("Ranking of pixels at step {}".format(n))
+plt.show()
+
 # Plot pixel ranking
 plt.matshow(ranking, cmap=plt.cm.Blues)
 plt.colorbar()
