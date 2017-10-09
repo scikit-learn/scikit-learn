@@ -32,11 +32,16 @@ import sphinx_gallery
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-    'numpy_ext.numpydoc',
+    'numpydoc',
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
 ]
+
+# this is needed for some reason...
+# see https://github.com/numpy/numpydoc/issues/69
+numpydoc_class_members_toctree = False
+
 
 # pngmath / imgmath compatibility layer for different sphinx versions
 import sphinx
@@ -236,12 +241,12 @@ trim_doctests_flags = True
 
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
+    'backreferences_dir': os.path.join('modules', 'generated'),
     'reference_url': {
         'sklearn': None,
         'matplotlib': 'http://matplotlib.org',
-        'numpy': 'http://docs.scipy.org/doc/numpy-1.6.0',
-        'scipy': 'http://docs.scipy.org/doc/scipy-0.11.0/reference',
-        'nibabel': 'http://nipy.org/nibabel'}
+        'numpy': 'http://docs.scipy.org/doc/numpy-1.8.1',
+        'scipy': 'http://docs.scipy.org/doc/scipy-0.13.3/reference'}
 }
 
 

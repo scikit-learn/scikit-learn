@@ -10,7 +10,8 @@
 
 import numpy as np
 cimport numpy as np
-from _tree cimport Node 
+from _tree cimport Node
+from sklearn.neighbors.quad_tree cimport Cell
 
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
@@ -39,20 +40,23 @@ ctypedef fused realloc_ptr:
     (DOUBLE_t*)
     (DOUBLE_t**)
     (Node*)
+    (Cell*)
     (Node**)
+    (StackRecord*)
+    (PriorityHeapRecord*)
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *
 
 
 cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
 
 
 cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
-                            UINT32_t* random_state) nogil
+                     UINT32_t* random_state) nogil
 
 
 cdef double rand_uniform(double low, double high,
-                                UINT32_t* random_state) nogil
+                         UINT32_t* random_state) nogil
 
 
 cdef double log(double x) nogil
@@ -79,7 +83,7 @@ cdef class Stack:
     cdef bint is_empty(self) nogil
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                   bint is_left, double impurity,
-                  SIZE_t n_constant_features) nogil
+                  SIZE_t n_constant_features) nogil except -1
     cdef int pop(self, StackRecord* res) nogil
 
 
@@ -111,7 +115,7 @@ cdef class PriorityHeap:
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
                   double impurity, double impurity_left,
-                  double impurity_right) nogil
+                  double impurity_right) nogil except -1
     cdef int pop(self, PriorityHeapRecord* res) nogil
 
 # =============================================================================
@@ -129,9 +133,9 @@ cdef class WeightedPQueue:
     cdef WeightedPQueueRecord* array_
 
     cdef bint is_empty(self) nogil
-    cdef void reset(self) nogil
+    cdef int reset(self) nogil except -1
     cdef SIZE_t size(self) nogil
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1
     cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
     cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
     cdef int peek(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
@@ -152,14 +156,14 @@ cdef class WeightedMedianCalculator:
                                        # = w[0] + w[1] + ... + w[k-1]
 
     cdef SIZE_t size(self) nogil
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil
-    cdef void reset(self) nogil
-    cdef int update_median_parameters_post_push(self, DOUBLE_t data,
-                                                DOUBLE_t weight,
-                                                DOUBLE_t original_median) nogil
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1
+    cdef int reset(self) nogil except -1
+    cdef int update_median_parameters_post_push(
+        self, DOUBLE_t data, DOUBLE_t weight,
+        DOUBLE_t original_median) nogil
     cdef int remove(self, DOUBLE_t data, DOUBLE_t weight) nogil
     cdef int pop(self, DOUBLE_t* data, DOUBLE_t* weight) nogil
-    cdef int update_median_parameters_post_remove(self, DOUBLE_t data,
-                                                  DOUBLE_t weight,
-                                                  DOUBLE_t original_median) nogil
+    cdef int update_median_parameters_post_remove(
+        self, DOUBLE_t data, DOUBLE_t weight,
+        DOUBLE_t original_median) nogil
     cdef DOUBLE_t get_median(self) nogil

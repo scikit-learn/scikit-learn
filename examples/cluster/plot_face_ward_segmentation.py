@@ -23,33 +23,26 @@ import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.fixes import sp_version
-
-if sp_version < (0, 12):
-    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and "
-                   "thus does not include the scipy.misc.face() image.")
 
 
-###############################################################################
+# #############################################################################
 # Generate data
-try:
+try:  # SciPy >= 0.16 have face in misc
+    from scipy.misc import face
+    face = face(gray=True)
+except ImportError:
     face = sp.face(gray=True)
-except AttributeError:
-    # Newer versions of scipy have face in misc
-    from scipy import misc
-    face = misc.face(gray=True)
 
 # Resize it to 10% of the original size to speed up the processing
 face = sp.misc.imresize(face, 0.10) / 255.
 
 X = np.reshape(face, (-1, 1))
 
-###############################################################################
+# #############################################################################
 # Define the structure A of the data. Pixels connected to their neighbors.
 connectivity = grid_to_graph(*face.shape)
 
-###############################################################################
+# #############################################################################
 # Compute clustering
 print("Compute structured hierarchical clustering...")
 st = time.time()
@@ -62,7 +55,7 @@ print("Elapsed time: ", time.time() - st)
 print("Number of pixels: ", label.size)
 print("Number of clusters: ", np.unique(label).size)
 
-###############################################################################
+# #############################################################################
 # Plot the results on an image
 plt.figure(figsize=(5, 5))
 plt.imshow(face, cmap=plt.cm.gray)

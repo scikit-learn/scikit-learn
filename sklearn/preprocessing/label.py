@@ -15,10 +15,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 
-from ..utils.fixes import np_version
 from ..utils.fixes import sparse_min_max
-from ..utils.fixes import astype
-from ..utils.fixes import in1d
 from ..utils import column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
@@ -37,20 +34,6 @@ __all__ = [
     'LabelEncoder',
     'MultiLabelBinarizer',
 ]
-
-
-def _check_numpy_unicode_bug(labels):
-    """Check that user is not subject to an old numpy bug
-
-    Fixed in master before 1.7.0:
-
-      https://github.com/numpy/numpy/pull/243
-
-    """
-    if np_version[:3] < (1, 7, 0) and labels.dtype.kind == 'U':
-        raise RuntimeError("NumPy < 1.7.0 does not implement searchsorted"
-                           " on unicode data correctly. Please upgrade"
-                           " NumPy to use LabelEncoder with unicode inputs.")
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
@@ -110,7 +93,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        _check_numpy_unicode_bug(y)
         self.classes_ = np.unique(y)
         return self
 
@@ -127,7 +109,6 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         y = column_or_1d(y, warn=True)
-        _check_numpy_unicode_bug(y)
         self.classes_, y = np.unique(y, return_inverse=True)
         return y
 
@@ -147,10 +128,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y = column_or_1d(y, warn=True)
 
         classes = np.unique(y)
-        _check_numpy_unicode_bug(classes)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
-            raise ValueError("y contains new labels: %s" % str(diff))
+            raise ValueError(
+                    "y contains previously unseen labels: %s" % str(diff))
         return np.searchsorted(self.classes_, y)
 
     def inverse_transform(self, y):
@@ -168,8 +149,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'classes_')
 
         diff = np.setdiff1d(y, np.arange(len(self.classes_)))
-        if diff:
-            raise ValueError("y contains new labels: %s" % str(diff))
+        if len(diff):
+            raise ValueError(
+                    "y contains previously unseen labels: %s" % str(diff))
         y = np.asarray(y)
         return self.classes_[y]
 
@@ -369,10 +351,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         threshold : float or None
             Threshold used in the binary and multi-label cases.
 
-            Use 0 when:
-                - Y contains the output of decision_function (classifier)
-            Use 0.5 when:
-                - Y contains the output of predict_proba
+            Use 0 when ``Y`` contains the output of decision_function
+            (classifier).
+            Use 0.5 when ``Y`` contains the output of predict_proba.
 
             If None, the threshold is assumed to be half way between
             neg_label and pos_label.
@@ -520,7 +501,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
         y = column_or_1d(y)
 
         # pick out the known labels from y
-        y_in_classes = in1d(y, classes)
+        y_in_classes = np.in1d(y, classes)
         y_seen = y[y_in_classes]
         indices = np.searchsorted(sorted_class, y_seen)
         indptr = np.hstack((0, np.cumsum(y_in_classes)))
@@ -541,7 +522,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
 
     if not sparse_output:
         Y = Y.toarray()
-        Y = astype(Y, int, copy=False)
+        Y = Y.astype(int, copy=False)
 
         if neg_label != 0:
             Y[Y == 0] = neg_label
@@ -549,7 +530,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
         if pos_switch:
             Y[Y == pos_label] = 0
     else:
-        Y.data = astype(Y.data, int, copy=False)
+        Y.data = Y.data.astype(int, copy=False)
 
     # preserve label ordering
     if np.any(classes != sorted_class):

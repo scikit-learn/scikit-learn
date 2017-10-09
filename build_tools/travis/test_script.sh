@@ -21,7 +21,12 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 run_tests() {
-    # Get into a temp directory to run test from the installed scikit learn and
+    if [[ "$USE_PYTEST" == "true" ]]; then
+        TEST_CMD="pytest --showlocals --durations=20 --pyargs"
+    else
+        TEST_CMD="nosetests --with-timer --timer-top-n 20"
+    fi
+    # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
     mkdir -p $TEST_DIR
     # We need the setup.cfg for the nose settings
@@ -34,14 +39,25 @@ run_tests() {
     export SKLEARN_SKIP_NETWORK_TESTS=1
 
     if [[ "$COVERAGE" == "true" ]]; then
-        nosetests -s --with-coverage --with-timer --timer-top-n 20 sklearn
-    else
-        nosetests -s --with-timer --timer-top-n 20 sklearn
+        TEST_CMD="$TEST_CMD --with-coverage"
     fi
+    $TEST_CMD sklearn
 
-    # Test doc
+    # Going back to git checkout folder needed to test documentation
     cd $OLDPWD
-    make test-doc test-sphinxext
+
+    if [[ "$USE_PYTEST" == "true" ]]; then
+        # Do not run doctests in scipy-dev-wheels build for now
+        # (broken by numpy 1.14.dev array repr/str formatting
+        # change even with np.set_printoptions(sign='legacy')).
+        # See https://github.com/numpy/numpy/issues/9804 for more details
+        if [[ "$DISTRIB" != "scipy-dev-wheels" ]]; then
+            pytest $(find doc -name '*.rst' | sort)
+        fi
+    else
+        # Makefile is using nose
+        make test-doc
+    fi
 }
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then

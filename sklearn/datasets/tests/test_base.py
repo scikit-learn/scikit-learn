@@ -17,6 +17,7 @@ from sklearn.datasets import load_linnerud
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
+from sklearn.datasets import load_wine
 from sklearn.datasets.base import Bunch
 
 from sklearn.externals.six import b, u
@@ -26,7 +27,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import with_setup
 
 
 DATA_HOME = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
@@ -84,33 +84,42 @@ def test_default_empty_load_files():
     assert_equal(res.DESCR, None)
 
 
-@with_setup(setup_load_files, teardown_load_files)
 def test_default_load_files():
-    res = load_files(LOAD_FILES_ROOT)
-    assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 2)
-    assert_equal(res.DESCR, None)
-    assert_equal(res.data, [b("Hello World!\n")])
+    try:
+        setup_load_files()
+        res = load_files(LOAD_FILES_ROOT)
+        assert_equal(len(res.filenames), 1)
+        assert_equal(len(res.target_names), 2)
+        assert_equal(res.DESCR, None)
+        assert_equal(res.data, [b("Hello World!\n")])
+    finally:
+        teardown_load_files()
 
 
-@with_setup(setup_load_files, teardown_load_files)
 def test_load_files_w_categories_desc_and_encoding():
-    category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
-    res = load_files(LOAD_FILES_ROOT, description="test",
-                     categories=category, encoding="utf-8")
-    assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 1)
-    assert_equal(res.DESCR, "test")
-    assert_equal(res.data, [u("Hello World!\n")])
+    try:
+        setup_load_files()
+        category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
+        res = load_files(LOAD_FILES_ROOT, description="test",
+                         categories=category, encoding="utf-8")
+        assert_equal(len(res.filenames), 1)
+        assert_equal(len(res.target_names), 1)
+        assert_equal(res.DESCR, "test")
+        assert_equal(res.data, [u("Hello World!\n")])
+    finally:
+        teardown_load_files()
 
 
-@with_setup(setup_load_files, teardown_load_files)
 def test_load_files_wo_load_content():
-    res = load_files(LOAD_FILES_ROOT, load_content=False)
-    assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 2)
-    assert_equal(res.DESCR, None)
-    assert_equal(res.get('data'), None)
+    try:
+        setup_load_files()
+        res = load_files(LOAD_FILES_ROOT, load_content=False)
+        assert_equal(len(res.filenames), 1)
+        assert_equal(len(res.target_names), 2)
+        assert_equal(res.DESCR, None)
+        assert_equal(res.get('data'), None)
+    finally:
+        teardown_load_files()
 
 
 def test_load_sample_images():
@@ -157,7 +166,7 @@ def test_load_missing_sample_image_error():
         try:
             from scipy.misc import imread
         except ImportError:
-            from scipy.misc.pilutil import imread
+            from scipy.misc.pilutil import imread  # noqa
     except ImportError:
         have_PIL = False
     if have_PIL:
@@ -172,6 +181,7 @@ def test_load_diabetes():
     assert_equal(res.data.shape, (442, 10))
     assert_true(res.target.size, 442)
     assert_equal(len(res.feature_names), 10)
+    assert_true(res.DESCR)
 
     # test return_X_y option
     X_y_tuple = load_diabetes(return_X_y=True)
@@ -195,6 +205,7 @@ def test_load_linnerud():
     assert_array_equal(X_y_tuple[0], bunch.data)
     assert_array_equal(X_y_tuple[1], bunch.target)
 
+
 def test_load_iris():
     res = load_iris()
     assert_equal(res.data.shape, (150, 4))
@@ -205,6 +216,21 @@ def test_load_iris():
     # test return_X_y option
     X_y_tuple = load_iris(return_X_y=True)
     bunch = load_iris()
+    assert_true(isinstance(X_y_tuple, tuple))
+    assert_array_equal(X_y_tuple[0], bunch.data)
+    assert_array_equal(X_y_tuple[1], bunch.target)
+
+
+def test_load_wine():
+    res = load_wine()
+    assert_equal(res.data.shape, (178, 13))
+    assert_equal(res.target.size, 178)
+    assert_equal(res.target_names.size, 3)
+    assert_true(res.DESCR)
+
+    # test return_X_y option
+    X_y_tuple = load_wine(return_X_y=True)
+    bunch = load_wine()
     assert_true(isinstance(X_y_tuple, tuple))
     assert_array_equal(X_y_tuple[0], bunch.data)
     assert_array_equal(X_y_tuple[1], bunch.target)
@@ -238,6 +264,7 @@ def test_load_boston():
     assert_true(isinstance(X_y_tuple, tuple))
     assert_array_equal(X_y_tuple[0], bunch.data)
     assert_array_equal(X_y_tuple[1], bunch.target)
+
 
 def test_loads_dumps_bunch():
     bunch = Bunch(x="x")

@@ -94,6 +94,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     if X.ndim == 1:
         X = X[:, np.newaxis]
     n_samples, n_features = X.shape
+    n_components = dictionary.shape[0]
+    if dictionary.shape[1] != X.shape[1]:
+        raise ValueError("Dictionary and X have different numbers of features:"
+                         "dictionary.shape: {} X.shape{}".format(
+                             dictionary.shape, X.shape))
     if cov is None and algorithm != 'lasso_cd':
         # overwriting cov is safe
         copy_cov = False
@@ -157,6 +162,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         raise ValueError('Sparse coding method must be "lasso_lars" '
                          '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
                          % algorithm)
+    if new_code.ndim != 2:
+        return new_code.reshape(n_samples, n_components)
     return new_code
 
 
@@ -213,16 +220,16 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
+    copy_cov : boolean, optional
+        Whether to copy the precomputed covariance matrix; if False, it may be
+        overwritten.
+
     init : array of shape (n_samples, n_components)
         Initialization value of the sparse codes. Only used if
         `algorithm='lasso_cd'`.
 
     max_iter : int, 1000 by default
         Maximum number of iterations to perform if `algorithm='lasso_cd'`.
-
-    copy_cov : boolean, optional
-        Whether to copy the precomputed covariance matrix; if False, it may be
-        overwritten.
 
     n_jobs : int, optional
         Number of parallel jobs to run.
@@ -281,10 +288,6 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
                               max_iter=max_iter,
                               check_input=False,
                               verbose=verbose)
-        # This ensure that dimensionality of code is always 2,
-        # consistant with the case n_jobs > 1
-        if code.ndim == 1:
-            code = code[np.newaxis, :]
         return code
 
     # Enter parallel code block
@@ -328,8 +331,11 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         Whether to compute and return the residual sum of squares corresponding
         to the computed solution.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -428,14 +434,17 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     code_init : array of shape (n_samples, n_components),
         Initial value for the sparse code for warm restart scenarios.
 
-    callback :
-        Callable that gets invoked every five iterations.
+    callback : callable or None, optional (default: None)
+        Callable that gets invoked every five iterations
 
-    verbose :
-        Degree of output the procedure will print.
+    verbose : bool, optional (default: False)
+        To control the verbosity of the procedure.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     return_n_iter : bool
         Whether or not to return the number of iterations.
@@ -590,14 +599,14 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     dict_init : array of shape (n_components, n_features),
         Initial value for the dictionary for warm restart scenarios.
 
-    callback :
-        Callable that gets invoked every five iterations.
+    callback : callable or None, optional (default: None)
+        callable that gets invoked every five iterations
 
     batch_size : int,
         The number of samples to take in each batch.
 
-    verbose :
-        Degree of output the procedure will print.
+    verbose : bool, optional (default: False)
+        To control the verbosity of the procedure.
 
     shuffle : boolean,
         Whether to shuffle the data before splitting it in batches.
@@ -616,8 +625,11 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         Number of previous iterations completed on the dictionary used for
         initialization.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     return_inner_stats : boolean, optional
         Return the inner statistics A (dictionary covariance) and B
@@ -722,8 +734,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
             sys.stdout.flush()
         elif verbose:
             if verbose > 10 or ii % ceil(100. / verbose) == 0:
-                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
-                       % (ii, dt, dt / 60))
+                print("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
+                      % (ii, dt, dt / 60))
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha, n_jobs=n_jobs).T
@@ -791,7 +803,7 @@ class SparseCodingMixin(TransformerMixin):
         self.split_sign = split_sign
         self.n_jobs = n_jobs
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """Encode the data as a sparse combination of the dictionary atoms.
 
         Coding method is determined by the object parameter
@@ -811,9 +823,7 @@ class SparseCodingMixin(TransformerMixin):
         """
         check_is_fitted(self, 'components_')
 
-        # XXX : kwargs is not documented
         X = check_array(X)
-        n_samples, n_features = X.shape
 
         code = sparse_encode(
             X, self.components_, algorithm=self.transform_algorithm,
@@ -897,6 +907,7 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
     MiniBatchSparsePCA
     sparse_encode
     """
+    _required_parameters = ["dictionary"]
 
     def __init__(self, dictionary, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
@@ -912,6 +923,17 @@ class SparseCoder(BaseEstimator, SparseCodingMixin):
 
         This method is just there to implement the usual API and hence
         work in pipelines.
+
+        Parameters
+        ----------
+        X : Ignored
+
+        y : Ignored
+
+        Returns
+        -------
+        self : object
+            Returns the object itself
         """
         return self
 
@@ -983,11 +1005,6 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    split_sign : bool, False by default
-        Whether to split the sparse feature vector into the concatenation of
-        its negative part and its positive part. This can improve the
-        performance of downstream classifiers.
-
     n_jobs : int,
         number of parallel jobs to run
 
@@ -997,11 +1014,19 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     dict_init : array of shape (n_components, n_features),
         initial values for the dictionary, for warm restart
 
-    verbose :
-        degree of verbosity of the printed output
+    verbose : bool, optional (default: False)
+        To control the verbosity of the procedure.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    split_sign : bool, False by default
+        Whether to split the sparse feature vector into the concatenation of
+        its negative part and its positive part. This can improve the
+        performance of downstream classifiers.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -1054,6 +1079,8 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------
@@ -1114,6 +1141,18 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
+    n_jobs : int,
+        number of parallel jobs to run
+
+    batch_size : int,
+        number of samples in each mini-batch
+
+    shuffle : bool,
+        whether to shuffle the samples before forming batches
+
+    dict_init : array of shape (n_components, n_features),
+        initial value of the dictionary for warm restart scenarios
+
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}
         Algorithm used to transform the data.
@@ -1140,28 +1179,19 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
+    verbose : bool, optional (default: False)
+        To control the verbosity of the procedure.
+
     split_sign : bool, False by default
         Whether to split the sparse feature vector into the concatenation of
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    n_jobs : int,
-        number of parallel jobs to run
-
-    dict_init : array of shape (n_components, n_features),
-        initial value of the dictionary for warm restart scenarios
-
-    verbose :
-        degree of verbosity of the printed output
-
-    batch_size : int,
-        number of samples in each mini-batch
-
-    shuffle : bool,
-        whether to shuffle the samples before forming batches
-
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
@@ -1222,6 +1252,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         self : object
@@ -1254,6 +1286,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         iter_offset : integer, optional
             The number of iteration on data batches that has been

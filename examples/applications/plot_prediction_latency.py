@@ -266,12 +266,13 @@ def plot_benchmark_throughput(throughputs, configuration):
     plt.show()
 
 
-###############################################################################
-# main code
+# #############################################################################
+# Main code
 
 start_time = time.time()
 
-# benchmark bulk/atomic prediction speed for various regressors
+# #############################################################################
+# Benchmark bulk/atomic prediction speed for various regressors
 configuration = {
     'n_train': int(1e3),
     'n_test': int(1e2),
@@ -279,7 +280,8 @@ configuration = {
     'estimators': [
         {'name': 'Linear Model',
          'instance': SGDRegressor(penalty='elasticnet', alpha=0.01,
-                                  l1_ratio=0.25, fit_intercept=True),
+                                  l1_ratio=0.25, fit_intercept=True,
+                                  tol=1e-4),
          'complexity_label': 'non-zero coefficients',
          'complexity_computer': lambda clf: np.count_nonzero(clf.coef_)},
         {'name': 'RandomForest',

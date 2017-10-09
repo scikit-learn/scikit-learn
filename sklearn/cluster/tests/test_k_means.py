@@ -27,7 +27,6 @@ from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics.cluster import homogeneity_score
 
 
@@ -301,7 +300,7 @@ def test_k_means_fortran_aligned_data():
     km = KMeans(n_init=1, init=centers, precompute_distances=False,
                 random_state=42, n_clusters=2)
     km.fit(X)
-    assert_array_equal(km.cluster_centers_, centers)
+    assert_array_almost_equal(km.cluster_centers_, centers)
     assert_array_equal(km.labels_, labels)
 
 
@@ -404,7 +403,7 @@ def test_minibatch_sensible_reassign_partial_fit():
 def test_minibatch_reassign():
     # Give a perfect initialization, but a large reassignment_ratio,
     # as a result all the centers should be reassigned and the model
-    # should not longer be good
+    # should no longer be good
     for this_X in (X, X_csr):
         mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=100,
                                      random_state=42)
@@ -661,7 +660,7 @@ def test_int_input():
         expected_labels = [0, 1, 1, 0, 0, 1]
         scores = np.array([v_measure_score(expected_labels, km.labels_)
                            for km in fitted_models])
-        assert_array_equal(scores, np.ones(scores.shape[0]))
+        assert_array_almost_equal(scores, np.ones(scores.shape[0]))
 
 
 def test_transform():
@@ -679,7 +678,7 @@ def test_transform():
 def test_fit_transform():
     X1 = KMeans(n_clusters=3, random_state=51).fit(X).transform(X)
     X2 = KMeans(n_clusters=3, random_state=51).fit_transform(X)
-    assert_array_equal(X1, X2)
+    assert_array_almost_equal(X1, X2)
 
 
 def test_predict_equal_labels():
@@ -758,7 +757,7 @@ def test_x_squared_norms_init_centroids():
     X_norms = np.sum(X**2, axis=1)
     precompute = _init_centroids(
         X, 3, "k-means++", random_state=0, x_squared_norms=X_norms)
-    assert_array_equal(
+    assert_array_almost_equal(
         precompute,
         _init_centroids(X, 3, "k-means++", random_state=0))
 

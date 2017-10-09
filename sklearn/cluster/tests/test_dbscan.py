@@ -350,3 +350,20 @@ def test_dbscan_precomputed_metric_with_degenerate_input_arrays():
     X = np.zeros((10, 10))
     labels = DBSCAN(eps=0.5, metric='precomputed').fit(X).labels_
     assert_equal(len(set(labels)), 1)
+
+
+def test_dbscan_precomputed_metric_with_initial_rows_zero():
+    # sample matrix with initial two row all zero
+    ar = np.array([
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0],
+        [0.0, 0.0, 0.1, 0.1, 0.0, 0.0, 0.3],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.1],
+        [0.0, 0.0, 0.0, 0.0, 0.3, 0.1, 0.0]
+    ])
+    matrix = sparse.csr_matrix(ar)
+    labels = DBSCAN(eps=0.2, metric='precomputed',
+                    min_samples=2).fit(matrix).labels_
+    assert_array_equal(labels, [-1, -1,  0,  0,  0,  1,  1])

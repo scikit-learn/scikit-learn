@@ -20,7 +20,7 @@ import warnings
 from collections import defaultdict
 from ..externals import six
 from ..utils.validation import check_is_fitted
-from ..utils import extmath, check_random_state, gen_batches, check_array
+from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
@@ -47,8 +47,11 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
     n_samples : int, optional
         The number of samples to use. If not given, all samples are used.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
@@ -59,11 +62,16 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
     bandwidth : float
         The bandwidth parameter.
     """
+    X = check_array(X)
+
     random_state = check_random_state(random_state)
     if n_samples is not None:
         idx = random_state.permutation(X.shape[0])[:n_samples]
         X = X[idx]
-    nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile),
+    n_neighbors = int(X.shape[0] * quantile)
+    if n_neighbors < 1:  # cannot fit NearestNeighbors with n_neighbors = 0
+        n_neighbors = 1
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors,
                             n_jobs=n_jobs)
     nbrs.fit(X)
 
@@ -91,7 +99,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         my_old_mean = my_mean  # save the old mean
         my_mean = np.mean(points_within, axis=0)
         # If converged or at max_iter, adds the cluster
-        if (extmath.norm(my_mean - my_old_mean) < stop_thresh or
+        if (np.linalg.norm(my_mean - my_old_mean) < stop_thresh or
                 completed_iterations == max_iter):
             return tuple(my_mean), len(points_within)
         completed_iterations += 1
@@ -167,7 +175,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     Notes
     -----
-    See examples/cluster/plot_mean_shift.py for an example.
+    For an example, see :ref:`examples/cluster/plot_mean_shift.py
+    <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
 
     """
 
@@ -383,6 +392,9 @@ class MeanShift(BaseEstimator, ClusterMixin):
         -----------
         X : array-like, shape=[n_samples, n_features]
             Samples to cluster.
+
+        y : Ignored
+
         """
         X = check_array(X)
         self.cluster_centers_, self.labels_ = \
