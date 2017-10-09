@@ -41,7 +41,7 @@ def print_outlier_ratio(y):
     print("----- Outlier ratio: %.5f" % (np.min(cnt) / len(y)))
 
 
-SEED = 1
+random_state = 1
 fig_roc, ax_roc = plt.subplots(1, 1, figsize=(8, 5))
 
 # Set this to true for plotting score histograms for each dataset:
@@ -58,7 +58,7 @@ for dat in datasets:
     print('--- Fetching data...')
     if dat in ['http', 'smtp', 'SF', 'SA']:
         dataset = fetch_kddcup99(subset=dat, shuffle=True,
-                                 percent10=True, random_state=SEED)
+                                 percent10=True, random_state=random_state)
         X = dataset.data
         y = dataset.target
 
@@ -66,7 +66,7 @@ for dat in datasets:
         dataset = fetch_mldata('shuttle')
         X = dataset.data
         y = dataset.target
-        X, y = sh(X, y, random_state=SEED)
+        X, y = sh(X, y, random_state=random_state)
         # we remove data with label 4
         # normal data are then those of class 1
         s = (y != 4)
@@ -76,7 +76,7 @@ for dat in datasets:
         print('----- ')
 
     if dat == 'forestcover':
-        dataset = fetch_covtype(shuffle=True, random_state=SEED)
+        dataset = fetch_covtype(shuffle=True, random_state=random_state)
         X = dataset.data
         y = dataset.target
         # normal data are those with attribute 2
@@ -119,7 +119,7 @@ for dat in datasets:
     y_test = y[n_samples_train:]
 
     print('--- Fitting the IsolationForest estimator...')
-    model = IsolationForest(n_jobs=-1, random_state=SEED)
+    model = IsolationForest(n_jobs=-1, random_state=random_state)
     tstart = time()
     model.fit(X_train)
     fit_time = time() - tstart
