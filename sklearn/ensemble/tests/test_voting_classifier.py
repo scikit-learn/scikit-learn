@@ -73,6 +73,16 @@ def test_notfitted():
            " with appropriate arguments before using this method.")
     assert_raise_message(NotFittedError, msg, eclf.predict_proba, X)
 
+"""
+def test_notfitted2():
+    eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
+                                        ('lr2', LogisticRegression())],
+                            prefit=True)
+    msg = ("This VotingClassifier instance is not fitted yet. Call \'fit\'"
+           " with appropriate arguments before using this method.")
+    assert_raise_message(NotFittedError, msg, eclf.predict_proba, X)
+"""
+
 
 def test_majority_label_iris():
     """Check classification by majority label on dataset iris."""
@@ -428,3 +438,41 @@ def test_transform():
             eclf3.transform(X).swapaxes(0, 1).reshape((4, 6)),
             eclf2.transform(X)
     )
+
+
+def test_prefit_true_calling_fit():
+
+    X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
+    y = np.array([1, 1, 2, 2])
+
+    lr1 = LogisticRegression()
+    lr2 = LogisticRegression()
+    lr1.fit(X, y)
+    lr2.fit(X, y)
+
+    eclf = VotingClassifier(estimators=[('lr1', lr1),
+                                        ('lr2', lr2)],
+                            voting='soft',
+                            prefit=True)
+
+    msg = ('Since `prefit=True`, call `transform`,'
+           ' `predict`, or `predict_proba directly')
+
+    assert_raise_message(ValueError, msg, eclf.fit, X, y)
+
+
+def test_prefit_predict():
+
+    X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
+    y = np.array([1, 1, 2, 2])
+
+    lr1 = LogisticRegression()
+    lr2 = LogisticRegression()
+    lr1.fit(X, y)
+    lr2.fit(X, y)
+
+    eclf = VotingClassifier(estimators=[('lr1', lr1),
+                                        ('lr2', lr2)],
+                            prefit=True)
+
+    eclf.predict(X)

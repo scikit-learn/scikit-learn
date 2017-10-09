@@ -17,6 +17,7 @@ import warnings
 from ..base import ClassifierMixin
 from ..base import TransformerMixin
 from ..base import clone
+from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
 from ..externals.joblib import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
@@ -70,6 +71,16 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         flatten_transform=False, it returns
         (n_classifiers, n_samples, n_classes).
 
+    prefit : bool, (default=False)
+        Whether the `estimators` are expected to be prefitted or not
+        into the constructor
+        directly or not. If True, ``transform`` must be called directly
+        and SelectFromModel cannot be used with ``cross_val_score``,
+        ``GridSearchCV`` and similar utilities that clone the estimator.
+        Otherwise train the model using ``fit`` and then ``transform`` to do
+        feature selection.
+
+
     Attributes
     ----------
     estimators_ : list of classifiers
@@ -122,16 +133,22 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     """
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=1,
-                 flatten_transform=None):
+                 flatten_transform=None, prefit=False):
         self.estimators = estimators
         self.voting = voting
         self.weights = weights
         self.n_jobs = n_jobs
         self.flatten_transform = flatten_transform
+        self.prefit = prefit
 
     @property
     def named_estimators(self):
         return Bunch(**dict(self.estimators))
+
+    def _name_estimators(self):
+        self.named_estimators_ = Bunch(**dict())
+        for k, e in zip(self.estimators, self.estimators_):
+            self.named_estimators_[k[0]] = e
 
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
@@ -154,6 +171,12 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         -------
         self : object
         """
+
+        if self.prefit:
+            raise NotFittedError(
+                "Since `prefit=True`, call `transform`, `predict`,"
+                " or `predict_proba directly")
+
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError('Multilabel and multi-output'
                                       ' classification is not supported.')
@@ -197,9 +220,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
                                                  sample_weight=sample_weight)
                 for clf in clfs if clf is not None)
 
-        self.named_estimators_ = Bunch(**dict())
-        for k, e in zip(self.estimators, self.estimators_):
-            self.named_estimators_[k[0]] = e
+        self._name_estimators()
+        print(self._name_estimators)
         return self
 
     @property
@@ -225,7 +247,23 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             Predicted class labels.
         """
 
-        check_is_fitted(self, 'estimators_')
+        if self.prefit:
+            if not hasattr(self, "estimators_"):
+
+                names, clfs = zip(*self.estimators)
+                self._validate_names(names)
+
+                n_isnone = np.sum([clf is None for _, clf in self.estimators])
+                if n_isnone == len(self.estimators):
+                    raise ValueError('All estimators are None. At least one is '
+                                     'required to be a classifier!')
+
+                self.estimators_ = [clf for clf in clfs if clf is not None]
+                self._name_estimators()
+
+        else:
+            check_is_fitted(self, 'estimators_')
+
         if self.voting == 'soft':
             maj = np.argmax(self.predict_proba(X), axis=1)
 
@@ -249,7 +287,22 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         if self.voting == 'hard':
             raise AttributeError("predict_proba is not available when"
                                  " voting=%r" % self.voting)
-        check_is_fitted(self, 'estimators_')
+        if self.prefit:
+            if not hasattr(self, "estimators_"):
+
+                names, clfs = zip(*self.estimators)
+                self._validate_names(names)
+
+                n_isnone = np.sum([clf is None for _, clf in self.estimators])
+                if n_isnone == len(self.estimators):
+                    raise ValueError('All estimators are None. At least one is '
+                                     'required to be a classifier!')
+
+                self.estimators_ = [clf for clf in clfs if clf is not None]
+                self._name_estimators()
+
+        else:
+            check_is_fitted(self, 'estimators_')
         avg = np.average(self._collect_probas(X), axis=0,
                          weights=self._weights_not_none)
         return avg
@@ -290,7 +343,23 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
           array-like = [n_samples, n_classifiers]
             Class labels predicted by each classifier.
         """
-        check_is_fitted(self, 'estimators_')
+
+        if self.prefit:
+            if not hasattr(self, "estimators_"):
+
+                names, clfs = zip(*self.estimators)
+                self._validate_names(names)
+
+                n_isnone = np.sum([clf is None for _, clf in self.estimators])
+                if n_isnone == len(self.estimators):
+                    raise ValueError('All estimators are None. At least one is '
+                                     'required to be a classifier!')
+
+                self.estimators_ = [clf for clf in clfs if clf is not None]
+                self._name_estimators()
+
+        else:
+            check_is_fitted(self, 'estimators_')
 
         if self.voting == 'soft':
             probas = self._collect_probas(X)
