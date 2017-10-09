@@ -246,10 +246,10 @@ Note on inappropriate usage of cross_val_predict
 The function :func:`cross_val_score` takes an average of over cross-validation
 folds and is grouped in different ways on computation in comparison to :func:`cross_val_predict`.
 Any metric score on :func:`cross_val_predict` is not equivalent to the
-result of :func:`cross_val_score`. Thus, the function :func:`cross_val_score` is
+result of :func:`cross_val_score`. Thus, the function :func:`cross_val_predict` is
 not an appropriate measure of generalisation error.
 
-The apt usage of :func:`cross_val_predict` is only for visualization of
+The valid use of :func:`cross_val_predict` is for visualization of
 training set predictions and model blending techniques.
 
 
