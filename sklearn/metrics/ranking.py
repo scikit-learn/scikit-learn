@@ -36,7 +36,7 @@ from ..preprocessing import LabelBinarizer
 from .base import _average_binary_score
 
 
-def auc(x, y, reorder=None):
+def auc(x, y, reorder='deprecated'):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     This is a general function, given points on a curve.  For computing the
