@@ -102,40 +102,6 @@ def test_lle_manifold():
                         tol * reconstruction_error, msg=details)
 
 
-# Tests the use of a different metric to pick the neighboors
-def test_lle_metrics():
-    metric = 'manhattan'
-    rng = np.random.RandomState(0)
-    # similar test on a slightly more complex manifold
-    X = np.array(list(product(np.arange(18), repeat=2)))
-    X = np.c_[X, X[:, 0] ** 2 / 18]
-    X = X + 1e-10 * rng.uniform(size=X.shape)
-    n_components = 2
-    for method in ["standard", "hessian", "modified", "ltsa"]:
-        clf = manifold.LocallyLinearEmbedding(n_neighbors=6,
-                                              n_components=n_components,
-                                              method=method, random_state=0,
-                                              metric=metric)
-        tol = 1.5 if method == "standard" else 3
-
-        N = barycenter_kneighbors_graph(X, clf.n_neighbors,
-                                        metric=metric).toarray()
-        reconstruction_error = linalg.norm(np.dot(N, X) - X)
-        assert_less(reconstruction_error, tol)
-
-        for solver in eigen_solvers:
-            clf.set_params(eigen_solver=solver)
-            clf.fit(X)
-            assert_true(clf.embedding_.shape[1] == n_components)
-            reconstruction_error = linalg.norm(
-                np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
-            details = ("solver: %s, method: %s" % (solver, method))
-            assert_less(reconstruction_error, tol, msg=details)
-            assert_less(np.abs(clf.reconstruction_error_ -
-                               reconstruction_error),
-                        tol * reconstruction_error, msg=details)
-
-
 # Test the error raised when parameter passed to lle is invalid
 def test_lle_init_parameters():
     X = np.random.rand(5, 3)
@@ -168,6 +134,19 @@ def test_singular_matrix():
     f = ignore_warnings
     assert_raises(ValueError, f(manifold.locally_linear_embedding),
                   M, 2, 1, method='standard', eigen_solver='arpack')
+
+
+# Test the error raised if an neighbor object with an invalid metric is passed
+def test_invalid_metric():
+    rand = np.random.RandomState(0)
+    X = rand.randint(0, 100, size=(20, 3))
+    NN = neighbors.NearestNeighbors(2, metric='manhattan').fit(X)
+    print(NN.metric)
+
+    msg = "metric must be euclidean or equivalent"
+    assert_raise_message(ValueError, msg, manifold.locally_linear_embedding,
+                         NN, 2, 1, method='standard', eigen_solver='arpack')
+
 
 
 # regression test for #6033

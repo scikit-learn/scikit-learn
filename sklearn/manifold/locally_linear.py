@@ -14,7 +14,7 @@ from ..utils import check_random_state, check_array
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
-from ..neighbors import NearestNeighbors
+from ..neighbors import NearestNeighbors, BallTree, KDTree
 
 
 def barycenter_weights(X, Z, reg=1e-3):
@@ -64,8 +64,7 @@ def barycenter_weights(X, Z, reg=1e-3):
     return B
 
 
-def barycenter_kneighbors_graph(X, n_neighbors, metric='minkowski',
-                                p=2, metric_params=None, reg=1e-3, n_jobs=1):
+def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=1):
     """Computes the barycenter weighted graph of k-Neighbors for points in X
 
     Parameters
@@ -83,19 +82,6 @@ def barycenter_kneighbors_graph(X, n_neighbors, metric='minkowski',
         problem. Only relevant if mode='barycenter'. If None, use the
         default.
 
-    metric : string or callable, default 'minkowski'
-        metric to use for neighbors computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
-
-    p : integer, optional (default = 2)
-        Parameter for the Minkowski metric from
-        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-
-    metric_params : dict, optional (default = None)
-        Additional keyword arguments for the metric function.
-
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
@@ -110,9 +96,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, metric='minkowski',
     sklearn.neighbors.kneighbors_graph
     sklearn.neighbors.radius_neighbors_graph
     """
-    knn = NearestNeighbors(n_neighbors + 1, n_jobs=n_jobs,
-                           metric=metric, p=p,
-                           metric_params=metric_params).fit(X)
+    knn = NearestNeighbors(n_neighbors + 1, n_jobs=n_jobs).fit(X)
     X = knn._fit_X
     n_samples = X.shape[0]
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
@@ -202,7 +186,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
 def locally_linear_embedding(
         X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto', tol=1e-6,
         max_iter=100, method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-        random_state=None, metric='minkowski', p=2, metric_params=None, n_jobs=1):
+        random_state=None, n_jobs=1):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -270,19 +254,6 @@ def locally_linear_embedding(
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``solver`` == 'arpack'.
 
-    metric : string or callable, default 'minkowski'
-        metric to use for neighbors computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
-
-    p : integer, optional (default = 2)
-        Parameter for the Minkowski metric from
-        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-
-    metric_params : dict, optional (default = None)
-        Additional keyword arguments for the metric function.
-
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
@@ -317,9 +288,15 @@ def locally_linear_embedding(
     if method not in ('standard', 'hessian', 'modified', 'ltsa'):
         raise ValueError("unrecognized method '%s'" % method)
 
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1,
-                            metric=metric, p=p, metric_params=metric_params, n_jobs=n_jobs)
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs)
+
     nbrs.fit(X)
+
+    if isinstance(X, (BallTree, KDTree, NearestNeighbors)) and \
+       not (X.metric == 'euclidean'
+            or (X.metric == 'minkowski' and X.p == 2)):
+        raise ValueError("metric must be euclidean or equivalent")
+
     X = nbrs._fit_X
 
     N, d_in = X.shape
@@ -341,8 +318,7 @@ def locally_linear_embedding(
 
     if method == 'standard':
         W = barycenter_kneighbors_graph(
-            nbrs, n_neighbors=n_neighbors, reg=reg,
-            metric=metric, p=p, metric_params=metric_params, n_jobs=n_jobs)
+            nbrs, n_neighbors=n_neighbors, reg=reg, n_jobs=n_jobs)
 
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
@@ -614,19 +590,6 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         If None, the random number generator is the RandomState instance used
         by `np.random`. Used when ``eigen_solver`` == 'arpack'.
 
-    metric : string or callable, default 'minkowski'
-        metric to use for neighbors computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
-
-    p : integer, optional (default = 2)
-        Parameter for the Minkowski metric from
-        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-
-    metric_params : dict, optional (default = None)
-        Additional keyword arguments for the metric function.
-
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
@@ -662,8 +625,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-                 neighbors_algorithm='auto', random_state=None,
-                 metric='minkowski', p=2, metric_params=None, n_jobs=1):
+                 neighbors_algorithm='auto', random_state=None, n_jobs=1):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.reg = reg
@@ -675,17 +637,11 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         self.modified_tol = modified_tol
         self.random_state = random_state
         self.neighbors_algorithm = neighbors_algorithm
-        self.metric = metric
-        self.p = 2
-        self.metric_params = metric_params
         self.n_jobs = n_jobs
 
     def _fit_transform(self, X):
         self.nbrs_ = NearestNeighbors(self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
-                                      metric=self.metric,
-                                      p=self.p,
-                                      metric_params=self.metric_params,
                                       n_jobs=self.n_jobs)
 
         random_state = check_random_state(self.random_state)
@@ -697,9 +653,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
-                random_state=random_state, reg=self.reg,
-                metric=self.metric, p=self.p, metric_params=self.metric_params,
-                n_jobs=self.n_jobs)
+                random_state=random_state, reg=self.reg, n_jobs=self.n_jobs)
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X
