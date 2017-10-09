@@ -206,7 +206,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
                 self.scores_.append(step_score(estimator, features))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
-            grid_ranking_.append(ranking_)
+            grid_ranking_.append(ranking_.copy())
 
         # Set final attributes
         features = np.arange(n_features)[support_]
