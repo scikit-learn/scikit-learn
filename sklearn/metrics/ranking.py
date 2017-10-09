@@ -52,8 +52,9 @@ def auc(x, y, reorder='deprecated'):
     y : array, shape = [n]
         y coordinates.
     reorder : boolean, optional (default='deprecated')
-        If True, assume that the curve is ascending in the case of ties, as for
-        an ROC curve. If the curve is non-ascending, the result will be wrong.
+        Whether to sort x before computing. If False, assume that x must be
+        either monotonic increasing or monotonic decreasing. If True, y is
+        used to break ties when sorting x.
 
         ..deprecated:: 0.20
           Parameter ``reorder`` has been deprecated in version 0.20 and will
