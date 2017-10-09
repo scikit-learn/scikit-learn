@@ -614,7 +614,7 @@ loss function:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
+    F_m(x) = F_{m-1}(x) - \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
     F_{m-1}(x_i))
 
 Where the step length :math:`\gamma_m` is chosen using line search:
