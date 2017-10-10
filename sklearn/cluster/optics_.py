@@ -90,20 +90,20 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
         If ``-1``, then the number of jobs is set to the number of CPU cores.
         Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
-    maxima_ratio: float, optional
+    maxima_ratio : float, optional
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
         ratio, the more generous the algorithm is to preserving local
         minima, and the more cuts the resulting tree will have.
 
-    rejection_ratio: float, optional
+    rejection_ratio : float, optional
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
         reject based on rejection_ratio. Higher values will result in points
         being more readily classified as noise; conversely, lower values will
         result in more points being classified.
 
-    similarity_threshold: float, optional
+    similarity_threshold : float, optional
         Used to check if nodes can be moved up one level, that is, if the
         new cluster created is too "similar" to its parent, given the
         similarity threshold. Similarity can be determined by 1) the size
@@ -113,18 +113,18 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
         node. A lower value for the similarity threshold means less levels
         in the tree.
 
-    significant_min: float, optional
+    significant_min : float, optional
         Sets a lower threshold on how small a significant maxima can be
 
-    min_cluster_size_ratio: float, optional
+    min_cluster_size_ratio : float, optional
         Minimum percentage of dataset expected for cluster membership.
 
-    min_maxima_ratio: float, optional
+    min_maxima_ratio : float, optional
         Used to determine neighborhood size for minimum cluster membership.
 
     Returns
     -------
-    core_sample_indices_: array, shape (n_core_samples,)
+    core_sample_indices_ : array, shape (n_core_samples,)
         The indices of the core samples.
 
     labels_ : array, shape (n_samples,)
@@ -142,7 +142,6 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
                                rejection_ratio, similarity_threshold,
                                significant_min, min_cluster_size_ratio,
                                min_maxima_ratio, n_jobs)
-    clust.fit(X)
     return clust.core_sample_indices_, clust.labels_
 
 
@@ -206,20 +205,20 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         If ``-1``, then the number of jobs is set to the number of CPU cores.
         Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
-    maxima_ratio: float, optional
+    maxima_ratio : float, optional
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
         ratio, the more generous the algorithm is to preserving local
         minima, and the more cuts the resulting tree will have.
 
-    rejection_ratio: float, optional
+    rejection_ratio : float, optional
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
         reject based on rejection_ratio. Higher values will result in points
         being more readily classified as noise; conversely, lower values will
         result in more points being classified.
 
-    similarity_threshold: float, optional
+    similarity_threshold : float, optional
         Used to check if nodes can be moved up one level, that is, if the
         new cluster created is too "similar" to its parent, given the
         similarity threshold. Similarity can be determined by 1) the size
@@ -229,13 +228,13 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
         node. A lower value for the similarity threshold means less levels
         in the tree.
 
-    significant_min: float, optional
+    significant_min : float, optional
         Sets a lower threshold on how small a significant maxima can be
 
-    min_cluster_size_ratio: float, optional
+    min_cluster_size_ratio : float, optional
         Minimum percentage of dataset expected for cluster membership.
 
-    min_maxima_ratio: float, optional
+    min_maxima_ratio : float, optional
         Used to determine neighborhood size for minimum cluster membership.
 
     Attributes
@@ -337,14 +336,14 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
             if not self._processed[point]:
                 self._expand_cluster_order(point, X)
 
-        indices_, self.labels_ = extract_optics(self.ordering_,
-                                                self.reachability_,
-                                                self.maxima_ratio,
-                                                self.rejection_ratio,
-                                                self.similarity_threshold,
-                                                self.significant_min,
-                                                self.min_cluster_size_ratio,
-                                                self.min_maxima_ratio)
+        indices_, self.labels_ = _extract_optics(self.ordering_,
+                                                 self.reachability_,
+                                                 self.maxima_ratio,
+                                                 self.rejection_ratio,
+                                                 self.similarity_threshold,
+                                                 self.significant_min,
+                                                 self.min_cluster_size_ratio,
+                                                 self.min_maxima_ratio)
         self.core_sample_indices_ = indices_
         self.n_clusters_ = np.max(self.labels_)
         return self
@@ -397,15 +396,21 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
     def extract_dbscan(self, eps):
         """Performs DBSCAN extraction for an arbitrary epsilon.
 
+        Extraction runs in linear time. Note that if the `max_bound` OPTICS
+        parameter was set to < inf for extracting reachability and ordering
+        arrays, DBSCAN extractions will be unstable for `eps` values close to
+        `max_bound`. Setting `eps` < (`max_bound` / 5.0) will guarantee
+        extraction parity with DBSCAN.
+
         Parameters
         ----------
-        eps: float or int, required
+        eps : float or int, required
             DBSCAN `eps` parameter. Must be set to < `max_bound`. Equivalence
-            with DBSCAN algorithm is achieved if `eps` is < (`max_bound` * 5)
+            with DBSCAN algorithm is achieved if `eps` is < (`max_bound` / 5)
 
         Returns
         -------
-        core_sample_indices_: array, shape (n_core_samples,)
+        core_sample_indices_ : array, shape (n_core_samples,)
             The indices of the core samples.
 
         labels_ : array, shape (n_samples,)
@@ -422,35 +427,29 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
                 "Warning, max_bound (%s) is close to eps (%s): "
                 "Output may be unstable." % (self.max_bound, eps),
                 RuntimeWarning, stacklevel=2)
-        # Stability warning is documented in extract_dbscan method...
+        # Stability warning is documented in _extract_dbscan method...
 
-        return extract_dbscan(self.ordering_, self.core_dists_,
-                              self.reachability_, eps)
+        return _extract_dbscan(self.ordering_, self.core_dists_,
+                               self.reachability_, eps)
 
 
-def extract_dbscan(ordering, core_dists, reachability, eps):
+def _extract_dbscan(ordering, core_dists, reachability, eps):
     """Performs DBSCAN extraction for an arbitrary epsilon (`eps`).
-
-    Extraction runs in linear time. Note that if the `max_bound` OPTICS
-    parameter was set to < inf for extracting reachability and ordering
-    arrays, DBSCAN extractions will be unstable for `eps` values close to
-    `max_bound`. Setting `eps` < (`max_bound` / 5.0) will guarantee
-    extraction parity with DBSCAN.
 
     Parameters
     ----------
-    ordering: array, shape(n_samples,)
+    ordering : array, shape (n_samples,)
         OPTICS ordered point indices (`ordering_`)
-    core_dists: array, shaep(n_samples,)
+    core_dists : array, shape (n_samples,)
         Distances at which points become core (`core_dists_`)
-    reachability: array, shape(n_samples,)
+    reachability : array, shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
-    epsilon_prime: float or int
+    epsilon_prime : float or int
         DBSCAN `eps` parameter
 
     Returns
     -------
-    core_sample_indices_: array, shape (n_core_samples,)
+    core_sample_indices_ : array, shape (n_core_samples,)
         The indices of the core samples.
 
     labels_ : array, shape (n_samples,)
@@ -477,37 +476,37 @@ def extract_dbscan(ordering, core_dists, reachability, eps):
                 is_core[entry] = 1   # True
             else:
                 is_core[entry] = 0   # False
-    return(np.arange(n_samples)[is_core], labels)
+    return np.arange(n_samples)[is_core], labels
 
 
-def extract_optics(ordering, reachability, maxima_ratio=.75,
-                   rejection_ratio=.7, similarity_threshold=0.4,
-                   significant_min=.003, min_cluster_size_ratio=.005,
-                   min_maxima_ratio=0.001):
+def _extract_optics(ordering, reachability, maxima_ratio=.75,
+                    rejection_ratio=.7, similarity_threshold=0.4,
+                    significant_min=.003, min_cluster_size_ratio=.005,
+                    min_maxima_ratio=0.001):
     """Performs automatic cluster extraction for variable density data.
 
     Parameters
     ----------
-    ordering: array, shape(n_samples,)
+    ordering : array, shape (n_samples,)
         OPTICS ordered point indices (`ordering_`)
 
-    reachability: array, shape(n_samples,)
+    reachability : array, shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
 
-    maxima_ratio: float, optional
+    maxima_ratio : float, optional
         The maximum ratio we allow of average height of clusters on the
         right and left to the local maxima in question. The higher the
         ratio, the more generous the algorithm is to preserving local
         minima, and the more cuts the resulting tree will have.
 
-    rejection_ratio: float, optional
+    rejection_ratio : float, optional
         Adjusts the fitness of the clustering. When the maxima_ratio is
         exceeded, determine which of the clusters to the left and right to
         reject based on rejection_ratio. Higher values will result in points
         being more readily classified as noise; conversely, lower values will
         result in more points being classified.
 
-    similarity_threshold: float, optional
+    similarity_threshold : float, optional
         Used to check if nodes can be moved up one level, that is, if the
         new cluster created is too "similar" to its parent, given the
         similarity threshold. Similarity can be determined by 1) the size
@@ -517,18 +516,18 @@ def extract_optics(ordering, reachability, maxima_ratio=.75,
         node. A lower value for the similarity threshold means less levels
         in the tree.
 
-    significant_min: float, optional
+    significant_min : float, optional
         Sets a lower threshold on how small a significant maxima can be
 
-    min_cluster_size_ratio: float, optional
+    min_cluster_size_ratio : float, optional
         Minimum percentage of dataset expected for cluster membership.
 
-    min_maxima_ratio: float, optional
+    min_maxima_ratio : float, optional
         Used to determine neighborhood size for minimum cluster membership.
 
     Returns
     -------
-    core_sample_indices_: array, shape (n_core_samples,)
+    core_sample_indices_ : array, shape (n_core_samples,)
         The indices of the core samples.
 
     labels_ : array, shape (n_samples,)

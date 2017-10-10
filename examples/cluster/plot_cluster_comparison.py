@@ -117,7 +117,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
         affinity="nearest_neighbors")
     dbscan = cluster.DBSCAN(eps=params['eps'])
     optics = cluster.OPTICS(min_samples=30, maxima_ratio=.8,
-                            rejection_ratio=.2)
+                            rejection_ratio=.4)
     affinity_propagation = cluster.AffinityPropagation(
         damping=params['damping'], preference=params['preference'])
     average_linkage = cluster.AgglomerativeClustering(

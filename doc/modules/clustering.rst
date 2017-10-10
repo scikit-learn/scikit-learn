@@ -94,7 +94,7 @@ Overview of clustering methods
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
      - Very large ``n_samples``, large ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes, varible density clusters
+     - Non-flat geometry, uneven cluster sizes, variable density clusters
      - Distances between points
    
    * - :ref:`Gaussian mixtures <mixture>`
@@ -814,17 +814,17 @@ The :class:`OPTICS` algorithm shares many similarities with the :class:`DBSCAN`
 algorithm, and can in fact be considered a generalization of DBSCAN that
 relaxes the ``eps`` requirement from a single value to a value range. The key
 difference between DBSCAN and OPTICS is that the OPTICS algorithm builds a
-*reachability* graph, which assigns each sample both a ``_reachability``
-distance, and an spot within the cluster ``ordering_`` attribute; these two
+*reachability* graph, which assigns each sample both a ``reachability_``
+distance, and a spot within the cluster ``ordering_`` attribute; these two
 attributes are assigned when the model is fit, and are used to determine
 cluster membership. If OPTICS is run with the default value of *inf* set for
 ``max_bound``, then DBSCAN style cluster extraction can be performed in linear
 time for any given ``eps`` value using the ``extract_dbscan`` method. Setting
 ``max_bound`` to a lower value will result in shorter run times, and can be
-thought of as the maximum cluster object size that OPTICS will be able to
-extract. The results from OPTICS ``extract_dbscan`` method and DBSCAN are not
-quite identical; this is because the first sample processed by OPTICS will
-always have a reachability distance that is set to ``inf``, and will thus
+thought of as the maximum cluster object size (in diameter) that OPTICS will be
+able to extract. The results from OPTICS ``extract_dbscan`` method and DBSCAN
+are not quite identical; this is because the first sample processed by OPTICS
+will always have a reachability distance that is set to ``inf``, and will thus
 always be marked as noise regardless of the surrounding density of other
 samples. This effects adjacent points when they are considered as candidates
 for being marked as *core samples*; this effect is quite local to the starting

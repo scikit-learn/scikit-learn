@@ -22,7 +22,7 @@ def test_optics():
     print(np.shape(X))
     # Parameters chosen specifically for this task.
     # Compute OPTICS
-    clust = OPTICS(max_bound=5.0*6.0, min_samples=4, metric='euclidean')
+    clust = OPTICS(max_bound=5.0 * 6.0, min_samples=4, metric='euclidean')
     clust.fit(X)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(clust.labels_)) - int(-1 in clust.labels_)
@@ -35,7 +35,7 @@ def test_optics2():
 
     # Compute OPTICS
     X = [[1, 1]]
-    clust = OPTICS(max_bound=5.0*0.3, min_samples=10)
+    clust = OPTICS(max_bound=5.0 * 0.3, min_samples=10)
 
     # Run the fit
     assert_raises(ValueError, clust.fit, X)
@@ -43,7 +43,7 @@ def test_optics2():
 
 def test_empty_extract():
     # Test extract where fit() has not yet been run.
-    clust = OPTICS(max_bound=5.0*0.3, min_samples=10)
+    clust = OPTICS(max_bound=5.0 * 0.3, min_samples=10)
     assert_raises(ValueError, clust.extract_dbscan, 0.01)
 
 
@@ -54,7 +54,7 @@ def test_bad_extract():
                                 cluster_std=0.4, random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_bound=5.0*0.003, min_samples=10)
+    clust = OPTICS(max_bound=5.0 * 0.003, min_samples=10)
     clust2 = clust.fit(X)
     assert_raises(ValueError, clust2.extract_dbscan, 0.3)
 
@@ -90,7 +90,7 @@ def test_auto_extract_hier():
 
     # Compute OPTICS
 
-    clust = OPTICS(max_bound=5.0*30.3, min_samples=9)
+    clust = OPTICS(min_samples=9)
 
     # Run the fit
     clust.fit(X)
@@ -115,7 +115,7 @@ def test_reach_dists():
 
     # Compute OPTICS
 
-    clust = OPTICS(max_bound=5.0*30.3, min_samples=10, metric='minkowski')
+    clust = OPTICS(min_samples=10, metric='minkowski')
 
     # Run the fit
     clust.fit(X)
