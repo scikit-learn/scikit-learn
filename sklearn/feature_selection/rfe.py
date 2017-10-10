@@ -442,7 +442,8 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select, step=self.step)
+                  n_features_to_select=n_features_to_select, step=self.step,
+                  verbose=self.verbose)
 
         rfe.fit(X, y)
 
