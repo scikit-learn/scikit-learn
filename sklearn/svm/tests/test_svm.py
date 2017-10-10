@@ -18,7 +18,7 @@ from sklearn.svm import LinearSVC, OneClassSVM, SVR, NuSVR, LinearSVR
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.metrics import f1_score
-from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics.pairwise import rbf_kernel, polynomial_kernel
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import _num_samples
@@ -411,6 +411,55 @@ def test_svdd_decision_function():
 
     dec_func_outliers = clf.decision_function(X_outliers)
     assert_array_equal((dec_func_outliers > 0).ravel(), y_pred_outliers == 1)
+
+
+def test_svdd_score_samples():
+    # Test the raw sample scores of the SVDD
+    # Background: the theoretical decision function score of the SVDD is
+    #  d(x) = R - \|\phi(x) - a\|^2
+    #       = R - \alpha^T Q \alpha / (\nu W)^2 - K(x, x)
+    #           + 2 / (\nu W) \sum_i \alpha_i K(z_i, x)
+    #       = 2 / (\nu W) (-\rho + \sum_i \alpha_i (K(z_i, x) - 0.5 K(x, x)))
+    # where \rho = 0.5 \nu W (\alpha^T Q \alpha / (\nu W)^2 - R), W is the
+    # sum of sample weights and \sum_i \alpha_i = \nu W since \alpha is
+    # feasible.
+    # In contrast, the current implementation returns a scaled score:
+    #  d(x) = 0.5 (\nu W) (R - \|\phi(x) - a\|^2)
+    #       = -\rho + \sum_i \alpha_i (K(z_i, x) - 0.5 K(x, x))
+    # Implicit scaling makes the raw decision function scores of the ocSVM
+    # and SVDD identical when the models coincide (stationary kernel).
+
+    # Generate train data
+    rnd = check_random_state(2)
+    X = 0.3 * rnd.randn(100, 2)
+    X_train = np.r_[X + 2, X - 2]
+
+    # Evaluate the scores on a small uniform 2-d mesh
+    xx, yy = np.meshgrid(np.linspace(-5, 5, num=26),
+                         np.linspace(-5, 5, num=26))
+    X_test = np.c_[xx.ravel(), yy.ravel()]
+
+    # Fit the model for at least 10% support vectors
+    clf = svm.SVDD(nu=0.1, kernel="poly", degree=2, coef0=1.0)
+    clf.fit(X_train)
+
+    # Check score_samples() implementation
+    assert_array_almost_equal(clf.score_samples(X_test),
+                              clf.decision_function(X_test) + clf.offset_)
+
+    # Compute the kernel matrices
+    k_zx = polynomial_kernel(X_train[clf.support_], X_test,
+                             degree=clf.degree, coef0=clf.coef0)
+    k_xx = polynomial_kernel(X_test,
+                             degree=clf.degree, coef0=clf.coef0).diagonal()
+
+    # Compute the sample scores = decision scores without `-\rho`
+    scores_ = np.dot(clf.dual_coef_, k_zx - k_xx[np.newaxis] / 2).ravel()
+    assert_array_almost_equal(clf.score_samples(X_test), scores_)
+
+    # Get the decision function scores
+    decision_ = scores_ + clf.intercept_  # intercept_ = - \rho
+    assert_array_almost_equal(clf.decision_function(X_test), decision_)
 
 
 def test_oneclass_and_svdd():
