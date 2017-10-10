@@ -37,12 +37,14 @@ from sklearn.utils.validation import assert_all_finite
 
 
 def test_make_classification():
+    weights = [0.1, 0.25]
     X, y = make_classification(n_samples=100, n_features=20, n_informative=5,
                                n_redundant=1, n_repeated=1, n_classes=3,
                                n_clusters_per_class=1, hypercube=False,
-                               shift=None, scale=None, weights=[0.1, 0.25],
+                               shift=None, scale=None, weights=weights,
                                random_state=0)
 
+    assert_equal(weights, [0.1, 0.25])
     assert_equal(X.shape, (100, 20), "X shape mismatch")
     assert_equal(y.shape, (100,), "y shape mismatch")
     assert_equal(np.unique(y).shape, (3,), "Unexpected number of classes")
@@ -178,6 +180,7 @@ def test_make_multilabel_classification_return_indicator():
     assert_equal(p_w_c.shape, (20, 3))
     assert_almost_equal(p_w_c.sum(axis=0), [1] * 3)
 
+
 def test_make_multilabel_classification_return_indicator_sparse():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
         X, Y = make_multilabel_classification(n_samples=25, n_features=20,
@@ -187,6 +190,7 @@ def test_make_multilabel_classification_return_indicator_sparse():
         assert_equal(X.shape, (25, 20), "X shape mismatch")
         assert_equal(Y.shape, (25, 3), "Y shape mismatch")
         assert_true(sp.issparse(Y))
+
 
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
