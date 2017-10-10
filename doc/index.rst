@@ -207,6 +207,8 @@
                     <li><em>On-going development:</em>
                     <a href="/dev/whats_new.html"><em>What's new</em> (Changelog)</a>
                     </li>
+                    <li><em>October 2017.</em> scikit-learn 0.19.1 is available for download (<a href="whats_new.html#version-0-19">Changelog</a>).
+                    </li>
                     <li><em>July 2017.</em> scikit-learn 0.19.0 is available for download (<a href="whats_new.html#version-0-19">Changelog</a>).
                     </li>
                     <li><em>June 2017.</em> scikit-learn 0.18.2 is available for download (<a href="whats_new.html#version-0-18-2">Changelog</a>).
@@ -216,20 +218,6 @@
                     <li><em>November 2015.</em> scikit-learn 0.17.0 is available for download (<a href="whats_new.html#version-0-17">Changelog</a>).
                     </li>
                     <li><em>March 2015.</em> scikit-learn 0.16.0 is available for download (<a href="whats_new.html#version-0-16">Changelog</a>).
-                    </li>
-                    <li><em>July 14-20th, 2014: international sprint.</em>
-                    During this week-long sprint, we gathered 18 of the core
-                    contributors in Paris.
-                    We want to thank our sponsors:
-                    <a href="http://www.campus-paris-saclay.fr/en/Idex-Paris-Saclay/Les-Lidex/Paris-Saclay-Center-for-Data-Science">
-                    Paris-Saclay Center for Data Science</a>
-                    & <a href="https://digicosme.lri.fr">Digicosme</a> and our
-                    hosts <a href="http://lapaillasse.org">La Paillasse</a>,
-                    <a href="http://www.criteo.com/">Criteo</a>,
-                    <a href="http://www.inria.fr/">Inria</a>,
-                    and <a href="http://www.tinyclues.com/">tinyclues</a>.
-                    </li>
-                    <li><em>August 2013.</em> scikit-learn 0.14 is available for download (<a href="whats_new.html#version-0-14">Changelog</a>).
                     </li>
                     </ul>
                 </div>
