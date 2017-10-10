@@ -108,7 +108,7 @@ export PATH="$MINICONDA_PATH/bin:$PATH"
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python numpy scipy \
-  cython nose coverage 'matplotlib=2.0.*|>2.1.0' sphinx=1.6.2 pillow
+  cython nose coverage matplotlib sphinx=1.6.2 pillow
 source activate testenv
 
 # Build and install scikit-learn in dev mode
