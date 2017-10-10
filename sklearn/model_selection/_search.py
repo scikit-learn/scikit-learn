@@ -588,12 +588,21 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 fit_params = self.fit_params
         if self.return_train_score == "warn":
+            msg = "Computing training scores can slow down the grid "
+                  "search significantly. This is the reason "
+                  "return_train_score will change its default value "
+                  "from True (current behaviour) to False in 0.21. "
+                  "Please set explicitly return_train_score to get "
+                  "rid of this warning."
+            dd = DeprecationDict(deprecations={'cv_results_': (msg, FutureWarning)})
+            '''
             warnings.warn("Computing training scores can slow down the grid "
                           "search significantly. This is the reason "
                           "return_train_score will change its default value "
                           "from True (current behaviour) to False in 0.21. "
                           "Please set explicitly return_train_score to get "
                           "rid of this warning.", FutureWarning)
+            '''
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 

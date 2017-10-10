@@ -2,7 +2,7 @@ import sys
 import warnings
 import functools
 
-__all__ = ["deprecated", ]
+__all__ = ["deprecated", "DeprecationDict"]
 
 
 class deprecated(object):
@@ -102,3 +102,32 @@ def _is_deprecated(func):
                                               for c in closures
                      if isinstance(c.cell_contents, str)]))
     return is_deprecated
+
+
+class DeprecationDict(dict):
+    """A dict which raises a warning when some keys are looked up
+
+    Note, this does not raise a warning for __contains__ and iteration.
+
+    It also will raise a warning even after the key has been manually set by
+    the user.
+
+    """
+    def __init__(self, *args, **kwargs):
+        self._deprecations = kwargs.pop('deprecations')
+        super(DeprecationDict, self).__init__(*args, **kwargs)
+
+    def __getitem__(self, key):
+        if key in self._deprecations:
+            warning = self._deprecations[key]
+            if not isinstance(warning, (tuple, list)):
+                warning = [warning]
+            warnings.warn(*warning)
+        return super(DeprecationDict, self).__getitem__(key)
+
+    def get(self, key, default=None):
+        # dict does not implement it like this, hence it needs to be overridden
+        try:
+            return self[key]
+        except KeyError:
+            return default
