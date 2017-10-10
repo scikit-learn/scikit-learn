@@ -1876,13 +1876,6 @@ class SVDD(BaseLibSVM):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        Ignored.
-
-        .. deprecated:: 0.20
-           ``random_state`` has been deprecated in 0.20 and will be removed in
-           0.22.
-
     Attributes
     ----------
     support_ : array-like, shape = [n_SV]
@@ -1923,13 +1916,13 @@ class SVDD(BaseLibSVM):
     """
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
-                 verbose=False, max_iter=-1, random_state=None):
+                 verbose=False, max_iter=-1):
 
         super(SVDD, self).__init__(
             'svdd_l1', kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
             tol=tol, C=0., nu=nu, epsilon=0., shrinking=shrinking,
             probability=False, cache_size=cache_size, class_weight=None,
-            verbose=verbose, max_iter=max_iter, random_state=random_state)
+            verbose=verbose, max_iter=max_iter, random_state=None)
 
     def fit(self, X, y=None, sample_weight=None, **params):
         """Learns the soft minimum volume hypersphere around the sample X.
