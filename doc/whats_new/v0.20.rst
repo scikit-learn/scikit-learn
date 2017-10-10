@@ -120,3 +120,9 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Metrics
+
+- Deprecate ``reorder`` parameter in :class:`metrics.auc` as it is introduced
+  for roc_auc_score and is no longer used there.
+  :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
