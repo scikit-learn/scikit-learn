@@ -62,6 +62,9 @@ Bug fixes
   and with the Barnes-Hut approximation) when ``n_components >= 3``.
   :issue:`9711` by :user:`goncalo-rodrigues`.
 
+- Fixed a bug where :func:`datasets.make_classification` modified its input
+  ``weights``. :issue:`9865` by :user:`Sachin Kelkar <s4chin>`.
+
 Enhancements
 ............
 
