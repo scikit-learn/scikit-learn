@@ -36,6 +36,7 @@ from ..utils.fixes import MaskedArray
 from ..utils.random import sample_without_replacement
 from ..utils.validation import indexable, check_is_fitted
 from ..utils.metaestimators import if_delegate_has_method
+from ..utils.deprecation import DeprecationDict
 from ..metrics.scorer import _check_multimetric_scoring
 from ..metrics.scorer import check_scoring
 
