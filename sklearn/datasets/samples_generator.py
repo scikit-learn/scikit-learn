@@ -162,7 +162,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     n_clusters = n_classes * n_clusters_per_class
 
     if weights and len(weights) == (n_classes - 1):
-        weights.append(1.0 - sum(weights))
+        weights = weights + [1.0 - sum(weights)]
 
     if weights is None:
         weights = [1.0 / n_classes] * n_classes
