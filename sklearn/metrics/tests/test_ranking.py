@@ -429,10 +429,8 @@ def test_auc_errors():
     # x is not in order
     x = [2, 1, 3, 4]
     y = [5, 6, 7, 8]
-    error_message = ("x is neither increasing nor decreasing : {}. The most "
-                     "positive value in np.diff(x) : x[2] - x[1] = 2. The "
-                     "most negative value in np.diff(x) : x[1] - x[0] = "
-                     "-1.".format(np.array(x)))
+    error_message = ("x is neither increasing nor decreasing : "
+                     "{}".format(np.array(x)))
     assert_raise_message(ValueError, error_message, auc, x, y)
 
 
