@@ -798,7 +798,7 @@ def test_cross_val_predict_decision_function_shape():
     X = X[:100]
     y = y[:100]
     assert_raises_regex(ValueError,
-                        'Output shape \(50L?,) of decision_function'
+                        'Output shape \(50L?,\) of decision_function'
                         ' does not match number of classes \(1\) '
                         'in fold. Cannot reconcile different number'
                         ' of classes in different folds. To fix '
@@ -1355,7 +1355,7 @@ def test_cross_val_predict_class_subset():
     est = LogisticRegression()
     predictions = cross_val_predict(est, X, y, method='decision_function',
                                     cv=kfold3)
-    expected_predictions = get_expected_predictions(X, y, kfold3, classes,
+    expected_predictions = get_expected_predictions(X, y, kfold3, 10,
                                                     est, 'decision_function')
     assert_array_almost_equal(expected_predictions, predictions)
 
