@@ -819,11 +819,11 @@ def test_cross_val_predict_decision_function_shape():
     X, y = X[ind], y[ind]
     assert_raises_regex(ValueError,
                         'Output shape \(599L?, 21L?\) of decision_function '
-                        'does not match number of classes \(7\) in fold\. '
+                        'does not match number of classes \(7\) in fold. '
                         'Cannot reconcile different number of '
-                        'classes in different folds\. To fix this, '
+                        'classes in different folds. To fix this, '
                         'use a cross-validation technique resulting '
-                        'in properly stratified folds\.',
+                        'in properly stratified folds.',
                         cross_val_predict, est, X, y,
                         cv=KFold(), method='decision_function')
 
@@ -1349,7 +1349,7 @@ def test_cross_val_predict_class_subset():
 
     # Special test for decision_function. This makes sure not to trigger
     # any of the numerous edge cases in decision_function
-    X = np.arange(100).reshape(50, 2)
+    X = np.arange(200).reshape(100, 2)
     y = np.array([x//10 for x in range(100)])
 
     est = LogisticRegression()
