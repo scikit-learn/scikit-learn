@@ -51,7 +51,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
                  early_stopping=False, validation_fraction=0.1,
-                 warm_start=False, average=False, n_iter=None):
+                 n_iter_no_change=2, warm_start=False, average=False,
+                 n_iter=None):
         self.loss = loss
         self.penalty = penalty
         self.learning_rate = learning_rate
@@ -67,6 +68,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.power_t = power_t
         self.early_stopping = early_stopping
         self.validation_fraction = validation_fraction
+        self.n_iter_no_change = n_iter_no_change
         self.warm_start = warm_start
         self.average = average
         self.n_iter = n_iter
@@ -97,6 +99,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             raise ValueError("l1_ratio must be in [0, 1]")
         if self.alpha < 0.0:
             raise ValueError("alpha must be >= 0")
+        if self.n_iter_no_change < 1:
+            raise ValueError("n_iter_no_change must be >= 1")
         if not (0.0 < self.validation_fraction < 1.0):
             raise ValueError("validation_fraction must be in ]0, 1[")
         if self.learning_rate in ("constant", "invscaling", "adaptive"):
@@ -245,7 +249,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         Returns
         -------
         validation_set : array, shape(n_samples, )
-            Equal to True on the validation set, False on the training set
+            Equal to 1 on the validation set, 0 on the training set
         """
         n_samples = X.shape[0]
         if not self.early_stopping:
@@ -334,6 +338,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
         return plain_sgd(coef, intercept, est.loss_function_,
                          penalty_type, alpha, C, est.l1_ratio,
                          dataset, validation_set, est.early_stopping, est,
+                         int(est.n_iter_no_change),
                          max_iter, tol, int(est.fit_intercept),
                          int(est.verbose), int(est.shuffle), seed,
                          pos_weight, neg_weight,
@@ -346,7 +351,8 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, max_iter,
                                   average_intercept, est.loss_function_,
                                   penalty_type, alpha, C, est.l1_ratio,
                                   dataset, validation_set, est.early_stopping,
-                                  est, max_iter, tol,
+                                  est, int(est.n_iter_no_change),
+                                  max_iter, tol,
                                   int(est.fit_intercept), int(est.verbose),
                                   int(est.shuffle), seed, pos_weight,
                                   neg_weight, learning_rate_type, est.eta0,
@@ -383,8 +389,9 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False,
-                 validation_fraction=0.1, class_weight=None,
-                 warm_start=False, average=False, n_iter=None):
+                 validation_fraction=0.1, n_iter_no_change=2,
+                 class_weight=None, warm_start=False, average=False,
+                 n_iter=None):
 
         super(BaseSGDClassifier, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
@@ -392,7 +399,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             shuffle=shuffle, verbose=verbose, epsilon=epsilon,
             random_state=random_state, learning_rate=learning_rate, eta0=eta0,
             power_t=power_t, early_stopping=early_stopping,
-            validation_fraction=validation_fraction, warm_start=warm_start,
+            validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, warm_start=warm_start,
             average=average, n_iter=n_iter)
         self.class_weight = class_weight
         self.n_jobs = int(n_jobs)
@@ -737,9 +745,9 @@ class SGDClassifier(BaseSGDClassifier):
         - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
         - 'invscaling': eta = eta0 / pow(t, power_t)
         - 'adaptive': eta = eta0, as long as the training keeps decreasing.
-        Each time 2 consecutive epochs fail to decrease the training loss by
-        tol, or fail to increase validation score by tol if 'early_stopping'
-        is on, the current learning rate is divided by 5.
+        Each time n_iter_no_change consecutive epochs fail to decrease the
+        training loss by tol, or fail to increase validation score by tol if
+        'early_stopping' is on, the current learning rate is divided by 5.
 
         where t0 is chosen by a heuristic proposed by Leon Bottou.
 
@@ -753,13 +761,17 @@ class SGDClassifier(BaseSGDClassifier):
 
     early_stopping : bool, default False
         Whether to use early stopping to terminate training when validation
-        score is not improving. If set to True, it will automatically set aside
+        score is not improving. If set to true, it will automatically set aside
         a fraction of training data as validation and terminate training when
-        validation score is not improving by at least tol for two consecutive
-        epochs.
+        validation score is not improving by at least tol for
+        n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
 
+    n_iter_no_change : int, default 2
+        Number of iterations with no improvement to wait before early stopping.
+
+        .. versionadded:: 0.20
 
     validation_fraction : float, optional, default 0.1
         The proportion of training data to set aside as validation set for
@@ -841,7 +853,7 @@ class SGDClassifier(BaseSGDClassifier):
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
                  random_state=None, learning_rate="optimal", eta0=0.0,
                  power_t=0.5, early_stopping=False, validation_fraction=0.1,
-                 class_weight=None, warm_start=False,
+                 n_iter_no_change=2, class_weight=None, warm_start=False,
                  average=False, n_iter=None):
         super(SGDClassifier, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
@@ -849,7 +861,8 @@ class SGDClassifier(BaseSGDClassifier):
             shuffle=shuffle, verbose=verbose, epsilon=epsilon, n_jobs=n_jobs,
             random_state=random_state, learning_rate=learning_rate, eta0=eta0,
             power_t=power_t, early_stopping=early_stopping,
-            validation_fraction=validation_fraction, class_weight=class_weight,
+            validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, class_weight=class_weight,
             warm_start=warm_start, average=average, n_iter=n_iter)
 
     def _check_proba(self):
@@ -984,14 +997,16 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
-                 warm_start=False, average=False, n_iter=None):
+                 n_iter_no_change=2, warm_start=False, average=False,
+                 n_iter=None):
         super(BaseSGDRegressor, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, epsilon=epsilon,
             random_state=random_state, learning_rate=learning_rate, eta0=eta0,
             power_t=power_t, early_stopping=early_stopping,
-            validation_fraction=validation_fraction, warm_start=warm_start,
+            validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, warm_start=warm_start,
             average=average, n_iter=n_iter)
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
@@ -1181,6 +1196,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                             self.l1_ratio,
                             dataset,
                             validation_set, self.early_stopping, self,
+                            int(self.n_iter_no_change),
                             max_iter, tol,
                             int(self.fit_intercept),
                             int(self.verbose),
@@ -1212,6 +1228,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                           self.l1_ratio,
                           dataset,
                           validation_set, self.early_stopping, self,
+                          int(self.n_iter_no_change),
                           max_iter, tol,
                           int(self.fit_intercept),
                           int(self.verbose),
@@ -1322,9 +1339,9 @@ class SGDRegressor(BaseSGDRegressor):
         - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
         - 'invscaling': eta = eta0 / pow(t, power_t)
         - 'adaptive': eta = eta0, as long as the training keeps decreasing.
-        Each time 2 consecutive epochs fail to decrease the training loss by
-        tol, or fail to increase validation score by tol if 'early_stopping'
-        is on, the current learning rate is divided by 5.
+        Each time n_iter_no_change consecutive epochs fail to decrease the
+        training loss by tol, or fail to increase validation score by tol if
+        'early_stopping' is on, the current learning rate is divided by 5.
 
         where t0 is chosen by a heuristic proposed by Leon Bottou.
 
@@ -1340,8 +1357,13 @@ class SGDRegressor(BaseSGDRegressor):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set aside
         a fraction of training data as validation and terminate training when
-        validation score is not improving by at least tol for two consecutive
-        epochs.
+        validation score is not improving by at least tol for
+        n_iter_no_change consecutive epochs.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default 2
+        Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
@@ -1415,12 +1437,14 @@ class SGDRegressor(BaseSGDRegressor):
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
                  power_t=0.25, early_stopping=False, validation_fraction=0.1,
-                 warm_start=False, average=False, n_iter=None):
+                 n_iter_no_change=2, warm_start=False, average=False,
+                 n_iter=None):
         super(SGDRegressor, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, epsilon=epsilon,
             random_state=random_state, learning_rate=learning_rate, eta0=eta0,
             power_t=power_t, early_stopping=early_stopping,
-            validation_fraction=validation_fraction, warm_start=warm_start,
+            validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, warm_start=warm_start,
             average=average, n_iter=n_iter)

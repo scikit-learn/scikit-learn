@@ -341,6 +341,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               SequentialDataset dataset,
               np.ndarray[short, ndim=1, mode='c'] validation_set,
               bint early_stopping, estimator,
+              int n_iter_no_change,
               int max_iter, double tol, int fit_intercept,
               int verbose, bint shuffle, np.uint32_t seed,
               double weight_pos, double weight_neg,
@@ -376,6 +377,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     estimator : BaseSGD
         A concrete object inheriting ``BaseSGD``
         Used only if early_stopping is True.
+    n_iter_no_change : int
+        Number of iteration with no improvement to wait before stopping
     max_iter : int
         The maximum number of iterations (epochs).
     tol: double
@@ -431,6 +434,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                                    validation_set,
                                    early_stopping,
                                    estimator,
+                                   n_iter_no_change,
                                    max_iter, tol, fit_intercept,
                                    verbose, shuffle, seed,
                                    weight_pos, weight_neg,
@@ -453,6 +457,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 SequentialDataset dataset,
                 np.ndarray[short, ndim=1, mode='c'] validation_set,
                 bint early_stopping, estimator,
+                int n_iter_no_change,
                 int max_iter, double tol, int fit_intercept,
                 int verbose, bint shuffle, np.uint32_t seed,
                 double weight_pos, double weight_neg,
@@ -493,6 +498,8 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     estimator : BaseSGD
         A concrete object inheriting ``BaseSGD``
         Used only if early_stopping is True.
+    n_iter_no_change : int
+        Number of iteration with no improvement to wait before stopping
     max_iter : int
         The maximum number of iterations (epochs).
     tol: double
@@ -554,6 +561,7 @@ def average_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                       validation_set,
                       early_stopping,
                       estimator,
+                      n_iter_no_change,
                       max_iter, tol, fit_intercept,
                       verbose, shuffle, seed,
                       weight_pos, weight_neg,
@@ -575,6 +583,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                SequentialDataset dataset,
                np.ndarray[short, ndim=1, mode='c'] validation_set,
                bint early_stopping, estimator,
+               int n_iter_no_change,
                int max_iter, double tol, int fit_intercept,
                int verbose, bint shuffle, np.uint32_t seed,
                double weight_pos, double weight_neg,
@@ -757,8 +766,8 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     no_improvement_count += 1
                 previous_loss = sumloss
 
-            # if there is no improvement twice in a row
-            if no_improvement_count >= 2:
+            # if there is no improvement several times in a row
+            if no_improvement_count >= n_iter_no_change:
                 if learning_rate == ADAPTIVE and eta > 1e-6:
                     eta = eta / 5
                     no_improvement_count = 0

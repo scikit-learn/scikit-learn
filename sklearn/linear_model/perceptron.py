@@ -63,8 +63,13 @@ class Perceptron(BaseSGDClassifier):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set aside
         a fraction of training data as validation and terminate training when
-        validation score is not improving by at least tol for two consecutive
-        epochs.
+        validation score is not improving by at least tol for
+        n_iter_no_change consecutive epochs.
+
+        .. versionadded:: 0.20
+
+    n_iter_no_change : int, default 2
+        Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
 
@@ -129,13 +134,14 @@ class Perceptron(BaseSGDClassifier):
     def __init__(self, penalty=None, alpha=0.0001, fit_intercept=True,
                  max_iter=None, tol=None, shuffle=True, verbose=0, eta0=1.0,
                  n_jobs=1, random_state=0, early_stopping=False,
-                 validation_fraction=0.1, class_weight=None,
-                 warm_start=False, n_iter=None):
+                 validation_fraction=0.1, n_iter_no_change=2,
+                 class_weight=None, warm_start=False, n_iter=None):
         super(Perceptron, self).__init__(
             loss="perceptron", penalty=penalty, alpha=alpha, l1_ratio=0,
             fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
             shuffle=shuffle, verbose=verbose, random_state=random_state,
             learning_rate="constant", eta0=eta0, early_stopping=early_stopping,
-            validation_fraction=validation_fraction, power_t=0.5,
+            validation_fraction=validation_fraction,
+            n_iter_no_change=n_iter_no_change, power_t=0.5,
             warm_start=warm_start, class_weight=class_weight, n_jobs=n_jobs,
             n_iter=n_iter)
