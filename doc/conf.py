@@ -34,6 +34,7 @@ extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
     'numpydoc',
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
 ]
@@ -228,15 +229,20 @@ latex_domain_indices = False
 
 trim_doctests_flags = True
 
+# intersphinx configuration
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/{.major}'.format(
+        sys.version_info), None),
+    'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/reference', None),
+    'matplotlib': ('https://matplotlib.org/', None),
+}
 
 sphinx_gallery_conf = {
     'doc_module': 'sklearn',
     'backreferences_dir': os.path.join('modules', 'generated'),
     'reference_url': {
-        'sklearn': None,
-        'matplotlib': 'http://matplotlib.org',
-        'numpy': 'http://docs.scipy.org/doc/numpy-1.8.1',
-        'scipy': 'http://docs.scipy.org/doc/scipy-0.13.3/reference'}
+        'sklearn': None}
 }
 
 
