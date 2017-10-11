@@ -46,12 +46,11 @@ also welcome to post feature requests or pull requests.
 Ways to contribute
 ==================
 
-There are many ways to contribute to scikit-learn, with
-the most common ones being contribution of code or documentation to
-the project. Improving the documentation is no less important than
-improving the library itself.
-If you find a typo in the documentation, or have made improvements, do not
-hesitate to send an email to the mailing list or submit a GitHub pull request.
+There are many ways to contribute to scikit-learn, with the most common ones
+being contribution of code or documentation to the project. Improving the
+documentation is no less important than improving the library itself.  If you
+find a typo in the documentation, or have made improvements, do not hesitate to
+send an email to the mailing list or preferably submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
 But there are many other ways to help. In particular answering queries on the
@@ -792,17 +791,20 @@ cross-compatibility and is included in scikit-learn as
 
 Code Review Guidelines
 ======================
-Reviewing code contributed to the project as PRs is a crucial component
-of scikit-learn development. We encourage anyone to start reviewing code of other
-developers. The code review process is often highly educational for everybody involved.
-While each pull request needs to be signed off by two core developers, you can
-speed up this process by providing your feedback.
+Reviewing code contributed to the project as PRs is a crucial component of
+scikit-learn development. We encourage anyone to start reviewing code of other
+developers. The code review process is often highly educational for everybody
+involved. This is particularly appropriate if it is a feature you would like to
+use, and so can respond critically about whether the PR meets your needs. While
+each pull request needs to be signed off by two core developers, you can speed
+up this process by providing your feedback.
 
 Here are a few important aspects that need to be covered in any code review,
 from high-level questions to a more detailed check-list.
 
-- Do we want this in the library? Is it likely to be used? Is it in the scope
-  of scikit-learn and does the benefit of the addition warrant the maintenance burden?
+- Do we want this in the library? Is it likely to be used? Is it in the scope of
+  scikit-learn? Will the cost of maintaining a new feature be worth its
+  benefits?
 
 - Is the code consistent with the API of scikit-learn? Are public
   functions/classes/parameters well named and intuitively designed?
@@ -814,16 +816,20 @@ from high-level questions to a more detailed check-list.
 
 - Is every public function/class tested? Are a reasonable set of parameters,
   their values, value types, and combinations tested? Do the tests pass in the
-  continuous integration build?
+  continuous integration build? If appropriate, help the contributor understand
+  why tests failed.
+
 
 - Do the tests validate that the code is correct, i.e. doing what the
-  documentation says it does?
+  documentation says it does? If appropriate, help the contributor test the code
+  better.
 
 - Do the tests cover every line of code (see the coverage report in the build
   log)? If not, are the lines missing coverage good exceptions?
 
 - Is the code easy to read and low on redundancy? Should variable names be
-  improved for clarity or consistency? Should comments be added?
+  improved for clarity or consistency? Should comments be added? Should comments
+  be removed as unhelpful or extraneous?
 
 - Could the code easily be rewritten to run much more efficiently for relevant settings?
 
@@ -833,7 +839,9 @@ from high-level questions to a more detailed check-list.
 
 - If the change is a bug-fix, is a non-regression test included?
 
-- Does the documentation render properly, and are the plots instructive?
+- Does the documentation render properly (see the
+  :ref:`contribute_documentation` section for more details), and are the plots
+  instructive?
 
 - Do you like and intend to use the change?
 
