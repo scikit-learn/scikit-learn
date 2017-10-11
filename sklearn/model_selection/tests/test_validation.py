@@ -797,9 +797,15 @@ def test_cross_val_predict_decision_function_shape():
     # class.
     X = X[:100]
     y = y[:100]
-    preds = cross_val_predict(RidgeClassifier(), X, y,
-                              method='decision_function', cv=KFold(2))
-    assert_equal(preds.shape, (100,))
+    assert_raises(ValueError,
+                  'Cannot reconcile cross-validation'
+                  ' predictions trained using'
+                  ' only one class. To fix this, '
+                  'use a cross-validation technique '
+                  'resulting in properly stratified '
+                  'folds.',
+                  cross_val_predict, RidgeClassifier(), X, y,
+                  method='decision_function', cv=KFold(2))
 
     X, y = load_digits(return_X_y=True)
     est = SVC(kernel='linear', decision_function_shape='ovo')
@@ -833,6 +839,20 @@ def test_cross_val_predict_predict_proba_shape():
 
     preds = cross_val_predict(LogisticRegression(), X, y,
                               method='predict_proba')
+    assert_equal(preds.shape, (150, 3))
+
+
+def test_cross_val_predict_predict_log_proba_shape():
+    X, y = make_classification(n_classes=2, n_samples=50)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_log_proba')
+    assert_equal(preds.shape, (50, 2))
+
+    X, y = load_iris(return_X_y=True)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_log_proba')
     assert_equal(preds.shape, (150, 3))
 
 
