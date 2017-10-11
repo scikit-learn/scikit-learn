@@ -58,10 +58,11 @@ def auc(x, y, reorder='deprecated'):
 
         ..deprecated:: 0.20
           Parameter ``reorder`` has been deprecated in version 0.20 and will
-          be removed in 0.22. The result from auc will be significantly
-          influenced if x is sorted unexpectedly due to slight floating point
-          error (See issue #9786). Future (and default) behavior is equivalent
-          to `reorder=False`.
+          be removed in 0.22. It's introduced for roc_auc_score (not for
+          general use) and is no longer used there. What's more, the result
+          from auc will be significantly influenced if x is sorted
+          unexpectedly due to slight floating point error (See issue #9786).
+          Future (and default) behavior is equivalent to `reorder=False`.
 
     Returns
     -------
