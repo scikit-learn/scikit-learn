@@ -1009,11 +1009,12 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     # Check that if number of samples in y_true and sample_weight are not
     # equal, meaningful error is raised.
     error_message = ("Found input variables with inconsistent numbers of "
-                     "samples: [{}, {}, {}]".format(_num_samples(y1),
-                     _num_samples(y2), _num_samples(sample_weight) * 2))
+                     "samples: [{}, {}, {}]".format(
+                         _num_samples(y1), _num_samples(y2),
+                         _num_samples(sample_weight) * 2))
     assert_raise_message(ValueError, error_message, metric, y1, y2,
                          sample_weight=np.hstack([sample_weight,
-                         sample_weight]))
+                                                  sample_weight]))
 
 
 def test_sample_weight_invariance(n_samples=50):
