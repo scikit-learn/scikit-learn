@@ -310,7 +310,7 @@ and Cython optimizations.
 Filing Bugs
 -----------
 
-We use Github issues to track all bugs and feature requests; feel free to
+We use GitHub issues to track all bugs and feature requests; feel free to
 open an issue if you have found a bug or wish to see a feature implemented.
 
 It is recommended to check that your issue complies with the
@@ -461,7 +461,7 @@ Finally, follow the formatting rules below to make it consistently good:
 .. warning:: **Sphinx version**
 
    While we do our best to have the documentation build under as many
-   version of Sphinx as possible, the different versions tend to
+   versions of Sphinx as possible, the different versions tend to
    behave slightly differently. To get the best results, you should
    use the same version as the one we used on CircleCI. Look at this
    `github search <https://github.com/search?utf8=%E2%9C%93&q=sphinx+repo%3Ascikit-learn%2Fscikit-learn+extension%3Ash+path%3Abuild_tools%2Fcircle&type=Code>`_
@@ -511,7 +511,7 @@ More information can be found on the `developer's wiki
 Issue Tracker Tags
 ------------------
 All issues and pull requests on the
-`Github issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
+`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
 should have (at least) one of the following tags:
 
 :Bug / Crash:
