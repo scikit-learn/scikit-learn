@@ -429,10 +429,10 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
 
     n_samples = X.shape[0]
     inverted_index = np.zeros((n_samples, n_samples))
-    order_indices = np.arange(n_samples)
-    inverted_index[order_indices[:, np.newaxis], ind_X] = order_indices[1:]
+    ordered_indices = np.arange(n_samples)
+    inverted_index[ordered_indices[:, np.newaxis], ind_X] = ordered_indices[1:]
 
-    ranks = inverted_index[np.arange(n_samples)[:, np.newaxis],
+    ranks = inverted_index[ordered_indices[:, np.newaxis],
                            ind_X_embedded] - n_neighbors
     t = np.sum(ranks[ranks > 0])
     t = 1.0 - t * (2.0 / (n_samples * n_neighbors *
