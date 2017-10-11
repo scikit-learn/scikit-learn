@@ -736,7 +736,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
             elif method == 'predict_log_proba':
                 # Fill missing classes with minimum value
                 predictions_ = np.full((_num_samples(X_test), n_classes),
-                                       np.finfo(X_test.dtype).min)
+                                       np.finfo(predictions.dtype).min)
                 predictions_[:, estimator.classes_] = predictions
 
             else:  # Special handling logic for decision_function
@@ -769,7 +769,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
                                      'folds.')
 
                 predictions_ = np.full((_num_samples(X_test), n_classes),
-                                       np.finfo(X_test.dtype).min)
+                                       np.finfo(predictions.dtype).min)
                 predictions_[:, estimator.classes_] = predictions
 
             predictions = predictions_

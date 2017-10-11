@@ -797,15 +797,15 @@ def test_cross_val_predict_decision_function_shape():
     # class.
     X = X[:100]
     y = y[:100]
-    assert_raises(ValueError,
-                  'Cannot reconcile cross-validation'
-                  ' predictions trained using'
-                  ' only one class. To fix this, '
-                  'use a cross-validation technique '
-                  'resulting in properly stratified '
-                  'folds.',
-                  cross_val_predict, RidgeClassifier(), X, y,
-                  method='decision_function', cv=KFold(2))
+    assert_raise_message(ValueError,
+                         'Cannot reconcile cross-validation'
+                         ' predictions trained using'
+                         ' only one class. To fix this, '
+                         'use a cross-validation technique '
+                         'resulting in properly stratified '
+                         'folds.',
+                         cross_val_predict, RidgeClassifier(), X, y,
+                         method='decision_function', cv=KFold(2))
 
     X, y = load_digits(return_X_y=True)
     est = SVC(kernel='linear', decision_function_shape='ovo')
@@ -829,7 +829,7 @@ def test_cross_val_predict_decision_function_shape():
 
 
 def test_cross_val_predict_predict_proba_shape():
-    X, y = make_classification(n_classes=2, n_samples=50)
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     preds = cross_val_predict(LogisticRegression(), X, y,
                               method='predict_proba')
@@ -843,7 +843,7 @@ def test_cross_val_predict_predict_proba_shape():
 
 
 def test_cross_val_predict_predict_log_proba_shape():
-    X, y = make_classification(n_classes=2, n_samples=50)
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     preds = cross_val_predict(LogisticRegression(), X, y,
                               method='predict_log_proba')
@@ -1296,11 +1296,12 @@ def get_expected_predictions(X, y, cv, classes, est, method):
         est.fit(X[train], y[train])
         expected_predictions_ = func(X[test])
         # To avoid 2 dimensional indexing
-        exp_pred_test = np.zeros((len(test), classes))
-        if method is 'decision_function' and len(est.classes_) == 2:
-            exp_pred_test[:, est.classes_[-1]] = expected_predictions_
+        if method is 'predict_proba':
+            exp_pred_test = np.zeros((len(test), classes))
         else:
-            exp_pred_test[:, est.classes_] = expected_predictions_
+            exp_pred_test = np.full((len(test), classes),
+                                    np.finfo(expected_predictions.dtype).min)
+        exp_pred_test[:, est.classes_] = expected_predictions_
         expected_predictions[test] = exp_pred_test
 
     return expected_predictions
@@ -1317,7 +1318,7 @@ def test_cross_val_predict_class_subset():
 
     le = LabelEncoder()
 
-    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
+    methods = ['predict_proba', 'predict_log_proba']
     for method in methods:
         est = LogisticRegression()
 
