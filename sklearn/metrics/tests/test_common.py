@@ -9,6 +9,7 @@ import scipy.sparse as sp
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _num_samples
 from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
 
@@ -1005,10 +1006,15 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                 err_msg="%s sample_weight is not invariant "
                         "under scaling" % name)
 
-    # Check that if sample_weight.shape[0] != y_true.shape[0], it raised an
-    # error
-    assert_raises(Exception, metric, y1, y2,
-                  sample_weight=np.hstack([sample_weight, sample_weight]))
+    # Check that if number of samples in y_true and sample_weight are not
+    # equal, meaningful error is raised.
+    error_message = ("Found input variables with inconsistent numbers of "
+                     "samples: [{}, {}, {}]".format(
+                         _num_samples(y1), _num_samples(y2),
+                         _num_samples(sample_weight) * 2))
+    assert_raise_message(ValueError, error_message, metric, y1, y2,
+                         sample_weight=np.hstack([sample_weight,
+                                                  sample_weight]))
 
 
 def test_sample_weight_invariance(n_samples=50):
