@@ -31,6 +31,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
+from ..preprocessing import label_binarize
 from ..preprocessing import LabelBinarizer
 
 from .base import _average_binary_score
@@ -212,12 +213,14 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels (either {0, 1} or {-1, 1}).
+        True binary labels or binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        (as returned by "decision_function" on some classifiers). For binary
+        y_true, y_score is supposed to be the score of the class with greater
+        label.
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -271,6 +274,11 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
         fpr, tpr, tresholds = roc_curve(y_true, y_score,
                                         sample_weight=sample_weight)
         return auc(fpr, tpr)
+
+    y_type = type_of_target(y_true)
+    if y_type == "binary":
+        labels = np.unique(y_true)
+        y_true = label_binarize(y_true, labels)[:, 0]
 
     return _average_binary_score(
         _binary_roc_auc_score, y_true, y_score, average,
