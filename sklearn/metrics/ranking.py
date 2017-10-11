@@ -32,6 +32,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
+from ..preprocessing import label_binarize
 from ..preprocessing import LabelBinarizer
 
 from .base import _average_binary_score, _average_multiclass_ovo_score
@@ -209,13 +210,18 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
+<<<<<<< 68c38761be8d86c944012b67d8d84feb3606ce6f
         True binary labels in binary label indicators.
         The multiclass case expects shape = [n_samples] and labels
         with values from 0 to (n_classes-1), inclusive.
+=======
+        True binary labels or binary label indicators.
+>>>>>>> [MRG+1] Completely support binary y_true in roc_auc_score (#9828)
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
+<<<<<<< 68c38761be8d86c944012b67d8d84feb3606ce6f
         (as returned by "decision_function" on some classifiers).
         The multiclass case expects shape = [n_samples, n_classes]
         where the scores correspond to probability estimates.
@@ -230,6 +236,11 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
         ``'ovo'``:
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
+=======
+        (as returned by "decision_function" on some classifiers). For binary
+        y_true, y_score is supposed to be the score of the class with greater
+        label.
+>>>>>>> [MRG+1] Completely support binary y_true in roc_auc_score (#9828)
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
