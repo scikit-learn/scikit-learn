@@ -243,14 +243,16 @@ can be used (otherwise, an exception is raised).
 
 Note on inappropriate usage of cross_val_predict
 ================================================
+The result of :func:`cross_val_predict` may be different from those
+obtained using :func:`cross_val_score` as the elements are grouped in different  ways.
 The function :func:`cross_val_score` takes an average of over cross-validation
-folds and is grouped in different ways on computation in comparison to :func:`cross_val_predict`.
-Any metric score on :func:`cross_val_predict` is not equivalent to the
-result of :func:`cross_val_score`. Thus, the function :func:`cross_val_predict` is
-not an appropriate measure of generalisation error.
+folds where as :func:`cross_val_predict` simply returns the labels (or probabilities)
+from several distinct models undistinguished. Thus, :func:`cross_val_predict`
+is not an appropriate measure of generalisation error.
 
-The valid use of :func:`cross_val_predict` is for visualization of
-training set predictions and model blending techniques.
+The :func:`cross_val_predict` is appropriate for:
+ - Visualization of predictions obtained from different models.
+ - Model blending: When predictions of one supervised estimator are used to train another estimator in ensemble methods.
 
 
 The available cross validation iterators are introduced in the following
