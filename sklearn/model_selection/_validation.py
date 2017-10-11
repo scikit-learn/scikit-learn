@@ -758,15 +758,6 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
                     # In this special case, `predictions` contains a 1D array.
                     raise ValueError(err_mess.format(predictions.shape, method,
                                                      len(estimator.classes_)))
-                if n_classes == 2:
-                    # In this special case, the estimator is trained with
-                    # just one class.
-                    raise ValueError('Cannot reconcile cross-validation'
-                                     ' predictions trained using'
-                                     ' only one class. To fix this, '
-                                     'use a cross-validation technique '
-                                     'resulting in properly stratified '
-                                     'folds.')
 
                 predictions_ = np.full((_num_samples(X_test), n_classes),
                                        np.finfo(predictions.dtype).min)

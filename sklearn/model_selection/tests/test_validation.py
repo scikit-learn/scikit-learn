@@ -797,15 +797,15 @@ def test_cross_val_predict_decision_function_shape():
     # class.
     X = X[:100]
     y = y[:100]
-    assert_raise_message(ValueError,
-                         'Cannot reconcile cross-validation'
-                         ' predictions trained using'
-                         ' only one class. To fix this, '
-                         'use a cross-validation technique '
-                         'resulting in properly stratified '
-                         'folds.',
-                         cross_val_predict, RidgeClassifier(), X, y,
-                         method='decision_function', cv=KFold(2))
+    assert_raises_regex(ValueError,
+                        'Output shape \(50L?,) of decision_function'
+                        ' does not match number of classes \(1\) '
+                        'in fold. Cannot reconcile different number'
+                        ' of classes in different folds. To fix '
+                        'this, use a cross-validation technique '
+                        'resulting in properly stratified folds',
+                        cross_val_predict, RidgeClassifier(), X, y,
+                        method='decision_function', cv=KFold(2))
 
     X, y = load_digits(return_X_y=True)
     est = SVC(kernel='linear', decision_function_shape='ovo')
@@ -1346,6 +1346,18 @@ def test_cross_val_predict_class_subset():
         expected_predictions = get_expected_predictions(X, y, kfold3, classes,
                                                         est, method)
         assert_array_almost_equal(expected_predictions, predictions)
+
+    # Special test for decision_function. This makes sure not to trigger
+    # any of the numerous edge cases in decision_function
+    X = np.arange(100).reshape(50, 2)
+    y = np.array([x//10 for x in range(100)])
+
+    est = LogisticRegression()
+    predictions = cross_val_predict(est, X, y, method='decision_function',
+                                    cv=kfold3)
+    expected_predictions = get_expected_predictions(X, y, kfold3, classes,
+                                                    est, 'decision_function')
+    assert_array_almost_equal(expected_predictions, predictions)
 
 
 def test_score_memmap():
