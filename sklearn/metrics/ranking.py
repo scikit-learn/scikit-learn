@@ -54,7 +54,8 @@ def auc(x, y, reorder='deprecated'):
     reorder : boolean, optional (default='deprecated')
         Whether to sort x before computing. If False, assume that x must be
         either monotonic increasing or monotonic decreasing. If True, y is
-        used to break ties when sorting x.
+        used to break ties when sorting x. Make sure that y has a monotonic
+        relation to x when setting reorder to True.
 
         ..deprecated:: 0.20
           Parameter ``reorder`` has been deprecated in version 0.20 and will
