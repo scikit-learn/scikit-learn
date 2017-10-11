@@ -435,8 +435,10 @@ def test_auc_errors():
 
 
 def test_deprecated_auc_reorder():
-    depr_message = ("The `reorder` parameter has been deprecated "
-                    "in version 0.20 and will be removed in 0.22.")
+    depr_message = ("The 'reorder' parameter has been deprecated in version "
+                    "0.20 and will be removed in 0.22. It is recommended not "
+                    "to set 'reorder' and ensure that x is monotonic "
+                    "increasing or monotonic decreasing.")
     assert_warns_message(DeprecationWarning, depr_message, auc,
                          [1, 2], [2, 3], reorder=True)
 

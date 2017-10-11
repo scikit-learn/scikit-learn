@@ -63,7 +63,7 @@ def auc(x, y, reorder='deprecated'):
           general use) and is no longer used there. What's more, the result
           from auc will be significantly influenced if x is sorted
           unexpectedly due to slight floating point error (See issue #9786).
-          Future (and default) behavior is equivalent to `reorder=False`.
+          Future (and default) behavior is equivalent to ``reorder=False``.
 
     Returns
     -------
@@ -95,8 +95,10 @@ def auc(x, y, reorder='deprecated'):
                          ' area under curve, but x.shape = %s' % x.shape)
 
     if reorder != 'deprecated':
-        warnings.warn("The `reorder` parameter has been deprecated "
-                      "in version 0.20 and will be removed in 0.22.",
+        warnings.warn("The 'reorder' parameter has been deprecated in "
+                      "version 0.20 and will be removed in 0.22. It is "
+                      "recommended not to set 'reorder' and ensure that x "
+                      "is monotonic increasing or monotonic decreasing.",
                       DeprecationWarning)
 
     direction = 1
