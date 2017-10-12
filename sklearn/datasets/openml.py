@@ -48,7 +48,7 @@ def _download_data(url):
 
 
 def fetch_openml(name_or_id=None, version='active', data_home=None,
-                 memory=True):
+                 target_column='default-target', memory=True):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -66,9 +66,15 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
         Version of the dataset. Only used if ``name_or_id`` is a string.
         If 'active' the oldest version that's still active is used.
 
-    data_home : optional, default: None
+    data_home : string or None, default None
         Specify another download and cache folder for the data sets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+
+    target_column : string or None, default 'default-target'
+        Specify the column name in the data to use as target. If
+        'default-target', the standard target column a stored on the server
+        is used. If ``None``, all columns are returned as data and the
+        tharget is ``None``.
 
     memory : boolean, default=True
         Whether to store downloaded datasets using joblib.
@@ -119,18 +125,19 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
         warn("Version {} of dataset {} is inactive, meaning that issues have"
              " been found in the dataset. Try using a newer version.".format(
                  data_description['name'], data_description['version']))
-    target_name = data_description.get('default_target_attribute', None)
+    if target_column == "default-target":
+        target_column = data_description.get('default_target_attribute', None)
 
     # download actual data
     data, meta = _download_data_(data_description['url'])
     columns = np.array(meta.names())
-    data_columns = columns[columns != target_name]
+    data_columns = columns[columns != target_column]
     # TODO: stacking the content of the structured array
     # this results in a copy. If the data was homogeneous
     # we could use a view instead.
     X = np.column_stack(data[c] for c in data_columns)
-    if target_name is not None:
-        y = data[target_name]
+    if target_column is not None:
+        y = data[target_column]
     else:
         y = None
 
