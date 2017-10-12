@@ -1047,6 +1047,10 @@ def check_clustering(name, clusterer_orig):
         pred2 = clusterer.fit_predict(X)
     assert_array_equal(pred, pred2)
 
+    # fit_predict(X) and labels_ should be of type int
+    assert_in(pred.dtype, [np.dtype('int32'), np.dtype('int64')])
+    assert_in(pred2.dtype, [np.dtype('int32'), np.dtype('int64')])
+
 
 @ignore_warnings(category=DeprecationWarning)
 def check_clusterer_compute_labels_predict(name, clusterer_orig):
