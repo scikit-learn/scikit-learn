@@ -134,7 +134,8 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
     # TODO: stacking the content of the structured array
     # this results in a copy. If the data was homogeneous
     # we could use a view instead.
-    X = np.column_stack(data[c] for c in data_columns)
+    dtype = object if "nominal" in meta.types() else None
+    X = np.array([data[c] for c in data_columns], dtype=dtype).T
     if target_column is not None:
         y = data[target_column]
     else:
@@ -145,6 +146,6 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
 
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
-        DESCR=description, details=data_description)
+        DESCR=description, details=data_description, meta=meta)
 
     return bunch
