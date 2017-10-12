@@ -44,7 +44,7 @@ Classifiers and regressors
 - :class:`neural_network.MLPClassifier`, :class:`neural_network.MLPRegressor`,
 ￼  now expose a ``n_iter_no_change`` parameter, to monitor the number of
   iteration with no improvement to wait before early stopping.
-  :issue:`9913`  by `Tom Dupre la Tour`_.
+  :issue:`9914`  by `Tom Dupre la Tour`_.
 
 Enhancements
 ............
