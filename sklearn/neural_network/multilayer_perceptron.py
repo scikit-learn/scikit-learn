@@ -51,7 +51,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                  alpha, batch_size, learning_rate, learning_rate_init, power_t,
                  max_iter, loss, shuffle, random_state, tol, verbose,
                  warm_start, momentum, nesterovs_momentum, early_stopping,
-                 validation_fraction, beta_1, beta_2, epsilon):
+                 validation_fraction, n_iter_no_change, beta_1, beta_2,
+                 epsilon):
         self.activation = activation
         self.solver = solver
         self.alpha = alpha
@@ -71,6 +72,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.nesterovs_momentum = nesterovs_momentum
         self.early_stopping = early_stopping
         self.validation_fraction = validation_fraction
+        self.n_iter_no_change = n_iter_no_change
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.epsilon = epsilon
@@ -407,6 +409,9 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.validation_fraction < 0 or self.validation_fraction >= 1:
             raise ValueError("validation_fraction must be >= 0 and < 1, "
                              "got %s" % self.validation_fraction)
+        if self.n_iter_no_change is not None and self.n_iter_no_change < 1:
+            raise ValueError("n_iter_no_change must be >= 1 or None, got %s" %
+                             self.n_iter_no_change)
         if self.beta_1 < 0 or self.beta_1 >= 1:
             raise ValueError("beta_1 must be >= 0 and < 1, got %s" %
                              self.beta_1)
@@ -537,15 +542,18 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 # for learning rate that needs to be updated at iteration end
                 self._optimizer.iteration_ends(self.t_)
 
-                if self._no_improvement_count > 2:
-                    # not better than last two iterations by tol.
+                if (self.n_iter_no_change is not None and
+                        self._no_improvement_count > self.n_iter_no_change):
+                    # not better than last n_iter_no_change iterations by tol.
                     # stop or decrease learning rate
                     if early_stopping:
                         msg = ("Validation score did not improve more than "
-                               "tol=%f for two consecutive epochs." % self.tol)
+                               "tol=%f for %d consecutive epochs."
+                               % (self.tol, self.n_iter_no_change))
                     else:
                         msg = ("Training loss did not improve more than tol=%f"
-                               " for two consecutive epochs." % self.tol)
+                               " for %d consecutive epochs."
+                               % (self.tol, self.n_iter_no_change))
 
                     is_stopping = self._optimizer.trigger_stopping(
                         msg, self.verbose)
@@ -813,6 +821,12 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True
 
+    n_iter_no_change : int or None, default 2
+        Number of iterations with no improvement to wait before early stopping.
+        If None, early stopping is disabled.
+
+        .. versionadded:: 0.20
+
     beta_1 : float, optional, default 0.9
         Exponential decay rate for estimates of first moment vector in adam,
         should be in [0, 1). Only used when solver='adam'
@@ -889,8 +903,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  shuffle=True, random_state=None, tol=1e-4,
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
-                 validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8):
+                 validation_fraction=0.1, n_iter_no_change=2, beta_1=0.9,
+                 beta_2=0.999, epsilon=1e-8):
 
         sup = super(MLPClassifier, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -903,6 +917,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
+                     n_iter_no_change=n_iter_no_change,
                      beta_1=beta_1, beta_2=beta_2, epsilon=epsilon)
 
     def _validate_input(self, X, y, incremental):
@@ -1190,6 +1205,12 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         early stopping. Must be between 0 and 1.
         Only used if early_stopping is True
 
+    n_iter_no_change : int or None, default 2
+        Number of iterations with no improvement to wait before early stopping.
+        If None, early stopping is disabled.
+
+        .. versionadded:: 0.20
+
     beta_1 : float, optional, default 0.9
         Exponential decay rate for estimates of first moment vector in adam,
         should be in [0, 1). Only used when solver='adam'
@@ -1264,8 +1285,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  random_state=None, tol=1e-4,
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
-                 validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8):
+                 validation_fraction=0.1, n_iter_no_change=2,
+                 beta_1=0.9, beta_2=0.999, epsilon=1e-8):
 
         sup = super(MLPRegressor, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -1278,6 +1299,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
+                     n_iter_no_change=n_iter_no_change,
                      beta_1=beta_1, beta_2=beta_2, epsilon=epsilon)
 
     def predict(self, X):
