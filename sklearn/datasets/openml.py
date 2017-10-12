@@ -53,8 +53,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
 
     Datasets are uniquely identified by either an integer ID or by a
     combination of name and version (i.e. there might be multiple
-    versions of the 'iris' dataset). Newer versions are assumed to fix
-    issues in earlier versions.
+    versions of the 'iris' dataset).
 
     Parameters
     ----------
