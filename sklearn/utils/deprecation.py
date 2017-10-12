@@ -111,18 +111,15 @@ class DeprecationDict(dict):
 
     It also will raise a warning even after the key has been manually set by
     the user.
-
     """
     def __init__(self, *args, **kwargs):
-        self._deprecations = kwargs.pop('deprecations')
+        self._deprecations = {}
         super(DeprecationDict, self).__init__(*args, **kwargs)
 
     def __getitem__(self, key):
         if key in self._deprecations:
-            warning = self._deprecations[key]
-            if not isinstance(warning, (tuple, list)):
-                warning = [warning]
-            warnings.warn(*warning)
+            warn_args, warn_kwargs = self._deprecations[key]
+            warnings.warn(*warn_args, **warn_kwargs)
         return super(DeprecationDict, self).__getitem__(key)
 
     def get(self, key, default=None):
@@ -131,3 +128,8 @@ class DeprecationDict(dict):
             return self[key]
         except KeyError:
             return default
+
+    def add_warning(self, key, *args, **kwargs):
+        """Add a warning to be triggered when the specified key is read"""
+        self._deprecations[key] = (args, kwargs)
+

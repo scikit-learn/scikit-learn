@@ -8,6 +8,7 @@ import pickle
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.deprecation import DeprecationDict
 
@@ -64,8 +65,9 @@ def test_pickle():
 
 
 def test_deprecationdict():
-    dd = DeprecationDict(deprecations={'a': 'hello',
-                                       'b': ('world', DeprecationWarning)})
+    dd = DeprecationDict()
+    dd.add_warning('a', 'hello')
+    dd.add_warning('b', 'world', DeprecationWarning)
     assert 1 == assert_warns_message(UserWarning, 'hello', dd.get, 'a', 1)
     dd['a'] = 5
     dd['b'] = 6
