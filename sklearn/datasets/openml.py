@@ -10,7 +10,7 @@ try:
 except ImportError:
     # Python 3+
     from urllib.request import urlopen
-    from http.client import IncompleteRead
+    # from http.client import IncompleteRead
 
 from scipy.io.arff import loadarff
 import numpy as np
@@ -22,13 +22,13 @@ from ..utils import Bunch
 
 _SEARCH_NAME = "https://openml.org/api/v1/json/data/list/data_name/{}/limit/1"
 _DATA_INFO = "https://openml.org/api/v1/json/data/{}"
-_DATA_DOWNLOAD = "https://www.openml.org/data/download/{}"
 
 
 def _get_data_info_by_name(name, version):
     if version == "active":
         json_string = urlopen(_SEARCH_NAME.format(name + "/status/active/"))
     else:
+        # FIXME waiting for new filter mechanism
         json_string = urlopen(_SEARCH_NAME.format(name))
     json_data = json.load(json_string)
     return json_data['data']['dataset'][0]
@@ -40,15 +40,11 @@ def _get_data_description_by_id(data_id):
     return json_data['data_set_description']
 
 
-def _download_data(data_id):
-    response = urlopen(_DATA_DOWNLOAD.format(data_id))
-    # we need to catch IncompleteRead which is likely a server-side issue
-    try:
-        data_arff = response.read()
-    except IncompleteRead as e:
-        data_arff = e.partial
-    # getting structured array and metadata
-    return loadarff(StringIO(data_arff.decode("utf-8")))
+def _download_data(url):
+    response = urlopen(url)
+    arff = loadarff(StringIO(response.read().decode('utf-8')))
+    response.close()
+    return arff
 
 
 def fetch_openml(name_or_id=None, version='active', data_home=None,
@@ -103,7 +99,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
 
     # check if dataset id is known
     if isinstance(name_or_id, numbers.Integral):
-        if version != 1:
+        if version != "active":
             raise ValueError(
                 "Dataset id={} and version={} passed, but you can only "
                 "specify a numeric id or a version, not both.".format(
@@ -123,17 +119,20 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
         warn("Version {} of dataset {} is inactive, meaning that issues have"
              " been found in the dataset. Try using a newer version.".format(
                  data_description['name'], data_description['version']))
-    target_name = data_description['default_target_attribute']
+    target_name = data_description.get('default_target_attribute', None)
 
     # download actual data
-    data, meta = _download_data_(data_id)
+    data, meta = _download_data_(data_description['url'])
     columns = np.array(meta.names())
     data_columns = columns[columns != target_name]
     # TODO: stacking the content of the structured array
     # this results in a copy. If the data was homogeneous
     # we could use a view instead.
     X = np.column_stack(data[c] for c in data_columns)
-    y = data[target_name]
+    if target_name is not None:
+        y = data[target_name]
+    else:
+        y = None
 
     description = "{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
