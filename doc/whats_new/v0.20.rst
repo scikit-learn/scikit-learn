@@ -41,6 +41,11 @@ Classifiers and regressors
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
 
+- :class:`neural_network.MLPClassifier`, :class:`neural_network.MLPRegressor`,
+￼  now expose a ``n_iter_no_change`` parameter, to monitor the number of
+  iteration with no improvement to wait before early stopping.
+  :issue:`9913`  by `Tom Dupre la Tour`_.
+
 Enhancements
 ............
 

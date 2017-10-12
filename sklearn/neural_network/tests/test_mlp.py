@@ -415,6 +415,7 @@ def test_params_errors():
     assert_raises(ValueError, clf(early_stopping='invalid').fit, X, y)
     assert_raises(ValueError, clf(validation_fraction=1).fit, X, y)
     assert_raises(ValueError, clf(validation_fraction=-0.5).fit, X, y)
+    assert_raises(ValueError, clf(n_iter_no_change=0).fit, X, y)
     assert_raises(ValueError, clf(beta_1=1).fit, X, y)
     assert_raises(ValueError, clf(beta_1=-0.5).fit, X, y)
     assert_raises(ValueError, clf(beta_2=1).fit, X, y)
@@ -552,6 +553,64 @@ def test_early_stopping():
     assert_equal(max(valid_scores), best_valid_score)
     assert_greater(best_valid_score + tol, valid_scores[-2])
     assert_greater(best_valid_score + tol, valid_scores[-1])
+
+
+def test_n_iter_no_change():
+    X = X_digits_binary[:100]
+    y = y_digits_binary[:100]
+    tol = 0.2
+
+    # With early_stopping=True
+    n_iter_list = []
+    for n_iter_no_change in [2, 3, 10]:
+        clf = MLPClassifier(tol=tol, max_iter=3000, solver='sgd',
+                            early_stopping=True,
+                            n_iter_no_change=n_iter_no_change).fit(X, y)
+        assert_greater(clf.max_iter, clf.n_iter_)
+        n_iter_list.append(clf.n_iter_)
+
+        valid_scores = clf.validation_scores_
+        best_valid_score = clf.best_validation_score_
+        assert_equal(max(valid_scores), best_valid_score)
+        for i in range(-1, -n_iter_no_change - 1, -1):
+            assert_greater(best_valid_score + tol, valid_scores[i])
+
+    assert_array_equal(n_iter_list, sorted(n_iter_list))
+
+    # With early_stopping=False
+    n_iter_list = []
+    for n_iter_no_change in [2, 3, 10]:
+        clf = MLPClassifier(tol=tol, max_iter=3000, solver='sgd',
+                            early_stopping=False,
+                            n_iter_no_change=n_iter_no_change).fit(X, y)
+        assert_greater(clf.max_iter, clf.n_iter_)
+        n_iter_list.append(clf.n_iter_)
+
+        loss_curve = clf.loss_curve_
+        best_loss = clf.best_loss_
+        assert_equal(min(loss_curve), best_loss)
+        for i in range(-1, -n_iter_no_change - 1, -1):
+            assert_greater(loss_curve[i], best_loss - tol)
+
+    assert_array_equal(n_iter_list, sorted(n_iter_list))
+
+
+@ignore_warnings(category=ConvergenceWarning)
+def test_n_iter_no_change_is_none():
+    X = X_digits_binary[:100]
+    y = y_digits_binary[:100]
+    max_iter = 12
+
+    for early_stopping in [False, True]:
+        clf = MLPClassifier(tol=0.4, max_iter=max_iter, solver='sgd',
+                            early_stopping=early_stopping,
+                            n_iter_no_change=None).fit(X, y)
+        assert_equal(max_iter, clf.n_iter_)
+
+        clf = MLPClassifier(tol=0.4, max_iter=max_iter, solver='sgd',
+                            early_stopping=early_stopping,
+                            n_iter_no_change=2).fit(X, y)
+        assert_greater(clf.max_iter, clf.n_iter_)
 
 
 def test_adaptive_learning_rate():
