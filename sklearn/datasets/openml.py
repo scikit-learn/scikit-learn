@@ -16,7 +16,7 @@ from scipy.io.arff import loadarff
 import numpy as np
 
 from .base import get_data_home
-# from ..externals.joblib import Memory
+from ..externals.joblib import Memory
 from ..externals.six import StringIO
 from ..utils import Bunch
 
@@ -38,6 +38,17 @@ def _get_data_description_by_id(data_id):
     json_string = urlopen(_DATA_INFO.format(data_id))
     json_data = json.load(json_string)
     return json_data['data_set_description']
+
+
+def _download_data(data_id):
+    response = urlopen(_DATA_DOWNLOAD.format(data_id))
+    # we need to catch IncompleteRead which is likely a server-side issue
+    try:
+        data_arff = response.read()
+    except IncompleteRead as e:
+        data_arff = e.partial
+    # getting structured array and metadata
+    return loadarff(StringIO(data_arff.decode("utf-8")))
 
 
 def fetch_openml(name_or_id=None, version='active', data_home=None,
@@ -78,11 +89,14 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
     """
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
-    # if memory:
-    #     mem = Memory(join(data_home, 'cache'))
-    #     _get_data_info_by_name = mem(_get_data_info_by_name)
-    #     _get_data_description_by_id = mem(_get_data_description_by_id)
-    #     _download_data = mem(_download_data)
+    if memory:
+        mem = Memory(join(data_home, 'cache'), verbose=0).cache
+    else:
+        mem = lambda x: x
+    _get_data_info_by_name_ = mem(_get_data_info_by_name)
+    _get_data_description_by_id_ = mem(_get_data_description_by_id)
+    _download_data_ = mem(_download_data)
+
     if not exists(data_home):
         os.makedirs(data_home)
 
@@ -95,7 +109,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
                     name_or_id, version))
         data_id = name_or_id
     elif isinstance(name_or_id, str):
-        data_info = _get_data_info_by_name(name_or_id, version)
+        data_info = _get_data_info_by_name_(name_or_id, version)
         data_id = data_info['did']
 
     else:
@@ -103,7 +117,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
             "Invalid name_or_id {}, should be string or integer.".format(
                 name_or_id))
 
-    data_description = _get_data_description_by_id(data_id)
+    data_description = _get_data_description_by_id_(data_id)
     if data_description['status'] != "active":
         warn("Version {} of dataset {} is inactive, meaning that issues have"
              " been found in the dataset. Try using a newer version.".format(
@@ -111,14 +125,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
     target_name = data_description['default_target_attribute']
 
     # download actual data
-    response = urlopen(_DATA_DOWNLOAD.format(data_id))
-    # we need to catch IncompleteRead which is likely a server-side issue
-    try:
-        data_arff = response.read()
-    except IncompleteRead as e:
-        data_arff = e.partial
-    # getting structured array and metadata
-    data, meta = loadarff(StringIO(data_arff.decode("utf-8")))
+    data, meta = _download_data_(data_id)
     columns = np.array(meta.names())
     data_columns = columns[columns != target_name]
     # TODO: stacking the content of the structured array
