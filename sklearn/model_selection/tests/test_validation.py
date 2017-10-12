@@ -1318,7 +1318,7 @@ def test_cross_val_predict_class_subset():
 
     le = LabelEncoder()
 
-    methods = ['decision_function','predict_proba', 'predict_log_proba']
+    methods = ['decision_function', 'predict_proba', 'predict_log_proba']
     for method in methods:
         est = LogisticRegression()
 
