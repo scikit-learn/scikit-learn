@@ -50,15 +50,15 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X : array-like
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like, optional, default: None
+    y : array-like, optional (default=None)
         The target variable to try to predict in the case of
         supervised learning.
 
-    groups : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), optional (default=None)
         Group labels for the samples used while splitting the dataset into
         train/test set.
 
-    scoring : string, callable, list/tuple, dict or None, default: None
+    scoring : string, callable, list/tuple, dict or None, optional (default=None)
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
@@ -73,7 +73,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
         If None, the estimator's default scorer (if available) is used.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, optional (default=None)
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
           - None, to use the default 3-fold cross validation,
@@ -88,17 +88,17 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    n_jobs : integer, optional
+    n_jobs : integer, optional (default=1)
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
 
-    verbose : integer, optional
+    verbose : integer, optional (default=0)
         The verbosity level.
 
-    fit_params : dict, optional
+    fit_params : dict, optional (default=None)
         Parameters to pass to the fit method of the estimator.
 
-    pre_dispatch : int, or string, optional
+    pre_dispatch : int, or string, optional (default='2*n_jobs')
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -115,7 +115,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    return_train_score : boolean, default True
+    return_train_score : boolean, optional (default=True)
         Whether to include train scores in the return dict if ``scoring`` is
         of multimetric type.
 
@@ -230,20 +230,20 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
     X : array-like
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like, optional, default: None
+    y : array-like, optional (default=None)
         The target variable to try to predict in the case of
         supervised learning.
 
-    groups : array-like, with shape (n_samples,), optional
+    groups : array-like, with shape (n_samples,), optional (default=None)
         Group labels for the samples used while splitting the dataset into
         train/test set.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable or None, optional (default=None)
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, optional (default=None)
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -259,17 +259,17 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-    n_jobs : integer, optional
+    n_jobs : integer, optional (default=1)
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.
 
-    verbose : integer, optional
+    verbose : integer, optional (default=0)
         The verbosity level.
 
-    fit_params : dict, optional
+    fit_params : dict, optional (default=None)
         Parameters to pass to the fit method of the estimator.
 
-    pre_dispatch : int, or string, optional
+    pre_dispatch : int, or string, optional (default='2*n_jobs')
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
