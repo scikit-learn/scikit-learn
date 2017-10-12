@@ -60,13 +60,13 @@ for the training samples::
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
     >>> clf = SGDClassifier(loss="hinge", penalty="l2", max_iter=5)
-    >>> clf.fit(X, y)
+    >>> clf.fit(X, y)   # doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter=None, n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
-           shuffle=True, tol=None, validation_fraction=0.1, verbose=0,
-           warm_start=False)
+               early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
+               l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
+               n_iter=None, n_iter_no_change=2, n_jobs=1, penalty='l2',
+               power_t=0.5, random_state=None, shuffle=True, tol=None,
+               validation_fraction=0.1, verbose=0, warm_start=False)
 
 
 After being fitted, the model can then be used to predict new values::
@@ -248,10 +248,10 @@ criteria to stop the algorithm when a given level of convergence is reached:
     and the stopping criterion is based on the objective function computed on
     the input data.
 
-In both cases, the criterion is evaluated once by epoch, and the algorithm
-stops when the criterion does not improve twice in a row. The improvement is
-evaluated with a tolerance ``tol``, and the algorithm stops in any case after
-a maximum number of iteration ``max_iter``.
+In both cases, the criterion is evaluated once by epoch, and the algorithm stops
+when the criterion does not improve ``n_iter_no_times`` times in a row. The
+improvement is evaluated with a tolerance ``tol``, and the algorithm stops in
+any case after a maximum number of iteration ``max_iter``.
 
 
 Tips on Practical Use

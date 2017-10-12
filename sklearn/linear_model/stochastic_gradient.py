@@ -835,9 +835,9 @@ class SGDClassifier(BaseSGDClassifier):
     SGDClassifier(alpha=0.0001, average=False, class_weight=None,
            early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
            l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=None,
-           n_iter=None, n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
-           shuffle=True, tol=None, validation_fraction=0.1, verbose=0,
-           warm_start=False)
+           n_iter=None, n_iter_no_change=2, n_jobs=1, penalty='l2',
+           power_t=0.5, random_state=None, shuffle=True, tol=None,
+           validation_fraction=0.1, verbose=0, warm_start=False)
 
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -1423,9 +1423,9 @@ class SGDRegressor(BaseSGDRegressor):
     SGDRegressor(alpha=0.0001, average=False, early_stopping=False,
            epsilon=0.1, eta0=0.01, fit_intercept=True, l1_ratio=0.15,
            learning_rate='invscaling', loss='squared_loss', max_iter=None,
-           n_iter=None, penalty='l2', power_t=0.25, random_state=None,
-           shuffle=True, tol=None, validation_fraction=0.1, verbose=0,
-           warm_start=False)
+           n_iter=None, n_iter_no_change=2, penalty='l2', power_t=0.25,
+           random_state=None, shuffle=True, tol=None, validation_fraction=0.1,
+           verbose=0, warm_start=False)
 
     See also
     --------
