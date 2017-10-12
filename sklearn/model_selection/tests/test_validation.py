@@ -1339,7 +1339,7 @@ def test_cross_val_predict_class_subset():
         assert_array_almost_equal(expected_predictions, predictions)
 
         # Testing unordered labels
-        y = np.array([x//10 for x in range(-100, 100, 2)])
+        y = np.array([x//20 for x in range(-100, 100, 2)])
         y = shuffle(y, random_state=0)
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold3)
