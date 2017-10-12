@@ -73,16 +73,6 @@ def test_notfitted():
            " with appropriate arguments before using this method.")
     assert_raise_message(NotFittedError, msg, eclf.predict_proba, X)
 
-"""
-def test_notfitted2():
-    eclf = VotingClassifier(estimators=[('lr1', LogisticRegression()),
-                                        ('lr2', LogisticRegression())],
-                            prefit=True)
-    msg = ("This VotingClassifier instance is not fitted yet. Call \'fit\'"
-           " with appropriate arguments before using this method.")
-    assert_raise_message(NotFittedError, msg, eclf.predict_proba, X)
-"""
-
 
 def test_majority_label_iris():
     """Check classification by majority label on dataset iris."""
@@ -440,39 +430,35 @@ def test_transform():
     )
 
 
-def test_prefit_true_calling_fit():
+def test_prefit_predict_with_nonfitted_estimators():
 
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
     y = np.array([1, 1, 2, 2])
 
     lr1 = LogisticRegression()
     lr2 = LogisticRegression()
-    lr1.fit(X, y)
-    lr2.fit(X, y)
 
     eclf = VotingClassifier(estimators=[('lr1', lr1),
                                         ('lr2', lr2)],
-                            voting='soft',
                             prefit=True)
 
-    msg = ('Since `prefit=True`, call `transform`,'
-           ' `predict`, or `predict_proba directly')
+    eclf.fit(X, y)
+    msg = ('Error encountered in estimator lr1. '
+           'This LogisticRegression instance is not fitted yet')
+    assert_raise_message(NotFittedError, msg, eclf.predict, X)
 
-    assert_raise_message(ValueError, msg, eclf.fit, X, y)
 
-
-def test_prefit_predict():
+def test_prefit_predict_with_fitted_estimators():
 
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
     y = np.array([1, 1, 2, 2])
 
-    lr1 = LogisticRegression()
-    lr2 = LogisticRegression()
-    lr1.fit(X, y)
-    lr2.fit(X, y)
+    lr1 = LogisticRegression().fit(X, y)
+    lr2 = LogisticRegression().fit(X, y)
 
     eclf = VotingClassifier(estimators=[('lr1', lr1),
                                         ('lr2', lr2)],
                             prefit=True)
 
-    eclf.predict(X)
+    eclf.fit(X, y)
+    assert eclf.score(X, y) == 0.75

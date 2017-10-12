@@ -72,14 +72,9 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         (n_classifiers, n_samples, n_classes).
 
     prefit : bool, (default=False)
-        Whether the `estimators` are expected to be prefitted or not
-        into the constructor
-        directly or not. If True, ``transform`` must be called directly
-        and SelectFromModel cannot be used with ``cross_val_score``,
-        ``GridSearchCV`` and similar utilities that clone the estimator.
-        Otherwise train the model using ``fit`` and then ``transform`` to do
-        feature selection.
-
+        If true, expects *all* `estimators` estimators to be prefitted;
+        otherwise, if prefit is set to `False`, *all* estimators will be
+        cloned and fitted from scratch.
 
     Attributes
     ----------
@@ -172,11 +167,6 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         self : object
         """
 
-        if self.prefit:
-            raise NotFittedError(
-                "Since `prefit=True`, call `transform`, `predict`,"
-                " or `predict_proba directly")
-
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError('Multilabel and multi-output'
                                       ' classification is not supported.')
@@ -215,13 +205,16 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         transformed_y = self.le_.transform(y)
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
-                                                 sample_weight=sample_weight)
-                for clf in clfs if clf is not None)
+        if not self.prefit:
+            self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+                    delayed(_parallel_fit_estimator)(
+                        clone(clf), X, transformed_y,
+                        sample_weight=sample_weight)
+                    for clf in clfs if clf is not None)
+        else:
+            self.estimators_ = [clf for clf in clfs if clf is not None]
 
         self._name_estimators()
-        print(self._name_estimators)
         return self
 
     @property
@@ -247,22 +240,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             Predicted class labels.
         """
 
-        if self.prefit:
-            if not hasattr(self, "estimators_"):
-
-                names, clfs = zip(*self.estimators)
-                self._validate_names(names)
-
-                n_isnone = np.sum([clf is None for _, clf in self.estimators])
-                if n_isnone == len(self.estimators):
-                    raise ValueError('All estimators are None. At least one is '
-                                     'required to be a classifier!')
-
-                self.estimators_ = [clf for clf in clfs if clf is not None]
-                self._name_estimators()
-
-        else:
-            check_is_fitted(self, 'estimators_')
+        check_is_fitted(self, 'estimators_')
 
         if self.voting == 'soft':
             maj = np.argmax(self.predict_proba(X), axis=1)
@@ -274,7 +252,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
                     np.bincount(x, weights=self._weights_not_none)),
                 axis=1, arr=predictions)
 
-        maj = self.le_.inverse_transform(maj)
+        if not self.prefit:
+            maj = self.le_.inverse_transform(maj)
 
         return maj
 
@@ -287,22 +266,8 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         if self.voting == 'hard':
             raise AttributeError("predict_proba is not available when"
                                  " voting=%r" % self.voting)
-        if self.prefit:
-            if not hasattr(self, "estimators_"):
 
-                names, clfs = zip(*self.estimators)
-                self._validate_names(names)
-
-                n_isnone = np.sum([clf is None for _, clf in self.estimators])
-                if n_isnone == len(self.estimators):
-                    raise ValueError('All estimators are None. At least one is '
-                                     'required to be a classifier!')
-
-                self.estimators_ = [clf for clf in clfs if clf is not None]
-                self._name_estimators()
-
-        else:
-            check_is_fitted(self, 'estimators_')
+        check_is_fitted(self, 'estimators_')
         avg = np.average(self._collect_probas(X), axis=0,
                          weights=self._weights_not_none)
         return avg
@@ -344,22 +309,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             Class labels predicted by each classifier.
         """
 
-        if self.prefit:
-            if not hasattr(self, "estimators_"):
-
-                names, clfs = zip(*self.estimators)
-                self._validate_names(names)
-
-                n_isnone = np.sum([clf is None for _, clf in self.estimators])
-                if n_isnone == len(self.estimators):
-                    raise ValueError('All estimators are None. At least one is '
-                                     'required to be a classifier!')
-
-                self.estimators_ = [clf for clf in clfs if clf is not None]
-                self._name_estimators()
-
-        else:
-            check_is_fitted(self, 'estimators_')
+        check_is_fitted(self, 'estimators_')
 
         if self.voting == 'soft':
             probas = self._collect_probas(X)
@@ -417,4 +367,16 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
     def _predict(self, X):
         """Collect results from clf.predict calls. """
-        return np.asarray([clf.predict(X) for clf in self.estimators_]).T
+
+        all_predictions = []
+
+        for name, est in zip(self.named_estimators_, self.estimators_):
+            try:
+                predictions = est.predict(X)
+            except NotFittedError as e:
+                raise type(e)(
+                    'Error encountered in estimator %s. '
+                    % name + str(e)) from None
+            all_predictions.append(predictions)
+
+        return np.asarray(all_predictions).T
