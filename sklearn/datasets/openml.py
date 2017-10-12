@@ -92,7 +92,8 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
     if memory:
         mem = Memory(join(data_home, 'cache'), verbose=0).cache
     else:
-        mem = lambda x: x
+        def mem(func):
+            return func
     _get_data_info_by_name_ = mem(_get_data_info_by_name)
     _get_data_description_by_id_ = mem(_get_data_description_by_id)
     _download_data_ = mem(_download_data)
