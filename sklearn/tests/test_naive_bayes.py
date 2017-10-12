@@ -557,7 +557,7 @@ def test_cnb():
     Y = np.array([0, 0, 0, 1])
 
     # Verify inputs are nonnegative.
-    clf = ComplementNB(alpha=1.0)
+    clf = ComplementNB(alpha=1.0, norm=True)
     assert_raises(ValueError, clf.fit, -X, Y)
 
     clf.fit(X, Y)
