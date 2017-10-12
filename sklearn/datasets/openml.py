@@ -2,7 +2,7 @@ import json
 import numbers
 import os
 from os.path import join, exists
-from http.client import IncompleteRead
+from warnings import warn
 
 try:
     # Python 2
@@ -10,6 +10,7 @@ try:
 except ImportError:
     # Python 3+
     from urllib.request import urlopen
+    from http.client import IncompleteRead
 
 from scipy.io.arff import loadarff
 import numpy as np
@@ -24,8 +25,11 @@ _DATA_INFO = "https://openml.org/api/v1/json/data/{}"
 _DATA_DOWNLOAD = "https://www.openml.org/data/download/{}"
 
 
-def _get_data_info_by_name(name):
-    json_string = urlopen(_SEARCH_NAME.format(name))
+def _get_data_info_by_name(name, version):
+    if version == "active":
+        json_string = urlopen(_SEARCH_NAME.format(name + "/status/active/"))
+    else:
+        json_string = urlopen(_SEARCH_NAME.format(name))
     json_data = json.load(json_string)
     return json_data['data']['dataset'][0]
 
@@ -36,24 +40,41 @@ def _get_data_description_by_id(data_id):
     return json_data['data_set_description']
 
 
-def fetch_openml(name_or_id=None, version=1, data_home=None, memory=True):
+def fetch_openml(name_or_id=None, version='active', data_home=None,
+                 memory=True):
     """Fetch dataset from openml by name or dataset id.
+
+    Datasets are uniquely identified by either an integer ID or by a
+    combination of name and version (i.e. there might be multiple
+    versions of the 'iris' dataset). Newer versions are assumed to fix
+    issues in earlier versions.
 
     Parameters
     ----------
+    name_or_id : string or integer
+        Identifier of the dataset. If integer, assumed to be the id of the
+        dataset on OpenML, if string, assumed to be the name of the dataset.
+
+    version : integer or 'active', default='active'
+        Version of the dataset. Only used if ``name_or_id`` is a string.
+        If 'active' the oldest version that's still active is used.
 
     data_home : optional, default: None
         Specify another download and cache folder for the data sets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+
+    memory : boolean, default=True
+        Whether to store downloaded datasets using joblib.
 
     Returns
     -------
 
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the classification labels,
-        'DESCR', the full description of the dataset, and
-        'COL_NAMES', the original names of the dataset columns.
+        'data', the data to learn, 'target', the regression target or
+        classification labels, 'DESCR', the full description of the dataset,
+        'feature_names', the original names of the dataset columns, and
+        'details' which provide more information on the openml meta-data.
     """
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
@@ -66,7 +87,6 @@ def fetch_openml(name_or_id=None, version=1, data_home=None, memory=True):
         os.makedirs(data_home)
 
     # check if dataset id is known
-
     if isinstance(name_or_id, numbers.Integral):
         if version != 1:
             raise ValueError(
@@ -75,7 +95,7 @@ def fetch_openml(name_or_id=None, version=1, data_home=None, memory=True):
                     name_or_id, version))
         data_id = name_or_id
     elif isinstance(name_or_id, str):
-        data_info = _get_data_info_by_name(name_or_id)
+        data_info = _get_data_info_by_name(name_or_id, version)
         data_id = data_info['did']
 
     else:
@@ -84,6 +104,10 @@ def fetch_openml(name_or_id=None, version=1, data_home=None, memory=True):
                 name_or_id))
 
     data_description = _get_data_description_by_id(data_id)
+    if data_description['status'] != "active":
+        warn("Version {} of dataset {} is inactive, meaning that issues have"
+             " been found in the dataset. Try using a newer version.".format(
+                 data_description['name'], data_description['version']))
     target_name = data_description['default_target_attribute']
 
     # download actual data
@@ -104,10 +128,10 @@ def fetch_openml(name_or_id=None, version=1, data_home=None, memory=True):
     y = data[target_name]
 
     description = "{}\n\nDownloaded from openml.org.".format(
-        data_description['description'])
+        data_description.pop('description'))
 
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
-        DESCR=description)
+        DESCR=description, details=data_description)
 
     return bunch
