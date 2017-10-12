@@ -825,7 +825,7 @@ def test_cross_val_predict_decision_function_shape():
                         'use a cross-validation technique resulting '
                         'in properly stratified folds',
                         cross_val_predict, est, X, y,
-                        cv=KFold(), method='decision_function')
+                        cv=KFold(n_splits=3), method='decision_function')
 
 
 def test_cross_val_predict_predict_proba_shape():
@@ -1309,16 +1309,16 @@ def get_expected_predictions(X, y, cv, classes, est, method):
 
 def test_cross_val_predict_class_subset():
 
-    X = np.arange(8).reshape(4, 2)
-    y = np.array([0, 0, 1, 2])
-    classes = 3
+    X = np.arange(200).reshape(100, 2)
+    y = np.array([x//10 for x in range(100)])
+    classes = 10
 
     kfold3 = KFold(n_splits=3)
     kfold4 = KFold(n_splits=4)
 
     le = LabelEncoder()
 
-    methods = ['predict_proba', 'predict_log_proba']
+    methods = ['decision_function','predict_proba', 'predict_log_proba']
     for method in methods:
         est = LogisticRegression()
 
@@ -1339,25 +1339,14 @@ def test_cross_val_predict_class_subset():
         assert_array_almost_equal(expected_predictions, predictions)
 
         # Testing unordered labels
-        y = [1, 1, -4, 6]
+        y = np.array([x//10 for x in range(-100, 100, 2)])
+        y = shuffle(y, random_state=0)
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold3)
         y = le.fit_transform(y)
         expected_predictions = get_expected_predictions(X, y, kfold3, classes,
                                                         est, method)
         assert_array_almost_equal(expected_predictions, predictions)
-
-    # Special test for decision_function. This makes sure not to trigger
-    # any of the numerous edge cases in decision_function
-    X = np.arange(200).reshape(100, 2)
-    y = np.array([x//10 for x in range(100)])
-
-    est = LogisticRegression()
-    predictions = cross_val_predict(est, X, y, method='decision_function',
-                                    cv=kfold3)
-    expected_predictions = get_expected_predictions(X, y, kfold3, 10,
-                                                    est, 'decision_function')
-    assert_array_almost_equal(expected_predictions, predictions)
 
 
 def test_score_memmap():

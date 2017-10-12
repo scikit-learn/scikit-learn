@@ -740,14 +740,14 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
                 predictions_[:, estimator.classes_] = predictions
 
             else:  # Special handling logic for decision_function
-                err_mess = 'Output shape {} of {} does not match ' \
-                           'number of classes ({}) in fold. Cannot' \
-                           ' reconcile different number of classes' \
-                           ' in different folds. To fix this, use ' \
-                           'a cross-validation technique resulting' \
-                           ' in properly stratified folds'
-                if predictions.ndim == 2 and \
-                        predictions.shape[1] != len(estimator.classes_):
+                err_mess = ('Output shape {} of {} does not match '
+                            'number of classes ({}) in fold. Cannot'
+                            ' reconcile different number of classes'
+                            ' in different folds. To fix this, use '
+                            'a cross-validation technique resulting'
+                            ' in properly stratified folds')
+                if (predictions.ndim == 2 and
+                        predictions.shape[1] != len(estimator.classes_)):
                     # This handles the case when the shape of predictions
                     # does not match the number of classes used to train
                     # it with. This case is found when sklearn.svm.SVC is
