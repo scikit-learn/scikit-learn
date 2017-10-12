@@ -728,18 +728,7 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         n_classes = len(set(y))
         if n_classes != len(estimator.classes_):
-            if method == 'predict_proba':
-                # Fill missing classes with zero
-                predictions_ = np.zeros((_num_samples(X_test), n_classes))
-                predictions_[:, estimator.classes_] = predictions
-
-            elif method == 'predict_log_proba':
-                # Fill missing classes with minimum value
-                predictions_ = np.full((_num_samples(X_test), n_classes),
-                                       np.finfo(predictions.dtype).min)
-                predictions_[:, estimator.classes_] = predictions
-
-            else:  # Special handling logic for decision_function
+            if method == 'decision_function':
                 err_mess = ('Output shape {} of {} does not match '
                             'number of classes ({}) in fold. Cannot'
                             ' reconcile different number of classes'
@@ -759,11 +748,15 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
                     raise ValueError(err_mess.format(predictions.shape, method,
                                                      len(estimator.classes_)))
 
-                predictions_ = np.full((_num_samples(X_test), n_classes),
-                                       np.finfo(predictions.dtype).min)
-                predictions_[:, estimator.classes_] = predictions
-
-            predictions = predictions_
+            float_min = np.finfo(predictions.dtype).min
+            default_values = {'decision_function': float_min,
+                              'predict_log_proba': float_min,
+                              'predict_proba': 0}
+            predictions_for_all_classes = np.full((_num_samples(predictions),
+                                                   n_classes),
+                                                  default_values[method])
+            predictions_for_all_classes[:, estimator.classes_] = predictions
+            predictions = predictions_for_all_classes
     return predictions, test
 
 
