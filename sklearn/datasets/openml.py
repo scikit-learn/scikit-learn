@@ -1,9 +1,8 @@
 import json
-import warnings
-import numpy as np
 import numbers
 import os
 from os.path import join, exists
+from http.client import IncompleteRead
 
 try:
     # Python 2
@@ -13,7 +12,12 @@ except ImportError:
     from urllib.request import urlopen
 
 from scipy.io.arff import loadarff
+import numpy as np
+
 from .base import get_data_home
+# from ..externals.joblib import Memory
+from ..externals.six import StringIO
+from ..utils import Bunch
 
 _SEARCH_NAME = "https://openml.org/api/v1/json/data/list/data_name/{}/limit/1"
 _DATA_INFO = "https://openml.org/api/v1/json/data/{}"
@@ -21,18 +25,18 @@ _DATA_DOWNLOAD = "https://www.openml.org/data/download/{}"
 
 
 def _get_data_info_by_name(name):
-    url_path = urlopen(_SEARCH_NAME.format(name))
-    json_data = json.load(url_path)
+    json_string = urlopen(_SEARCH_NAME.format(name))
+    json_data = json.load(json_string)
     return json_data['data']['dataset'][0]
 
 
 def _get_data_description_by_id(data_id):
-    url_path = urlopen(_DATA_INFO.format(data_id))
-    json_data = json.load(url_path)
+    json_string = urlopen(_DATA_INFO.format(data_id))
+    json_data = json.load(json_string)
     return json_data['data_set_description']
 
 
-def fetch_openml(name_or_id=None, version=1, data_home=None):
+def fetch_openml(name_or_id=None, version=1, data_home=None, memory=True):
     """Fetch dataset from openml by name or dataset id.
 
     Parameters
@@ -53,6 +57,11 @@ def fetch_openml(name_or_id=None, version=1, data_home=None):
     """
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
+    # if memory:
+    #     mem = Memory(join(data_home, 'cache'))
+    #     _get_data_info_by_name = mem(_get_data_info_by_name)
+    #     _get_data_description_by_id = mem(_get_data_description_by_id)
+    #     _download_data = mem(_download_data)
     if not exists(data_home):
         os.makedirs(data_home)
 
@@ -74,34 +83,31 @@ def fetch_openml(name_or_id=None, version=1, data_home=None):
             "Invalid name_or_id {}, should be string or integer.".format(
                 name_or_id))
 
-
     data_description = _get_data_description_by_id(data_id)
+    target_name = data_description['default_target_attribute']
 
     # download actual data
-    json_dl = urlretrieve(json_loc.format(name))[0]
-    # get the json file
-    with open(json_dl, 'r') as tmp:
-        json_data = json.load(tmp)['data']['dataset']
-    vers = [(idx, val) for idx, item in enumerate(json_data)
-            for key, val in item.items() if key == "version"]
-    # tell user there are more versions if they dont specify number
-    if len(vers) > 1 and name_vers is None:
-        msg = ("dataset: {} has versions {}, "
-               "default is {}").format(name,
-                                       [i[1] for i in vers],
-                                       min([i[1] for i in vers]))
-        warnings.warn(msg)
-    # check if the version specified (if it is) is in the ones gotten
-    use = 1 if name_vers is None else name_vers
-    for v in vers:
-        if v[1] == use:
-            to_get = json_data[v[0]]['file_id']
-    # download data
-    data_tmp = urlretrieve(data_loc.format(to_get))[0]
-    # load the data
-    data = loadarff(data_tmp)
-    data_fmt = np.zeros((data[0].shape[0], len(data[0][0])), dtype=object)
-    # scipy returns a tuple so try to put it in the right format
-    for idx, row in enumerate(data[0]):
-        data_fmt[idx, :] = [val for val in row]
-    return data_fmt
+    response = urlopen(_DATA_DOWNLOAD.format(data_id))
+    # we need to catch IncompleteRead which is likely a server-side issue
+    try:
+        data_arff = response.read()
+    except IncompleteRead as e:
+        data_arff = e.partial
+    # getting structured array and metadata
+    data, meta = loadarff(StringIO(data_arff.decode("utf-8")))
+    columns = np.array(meta.names())
+    data_columns = columns[columns != target_name]
+    # TODO: stacking the content of the structured array
+    # this results in a copy. If the data was homogeneous
+    # we could use a view instead.
+    X = np.column_stack(data[c] for c in data_columns)
+    y = data[target_name]
+
+    description = "{}\n\nDownloaded from openml.org.".format(
+        data_description['description'])
+
+    bunch = Bunch(
+        data=X, target=y, feature_names=data_columns,
+        DESCR=description)
+
+    return bunch
