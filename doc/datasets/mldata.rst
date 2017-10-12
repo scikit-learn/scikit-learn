@@ -16,6 +16,7 @@ Downloading datasets from the mldata.org repository
 
 `mldata.org <http://mldata.org>`_ is a public repository for machine learning
 data, supported by the `PASCAL network <http://www.pascal-network.org>`_ .
+It is no longer actively maintained, and it's suggested to use :ref:openml instead.
 
 The ``sklearn.datasets`` package is able to directly download data
 sets from the repository using the function
