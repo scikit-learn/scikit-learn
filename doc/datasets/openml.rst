@@ -15,7 +15,7 @@ Downloading datasets from the openml.org repository
 ===================================================
 
 `openml.org <https://openml.org>`_ is a public repository for machine learning
-data and experiments.
+data and experiments, that allows everybody to upload open datasets.
 
 The ``sklearn.datasets`` package is able to directly download data
 sets from the repository using the function
