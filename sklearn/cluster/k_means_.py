@@ -792,7 +792,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Labels of each point
 
     inertia_ : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     Examples
     --------
