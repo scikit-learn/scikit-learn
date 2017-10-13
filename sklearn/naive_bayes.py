@@ -816,6 +816,7 @@ class ComplementNB(BaseDiscreteNB):
         """Apply smoothing to raw counts and compute the weights."""
         comp_count = self.feature_all_ + alpha - self.feature_count_
         logged = np.log(comp_count / comp_count.sum(axis=1, keepdims=True))
+        # BaseNB.predict uses argmax, but ComplementNB operates with argmin.
         feature_log_prob = -logged
         if self.norm:
             summed = logged.sum(axis=1, keepdims=True)
