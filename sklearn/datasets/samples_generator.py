@@ -43,8 +43,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     This initially creates clusters of points normally distributed (std=1)
     about vertices of an `n_informative`-dimensional hypercube, and assigns
-    an equal number of clusters to each class. It introduces interdependence 
-    between these features and adds various types of further noise to the 
+    an equal number of clusters to each class. It introduces interdependence
+    between these features and adds various types of further noise to the
     data.
 
     Prior to shuffling, `X` stacks a number of these primary "informative"
@@ -62,8 +62,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         The total number of features. These comprise `n_informative`
         informative features, `n_redundant` redundant features, `n_repeated`
         duplicated features and `n_features-n_informative-n_redundant-
-        n_repeated` useless features drawn at random.  A larger number of
-        features generally makes the classification task more difficult.
+        n_repeated` useless features drawn at random.
 
     n_informative : int, optional (default=2)
         The number of informative features. Each class is composed of a number
@@ -96,7 +95,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         exceeds 1.
 
     flip_y : float, optional (default=0.01)
-        The fraction of samples whose class are randomly exchanged. Larger 
+        The fraction of samples whose class are randomly exchanged. Larger
         values introduce noise in the labels and make the classification
         task harder.
 
