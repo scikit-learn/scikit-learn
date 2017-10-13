@@ -797,15 +797,14 @@ def test_cross_val_predict_decision_function_shape():
     # class.
     X = X[:100]
     y = y[:100]
-    assert_raises_regex(ValueError,
-                        'Output shape \(50L?,\) of decision_function'
-                        ' does not match number of classes \(1\) '
-                        'in fold. Cannot reconcile different number'
-                        ' of classes in different folds. To fix '
-                        'this, use a cross-validation technique '
-                        'resulting in properly stratified folds',
-                        cross_val_predict, RidgeClassifier(), X, y,
-                        method='decision_function', cv=KFold(2))
+    assert_raise_message(ValueError,
+                         'Only 1 class/es in training fold, this'
+                         ' is not supported for decision_function'
+                         ' with imbalanced folds. To fix '
+                         'this, use a cross-validation technique '
+                         'resulting in properly stratified folds',
+                         cross_val_predict, RidgeClassifier(), X, y,
+                         method='decision_function', cv=KFold(2))
 
     X, y = load_digits(return_X_y=True)
     est = SVC(kernel='linear', decision_function_shape='ovo')
@@ -1339,8 +1338,7 @@ def test_cross_val_predict_class_subset():
         assert_array_almost_equal(expected_predictions, predictions)
 
         # Testing unordered labels
-        y = np.array([x//20 for x in range(-100, 100, 2)])
-        y = shuffle(y, random_state=0)
+        y = shuffle(np.repeat(range(10), 10), random_state=0)
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold3)
         y = le.fit_transform(y)
