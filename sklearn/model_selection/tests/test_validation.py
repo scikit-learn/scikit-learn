@@ -777,6 +777,10 @@ def test_cross_val_predict():
 
     assert_raises(ValueError, cross_val_predict, est, X, y, cv=BadCV())
 
+    X, y = load_iris(return_X_y=True)
+    assert_warns(RuntimeWarning, cross_val_predict, LogisticRegression(),
+                 X, y, method='predict_proba', cv=KFold(2))
+
 
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
