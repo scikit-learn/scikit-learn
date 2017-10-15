@@ -167,13 +167,14 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     2
 
     In the multilabel case with binary label indicators:
-    
+
     >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
     """
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith('multilabel'):
         differing_labels = count_nonzero(y_true - y_pred, axis=1)
         score = differing_labels == 0
@@ -263,7 +264,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     else:
         sample_weight = np.asarray(sample_weight)
 
-    check_consistent_length(sample_weight, y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
@@ -444,6 +445,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith('multilabel'):
         with np.errstate(divide='ignore', invalid='ignore'):
             # oddly, we may get an "invalid" rather than a "divide" error here
@@ -519,6 +521,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     -0.33...
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     if y_type not in {"binary", "multiclass"}:
         raise ValueError("%s is not supported" % y_type)
 
@@ -528,9 +531,9 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     y_pred = lb.transform(y_pred)
 
     C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-    t_sum = C.sum(axis=1)
-    p_sum = C.sum(axis=0)
-    n_correct = np.trace(C)
+    t_sum = C.sum(axis=1, dtype=np.float64)
+    p_sum = C.sum(axis=0, dtype=np.float64)
+    n_correct = np.trace(C, dtype=np.float64)
     n_samples = p_sum.sum()
     cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
     cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
@@ -1023,6 +1026,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         raise ValueError("beta should be >0 in the F-beta score")
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     present_labels = unique_labels(y_true, y_pred)
 
     if average == 'binary':
@@ -1550,6 +1554,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         labels = classes
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -1638,7 +1643,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     The logarithm used is the natural logarithm (base-e).
     """
     y_pred = check_array(y_pred, ensure_2d=False)
-    check_consistent_length(y_pred, y_true)
+    check_consistent_length(y_pred, y_true, sample_weight)
 
     lb = LabelBinarizer()
 
@@ -1931,6 +1936,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
+    check_consistent_length(y_true, y_prob, sample_weight)
 
     # currently, we only support binary classification
     y_true = _check_binary_probabilistic_predictions(y_true, y_prob, pos_label)

@@ -60,6 +60,7 @@ Scoring                           Function                                      
 **Classification**
 'accuracy'                        :func:`metrics.accuracy_score`
 'average_precision'               :func:`metrics.average_precision_score`
+'brier_score_loss'                :func:`metrics.brier_score_loss`
 'f1'                              :func:`metrics.f1_score`                          for binary targets
 'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
 'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
@@ -102,7 +103,7 @@ Usage examples:
     >>> model = svm.SVC()
     >>> cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'completeness_score', 'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_mutual_info_score', 'adjusted_rand_score', 'average_precision', 'brier_score_loss', 'completeness_score', 'explained_variance', 'f1', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'fowlkes_mallows_score', 'homogeneity_score', 'mutual_info_score', 'neg_log_loss', 'neg_mean_absolute_error', 'neg_mean_squared_error', 'neg_mean_squared_log_error', 'neg_median_absolute_error', 'normalized_mutual_info_score', 'precision', 'precision_macro', 'precision_micro', 'precision_samples', 'precision_weighted', 'r2', 'recall', 'recall_macro', 'recall_micro', 'recall_samples', 'recall_weighted', 'roc_auc', 'v_measure_score']
 
 .. note::
 
@@ -633,10 +634,25 @@ The :func:`precision_recall_curve` computes a precision-recall curve
 from the ground truth label and a score given by the classifier
 by varying a decision threshold.
 
-The :func:`average_precision_score` function computes the average precision
-(AP) from prediction scores. This score corresponds to the area under the
-precision-recall curve. The value is between 0 and 1 and higher is better.
-With random predictions, the AP is the fraction of positive samples.
+The :func:`average_precision_score` function computes the
+`average precision <http://en.wikipedia.org/w/index.php?title=Information_retrieval&oldid=793358396#Average_precision>`_
+(AP) from prediction scores. The value is between 0 and 1 and higher is better.
+AP is defined as
+
+.. math::
+    \text{AP} = \sum_n (R_n - R_{n-1}) P_n
+
+where :math:`P_n` and :math:`R_n` are the precision and recall at the
+nth threshold. With random predictions, the AP is the fraction of positive
+samples.
+
+References [Manning2008]_ and [Everingham2010]_ present alternative variants of
+AP that interpolate the precision-recall curve. Currently,
+:func:`average_precision_score` does not implement any interpolated variant.
+References [Davis2006]_ and [Flach2015]_ describe why a linear interpolation of
+points on the precision-recall curve provides an overly-optimistic measure of
+classifier performance. This linear interpolation is used when computing area
+under the curve with the trapezoidal rule in :func:`auc`.
 
 Several functions allow you to analyze the precision, recall and F-measures
 score:
@@ -670,6 +686,24 @@ binary classification and multilabel indicator format.
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_precision_recall.py`
     for an example of :func:`precision_recall_curve` usage to evaluate
     classifier output quality.
+
+
+.. topic:: References:
+
+  .. [Manning2008] C.D. Manning, P. Raghavan, H. Schütze, `Introduction to Information Retrieval
+     <http://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html>`_,
+     2008.
+  .. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
+     `The Pascal Visual Object Classes (VOC) Challenge
+     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_,
+     IJCV 2010.
+  .. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
+     <http://www.machinelearning.org/proceedings/icml2006/030_The_Relationship_Bet.pdf>`_,
+     ICML 2006.
+  .. [Flach2015] P.A. Flach, M. Kull, `Precision-Recall-Gain Curves: PR Analysis Done Right
+     <http://papers.nips.cc/paper/5867-precision-recall-gain-curves-pr-analysis-done-right.pdf>`_,
+     NIPS 2015.
+
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^

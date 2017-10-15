@@ -199,6 +199,33 @@ def test_cross_validator_with_default_params():
                          lpo.get_n_splits, None, y, groups)
 
 
+def test_2d_y():
+    # smoke test for 2d y and multi-label
+    n_samples = 30
+    rng = np.random.RandomState(1)
+    X = rng.randint(0, 3, size=(n_samples, 2))
+    y = rng.randint(0, 3, size=(n_samples,))
+    y_2d = y.reshape(-1, 1)
+    y_multilabel = rng.randint(0, 2, size=(n_samples, 3))
+    groups = rng.randint(0, 3, size=(n_samples,))
+    splitters = [LeaveOneOut(), LeavePOut(p=2), KFold(), StratifiedKFold(),
+                 RepeatedKFold(), RepeatedStratifiedKFold(),
+                 ShuffleSplit(), StratifiedShuffleSplit(test_size=.5),
+                 GroupShuffleSplit(), LeaveOneGroupOut(),
+                 LeavePGroupsOut(n_groups=2), GroupKFold(), TimeSeriesSplit(),
+                 PredefinedSplit(test_fold=groups)]
+    for splitter in splitters:
+        list(splitter.split(X, y, groups))
+        list(splitter.split(X, y_2d, groups))
+        try:
+            list(splitter.split(X, y_multilabel, groups))
+        except ValueError as e:
+            allowed_target_types = ('binary', 'multiclass')
+            msg = "Supported target types are: {}. Got 'multilabel".format(
+                allowed_target_types)
+            assert msg in str(e)
+
+
 def check_valid_split(train, test, n_samples=None):
     # Use python sets to get more informative assertion failure messages
     train, test = set(train), set(test)
@@ -724,7 +751,7 @@ def test_group_shuffle_split():
     for groups_i in test_groups:
         X = y = np.ones(len(groups_i))
         n_splits = 6
-        test_size = 1./3
+        test_size = 1. / 3
         slo = GroupShuffleSplit(n_splits, test_size=test_size, random_state=0)
 
         # Make sure the repr works
@@ -845,20 +872,22 @@ def test_leave_one_p_group_out_error_on_fewer_number_of_groups():
     assert_raise_message(ValueError, "Found array with 0 sample(s)", next,
                          LeaveOneGroupOut().split(X, y, groups))
     X = y = groups = np.ones(1)
-    msg = ("The groups parameter contains fewer than 2 unique groups ([ 1.]). "
-           "LeaveOneGroupOut expects at least 2.")
+    msg = ("The groups parameter contains fewer than 2 unique groups ({}). "
+           "LeaveOneGroupOut expects at least 2.").format(groups)
     assert_raise_message(ValueError, msg, next,
                          LeaveOneGroupOut().split(X, y, groups))
     X = y = groups = np.ones(1)
     msg = ("The groups parameter contains fewer than (or equal to) n_groups "
-           "(3) numbers of unique groups ([ 1.]). LeavePGroupsOut expects "
-           "that at least n_groups + 1 (4) unique groups be present")
+           "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
+           "that at least n_groups + 1 (4) unique groups "
+           "be present").format(groups)
     assert_raise_message(ValueError, msg, next,
                          LeavePGroupsOut(n_groups=3).split(X, y, groups))
     X = y = groups = np.arange(3)
     msg = ("The groups parameter contains fewer than (or equal to) n_groups "
-           "(3) numbers of unique groups ([0 1 2]). LeavePGroupsOut expects "
-           "that at least n_groups + 1 (4) unique groups be present")
+           "(3) numbers of unique groups ({}). LeavePGroupsOut expects "
+           "that at least n_groups + 1 (4) unique groups "
+           "be present").format(groups)
     assert_raise_message(ValueError, msg, next,
                          LeavePGroupsOut(n_groups=3).split(X, y, groups))
 
@@ -1138,6 +1167,15 @@ def test_check_cv():
     cv = check_cv(3, y_multiclass, classifier=True)
     np.testing.assert_equal(list(StratifiedKFold(3).split(X, y_multiclass)),
                             list(cv.split(X, y_multiclass)))
+    # also works with 2d multiclass
+    y_multiclass_2d = y_multiclass.reshape(-1, 1)
+    cv = check_cv(3, y_multiclass_2d, classifier=True)
+    np.testing.assert_equal(list(StratifiedKFold(3).split(X, y_multiclass_2d)),
+                            list(cv.split(X, y_multiclass_2d)))
+
+    assert_false(np.all(
+        next(StratifiedKFold(3).split(X, y_multiclass_2d))[0] ==
+        next(KFold(3).split(X, y_multiclass_2d))[0]))
 
     X = np.ones(5)
     y_multilabel = np.array([[0, 0, 0, 0], [0, 1, 1, 0], [0, 0, 0, 1],

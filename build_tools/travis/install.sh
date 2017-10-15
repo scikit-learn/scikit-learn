@@ -39,22 +39,30 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # Configure the conda environment and put it in the path using the
     # provided versions
+    if [[ "$USE_PYTEST" == "true" ]]; then
+        TEST_RUNNER_PACKAGE=pytest
+    else
+        TEST_RUNNER_PACKAGE=nose
+    fi
+
     if [[ "$INSTALL_MKL" == "true" ]]; then
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
-            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip \
+            $TEST_RUNNER_PACKAGE numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             mkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
             
     else
-        conda create -n testenv --yes python=$PYTHON_VERSION pip nose pytest \
-            numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+        conda create -n testenv --yes python=$PYTHON_VERSION pip \
+            $TEST_RUNNER_PACKAGE numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             nomkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
     fi
     source activate testenv
 
-    # Install nose-timer via pip
-    pip install nose-timer
+    if [[ $USE_PYTEST != "true" ]]; then
+        # Install nose-timer via pip
+        pip install nose-timer
+    fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
@@ -65,7 +73,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip install nose nose-timer cython
+    pip install nose nose-timer cython==$CYTHON_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
     # Set up our own virtualenv environment to avoid travis' numpy.
@@ -77,8 +85,13 @@ elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
 
     echo "Installing numpy and scipy master wheels"
     dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
-    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy
-    pip install nose nose-timer cython
+    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy cython
+    if [[ $USE_PYTEST == "true" ]]; then
+        pip install pytest
+    else
+        # Install nose-timer via pip
+        pip install nose nose-timer
+    fi
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then

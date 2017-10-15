@@ -158,8 +158,8 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
     # Q is a heavy-tailed distribution: Student's t-distribution
     dist = pdist(X_embedded, "sqeuclidean")
-    dist += 1.
     dist /= degrees_of_freedom
+    dist += 1.
     dist **= (degrees_of_freedom + 1.0) / -2.0
     Q = np.maximum(dist / (2.0 * np.sum(dist)), MACHINE_EPSILON)
 
@@ -385,12 +385,13 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     .. math::
 
         T(k) = 1 - \frac{2}{nk (2n - 3k - 1)} \sum^n_{i=1}
-            \sum_{j \in U^{(k)}_i} (r(i, j) - k)
+            \sum_{j \in \mathcal{N}_{i}^{k}} \max(0, (r(i, j) - k))
 
-    where :math:`r(i, j)` is the rank of the embedded datapoint j
-    according to the pairwise distances between the embedded datapoints,
-    :math:`U^{(k)}_i` is the set of points that are in the k nearest
-    neighbors in the embedded space but not in the original space.
+    where for each sample i, :math:`\mathcal{N}_{i}^{k}` are its k nearest
+    neighbors in the output space, and every sample j is its :math:`r(i, j)`-th
+    nearest neighbor in the input space. In other words, any unexpected nearest
+    neighbors in the output space are penalised in proportion to their rank in
+    the input space.
 
     * "Neighborhood Preservation in Nonlinear Projection Methods: An
       Experimental Study"
@@ -422,9 +423,9 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
         dist_X = X
     else:
         dist_X = pairwise_distances(X, squared=True)
-    dist_X_embedded = pairwise_distances(X_embedded, squared=True)
     ind_X = np.argsort(dist_X, axis=1)
-    ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, 1:n_neighbors + 1]
+    ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
+        return_distance=False)
 
     n_samples = X.shape[0]
     t = 0.0
@@ -655,6 +656,9 @@ class TSNE(BaseEstimator):
                             'the array is small enough for it to fit in '
                             'memory. Otherwise consider dimensionality '
                             'reduction techniques (e.g. TruncatedSVD)')
+        if self.method == 'barnes_hut':
+            X = check_array(X, ensure_min_samples=2,
+                            dtype=[np.float32, np.float64])
         else:
             X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                             dtype=[np.float32, np.float64])
@@ -711,10 +715,7 @@ class TSNE(BaseEstimator):
                 print("[t-SNE] Computing {} nearest neighbors...".format(k))
 
             # Find the nearest neighbors for every point
-            neighbors_method = 'ball_tree'
-            if (self.metric == 'precomputed'):
-                neighbors_method = 'brute'
-            knn = NearestNeighbors(algorithm=neighbors_method, n_neighbors=k,
+            knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
                                    metric=self.metric)
             t0 = time()
             knn.fit(X)
@@ -767,7 +768,7 @@ class TSNE(BaseEstimator):
         # Laurens van der Maaten, 2009.
         degrees_of_freedom = max(self.n_components - 1.0, 1)
 
-        return self._tsne(P, degrees_of_freedom, n_samples, random_state,
+        return self._tsne(P, degrees_of_freedom, n_samples,
                           X_embedded=X_embedded,
                           neighbors=neighbors_nn,
                           skip_num_points=skip_num_points)
@@ -778,7 +779,7 @@ class TSNE(BaseEstimator):
     def n_iter_final(self):
         return self.n_iter_
 
-    def _tsne(self, P, degrees_of_freedom, n_samples, random_state, X_embedded,
+    def _tsne(self, P, degrees_of_freedom, n_samples, X_embedded,
               neighbors=None, skip_num_points=0):
         """Runs t-SNE."""
         # t-SNE minimizes the Kullback-Leiber divergence of the Gaussians P
@@ -851,6 +852,8 @@ class TSNE(BaseEstimator):
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
 
+        y : Ignored
+
         Returns
         -------
         X_new : array, shape (n_samples, n_components)
@@ -870,6 +873,8 @@ class TSNE(BaseEstimator):
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
             or 'coo'.
+
+        y : Ignored
         """
         self.fit_transform(X)
         return self
