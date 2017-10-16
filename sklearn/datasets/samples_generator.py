@@ -44,7 +44,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     This initially creates clusters of points normally distributed (std=1)
     about vertices of an `n_informative`-dimensional hypercube with sides of
     length `2*class_sep` and assigns an equal number of clusters to each
-    class. It introduces interdependence between these features and adds 
+    class. It introduces interdependence between these features and adds
     various types of further noise to the data.
 
     Prior to shuffling, `X` stacks a number of these primary "informative"
