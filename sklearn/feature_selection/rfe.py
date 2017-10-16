@@ -64,6 +64,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         If within (0.0, 1.0), then `step` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
+    step_ranking : bool of None, optional (default=None)
+        If specified, ranking at each step will be saved as a row of
+        `grid_ranking_` array.
+
     verbose : int, default=0
         Controls verbosity of output.
 
@@ -80,9 +84,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         ranking position of the i-th feature. Selected (i.e., estimated
         best) features are assigned rank 1.
 
-    grid_ranking_: array of shape [n_steps, n_features]
+    grid_ranking_: array of shape [n_steps, n_features], optional
         The grid representing rankings at each step, such that
-        ``grid_ranking_[i]`` corresponds to ranking_ at i-th step.
+        ``grid_ranking_[i]`` corresponds to ranking_ at i-th step (if you have
+        initialized `step_ranking=True`)
 
     estimator_ : object
         The external estimator fit on the reduced dataset.
@@ -113,11 +118,12 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, n_features_to_select=None, step=1,
-                 verbose=0):
+                 step_ranking=None, verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
         self.verbose = verbose
+        self.step_ranking = step_ranking
 
     @property
     def _estimator_type(self):
@@ -160,7 +166,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         support_ = np.ones(n_features, dtype=np.bool)
         ranking_ = np.ones(n_features, dtype=np.int)
-        grid_ranking_ = []
+        if self.step_ranking:
+            grid_ranking_ = []
 
         if step_score:
             self.scores_ = []
@@ -206,7 +213,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
                 self.scores_.append(step_score(estimator, features))
             support_[features[ranks][:threshold]] = False
             ranking_[np.logical_not(support_)] += 1
-            grid_ranking_.append(ranking_.copy())
+            if self.step_ranking:
+                grid_ranking_.append(ranking_.copy())
 
         # Set final attributes
         features = np.arange(n_features)[support_]
@@ -219,7 +227,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         self.n_features_ = support_.sum()
         self.support_ = support_
         self.ranking_ = ranking_
-        self.grid_ranking_ = np.array(grid_ranking_)
+        if self.step_ranking:
+            self.grid_ranking_ = np.array(grid_ranking_)
 
         return self
 
