@@ -126,6 +126,19 @@ def test_mcd_issue3367():
     MinCovDet(random_state=rand_gen).fit(data)
 
 
+def test_mcd_support_covariance_is_zero():
+    # Check that MCD returns a ValueError with informative message when the
+    # covariance of the support data is equal to 0.
+    X_1 = np.array([0.5, 0.1, 0.1, 0.1, 0.957, 0.1, 0.1, 0.1, 0.4285, 0.1])
+    X_1 = X_1.reshape(-1, 1)
+    X_2 = np.array([0.5, 0.3, 0.3, 0.3, 0.957, 0.3, 0.3, 0.3, 0.4285, 0.3])
+    X_2 = X_2.reshape(-1, 1)
+    msg = ('The covariance matrix of the support data is equal to 0, try to '
+           'increase support_fraction')
+    for X in [X_1, X_2]:
+        assert_raise_message(ValueError, msg, MinCovDet().fit, X)
+
+
 def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
