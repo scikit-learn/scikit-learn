@@ -19,6 +19,10 @@ sample.
 Changelog
 ---------
 
+- Reverted the addition of ``metrics.ndcg_score`` and ``metrics.dcg_score``
+  which had been merged into version 0.19.0 by error.  The implementations
+  were broken and undocumented.
+
 Bug fixes
 .........
 
@@ -64,6 +68,10 @@ Bug fixes
 
 - Fixed a bug where :func:`datasets.make_classification` modified its input
   ``weights``. :issue:`9865` by :user:`Sachin Kelkar <s4chin>`.
+
+- Fixed a bug where parallelised prediction in random forests was not
+  thread-safe and could (rarely) result in arbitrary errors. :issue:`9830` by
+  `Joel Nothman`_.
 
 Enhancements
 ............
