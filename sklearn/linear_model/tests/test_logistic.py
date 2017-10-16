@@ -567,7 +567,10 @@ def test_ovr_multinomial_iris():
 
 def test_ovr_multinomial_iris_binary():
     # Test that multinomial gives better predictions on binary outcome iris
-    # model with respect to log loss and negligible regularisation.
+    # model with respect to log loss and negligible regularisation. Note that
+    # it should be slightly greater as the parameters of the multinomial
+    # model are roughly half those of ovr so are slightly less affected by
+    # regularisation and can make slightly better estimates.
     train, target = iris.data, iris.target
     n_samples, n_features = train.shape
 
