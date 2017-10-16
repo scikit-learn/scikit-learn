@@ -5,8 +5,8 @@ Empirical evaluation of the impact of k-means initialization
 
 Evaluate the ability of k-means initializations strategies to make
 the algorithm convergence robust as measured by the relative standard
-deviation of the inertia of the clustering (i.e. the sum of distances
-to the nearest cluster center).
+deviation of the inertia of the clustering (i.e. the sum of squared
+distances to the nearest cluster center).
 
 The first plot shows the best inertia reached for each combination
 of the model (``KMeans`` or ``MiniBatchKMeans``) and the init method
