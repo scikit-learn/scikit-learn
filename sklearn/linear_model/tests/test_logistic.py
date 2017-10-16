@@ -565,6 +565,35 @@ def test_ovr_multinomial_iris():
         assert_equal(scores.shape, (3, n_cv, 10))
 
 
+def test_ovr_multinomial_iris_binary():
+    # Test that multinomial gives better predictions on binary outcome iris
+    # model with respect to log loss and negligible regularisation.
+    train, target = iris.data, iris.target
+    n_samples, n_features = train.shape
+
+    # Conflate classes 0 and 1 and train ovr and multinomial models on this
+    # modified dataset
+    target_copy = target.copy()
+    target_copy[target_copy == 0] = 1
+
+    clf_ovr = LogisticRegression(C=10000, multi_class='ovr',
+                                 solver='saga', max_iter=100000)
+    clf_multi = LogisticRegression(C=10000, multi_class='multinomial',
+                                   solver='saga', max_iter=100000)
+    clf_ovr.fit(train, target_copy)
+    clf_multi.fit(train, target_copy)
+
+    # Test that for the iris data multinomial gives a better accuracy than OvR
+    # on the conflated 2 class dataset with respect to log loss
+    predicted_ovr = clf_ovr.predict_proba(train)
+    predicted_multi = clf_multi.predict_proba(train)
+
+    ovr_log_loss = log_loss(target_copy, predicted_ovr)
+    multi_log_loss = log_loss(target_copy, predicted_multi)
+
+    assert_greater(ovr_log_loss, multi_log_loss)
+
+
 def test_logistic_regression_solvers():
     X, y = make_classification(n_features=10, n_informative=5, random_state=0)
 
