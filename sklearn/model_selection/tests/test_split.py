@@ -733,9 +733,9 @@ def test_stratified_shuffle_split_multilabel_many_labels():
     # method for transforming a multilabel problem to a multiclass one; this
     # test checks that this problem is fixed.
     row_with_many_zeros = [1, 0, 1] + [0] * 1000 + [1, 0, 1]
-	row_with_many_ones = [1, 0, 1] + [1] * 1000 + [1, 0, 1]
-	y = np.array([row_with_many_zeros] * 10 + [row_with_many_ones] * 100)
-	X = np.ones_like(y)
+    row_with_many_ones = [1, 0, 1] + [1] * 1000 + [1, 0, 1]
+    y = np.array([row_with_many_zeros] * 10 + [row_with_many_ones] * 100)
+    X = np.ones_like(y)
 
     sss = StratifiedShuffleSplit(n_splits=1, test_size=0.5, random_state=0)
     train, test = next(sss.split(X=X, y=y))
