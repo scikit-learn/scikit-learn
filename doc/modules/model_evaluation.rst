@@ -309,14 +309,6 @@ Some also work in the multilabel case:
    recall_score
    zero_one_loss
 
-Some are typically used for ranking:
-
-.. autosummary::
-   :template: function.rst
-
-   dcg_score
-   ndcg_score
-
 And some work with binary and multilabel (but not multiclass) problems:
 
 .. autosummary::
