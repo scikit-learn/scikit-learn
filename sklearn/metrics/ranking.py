@@ -877,6 +877,9 @@ def ndcg_score(y_true, y_score, k=5):
     # number in the array)
     binarized_y_true = label_binarize(y_true, np.unique(y_true))
 
+    if binarized_y_true.shape[1] == 1 and y_score.shape[1] == 2:
+        binarized_y_true = np.hstack([1 - y_true, y_true])
+
     if binarized_y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different value ranges")
 
