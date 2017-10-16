@@ -21,6 +21,7 @@ import scipy.sparse as sp
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, safe_indexing
+from ..utils.deprecation import DeprecationDict
 from ..utils.validation import _is_arraylike, _num_samples
 from ..utils.metaestimators import _safe_split
 from ..externals.joblib import Parallel, delayed, logger
@@ -116,11 +117,11 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
               as in '2*n_jobs'
 
     return_train_score : boolean, optional
-        Whether to include train scores in the return dict if ``scoring`` is
-        of multimetric type.
+        Whether to include train scores.
+
         Current default is ``'warn'``, which behaves as ``True`` in addition
-        to raising a warning. That default will be changed to ``False``
-        in 0.21.
+        to raising a warning when the training score is looked up.
+        That default will be changed to ``False`` in 0.21.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
         However computing the scores on the training set can be computationally
@@ -188,14 +189,6 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Make a scorer from a performance metric or loss function.
 
     """
-    if return_train_score == "warn":
-        warnings.warn("Computing training scores can slow down the grid "
-                      "search significantly. This is the reason "
-                      "return_train_score will change its default value "
-                      "from True (current behaviour) to False in 0.21. "
-                      "Please set explicitly return_train_score to get "
-                      "rid of this warning.", FutureWarning)
-
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
@@ -219,7 +212,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         test_scores, fit_times, score_times = zip(*scores)
     test_scores = _aggregate_score_dicts(test_scores)
 
-    ret = dict()
+    ret = DeprecationDict()  # for return_train_score='warn'
     ret['fit_time'] = np.array(fit_times)
     ret['score_time'] = np.array(score_times)
 
@@ -227,6 +220,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         ret['test_%s' % name] = np.array(test_scores[name])
         if return_train_score:
             ret['train_%s' % name] = np.array(train_scores[name])
+            if return_train_score == 'warn':
+                # warn on key access
+                ret.add_warning(
+                    'train_%s' % name,
+                    "Computing training scores can slow down cross "
+                    "validation significantly. This is the reason "
+                    "return_train_score will change its default value "
+                    "from True (current behaviour) to False in 0.21. "
+                    "Please set return_train_score explicitly to get "
+                    "rid of this warning.", FutureWarning)
 
     return ret
 

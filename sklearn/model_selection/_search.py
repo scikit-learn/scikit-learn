@@ -588,23 +588,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                               'the "fit" method.', RuntimeWarning)
             else:
                 fit_params = self.fit_params
-        if self.return_train_score == "warn":
-            msg = ("Computing training scores can slow down the grid "
-                   "search significantly. This is the reason "
-                   "return_train_score will change its default value "
-                   "from True (current behaviour) to False in 0.21. "
-                   "Please set explicitly return_train_score to get "
-                   "rid of this warning.")
-            dd = DeprecationDict()
-            dd.add_warning('cv_results_', msg, FutureWarning)
-            '''
-            warnings.warn("Computing training scores can slow down the grid "
-                          "search significantly. This is the reason "
-                          "return_train_score will change its default value "
-                          "from True (current behaviour) to False in 0.21. "
-                          "Please set explicitly return_train_score to get "
-                          "rid of this warning.", FutureWarning)
-            '''
+
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
@@ -669,7 +653,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         if self.return_train_score:
             train_scores = _aggregate_score_dicts(train_score_dicts)
 
-        results = dict()
+        results = DeprecationDict()  # for return_train_score='warn'
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
@@ -724,8 +708,21 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                    splits=True, rank=True,
                    weights=test_sample_counts if self.iid else None)
             if self.return_train_score:
+                prev_keys = set(results.keys())
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
                        splits=True)
+
+                if self.return_train_score == 'warn':
+                    for key in set(results.keys()) - prev_keys:
+                        # warn on key access
+                        results.add_warning(
+                            key,
+                            "Computing training scores can slow down cross "
+                            "validation significantly. This is the reason "
+                            "return_train_score will change its default value "
+                            "from True (current behaviour) to False in 0.21. "
+                            "Please set return_train_score explicitly to get "
+                            "rid of this warning.", FutureWarning)
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
@@ -901,11 +898,12 @@ class GridSearchCV(BaseSearchCV):
         step, which will always raise the error.
 
     return_train_score : boolean, optional
-        Current default is ``'warn'``, which behaves as ``True`` in addition
-        to raising a warning. That default will be changed to ``False``
-        in 0.21.
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
+
+        Current default is ``'warn'``, which behaves as ``True`` in addition
+        to raising a warning when the training score is looked up.
+        That default will be changed to ``False`` in 0.21.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
         However computing the scores on the training set can be computationally

@@ -333,29 +333,33 @@ def test_grid_search_groups():
         gs.fit(X, y)
 
 
-def test_future_warnings():
+def test_return_train_score_warn():
     # Test that warnings are raised. Will be removed in 0.21
 
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
-    array = np.ones(10)
-    grid = {'C': array}
+    grid = {'C': [1, 2]}
 
     estimators = [GridSearchCV(LinearSVC(random_state=0), grid),
-                  RandomizedSearchCV(LinearSVC(random_state=0), grid)]
-    msg = ("Computing training scores can slow down the grid search "
+                  RandomizedSearchCV(LinearSVC(random_state=0), grid,
+                                     n_iter=2)]
+    msg = ("Computing training scores can slow down cross validation "
            "significantly. This is the reason return_train_score will "
            "change its default value from True (current behaviour) to "
-           "False in 0.21. Please set explicitly return_train_score to "
+           "False in 0.21. Please set return_train_score explicitly to "
            "get rid of this warning.")
+    result = {}
     for estimator in estimators:
-        search_with_warn = estimator.set_params(return_train_score="warn")
-        assert_warns_message(FutureWarning, msg, search_with_warn.fit, X, y)
-        assert_true("mean_train_score" in estimator.cv_results_)
-        search_with_true = estimator.set_params(return_train_score=True)
-        assert_no_warnings(FutureWarning, msg, search_with_true.fit, X, y)
-        search_with_false = estimator.set_params(return_train_score=False)
-        assert_no_warnings(FutureWarning, msg, search_with_false.fit, X, y)
+        for val in [True, False, 'warn']:
+            estimator.set_params(return_train_score=val)
+            result[val] = assert_no_warnings(estimator.fit, X, y).cv_results_
+
+    for key in ['split0_train_score', 'split1_train_score',
+                'split2_train_score', 'mean_train_score', 'std_train_score']:
+        train_score = assert_warns_message(FutureWarning, msg,
+                                           result['warn'].get, key)
+        assert np.allclose(train_score, result[True][key])
+        assert key not in result[False]
 
 
 def test_classes__property():

@@ -381,26 +381,26 @@ def test_cross_validate():
         yield check_cross_validate_multi_metric, est, X, y, scores
 
 
-def test_cross_validate_future_warnings():
+def test_cross_validate_return_train_score_warn():
     # Test that warnings are raised. Will be removed in 0.21
 
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
 
-    def init(estimator, X, y, return_train_score):
-        cv_results = cross_validate(estimator, X, y,
-                                    return_train_score=return_train_score)
-        return cv_results
-
-    msg = ("Computing training scores can slow down the grid search "
+    msg = ("Computing training scores can slow down cross validation "
            "significantly. This is the reason return_train_score will "
            "change its default value from True (current behaviour) to "
-           "False in 0.21. Please set explicitly return_train_score to "
+           "False in 0.21. Please set return_train_score explicitly to "
            "get rid of this warning.")
-    assert_warns_message(FutureWarning, msg, init, estimator, X, y, "warn")
-    assert_true("train_score" in init(estimator, X, y, "warn"))
-    assert_no_warnings(FutureWarning, msg, init, estimator, X, y, True)
-    assert_no_warnings(FutureWarning, msg, init, estimator, X, y, False)
+    result = {}
+    for val in [False, True, 'warn']:
+        result[val] = assert_no_warnings(cross_validate, estimator, X, y,
+                                         return_train_score=val)
+
+    train_score = assert_warns_message(FutureWarning, msg,
+                                       result['warn'].get, 'train_score')
+    assert np.allclose(train_score, result[True]['train_score'])
+    assert 'train_score' not in result[False]
 
 
 def check_cross_validate_single_metric(clf, X, y, scores):
