@@ -43,6 +43,7 @@ from __future__ import division
 
 import warnings
 from warnings import warn
+import threading
 
 from abc import ABCMeta, abstractmethod
 import numpy as np
@@ -378,13 +379,14 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble)):
 # ForestClassifier or ForestRegressor, because joblib complains that it cannot
 # pickle it when placed there.
 
-def accumulate_prediction(predict, X, out):
+def accumulate_prediction(predict, X, out, lock):
     prediction = predict(X, check_input=False)
-    if len(out) == 1:
-        out[0] += prediction
-    else:
-        for i in range(len(out)):
-            out[i] += prediction[i]
+    with lock:
+        if len(out) == 1:
+            out[0] += prediction
+        else:
+            for i in range(len(out)):
+                out[i] += prediction[i]
 
 
 class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
@@ -581,8 +583,9 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         # avoid storing the output of every estimator by summing them here
         all_proba = [np.zeros((X.shape[0], j), dtype=np.float64)
                      for j in np.atleast_1d(self.n_classes_)]
+        lock = threading.Lock()
         Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
-            delayed(accumulate_prediction)(e.predict_proba, X, all_proba)
+            delayed(accumulate_prediction)(e.predict_proba, X, all_proba, lock)
             for e in self.estimators_)
 
         for proba in all_proba:
@@ -687,8 +690,9 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             y_hat = np.zeros((X.shape[0]), dtype=np.float64)
 
         # Parallel loop
+        lock = threading.Lock()
         Parallel(n_jobs=n_jobs, verbose=self.verbose, backend="threading")(
-            delayed(accumulate_prediction)(e.predict, X, [y_hat])
+            delayed(accumulate_prediction)(e.predict, X, [y_hat], lock)
             for e in self.estimators_)
 
         y_hat /= len(self.estimators_)
