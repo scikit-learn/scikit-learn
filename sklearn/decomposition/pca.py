@@ -112,8 +112,8 @@ class PCA(_BasePCA):
 
     It uses the LAPACK implementation of the full SVD or a randomized truncated
     SVD by the method of Halko et al. 2009, depending on the shape of the input
-    data and the number of components to extract. It centers the data matrix
-    columnwise (but does not scale it) before performing Singular Value Decomposition.
+    data and the number of components to extract. The input data is centered
+    for each feature before applying the SVD.
 
     It can also use the scipy.sparse.linalg ARPACK implementation of the
     truncated SVD.
