@@ -789,6 +789,11 @@ def test_ndcg_score():
     average_ranking = ndcg_score(y_true, y_score, k=2)
     assert_almost_equal(average_ranking, 0.63092975)
 
+    # Check repetition results in same score
+    # Non-regression test for #9921
+    assert_almost_equal(average_ranking, ndcg_score(y_true * 2, y_score * 2,
+                                                    k=2))
+
 
 def check_lrap_error_raised(lrap_score):
     # Raise value error if not appropriate format

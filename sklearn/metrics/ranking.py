@@ -32,7 +32,6 @@ from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
-from ..preprocessing import LabelBinarizer
 
 from .base import _average_binary_score
 
@@ -876,9 +875,10 @@ def ndcg_score(y_true, y_score, k=5):
 
     # Make sure we use all the labels (max between the length and the higher
     # number in the array)
-    lb = LabelBinarizer()
-    lb.fit(np.arange(max(np.max(y_true) + 1, len(y_true))))
-    binarized_y_true = lb.transform(y_true)
+    binarized_y_true = label_binarize(y_true, np.unique(y_true))
+
+    if binarized_y_true.shape[1] == 1 and y_score.shape[1] == 2:
+        binarized_y_true = np.hstack([1 - y_true, y_true])
 
     if binarized_y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different value ranges")
