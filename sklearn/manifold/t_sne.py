@@ -423,15 +423,10 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
         dist_X = X
     else:
         dist_X = pairwise_distances(X, squared=True)
-<<<<<<< HEAD
-    dist_X_embedded = pairwise_distances(X_embedded, squared=True)
+
     ind_X = np.argsort(dist_X, axis=1)[:, 1:]
-    ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, 1:n_neighbors + 1]
-=======
-    ind_X = np.argsort(dist_X, axis=1)
     ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
         return_distance=False)
->>>>>>> ed5a0cac6b0bdf2ff9920a7565efa0bff12f485c
 
     n_samples = X.shape[0]
     inverted_index = np.zeros((n_samples, n_samples))
