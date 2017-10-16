@@ -43,6 +43,32 @@ ticket to the
 also welcome to post feature requests or pull requests.
 
 
+Ways to contribute
+==================
+
+There are many ways to contribute to scikit-learn, with the most common ones
+being contribution of code or documentation to the project. Improving the
+documentation is no less important than improving the library itself.  If you
+find a typo in the documentation, or have made improvements, do not hesitate to
+send an email to the mailing list or preferably submit a GitHub pull request.
+Full documentation can be found under the doc/ directory.
+
+But there are many other ways to help. In particular answering queries on the
+`issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_,
+investigating bugs, and :ref:`reviewing other developers' pull requests
+<code_review>` are very valuable contributions that decrease the burden on the
+project maintainers.
+
+Another way to contribute is to report issues you're facing, and give a "thumbs up"
+on issues that others reported and that are relevant to you.
+It also helps us if you spread the word: reference the project from your blog
+and articles, link to it from your website, or simply say "I use it":
+
+.. raw:: html
+
+   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+
+
 .. _git_repo:
 
 Retrieving the latest code
@@ -545,24 +571,6 @@ There are three other tags to help new contributors:
     contributors will have this tag.
 
 
-Other ways to contribute
-========================
-
-Code is not the only way to contribute to scikit-learn. For instance,
-documentation is also a very important part of the project and often
-doesn't get as much attention as it deserves. If you find a typo in
-the documentation, or have made improvements, do not hesitate to send
-an email to the mailing list or submit a GitHub pull request. Full
-documentation can be found under the doc/ directory.
-
-It also helps us if you spread the word: reference the project from your blog
-and articles, link to it from your website, or simply say "I use it":
-
-.. raw:: html
-
-   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
-
-
 .. _coding-guidelines:
 
 Coding guidelines
@@ -780,6 +788,66 @@ the Python standard library.
 The `six <http://pythonhosted.org/six/>`_ package helps with
 cross-compatibility and is included in scikit-learn as
 ``sklearn.externals.six``.
+
+
+.. _code_review:
+
+Code Review Guidelines
+======================
+Reviewing code contributed to the project as PRs is a crucial component of
+scikit-learn development. We encourage anyone to start reviewing code of other
+developers. The code review process is often highly educational for everybody
+involved. This is particularly appropriate if it is a feature you would like to
+use, and so can respond critically about whether the PR meets your needs. While
+each pull request needs to be signed off by two core developers, you can speed
+up this process by providing your feedback.
+
+Here are a few important aspects that need to be covered in any code review,
+from high-level questions to a more detailed check-list.
+
+- Do we want this in the library? Is it likely to be used? Do you, as
+  a scikit-learn user, like the change and intend to use it? Is it in
+  the scope of scikit-learn? Will the cost of maintaining a new
+  feature be worth its benefits?
+
+- Is the code consistent with the API of scikit-learn? Are public
+  functions/classes/parameters well named and intuitively designed?
+
+- Are all public functions/classes and their parameters, return types, and
+  stored attributes named according to scikit-learn conventions and documented clearly?
+
+- Is any new functionality described in the user-guide and illustrated with examples?
+
+- Is every public function/class tested? Are a reasonable set of
+  parameters, their values, value types, and combinations tested? Do
+  the tests validate that the code is correct, i.e. doing what the
+  documentation says it does? If the change is a bug-fix, is a
+  non-regression test included? Look at `this
+  <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`_
+  to get started with testing in Python.
+
+- Do the tests pass in the continuous integration build? If
+  appropriate, help the contributor understand why tests failed.
+
+- Do the tests cover every line of code (see the coverage report in the build
+  log)? If not, are the lines missing coverage good exceptions?
+
+- Is the code easy to read and low on redundancy? Should variable names be
+  improved for clarity or consistency? Should comments be added? Should comments
+  be removed as unhelpful or extraneous?
+
+- Could the code easily be rewritten to run much more efficiently for
+  relevant settings?
+
+- Is the code backwards compatible with previous versions? (or is a
+  deprecation cycle necessary?)
+
+- Will the new code add any dependencies on other libraries? (this is
+  unlikely to be accepted)
+
+- Does the documentation render properly (see the
+  :ref:`contribute_documentation` section for more details), and are the plots
+  instructive?
 
 
 APIs of scikit-learn objects
