@@ -31,6 +31,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
+from ..preprocessing import label_binarize
 
 from .base import _average_binary_score
 
