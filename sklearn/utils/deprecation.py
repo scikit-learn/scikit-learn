@@ -132,4 +132,3 @@ class DeprecationDict(dict):
     def add_warning(self, key, *args, **kwargs):
         """Add a warning to be triggered when the specified key is read"""
         self._deprecations[key] = (args, kwargs)
-
