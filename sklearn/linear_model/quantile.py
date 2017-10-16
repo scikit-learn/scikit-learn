@@ -2,7 +2,7 @@
 # License: TBD
 
 import numpy as np
-
+import warnings
 from scipy import optimize, sparse
 
 from ..base import BaseEstimator, RegressorMixin
@@ -152,7 +152,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
            Sankhyā: The Indian Journal of Statistics, 399-417.
     """
 
-    def __init__(self, quantile=0.5, max_iter=100, alpha=0.0001, l1_ratio=0.0
+    def __init__(self, quantile=0.5, max_iter=1000, alpha=0.0001, l1_ratio=0.0,
                  warm_start=False, fit_intercept=True, tol=1e-05):
         self.quantile = quantile
         self.max_iter = max_iter
@@ -214,11 +214,10 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             #gtol=self.tol,
             method='BFGS',
             #iprint=0,
-            jac = True,
+            jac=True,
             )
-        # ToDo: issue warning instead of ValueError
         if result['success'] == False:
-            raise ValueError("QuantileRegressor convergence failed:"
+            warnings.warn("QuantileRegressor convergence failed:"
                              " Scipy solver terminated with %s"
                              % result['message'])
         
