@@ -56,7 +56,7 @@ Full documentation can be found under the doc/ directory.
 But there are many other ways to help. In particular answering queries on the
 `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_,
 investigating bugs, and :ref:`reviewing other developers' pull requests
-<code_review>` are very valuabe contributions that decrease the burden on the
+<code_review>` are very valuable contributions that decrease the burden on the
 project maintainers.
 
 Another way to contribute is to report issues you're facing, and give a "thumbs up"
