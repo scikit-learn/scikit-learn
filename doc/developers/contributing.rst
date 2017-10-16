@@ -802,9 +802,10 @@ up this process by providing your feedback.
 Here are a few important aspects that need to be covered in any code review,
 from high-level questions to a more detailed check-list.
 
-- Do we want this in the library? Is it likely to be used? Is it in the scope of
-  scikit-learn? Will the cost of maintaining a new feature be worth its
-  benefits?
+- Do we want this in the library? Is it likely to be used? Do you, as
+  a scikit-learn user, like the change and intend to use it? Is it in
+  the scope of scikit-learn? Will the cost of maintaining a new
+  feature be worth its benefits?
 
 - Is the code consistent with the API of scikit-learn? Are public
   functions/classes/parameters well named and intuitively designed?
@@ -814,15 +815,17 @@ from high-level questions to a more detailed check-list.
 
 - Is any new functionality described in the user-guide and illustrated with examples?
 
-- Is every public function/class tested? Are a reasonable set of parameters,
-  their values, value types, and combinations tested? Do the tests pass in the
-  continuous integration build? If appropriate, help the contributor understand
-  why tests failed.
+- Is every public function/class tested? Are a reasonable set of
+  parameters, their values, value types, and combinations tested? Do
+  the tests validate that the code is correct, i.e. doing what the
+  documentation says it does? Look at `this
+  <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing`_
+  Do the tests validate that the code is correct, i.e. doing what the
+  documentation says it does? If the change is a bug-fix, is a
+  non-regression test included?
 
-
-- Do the tests validate that the code is correct, i.e. doing what the
-  documentation says it does? If appropriate, help the contributor test the code
-  better.
+- Do the tests pass in the continuous integration build? If
+  appropriate, help the contributor understand why tests failed.
 
 - Do the tests cover every line of code (see the coverage report in the build
   log)? If not, are the lines missing coverage good exceptions?
@@ -831,19 +834,18 @@ from high-level questions to a more detailed check-list.
   improved for clarity or consistency? Should comments be added? Should comments
   be removed as unhelpful or extraneous?
 
-- Could the code easily be rewritten to run much more efficiently for relevant settings?
+- Could the code easily be rewritten to run much more efficiently for
+  relevant settings?
 
-- Is the code backwards compatible with previous versions? (Or is a deprecation cycle necessary?)
+- Is the code backwards compatible with previous versions? (or is a
+  deprecation cycle necessary?)
 
-- Will the new code add any dependencies on other libraries? (This is unlikely to be accepted)
-
-- If the change is a bug-fix, is a non-regression test included?
+- Will the new code add any dependencies on other libraries? (this is
+  unlikely to be accepted)
 
 - Does the documentation render properly (see the
   :ref:`contribute_documentation` section for more details), and are the plots
   instructive?
-
-- Do you like and intend to use the change?
 
 
 APIs of scikit-learn objects
