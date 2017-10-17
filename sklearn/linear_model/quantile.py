@@ -210,13 +210,16 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             _quantile_loss_and_gradient, 
             parameters,
             args=(X, y, self.quantile, self.alpha, self.l1_ratio, sample_weight),
-            #maxiter=self.max_iter, 
-            #gtol=self.tol,
             method='BFGS',
-            #iprint=0,
             jac=True,
+            options={
+                # Gradient norm must be less than gtol before successful termination, but it is never so
+                # todo: fix convergence problem (criteria of true convergence)
+                'gtol': self.tol,
+                'maxiter': self.max_iter,
+            }
             )
-        if result['success'] == False:
+        if not result['success']:
             warnings.warn("QuantileRegressor convergence failed:"
                              " Scipy solver terminated with %s"
                              % result['message'])
