@@ -835,6 +835,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Maximum number of epochs to not meet `tol` improvement.
         Only effective when solver='sgd' or 'adam'
 
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     classes_ : array or list of array of shape (n_classes,)
@@ -1216,6 +1218,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
     n_iter_no_change : int, optional, default 10
         Maximum number of epochs to not meet `tol` improvement.
         Only effective when solver='sgd' or 'adam'
+
+        .. versionadded:: 0.20
 
     Attributes
     ----------
