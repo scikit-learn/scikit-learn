@@ -30,6 +30,9 @@ strong assumptions on the isotropy of the signal: this is for example
 the case for Support Vector Machines with the RBF kernel and the K-Means
 clustering algorithm.
 
+Note: the :class:`PCA` object centers the input data for each feature before
+applying the SVD.
+
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
 
