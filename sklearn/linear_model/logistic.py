@@ -1102,13 +1102,18 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         Coefficient of the features in the decision function.
 
         `coef_` is of shape (1, n_features) when the given problem
-        is binary.
+        is binary and in the case when `multi_class='multinomial'`, then
+        `coef_` are the coefficients for outcome 1 (True) and `-coef_` are
+        the coefficients for outcome 0 (False).
 
     intercept_ : array, shape (1,) or (n_classes,)
         Intercept (a.k.a. bias) added to the decision function.
 
         If `fit_intercept` is set to False, the intercept is set to zero.
-        `intercept_` is of shape(1,) when the problem is binary.
+        `intercept_` is of shape(1,) when the problem is binary and in the
+        case when `multi_class='multinomial'`, then `intercept_` is the
+        intercept term for outcome 1 (True) and `-intercept_` is the intercept
+        term for outcome 0 (False).
 
     n_iter_ : array, shape (n_classes,) or (1, )
         Actual number of iterations for all classes. If binary or multinomial,
