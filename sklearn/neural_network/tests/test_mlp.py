@@ -420,6 +420,7 @@ def test_params_errors():
     assert_raises(ValueError, clf(beta_2=1).fit, X, y)
     assert_raises(ValueError, clf(beta_2=-0.5).fit, X, y)
     assert_raises(ValueError, clf(epsilon=-0.5).fit, X, y)
+    assert_raises(ValueError, clf(n_iter_no_change=-1).fit, X, y)
 
     assert_raises(ValueError, clf(solver='hadoken').fit, X, y)
     assert_raises(ValueError, clf(learning_rate='converge').fit, X, y)
