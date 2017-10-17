@@ -19,9 +19,28 @@ sample.
 Changelog
 ---------
 
+API changes
+...........
+
 - Reverted the addition of ``metrics.ndcg_score`` and ``metrics.dcg_score``
   which had been merged into version 0.19.0 by error.  The implementations
   were broken and undocumented.
+
+- ``return_train_score`` which was added to
+  :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV` and
+  :func:`model_selection.cross_validate` in version 0.19.0 will be changing its
+  default value from True to False in version 0.21.  We found that calculating
+  training score could have a great effect on cross validation runtime in some
+  cases.  Users should explicitly set ``return_train_score`` to False if
+  prediction or scoring functions are slow, resulting in a deleterious effect
+  on CV runtime, or to True if they wish to use the calculated scores.
+  :issue:`9677` by :user:`Kumar Ashutosh <thechargedneutron>` and `Joel
+  Nothman`_.
+
+- ``correlation_models`` and ``regression_models`` from the legacy gaussian
+  processes implementation have been belatedly deprecated. :issue:`9717` by
+  :user:`Kumar Ashutosh <thechargedneutron>`.
 
 Bug fixes
 .........
