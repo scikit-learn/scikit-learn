@@ -73,6 +73,10 @@ Bug fixes
   thread-safe and could (rarely) result in arbitrary errors. :issue:`9830` by
   `Joel Nothman`_.
 
+- :class:`model_selection.StratifiedShuffleSplit` now works with multioutput
+  multiclass or multilabel data with more than 1000 columns.  :issue:`9922` by
+  :user:`Charlie Brummitt <crbrummitt>`.
+
 Enhancements
 ............
 
