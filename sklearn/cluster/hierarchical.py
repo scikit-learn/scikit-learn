@@ -765,10 +765,18 @@ class FeatureAgglomeration(_BaseClustering, AgglomerationTransform):
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean):
-        _BaseClustering.__init__(self, n_clusters=2, affinity="euclidean",
-                                 memory=None, connectivity=None,
-                                 compute_full_tree='auto', linkage='ward')
+        self.n_clusters = n_clusters
+        self.memory = memory
+        self.connectivity = connectivity
+        self.compute_full_tree = compute_full_tree
+        self.linkage = linkage
+        self.affinity = affinity
         self.pooling_func = pooling_func
+        _BaseClustering.__init__(self, n_clusters=n_clusters,
+                                 affinity=affinity, memory=memory,
+                                 connectivity=connectivity,
+                                 compute_full_tree=compute_full_tree,
+                                 linkage=linkage)
 
     def fit(self, X, y=None, **params):
         """Fit the hierarchical clustering on the data
