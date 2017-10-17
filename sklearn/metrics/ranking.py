@@ -26,17 +26,17 @@ from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
 from ..utils import check_consistent_length
-from ..utils import column_or_1d, check_array, check_X_y
+from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
-from ..preprocessing import LabelBinarizer
+from ..preprocessing import label_binarize
 
 from .base import _average_binary_score
 
 
-def auc(x, y, reorder=False):
+def auc(x, y, reorder='deprecated'):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     This is a general function, given points on a curve.  For computing the
@@ -47,12 +47,23 @@ def auc(x, y, reorder=False):
     Parameters
     ----------
     x : array, shape = [n]
-        x coordinates.
+        x coordinates. These must be either monotonic increasing or monotonic
+        decreasing.
     y : array, shape = [n]
         y coordinates.
-    reorder : boolean, optional (default=False)
-        If True, assume that the curve is ascending in the case of ties, as for
-        an ROC curve. If the curve is non-ascending, the result will be wrong.
+    reorder : boolean, optional (default='deprecated')
+        Whether to sort x before computing. If False, assume that x must be
+        either monotonic increasing or monotonic decreasing. If True, y is
+        used to break ties when sorting x. Make sure that y has a monotonic
+        relation to x when setting reorder to True.
+
+        .. deprecated:: 0.20
+           Parameter ``reorder`` has been deprecated in version 0.20 and will
+           be removed in 0.22. It's introduced for roc_auc_score (not for
+           general use) and is no longer used there. What's more, the result
+           from auc will be significantly influenced if x is sorted
+           unexpectedly due to slight floating point error (See issue #9786).
+           Future (and default) behavior is equivalent to ``reorder=False``.
 
     Returns
     -------
@@ -83,8 +94,15 @@ def auc(x, y, reorder=False):
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
 
+    if reorder != 'deprecated':
+        warnings.warn("The 'reorder' parameter has been deprecated in "
+                      "version 0.20 and will be removed in 0.22. It is "
+                      "recommended not to set 'reorder' and ensure that x "
+                      "is monotonic increasing or monotonic decreasing.",
+                      DeprecationWarning)
+
     direction = 1
-    if reorder:
+    if reorder is True:
         # reorder the data points according to the x axis and using y to
         # break ties
         order = np.lexsort((y, x))
@@ -95,8 +113,8 @@ def auc(x, y, reorder=False):
             if np.all(dx <= 0):
                 direction = -1
             else:
-                raise ValueError("Reordering is not turned on, and "
-                                 "the x array is not increasing: %s" % x)
+                raise ValueError("x is neither increasing nor decreasing "
+                                 ": {}.".format(x))
 
     area = direction * np.trapz(y, x)
     if isinstance(area, np.memmap):
@@ -212,12 +230,14 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels (either {0, 1} or {-1, 1}).
+        True binary labels or binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+        (as returned by "decision_function" on some classifiers). For binary
+        y_true, y_score is supposed to be the score of the class with greater
+        label.
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -272,6 +292,11 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
                                         sample_weight=sample_weight)
         return auc(fpr, tpr)
 
+    y_type = type_of_target(y_true)
+    if y_type == "binary":
+        labels = np.unique(y_true)
+        y_true = label_binarize(y_true, labels)[:, 0]
+
     return _average_binary_score(
         _binary_roc_auc_score, y_true, y_score, average,
         sample_weight=sample_weight)
@@ -311,6 +336,12 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     thresholds : array, shape = [n_thresholds]
         Decreasing score values.
     """
+    # Check to make sure y_true is valid
+    y_type = type_of_target(y_true)
+    if not (y_type == "binary" or
+            (y_type == "multiclass" and pos_label is not None)):
+        raise ValueError("{0} format is not supported".format(y_type))
+
     check_consistent_length(y_true, y_score, sample_weight)
     y_true = column_or_1d(y_true)
     y_score = column_or_1d(y_score)
@@ -790,91 +821,3 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
     loss[np.logical_or(n_positives == 0, n_positives == n_labels)] = 0.
 
     return np.average(loss, weights=sample_weight)
-
-
-def dcg_score(y_true, y_score, k=5):
-    """Discounted cumulative gain (DCG) at rank K.
-
-    Parameters
-    ----------
-    y_true : array, shape = [n_samples]
-        Ground truth (true relevance labels).
-    y_score : array, shape = [n_samples]
-        Predicted scores.
-    k : int
-        Rank.
-
-    Returns
-    -------
-    score : float
-
-    References
-    ----------
-    .. [1] `Wikipedia entry for the Discounted Cumulative Gain
-           <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
-    """
-    order = np.argsort(y_score)[::-1]
-    y_true = np.take(y_true, order[:k])
-
-    gain = 2 ** y_true - 1
-
-    discounts = np.log2(np.arange(len(y_true)) + 2)
-    return np.sum(gain / discounts)
-
-
-def ndcg_score(y_true, y_score, k=5):
-    """Normalized discounted cumulative gain (NDCG) at rank K.
-
-    Normalized Discounted Cumulative Gain (NDCG) measures the performance of a
-    recommendation system based on the graded relevance of the recommended
-    entities. It varies from 0.0 to 1.0, with 1.0 representing the ideal
-    ranking of the entities.
-
-    Parameters
-    ----------
-    y_true : array, shape = [n_samples]
-        Ground truth (true labels represended as integers).
-    y_score : array, shape = [n_samples, n_classes]
-        Predicted probabilities.
-    k : int
-        Rank.
-
-    Returns
-    -------
-    score : float
-
-    Examples
-    --------
-    >>> y_true = [1, 0, 2]
-    >>> y_score = [[0.15, 0.55, 0.2], [0.7, 0.2, 0.1], [0.06, 0.04, 0.9]]
-    >>> ndcg_score(y_true, y_score, k=2)
-    1.0
-    >>> y_score = [[0.9, 0.5, 0.8], [0.7, 0.2, 0.1], [0.06, 0.04, 0.9]]
-    >>> ndcg_score(y_true, y_score, k=2)
-    0.66666666666666663
-
-    References
-    ----------
-    .. [1] `Kaggle entry for the Normalized Discounted Cumulative Gain
-           <https://www.kaggle.com/wiki/NormalizedDiscountedCumulativeGain>`_
-    """
-    y_score, y_true = check_X_y(y_score, y_true)
-
-    # Make sure we use all the labels (max between the length and the higher
-    # number in the array)
-    lb = LabelBinarizer()
-    lb.fit(np.arange(max(np.max(y_true) + 1, len(y_true))))
-    binarized_y_true = lb.transform(y_true)
-
-    if binarized_y_true.shape != y_score.shape:
-        raise ValueError("y_true and y_score have different value ranges")
-
-    scores = []
-
-    # Iterate over each y_value_true and compute the DCG score
-    for y_value_true, y_value_score in zip(binarized_y_true, y_score):
-        actual = dcg_score(y_value_true, y_value_score, k)
-        best = dcg_score(y_value_true, y_value_true, k)
-        scores.append(actual / best)
-
-    return np.mean(scores)
