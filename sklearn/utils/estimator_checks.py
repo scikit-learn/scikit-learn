@@ -1264,9 +1264,6 @@ def check_supervised_y_2d(name, estimator_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_classifiers_classes(name, classifier_orig):
-    # This is a pathological data set for ComplementNB.
-    if name == "ComplementNB":
-        return
     X, y = make_blobs(n_samples=30, random_state=0, cluster_std=0.1)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
@@ -1292,7 +1289,9 @@ def check_classifiers_classes(name, classifier_orig):
 
         y_pred = classifier.predict(X)
         # training set performance
-        assert_array_equal(np.unique(y_), np.unique(y_pred))
+        if name != "ComplementNB":
+            # This is a pathological data set for ComplementNB.
+            assert_array_equal(np.unique(y_), np.unique(y_pred))
         if np.any(classifier.classes_ != classes):
             print("Unexpected classes_ attribute for %r: "
                   "expected %s, got %s" %

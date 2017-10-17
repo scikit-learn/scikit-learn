@@ -754,7 +754,10 @@ class ComplementNB(BaseDiscreteNB):
         Prior probabilities of the classes. Not used.
 
     norm : boolean, optional (default=False)
-        Whether or not to perform second normalization of weights.
+        Whether or not a second normalization of the weights is performed. The
+        default behavior mirrors the implementations found in Mahout and Weka,
+        which do not follow the full algorithm described in Table 9 of the
+        paper.
 
     Attributes
     ----------
