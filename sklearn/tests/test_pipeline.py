@@ -24,10 +24,11 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.dummy import DummyRegressor
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
@@ -861,6 +862,20 @@ def test_step_name_validation():
             assert_raise_message(ValueError, message, est.fit, [[1]], [1])
             assert_raise_message(ValueError, message, est.fit_transform,
                                  [[1]], [1])
+
+
+def test_set_conditional_params():
+    estimator = Pipeline([
+        ('a', Pipeline([
+            ('b', DummyRegressor())
+        ]))
+    ])
+    params = {
+        'a__b__alpha': 0.001,
+        'a__b': Lasso(),
+    }
+
+    estimator.set_params(**params)
 
 
 def test_pipeline_wrong_memory():

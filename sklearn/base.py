@@ -248,7 +248,10 @@ class BaseEstimator(object):
             # Simple optimization to gain speed (inspect is slow)
             return self
         valid_params = self.get_params(deep=True)
-        for key, value in six.iteritems(params):
+        # ensure ordered iteration
+        keys = sorted(params)
+        for key in keys:
+            value = params[key]
             split = key.split('__', 1)
             if len(split) > 1:
                 # nested objects case
