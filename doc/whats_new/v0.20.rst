@@ -123,8 +123,7 @@ Linear, kernelized and related models
 
 Metrics
 
-- Deprecate ``reorder`` parameter in :class:`metrics.auc` as it's introduced
-  for roc_auc_score (not for general use) and is no longer used there. What's
-  more, the result from auc will be significantly influenced if x is sorted
-  unexpectedly due to slight floating point error.
+- Deprecate ``reorder`` parameter in :func:`metrics.auc` as it's no longer required
+  for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
+  due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
