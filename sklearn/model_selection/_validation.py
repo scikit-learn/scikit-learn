@@ -205,10 +205,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         train_scores = zipped_scores.pop(0)
         train_scores = _aggregate_score_dicts(train_scores)
     if return_estimator:
-        (test_scores, fit_times, score_times,
-         fitted_estimators) = zipped_scores
-    else:
-        test_scores, fit_times, score_times = zipped_scores
+        fitted_estimators = zipped_scores.pop()
+    test_scores, fit_times, score_times = zipped_scores
     test_scores = _aggregate_score_dicts(test_scores)
 
     ret = dict()

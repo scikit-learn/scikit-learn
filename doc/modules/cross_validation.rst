@@ -196,7 +196,8 @@ following keys -
 for all the scorers. If train scores are not needed, this should be set to
 ``False`` explicitly.
 
-``return_estimator`` is set to ``False`` by default. When set to ``True``, it adds an ``estimator`` key containing the estimators fitted on each split.
+You may also retain the estimator fitted on each training set by setting
+``return_estimator=True``.
 
 The multiple metrics can be specified either as a list, tuple or set of
 predefined scorer names::
