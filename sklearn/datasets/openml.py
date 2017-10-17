@@ -1,5 +1,6 @@
 import json
 import numbers
+import sys
 import os
 from os.path import join, exists
 from warnings import warn
@@ -42,7 +43,12 @@ def _get_data_description_by_id(data_id):
 
 def _download_data(url):
     response = urlopen(url)
-    arff = loadarff(StringIO(response.read().decode('utf-8')))
+    if sys.version_info[0] == 2:
+        # Python2.7 numpy can't handle unicode?
+        arff = loadarff(StringIO(response.read()))
+    else:
+        arff = loadarff(StringIO(response.read().decode('utf-8')))
+
     response.close()
     return arff
 
@@ -141,7 +147,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
     else:
         y = None
 
-    description = "{}\n\nDownloaded from openml.org.".format(
+    description = u"{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
 
     bunch = Bunch(
