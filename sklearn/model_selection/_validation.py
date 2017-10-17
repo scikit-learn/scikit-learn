@@ -120,13 +120,13 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         Whether to include train scores.
 
         Current default is ``'warn'``, which behaves as ``True`` in addition
-        to raising a warning when the training score is looked up.
+        to raising a warning when a training score is looked up.
         That default will be changed to ``False`` in 0.21.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
         However computing the scores on the training set can be computationally
-        expensive and is not strictly required evaluate the generalization
-        performance.
+        expensive and is not strictly required to select the parameters that
+        yield the best generalization performance.
 
     Returns
     -------
@@ -212,7 +212,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         test_scores, fit_times, score_times = zip(*scores)
     test_scores = _aggregate_score_dicts(test_scores)
 
-    ret = DeprecationDict()  # for return_train_score='warn'
+    # TODO: replace by a dict in 0.21
+    ret = DeprecationDict() if return_train_score == 'warn' else {}
     ret['fit_time'] = np.array(fit_times)
     ret['score_time'] = np.array(score_times)
 

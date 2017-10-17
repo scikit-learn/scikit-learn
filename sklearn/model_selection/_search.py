@@ -588,7 +588,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                               'the "fit" method.', RuntimeWarning)
             else:
                 fit_params = self.fit_params
-
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
@@ -653,7 +652,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         if self.return_train_score:
             train_scores = _aggregate_score_dicts(train_score_dicts)
 
-        results = DeprecationDict()  # for return_train_score='warn'
+        # TODO: replace by a dict in 0.21
+        results = (DeprecationDict() if self.return_train_score == 'warn'
+                   else {})
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""
@@ -902,7 +903,7 @@ class GridSearchCV(BaseSearchCV):
         scores.
 
         Current default is ``'warn'``, which behaves as ``True`` in addition
-        to raising a warning when the training score is looked up.
+        to raising a warning when a training score is looked up.
         That default will be changed to ``False`` in 0.21.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
@@ -1225,11 +1226,12 @@ class RandomizedSearchCV(BaseSearchCV):
         step, which will always raise the error.
 
     return_train_score : boolean, optional
-        Current default is ``'warn'``, which behaves as ``True`` in addition
-        to raising a warning. That default will be changed to ``False``
-        in 0.21.
         If ``False``, the ``cv_results_`` attribute will not include training
         scores.
+
+        Current default is ``'warn'``, which behaves as ``True`` in addition
+        to raising a warning when a training score is looked up.
+        That default will be changed to ``False`` in 0.21.
         Computing training scores is used to get insights on how different
         parameter settings impact the overfitting/underfitting trade-off.
         However computing the scores on the training set can be computationally
