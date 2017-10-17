@@ -22,6 +22,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score
@@ -778,8 +779,13 @@ def test_cross_val_predict():
     assert_raises(ValueError, cross_val_predict, est, X, y, cv=BadCV())
 
     X, y = load_iris(return_X_y=True)
-    assert_warns(RuntimeWarning, cross_val_predict, LogisticRegression(),
-                 X, y, method='predict_proba', cv=KFold(2))
+
+    warning_message = ('Number of classes in training fold (2) does '
+                       'not match total number of classes (3). '
+                       'Results may not be appropriate for your use case.')
+    assert_warns_message(RuntimeWarning, warning_message,
+                         cross_val_predict, LogisticRegression(),
+                         X, y, method='predict_proba', cv=KFold(2))
 
 
 def test_cross_val_predict_decision_function_shape():

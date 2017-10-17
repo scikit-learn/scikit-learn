@@ -728,14 +728,15 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         n_classes = len(set(y))
         if n_classes != len(estimator.classes_):
-            err_mess = ('To fix this, use a cross-validation '
-                        'technique resulting in properly '
-                        'stratified folds')
-            warnings.warn("Number of classes in training fold ({}) does"
-                          "not match total number of classes ({}).  "
-                          "Results may not be appropriate for your use case."
-                          " {}".format(len(estimator.classes_),
-                                       n_classes, err_mess),
+            recommendation = (
+                'To fix this, use a cross-validation '
+                'technique resulting in properly '
+                'stratified folds')
+            warnings.warn('Number of classes in training fold ({}) does '
+                          'not match total number of classes ({}). '
+                          'Results may not be appropriate for your use case. '
+                          '{}'.format(len(estimator.classes_),
+                                      n_classes, recommendation),
                           RuntimeWarning)
             if method == 'decision_function':
                 if (predictions.ndim == 2 and
@@ -745,17 +746,19 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
                     # it with. This case is found when sklearn.svm.SVC is
                     # set to `decision_function_shape='ovo'`.
                     raise ValueError('Output shape {} of {} does not match '
-                                     'number of classes ({}) in fold. Cannot'
-                                     ' reconcile different number of classes'
-                                     ' in different folds. {}'.format(
+                                     'number of classes ({}) in fold. Cannot '
+                                     'reconcile different number of classes '
+                                     'in different folds. {}'.format(
                                         predictions.shape, method,
-                                        len(estimator.classes_), err_mess))
+                                        len(estimator.classes_),
+                                        recommendation))
                 if len(estimator.classes_) <= 2:
                     # In this special case, `predictions` contains a 1D array.
-                    raise ValueError('Only {} class/es in training fold, this'
-                                     ' is not supported for decision_function'
-                                     ' with imbalanced folds. {}'.format(
-                                        len(estimator.classes_), err_mess))
+                    raise ValueError('Only {} class/es in training fold, this '
+                                     'is not supported for decision_function '
+                                     'with imbalanced folds. {}'.format(
+                                        len(estimator.classes_),
+                                        recommendation))
 
             float_min = np.finfo(predictions.dtype).min
             default_values = {'decision_function': float_min,
