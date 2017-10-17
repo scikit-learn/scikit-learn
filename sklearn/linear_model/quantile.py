@@ -88,8 +88,7 @@ def _quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weigh
 
     loss = np.sum(regression_loss) + alpha * (1-l1_ratio) * np.dot(w, w) + alpha * l1_ratio * np.sum(np.abs(w))
     return loss, grad
-    
-# Todo: add smoothed version of the problem
+
 # Todo: make lasso precise enough, because now coefficients are nowhere near zero. Coo descent?
 
 
@@ -114,9 +113,9 @@ def _smooth_quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sampl
     small_error = ~ (positive_error | negative_error)
 
     # Calculate loss due to regression error
-    regression_loss = (positive_error * (linear_loss * (quantile-1) - 0.5 * (quantile-1)**2 * tau)
-                       + small_error * 0.5 * linear_loss**2 * tau
-                       + negative_error * (linear_loss * quantile - 0.5 * quantile**2 * tau)
+    regression_loss = (positive_error * (linear_loss * quantile - 0.5 * quantile**2 * tau)
+                       + small_error * 0.5 * linear_loss**2 / (tau if tau != 0 else 1)  # Here the article LIES!
+                       + negative_error * (linear_loss * (quantile-1) - 0.5 * (quantile-1)**2 * tau)
                        ) * sample_weight
     loss = np.sum(regression_loss)
 
@@ -126,27 +125,27 @@ def _smooth_quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sampl
         grad = np.zeros(n_features + 0)
 
     # Gradient due to the regression error
-    weighted_grad = (positive_error * (quantile-1)
-                     + small_error * linear_loss * tau
-                     + negative_error * quantile) * sample_weight
+    weighted_grad = (positive_error * quantile
+                     + small_error * linear_loss / (tau if tau != 0 else 1)  # Here the article LIES!
+                     + negative_error * (quantile-1)) * sample_weight
     grad[:n_features] -= safe_sparse_dot(weighted_grad, X)
 
     if fit_intercept:
         grad[-1] -= np.sum(weighted_grad)
 
-    # Gradient due to the ridge penalty
+    # Gradient and loss due to the ridge penalty
     grad[:n_features] += alpha * (1 - l1_ratio) * 2. * w
     loss += alpha * (1 - l1_ratio) * np.dot(w, w)
 
-    # Gradient due to the lasso penalty
+    # Gradient and loss due to the lasso penalty
     # for smoothness, replace abs(w) with w^2/(2*tau)+tau/2 for abs(w)<tau
     if tau > 0:
         large_coef = np.abs(w) > tau
         small_coef = ~large_coef
-        grad[:n_features] += alpha * l1_ratio * (large_coef * np.abs(w) + small_coef * w / tau)
-        loss += alpha * l1_ratio * np.sum(np.abs(w) * large_coef + (w ** 2 / (2 * tau) + tau / 2) * small_coef)
+        loss += alpha * l1_ratio * np.sum(large_coef * np.abs(w) + small_coef * (w ** 2 / (2 * tau) + tau / 2))
+        grad[:n_features] += alpha * l1_ratio * (large_coef * np.sign(w) + small_coef * w / tau)
     else:
-        grad[:n_features] += alpha * l1_ratio * np.sum(np.abs(w))
+        loss += alpha * l1_ratio * np.sum(np.abs(w))
         grad[:n_features] += alpha * l1_ratio * np.sign(w)
 
     return loss, grad
@@ -208,7 +207,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     References
     ----------
     .. [1] Chen, C., & Wei, Y. (2005). Computational issues for quantile regression. 
-           Sankhyā: The Indian Journal of Statistics, 399-417.
+           Sankhya: The Indian Journal of Statistics, 399-417.
     """
 
     def __init__(self, quantile=0.5, max_iter=1000, alpha=0.0001, l1_ratio=0.0,
@@ -266,9 +265,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
         # Type Error caused in old versions of SciPy because of no
         # maxiter argument ( <= 0.9).
         result = optimize.minimize(
-            _quantile_loss_and_gradient, 
+            _smooth_quantile_loss_and_gradient,
             parameters,
-            args=(X, y, self.quantile, self.alpha, self.l1_ratio, sample_weight),
+            args=(X, y, self.quantile, self.alpha, self.l1_ratio, sample_weight, 1e-10),
             method='BFGS',
             jac=True,
             options={
@@ -279,6 +278,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 'maxiter': self.max_iter,
             }
             )
+        # do I really need to issue this warning???
         if not result['success']:
             warnings.warn("QuantileRegressor convergence failed:"
                              " Scipy solver terminated with %s"
