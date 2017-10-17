@@ -145,7 +145,7 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                 cv split. (Note time for scoring on the train set is not
                 included even if ``return_train_score`` is set to ``True``
             ``estimator``
-                The list of estimator objects for each cv split.
+                The estimator objects for each cv split.
 
     Examples
     --------
@@ -201,16 +201,14 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         for train, test in cv.split(X, y, groups))
 
     zipped_scores = list(zip(*scores))
-    unpacked = 0
     if return_train_score:
-        train_scores = zipped_scores[0]
+        train_scores = zipped_scores.pop(0)
         train_scores = _aggregate_score_dicts(train_scores)
-        unpacked += 1
     if return_estimator:
         (test_scores, fit_times, score_times,
-         fitted_estimators) = zipped_scores[unpacked:]
+         fitted_estimators) = zipped_scores
     else:
-        test_scores, fit_times, score_times = zipped_scores[unpacked:]
+        test_scores, fit_times, score_times = zipped_scores
     test_scores = _aggregate_score_dicts(test_scores)
 
     ret = dict()
@@ -399,7 +397,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_times : boolean, optional, default: False
         Whether to return the fit/score times.
 
-    return_estimator : boolean, optimal, default: False
+    return_estimator : boolean, optional, default: False
         Whether to return the fitted estimator.
 
     Returns
