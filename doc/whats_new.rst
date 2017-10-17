@@ -63,17 +63,6 @@ Decomposition, manifold learning and clustering
   division on Python 2 versions. :issue:`9492` by
   :user:`James Bourbeau <jrbourbeau>`.
 
-Neighbors
-
-- Fix bug so that the method ``predict`` for 
-  :class:`neighbors.RadiusNeighborsRegressor` can handle empty neighbor set 
-  when using non uniform weights. Also raises a new warning, irrespective of 
-  weighting, when no neighbors are found for one or more samples. Moreover, 
-  all numpy errors related to missing neighbors are suppressed. :issue:`9654`. 
-  By :user:`Andreas Bjerre-Nielsen <abjer>`.
-
-
-
 Version 0.19
 ============
 
