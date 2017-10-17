@@ -182,7 +182,7 @@ The ``cross_validate`` function differs from ``cross_val_score`` in two ways -
 
 - It allows specifying multiple metrics for evaluation.
 
-- It returns a dict containing training scores, fit-times and score-times in
+- It returns a dict containing training scores, fit-times, score-times and fitted estimators in
   addition to the test score.
 
 For single metric evaluation, where the scoring parameter is a string,
@@ -195,6 +195,8 @@ following keys -
 ``return_train_score`` is set to ``True`` by default. It adds train score keys
 for all the scorers. If train scores are not needed, this should be set to
 ``False`` explicitly.
+
+``return_estimator`` is set to ``False`` by default. When set to ``True``, it adds an ``estimator`` key containing the estimators fitted on each split.
 
 The multiple metrics can be specified either as a list, tuple or set of
 predefined scorer names::
@@ -227,8 +229,9 @@ Here is an example of ``cross_validate`` using a single metric::
 
     >>> scores = cross_validate(clf, iris.data, iris.target,
     ...                         scoring='precision_macro')
+    ...                         return_estimator=True)
     >>> sorted(scores.keys())
-    ['fit_time', 'score_time', 'test_score', 'train_score']
+    ['fit_time', 'score_time', 'estimator', test_score', 'train_score']
 
 
 Obtaining predictions by cross-validation
