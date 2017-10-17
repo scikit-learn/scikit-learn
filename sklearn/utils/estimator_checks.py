@@ -1054,7 +1054,7 @@ def check_clustering(name, clusterer_orig):
     # There should be at least one sample in every cluster. Equivalently
     # labels_ should contain all the consecutive values between its
     # min and its max.
-    pred_sorted = np.sort(np.unique(pred))
+    pred_sorted = np.unique(pred)
     assert_array_equal(pred_sorted, np.arange(pred_sorted[0],
                                               pred_sorted[-1] + 1))
 
