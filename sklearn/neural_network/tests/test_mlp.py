@@ -610,6 +610,7 @@ def test_n_iter_no_change():
         assert_greater(max_iter, clf.n_iter_)
 
 
+@ignore_warnings(category=ConvergenceWarning)
 def test_n_iter_no_change_inf():
     # test n_iter_no_change using binary data set
     # the fitting process should go to max_iter iterations
