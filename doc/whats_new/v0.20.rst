@@ -65,6 +65,13 @@ Classifiers and regressors
   :class:`sklearn.naive_bayes.GaussianNB` to give a precise control over
   variances calculation. :issue:`9681` by :user:`Dmitry Mottl <Mottl>`.
 
+- Add `n_iter_no_change` parameter in
+  :class:`multilayer_perceptron.BaseMultilayerPerceptron`,
+  :class:`multilayer_perceptron.MLPRegressor`, and
+  :class:`multilayer_perceptron.MLPClassifier` to give control over
+  maximum number of epochs to not meet `tol` improvement.
+  :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -90,6 +97,10 @@ Classifiers and regressors
   combined weights when fitting a model to data involving points with
   identical X values.
   :issue:`9432` by :user:`Dallas Card <dallascard>`
+
+- Fixed a bug in :class:`multilayer_perceptron.MLPRegressor` where fitting
+  quit unexpectedly early due to local minima or fluctuations.
+  :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`
 
 Decomposition, manifold learning and clustering
 
