@@ -68,8 +68,9 @@ Neighbors
 - Fix bug so that the method ``predict`` for 
   :class:`neighbors.RadiusNeighborsRegressor` can handle empty neighbor set 
   when using non uniform weights. Also raises a new warning, irrespective of 
-  weighting, when no neighbors are found for samples, in place of unclear 
-  numpy errors.. :issue:`9655`. By :user:`Andreas Bjerre-Nielsen <abjer>`.
+  weighting, when no neighbors are found for one or more samples. Moreover, 
+  all numpy errors related to missing neighbors are suppressed. :issue:`9654`. 
+  By :user:`Andreas Bjerre-Nielsen <abjer>`.
 
 
 
