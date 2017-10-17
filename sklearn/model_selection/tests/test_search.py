@@ -350,8 +350,9 @@ def test_return_train_score_warn():
             estimator.set_params(return_train_score=val)
             result[val] = assert_no_warnings(estimator.fit, X, y).cv_results_
 
-    for key in ['split0_train_score', 'split1_train_score',
-                'split2_train_score', 'mean_train_score', 'std_train_score']:
+    train_keys = ['split0_train_score', 'split1_train_score',
+                  'split2_train_score', 'mean_train_score', 'std_train_score']
+    for key in train_keys:
         msg = (
             'You are accessing a training score ({!r}), '
             'which will not be available by default '
@@ -361,6 +362,10 @@ def test_return_train_score_warn():
                                            result['warn'].get, key)
         assert np.allclose(train_score, result[True][key])
         assert key not in result[False]
+
+    for key in result['warn']:
+        if key not in train_keys:
+            assert_no_warnings(result['warn'].get, key)
 
 
 def test_classes__property():
