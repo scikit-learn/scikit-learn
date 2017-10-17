@@ -543,11 +543,6 @@ class ClassifierChain(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     def predict_proba(self, X):
         """Predict probability estimates.
 
-        By default the inputs to later models in a chain is the binary class
-        predictions not the class probabilities. To use class probabilities
-        as features in subsequent models set the cv property to be one of
-        the allowed values other than None.
-
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
