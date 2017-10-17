@@ -220,17 +220,16 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     for name in scorers:
         ret['test_%s' % name] = np.array(test_scores[name])
         if return_train_score:
-            ret['train_%s' % name] = np.array(train_scores[name])
+            key = 'train_%s' % name
+            ret[key] = np.array(train_scores[name])
             if return_train_score == 'warn':
+                message = (
+                    'You are accessing a training score ({!r}), '
+                    'which will not be available by default '
+                    'any more in 0.21. If you need training scores, '
+                    'please set return_train_score=True').format(key)
                 # warn on key access
-                ret.add_warning(
-                    'train_%s' % name,
-                    "Computing training scores can slow down cross "
-                    "validation significantly. This is the reason "
-                    "return_train_score will change its default value "
-                    "from True (current behaviour) to False in 0.21. "
-                    "Please set return_train_score explicitly to get "
-                    "rid of this warning.", FutureWarning)
+                ret.add_warning(key, message, FutureWarning)
 
     return ret
 

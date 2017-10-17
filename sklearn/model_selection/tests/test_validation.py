@@ -387,16 +387,16 @@ def test_cross_validate_return_train_score_warn():
     X, y = make_classification(random_state=0)
     estimator = MockClassifier()
 
-    msg = ("Computing training scores can slow down cross validation "
-           "significantly. This is the reason return_train_score will "
-           "change its default value from True (current behaviour) to "
-           "False in 0.21. Please set return_train_score explicitly to "
-           "get rid of this warning.")
     result = {}
     for val in [False, True, 'warn']:
         result[val] = assert_no_warnings(cross_validate, estimator, X, y,
                                          return_train_score=val)
 
+    msg = (
+        'You are accessing a training score ({!r}), '
+        'which will not be available by default '
+        'any more in 0.21. If you need training scores, '
+        'please set return_train_score=True').format('train_score')
     train_score = assert_warns_message(FutureWarning, msg,
                                        result['warn'].get, 'train_score')
     assert np.allclose(train_score, result[True]['train_score'])

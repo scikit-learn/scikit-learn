@@ -715,15 +715,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
                 if self.return_train_score == 'warn':
                     for key in set(results.keys()) - prev_keys:
+                        message = (
+                            'You are accessing a training score ({!r}), '
+                            'which will not be available by default '
+                            'any more in 0.21. If you need training scores, '
+                            'please set return_train_score=True').format(key)
                         # warn on key access
-                        results.add_warning(
-                            key,
-                            "Computing training scores can slow down cross "
-                            "validation significantly. This is the reason "
-                            "return_train_score will change its default value "
-                            "from True (current behaviour) to False in 0.21. "
-                            "Please set return_train_score explicitly to get "
-                            "rid of this warning.", FutureWarning)
+                        results.add_warning(key, message, FutureWarning)
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names

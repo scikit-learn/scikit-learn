@@ -343,11 +343,7 @@ def test_return_train_score_warn():
     estimators = [GridSearchCV(LinearSVC(random_state=0), grid),
                   RandomizedSearchCV(LinearSVC(random_state=0), grid,
                                      n_iter=2)]
-    msg = ("Computing training scores can slow down cross validation "
-           "significantly. This is the reason return_train_score will "
-           "change its default value from True (current behaviour) to "
-           "False in 0.21. Please set return_train_score explicitly to "
-           "get rid of this warning.")
+
     result = {}
     for estimator in estimators:
         for val in [True, False, 'warn']:
@@ -356,6 +352,11 @@ def test_return_train_score_warn():
 
     for key in ['split0_train_score', 'split1_train_score',
                 'split2_train_score', 'mean_train_score', 'std_train_score']:
+        msg = (
+            'You are accessing a training score ({!r}), '
+            'which will not be available by default '
+            'any more in 0.21. If you need training scores, '
+            'please set return_train_score=True').format(key)
         train_score = assert_warns_message(FutureWarning, msg,
                                            result['warn'].get, key)
         assert np.allclose(train_score, result[True][key])
