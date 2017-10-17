@@ -93,6 +93,65 @@ def _quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weigh
 # Todo: make lasso precise enough, because now coefficients are nowhere near zero. Coo descent?
 
 
+def _smooth_quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weight, tau=0):
+    """ Smooth approximation to quantile regression loss, gradient and hessian.
+    Main loss and l1 penalty are both approximated by the same trick from Chen & Wei, 2005
+    """
+    _, n_features = X.shape
+    fit_intercept = (n_features + 1 == w.shape[0])
+    if fit_intercept:
+        intercept = w[-1]
+    else:
+        intercept = 0  # regardless of len(w)
+    w = w[:n_features]
+
+    # Discriminate positive, negative and small residuals
+    linear_loss = y - safe_sparse_dot(X, w)
+    if fit_intercept:
+        linear_loss -= intercept
+    positive_error = linear_loss > quantile * tau
+    negative_error = linear_loss < (quantile - 1) * tau
+    small_error = ~ (positive_error | negative_error)
+
+    # Calculate loss due to regression error
+    regression_loss = (positive_error * (linear_loss * (quantile-1) - 0.5 * (quantile-1)**2 * tau)
+                       + small_error * 0.5 * linear_loss**2 * tau
+                       + negative_error * (linear_loss * quantile - 0.5 * quantile**2 * tau)
+                       ) * sample_weight
+    loss = np.sum(regression_loss)
+
+    if fit_intercept:
+        grad = np.zeros(n_features + 1)
+    else:
+        grad = np.zeros(n_features + 0)
+
+    # Gradient due to the regression error
+    weighted_grad = (positive_error * (quantile-1)
+                     + small_error * linear_loss * tau
+                     + negative_error * quantile) * sample_weight
+    grad[:n_features] -= safe_sparse_dot(weighted_grad, X)
+
+    if fit_intercept:
+        grad[-1] -= np.sum(weighted_grad)
+
+    # Gradient due to the ridge penalty
+    grad[:n_features] += alpha * (1 - l1_ratio) * 2. * w
+    loss += alpha * (1 - l1_ratio) * np.dot(w, w)
+
+    # Gradient due to the lasso penalty
+    # for smoothness, replace abs(w) with w^2/(2*tau)+tau/2 for abs(w)<tau
+    if tau > 0:
+        large_coef = np.abs(w) > tau
+        small_coef = ~large_coef
+        grad[:n_features] += alpha * l1_ratio * (large_coef * np.abs(w) + small_coef * w / tau)
+        loss += alpha * l1_ratio * np.sum(np.abs(w) * large_coef + (w ** 2 / (2 * tau) + tau / 2) * small_coef)
+    else:
+        grad[:n_features] += alpha * l1_ratio * np.sum(np.abs(w))
+        grad[:n_features] += alpha * l1_ratio * np.sign(w)
+
+    return loss, grad
+
+
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     """Linear regression model that is robust to outliers.
 
