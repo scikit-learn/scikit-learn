@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -425,7 +426,20 @@ def test_auc_errors():
     assert_raises(ValueError, auc, [0.0], [0.1])
 
     # x is not in order
-    assert_raises(ValueError, auc, [1.0, 0.0, 0.5], [0.0, 0.0, 0.0])
+    x = [2, 1, 3, 4]
+    y = [5, 6, 7, 8]
+    error_message = ("x is neither increasing nor decreasing : "
+                     "{}".format(np.array(x)))
+    assert_raise_message(ValueError, error_message, auc, x, y)
+
+
+def test_deprecated_auc_reorder():
+    depr_message = ("The 'reorder' parameter has been deprecated in version "
+                    "0.20 and will be removed in 0.22. It is recommended not "
+                    "to set 'reorder' and ensure that x is monotonic "
+                    "increasing or monotonic decreasing.")
+    assert_warns_message(DeprecationWarning, depr_message, auc,
+                         [1, 2], [2, 3], reorder=True)
 
 
 def test_auc_score_non_binary_class():
