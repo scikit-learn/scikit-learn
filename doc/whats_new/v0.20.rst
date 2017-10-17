@@ -40,6 +40,12 @@ Classifiers and regressors
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
+  
+Model evaluation
+
+- Added the :func:`metrics.balanced_accuracy` metric and a corresponding
+  ``'balanced_accuracy'`` scorer for binary classification.
+  :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
 Enhancements
 ............
