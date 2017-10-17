@@ -1615,26 +1615,27 @@ def test_brier_score_loss():
     # ensure to raise an error for multiclass y_true
     y_true = np.array([0, 1, 2, 0])
     y_pred = np.array([0.8, 0.6, 0.4, 0.2])
-    assert_raises(ValueError, brier_score_loss, y_true, y_pred)
+    error_message = ("Only binary classification is supported. Provided "
+                     "labels {}".format(np.array([0, 1, 2])))
+    assert_raise_message(ValueError, error_message, brier_score_loss,
+                         y_true, y_pred)
 
     # ensure valid y_true if pos_label is not specified
     y_true = np.array(['False', 'False', 'False', 'False'])
     y_pred = np.array([0, 0, 0, 0])
-    assert_raises(ValueError, brier_score_loss, y_true, y_pred)
+    error_message = "Data is not binary and pos_label is not specified"
+    assert_raise_message(ValueError, error_message, brier_score_loss,
+                         y_true, y_pred)
 
     # ensure valid pos_label
     y_true = np.array(['True', 'False', 'False', 'False'])
     y_pred = np.array([1, 0, 0, 0])
-    assert_raises(ValueError, brier_score_loss, y_true, y_pred,
-                  pos_label='invalid')
+    error_message = ("Invalid pos_label provided. Valid options are {}"
+                     .format(np.array(['False', 'True'])))
+    assert_raise_message(ValueError, error_message, brier_score_loss,
+                         y_true, y_pred, pos_label='invalid')
 
     # calculate correctly if only single class in y_true
-    assert_almost_equal(brier_score_loss([0], [0.5]), 0.25)
-    assert_almost_equal(brier_score_loss([1], [0.5]), 0.25)
     assert_almost_equal(brier_score_loss([-1], [0.4]), 0.16)
     assert_almost_equal(brier_score_loss([0], [0.4]), 0.16)
     assert_almost_equal(brier_score_loss([1], [0.4]), 0.36)
-    assert_almost_equal(brier_score_loss(['True'], [0.4], pos_label='True'),
-                        0.36)
-    assert_almost_equal(brier_score_loss(['True'], [0.4], pos_label='False'),
-                        0.16)

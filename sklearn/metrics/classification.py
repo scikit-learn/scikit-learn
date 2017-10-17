@@ -1839,21 +1839,16 @@ def _check_binary_probabilistic_predictions(y_true, y_prob, pos_label=None):
     labels = np.unique(y_true)
     if len(labels) > 2:
         raise ValueError("Only binary classification is supported. "
-                         "Provided labels %s." % labels)
+                         "Provided labels {}.".format(labels))
     elif len(labels) == 1:
         if pos_label is None:
-            if labels[0] == 1:
-                return np.ones(len(y_true))
-            elif labels[0] == 0 or labels[0] == -1:
-                return np.zeros(len(y_true))
+            if labels[0] in (-1, 0, 1):
+                return np.array(y_true == 1, int)
             else:
                 raise ValueError("Data is not binary "
                                  "and pos_label is not specified")
         else:
-            if labels[0] == pos_label:
-                return np.ones(len(y_true))
-            else:
-                return np.zeros(len(y_true))
+            return np.array(y_true == pos_label, int)
 
     out = label_binarize(y_true, labels)[:, 0]
     if pos_label is not None:
