@@ -50,24 +50,24 @@ def _quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weigh
         Returns the derivative of the Quantile loss with respect to each
         coefficient and intercept as a vector.
     """
-    X_is_sparse = sparse.issparse(X)
     _, n_features = X.shape
     fit_intercept = (n_features + 1 == w.shape[0])
     if fit_intercept:
         intercept = w[-1]
+    else:
+        intercept = 0  # regardless of len(w)
     w = w[:n_features]
-    n_samples = np.sum(sample_weight)
 
     # Calculate skewed absolute loss
     linear_loss = y - safe_sparse_dot(X, w)
     if fit_intercept:
         linear_loss -= intercept
-    #positive_error = linear_loss > 0
+    # positive_error = linear_loss > 0
     negative_error = linear_loss < 0
-    #abs_error = np.abs(linear_loss)
+    # abs_error = np.abs(linear_loss)
     
     weighted_obs = (quantile - negative_error) * sample_weight
-    #regression_loss = abs_error * (positive_error * quantile + negative_error * (1 - quantile))
+    # regression_loss = abs_error * (positive_error * quantile + negative_error * (1 - quantile))
     regression_loss = linear_loss * weighted_obs
 
     if fit_intercept:
@@ -90,7 +90,7 @@ def _quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weigh
     return loss, grad
     
 # Todo: add smoothed version of the problem
-# Todo: test lasso regularization
+# Todo: make lasso precise enough, because now coefficients are nowhere near zero. Coo descent?
 
 
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
@@ -214,8 +214,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             jac=True,
             options={
                 # Gradient norm must be less than gtol before successful termination, but it is never so
-                # todo: fix convergence problem (criteria of true convergence)
-                'gtol': self.tol,
+                # todo: fix convergence problem (invent criteria of true convergence)
+                'gtol': self.tol,  # for 'BFGS'
+                # 'xtol': self.tol,  # for 'Newton-CG'
                 'maxiter': self.max_iter,
             }
             )

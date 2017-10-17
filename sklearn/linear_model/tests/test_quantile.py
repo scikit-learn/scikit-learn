@@ -26,11 +26,12 @@ def test_quantile_estimates_fraction():
         assert_almost_equal(fraction_below, q, 2)
 
 
-def test_quantile_is_sparse():
-    X, y = make_regression(n_samples=1000, n_features=100, n_informative=10, random_state=0, noise=1.0)
+def test_quantile_is_approximately_sparse():
+    # now most of coefficients are not exact zero, but with large n_samples they are close enough
+    X, y = make_regression(n_samples=3000, n_features=100, n_informative=10, random_state=0, noise=1.0)
     q = QuantileRegressor(l1_ratio=1, alpha=0.1).fit(X, y)
-    share_zeros = np.mean(np.abs(q.coef_) < 1e-5)
-    assert_almost_equal(share_zeros, 0.1, 1)
+    share_zeros = np.mean(np.abs(q.coef_) > 1e-1)
+    assert_almost_equal(share_zeros, 0.1, 2)
 
 
 def test_quantile_without_intercept():
@@ -85,4 +86,6 @@ def test_quantile_warm_start():
 
 def test_quantile_convergence():
     # quantile loss may not converge to unique solution if there is no regularization
+    # need to check that warning is not thrown if model has converged.
+    # https://stackoverflow.com/questions/3892218/how-to-test-with-pythons-unittest-that-a-warning-has-been-thrown
     pass
