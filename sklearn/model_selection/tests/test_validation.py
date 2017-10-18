@@ -16,6 +16,8 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -377,6 +379,28 @@ def test_cross_validate():
 
         yield check_cross_validate_single_metric, est, X, y, scores
         yield check_cross_validate_multi_metric, est, X, y, scores
+
+
+def test_cross_validate_return_train_score_warn():
+    # Test that warnings are raised. Will be removed in 0.21
+
+    X, y = make_classification(random_state=0)
+    estimator = MockClassifier()
+
+    result = {}
+    for val in [False, True, 'warn']:
+        result[val] = assert_no_warnings(cross_validate, estimator, X, y,
+                                         return_train_score=val)
+
+    msg = (
+        'You are accessing a training score ({!r}), '
+        'which will not be available by default '
+        'any more in 0.21. If you need training scores, '
+        'please set return_train_score=True').format('train_score')
+    train_score = assert_warns_message(FutureWarning, msg,
+                                       result['warn'].get, 'train_score')
+    assert np.allclose(train_score, result[True]['train_score'])
+    assert 'train_score' not in result[False]
 
 
 def check_cross_validate_single_metric(clf, X, y, scores):

@@ -469,8 +469,8 @@ class BinomialDeviance(ClassificationLossFunction):
     """
     def __init__(self, n_classes):
         if n_classes != 2:
-            raise ValueError("{0:s} requires 2 classes.".format(
-                self.__class__.__name__))
+            raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
+                             .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
         super(BinomialDeviance, self).__init__(1)
 
@@ -602,8 +602,8 @@ class ExponentialLoss(ClassificationLossFunction):
     """
     def __init__(self, n_classes):
         if n_classes != 2:
-            raise ValueError("{0:s} requires 2 classes.".format(
-                self.__class__.__name__))
+            raise ValueError("{0:s} requires 2 classes; got {1:d} class(es)"
+                             .format(self.__class__.__name__, n_classes))
         # we only need to fit one tree for binary clf.
         super(ExponentialLoss, self).__init__(1)
 

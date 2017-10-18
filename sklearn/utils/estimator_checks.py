@@ -124,6 +124,7 @@ def _yield_classifier_checks(name, classifier):
         # the column y interface is used by the forests.
 
         yield check_supervised_y_2d
+    yield check_supervised_y_no_nan
     # test if NotFittedError is raised
     yield check_estimators_unfitted
     if 'class_weight' in classifier.get_params().keys():
@@ -222,10 +223,11 @@ def _yield_all_checks(name, estimator):
         for check in _yield_clustering_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
-    yield check_fit2d_1sample
+    if name != 'GaussianProcess':  # FIXME
+        # XXX GaussianProcess deprecated in 0.20
+        yield check_fit2d_1sample
     yield check_fit2d_1feature
-    yield check_fit1d_1feature
-    yield check_fit1d_1sample
+    yield check_fit1d
     yield check_get_params_invariance
     yield check_dict_unchanged
     yield check_dont_overwrite_parameters
@@ -587,7 +589,9 @@ def check_fit2d_predict1d(name, estimator_orig):
 
 @ignore_warnings
 def check_fit2d_1sample(name, estimator_orig):
-    # check by fitting a 2d array and prediting with a 1d array
+    # Check that fitting a 2d array with only one sample either works or
+    # returns an informative message. The error message should either mention
+    # the number of samples or the number of classes.
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(1, 10))
     y = X[:, 0].astype(np.int)
@@ -600,15 +604,21 @@ def check_fit2d_1sample(name, estimator_orig):
         estimator.n_clusters = 1
 
     set_random_state(estimator, 1)
+
+    msgs = ["1 sample", "n_samples = 1", "n_samples=1", "one sample",
+            "1 class", "one class"]
+
     try:
         estimator.fit(X, y)
-    except ValueError:
-        pass
+    except ValueError as e:
+        if all(msg not in repr(e) for msg in msgs):
+            raise e
 
 
 @ignore_warnings
 def check_fit2d_1feature(name, estimator_orig):
-    # check by fitting a 2d array and prediting with a 1d array
+    # check fitting a 2d array with only 1 feature either works or returns
+    # informative message
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
     y = X[:, 0].astype(np.int)
@@ -619,17 +629,28 @@ def check_fit2d_1feature(name, estimator_orig):
         estimator.n_components = 1
     if hasattr(estimator, "n_clusters"):
         estimator.n_clusters = 1
+    # ensure two labels in subsample for RandomizedLogisticRegression
+    if name == 'RandomizedLogisticRegression':
+        estimator.sample_fraction = 1
+    # ensure non skipped trials for RANSACRegressor
+    if name == 'RANSACRegressor':
+        estimator.residual_threshold = 0.5
 
+    y = multioutput_estimator_convert_y_2d(estimator, y)
     set_random_state(estimator, 1)
+
+    msgs = ["1 feature(s)", "n_features = 1", "n_features=1"]
+
     try:
         estimator.fit(X, y)
-    except ValueError:
-        pass
+    except ValueError as e:
+        if all(msg not in repr(e) for msg in msgs):
+            raise e
 
 
 @ignore_warnings
-def check_fit1d_1feature(name, estimator_orig):
-    # check fitting 1d array with 1 feature
+def check_fit1d(name, estimator_orig):
+    # check fitting 1d X array raises a ValueError
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20))
     y = X.astype(np.int)
@@ -642,33 +663,7 @@ def check_fit1d_1feature(name, estimator_orig):
         estimator.n_clusters = 1
 
     set_random_state(estimator, 1)
-
-    try:
-        estimator.fit(X, y)
-    except ValueError:
-        pass
-
-
-@ignore_warnings
-def check_fit1d_1sample(name, estimator_orig):
-    # check fitting 1d array with 1 feature
-    rnd = np.random.RandomState(0)
-    X = 3 * rnd.uniform(size=(20))
-    y = np.array([1])
-    estimator = clone(estimator_orig)
-    y = multioutput_estimator_convert_y_2d(estimator, y)
-
-    if hasattr(estimator, "n_components"):
-        estimator.n_components = 1
-    if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
-
-    set_random_state(estimator, 1)
-
-    try:
-        estimator.fit(X, y)
-    except ValueError:
-        pass
+    assert_raises(ValueError, estimator.fit, X, y)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -1040,8 +1035,8 @@ def check_clustering(name, clusterer_orig):
     # with lists
     clusterer.fit(X.tolist())
 
-    assert_equal(clusterer.labels_.shape, (n_samples,))
     pred = clusterer.labels_
+    assert_equal(pred.shape, (n_samples,))
     assert_greater(adjusted_rand_score(pred, y), 0.4)
     # fit another time with ``fit_predict`` and compare results
     if name == 'SpectralClustering':
@@ -1051,6 +1046,25 @@ def check_clustering(name, clusterer_orig):
     with warnings.catch_warnings(record=True):
         pred2 = clusterer.fit_predict(X)
     assert_array_equal(pred, pred2)
+
+    # fit_predict(X) and labels_ should be of type int
+    assert_in(pred.dtype, [np.dtype('int32'), np.dtype('int64')])
+    assert_in(pred2.dtype, [np.dtype('int32'), np.dtype('int64')])
+
+    # There should be at least one sample in every cluster. Equivalently
+    # labels_ should contain all the consecutive values between its
+    # min and its max.
+    pred_sorted = np.unique(pred)
+    assert_array_equal(pred_sorted, np.arange(pred_sorted[0],
+                                              pred_sorted[-1] + 1))
+
+    # labels_ should be greater than -1
+    assert_greater_equal(pred_sorted[0], -1)
+    # labels_ should be less than n_clusters - 1
+    if hasattr(clusterer, 'n_clusters'):
+        n_clusters = getattr(clusterer, 'n_clusters')
+        assert_greater_equal(n_clusters - 1, pred_sorted[-1])
+    # else labels_ should be less than max(labels_) which is necessarily true
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1286,7 +1300,7 @@ def check_classifiers_classes(name, classifier_orig):
 
         classes = np.unique(y_)
         classifier = clone(classifier_orig)
-        if name in ['BernoulliNB', 'ComplementNB']:
+        if name == 'BernoulliNB':
             X = X > X.mean()
         set_random_state(classifier)
         # fit
@@ -1294,7 +1308,9 @@ def check_classifiers_classes(name, classifier_orig):
 
         y_pred = classifier.predict(X)
         # training set performance
-        assert_array_equal(np.unique(y_), np.unique(y_pred))
+        if name != "ComplementNB":
+            # This is a pathological data set for ComplementNB.
+            assert_array_equal(np.unique(y_), np.unique(y_pred))
         if np.any(classifier.classes_ != classes):
             print("Unexpected classes_ attribute for %r: "
                   "expected %s, got %s" %
