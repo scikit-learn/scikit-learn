@@ -290,7 +290,7 @@ def test_pipeline_raise_set_params_error():
                  'with `estimator.get_params().keys()`.')
 
     assert_raise_message(ValueError,
-                         error_msg % ('fake', 'Pipeline'),
+                         error_msg % ('fake', pipe),
                          pipe.set_params,
                          fake='nope')
 
