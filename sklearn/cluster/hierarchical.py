@@ -18,7 +18,6 @@ from ..base import BaseEstimator, ClusterMixin
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
-from ..utils import deprecated
 from ..utils.validation import check_memory
 
 from . import _hierarchical
