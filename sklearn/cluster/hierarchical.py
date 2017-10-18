@@ -642,6 +642,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
           all observations of the two sets.
 
     pooling_func : callable, default=np.mean
+        deprecated, since AgglomerativeClustering do not use pooling_func
         This combines the values of agglomerated features into a single
         value, and should accept an array of shape [M, N] and the keyword
         argument ``axis=1``, and reduce it to an array of size [M].
@@ -670,7 +671,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func=np.mean):
+                 linkage='ward', pooling_func='deprecated'):
         self.n_clusters = n_clusters
         self.memory = memory
         self.connectivity = connectivity
@@ -678,7 +679,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.linkage = linkage
         self.affinity = affinity
         self.pooling_func = pooling_func
-        if self.pooling_func != np.mean:
+        if self.pooling_func != 'deprecated':
             warnings.warn('"pooling_func" as a parameter argument is '
                           'deprecated in version 0.20 and will be removed '
                           'in version 0.22. It is being removed since '
