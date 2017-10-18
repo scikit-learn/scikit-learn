@@ -755,9 +755,10 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
                     # it with. This case is found when sklearn.svm.SVC is
                     # set to `decision_function_shape='ovo'`.
                     raise ValueError('Output shape {} of {} does not match '
-                                     'number of classes ({}) in fold. Cannot '
-                                     'reconcile different number of classes '
-                                     'in different folds. {}'.format(
+                                     'number of classes ({}) in fold. '
+                                     'Irregular decision_function outputs '
+                                     'are not currently supported by '
+                                     'cross_val_predict'.format(
                                         predictions.shape, method,
                                         len(estimator.classes_),
                                         recommendation))

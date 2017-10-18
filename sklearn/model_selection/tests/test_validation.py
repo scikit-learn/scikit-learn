@@ -829,10 +829,7 @@ def test_cross_val_predict_decision_function_shape():
     assert_raises_regex(ValueError,
                         'Output shape \(599L?, 21L?\) of decision_function '
                         'does not match number of classes \(7\) in fold. '
-                        'Cannot reconcile different number of '
-                        'classes in different folds. To fix this, '
-                        'use a cross-validation technique resulting '
-                        'in properly stratified folds',
+                        'Irregular decision_function .*',
                         cross_val_predict, est, X, y,
                         cv=KFold(n_splits=3), method='decision_function')
 
