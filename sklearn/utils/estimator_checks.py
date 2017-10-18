@@ -49,7 +49,8 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import SkipTestWarning
 from sklearn.model_selection import train_test_split
-from sklearn.metrics.pairwise import rbf_kernel, linear_kernel
+from sklearn.metrics.pairwise import (rbf_kernel, linear_kernel,
+                                      pairwise_distances)
 
 from sklearn.utils import shuffle
 from sklearn.utils.fixes import signature
@@ -363,16 +364,7 @@ def gram_matrix_if_pairwise(X, estimator, kernel=linear_kernel):
         X = X.reshape(-1, 1)
 
     if is_pairwise_metric(estimator):
-        # pairwise_distance() fails for certain versions of scipy
-        n_obs = X.shape[0]
-        X_std = (X - X.mean(axis=0)) / X.std(axis=0)
-        X_out = np.zeros(shape=(n_obs, n_obs))
-        for i in range(n_obs):
-            for j in range(n_obs):
-                dist = np.sum((X_std[i] - X_std[j]) ** 2) ** .5
-                X_out[i, j] = dist
-        return X_out
-
+        return pairwise_distances(X, metric='mahalanobis')
     if is_pairwise(estimator):
         return kernel(X, X)
 
