@@ -855,7 +855,10 @@ def dcg_score(y_true, y_score, k=None, log_basis=2):
 
     References
     ----------
-    Järvelin, K., & Kekäläinen, J. (2002).
+    `Wikipedia entry for Discounted Cumulative Gain
+        <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
+
+    Jarvelin, K., & Kekalainen, J. (2002).
     Cumulated gain-based evaluation of IR techniques. ACM Transactions on
     Information Systems (TOIS), 20(4), 422-446.
 
@@ -915,7 +918,10 @@ def ndcg_score(y_true, y_score, k=None):
 
     References
     ----------
-    Järvelin, K., & Kekäläinen, J. (2002).
+    `Wikipedia entry for Discounted Cumulative Gain
+        <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
+
+    Jarvelin, K., & Kekalainen, J. (2002).
     Cumulated gain-based evaluation of IR techniques. ACM Transactions on
     Information Systems (TOIS), 20(4), 422-446.
 
