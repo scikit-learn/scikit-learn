@@ -864,18 +864,14 @@ def test_step_name_validation():
                                  [[1]], [1])
 
 
-def test_set_conditional_params():
+def test_set_params_nested_pipeline():
     estimator = Pipeline([
         ('a', Pipeline([
             ('b', DummyRegressor())
         ]))
     ])
-    params = {
-        'a__b__alpha': 0.001,
-        'a__b': Lasso(),
-    }
-
     estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
+    estimator.set_params(a__steps=[('b', LogisticRegression())], a__b__C=5)
 
 
 def test_pipeline_wrong_memory():
