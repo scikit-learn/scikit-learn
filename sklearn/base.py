@@ -257,7 +257,7 @@ class BaseEstimator(object):
                 raise ValueError('Invalid parameter %s for estimator %s. '
                                  'Check the list of available parameters '
                                  'with `estimator.get_params().keys()`.' %
-                                 (key, self))
+                                 (key, self.__class__.__name__))
 
             if delim:
                 nested_params[key][sub_key] = value
