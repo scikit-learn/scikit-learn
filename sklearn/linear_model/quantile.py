@@ -228,9 +228,9 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                     old_param = new_parameters[j]
                     new_parameters[j] = 0
                     new_value, _ = _smooth_quantile_loss_and_gradient(new_parameters, *loss_args, gamma=0)
-                    # check if the cost function decreases, or increases, but by little
+                    # check if the cost function decreases, or increases, but by little, and param is small anyway
                     if new_value <= value \
-                            or np.abs(old_param) < self.xtol and new_value + self.gtol < value:
+                            or np.abs(old_param) < self.xtol and new_value < value + self.gtol:
                         value = new_value
                         parameters = new_parameters
 
