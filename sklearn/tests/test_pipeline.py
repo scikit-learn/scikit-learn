@@ -875,7 +875,7 @@ def test_set_conditional_params():
         'a__b': Lasso(),
     }
 
-    estimator.set_params(**params)
+    estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
 
 
 def test_pipeline_wrong_memory():
