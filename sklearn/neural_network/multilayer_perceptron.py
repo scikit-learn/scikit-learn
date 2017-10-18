@@ -773,11 +773,11 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         gradient steps.
 
     max_fun : int, optional, default 15000
-        Maximum number of function calls. The solver iterates until convergence
-        (determined by 'tol'), number of iterations reaches max_iter, or this
-        number of function calls. Note that number of function calls will be
-        greater than or equal to the number of iterations for the
-        MLPClassifier. Only used when solver='lbfgs'.
+        Only used when solver='lbfgs'. Maximum number of function calls.
+        The solver iterates until convergence (determined by 'tol'), number
+        of iterations reaches max_iter, or this  number of function calls.
+        Note that number of function calls will be greater than or equal to
+        the number of iterations for the MLPClassifier.
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when
@@ -1157,11 +1157,11 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         gradient steps.
 
     max_fun : int, optional, default 15000
-        Maximum number of function calls. The solver iterates until convergence
-        (determined by 'tol'), number of iterations reaches max_iter, or this
-        number of function calls. Note that number of function calls will be
-        greater than or equal to the number of iterations for the MLPRegressor.
-        Only used when solver='lbfgs'.
+        Only used when solver='lbfgs'. Maximum number of function calls.
+        The solver iterates until convergence (determined by 'tol'), number
+        of iterations reaches max_iter, or this number of function calls.
+        Note that number of function calls will be greater than or equal to
+        the number of iterations for the MLPRegressor.
 
     shuffle : bool, optional, default True
         Whether to shuffle samples in each iteration. Only used when

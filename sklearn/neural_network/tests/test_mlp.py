@@ -266,12 +266,11 @@ def test_lbfgs_regression():
             # Non linear models perform much better than linear bottleneck:
             assert_greater(mlp.score(X, y), 0.95)
 
+
 def test_lbfgs_maxfun():
-    # Test lbfgs parameter max_fun
-    # It should independently limit the 
-    # number of iterations for lbfgs
+    # Test lbfgs parameter max_fun.
+    # It should independently limit the number of iterations for lbfgs.
     max_fun = 10
-    expected_num_iter = 10 
     # classification tests
     for X, y in classification_datasets:
         X_train = X[:150]
@@ -279,19 +278,20 @@ def test_lbfgs_maxfun():
         X_test = X[150:]
         for activation in ACTIVATION_TYPES:
             mlp = MLPClassifier(solver='lbfgs', hidden_layer_sizes=50,
-                                max_iter=150, max_fun=max_fun, shuffle=True, 
+                                max_iter=150, max_fun=max_fun, shuffle=True,
                                 random_state=1, activation=activation)
             mlp.fit(X_train, y_train)
-            assert_greater(expected_num_iter, mlp.n_iter_)
+            assert_greater(max_fun, mlp.n_iter_)
     # regression tests
     X = Xboston
-    y = yboston 
+    y = yboston
     for activation in ACTIVATION_TYPES:
         mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50,
-                           max_iter=150, max_fun=max_fun, shuffle=True, 
+                           max_iter=150, max_fun=max_fun, shuffle=True,
                            random_state=1, activation=activation)
         mlp.fit(X, y)
-        assert_greater(expected_num_iter, mlp.n_iter_)
+        assert_greater(max_fun, mlp.n_iter_)
+
 
 def test_learning_rate_warmstart():
     # Tests that warm_start reuse past solutions.
