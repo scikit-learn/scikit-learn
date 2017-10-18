@@ -133,7 +133,7 @@ cdef float compute_gradient_positive(float[:] val_P,
             for ax in range(n_dimensions):
                 buff[ax] = pos_reference[i, ax] - pos_reference[j, ax]
                 dij += buff[ax] * buff[ax]
-            qij = (((1.0 + dij) / dof) ** exponent)
+            qij = ((1.0 + dij / dof) ** exponent)
             dij = pij * qij
             qij /= sum_Q
             C += pij * log(max(pij, FLOAT32_TINY)
@@ -195,7 +195,7 @@ cdef void compute_gradient_negative(float[:, :] pos_reference,
 
             dist2s = summary[j * offset + n_dimensions]
             size = summary[j * offset + n_dimensions + 1]
-            qijZ = ((1.0 + dist2s) / dof) ** exponent  # 1/(1+dist)
+            qijZ = (1.0 + dist2s / dof) ** exponent  # 1/(1+dist)
             sum_Q[0] += size * qijZ   # size of the node * q
             mult = size * qijZ * qijZ
             for ax in range(n_dimensions):

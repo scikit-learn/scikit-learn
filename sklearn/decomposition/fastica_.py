@@ -267,7 +267,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     fun_args = {} if fun_args is None else fun_args
     # make interface compatible with other decompositions
     # a copy is required only for non whitened data
-    X = check_array(X, copy=whiten, dtype=FLOAT_DTYPES).T
+    X = check_array(X, copy=whiten, dtype=FLOAT_DTYPES,
+                    ensure_min_samples=2).T
 
     alpha = fun_args.get('alpha', 1.0)
     if not 1 <= alpha <= 2:
@@ -509,6 +510,8 @@ class FastICA(BaseEstimator, TransformerMixin):
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
+        y : Ignored
+
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
@@ -523,6 +526,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------

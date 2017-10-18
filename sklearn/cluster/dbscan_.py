@@ -275,6 +275,9 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             ``min_samples`` is by itself a core sample; a sample with negative
             weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
+
+        y : Ignored
+
         """
         X = check_array(X, accept_sparse='csr')
         clust = dbscan(X, sample_weight=sample_weight,
@@ -302,6 +305,8 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             ``min_samples`` is by itself a core sample; a sample with negative
             weight may inhibit its eps-neighbor from being core.
             Note that weights are absolute, and default to 1.
+
+        y : Ignored
 
         Returns
         -------

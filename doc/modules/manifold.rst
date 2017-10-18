@@ -558,7 +558,7 @@ descent will get stuck in a bad local minimum. If it is too high the KL
 divergence will increase during optimization. More tips can be found in
 Laurens van der Maaten's FAQ (see references). The last parameter, angle,
 is a tradeoff between performance and accuracy. Larger angles imply that we
-can approximate larger regions by a single point,leading to better speed
+can approximate larger regions by a single point, leading to better speed
 but less accurate results.
 
 `"How to Use t-SNE Effectively" <http://distill.pub/2016/misread-tsne/>`_
