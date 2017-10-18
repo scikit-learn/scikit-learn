@@ -18,6 +18,7 @@ from ..base import BaseEstimator, ClusterMixin
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
+from ..utils import deprecated
 from ..utils.validation import check_memory
 
 from . import _hierarchical
@@ -678,6 +679,12 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.linkage = linkage
         self.affinity = affinity
         self.pooling_func = pooling_func
+        if self.pooling_func != np.mean:
+            warnings.warn('"pooling_func" as a parameter argument is '
+                          'deprecated in version 0.20 and will be removed '
+                          'in version 0.22. It is being removed since '
+                          'AgglomerativeClustering do not directly use '
+                          '"pooling_func"', DeprecationWarning)
 
     def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data
@@ -828,6 +835,18 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_features + i`
     """
+
+    def __init__(self, n_clusters=2, affinity="euclidean",
+                 memory=None,
+                 connectivity=None, compute_full_tree='auto',
+                 linkage='ward', pooling_func=np.mean):
+        self.n_clusters = n_clusters
+        self.memory = memory
+        self.connectivity = connectivity
+        self.compute_full_tree = compute_full_tree
+        self.linkage = linkage
+        self.affinity = affinity
+        self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
         """Fit the hierarchical clustering on the data
