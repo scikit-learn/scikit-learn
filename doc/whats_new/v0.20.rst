@@ -40,7 +40,7 @@ Classifiers and regressors
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
-  
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy` metric and a corresponding
@@ -126,6 +126,14 @@ Metrics
 
 - Fixed a bug due to floating point error in :func:`metrics.roc_auc_score` with
   non-integer sample weights. :issue:`9786` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+Neighbors
+
+- Fix bug so that the method ``predict`` for
+  :class:`neighbors.RadiusNeighborsRegressor` can handle empty neighbor set
+  when using non uniform weights. Also raises a new warning, irrespective of
+  weighting, when no neighbors are found for samples, in place of unclear
+  numpy errors.. :issue:`9655`. By :user:`Andreas Bjerre-Nielsen <abjer>`.
 
 API changes summary
 -------------------
