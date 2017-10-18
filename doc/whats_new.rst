@@ -81,6 +81,10 @@ Regressions in 0.19.0 fixed in 0.19.1:
   longer accepted ``X`` as a list. :issue:`9600` by :user:`Rasul Kerimov
   <CoderINusE>`.
 
+- Fixed handling of :func:`cross_val_predict` for binary classification with
+  ``method='decision_function'``. :issue:`9593` by :user:`Reiichiro Nakano
+  <reiinakano>` and core devs.
+
 - Fix regression in :class:`pipeline.Pipeline` where it no longer accepted
   ``steps`` as a tuple. :issue:`9604` by :user:`Joris Van den Bossche
   <jorisvandenbossche>`.
@@ -114,6 +118,19 @@ Enhancements
 
 - Made a FutureWarning in SGD-based estimators less verbose. :issue:`9802` by
   :user:`Vrishank Bhardwaj <vrishank97>`.
+
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+Joel Nothman, Loic Esteve, Andreas Mueller, Kumar Ashutosh,
+Vrishank Bhardwaj, Hanmin Qin, Rasul Kerimov, James Bourbeau,
+Nagarjuna Kumar, Nathaniel Saul, Olivier Grisel, Roman
+Yurchak, Sachin Kelkar, Sam Steingold, Yaroslav Halchenko,
+diegodlh, felix, goncalo-rodrigues, jkleint, oliblum90, pasbi,
+Anthony Gitter, Ben Lawson, Charlie Brummitt, Didi Bar-Zev,
+Gael Varoquaux, Joan Massich, Joris Van den Bossche
 
 Version 0.19
 ============
