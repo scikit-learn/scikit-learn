@@ -290,12 +290,13 @@ def locally_linear_embedding(
 
     nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs)
 
-    nbrs.fit(X)
-
     if isinstance(X, (BallTree, KDTree, NearestNeighbors)) and \
        not (X.metric == 'euclidean'
             or (X.metric == 'minkowski' and X.p == 2)):
-        raise ValueError("metric must be euclidean or equivalent")
+        raise ValueError("metric must be euclidean or equivalent. "
+                         "Got metric={} and p={}".format(X.metric, X.p))
+
+    nbrs.fit(X)
 
     X = nbrs._fit_X
 
