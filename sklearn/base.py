@@ -5,7 +5,6 @@
 
 import copy
 import warnings
-import itertools
 from collections import defaultdict
 
 import numpy as np
@@ -251,29 +250,22 @@ class BaseEstimator(object):
             return self
         valid_params = self.get_params(deep=True)
 
-        # group by prefix
-        nested_params = defaultdict(dict)
-        simple_params = {}
+        nested_params = defaultdict(dict)  # grouped by prefix
         for key, value in params.items():
             key, delim, sub_key = key.partition('__')
-            if delim:
-                nested_params[key][sub_key] = value
-            else:
-                simple_params[key] = value
-
-        # validate keys
-        for key in itertools.chain(simple_params, nested_params):
             if key not in valid_params:
                 raise ValueError('Invalid parameter %s for estimator %s. '
                                  'Check the list of available parameters '
                                  'with `estimator.get_params().keys()`.' %
                                  (key, self))
 
-        # set
+            if delim:
+                nested_params[key][sub_key] = value
+            else:
+                setattr(self, key, value)
+
         for key, sub_params in nested_params.items():
             valid_params[key].set_params(**sub_params)
-        for key, value in simple_params.items():
-            setattr(self, key, value)
 
         return self
 
