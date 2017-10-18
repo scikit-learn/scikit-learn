@@ -5,6 +5,7 @@
 
 import copy
 import warnings
+import itertools
 
 import numpy as np
 from scipy import sparse
@@ -248,28 +249,29 @@ class BaseEstimator(object):
             # Simple optimization to gain speed (inspect is slow)
             return self
         valid_params = self.get_params(deep=True)
-        # ensure ordered iteration
-        keys = sorted(params)
-        for key in keys:
-            value = params[key]
-            split = key.split('__', 1)
-            if len(split) > 1:
+        params = sorted((key.partition('__'), value)
+                        for key, value in six.iteritems(params))
+
+        def get_prefix_and_delim(x):
+            return (x[0][0], x[0][1])
+
+        for (key, delim), sub_items in itertools.groupby(params,
+                                                         get_prefix_and_delim):
+            if key not in valid_params:
+                raise ValueError('Invalid parameter %s for estimator %s. '
+                                 'Check the list of available parameters '
+                                 'with `estimator.get_params().keys()`.' %
+                                 (key, self))
+            sub_items = {sub_key: value
+                         for (_, _, sub_key), value in sub_items}
+            if delim:
                 # nested objects case
-                name, sub_name = split
-                if name not in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s. '
-                                     'Check the list of available parameters '
-                                     'with `estimator.get_params().keys()`.' %
-                                     (name, self))
-                sub_object = valid_params[name]
-                sub_object.set_params(**{sub_name: value})
+                sub_object = valid_params[key]
+                sub_object.set_params(**sub_items)
             else:
                 # simple objects case
-                if key not in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s. '
-                                     'Check the list of available parameters '
-                                     'with `estimator.get_params().keys()`.' %
-                                     (key, self.__class__.__name__))
+                value = sub_items.pop('')
+                assert not sub_items, 'Found multiple values for key %r' % key
                 setattr(self, key, value)
         return self
 
