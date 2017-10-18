@@ -40,6 +40,12 @@ Classifiers and regressors
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
+  
+Model evaluation
+
+- Added the :func:`metrics.balanced_accuracy` metric and a corresponding
+  ``'balanced_accuracy'`` scorer for binary classification.
+  :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
 Enhancements
 ............
@@ -129,3 +135,10 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Metrics
+
+- Deprecate ``reorder`` parameter in :func:`metrics.auc` as it's no longer required
+  for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
+  due to floating point error in the input.
+  :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.

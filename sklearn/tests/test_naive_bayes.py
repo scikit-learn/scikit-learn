@@ -556,20 +556,6 @@ def test_cnb():
     # Classes are China (0), Japan (1).
     Y = np.array([0, 0, 0, 1])
 
-    # Verify inputs are nonnegative.
-    clf = ComplementNB(alpha=1.0)
-    assert_raises(ValueError, clf.fit, -X, Y)
-
-    clf.fit(X, Y)
-
-    # Check that counts are correct.
-    feature_count = np.array([[1, 3, 0, 1, 1, 0], [0, 1, 1, 0, 0, 1]])
-    assert_array_equal(clf.feature_count_, feature_count)
-    class_count = np.array([3, 1])
-    assert_array_equal(clf.class_count_, class_count)
-    feature_all = np.array([1, 4, 1, 1, 1, 1])
-    assert_array_equal(clf.feature_all_, feature_all)
-
     # Check that weights are correct. See steps 4-6 in Table 4 of
     # Rennie et al. (2003).
     theta = np.array([
@@ -591,11 +577,29 @@ def test_cnb():
         ]])
 
     weights = np.zeros(theta.shape)
+    normed_weights = np.zeros(theta.shape)
     for i in range(2):
-        weights[i] = np.log(theta[i])
-        weights[i] /= weights[i].sum()
+        weights[i] = -np.log(theta[i])
+        normed_weights[i] = weights[i] / weights[i].sum()
 
+    # Verify inputs are nonnegative.
+    clf = ComplementNB(alpha=1.0)
+    assert_raises(ValueError, clf.fit, -X, Y)
+
+    clf.fit(X, Y)
+
+    # Check that counts/weights are correct.
+    feature_count = np.array([[1, 3, 0, 1, 1, 0], [0, 1, 1, 0, 0, 1]])
+    assert_array_equal(clf.feature_count_, feature_count)
+    class_count = np.array([3, 1])
+    assert_array_equal(clf.class_count_, class_count)
+    feature_all = np.array([1, 4, 1, 1, 1, 1])
+    assert_array_equal(clf.feature_all_, feature_all)
     assert_array_almost_equal(clf.feature_log_prob_, weights)
+
+    clf = ComplementNB(alpha=1.0, norm=True)
+    clf.fit(X, Y)
+    assert_array_almost_equal(clf.feature_log_prob_, normed_weights)
 
 
 def test_naive_bayes_scale_invariance():

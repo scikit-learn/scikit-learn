@@ -753,6 +753,12 @@ class ComplementNB(BaseDiscreteNB):
     class_prior : array-like, size (n_classes,), optional (default=None)
         Prior probabilities of the classes. Not used.
 
+    norm : boolean, optional (default=False)
+        Whether or not a second normalization of the weights is performed. The
+        default behavior mirrors the implementations found in Mahout and Weka,
+        which do not follow the full algorithm described in Table 9 of the
+        paper.
+
     Attributes
     ----------
     class_log_prior_ : array, shape (n_classes, )
@@ -782,7 +788,7 @@ class ComplementNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import ComplementNB
     >>> clf = ComplementNB()
     >>> clf.fit(X, y)
-    ComplementNB(alpha=1.0, class_prior=None, fit_prior=True)
+    ComplementNB(alpha=1.0, class_prior=None, fit_prior=True, norm=False)
     >>> print(clf.predict(X[2:3]))
     [3]
 
@@ -794,10 +800,12 @@ class ComplementNB(BaseDiscreteNB):
     http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
+                 norm=False):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+        self.norm = norm
 
     def _count(self, X, Y):
         """Count feature occurrences."""
@@ -811,7 +819,12 @@ class ComplementNB(BaseDiscreteNB):
         """Apply smoothing to raw counts and compute the weights."""
         comp_count = self.feature_all_ + alpha - self.feature_count_
         logged = np.log(comp_count / comp_count.sum(axis=1, keepdims=True))
-        self.feature_log_prob_ = logged / logged.sum(axis=1, keepdims=True)
+        # BaseNB.predict uses argmax, but ComplementNB operates with argmin.
+        feature_log_prob = -logged
+        if self.norm:
+            summed = logged.sum(axis=1, keepdims=True)
+            feature_log_prob = -feature_log_prob / summed
+        self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
         """Calculate the class scores for the samples in X."""
