@@ -1035,8 +1035,8 @@ def check_clustering(name, clusterer_orig):
     # with lists
     clusterer.fit(X.tolist())
 
-    assert_equal(clusterer.labels_.shape, (n_samples,))
     pred = clusterer.labels_
+    assert_equal(pred.shape, (n_samples,))
     assert_greater(adjusted_rand_score(pred, y), 0.4)
     # fit another time with ``fit_predict`` and compare results
     if name == 'SpectralClustering':
@@ -1046,6 +1046,25 @@ def check_clustering(name, clusterer_orig):
     with warnings.catch_warnings(record=True):
         pred2 = clusterer.fit_predict(X)
     assert_array_equal(pred, pred2)
+
+    # fit_predict(X) and labels_ should be of type int
+    assert_in(pred.dtype, [np.dtype('int32'), np.dtype('int64')])
+    assert_in(pred2.dtype, [np.dtype('int32'), np.dtype('int64')])
+
+    # There should be at least one sample in every cluster. Equivalently
+    # labels_ should contain all the consecutive values between its
+    # min and its max.
+    pred_sorted = np.unique(pred)
+    assert_array_equal(pred_sorted, np.arange(pred_sorted[0],
+                                              pred_sorted[-1] + 1))
+
+    # labels_ should be greater than -1
+    assert_greater_equal(pred_sorted[0], -1)
+    # labels_ should be less than n_clusters - 1
+    if hasattr(clusterer, 'n_clusters'):
+        n_clusters = getattr(clusterer, 'n_clusters')
+        assert_greater_equal(n_clusters - 1, pred_sorted[-1])
+    # else labels_ should be less than max(labels_) which is necessarily true
 
 
 @ignore_warnings(category=DeprecationWarning)
