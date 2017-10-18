@@ -6,6 +6,7 @@
 import copy
 import warnings
 import itertools
+from collections import defaultdict
 
 import numpy as np
 from scipy import sparse
@@ -249,30 +250,31 @@ class BaseEstimator(object):
             # Simple optimization to gain speed (inspect is slow)
             return self
         valid_params = self.get_params(deep=True)
-        params = sorted((key.partition('__'), value)
-                        for key, value in six.iteritems(params))
 
-        def get_prefix_and_delim(x):
-            return (x[0][0], x[0][1])
+        # group by prefix
+        nested_params = defaultdict(dict)
+        simple_params = {}
+        for key, value in params.items():
+            key, delim, sub_key = key.partition('__')
+            if delim:
+                nested_params[key][sub_key] = value
+            else:
+                simple_params[key] = value
 
-        for (key, delim), sub_items in itertools.groupby(params,
-                                                         get_prefix_and_delim):
+        # validate keys
+        for key in itertools.chain(simple_params, nested_params):
             if key not in valid_params:
                 raise ValueError('Invalid parameter %s for estimator %s. '
                                  'Check the list of available parameters '
                                  'with `estimator.get_params().keys()`.' %
                                  (key, self))
-            sub_items = {sub_key: value
-                         for (_, _, sub_key), value in sub_items}
-            if delim:
-                # nested objects case
-                sub_object = valid_params[key]
-                sub_object.set_params(**sub_items)
-            else:
-                # simple objects case
-                value = sub_items.pop('')
-                assert not sub_items, 'Found multiple values for key %r' % key
-                setattr(self, key, value)
+
+        # set
+        for key, sub_params in nested_params.items():
+            valid_params[key].set_params(**sub_params)
+        for key, value in simple_params.items():
+            setattr(self, key, value)
+
         return self
 
     def __repr__(self):
