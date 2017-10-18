@@ -1081,16 +1081,21 @@ def test_ndcg_score():
     assert_raises(ValueError, dcg_score, np.eye(5), np.arange(5))
     _, y_true = make_multilabel_classification(random_state=0, n_classes=10)
     y_score = - y_true + 1
-    _test_dcg_score_for(y_true, y_score)
+    _test_ndcg_score_for(y_true, y_score)
     y_true, y_score = np.random.RandomState(0).random_sample((2, 100, 10))
-    _test_dcg_score_for(y_true, y_score)
+    _test_ndcg_score_for(y_true, y_score)
 
 
 def _test_ndcg_score_for(y_true, y_score):
     ideal = ndcg_score(y_true, y_true)
     score = ndcg_score(y_true, y_score)
     assert_true((score <= ideal).all())
-    assert_array_almost_equal(ideal, np.ones(ideal.shape[0]))
-    assert_array_almost_equal(score, dcg_score(y_score) / dcg_score(y_true))
+    all_zero = (y_true == 0).all(axis=1)
+    assert_array_almost_equal(ideal[~all_zero], np.ones((~all_zero).sum()))
+    assert_array_almost_equal(ideal[all_zero], np.zeros(all_zero.sum()))
+    assert_array_almost_equal(score[~all_zero],
+                              dcg_score(y_true, y_score)[~all_zero] /
+                              dcg_score(y_true, y_true)[~all_zero])
+    assert_array_almost_equal(score[all_zero], np.zeros(all_zero.sum()))
     assert_equal(ideal.shape, (y_true.shape[0], ))
     assert_equal(score.shape, (y_true.shape[0], ))
