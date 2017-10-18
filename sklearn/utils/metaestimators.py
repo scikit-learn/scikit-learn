@@ -38,14 +38,17 @@ class _BaseComposition(six.with_metaclass(ABCMeta, BaseEstimator)):
     def _set_params(self, attr, **params):
         # Ensure strict ordering of parameter setting:
         # 1. All steps
+        print("Pipeline.set_params", sorted(params.keys()))
         if attr in params:
             setattr(self, attr, params.pop(attr))
         # 2. Step replacement
         names, _ = zip(*getattr(self, attr))
         for name in list(six.iterkeys(params)):
             if '__' not in name and name in names:
+                print("replacing", name, 'with', params[name])
                 self._replace_estimator(attr, name, params.pop(name))
         # 3. Step parameters and other initilisation arguments
+        print("passing on", params, 'to', self)
         super(_BaseComposition, self).set_params(**params)
         return self
 
