@@ -581,7 +581,7 @@ def is_pairwise(estimator):
 
 
 def is_pairwise_metric(estimator):
-    """Returns True if estimator has a _pairwise attribute set to True.
+    """Returns True if estimator accepts pairwise metric.
 
     Parameters
     ----------

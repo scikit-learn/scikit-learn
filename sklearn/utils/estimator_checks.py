@@ -1181,7 +1181,13 @@ def check_classifiers_train(name, classifier_orig):
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
-        if not is_pairwise(classifier):
+        if is_pairwise(classifier):
+            with assert_raises(ValueError, msg="The classifier {} does not"
+                               " raise an error when the number of features "
+                               "in predict is not equal to (n_test_samples,"
+                               "n_training_samples)".format(name)):
+                classifier.predict(X.reshape(-1, 1))
+        else:
             with assert_raises(ValueError, msg="The classifier {} does not"
                                " raise an error when the number of features "
                                "in predict is different from the number of"
