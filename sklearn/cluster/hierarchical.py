@@ -642,10 +642,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
           all observations of the two sets.
 
     pooling_func : callable, default=np.mean
-        deprecated, since AgglomerativeClustering do not use pooling_func
-        This combines the values of agglomerated features into a single
-        value, and should accept an array of shape [M, N] and the keyword
-        argument ``axis=1``, and reduce it to an array of size [M].
+        ignored, Deprecate to be removed in 0.22.
 
     Attributes
     ----------
