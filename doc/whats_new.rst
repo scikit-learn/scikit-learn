@@ -45,13 +45,41 @@ API changes
 Bug fixes
 .........
 
-- Fix regression in :func:`model_selection.cross_val_predict` where it no
-  longer accepted ``X`` as a list. :issue:`9600` by :user:`Rasul Kerimov
-  <CoderINusE>`.
+- Avoid integer overflows in :func:`metrics.matthews_corrcoef`.
+  :issue:`9693` by :user:`Sam Steingold <sam-s>`.
+
+- Fix ValueError in :class:`preprocessing.LabelEncoder` when using
+  ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
+  <newey01c>`.
+
+- Fixed a bug in the objective function for :class:`manifold.TSNE` (both exact
+  and with the Barnes-Hut approximation) when ``n_components >= 3``.
+  :issue:`9711` by :user:`goncalo-rodrigues`.
 
 - Fix regression in :func:`model_selection.cross_val_predict` where it
   raised an error with ``method='predict_proba'`` for some probabilistic
   classifiers. :issue:`9641` by :user:`James Bourbeau <jrbourbeau>`.
+
+- Fixed a bug where :func:`datasets.make_classification` modified its input
+  ``weights``. :issue:`9865` by :user:`Sachin Kelkar <s4chin>`.
+
+- :class:`model_selection.StratifiedShuffleSplit` now works with multioutput
+  multiclass or multilabel data with more than 1000 columns.  :issue:`9922` by
+  :user:`Charlie Brummitt <crbrummitt>`.
+
+- Fixed a bug with nested and conditional parameter setting, e.g. setting a
+  pipeline step and its parameter at the same time. :issue:`9945` by `Andreas
+  Müller`_ and `Joel Nothman`_.
+
+Regressions in 0.19.0 fixed in 0.19.1:
+
+- Fixed a bug where parallelised prediction in random forests was not
+  thread-safe and could (rarely) result in arbitrary errors. :issue:`9830` by
+  `Joel Nothman`_.
+
+- Fix regression in :func:`model_selection.cross_val_predict` where it no
+  longer accepted ``X`` as a list. :issue:`9600` by :user:`Rasul Kerimov
+  <CoderINusE>`.
 
 - Fix regression in :class:`pipeline.Pipeline` where it no longer accepted
   ``steps`` as a tuple. :issue:`9604` by :user:`Joris Van den Bossche
@@ -64,37 +92,12 @@ Bug fixes
   :class:`linear_model.PassiveAggressiveRegressor` and
   :class:`linear_model.Perceptron`. :issue:`9558` by `Andreas Müller`_.
 
-- Avoid integer overflows in :func:`metrics.matthews_corrcoef`.
-  :issue:`9693` by :user:`Sam Steingold <sam-s>`.
-
 - Dataset fetchers make sure temporary files are closed before removing them,
   which caused errors on Windows. :issue:`9847` by :user:`Joan Massich <massich>`.
 
 - Fixed a regression in :class:`manifold.TSNE` where it no longer supported
   metrics other than 'euclidean' and 'precomputed'. :issue:`9623` by :user:`Oli
   Blum <oliblum90>`.
-
-- Made a FutureWarning in SGD-based estimators less verbose. :issue:`9802` by
-  :user:`Vrishank Bhardwaj <vrishank97>`.
-
-- Fix ValueError in :class:`preprocessing.LabelEncoder` when using
-  ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
-  <newey01c>`.
-
-- Fixed a bug in the objective function for :class:`manifold.TSNE` (both exact
-  and with the Barnes-Hut approximation) when ``n_components >= 3``.
-  :issue:`9711` by :user:`goncalo-rodrigues`.
-
-- Fixed a bug where :func:`datasets.make_classification` modified its input
-  ``weights``. :issue:`9865` by :user:`Sachin Kelkar <s4chin>`.
-
-- Fixed a bug where parallelised prediction in random forests was not
-  thread-safe and could (rarely) result in arbitrary errors. :issue:`9830` by
-  `Joel Nothman`_.
-
-- :class:`model_selection.StratifiedShuffleSplit` now works with multioutput
-  multiclass or multilabel data with more than 1000 columns.  :issue:`9922` by
-  :user:`Charlie Brummitt <crbrummitt>`.
 
 Enhancements
 ............
@@ -108,6 +111,9 @@ Enhancements
   issue:`9584` by :user:`Kumar Ashutosh <thechargedneutron>`
 
 - Some fixes to examples: :issue:`9750`, :issue:`9788`, :issue:`9815`
+
+- Made a FutureWarning in SGD-based estimators less verbose. :issue:`9802` by
+  :user:`Vrishank Bhardwaj <vrishank97>`.
 
 Version 0.19
 ============
