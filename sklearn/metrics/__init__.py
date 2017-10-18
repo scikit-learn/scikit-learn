@@ -12,6 +12,7 @@ from .ranking import label_ranking_loss
 from .ranking import precision_recall_curve
 from .ranking import roc_auc_score
 from .ranking import roc_curve
+from .ranking import dcg_score, ndcg_score
 
 from .classification import accuracy_score
 from .classification import balanced_accuracy_score
@@ -78,6 +79,7 @@ __all__ = [
     'confusion_matrix',
     'consensus_score',
     'coverage_error',
+    'dcg_score',
     'euclidean_distances',
     'explained_variance_score',
     'f1_score',
@@ -99,6 +101,7 @@ __all__ = [
     'mean_squared_log_error',
     'median_absolute_error',
     'mutual_info_score',
+    'ndcg_score',
     'normalized_mutual_info_score',
     'pairwise_distances',
     'pairwise_distances_argmin',
@@ -117,5 +120,5 @@ __all__ = [
     'silhouette_score',
     'v_measure_score',
     'zero_one_loss',
-    'brier_score_loss',
+    'brier_score_loss'
 ]

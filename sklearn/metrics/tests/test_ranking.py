@@ -21,6 +21,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_true
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -30,6 +31,7 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
+from sklearn.metrics import ndcg_score, dcg_score
 
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -1052,3 +1054,43 @@ def test_ranking_loss_ties_handling():
     assert_almost_equal(label_ranking_loss([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 1)
     assert_almost_equal(label_ranking_loss([[1, 0, 1]], [[0.25, 0.5, 0.5]]), 1)
     assert_almost_equal(label_ranking_loss([[1, 1, 0]], [[0.25, 0.5, 0.5]]), 1)
+
+
+def test_dcg_score():
+    assert_raises(ValueError, dcg_score, np.eye(5), np.arange(5))
+    _, y_true = make_multilabel_classification(random_state=0, n_classes=10)
+    y_score = - y_true + 1
+    _test_dcg_score_for(y_true, y_score)
+    y_true, y_score = np.random.RandomState(0).random_sample((2, 100, 10))
+    _test_dcg_score_for(y_true, y_score)
+
+
+def _test_dcg_score_for(y_true, y_score):
+    discount = np.log2(np.arange(y_true.shape[1]) + 2)
+    ideal = dcg_score(y_true, y_true)
+    score = dcg_score(y_true, y_score)
+    assert_true((score <= ideal).all())
+    assert_true((dcg_score(y_true, y_true, k=5) <= ideal).all())
+    assert_equal(ideal.shape, (y_true.shape[0], ))
+    assert_equal(score.shape, (y_true.shape[0], ))
+    assert_array_almost_equal(
+        ideal, (np.sort(y_true)[:, ::-1] / discount).sum(axis=1))
+
+
+def test_ndcg_score():
+    assert_raises(ValueError, dcg_score, np.eye(5), np.arange(5))
+    _, y_true = make_multilabel_classification(random_state=0, n_classes=10)
+    y_score = - y_true + 1
+    _test_dcg_score_for(y_true, y_score)
+    y_true, y_score = np.random.RandomState(0).random_sample((2, 100, 10))
+    _test_dcg_score_for(y_true, y_score)
+
+
+def _test_ndcg_score_for(y_true, y_score):
+    ideal = ndcg_score(y_true, y_true)
+    score = ndcg_score(y_true, y_score)
+    assert_true((score <= ideal).all())
+    assert_array_almost_equal(ideal, np.ones(ideal.shape[0]))
+    assert_array_almost_equal(score, dcg_score(y_score) / dcg_score(y_true))
+    assert_equal(ideal.shape, (y_true.shape[0], ))
+    assert_equal(score.shape, (y_true.shape[0], ))
