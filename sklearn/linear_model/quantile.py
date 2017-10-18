@@ -89,7 +89,8 @@ def _quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weigh
     loss = np.sum(regression_loss) + alpha * (1-l1_ratio) * np.dot(w, w) + alpha * l1_ratio * np.sum(np.abs(w))
     return loss, grad
 
-# Todo: make lasso precise enough, because now coefficients are nowhere near zero. Coo descent?
+# Todo: make lasso precise enough, because now there are many coefficients around zero, but not exactly. Coo descent?
+
 
 def _smooth_quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weight, tau=0):
     """ Smooth approximation to quantile regression loss, gradient and hessian.
@@ -210,7 +211,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     """
 
     def __init__(self, quantile=0.5, max_iter=1000, alpha=0.0001, l1_ratio=0.0,
-                 warm_start=False, fit_intercept=True, gtol=1e-05, first_tau=1e-2, xtol=1e-10):
+                 warm_start=False, fit_intercept=True, gtol=1e-4, first_tau=1e-2, xtol=1e-6):
         self.quantile = quantile
         self.max_iter = max_iter
         self.alpha = alpha
@@ -265,12 +266,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
         # solve sequence of optimization problems with different smoothing parameter
         total_iter = []
+        loss_args = X, y, self.quantile, self.alpha, self.l1_ratio, sample_weight
         for i in range(10):
             tau = self.first_tau * 0.1**i
             result = optimize.minimize(
                 _smooth_quantile_loss_and_gradient,
                 parameters,
-                args=(X, y, self.quantile, self.alpha, self.l1_ratio, sample_weight, tau),
+                args=loss_args + (tau, ),
                 method='BFGS',
                 jac=True,
                 options={
@@ -287,12 +289,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
             # for lasso, replace parameters with exact zero, if it increases likelihood
             if self.alpha * self.l1_ratio > 0:
-                loss_args = X, y, self.quantile, self.alpha, self.l1_ratio, sample_weight, 0
-                value, _ = _smooth_quantile_loss_and_gradient(parameters, *loss_args)
+                value, _ = _smooth_quantile_loss_and_gradient(parameters, *loss_args, tau=0)
                 for j in range(len(parameters)):
                     new_parameters = parameters.copy()
                     new_parameters[j] = 0
-                    new_value, _ = _smooth_quantile_loss_and_gradient(new_parameters, *loss_args)
+                    new_value, _ = _smooth_quantile_loss_and_gradient(new_parameters, *loss_args, tau=0)
                     if new_value <= value:
                         value = new_value
                         parameters = new_parameters
@@ -303,11 +304,14 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             # stop if maximum number of iterations is exceeded
             if sum(total_iter) >= self.max_iter:
                 break
-        # do I really need to issue this warning???
+            # stop if tau is already zero
+            if tau == 0:
+                break
+        # do I really need to issue this warning??? Its reason is lineSearchError, which cannot be easily fixed
         if not result['success']:
-            warnings.warn("QuantileRegressor convergence failed:"
-                             " Scipy solver terminated with %s"
-                             % result['message'])
+            warnings.warn("QuantileRegressor convergence failed:" +
+                          " Scipy solver terminated with %s." % result['message']
+                          )
         
         self.n_iter_ = sum(total_iter)
         self.tau_ = tau

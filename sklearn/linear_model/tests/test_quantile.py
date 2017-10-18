@@ -2,11 +2,13 @@
 # License: TBD
 
 import numpy as np
-from sklearn.utils.testing import assert_almost_equal, assert_greater, assert_raises, assert_array_almost_equal, assert_equal
+from sklearn.utils.testing import assert_almost_equal, assert_greater, assert_raises, assert_array_almost_equal, assert_equal, assert_true
 
 from sklearn.datasets import make_regression
 
 from sklearn.linear_model import (HuberRegressor, LinearRegression, SGDRegressor, QuantileRegressor)
+
+import warnings
 
 
 def test_quantile_equals_huber_for_low_epsilon():
@@ -87,5 +89,15 @@ def test_quantile_warm_start():
 def test_quantile_convergence():
     # quantile loss may not converge to unique solution if there is no regularization
     # need to check that warning is not thrown if model has converged.
-    # https://stackoverflow.com/questions/3892218/how-to-test-with-pythons-unittest-that-a-warning-has-been-thrown
-    pass
+    X, y = make_regression(n_samples=300, n_features=20, random_state=0, noise=1.0)
+
+    # check that for small n_iter, warning is thrown
+    with warnings.catch_warnings(record=True) as w:
+        quant = QuantileRegressor(max_iter=10).fit(X, y)
+        assert_true(len(w) == 1)
+        assert_true('QuantileRegressor convergence failed' in str(w[-1].message))
+
+    # check that for large n_iter, it is not thrown
+    with warnings.catch_warnings(record=True) as w:
+        quant = QuantileRegressor(max_iter=10000).fit(X, y)
+        assert_true(len(w) == 0)
