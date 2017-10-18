@@ -679,12 +679,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.linkage = linkage
         self.affinity = affinity
         self.pooling_func = pooling_func
-        if self.pooling_func != 'deprecated':
-            warnings.warn('"pooling_func" as a parameter argument is '
-                          'deprecated in version 0.20 and will be removed '
-                          'in version 0.22. It is being removed since '
-                          'AgglomerativeClustering do not directly use '
-                          '"pooling_func"', DeprecationWarning)
 
     def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data
@@ -701,6 +695,12 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
+        if self.pooling_func != 'deprecated':
+            warnings.warn('"pooling_func" as a parameter argument is '
+                          'deprecated in version 0.20 and will be removed '
+                          'in version 0.22. It is being removed since '
+                          'AgglomerativeClustering do not directly use '
+                          '"pooling_func"', DeprecationWarning)
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
