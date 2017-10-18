@@ -85,7 +85,6 @@ def test_quantile_warm_start():
     assert_array_almost_equal(warm.coef_, warm_coef, 1)
 
 
-
 def test_quantile_convergence():
     # quantile loss may not converge to unique solution if there is no regularization
     # need to check that warning is not thrown if model has converged.
