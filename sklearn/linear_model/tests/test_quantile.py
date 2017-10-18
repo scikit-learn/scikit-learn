@@ -43,7 +43,7 @@ def test_quantile_without_intercept():
     assert_almost_equal(huber.coef_, quant.coef_, 1)
     # check that we still predict fraction
     fraction_below = np.mean(y < quant.predict(X))
-    assert_almost_equal(fraction_below, 0.5, 2)
+    assert_almost_equal(fraction_below, 0.5, 1)
 
 
 def test_quantile_sample_weight():
@@ -73,7 +73,7 @@ def test_quantile_incorrect_quantile():
 def test_quantile_warm_start():
     X, y = make_regression()
     warm = QuantileRegressor(
-        fit_intercept=True, alpha=1.0, max_iter=10000, warm_start=True, tol=1e-1)
+        fit_intercept=True, alpha=1.0, max_iter=10000, warm_start=True, gtol=1e-1)
     warm.fit(X, y)
     warm_coef = warm.coef_.copy()
     warm.fit(X, y)

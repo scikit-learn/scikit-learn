@@ -91,7 +91,6 @@ def _quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weigh
 
 # Todo: make lasso precise enough, because now coefficients are nowhere near zero. Coo descent?
 
-
 def _smooth_quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weight, tau=0):
     """ Smooth approximation to quantile regression loss, gradient and hessian.
     Main loss and l1 penalty are both approximated by the same trick from Chen & Wei, 2005
@@ -211,14 +210,16 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     """
 
     def __init__(self, quantile=0.5, max_iter=1000, alpha=0.0001, l1_ratio=0.0,
-                 warm_start=False, fit_intercept=True, tol=1e-05):
+                 warm_start=False, fit_intercept=True, gtol=1e-05, first_tau=1e-2, xtol=1e-10):
         self.quantile = quantile
         self.max_iter = max_iter
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         self.warm_start = warm_start
         self.fit_intercept = fit_intercept
-        self.tol = tol
+        self.gtol = gtol
+        self.xtol = xtol
+        self.first_tau = first_tau
 
     def fit(self, X, y, sample_weight=None):
         """Fit the model according to the given training data.
@@ -262,32 +263,58 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             else:
                 parameters = np.zeros(X.shape[1] + 0)
 
-        # Type Error caused in old versions of SciPy because of no
-        # maxiter argument ( <= 0.9).
-        result = optimize.minimize(
-            _smooth_quantile_loss_and_gradient,
-            parameters,
-            args=(X, y, self.quantile, self.alpha, self.l1_ratio, sample_weight, 1e-10),
-            method='BFGS',
-            jac=True,
-            options={
-                # Gradient norm must be less than gtol before successful termination, but it is never so
-                # todo: fix convergence problem (invent criteria of true convergence)
-                'gtol': self.tol,  # for 'BFGS'
-                # 'xtol': self.tol,  # for 'Newton-CG'
-                'maxiter': self.max_iter,
-            }
-            )
+        # solve sequence of optimization problems with different smoothing parameter
+        total_iter = []
+        for i in range(10):
+            tau = self.first_tau * 0.1**i
+            result = optimize.minimize(
+                _smooth_quantile_loss_and_gradient,
+                parameters,
+                args=(X, y, self.quantile, self.alpha, self.l1_ratio, sample_weight, tau),
+                method='BFGS',
+                jac=True,
+                options={
+                    # Gradient norm must be less than gtol before successful termination, but it is never so
+                    # todo: fix convergence problem (invent criteria of true convergence)
+                    'gtol': self.gtol,  # for 'BFGS'
+                    # 'xtol': self.tol,  # for 'Newton-CG'
+                    'maxiter': self.max_iter - sum(total_iter),
+                }
+                )
+            total_iter.append(result['nit'])
+            prev_parameters = parameters
+            parameters = result['x']
+
+            # for lasso, replace parameters with exact zero, if it increases likelihood
+            if self.alpha * self.l1_ratio > 0:
+                loss_args = X, y, self.quantile, self.alpha, self.l1_ratio, sample_weight, 0
+                value, _ = _smooth_quantile_loss_and_gradient(parameters, *loss_args)
+                for j in range(len(parameters)):
+                    new_parameters = parameters.copy()
+                    new_parameters[j] = 0
+                    new_value, _ = _smooth_quantile_loss_and_gradient(new_parameters, *loss_args)
+                    if new_value <= value:
+                        value = new_value
+                        parameters = new_parameters
+
+            # stop if solution does not change between subproblems
+            if np.linalg.norm(prev_parameters-parameters) < self.xtol:
+                break
+            # stop if maximum number of iterations is exceeded
+            if sum(total_iter) >= self.max_iter:
+                break
         # do I really need to issue this warning???
         if not result['success']:
             warnings.warn("QuantileRegressor convergence failed:"
                              " Scipy solver terminated with %s"
                              % result['message'])
         
-        self.n_iter_ = result.get('nit', None)
+        self.n_iter_ = sum(total_iter)
+        self.tau_ = tau
+        self.total_iter_ = total_iter
         if self.fit_intercept:
-            self.intercept_ = result['x'][-1]
+            self.intercept_ = parameters[-1]
         else:
             self.intercept_ = 0.0
-        self.coef_ = result['x'][:X.shape[1]]
+        self.coef_ = parameters[:X.shape[1]]
         return self
