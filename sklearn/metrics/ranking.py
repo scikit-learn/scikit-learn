@@ -822,6 +822,7 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
 
     return np.average(loss, weights=sample_weight)
 
+
 def dcg_score(y_true, y_score, k=None, log_basis=2):
     """Compute Discounted Cumulative Gain.
 
