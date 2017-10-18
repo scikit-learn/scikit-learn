@@ -870,11 +870,6 @@ def test_set_conditional_params():
             ('b', DummyRegressor())
         ]))
     ])
-    params = {
-        'a__b__alpha': 0.001,
-        'a__b': Lasso(),
-    }
-
     estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
 
 
