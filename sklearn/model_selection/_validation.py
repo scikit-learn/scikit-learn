@@ -625,6 +625,15 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     predictions : ndarray
         This is the result of calling ``method``
 
+    Notes
+    -----
+    In the case that one or more classes are absent in a training portion, a
+    default score needs to be assigned to all instances for that class if
+    ``method`` produces columns per class, as in {'decision_function',
+    'predict_proba', 'predict_log_proba'}.  For ``predict_proba`` this value is
+    0.  In order to ensure finite output, we approximate negative infinity by
+    the minimum finite float value for the dtype in other cases.
+
     Examples
     --------
     >>> from sklearn import datasets, linear_model
