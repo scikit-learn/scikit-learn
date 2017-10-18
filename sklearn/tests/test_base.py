@@ -228,6 +228,24 @@ def test_set_params():
     #               bad__stupid_param=True)
 
 
+def test_set_params_passes_all_parameters():
+    # Make sure all parameters are passed together to set_params
+    # of nested estimator. Regression test for #9944
+
+    class TestDecisionTree(DecisionTreeClassifier):
+        def set_params(self, **kwargs):
+            super(TestDecisionTree, self).set_params(**kwargs)
+            # expected_kwargs is in test scope
+            assert kwargs == expected_kwargs
+            return self
+
+    expected_kwargs = {'max_depth': 5, 'min_samples_leaf': 2}
+    for est in [Pipeline([('estimator', TestDecisionTree())]),
+                GridSearchCV(TestDecisionTree(), {})]:
+        est.set_params(estimator__max_depth=5,
+                       estimator__min_samples_leaf=2)
+
+
 def test_score_sample_weight():
 
     rng = np.random.RandomState(0)
