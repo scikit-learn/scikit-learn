@@ -13,9 +13,6 @@ from ..utils import axis0_safe_slice
 from ..utils.extmath import safe_sparse_dot
 
 
-# Todo: make lasso precise enough, because now there are many coefficients around zero, but not exactly. Coo descent?
-
-
 def _smooth_quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weight, gamma=0):
     """ Smooth approximation to quantile regression loss, gradient and hessian.
     Main loss and l1 penalty are both approximated by the same trick from Chen & Wei, 2005
@@ -216,7 +213,6 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 options={
                     # Gradient norm must be less than gtol before successful termination, but it is never so
                     'gtol': self.gtol,  # for 'BFGS'
-                    # 'xtol': self.tol,  # for 'Newton-CG'
                     'maxiter': self.max_iter - sum(total_iter),
                 }
                 )
@@ -224,14 +220,17 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             prev_parameters = parameters
             parameters = result['x']
 
-            # for lasso, replace parameters with exact zero, if it increases likelihood
+            # for lasso, replace parameters with exact zero, if this decreases the cost function
             if self.alpha * self.l1_ratio > 0:
                 value, _ = _smooth_quantile_loss_and_gradient(parameters, *loss_args, gamma=0)
                 for j in range(len(parameters)):
                     new_parameters = parameters.copy()
+                    old_param = new_parameters[j]
                     new_parameters[j] = 0
                     new_value, _ = _smooth_quantile_loss_and_gradient(new_parameters, *loss_args, gamma=0)
-                    if new_value <= value:
+                    # check if the cost function decreases, or increases, but by little
+                    if new_value <= value \
+                            or np.abs(old_param) < self.xtol and new_value + self.gtol < value:
                         value = new_value
                         parameters = new_parameters
 
