@@ -38,6 +38,9 @@ from ._gradient_boosting import _random_sample_mask
 import numbers
 import numpy as np
 
+import math as math##Added / changed
+from scipy.stats import norm
+
 from scipy import stats
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
@@ -169,7 +172,31 @@ class ZeroEstimator(object):
         y.fill(0.0)
         return y
 
+        
+class TobitEstimator(object):##Added / changed
+    def __init__(self, sigma=1,yl=0,yu=1):
+        if not 0 < sigma:
+            raise ValueError("`sigma` must be larger than 0 but was %r" % sigma)
+        self.sigma = sigma
+        if not yl < yu:
+            raise ValueError("`yl` must be smaller than `yu`")
+        self.yl = yl
+        self.yu = yu
+        
+    def fit(self, X, y, sample_weight=None):
+        if sample_weight is None:
+            self.mean = np.mean(y)
+        else:
+            self.mean = np.average(y, weights=sample_weight)
 
+    def predict(self, X):
+        check_is_fitted(self, 'mean')
+
+        y = np.empty((X.shape[0], 1), dtype=np.float64)
+        y.fill(self.mean)
+        return y
+
+        
 class LossFunction(six.with_metaclass(ABCMeta, object)):
     """Abstract base class for various loss functions.
 
@@ -443,6 +470,100 @@ class QuantileLossFunction(RegressionLossFunction):
         tree.value[leaf, 0] = val
 
 
+class TobitLossFunction(RegressionLossFunction):##Added / changed
+    """Loss function for Tobit regression"""
+
+    def __init__(self, n_classes, sigma=1, yl=0, yu=1):
+        super(TobitLossFunction, self).__init__(n_classes)
+        assert 0 < sigma
+        assert yl < yu
+        self.sigma = sigma
+        self.yl = yl
+        self.yu = yu
+        self.const = 0.5*np.log(2*math.pi)+np.log(sigma)
+
+    def init_estimator(self):
+        return TobitEstimator(self.sigma,self.yl,self.yu)
+          
+    def __call__(self, y, pred, sample_weight=None):
+        pred = pred.ravel()
+        sigma = self.sigma
+        yl=self.yl
+        yu=self.yu
+        const=self.const
+        diff = (y - pred)/sigma 
+        indl=(y==yl)
+        indu=(y==yu)
+        indmid=(y>yl) & (y<yu)
+        if sample_weight is None:
+            loss = (np.sum((diff[indmid] ** 2.0)/2+ const)  
+                    -np.sum(norm.logcdf(diff[indl]))+
+                    -np.sum(norm.logcdf(-diff[indu])))
+        else:
+            loss = (np.sum(sample_weight[indmid]*((diff[indmid] ** 2.0)/2+ const)) 
+                    -np.sum(sample_weight[indl]*norm.logcdf(diff[indl]))+
+                    -np.sum(sample_weight[indu]*norm.logcdf(-diff[indu])))
+        return loss
+
+    def negative_gradient(self, y, pred, sample_weight=None, **kargs):
+        pred = pred.ravel()
+        sigma = self.sigma
+        yl=self.yl
+        yu=self.yu
+        diff = (y - pred)/sigma
+        indl=(y==yl)
+        indu=(y==yu)
+        indmid=(y>yl) & (y<yu)
+        residual = np.zeros((y.shape[0],), dtype=np.float64)
+        if sample_weight is None:
+            residual[indl]=-np.exp(norm.logpdf(diff[indl])-norm.logcdf(diff[indl]))/sigma
+            residual[indmid]=diff[indmid]/sigma
+            residual[indu]=np.exp(norm.logpdf(diff[indu])-norm.logcdf(-diff[indu]))/sigma
+        else:
+            residual[indl]=-sample_weight[indl]*np.exp(norm.logpdf(diff[indl])-norm.logcdf(diff[indl]))/sigma
+            residual[indmid]=sample_weight[indmid]*diff[indmid]/sigma
+            residual[indu]=sample_weight[indu]*np.exp(norm.logpdf(diff[indu])-norm.logcdf(-diff[indu]))/sigma
+        return (residual)
+
+    def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
+                                residual, pred, sample_weight):
+        """Make a single Newton-Raphson step.
+        """
+        terminal_region = np.where(terminal_regions == leaf)[0]
+        residual = residual.take(terminal_region, axis=0)
+        y_tr = y.take(terminal_region, axis=0)
+        sample_weight = sample_weight.take(terminal_region, axis=0)
+        
+        pred = pred.ravel()
+        sigma = self.sigma
+        sigma2 = self.sigma**2
+        yl=self.yl
+        yu=self.yu
+
+        diff = (y_tr-pred.take(terminal_region, axis=0))/sigma
+        indl=(y_tr==yl)
+        indu=(y_tr==yu)
+        indmid=(y_tr>yl) & (y_tr<yu)
+        hessian = np.zeros((y_tr.shape[0],), dtype=np.float64)
+        
+        lognpdfl=norm.logpdf(diff[indl])
+        logncdfl=norm.logcdf(diff[indl])
+        lognpdfu=norm.logpdf(diff[indu])
+        logncdfu=norm.logcdf(-diff[indu])
+        
+        hessian[indmid]=1/sigma2
+        hessian[indl]=np.exp(lognpdfl-logncdfl)/sigma2*diff[indl]+np.exp(2*lognpdfl-2*logncdfl)/sigma2
+        hessian[indu]=-np.exp(lognpdfu-logncdfu)/sigma2*diff[indu]+np.exp(2*lognpdfu-2*logncdfu)/sigma2
+
+        numerator = np.sum(sample_weight * residual)  
+        denominator = np.sum(sample_weight * hessian)
+        
+        if denominator == 0.0:
+            tree.value[leaf, 0] = 0.0
+        else:
+            tree.value[leaf, 0] = numerator / denominator
+
+
 class ClassificationLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
     """Base class for classification loss functions. """
 
@@ -656,6 +777,7 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'quantile': QuantileLossFunction,
                   'deviance': None,    # for both, multinomial and binomial
                   'exponential': ExponentialLoss,
+                  'tobit': TobitLossFunction,##Added / changed
                   }
 
 
@@ -727,7 +849,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto',
                  validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-4):
+                 tol=1e-4,sigma=1,yl=0,yu=1):##Added / changed
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -751,6 +873,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
+        self.sigma=sigma##Added / changed
+        self.yl=yl
+        self.yu=yu
 
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
                    random_state, X_idx_sorted, X_csc=None, X_csr=None):
@@ -831,6 +956,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if self.loss in ('huber', 'quantile'):
             self.loss_ = loss_class(self.n_classes_, self.alpha)
+        elif self.loss in ('tobit'):##Added / changed
+            self.loss_ = loss_class(self.n_classes_, self.sigma, self.yl, self.yu)
         else:
             self.loss_ = loss_class(self.n_classes_)
 
@@ -1961,7 +2088,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
+    _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile','tobit')##Added / changed
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
@@ -1970,7 +2097,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4):
+                 n_iter_no_change=None, tol=1e-4,sigma=1,yl=0,yu=1):##Added / changed
 
         super(GradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1984,7 +2111,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             presort=presort, validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol)
+            n_iter_no_change=n_iter_no_change, tol=tol,sigma=sigma,yl=yl,yu=yu)##Added / changed
 
     def predict(self, X):
         """Predict regression target for X.
