@@ -834,17 +834,18 @@ def dcg_score(y_true, y_score, k=None, log_basis=2):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples, n_labels]
-        True labels.
+    y_true : array, shape = [n_samples, n_labels], dtype = int or float
+        True targets of multilabel classification, or true scores of entities
+        to be ranked.
 
-    y_score : array, shape = [n_samples, n_labels]
-        Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+    y_score : array, shape = [n_samples, n_labels], dtype = float
+        Target scores, can either be probability estimates, confidence values,
+        or non-thresholded measure of decisions (as returned by
+        "decision_function" on some classifiers).
 
     k : int, optional (default=None)
-        Only consider the first k labels in the ranking. If None, use all
-        labels.
+        Only consider the highest k scores in the ranking. If None, use all
+        outputs.
 
     log_basis : float, optional (default=2)
         Basis of the logarithm used for the discount. A low value means a
@@ -852,7 +853,8 @@ def dcg_score(y_true, y_score, k=None, log_basis=2):
 
     Returns
     -------
-    discounted_cumulative_gain : float
+    discounted_cumulative_gain : array, shape = [n_samples,], dtype = float
+        The DCG score for each sample.
 
     References
     ----------
@@ -901,21 +903,23 @@ def ndcg_score(y_true, y_score, k=None):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples, n_labels]
-        True labels.
+    y_true : array, shape = [n_samples, n_labels], dtype = int or float
+        True targets of multilabel classification, or true scores of entities
+        to be ranked.
 
-    y_score : array, shape = [n_samples, n_labels]
-        Target scores, can either be probability estimates of the positive
-        class, confidence values, or non-thresholded measure of decisions
-        (as returned by "decision_function" on some classifiers).
+    y_score : array, shape = [n_samples, n_labels], dtype = float
+        Target scores, can either be probability estimates, confidence values,
+        or non-thresholded measure of decisions (as returned by
+        "decision_function" on some classifiers).
 
     k : int, optional (default=None)
-        Only consider the first k labels in the ranking. If None, use all
-        labels.
+        Only consider the highest k scores in the ranking. If None, use all
+        outputs.
 
     Returns
     -------
-    normalized_discounted_cumulative_gain : float in [0., 1.]
+    normalized_discounted_cumulative_gain : array, shape = [n_samples,]
+        The NDCG score for each sample: array of floats in [0., 1.].
 
     References
     ----------
