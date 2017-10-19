@@ -71,8 +71,8 @@ following rules before you submit a pull request:
    page.
 
 -  Give your pull request a helpful title that summarises what your
-   contribution does. In some cases "Fix <ISSUE TITLE>" is enough.
-   "Fix #<ISSUE NUMBER>" is not enough.
+   contribution does. In some cases `Fix <ISSUE TITLE>` is enough.
+   `Fix #<ISSUE NUMBER>` is not enough.
 
 -  Often pull requests resolve one or more other issues (or pull requests).
    If merging your pull request means that some other issues/PRs should
