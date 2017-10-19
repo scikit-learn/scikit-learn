@@ -2578,9 +2578,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
     The input to this transformer should be an array-like of integers or
     strings, denoting the values taken on by categorical (discrete) features.
-    The features can be encoded using a one-hot aka one-of-K scheme
-    (``encoding='onehot'``, the default) or converted to ordinal integers
-    (``encoding='ordinal'``).
+    The features can be encoded using a one-hot (aka one-of-K or dummy)
+    encoding scheme (``encoding='onehot'``, the default) or converted
+    to ordinal integers (``encoding='ordinal'``).
 
     This encoding is needed for feeding categorical data to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
