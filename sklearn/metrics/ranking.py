@@ -823,7 +823,7 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
     return np.average(loss, weights=sample_weight)
 
 
-def dcg_score(y_true, y_score, k=None, log_basis=2):
+def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
     """Compute Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -877,9 +877,14 @@ def dcg_score(y_true, y_score, k=None, log_basis=2):
         have a score between 0 and 1.
 
     """
-    check_array(y_true)
-    check_array(y_score)
+    check_array(y_true, ensure_2d=False)
+    check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score)
+    y_type = type_of_target(y_true)
+    if y_type not in ("multilabel-indicator", "continuous-multioutput",
+                      "multiclass-multioutput"):
+        raise ValueError("{0} format is not supported".format(y_type))
+
     ranking = np.argsort(y_score)[:, ::-1]
     ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
     if k is not None:
@@ -889,7 +894,70 @@ def dcg_score(y_true, y_score, k=None, log_basis=2):
     return gain
 
 
-def ndcg_score(y_true, y_score, k=None):
+def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
+    """Compute Discounted Cumulative Gain.
+
+    Sum the true scores ranked in the order induced by the predicted scores,
+    after applying a logarithmic discount.
+
+    This ranking metric yields a high value if true labels are ranked high by
+    ``y_score``.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples, n_labels], dtype = int or float
+        True targets of multilabel classification, or true scores of entities
+        to be ranked.
+
+    y_score : array, shape = [n_samples, n_labels], dtype = float
+        Target scores, can either be probability estimates, confidence values,
+        or non-thresholded measure of decisions (as returned by
+        "decision_function" on some classifiers).
+
+    k : int, optional (default=None)
+        Only consider the highest k scores in the ranking. If None, use all
+        outputs.
+
+    log_basis : float, optional (default=2)
+        Basis of the logarithm used for the discount. A low value means a
+        sharper discount (top results are more important).
+
+    sample_weight : array-like of shape = [n_samples], optional, dtype = float.
+        Sample weights. If None, all samples are given the same weight.
+
+    Returns
+    -------
+    discounted_cumulative_gain : float
+        The averaged sample DCG scores.
+
+    References
+    ----------
+    `Wikipedia entry for Discounted Cumulative Gain
+        <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
+
+    Jarvelin, K., & Kekalainen, J. (2002).
+    Cumulated gain-based evaluation of IR techniques. ACM Transactions on
+    Information Systems (TOIS), 20(4), 422-446.
+
+    Wang, Y., Wang, L., Li, Y., He, D., Chen, W., & Liu, T. Y. (2013, May).
+    A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
+    Annual Conference on Learning Theory (COLT 2013)
+
+    See also
+    --------
+    ndcg_score :
+        The Discounted Cumulative Gain divided by the Ideal Discounted
+        Cumulative Gain (the DCG obtained for a perfect ranking), in order to
+        have a score between 0 and 1.
+
+    """
+    check_consistent_length(y_true, y_score, sample_weight)
+    return np.average(
+        _dcg_sample_scores(y_true, y_score, k=k, log_basis=log_basis),
+        weights=sample_weight)
+
+
+def _ndcg_sample_scores(y_true, y_score, k=None):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -918,7 +986,7 @@ def ndcg_score(y_true, y_score, k=None):
     Returns
     -------
     normalized_discounted_cumulative_gain : array, shape = [n_samples,]
-        The NDCG score for each sample: array of floats in [0., 1.].
+        The NDCG score for each sample (float in [0., 1.]).
 
     References
     ----------
@@ -938,9 +1006,66 @@ def ndcg_score(y_true, y_score, k=None):
     dcg_score : Discounted Cumulative Gain (not normalized).
 
     """
-    gain = dcg_score(y_true, y_score, k)
-    normalizing_gain = dcg_score(y_true, y_true, k)
+    gain = _dcg_sample_scores(y_true, y_score, k)
+    normalizing_gain = _dcg_sample_scores(y_true, y_true, k)
     all_irrelevant = normalizing_gain == 0
     gain[all_irrelevant] = 0
     gain[~all_irrelevant] /= normalizing_gain[~all_irrelevant]
     return gain
+
+
+def ndcg_score(y_true, y_score, k=None, sample_weight=None):
+    """Compute Normalized Discounted Cumulative Gain.
+
+    Sum the true scores ranked in the order induced by the predicted scores,
+    after applying a logarithmic discount. Then divide by the best possible
+    score (Ideal DCG, obtained for a perfect ranking) to obtain a score between
+    0 and 1.
+
+    This ranking metric yields a high value if true labels are ranked high by
+    ``y_score``.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples, n_labels], dtype = int or float
+        True targets of multilabel classification, or true scores of entities
+        to be ranked.
+
+    y_score : array, shape = [n_samples, n_labels], dtype = float
+        Target scores, can either be probability estimates, confidence values,
+        or non-thresholded measure of decisions (as returned by
+        "decision_function" on some classifiers).
+
+    k : int, optional (default=None)
+        Only consider the highest k scores in the ranking. If None, use all
+        outputs.
+
+    sample_weight : array-like of shape = [n_samples], optional, dtype = float.
+        Sample weights. If None, all samples are given the same weight.
+
+    Returns
+    -------
+    normalized_discounted_cumulative_gain : float in [0., 1.]
+        The averaged NDCG scores for all samples.
+
+    References
+    ----------
+    `Wikipedia entry for Discounted Cumulative Gain
+        <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
+
+    Jarvelin, K., & Kekalainen, J. (2002).
+    Cumulated gain-based evaluation of IR techniques. ACM Transactions on
+    Information Systems (TOIS), 20(4), 422-446.
+
+    Wang, Y., Wang, L., Li, Y., He, D., Chen, W., & Liu, T. Y. (2013, May).
+    A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
+    Annual Conference on Learning Theory (COLT 2013)
+
+    See also
+    --------
+    dcg_score : Discounted Cumulative Gain (not normalized).
+
+    """
+    check_consistent_length(y_true, y_score, sample_weight)
+    gain = _ndcg_sample_scores(y_true, y_score, k=k)
+    return np.average(gain, weights=sample_weight)

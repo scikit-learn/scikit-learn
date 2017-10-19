@@ -50,6 +50,7 @@ from sklearn.metrics import r2_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import zero_one_loss
+from sklearn.metrics import ndcg_score, dcg_score
 
 # TODO Curve are currently not covered by invariance test
 # from sklearn.metrics import precision_recall_curve
@@ -176,6 +177,8 @@ THRESHOLDED_METRICS = {
     partial(average_precision_score, average="macro"),
     "label_ranking_average_precision_score":
     label_ranking_average_precision_score,
+    "ndcg_score": ndcg_score,
+    "dcg_score": dcg_score
 }
 
 ALL_METRICS = dict()
@@ -209,6 +212,8 @@ METRIC_UNDEFINED_BINARY = [
 
     "label_ranking_loss",
     "label_ranking_average_precision_score",
+
+    "dcg_score", "ndcg_score"
 ]
 
 # Those metrics don't support multiclass inputs
@@ -305,6 +310,8 @@ THRESHOLDED_MULTILABEL_METRICS = [
     "macro_average_precision_score",
 
     "coverage_error", "label_ranking_loss",
+
+    "ndcg_score", "dcg_score"
 ]
 
 # Classification metrics with  "multilabel-indicator" format
