@@ -1433,7 +1433,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         else:
             raise ValueError(
                 "Number of classes, {0}, does not match size of "
-                "target_names, {1}".format(len(labels), len(target_names))
+                "target_names, {1}. Try specifying the labels "
+                "parameter".format(len(labels), len(target_names))
             )
 
     last_line_heading = 'avg / total'

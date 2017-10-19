@@ -883,7 +883,8 @@ def test_classification_report_no_labels_target_names_unequal_length():
 
     assert_raise_message(ValueError,
                          "Number of classes, 2, does not "
-                         "match size of target_names, 3",
+                         "match size of target_names, 3. "
+                         "Try specifying the labels parameter",
                          classification_report,
                          y_true, y_pred, target_names=target_names)
 
