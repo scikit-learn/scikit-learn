@@ -389,16 +389,17 @@ underestimate how easy an issue is to solve!
     the list of `good first issues
     <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_
     in the issue tracker. Resolving these issues allow you to start contributing
-    to the project without much prior knowledge. Your assistance in this area
-    will be greatly appreciated by the more experienced developers as it helps
-    free up their time to concentrate on other issues.
+    to the project without much prior knowledge. If you have already contributed
+    to scikit-learn, you should look at Easy issues instead.
 
 .. topic:: Easy tag
 
-    Another great way to contribute to scikit-learn is to pick an item
-    from the list of `Easy issues
+    Another great way to contribute to scikit-learn is to pick an item from the
+    list of `Easy issues
     <https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ in the issue
-    tracker.
+    tracker.  Your assistance in this area will be greatly appreciated by the
+    more experienced developers as it helps free up their time to concentrate on
+    other issues.
 
 .. topic:: help wanted tag
 
@@ -564,7 +565,8 @@ There are four other tags to help new contributors:
 
 :good first issue:
     This issue is ideal for a first contribution to scikit-learn. Ask for help
-    if the formulation is unclear.
+    if the formulation is unclear. If you have already contributed to
+    scikit-learn, look at Easy issues instead.
 
 :Easy:
     This issue can be tackled without much prior experience.

@@ -200,12 +200,14 @@ New contributor tips
 --------------------
 
 A great way to start contributing to scikit-learn is to pick an item from the
-list of [good first issues](https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue)
-or [Easy issues](https://github.com/scikit-learn/scikit-learn/labels/Easy) in
-the issue tracker. Resolving these issues allow you to start contributing to the
-project without much prior knowledge. Your assistance in this area will be
-greatly appreciated by the more experienced developers as it helps free up their
-time to concentrate on other issues.
+list of
+[good first issues](https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue). If
+you have already contributed to scikit-learn look at
+[Easy issues](https://github.com/scikit-learn/scikit-learn/labels/Easy)
+instead. Resolving these issues allow you to start contributing to the project
+without much prior knowledge. Your assistance in this area will be greatly
+appreciated by the more experienced developers as it helps free up their time to
+concentrate on other issues.
 
 Documentation
 -------------
