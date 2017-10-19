@@ -644,6 +644,15 @@ def cross_val_predict(estimator, X, y=None, groups=None, cv=None, n_jobs=1,
     predictions : ndarray
         This is the result of calling ``method``
 
+    Notes
+    -----
+    In the case that one or more classes are absent in a training portion, a
+    default score needs to be assigned to all instances for that class if
+    ``method`` produces columns per class, as in {'decision_function',
+    'predict_proba', 'predict_log_proba'}.  For ``predict_proba`` this value is
+    0.  In order to ensure finite output, we approximate negative infinity by
+    the minimum finite float value for the dtype in other cases.
+
     Examples
     --------
     >>> from sklearn import datasets, linear_model
@@ -746,12 +755,49 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     predictions = func(X_test)
     if method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         n_classes = len(set(y))
-        predictions_ = np.zeros((_num_samples(X_test), n_classes))
-        if method == 'decision_function' and len(estimator.classes_) == 2:
-            predictions_[:, estimator.classes_[-1]] = predictions
-        else:
-            predictions_[:, estimator.classes_] = predictions
-        predictions = predictions_
+        if n_classes != len(estimator.classes_):
+            recommendation = (
+                'To fix this, use a cross-validation '
+                'technique resulting in properly '
+                'stratified folds')
+            warnings.warn('Number of classes in training fold ({}) does '
+                          'not match total number of classes ({}). '
+                          'Results may not be appropriate for your use case. '
+                          '{}'.format(len(estimator.classes_),
+                                      n_classes, recommendation),
+                          RuntimeWarning)
+            if method == 'decision_function':
+                if (predictions.ndim == 2 and
+                        predictions.shape[1] != len(estimator.classes_)):
+                    # This handles the case when the shape of predictions
+                    # does not match the number of classes used to train
+                    # it with. This case is found when sklearn.svm.SVC is
+                    # set to `decision_function_shape='ovo'`.
+                    raise ValueError('Output shape {} of {} does not match '
+                                     'number of classes ({}) in fold. '
+                                     'Irregular decision_function outputs '
+                                     'are not currently supported by '
+                                     'cross_val_predict'.format(
+                                        predictions.shape, method,
+                                        len(estimator.classes_),
+                                        recommendation))
+                if len(estimator.classes_) <= 2:
+                    # In this special case, `predictions` contains a 1D array.
+                    raise ValueError('Only {} class/es in training fold, this '
+                                     'is not supported for decision_function '
+                                     'with imbalanced folds. {}'.format(
+                                        len(estimator.classes_),
+                                        recommendation))
+
+            float_min = np.finfo(predictions.dtype).min
+            default_values = {'decision_function': float_min,
+                              'predict_log_proba': float_min,
+                              'predict_proba': 0}
+            predictions_for_all_classes = np.full((_num_samples(predictions),
+                                                   n_classes),
+                                                  default_values[method])
+            predictions_for_all_classes[:, estimator.classes_] = predictions
+            predictions = predictions_for_all_classes
     return predictions, test
 
 
