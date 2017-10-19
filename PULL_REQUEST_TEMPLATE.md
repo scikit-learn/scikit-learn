@@ -5,8 +5,9 @@ the contribution guidelines: https://github.com/scikit-learn/scikit-learn/blob/m
 
 #### Reference Issues/PRs
 <!-- Example: Fixes #1234. Closes #2345. See also #3456.
-In this way, #1234 and #2345 will be automatically closed when this PR is merged.
-This is important to keep our tracker organised.
+Please use keywords (e.g., Fixes, Closes) to create link to the issues or pull
+requests you resolved, so that they will automatically be closed by GitHub
+when your pull request is merged.
 -->
 
 
