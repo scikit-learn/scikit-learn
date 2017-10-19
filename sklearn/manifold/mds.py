@@ -331,6 +331,12 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
+    inductive : boolean, optional, default: False
+        By default, the smacof algorithm is used and the model can not transform
+        new data points. If ``True`` the transform method can be used with new
+        data.
+
+
     Attributes
     ----------
     embedding_ : array-like, shape (n_components, n_samples)
@@ -360,7 +366,7 @@ class MDS(BaseEstimator):
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=1,
                  random_state=None, dissimilarity="euclidean",
-                 extendible=False):
+                 inductive=False):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
         self.metric = metric
@@ -370,7 +376,7 @@ class MDS(BaseEstimator):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
-        self.extendible = extendible
+        self.inductive = inductive
 
     @property
     def _pairwise(self):
@@ -392,7 +398,7 @@ class MDS(BaseEstimator):
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
         """
-        if not self.extendible:
+        if not self.inductive:
             self.fit_transform(X, init=init)
         else:
             self.X_train_ = X
@@ -428,13 +434,13 @@ class MDS(BaseEstimator):
                 if dissimilarity='precomputed'
 
         init : ndarray, shape (n_samples,), optional, default: None
-            Should only be used with the non-extendible MDS (SMACOF).
+            Should only be used with the non-inductive MDS (SMACOF).
             If None, randomly chooses the initial configuration
             if ndarray, initialize the SMACOF algorithm with this array.
         """
-        if self.extendible:
+        if self.inductive:
             if init is not None:
-                raise ValueError("Init is only for the non-extendible MDS.")
+                raise ValueError("Init is only for the non-inductive MDS.")
             ret = self._fit_transform_ext(X)
         else:
             ret = self._fit_transform(X, init)
@@ -468,8 +474,8 @@ class MDS(BaseEstimator):
 
         """
 
-        if not self.extendible:
-            raise ValueError("Method only available if extendible is True.")
+        if not self.inductive:
+            raise ValueError("Method only available if inductive is True.")
         if self.dissimilarity == 'precomputed':
             D_new = X
         elif self.dissimilarity == 'euclidean':
@@ -477,7 +483,7 @@ class MDS(BaseEstimator):
                or not hasattr(self, 'D_XX_') \
                or self.X_train_ is None \
                or self.D_XX_ is None:
-                raise ValueError("Extendible MDS with Euclidean Similarities "
+                raise ValueError("Inductive MDS with Euclidean Similarities "
                                  "must be fit first. use ``MDS.fit()``")
             else:
                 D_aX = euclidean_distances(X, self.X_train_)

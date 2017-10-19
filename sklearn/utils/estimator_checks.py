@@ -341,7 +341,7 @@ def set_checking_parameters(estimator):
         # MDS can optionally implement fit() and transform() functionality
         # but doesn't by default. However, the functions are always
         # defined so some tests fail.
-        estimator.set_params(extendible=True)
+        estimator.set_params(inductive=True)
 
 
 class NotAnArray(object):
