@@ -26,8 +26,10 @@ Base classes
    :template: class.rst
 
    base.BaseEstimator
+   base.BiclusterMixin
    base.ClassifierMixin
    base.ClusterMixin
+   base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
 
