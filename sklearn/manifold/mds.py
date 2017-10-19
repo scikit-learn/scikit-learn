@@ -332,9 +332,9 @@ class MDS(BaseEstimator):
             ``fit_transform``.
 
     inductive : boolean, optional, default: False
-        By default, the smacof algorithm is used and the model can not transform
-        new data points. If ``True`` the transform method can be used with new
-        data.
+        By default, the smacof algorithm is used and the model can not
+        transform new data points. If ``True`` the transform method can be used
+        with new data.
 
 
     Attributes
