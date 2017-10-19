@@ -225,7 +225,7 @@ rules before submitting a pull request:
     * Often pull requests resolve one or more other issues (or pull requests).
       If merging your pull request means that some other issues/PRs should
       be closed, you should `use keywords to create link to them
-      <https://help.github.com/articles/closing-issues-using-keywords/>`_
+      <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
       (e.g., ``Fixes #1234``, ``Closes #1234``; multiple issues/PRs are
       allowed as long as each one is preceded by a keyword). Upon merging,
       those issues/PRs will automatically be closed by GitHub. If your pull

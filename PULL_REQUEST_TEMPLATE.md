@@ -1,9 +1,13 @@
 <!--
 Thanks for contributing a pull request! Please ensure you have taken a look at
-the contribution guidelines: http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests
+the contribution guidelines: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
 -->
+
 #### Reference Issues/PRs
-<!-- Example: Fixes #1234. Closes #2345. See also #3456. -->
+<!-- Example: Fixes #1234. Closes #2345. See also #3456.
+In this way, #1234 and #2345 will be automatically closed when this PR is merged.
+This is important to keep our tracker organised.
+-->
 
 
 #### What does this implement/fix? Explain your changes.
