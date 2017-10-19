@@ -280,7 +280,8 @@ configuration = {
     'estimators': [
         {'name': 'Linear Model',
          'instance': SGDRegressor(penalty='elasticnet', alpha=0.01,
-                                  l1_ratio=0.25, fit_intercept=True),
+                                  l1_ratio=0.25, fit_intercept=True,
+                                  tol=1e-4),
          'complexity_label': 'non-zero coefficients',
          'complexity_computer': lambda clf: np.count_nonzero(clf.coef_)},
         {'name': 'RandomForest',

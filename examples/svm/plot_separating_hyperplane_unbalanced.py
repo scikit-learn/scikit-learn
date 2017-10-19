@@ -30,7 +30,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm
 
-# we create 40 separable points
+# we create clusters with 1000 and 100 points
 rng = np.random.RandomState(0)
 n_samples_1 = 1000
 n_samples_2 = 100
@@ -75,3 +75,4 @@ b = ax.contour(XX, YY, Z, colors='r', levels=[0], alpha=0.5, linestyles=['-'])
 
 plt.legend([a.collections[0], b.collections[0]], ["non weighted", "weighted"],
            loc="upper right")
+plt.show()

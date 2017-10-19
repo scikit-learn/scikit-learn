@@ -16,6 +16,8 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -51,7 +53,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
 from sklearn.metrics.scorer import check_scoring
 
-from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
@@ -377,6 +379,28 @@ def test_cross_validate():
 
         yield check_cross_validate_single_metric, est, X, y, scores
         yield check_cross_validate_multi_metric, est, X, y, scores
+
+
+def test_cross_validate_return_train_score_warn():
+    # Test that warnings are raised. Will be removed in 0.21
+
+    X, y = make_classification(random_state=0)
+    estimator = MockClassifier()
+
+    result = {}
+    for val in [False, True, 'warn']:
+        result[val] = assert_no_warnings(cross_validate, estimator, X, y,
+                                         return_train_score=val)
+
+    msg = (
+        'You are accessing a training score ({!r}), '
+        'which will not be available by default '
+        'any more in 0.21. If you need training scores, '
+        'please set return_train_score=True').format('train_score')
+    train_score = assert_warns_message(FutureWarning, msg,
+                                       result['warn'].get, 'train_score')
+    assert np.allclose(train_score, result[True]['train_score'])
+    assert 'train_score' not in result[False]
 
 
 def check_cross_validate_single_metric(clf, X, y, scores):
@@ -808,6 +832,12 @@ def test_cross_val_predict_input_types():
     clf = CheckingClassifier(check_y=list_check)
     predictions = cross_val_predict(clf, X, y.tolist())
 
+    # test with X and y as list and non empty method
+    predictions = cross_val_predict(LogisticRegression(), X.tolist(),
+                                    y.tolist(), method='decision_function')
+    predictions = cross_val_predict(LogisticRegression(), X,
+                                    y.tolist(), method='decision_function')
+
     # test with 3d X and
     X_3d = X[:, :, np.newaxis]
     check_3d = lambda x: x.ndim == 3
@@ -1186,6 +1216,13 @@ def check_cross_val_predict_with_method(est):
 
 def test_cross_val_predict_with_method():
     check_cross_val_predict_with_method(LogisticRegression())
+
+
+def test_cross_val_predict_method_checking():
+    # Regression test for issue #9639. Tests that cross_val_predict does not
+    # check estimator methods (e.g. predict_proba) before fitting
+    est = SGDClassifier(loss='log', random_state=2)
+    check_cross_val_predict_with_method(est)
 
 
 def test_gridsearchcv_cross_val_predict_with_method():
