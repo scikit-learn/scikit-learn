@@ -226,11 +226,11 @@ rules before submitting a pull request:
       If merging your pull request means that some other issues/PRs should
       be closed, you should `use keywords to create link to them
       <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
-      (e.g., ``Fixes #1234``, ``Closes #1234``; multiple issues/PRs are
-      allowed as long as each one is preceded by a keyword). Upon merging,
-      those issues/PRs will automatically be closed by GitHub. If your pull
-      request is simply related to some other issues/PRs, create a link to
-      them without using the keywords (e.g., ``See also #1234``).
+      (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+      one is preceded by a keyword). Upon merging, those issues/PRs will
+      automatically be closed by GitHub. If your pull request is simply
+      related to some other issues/PRs, create a link to them without using
+      the keywords (e.g., ``See also #1234``).
     
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
