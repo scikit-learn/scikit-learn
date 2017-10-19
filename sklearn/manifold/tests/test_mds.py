@@ -140,6 +140,10 @@ def test_MDS_transform_error():
                     [3, 2, 0, 1],
                     [4, 2, 1, 0]])
 
+    # calling transform with inductive=False causes an error
+    mds_clf = mds.MDS(dissimilarity="euclidean", inductive=False)
+    assert_raises(ValueError, mds_clf.transform, sim)
+
     # it is necessary to fit the projection before transforming new points
     mds_clf = mds.MDS(dissimilarity="euclidean", inductive=True)
     assert_raises(ValueError, mds_clf.transform, sim)
