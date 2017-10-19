@@ -230,7 +230,7 @@ rules before submitting a pull request:
       allowed as long as each one is preceded by a keyword). Upon merging,
       those issues/PRs will automatically be closed by GitHub. If your pull
       request is simply related to some other issues/PRs, create a link to
-      them without using the keywords (e.g., ``See also #1234``)
+      them without using the keywords (e.g., ``See also #1234``).
     
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
