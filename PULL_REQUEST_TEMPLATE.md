@@ -3,7 +3,7 @@ Thanks for contributing a pull request! Please ensure you have taken a look at
 the contribution guidelines: http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests
 -->
 #### Reference Issues/PRs
-<!-- Example: Fixes #1234 / Closes #2345 / See also #3456 -->
+<!-- Example: Fixes #1234. Closes #2345. See also #3456 -->
 
 
 #### What does this implement/fix? Explain your changes.
