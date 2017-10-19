@@ -877,10 +877,9 @@ def dcg_score(y_true, y_score, k=None, log_basis=2):
         have a score between 0 and 1.
 
     """
-    if y_true.shape != y_score.shape:
-        raise ValueError("y_true and y_score have different shapes")
-    y_true = np.atleast_2d(y_true)
-    y_score = np.atleast_2d(y_score)
+    check_array(y_true)
+    check_array(y_score)
+    check_consistent_length(y_true, y_score)
     ranking = np.argsort(y_score)[:, ::-1]
     ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
     if k is not None:
