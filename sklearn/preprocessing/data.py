@@ -2576,8 +2576,8 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 class CategoricalEncoder(BaseEstimator, TransformerMixin):
     """Encode categorical features as a numeric array.
 
-    The input to this transformer should be a matrix of integers or strings,
-    denoting the values taken on by categorical (discrete) features.
+    The input to this transformer should be an array-like of integers or
+    strings, denoting the values taken on by categorical (discrete) features.
     The features can be encoded using a one-hot aka one-of-K scheme
     (``encoding='onehot'``, the default) or converted to ordinal integers
     (``encoding='ordinal'``).
@@ -2613,7 +2613,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
     handle_unknown : 'error' (default) or 'ignore'
         Whether to raise an error or ignore if a unknown categorical feature is
-        present during transform (default is to raise). When this is parameter
+        present during transform (default is to raise). When this parameter
         is set to 'ignore' and an unknown category is encountered during
         transform, the resulting one-hot encoded columns for this feature
         will be all zeros.
@@ -2623,15 +2623,14 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     categories_ : list of arrays
-        The categories of each feature determined during fitting. When
-        categories were specified manually, this holds the sorted categories
+        The categories of each feature determined during fitting. If
+        categories are specified manually, this holds the sorted categories
         (in order corresponding with output of `transform`).
 
     Examples
     --------
-    Given a dataset with three features and two samples, we let the encoder
-    find the maximum value per feature and transform the data to a binary
-    one-hot encoding.
+    Given a dataset with three features, we let the encoder find the unique
+    values per feature and transform the data to a binary one-hot encoding.
 
     >>> from sklearn.preprocessing import CategoricalEncoder
     >>> enc = CategoricalEncoder(handle_unknown='ignore')
@@ -2667,7 +2666,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_feature]
+        X : array-like, shape [n_samples, n_features]
             The data to determine the categories of each feature.
 
         Returns
@@ -2689,7 +2688,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             raise ValueError("handle_unknown='ignore' is not supported for"
                              " encoding='ordinal'")
 
-        X = check_array(X, dtype=np.object, accept_sparse='csc', copy=True)
+        X = check_array(X, dtype=np.object, copy=True)
         n_samples, n_features = X.shape
 
         self._label_encoders_ = [LabelEncoder() for _ in range(n_features)]
@@ -2714,7 +2713,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        """Transform X using one-hot encoding.
+        """Transform X using specified encoding scheme.
 
         Parameters
         ----------
@@ -2727,7 +2726,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             Transformed input.
 
         """
-        X = check_array(X, accept_sparse='csc', dtype=np.object, copy=True)
+        X = check_array(X, dtype=np.object, copy=True)
         n_samples, n_features = X.shape
         X_int = np.zeros_like(X, dtype=np.int)
         X_mask = np.ones_like(X, dtype=np.bool)

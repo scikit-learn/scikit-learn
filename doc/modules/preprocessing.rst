@@ -474,10 +474,11 @@ the categories as being ordered, which is often not desired (i.e. the set of
 browsers was ordered arbitrarily).
 
 One possibility to convert categorical features to features that can be used
-with scikit-learn estimators is to use a one-of-K or one-hot encoding. This
-type of encoding is the default behaviour of the :class:`CategoricalEncoder`.
-The estimator then transforms each categorical feature with ``n_categories``
-possible values into ``n_categories`` binary features, with only one active.
+with scikit-learn estimators is to use a one-of-K, one-hot or dummy encoding.
+This type of encoding is the default behaviour of the :class:`CategoricalEncoder`.
+The :class:`CategoricalEncoder` then transforms each categorical feature with
+``n_categories`` possible values into ``n_categories`` binary features, with
+one of them 1, and all others 0.
 
 Continuing the example above::
 

@@ -76,8 +76,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.OneHotEncoder : encode categorical integer features
-        using a one-hot aka one-of-K scheme.
+    sklearn.preprocessing.CategoricalEncoder : encode categorical features
+        using a one-hot or ordinal encoding scheme.
     """
 
     def fit(self, y):

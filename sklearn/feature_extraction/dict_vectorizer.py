@@ -90,7 +90,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     --------
     FeatureHasher : performs vectorization using only a hash function.
     sklearn.preprocessing.CategoricalEncoder : handles nominal/categorical
-      features encoded as columns of arbitraty data types.
+      features encoded as columns of arbitrary data types.
     """
 
     def __init__(self, dtype=np.float64, separator="=", sparse=True,

@@ -1870,7 +1870,7 @@ def _check_transform_selected(X, X_expected, sel):
 
 
 def test_transform_selected():
-    X = np.array([[3, 2, 1], [0, 1, 1]])
+    X = [[3, 2, 1], [0, 1, 1]]
 
     X_expected = [[1, 2, 1], [0, 1, 1]]
     _check_transform_selected(X, X_expected, [0])
@@ -1992,18 +1992,18 @@ def test_categorical_encoder_onehot():
 
 def test_categorical_encoder_handle_unknown():
     X = [[1, 2, 3], [4, 5, 6]]
-    y = [[7, 5, 3]]
+    X2 = [[7, 5, 3]]
 
     # Test that encoder raises error for unknown features during transform.
     enc = CategoricalEncoder()
     enc.fit(X)
     msg = re.escape('unknown categories [7] in column 0')
-    assert_raises_regex(ValueError, msg, enc.transform, y)
+    assert_raises_regex(ValueError, msg, enc.transform, X2)
 
     # With 'ignore' you get all 0's in result
     enc = CategoricalEncoder(handle_unknown='ignore')
     enc.fit(X)
-    Xtr = enc.transform(y)
+    Xtr = enc.transform(X2)
     assert_allclose(Xtr.toarray(), [[0, 0, 0, 1, 1, 0]])
 
     # Invalid option
