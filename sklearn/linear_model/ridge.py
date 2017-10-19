@@ -512,6 +512,10 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 class Ridge(_BaseRidge, RegressorMixin):
     """Linear least squares with l2 regularization.
 
+    Minimizes the objective function::
+
+    ||y - Xw||^2_2 + alpha * ||w||^2_2
+
     This model solves a regression model where the loss function is
     the linear least squares function and regularization is given by
     the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
@@ -804,6 +808,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         -------
         self : returns an instance of self.
         """
+        check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                  multi_output=True)
+
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
@@ -1348,6 +1355,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         self : object
             Returns self.
         """
+        check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                  multi_output=True)
+
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.y_type_.startswith('multilabel'):
