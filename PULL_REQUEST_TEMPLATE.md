@@ -1,6 +1,6 @@
 <!--
 Thanks for contributing a pull request! Please ensure you have taken a look at
-the contribution guidelines: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md#Contributing-Pull-Requests
+the contribution guidelines: http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests
 -->
 #### Reference Issue
 <!-- Example: Fixes #1234 -->
