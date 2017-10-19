@@ -837,13 +837,12 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean):
-        self.n_clusters = n_clusters
-        self.memory = memory
-        self.connectivity = connectivity
-        self.compute_full_tree = compute_full_tree
-        self.linkage = linkage
-        self.affinity = affinity
-        self.pooling_func = pooling_func
+        super(FeatureAgglomeration, self).__init__(n_clusters=n_clusters,
+                                                   memory=memory,
+                                                   connectivity=connectivity,
+                                                   compute_full_tree=compute_full_tree,
+                                                   linkage=linkage, affinity=affinity,
+                                                   pooling_func=pooling_func)
 
     def fit(self, X, y=None, **params):
         """Fit the hierarchical clustering on the data
