@@ -35,8 +35,8 @@ X = (X - 0.5) * 2
 x1t = np.abs(X[:, 0]) ** 1.5
 x2t = np.abs(X[:, 1]) ** 1.5
 r2 = (x1t ** 2 + x2t ** 2) ** 0.5
-y = (4 * np.cos(np.pi * 2 * 1.1 * r2) + 4 * X[:, 2]
-     + np.random.normal(scale=1, size=n))
+e = np.random.normal(scale=1, size=n)
+y = (4 * np.cos(np.pi * 2 * 1.1 * r2) + 4 * X[:, 2] + e)
 
 # Censoring: 66% of the data is censored (33% lower and 33% upper censoring)
 yc = y.copy()
@@ -53,7 +53,7 @@ model.fit(X, yc)
 
 
 """
-Variable importance plots 
+Variable importance plots
 """
 feature_names = np.array(['V1', 'V2', 'V3', 'V4'])
 feature_importance = model.feature_importances_
