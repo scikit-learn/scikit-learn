@@ -1415,7 +1415,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         default scoring option used is 'accuracy'.
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
-        default: 'liblinear'
+        default: 'lbfgs'
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and
