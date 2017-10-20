@@ -22,7 +22,6 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.partial_dependence import plot_partial_dependence
 from sklearn.ensemble.partial_dependence import partial_dependence
 import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -56,18 +55,18 @@ model.fit(X, yc)
 ###############################
 ## Variable importance plots ##
 ###############################
-VI = pd.concat([pd.DataFrame(['V1','V2','V3','V4']),
-                pd.DataFrame(model.feature_importances_)], axis=1)
-VI.columns = ['variable','importance']
-VI.sort_values(by='importance', ascending=False, inplace=True)
-plt.figure()
-index = np.arange(len(VI['variable']))
-plt.bar(index, VI['importance'], color='black', alpha=0.5)
-plt.xlabel('features')
-plt.ylabel('importance')
-plt.title('Feature importance')
-plt.xticks(index, VI['variable'])
-plt.tight_layout()
+feature_names = np.array(['V1','V2','V3','V4'])
+feature_importance = model.feature_importances_
+# make importances relative to max importance
+feature_importance = 100.0 * (feature_importance / feature_importance.max())
+sorted_idx = np.argsort(feature_importance)
+pos = np.arange(sorted_idx.shape[0]) + .5
+plt.subplot(1, 2, 2)
+plt.barh(pos, feature_importance[sorted_idx], align='center')
+plt.yticks(pos, feature_names[sorted_idx])
+plt.xlabel('Relative Importance')
+plt.title('Variable Importance')
+plt.show()
 
 
 ##############################
