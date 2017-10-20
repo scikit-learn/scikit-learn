@@ -2775,3 +2775,61 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             return out.toarray()
         else:
             return out
+
+    def inverse_transform(self, X):
+        """Convert back the data to the original representation.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape [n_samples, n_encoded_features]
+            The transformed data.
+
+        Returns
+        -------
+        X_tr : array-like, shape [n_samples, n_features]
+            Inverse transformed array.
+
+        """
+        check_is_fitted(self, 'categories_')
+
+        n_samples, _ = X.shape
+        n_features = len(self.categories_)
+
+        dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
+        X_tr = np.empty((n_samples, n_features), dtype=dt)
+
+        if self.encoding == 'ordinal':
+            for i in range(n_features):
+                labels = X[:, i].astype('int64')
+                X_tr[:, i] = self.categories_[i][labels]
+
+        else:  # encoding == 'onehot' / 'onehot-dense'
+            j = 0
+            found_unknown = {}
+
+            for i in range(n_features):
+                n_categories = len(self.categories_[i])
+                sub = X[:, j:j + n_categories]
+
+                # for sparse X argmax returns 2D matrix, ensure 1D array
+                labels = np.asarray(sub.argmax(axis=1)).flatten()
+                X_tr[:, i] = self.categories_[i][labels]
+
+                if self.handle_unknown == 'ignore':
+                    # ignored unknown categories: we have a row of all zero's
+                    unknown = np.asarray(sub.sum(axis=1) == 0).flatten()
+                    if unknown.any():
+                        found_unknown[i] = unknown
+
+                j += n_categories
+
+            # if ignored are found: potentially need to upcast result to
+            # insert None values
+            if found_unknown:
+                if X_tr.dtype != object:
+                    X_tr = X_tr.astype(object)
+
+                for idx, mask in found_unknown.items():
+                    X_tr[mask, idx] = None
+
+        return X_tr

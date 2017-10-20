@@ -1990,6 +1990,42 @@ def test_categorical_encoder_onehot():
     assert_allclose(Xtr.toarray(), [[1, 0, 1, 0,  1], [0, 1, 0, 1, 1]])
 
 
+def test_categorical_encoder_onehot_inverse():
+    for encoding in ['onehot', 'onehot-dense']:
+        X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
+        enc = CategoricalEncoder(encoding=encoding)
+        X_tr = enc.fit_transform(X)
+        exp = np.array(X, dtype=object)
+        assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+        X = [[2, 55], [1, 55], [3, 55]]
+        enc = CategoricalEncoder(encoding=encoding)
+        X_tr = enc.fit_transform(X)
+        exp = np.array(X)
+        assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+        # with unknown categories
+        X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
+        enc = CategoricalEncoder(encoding=encoding, handle_unknown='ignore',
+                                 categories=[['abc', 'def'], [1, 2],
+                                             [54, 55, 56]])
+        X_tr = enc.fit_transform(X)
+        exp = np.array(X, dtype=object)
+        exp[2, 1] = None
+        assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+        # with an otherwise numerical output, still object if unknown
+        X = [[2, 55], [1, 55], [3, 55]]
+        enc = CategoricalEncoder(encoding=encoding,
+                                 categories=[[1, 2], [54, 56]],
+                                 handle_unknown='ignore')
+        X_tr = enc.fit_transform(X)
+        exp = np.array(X, dtype=object)
+        exp[2, 0] = None
+        exp[:, 1] = None
+        assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+
 def test_categorical_encoder_handle_unknown():
     X = [[1, 2, 3], [4, 5, 6]]
     X2 = [[7, 5, 3]]
@@ -2084,6 +2120,14 @@ def test_categorical_encoder_ordinal():
     assert_array_equal(enc.fit_transform(X), exp.astype('float64'))
     enc = CategoricalEncoder(encoding='ordinal', dtype='int64')
     assert_array_equal(enc.fit_transform(X), exp)
+
+
+def test_categorical_encoder_ordinal_inverse():
+    X = [['abc', 2, 55], ['def', 1, 55]]
+    enc = CategoricalEncoder(encoding='ordinal')
+    X_tr = enc.fit_transform(X)
+    exp = np.array(X, dtype=object)
+    assert_array_equal(enc.inverse_transform(X_tr), exp)
 
 
 def test_fit_cold_start():
