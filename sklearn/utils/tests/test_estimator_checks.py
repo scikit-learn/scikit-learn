@@ -8,7 +8,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
                                    assert_equal, ignore_warnings)
 from sklearn.utils.estimator_checks import check_estimator
-from sklearn.utils.estimator_checks import is_pairwise, is_pairwise_metric
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
 from sklearn.utils.estimator_checks import check_estimators_unfitted
@@ -258,17 +257,12 @@ def test_check_no_fit_attributes_set_in_init():
 
 def test_check_estimator_pairwise():
     # check that check_estimator() works on estimator with _pairwise
-    # attribute set
+    # kernel or  metric
 
+    # test precomputed kernel
     est = SVC(kernel='precomputed')
-    assert(is_pairwise(est))
     check_estimator(est)
 
-
-def test_check_estimator_pairwise_metric():
-    # check that check_estimator works for estimator that is based on
-    # a precomputed metric
-
+    # test precomputed metric
     est = KNeighborsRegressor(metric='precomputed')
-    assert(is_pairwise_metric(est))
     check_estimator(est)

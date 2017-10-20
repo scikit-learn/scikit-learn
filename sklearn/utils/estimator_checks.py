@@ -36,8 +36,8 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 
 from sklearn.base import (clone, TransformerMixin, ClusterMixin,
-                          BaseEstimator, is_classifier, is_regressor,
-                          is_pairwise, is_pairwise_metric)
+                          BaseEstimator, is_classifier, is_regressor)
+
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.random_projection import BaseRandomProjection
@@ -357,15 +357,48 @@ def _is_32bit():
     """Detect if process is 32bit Python."""
     return struct.calcsize('P') * 8 == 32
 
+def _is_pairwise(estimator):
+    """Returns True if estimator has a _pairwise attribute set to True.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if _pairwise is set to True and False otherwise.
+    """
+    return bool(getattr(estimator, "_pairwise", False))
+
+
+def _is_pairwise_metric(estimator):
+    """Returns True if estimator accepts pairwise metric.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if _pairwise is set to True and False otherwise.
+    """
+    metric = getattr(estimator,  "metric", None)
+
+    return bool(metric == 'precomputed')
 
 def maybe_pairwise(X, estimator, kernel=linear_kernel):
 
     if len(X.shape) == 1:
         X = X.reshape(-1, 1)
 
-    if is_pairwise_metric(estimator):
+    if _is_pairwise_metric(estimator):
+        # workaround for this function
         return pairwise_distances(X, metric='mahalanobis')
-    if is_pairwise(estimator):
+    if _is_pairwise(estimator):
         return kernel(X, X)
 
     return X
@@ -373,8 +406,7 @@ def maybe_pairwise(X, estimator, kernel=linear_kernel):
 
 def check_estimator_sparse_data(name, estimator_orig):
 
-    # Sparse precomputed kernels aren't supported
-    if is_pairwise(estimator_orig):
+    if _is_pairwise(estimator_orig):
         return
 
     rng = np.random.RandomState(0)
@@ -1189,7 +1221,7 @@ def check_classifiers_train(name, classifier_orig):
             assert_greater(accuracy_score(y, y_pred), 0.83)
 
         # raises error on malformed input for predict
-        if is_pairwise(classifier):
+        if _is_pairwise(classifier):
             with assert_raises(ValueError, msg="The classifier {} does not"
                                " raise an error when the number of features "
                                "in predict is not equal to (n_test_samples,"
@@ -1216,7 +1248,7 @@ def check_classifiers_train(name, classifier_orig):
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
 
                 # raises error on malformed input for decision_function
-                if not is_pairwise(classifier):
+                if not _is_pairwise(classifier):
                     with assert_raises(ValueError, msg="The classifier {} does"
                                        " not raise an error when the number "
                                        "of features in decision_function is "
@@ -1472,7 +1504,7 @@ def check_class_weight_classifiers(name, classifier_orig):
                                                             random_state=0)
 
         # can't use gram_if_pairwise() here, setting up gram matrix manually
-        if is_pairwise(classifier_orig):
+        if _is_pairwise(classifier_orig):
             X_test = rbf_kernel(X_test, X_train)
             X_train = rbf_kernel(X_train, X_train)
 

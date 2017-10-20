@@ -561,37 +561,3 @@ def is_regressor(estimator):
         True if estimator is a regressor and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "regressor"
-
-
-def is_pairwise(estimator):
-    """Returns True if estimator has a _pairwise attribute set to True.
-
-    Parameters
-    ----------
-    estimator : object
-        Estimator object to test.
-
-    Returns
-    -------
-    out : bool
-        True if _pairwise is set to True and False otherwise.
-    """
-    return bool(getattr(estimator, "_pairwise", False))
-
-
-def is_pairwise_metric(estimator):
-    """Returns True if estimator accepts pairwise metric.
-
-    Parameters
-    ----------
-    estimator : object
-        Estimator object to test.
-
-    Returns
-    -------
-    out : bool
-        True if _pairwise is set to True and False otherwise.
-    """
-    metric = getattr(estimator,  "metric", None)
-
-    return bool(metric == 'precomputed')
