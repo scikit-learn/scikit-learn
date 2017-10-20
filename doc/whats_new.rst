@@ -127,10 +127,11 @@ With thanks to:
 Joel Nothman, Loic Esteve, Andreas Mueller, Kumar Ashutosh,
 Vrishank Bhardwaj, Hanmin Qin, Rasul Kerimov, James Bourbeau,
 Nagarjuna Kumar, Nathaniel Saul, Olivier Grisel, Roman
-Yurchak, Sachin Kelkar, Sam Steingold, Yaroslav Halchenko,
-diegodlh, felix, goncalo-rodrigues, jkleint, oliblum90, pasbi,
-Anthony Gitter, Ben Lawson, Charlie Brummitt, Didi Bar-Zev,
-Gael Varoquaux, Joan Massich, Joris Van den Bossche
+Yurchak, Reiichiro Nakano, Sachin Kelkar, Sam Steingold,
+Yaroslav Halchenko, diegodlh, felix, goncalo-rodrigues,
+jkleint, oliblum90, pasbi, Anthony Gitter, Ben Lawson, Charlie
+Brummitt, Didi Bar-Zev, Gael Varoquaux, Joan Massich, Joris
+Van den Bossche
 
 Version 0.19
 ============
