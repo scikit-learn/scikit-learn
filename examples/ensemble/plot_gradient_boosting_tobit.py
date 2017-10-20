@@ -18,7 +18,7 @@ Feature importance plots and partial dependence plots are shown.
 
 print(__doc__)
 
-import sklearn.ensemble
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.partial_dependence import plot_partial_dependence
 from sklearn.ensemble.partial_dependence import partial_dependence
 import numpy as np
@@ -30,34 +30,36 @@ from mpl_toolkits.mplot3d import Axes3D
 ###################
 ## Simulate data ##
 ###################
-n=10000
-X=np.random.rand(n,4)
-X=(X-0.5)*2
-x1t=np.abs(X[:,0])**1.5
-x2t=np.abs(X[:,1])**1.5
-r2=(x1t**2+x2t**2)**0.5
-y=4*np.cos(np.pi*1.1*2*r2)+4*X[:,2]+np.random.normal(scale=1, size=n)
+n = 10000
+X = np.random.rand(n, 4)
+X = (X - 0.5) * 2
+x1t = np.abs(X[:,0]) ** 1.5
+x2t = np.abs(X[:,1]) ** 1.5
+r2 = (x1t ** 2 + x2t ** 2) ** 0.5
+y = (4 * np.cos(np.pi * 2 * 1.1 * r2) + 4 * X[:,2] 
+    + np.random.normal(scale=1, size=n))
 
 ##Censoring: 66% of the data is censored (33% lower and 33% upper censoring)
-yc=y.copy()
-yl=np.percentile(y,q=33)
-yu=np.percentile(y,q=66)
-yc[y>=yu]=yu
-yc[y<=yl]=yl
+yc = y.copy()
+yl = np.percentile(y, q=33)
+yu = np.percentile(y, q=66)
+yc[y >= yu] = yu
+yc[y <= yl] = yl
 
 ############################
 ## Define and learn model ##
 ############################
-model = sklearn.ensemble.GradientBoostingRegressor(loss='tobit',yl=yl,yu=yu)
+model = GradientBoostingRegressor(loss='tobit', yl=yl, yu=yu)
 model.fit(X, yc)
 
 
 ###############################
 ## Variable importance plots ##
 ###############################
-VI=pd.concat([pd.DataFrame(['V1','V2','V3','V4']),pd.DataFrame(model.feature_importances_)],axis=1)
-VI.columns=['variable','importance']
-VI.sort_values(by='importance',ascending=False,inplace=True)
+VI = pd.concat([pd.DataFrame(['V1','V2','V3','V4']), 
+                pd.DataFrame(model.feature_importances_)], axis=1)
+VI.columns = ['variable','importance']
+VI.sort_values(by='importance', ascending=False, inplace=True)
 plt.figure()
 index = np.arange(len(VI['variable']))
 plt.bar(index, VI['importance'], color='black', alpha=0.5)
@@ -73,7 +75,7 @@ plt.tight_layout()
 ##############################
 ##Univariate partial dependence plots
 features = [0,1,2,3]
-names=[0,1,2,3]
+names = [0,1,2,3]
 fig, axs = plot_partial_dependence(model, X, features,
                                    feature_names=names,
                                    n_jobs=3, grid_resolution=50)

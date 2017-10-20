@@ -38,7 +38,7 @@ from ._gradient_boosting import _random_sample_mask
 import numbers
 import numpy as np
 
-import math as math##Added / changed
+import math as math
 from scipy.stats import norm
 
 from scipy import stats
@@ -173,8 +173,9 @@ class ZeroEstimator(object):
         return y
 
         
-class TobitEstimator(object):##Added / changed
-    def __init__(self, sigma=1,yl=0,yu=1):
+class TobitEstimator(object):
+    """An estimator predicting the mean of the latent variable in a Tobit model."""
+    def __init__(self, sigma=1, yl=0, yu=1):
         if not 0 < sigma:
             raise ValueError("`sigma` must be larger than 0 but was %r" % sigma)
         self.sigma = sigma
@@ -448,9 +449,9 @@ class QuantileLossFunction(RegressionLossFunction):
             loss = (alpha * diff[mask].sum() -
                     (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
         else:
-            loss = ((alpha * np.sum(sample_weight[mask] * diff[mask]) -
+            loss = (((alpha * np.sum(sample_weight[mask] * diff[mask]) -
                     (1.0 - alpha) * np.sum(sample_weight[~mask] * diff[~mask])) /
-                    sample_weight.sum())
+                    sample_weight.sum()))
         return loss
 
     def negative_gradient(self, y, pred, **kargs):
@@ -470,8 +471,11 @@ class QuantileLossFunction(RegressionLossFunction):
         tree.value[leaf, 0] = val
 
 
-class TobitLossFunction(RegressionLossFunction):##Added / changed
-    """Loss function for Tobit regression"""
+class TobitLossFunction(RegressionLossFunction):
+    """Loss function for the Tobit model.
+    
+    The Tobit model is used, for instance, for modeling censored data.
+    """
 
     def __init__(self, n_classes, sigma=1, yl=0, yu=1):
         super(TobitLossFunction, self).__init__(n_classes)
@@ -480,29 +484,30 @@ class TobitLossFunction(RegressionLossFunction):##Added / changed
         self.sigma = sigma
         self.yl = yl
         self.yu = yu
-        self.const = 0.5*np.log(2*math.pi)+np.log(sigma)
+        self.const = 0.5 * np.log(2 * math.pi) + np.log(sigma)
 
     def init_estimator(self):
-        return TobitEstimator(self.sigma,self.yl,self.yu)
+        return TobitEstimator(self.sigma, self.yl, self.yu)
           
     def __call__(self, y, pred, sample_weight=None):
         pred = pred.ravel()
         sigma = self.sigma
-        yl=self.yl
-        yu=self.yu
-        const=self.const
+        yl = self.yl
+        yu = self.yu
+        const = self.const
         diff = (y - pred)/sigma 
-        indl=(y==yl)
-        indu=(y==yu)
-        indmid=(y>yl) & (y<yu)
+        indl = (y == yl)
+        indu = (y == yu)
+        indmid = (y > yl) & (y < yu)
         if sample_weight is None:
-            loss = (np.sum((diff[indmid] ** 2.0)/2+ const)  
-                    -np.sum(norm.logcdf(diff[indl]))+
-                    -np.sum(norm.logcdf(-diff[indu])))
+            loss = (np.sum((diff[indmid] ** 2.0)/2 + const)  
+                    - np.sum(norm.logcdf(diff[indl]))
+                    - np.sum(norm.logcdf(-diff[indu])))
         else:
-            loss = (np.sum(sample_weight[indmid]*((diff[indmid] ** 2.0)/2+ const)) 
-                    -np.sum(sample_weight[indl]*norm.logcdf(diff[indl]))+
-                    -np.sum(sample_weight[indu]*norm.logcdf(-diff[indu])))
+            loss = ((np.sum(sample_weight[indmid] 
+                            * ((diff[indmid] ** 2.0) / 2 + const)) 
+                    - np.sum(sample_weight[indl] * norm.logcdf(diff[indl]))
+                    - np.sum(sample_weight[indu] * norm.logcdf(-diff[indu]))))
         return loss
 
     def negative_gradient(self, y, pred, sample_weight=None, **kargs):
@@ -511,18 +516,24 @@ class TobitLossFunction(RegressionLossFunction):##Added / changed
         yl=self.yl
         yu=self.yu
         diff = (y - pred)/sigma
-        indl=(y==yl)
-        indu=(y==yu)
-        indmid=(y>yl) & (y<yu)
+        indl = (y == yl)
+        indu = (y == yu)
+        indmid = (y > yl) & (y < yu)
         residual = np.zeros((y.shape[0],), dtype=np.float64)
         if sample_weight is None:
-            residual[indl]=-np.exp(norm.logpdf(diff[indl])-norm.logcdf(diff[indl]))/sigma
-            residual[indmid]=diff[indmid]/sigma
-            residual[indu]=np.exp(norm.logpdf(diff[indu])-norm.logcdf(-diff[indu]))/sigma
+            residual[indl] = (- np.exp(norm.logpdf(diff[indl]) 
+                                - norm.logcdf(diff[indl])) / sigma)
+            residual[indmid] = diff[indmid] / sigma
+            residual[indu] = (np.exp(norm.logpdf(diff[indu]) 
+                                - norm.logcdf(-diff[indu])) / sigma)
         else:
-            residual[indl]=-sample_weight[indl]*np.exp(norm.logpdf(diff[indl])-norm.logcdf(diff[indl]))/sigma
-            residual[indmid]=sample_weight[indmid]*diff[indmid]/sigma
-            residual[indu]=sample_weight[indu]*np.exp(norm.logpdf(diff[indu])-norm.logcdf(-diff[indu]))/sigma
+            residual[indl] = (- sample_weight[indl] 
+                                * np.exp(norm.logpdf(diff[indl])
+                                - norm.logcdf(diff[indl])) / sigma)
+            residual[indmid] = sample_weight[indmid] * diff[indmid] / sigma
+            residual[indu] = (sample_weight[indu] 
+                                * np.exp(norm.logpdf(diff[indu])
+                                - norm.logcdf(-diff[indu])) / sigma)
         return (residual)
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
@@ -536,24 +547,26 @@ class TobitLossFunction(RegressionLossFunction):##Added / changed
         
         pred = pred.ravel()
         sigma = self.sigma
-        sigma2 = self.sigma**2
-        yl=self.yl
-        yu=self.yu
+        sigma2 = self.sigma ** 2
+        yl = self.yl
+        yu = self.yu
 
-        diff = (y_tr-pred.take(terminal_region, axis=0))/sigma
-        indl=(y_tr==yl)
-        indu=(y_tr==yu)
-        indmid=(y_tr>yl) & (y_tr<yu)
+        diff = (y_tr - pred.take(terminal_region, axis=0)) / sigma
+        indl = (y_tr == yl)
+        indu = (y_tr == yu)
+        indmid = (y_tr > yl) & (y_tr < yu)
         hessian = np.zeros((y_tr.shape[0],), dtype=np.float64)
         
-        lognpdfl=norm.logpdf(diff[indl])
-        logncdfl=norm.logcdf(diff[indl])
-        lognpdfu=norm.logpdf(diff[indu])
-        logncdfu=norm.logcdf(-diff[indu])
+        lognpdfl = norm.logpdf(diff[indl])
+        logncdfl = norm.logcdf(diff[indl])
+        lognpdfu = norm.logpdf(diff[indu])
+        logncdfu = norm.logcdf(-diff[indu])
         
-        hessian[indmid]=1/sigma2
-        hessian[indl]=np.exp(lognpdfl-logncdfl)/sigma2*diff[indl]+np.exp(2*lognpdfl-2*logncdfl)/sigma2
-        hessian[indu]=-np.exp(lognpdfu-logncdfu)/sigma2*diff[indu]+np.exp(2*lognpdfu-2*logncdfu)/sigma2
+        hessian[indmid] = 1/sigma2
+        hessian[indl] = (np.exp(lognpdfl - logncdfl) / sigma2 * diff[indl]
+                            + np.exp(2*lognpdfl-2 * logncdfl) / sigma2)
+        hessian[indu] = (- np.exp(lognpdfu-logncdfu)/sigma2 * diff[indu] 
+                            + np.exp(2*lognpdfu-2 * logncdfu) / sigma2)
 
         numerator = np.sum(sample_weight * residual)  
         denominator = np.sum(sample_weight * hessian)
@@ -777,7 +790,7 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'quantile': QuantileLossFunction,
                   'deviance': None,    # for both, multinomial and binomial
                   'exponential': ExponentialLoss,
-                  'tobit': TobitLossFunction,##Added / changed
+                  'tobit': TobitLossFunction,
                   }
 
 
@@ -849,7 +862,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto',
                  validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-4,sigma=1,yl=0,yu=1):##Added / changed
+                 tol=1e-4, sigma=1, yl=0, yu=1):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -873,9 +886,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
-        self.sigma=sigma##Added / changed
-        self.yl=yl
-        self.yu=yu
+        self.sigma = sigma
+        self.yl = yl
+        self.yu = yu
 
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
                    random_state, X_idx_sorted, X_csc=None, X_csr=None):
@@ -956,7 +969,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if self.loss in ('huber', 'quantile'):
             self.loss_ = loss_class(self.n_classes_, self.alpha)
-        elif self.loss in ('tobit'):##Added / changed
+        elif self.loss in ('tobit'):
             self.loss_ = loss_class(self.n_classes_, self.sigma, self.yl, self.yu)
         else:
             self.loss_ = loss_class(self.n_classes_)
@@ -2036,7 +2049,26 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         number), the training stops.
 
         .. versionadded:: 0.20
-
+        
+    sigma: float, optional, default 1.
+        Standard deviation of the latent variable in a Tobit model. 
+        This can be considered a tuning parameter for when doing
+        gardient boosting.
+        
+        .. versionadded:: 0.20
+        
+    yl: float, optional, default 0.
+        Lower limit of the Tobit model. If there is no lower censoring,
+        simply set this parameter to a low value (lower than all data points)
+        
+        .. versionadded:: 0.20
+        
+    yu: float, optional, default 1.
+        Upper limit of the Tobit model. If there is no upper censoring,
+        simply set this parameter to a high value (higher than all data points)
+        
+        .. versionadded:: 0.20
+        
 
     Attributes
     ----------
@@ -2088,7 +2120,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
 
-    _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile','tobit')##Added / changed
+    _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile', 'tobit')
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
@@ -2097,7 +2129,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False, presort='auto', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4,sigma=1,yl=0,yu=1):##Added / changed
+                 n_iter_no_change=None, tol=1e-4, sigma=1, yl=0, yu=1):
 
         super(GradientBoostingRegressor, self).__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -2111,7 +2143,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             presort=presort, validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol,sigma=sigma,yl=yl,yu=yu)##Added / changed
+            n_iter_no_change=n_iter_no_change, tol=tol, sigma=sigma,
+            yl=yl, yu=yu)
 
     def predict(self, X):
         """Predict regression target for X.
