@@ -726,7 +726,7 @@ def test_estimators_samples_deterministic():
     # This test is a regression test to check that with a random step
     # (e.g. SparseRandomProjection) and a given random state, the results
     # generated at fit time can be identically reproduced at a later time using
-    # data saved in object attributes.
+    # data saved in object attributes. Check issue #9524 for full discussion.
 
     iris = load_iris()
     X, y = iris.data, iris.target
