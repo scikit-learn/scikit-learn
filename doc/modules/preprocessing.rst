@@ -503,9 +503,9 @@ dataset.
 Note that, if there is a possibility that the training data might have missing categorical
 features, one has to explicitly set ``categories``. For example,
 
-    >>> genders = ['male', 'female']
-    >>> locations = ['from Europe', 'from US', 'from Africa', 'from Asia']
-    >>> browsers = ['uses Safari', 'uses Firefox', 'uses IE', 'uses Chrome']
+    >>> genders = ['female', 'male']
+    >>> locations = ['from Africa', 'from Asia', 'from Europe', 'from US']
+    >>> browsers = ['uses Chrome', 'uses Firefox', 'uses IE', 'uses Safari']
     >>> enc = preprocessing.CategoricalEncoder(categories=[genders, locations, browsers])
     >>> # Note that for there are missing categorical values for the 2nd and 3rd
     >>> # feature
