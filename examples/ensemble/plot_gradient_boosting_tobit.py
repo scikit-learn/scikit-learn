@@ -26,36 +26,36 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
-###################
-## Simulate data ##
-###################
+"""
+Simulate data
+"""
 n = 10000
 X = np.random.rand(n, 4)
 X = (X - 0.5) * 2
-x1t = np.abs(X[:,0]) ** 1.5
-x2t = np.abs(X[:,1]) ** 1.5
+x1t = np.abs(X[:, 0]) ** 1.5
+x2t = np.abs(X[:, 1]) ** 1.5
 r2 = (x1t ** 2 + x2t ** 2) ** 0.5
-y = (4 * np.cos(np.pi * 2 * 1.1 * r2) + 4 * X[:,2]
-    + np.random.normal(scale=1, size=n))
+y = (4 * np.cos(np.pi * 2 * 1.1 * r2) + 4 * X[:, 2]
+     + np.random.normal(scale=1, size=n))
 
-##Censoring: 66% of the data is censored (33% lower and 33% upper censoring)
+# Censoring: 66% of the data is censored (33% lower and 33% upper censoring)
 yc = y.copy()
 yl = np.percentile(y, q=33)
 yu = np.percentile(y, q=66)
 yc[y >= yu] = yu
 yc[y <= yl] = yl
 
-############################
-## Define and learn model ##
-############################
+"""
+Define and learn model
+"""
 model = GradientBoostingRegressor(loss='tobit', yl=yl, yu=yu)
 model.fit(X, yc)
 
 
-###############################
-## Variable importance plots ##
-###############################
-feature_names = np.array(['V1','V2','V3','V4'])
+"""
+Variable importance plots 
+"""
+feature_names = np.array(['V1', 'V2', 'V3', 'V4'])
 feature_importance = model.feature_importances_
 # make importances relative to max importance
 feature_importance = 100.0 * (feature_importance / feature_importance.max())
@@ -69,19 +69,19 @@ plt.title('Variable Importance')
 plt.show()
 
 
-##############################
-## Partial dependence plots ##
-##############################
-##Univariate partial dependence plots
-features = [0,1,2,3]
-names = [0,1,2,3]
+"""
+Partial dependence plots
+"""
+# Univariate partial dependence plots
+features = [0, 1, 2, 3]
+names = [0, 1, 2, 3]
 fig, axs = plot_partial_dependence(model, X, features,
                                    feature_names=names,
                                    n_jobs=3, grid_resolution=50)
 fig.suptitle('Partial dependence plots')
 plt.subplots_adjust(top=0.9)
 
-##3d plot for bivariate partial dependence plot
+# 3d plot for bivariate partial dependence plot
 target_feature = (0, 1)
 pdp, axes = partial_dependence(model, target_feature,
                                X=X, grid_resolution=50)
@@ -101,9 +101,3 @@ plt.colorbar(surf)
 plt.suptitle('Partial dependence plot of first two variables')
 plt.subplots_adjust(top=0.9)
 plt.show()
-
-
-
-
-
-
