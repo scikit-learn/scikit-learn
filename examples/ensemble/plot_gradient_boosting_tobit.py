@@ -5,7 +5,7 @@ Grabit: Gradient Boosting for the Tobit model
 
 Demonstrate the Grabit model (Gradient Boosting with a Tobit loss fuction).
 
-This example fits a Gradient Boosting model with a Tobit loss function  
+This example fits a Gradient Boosting model with a Tobit loss function
 to a simulated data set.
 
 Feature importance plots and partial dependence plots are shown.
@@ -26,7 +26,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-    
+
 ###################
 ## Simulate data ##
 ###################
@@ -36,7 +36,7 @@ X = (X - 0.5) * 2
 x1t = np.abs(X[:,0]) ** 1.5
 x2t = np.abs(X[:,1]) ** 1.5
 r2 = (x1t ** 2 + x2t ** 2) ** 0.5
-y = (4 * np.cos(np.pi * 2 * 1.1 * r2) + 4 * X[:,2] 
+y = (4 * np.cos(np.pi * 2 * 1.1 * r2) + 4 * X[:,2]
     + np.random.normal(scale=1, size=n))
 
 ##Censoring: 66% of the data is censored (33% lower and 33% upper censoring)
@@ -56,7 +56,7 @@ model.fit(X, yc)
 ###############################
 ## Variable importance plots ##
 ###############################
-VI = pd.concat([pd.DataFrame(['V1','V2','V3','V4']), 
+VI = pd.concat([pd.DataFrame(['V1','V2','V3','V4']),
                 pd.DataFrame(model.feature_importances_)], axis=1)
 VI.columns = ['variable','importance']
 VI.sort_values(by='importance', ascending=False, inplace=True)
