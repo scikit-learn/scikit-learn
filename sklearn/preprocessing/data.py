@@ -2605,8 +2605,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         - 'auto' : Determine categories automatically from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
-          column. The passed categories are sorted before encoding the data
-          (used categories can be found in the ``categories_`` attribute).
+          column. The passed categories should be sorted.
+
+        The used categories can be found in the ``categories_`` attribute.
 
     dtype : number type, default np.float64
         Desired dtype of output.
@@ -2688,6 +2689,12 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             raise ValueError("handle_unknown='ignore' is not supported for"
                              " encoding='ordinal'")
 
+        if self.categories != 'auto':
+            for cats in self.categories:
+                if not np.all(np.sort(cats) == np.array(cats)):
+                    raise ValueError("Unsorted categories are not yet "
+                                     "supported")
+
         X = check_array(X, dtype=np.object, copy=True)
         n_samples, n_features = X.shape
 
@@ -2706,7 +2713,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
-                le.classes_ = np.array(np.sort(self.categories[i]))
+                le.classes_ = np.array(self.categories[i])
 
         self.categories_ = [le.classes_ for le in self._label_encoders_]
 

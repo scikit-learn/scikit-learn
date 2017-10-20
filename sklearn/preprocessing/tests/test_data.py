@@ -2032,14 +2032,13 @@ def test_categorical_encoder_specified_categories():
     exp = np.array([[1., 0., 0.],
                     [0., 1., 0.]])
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
-
-    # don't follow order of passed categories, but sort them
-    enc = CategoricalEncoder(categories=[['c', 'b', 'a']])
-    exp = np.array([[1., 0., 0.],
-                    [0., 1., 0.]])
-    assert_array_equal(enc.fit_transform(X).toarray(), exp)
-    assert enc.categories[0] == ['c', 'b', 'a']
+    assert enc.categories[0] == ['a', 'b', 'c']
     assert enc.categories_[0].tolist() == ['a', 'b', 'c']
+
+    # unsorted passed categories raises for now
+    enc = CategoricalEncoder(categories=[['c', 'b', 'a']])
+    msg = re.escape('Unsorted categories are not yet supported')
+    assert_raises_regex(ValueError, msg, enc.fit_transform, X)
 
     # multiple columns
     X = np.array([['a', 'b'], ['A', 'C']], dtype=object).T
