@@ -4,6 +4,7 @@
 # The behavior of the script is controlled by environment variable defined
 # in the circle.yml in the top level folder of the project.
 
+set -e
 
 if [ -z $CIRCLE_PROJECT_USERNAME ];
 then USERNAME="sklearn-ci";
@@ -11,6 +12,13 @@ else USERNAME=$CIRCLE_PROJECT_USERNAME;
 fi
 
 DOC_REPO="scikit-learn.github.io"
+GENERATED_DOC_DIR=$1
+
+if [[ -z "$GENERATED_DIR" ]]; then
+    echo "Need to pass directory of the generated doc as argument"
+    echo "Usage: $0 <generated_doc_dir>"
+    exit 1
+fi
 
 if [ "$CIRCLE_BRANCH" = "master" ]
 then
@@ -32,7 +40,7 @@ echo $dir > .git/info/sparse-checkout
 git checkout $CIRCLE_BRANCH
 git reset --hard origin/$CIRCLE_BRANCH
 git rm -rf $dir/ && rm -rf $dir/
-cp -R $HOME/scikit-learn/doc/_build/html/stable $dir
+cp -R $GENERATED_DOC_DIR $dir
 git config --global user.email "olivier.grisel+sklearn-ci@gmail.com"
 git config --global user.name $USERNAME
 git config --global push.default matching
