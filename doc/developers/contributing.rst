@@ -218,10 +218,20 @@ rules before submitting a pull request:
       ``sklearn.utils`` submodule.  A list of utility routines available
       for developers can be found in the :ref:`developers-utils` page.
 
-    * If your pull request addresses an issue, please use the title to describe
-      the issue and mention the issue number in the pull request description to
-      ensure a link is created to the original issue.
+    * Give your pull request a helpful title that summarises what your
+      contribution does. In some cases "Fix <ISSUE TITLE>" is enough.
+      "Fix #<ISSUE NUMBER>" is not enough.
 
+    * Often pull requests resolve one or more other issues (or pull requests).
+      If merging your pull request means that some other issues/PRs should
+      be closed, you should `use keywords to create link to them
+      <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
+      (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+      one is preceded by a keyword). Upon merging, those issues/PRs will
+      automatically be closed by GitHub. If your pull request is simply
+      related to some other issues/PRs, create a link to them without using
+      the keywords (e.g., ``See also #1234``).
+    
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
 
