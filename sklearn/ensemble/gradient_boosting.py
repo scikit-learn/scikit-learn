@@ -524,18 +524,18 @@ class TobitLossFunction(RegressionLossFunction):
         residual = np.zeros((y.shape[0],), dtype=np.float64)
         if sample_weight is None:
             residual[indl] = (- np.exp(norm.logpdf(diff[indl])
-                            - norm.logcdf(diff[indl])) / sigma)
+                              - norm.logcdf(diff[indl])) / sigma)
             residual[indmid] = diff[indmid] / sigma
             residual[indu] = (np.exp(norm.logpdf(diff[indu])
-                            - norm.logcdf(-diff[indu])) / sigma)
+                              - norm.logcdf(-diff[indu])) / sigma)
         else:
             residual[indl] = (- sample_weight[indl]
-                            * np.exp(norm.logpdf(diff[indl])
-                            - norm.logcdf(diff[indl])) / sigma)
+                              * np.exp(norm.logpdf(diff[indl])
+                              - norm.logcdf(diff[indl])) / sigma)
             residual[indmid] = sample_weight[indmid] * diff[indmid] / sigma
             residual[indu] = (sample_weight[indu]
-                            * np.exp(norm.logpdf(diff[indu])
-                            - norm.logcdf(-diff[indu])) / sigma)
+                              * np.exp(norm.logpdf(diff[indu])
+                              - norm.logcdf(-diff[indu])) / sigma)
         return (residual)
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
@@ -566,9 +566,9 @@ class TobitLossFunction(RegressionLossFunction):
 
         hessian[indmid] = 1/sigma2
         hessian[indl] = (np.exp(lognpdfl - logncdfl) / sigma2 * diff[indl]
-                            + np.exp(2*lognpdfl-2 * logncdfl) / sigma2)
+                         + np.exp(2*lognpdfl-2 * logncdfl) / sigma2)
         hessian[indu] = (- np.exp(lognpdfu-logncdfu)/sigma2 * diff[indu]
-                            + np.exp(2*lognpdfu-2 * logncdfu) / sigma2)
+                         + np.exp(2*lognpdfu-2 * logncdfu) / sigma2)
 
         numerator = np.sum(sample_weight * residual)
         denominator = np.sum(sample_weight * hessian)
@@ -972,7 +972,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if self.loss in ('huber', 'quantile'):
             self.loss_ = loss_class(self.n_classes_, self.alpha)
         elif self.loss in ('tobit'):
-            self.loss_ = loss_class(self.n_classes_, self.sigma, self.yl, self.yu)
+            self.loss_ = loss_class(self.n_classes_, self.sigma,
+                                    self.yl, self.yu)
         else:
             self.loss_ = loss_class(self.n_classes_)
 
