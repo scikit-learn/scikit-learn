@@ -83,9 +83,9 @@ class KernelRidge(BaseEstimator, RegressorMixin):
 
     See also
     --------
-    Ridge
+    :func:`sklearn.linear_model.Ridge`:
         Linear ridge regression.
-    SVR
+    :func:`sklearn.svm.SVR`:
         Support Vector Regression implemented using libsvm.
 
     Examples
