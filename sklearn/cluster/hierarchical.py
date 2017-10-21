@@ -642,7 +642,13 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
           all observations of the two sets.
 
     pooling_func : callable, default=np.mean
-        ignored, Deprecate to be removed in 0.22.
+        This combines the values of agglomerated features into a single
+        value, and should accept an array of shape [M, N] and the keyword
+        argument `axis=1`, and reduce it to an array of size [M].
+
+        .. deprecated:: 0.20
+           ``pooling_func`` has been deprecated in 0.20 and will be removed
+           in 0.22.
 
     Attributes
     ----------
@@ -693,11 +699,9 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self
         """
         if self.pooling_func != 'deprecated':
-            warnings.warn('"pooling_func" as a parameter argument is '
-                          'deprecated in version 0.20 and will be removed '
-                          'in version 0.22. It is being removed since '
-                          'AgglomerativeClustering do not directly use '
-                          '"pooling_func"', DeprecationWarning)
+            warnings.warn('Agglomerative "pooling_func" parameter is not used.'
+                          ' It has been deprecated in version 0.20 and will be'
+                          'removed in 0.22', DeprecationWarning)
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
@@ -841,8 +845,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
                                                    memory=memory,
                                                    connectivity=connectivity,
                                                    compute_full_tree=compute_full_tree,
-                                                   linkage=linkage, affinity=affinity,
-                                                   pooling_func=pooling_func)
+                                                   linkage=linkage, affinity=affinity)
+        self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
         """Fit the hierarchical clustering on the data
