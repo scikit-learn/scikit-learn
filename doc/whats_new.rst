@@ -131,7 +131,7 @@ Yurchak, Reiichiro Nakano, Sachin Kelkar, Sam Steingold,
 Yaroslav Halchenko, diegodlh, felix, goncalo-rodrigues,
 jkleint, oliblum90, pasbi, Anthony Gitter, Ben Lawson, Charlie
 Brummitt, Didi Bar-Zev, Gael Varoquaux, Joan Massich, Joris
-Van den Bossche
+Van den Bossche, nielsenmarkus11
 
 Version 0.19
 ============
