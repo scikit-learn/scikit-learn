@@ -1176,7 +1176,7 @@ implement the interface is::
 
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
-            self.setattr(parameter, value)
+            setattr(self, parameter, value)
         return self
 
 
