@@ -642,13 +642,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
           all observations of the two sets.
 
     pooling_func : callable, default=np.mean
-        This combines the values of agglomerated features into a single
-        value, and should accept an array of shape [M, N] and the keyword
-        argument `axis=1`, and reduce it to an array of size [M].
-
-        .. deprecated:: 0.20
-           ``pooling_func`` has been deprecated in 0.20 and will be removed
-           in 0.22.
+        ignored, Deprecated to be removed in 0.22.
 
     Attributes
     ----------
@@ -841,11 +835,10 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean):
-        super(FeatureAgglomeration, self).__init__(n_clusters=n_clusters,
-                                                   memory=memory,
-                                                   connectivity=connectivity,
-                                                   compute_full_tree=compute_full_tree,
-                                                   linkage=linkage, affinity=affinity)
+        super(FeatureAgglomeration, self).__init__(
+            n_clusters=n_clusters, memory=memory, connectivity=connectivity,
+            compute_full_tree=compute_full_tree, linkage=linkage,
+            affinity=affinity)
         self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
