@@ -1187,6 +1187,10 @@ Quantile regression provides sensible prediction intervals even for errors with 
    :align: center
    :scale: 50%
 
+Another possible advantage of quantile regression over OLS is its robustness
+to outliers, because it is only sign of an error that influences estimated
+coefficients, not its absolute value.
+
 Quantile loss function can be used with models other than linear.
 :class:`GradientBoostingRegressor` also has an option to predict conditional quantiles.
 
