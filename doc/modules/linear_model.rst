@@ -1148,6 +1148,65 @@ Also, this estimator is different from the R implementation of Robust Regression
 squares implementation with weights given to each sample on the basis of how much the residual is
 greater than a certain threshold.
 
+.. _quantile_regression:
+
+Quantile Regression
+===================
+
+Quantile regression estimates median or other quantiles of :math:`y` conditional on :math:`X`,
+    while OLS estimates conditional mean.
+
+The :class:`QuantileRegressor` applies linear loss to all samples. It is thus more radical than
+:class:`HuberRegressor`, that applies linear penalty to small fraction of outliers and quadratic loss
+to the rest of observations. :class:`QuantileRegressor` also supports L1 and L2 regularization,
+like :class:`ElasticNet`. It solves
+
+.. math::
+    \underset{w}{min\,} { \frac{1}{n_{samples}} L_q (y - X w) + \alpha \rho ||w||_1 + \alpha(1-\rho) ||w||_2 ^ 2}
+
+where
+
+.. math::
+    \L_q(t) =
+    \begin{cases}
+        q t, & t > 0, \\
+        0,    & t = 0, \\
+        (1-q) t, & t < 0
+    \end{cases}
+
+and :math:`q \in (0, 1)` is the quantile to be estimated.
+
+Quantile regression may be useful if one is interested in predicting an interval
+instead of point prediction. Sometimes prediction interval is calculated based on
+assumption that prediction error is distributed normally with zero mean and constant variance.
+Quantile regression provides sensible prediction intervals even for errors with non-constant
+(but predictable) variance) or non-normal distribution.
+
+.. figure:: /auto_examples/linear_model/images/sphx_glr_plot_quantile_regression_001.png
+   :target: ../auto_examples/linear_model/plot_quantile_regression.html
+   :align: center
+   :scale: 50%
+
+Most implementations of quantile regression are based on linear programming problem.
+Use of L2 regularization makes the problem nonlinear, but use non-differentiable absolute values
+makes it difficult for gradient descent optimization. Instead, current implementation solves
+a sequence of smooth approximate problems similar to Huber regression, proposed by Chen.
+Every next step uses finer approximation. Optimization stops when solutions of two
+consecutive steps are almost identical.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_huber_vs_ridge.py`
+
+.. topic:: References:
+
+  * Koenker, R., & Bassett Jr, G. (1978). `Regression quantiles. <http://web.stanford.edu/~doubleh/otherpapers/koenker.pdf>`_
+            Econometrica: journal of the Econometric Society, 33-50.
+
+  * Chen, C., & Wei, Y. (2005). `Computational issues for quantile regression. <http://pdfs.semanticscholar.org/5cf3/f9fe77c423dc394c8766cbdcfb41ea44b7d4.pdf>`_
+           Sankhya: The Indian Journal of Statistics, 399-417.
+
+
 .. _polynomial_regression:
 
 Polynomial regression: extending linear models with basis functions

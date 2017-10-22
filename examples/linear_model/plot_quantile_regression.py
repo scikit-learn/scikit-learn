@@ -7,7 +7,7 @@ Plot the prediction of different conditional quantiles.
 
 The left figure shows the case when error distribution is normal, but variance is not constant.
 
-The right figure shows example of asymmetric distribution.
+The right figure shows example of asymmetric error distribution (namely, Pareto).
 """
 from __future__ import division
 print(__doc__)
@@ -32,7 +32,7 @@ for quantile in quantiles:
     plt.plot([0, 10], qr.predict([[0], [10]]))
 plt.xlabel('x')
 plt.ylabel('y')
-plt.title('Quantiles of normal residuals')
+plt.title('Quantiles of normal residuals with non-constant variance')
 plt.legend(quantiles)
 
 plt.subplot(122)
@@ -45,7 +45,7 @@ for quantile in quantiles:
     plt.plot([0, 10], qr.predict([[0],[10]]))
 plt.xlabel('x')
 plt.ylabel('y')
-plt.title('Quantiles of pareto residuals')
+plt.title('Quantiles of asymmetrically distributed residuals')
 plt.legend(quantiles)
 
 plt.show()

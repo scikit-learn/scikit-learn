@@ -141,7 +141,10 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     References
     ----------
-    .. [1] Chen, C., & Wei, Y. (2005). Computational issues for quantile regression. 
+    .. [1] Koenker, R., & Bassett Jr, G. (1978). Regression quantiles.
+            Econometrica: journal of the Econometric Society, 33-50.
+
+    .. [2] Chen, C., & Wei, Y. (2005). Computational issues for quantile regression.
            Sankhya: The Indian Journal of Statistics, 399-417.
     """
 
