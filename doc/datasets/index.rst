@@ -321,6 +321,7 @@ writing data in that format.
     labeled_faces
     covtype
     rcv1
+    kddcup99
 
 
 .. include:: olivetti_faces.rst
@@ -334,6 +335,8 @@ writing data in that format.
 .. include:: covtype.rst
 
 .. include:: rcv1.rst
+
+.. include:: kddcup99.rst
 
 .. _boston_house_prices:
 
