@@ -22,7 +22,6 @@ People
 
 The following people have been core contributors to scikit-learn's development and maintenance:
 
-.. hlist::
 
   * `Mathieu Blondel <http://mblondel.org>`_
   * `Matthieu Brucher <http://matt.eifelle.com/>`_
