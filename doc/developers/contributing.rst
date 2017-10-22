@@ -825,7 +825,8 @@ each pull request needs to be signed off by two core developers, you can speed
 up this process by providing your feedback.
 
 Here are a few important aspects that need to be covered in any code review,
-from high-level questions to a more detailed check-list.
+from high-level questions to a more detailed check-list. We encourage you to add new 
+test(s) as it's relatively rare for any code contributions not to require test(s).
 
 - Do we want this in the library? Is it likely to be used? Do you, as
   a scikit-learn user, like the change and intend to use it? Is it in
