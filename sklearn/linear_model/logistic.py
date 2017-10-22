@@ -34,7 +34,7 @@ from ..utils.multiclass import check_classification_targets
 from ..externals.joblib import Parallel, delayed
 from ..model_selection import check_cv
 from ..externals import six
-from ..metrics import SCORERS
+from ..metrics import get_scorer
 
 
 # .. some helper functions for logistic_regression_path ..
@@ -941,7 +941,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     scores = list()
 
     if isinstance(scoring, six.string_types):
-        scoring = SCORERS[scoring]
+        scoring = get_scorer(scoring)
     for w in coefs:
         if multi_class == 'ovr':
             w = w[np.newaxis, :]
@@ -1415,7 +1415,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         default scoring option used is 'accuracy'.
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'},
-        default: 'liblinear'
+        default: 'lbfgs'
         Algorithm to use in the optimization problem.
 
         - For small datasets, 'liblinear' is a good choice, whereas 'sag' and

@@ -83,9 +83,9 @@ class KernelRidge(BaseEstimator, RegressorMixin):
 
     See also
     --------
-    Ridge
+    sklearn.linear_model.Ridge:
         Linear ridge regression.
-    SVR
+    sklearn.svm.SVR:
         Support Vector Regression implemented using libsvm.
 
     Examples

@@ -18,7 +18,7 @@ import numpy as np
 import scipy.sparse as sp
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
-from .base import RegressorMixin, ClassifierMixin
+from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.fixes import parallel_helper
@@ -152,7 +152,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
                          multi_output=True,
                          accept_sparse=True)
 
-        if isinstance(self, ClassifierMixin):
+        if is_classifier(self):
             check_classification_targets(y)
 
         if y.ndim == 1:
@@ -316,7 +316,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
     def predict_proba(self, X):
         """Probability estimates.
-        Returns prediction probabilites for each class of each output.
+        Returns prediction probabilities for each class of each output.
 
         Parameters
         ----------
@@ -368,7 +368,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return np.mean(np.all(y == y_pred, axis=1))
 
 
-class ClassifierChain(BaseEstimator):
+class ClassifierChain(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """A multi-label model that arranges binary classifiers into a chain.
 
     Each model makes a prediction in the order specified by the chain using
@@ -542,11 +542,6 @@ class ClassifierChain(BaseEstimator):
     @if_delegate_has_method('base_estimator')
     def predict_proba(self, X):
         """Predict probability estimates.
-
-        By default the inputs to later models in a chain is the binary class
-        predictions not the class probabilities. To use class probabilities
-        as features in subsequent models set the cv property to be one of
-        the allowed values other than None.
 
         Parameters
         ----------

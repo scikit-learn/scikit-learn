@@ -90,7 +90,7 @@ def safe_mask(X, mask):
         mask
     """
     mask = np.asarray(mask)
-    if np.issubdtype(mask.dtype, np.int):
+    if np.issubdtype(mask.dtype, np.signedinteger):
         return mask
 
     if hasattr(X, "toarray"):
@@ -135,8 +135,15 @@ def safe_indexing(X, indices):
     -------
     subset
         Subset of X on first axis
+
+    Notes
+    -----
+    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    not supported.
     """
     if hasattr(X, "iloc"):
+        # Work-around for indexing with read-only indices in pandas
+        indices = indices if indices.flags.writeable else indices.copy()
         # Pandas Dataframes and Series
         try:
             return X.iloc[indices]

@@ -75,9 +75,9 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
-          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
-          'sqeuclidean', 'yule']
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics:
@@ -85,8 +85,8 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
     p : integer, optional (default=2)
         Parameter for the Minkowski metric from
-        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
+        :func:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this
+        is equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, optional (default=None)
@@ -106,7 +106,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     Attributes
     ----------
     negative_outlier_factor_ : numpy array, shape (n_samples,)
-        The opposite LOF of the training samples. The lower, the more normal.
+        The opposite LOF of the training samples. The lower, the more abnormal.
         Inliers tend to have a LOF score close to 1, while outliers tend
         to have a larger LOF score.
 

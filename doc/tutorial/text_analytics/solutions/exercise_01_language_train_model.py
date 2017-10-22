@@ -37,7 +37,7 @@ vectorizer = TfidfVectorizer(ngram_range=(1, 3), analyzer='char',
 # the pipeline instance should stored in a variable named clf
 clf = Pipeline([
     ('vec', vectorizer),
-    ('clf', Perceptron()),
+    ('clf', Perceptron(tol=1e-3)),
 ])
 
 # TASK: Fit the pipeline on the training set
