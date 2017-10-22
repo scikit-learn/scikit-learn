@@ -50,12 +50,14 @@ from .olivetti_faces import fetch_olivetti_faces
 from .species_distributions import fetch_species_distributions
 from .california_housing import fetch_california_housing
 from .rcv1 import fetch_rcv1
+from .adult_census import fetch_adult_census
 
 
 __all__ = ['clear_data_home',
            'dump_svmlight_file',
            'fetch_20newsgroups',
            'fetch_20newsgroups_vectorized',
+           'fetch_adult_census',
            'fetch_lfw_pairs',
            'fetch_lfw_people',
            'fetch_mldata',
