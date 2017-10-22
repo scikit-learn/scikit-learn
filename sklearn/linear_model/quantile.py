@@ -3,19 +3,20 @@
 
 import numpy as np
 import warnings
-from scipy import optimize, sparse
+from scipy import optimize
 
 from ..base import BaseEstimator, RegressorMixin
 from .base import LinearModel
 from ..utils import check_X_y
 from ..utils import check_consistent_length
-from ..utils import axis0_safe_slice
 from ..utils.extmath import safe_sparse_dot
 
 
-def _smooth_quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sample_weight, gamma=0):
+def _smooth_quantile_loss_and_gradient(
+        w, X, y, quantile, alpha, l1_ratio, sample_weight, gamma=0):
     """ Smooth approximation to quantile regression loss, gradient and hessian.
-    Main loss and l1 penalty are both approximated by the same trick from Chen & Wei, 2005
+    Main loss and l1 penalty are both approximated by the same trick
+    from Chen & Wei, 2005
     """
     _, n_features = X.shape
     fit_intercept = (n_features + 1 == w.shape[0])
@@ -34,10 +35,11 @@ def _smooth_quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sampl
     small_error = ~ (positive_error | negative_error)
 
     # Calculate loss due to regression error
-    regression_loss = (positive_error * (linear_loss * quantile - 0.5 * quantile ** 2 * gamma)
-                       + small_error * 0.5 * linear_loss ** 2 / (gamma if gamma != 0 else 1)  # Here the article LIES!
-                       + negative_error * (linear_loss * (quantile-1) - 0.5 * (quantile-1) ** 2 * gamma)
-                       ) * sample_weight
+    regression_loss = (
+        positive_error * (linear_loss*quantile - 0.5*gamma*quantile**2) +
+        small_error * 0.5*linear_loss**2 / (gamma if gamma != 0 else 1) +
+        negative_error * (linear_loss*(quantile-1) - 0.5*gamma*(quantile-1)**2)
+        ) * sample_weight
     loss = np.sum(regression_loss)
 
     if fit_intercept:
@@ -46,9 +48,9 @@ def _smooth_quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sampl
         grad = np.zeros(n_features + 0)
 
     # Gradient due to the regression error
-    weighted_grad = (positive_error * quantile
-                     + small_error * linear_loss / (gamma if gamma != 0 else 1)  # Here the article LIES!
-                     + negative_error * (quantile-1)) * sample_weight
+    weighted_grad = (positive_error * quantile +
+                     small_error * linear_loss / (gamma if gamma != 0 else 1) +
+                     negative_error * (quantile-1)) * sample_weight
     grad[:n_features] -= safe_sparse_dot(weighted_grad, X)
 
     if fit_intercept:
@@ -59,12 +61,14 @@ def _smooth_quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sampl
     loss += alpha * (1 - l1_ratio) * np.dot(w, w)
 
     # Gradient and loss due to the lasso penalty
-    # for smoothness, replace abs(w) with w^2/(2*gamma)+gamma/2 for abs(w)<gamma
+    # for smoothness replace abs(w) with w^2/(2*gamma)+gamma/2 for abs(w)<gamma
     if gamma > 0:
         large_coef = np.abs(w) > gamma
         small_coef = ~large_coef
-        loss += alpha * l1_ratio * np.sum(large_coef * np.abs(w) + small_coef * (w ** 2 / (2 * gamma) + gamma / 2))
-        grad[:n_features] += alpha * l1_ratio * (large_coef * np.sign(w) + small_coef * w / gamma)
+        loss += alpha*l1_ratio*np.sum(large_coef*np.abs(w) +
+                                      small_coef*(w**2/(2*gamma) + gamma/2))
+        grad[:n_features] += alpha*l1_ratio*(large_coef*np.sign(w) +
+                                             small_coef*w/gamma)
     else:
         loss += alpha * l1_ratio * np.sum(np.abs(w))
         grad[:n_features] += alpha * l1_ratio * np.sign(w)
@@ -75,7 +79,7 @@ def _smooth_quantile_loss_and_gradient(w, X, y, quantile, alpha, l1_ratio, sampl
 class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     """Linear regression model that is robust to outliers.
 
-    The Quantile Regressor optimizes the skewed absolute loss 
+    The Quantile Regressor optimizes the skewed absolute loss
      ``(y - X'w) (q - [y - X'w < 0])``, where q is the desired quantile.
 
     Optimization is performed as a sequence of smooth optimization problems.
@@ -95,7 +99,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     alpha : float, default 0.0001
         Constant that multiplies ElasticNet penalty term.
-        
+
     l1_ratio : float, default 0.0
         The ElasticNet mixing parameter, with ``0 <= l1_ratio <= 1``. For
         ``l1_ratio = 0`` the penalty is an L2 penalty. ``For l1_ratio = 1`` it
@@ -144,12 +148,14 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
     .. [1] Koenker, R., & Bassett Jr, G. (1978). Regression quantiles.
             Econometrica: journal of the Econometric Society, 33-50.
 
-    .. [2] Chen, C., & Wei, Y. (2005). Computational issues for quantile regression.
+    .. [2] Chen, C., & Wei, Y. (2005).
+           Computational issues for quantile regression.
            Sankhya: The Indian Journal of Statistics, 399-417.
     """
 
     def __init__(self, quantile=0.5, max_iter=1000, alpha=0.0001, l1_ratio=0.0,
-                 warm_start=False, fit_intercept=True, gamma=1e-2, gtol=1e-4, xtol=1e-6):
+                 warm_start=False, fit_intercept=True,
+                 gamma=1e-2, gtol=1e-4, xtol=1e-6):
         self.quantile = quantile
         self.max_iter = max_iter
         self.alpha = alpha
@@ -202,9 +208,11 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             else:
                 parameters = np.zeros(X.shape[1] + 0)
 
-        # solve sequence of optimization problems with different smoothing parameter
+        # solve sequence of optimization problems
+        # with different smoothing parameter
         total_iter = []
-        loss_args = X, y, self.quantile, self.alpha, self.l1_ratio, sample_weight
+        loss_args = (X, y, self.quantile, self.alpha, self.l1_ratio,
+                     sample_weight)
         for i in range(10):
             gamma = self.gamma * 0.1 ** i
             result = optimize.minimize(
@@ -214,8 +222,7 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 method='BFGS',
                 jac=True,
                 options={
-                    # Gradient norm must be less than gtol before successful termination, but it is never so
-                    'gtol': self.gtol,  # for 'BFGS'
+                    'gtol': self.gtol,
                     'maxiter': self.max_iter - sum(total_iter),
                 }
                 )
@@ -223,17 +230,23 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             prev_parameters = parameters
             parameters = result['x']
 
-            # for lasso, replace parameters with exact zero, if this decreases the cost function
+            # for lasso, replace parameters with exact zero,
+            # if this decreases the cost function
             if self.alpha * self.l1_ratio > 0:
-                value, _ = _smooth_quantile_loss_and_gradient(parameters, *loss_args, gamma=0)
+                value, _ = _smooth_quantile_loss_and_gradient(parameters,
+                                                              *loss_args,
+                                                              gamma=0)
                 for j in range(len(parameters)):
                     new_parameters = parameters.copy()
                     old_param = new_parameters[j]
                     new_parameters[j] = 0
-                    new_value, _ = _smooth_quantile_loss_and_gradient(new_parameters, *loss_args, gamma=0)
-                    # check if the cost function decreases, or increases, but by little, and param is small anyway
+                    new_value, _ = _smooth_quantile_loss_and_gradient(
+                        new_parameters, *loss_args, gamma=0)
+                    # check if the cost function decreases,
+                    # or increases, but by little, and param is small anyway
                     if new_value <= value \
-                            or np.abs(old_param) < self.xtol and new_value < value + self.gtol:
+                            or np.abs(old_param) < self.xtol \
+                            and new_value < value + self.gtol:
                         value = new_value
                         parameters = new_parameters
 
@@ -246,12 +259,13 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
             # stop if gamma is already zero
             if gamma == 0:
                 break
-        # do I really need to issue this warning??? Its reason is lineSearchError, which cannot be easily fixed
+        # do I really need to issue this warning?
+        # Its reason is lineSearchError, which cannot be easily fixed
         if not result['success']:
             warnings.warn("QuantileRegressor convergence failed:" +
-                          " Scipy solver terminated with %s." % result['message']
+                          " Scipy solver terminated with %s."
+                          % result['message']
                           )
-        
         self.n_iter_ = sum(total_iter)
         self.gamma_ = gamma
         self.total_iter_ = total_iter
