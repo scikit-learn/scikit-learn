@@ -1187,6 +1187,9 @@ Quantile regression provides sensible prediction intervals even for errors with 
    :align: center
    :scale: 50%
 
+Quantile loss function can be used with models other than linear.
+:class:`GradientBoostingRegressor` also has an option to predict conditional quantiles.
+
 Most implementations of quantile regression are based on linear programming problem.
 Use of L2 regularization makes the problem nonlinear, but use non-differentiable absolute values
 makes it difficult for gradient descent optimization. Instead, current implementation solves
