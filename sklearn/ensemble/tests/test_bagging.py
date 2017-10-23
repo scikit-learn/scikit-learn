@@ -703,8 +703,8 @@ def test_estimators_samples():
 
     # Test for correct formatting
     assert_equal(len(estimators_samples), len(estimators))
-    assert_equal(len(estimators_samples[0]), len(X))
-    assert_equal(estimators_samples[0].dtype.kind, 'b')
+    assert_equal(len(estimators_samples[0]), len(X) // 2)
+    assert_equal(estimators_samples[0].dtype.kind, 'i')
 
     # Re-fit single estimator to test for consistent sampling
     estimator_index = 0

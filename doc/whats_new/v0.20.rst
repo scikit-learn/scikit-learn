@@ -19,10 +19,6 @@ random sampling procedures.
 - :class:`isotonic.IsotonicRegression` (bug fix)
 - :class:`metrics.roc_auc_score` (bug fix)
 
-- Classes derived from :class:`ensemble.BaseBagging`. The base estimator may be
-  presented with the same samples in a different order in previous versions;
-  now the samples will always be in input order.
-
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -44,7 +40,7 @@ Classifiers and regressors
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
-  
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy` metric and a corresponding
