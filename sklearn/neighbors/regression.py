@@ -139,7 +139,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse=False)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 

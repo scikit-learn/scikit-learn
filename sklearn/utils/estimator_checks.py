@@ -406,9 +406,6 @@ def maybe_pairwise(X, estimator, kernel=linear_kernel):
 
 def check_estimator_sparse_data(name, estimator_orig):
 
-    if _is_pairwise(estimator_orig):
-        return
-
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
@@ -438,7 +435,7 @@ def check_estimator_sparse_data(name, estimator_orig):
                 probs = estimator.predict_proba(X)
                 assert_equal(probs.shape, (X.shape[0], 4))
         except TypeError as e:
-            if 'sparse' not in repr(e):
+            if 'sparse' not in repr(e).lower():
                 print("Estimator %s doesn't seem to fail gracefully on "
                       "sparse data: error message state explicitly that "
                       "sparse input is not supported if this is not the case."
