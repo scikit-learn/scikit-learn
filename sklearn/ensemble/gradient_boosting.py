@@ -481,8 +481,6 @@ class TobitLossFunction(RegressionLossFunction):
 
     def __init__(self, n_classes, sigma=1, yl=0, yu=1):
         super(TobitLossFunction, self).__init__(n_classes)
-        assert 0 < sigma
-        assert yl < yu
         self.sigma = sigma
         self.yl = yl
         self.yu = yu
