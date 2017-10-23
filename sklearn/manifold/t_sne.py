@@ -423,7 +423,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
         dist_X = X
     else:
         dist_X = pairwise_distances(X, squared=True)
-    np.fill_diagonal(dist_X, np.inf)
+    np.fill_diagonal(dist_X, np.inf) # excludes dist(x_i, x_i)
     ind_X = np.argsort(dist_X, axis=1)[:, :-1]
     ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
         return_distance=False)
