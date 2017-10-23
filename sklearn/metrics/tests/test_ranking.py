@@ -673,8 +673,11 @@ def test_average_precision_score_pos_label_multilabel_indicator():
     # pos_label other than 1
     y_true = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
     y_pred = np.array([[0.9, 0.1], [0.1, 0.9], [0.8, 0.2], [0.2, 0.8]])
-    assert_raises(ValueError, average_precision_score, y_true, y_pred,
-                  pos_label=0)
+    erorr_message = ("Parameter pos_label is fixed to 1 for multilabel"
+                     "-indicator y_true. Do not set pos_label or set "
+                     "pos_label to 1.")
+    assert_raise_message(ValueError, erorr_message, average_precision_score,
+                         y_true, y_pred, pos_label=0)
 
 
 def test_score_scale_invariance():
