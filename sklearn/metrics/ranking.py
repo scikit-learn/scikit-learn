@@ -126,7 +126,7 @@ def auc(x, y, reorder='deprecated'):
     return area
 
 
-def average_precision_score(y_true, y_score, average="macro", pos_label=None,
+def average_precision_score(y_true, y_score, average="macro", pos_label=1,
                             sample_weight=None):
     """Compute average precision (AP) from prediction scores
 
@@ -151,7 +151,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=None,
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels (either {0, 1} or {-1, 1}).
+        True binary labels or binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -173,6 +173,10 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=None,
             by support (the number of true instances for each label).
         ``'samples'``:
             Calculate metrics for each instance, and find their average.
+
+    pos_label : int or str (default=1)
+        The label of the positive class. For multilabel-indicator y_true,
+        pos_label is fixed to 1.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -222,11 +226,10 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=None,
             _partial_binary_uninterpolated_average_precision, y_true,
             y_score, average, sample_weight=sample_weight)
     else:
-        if pos_label is not None and pos_label != 1:
+        if pos_label != 1:
             raise ValueError("Parameter pos_label is fixed to 1 for "
                              "multilabel-indicator y_true. Do not set "
-                             "pos_label or set pos_label to either None "
-                             "or 1.")
+                             "pos_label or set pos_label to 1.")
         return _average_binary_score(
             _binary_uninterpolated_average_precision, y_true, y_score,
             average, sample_weight=sample_weight)
