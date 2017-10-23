@@ -139,6 +139,13 @@ def test_parameter_checks():
                       loss='deviance').fit(X, y),
                   X, [0, 0, 0, 0])
 
+    # Tobit model needs positive variance parameter
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='tobit', sigma=-1).fit, X, y)
+    # Tobit: upper limit needs to be larger than lower limit
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='tobit', yl=1, yu=0).fit, X, y)
+
 
 def test_loss_function():
     assert_raises(ValueError,

@@ -512,7 +512,7 @@ class TobitLossFunction(RegressionLossFunction):
                     - np.sum(sample_weight[indu] * norm.logcdf(-diff[indu]))))
         return loss
 
-    def negative_gradient(self, y, pred, sample_weight=None, **kargs):
+    def negative_gradient(self, y, pred, sample_weight, **kargs):
         pred = pred.ravel()
         sigma = self.sigma
         yl = self.yl
@@ -522,20 +522,13 @@ class TobitLossFunction(RegressionLossFunction):
         indu = (y == yu)
         indmid = (y > yl) & (y < yu)
         residual = np.zeros((y.shape[0],), dtype=np.float64)
-        if sample_weight is None:
-            residual[indl] = (- np.exp(norm.logpdf(diff[indl])
-                              - norm.logcdf(diff[indl])) / sigma)
-            residual[indmid] = diff[indmid] / sigma
-            residual[indu] = (np.exp(norm.logpdf(diff[indu])
-                              - norm.logcdf(-diff[indu])) / sigma)
-        else:
-            residual[indl] = (- sample_weight[indl]
-                              * np.exp(norm.logpdf(diff[indl])
-                              - norm.logcdf(diff[indl])) / sigma)
-            residual[indmid] = sample_weight[indmid] * diff[indmid] / sigma
-            residual[indu] = (sample_weight[indu]
-                              * np.exp(norm.logpdf(diff[indu])
-                              - norm.logcdf(-diff[indu])) / sigma)
+        residual[indl] = (- sample_weight[indl]
+                          * np.exp(norm.logpdf(diff[indl])
+                          - norm.logcdf(diff[indl])) / sigma)
+        residual[indmid] = sample_weight[indmid] * diff[indmid] / sigma
+        residual[indu] = (sample_weight[indu]
+                          * np.exp(norm.logpdf(diff[indu])
+                          - norm.logcdf(-diff[indu])) / sigma)
         return (residual)
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
