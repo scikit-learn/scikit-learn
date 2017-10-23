@@ -81,7 +81,7 @@ Regressions in 0.19.0 fixed in 0.19.1:
   longer accepted ``X`` as a list. :issue:`9600` by :user:`Rasul Kerimov
   <CoderINusE>`.
 
-- Fixed handling of :func:`cross_val_predict` for binary classification with
+- Fixed handling of :func:`model_selection.cross_val_predict` for binary classification with
   ``method='decision_function'``. :issue:`9593` by :user:`Reiichiro Nakano
   <reiinakano>` and core devs.
 
@@ -112,7 +112,7 @@ Enhancements
 - To improve usability of version 0.19's :class:`pipeline.Pipeline`
   caching, ``memory`` now allows ``joblib.Memory`` instances.
   This make use of the new :func:`utils.validation.check_memory` helper.
-  issue:`9584` by :user:`Kumar Ashutosh <thechargedneutron>`
+  :issue:`9584` by :user:`Kumar Ashutosh <thechargedneutron>`
 
 - Some fixes to examples: :issue:`9750`, :issue:`9788`, :issue:`9815`
 
