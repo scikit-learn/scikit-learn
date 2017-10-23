@@ -461,6 +461,22 @@ given binary ``y_true`` and ``y_pred``:
     Currently this score function is only defined for binary classification problems, you
     may need to wrap it by yourself if you want to use it for multilabel problems.
 
+    There is no clear consensus on the definition of a balanced accuracy for the
+    multiclass setting. Here are some definitions that can be found in the literature:
+
+    * Normalized class-wise accuracy average as described in [Guyon2015]_
+    * Macro-average recall as described in [Mosley2013]_
+
+.. topic:: References:
+
+  .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
+     B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
+     <http://ieeexplore.ieee.org/document/7280767/>`_,
+     IJCNN 2015.
+  .. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
+     <http://lib.dr.iastate.edu/etd/13537/>`_,
+     IJCV 2010.
+
 .. _cohen_kappa:
 
 Cohen's kappa
