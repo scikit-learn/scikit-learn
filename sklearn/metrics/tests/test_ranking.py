@@ -668,6 +668,20 @@ def test_average_precision_constant_values():
     assert_equal(average_precision_score(y_true, y_score), .25)
 
 
+def test_roc_auc_score_pos_label_multilabel_indicator():
+    # Raise an error for multilabel-indicator y_true with
+    # pos_label other than None or 1
+    y_true = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
+    y_pred = np.array([[0.9, 0.1], [0.1, 0.9], [0.8, 0.2], [0.2, 0.8]])
+    average_precision_score_1 = average_precision_score(y_true, y_pred,
+                                                        pos_label=None)
+    average_precision_score_2 = average_precision_score(y_true, y_pred,
+                                                        pos_label=1)
+    assert_almost_equal(average_precision_score_1, average_precision_score_2)
+    assert_raises(ValueError, average_precision_score, y_true, y_pred,
+                  pos_label=0)
+
+
 def test_score_scale_invariance():
     # Test that average_precision_score and roc_auc_score are invariant by
     # the scaling or shifting of probabilities

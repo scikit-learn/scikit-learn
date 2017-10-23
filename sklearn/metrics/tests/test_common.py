@@ -200,13 +200,6 @@ METRIC_UNDEFINED_BINARY = [
     "samples_precision_score",
     "samples_recall_score",
     "coverage_error",
-
-    "average_precision_score",
-    "weighted_average_precision_score",
-    "micro_average_precision_score",
-    "macro_average_precision_score",
-    "samples_average_precision_score",
-
     "label_ranking_loss",
     "label_ranking_average_precision_score",
 ]
@@ -221,6 +214,12 @@ METRIC_UNDEFINED_MULTICLASS = [
     "weighted_roc_auc",
     "macro_roc_auc",
     "samples_roc_auc",
+
+    "average_precision_score",
+    "weighted_average_precision_score",
+    "micro_average_precision_score",
+    "macro_average_precision_score",
+    "samples_average_precision_score",
 
     # with default average='binary', multiclass is prohibited
     "precision_score",
@@ -251,6 +250,12 @@ METRICS_WITH_POS_LABEL = [
     "brier_score_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+
+    "average_precision_score",
+    "weighted_average_precision_score",
+    "micro_average_precision_score",
+    "macro_average_precision_score",
+    "samples_average_precision_score",
 
     # pos_label support deprecated; to be removed in 0.18:
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
@@ -611,7 +616,7 @@ def test_invariance_string_vs_numbers_labels():
                                err_msg="{0} failed string vs number "
                                        "invariance test".format(name))
 
-            measure_with_strobj = metric(y1_str.astype('O'), y2)
+            measure_with_strobj = metric_str(y1_str.astype('O'), y2)
             assert_array_equal(measure_with_number, measure_with_strobj,
                                err_msg="{0} failed string object vs number "
                                        "invariance test".format(name))
