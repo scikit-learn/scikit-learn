@@ -641,11 +641,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         - complete or maximum linkage uses the maximum distances between
           all observations of the two sets.
 
-    pooling_func : callable, default=np.mean
-        This combines the values of agglomerated features into a single
-        value, and should accept an array of shape [M, N] and the keyword
-        argument ``axis=1``, and reduce it to an array of size [M].
-
     Attributes
     ----------
     labels_ : array [n_samples]
@@ -670,16 +665,15 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func=np.mean):
+                 linkage='ward'):
         self.n_clusters = n_clusters
         self.memory = memory
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
-        self.pooling_func = pooling_func
 
-    def fit(self, X, y=None):
+    def _get_clusters(self, X):
         """Fit the hierarchical clustering on the data
 
         Parameters
@@ -687,8 +681,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         X : array-like, shape = [n_samples, n_features]
             Training data. Shape [n_samples, n_features], or [n_samples,
             n_samples] if affinity=='precomputed'.
-
-        y : Ignored
 
         Returns
         -------
@@ -751,6 +743,26 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             labels = np.copy(labels[:n_samples])
             # Reassign cluster numbers
             self.labels_ = np.searchsorted(np.unique(labels), labels)
+        return self
+
+
+    def fit(self, X, y=None):
+        """Fit the hierarchical clustering on the data
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training data. Shape [n_samples, n_features], or [n_samples,
+            n_samples] if affinity=='precomputed'.
+
+        y : Ignored
+
+        Returns
+        -------
+        self
+        """
+
+        self._get_clusters(X)
         return self
 
 
@@ -829,7 +841,18 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         are merged to form node `n_features + i`
     """
 
-    def fit(self, X, y=None, **params):
+    def __init__(self, n_clusters=2, affinity="euclidean",
+                 memory=None,connectivity=None, compute_full_tree='auto',
+                 linkage='ward', pooling_func=np.mean):
+        super(FeatureAgglomeration, self).__init__(n_clusters=n_clusters,
+                                                   affinity=affinity,
+                                                   memory=memory,
+                                                   connectivity=connectivity,
+                                                   compute_full_tree=compute_full_tree,
+                                                   linkage=linkage)
+        self.pooling_func = pooling_func
+
+    def fit(self, X, y=None):
         """Fit the hierarchical clustering on the data
 
         Parameters
@@ -845,7 +868,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         ensure_min_features=2, estimator=self)
-        return AgglomerativeClustering.fit(self, X.T, **params)
+        return self._get_clusters(X.T)
 
     @property
     def fit_predict(self):
