@@ -85,7 +85,6 @@ Anaconda offers scikit-learn as part of its free distribution.
     pip upgrade and uninstall operations only work on packages installed
     via ``pip install``.
 
-
 WinPython for Windows
 -----------------------
 
@@ -95,3 +94,17 @@ scikit-learn as an additional plugin.
 
 For installation instructions for particular operating systems or for compiling
 the bleeding edge version, see the :ref:`advanced-installation`.
+
+Online Services
+===============
+
+In case you do not want to or can't setup scikit-learn on your local machine,
+there are also online services available.
+They allow you to work with scikit-learn conveniently online within your browser.
+
+* `CoCalc: collaborative calculation in the cloud <https://cocalc.com/>`_
+  lets you work with interactive worksheets running Python 2/3 or Anaconda,
+  which have scikit-learn and other scientific libraries preinstalled.
+
+* `repl.it: a cloud coding environment <https://repl.it/>`_
+  offers a Python 3 environment, which has scikit-learn and other scientific libraries preinstalled.
