@@ -29,8 +29,8 @@ def _get_data_info_by_name(name, version):
     if version == "active":
         json_string = urlopen(_SEARCH_NAME.format(name + "/status/active/"))
     else:
-        # FIXME waiting for new filter mechanism
-        json_string = urlopen(_SEARCH_NAME.format(name))
+        json_string = urlopen(_SEARCH_NAME.format(name)
+                              + "/data_version/{}".format(version))
     json_data = json.load(json_string)
     return json_data['data']['dataset'][0]
 

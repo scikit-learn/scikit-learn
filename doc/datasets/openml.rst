@@ -117,7 +117,7 @@ has multiple versions::
   >>> iris_969.details['id']  #doctest: +SKIP
   '969'
 
-'Specifying the dataset by the name "iris" yields the lowest version, version 1, with the id 61.
+Specifying the dataset by the name "iris" yields the lowest version, version 1, with the id 61.
 To make sure you always get this exact dataset, it is safest to specify it by the dataset id.
 The other dataset, with id 969, is version 3 (version 2 has become inactive), and contains
 a binarized version of the data::
@@ -125,6 +125,14 @@ a binarized version of the data::
   >>> np.unique(iris_969.target)  #doctest: +SKIP
   array([b'N', b'P'],
         dtype='|S1')
+
+You can also specify both the name and the version, which also uniquely identifies the dataset:: 
+  >>> iris_version_3 = fetch_openml("iris", version=3, data_home=custom_data_home)
+  >>> iris_version_3.details['version']
+  '3'
+  >>> iris_version_3.details['id']
+  '969'
+
 
 ..
     >>> import shutil
