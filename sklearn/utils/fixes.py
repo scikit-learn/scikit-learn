@@ -197,7 +197,7 @@ else:
 
 if np_version < (1, 9, 0):
     # Allow unique to return counts
-    # https://github.com/numpy/numpy/commit/da3c6a28f651877dfb4cfdbbbe76dab985669252
+    # https://github.com/numpy/numpy/commit/09fb4205a1d56090e13257a181f23514684f532b
 
     def unique(ar, return_index=False, return_inverse=False,
                return_counts=False):
