@@ -142,3 +142,9 @@ Metrics
   for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
   due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+Cluster
+
+- Deprecate ``pooling_func`` unused parameter in
+  :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
+  <thechargedneutron>`.

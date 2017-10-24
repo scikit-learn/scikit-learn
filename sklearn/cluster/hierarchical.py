@@ -641,10 +641,12 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         - complete or maximum linkage uses the maximum distances between
           all observations of the two sets.
 
-    pooling_func : callable, default=np.mean
-        This combines the values of agglomerated features into a single
-        value, and should accept an array of shape [M, N] and the keyword
-        argument ``axis=1``, and reduce it to an array of size [M].
+    pooling_func : callable, default='deprecated'
+        Ignored.
+
+        .. deprecated:: 0.20
+            ``pooling_func`` has been deprecated in 0.20 and will be removed
+            in 0.22.
 
     Attributes
     ----------
@@ -670,7 +672,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func=np.mean):
+                 linkage='ward', pooling_func='deprecated'):
         self.n_clusters = n_clusters
         self.memory = memory
         self.connectivity = connectivity
@@ -694,6 +696,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
+        if self.pooling_func != 'deprecated':
+            warnings.warn('Agglomerative "pooling_func" parameter is not used.'
+                          ' It has been deprecated in version 0.20 and will be'
+                          'removed in 0.22', DeprecationWarning)
         X = check_array(X, ensure_min_samples=2, estimator=self)
         memory = check_memory(self.memory)
 
@@ -828,6 +834,16 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_features + i`
     """
+
+    def __init__(self, n_clusters=2, affinity="euclidean",
+                 memory=None,
+                 connectivity=None, compute_full_tree='auto',
+                 linkage='ward', pooling_func=np.mean):
+        super(FeatureAgglomeration, self).__init__(
+            n_clusters=n_clusters, memory=memory, connectivity=connectivity,
+            compute_full_tree=compute_full_tree, linkage=linkage,
+            affinity=affinity)
+        self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
         """Fit the hierarchical clustering on the data
