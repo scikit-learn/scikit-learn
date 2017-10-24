@@ -642,7 +642,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
           all observations of the two sets.
 
     pooling_func : callable, default='deprecated'
-        Always ignored, Deprecated to be removed in 0.22.
+        Ignored.
 
         .. deprecated:: 0.20
             ``pooling_func`` has been deprecated in 0.20 and will be removed
