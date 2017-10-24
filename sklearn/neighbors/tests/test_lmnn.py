@@ -2,6 +2,7 @@ import numpy as np
 
 from sklearn.model_selection import train_test_split
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
@@ -9,7 +10,14 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn import datasets
-from sklearn.neighbors import LargeMarginNearestNeighbor, KNeighborsClassifier
+from sklearn.neighbors import LargeMarginNearestNeighbor
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors.lmnn import make_lmnn_classifier
+from sklearn.neighbors.lmnn import _paired_distances_blockwise
+from sklearn.neighbors.lmnn import _euclidean_distances_without_checks
+from sklearn.metrics.pairwise import paired_euclidean_distances
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.utils.extmath import row_norms
 
 
 rng = np.random.RandomState(0)
@@ -86,10 +94,12 @@ def test_params_validation():
     assert_raises(TypeError, LMNN(verbose='true').fit, X, y)
     assert_raises(TypeError, LMNN(max_impostors=23.1).fit, X, y)
     assert_raises(TypeError, LMNN(tol=1).fit, X, y)
-    assert_raises(TypeError, LMNN(n_features_out='invalid').fit, X, y)
+    assert_raises(TypeError, LMNN(n_features_out='invalid').fit,
+                  X, y)
     assert_raises(TypeError, LMNN(n_jobs='yes').fit, X, y)
     assert_raises(TypeError, LMNN(warm_start=1).fit, X, y)
-    assert_raises(TypeError, LMNN(imp_store=0.5).fit, X, y)
+    assert_raises(TypeError, LMNN(impostor_store=0.5).fit, X, y)
+    assert_raises(TypeError, LMNN(neighbors_params=65).fit, X, y)
 
     # ValueError
     assert_raises(ValueError, LMNN(init=1).fit, X, y)
@@ -97,6 +107,8 @@ def test_params_validation():
     assert_raises(ValueError, LMNN(n_neighbors=len(X)).fit, X, y)
     assert_raises(ValueError, LMNN(max_iter=-1).fit, X, y)
     assert_raises(ValueError, LMNN(max_impostors=-1).fit, X, y)
+    assert_raises(ValueError, LMNN(impostor_store='dense').fit,
+                  X, y)
 
     fit_func = LMNN(init=np.random.rand(5, 3)).fit
     assert_raises(ValueError, fit_func, X, y)
@@ -166,18 +178,15 @@ def test_n_features_out():
     transformation = np.array([[1, 2, 3], [4, 5, 6]])
 
     # n_features_out = X.shape[1] != transformation.shape[0]
-    lmnn = LargeMarginNearestNeighbor(init=transformation,
-                                      n_neighbors=1, n_features_out=3)
+    lmnn = LargeMarginNearestNeighbor(init=transformation, n_features_out=3)
     assert_raises(ValueError, lmnn.fit, X, y)
 
     # n_features_out > X.shape[1]
-    lmnn = LargeMarginNearestNeighbor(init=transformation,
-                                      n_neighbors=1, n_features_out=5)
+    lmnn = LargeMarginNearestNeighbor(init=transformation, n_features_out=5)
     assert_raises(ValueError, lmnn.fit, X, y)
 
     # n_features_out < X.shape[1]
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=1, n_features_out=2,
-                                      init='identity')
+    lmnn = LargeMarginNearestNeighbor(n_features_out=2, init='identity')
     lmnn.fit(X, y)
 
 
@@ -186,28 +195,49 @@ def test_init_transformation():
                                         n_redundant=0, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
+    # Start learning from scratch
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init='identity')
     lmnn.fit(X_train, y_train)
-    n_iter_no_pca = lmnn.n_iter_
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init='pca')
+    # Initialize with PCA
+    lmnn_pca = LargeMarginNearestNeighbor(n_neighbors=3, init='pca')
+    lmnn_pca.fit(X_train, y_train)
+
+    # Not always True
+    # assert_true(lmnn_pca.n_iter_ <= lmnn.n_iter_)
+
+    init = np.random.rand(X.shape[1], X.shape[1])
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init=init)
     lmnn.fit(X_train, y_train)
-    n_iter_pca = lmnn.n_iter_
 
-    assert_true(n_iter_pca <= n_iter_no_pca)
+    # init.shape[1] must match X.shape[1]
+    init = np.random.rand(X.shape[1], X.shape[1] + 1)
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init=init)
+    assert_raises(ValueError, lmnn.fit, X_train, y_train)
+
+    # init.shape[0] must be <= init.shape[1]
+    init = np.random.rand(X.shape[1] + 1, X.shape[1])
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init=init)
+    assert_raises(ValueError, lmnn.fit, X_train, y_train)
+
+    # init.shape[0] must match n_features_out
+    init = np.random.rand(X.shape[1], X.shape[1])
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, init=init,
+                                      n_features_out=X.shape[1] - 2)
+    assert_raises(ValueError, lmnn.fit, X_train, y_train)
 
 
 def test_max_impostors():
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_impostors=1,
-                                      imp_store='list')
+                                      impostor_store='list')
     lmnn.fit(iris_data, iris_target)
 
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_impostors=1,
-                                      imp_store='sparse')
+                                      impostor_store='sparse')
     lmnn.fit(iris_data, iris_target)
 
 
-def test_imp_store():
+def test_impostor_store():
     X = iris_data
     y = iris_target
     n_samples, n_features = X.shape
@@ -217,18 +247,18 @@ def test_imp_store():
     X_train, y_train, X_test, y_test = X[train], y[train], X[test], y[test]
 
     k = 3
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, imp_store='list')
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, impostor_store='list')
     lmnn.fit(X_train, y_train)
     knn = KNeighborsClassifier(n_neighbors=k)
     knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
     acc_sparse = knn.score(lmnn.transform(X_test), y_test)
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, imp_store='sparse')
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=k, impostor_store='sparse')
     lmnn.fit(X_train, y_train)
     knn.fit(lmnn.fit_transform(X_train, y_train), y_train)
     acc_dense = knn.score(lmnn.transform(X_test), y_test)
 
-    err_msg = 'Toggling `imp_store` results in different accuracy.'
+    err_msg = 'Toggling `impostor_store` results in different accuracy.'
     assert_equal(acc_dense, acc_sparse, msg=err_msg)
 
 
@@ -277,8 +307,7 @@ def test_warm_start_diff_inputs():
     X, y = make_cla(n_samples=30, n_features=5, n_classes=4, n_redundant=0,
                     n_informative=5, random_state=0)
 
-    lmnn = LargeMarginNearestNeighbor(n_neighbors=1, warm_start=True,
-                                      max_iter=5)
+    lmnn = LargeMarginNearestNeighbor(warm_start=True, max_iter=5)
     lmnn.fit(X, y)
 
     X_less_features, y = make_cla(n_samples=30, n_features=4, n_classes=4,
@@ -375,3 +404,73 @@ def test_terminate_early():
 
     lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_iter=5)
     lmnn.fit(X_train, y_train)
+
+
+def test_store_opt_result():
+    X = iris_data
+    y = iris_target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, max_iter=5,
+                                      store_opt_result=True)
+    lmnn.fit(X_train, y_train)
+    transformation = lmnn.opt_result_.x
+    assert_equal(transformation.size, X.shape[1]**2)
+
+
+def test_paired_distances_blockwise():
+    n, d = 10000, 100  # 4 or 8 MiB
+    X = rng.rand(n, d)
+    ind_a = rng.permutation(n)
+    ind_b = rng.permutation(n)
+
+    distances = paired_euclidean_distances(X[ind_a], X[ind_b])
+    distances_blockwise = _paired_distances_blockwise(
+        X, ind_a, ind_b, squared=False, block_size=1)
+    assert_array_equal(distances, distances_blockwise)
+
+
+def test_euclidean_distances_without_checks():
+    X = rng.rand(100, 20)
+    Y = rng.rand(50, 20)
+
+    # 2 matrices with no precomputed norms
+    distances1 = euclidean_distances(X, Y)
+    distances2 = _euclidean_distances_without_checks(X, Y)
+
+    assert_array_equal(distances1, distances2)
+
+    # 1 matrix with itself with squared row_norms precomputed and transposed
+    XX = row_norms(X, squared=True)[np.newaxis, :]
+    distances1 = euclidean_distances(X, X_norm_squared=XX)
+    distances2 = _euclidean_distances_without_checks(X, X_norm_squared=XX)
+
+    assert_array_equal(distances1, distances2)
+
+
+def test_classifier_equivalency():
+    X = iris_data
+    y = iris_target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+
+    # Use init='identity' to ensure reproducibility
+    lmnn_params = dict(n_neighbors=3, max_iter=10, init='identity',
+                       random_state=42)
+    n_neighbors = 3
+
+    lmnn = LargeMarginNearestNeighbor(**lmnn_params)
+    lmnn.fit(X_train, y_train)
+
+    lmnn_clf = make_lmnn_classifier(**lmnn_params)
+    lmnn_clf.fit(X_train, y_train)
+
+    clf_transformation = lmnn_clf.get_params()['lmnn'].transformation_
+    assert_array_almost_equal(lmnn.transformation_, clf_transformation)
+
+    knn = KNeighborsClassifier(n_neighbors=n_neighbors)
+    knn.fit(lmnn.transform(X_train), y_train)
+    score1 = knn.score(lmnn.transform(X_test), y_test)
+
+    score2 = lmnn_clf.score(X_test, y_test)
+
+    assert_equal(score1, score2)

@@ -16,13 +16,15 @@ from scipy.optimize import minimize
 from scipy.sparse import csr_matrix, csc_matrix, coo_matrix, spdiags
 
 from ..base import BaseEstimator, TransformerMixin
-from ..neighbors import NearestNeighbors
+from ..pipeline import Pipeline
+from ..neighbors import NearestNeighbors, KNeighborsClassifier
 from ..decomposition import PCA
 from ..utils import gen_batches
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..utils.random import check_random_state
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted, check_array, check_X_y
+from ..externals.six import integer_types, string_types
 
 
 class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
@@ -30,41 +32,63 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
+    n_neighbors : int, optional (default=3)
+        Number of neighbors to use as target neighbors for each sample.
+
     n_features_out : int, optional (default=None)
         Preferred dimensionality of the embedding.
         If None it is inferred from ``init``.
 
     init : string or numpy array, optional (default='pca')
-        Initialization of linear transformation. Possible options are 'pca',
-        'identity' and a numpy array of shape (n_features_out, n_features).
+        Initialization of the linear transformation. Possible options are
+        'pca', 'identity' and a numpy array of shape (n_features_a,
+        n_features_b).
+
+        pca:
+            ``n_features_out`` many principal components of the inputs passed
+            to :meth:`fit` will be used to initialize the transformation.
+
+        identity:
+            If ``n_features_out`` is strictly smaller than the
+            dimensionality of the inputs passed to :meth:`fit`, the identity
+            matrix will be truncated to the first ``n_features_out`` rows.
+
+        numpy array:
+            n_features_b must match the dimensionality of the inputs passed to
+            :meth:`fit` and n_features_a must be less than or equal to that.
+            If ``n_features_out`` is not None, n_features_a must match it.
 
     warm_start : bool, optional, (default=False)
         If True and :meth:`fit` has been called before, the solution of the
         previous call to :meth:`fit` is used as the initial linear
-        transformation (``init`` is ignored).
-
-    n_neighbors : int, optional (default=3)
-        Number of neighbors to use as target neighbors for each sample.
-
-    neighbors_algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
-        Algorithm used to compute the target neighbors, passed to
-        neighbors.NearestNeighbors instance
+        transformation (``n_features_out`` and ``init`` will be ignored).
 
     max_impostors : int, optional (default=500000)
         Maximum number of impostors to consider per iteration. In the worst
-        case this will result in ``max_impostors * n_neighbors`` constraints.
+        case this will allow ``max_impostors * n_neighbors`` constraints to be
+        active.
 
-    imp_store : {'auto', 'list', 'sparse'}, optional
-        Data structure used to store the impostors:
+    neighbors_params : dict, optional (default=None)
+        Parameters to pass to a :class:`neighbors.NearestNeighbors` instance -
+        apart from ``n_neighbors`` - that will be used to select the target
+        neighbors.
 
-        - 'list' will use 3 lists to store the indices of samples,
-           their impostors and the distance between them.
-        - 'sparse' will use a sparse indicator matrix to store the (sample,
-          impostor) pairs. The distances to the impostors will be computed
-          twice, but this option tends to be more efficient than 'list' as the
-          data set size increases.
-        - 'auto' will attempt to decide the most appropriate approach
-          based on the values passed to :meth:`fit`.
+    impostor_store : str ['auto'|'list'|'sparse'], optional
+        list :
+            Three lists will be used to store the indices of reference
+            samples, the indices of their impostors and the distances between
+            the (sample, impostor) pairs.
+
+        sparse :
+            A sparse indicator matrix will be used to store the (sample,
+            impostor) pairs. The distances to the impostors will be computed
+            twice (once to determine the impostors and once to be stored),
+            but this option tends to be faster than 'list' as the size of
+            the data set increases.
+
+        auto :
+            Will attempt to decide the most appropriate choice of data
+            structure based on the values passed to :meth:`fit`.
 
     max_iter : int, optional (default=50)
         Maximum number of iterations in the optimization.
@@ -74,19 +98,20 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     callback : callable, optional (default=None)
         If not None, this function is called after every iteration of the
-        optimizer taking as arguments the current solution and the number of
-        iterations. This might be useful in case one wants to examine or store
-        the transformation found after each iteration.
+        optimizer, taking as arguments the current solution (transformation)
+        and the number of iterations. This might be useful in case one wants
+        to examine or store the transformation found after each iteration.
 
     store_opt_result : bool, optional (default=False)
-        If True, the OptimizeResult object returned by :meth:`minimize` of
-        scipy.optimize will be stored in the attribute ``opt_result_``.
+        If True, the :class:`scipy.optimize.OptimizeResult` object returned by
+        :meth:`minimize` of `scipy.optimize` will be stored as attribute
+        ``opt_result_``.
 
     verbose : int, optional (default=0)
         If 0, no progress messages will be printed.
         If 1, progress messages will be printed to stdout.
         If > 1, progress messages will be printed and the ``iprint``
-        parameter of :meth:`_minimize_lbfgsb` of scipy.optimize will be set
+        parameter of :meth:`_minimize_lbfgsb` of `scipy.optimize` will be set
         to ``verbose - 2``.
 
     random_state : int or numpy.RandomState or None, optional (default=None)
@@ -99,12 +124,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    transformation_ : array, shape (n_features_out, n_features).
+    transformation_ : array, shape (n_features_out, n_features)
         The linear transformation learned during fitting.
 
     n_neighbors_ : int
-        The provided n_neighbors is decreased if it is greater than or equal
-        to  min(number of elements in each class).
+        The provided ``n_neighbors`` is decreased if it is greater than or
+        equal to  min(number of elements in each class).
 
     classes_inverse_non_singleton_ : array, shape (n_classes_non_singleton,)
         The appearing classes that have more than one sample, encoded as
@@ -113,9 +138,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     n_iter_ : int
         Counts the number of iterations performed by the optimizer.
 
-    opt_result_ : OptimizeResult (optional)
-        If ``store_opt_result`` is True, this will be a dictionary of
-        information representing the optimization result.
+    opt_result_ : scipy.optimize.OptimizeResult (optional)
+        A dictionary of information representing the optimization result.
+        This is stored only if ``store_opt_result`` was True.
 
     Examples
     --------
@@ -129,7 +154,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
     >>> lmnn.fit(X_train, y_train) # doctest: +ELLIPSIS
     LargeMarginNearestNeighbor(...)
-    >>> knn = KNeighborsClassifier(n_neighbors=lmnn.n_neighbors_)
+    >>> knn = KNeighborsClassifier(n_neighbors=3)
     >>> knn.fit(X_train, y_train) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
     >>> print(knn.score(X_test, y_test))
@@ -157,39 +182,41 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     .. warning::
 
-        At least for 32bit systems, one cannot expect precise reproducibility
-        of PCA and therefore the transformations in 2 identical runs can
-        diverge even before the first iteration of LargeMarginNearestNeighbor.
-        Therefore, one should not expect any reproducibility of the
-        transformations found by `LargeMarginNearestNeighbor` when
-        initialization with PCA is used (``init``='pca').
+        Exact floating-point reproducibility is generally not guaranteed (
+        unless special care is taken with library and compiler options). As
+        a consequence, the transformations computed in 2 identical runs of
+        LargeMarginNearestNeighbor can differ from each other. This can
+        happen even before the optimizer is called if initialization with
+        PCA is used (init='pca').
 
     References
     ----------
-    .. [1] Weinberger, Kilian Q., and Lawrence K. Saul. "Distance Metric
-    Learning for Large Margin Nearest Neighbor Classification."
-    Journal of Machine Learning Research, Vol. 10, Feb. 2009, pp. 207-244.
-    (http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf)
+    .. [1] Weinberger, Kilian Q., and Lawrence K. Saul.
+           "Distance Metric Learning for Large Margin Nearest Neighbor
+           Classification."
+           Journal of Machine Learning Research, Vol. 10, Feb. 2009,
+           pp. 207-244.
+           http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf
 
     .. [2] Wikipedia entry on Large Margin Nearest Neighbor
-    (https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor)
+           https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor
 
     """
 
-    def __init__(self, n_features_out=None, init='pca', warm_start=False,
-                 n_neighbors=3, neighbors_algorithm='auto',
-                 max_impostors=500000, imp_store='auto', max_iter=50,
-                 tol=1e-5, callback=None, store_opt_result=False, verbose=0,
-                 random_state=None, n_jobs=1):
+    def __init__(self, n_neighbors=3, n_features_out=None, init='pca',
+                 warm_start=False, max_impostors=500000,
+                 neighbors_params=None, impostor_store='auto',
+                 max_iter=50, tol=1e-5, callback=None, store_opt_result=False,
+                 verbose=0, random_state=None, n_jobs=1):
 
         # Parameters
+        self.n_neighbors = n_neighbors
         self.n_features_out = n_features_out
         self.init = init
         self.warm_start = warm_start
-        self.n_neighbors = n_neighbors
-        self.neighbors_algorithm = neighbors_algorithm
         self.max_impostors = max_impostors
-        self.imp_store = imp_store
+        self.neighbors_params = neighbors_params
+        self.impostor_store = impostor_store
         self.max_iter = max_iter
         self.tol = tol
         self.callback = callback
@@ -232,18 +259,15 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         transformation = self._initialize(X_valid, init)
 
         # Find the target neighbors
-        targets = _select_target_neighbors(X_valid, y_valid, self.n_neighbors_,
-                                           verbose=self.verbose,
-                                           n_jobs=self.n_jobs,
-                                           algorithm=self.neighbors_algorithm)
+        target_neighbors = self._select_target_neighbors(X_valid, y_valid)
 
         # Compute the gradient part contributed by the target neighbors
-        grad_static = _compute_grad_static(X_valid, targets, self.verbose)
+        grad_static = self._compute_grad_static(X_valid, target_neighbors)
 
         # Decide how to store the impostors
-        if self.imp_store == 'sparse':
+        if self.impostor_store == 'sparse':
             use_sparse = True
-        elif self.imp_store == 'list':
+        elif self.impostor_store == 'list':
             use_sparse = False
         else:
             # auto: Use a heuristic based on the data set size
@@ -254,8 +278,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         optimizer_params = {'method': 'L-BFGS-B',
                             'fun': self._loss_grad_lbfgs,
                             'jac': True,
-                            'args': (X_valid, y_valid, targets, grad_static,
-                                     use_sparse),
+                            'args': (X_valid, y_valid, target_neighbors,
+                                     grad_static, use_sparse),
                             'x0': transformation,
                             'tol': self.tol,
                             'options': dict(maxiter=self.max_iter, disp=disp),
@@ -341,13 +365,13 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             The validated training labels, encoded to be integers in
             the range(0, n_classes).
 
-        init : string or numpy array
+        init : string or numpy array of shape (n_features_a, n_features_b)
             The validated initialization of the linear transformation.
 
         Raises
         -------
         TypeError
-            If a parameter's type does not match the desired type.
+            If a parameter is not an instance of the desired type.
 
         ValueError
             If a parameter's value violates its legal value range or if the
@@ -383,7 +407,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Check the preferred embedding dimensionality
         if self.n_features_out is not None:
-            _check_scalar(self.n_features_out, 'n_features_out', int, 1)
+            _check_scalar(self.n_features_out, 'n_features_out',
+                          integer_types, 1)
 
             if self.n_features_out > X.shape[1]:
                 raise ValueError('The preferred embedding dimensionality '
@@ -401,16 +426,18 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                  .format(self.transformation_.shape[1],
                                          X.shape[1]))
 
-        _check_scalar(self.n_neighbors, 'n_neighbors', int, 1, X.shape[0] - 1)
-        _check_scalar(self.max_iter, 'max_iter', int, 1)
+        _check_scalar(self.n_neighbors, 'n_neighbors', integer_types, 1,
+                      X.shape[0] - 1)
+        _check_scalar(self.max_iter, 'max_iter', integer_types, 1)
         _check_scalar(self.tol, 'tol', float, 0.)
-        _check_scalar(self.max_impostors, 'max_impostors', int, 1)
-        _check_scalar(self.imp_store, 'imp_store', str)
-        _check_scalar(self.n_jobs, 'n_jobs', int)
-        _check_scalar(self.verbose, 'verbose', int, 0)
+        _check_scalar(self.max_impostors, 'max_impostors', integer_types, 1)
+        _check_scalar(self.impostor_store, 'impostor_store', string_types)
+        _check_scalar(self.n_jobs, 'n_jobs', integer_types)
+        _check_scalar(self.verbose, 'verbose', integer_types, 0)
 
-        if self.imp_store not in ['auto', 'sparse', 'list']:
-            raise ValueError("`imp_store` must be 'auto', 'sparse' or 'list'.")
+        if self.impostor_store not in ['auto', 'sparse', 'list']:
+            raise ValueError("`impostor_store` must be 'auto', 'sparse' or "
+                             "'list'.")
 
         if self.callback is not None:
             if not callable(self.callback):
@@ -457,9 +484,17 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                  'samples in the smallest non-singleton class (={}). '
                  '`n_neighbors_` will be set to {} for estimation.'
                  .format(self.n_neighbors, min_non_singleton_size,
-                         min_non_singleton_size-1))
+                         min_non_singleton_size - 1))
 
-        self.n_neighbors_ = min(self.n_neighbors, min_non_singleton_size-1)
+        self.n_neighbors_ = min(self.n_neighbors, min_non_singleton_size - 1)
+
+        neighbors_params = self.neighbors_params
+        if neighbors_params is not None:
+            _check_scalar(neighbors_params, 'neighbors_params', dict)
+            neighbors_params.setdefault('n_jobs', self.n_jobs)
+            # Attempt to instantiate a NearestNeighbors instance here to
+            # raise any errors before actually fitting
+            NearestNeighbors(n_neighbors=self.n_neighbors_, **neighbors_params)
 
         return X, y_inverse, init
 
@@ -471,7 +506,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         X : array, shape (n_samples, n_features)
             The training samples.
 
-        init : string or numpy array
+        init : string or numpy array of shape (n_features_a, n_features)
             The initialization of the linear transformation.
 
         Returns
@@ -493,12 +528,15 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                       random_state=self.random_state_)
             t_pca = time.time()
             if self.verbose:
-                print('Finding principal components... ', end='')
+                print('[{}] Finding principal components...'.format(
+                    self.__class__.__name__))
                 sys.stdout.flush()
 
             pca.fit(X)
             if self.verbose:
-                print('done in {:5.2f}s.'.format(time.time() - t_pca))
+                t_pca = time.time() - t_pca
+                print('[{}] Found principal components in {:5.2f}s.'.format(
+                    self.__class__.__name__, t_pca))
 
             transformation = pca.components_
 
@@ -509,6 +547,80 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                 transformation = np.eye(self.n_features_out, X.shape[1])
 
         return transformation
+
+    def _select_target_neighbors(self, X, y):
+        """Find the target neighbors of each data sample.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples, n_features)
+            The training samples.
+
+        y : array, shape (n_samples,)
+            The corresponding training labels indices.
+
+        Returns
+        -------
+        target_neighbors: array, shape (n_samples, n_neighbors)
+            An array of neighbors indices for each sample.
+        """
+
+        t_targets = time.time()
+        if self.verbose:
+            print('[{}] Finding the target neighbors...'.format(
+                self.__class__.__name__))
+            sys.stdout.flush()
+
+        neighbors_params = self.neighbors_params
+        if neighbors_params is None:
+            neighbors_params = {}
+
+        neighbors_params.setdefault('n_jobs', self.n_jobs)
+        target_neighbors = _select_target_neighbors(
+            X, y, self.n_neighbors_, **neighbors_params)
+
+        if self.verbose:
+            t_targets = time.time() - t_targets
+            print('[{}] Found the target neighbors in {:5.2f}s.'.format(
+                self.__class__.__name__, t_targets))
+
+        return target_neighbors
+
+    def _compute_grad_static(self, X, targets):
+        """Compute the gradient contributed by the target neighbors.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples, n_features)
+            The training samples.
+
+        targets : array, shape (n_samples, n_neighbors)
+            The k nearest neighbors of each sample from the same class.
+
+        Returns
+        -------
+        grad_targets, shape (n_features, n_features)
+            An array with the sum of all outer products of samples-targets.
+        """
+
+        t_grad_static = time.time()
+        if self.verbose:
+            print('[{}] Computing static part of the gradient...'.format(
+                self.__class__.__name__))
+
+        n_samples, n_neighbors = targets.shape
+        row = np.repeat(range(n_samples), n_neighbors)
+        col = targets.ravel()
+        targets_sparse = csr_matrix((np.ones(targets.size), (row, col)),
+                                    shape=(n_samples, n_samples))
+        grad_targets = _sum_weighted_outer_differences(X, targets_sparse)
+
+        if self.verbose:
+            t_grad_static = time.time() - t_grad_static
+            print('[{}] Computed static part of the gradient in {:5.2f}s.'
+                  .format(self.__class__.__name__, t_grad_static))
+
+        return grad_targets
 
     def _callback(self, transformation):
         """Called after each iteration of the optimizer.
@@ -568,9 +680,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                  '#Active Triplets', 'Time(s)']
                 header_fmt = '{:>10} {:>20} {:>20} {:>10}'
                 header = header_fmt.format(*header_fields)
-                print('\n{}\n{}'.format(header, '-' * len(header)))
+                cls_name = self.__class__.__name__
+                print('[{}]'.format(cls_name))
+                print('[{}] {}\n[{}] {}'.format(cls_name, header,
+                                                cls_name, '-' * len(header)))
 
-        t_start = time.time()
+        t_funcall = time.time()
         X_embedded = self._transform_without_checks(X)
 
         # Compute squared distances to the target neighbors
@@ -599,10 +714,11 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         metric = np.dot(transformation.T, transformation)
         loss += np.dot(grad_static.ravel(), metric.ravel())
 
-        t = time.time() - t_start
         if self.verbose:
-            values_fmt = '{:>10} {:>20.6e} {:>20,} {:>10.2f}'
-            print(values_fmt.format(self.n_iter_, loss, n_active_triplets, t))
+            t_funcall = time.time() - t_funcall
+            values_fmt = '[{}] {:>10} {:>20.6e} {:>20,} {:>10.2f}'
+            print(values_fmt.format(self.__class__.__name__, self.n_iter_,
+                                    loss, n_active_triplets, t_funcall))
             sys.stdout.flush()
 
         return loss, grad.ravel()
@@ -619,10 +735,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             The corresponding (possibly encoded) class labels.
 
         margin_radii : array, shape (n_samples,)
-            Distances to the farthest target neighbors + margin.
+            (Squared) distances of samples to their farthest target
+            neighbors plus margin.
 
         use_sparse : bool, optional (default=True)
-            Whether to use a sparse matrix to store the pairs.
+            Whether to use a sparse matrix to store the (sample, impostor)
+            pairs.
 
         Returns
         -------
@@ -705,8 +823,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                     imp_col.extend(ind_in[jj])
                     imp_dist.extend(dist_batch)
 
-            imp_row = np.asarray(imp_row, dtype=int)
-            imp_col = np.asarray(imp_col, dtype=int)
+            imp_row = np.asarray(imp_row, dtype=np.int)
+            imp_col = np.asarray(imp_col, dtype=np.int)
             imp_dist = np.asarray(imp_dist)
 
             # Make sure we do not exceed max_impostors
@@ -724,12 +842,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         return impostors_graph
 
 
-##########################
-# Some helper functions #
-#########################
+########################
+# Some core functions #
+#######################
 
 
-def _select_target_neighbors(X, y, n_neighbors, verbose=0, **kwargs):
+def _select_target_neighbors(X, y, n_neighbors, **nn_kwargs):
     """Find the target neighbors of each data sample.
 
     Parameters
@@ -743,23 +861,19 @@ def _select_target_neighbors(X, y, n_neighbors, verbose=0, **kwargs):
     n_neighbors : int
         The number of target neighbors to select for each sample in X.
 
-    verbose : int, optional (default=0)
-        Whether to print progress info.
+    **nn_kwargs : keyword arguments
+        Parameters passed to a :class:`neighbors.NearestNeighbors` instance
+        except from ``n_neighbors`` which will be set to ``n_neighbors``.
 
     Returns
     -------
     target_neighbors: array, shape (n_samples, n_neighbors)
-        An array of neighbors indices for each sample.
+        The indices of the target neighbors of each sample.
     """
 
-    t_targets = time.time()
-    if verbose:
-        print('Finding the target neighbors... ', end='')
-        sys.stdout.flush()
+    target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=np.int)
 
-    target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=int)
-
-    nn = NearestNeighbors(n_neighbors=n_neighbors, **kwargs)
+    nn = NearestNeighbors(n_neighbors=n_neighbors, **nn_kwargs)
 
     classes = np.unique(y)
     for class_id in classes:
@@ -768,46 +882,7 @@ def _select_target_neighbors(X, y, n_neighbors, verbose=0, **kwargs):
         neigh_ind = nn.kneighbors(return_distance=False)
         target_neighbors[ind_class] = ind_class[neigh_ind]
 
-    if verbose:
-        print('done in {:5.2f}s.'.format(time.time() - t_targets))
-
     return target_neighbors
-
-
-def _compute_grad_static(X, targets, verbose=0):
-    """Compute the gradient contributed by the target neighbors.
-
-    Parameters
-    ----------
-    X : array, shape (n_samples, n_features)
-        The training samples.
-
-    targets : array, shape (n_samples, n_neighbors)
-        The k nearest neighbors of each sample from the same class.
-
-    verbose : int, optional (default=0)
-        Whether to print progress info.
-
-    Returns
-    -------
-    grad_targets, shape (n_features, n_features)
-        An array with the sum of all outer products of samples-targets.
-    """
-
-    if verbose:
-        print('Computing static part of the gradient... ', end='')
-
-    n_samples, n_neighbors = targets.shape
-    row = np.repeat(range(n_samples), n_neighbors)
-    col = targets.ravel()
-    targets_sparse = csr_matrix((np.ones(targets.size), (row, col)),
-                                shape=(n_samples, n_samples))
-    grad_targets = _sum_weighted_outer_differences(X, targets_sparse)
-
-    if verbose:
-        print('done.')
-
-    return grad_targets
 
 
 def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
@@ -857,17 +932,11 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
     # X_b squared norm stays constant, so pre-compute it to get a speed-up
     X_b_norm_squared = row_norms(X_b, squared=True)[np.newaxis, :]
     for chunk in gen_batches(n_samples_a, block_n_rows):
-        # from sklearn.metrics.pairwise import euclidean_distances
-        # distances_ab = euclidean_distances(X_a[chunk], X_b, squared=True,
-        #                                    Y_norm_squared=X_b_norm_squared)
-        # check_input in every chunk would add an extra ~8% time of computation
-
-        X_a_chunk = X_a[chunk]
-        X_a_norm_squared = row_norms(X_a_chunk, squared=True)[:, np.newaxis]
-        distances_ab = safe_sparse_dot(X_a_chunk, X_b.T, dense_output=True)
-        distances_ab *= -2
-        distances_ab += X_a_norm_squared
-        distances_ab += X_b_norm_squared
+        # sklearn.metrics.pairwise.euclidean_distances function would add an
+        # extra ~8% time of computation due to input validation
+        distances_ab = _euclidean_distances_without_checks(
+            X_a[chunk], X_b, squared=True, Y_norm_squared=X_b_norm_squared,
+            clip=False)
 
         ind_b, = np.where((distances_ab < radii_a[chunk, None]).ravel())
         ind_a, = np.where((distances_ab < radii_b[None, :]).ravel())
@@ -878,9 +947,10 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
             imp_indices.extend(ind_plus_offset)
 
             if return_distance:
-                # This np.maximum would add another ~8% time of computation
-                # np.maximum(distances_ab, 0, out=distances_ab)
+                # We only need the clipping here because we return the
+                # distances. This adds another ~8% time of computation
                 distances_chunk = distances_ab.ravel()[ind]
+                # Clip only the indexed (unique) distances
                 np.maximum(distances_chunk, 0, out=distances_chunk)
                 imp_distances.extend(distances_chunk)
 
@@ -890,47 +960,6 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
         return imp_indices, np.asarray(imp_distances)
     else:
         return imp_indices
-
-
-def _paired_distances_blockwise(X, ind_a, ind_b, squared=True, block_size=8):
-    """Equivalent to row_norms(X[ind_a] - X[ind_b], squared=squared).
-
-    Parameters
-    ----------
-    X : array, shape (n_samples, n_features)
-        An array of data samples.
-
-    ind_a : array, shape (n_indices,)
-        An array of sample indices.
-
-    ind_b : array, shape (n_indices,)
-        Another array of sample indices.
-
-    squared : bool (default=True)
-        Whether to return the squared distances.
-
-    block_size : int, optional (default=8)
-        The maximum number of mebibytes (MiB) of memory to use at a time for
-        calculating paired distances.
-
-    Returns
-    -------
-    distances: array, shape (n_indices,)
-        An array of pairwise, optionally squared, distances.
-    """
-
-    bytes_per_row = X.shape[1] * X.itemsize
-    batch_size = int(block_size*1024*1024 // bytes_per_row)
-
-    n_pairs = len(ind_a)
-    distances = np.zeros(n_pairs)
-    for chunk in gen_batches(n_pairs, batch_size):
-        distances[chunk] = row_norms(X[ind_a[chunk]] - X[ind_b[chunk]], True)
-
-    if not squared:
-        np.sqrt(distances, distances)
-
-    return distances
 
 
 def _compute_push_loss(X, targets, dist_targets, impostors_graph):
@@ -974,16 +1003,16 @@ def _compute_push_loss(X, targets, dist_targets, impostors_graph):
     A0 = csr_matrix(shape)
     sample_range = range(n_samples)
     n_active_triplets = 0
-    for k in range(n_neighbors-1, -1, -1):
+    for k in range(n_neighbors - 1, -1, -1):
         loss1 = np.maximum(dist_targets[imp_row, k] - dist_impostors, 0)
         ac, = np.where(loss1 > 0)
         n_active_triplets += len(ac)
-        A1 = csr_matrix((2*loss1[ac], (imp_row[ac], imp_col[ac])), shape)
+        A1 = csr_matrix((2 * loss1[ac], (imp_row[ac], imp_col[ac])), shape)
 
         loss2 = np.maximum(dist_targets[imp_col, k] - dist_impostors, 0)
         ac, = np.where(loss2 > 0)
         n_active_triplets += len(ac)
-        A2 = csc_matrix((2*loss2[ac], (imp_row[ac], imp_col[ac])), shape)
+        A2 = csc_matrix((2 * loss2[ac], (imp_row[ac], imp_col[ac])), shape)
 
         values = (A1.sum(1).ravel() + A2.sum(0)).getA1()
         A3 = csr_matrix((values, (sample_range, targets[:, k])), shape)
@@ -993,6 +1022,114 @@ def _compute_push_loss(X, targets, dist_targets, impostors_graph):
     grad = _sum_weighted_outer_differences(X, A0)
 
     return loss, grad, n_active_triplets
+
+
+##########################
+# Some helper functions #
+#########################
+
+def _euclidean_distances_without_checks(X, Y=None, Y_norm_squared=None,
+                                        squared=False, X_norm_squared=None,
+                                        clip=True):
+    """sklearn.pairwise.euclidean_distances without checks with optional clip.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples_1, n_features)
+
+    Y : {array-like, sparse matrix}, shape (n_samples_2, n_features)
+
+    Y_norm_squared : array-like, shape (n_samples_2, ), optional
+        Pre-computed dot-products of vectors in Y (e.g.,
+        ``(Y**2).sum(axis=1)``)
+
+    squared : boolean, optional
+        Return squared Euclidean distances.
+
+    X_norm_squared : array-like, shape = [n_samples_1], optional
+        Pre-computed dot-products of vectors in X (e.g.,
+        ``(X**2).sum(axis=1)``)
+
+    clip : bool, optional (default=True)
+
+    Returns
+    -------
+    distances : {array, sparse matrix}, shape (n_samples_1, n_samples_2)
+
+    """
+
+    if Y is None:
+        Y = X
+
+    if X_norm_squared is not None:
+        XX = X_norm_squared
+        if XX.shape == (1, X.shape[0]):
+            XX = XX.T
+    else:
+        XX = row_norms(X, squared=True)[:, np.newaxis]
+
+    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
+        YY = XX.T
+    elif Y_norm_squared is not None:
+        YY = np.atleast_2d(Y_norm_squared)
+    else:
+        YY = row_norms(Y, squared=True)[np.newaxis, :]
+
+    distances = safe_sparse_dot(X, Y.T, dense_output=True)
+    distances *= -2
+    distances += XX
+    distances += YY
+
+    if clip:
+        np.maximum(distances, 0, out=distances)
+
+    if X is Y:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        distances.flat[::distances.shape[0] + 1] = 0.0
+
+    return distances if squared else np.sqrt(distances, out=distances)
+
+
+def _paired_distances_blockwise(X, ind_a, ind_b, squared=True, block_size=8):
+    """Equivalent to row_norms(X[ind_a] - X[ind_b], squared=squared).
+
+    Parameters
+    ----------
+    X : array, shape (n_samples, n_features)
+        An array of data samples.
+
+    ind_a : array, shape (n_indices,)
+        An array of sample indices.
+
+    ind_b : array, shape (n_indices,)
+        Another array of sample indices.
+
+    squared : bool (default=True)
+        Whether to return the squared distances.
+
+    block_size : int, optional (default=8)
+        The maximum number of mebibytes (MiB) of memory to use at a time for
+        calculating paired distances.
+
+    Returns
+    -------
+    distances: array, shape (n_indices,)
+        An array of pairwise, optionally squared, distances.
+    """
+
+    bytes_per_row = X.shape[1] * X.itemsize
+    batch_size = int(block_size*1024*1024 // bytes_per_row)
+
+    n_pairs = len(ind_a)
+    distances = np.zeros(n_pairs)
+    for chunk in gen_batches(n_pairs, batch_size):
+        distances[chunk] = row_norms(X[ind_a[chunk]] - X[ind_b[chunk]], True)
+
+    if not squared:
+        np.sqrt(distances, distances)
+
+    return distances
 
 
 def _sum_weighted_outer_differences(X, weights):
@@ -1020,7 +1157,7 @@ def _sum_weighted_outer_differences(X, weights):
     return np.dot(X.T, safe_sparse_dot(laplacian, X, dense_output=True))
 
 
-def _check_scalar(x, name, dtype, min_val=None, max_val=None):
+def _check_scalar(x, name, target_type, min_val=None, max_val=None):
     """Validate scalar parameters type and value.
 
     Parameters
@@ -1031,8 +1168,8 @@ def _check_scalar(x, name, dtype, min_val=None, max_val=None):
     name : str
         The name of the parameter to be printed in error messages.
 
-    dtype : type
-        The desired datatype for the parameter.
+    target_type : type or tuple
+        Acceptable data types for the parameter.
 
     min_val : float or int, optional (default=None)
         The minimum value value the parameter can take. If None (default) it
@@ -1051,11 +1188,194 @@ def _check_scalar(x, name, dtype, min_val=None, max_val=None):
         If the parameter's value violates the given bounds.
     """
 
-    if type(x) is not dtype:
-        raise TypeError('`{}` must be {}.'.format(name, dtype))
+    if not isinstance(x, target_type):
+        raise TypeError('`{}` must be an instance of {}, not {}.'
+                        .format(name, target_type, type(x)))
 
     if min_val is not None and x < min_val:
-        raise ValueError('`{}` must be >= {}.'.format(name, min_val))
+        raise ValueError('`{}`= {}, must be >= {}.'.format(name, x, min_val))
 
     if max_val is not None and x > max_val:
-        raise ValueError('`{}` must be <= {}.'.format(name, max_val))
+        raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
+
+
+#####################################################################
+# Convenience function to construct the trivial LMNN - KNN pipeline #
+#####################################################################
+
+def make_lmnn_classifier(
+        n_neighbors=3, n_features_out=None, init='pca', warm_start=False,
+        max_impostors=500000, neighbors_params=None, impostor_store='auto',
+        max_iter=50, tol=1e-5, callback=None, store_opt_result=False,
+        verbose=0, random_state=None, n_jobs=1, n_neighbors_predict=None,
+        weights='uniform', algorithm='auto', leaf_size=30, p=2,
+        metric='minkowski', metric_params=None):
+    """
+
+    Parameters
+    ----------
+    n_neighbors : int, optional (default=3)
+        Number of neighbors to use as target neighbors for each sample.
+
+    n_features_out : int, optional (default=None)
+        Preferred dimensionality of the embedding.
+        If None it is inferred from ``init``.
+
+    init : string or numpy array, optional (default='pca')
+        Initialization of the linear transformation. Possible options are
+        'pca', 'identity' and a numpy array of shape (n_features_a,
+        n_features_b).
+
+        pca:
+            ``n_features_out`` many principal components of the inputs passed
+            to :meth:`fit` will be used to initialize the transformation.
+
+        identity:
+            If ``n_features_out`` is strictly smaller than the
+            dimensionality of the inputs passed to :meth:`fit`, the identity
+            matrix will be truncated to the first ``n_features_out`` rows.
+
+        numpy array:
+            n_features_b must match the dimensionality of the inputs passed to
+            :meth:`fit` and n_features_a must be less than or equal to that.
+            If ``n_features_out`` is not None, n_features_a must match it.
+
+    warm_start : bool, optional, (default=False)
+        If True and :meth:`fit` has been called before, the solution of the
+        previous call to :meth:`fit` is used as the initial linear
+        transformation (``n_features_out`` and ``init`` will be ignored).
+
+    max_impostors : int, optional (default=500000)
+        Maximum number of impostors to consider per iteration. In the worst
+        case this will allow ``max_impostors * n_neighbors`` constraints to be
+        active.
+
+    neighbors_params : dict, optional (default=None)
+        Parameters to pass to a :class:`neighbors.NearestNeighbors` instance -
+        apart from ``n_neighbors`` - that will be used to select the target
+        neighbors.
+
+    impostor_store : str ['auto'|'list'|'sparse'], optional
+        list :
+            Three lists will be used to store the indices of reference
+            samples, the indices of their impostors and the distances between
+            the (sample, impostor) pairs.
+
+        sparse :
+            A sparse indicator matrix will be used to store the (sample,
+            impostor) pairs. The distances to the impostors will be computed
+            twice (once to determine the impostors and once to be stored),
+            but this option tends to be faster than 'list' as the size of
+            the data set increases.
+
+        auto :
+            Will attempt to decide the most appropriate choice of data
+            structure based on the values passed to :meth:`fit`.
+
+    max_iter : int, optional (default=50)
+        Maximum number of iterations in the optimization.
+
+    tol : float, optional (default=1e-5)
+        Convergence tolerance for the optimization.
+
+    callback : callable, optional (default=None)
+        If not None, this function is called after every iteration of the
+        optimizer, taking as arguments the current solution (transformation)
+        and the number of iterations. This might be useful in case one wants
+        to examine or store the transformation found after each iteration.
+
+    store_opt_result : bool, optional (default=False)
+        If True, the :class:`scipy.optimize.OptimizeResult` object returned by
+        :meth:`minimize` of `scipy.optimize` will be stored as attribute
+        ``opt_result_``.
+
+    verbose : int, optional (default=0)
+        If 0, no progress messages will be printed.
+        If 1, progress messages will be printed to stdout.
+        If > 1, progress messages will be printed and the ``iprint``
+        parameter of :meth:`_minimize_lbfgsb` of `scipy.optimize` will be set
+        to ``verbose - 2``.
+
+    random_state : int or numpy.RandomState or None, optional (default=None)
+        A pseudo random number generator object or a seed for it if int.
+
+    n_jobs : int, optional (default=1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        Doesn't affect :meth:`fit` method.
+
+    n_neighbors_predict : int, optional (default=None)
+        The number of neighbors to use during prediction. If None (default)
+        the value of ``n_neighbors`` used to train the model will be used.
+
+    weights : str or callable, optional (default = 'uniform')
+        weight function used in prediction.  Possible values:
+
+        - 'uniform' : uniform weights.  All points in each neighborhood
+          are weighted equally.
+        - 'distance' : weight points by the inverse of their distance.
+          in this case, closer neighbors of a query point will have a
+          greater influence than neighbors which are further away.
+        - [callable] : a user-defined function which accepts an
+          array of distances, and returns an array of the same shape
+          containing the weights.
+
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+        Algorithm used to compute the nearest neighbors:
+
+        - 'ball_tree' will use :class:`BallTree`
+        - 'kd_tree' will use :class:`KDTree`
+        - 'brute' will use a brute-force search.
+        - 'auto' will attempt to decide the most appropriate algorithm
+          based on the values passed to :meth:`fit` method.
+
+        Note: fitting on sparse input will override the setting of
+        this parameter, using brute force.
+
+    leaf_size : int, optional (default = 30)
+        Leaf size passed to BallTree or KDTree.  This can affect the
+        speed of the construction and query, as well as the memory
+        required to store the tree.  The optimal value depends on the
+        nature of the problem.
+
+    p : integer, optional (default = 2)
+        Power parameter for the Minkowski metric. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric : string or callable, default 'minkowski'
+        the distance metric to use for the tree. The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. See the documentation of the DistanceMetric class for a
+        list of available metrics.
+
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
+
+    Returns
+    -------
+    lmnn_pipe : Pipeline
+        A Pipeline instance with two steps: a ``LargeMarginNearestNeighbor``
+        instance that is used to fit the model and a ``KNeighborsClassifier``
+        instance that is used for prediction.
+
+    """
+
+    lmnn = LargeMarginNearestNeighbor(
+        n_neighbors=n_neighbors, n_features_out=n_features_out, init=init,
+        warm_start=warm_start, max_impostors=max_impostors,
+        neighbors_params=neighbors_params, impostor_store=impostor_store,
+        max_iter=max_iter, tol=tol, callback=callback,
+        store_opt_result=store_opt_result, verbose=verbose,
+        random_state=random_state, n_jobs=n_jobs)
+
+    if n_neighbors_predict is None:
+        n_neighbors_predict = n_neighbors
+
+    knn = KNeighborsClassifier(
+        n_neighbors=n_neighbors_predict, weights=weights, algorithm=algorithm,
+        leaf_size=leaf_size, p=p, metric=metric, metric_params=metric_params,
+        n_jobs=n_jobs)
+
+    return Pipeline([('lmnn', lmnn), ('knn', knn)])

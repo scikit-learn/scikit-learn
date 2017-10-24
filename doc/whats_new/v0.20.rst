@@ -17,6 +17,7 @@ random sampling procedures.
 
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 - :class:`isotonic.IsotonicRegression` (bug fix)
+- :class:`metrics.roc_auc_score` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -39,6 +40,12 @@ Classifiers and regressors
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
+  
+Model evaluation
+
+- Added the :func:`metrics.balanced_accuracy` metric and a corresponding
+  ``'balanced_accuracy'`` scorer for binary classification.
+  :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
 Other estimators
 
@@ -65,12 +72,15 @@ Classifiers and regressors
   :class:`sklearn.naive_bayes.GaussianNB` to give a precise control over
   variances calculation. :issue:`9681` by :user:`Dmitry Mottl <Mottl>`.
 
-
-
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
   :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+Metrics
+
+- :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
+  ``{0, 1}`` or ``{-1, 1}``. :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
 
 Linear, kernelized and related models
 
@@ -115,6 +125,15 @@ Decomposition, manifold learning and clustering
 - Fixed a bug in :func:`datasets.fetch_kddcup99`, where data were not properly
   shuffled. :issue:`9731` by `Nicolas Goix`_.
 
+- Fixed a bug in :class:`decomposition.PCA` where users will get unexpected error
+  with large datasets when ``n_components='mle'`` on Python 3 versions.
+  :issue:`9886` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+Metrics
+
+- Fixed a bug due to floating point error in :func:`metrics.roc_auc_score` with
+  non-integer sample weights. :issue:`9786` by :user:`Hanmin Qin <qinhanmin2014>`.
+
 API changes summary
 -------------------
 
@@ -123,3 +142,16 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Metrics
+
+- Deprecate ``reorder`` parameter in :func:`metrics.auc` as it's no longer required
+  for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
+  due to floating point error in the input.
+  :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+Cluster
+
+- Deprecate ``pooling_func`` unused parameter in
+  :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
+  <thechargedneutron>`.

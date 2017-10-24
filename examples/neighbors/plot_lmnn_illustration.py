@@ -3,9 +3,10 @@
 Large Margin Nearest Neighbor Illustration
 ==========================================
 
-An example to illustrate the goal of learning a distance metric with Large
-Margin Nearest Neighbor. The example is solely for illustration purposes.
-Please refer to :ref:`User Guide <neighbors>` for more information.
+An example illustrating the goal of learning a distance metric that maximizes
+the nearest neighbors classification accuracy. The example is solely for
+illustration purposes. Please refer to the :ref:`User Guide <lmnn>` for
+more information.
 """
 
 # Author: John Chiotellis <johnyc.code@gmail.com>

@@ -4,13 +4,13 @@ Comparing Nearest Neighbors and Large Margin Nearest Neighbor Classification
 ============================================================================
 
 An example comparing nearest neighbors classification with and without
-:ref:`neighbors.LargeMarginNearestNeighbor`.
+Large Margin Nearest Neighbor.
 
 It will plot the decision boundaries for each class determined by a simple
-nearest neighbors classifier against the decision boundaries determined by a
-Large Margin Nearest Neighbor classifier. The latter finds a distance metric
-specifically to maximize the nearest neighbor classification accuracy on a
-given training set.
+Nearest Neighbors classifier against the decision boundaries determined by a
+Large Margin Nearest Neighbor classifier. The latter aims to find a distance
+metric that maximizes the nearest neighbor classification accuracy on a given
+training set.
 """
 
 # Author: John Chiotellis <johnyc.code@gmail.com>
@@ -40,7 +40,7 @@ y = iris.target
 X_train, X_test, y_train, y_test = \
     train_test_split(X, y, stratify=y, test_size=0.7, random_state=42)
 
-h = .02  # step size in the mesh
+h = .01  # step size in the mesh
 
 # Create color maps
 cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
