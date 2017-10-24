@@ -357,6 +357,7 @@ def _is_32bit():
     """Detect if process is 32bit Python."""
     return struct.calcsize('P') * 8 == 32
 
+
 def _is_pairwise(estimator):
     """Returns True if estimator has a _pairwise attribute set to True.
 
@@ -389,6 +390,7 @@ def _is_pairwise_metric(estimator):
     metric = getattr(estimator,  "metric", None)
 
     return bool(metric == 'precomputed')
+
 
 def maybe_pairwise(X, estimator, kernel=linear_kernel):
 
