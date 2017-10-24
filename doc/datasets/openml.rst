@@ -33,21 +33,21 @@ of size 28x28 pixels, labeled from 0 to 9::
   (1080, 81)
   >>> mice.target.shape
   (1080,)
-  >>> np.unique(mice.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  >>> np.unique(mice.target) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
   array([b"'c-CS-m'", b"'c-CS-s'", b"'c-SC-m'", b"'c-SC-s'", b"'t-CS-m'",
   b"'t-CS-s'", b"'t-SC-m'", b"'t-SC-s'"], dtype='|S8')
 
 You can get more information on the dataset by looking at the ``DESCR``
 and ``details`` attributes::
 
-  >>> print(mice.DESCR) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  >>> print(mice.DESCR) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
   **Author**: Clara Higuera, Katheleen J. Gardiner, Krzysztof J. Cios  
   **Source**: [UCI](https://archive.ics.uci.edu/ml/datasets/Mice+Protein+Expression) - 2015   
   **Please cite**: Higuera C, Gardiner KJ, Cios KJ (2015) Self-Organizing
   Feature Maps Identify Proteins Critical to Learning in a Mouse Model of Down
   Syndrome. PLoS ONE 10(6): e0129126...
 
-  >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
   {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
   'creator': ...,
   'upload_date': '2016-02-17T14:32:49', 'licence': 'Public', 'url':
@@ -68,7 +68,7 @@ to get more information on the dataset on the openml website: https://www.openml
 The id is also the best way to specify how to fetch a dataset from OpenML::
 
   >>> mice = fetch_openml(4550, data_home=custom_data_home)
-  >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
   {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
   'creator': ...,
   'upload_date': '2016-02-17T14:32:49', 'licence': 'Public', 'url':
@@ -93,28 +93,28 @@ if earlier versions become inactive.
 You can see that the dataset with id 4550 that we fetched above is the version 1
 of the "miceprotein" dataset::
 
-  >>> mice.details['version']
+  >>> mice.details['version']  #doctest: +SKIP
   '1'
 
 In fact, this dataset only has one version. The iris dataset on the other hand
 has multiple versions::
 
   >>> iris = fetch_openml("iris", data_home=custom_data_home)
-  >>> iris.details['version']
+  >>> iris.details['version']  #doctest: +SKIP
   '1'
-  >>> iris.details['id']
+  >>> iris.details['id']  #doctest: +SKIP
   '61'
 
   >>> iris_61 = fetch_openml(61, data_home=custom_data_home)
-  >>> iris_61.details['version']
+  >>> iris_61.details['version']  #doctest: +SKIP
   '1'
-  >>> iris_61.details['id']
+  >>> iris_61.details['id']  #doctest: +SKIP
   '61'
 
   >>> iris_969 = fetch_openml(969, data_home=custom_data_home)
-  >>> iris_969.details['version']
+  >>> iris_969.details['version']  #doctest: +SKIP
   '3'
-  >>> iris_969.details['id']
+  >>> iris_969.details['id']  #doctest: +SKIP
   '969'
 
 'Specifying the dataset by the name "iris" yields the lowest version, version 1, with the id 61.
@@ -122,7 +122,7 @@ To make sure you always get this exact dataset, it is safest to specify it by th
 The other dataset, with id 969, is version 3 (version 2 has become inactive), and contains
 a binarized version of the data::
 
-  >>> np.unique(iris_969.target)
+  >>> np.unique(iris_969.target)  #doctest: +SKIP
   array([b'N', b'P'],
         dtype='|S1')
 
