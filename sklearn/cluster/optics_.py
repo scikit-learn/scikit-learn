@@ -543,7 +543,7 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
                                    min_cluster_size_ratio, min_maxima_ratio)
     leaves = _get_leaves(root_node, [])
     # Start cluster id's at 1
-    clustid = 1
+    clustid = 0
     n_samples = len(reachability)
     is_core = np.zeros(n_samples, dtype=bool)
     labels = np.ones(n_samples, dtype=int) * -1
