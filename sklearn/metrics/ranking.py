@@ -457,7 +457,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
 
     The last precision and recall values are 1. and 0. respectively and do not
     have a corresponding threshold.  This ensures that the graph starts on the
-    x axis.
+    y axis.
 
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
