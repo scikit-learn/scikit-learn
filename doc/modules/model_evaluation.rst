@@ -467,6 +467,8 @@ given binary ``y_true`` and ``y_pred``:
     * Normalized class-wise accuracy average as described in [Guyon2015]_
     * Macro-average recall as described in [Mosley2013]_
 
+    Note that none of these different definitions are currently implemented in scikit-learn.
+
 .. topic:: References:
 
   .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
