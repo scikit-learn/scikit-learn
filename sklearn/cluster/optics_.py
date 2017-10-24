@@ -322,8 +322,9 @@ class OPTICS(NeighborsBase, KNeighborsMixin,
 
         # Check for valid n_samples relative to min_samples
         if self.min_samples > n_samples:
-            raise ValueError("Number of training samples (%d) must be greater "
-                             "than min_samples (%d) used for clustering." %
+            raise ValueError("Number of training samples (n_samples=%d) must "
+                             "be greater than min_samples (min_samples=%d) "
+                             "used for clustering." %
                              (n_samples, self.min_samples))
 
         super(OPTICS, self).fit(X)
