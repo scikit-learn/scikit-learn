@@ -484,29 +484,6 @@ def test_RadiusNeighborsClassifier_multioutput():
         assert_array_almost_equal(y_pred_mo, y_pred_so)
 
 
-def test_kneighbors_classifier_sparse(n_samples=40,
-                                      n_features=5,
-                                      n_test_pts=10,
-                                      n_neighbors=5,
-                                      random_state=0):
-    # Test k-NN classifier on sparse matrices
-    # Like the above, but with various types of sparse matrices
-    rng = np.random.RandomState(random_state)
-    X = 2 * rng.rand(n_samples, n_features) - 1
-    X *= X > .2
-    y = ((X ** 2).sum(axis=1) < .5).astype(np.int)
-
-    for sparsemat in SPARSE_TYPES:
-        knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors,
-                                             algorithm='auto')
-        knn.fit(sparsemat(X), y)
-        epsilon = 1e-5 * (2 * rng.rand(1, n_features) - 1)
-        for sparsev in SPARSE_TYPES + (np.asarray,):
-            X_eps = sparsev(X[:n_test_pts] + epsilon)
-            y_pred = knn.predict(X_eps)
-            assert_array_equal(y_pred, y[:n_test_pts])
-
-
 def test_KNeighborsClassifier_multioutput():
     # Test k-NN classifier on multioutput data
     rng = check_random_state(0)
@@ -714,26 +691,6 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
 
         assert_equal(y_pred.shape, y_target.shape)
         assert_true(np.all(np.abs(y_pred - y_target) < 0.3))
-
-
-def test_kneighbors_regressor_sparse(n_samples=40,
-                                     n_features=5,
-                                     n_test_pts=10,
-                                     n_neighbors=5,
-                                     random_state=0):
-    # Test radius-based regression on sparse matrices
-    # Like the above, but with various types of sparse matrices
-    rng = np.random.RandomState(random_state)
-    X = 2 * rng.rand(n_samples, n_features) - 1
-    y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
-
-    for sparsemat in SPARSE_TYPES:
-        knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
-                                            algorithm='auto')
-        knn.fit(sparsemat(X), y)
-        for sparsev in SPARSE_OR_DENSE:
-            X2 = sparsev(X)
-            assert_true(np.mean(knn.predict(X2).round() == y) > 0.95)
 
 
 def test_neighbors_iris():
