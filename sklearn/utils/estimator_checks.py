@@ -434,7 +434,7 @@ def check_estimator_sparse_data(name, estimator_orig):
             if hasattr(estimator, 'predict_proba'):
                 probs = estimator.predict_proba(X)
                 assert_equal(probs.shape, (X.shape[0], 4))
-        except TypeError as e:
+        except (TypeError, ValueError) as e:
             if 'sparse' not in repr(e).lower():
                 print("Estimator %s doesn't seem to fail gracefully on "
                       "sparse data: error message state explicitly that "
