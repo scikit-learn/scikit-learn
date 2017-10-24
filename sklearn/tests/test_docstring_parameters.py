@@ -43,7 +43,6 @@ IGNORED_MODULES = (
     'multioutput',
     'random_projection',
     'setup',
-    'svm',
     'utils',
     'neighbors',
     # Deprecated modules
