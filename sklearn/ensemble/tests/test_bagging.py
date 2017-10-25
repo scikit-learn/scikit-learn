@@ -34,6 +34,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
+from sklearn.externals.joblib import hash
 
 from scipy.sparse import csc_matrix, csr_matrix
 
@@ -219,6 +220,13 @@ def test_sparse_regression():
             assert_array_almost_equal(sparse_results, dense_results)
 
 
+class DummySizeEstimator(BaseEstimator):
+
+    def fit(self, X, y):
+        self.training_size = X.shape[0]
+        self.training_hash = hash(X)
+
+
 def test_bootstrap_samples():
     # Test that bootstrapping samples generate non-perfect base estimators.
     rng = check_random_state(0)
@@ -245,6 +253,16 @@ def test_bootstrap_samples():
 
     assert_greater(base_estimator.score(X_train, y_train),
                    ensemble.score(X_train, y_train))
+
+    # check as well the size of the training set to be sure that only
+    # under-sampling is performed
+    ensemble = BaggingRegressor(base_estimator=DummySizeEstimator(),
+                                bootstrap=True).fit(X_train, y_train)
+    training_hash = []
+    for estimator in ensemble.estimators_:
+        assert estimator.training_size == X_train.shape[0]
+        training_hash.append(estimator.training_hash)
+    assert len(set(training_hash)) == len(training_hash)
 
 
 def test_bootstrap_features():
