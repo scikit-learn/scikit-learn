@@ -1155,8 +1155,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None, solver='liblinear', max_iter=100,
-                 multi_class='ovr', verbose=0, warm_start=False, n_jobs=1):
+                 random_state=None, solver='default', max_iter=100,
+                 multi_class='default', verbose=0, warm_start=False, n_jobs=1):
 
         self.penalty = penalty
         self.dual = dual
@@ -1197,6 +1197,14 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self : object
             Returns self.
         """
+        if self.solver == 'default':
+            self.solver = 'liblinear'
+            warnings.warn("Default solver will be changed to 'lbfgs' in 0.22",
+                          FutureWarning)
+        if self.multi_class == 'default':
+            self.multi_class = 'multinomial'
+            warnings.warn("Default multi_class will be changed to "
+                          "'multinomial' in 0.22", FutureWarning)
         if not isinstance(self.C, numbers.Number) or self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
