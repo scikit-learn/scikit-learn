@@ -30,6 +30,8 @@ from scipy.optimize import check_grad
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import manhattan_distances
+from sklearn.metrics.pairwise import cosine_distances
 
 
 x = np.linspace(0, 1, 10)
@@ -244,7 +246,9 @@ def test_preserve_trustworthiness_approximately():
                         method=method)
             X_embedded = tsne.fit_transform(X)
             t = trustworthiness(X, X_embedded, n_neighbors=1)
-            assert_greater(t, 0.9)
+            assert_greater(t, 0.85, msg='Trustworthiness={:0.3f} < 0.85 '
+                                        'for method={} and '
+                                        'init={}'.format(t, method, init))
 
 
 def test_optimization_minimizes_kl_divergence():
@@ -293,14 +297,14 @@ def test_early_exaggeration_too_small():
     # Early exaggeration factor must be >= 1.
     tsne = TSNE(early_exaggeration=0.99)
     assert_raises_regexp(ValueError, "early_exaggeration .*",
-                         tsne.fit_transform, np.array([[0.0]]))
+                         tsne.fit_transform, np.array([[0.0], [0.0]]))
 
 
 def test_too_few_iterations():
     # Number of gradient descent iterations must be at least 200.
     tsne = TSNE(n_iter=199)
     assert_raises_regexp(ValueError, "n_iter .*", tsne.fit_transform,
-                         np.array([[0.0]]))
+                         np.array([[0.0], [0.0]]))
 
 
 def test_non_square_precomputed_distances():
@@ -715,28 +719,48 @@ def test_accessible_kl_divergence():
 
 
 def check_uniform_grid(method, seeds=[0, 1, 2], n_iter=1000):
-    """Make sure that TSNE can approximately recover a uniform 2D grid"""
+    """Make sure that TSNE can approximately recover a uniform 2D grid
+
+    Due to ties in distances between point in X_2d_grid, this test is platform
+    dependent for ``method='barnes_hut'`` due to numerical imprecision.
+
+    Also, t-SNE is not assured to converge to the right solution because bad
+    initialization can lead to convergence to bad local minimum (the
+    optimization problem is non-convex). To avoid breaking the test too often,
+    we re-run t-SNE from the final point when the convergence is not good
+    enough.
+    """
     for seed in seeds:
         tsne = TSNE(n_components=2, init='random', random_state=seed,
-                    perplexity=10, n_iter=n_iter, method=method)
+                    perplexity=20, n_iter=n_iter, method=method)
         Y = tsne.fit_transform(X_2d_grid)
 
-        # Ensure that the convergence criterion has been triggered
-        assert tsne.n_iter_ < n_iter
-
-        # Ensure that the resulting embedding leads to approximately
-        # uniformly spaced points: the distance to the closest neighbors
-        # should be non-zero and approximately constant.
-        nn = NearestNeighbors(n_neighbors=1).fit(Y)
-        dist_to_nn = nn.kneighbors(return_distance=True)[0].ravel()
-        assert dist_to_nn.min() > 0.1
-
-        smallest_to_mean = dist_to_nn.min() / np.mean(dist_to_nn)
-        largest_to_mean = dist_to_nn.max() / np.mean(dist_to_nn)
-
         try_name = "{}_{}".format(method, seed)
-        assert_greater(smallest_to_mean, .5, msg=try_name)
-        assert_less(largest_to_mean, 2, msg=try_name)
+        try:
+            assert_uniform_grid(Y, try_name)
+        except AssertionError:
+            # If the test fails a first time, re-run with init=Y to see if
+            # this was caused by a bad initialization. Note that this will
+            # also run an early_exaggeration step.
+            try_name += ":rerun"
+            tsne.init = Y
+            Y = tsne.fit_transform(X_2d_grid)
+            assert_uniform_grid(Y, try_name)
+
+
+def assert_uniform_grid(Y, try_name=None):
+    # Ensure that the resulting embedding leads to approximately
+    # uniformly spaced points: the distance to the closest neighbors
+    # should be non-zero and approximately constant.
+    nn = NearestNeighbors(n_neighbors=1).fit(Y)
+    dist_to_nn = nn.kneighbors(return_distance=True)[0].ravel()
+    assert dist_to_nn.min() > 0.1
+
+    smallest_to_mean = dist_to_nn.min() / np.mean(dist_to_nn)
+    largest_to_mean = dist_to_nn.max() / np.mean(dist_to_nn)
+
+    assert_greater(smallest_to_mean, .5, msg=try_name)
+    assert_less(largest_to_mean, 2, msg=try_name)
 
 
 def test_uniform_grid():
@@ -764,3 +788,21 @@ def test_bh_match_exact():
     assert n_iter['exact'] == n_iter['barnes_hut']
     assert_array_almost_equal(X_embeddeds['exact'], X_embeddeds['barnes_hut'],
                               decimal=3)
+
+
+def test_tsne_with_different_distance_metrics():
+    """Make sure that TSNE works for different distance metrics"""
+    random_state = check_random_state(0)
+    n_components_original = 3
+    n_components_embedding = 2
+    X = random_state.randn(50, n_components_original).astype(np.float32)
+    metrics = ['manhattan', 'cosine']
+    dist_funcs = [manhattan_distances, cosine_distances]
+    for metric, dist_func in zip(metrics, dist_funcs):
+        X_transformed_tsne = TSNE(
+            metric=metric, n_components=n_components_embedding,
+            random_state=0).fit_transform(X)
+        X_transformed_tsne_precomputed = TSNE(
+            metric='precomputed', n_components=n_components_embedding,
+            random_state=0).fit_transform(dist_func(X))
+        assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)

@@ -551,7 +551,7 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
         Indices of clusters that samples are assigned to.
 
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     """
     n_samples = X.shape[0]
@@ -602,7 +602,7 @@ def _labels_inertia(X, x_squared_norms, centers,
         The resulting assignment
 
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
     """
     n_samples = X.shape[0]
     # set the default value of centers to -1 to be able to detect any anomaly
@@ -792,7 +792,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Labels of each point
 
     inertia_ : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     Examples
     --------
@@ -1068,7 +1068,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     Returns
     -------
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     squared_diff : numpy array, shape (n_clusters,)
         Squared distances between previous and updated cluster centers.

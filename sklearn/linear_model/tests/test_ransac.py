@@ -1,7 +1,7 @@
 import numpy as np
 from scipy import sparse
 
-from numpy.testing import assert_equal, assert_raises
+from numpy.testing import assert_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils.testing import assert_raises
 from sklearn.linear_model import LinearRegression, RANSACRegressor, Lasso
 from sklearn.linear_model.ransac import _dynamic_max_trials
 

@@ -298,7 +298,11 @@ def locally_linear_embedding(
         raise ValueError("output dimension must be less than or equal "
                          "to input dimension")
     if n_neighbors >= N:
-        raise ValueError("n_neighbors must be less than number of points")
+        raise ValueError(
+            "Expected n_neighbors <= n_samples, "
+            " but n_samples = %d, n_neighbors = %d" %
+            (N, n_neighbors)
+        )
 
     if n_neighbors <= 0:
         raise ValueError("n_neighbors must be positive")
@@ -652,7 +656,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        y: Ignored.
+        y: Ignored
 
         Returns
         -------
@@ -669,7 +673,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
-        y: Ignored.
+        y: Ignored
 
         Returns
         -------

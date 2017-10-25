@@ -428,7 +428,7 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
-        Y: Ignored.
+        Y: Ignored
 
         Returns
         -------
@@ -476,7 +476,7 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
-        Y: Ignored.
+        Y: Ignored
 
         Returns
         -------
@@ -518,7 +518,7 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
-        Y: Ignored.
+        Y: Ignored
 
         Returns
         -------
