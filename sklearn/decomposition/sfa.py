@@ -25,13 +25,20 @@ class SFA(BaseEstimator, TransformerMixin):
         fit(X).transform(X) will not yield the expected results,
         use fit_transform(X) instead.
 
+    n_components : int or None
+        Number of components to keep. SFA will keep the `n_components` slowest
+        components.
+        If `n_components` is `None`, all components are kept, and the output
+        dim is the same as the input dim.
+
     Attributes
     ----------
     n_input_dim_ : int
         The number of input dimensions of the data passed to :meth:`fit`
     """
-    def __init__(self, copy=True):
+    def __init__(self, copy=True, n_components=None):
         self.copy = copy
+        self.n_components = n_components
 
     def fit(self, X, y=None):
         """Fit the SFA parameters with the `X`.
@@ -51,16 +58,26 @@ class SFA(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, dtype=[np.float64, np.float32], copy=self.copy,
                         ensure_min_samples=2)
+        # Time derivative
         dX_dt = X[1:, :] - X[:-1, :]
         self.n_input_dim_ = X.shape[1]
-
         self.mean_ = np.mean(X, axis=0)
+
         X -= self.mean_
-
         cov_mtx = empirical_covariance(X, assume_centered=True)
-        dcov_mtx = empirical_covariance(dX_dt, assume_centered=True)
 
-        d, self.components_ = sp.linalg.eigh(dcov_mtx, cov_mtx)
+        # The time derivative is not centered around the mean:
+        # we want the second moment matrix (centered around 0) and
+        # not the second central moment matrix (centered around the mean), i.e.
+        # the covariance matrix
+        dt_cov_mtx = empirical_covariance(dX_dt, assume_centered=True)
+
+        if self.n_components is None:
+            eigvals = None
+        else:
+            eigvals = (0, self.n_components - 1)
+        d, self.components_ = sp.linalg.eigh(dt_cov_mtx, cov_mtx,
+                                             eigvals=eigvals)
         self.bias_ = np.dot(self.mean_, self.components_)
 
         # Return the transformer
