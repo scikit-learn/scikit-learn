@@ -35,6 +35,27 @@ class SFA(BaseEstimator, TransformerMixin):
     ----------
     n_input_dim_ : int
         The number of input dimensions of the data passed to :meth:`fit`
+
+    components_ : array, shape (n_components, n_features)
+        Slowest directions in inputs space. The components are sorted
+        by slowest to fastest.
+
+    mean_ : array, shape (n_components)
+        Per-feature empirical mean, estimated from the training set.
+        Equal to `X.mean(axis=0)`.
+
+    bias_ : array, shape (n_components)
+        Displacement necessary to make sure that the output signals have
+        zero mean. This is a convenience quantity that is equal to
+        `np.dot(self.mean_, self.components_)`.
+
+    eta_ : array, shape (n_components)
+        The eta value of the components. This is a measure of the slowness of
+        a signal, defined as `eta(x) = 1/(2*pi) * sqrt(dx/dt)`. It can be
+        interpreted as the number of oscillations per time step (or in
+        other words in `n_samples` time points, a sine wave `x` makes
+        `eta(x) * n_samples` oscillations).
+
     """
     def __init__(self, copy=True, n_components=None):
         self.copy = copy
