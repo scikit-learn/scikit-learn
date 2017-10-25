@@ -249,9 +249,9 @@ def test_set_params_passes_all_parameters():
 def test_set_params_updates_valid_params():
     # Check that set_params tries to set SVC().C, not
     # DecisionTreeClassifier().C
-    est = GridSearchCV(DecisionTreeClassifier(), {})
-    est.set_params(estimator=SVC(), estimator__C=42.0)
-    assert est.C == 42.0
+    gscv = GridSearchCV(DecisionTreeClassifier(), {})
+    gscv.set_params(estimator=SVC(), estimator__C=42.0)
+    assert gscv.estimator.C == 42.0
 
 
 def test_score_sample_weight():
