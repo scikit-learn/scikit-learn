@@ -15,6 +15,7 @@ from .dict_learning import (dict_learning, dict_learning_online, sparse_encode,
                             DictionaryLearning, MiniBatchDictionaryLearning,
                             SparseCoder)
 from .factor_analysis import FactorAnalysis
+from .sfa import SFA
 from ..utils.extmath import randomized_svd
 from .online_lda import LatentDirichletAllocation
 
@@ -36,5 +37,6 @@ __all__ = ['DictionaryLearning',
            'randomized_svd',
            'sparse_encode',
            'FactorAnalysis',
+           'SFA',
            'TruncatedSVD',
            'LatentDirichletAllocation']
