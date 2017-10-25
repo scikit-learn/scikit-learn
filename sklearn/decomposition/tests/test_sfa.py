@@ -5,19 +5,16 @@ from sklearn.utils.estimator_checks import check_estimator
 from ..sfa import SFA
 
 
-def _input_data_sin_waves(n_samples):
+def _input_data_sin_waves(n_samples, freqs):
     """ Support function to create two mixes sine waves to test SFA.
-
-    By construction, the first sine wave is faster (higher frequency) than
-    the second.
 
     Sine waves are the analytical solution to the SFA problem
     (Wiskott and Sejnowski, 2002), so we are sure that SFA is going to
     be able to recover them.
     """
     t = np.linspace(0.0, 1.0, num=n_samples)
-    X = np.array([np.sin(2 * np.pi * 5 * t),
-                  np.sin(2 * np.pi * t)]).T
+    X = np.array([np.sin(2 * np.pi * freqs[0] * t),
+                  np.sin(2 * np.pi * freqs[1] * t)]).T
 
     X = X - X[:-1, :].mean(axis=0)
     X = X / X[:-1, :].std(axis=0)
@@ -38,7 +35,8 @@ def test_sfa():
     # together with a arbitrary linear transform. SFA should be able to
     # unmix them.
     n_samples = 10000
-    X, X_mixed = _input_data_sin_waves(n_samples)
+    freqs = [5.0, 1.0]
+    X, X_mixed = _input_data_sin_waves(n_samples, freqs=freqs)
 
     sfa = SFA()
     sfa.fit(X_mixed)
@@ -53,10 +51,14 @@ def test_sfa():
     correlation = np.dot(X[:, [1, 0]].T, X_output) / n_samples
     assert_array_almost_equal(abs(correlation), np.eye(2), 4)
 
+    # The eta value is the number of oscillations in a time step.
+    assert_array_almost_equal(sfa.eta_,
+                              [freqs[1] / n_samples, freqs[0] / n_samples])
+
 
 def test_sfa_reduce_output_dim():
     n_samples = 10000
-    X, X_mixed = _input_data_sin_waves(n_samples)
+    X, X_mixed = _input_data_sin_waves(n_samples, freqs=[5.0, 1.0])
 
     sfa = SFA(n_components=1)
     sfa.fit(X_mixed)

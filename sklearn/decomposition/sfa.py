@@ -79,6 +79,7 @@ class SFA(BaseEstimator, TransformerMixin):
         d, self.components_ = sp.linalg.eigh(dt_cov_mtx, cov_mtx,
                                              eigvals=eigvals)
         self.bias_ = np.dot(self.mean_, self.components_)
+        self.eta_ = 0.5 / np.pi * np.sqrt(d)
 
         # Return the transformer
         return self
@@ -100,7 +101,7 @@ class SFA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         # Check that fit has been called
-        check_is_fitted(self, ['n_input_dim_', 'components_', 'bias_'])
+        check_is_fitted(self, ['n_input_dim_', 'components_', 'bias_', 'eta_'])
 
         # Input validation
         X = check_array(X, dtype=[np.float64, np.float32],
