@@ -12,10 +12,9 @@ from .ranking import label_ranking_loss
 from .ranking import precision_recall_curve
 from .ranking import roc_auc_score
 from .ranking import roc_curve
-from .ranking import dcg_score
-from .ranking import ndcg_score
 
 from .classification import accuracy_score
+from .classification import balanced_accuracy_score
 from .classification import classification_report
 from .classification import cohen_kappa_score
 from .classification import confusion_matrix
@@ -70,6 +69,7 @@ __all__ = [
     'adjusted_rand_score',
     'auc',
     'average_precision_score',
+    'balanced_accuracy_score',
     'calinski_harabaz_score',
     'classification_report',
     'cluster',
@@ -118,6 +118,4 @@ __all__ = [
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',
-    'dcg_score',
-    'ndcg_score'
 ]

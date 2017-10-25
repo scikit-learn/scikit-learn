@@ -46,7 +46,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
-from sklearn import clone
 from sklearn.datasets import load_iris
 from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
                               AdaBoostClassifier)
@@ -90,10 +89,9 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         X = (X - mean) / std
 
         # Train
-        clf = clone(model)
-        clf = model.fit(X, y)
+        model.fit(X, y)
 
-        scores = clf.score(X, y)
+        scores = model.score(X, y)
         # Create a title for each column and the console by using str() and
         # slicing away useless parts of the string
         model_title = str(type(model)).split(
@@ -109,7 +107,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         plt.subplot(3, 4, plot_idx)
         if plot_idx <= len(models):
             # Add a title at the top of each column
-            plt.title(model_title)
+            plt.title(model_title, fontsize=9)
 
         # Now plot the decision boundary using a fine mesh as input to a
         # filled contour plot
@@ -156,7 +154,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
                     edgecolor='k', s=20)
         plot_idx += 1  # move on to the next plot in sequence
 
-plt.suptitle("Classifiers on feature subsets of the Iris dataset")
+plt.suptitle("Classifiers on feature subsets of the Iris dataset", fontsize=12)
 plt.axis("tight")
-
+plt.tight_layout(h_pad=0.2, w_pad=0.2, pad=2.5)
 plt.show()

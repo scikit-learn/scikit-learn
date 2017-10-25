@@ -112,28 +112,43 @@ def test_hasher_zeros():
 
 @ignore_warnings(category=DeprecationWarning)
 def test_hasher_alternate_sign():
-    # the last two tokens produce a hash collision that sums as 0
-    X = [["foo", "bar", "baz", "investigation need", "records"]]
+    X = [list("Thequickbrownfoxjumped")]
 
     Xt = FeatureHasher(alternate_sign=True, non_negative=False,
                        input_type='string').fit_transform(X)
-    assert_true(Xt.data.min() < 0 and Xt.data.max() > 0)
-    # check that we have a collision that produces a 0 count
-    assert_true(len(Xt.data) < len(X[0]))
-    assert_true((Xt.data == 0.).any())
+    assert Xt.data.min() < 0 and Xt.data.max() > 0
 
     Xt = FeatureHasher(alternate_sign=True, non_negative=True,
                        input_type='string').fit_transform(X)
-    assert_true((Xt.data >= 0).all())   # all counts are positive
-    assert_true((Xt.data == 0.).any())  # we still have a collision
+    assert Xt.data.min() > 0
+
     Xt = FeatureHasher(alternate_sign=False, non_negative=True,
                        input_type='string').fit_transform(X)
-    assert_true((Xt.data > 0).all())    # strictly positive counts
+    assert Xt.data.min() > 0
     Xt_2 = FeatureHasher(alternate_sign=False, non_negative=False,
                          input_type='string').fit_transform(X)
     # With initially positive features, the non_negative option should
     # have no impact when alternate_sign=False
     assert_array_equal(Xt.data, Xt_2.data)
+
+
+@ignore_warnings(category=DeprecationWarning)
+def test_hash_collisions():
+    X = [list("Thequickbrownfoxjumped")]
+
+    Xt = FeatureHasher(alternate_sign=True, non_negative=False,
+                       n_features=1, input_type='string').fit_transform(X)
+    # check that some of the hashed tokens are added
+    # with an opposite sign and cancel out
+    assert abs(Xt.data[0]) < len(X[0])
+
+    Xt = FeatureHasher(alternate_sign=True, non_negative=True,
+                       n_features=1, input_type='string').fit_transform(X)
+    assert abs(Xt.data[0]) < len(X[0])
+
+    Xt = FeatureHasher(alternate_sign=False, non_negative=True,
+                       n_features=1, input_type='string').fit_transform(X)
+    assert Xt.data[0] == len(X[0])
 
 
 @ignore_warnings(category=DeprecationWarning)
