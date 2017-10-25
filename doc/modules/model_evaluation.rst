@@ -465,7 +465,7 @@ given binary ``y_true`` and ``y_pred``:
     multiclass setting. Here are some definitions that can be found in the literature:
 
     * Normalized class-wise accuracy average as described in [Guyon2015]_
-    * Macro-average recall as described in [Mosley2013]_
+    * Macro-average recall as described in [Mosley2013]_ and [Kelleher2015]_
 
     Note that none of these different definitions are currently implemented in scikit-learn.
 
@@ -478,6 +478,10 @@ given binary ``y_true`` and ``y_pred``:
   .. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
      <http://lib.dr.iastate.edu/etd/13537/>`_,
      IJCV 2010.
+  .. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
+     Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
+     and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
+     2015.
 
 .. _cohen_kappa:
 
