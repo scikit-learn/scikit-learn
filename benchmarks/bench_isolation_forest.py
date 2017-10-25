@@ -3,6 +3,17 @@
 IsolationForest benchmark
 ==========================================
 A test of IsolationForest on classical anomaly detection datasets.
+
+The benchmark is run as follows:
+1. The dataset is randomly split into a training set and a test set, both
+assumed to contain outliers.
+2. Isolation Forest is trained on the training set.
+3. The ROC curve is computed on the test set using the knowledge of the labels.
+
+Note that the smtp dataset contains a very small proportion of outliers.
+Therefore, depending on the seed of the random number generator, randomly
+splitting the data set might lead to a test set containing no outliers. In this
+case a warning is raised when computing the ROC curve.
 """
 
 from time import time
@@ -12,7 +23,7 @@ import matplotlib.pyplot as plt
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import roc_curve, auc
 from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_mldata
-from sklearn.preprocessing import MultiLabelBinarizer
+from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import shuffle as sh
 
 print(__doc__)
@@ -30,15 +41,14 @@ def print_outlier_ratio(y):
     print("----- Outlier ratio: %.5f" % (np.min(cnt) / len(y)))
 
 
-np.random.seed(1)
+random_state = 1
 fig_roc, ax_roc = plt.subplots(1, 1, figsize=(8, 5))
 
 # Set this to true for plotting score histograms for each dataset:
 with_decision_function_histograms = False
 
-# Removed the shuttle dataset because as of 2017-03-23 mldata.org is down:
-# datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
-datasets = ['http', 'smtp', 'SA', 'SF', 'forestcover']
+# datasets available = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
+datasets = ['http', 'smtp', 'SA', 'SF', 'shuttle', 'forestcover']
 
 # Loop over all datasets for fitting and scoring the estimator:
 for dat in datasets:
@@ -47,7 +57,8 @@ for dat in datasets:
     print('====== %s ======' % dat)
     print('--- Fetching data...')
     if dat in ['http', 'smtp', 'SF', 'SA']:
-        dataset = fetch_kddcup99(subset=dat, shuffle=True, percent10=True)
+        dataset = fetch_kddcup99(subset=dat, shuffle=True,
+                                 percent10=True, random_state=random_state)
         X = dataset.data
         y = dataset.target
 
@@ -55,7 +66,7 @@ for dat in datasets:
         dataset = fetch_mldata('shuttle')
         X = dataset.data
         y = dataset.target
-        X, y = sh(X, y)
+        X, y = sh(X, y, random_state=random_state)
         # we remove data with label 4
         # normal data are then those of class 1
         s = (y != 4)
@@ -65,7 +76,7 @@ for dat in datasets:
         print('----- ')
 
     if dat == 'forestcover':
-        dataset = fetch_covtype(shuffle=True)
+        dataset = fetch_covtype(shuffle=True, random_state=random_state)
         X = dataset.data
         y = dataset.target
         # normal data are those with attribute 2
@@ -79,17 +90,17 @@ for dat in datasets:
     print('--- Vectorizing data...')
 
     if dat == 'SF':
-        lb = MultiLabelBinarizer()
-        x1 = lb.fit_transform(X[:, 1])
+        lb = LabelBinarizer()
+        x1 = lb.fit_transform(X[:, 1].astype(str))
         X = np.c_[X[:, :1], x1, X[:, 2:]]
         y = (y != b'normal.').astype(int)
         print_outlier_ratio(y)
 
     if dat == 'SA':
-        lb = MultiLabelBinarizer()
-        x1 = lb.fit_transform(X[:, 1])
-        x2 = lb.fit_transform(X[:, 2])
-        x3 = lb.fit_transform(X[:, 3])
+        lb = LabelBinarizer()
+        x1 = lb.fit_transform(X[:, 1].astype(str))
+        x2 = lb.fit_transform(X[:, 2].astype(str))
+        x3 = lb.fit_transform(X[:, 3].astype(str))
         X = np.c_[X[:, :1], x1, x2, x3, X[:, 4:]]
         y = (y != b'normal.').astype(int)
         print_outlier_ratio(y)
@@ -108,7 +119,7 @@ for dat in datasets:
     y_test = y[n_samples_train:]
 
     print('--- Fitting the IsolationForest estimator...')
-    model = IsolationForest(n_jobs=-1)
+    model = IsolationForest(n_jobs=-1, random_state=random_state)
     tstart = time()
     model.fit(X_train)
     fit_time = time() - tstart
