@@ -214,7 +214,7 @@ General Concepts
             :func:`fit` and similar methods consists of pairwise measures over
             samples rather than a feature representation for each sample.  It
             is usually ``True`` where an estimator has a ``metric`` or
-            ``affinity`` parameter with value 'precomputed'.
+            ``affinity`` or ``kernel`` parameter with value 'precomputed'.
 
     feature
     features
@@ -682,6 +682,8 @@ non-estimator parameters with similar semantics.
         TODO
         See also :term:`kernel`
 
+        XXX: hierarchical clustering uses ``affinity`` for a distance metric.
+
     ``class_weight``
         Used to specify sample weights when fitting classifiers as a function
         of the :term:`target` class.  Where the :term:`sample_weight`
@@ -854,6 +856,8 @@ non-estimator parameters with similar semantics.
         should enable some logging, but larger integers (e.g. above 10) may be
         needed for full verbosity.  Verbose logs are usually printed to
         Standard Output.
+        Estimators should not produce any output on Standard Output with the
+        default ``verbose`` setting.
 
     ``warm_start``
 
@@ -891,6 +895,10 @@ See concept :term:`attribute`.
     ``components_``
         TODO
 
+    ``embedding_``
+        TODO
+        See also :term:`labels_`
+
     ``n_iter_``
         TODO
 
@@ -899,6 +907,7 @@ See concept :term:`attribute`.
 
     ``labels_``
         TODO
+        See also :term:`embedding_`
 
 .. _glossary_sample_props:
 
