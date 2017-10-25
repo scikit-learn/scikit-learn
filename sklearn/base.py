@@ -250,7 +250,6 @@ class BaseEstimator(object):
             return self
         valid_params = self.get_params(deep=True)
 
-        changed = False
         nested_params = defaultdict(dict)  # grouped by prefix
         for key, value in params.items():
             key, delim, sub_key = key.partition('__')
@@ -263,12 +262,9 @@ class BaseEstimator(object):
             if delim:
                 nested_params[key][sub_key] = value
             else:
-                changed = True
                 setattr(self, key, value)
+                valid_params[key] = value
 
-        if changed and nested_params:
-            # still need deep because Pipeline steps are deep
-            valid_params = self.get_params(deep=True)
         for key, sub_params in nested_params.items():
             valid_params[key].set_params(**sub_params)
 
