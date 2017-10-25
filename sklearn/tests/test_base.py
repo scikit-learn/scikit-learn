@@ -246,6 +246,13 @@ def test_set_params_passes_all_parameters():
                        estimator__min_samples_leaf=2)
 
 
+def test_set_params_updates_valid_params():
+    # Check that set_params tries to set SVC().C, not
+    # DecisionTreeClassifier().C
+    pipe = GridSearchCV(DecisionTreeClassifier(), {})
+    pipe.set_params(estimator=SVC(), estimator__C=1.0)
+
+
 def test_score_sample_weight():
 
     rng = np.random.RandomState(0)
