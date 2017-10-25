@@ -565,7 +565,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             An array of neighbors indices for each sample.
         """
 
-        t_targets = time.time()
+        t_start = time.time()
         if self.verbose:
             print('[{}] Finding the target neighbors...'.format(
                 self.__class__.__name__))
@@ -580,13 +580,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             X, y, self.n_neighbors_, **neighbors_params)
 
         if self.verbose:
-            t_targets = time.time() - t_targets
             print('[{}] Found the target neighbors in {:5.2f}s.'.format(
-                self.__class__.__name__, t_targets))
+                self.__class__.__name__, time.time() - t_start))
 
         return target_neighbors
 
-    def _compute_grad_static(self, X, targets):
+    def _compute_grad_static(self, X, target_neighbors):
         """Compute the gradient contributed by the target neighbors.
 
         Parameters
@@ -594,13 +593,14 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         X : array, shape (n_samples, n_features)
             The training samples.
 
-        targets : array, shape (n_samples, n_neighbors)
+        target_neighbors : array, shape (n_samples, n_neighbors)
             The k nearest neighbors of each sample from the same class.
 
         Returns
         -------
-        grad_targets, shape (n_features, n_features)
-            An array with the sum of all outer products of samples-targets.
+        grad_target_neighbors, shape (n_features, n_features)
+            An array with the sum of all outer products of
+            (sample, target_neighbor) pairs.
         """
 
         t_grad_static = time.time()
@@ -608,19 +608,19 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             print('[{}] Computing static part of the gradient...'.format(
                 self.__class__.__name__))
 
-        n_samples, n_neighbors = targets.shape
+        n_samples, n_neighbors = target_neighbors.shape
         row = np.repeat(range(n_samples), n_neighbors)
-        col = targets.ravel()
-        targets_sparse = csr_matrix((np.ones(targets.size), (row, col)),
-                                    shape=(n_samples, n_samples))
-        grad_targets = _sum_weighted_outer_differences(X, targets_sparse)
+        col = target_neighbors.ravel()
+        tn_graph = csr_matrix((np.ones(target_neighbors.size), (row, col)),
+                              shape=(n_samples, n_samples))
+        grad_target_neighbors = _sum_weighted_outer_differences(X, tn_graph)
 
         if self.verbose:
             t_grad_static = time.time() - t_grad_static
             print('[{}] Computed static part of the gradient in {:5.2f}s.'
                   .format(self.__class__.__name__, t_grad_static))
 
-        return grad_targets
+        return grad_target_neighbors
 
     def _callback(self, transformation):
         """Called after each iteration of the optimizer.
@@ -635,8 +635,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         self.n_iter_ += 1
 
-    def _loss_grad_lbfgs(self, transformation, X, y, targets, grad_static,
-                         use_sparse):
+    def _loss_grad_lbfgs(self, transformation, X, y, target_neighbors,
+                         grad_static, use_sparse):
         """Compute the loss and the loss gradient w.r.t. ``transformation``.
 
         Parameters
@@ -650,7 +650,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         y : array, shape (n_samples,)
             The corresponding training labels.
 
-        targets : array, shape (n_samples, n_neighbors)
+        target_neighbors : array, shape (n_samples, n_neighbors)
             The target neighbors of each sample.
 
         grad_static : array, shape (n_features, n_features)
@@ -689,10 +689,11 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         X_embedded = self._transform_without_checks(X)
 
         # Compute squared distances to the target neighbors
-        n_neighbors = targets.shape[1]
+        n_neighbors = target_neighbors.shape[1]
         dist_tn = np.zeros((n_samples, n_neighbors))
         for k in range(n_neighbors):
-            dist_tn[:, k] = row_norms(X_embedded - X_embedded[targets[:, k]],
+            dist_tn[:, k] = row_norms(X_embedded -
+                                      X_embedded[target_neighbors[:, k]],
                                       squared=True)
 
         # Add the margin to all distances to target neighbors
@@ -704,7 +705,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Compute the push loss and its gradient
         loss, grad_new, n_active_triplets = \
-            _compute_push_loss(X, targets, dist_tn, impostors_graph)
+            _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph)
 
         # Compute the total gradient
         grad = np.dot(transformation, grad_static + grad_new)
@@ -823,8 +824,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                     imp_col.extend(ind_in[jj])
                     imp_dist.extend(dist_batch)
 
-            imp_row = np.asarray(imp_row, dtype=np.int)
-            imp_col = np.asarray(imp_col, dtype=np.int)
+            imp_row = np.asarray(imp_row, dtype=np.intp)
+            imp_col = np.asarray(imp_col, dtype=np.intp)
             imp_dist = np.asarray(imp_dist)
 
             # Make sure we do not exceed max_impostors
@@ -871,7 +872,7 @@ def _select_target_neighbors(X, y, n_neighbors, **nn_kwargs):
         The indices of the target neighbors of each sample.
     """
 
-    target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=np.int)
+    target_neighbors = np.zeros((X.shape[0], n_neighbors), dtype=np.intp)
 
     nn = NearestNeighbors(n_neighbors=n_neighbors, **nn_kwargs)
 
@@ -962,7 +963,7 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
         return imp_indices
 
 
-def _compute_push_loss(X, targets, dist_targets, impostors_graph):
+def _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph):
     """
 
     Parameters
@@ -970,10 +971,10 @@ def _compute_push_loss(X, targets, dist_targets, impostors_graph):
     X : array, shape (n_samples, n_features)
         The training input samples.
 
-    targets : array, shape (n_samples, n_neighbors)
+    target_neighbors : array, shape (n_samples, n_neighbors)
         Indices of target neighbors of each sample.
 
-    dist_targets : array, shape (n_samples, n_neighbors)
+    dist_tn : array, shape (n_samples, n_neighbors)
         Distances of samples to their target neighbors.
 
     impostors_graph : coo_matrix, shape (n_samples, n_samples)
@@ -983,7 +984,7 @@ def _compute_push_loss(X, targets, dist_targets, impostors_graph):
     Returns
     -------
     loss : float
-        The push loss caused by the given targets and impostors.
+        The push loss caused by the given target_neighbors and impostors.
 
     grad : array, shape (n_features, n_features)
         The gradient of the push loss.
@@ -993,7 +994,7 @@ def _compute_push_loss(X, targets, dist_targets, impostors_graph):
 
     """
 
-    n_samples, n_neighbors = dist_targets.shape
+    n_samples, n_neighbors = dist_tn.shape
     imp_row = impostors_graph.row
     imp_col = impostors_graph.col
     dist_impostors = impostors_graph.data
@@ -1004,18 +1005,18 @@ def _compute_push_loss(X, targets, dist_targets, impostors_graph):
     sample_range = range(n_samples)
     n_active_triplets = 0
     for k in range(n_neighbors - 1, -1, -1):
-        loss1 = np.maximum(dist_targets[imp_row, k] - dist_impostors, 0)
+        loss1 = np.maximum(dist_tn[imp_row, k] - dist_impostors, 0)
         ac, = np.where(loss1 > 0)
         n_active_triplets += len(ac)
         A1 = csr_matrix((2 * loss1[ac], (imp_row[ac], imp_col[ac])), shape)
 
-        loss2 = np.maximum(dist_targets[imp_col, k] - dist_impostors, 0)
+        loss2 = np.maximum(dist_tn[imp_col, k] - dist_impostors, 0)
         ac, = np.where(loss2 > 0)
         n_active_triplets += len(ac)
         A2 = csc_matrix((2 * loss2[ac], (imp_row[ac], imp_col[ac])), shape)
 
-        values = (A1.sum(1).ravel() + A2.sum(0)).getA1()
-        A3 = csr_matrix((values, (sample_range, targets[:, k])), shape)
+        val = (A1.sum(1).ravel() + A2.sum(0)).getA1()
+        A3 = csr_matrix((val, (sample_range, target_neighbors[:, k])), shape)
         A0 = A0 - A1 - A2 + A3
         loss += np.dot(loss1, loss1) + np.dot(loss2, loss2)
 
