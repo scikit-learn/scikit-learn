@@ -602,7 +602,16 @@ to construct the same classifier:
 
 In this case the transformation is applied to the inputs automatically whenever
 :meth:`sklearn.pipeline.Pipeline.fit` or :meth:`sklearn.pipeline.Pipeline.predict`
-is called.
+is called. For convenience, one can obtain such a :class:`sklearn.pipeline.Pipeline`
+instance by calling :func:`make_lmnn_classifier`:
+
+    >>> from sklearn.neighbors import make_lmnn_classifier
+    >>> lmnn_clf = make_lmnn_classifier(n_neighbors=3, random_state=42,
+    ... n_neighbors_predict=3)
+    >>> lmnn_clf.fit(X_train, y_train)
+    Pipeline(...)
+    >>> print(lmnn_clf.score(X_test, y_test))
+    0.971428571429
 
 .. |lmnn_classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_classification_001.png
    :target: ../auto_examples/neighbors/plot_lmnn_classification.html

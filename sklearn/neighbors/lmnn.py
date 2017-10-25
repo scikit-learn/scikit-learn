@@ -15,9 +15,11 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.sparse import csr_matrix, csc_matrix, coo_matrix, spdiags
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, ClassifierMixin
 from ..pipeline import Pipeline
 from ..neighbors import NearestNeighbors, KNeighborsClassifier
+from ..neighbors.base import NeighborsBase
+from ..neighbors.classification import _check_weights
 from ..decomposition import PCA
 from ..utils import gen_batches
 from ..utils.extmath import row_norms, safe_sparse_dot
@@ -863,8 +865,8 @@ def _select_target_neighbors(X, y, n_neighbors, **nn_kwargs):
         The number of target neighbors to select for each sample in X.
 
     **nn_kwargs : keyword arguments
-        Parameters passed to a :class:`neighbors.NearestNeighbors` instance
-        except from ``n_neighbors`` which will be set to ``n_neighbors``.
+        Parameters to be passed to a :class:`neighbors.NearestNeighbors`
+        instance except from ``n_neighbors``.
 
     Returns
     -------
@@ -1380,3 +1382,66 @@ def make_lmnn_classifier(
         n_jobs=n_jobs)
 
     return Pipeline([('lmnn', lmnn), ('knn', knn)])
+
+
+class LMNNClassifier(LargeMarginNearestNeighbor, NeighborsBase,
+                     ClassifierMixin):
+
+    def __init__(self, n_neighbors=3, n_features_out=None, init='pca',
+                 warm_start=False, max_impostors=500000,
+                 neighbors_params=None, impostor_store='auto', max_iter=50,
+                 tol=1e-5, callback=None, store_opt_result=False, verbose=0,
+                 random_state=None, n_jobs=1, n_neighbors_predict=None,
+                 weights='uniform', algorithm='auto', leaf_size=30, p=2,
+                 metric='minkowski', metric_params=None):
+
+        LargeMarginNearestNeighbor.__init__(
+            self,  n_neighbors=n_neighbors, n_features_out=n_features_out,
+            init=init, warm_start=warm_start, max_impostors=max_impostors,
+            neighbors_params=neighbors_params, impostor_store=impostor_store,
+            max_iter=max_iter, tol=tol, callback=callback,
+            store_opt_result=store_opt_result, verbose=verbose,
+            random_state=random_state, n_jobs=n_jobs)
+
+        self.n_neighbors_predict = n_neighbors_predict
+
+        self._init_params(
+            n_neighbors=n_neighbors, algorithm=algorithm,
+            leaf_size=leaf_size, metric=metric, p=p,
+            metric_params=metric_params, n_jobs=n_jobs)
+
+        self.weights = _check_weights(weights)
+
+    def fit(self, X, y):
+
+        # Fit LMNN
+        LargeMarginNearestNeighbor.fit(self, X, y)
+
+        # Now see what ``n_neighbors`` of KNN needs to be
+        if self.n_neighbors_predict is None:
+            # Set it to the same as ``n_neighbors_``
+            n_neighbors_predict = self.n_neighbors_
+        else:
+            n_neighbors_predict = self.n_neighbors_predict
+
+        self.knn_ = KNeighborsClassifier(
+            n_neighbors=n_neighbors_predict, weights=self.weights,
+            algorithm=self.algorithm, leaf_size=self.leaf_size, p=self.p,
+            metric=self.metric, metric_params=self.metric_params,
+            n_jobs=self.n_jobs)
+
+        self.knn_.fit(self.transform(X), y)
+
+        return self
+
+    def predict(self, X):
+
+        check_is_fitted(self, 'transformation_')
+
+        return self.knn_.predict(self.transform(X))
+
+    def predict_proba(self, X):
+
+        check_is_fitted(self, 'transformation_')
+
+        return self.knn_.predict_proba(self.transform(X))
