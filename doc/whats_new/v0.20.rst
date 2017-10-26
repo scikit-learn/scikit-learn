@@ -41,10 +41,12 @@ Classifiers and regressors
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
 
+
 - Added :class:`neighbors.LMNNClassifier`, which performs Large Margin Nearest
   Neighbor classification as described in Weinberger et al. (2006).
   :issue:`8602` by :user:`John Chiotellis <johny-c>`.
   
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy` metric and a corresponding
@@ -75,6 +77,11 @@ Classifiers and regressors
 - Add `var_smoothing` parameter in
   :class:`sklearn.naive_bayes.GaussianNB` to give a precise control over
   variances calculation. :issue:`9681` by :user:`Dmitry Mottl <Mottl>`.
+
+- A parameter ``check_inverse`` was added to :class:`FunctionTransformer`
+  to ensure that ``func`` and ``inverse_func`` are the inverse of each
+  other.
+  :issue:`9399` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Model evaluation and meta-estimators
 
@@ -132,6 +139,10 @@ Decomposition, manifold learning and clustering
 - Fixed a bug in :class:`decomposition.PCA` where users will get unexpected error
   with large datasets when ``n_components='mle'`` on Python 3 versions.
   :issue:`9886` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- Fixed a bug when setting parameters on meta-estimator, involving both a
+  wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
+  <marcus-voss>` and `Joel Nothman`_.
 
 Metrics
 
