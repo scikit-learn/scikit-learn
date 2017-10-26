@@ -24,7 +24,7 @@ from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
-
+from sklearn.model_selection import train_test_split
 from sklearn.linear_model import sgd_fast
 
 
@@ -1239,6 +1239,32 @@ def test_tol_and_max_iter_default_values():
     est._validate_params()
     assert_equal(est._tol, 1e-2)
     assert_equal(est._max_iter, 42)
+
+
+def test_counter_not_reset_with_warm_start():
+    # Test that self.t_ is not reset when calling fit with warm_start=True
+    for klass in [SGDClassifier, SGDRegressor]:
+        X, y = iris.data, iris.target
+        n_iter = 10
+
+        if klass == SGDClassifier:
+            partial_fit_params = dict(classes=np.unique(y))
+        else:
+            partial_fit_params = dict()
+
+        common_params = dict(eta0=0.01,
+                             random_state=1, tol=None, shuffle=False)
+        clf_1 = klass(max_iter=1, warm_start=True, **common_params)
+        clf_2 = klass(max_iter=1, **common_params)
+        clf_3 = klass(max_iter=n_iter, **common_params)
+
+        for i in range(n_iter):
+            clf_1.fit(X, y)
+            clf_2.partial_fit(X, y, **partial_fit_params)
+        clf_3.fit(X, y)
+
+        assert_equal(clf_1.t_, clf_2.t_)
+        assert_equal(clf_1.t_, clf_3.t_)
 
 
 def _test_gradient_common(loss_function, cases):
