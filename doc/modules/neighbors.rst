@@ -621,7 +621,7 @@ instance by calling :func:`make_lmnn_pipeline`:
     >>> from sklearn.neighbors import make_lmnn_pipeline
     >>> lmnn_pipe = make_lmnn_pipeline(n_neighbors=3, random_state=42,
     ... n_neighbors_predict=3)
-    >>> lmnn_pipe.fit(X_train, y_train)
+    >>> lmnn_pipe.fit(X_train, y_train) # doctest: +ELLIPSIS
     Pipeline(...)
     >>> print(lmnn_pipe.score(X_test, y_test))
     0.971428571429
