@@ -8,12 +8,16 @@ anomaly/novelty detection algorithms on 2D datasets. Datasets contain
 one or two modes (regions of high density) to illustrate the ability
 of algorithms to cope with multimodal data.
 
+For each dataset, 15% of samples are generated as random uniform noise.
+We display decision boundaries with a threshold that would mark 15% of
+training samples as outliers.
+
+Local Outlier Factor (LOF) does not show a decision boundary in black
+as it has no predict method to be applied on new data.
+
 While these examples give some intuition about the
 algorithms, this intuition might not apply to very high
 dimensional data.
-
-Local Outlier Factor (LOF) does not show a decision function in black
-as it has no predict method to be applied on new data.
 
 Finally, note that parameters of the models have been here handpicked
 but that in practice they need to be adjusted. In the absence of labelled
@@ -40,7 +44,6 @@ matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
 # Example settings
 n_samples = 300
 outliers_fraction = 0.15
-clusters_separation = (0, 1, 2)
 n_outliers = int(outliers_fraction * n_samples)
 n_inliers = n_samples - n_outliers
 
