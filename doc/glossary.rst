@@ -231,7 +231,7 @@ General Concepts
         Features in scikit-learn are generally expected to be numeric and
         finite, even when they have semantically distinct domains and
         distributions (categorical, ordinal, count-valued, real-valued,
-        interval). See also :term`categorical feature` and :term:`missing
+        interval). See also :term:`categorical feature` and :term:`missing
         values`.
 
         ``n_features`` indicates the number of features in a dataset.
