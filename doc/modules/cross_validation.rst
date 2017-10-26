@@ -230,7 +230,7 @@ Or as a dict mapping scorer name to a predefined or custom scoring function::
 Here is an example of ``cross_validate`` using a single metric::
 
     >>> scores = cross_validate(clf, iris.data, iris.target,
-    ...                         scoring='precision_macro')
+    ...                         scoring='precision_macro',
     ...                         return_estimator=True)
     >>> sorted(scores.keys())
     ['fit_time', 'score_time', 'estimator', test_score', 'train_score']
