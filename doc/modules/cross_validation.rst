@@ -182,7 +182,8 @@ The ``cross_validate`` function differs from ``cross_val_score`` in two ways -
 
 - It allows specifying multiple metrics for evaluation.
 
-- It returns a dict containing training scores, fit-times, score-times and fitted estimators in
+- It returns a dict containing fit-times, score-times
+  (and optionally training scores as well as fitted estimators) in
   addition to the test score.
 
 For single metric evaluation, where the scoring parameter is a string,

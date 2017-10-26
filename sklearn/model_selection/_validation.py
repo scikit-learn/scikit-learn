@@ -155,6 +155,8 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
                 included even if ``return_train_score`` is set to ``True``
             ``estimator``
                 The estimator objects for each cv split.
+                This is available only if ``return_estimator`` parameter
+                is set to ``True``.
 
     Examples
     --------
