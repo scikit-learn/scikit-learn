@@ -21,8 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors import LargeMarginNearestNeighbor, KNeighborsClassifier
-from sklearn.pipeline import Pipeline
+from sklearn.neighbors import KNeighborsClassifier, LMNNClassifier
 
 
 print(__doc__)
@@ -48,13 +47,8 @@ cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
 
 names = ['K-Nearest Neighbors', 'Large Margin Nearest Neighbor']
 
-# Construct a Large Margin Nearest Neighbor classifier as a pipeline
-lmnn_clf = Pipeline([('transform',
-                      LargeMarginNearestNeighbor(n_neighbors=n_neighbors,
-                                                 random_state=42)),
-                     ('clf', KNeighborsClassifier(n_neighbors=n_neighbors))])
-
-classifiers = [KNeighborsClassifier(n_neighbors=n_neighbors), lmnn_clf]
+classifiers = [KNeighborsClassifier(n_neighbors=n_neighbors),
+               LMNNClassifier(n_neighbors=n_neighbors, random_state=42)]
 
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1

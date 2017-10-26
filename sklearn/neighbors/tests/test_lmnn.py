@@ -10,9 +10,9 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn import datasets
-from sklearn.neighbors import LargeMarginNearestNeighbor
+from sklearn.neighbors import LargeMarginNearestNeighbor, LMNNClassifier
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors.lmnn import make_lmnn_classifier
+from sklearn.neighbors.lmnn import make_lmnn_pipeline
 from sklearn.neighbors.lmnn import _paired_distances_blockwise
 from sklearn.neighbors.lmnn import _euclidean_distances_without_checks
 from sklearn.metrics.pairwise import paired_euclidean_distances
@@ -461,16 +461,43 @@ def test_classifier_equivalency():
     lmnn = LargeMarginNearestNeighbor(**lmnn_params)
     lmnn.fit(X_train, y_train)
 
-    lmnn_clf = make_lmnn_classifier(**lmnn_params)
+    lmnn_clf = LMNNClassifier(**lmnn_params)
     lmnn_clf.fit(X_train, y_train)
 
-    clf_transformation = lmnn_clf.get_params()['lmnn'].transformation_
-    assert_array_almost_equal(lmnn.transformation_, clf_transformation)
+    assert_array_almost_equal(lmnn.transformation_, lmnn_clf.transformation_)
 
     knn = KNeighborsClassifier(n_neighbors=n_neighbors)
     knn.fit(lmnn.transform(X_train), y_train)
-    score1 = knn.score(lmnn.transform(X_test), y_test)
+    score = knn.score(lmnn.transform(X_test), y_test)
 
-    score2 = lmnn_clf.score(X_test, y_test)
+    score_clf = lmnn_clf.score(X_test, y_test)
 
-    assert_equal(score1, score2)
+    assert_equal(score, score_clf)
+
+
+def test_pipeline_equivalency():
+    X = iris_data
+    y = iris_target
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+
+    # Use init='identity' to ensure reproducibility
+    lmnn_params = dict(n_neighbors=3, max_iter=10, init='identity',
+                       random_state=42)
+    n_neighbors = 3
+
+    lmnn = LargeMarginNearestNeighbor(**lmnn_params)
+    lmnn.fit(X_train, y_train)
+
+    lmnn_pipe = make_lmnn_pipeline(**lmnn_params)
+    lmnn_pipe.fit(X_train, y_train)
+
+    pipe_transformation = lmnn_pipe.steps[0][1].transformation_
+    assert_array_almost_equal(lmnn.transformation_, pipe_transformation)
+
+    knn = KNeighborsClassifier(n_neighbors=n_neighbors)
+    knn.fit(lmnn.transform(X_train), y_train)
+    score = knn.score(lmnn.transform(X_test), y_test)
+
+    score_pipe = lmnn_pipe.score(X_test, y_test)
+
+    assert_equal(score, score_pipe)

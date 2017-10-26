@@ -15,11 +15,9 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.sparse import csr_matrix, csc_matrix, coo_matrix, spdiags
 
-from ..base import BaseEstimator, TransformerMixin, ClassifierMixin
+from ..base import BaseEstimator, TransformerMixin
 from ..pipeline import Pipeline
 from ..neighbors import NearestNeighbors, KNeighborsClassifier
-from ..neighbors.base import NeighborsBase
-from ..neighbors.classification import _check_weights
 from ..decomposition import PCA
 from ..utils import gen_batches
 from ..utils.extmath import row_norms, safe_sparse_dot
@@ -30,7 +28,7 @@ from ..externals.six import integer_types, string_types
 
 
 class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
-    """Distance Metric Learning for Large Margin Classification.
+    """Distance metric learning for large margin classification.
 
     Parameters
     ----------
@@ -1206,14 +1204,14 @@ def _check_scalar(x, name, target_type, min_val=None, max_val=None):
 # Convenience function to construct the trivial LMNN - KNN pipeline #
 #####################################################################
 
-def make_lmnn_classifier(
+def make_lmnn_pipeline(
         n_neighbors=3, n_features_out=None, init='pca', warm_start=False,
         max_impostors=500000, neighbors_params=None, impostor_store='auto',
         max_iter=50, tol=1e-5, callback=None, store_opt_result=False,
         verbose=0, random_state=None, n_jobs=1, n_neighbors_predict=None,
         weights='uniform', algorithm='auto', leaf_size=30, p=2,
-        metric='minkowski', metric_params=None):
-    """
+        metric='minkowski', metric_params=None, n_jobs_predict=None):
+    """Constructs the trivial LMNN - KNN pipeline.
 
     Parameters
     ----------
@@ -1309,7 +1307,7 @@ def make_lmnn_classifier(
 
     n_neighbors_predict : int, optional (default=None)
         The number of neighbors to use during prediction. If None (default)
-        the value of ``n_neighbors`` used to train the model will be used.
+        the value of ``n_neighbors`` used to train the model is used.
 
     weights : str or callable, optional (default = 'uniform')
         weight function used in prediction.  Possible values:
@@ -1355,6 +1353,10 @@ def make_lmnn_classifier(
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
 
+    n_jobs_predict : int, optional (default=None)
+        The number of parallel jobs to run for neighbors search during
+        prediction. If None (default), then the value of ``n_jobs`` is used.
+
 
     Returns
     -------
@@ -1376,22 +1378,205 @@ def make_lmnn_classifier(
     if n_neighbors_predict is None:
         n_neighbors_predict = n_neighbors
 
+    if n_jobs_predict is None:
+        n_jobs_predict = n_jobs
+
     knn = KNeighborsClassifier(
         n_neighbors=n_neighbors_predict, weights=weights, algorithm=algorithm,
         leaf_size=leaf_size, p=p, metric=metric, metric_params=metric_params,
-        n_jobs=n_jobs)
+        n_jobs=n_jobs_predict)
 
     return Pipeline([('lmnn', lmnn), ('knn', knn)])
 
 
-class LMNNClassifier(LargeMarginNearestNeighbor, NeighborsBase,
-                     ClassifierMixin):
+class LMNNClassifier(LargeMarginNearestNeighbor, KNeighborsClassifier):
+    """Nearest Neighbors classification with a learned distance metric.
+
+    Parameters
+    ----------
+    n_neighbors : int, optional (default=3)
+        Number of neighbors to use as target neighbors for each sample and
+        to predict.
+
+    n_features_out : int, optional (default=None)
+        Preferred dimensionality of the embedding.
+        If None it is inferred from ``init``.
+
+    init : string or numpy array, optional (default='pca')
+        Initialization of the linear transformation. Possible options are
+        'pca', 'identity' and a numpy array of shape (n_features_a,
+        n_features_b).
+
+        pca:
+            ``n_features_out`` many principal components of the inputs passed
+            to :meth:`fit` will be used to initialize the transformation.
+
+        identity:
+            If ``n_features_out`` is strictly smaller than the
+            dimensionality of the inputs passed to :meth:`fit`, the identity
+            matrix will be truncated to the first ``n_features_out`` rows.
+
+        numpy array:
+            n_features_b must match the dimensionality of the inputs passed to
+            :meth:`fit` and n_features_a must be less than or equal to that.
+            If ``n_features_out`` is not None, n_features_a must match it.
+
+    warm_start : bool, optional, (default=False)
+        If True and :meth:`fit` has been called before, the solution of the
+        previous call to :meth:`fit` is used as the initial linear
+        transformation (``n_features_out`` and ``init`` will be ignored).
+
+    max_impostors : int, optional (default=500000)
+        Maximum number of impostors to consider per iteration. In the worst
+        case this will allow ``max_impostors * n_neighbors`` constraints to be
+        active.
+
+    neighbors_params : dict, optional (default=None)
+        Parameters to pass to a :class:`neighbors.NearestNeighbors` instance -
+        apart from ``n_neighbors`` - that will be used to select the target
+        neighbors.
+
+    impostor_store : str ['auto'|'list'|'sparse'], optional
+        list :
+            Three lists will be used to store the indices of reference
+            samples, the indices of their impostors and the distances between
+            the (sample, impostor) pairs.
+
+        sparse :
+            A sparse indicator matrix will be used to store the (sample,
+            impostor) pairs. The distances to the impostors will be computed
+            twice (once to determine the impostors and once to be stored),
+            but this option tends to be faster than 'list' as the size of
+            the data set increases.
+
+        auto :
+            Will attempt to decide the most appropriate choice of data
+            structure based on the values passed to :meth:`fit`.
+
+    max_iter : int, optional (default=50)
+        Maximum number of iterations in the optimization.
+
+    tol : float, optional (default=1e-5)
+        Convergence tolerance for the optimization.
+
+    callback : callable, optional (default=None)
+        If not None, this function is called after every iteration of the
+        optimizer, taking as arguments the current solution (transformation)
+        and the number of iterations. This might be useful in case one wants
+        to examine or store the transformation found after each iteration.
+
+    store_opt_result : bool, optional (default=False)
+        If True, the :class:`scipy.optimize.OptimizeResult` object returned by
+        :meth:`minimize` of `scipy.optimize` will be stored as attribute
+        ``opt_result_``.
+
+    verbose : int, optional (default=0)
+        If 0, no progress messages will be printed.
+        If 1, progress messages will be printed to stdout.
+        If > 1, progress messages will be printed and the ``iprint``
+        parameter of :meth:`_minimize_lbfgsb` of `scipy.optimize` will be set
+        to ``verbose - 2``.
+
+    random_state : int or numpy.RandomState or None, optional (default=None)
+        A pseudo random number generator object or a seed for it if int.
+
+    n_jobs : int, optional (default=1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        Doesn't affect :meth:`fit` method.
+
+    weights : str or callable, optional (default = 'uniform')
+        weight function used in prediction.  Possible values:
+
+        - 'uniform' : uniform weights.  All points in each neighborhood
+          are weighted equally.
+        - 'distance' : weight points by the inverse of their distance.
+          in this case, closer neighbors of a query point will have a
+          greater influence than neighbors which are further away.
+        - [callable] : a user-defined function which accepts an
+          array of distances, and returns an array of the same shape
+          containing the weights.
+
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+        Algorithm used to compute the nearest neighbors:
+
+        - 'ball_tree' will use :class:`BallTree`
+        - 'kd_tree' will use :class:`KDTree`
+        - 'brute' will use a brute-force search.
+        - 'auto' will attempt to decide the most appropriate algorithm
+          based on the values passed to :meth:`fit` method.
+
+        Note: fitting on sparse input will override the setting of
+        this parameter, using brute force.
+
+    leaf_size : int, optional (default = 30)
+        Leaf size passed to BallTree or KDTree.  This can affect the
+        speed of the construction and query, as well as the memory
+        required to store the tree.  The optimal value depends on the
+        nature of the problem.
+
+    p : integer, optional (default = 2)
+        Power parameter for the Minkowski metric. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    metric : string or callable, default 'minkowski'
+        the distance metric to use for the tree. The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. See the documentation of the DistanceMetric class for a
+        list of available metrics.
+
+    metric_params : dict, optional (default = None)
+        Additional keyword arguments for the metric function.
+
+    Examples
+    --------
+    >>> from sklearn.neighbors import LMNNClassifier
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ... stratify=y, test_size=0.7, random_state=42)
+    >>> lmnn_clf = LMNNClassifier(n_neighbors=3, random_state=42)
+    >>> lmnn_clf.fit(X_train, y_train) # doctest: +ELLIPSIS
+    LMNNClassifier(...)
+    >>> print(lmnn_clf.score(X_test, y_test))
+    0.971428571429
+
+    Notes
+    -----
+    If you need to predict with a different number of neighbors than the
+    one used to fit the model, you need to construct a Pipeline. For
+    convenience, you can use the :func:`make_lmnn_pipeline` and pass both
+    parameters ``n_neighbors`` and ``n_neighbors_predict``.
+
+
+    See Also
+    --------
+    LargeMarginNearestNeighbor
+    KNeighborsClassifier
+    make_lmnn_pipeline
+
+
+    References
+    ----------
+    .. [1] Weinberger, Kilian Q., and Lawrence K. Saul.
+           "Distance Metric Learning for Large Margin Nearest Neighbor
+           Classification."
+           Journal of Machine Learning Research, Vol. 10, Feb. 2009,
+           pp. 207-244.
+           http://jmlr.csail.mit.edu/papers/volume10/weinberger09a/weinberger09a.pdf
+
+    .. [2] Wikipedia entry on Large Margin Nearest Neighbor
+           https://en.wikipedia.org/wiki/Large_margin_nearest_neighbor
+
+    """
 
     def __init__(self, n_neighbors=3, n_features_out=None, init='pca',
                  warm_start=False, max_impostors=500000,
                  neighbors_params=None, impostor_store='auto', max_iter=50,
                  tol=1e-5, callback=None, store_opt_result=False, verbose=0,
-                 random_state=None, n_jobs=1, n_neighbors_predict=None,
+                 random_state=None, n_jobs=1,
                  weights='uniform', algorithm='auto', leaf_size=30, p=2,
                  metric='minkowski', metric_params=None):
 
@@ -1403,45 +1588,124 @@ class LMNNClassifier(LargeMarginNearestNeighbor, NeighborsBase,
             store_opt_result=store_opt_result, verbose=verbose,
             random_state=random_state, n_jobs=n_jobs)
 
-        self.n_neighbors_predict = n_neighbors_predict
-
-        self._init_params(
-            n_neighbors=n_neighbors, algorithm=algorithm,
-            leaf_size=leaf_size, metric=metric, p=p,
+        KNeighborsClassifier.__init__(
+            self, n_neighbors=n_neighbors, weights=weights,
+            algorithm=algorithm, leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params, n_jobs=n_jobs)
 
-        self.weights = _check_weights(weights)
-
     def fit(self, X, y):
+        """Fit the model according to the given training data.
 
-        # Fit LMNN
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The training samples.
+
+        y : array-like, shape (n_samples,)
+            The corresponding training labels.
+
+        Returns
+        -------
+        self : object
+            returns a trained LMNNClassifier model.
+        """
+
+        # Fit LargeMarginNearestNeighbor (it also validates the parameters)
         LargeMarginNearestNeighbor.fit(self, X, y)
 
-        # Now see what ``n_neighbors`` of KNN needs to be
-        if self.n_neighbors_predict is None:
-            # Set it to the same as ``n_neighbors_``
-            n_neighbors_predict = self.n_neighbors_
-        else:
-            n_neighbors_predict = self.n_neighbors_predict
-
-        self.knn_ = KNeighborsClassifier(
-            n_neighbors=n_neighbors_predict, weights=self.weights,
-            algorithm=self.algorithm, leaf_size=self.leaf_size, p=self.p,
-            metric=self.metric, metric_params=self.metric_params,
-            n_jobs=self.n_jobs)
-
-        self.knn_.fit(self.transform(X), y)
+        # Fit KNeighborsClassifier
+        KNeighborsClassifier.fit(self, self.transform(X), y)
 
         return self
 
     def predict(self, X):
+        """Predict the class labels for the provided data
 
-        check_is_fitted(self, 'transformation_')
+        Parameters
+        ----------
+        X : array-like, shape (n_query, n_features)
+            Test samples.
 
-        return self.knn_.predict(self.transform(X))
+        Returns
+        -------
+        y : array of shape (n_samples,)
+            Class labels for each data sample.
+        """
+        return KNeighborsClassifier.predict(self, self.transform(X))
 
     def predict_proba(self, X):
+        """Return probability estimates for the test data X.
 
-        check_is_fitted(self, 'transformation_')
+        Parameters
+        ----------
+        X : array-like, shape (n_query, n_features)
+            Test samples.
 
-        return self.knn_.predict_proba(self.transform(X))
+        Returns
+        -------
+        p : array, shape (n_samples, n_classes)
+            The class probabilities of the input samples. Classes are ordered
+            by lexicographic order.
+        """
+        return KNeighborsClassifier.predict_proba(self, self.transform(X))
+
+    def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
+        """Finds the K-neighbors of a point in the LMNN embedding.
+
+        Returns indices of and distances to the neighbors of each point.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_query, n_features)
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
+
+        n_neighbors : int
+            Number of neighbors to get (default is the value
+            passed to the constructor).
+
+        return_distance : boolean, optional. Defaults to True.
+            If False, distances will not be returned
+
+        Returns
+        -------
+        dist : array
+            Array representing the lengths to points, only present if
+            return_distance=True
+
+        ind : array
+            Indices of the nearest points in the population matrix.
+
+        """
+        return KNeighborsClassifier.kneighbors(self, self.transform(X),
+                                               n_neighbors, return_distance)
+
+    def kneighbors_graph(self, X=None, n_neighbors=None, mode='connectivity'):
+        """Computes the (weighted) graph of k-Neighbors for points in X
+
+        Parameters
+        ----------
+        X : array-like, shape (n_query, n_features)
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
+
+        n_neighbors : int
+            Number of neighbors for each sample.
+            (default is value passed to the constructor).
+
+        mode : {'connectivity', 'distance'}, optional
+            Type of returned matrix: 'connectivity' will return the
+            connectivity matrix with ones and zeros, in 'distance' the
+            edges are Euclidean distance between points.
+
+        Returns
+        -------
+        A : sparse matrix in CSR format, shape = [n_samples, n_samples_fit]
+            n_samples_fit is the number of samples in the fitted data
+            A[i, j] is assigned the weight of edge that connects i to j.
+
+        """
+        return KNeighborsClassifier.kneighbors_graph(
+            self, self.transform(X), n_neighbors, mode)

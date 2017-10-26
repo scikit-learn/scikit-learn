@@ -555,8 +555,8 @@ regularization.
 Classification
 --------------
 
-Combined with a nearest neighbors classifier (:class:`KNeighborsClassifier`)
-, this method is attractive for classification because it can naturally
+Combined with a nearest neighbors classifier (:class:`KNeighborsClassifier`),
+this method is attractive for classification because it can naturally
 handle multi-class problems without any increase in the model size, and only
 a single parameter (``n_neighbors``) has to be selected by the user before
 training.
@@ -567,19 +567,31 @@ related methods such as Linear Discriminant Analysis, LMNN does not make any
 assumptions about the class distributions. The nearest neighbor classification
 can naturally produce highly irregular decision boundaries.
 
-To use this model for classification, one can simply fit a nearest neighbors
-classifier (:class:`KNeighborsClassifier`) on the data after transforming
-them with the linear transformation :math:`L` (attribute :attr:`transformation_`)
-found by LMNN. This is implemented by :func:`LargeMarginNearestNeighbor.transform`.
-Here is an example on how to use the two classes:
+There are multiple ways to use this model for classification. The most
+straightforward way is to create a :class:`LMNNClassifier` instance:
 
-    >>> from sklearn.neighbors import LargeMarginNearestNeighbor
-    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> from sklearn.neighbors import LMNNClassifier
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = load_iris(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ... stratify=y, test_size=0.7, random_state=42)
+    >>> lmnn_clf = LMNNClassifier(n_neighbors=3, random_state=42)
+    >>> lmnn_clf.fit(X_train, y_train) # doctest: +ELLIPSIS
+    LMNNClassifier(...)
+    >>> print(lmnn_clf.score(X_test, y_test))
+    0.971428571429
+
+If one needs more control over the parameters in the training and the testing
+phase, one can instead fit a nearest neighbors classifier
+(:class:`KNeighborsClassifier`) on the data after transforming them with the
+linear transformation :math:`L` (attribute :attr:`transformation_`) found
+by a :class:`LargeMarginNearestNeighbor` instance. This is implemented by
+:func:`LargeMarginNearestNeighbor.transform`. Here is an example on how to use
+the two classes:
+
+    >>> from sklearn.neighbors import LargeMarginNearestNeighbor
+    >>> from sklearn.neighbors import KNeighborsClassifier
     >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
     >>> lmnn.fit(X_train, y_train) # doctest: +ELLIPSIS
     LargeMarginNearestNeighbor(...)
@@ -589,28 +601,29 @@ Here is an example on how to use the two classes:
     >>> print(knn.score(lmnn.transform(X_test), y_test))
     0.971428571429
 
-Notice that one needs to apply the same transformation to the test data
-before predicting. Alternatively, one can use a :class:`sklearn.pipeline.Pipeline`
-to construct the same classifier:
+Notice that one needs to apply the learned transformation to the training
+data and the test data before fitting and predicting with the
+:class:`KNeighborsClassifier` instance. Alternatively, one can use a
+:class:`sklearn.pipeline.Pipeline` to construct the same classifier:
 
     >>> from sklearn.pipeline import Pipeline
-    >>> lmnn_clf = Pipeline([('transform', lmnn), ('clf', knn)])
-    >>> lmnn_clf.fit(X_train, y_train) # doctest: +ELLIPSIS
+    >>> lmnn_pipe = Pipeline([('transform', lmnn), ('clf', knn)])
+    >>> lmnn_pipe.fit(X_train, y_train) # doctest: +ELLIPSIS
     Pipeline(...)
-    >>> print(lmnn_clf.score(X_test, y_test))
+    >>> print(lmnn_pipe.score(X_test, y_test))
     0.971428571429
 
 In this case the transformation is applied to the inputs automatically whenever
 :meth:`sklearn.pipeline.Pipeline.fit` or :meth:`sklearn.pipeline.Pipeline.predict`
 is called. For convenience, one can obtain such a :class:`sklearn.pipeline.Pipeline`
-instance by calling :func:`make_lmnn_classifier`:
+instance by calling :func:`make_lmnn_pipeline`:
 
-    >>> from sklearn.neighbors import make_lmnn_classifier
-    >>> lmnn_clf = make_lmnn_classifier(n_neighbors=3, random_state=42,
+    >>> from sklearn.neighbors import make_lmnn_pipeline
+    >>> lmnn_pipe = make_lmnn_pipeline(n_neighbors=3, random_state=42,
     ... n_neighbors_predict=3)
-    >>> lmnn_clf.fit(X_train, y_train)
+    >>> lmnn_pipe.fit(X_train, y_train)
     Pipeline(...)
-    >>> print(lmnn_clf.score(X_test, y_test))
+    >>> print(lmnn_pipe.score(X_test, y_test))
     0.971428571429
 
 .. |lmnn_classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_lmnn_classification_001.png

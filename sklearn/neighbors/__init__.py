@@ -10,7 +10,7 @@ from .graph import kneighbors_graph, radius_neighbors_graph
 from .unsupervised import NearestNeighbors
 from .classification import KNeighborsClassifier, RadiusNeighborsClassifier
 from .lmnn import LargeMarginNearestNeighbor, LMNNClassifier
-from .lmnn import make_lmnn_classifier
+from .lmnn import make_lmnn_pipeline
 from .regression import KNeighborsRegressor, RadiusNeighborsRegressor
 from .nearest_centroid import NearestCentroid
 from .kde import KernelDensity
@@ -22,6 +22,8 @@ __all__ = ['BallTree',
            'KDTree',
            'KNeighborsClassifier',
            'LargeMarginNearestNeighbor',
+           'LMNNClassifier',
+           'make_lmnn_pipeline',
            'KNeighborsRegressor',
            'NearestCentroid',
            'NearestNeighbors',
@@ -29,8 +31,6 @@ __all__ = ['BallTree',
            'RadiusNeighborsRegressor',
            'kneighbors_graph',
            'radius_neighbors_graph',
-           'make_lmnn_classifier',
-           'LMNNClassifier',
            'KernelDensity',
            'LSHForest',
            'LocalOutlierFactor']

@@ -1114,6 +1114,7 @@ Model validation
    neighbors.NearestCentroid
    neighbors.NearestNeighbors
    neighbors.LargeMarginNearestNeighbor
+   neighbors.LMNNClassifier
 
 .. autosummary::
    :toctree: generated/
@@ -1121,6 +1122,7 @@ Model validation
 
    neighbors.kneighbors_graph
    neighbors.radius_neighbors_graph
+   neighbors.make_lmnn_pipeline
 
 .. _neural_network_ref:
 
