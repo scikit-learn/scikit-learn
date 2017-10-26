@@ -33,15 +33,15 @@ new observations can then be sorted as inliers or outliers with a
 
 Inliers are labeled 1, while outliers are labeled -1.
 
-Overview of novelty and outlier detection methods
-=================================================
+Overview of outlier detection methods
+=====================================
 
 .. figure:: ../auto_examples/images/sphx_glr_plot_anomaly_comparison_001.png
    :target: ../auto_examples/plot_anomaly_comparison.html
    :align: center
    :scale: 50
 
-   A comparison of the novelty and outlier detection algorithms in scikit-learn
+   A comparison of the outlier detection algorithms in scikit-learn
 
 
 Novelty Detection

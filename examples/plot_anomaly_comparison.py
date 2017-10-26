@@ -1,10 +1,10 @@
 """
-========================================================================
-Comparing different anomaly/novelty detection algorithms on toy datasets
-========================================================================
+============================================================================
+Comparing anomaly detection algorithms for outlier detection on toy datasets
+============================================================================
 
 This example shows characteristics of different
-anomaly/novelty detection algorithms on 2D datasets. Datasets contain
+anomaly detection algorithms on 2D datasets. Datasets contain
 one or two modes (regions of high density) to illustrate the ability
 of algorithms to cope with multimodal data.
 
@@ -93,24 +93,23 @@ for i_dataset, X in enumerate(datasets):
 
         # fit the data and tag outliers
         if name == "Local Outlier Factor":
-            y_pred = algorithm.fit_predict(X)
             anomaly_scores = algorithm.negative_outlier_factor_
         else:
-            y_pred = algorithm.fit(X).predict(X)
-            anomaly_scores = algorithm.decision_function(X)
+            anomaly_scores = algorithm.decision_function(X).ravel()
 
         threshold = stats.scoreatpercentile(anomaly_scores,
                                             100 * outliers_fraction)
+        y_pred = (anomaly_scores >= threshold).astype(int)
 
         # plot the levels lines and the points
         if name != "Local Outlier Factor":  # LOF does not implement predict
-            Z = algorithm.predict(np.c_[xx.ravel(), yy.ravel()])
+            Z = algorithm.decision_function(np.c_[xx.ravel(), yy.ravel()])
             Z = Z.reshape(xx.shape)
             plt.contour(xx, yy, Z, levels=[threshold],
                         linewidths=2, colors='black')
 
         colors = np.array(['#377eb8', '#ff7f00'])
-        plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[(y_pred + 1) // 2])
+        plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
 
         plt.xlim(-7, 7)
         plt.ylim(-7, 7)
