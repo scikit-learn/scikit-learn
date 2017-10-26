@@ -1059,7 +1059,7 @@ def check_clustering(name, clusterer_orig):
                                                 labels_sorted[-1] + 1))
 
     # Labels are expected to start at 0 (no noise) or -1 (if noise)
-    assert_true((labels_sorted[0] == -1) or (labels_sorted[0] == 0))
+    assert_true(labels_sorted[0] in [0, 1])
     # Labels should be less than n_clusters - 1
     if hasattr(clusterer, 'n_clusters'):
         n_clusters = getattr(clusterer, 'n_clusters')
