@@ -25,6 +25,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
@@ -142,13 +143,21 @@ def test_classifier_parameter_checks():
 
 def test_regressor_parameter_checks():
     # Check input parameter validation for GradientBoostingRegressor
-    assert_raises(ValueError,
-                  GradientBoostingRegressor(loss='huber', alpha=1.2).fit, X, y)
-    assert_raises(ValueError,
-                  GradientBoostingRegressor(max_features='invalid').fit, X, y)
-    assert_raises(ValueError,
-                  GradientBoostingRegressor(n_iter_no_change='invalid').fit, X,
-                  y)
+    assert_raise_message(ValueError, "alpha must be in (0.0, 1.0) but was 1.2",
+                         GradientBoostingRegressor(loss='huber', alpha=1.2)
+                         .fit, X, y)
+    assert_raise_message(ValueError, "alpha must be in (0.0, 1.0) but was 1.2",
+                         GradientBoostingRegressor(loss='quantile', alpha=1.2)
+                         .fit, X, y)
+    assert_raise_message(ValueError, "Invalid value for max_features: "
+                         "'invalid'. Allowed string values are 'auto', 'sqrt'"
+                         " or 'log2'.",
+                         GradientBoostingRegressor(max_features='invalid').fit,
+                         X, y)
+    assert_raise_message(ValueError, "n_iter_no_change should either be None"
+                         " or an integer. 'invalid' was passed",
+                         GradientBoostingRegressor(n_iter_no_change='invalid')
+                         .fit, X, y)
 
 
 def test_loss_function():
