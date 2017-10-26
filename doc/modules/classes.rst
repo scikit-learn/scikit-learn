@@ -302,6 +302,7 @@ Samples generator
    decomposition.MiniBatchSparsePCA
    decomposition.NMF
    decomposition.PCA
+   decomposition.SFA
    decomposition.SparsePCA
    decomposition.SparseCoder
    decomposition.TruncatedSVD
