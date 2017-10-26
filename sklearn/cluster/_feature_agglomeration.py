@@ -53,8 +53,8 @@ class AgglomerationTransform(TransformerMixin):
         else:
             for l in np.unique(self.labels_):
                 nX.append(pooling_func(X[:, self.labels_ == l], axis=1))
-            nX = np.array(X).T
-        return np.array(nX).T
+            nX = np.array(nX).T
+        return nX
 
     def inverse_transform(self, Xred):
         """
