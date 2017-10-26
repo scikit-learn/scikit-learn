@@ -1546,7 +1546,7 @@ class LMNNClassifier(LargeMarginNearestNeighbor, KNeighborsClassifier):
     Notes
     -----
     If you need to predict with a different number of neighbors than the
-    one used to fit the model, you need to construct a Pipeline. For
+    one used to fit the model, you need to construct a :class:`Pipeline`. For
     convenience, you can use the :func:`make_lmnn_pipeline` and pass both
     parameters ``n_neighbors`` and ``n_neighbors_predict``.
 
@@ -1648,64 +1648,3 @@ class LMNNClassifier(LargeMarginNearestNeighbor, KNeighborsClassifier):
             by lexicographic order.
         """
         return KNeighborsClassifier.predict_proba(self, self.transform(X))
-
-    def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
-        """Finds the K-neighbors of a point in the LMNN embedding.
-
-        Returns indices of and distances to the neighbors of each point.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_query, n_features)
-            The query point or points.
-            If not provided, neighbors of each indexed point are returned.
-            In this case, the query point is not considered its own neighbor.
-
-        n_neighbors : int
-            Number of neighbors to get (default is the value
-            passed to the constructor).
-
-        return_distance : boolean, optional. Defaults to True.
-            If False, distances will not be returned
-
-        Returns
-        -------
-        dist : array
-            Array representing the lengths to points, only present if
-            return_distance=True
-
-        ind : array
-            Indices of the nearest points in the population matrix.
-
-        """
-        return KNeighborsClassifier.kneighbors(self, self.transform(X),
-                                               n_neighbors, return_distance)
-
-    def kneighbors_graph(self, X=None, n_neighbors=None, mode='connectivity'):
-        """Computes the (weighted) graph of k-Neighbors for points in X
-
-        Parameters
-        ----------
-        X : array-like, shape (n_query, n_features)
-            The query point or points.
-            If not provided, neighbors of each indexed point are returned.
-            In this case, the query point is not considered its own neighbor.
-
-        n_neighbors : int
-            Number of neighbors for each sample.
-            (default is value passed to the constructor).
-
-        mode : {'connectivity', 'distance'}, optional
-            Type of returned matrix: 'connectivity' will return the
-            connectivity matrix with ones and zeros, in 'distance' the
-            edges are Euclidean distance between points.
-
-        Returns
-        -------
-        A : sparse matrix in CSR format, shape = [n_samples, n_samples_fit]
-            n_samples_fit is the number of samples in the fitted data
-            A[i, j] is assigned the weight of edge that connects i to j.
-
-        """
-        return KNeighborsClassifier.kneighbors_graph(
-            self, self.transform(X), n_neighbors, mode)
