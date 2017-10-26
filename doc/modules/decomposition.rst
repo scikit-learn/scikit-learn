@@ -905,3 +905,34 @@ when data can be fetched sequentially.
     * `"Stochastic Variational Inference"
       <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
+
+
+.. _SFA:
+
+Slow Feature Analysis (SFA)
+===========================
+
+Slow feature analysis (SFA) is an unsupervised learning algorithm for
+extracting slowly varying components from a time-varying input signal.
+
+The :class:`SFA` transformer learns a set of orthogonal linear components,
+such that the first component produces the slowest possible output signal,
+and following components produce uncorrelated output signals of decreasing
+slowness.
+
+:class:`SFA` can be used to extract non-linear slowly varying components by
+expanding the expanding the input signal with a set of nonlinear basis
+functions (e.g. :class:`PolynomialFeatures`).
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_sfa_logistic_regression.py`
+
+.. topic:: References:
+
+    * `"Slow Feature Analysis: Unsupervised learning of invariances"
+      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.164.6721&rep=rep1&type=pdf>`_
+      Wiskott, L and Sejnowski, T (2002). Neural Computation 14(4): 715-770.
+    * `"Slow Feature Analysis"
+      <http://www.scholarpedia.org/article/Slow_feature_analysis>`_
+      Laurenz Wiskott et al. (2011), Scholarpedia, 6(4):5282
