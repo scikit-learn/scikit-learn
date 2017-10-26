@@ -8,16 +8,17 @@ increase.
 """
 
 import numpy as np
-from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import FeatureAgglomeration
 import time
 
+
 def fit_agglomeration():
     rng = np.random.RandomState(0)
-    X = rng.randn(50, 1000)
-    agglo = FeatureAgglomeration(n_clusters=500)
+    X = rng.randn(100000, 1000)
+    agglo = FeatureAgglomeration(n_clusters=5)
     agglo.fit(X)
     return X, agglo
+
 
 def get_transformed_array(X, agglo, method):
     size = np.bincount(agglo.labels_)
@@ -37,6 +38,7 @@ def get_transformed_array(X, agglo, method):
     else:
         raise ValueError("Method can have a value of 'bincount' or 'np.mean'")
     return nX
+
 
 if __name__ == "__main__":
     X, agglo = fit_agglomeration()
