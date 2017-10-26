@@ -1054,17 +1054,17 @@ def check_clustering(name, clusterer_orig):
     # There should be at least one sample in every cluster. Equivalently
     # labels_ should contain all the consecutive values between its
     # min and its max.
-    pred_sorted = np.unique(pred)
-    assert_array_equal(pred_sorted, np.arange(pred_sorted[0],
-                                              pred_sorted[-1] + 1))
+    labels_sorted = np.unique(pred)
+    assert_array_equal(labels_sorted, np.arange(labels_sorted[0],
+                                                labels_sorted[-1] + 1))
 
-    # labels_ should be greater than -1
-    assert_greater_equal(pred_sorted[0], -1)
-    # labels_ should be less than n_clusters - 1
+    # Labels are expected to start at 0 (no noise) or -1 (if noise)
+    assert_true((labels_sorted[0] == -1) or (labels_sorted[0] == 0))
+    # Labels should be less than n_clusters - 1
     if hasattr(clusterer, 'n_clusters'):
         n_clusters = getattr(clusterer, 'n_clusters')
-        assert_greater_equal(n_clusters - 1, pred_sorted[-1])
-    # else labels_ should be less than max(labels_) which is necessarily true
+        assert_greater_equal(n_clusters - 1, labels_sorted[-1])
+    # else labels should be less than max(labels_) which is necessarily true
 
 
 @ignore_warnings(category=DeprecationWarning)
