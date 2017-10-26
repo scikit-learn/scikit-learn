@@ -46,10 +46,9 @@ class AgglomerationTransform(TransformerMixin):
         if len(self.labels_) != X.shape[1]:
             raise ValueError("X has a different number of features than "
                              "during fitting.")
-
         if pooling_func == np.mean:
             # a fast way to compute the mean of grouped features
-            nX = np.array([np.bincount(self.labels_, X[i, :])]/size for i in range(n_samples))
+            nX = np.array([np.bincount(self.labels_, X[i, :])/size for i in range(n_samples)])
         else:
             for l in np.unique(self.labels_):
                 nX.append(pooling_func(X[:, self.labels_ == l], axis=1))
