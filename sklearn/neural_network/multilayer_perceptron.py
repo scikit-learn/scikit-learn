@@ -98,7 +98,6 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             function, which is either the softmax function or the
             logistic function
         """
-        hidden_activation = ACTIVATIONS[self.activation]
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 1):
             activations[i + 1] = safe_sparse_dot(activations[i],
@@ -107,6 +106,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             # For the hidden layers
             if (i + 1) != (self.n_layers_ - 1):
+                hidden_activation = ACTIVATIONS[self.activation[i]]
                 activations[i + 1] = hidden_activation(activations[i + 1])
 
         # For the last layer
@@ -249,7 +249,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 2, 0, -1):
             deltas[i - 1] = safe_sparse_dot(deltas[i], self.coefs_[i].T)
-            inplace_derivative = DERIVATIVES[self.activation]
+            inplace_derivative = DERIVATIVES[self.activation[i-1]]
             inplace_derivative(activations[i], deltas[i - 1])
 
             coef_grads, intercept_grads = self._compute_loss_grad(
@@ -282,11 +282,21 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.coefs_ = []
         self.intercepts_ = []
 
-        for i in range(self.n_layers_ - 1):
+        for i in range(self.n_layers_ - 2):
             coef_init, intercept_init = self._init_coef(layer_units[i],
-                                                        layer_units[i + 1])
+                                                        layer_units[i + 1],
+                                                        self.activation[i])
             self.coefs_.append(coef_init)
             self.intercepts_.append(intercept_init)
+
+        # for output layer, use the rule according to the activation function
+        # in the previous layer.
+        coef_init, intercept_init = self._init_coef(layer_units[self.n_layers_ - 2],
+                                                    layer_units[self.n_layers_ - 1],
+                                                    self.activation[self.n_layers_ - 3] )
+        self.coefs_.append(coef_init)
+        self.intercepts_.append(intercept_init)
+
 
         if self.solver in _STOCHASTIC_SOLVERS:
             self.loss_curve_ = []
@@ -297,17 +307,17 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             else:
                 self.best_loss_ = np.inf
 
-    def _init_coef(self, fan_in, fan_out):
-        if self.activation == 'logistic':
+    def _init_coef(self, fan_in, fan_out, activation):
+        if activation == 'logistic':
             # Use the initialization method recommended by
             # Glorot et al.
             init_bound = np.sqrt(2. / (fan_in + fan_out))
-        elif self.activation in ('identity', 'tanh', 'relu'):
+        elif activation in ('identity', 'tanh', 'relu'):
             init_bound = np.sqrt(6. / (fan_in + fan_out))
         else:
             # this was caught earlier, just to make sure
             raise ValueError("Unknown activation function %s" %
-                             self.activation)
+                             activation)
 
         coef_init = self._random_state.uniform(-init_bound, init_bound,
                                                (fan_in, fan_out))
@@ -418,10 +428,11 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # raise ValueError if not registered
         supported_activations = ('identity', 'logistic', 'tanh', 'relu')
-        if self.activation not in supported_activations:
-            raise ValueError("The activation '%s' is not supported. Supported "
-                             "activations are %s." % (self.activation,
-                                                      supported_activations))
+        for idx_activation in range(len(self.activation)):
+            if self.activation[idx_activation] not in supported_activations:
+                raise ValueError("The activation '%s' is not supported. Supported "
+                                 "activations are %s." % (self.activation[idx_activation],
+                                                          supported_activations))
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " %
                              self.learning_rate)
