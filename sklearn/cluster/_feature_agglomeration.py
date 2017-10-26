@@ -14,6 +14,7 @@ from ..utils.validation import check_is_fitted
 ###############################################################################
 # Mixin class for feature agglomeration.
 
+
 class AgglomerationTransform(TransformerMixin):
     """
     A class for feature agglomeration via the transform interface
@@ -48,7 +49,8 @@ class AgglomerationTransform(TransformerMixin):
                              "during fitting.")
         if pooling_func == np.mean:
             # a fast way to compute the mean of grouped features
-            nX = np.array([np.bincount(self.labels_, X[i, :])/size for i in range(n_samples)])
+            nX = np.array([np.bincount(self.labels_, X[i, :])/size
+                          for i in range(n_samples)])
         else:
             for l in np.unique(self.labels_):
                 nX.append(pooling_func(X[:, self.labels_ == l], axis=1))
