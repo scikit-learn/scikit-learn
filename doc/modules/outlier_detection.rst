@@ -41,7 +41,7 @@ Overview of novelty and outlier detection methods
    :align: center
    :scale: 50
 
-   A comparison of the clustering algorithms in scikit-learn
+   A comparison of the novelty and outlier detection algorithms in scikit-learn
 
 
 Novelty Detection

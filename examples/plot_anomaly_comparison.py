@@ -11,6 +11,14 @@ of algorithms to cope with multimodal data.
 While these examples give some intuition about the
 algorithms, this intuition might not apply to very high
 dimensional data.
+
+Local Outlier Factor (LOF) does not show a decision function in black
+as it has no predict method to be applied on new data.
+
+Finally, note that parameters of the models have been here handpicked
+but that in practice they need to be adjusted. In the absence of labelled
+data, the problem is completely unsupervised so model selection can be
+a challenge.
 """
 print(__doc__)  # noqa
 
@@ -22,7 +30,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from sklearn import svm
-from sklearn.datasets import make_moons
+from sklearn.datasets import make_moons, make_blobs
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
@@ -36,29 +44,22 @@ clusters_separation = (0, 1, 2)
 n_outliers = int(outliers_fraction * n_samples)
 n_inliers = n_samples - n_outliers
 
-
-def make_dataset(n_inliers, offset, stds=(0.5, 0.5), random_state=0):
-    rng = np.random.RandomState(random_state)
-    # Data generation
-    X1 = stds[0] * rng.randn(n_inliers // 2, 2) - offset
-    X2 = stds[1] * rng.randn(n_inliers // 2, 2) + offset
-    X = np.concatenate([X1, X2], axis=0)
-    return X
-
 # define outlier/anomaly detection methods to be compared
 anomaly_algorithms = [
     ("Robust covariance", EllipticEnvelope(contamination=outliers_fraction)),
-    ("One-Class SVM", svm.OneClassSVM(nu=0.95 * outliers_fraction + 0.05,
-                                      kernel="rbf", gamma=0.1)),
+    ("One-Class SVM", svm.OneClassSVM(nu=0.2, kernel="rbf", gamma=0.1)),
     ("Isolation Forest", IsolationForest(contamination=outliers_fraction,
                                          random_state=42)),
     ("Local Outlier Factor", LocalOutlierFactor(
         n_neighbors=35, contamination=outliers_fraction))]
 
 # Define datasets
+blobs_params = dict(random_state=0, n_samples=n_inliers, n_features=2)
 datasets = [
-    make_dataset(n_inliers, stds=(0.5, 0.5), offset=0.),
-    make_dataset(n_inliers, stds=(0.3, 1.5), offset=2.),
+    make_blobs(centers=[[0, 0], [0, 0]], cluster_std=0.5,
+               **blobs_params)[0],
+    make_blobs(centers=[[2, 2], [-2, -2]], cluster_std=[1.5, .3],
+               **blobs_params)[0],
     4. * (make_moons(n_samples=n_samples, noise=.05)[0] -
           np.array([0.5, 0.25])),
     14. * (np.random.RandomState(42).rand(n_samples, 2) - 0.5)]
@@ -99,7 +100,7 @@ for i_dataset, X in enumerate(datasets):
                                             100 * outliers_fraction)
 
         # plot the levels lines and the points
-        if hasattr(algorithm, 'predict'):
+        if name != "Local Outlier Factor":  # LOF does not implement predict
             Z = algorithm.predict(np.c_[xx.ravel(), yy.ravel()])
             Z = Z.reshape(xx.shape)
             plt.contour(xx, yy, Z, levels=[threshold],
