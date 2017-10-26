@@ -79,8 +79,8 @@ def test_classification_toy():
         yield check_classification_toy, presort, loss
 
 
-def test_parameter_checks():
-    # Check input parameter validation.
+def test_classifier_parameter_checks():
+    # Check input parameter validation for GradientBoostingClassifier.
 
     assert_raises(ValueError,
                   GradientBoostingClassifier(n_estimators=0).fit, X, y)
@@ -138,6 +138,17 @@ def test_parameter_checks():
                   lambda X, y: GradientBoostingClassifier(
                       loss='deviance').fit(X, y),
                   X, [0, 0, 0, 0])
+
+
+def test_regressor_parameter_checks():
+    # Check input parameter validation for GradientBoostingRegressor
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='huber', alpha=1.2).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(max_features='invalid').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(n_iter_no_change='invalid').fit, X,
+                  y)
 
 
 def test_loss_function():
