@@ -439,7 +439,8 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
             self.average_intercept_ = None
 
         # Clear iteration count for multiple call to fit.
-        self.t_ = 1.0
+        if not self.warm_start:
+            self.t_ = 1.0
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate, self._max_iter,
                           classes, sample_weight, coef_init, intercept_init)
@@ -1009,7 +1010,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self.average_intercept_ = None
 
         # Clear iteration count for multiple call to fit.
-        self.t_ = 1.0
+        if not self.warm_start:
+            self.t_ = 1.0
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate,
                           self._max_iter, sample_weight, coef_init,
