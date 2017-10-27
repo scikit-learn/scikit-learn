@@ -445,7 +445,7 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
             ci = masks[:, y[i]]
             p_i_j = soft[ci]
             not_ci = np.logical_not(ci)
-            diff_ci = diffs[i, ci, :]  # n_samples * n_features
+            diff_ci = diffs[i, ci, :]
             diff_not_ci = diffs[i, not_ci, :]
             sum_ci = diff_ci.T.dot(
                 (p_i_j[:, np.newaxis] * diff_embedded[ci, :]))
