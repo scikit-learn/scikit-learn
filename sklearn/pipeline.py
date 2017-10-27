@@ -297,7 +297,7 @@ class Pipeline(_BaseComposition):
             of the pipeline.
 
         **predict_kwargs : dict of string -> object
-            Parameters passed to the ``predict`` method fo the last step
+            Parameters passed to the ``predict`` method of the last step
 
         Returns
         -------
