@@ -1426,7 +1426,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None, digits=2):
+                          sample_weight=None, digits=2, average='weighted'):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1451,14 +1451,35 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     digits : int
         Number of digits for formatting output floating point values
 
+    average : string, ['weighted' (default), 'binary', 'micro', 'macro', 'samples']
+        Determines the type of averaging performed on the data, after reporting the individual results per class:
+
+        ``'binary'``:
+            Only report results for the class specified by ``pos_label``.
+            This is applicable only if targets (``y_{true,pred}``) are binary.
+        ``'micro'``:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification where this differs from
+            :func:`accuracy_score`).
+
     Returns
     -------
     report : string
-        Text summary of the precision, recall, F1 score for each class.
+        Text summary of the precision, recall, F1 score for each class, including averages across classes.
 
-        The reported averages are a prevalence-weighted macro-average across
-        classes (equivalent to :func:`precision_recall_fscore_support` with
-        ``average='weighted'``).
+        Unless specified otherwise, the reported averages are a prevalence-weighted macro-average across
+        classes (equivalent to :func:`precision_recall_fscore_support` with ``average='weighted'``).
 
         Note that in binary classification, recall of the positive class
         is also known as "sensitivity"; recall of the negative class is
@@ -1471,13 +1492,13 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     >>> y_pred = [0, 0, 2, 2, 1]
     >>> target_names = ['class 0', 'class 1', 'class 2']
     >>> print(classification_report(y_true, y_pred, target_names=target_names))
-                 precision    recall  f1-score   support
+                  precision    recall  f1-score   support
     <BLANKLINE>
-        class 0       0.50      1.00      0.67         1
-        class 1       0.00      0.00      0.00         1
-        class 2       1.00      0.67      0.80         3
+         class 0       0.50      1.00      0.67         1
+         class 1       0.00      0.00      0.00         1
+         class 2       1.00      0.67      0.80         3
     <BLANKLINE>
-    avg / total       0.70      0.60      0.61         5
+    weighted avg       0.70      0.60      0.61         5
     <BLANKLINE>
 
     """
@@ -1490,10 +1511,14 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     if target_names is not None and len(labels) != len(target_names):
         warnings.warn(
             "labels size, {0}, does not match size of target_names, {1}"
-            .format(len(labels), len(target_names))
+                .format(len(labels), len(target_names))
         )
 
-    last_line_heading = 'avg / total'
+    average_options = ('micro', 'macro', 'weighted', 'binary', 'samples')
+    if average not in average_options:
+        raise ValueError('average has to be one of ' + str(average_options))
+
+    last_line_heading = average + ' avg'
 
     if target_names is None:
         target_names = [u'%s' % l for l in labels]
@@ -1505,6 +1530,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     report = head_fmt.format(u'', *headers, width=width)
     report += u'\n\n'
 
+    # compute per-class results without averaging
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
                                                   average=None,
@@ -1517,11 +1543,16 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     report += u'\n'
 
-    # compute averages
+    # compute averages with specified averaging method
+    avg_p, avg_r, avg_f1, unused_s = precision_recall_fscore_support(y_true, y_pred,
+                                                                     labels=labels,
+                                                                     average=average,
+                                                                     sample_weight=sample_weight)
+
     report += row_fmt.format(last_line_heading,
-                             np.average(p, weights=s),
-                             np.average(r, weights=s),
-                             np.average(f1, weights=s),
+                             avg_p,
+                             avg_r,
+                             avg_f1,
                              np.sum(s),
                              width=width, digits=digits)
 
