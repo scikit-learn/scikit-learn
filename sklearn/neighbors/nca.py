@@ -27,7 +27,7 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_features_out: int, optional (default=None)
+    n_features_out : int, optional (default=None)
         Preferred dimensionality of the embedding.
 
     init : string or numpy array, optional (default='pca')
@@ -87,10 +87,10 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     transformation_ : array, shape (n_features_out, n_features)
-    The linear transformation learned during fitting.
+        The linear transformation learned during fitting.
 
     n_iter_ : int
-    Counts the number of iterations performed by the optimizer.
+        Counts the number of iterations performed by the optimizer.
 
     opt_result_ : scipy.optimize.OptimizeResult (optional)
         A dictionary of information representing the optimization result.
@@ -121,9 +121,9 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
     Notes
     -----
     Neighborhood Component Analysis (NCA) is a machine learning algorithm for
-    metric learning. It learns a linear transformation of the space in a
-    supervised fashion to improve the classification accuracy of a
-    stochastic nearest neighbors rule in this new space.
+    metric learning. It learns a linear transformation in a supervised fashion
+    to improve the classification accuracy of a stochastic nearest neighbors
+    rule in the new space.
 
     .. warning::
 
