@@ -103,6 +103,12 @@ Classifiers and regressors
   identical X values.
   :issue:`9432` by :user:`Dallas Card <dallascard>`
 
+- Fixed a bug in :class:`multilayer_perceptron.BaseMultilayerPerceptron`,
+  :class:`multilayer_perceptron.MLPRegressor`, and
+  :class:`multilayer_perceptron.MLPClassifier` with new `n_iter_no_change`
+  parameter now at 10 from previously hardcoded 2.
+  :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
+  
 - Fixed a bug in :class:`multilayer_perceptron.MLPRegressor` where fitting
   quit unexpectedly early due to local minima or fluctuations.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`
