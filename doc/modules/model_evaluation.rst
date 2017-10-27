@@ -20,13 +20,13 @@ predictions:
     >>> from sklearn import linear_model
     >>> from sklearn.model_selection import train_test_split
     >>> est = linear_model.LinearRegression()
-    >>> X = [[1, 1], [2, 2], [4, 4], [3, 3], [10, 10], [5, 5.5]]
-    >>> y = [1, 2, 4, 3, 10, 5]
+    >>> X = [[1, 1], [2, 2], [4, 4], [3, 3],[8.75, 8.65], [10, 10], [5, 5.5]]
+    >>> y = [1, 2, 4, 3, 8.7, 10, 5.3]
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     >>> est.fit (X_train, y_train)
     LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=False)
     >>> est.score(X_test, y_test)
-    0.87500000000000089
+    0.997...
 
 
 * **Scoring parameter**: Model-evaluation tools using
@@ -42,7 +42,7 @@ predictions:
     >>> from sklearn.model_selection import cross_val_score
     >>> scores = cross_val_score(est, X, y)
     >>> np.mean(scores)
-    0.99833333333333341
+    0.99992202084853343
 
 
 * **Metric functions**: The :mod:`metrics` module implements functions
