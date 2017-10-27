@@ -40,7 +40,7 @@ Classifiers and regressors
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
-  
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy` metric and a corresponding
@@ -64,6 +64,11 @@ Classifiers and regressors
 - Add `var_smoothing` parameter in
   :class:`sklearn.naive_bayes.GaussianNB` to give a precise control over
   variances calculation. :issue:`9681` by :user:`Dmitry Mottl <Mottl>`.
+
+- A parameter ``check_inverse`` was added to :class:`FunctionTransformer`
+  to ensure that ``func`` and ``inverse_func`` are the inverse of each
+  other.
+  :issue:`9399` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Model evaluation and meta-estimators
 
