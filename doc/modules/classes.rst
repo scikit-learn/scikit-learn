@@ -1113,6 +1113,7 @@ Model validation
    neighbors.RadiusNeighborsRegressor
    neighbors.NearestCentroid
    neighbors.NearestNeighbors
+   neighbors.NeighborhoodComponentAnalysis
 
 .. autosummary::
    :toctree: generated/
