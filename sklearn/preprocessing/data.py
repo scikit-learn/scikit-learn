@@ -23,7 +23,7 @@ from ..externals.six import string_types
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.fixes import argmax
+from ..utils.fixes import _argmax
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -2813,7 +2813,7 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                 sub = X[:, j:j + n_categories]
 
                 # for sparse X argmax returns 2D matrix, ensure 1D array
-                labels = np.asarray(argmax(sub, axis=1)).flatten()
+                labels = np.asarray(_argmax(sub, axis=1)).flatten()
                 X_tr[:, i] = self.categories_[i][labels]
 
                 if self.handle_unknown == 'ignore':

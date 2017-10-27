@@ -151,7 +151,7 @@ except ImportError:
 
 
 if sp_version >= (0, 19):
-    def argmax(arr_or_spmatrix, axis=None):
+    def _argmax(arr_or_spmatrix, axis=None):
         return arr_or_spmatrix.argmax(axis=axis)
 else:
     # Backport of argmax functionality from scipy 0.19.1, can be removed
@@ -242,12 +242,12 @@ else:
 
         return _arg_min_or_max_axis(self, axis, op, compare)
 
-    def sparse_argmax(self, axis=None, out=None):
+    def _sparse_argmax(self, axis=None, out=None):
         return _arg_min_or_max(self, axis, out, np.argmax, np.greater)
 
-    def argmax(arr_or_matrix, axis=None):
+    def _argmax(arr_or_matrix, axis=None):
         if sp.issparse(arr_or_matrix):
-            return sparse_argmax(arr_or_matrix, axis=axis)
+            return _sparse_argmax(arr_or_matrix, axis=axis)
         else:
             return arr_or_matrix.argmax(axis=axis)
 
