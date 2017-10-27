@@ -96,6 +96,10 @@ Classifiers and regressors
   identical X values.
   :issue:`9432` by :user:`Dallas Card <dallascard>`
 
+- Fixed a bug in :class:`naive_bayes.GaussianNB` which incorrectly raised
+  error for prior list which summed to 1.
+  :issue:`10005` by :user:`Gaurav Dhingra <gxyd>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
