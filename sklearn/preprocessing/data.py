@@ -2706,9 +2706,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             if self.categories == 'auto':
                 le.fit(Xi)
             else:
-                valid_mask = np.in1d(Xi, self.categories[i])
-                if not np.all(valid_mask):
-                    if self.handle_unknown == 'error':
+                if self.handle_unknown == 'error':
+                    valid_mask = np.in1d(Xi, self.categories[i])
+                    if not np.all(valid_mask):
                         diff = np.unique(Xi[~valid_mask])
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
