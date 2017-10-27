@@ -287,7 +287,7 @@ class Pipeline(_BaseComposition):
             return last_step.fit(Xt, y, **fit_params).transform(Xt)
 
     @if_delegate_has_method(delegate='_final_estimator')
-    def predict(self, X):
+    def predict(self, X, **predict_kwargs):
         """Apply transforms to the data, and predict with the final estimator
 
         Parameters
@@ -295,6 +295,9 @@ class Pipeline(_BaseComposition):
         X : iterable
             Data to predict on. Must fulfill input requirements of first step
             of the pipeline.
+
+        **predict_kwargs : dict of string -> object
+            Parameters passed to the ``predict`` method of the last step
 
         Returns
         -------
@@ -304,7 +307,7 @@ class Pipeline(_BaseComposition):
         for name, transform in self.steps[:-1]:
             if transform is not None:
                 Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict(Xt)
+        return self.steps[-1][-1].predict(Xt, **predict_kwargs)
 
     @if_delegate_has_method(delegate='_final_estimator')
     def fit_predict(self, X, y=None, **fit_params):
