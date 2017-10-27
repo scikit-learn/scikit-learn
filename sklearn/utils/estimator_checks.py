@@ -398,7 +398,7 @@ def maybe_pairwise(X, estimator, kernel=linear_kernel):
         X = X.reshape(-1, 1)
 
     if _is_pairwise_metric(estimator):
-        return pairwise_distances(X, X, metric='mahalanobis')
+        return pairwise_distances(X, metric='euclidean')
     if _is_pairwise(estimator):
         return kernel(X, X)
 
