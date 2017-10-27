@@ -107,6 +107,10 @@ Classifiers and regressors
   quit unexpectedly early due to local minima or fluctuations.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`
 
+- Fixed a bug in :class:`naive_bayes.GaussianNB` which incorrectly raised
+  error for prior list which summed to 1.
+  :issue:`10005` by :user:`Gaurav Dhingra <gxyd>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
