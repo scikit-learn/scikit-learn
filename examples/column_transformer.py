@@ -89,7 +89,7 @@ pipeline = Pipeline([
     # Extract the subject & body
     ('subjectbody', SubjectBodyExtractor()),
 
-    # Use FeatureUnion to combine the features from subject and body
+    # Use C toolumnTransformer to combine the features from subject and body
     ('union', ColumnTransformer(
         [
             # Pulling features from the post's subject line (first column)
@@ -108,7 +108,7 @@ pipeline = Pipeline([
             ]), 1),
         ],
 
-        # weight components in FeatureUnion
+        # weight components in ColumnTransformer
         transformer_weights={
             'subject': 0.8,
             'body_bow': 0.5,

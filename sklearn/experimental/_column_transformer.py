@@ -63,6 +63,13 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
 
+    passthrough : string or int, array-like of string or int, slice or \
+boolean mask array
+        Specifies the columns that should be passed through untransformed.
+        This selection of columns is concatenated with the output of the
+        transformers. See explanation of `column` above for details on the
+        format.
+
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
@@ -107,8 +114,9 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
 
     """
 
-    def __init__(self, transformers, n_jobs=1, transformer_weights=None):
+    def __init__(self, transformers, passthrough=None, n_jobs=1, transformer_weights=None):
         self.transformers = transformers
+        self.passthrough = passthrough
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
 
@@ -299,6 +307,8 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
 
         self._update_fitted_transformers(transformers)
 
+        Xs = list(Xs) + [_get_column(X, self.passthrough)]
+
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
@@ -329,7 +339,13 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
 
         if not Xs:
             # All transformers are None
-            return np.zeros((X.shape[0], 0))
+            if self.passthrough is None:
+                return np.zeros((X.shape[0], 0))
+            else:
+                return _get_column(X, self.passthrough)
+
+        Xs = list(Xs) + [_get_column(X, self.passthrough)]
+
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
