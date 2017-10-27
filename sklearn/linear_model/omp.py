@@ -598,7 +598,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     Lars
     LassoLars
     decomposition.sparse_encode
-
+    OrthogonalMatchingPursuitCV
     """
     def __init__(self, n_nonzero_coefs=None, tol=None, fit_intercept=True,
                  normalize=True, precompute='auto'):
