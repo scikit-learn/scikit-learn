@@ -1,6 +1,7 @@
 """Tests for input validation functions"""
 
 import warnings
+import os
 
 from tempfile import NamedTemporaryFile
 from itertools import product
@@ -10,7 +11,8 @@ from numpy.testing import assert_array_equal
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_true, assert_false, assert_equal
-from sklearn.utils.testing import assert_raises, assert_raises_regexp
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_warns
@@ -31,6 +33,7 @@ from sklearn.utils.validation import (
     check_is_fitted,
     check_consistent_length,
     assert_all_finite,
+    check_memory
 )
 import sklearn
 
@@ -38,6 +41,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.utils.testing import assert_raise_message
+
 
 def test_as_float_array():
     # Test function for as_float_array
@@ -138,9 +142,13 @@ def test_check_array():
     # ensure_2d=False
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert_equal(X_array.ndim, 1)
-    # ensure_2d=True
+    # ensure_2d=True with 1d array
     assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
                          check_array, [0, 1, 2], ensure_2d=True)
+    # ensure_2d=True with scalar array
+    assert_raise_message(ValueError,
+                         'Expected 2D array, got scalar array instead',
+                         check_array, 10, ensure_2d=True)
     # don't allow ndim > 3
     X_ndim = np.arange(8).reshape(2, 2, 2)
     assert_raises(ValueError, check_array, X_ndim)
@@ -433,6 +441,45 @@ def test_check_array_min_samples_and_features_messages():
     assert_array_equal(y, y_checked)
 
 
+def test_check_array_complex_data_error():
+    X = np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]])
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # list of lists
+    X = [[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]]
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # tuple of tuples
+    X = ((1 + 2j, 3 + 4j, 5 + 7j), (2 + 3j, 4 + 5j, 6 + 7j))
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # list of np arrays
+    X = [np.array([1 + 2j, 3 + 4j, 5 + 7j]),
+         np.array([2 + 3j, 4 + 5j, 6 + 7j])]
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # tuple of np arrays
+    X = (np.array([1 + 2j, 3 + 4j, 5 + 7j]),
+         np.array([2 + 3j, 4 + 5j, 6 + 7j]))
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # dataframe
+    X = MockDataFrame(
+        np.array([[1 + 2j, 3 + 4j, 5 + 7j], [2 + 3j, 4 + 5j, 6 + 7j]]))
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+    # sparse matrix
+    X = sp.coo_matrix([[0, 1 + 2j], [0, 0]])
+    assert_raises_regex(
+        ValueError, "Complex data not supported", check_array, X)
+
+
 def test_has_fit_parameter():
     assert_false(has_fit_parameter(KNeighborsClassifier, "sample_weight"))
     assert_true(has_fit_parameter(RandomForestRegressor, "sample_weight"))
@@ -506,17 +553,17 @@ def test_check_consistent_length():
     check_consistent_length([1], [2], [3], [4], [5])
     check_consistent_length([[1, 2], [[1, 2]]], [1, 2], ['a', 'b'])
     check_consistent_length([1], (2,), np.array([3]), sp.csr_matrix((1, 2)))
-    assert_raises_regexp(ValueError, 'inconsistent numbers of samples',
-                         check_consistent_length, [1, 2], [1])
-    assert_raises_regexp(TypeError, 'got <\w+ \'int\'>',
-                         check_consistent_length, [1, 2], 1)
-    assert_raises_regexp(TypeError, 'got <\w+ \'object\'>',
-                         check_consistent_length, [1, 2], object())
+    assert_raises_regex(ValueError, 'inconsistent numbers of samples',
+                        check_consistent_length, [1, 2], [1])
+    assert_raises_regex(TypeError, 'got <\w+ \'int\'>',
+                        check_consistent_length, [1, 2], 1)
+    assert_raises_regex(TypeError, 'got <\w+ \'object\'>',
+                        check_consistent_length, [1, 2], object())
 
     assert_raises(TypeError, check_consistent_length, [1, 2], np.array(1))
     # Despite ensembles having __len__ they must raise TypeError
-    assert_raises_regexp(TypeError, 'estimator', check_consistent_length,
-                         [1, 2], RandomForestRegressor())
+    assert_raises_regex(TypeError, 'estimator', check_consistent_length,
+                        [1, 2], RandomForestRegressor())
     # XXX: We should have a test with a string, but what is correct behaviour?
 
 
@@ -539,3 +586,31 @@ def test_suppress_validation():
     assert_all_finite(X)
     sklearn.set_config(assume_finite=False)
     assert_raises(ValueError, assert_all_finite, X)
+
+
+class DummyMemory(object):
+    def cache(self, func):
+        return func
+
+
+class WrongDummyMemory(object):
+    pass
+
+
+def test_check_memory():
+    memory = check_memory("cache_directory")
+    assert_equal(memory.cachedir, os.path.join('cache_directory', 'joblib'))
+    memory = check_memory(None)
+    assert_equal(memory.cachedir, None)
+    dummy = DummyMemory()
+    memory = check_memory(dummy)
+    assert memory is dummy
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.externals.joblib.Memory."
+                        " Got memory='1' instead.", check_memory, 1)
+    dummy = WrongDummyMemory()
+    assert_raises_regex(ValueError, "'memory' should be None, a string or"
+                        " have the same interface as "
+                        "sklearn.externals.joblib.Memory. Got memory='{}' "
+                        "instead.".format(dummy), check_memory, dummy)

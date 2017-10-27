@@ -23,13 +23,12 @@ from sklearn.base import clone
 import numpy as np
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_raises
 from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
                                    assert_not_equal, assert_almost_equal,
                                    assert_in, assert_less, assert_greater,
                                    assert_warns_message, assert_raise_message,
                                    clean_warning_registry, ignore_warnings,
-                                   SkipTest)
+                                   SkipTest, assert_raises)
 
 from collections import defaultdict, Mapping
 from functools import partial

@@ -414,8 +414,6 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 alphas[-add_features:] = 0
             coef = coefs[n_iter]
             prev_coef = coefs[n_iter - 1]
-            alpha = alphas[n_iter, np.newaxis]
-            prev_alpha = alphas[n_iter - 1, np.newaxis]
         else:
             # mimic the effect of incrementing n_iter on the array references
             prev_coef = coef
@@ -826,6 +824,7 @@ class LassoLars(Lars):
     Lasso
     LassoCV
     LassoLarsCV
+    LassoLarsIC
     sklearn.decomposition.sparse_encode
 
     """

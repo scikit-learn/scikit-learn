@@ -239,11 +239,11 @@ data.
   or :class:`sklearn.decomposition.RandomizedPCA` with ``whiten=True``
   to further remove the linear correlation across features.
 
-.. topic:: Scaling target variables in regression
+.. topic:: Scaling a 1D array
 
-    :func:`scale` and :class:`StandardScaler` work out-of-the-box with 1d arrays.
-    This is very useful for scaling the target / response variables used
-    for regression.
+   All above functions (i.e. :func:`scale`, :func:`minmax_scale`,
+   :func:`maxabs_scale`, and :func:`robust_scale`) accept 1D array which can be
+   useful in some specific case.
 
 .. _kernel_centering:
 
@@ -482,7 +482,7 @@ Then we fit the estimator, and transform a data point.
 In the result, the first two numbers encode the gender, the next set of three
 numbers the continent and the last four the web browser.
 
-Note that, if there is a possibilty that the training data might have missing categorical
+Note that, if there is a possibility that the training data might have missing categorical
 features, one has to explicitly set ``n_values``. For example,
 
     >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
@@ -588,7 +588,7 @@ In some cases, only interaction terms among features are required, and it can be
 
 The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
-Note that polynomial features are used implicitily in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
+Note that polynomial features are used implicitly in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
 See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
 
@@ -609,6 +609,15 @@ a transformer that applies a log transformation in a pipeline, do::
     >>> transformer.transform(X)
     array([[ 0.        ,  0.69314718],
            [ 1.09861229,  1.38629436]])
+
+You can ensure that ``func`` and ``inverse_func`` are the inverse of each other
+by setting ``check_inverse=True`` and calling ``fit`` before
+``transform``. Please note that a warning is raised and can be turned into an
+error with a ``filterwarnings``::
+
+  >>> import warnings
+  >>> warnings.filterwarnings("error", message=".*check_inverse*.",
+  ...                         category=UserWarning, append=False)
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
 to do custom feature selection,

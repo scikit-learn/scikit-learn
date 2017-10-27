@@ -32,7 +32,7 @@ clean:
 	-rm -rf $(BUILDDIR)/*
 	-rm -rf auto_examples/
 	-rm -rf generated/*
-	-rm -rf modules/generated/*
+	-rm -rf modules/generated/
 
 html:
 	# These two lines make the build a bit more lengthy, and the

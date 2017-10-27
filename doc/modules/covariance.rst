@@ -38,7 +38,7 @@ The empirical covariance matrix of a sample can be computed using the
 whether the data are centered or not, the result will be different, so
 one may want to use the ``assume_centered`` parameter accurately. More precisely
 if one uses ``assume_centered=False``, then the test set is supposed to have the
-same mean vector as the training set. If not so, both should be centered by the 
+same mean vector as the training set. If not so, both should be centered by the
 user, and ``assume_centered=True`` should be used.
 
 .. topic:: Examples:
@@ -104,6 +104,23 @@ The Ledoit-Wolf estimator of the covariance matrix can be computed on
 a sample with the :meth:`ledoit_wolf` function of the
 `sklearn.covariance` package, or it can be otherwise obtained by
 fitting a :class:`LedoitWolf` object to the same sample.
+
+.. note:: **Case when population covariance matrix is isotropic**
+
+    It is important to note that when the number of samples is much larger than
+    the number of features, one would expect that no shrinkage would be
+    necessary. The intuition behind this is that if the population covariance
+    is full rank, when the number of sample grows, the sample covariance will
+    also become positive definite. As a result, no shrinkage would necessary
+    and the method should automatically do this.
+
+    This, however, is not the case in the Ledoit-Wolf procedure when the
+    population covariance happens to be a multiple of the identity matrix. In
+    this case, the Ledoit-Wolf shrinkage estimate approaches 1 as the number of
+    samples increases. This indicates that the optimal estimate of the
+    covariance matrix in the Ledoit-Wolf sense is multiple of the identity.
+    Since the population covariance is already a multiple of the identity
+    matrix, the Ledoit-Wolf solution is indeed a reasonable estimate.
 
 .. topic:: Examples:
 
@@ -334,4 +351,3 @@ ____
 
     * - |robust_vs_emp|
       - |mahalanobis|
-
