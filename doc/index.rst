@@ -207,6 +207,8 @@
                     <li><em>On-going development:</em>
                     <a href="/dev/whats_new.html"><em>What's new</em> (Changelog)</a>
                     </li>
+                    <li><em>October 2017.</em> scikit-learn 0.19.1 is available for download (<a href="whats_new.html#version-0-19">Changelog</a>).
+                    </li>
                     <li><em>July 2017.</em> scikit-learn 0.19.0 is available for download (<a href="whats_new/v0.19.html#version-0-19">Changelog</a>).
                     </li>
                     <li><em>June 2017.</em> scikit-learn 0.18.2 is available for download (<a href="whats_new/v0.18.html#version-0-18-2">Changelog</a>).
