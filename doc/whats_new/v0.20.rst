@@ -98,7 +98,7 @@ Classifiers and regressors
 
 - Fixed a bug in :class:`naive_bayes.GaussianNB` which incorrectly raised
   error for prior list which summed to 1.
-  :issue:`9633` by :user:`Gaurav Dhingra <gxyd>`.
+  :issue:`10005` by :user:`Gaurav Dhingra <gxyd>`.
 
 Decomposition, manifold learning and clustering
 
