@@ -41,6 +41,12 @@ Classifiers and regressors
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
 
+Preprocessing and transformers
+
+- Added :class:`experimental.ColumnTransformer`, which allows to apply
+  different transformers to different columns of arrays or pandas
+  DataFrames. By `Andreas Müller`_ and `Joris Van den Bossche`_.
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy` metric and a corresponding
