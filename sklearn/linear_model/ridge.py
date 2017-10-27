@@ -512,6 +512,10 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 class Ridge(_BaseRidge, RegressorMixin):
     """Linear least squares with l2 regularization.
 
+    Minimizes the objective function::
+
+    ||y - Xw||^2_2 + alpha * ||w||^2_2
+
     This model solves a regression model where the loss function is
     the linear least squares function and regularization is given by
     the l2-norm. Also known as Ridge Regression or Tikhonov regularization.
@@ -620,7 +624,10 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     See also
     --------
-    RidgeClassifier, RidgeCV, :class:`sklearn.kernel_ridge.KernelRidge`
+    RidgeClassifier : Ridge classifier
+    RidgeCV : Ridge regression with built-in cross validation
+    :class:`sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
+        combines ridge regression with the kernel trick
 
     Examples
     --------
@@ -766,7 +773,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     See also
     --------
-    Ridge, RidgeClassifierCV
+    Ridge : Ridge regression
+    RidgeClassifierCV :  Ridge classifier with built-in cross validation
 
     Notes
     -----
@@ -1229,9 +1237,9 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     See also
     --------
-    Ridge: Ridge regression
-    RidgeClassifier: Ridge classifier
-    RidgeClassifierCV: Ridge classifier with built-in cross validation
+    Ridge : Ridge regression
+    RidgeClassifier : Ridge classifier
+    RidgeClassifierCV : Ridge classifier with built-in cross validation
     """
     pass
 
@@ -1314,9 +1322,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     See also
     --------
-    Ridge: Ridge regression
-    RidgeClassifier: Ridge classifier
-    RidgeCV: Ridge regression with built-in cross validation
+    Ridge : Ridge regression
+    RidgeClassifier : Ridge classifier
+    RidgeCV : Ridge regression with built-in cross validation
 
     Notes
     -----
