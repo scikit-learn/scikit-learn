@@ -866,7 +866,7 @@ children of a larger parent cluster.
     DBSCAN. It is also important to note that OPTICS output can be unstable at
     ``eps`` values very close to the initial ``max_bound`` value. OPTICS seems
     to produce identical results to DBSCAN provided that ``eps`` passed to
-    ``extract_dbscan`` is a half order of magnatude less than the inital
+    ``extract_dbscan`` is a half order of magnitude less than the inital
     ``max_bound`` that was used to fit; using a value close to ``max_bound``
     will throw a warning, and using a value larger will result in an exception. 
 

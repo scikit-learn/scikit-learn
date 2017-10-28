@@ -61,13 +61,13 @@ ax4.set_title('Clustering at 0.75 epsilon cut')
 
 # Reachability plot
 color = ['g.', 'r.', 'b.', 'y.', 'c.']
-for k, c in zip(range(1, 7),  color):
+for k, c in zip(range(1, 7), color):
     Xk = space[C == k]
     Rk = R[C == k]
     ax1.plot(Xk, Rk, c, alpha=0.3)
 ax1.plot(space[C == -1], R[C == -1], 'k.', alpha=0.3)
-ax1.plot(space, np.ones_like(space)*0.75, 'k-', alpha=0.5)
-ax1.plot(space, np.ones_like(space)*0.25, 'k-.', alpha=0.5)
+ax1.plot(space, np.ones_like(space) * 0.75, 'k-', alpha=0.5)
+ax1.plot(space, np.ones_like(space) * 0.25, 'k-.', alpha=0.5)
 
 np.random.seed(0)
 n_points_per_cluster = 250
@@ -107,31 +107,31 @@ ax4.set_title('Clustering at 0.75 epsilon cut')
 
 # Reachability plot
 color = ['g.', 'r.', 'b.', 'y.', 'c.']
-for k, c in zip(range(1, 7),  color):
+for k, c in zip(range(1, 7), color):
     Xk = space[C == k]
     Rk = R[C == k]
     ax1.plot(Xk, Rk, c, alpha=0.3)
 ax1.plot(space[C == -1], R[C == -1], 'k.', alpha=0.3)
-ax1.plot(space, np.ones_like(space)*0.75, 'k-', alpha=0.5)
-ax1.plot(space, np.ones_like(space)*0.25, 'k-.', alpha=0.5)
+ax1.plot(space, np.ones_like(space) * 0.75, 'k-', alpha=0.5)
+ax1.plot(space, np.ones_like(space) * 0.25, 'k-.', alpha=0.5)
 
 # OPTICS
 color = ['g.', 'r.', 'b.', 'y.', 'c.']
-for k, c in zip(range(1, 7),  color):
+for k, c in zip(range(1, 7), color):
     Xk = X[clust.labels_ == k]
     ax2.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3)
 ax2.plot(X[clust.labels_ == -1, 0], X[clust.labels_ == -1, 1], 'k+', alpha=0.1)
 
 # DBSCAN at 0.25
 color = ['g.', 'm.', 'k.', 'r.', 'b.', 'c.']
-for k, c in zip(range(1, 8),  color):
+for k, c in zip(range(1, 8), color):
     Xk = X[labels_025 == k]
     ax3.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3)
 ax3.plot(X[labels_025 == -1, 0], X[labels_025 == -1, 1], 'k+', alpha=0.1)
 
 # DBSCAN at 0.75
 color = ['g.', 'm.', 'y.', 'c.']
-for k, c in zip(range(1, 5),  color):
+for k, c in zip(range(1, 5), color):
     Xk = X[labels_075 == k]
     ax4.plot(Xk[:, 0], Xk[:, 1], c, alpha=0.3)
 ax4.plot(X[labels_075 == -1, 0], X[labels_075 == -1, 1], 'k+', alpha=0.1)
