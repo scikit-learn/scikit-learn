@@ -1,4 +1,4 @@
-"""Partial dependence plots for regression and classification models. """
+"""Partial dependence plots for regression and classification models."""
 
 # Authors: Peter Prettenhofer
 #          Trevor Stephens
@@ -297,7 +297,7 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         if pdp.shape[0] == 2:
             # Binary classification
             pdp = pdp[1, :][np.newaxis]
-        elif len(pdp.shape) == 1:
+        elif pdp.ndim == 1:
             # Regression
             pdp = pdp[np.newaxis]
     elif method == 'estimated':
@@ -309,6 +309,9 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
         if est._estimator_type == 'classifier' and pdp.shape[1] == 2:
             # Binary classification
             pdp = pdp[:, 1][np.newaxis]
+        elif est._estimator_type == 'classifier' and pdp.shape[1] > 2:
+            # Multi-label classification
+            pdp = pdp.T
         if est._estimator_type == 'regressor':
             pdp = pdp[np.newaxis]
     else:

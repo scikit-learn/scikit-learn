@@ -21,8 +21,6 @@ from sklearn.datasets import make_classification, make_regression
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
-T = [[-1, -1], [2, 2], [3, 2]]
-true_result = [-1, 1, 1]
 
 # Make some sample data to test output shapes
 X_c, y_c = make_classification(n_features=10, n_informative=5, random_state=0)
