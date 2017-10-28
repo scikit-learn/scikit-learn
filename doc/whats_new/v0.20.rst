@@ -18,6 +18,9 @@ random sampling procedures.
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 - :class:`isotonic.IsotonicRegression` (bug fix)
 - :class:`metrics.roc_auc_score` (bug fix)
+- :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
+- :class:`neural_network.MLPRegressor` (bug fix)
+- :class:`neural_network.MLPClassifier` (bug fix)
 
 Details are listed in the changelog below.
 
