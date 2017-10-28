@@ -531,7 +531,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
 
     # compute PD functions
     pd_result = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(partial_dependence)(est, fxs, X=X, method=method,
+        delayed(partial_dependence)(est, fxs, X=X, output=output,
+                                    method=method,
                                     grid_resolution=grid_resolution,
                                     percentiles=percentiles)
         for fxs in features)
