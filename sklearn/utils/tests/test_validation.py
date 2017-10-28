@@ -142,9 +142,13 @@ def test_check_array():
     # ensure_2d=False
     X_array = check_array([0, 1, 2], ensure_2d=False)
     assert_equal(X_array.ndim, 1)
-    # ensure_2d=True
+    # ensure_2d=True with 1d array
     assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
                          check_array, [0, 1, 2], ensure_2d=True)
+    # ensure_2d=True with scalar array
+    assert_raise_message(ValueError,
+                         'Expected 2D array, got scalar array instead',
+                         check_array, 10, ensure_2d=True)
     # don't allow ndim > 3
     X_ndim = np.arange(8).reshape(2, 2, 2)
     assert_raises(ValueError, check_array, X_ndim)
