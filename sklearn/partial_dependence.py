@@ -321,7 +321,8 @@ def partial_dependence(est, target_variables, grid=None, X=None, output=None,
 
 
 def plot_partial_dependence(est, X, features, feature_names=None,
-                            label=None, n_cols=3, grid_resolution=100,
+                            label=None, output=None,
+                            n_cols=3, grid_resolution=100,
                             percentiles=(0.05, 0.95), method='auto', n_jobs=1,
                             verbose=0, ax=None, line_kw=None,
                             contour_kw=None, **fig_kw):
@@ -353,6 +354,8 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     label : object
         The class label for which the PDPs should be computed.
         Only if est is a multi-class model. Must be in ``est.classes_``.
+    output : int, optional (default=None)
+        The output index to use for multi-output estimators.
     n_cols : int
         The number of columns in the grid plot (default: 3).
     grid_resolution : int, default=100
@@ -448,13 +451,27 @@ def plot_partial_dependence(est, X, features, feature_names=None,
     else:
         n_features = X.shape[1]
 
-    # set label_idx for multi-class GBRT
+    # set label_idx for multi-class estimators
     if hasattr(est, 'classes_') and np.size(est.classes_) > 2:
         if label is None:
             raise ValueError('label is not given for multi-class PDP')
-        label_idx = np.searchsorted(est.classes_, label)
-        if est.classes_[label_idx] != label:
-            raise ValueError('label %s not in ``gbrt.classes_``' % str(label))
+        if type(est.classes_) == list:
+            # multi-output classification
+            if output is None:
+                raise ValueError('output is required for multi-output '
+                                 'estimators')
+            if output > len(est.classes_):
+                raise ValueError('output %d exceeds number of outputs in est, '
+                                 '%d' % (output, len(est.classes_)))
+            label_idx = np.searchsorted(est.classes_[output], label)
+            if est.classes_[output][label_idx] != label:
+                raise ValueError('label %s not in ``est.classes_``' %
+                                 str(label))
+        else:
+            label_idx = np.searchsorted(est.classes_, label)
+            if est.classes_[label_idx] != label:
+                raise ValueError('label %s not in ``est.classes_``' %
+                                 str(label))
     else:
         # regression and binary classification
         label_idx = 0
