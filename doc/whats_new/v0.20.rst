@@ -66,10 +66,10 @@ Classifiers and regressors
   variances calculation. :issue:`9681` by :user:`Dmitry Mottl <Mottl>`.
 
 - Add `n_iter_no_change` parameter in
-  :class:`multilayer_perceptron.BaseMultilayerPerceptron`,
-  :class:`multilayer_perceptron.MLPRegressor`, and
-  :class:`multilayer_perceptron.MLPClassifier` to give control over
-  maximum number of epochs to not meet `tol` improvement.
+  :class:`neural_network.BaseMultilayerPerceptron`,
+  :class:`neural_network.MLPRegressor`, and
+  :class:`neural_network.MLPClassifier` to give control over
+  maximum number of epochs to not meet ``tol`` improvement.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
 
 - A parameter ``check_inverse`` was added to :class:`FunctionTransformer`
@@ -103,13 +103,13 @@ Classifiers and regressors
   identical X values.
   :issue:`9432` by :user:`Dallas Card <dallascard>`
 
-- Fixed a bug in :class:`multilayer_perceptron.BaseMultilayerPerceptron`,
-  :class:`multilayer_perceptron.MLPRegressor`, and
-  :class:`multilayer_perceptron.MLPClassifier` with new `n_iter_no_change`
+- Fixed a bug in :class:`neural_network.BaseMultilayerPerceptron`,
+  :class:`neural_network.MLPRegressor`, and
+  :class:`neural_network.MLPClassifier` with new ``n_iter_no_change``
   parameter now at 10 from previously hardcoded 2.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
   
-- Fixed a bug in :class:`multilayer_perceptron.MLPRegressor` where fitting
+- Fixed a bug in :class:`neural_network.MLPRegressor` where fitting
   quit unexpectedly early due to local minima or fluctuations.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`
 
