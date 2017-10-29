@@ -383,6 +383,13 @@ class PCA(_BasePCA):
         else:
             n_components = self.n_components
 
+        if n_components != "mle" and \
+                (n_components > 1 and
+                 not (np.issubdtype(type(n_components), np.integer))):
+            raise ValueError("n_components=%r must be of type int "
+                             "when bigger than 1, was of type=%r"
+                             % (n_components, type(n_components)))
+
         # Handle svd_solver
         svd_solver = self.svd_solver
         if svd_solver == 'auto':
