@@ -461,6 +461,38 @@ given binary ``y_true`` and ``y_pred``:
     Currently this score function is only defined for binary classification problems, you
     may need to wrap it by yourself if you want to use it for multilabel problems.
 
+    There is no clear consensus on the definition of a balanced accuracy for the
+    multiclass setting. Here are some definitions that can be found in the literature:
+
+    * Normalized class-wise accuracy average as described in [Guyon2015]_: for multi-class
+      classification problem, each sample is assigned the class with maximum prediction value.
+      The predictions are then binarized to compute the accuracy of each class on a
+      one-vs-rest fashion. The balanced accuracy is obtained by averaging the individual
+      accuracies over all classes and then normalized by the expected value of balanced
+      accuracy for random predictions (:math:`0.5` for binary classification, :math:`1/C`
+      for C-class classification problem).
+    * Macro-average recall as described in [Mosley2013]_ and [Kelleher2015]_: the recall
+      for each class is computed independently and the average is taken over all classes.
+
+    Note that none of these different definitions are currently implemented within
+    the :func:`balanced_accuracy_score` function. However, the macro-averaged recall
+    is implemented in :func:`sklearn.metrics.recall_score`: set ``average`` parameter
+    to ``"macro"``.
+
+.. topic:: References:
+
+  .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
+     B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
+     <http://ieeexplore.ieee.org/document/7280767/>`_,
+     IJCNN 2015.
+  .. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
+     <http://lib.dr.iastate.edu/etd/13537/>`_,
+     IJCV 2010.
+  .. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
+     Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
+     and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
+     2015.
+
 .. _cohen_kappa:
 
 Cohen's kappa
