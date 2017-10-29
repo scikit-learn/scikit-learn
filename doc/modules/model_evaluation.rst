@@ -464,8 +464,15 @@ given binary ``y_true`` and ``y_pred``:
     There is no clear consensus on the definition of a balanced accuracy for the
     multiclass setting. Here are some definitions that can be found in the literature:
 
-    * Normalized class-wise accuracy average as described in [Guyon2015]_
-    * Macro-average recall as described in [Mosley2013]_ and [Kelleher2015]_
+    * Normalized class-wise accuracy average as described in [Guyon2015]_: for multi-class
+      classification problem, each sample is assigned the class with maximum prediction value.
+      The predictions are then binarized to compute the accuracy of each class on a
+      one-vs-rest fashion. The balanced accuracy is obtained by averaging the individual
+      accuracies over all classes and then normalized by the expected value of balanced
+      accuracy for random predictions (:math:`0.5` for binary classification, :math:`1/C`
+      for C-class classification problem).
+    * Macro-average recall as described in [Mosley2013]_ and [Kelleher2015]_: the recall
+      for each class is computed independently and the average is taken over all classes.
 
     Note that none of these different definitions are currently implemented within
     the :func:`balanced_accuracy_score` function.
