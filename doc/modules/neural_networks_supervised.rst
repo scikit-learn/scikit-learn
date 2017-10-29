@@ -249,7 +249,7 @@ where :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{0, 1\}`, a one hidden
 layer one hidden neuron MLP learns the function :math:`f(x) = W_2 g(W_1^T x + b_1) + b_2`
 where :math:`W_1 \in \mathbf{R}^m` and :math:`W_2, b_1, b_2 \in \mathbf{R}` are
 model parameters. :math:`W_1, W_2` represent the weights of the input layer and
-hidden layer, resepctively; and :math:`b_1, b_2` represent the bias added to
+hidden layer, respectively; and :math:`b_1, b_2` represent the bias added to
 the hidden layer and the output layer, respectively.
 :math:`g(\cdot) : R \rightarrow R` is the activation function, set by default as
 the hyperbolic tan. It is given as,
