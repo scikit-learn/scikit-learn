@@ -341,12 +341,6 @@ class _IgnoreWarnings(object):
 assert_less = _dummy.assertLess
 assert_greater = _dummy.assertGreater
 
-if hasattr(np.testing, 'assert_allclose'):
-    assert_allclose = np.testing.assert_allclose
-else:
-    assert_allclose = _assert_allclose
-
-
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
     """Helper function to test error messages in exceptions.
 
