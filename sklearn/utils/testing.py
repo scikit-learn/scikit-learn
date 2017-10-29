@@ -341,22 +341,7 @@ class _IgnoreWarnings(object):
 assert_less = _dummy.assertLess
 assert_greater = _dummy.assertGreater
 
-
-def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
-                     err_msg='', verbose=True):
-    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
-    if np.allclose(actual, desired, rtol=rtol, atol=atol):
-        return
-    msg = ('Array not equal to tolerance rtol=%g, atol=%g: '
-           'actual %s, desired %s') % (rtol, atol, actual, desired)
-    raise AssertionError(msg)
-
-
-if hasattr(np.testing, 'assert_allclose'):
-    assert_allclose = np.testing.assert_allclose
-else:
-    assert_allclose = _assert_allclose
-
+assert_allclose = np.testing.assert_allclose
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
     """Helper function to test error messages in exceptions.
