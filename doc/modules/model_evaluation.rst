@@ -473,6 +473,12 @@ given binary ``y_true`` and ``y_pred``:
       for C-class classification problem).
     * Macro-average recall as described in [Mosley2013]_ and [Kelleher2015]_: the recall
       for each class is computed independently and the average is taken over all classes.
+    * Class balance accuracy as described in [Mosley2013]_: for each class, the number
+      of correctly predicted samples (diagonal element in the confusion matrix) is normalized
+      by the maximum value of either the total number of observations predicted to the class
+      (sum of the class' column in the confusion matrix) or the actual number
+      of observations in that class (sum of the class' row in the confusion matrix).
+      The individual accuracies are then averaged to get the class balanced accuracy.
 
     Note that none of these different definitions are currently implemented within
     the :func:`balanced_accuracy_score` function. However, the macro-averaged recall
