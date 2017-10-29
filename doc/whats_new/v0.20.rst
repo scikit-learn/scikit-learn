@@ -18,6 +18,9 @@ random sampling procedures.
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 - :class:`isotonic.IsotonicRegression` (bug fix)
 - :class:`metrics.roc_auc_score` (bug fix)
+- :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
+- :class:`neural_network.MLPRegressor` (bug fix)
+- :class:`neural_network.MLPClassifier` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -65,6 +68,13 @@ Classifiers and regressors
   :class:`sklearn.naive_bayes.GaussianNB` to give a precise control over
   variances calculation. :issue:`9681` by :user:`Dmitry Mottl <Mottl>`.
 
+- Add `n_iter_no_change` parameter in
+  :class:`neural_network.BaseMultilayerPerceptron`,
+  :class:`neural_network.MLPRegressor`, and
+  :class:`neural_network.MLPClassifier` to give control over
+  maximum number of epochs to not meet ``tol`` improvement.
+  :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
+
 - A parameter ``check_inverse`` was added to :class:`FunctionTransformer`
   to ensure that ``func`` and ``inverse_func`` are the inverse of each
   other.
@@ -95,6 +105,16 @@ Classifiers and regressors
   combined weights when fitting a model to data involving points with
   identical X values.
   :issue:`9432` by :user:`Dallas Card <dallascard>`
+
+- Fixed a bug in :class:`neural_network.BaseMultilayerPerceptron`,
+  :class:`neural_network.MLPRegressor`, and
+  :class:`neural_network.MLPClassifier` with new ``n_iter_no_change``
+  parameter now at 10 from previously hardcoded 2.
+  :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
+  
+- Fixed a bug in :class:`neural_network.MLPRegressor` where fitting
+  quit unexpectedly early due to local minima or fluctuations.
+  :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`
 
 - Fixed a bug in :class:`naive_bayes.GaussianNB` which incorrectly raised
   error for prior list which summed to 1.
