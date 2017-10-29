@@ -8,9 +8,10 @@ anomaly detection algorithms on 2D datasets. Datasets contain
 one or two modes (regions of high density) to illustrate the ability
 of algorithms to cope with multimodal data.
 
-For each dataset, 15% of samples are generated as random uniform noise.
-We display decision boundaries with a threshold that would mark 15% of
-training samples as outliers.
+For each dataset, 15% of samples are generated as random uniform noise. This
+proportion is the value given to the nu parameter of the OneClassSVM and the
+contamination parameter of the other outlier detection algorithms.
+Decision boundaries between inliers and outliers are displayed in black.
 
 Local Outlier Factor (LOF) does not show a decision boundary in black
 as it has no predict method to be applied on new data.
@@ -29,7 +30,6 @@ print(__doc__)  # noqa
 import time
 
 import numpy as np
-from scipy import stats
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -50,7 +50,8 @@ n_inliers = n_samples - n_outliers
 # define outlier/anomaly detection methods to be compared
 anomaly_algorithms = [
     ("Robust covariance", EllipticEnvelope(contamination=outliers_fraction)),
-    ("One-Class SVM", svm.OneClassSVM(nu=0.2, kernel="rbf", gamma=0.1)),
+    ("One-Class SVM", svm.OneClassSVM(nu=outliers_fraction, kernel="rbf",
+                                      gamma=0.1)),
     ("Isolation Forest", IsolationForest(contamination=outliers_fraction,
                                          random_state=42)),
     ("Local Outlier Factor", LocalOutlierFactor(
@@ -63,7 +64,7 @@ datasets = [
                **blobs_params)[0],
     make_blobs(centers=[[2, 2], [-2, -2]], cluster_std=[1.5, .3],
                **blobs_params)[0],
-    4. * (make_moons(n_samples=n_samples, noise=.05)[0] -
+    4. * (make_moons(n_samples=n_samples, noise=.05, random_state=0)[0] -
           np.array([0.5, 0.25])),
     14. * (np.random.RandomState(42).rand(n_samples, 2) - 0.5)]
 
@@ -93,23 +94,18 @@ for i_dataset, X in enumerate(datasets):
 
         # fit the data and tag outliers
         if name == "Local Outlier Factor":
-            anomaly_scores = algorithm.negative_outlier_factor_
+            y_pred = algorithm.fit_predict(X)
         else:
-            anomaly_scores = algorithm.decision_function(X).ravel()
-
-        threshold = stats.scoreatpercentile(anomaly_scores,
-                                            100 * outliers_fraction)
-        y_pred = (anomaly_scores >= threshold).astype(int)
+            y_pred = algorithm.fit(X).predict(X)
 
         # plot the levels lines and the points
         if name != "Local Outlier Factor":  # LOF does not implement predict
-            Z = algorithm.decision_function(np.c_[xx.ravel(), yy.ravel()])
+            Z = algorithm.predict(np.c_[xx.ravel(), yy.ravel()])
             Z = Z.reshape(xx.shape)
-            plt.contour(xx, yy, Z, levels=[threshold],
-                        linewidths=2, colors='black')
+            plt.contour(xx, yy, Z, levels=[0], linewidths=2, colors='black')
 
         colors = np.array(['#377eb8', '#ff7f00'])
-        plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[y_pred])
+        plt.scatter(X[:, 0], X[:, 1], s=10, color=colors[(y_pred + 1) // 2])
 
         plt.xlim(-7, 7)
         plt.ylim(-7, 7)
