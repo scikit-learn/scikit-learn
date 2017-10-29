@@ -475,7 +475,9 @@ given binary ``y_true`` and ``y_pred``:
       for each class is computed independently and the average is taken over all classes.
 
     Note that none of these different definitions are currently implemented within
-    the :func:`balanced_accuracy_score` function.
+    the :func:`balanced_accuracy_score` function. However, the macro-averaged recall
+    is implemented in :func:`sklearn.metrics.recall_score`: set ``average`` parameter
+    to ``"macro"``.
 
 .. topic:: References:
 
