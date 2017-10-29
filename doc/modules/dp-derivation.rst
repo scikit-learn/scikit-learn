@@ -358,7 +358,7 @@ The model then is
   X_t &\sim& Normal(\mu_{z_i},  \Sigma^{-1})
   \end{array}
 
-Tha variational distribution we'll use is
+The variational distribution we'll use is
 
 .. math::
 
