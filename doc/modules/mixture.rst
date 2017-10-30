@@ -264,7 +264,7 @@ Pros
 :Less sensitivity to the number of parameters: unlike finite models, which will
    almost always use all components as much as they can, and hence will produce
    wildly different solutions for different numbers of components, the
-   variantional inference with a Dirichlet process prior
+   variational inference with a Dirichlet process prior
    (``weight_concentration_prior_type='dirichlet_process'``) won't change much
    with changes to the parameters, leading to more stability and less tuning.
 

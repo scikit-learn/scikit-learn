@@ -54,7 +54,7 @@ class VarianceThreshold(BaseEstimator, SelectorMixin):
             Sample vectors from which to compute variances.
 
         y : any
-            Ignored This parameter exists only for compatibility with
+            Ignored. This parameter exists only for compatibility with
             sklearn.pipeline.Pipeline.
 
         Returns

@@ -91,12 +91,13 @@ training samples::
     ...
     >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
     MLPClassifier(activation='relu', alpha=1e-05, batch_size='auto',
-           beta_1=0.9, beta_2=0.999, early_stopping=False,
-           epsilon=1e-08, hidden_layer_sizes=(5, 2), learning_rate='constant',
-           learning_rate_init=0.001, max_iter=200, momentum=0.9,
-           nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
-           solver='lbfgs', tol=0.0001, validation_fraction=0.1, verbose=False,
-           warm_start=False)
+                  beta_1=0.9, beta_2=0.999, early_stopping=False,
+                  epsilon=1e-08, hidden_layer_sizes=(5, 2),
+                  learning_rate='constant', learning_rate_init=0.001,
+                  max_iter=200, momentum=0.9, n_iter_no_change=10,
+                  nesterovs_momentum=True, power_t=0.5, random_state=1,
+                  shuffle=True, solver='lbfgs', tol=0.0001,
+                  validation_fraction=0.1, verbose=False, warm_start=False)
 
 After fitting (training), the model can predict labels for new samples::
 
@@ -139,12 +140,13 @@ indices where the value is `1` represents the assigned classes of that sample::
     ...
     >>> clf.fit(X, y)                         # doctest: +NORMALIZE_WHITESPACE
     MLPClassifier(activation='relu', alpha=1e-05, batch_size='auto',
-           beta_1=0.9, beta_2=0.999, early_stopping=False,
-           epsilon=1e-08, hidden_layer_sizes=(15,), learning_rate='constant',
-           learning_rate_init=0.001, max_iter=200, momentum=0.9,
-           nesterovs_momentum=True, power_t=0.5, random_state=1, shuffle=True,
-           solver='lbfgs', tol=0.0001, validation_fraction=0.1, verbose=False,
-           warm_start=False)
+                  beta_1=0.9, beta_2=0.999, early_stopping=False,
+                  epsilon=1e-08, hidden_layer_sizes=(15,),
+                  learning_rate='constant', learning_rate_init=0.001,
+                  max_iter=200, momentum=0.9, n_iter_no_change=10,
+                  nesterovs_momentum=True, power_t=0.5,  random_state=1,
+                  shuffle=True, solver='lbfgs', tol=0.0001,
+                  validation_fraction=0.1, verbose=False, warm_start=False)
     >>> clf.predict([[1., 2.]])
     array([[1, 1]])
     >>> clf.predict([[0., 0.]])
@@ -247,7 +249,7 @@ where :math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{0, 1\}`, a one hidden
 layer one hidden neuron MLP learns the function :math:`f(x) = W_2 g(W_1^T x + b_1) + b_2`
 where :math:`W_1 \in \mathbf{R}^m` and :math:`W_2, b_1, b_2 \in \mathbf{R}` are
 model parameters. :math:`W_1, W_2` represent the weights of the input layer and
-hidden layer, resepctively; and :math:`b_1, b_2` represent the bias added to
+hidden layer, respectively; and :math:`b_1, b_2` represent the bias added to
 the hidden layer and the output layer, respectively.
 :math:`g(\cdot) : R \rightarrow R` is the activation function, set by default as
 the hyperbolic tan. It is given as,
