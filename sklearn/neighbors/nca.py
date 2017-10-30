@@ -430,6 +430,19 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
             The new (flattened) gradient of the loss.
         """
 
+        if self.n_iter_ == 0:
+            self.n_iter_ += 1
+            if self.verbose:
+                header_fields = ['Iteration', 'Objective Value', 'Time(s)']
+                header_fmt = '{:>10} {:>20} {:>10}'
+                header = header_fmt.format(*header_fields)
+                cls_name = self.__class__.__name__
+                print('[{}]'.format(cls_name))
+                print('[{}] {}\n[{}] {}'.format(cls_name, header,
+                                                cls_name, '-' * len(header)))
+
+        t_funcall = time.time()
+
         transformation = transformation.reshape(-1, X.shape[1])
         loss = 0
         gradient = np.zeros(transformation.shape)
@@ -454,6 +467,14 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
             p_i = np.sum(p_i_j)
             gradient += 2 * (p_i * (sum_ci.T + sum_not_ci.T) - sum_ci.T)
             loss += p_i
+
+        if self.verbose:
+            t_funcall = time.time() - t_funcall
+            values_fmt = '[{}] {:>10} {:>20.6e} {:>10.2f}'
+            print(values_fmt.format(self.__class__.__name__, self.n_iter_,
+                                    loss, t_funcall))
+            sys.stdout.flush()
+
         return - loss, - gradient.ravel()
 
 

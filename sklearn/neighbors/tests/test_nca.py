@@ -60,6 +60,7 @@ def test_finite_differences():
     X, y, init = nca._validate_params(X, y)
     masks = _make_masks(y)
     diffs = X[:, np.newaxis] - X[np.newaxis]
+    nca.n_iter_ = 0
 
     point = nca._initialize(X, init)
     # compute the gradient at `point`
