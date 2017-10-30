@@ -2695,7 +2695,12 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                     raise ValueError("Unsorted categories are not yet "
                                      "supported")
 
-        X = check_array(X, dtype=np.object, copy=True)
+        X_temp = check_array(X, dtype=None, copy=True)
+        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, str):
+            X = check_array(X, dtype=np.object, copy=True)
+        else:
+            X = X_temp
+
         n_samples, n_features = X.shape
 
         self._label_encoders_ = [LabelEncoder() for _ in range(n_features)]
@@ -2733,7 +2738,12 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             Transformed input.
 
         """
-        X = check_array(X, dtype=np.object, copy=True)
+        X_temp = check_array(X, dtype=None, copy=True)
+        if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, str):
+            X = check_array(X, dtype=np.object, copy=True)
+        else:
+            X = X_temp
+
         n_samples, n_features = X.shape
         X_int = np.zeros_like(X, dtype=np.int)
         X_mask = np.ones_like(X, dtype=np.bool)
