@@ -223,8 +223,8 @@ def test_sparse_regression():
 class DummySizeEstimator(BaseEstimator):
 
     def fit(self, X, y):
-        self.training_size = X.shape[0]
-        self.training_hash = hash(X)
+        self.training_size_ = X.shape[0]
+        self.training_hash_ = hash(X)
 
 
 def test_bootstrap_samples():
@@ -254,14 +254,15 @@ def test_bootstrap_samples():
     assert_greater(base_estimator.score(X_train, y_train),
                    ensemble.score(X_train, y_train))
 
-    # check as well the size of the training set to be sure that only
-    # under-sampling is performed
+    # check that each sampling correspond to a complete bootstrap resample.
+    # the size of each bootstrap should be the same as the input data but
+    # the data should be different (checked using the hash of the data).
     ensemble = BaggingRegressor(base_estimator=DummySizeEstimator(),
                                 bootstrap=True).fit(X_train, y_train)
     training_hash = []
     for estimator in ensemble.estimators_:
-        assert estimator.training_size == X_train.shape[0]
-        training_hash.append(estimator.training_hash)
+        assert estimator.training_size_ == X_train.shape[0]
+        training_hash.append(estimator.training_hash_)
     assert len(set(training_hash)) == len(training_hash)
 
 
