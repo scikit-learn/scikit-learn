@@ -51,8 +51,15 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     voting : str, {'hard', 'soft'} (default='hard')
         If 'hard', uses predicted class labels for majority rule voting.
         Else if 'soft', predicts the class label based on the argmax of
-        the sums of the predicted probabilities, which is recommended for
-        an ensemble of well-calibrated classifiers.
+        the sums of the predicted probabilities or log-odds, which is
+        recommended for an ensemble of well-calibrated classifiers.
+
+    measure : str, {'probability', 'log-odd'}
+        Measure to use to calculate the probability when voting='soft'.
+        If 'probablity' corresponds to the traditional notion of averaging
+        across the probabilities of individuals classifiers, while if 'log-odd'
+        corresponds to looking at the odds of the event for each classifier
+        and averaging across their logs for all the classifiers.
 
     weights : array-like, shape = [n_classifiers], optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
@@ -121,10 +128,11 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>>
     """
 
-    def __init__(self, estimators, voting='hard', weights=None, n_jobs=1,
-                 flatten_transform=None):
+    def __init__(self, estimators, voting='hard', measure='probabilities',
+                 weights=None, n_jobs=1, flatten_transform=None):
         self.estimators = estimators
         self.voting = voting
+        self.measure = measure
         self.weights = weights
         self.n_jobs = n_jobs
         self.flatten_transform = flatten_transform
