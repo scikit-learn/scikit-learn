@@ -214,7 +214,7 @@ def test_transform_target_regressor_multi_to_single():
                                     check_inverse=False)
     tt.fit(X, y)
     y_pred_2d_func = tt.predict(X)
-    assert_equal(y_pred_2d_func.shape, (100,))
+    assert_equal(y_pred_2d_func.shape, (100, 1))
 
     # force that the function only return a 1D array
     def func(y):
@@ -224,6 +224,6 @@ def test_transform_target_regressor_multi_to_single():
                                     check_inverse=False)
     tt.fit(X, y)
     y_pred_1d_func = tt.predict(X)
-    assert_equal(y_pred_1d_func.shape, (100,))
+    assert_equal(y_pred_1d_func.shape, (100, 1))
 
     assert_allclose(y_pred_1d_func, y_pred_2d_func)

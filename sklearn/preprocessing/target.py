@@ -165,6 +165,10 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         """
         X, y = check_X_y(X, y, multi_output=True, y_numeric=True)
 
+        # store the number of dimension of the target to predict an array of
+        # similar shape at predict
+        self.training_dim_ = y.ndim
+
         # transformers are designed to modify X which is a 2d dimensional, we
         # need to modify y accordingly.
         if y.ndim == 1:
@@ -217,7 +221,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
                 pred.reshape(-1, 1))
         else:
             pred_trans = self.transformer_.inverse_transform(pred)
-        if pred_trans.ndim == 2 and pred_trans.shape[1] == 1:
+        if (self.training_dim_ == 1 and
+                pred_trans.ndim == 2 and pred_trans.shape[1] == 1):
             pred_trans = pred_trans.squeeze(axis=1)
 
         return pred_trans
