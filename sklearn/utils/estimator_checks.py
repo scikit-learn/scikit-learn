@@ -951,7 +951,7 @@ def check_estimators_nan_inf(name, estimator_orig):
     # Checks that Estimator X's do not contain NaN or inf.
     rnd = np.random.RandomState(0)
     X_train_finite = pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
-                                    estimator_orig)
+                                                  estimator_orig)
     X_train_nan = rnd.uniform(size=(10, 3))
     X_train_nan[0, 0] = np.nan
     X_train_inf = rnd.uniform(size=(10, 3))
