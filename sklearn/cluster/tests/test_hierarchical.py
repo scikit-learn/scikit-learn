@@ -567,7 +567,6 @@ def test_agg_n_cluster_and_distance_threshold():
     agc.fit(X)
     # Expecting no errors here
     assert_true(agc.n_clusters == n_clus)
-    assert_true(agc.n_clusters_ == n_clus)
 
 
 def test_affinity_passed_to_fix_connectivity():
@@ -643,30 +642,3 @@ def test_agglomerative_clustering_with_distance_threshold_edge_case():
                                                 linkage=linkage)
             y_pred = clusterer.fit_predict(X)
             assert_equal(1, adjusted_rand_score(y_true, y_pred))
-
-
-def test_affinity_passed_to_fix_connectivity():
-    # Test that the affinity parameter is actually passed to the pairwise
-    # function
-
-    size = 2
-    rng = np.random.RandomState(0)
-    X = rng.randn(size, size)
-    mask = np.array([True, False, False, True])
-
-    connectivity = grid_to_graph(n_x=size, n_y=size,
-                                 mask=mask, return_as=np.ndarray)
-
-    class FakeAffinity:
-        def __init__(self):
-            self.counter = 0
-
-        def increment(self, *args, **kwargs):
-            self.counter += 1
-            return self.counter
-
-    fa = FakeAffinity()
-
-    linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
-
-    assert_equal(fa.counter, 3)
