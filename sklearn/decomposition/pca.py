@@ -383,13 +383,6 @@ class PCA(_BasePCA):
         else:
             n_components = self.n_components
 
-        if n_components != "mle" and \
-                (n_components > 1 and
-                 not (np.issubdtype(type(n_components), np.integer))):
-            raise ValueError("n_components=%r must be of type int "
-                             "when bigger than 1, was of type=%r"
-                             % (n_components, type(n_components)))
-
         # Handle svd_solver
         svd_solver = self.svd_solver
         if svd_solver == 'auto':
@@ -424,6 +417,11 @@ class PCA(_BasePCA):
                              "min(n_samples, n_features)=%r with "
                              "svd_solver='full'"
                              % (n_components, min(n_samples, n_features)))
+        elif n_components >= 1:
+            if not np.issubdtype(type(n_components), np.integer):
+                raise ValueError("n_components=%r must be of type int "
+                                 "when greater or equal to 1, was of type=%r"
+                                 % (n_components, type(n_components)))
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -484,6 +482,10 @@ class PCA(_BasePCA):
                              "svd_solver='%s'"
                              % (n_components, min(n_samples, n_features),
                                 svd_solver))
+        elif not np.issubdtype(type(n_components), np.integer):
+            raise ValueError("n_components=%r must be of type int "
+                             "when greater or equal to 1, was of type=%r"
+                             % (n_components, type(n_components)))
         elif svd_solver == 'arpack' and n_components == min(n_samples,
                                                             n_features):
             raise ValueError("n_components=%r must be strictly less than "
