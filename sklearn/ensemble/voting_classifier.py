@@ -128,7 +128,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>>
     """
 
-    def __init__(self, estimators, voting='hard', measure='probabilities',
+    def __init__(self, estimators, voting='hard', measure='probability',
                  weights=None, n_jobs=1, flatten_transform=None):
         self.estimators = estimators
         self.voting = voting
