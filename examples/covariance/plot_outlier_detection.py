@@ -43,12 +43,15 @@ from sklearn.neighbors import LocalOutlierFactor
 
 print(__doc__)
 
-rng = np.random.RandomState(42)
+SEED = 42
+GRID_PRECISION = 100
+
+rng = np.random.RandomState(SEED)
 
 # Example settings
 n_samples = 200
 outliers_fraction = 0.25
-clusters_separation = [0, 1, 2]
+clusters_separation = (0, 1, 2)
 
 # define two outlier detection tools to be compared
 classifiers = {
@@ -63,21 +66,23 @@ classifiers = {
         contamination=outliers_fraction)}
 
 # Compare given classifiers under given settings
-xx, yy = np.meshgrid(np.linspace(-7, 7, 100), np.linspace(-7, 7, 100))
-n_inliers = int((1. - outliers_fraction) * n_samples)
+xx, yy = np.meshgrid(np.linspace(-7, 7, GRID_PRECISION),
+                     np.linspace(-7, 7, GRID_PRECISION))
 n_outliers = int(outliers_fraction * n_samples)
+n_inliers = n_samples - n_outliers
 ground_truth = np.ones(n_samples, dtype=int)
 ground_truth[-n_outliers:] = -1
 
 # Fit the problem with varying cluster separation
-for i, offset in enumerate(clusters_separation):
-    np.random.seed(42)
+for _, offset in enumerate(clusters_separation):
+    np.random.seed(SEED)
     # Data generation
     X1 = 0.3 * np.random.randn(n_inliers // 2, 2) - offset
     X2 = 0.3 * np.random.randn(n_inliers // 2, 2) + offset
-    X = np.r_[X1, X2]
+    X = np.concatenate([X1, X2], axis=0)
     # Add outliers
-    X = np.r_[X, np.random.uniform(low=-6, high=6, size=(n_outliers, 2))]
+    X = np.concatenate([X, np.random.uniform(low=-6, high=6,
+                       size=(n_outliers, 2))], axis=0)
 
     # Fit the model
     plt.figure(figsize=(9, 7))
