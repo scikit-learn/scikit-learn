@@ -420,7 +420,8 @@ class PCA(_BasePCA):
         elif n_components >= 1:
             if not np.issubdtype(type(n_components), np.integer):
                 raise ValueError("n_components=%r must be of type int "
-                                 "when greater or equal to 1, was of type=%r"
+                                 "when greater than or equal to 1, "
+                                 "was of type=%r"
                                  % (n_components, type(n_components)))
 
         # Center data
@@ -484,7 +485,7 @@ class PCA(_BasePCA):
                                 svd_solver))
         elif not np.issubdtype(type(n_components), np.integer):
             raise ValueError("n_components=%r must be of type int "
-                             "when greater or equal to 1, was of type=%r"
+                             "when greater than or equal to 1, was of type=%r"
                              % (n_components, type(n_components)))
         elif svd_solver == 'arpack' and n_components == min(n_samples,
                                                             n_features):
