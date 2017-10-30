@@ -479,7 +479,8 @@ def check_sample_weights_list(name, estimator_orig):
     if has_fit_parameter(estimator_orig, "sample_weight"):
         estimator = clone(estimator_orig)
         rnd = np.random.RandomState(0)
-        X = pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)), estimator_orig)
+        X = pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
+                                         estimator_orig)
         y = np.arange(10) % 3
         y = multioutput_estimator_convert_y_2d(estimator, y)
         sample_weight = [3] * 10
