@@ -38,7 +38,7 @@ def test_transform_target_regressor_error():
     # func is given but inverse_func is not
     regr = TransformedTargetRegressor(func=np.exp)
     assert_raises_regex(ValueError, "When 'func' is not None, 'inverse_func'"
-                        " cannot be None.")
+                        " cannot be None.", regr.fit, X, y)
 
 
 def test_transform_target_regressor_invertible():
