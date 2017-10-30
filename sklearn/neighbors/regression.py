@@ -140,12 +140,12 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
-        if issparse(X):
+        if issparse(X) and self.metric == 'precomputed':
             raise ValueError(
-                "Sparse matricies not supported for prediction. "
-                "Densify your matrix."
+                "Sparse matricies not supported for prediction with "
+                "precomputed kernels. Densify your matrix."
             )
-        X = check_array(X, accept_sparse=False)
+        X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
