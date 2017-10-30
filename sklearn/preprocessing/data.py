@@ -2761,16 +2761,16 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         mask = X_mask.ravel()
         n_values = [cats.shape[0] for cats in self.categories_]
         n_values = np.array([0] + n_values)
-        indices = np.cumsum(n_values)
+        feature_indices = np.cumsum(n_values)
 
-        column_indices = (X_int + indices[:-1]).ravel()[mask]
-        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
-                                n_features)[mask]
+        indices = (X_int + feature_indices[:-1]).ravel()[mask]
+        indptr = X_mask.sum(axis=1).cumsum()
+        indptr = np.insert(indptr, 0, 0)
         data = np.ones(n_samples * n_features)[mask]
 
-        out = sparse.csc_matrix((data, (row_indices, column_indices)),
-                                shape=(n_samples, indices[-1]),
-                                dtype=self.dtype).tocsr()
+        out = sparse.csr_matrix((data, indices, indptr),
+                                shape=(n_samples, feature_indices[-1]),
+                                dtype=self.dtype)
         if self.encoding == 'onehot-dense':
             return out.toarray()
         else:
