@@ -478,6 +478,7 @@ given binary ``y_true`` and ``y_pred``:
       by the maximum value of either the total number of observations predicted to the class
       (sum of the class' column in the confusion matrix) or the actual number
       of observations in that class (sum of the class' row in the confusion matrix).
+      In other words, we take the minimum between the precision and th recall for each class.
       The individual accuracies are then averaged to get the class balanced accuracy.
 
     Note that none of these different definitions are currently implemented within
