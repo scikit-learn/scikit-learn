@@ -390,14 +390,13 @@ def test_pca_validation():
                                     PCA(n_components, svd_solver=solver)
                                     .fit, data)
 
-                n_components = 1.0
-                type_ncom = type(n_components)
-                assert_raise_message(ValueError,
-                                     "n_components={} must be of type int "
-                                     "when greater or equal to 1, "
-                                     "was of type={}"
-                                     .format(n_components, type_ncom),
-                                     PCA(n_components).fit, data)
+        n_components = 1.0
+        type_ncom = type(n_components)
+        assert_raise_message(ValueError,
+                             "n_components={} must be of type int "
+                             "when greater or equal to 1, was of type={}"
+                             .format(n_components, type_ncom),
+                             PCA(n_components).fit, data)
 
 
 
