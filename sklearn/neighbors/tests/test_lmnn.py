@@ -464,7 +464,7 @@ def test_pipeline_equivalency():
     lmnn_pipe = make_lmnn_pipeline(**lmnn_params)
     lmnn_pipe.fit(X_train, y_train)
 
-    pipe_transformation = lmnn_pipe.steps[0][1].transformation_
+    pipe_transformation = lmnn_pipe.named_steps.lmnn.transformation_
     assert_array_almost_equal(lmnn.transformation_, pipe_transformation)
 
     knn = KNeighborsClassifier(n_neighbors=n_neighbors)

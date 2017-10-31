@@ -523,8 +523,6 @@ Large Margin Nearest Neighbor
 
 .. sectionauthor:: John Chiotellis <johnyc.code@gmail.com>
 
-.. currentmodule:: sklearn.neighbors
-
 Large Margin Nearest Neighbor (LMNN, :class:`LargeMarginNearestNeighbor`) is
 a distance metric learning algorithm which aims to improve the accuracy of
 nearest neighbors classification compared to the standard Euclidean distance.
@@ -567,16 +565,44 @@ related methods such as Linear Discriminant Analysis, LMNN does not make any
 assumptions about the class distributions. The nearest neighbor classification
 can naturally produce highly irregular decision boundaries.
 
-To use this model for classification, one can create a :class:`sklearn.pipeline.Pipeline`
-instance with two steps, a :class:`LargeMarginNearestNeighbor` instance and a
-:class:`KNeighborsClassifier` instance by calling :func:`make_lmnn_pipeline`:
+To use this model for classification, one needs to combine a :class:`LargeMarginNearestNeighbor`
+instance that learns the optimal transformation with a :class:`KNeighborsClassifier`
+instance that performs the classification in the embedded space. Here is an
+example using the two classes:
 
-    >>> from sklearn.neighbors import make_lmnn_pipeline
+    >>> from sklearn.neighbors import LargeMarginNearestNeighbor
+    >>> from sklearn.neighbors import KNeighborsClassifier
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = load_iris(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ... stratify=y, test_size=0.7, random_state=42)
+    >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
+    >>> lmnn.fit(X_train, y_train) # doctest: + ELLIPSIS
+    >>> LargeMarginNearestNeighbor(...)
+    >>> # Apply the learned transformation when using KNeighborsClassifier
+    >>> knn = KNeighborsClassifier(n_neighbors=3)
+    >>> knn.fit(lmnn.transform(X_train), y_train) # doctest: +ELLIPSIS
+    KNeighborsClassifier(...)
+    >>> print(knn.score(lmnn.transform(X_test), y_test))
+    0.971428571429
+
+Alternatively, one can create a :class:`sklearn.pipeline.Pipeline` instance
+that automatically applies the transformation when fitting or predicting:
+
+    >>> from sklearn.pipeline import Pipeline
+    >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
+    >>> knn = KNeighborsClassifier(n_neighbors=3)
+    >>> lmnn_pipe = Pipeline([('lmnn', lmnn), ('knn', knn)])
+    >>> lmnn_pipe.fit(X_train, y_train) # doctest: +ELLIPSIS
+    Pipeline(...)
+    >>> print(lmnn_pipe.score(X_test, y_test))
+    0.971428571429
+
+For convenience, one can directly construct such a :class:`sklearn.pipeline.Pipeline`
+instance by calling :func:`make_lmnn_pipeline`:
+
+    >>> from sklearn.neighbors import make_lmnn_pipeline
     >>> lmnn_pipe = make_lmnn_pipeline(n_neighbors=3, n_neighbors_predict=3,
     ... random_state=42)
     >>> lmnn_pipe.fit(X_train, y_train) # doctest: +ELLIPSIS

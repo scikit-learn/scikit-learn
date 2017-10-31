@@ -140,7 +140,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     opt_result_ : scipy.optimize.OptimizeResult (optional)
         A dictionary of information representing the optimization result.
-        This is stored only if ``store_opt_result`` was True.
+        This is stored only if ``store_opt_result`` is True.
 
     Examples
     --------
@@ -986,7 +986,7 @@ def _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph):
     Returns
     -------
     loss : float
-        The push loss caused by the given target_neighbors and impostors.
+        The push loss caused by the given target neighbors and impostors.
 
     grad : array, shape (n_features, n_features)
         The gradient of the push loss.
@@ -1212,7 +1212,7 @@ def make_lmnn_pipeline(
         max_iter=50, tol=1e-5, callback=None, store_opt_result=False,
         verbose=0, random_state=None, n_jobs=1, n_neighbors_predict=None,
         weights='uniform', algorithm='auto', leaf_size=30,
-        n_jobs_predict=None):
+        n_jobs_predict=None, **kwargs):
     """Constructs the trivial LMNN - KNN pipeline.
 
     Parameters
@@ -1345,6 +1345,16 @@ def make_lmnn_pipeline(
         The number of parallel jobs to run for neighbors search during
         prediction. If None (default), then the value of ``n_jobs`` is used.
 
+    memory : None, str or object with the joblib.Memory interface, optional
+        Used to cache the fitted transformers of the pipeline. By default,
+        no caching is performed. If a string is given, it is the path to
+        the caching directory. Enabling caching triggers a clone of
+        the transformers before fitting. Therefore, the transformer
+        instance given to the pipeline cannot be inspected
+        directly. Use the attribute ``named_steps`` or ``steps`` to
+        inspect estimators within the pipeline. Caching the
+        transformers is advantageous when fitting is time consuming.
+
 
     Returns
     -------
@@ -1371,6 +1381,11 @@ def make_lmnn_pipeline(
 
     """
 
+    memory = kwargs.pop('memory', None)
+    if kwargs:
+        raise TypeError('Unknown keyword arguments: "{}"'
+                        .format(list(kwargs.keys())[0]))
+
     lmnn = LargeMarginNearestNeighbor(
         n_neighbors=n_neighbors, n_features_out=n_features_out, init=init,
         warm_start=warm_start, max_impostors=max_impostors,
@@ -1389,4 +1404,4 @@ def make_lmnn_pipeline(
         n_neighbors=n_neighbors_predict, weights=weights, algorithm=algorithm,
         leaf_size=leaf_size, n_jobs=n_jobs_predict)
 
-    return Pipeline([('lmnn', lmnn), ('knn', knn)])
+    return Pipeline([('lmnn', lmnn), ('knn', knn)], memory=memory)
