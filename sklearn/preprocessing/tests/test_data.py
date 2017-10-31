@@ -2080,6 +2080,7 @@ def test_categorical_encoder_specified_categories():
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
     assert enc.categories[0] == ['a', 'b', 'c']
     assert enc.categories_[0].tolist() == ['a', 'b', 'c']
+    assert np.issubdtype(enc.categories_[0].dtype, str)
 
     # unsorted passed categories raises for now
     enc = CategoricalEncoder(categories=[['c', 'b', 'a']])
@@ -2087,11 +2088,15 @@ def test_categorical_encoder_specified_categories():
     assert_raises_regex(ValueError, msg, enc.fit_transform, X)
 
     # multiple columns
-    X = np.array([['a', 'b'], ['A', 'C']], dtype=object).T
-    enc = CategoricalEncoder(categories=[['a', 'b', 'c'], ['A', 'B', 'C']])
+    X = np.array([['a', 'b'], [0, 2]], dtype=object).T
+    enc = CategoricalEncoder(categories=[['a', 'b', 'c'], [0, 1, 2]])
     exp = np.array([[1., 0., 0., 1., 0., 0.],
                     [0., 1., 0., 0., 0., 1.]])
     assert_array_equal(enc.fit_transform(X).toarray(), exp)
+    assert enc.categories_[0].tolist() == ['a', 'b', 'c']
+    assert np.issubdtype(enc.categories_[0].dtype, str)
+    assert enc.categories_[1].tolist() == [0, 1, 2]
+    assert np.issubdtype(enc.categories_[1].dtype, np.integer)
 
     # when specifying categories manually, unknown categories should already
     # raise when fitting
@@ -2109,7 +2114,7 @@ def test_categorical_encoder_pandas():
     except ImportError:
         raise SkipTest("pandas is not installed")
 
-    X_df = pd.DataFrame({'A': ['a', 'b'], 'B': ['c', 'd']})
+    X_df = pd.DataFrame({'A': ['a', 'b'], 'B': [1, 2]})
 
     Xtr = check_categorical_onehot(X_df)
     assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
@@ -2138,6 +2143,64 @@ def test_categorical_encoder_ordinal_inverse():
     X_tr = enc.fit_transform(X)
     exp = np.array(X, dtype=object)
     assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+
+def test_categorical_encoder_dtypes():
+    # check that dtypes are preserved when determining categories
+    enc = CategoricalEncoder()
+    exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
+
+    X = np.array([[1, 2], [3, 4]], dtype='int64')
+    enc.fit(X)
+    assert all([enc.categories_[i].dtype == 'int64' for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
+
+    X = np.array([[1, 2], [3, 4]], dtype='float64')
+    enc.fit(X)
+    assert all([enc.categories_[i].dtype == 'float64' for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
+
+    X = np.array([['a', 'b'], ['c', 'd']])  # string dtype
+    enc.fit(X)
+    assert all([enc.categories_[i].dtype == X.dtype for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
+
+    X = np.array([[1, 'a'], [3, 'b']], dtype='object')
+    enc.fit(X)
+    assert all([enc.categories_[i].dtype == 'object' for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
+
+    X = [[1, 2], [3, 4]]
+    enc.fit(X)
+    assert all([np.issubdtype(enc.categories_[i].dtype, np.integer)
+                for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
+
+    X = [[1, 'a'], [3, 'b']]
+    enc.fit(X)
+    assert all([enc.categories_[i].dtype == 'object' for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
+
+
+def test_categorical_encoder_dtypes_pandas():
+    # check dtype (similar to test_categorical_encoder_dtypes for dataframes)
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest("pandas is not installed")
+
+    enc = CategoricalEncoder()
+    exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
+
+    X = pd.DataFrame({'A': [1, 2], 'B': [3, 4]}, dtype='int64')
+    enc.fit(X)
+    assert all([enc.categories_[i].dtype == 'int64' for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
+
+    X = pd.DataFrame({'A': [1, 2], 'B': ['a', 'b']})
+    enc.fit(X)
+    assert all([enc.categories_[i].dtype == 'object' for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
 
 
 def test_fit_cold_start():
