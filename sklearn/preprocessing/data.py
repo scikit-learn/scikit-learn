@@ -1803,16 +1803,21 @@ def add_dummy_feature(X, value=1.0):
 
 def _transform_selected(X, transform, selected="all", copy=True):
     """Apply a transform function to portion of selected features
+
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape [n_samples, n_features]
         Dense array or sparse matrix.
+
     transform : callable
         A callable transform(X) -> X_transformed
+
     copy : boolean, optional
         Copy X even if it could be avoided.
+
     selected: "all" or array of indices or mask
         Specify which features to apply the transform to.
+
     Returns
     -------
     X : array or sparse matrix, shape=(n_samples, n_features_new)
@@ -1936,8 +1941,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     --------
     sklearn.preprocessing.CategoricalEncoder : performs a one-hot or ordinal
       encoding of all features (also handles string-valued features). This
-      encoder derives the categories based on the unique values in the
-      features.
+      encoder derives the categories based on the unique values in each
+      feature.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
@@ -2606,7 +2611,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         - 'auto' : Determine categories automatically from the training data.
         - list : ``categories[i]`` holds the categories expected in the ith
-          column. The passed categories must be sorted.
+          column. The passed categories must be sorted and should not mix
+          strings and numeric values.
 
         The used categories can be found in the ``categories_`` attribute.
 
@@ -2618,7 +2624,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         present during transform (default is to raise). When this parameter
         is set to 'ignore' and an unknown category is encountered during
         transform, the resulting one-hot encoded columns for this feature
-        will be all zeros.
+        will be all zeros. In the inverse transform, an unknown category
+        will be denoted as None.
         Ignoring unknown categories is not supported for
         ``encoding='ordinal'``.
 
@@ -2630,18 +2637,23 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    Given a dataset with three features, we let the encoder find the unique
+    Given a dataset with two features, we let the encoder find the unique
     values per feature and transform the data to a binary one-hot encoding.
 
     >>> from sklearn.preprocessing import CategoricalEncoder
     >>> enc = CategoricalEncoder(handle_unknown='ignore')
-    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
-    ... # doctest: +ELLIPSIS
-    CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+    >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
+    >>> enc.fit(X)
+    CategoricalEncoder(categories='auto', dtype=<class 'numpy.float64'>,
               encoding='onehot', handle_unknown='ignore')
-    >>> enc.transform([[0, 1, 1], [1, 0, 4]]).toarray()
-    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.],
-           [ 0.,  1.,  1.,  0.,  0.,  0.,  0.,  0.,  0.]])
+    >>> enc.categories_
+    [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
+    >>> enc.transform([['Female', 1], ['Male', 4]]).toarray()
+    array([[ 1.,  0.,  1.,  0.,  0.],
+           [ 0.,  1.,  0.,  0.,  0.]])
+    >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
+    array([['Male', 1],
+           [None, 2]], dtype=object)
 
     See also
     --------
@@ -2790,6 +2802,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
     def inverse_transform(self, X):
         """Convert back the data to the original representation.
+
+        In case unknown categories are encountered (all zero's in the
+        one-hot encoding), ``None`` is used to represent this category.
 
         Parameters
         ----------

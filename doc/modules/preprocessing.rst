@@ -473,8 +473,9 @@ scikit-learn estimators, as these expect continuous input, and would interpret
 the categories as being ordered, which is often not desired (i.e. the set of
 browsers was ordered arbitrarily).
 
-One possibility to convert categorical features to features that can be used
-with scikit-learn estimators is to use a one-of-K, one-hot or dummy encoding.
+Another possibility to convert categorical features to features that can be used
+with scikit-learn estimators is to use a one-of-K, also known as one-hot or
+dummy encoding.
 This type of encoding is the default behaviour of the :class:`CategoricalEncoder`.
 The :class:`CategoricalEncoder` then transforms each categorical feature with
 ``n_categories`` possible values into ``n_categories`` binary features, with
@@ -487,21 +488,20 @@ Continuing the example above::
   >>> enc.fit(X)  # doctest: +ELLIPSIS
   CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
             encoding='onehot', handle_unknown='error')
-  >>> enc.transform([['female', 'from US', 'uses Safari']]).toarray()
-  array([[ 1.,  0.,  0.,  1.,  0.,  1.]])
+  >>> enc.transform([['female', 'from US', 'uses Safari'],
+  ...                ['male', 'from Europe', 'uses Safari']]).toarray()
+  array([[ 1.,  0.,  0.,  1.,  0.,  1.],
+         [ 0.,  1.,  1.,  0.,  0.,  1.]])
 
-By default, how many values each feature can take is inferred automatically
+By default, the values each feature can take is inferred automatically
 from the dataset and can be found in the ``categories_`` attribute::
 
     >>> enc.categories_
     [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
 
 It is possible to specify this explicitly using the parameter ``categories``.
-There are two genders, three possible continents and four web browsers in our
-dataset.
-
-Note that, if there is a possibility that the training data might have missing categorical
-features, one has to explicitly set ``categories``. For example,
+There are two genders, four possible continents and four web browsers in our
+dataset::
 
     >>> genders = ['female', 'male']
     >>> locations = ['from Africa', 'from Asia', 'from Europe', 'from US']
@@ -516,6 +516,13 @@ features, one has to explicitly set ``categories``. For example,
               handle_unknown='error')
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
+
+If there is a possibility that the training data might have missing categorical
+features, it is especially important to explicitly set ``categories`` manually.
+Alternatively, one can specify ``handle_unknown='ignore'``. In that case, when
+unknown categories are encountered during transform, no error will be raised but
+the resulting one-hot encoded columns for this feature will be all zeros
+(``handle_unknown='ignore'`` is only supported for one one-hot encoding).
 
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as scalars.
