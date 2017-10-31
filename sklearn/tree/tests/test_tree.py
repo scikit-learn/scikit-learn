@@ -1715,3 +1715,25 @@ def test_criterion_copy():
             assert_equal(typename, typename_)
             assert_equal(n_outputs, n_outputs_)
             assert_equal(n_samples, n_samples_)
+
+
+def test_32bits_arch():
+    X = np.array([[-0.3879569, 0.6894251], [-0.09322739, 1.28177189],
+                  [-0.77740357, 0.74097941], [0.91542919, -0.65453327],
+                  [-0.03852113, 0.40910479], [-0.43877303, 1.07366684],
+                  [-0.85795321, 0.82980738], [-0.18430329, 0.52328473],
+                  [-0.30126957, -0.66268378], [-0.65571327, 0.42412021],
+                  [-0.28305528, 0.30284991], [0.20246714, -0.34727125],
+                  [1.06446472, -1.09279772], [0.30543283, -0.02589502],
+                  [-0.00717161, 0.00318087]])
+    y = np.array([0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0])
+
+    train_index = [0, 1, 2, 3, 6, 7, 8, 10, 11, 12, 13, 14]
+    test_index = [4, 5, 9]
+
+    clf = DecisionTreeClassifier(random_state=0)
+    clf.fit(X[train_index], y[train_index])
+    proba = clf.predict_proba(X[test_index])
+    assert_array_equal(proba, np.array([[1., 0.],
+                                        [0., 1.],
+                                        [1., 0.]]))
