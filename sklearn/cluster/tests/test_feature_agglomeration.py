@@ -5,7 +5,6 @@ Tests for sklearn.cluster._feature_agglomeration
 import numpy as np
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_array_almost_equal
 
 
