@@ -171,9 +171,6 @@ class Imputer(BaseEstimator, TransformerMixin):
                                                    self.missing_values,
                                                    self.axis)
 
-            valid_mask = np.logical_not(np.isnan(self.statistics_))
-            self._valid_statistics_inds = np.flatnonzero(valid_mask)
-
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, axis):
@@ -347,13 +344,14 @@ class Imputer(BaseEstimator, TransformerMixin):
         invalid_mask = np.isnan(statistics)
         valid_mask = np.logical_not(invalid_mask)
         valid_statistics = statistics[valid_mask]
+        valid_statistics_indexes = np.flatnonzero(valid_mask)
         missing = np.arange(X.shape[not self.axis])[invalid_mask]
 
         if self.axis == 0 and invalid_mask.any():
             if self.verbose:
                 warnings.warn("Deleting features without "
                               "observed values: %s" % missing)
-            X = X[:, self._valid_statistics_inds]
+            X = X[:, valid_statistics_indexes]
         elif self.axis == 1 and invalid_mask.any():
             raise ValueError("Some rows only contain "
                              "missing values: %s" % missing)
@@ -724,9 +722,16 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                         strategy=self.initial_strategy,
                                         axis=0)
         X_filled = self.initial_imputer_.fit_transform(X)
-        self._val_inds = self.initial_imputer_._valid_statistics_inds
-        X = X[:, self._val_inds]
-        mask_missing_values = mask_missing_values[:, self._val_inds]
+
+        valid_mask = np.logical_not(np.isnan(
+            self.initial_imputer_.statistics_
+        ))
+        self._valid_statistics_indexes = np.flatnonzero(valid_mask)
+        X = X[:, self._valid_statistics_indexes]
+        mask_missing_values = mask_missing_values[
+                              :,
+                              self._valid_statistics_indexes
+        ]
 
         # perform imputations
         self._trained_estimator_triplets = []
@@ -798,8 +803,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         # initial imputation
         X_filled = self.initial_imputer_.transform(X)
-        X = X[:, self._val_inds]
-        mask_missing_values = mask_missing_values[:, self._val_inds]
+        X = X[:, self._valid_statistics_indexes]
+        mask_missing_values = mask_missing_values[
+                              :,
+                              self._valid_statistics_indexes
+        ]
 
         # perform imputations
         n_samples, n_features = X_filled.shape

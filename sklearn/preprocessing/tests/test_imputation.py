@@ -291,7 +291,7 @@ def test_mice_pipeline_grid_search():
                          ('tree', tree.DecisionTreeRegressor(random_state=0))])
 
     parameters = {
-        'imputer__initial_fill_method': ["mean", "median", "most_frequent"]
+        'imputer__initial_strategy': ["mean", "median", "most_frequent"]
     }
 
     l = 100
