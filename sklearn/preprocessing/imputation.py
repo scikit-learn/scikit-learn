@@ -549,8 +549,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # get posterior samples
         X_test = X_filled[:, neighbor_feat_inds][missing_row_mask]
         mus, sigmas = estimator.predict(X_test, return_std=True)
+        sigmas[np.isnan(sigmas)] = 0
         print('sigmas for MICE:', sigmas)
-        print('sigmas less than zero for MICE:', sigmas[sigmas < 0])
         imputed_values = rng.normal(
             loc=mus,
             scale=np.maximum(sigmas, min_std)
