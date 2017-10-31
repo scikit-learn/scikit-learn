@@ -25,6 +25,7 @@ from sklearn.datasets import make_friedman2
 from sklearn.datasets import make_friedman3
 from sklearn.datasets import make_low_rank_matrix
 from sklearn.datasets import make_moons
+from sklearn.datasets import make_circles
 from sklearn.datasets import make_sparse_coded_signal
 from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_spd_matrix
@@ -385,3 +386,16 @@ def test_make_moons():
         dist_sqr = ((x - center) ** 2).sum()
         assert_almost_equal(dist_sqr, 1.0,
                             err_msg="Point is not on expected unit circle")
+
+
+def test_make_circles():
+    f = 0.3
+    X, y = make_circles(7, shuffle=False, noise=None, factor=f)
+    assert_equal(X.shape, (7, 2), "X shape mismatch")
+    assert_equal(y.shape, (7,), "y shape mismatch")
+    center = [0.0, 0.0]
+    for x, label in zip(X, y):
+        dist_sqr = ((x - center) ** 2).sum()
+        dist_exp = 1.0 if label == 0 else f**2
+        assert_almost_equal(dist_sqr, dist_exp,
+                            err_msg="Point is not on expected circle")
