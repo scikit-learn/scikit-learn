@@ -154,11 +154,13 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
     >>> lmnn.fit(X_train, y_train) # doctest: +ELLIPSIS
     LargeMarginNearestNeighbor(...)
+    >>> # Fit and evaluate a simple nearest neighbor classifier for comparison
     >>> knn = KNeighborsClassifier(n_neighbors=3)
     >>> knn.fit(X_train, y_train) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
     >>> print(knn.score(X_test, y_test))
     0.933333333333
+    >>> # Now fit on the data transformed by the learned transformation
     >>> knn.fit(lmnn.transform(X_train), y_train) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
     >>> print(knn.score(lmnn.transform(X_test), y_test))
@@ -204,10 +206,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_neighbors=3, n_features_out=None, init='pca',
-                 warm_start=False, max_impostors=500000,
-                 neighbors_params=None, impostor_store='auto',
-                 max_iter=50, tol=1e-5, callback=None, store_opt_result=False,
-                 verbose=0, random_state=None, n_jobs=1):
+                 warm_start=False, max_impostors=500000, neighbors_params=None,
+                 impostor_store='auto', max_iter=50, tol=1e-5, callback=None,
+                 store_opt_result=False, verbose=0, random_state=None,
+                 n_jobs=1):
 
         # Parameters
         self.n_neighbors = n_neighbors
@@ -934,7 +936,7 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
     X_b_norm_squared = row_norms(X_b, squared=True)[np.newaxis, :]
     for chunk in gen_batches(n_samples_a, block_n_rows):
         # sklearn.metrics.pairwise.euclidean_distances function would add an
-        # extra ~8% time of computation due to input validation
+        # extra ~8% time of computation due to input validation on every chunk
         distances_ab = _euclidean_distances_without_checks(
             X_a[chunk], X_b, squared=True, Y_norm_squared=X_b_norm_squared,
             clip=False)
@@ -948,8 +950,8 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
             imp_indices.extend(ind_plus_offset)
 
             if return_distance:
-                # We only need the clipping here because we return the
-                # distances. This adds another ~8% time of computation
+                # We only need to do clipping if we return the distances.
+                # This adds another ~8% time of computation
                 distances_chunk = distances_ab.ravel()[ind]
                 # Clip only the indexed (unique) distances
                 np.maximum(distances_chunk, 0, out=distances_chunk)
@@ -1209,8 +1211,8 @@ def make_lmnn_pipeline(
         max_impostors=500000, neighbors_params=None, impostor_store='auto',
         max_iter=50, tol=1e-5, callback=None, store_opt_result=False,
         verbose=0, random_state=None, n_jobs=1, n_neighbors_predict=None,
-        weights='uniform', algorithm='auto', leaf_size=30, p=2,
-        metric='minkowski', metric_params=None, n_jobs_predict=None):
+        weights='uniform', algorithm='auto', leaf_size=30,
+        n_jobs_predict=None):
     """Constructs the trivial LMNN - KNN pipeline.
 
     Parameters
@@ -1339,20 +1341,6 @@ def make_lmnn_pipeline(
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : integer, optional (default = 2)
-        Power parameter for the Minkowski metric. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-
-    metric : string or callable, default 'minkowski'
-        the distance metric to use for the tree. The default metric is
-        minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
-        list of available metrics.
-
-    metric_params : dict, optional (default = None)
-        Additional keyword arguments for the metric function.
-
     n_jobs_predict : int, optional (default=None)
         The number of parallel jobs to run for neighbors search during
         prediction. If None (default), then the value of ``n_jobs`` is used.
@@ -1383,8 +1371,7 @@ def make_lmnn_pipeline(
 
     knn = KNeighborsClassifier(
         n_neighbors=n_neighbors_predict, weights=weights, algorithm=algorithm,
-        leaf_size=leaf_size, p=p, metric=metric, metric_params=metric_params,
-        n_jobs=n_jobs_predict)
+        leaf_size=leaf_size, n_jobs=n_jobs_predict)
 
     return Pipeline([('lmnn', lmnn), ('knn', knn)])
 
@@ -1577,8 +1564,7 @@ class LMNNClassifier(LargeMarginNearestNeighbor, KNeighborsClassifier):
                  neighbors_params=None, impostor_store='auto', max_iter=50,
                  tol=1e-5, callback=None, store_opt_result=False, verbose=0,
                  random_state=None, n_jobs=1,
-                 weights='uniform', algorithm='auto', leaf_size=30, p=2,
-                 metric='minkowski', metric_params=None):
+                 weights='uniform', algorithm='auto', leaf_size=30):
 
         LargeMarginNearestNeighbor.__init__(
             self,  n_neighbors=n_neighbors, n_features_out=n_features_out,
@@ -1590,8 +1576,7 @@ class LMNNClassifier(LargeMarginNearestNeighbor, KNeighborsClassifier):
 
         KNeighborsClassifier.__init__(
             self, n_neighbors=n_neighbors, weights=weights,
-            algorithm=algorithm, leaf_size=leaf_size, metric=metric, p=p,
-            metric_params=metric_params, n_jobs=n_jobs)
+            algorithm=algorithm, leaf_size=leaf_size, n_jobs=n_jobs)
 
     def fit(self, X, y):
         """Fit the model according to the given training data.
