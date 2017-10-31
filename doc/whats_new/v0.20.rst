@@ -40,11 +40,6 @@ Classifiers and regressors
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
-
-
-- Added :class:`neighbors.LMNNClassifier`, which performs Large Margin Nearest
-  Neighbor classification as described in Weinberger et al. (2006).
-  :issue:`8602` by :user:`John Chiotellis <johny-c>`.
   
 
 Model evaluation

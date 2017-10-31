@@ -1114,7 +1114,6 @@ Model validation
    neighbors.NearestCentroid
    neighbors.NearestNeighbors
    neighbors.LargeMarginNearestNeighbor
-   neighbors.LMNNClassifier
 
 .. autosummary::
    :toctree: generated/
