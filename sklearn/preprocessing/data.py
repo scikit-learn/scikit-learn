@@ -2644,7 +2644,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     >>> enc = CategoricalEncoder(handle_unknown='ignore')
     >>> X = [['Male', 1], ['Female', 3], ['Female', 2]]
     >>> enc.fit(X)
-    CategoricalEncoder(categories='auto', dtype=<class 'numpy.float64'>,
+    ... # doctest: +ELLIPSIS
+    CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
               encoding='onehot', handle_unknown='ignore')
     >>> enc.categories_
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
@@ -2685,8 +2686,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         Returns
         -------
         self
-        """
 
+        """
         if self.encoding not in ['onehot', 'onehot-dense', 'ordinal']:
             template = ("encoding should be either 'onehot', 'onehot-dense' "
                         "or 'ordinal', got %s")
