@@ -405,4 +405,4 @@ def test_make_circles():
     assert_equal(y.shape, (10,), "y shape mismatch")
 
     assert_equal(X[y == 0].shape, (5, 2),
-                 err_msg="Samples not correctly distributed across circles.")
+                 "Samples not correctly distributed across circles.")
