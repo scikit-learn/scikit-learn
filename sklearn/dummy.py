@@ -485,8 +485,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                         force_all_finite=False)
         n_samples = X.shape[0]
 
-        y = np.ones((n_samples, 1)) * self.constant_
-        y_std = np.zeros((n_samples, 1))
+        y = np.ones((n_samples, self.n_outputs_)) * self.constant_
+        y_std = np.zeros((n_samples, self.n_outputs_))
 
         if self.n_outputs_ == 1 and not self.output_2d_:
             y = np.ravel(y)
