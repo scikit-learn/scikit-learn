@@ -1,10 +1,11 @@
 import numpy as np
 from numpy.testing import assert_array_equal
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_raises, assert_equal
 from sklearn.datasets import load_iris, make_classification
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis, _make_masks
+from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
 
 
@@ -59,7 +60,8 @@ def test_finite_differences():
     nca = NeighborhoodComponentsAnalysis(None, init=point)
 
     X, y, init = nca._validate_params(X, y)
-    masks = _make_masks(y)
+    masks = OneHotEncoder(sparse=False,
+                          dtype=bool).fit_transform(y[:, np.newaxis])
     diffs = X[:, np.newaxis] - X[np.newaxis]
     nca.n_iter_ = 0
 

@@ -529,24 +529,3 @@ def _check_scalar(x, name, target_type, min_val=None, max_val=None):
 
     if max_val is not None and x > max_val:
         raise ValueError('`{}`= {}, must be <= {}.'.format(name, x, max_val))
-
-
-def _make_masks(y):
-    """Create one-hot encoding of vector ``y``.
-
-    Parameters
-    ----------
-    y : array, shape (n_samples,)
-        Data samples labels.
-
-    Returns
-    -------
-    masks: array, shape (n_samples, n_classes)
-        One-hot encoding of ``y``.
-    """
-    masks = OneHotEncoder(sparse=False, dtype=bool).fit_transform(y[:,
-                                                                  np.newaxis])
-    # n = y.shape[0]
-    # masks = np.zeros((n, y.max() + 1), dtype=bool)
-    # masks[np.arange(n), y] = [True]
-    return masks
