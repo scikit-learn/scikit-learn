@@ -824,6 +824,7 @@ class LassoLars(Lars):
     Lasso
     LassoCV
     LassoLarsCV
+    LassoLarsIC
     sklearn.decomposition.sparse_encode
 
     """
