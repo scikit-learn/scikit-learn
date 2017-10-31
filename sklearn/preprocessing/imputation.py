@@ -394,8 +394,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     missing_values : int or "NaN", optional (default="NaN")
-        The placeholder for the `missing values`. All occurrences of
-        missing_values will be imputed. For missing values encoded as
+        The placeholder for the missing values. All occurrences of
+        `missing_values` will be imputed. For missing values encoded as
         np.nan, use the string value "NaN".
 
     imputation_order : str, optional (default="monotone")
