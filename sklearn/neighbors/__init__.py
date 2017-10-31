@@ -14,7 +14,7 @@ from .nearest_centroid import NearestCentroid
 from .kde import KernelDensity
 from .approximate import LSHForest
 from .lof import LocalOutlierFactor
-from .nca import NeighborhoodComponentAnalysis
+from .nca import NeighborhoodComponentsAnalysis
 
 __all__ = ['BallTree',
            'DistanceMetric',
@@ -30,4 +30,4 @@ __all__ = ['BallTree',
            'KernelDensity',
            'LSHForest',
            'LocalOutlierFactor',
-           'NeighborhoodComponentAnalysis']
+           'NeighborhoodComponentsAnalysis']

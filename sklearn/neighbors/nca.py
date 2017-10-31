@@ -12,6 +12,7 @@ import sys
 import time
 from scipy.misc import logsumexp
 from scipy.optimize import minimize
+from sklearn.preprocessing import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelEncoder
@@ -22,8 +23,8 @@ from ..utils.validation import check_is_fitted, check_array, check_X_y
 from ..externals.six import integer_types
 
 
-class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
-    """Neighborhood Component Analysis
+class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
+    """Neighborhood Components Analysis
 
     Parameters
     ----------
@@ -98,16 +99,16 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
 
     Examples
     --------
-    >>> from sklearn.neighbors.nca import NeighborhoodComponentAnalysis
+    >>> from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis
     >>> from sklearn.neighbors import KNeighborsClassifier
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.model_selection import train_test_split
     >>> X, y = load_iris(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ... stratify=y, test_size=0.7, random_state=42)
-    >>> nca = NeighborhoodComponentAnalysis(None,random_state=42)
+    >>> nca = NeighborhoodComponentsAnalysis(None,random_state=42)
     >>> nca.fit(X_train, y_train) # doctest: +ELLIPSIS
-    NeighborhoodComponentAnalysis(...)
+    NeighborhoodComponentsAnalysis(...)
     >>> knn = KNeighborsClassifier(n_neighbors=3)
     >>> knn.fit(X_train, y_train) # doctest: +ELLIPSIS
     KNeighborsClassifier(...)
@@ -123,13 +124,7 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
     Neighborhood Component Analysis (NCA) is a machine learning algorithm for
     metric learning. It learns a linear transformation in a supervised fashion
     to improve the classification accuracy of a stochastic nearest neighbors
-    rule in the new space.
-
-    .. warning::
-
-        As NCA is optimizing a non-convex objective function, it will
-        likely end up in a local optimum. Several runs with independent random
-        init might be necessary to get a good convergence.
+    rule in the transformed space.
 
     References
     ----------
@@ -137,9 +132,13 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
            "Neighbourhood Components Analysis". Advances in Neural Information
            Processing Systems. 17, 513-520, 2005.
            http://www.cs.nyu.edu/~roweis/papers/ncanips.pdf
+
+    .. [2] Wikipedia entry on Neighborhood Components Analysis
+           https://en.wikipedia.org/wiki/Neighbourhood_components_analysis
+
     """
 
-    def __init__(self, n_features_out=None, init='identity', max_iter=50,
+    def __init__(self, n_features_out=None, init='pca', max_iter=50,
                  tol=1e-5, callback=None, store_opt_result=False, verbose=0,
                  random_state=None):
 
@@ -167,7 +166,7 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
         Returns
         -------
         self : object
-            returns a trained NeighborhoodComponentAnalysis model.
+            returns a trained NeighborhoodComponentsAnalysis model.
         """
 
         # Verify inputs X and y and NCA parameters, and transform a copy if
@@ -182,7 +181,8 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
 
         # Compute arrays that stay fixed during optimization:
         # mask for fast lookup of same-class samples
-        masks = _make_masks(y_valid)
+        masks = OneHotEncoder(sparse=False,
+                              dtype=bool).fit_transform(y_valid[:, np.newaxis])
         # pairwise differences
         diffs = X_valid[:, np.newaxis] - X_valid[np.newaxis]
 
@@ -193,7 +193,7 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
         disp = self.verbose - 2 if self.verbose > 1 else -1
         optimizer_params = {'method': 'L-BFGS-B',
                             'fun': self._loss_grad_lbfgs,
-                            'args': (X_valid, y_valid, diffs, masks),
+                            'args': (X_valid, y_valid, diffs, masks, -1.0),
                             'jac': True,
                             'x0': transformation,
                             'tol': self.tol,
@@ -401,7 +401,7 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
         self.n_iter_ += 1
 
     def _loss_grad_lbfgs(self, transformation, X, y, diffs,
-                         masks):
+                         masks, sign=1.0):
         """Compute the loss and the loss gradient w.r.t. ``transformation``.
 
         Parameters
@@ -448,23 +448,29 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
         gradient = np.zeros(transformation.shape)
         X_embedded = transformation.dot(X.T).T
 
-        # for every sample, compute its contribution to loss and gradient
+        # for every sample x_i, compute its contribution to loss and gradient
         for i in range(X.shape[0]):
+            # compute distances to x_i in embedded space
             diff_embedded = X_embedded[i] - X_embedded
-            sum_of_squares = np.einsum('ij,ij->i', diff_embedded,
-                                       diff_embedded)
-            sum_of_squares[i] = np.inf
-            soft = np.exp(-sum_of_squares - logsumexp(-sum_of_squares))
-            ci = masks[:, y[i]]
-            p_i_j = soft[ci]
-            not_ci = np.logical_not(ci)
+            dist_embedded = np.einsum('ij,ij->i', diff_embedded,
+                                      diff_embedded)
+            dist_embedded[i] = np.inf
+
+            # compute exponentiated distances (use the log-sum-exp trick to
+            # avoid numerical instabilities
+            exp_dist_embedded = np.exp(-dist_embedded -
+                                       logsumexp(-dist_embedded))
+            ci = masks[:, y[i]]  # samples that are in the same class as x_i
+            p_i_j = exp_dist_embedded[ci]
             diff_ci = diffs[i, ci, :]
-            diff_not_ci = diffs[i, not_ci, :]
+            diff_not_ci = diffs[i, ~ci, :]
             sum_ci = diff_ci.T.dot(
                 (p_i_j[:, np.newaxis] * diff_embedded[ci, :]))
-            sum_not_ci = diff_not_ci.T.dot((soft[not_ci][:, np.newaxis] *
-                                            diff_embedded[not_ci, :]))
-            p_i = np.sum(p_i_j)
+            sum_not_ci = diff_not_ci.T.dot((exp_dist_embedded[~ci][:,
+                                            np.newaxis] *
+                                            diff_embedded[~ci, :]))
+            p_i = np.sum(p_i_j)  # probability of x_i to be correctly
+            # classified
             gradient += 2 * (p_i * (sum_ci.T + sum_not_ci.T) - sum_ci.T)
             loss += p_i
 
@@ -475,7 +481,7 @@ class NeighborhoodComponentAnalysis(BaseEstimator, TransformerMixin):
                                     loss, t_funcall))
             sys.stdout.flush()
 
-        return - loss, - gradient.ravel()
+        return sign * loss, sign * gradient.ravel()
 
 
 ##########################
@@ -538,8 +544,9 @@ def _make_masks(y):
     masks: array, shape (n_samples, n_classes)
         One-hot encoding of ``y``.
     """
-
-    n = y.shape[0]
-    masks = np.zeros((n, y.max() + 1))
-    masks[np.arange(n), y] = [1]
-    return masks.astype(bool)
+    masks = OneHotEncoder(sparse=False, dtype=bool).fit_transform(y[:,
+                                                                  np.newaxis])
+    # n = y.shape[0]
+    # masks = np.zeros((n, y.max() + 1), dtype=bool)
+    # masks[np.arange(n), y] = [True]
+    return masks

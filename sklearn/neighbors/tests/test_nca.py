@@ -1,9 +1,10 @@
 import numpy as np
+from numpy.testing import assert_array_equal
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_raises, assert_equal
 from sklearn.datasets import load_iris, make_classification
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors.nca import NeighborhoodComponentAnalysis, _make_masks
+from sklearn.neighbors.nca import NeighborhoodComponentsAnalysis, _make_masks
 from sklearn.metrics import pairwise_distances
 
 
@@ -55,7 +56,7 @@ def test_finite_differences():
     y = random_state.randint(0, n_labels, (n_samples))
     point = random_state.randn(num_dims, n_features)
     X = random_state.randn(n_samples, n_features)
-    nca = NeighborhoodComponentAnalysis(None, init=point)
+    nca = NeighborhoodComponentsAnalysis(None, init=point)
 
     X, y, init = nca._validate_params(X, y)
     masks = _make_masks(y)
@@ -99,8 +100,8 @@ def test_simple_example():
     """
     X = np.array([[0, 0], [0, 1], [2, 0], [2, 1]])
     y = np.array([1, 0, 1, 0])
-    nca = NeighborhoodComponentAnalysis(n_features_out=2, init='identity',
-                                        random_state=42)
+    nca = NeighborhoodComponentsAnalysis(n_features_out=2, init='identity',
+                                         random_state=42)
     nca.fit(X, y)
     X_transformed = nca.transform(X)
     np.testing.assert_equal(pairwise_distances(X_transformed).argsort()[:, 1],
@@ -111,7 +112,7 @@ def test_params_validation():
     # Test that invalid parameters raise value error
     X = np.arange(12).reshape(4, 3)
     y = [1, 1, 2, 2]
-    NCA = NeighborhoodComponentAnalysis
+    NCA = NeighborhoodComponentsAnalysis
 
     # TypeError
     assert_raises(TypeError, NCA(max_iter='21').fit, X, y)
@@ -136,7 +137,8 @@ def test_transformation_dimensions():
     # Fail if transformation input dimension does not match inputs dimensions
     transformation = np.array([[1, 2], [3, 4]])
     assert_raises(ValueError,
-                  NeighborhoodComponentAnalysis(None, init=transformation).fit,
+                  NeighborhoodComponentsAnalysis(None,
+                                                 init=transformation).fit,
                   X, y)
 
     # Fail if transformation output dimension is larger than
@@ -144,12 +146,13 @@ def test_transformation_dimensions():
     transformation = np.array([[1, 2], [3, 4], [5, 6]])
     # len(transformation) > len(transformation[0])
     assert_raises(ValueError,
-                  NeighborhoodComponentAnalysis(None, init=transformation).fit,
+                  NeighborhoodComponentsAnalysis(None,
+                                                 init=transformation).fit,
                   X, y)
 
     # Pass otherwise
     transformation = np.arange(9).reshape(3, 3)
-    NeighborhoodComponentAnalysis(None, init=transformation).fit(X, y)
+    NeighborhoodComponentsAnalysis(None, init=transformation).fit(X, y)
 
 
 def test_n_features_out():
@@ -159,15 +162,15 @@ def test_n_features_out():
     transformation = np.array([[1, 2, 3], [4, 5, 6]])
 
     # n_features_out = X.shape[1] != transformation.shape[0]
-    nca = NeighborhoodComponentAnalysis(n_features_out=3, init=transformation)
+    nca = NeighborhoodComponentsAnalysis(n_features_out=3, init=transformation)
     assert_raises(ValueError, nca.fit, X, y)
 
     # n_features_out > X.shape[1]
-    nca = NeighborhoodComponentAnalysis(n_features_out=5, init=transformation)
+    nca = NeighborhoodComponentsAnalysis(n_features_out=5, init=transformation)
     assert_raises(ValueError, nca.fit, X, y)
 
     # n_features_out < X.shape[1]
-    nca = NeighborhoodComponentAnalysis(n_features_out=2, init='identity')
+    nca = NeighborhoodComponentsAnalysis(n_features_out=2, init='identity')
     nca.fit(X, y)
 
 
@@ -177,41 +180,92 @@ def test_init_transformation():
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
     # Start learning from scratch
-    nca = NeighborhoodComponentAnalysis(None, init='identity')
+    nca = NeighborhoodComponentsAnalysis(None, init='identity')
     nca.fit(X_train, y_train)
 
     # Initialize with random
-    nca_random = NeighborhoodComponentAnalysis(None, init='random')
+    nca_random = NeighborhoodComponentsAnalysis(None, init='random')
     nca_random.fit(X_train, y_train)
 
     # Initialize with PCA
-    nca_pca = NeighborhoodComponentAnalysis(None, init='pca')
+    nca_pca = NeighborhoodComponentsAnalysis(None, init='pca')
     nca_pca.fit(X_train, y_train)
 
     init = np.random.rand(X.shape[1], X.shape[1])
-    nca = NeighborhoodComponentAnalysis(None, init=init)
+    nca = NeighborhoodComponentsAnalysis(None, init=init)
     nca.fit(X_train, y_train)
 
     # init.shape[1] must match X.shape[1]
     init = np.random.rand(X.shape[1], X.shape[1] + 1)
-    nca = NeighborhoodComponentAnalysis(None, init=init)
+    nca = NeighborhoodComponentsAnalysis(None, init=init)
     assert_raises(ValueError, nca.fit, X_train, y_train)
 
     # init.shape[0] must be <= init.shape[1]
     init = np.random.rand(X.shape[1] + 1, X.shape[1])
-    nca = NeighborhoodComponentAnalysis(None, init=init)
+    nca = NeighborhoodComponentsAnalysis(None, init=init)
     assert_raises(ValueError, nca.fit, X_train, y_train)
 
     # init.shape[0] must match n_features_out
     init = np.random.rand(X.shape[1], X.shape[1])
-    nca = NeighborhoodComponentAnalysis(n_features_out=X.shape[1] - 2,
-                                        init=init)
+    nca = NeighborhoodComponentsAnalysis(n_features_out=X.shape[1] - 2,
+                                         init=init)
     assert_raises(ValueError, nca.fit, X_train, y_train)
 
 
 def test_verbose():
-    nca = NeighborhoodComponentAnalysis(None, verbose=1)
+    nca = NeighborhoodComponentsAnalysis(None, verbose=1)
     nca.fit(iris_data, iris_target)
+
+
+def test_singleton_class():
+    X = iris_data
+    y = iris_target
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y)
+
+    # one singleton class
+    singleton_class = 1
+    ind_singleton, = np.where(y_tr == singleton_class)
+    y_tr[ind_singleton] = 2
+    y_tr[ind_singleton[0]] = singleton_class
+
+    nca = NeighborhoodComponentsAnalysis(max_iter=30)
+    nca.fit(X_tr, y_tr)
+
+    # One non-singleton class
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y)
+    ind_1, = np.where(y_tr == 1)
+    ind_2, = np.where(y_tr == 2)
+    y_tr[ind_1] = 0
+    y_tr[ind_1[0]] = 1
+    y_tr[ind_2] = 0
+    y_tr[ind_2[0]] = 2
+
+    nca = NeighborhoodComponentsAnalysis(max_iter=30)
+    nca.fit(X_tr, y_tr)
+
+    # Only singleton classes
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3, stratify=y)
+    ind_0, = np.where(y_tr == 0)
+    ind_1, = np.where(y_tr == 1)
+    ind_2, = np.where(y_tr == 2)
+    X_tr = X_tr[[ind_0[0], ind_1[0], ind_2[0]]]
+    y_tr = y_tr[[ind_0[0], ind_1[0], ind_2[0]]]
+
+    nca = NeighborhoodComponentsAnalysis(init='identity', max_iter=30)
+    nca.fit(X_tr, y_tr)
+    assert_array_equal(X, nca.transform(X))
+
+
+def test_one_class():
+    X = iris_data[iris_target == 0]
+    y = iris_target[iris_target == 0]
+    X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=0.3)
+
+    nca = NeighborhoodComponentsAnalysis(max_iter=30,
+                                         n_features_out=X.shape[1],
+                                         init='identity')
+    nca.fit(X_tr, y_tr)
+    assert_array_equal(X, nca.transform(X))
 
 
 def test_callable():
@@ -219,7 +273,7 @@ def test_callable():
     y = iris_target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
-    nca = NeighborhoodComponentAnalysis(None, callback='my_cb')
+    nca = NeighborhoodComponentsAnalysis(None, callback='my_cb')
     assert_raises(ValueError, nca.fit, X_train, y_train)
 
     max_iter = 10
@@ -228,8 +282,8 @@ def test_callable():
         rem_iter = max_iter - n_iter
         print('{} iterations remaining...'.format(rem_iter))
 
-    nca = NeighborhoodComponentAnalysis(None, max_iter=max_iter,
-                                        callback=my_cb, verbose=1)
+    nca = NeighborhoodComponentsAnalysis(None, max_iter=max_iter,
+                                         callback=my_cb, verbose=1)
     nca.fit(X_train, y_train)
 
 
@@ -238,7 +292,7 @@ def test_terminate_early():
     y = iris_target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
-    nca = NeighborhoodComponentAnalysis(None, max_iter=5)
+    nca = NeighborhoodComponentsAnalysis(None, max_iter=5)
     nca.fit(X_train, y_train)
 
 
@@ -247,8 +301,8 @@ def test_store_opt_result():
     y = iris_target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
-    nca = NeighborhoodComponentAnalysis(None, max_iter=5,
-                                        store_opt_result=True)
+    nca = NeighborhoodComponentsAnalysis(None, max_iter=5,
+                                         store_opt_result=True)
     nca.fit(X_train, y_train)
     transformation = nca.opt_result_.x
     assert_equal(transformation.size, X.shape[1]**2)
