@@ -73,7 +73,7 @@ and security. Because of this,
 In order to rebuild a similar model with future versions of scikit-learn,
 additional metadata should be saved along the pickled model:
 
-* The training data, e.g. a reference to a immutable snapshot
+* The training data, e.g. a reference to an immutable snapshot
 * The python source code used to generate the model
 * The versions of scikit-learn and its dependencies
 * The cross validation score obtained on the training data
