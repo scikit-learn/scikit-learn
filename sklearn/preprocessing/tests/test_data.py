@@ -2034,8 +2034,8 @@ def test_categorical_encoder_onehot_inverse():
 
 
 def test_categorical_encoder_handle_unknown():
-    X = [[1, 2, 3], [4, 5, 6]]
-    X2 = [[7, 5, 3]]
+    X = np.array([[1, 2, 3], [4, 5, 6]])
+    X2 = np.array([[7, 5, 3]])
 
     # Test that encoder raises error for unknown features during transform.
     enc = CategoricalEncoder()
@@ -2046,8 +2046,11 @@ def test_categorical_encoder_handle_unknown():
     # With 'ignore' you get all 0's in result
     enc = CategoricalEncoder(handle_unknown='ignore')
     enc.fit(X)
-    Xtr = enc.transform(X2)
+    X2_passed = X2.copy()
+    Xtr = enc.transform(X2_passed)
     assert_allclose(Xtr.toarray(), [[0, 0, 0, 1, 1, 0]])
+    # ensure transformed data was not modified in place
+    assert_allclose(X2, X2_passed)
 
     # Invalid option
     enc = CategoricalEncoder(handle_unknown='invalid')

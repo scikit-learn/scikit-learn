@@ -2695,9 +2695,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                     raise ValueError("Unsorted categories are not yet "
                                      "supported")
 
-        X_temp = check_array(X, dtype=None, copy=True)
+        X_temp = check_array(X, dtype=None)
         if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, str):
-            X = check_array(X, dtype=np.object, copy=True)
+            X = check_array(X, dtype=np.object)
         else:
             X = X_temp
 
@@ -2738,9 +2738,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
             Transformed input.
 
         """
-        X_temp = check_array(X, dtype=None, copy=True)
+        X_temp = check_array(X, dtype=None)
         if not hasattr(X, 'dtype') and np.issubdtype(X_temp.dtype, str):
-            X = check_array(X, dtype=np.object, copy=True)
+            X = check_array(X, dtype=np.object)
         else:
             X = X_temp
 
@@ -2749,7 +2749,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
         X_mask = np.ones_like(X, dtype=np.bool)
 
         for i in range(n_features):
-            valid_mask = np.in1d(X[:, i], self.categories_[i])
+            Xi = X[:, i]
+            valid_mask = np.in1d(Xi, self.categories_[i])
 
             if not np.all(valid_mask):
                 if self.handle_unknown == 'error':
@@ -2762,8 +2763,9 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                     # continue `The rows are marked `X_mask` and will be
                     # removed later.
                     X_mask[:, i] = valid_mask
-                    X[:, i][~valid_mask] = self.categories_[i][0]
-            X_int[:, i] = self._label_encoders_[i].transform(X[:, i])
+                    Xi = Xi.copy()
+                    Xi[~valid_mask] = self.categories_[i][0]
+            X_int[:, i] = self._label_encoders_[i].transform(Xi)
 
         if self.encoding == 'ordinal':
             return X_int.astype(self.dtype, copy=False)
