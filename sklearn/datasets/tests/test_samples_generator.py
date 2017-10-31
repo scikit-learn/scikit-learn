@@ -399,3 +399,10 @@ def test_make_circles():
         dist_exp = 1.0 if label == 0 else f**2
         assert_almost_equal(dist_sqr, dist_exp,
                             err_msg="Point is not on expected circle")
+
+    X, y = make_circles(10, shuffle=False, noise=None)
+    assert_equal(X.shape, (10, 2), "X shape mismatch")
+    assert_equal(y.shape, (10,), "y shape mismatch")
+
+    assert_equal(X[y == 0].shape, (5, 2),
+                 err_msg="Samples not correctly distributed across circles.")
