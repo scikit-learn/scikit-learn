@@ -22,11 +22,6 @@ random sampling procedures.
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
 
-- Classes derived from :class:`ensemble.BaseBagging`. The attribute
-  ``estimators_samples_`` will return a list of arrays containing the indices
-  selected for each bootstrap instead of a list of arrays containing the mask
-  of the samples selected for each bootstrap.
-
 Details are listed in the changelog below.
 
 (While we are trying to better inform users by providing this information, we
@@ -193,3 +188,10 @@ Cluster
 - Deprecate ``pooling_func`` unused parameter in
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
+
+Ensemble
+
+- Classes derived from :class:`ensemble.BaseBagging`. The attribute
+  ``estimators_samples_`` will return a list of arrays containing the indices
+  selected for each bootstrap instead of a list of arrays containing the mask
+  of the samples selected for each bootstrap.
