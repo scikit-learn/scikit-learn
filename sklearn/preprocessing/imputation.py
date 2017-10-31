@@ -487,7 +487,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                             feat_idx,
                             neighbor_feat_inds,
                             estimator=None,
-                            min_std=1e-6):
+                            min_std=1e-5):
         """Imputes a single feature from the others provided.
 
         This function predicts the missing values of one of the features using
@@ -514,7 +514,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             As of now, it must support `return_std` in its ``predict`` method.
             If None, it will be fit, otherwise not.
 
-        min_std : float, optional (default=1e-6)
+        min_std : float, optional (default=1e-5)
             The smallest allowable standard deviation for the posterior
             sampling step.
 
