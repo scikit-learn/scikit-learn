@@ -50,14 +50,10 @@ def test_finite_differences():
     """
     # Initialize `transformation`, `X` and `y` and `NCA`
     random_state = check_random_state(0)
-    n_features = 10
-    num_dims = 2
-    n_samples = 100
-    n_labels = 3
-    y = random_state.randint(0, n_labels, (n_samples))
-    point = random_state.randn(num_dims, n_features)
-    X = random_state.randn(n_samples, n_features)
-    nca = NeighborhoodComponentsAnalysis(None, init=point)
+    X, y = make_classification(random_state=random_state)
+    point = random_state.randn(random_state.randint(1, X.shape[1] + 1),
+                               X.shape[1])
+    nca = NeighborhoodComponentsAnalysis(init=point)
 
     X, y, init = nca._validate_params(X, y)
     masks = OneHotEncoder(sparse=False,

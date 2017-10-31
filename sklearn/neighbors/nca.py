@@ -450,7 +450,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         # for every sample x_i, compute its contribution to loss and gradient
         for i in range(X.shape[0]):
-            # compute distances to x_i in embedded space
+            # compute squared distances to x_i in embedded space
             diff_embedded = X_embedded[i] - X_embedded
             dist_embedded = np.einsum('ij,ij->i', diff_embedded,
                                       diff_embedded)
