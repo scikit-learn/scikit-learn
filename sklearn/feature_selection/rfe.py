@@ -54,6 +54,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         information about feature importance either through a ``coef_``
         attribute or through a ``feature_importances_`` attribute.
 
+        The estimator can also have a feature_importances_ attribute as an array. 
+        This attribute is contained in ensemble estimators such as the RandomForestClassifier.  
+
     n_features_to_select : int or None (default=None)
         The number of features to select. If `None`, half of the features
         are selected.
