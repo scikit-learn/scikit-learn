@@ -124,7 +124,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError("When 'func' is not None, 'inverse_func'"
                                  " cannot be None.")
             self.transformer_ = FunctionTransformer(
-                func=self.func, inverse_func=self.inverse_func, validate=True)
+                func=self.func, inverse_func=self.inverse_func, validate=True,
+                check_inverse=self.check_inverse)
         # XXX: sample_weight is not currently passed to the
         # transformer. However, if transformer starts using sample_weight, the
         # code should be modified accordingly. At the time to consider the
