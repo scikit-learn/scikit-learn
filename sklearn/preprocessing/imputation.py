@@ -487,7 +487,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                             feat_idx,
                             neighbor_feat_inds,
                             estimator=None,
-                            min_std=1e-5):
+                            min_std=1e-6):
         """Imputes a single feature from the others provided.
 
         This function predicts the missing values of one of the features using
@@ -549,8 +549,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # get posterior samples
         X_test = X_filled[:, neighbor_feat_inds][missing_row_mask]
         mus, sigmas = estimator.predict(X_test, return_std=True)
-        sigmas = np.maximum(sigmas, min_std)
-        imputed_values = rng.normal(mus, sigmas)
+        imputed_values = rng.normal(
+            loc=mus,
+            scale=np.maximum(sigmas, min_std)
+        )
 
         # clip the values (np.clip ignores np.nans)
         imputed_values = np.clip(imputed_values,
