@@ -578,7 +578,7 @@ example using the two classes:
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ... stratify=y, test_size=0.7, random_state=42)
     >>> lmnn = LargeMarginNearestNeighbor(n_neighbors=3, random_state=42)
-    >>> lmnn.fit(X_train, y_train) # doctest: + ELLIPSIS
+    >>> lmnn.fit(X_train, y_train) # doctest: +ELLIPSIS
     >>> LargeMarginNearestNeighbor(...)
     >>> # Apply the learned transformation when using KNeighborsClassifier
     >>> knn = KNeighborsClassifier(n_neighbors=3)
