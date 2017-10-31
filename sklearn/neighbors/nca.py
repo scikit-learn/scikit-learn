@@ -106,7 +106,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
     >>> X, y = load_iris(return_X_y=True)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
     ... stratify=y, test_size=0.7, random_state=42)
-    >>> nca = NeighborhoodComponentsAnalysis(None,random_state=42)
+    >>> nca = NeighborhoodComponentsAnalysis(random_state=42)
     >>> nca.fit(X_train, y_train) # doctest: +ELLIPSIS
     NeighborhoodComponentsAnalysis(...)
     >>> knn = KNeighborsClassifier(n_neighbors=3)

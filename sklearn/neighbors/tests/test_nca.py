@@ -135,7 +135,7 @@ def test_transformation_dimensions():
     # Fail if transformation input dimension does not match inputs dimensions
     transformation = np.array([[1, 2], [3, 4]])
     assert_raises(ValueError,
-                  NeighborhoodComponentsAnalysis(None,
+                  NeighborhoodComponentsAnalysis(
                                                  init=transformation).fit,
                   X, y)
 
@@ -144,13 +144,13 @@ def test_transformation_dimensions():
     transformation = np.array([[1, 2], [3, 4], [5, 6]])
     # len(transformation) > len(transformation[0])
     assert_raises(ValueError,
-                  NeighborhoodComponentsAnalysis(None,
+                  NeighborhoodComponentsAnalysis(
                                                  init=transformation).fit,
                   X, y)
 
     # Pass otherwise
     transformation = np.arange(9).reshape(3, 3)
-    NeighborhoodComponentsAnalysis(None, init=transformation).fit(X, y)
+    NeighborhoodComponentsAnalysis(init=transformation).fit(X, y)
 
 
 def test_n_features_out():
@@ -178,29 +178,29 @@ def test_init_transformation():
     X_train, X_test, y_train, y_test = train_test_split(X, y)
 
     # Start learning from scratch
-    nca = NeighborhoodComponentsAnalysis(None, init='identity')
+    nca = NeighborhoodComponentsAnalysis(init='identity')
     nca.fit(X_train, y_train)
 
     # Initialize with random
-    nca_random = NeighborhoodComponentsAnalysis(None, init='random')
+    nca_random = NeighborhoodComponentsAnalysis(init='random')
     nca_random.fit(X_train, y_train)
 
     # Initialize with PCA
-    nca_pca = NeighborhoodComponentsAnalysis(None, init='pca')
+    nca_pca = NeighborhoodComponentsAnalysis(init='pca')
     nca_pca.fit(X_train, y_train)
 
     init = np.random.rand(X.shape[1], X.shape[1])
-    nca = NeighborhoodComponentsAnalysis(None, init=init)
+    nca = NeighborhoodComponentsAnalysis(init=init)
     nca.fit(X_train, y_train)
 
     # init.shape[1] must match X.shape[1]
     init = np.random.rand(X.shape[1], X.shape[1] + 1)
-    nca = NeighborhoodComponentsAnalysis(None, init=init)
+    nca = NeighborhoodComponentsAnalysis(init=init)
     assert_raises(ValueError, nca.fit, X_train, y_train)
 
     # init.shape[0] must be <= init.shape[1]
     init = np.random.rand(X.shape[1] + 1, X.shape[1])
-    nca = NeighborhoodComponentsAnalysis(None, init=init)
+    nca = NeighborhoodComponentsAnalysis(init=init)
     assert_raises(ValueError, nca.fit, X_train, y_train)
 
     # init.shape[0] must match n_features_out
@@ -211,7 +211,7 @@ def test_init_transformation():
 
 
 def test_verbose():
-    nca = NeighborhoodComponentsAnalysis(None, verbose=1)
+    nca = NeighborhoodComponentsAnalysis(verbose=1)
     nca.fit(iris_data, iris_target)
 
 
@@ -271,7 +271,7 @@ def test_callable():
     y = iris_target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
-    nca = NeighborhoodComponentsAnalysis(None, callback='my_cb')
+    nca = NeighborhoodComponentsAnalysis(callback='my_cb')
     assert_raises(ValueError, nca.fit, X_train, y_train)
 
     max_iter = 10
@@ -280,7 +280,7 @@ def test_callable():
         rem_iter = max_iter - n_iter
         print('{} iterations remaining...'.format(rem_iter))
 
-    nca = NeighborhoodComponentsAnalysis(None, max_iter=max_iter,
+    nca = NeighborhoodComponentsAnalysis(max_iter=max_iter,
                                          callback=my_cb, verbose=1)
     nca.fit(X_train, y_train)
 
@@ -290,7 +290,7 @@ def test_terminate_early():
     y = iris_target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
-    nca = NeighborhoodComponentsAnalysis(None, max_iter=5)
+    nca = NeighborhoodComponentsAnalysis(max_iter=5)
     nca.fit(X_train, y_train)
 
 
@@ -299,7 +299,7 @@ def test_store_opt_result():
     y = iris_target
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
 
-    nca = NeighborhoodComponentsAnalysis(None, max_iter=5,
+    nca = NeighborhoodComponentsAnalysis(max_iter=5,
                                          store_opt_result=True)
     nca.fit(X_train, y_train)
     transformation = nca.opt_result_.x
