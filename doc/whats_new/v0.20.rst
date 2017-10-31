@@ -194,4 +194,5 @@ Ensemble
 - Classes derived from :class:`ensemble.BaseBagging`. The attribute
   ``estimators_samples_`` will return a list of arrays containing the indices
   selected for each bootstrap instead of a list of arrays containing the mask
-  of the samples selected for each bootstrap.
+  of the samples selected for each bootstrap. :issue:`9524` by
+  :user:`Guillaume Lemaitre <glemaitre>`.
