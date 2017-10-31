@@ -616,6 +616,9 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     n_samples_out = n_samples // 2
     n_samples_in = n_samples - n_samples_out
 
+    n_samples_out = n_samples // 2
+    n_samples_in = n_samples - n_samples_out
+
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we set endpoint=False
     linspace_out = np.linspace(0, 2 * np.pi, n_samples_out, endpoint=False)
