@@ -181,3 +181,9 @@ Cluster
 - Deprecate ``pooling_func`` unused parameter in
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
+
+Changes to estimator checks
+---------------------------
+
+- Pairwise Estimators
+
