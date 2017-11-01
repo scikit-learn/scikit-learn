@@ -294,9 +294,10 @@ def test_mice_pipeline_grid_search():
         'imputer__initial_strategy': ["mean", "median", "most_frequent"]
     }
 
-    l = 100
-    X = sparse_random_matrix(l, l, density=0.10).toarray()
-    Y = sparse_random_matrix(l, 1, density=0.10).toarray()
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.10).toarray()
+    Y = sparse_random_matrix(n, d, density=0.10).toarray()
     gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
