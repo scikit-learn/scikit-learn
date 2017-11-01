@@ -54,12 +54,12 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         the sums of the predicted probabilities or log-odds, which is
         recommended for an ensemble of well-calibrated classifiers.
 
-    measure : str, {'probability', 'log-odd'}
-        Measure to use to calculate the probability when voting='soft'.
-        If 'probablity' corresponds to the traditional notion of averaging
-        across the probabilities of individuals classifiers, while if 'log-odd'
-        corresponds to looking at the odds of the event for each classifier
-        and averaging across their logs for all the classifiers.
+    method : str, {'arithmetic', 'geometric'} (default='arithmetic')
+        Method to use to calculate the probability when voting='soft'.
+        If 'arithmetic' corresponds to the traditional notion of averaging
+        across the probabilities of individuals classifiers, while if
+        'geometric' corresponds taking the product of all the probabilities
+        of the classifiers.
 
     weights : array-like, shape = [n_classifiers], optional (default=`None`)
         Sequence of weights (`float` or `int`) to weight the occurrences of
@@ -128,11 +128,11 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>>
     """
 
-    def __init__(self, estimators, voting='hard', measure='probability',
+    def __init__(self, estimators, voting='hard', method='arithmetic',
                  weights=None, n_jobs=1, flatten_transform=None):
         self.estimators = estimators
         self.voting = voting
-        self.measure = measure
+        self.method = method
         self.weights = weights
         self.n_jobs = n_jobs
         self.flatten_transform = flatten_transform
@@ -169,6 +169,10 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         if self.voting not in ('soft', 'hard'):
             raise ValueError("Voting must be 'soft' or 'hard'; got (voting=%r)"
                              % self.voting)
+
+        if self.method not in ('arithmetic', 'geometric'):
+            raise ValueError("Method must be 'arithmetic' or 'geometric'"
+                             "; got (method=%r)" % self.method)
 
         if self.estimators is None or len(self.estimators) == 0:
             raise AttributeError('Invalid `estimators` attribute, `estimators`'
@@ -258,9 +262,12 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
             raise AttributeError("predict_proba is not available when"
                                  " voting=%r" % self.voting)
         check_is_fitted(self, 'estimators_')
-        avg = np.average(self._collect_probas(X), axis=0,
-                         weights=self._weights_not_none)
-        return avg
+        if self.method == 'arithmetic':
+            return np.average(self._collect_probas(X), axis=0,
+                              weights=self._weights_not_none)
+        elif self.method == 'geometric':
+            return np.prod(self._collect_probas(X), axis=0)
+
 
     @property
     def predict_proba(self):
