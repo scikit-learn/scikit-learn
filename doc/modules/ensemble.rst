@@ -598,7 +598,7 @@ minimize the loss function :math:`L` given the current model
   .. math::
 
     F_m(x) = F_{m-1}(x) + \arg\min_{h} \sum_{i=1}^{n} L(y_i,
-    F_{m-1}(x_i) - h(x))
+    F_{m-1}(x_i) + h(x))
 
 The initial model :math:`F_{0}` is problem specific, for least-squares
 regression one usually chooses the mean of the target values.
@@ -614,7 +614,7 @@ loss function:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
+    F_m(x) = F_{m-1}(x) - \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
     F_{m-1}(x_i))
 
 Where the step length :math:`\gamma_m` is chosen using line search:
