@@ -119,15 +119,16 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             max_iter = self.n_iter
             self._tol = None
 
-        elif self.tol is None and self.max_iter is None and not for_partial_fit:
-            warnings.warn(
-                "max_iter and tol parameters have been added in %s in 0.19. If"
-                " both are left unset, they default to max_iter=5 and tol=None"
-                ". If tol is not None, max_iter defaults to max_iter=1000. "
-                "From 0.21, default max_iter will be 1000, "
-                "and default tol will be 1e-3." % type(self), FutureWarning)
-            # Before 0.19, default was n_iter=5
-            max_iter = 5
+        elif self.tol is None and self.max_iter is None:
+            if not for_partial_fit:
+                warnings.warn(
+                    "max_iter and tol parameters have been added in %s in 0.19. If"
+                    " both are left unset, they default to max_iter=5 and tol=None"
+                    ". If tol is not None, max_iter defaults to max_iter=1000. "
+                    "From 0.21, default max_iter will be 1000, "
+                    "and default tol will be 1e-3." % type(self), FutureWarning)
+                # Before 0.19, default was n_iter=5
+                max_iter = 5
         else:
             max_iter = self.max_iter if self.max_iter is not None else 1000
         self._max_iter = max_iter
