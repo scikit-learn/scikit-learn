@@ -82,7 +82,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     def fit(self, X, y):
         """Fit model."""
 
-    def _validate_params(self, set_max_iter=True,for_partial_fit=False):
+    def _validate_params(self, set_max_iter=True, for_partial_fit=False):
         """Validate input params. """
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
