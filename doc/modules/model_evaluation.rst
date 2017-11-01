@@ -464,22 +464,13 @@ given binary ``y_true`` and ``y_pred``:
     There is no clear consensus on the definition of a balanced accuracy for the
     multiclass setting. Here are some definitions that can be found in the literature:
 
-    * Normalized class-wise accuracy average as described in [Guyon2015]_: for multi-class
-      classification problem, each sample is assigned the class with maximum prediction value.
-      The predictions are then binarized to compute the accuracy of each class on a
-      one-vs-rest fashion. The balanced accuracy is obtained by averaging the individual
-      accuracies over all classes and then normalized by the expected value of balanced
-      accuracy for random predictions (:math:`0.5` for binary classification, :math:`1/C`
-      for C-class classification problem).
-    * Macro-average recall as described in [Mosley2013]_ and [Kelleher2015]_: the recall
-      for each class is computed independently and the average is taken over all classes.
-    * Class balanced accuracy as described in [Mosley2013]_: for each class, the number
-      of correctly predicted samples (diagonal element in the confusion matrix) is normalized
-      by the maximum value of either the total number of observations predicted to the class
-      (sum of the class' column in the confusion matrix) or the actual number
-      of observations in that class (sum of the class' row in the confusion matrix).
-      In other words, we take the minimum between the precision and the recall for each class.
-      The individual accuracies are then averaged to get the class balanced accuracy.
+    * Macro-average recall as described in [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_:
+      the recall for each class is computed independently and the average is taken over all classes.
+      In [Guyon2015]_, the macro-average recall is then adjusted to ensure that random predictions
+      have a score of :math:`0` while perfect predictions have a score of :math:`1`.
+    * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
+      and the recall for each class is computed. Those values are then averaged over the total
+      number of classes to get the balanced accuracy.
 
     Note that none of these different definitions are currently implemented within
     the :func:`balanced_accuracy_score` function. However, the macro-averaged recall
