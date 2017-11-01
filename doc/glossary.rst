@@ -442,6 +442,9 @@ Class APIs and Estimator Types
     vectorizer
         See :term:`feature extractor`.
 
+    ``Xt``
+        Shorthand for transformed ``X``.
+
 There are further APIs specifically related to a small family of estimators,
 such as:
 
@@ -791,7 +794,8 @@ non-estimator parameters with similar semantics.
         * Whether parallel processing is helpful at improving runtime depends
           on many factors, and it's usually a good idea to experiment rather
           than assuming that increasing the number of jobs is always a good
-          thing.
+          thing.  *It can be highly detrimental to performance to run multiple
+          copies of some estimators or functions in parallel.*
 
         Nested uses of ``n_jobs``-based parallelism with the same backend will
         result in an exception.
