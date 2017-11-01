@@ -1257,7 +1257,8 @@ def check_classifiers_train(name, classifier_orig):
                                        " not raise an error when the  "
                                        "shape of X in decision_function is "
                                        "not equal to (n_test_samples, "
-                                       "n_training_samples) in fit.".format(name)):
+                                       "n_training_samples) in fit."
+                                       .format(name)):
                         classifier.decision_function(X.reshape(-1, 1))
                 else:
                     with assert_raises(ValueError, msg="The classifier {} does"
@@ -1280,14 +1281,15 @@ def check_classifiers_train(name, classifier_orig):
                 with assert_raises(ValueError, msg="The classifier {} does not"
                                    " raise an error when the shape of X"
                                    "in predict_proba is not equal to "
-                                   "(n_test_samples, n_training_samples)."\
+                                   "(n_test_samples, n_training_samples)."
                                    .format(name)):
                     classifier.predict_proba(X.reshape(-1, 1))
             else:
                 with assert_raises(ValueError, msg="The classifier {} does not"
-                                   " raise an error when the number of features "
-                                   "in predict_proba is different from the number "
-                                   "of features in fit.".format(name)):
+                                   " raise an error when the number of "
+                                   "features in predict_proba is different "
+                                   "from the number of features in fit."
+                                   .format(name)):
                     classifier.predict_proba(X.T)
             if hasattr(classifier, "predict_log_proba"):
                 # predict_log_proba is a transformation of predict_proba
