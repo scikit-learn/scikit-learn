@@ -1227,7 +1227,7 @@ def check_classifiers_train(name, classifier_orig):
         # raises error on malformed input for predict
         if _is_pairwise(classifier):
             with assert_raises(ValueError, msg="The classifier {} does not"
-                               " raise an error when the number of features "
+                               " raise an error when shape of X"
                                "in predict is not equal to (n_test_samples,"
                                "n_training_samples)".format(name)):
                 classifier.predict(X.reshape(-1, 1))
@@ -1252,7 +1252,14 @@ def check_classifiers_train(name, classifier_orig):
                     assert_array_equal(np.argmax(decision, axis=1), y_pred)
 
                 # raises error on malformed input for decision_function
-                if not _is_pairwise(classifier):
+                if _is_pairwise(classifier):
+                    with assert_raises(ValueError, msg="The classifier {} does"
+                                       " not raise an error when the  "
+                                       "shape of X in decision_function is "
+                                       "not equal to (n_test_samples, "
+                                       "n_training_samples) in fit.".format(name)):
+                        classifier.decision_function(X.reshape(-1, 1))
+                else:
                     with assert_raises(ValueError, msg="The classifier {} does"
                                        " not raise an error when the number "
                                        "of features in decision_function is "
@@ -1269,11 +1276,19 @@ def check_classifiers_train(name, classifier_orig):
             # check that probas for all classes sum to one
             assert_allclose(np.sum(y_prob, axis=1), np.ones(n_samples))
             # raises error on malformed input for predict_proba
-            with assert_raises(ValueError, msg="The classifier {} does not"
-                               " raise an error when the number of features "
-                               "in predict_proba is different from the number "
-                               "of features in fit.".format(name)):
-                classifier.predict_proba(X.T)
+            if _is_pairwise(classifier_orig):
+                with assert_raises(ValueError, msg="The classifier {} does not"
+                                   " raise an error when the shape of X"
+                                   "in predict_proba is not equal to "
+                                   "(n_test_samples, n_training_samples)."\
+                                   .format(name)):
+                    classifier.predict_proba(X.reshape(-1, 1))
+            else:
+                with assert_raises(ValueError, msg="The classifier {} does not"
+                                   " raise an error when the number of features "
+                                   "in predict_proba is different from the number "
+                                   "of features in fit.".format(name)):
+                    classifier.predict_proba(X.T)
             if hasattr(classifier, "predict_log_proba"):
                 # predict_log_proba is a transformation of predict_proba
                 y_log_prob = classifier.predict_log_proba(X)
