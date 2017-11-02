@@ -1035,8 +1035,8 @@ def check_clustering(name, clusterer_orig):
     # with lists
     clusterer.fit(X.tolist())
 
-    assert_equal(clusterer.labels_.shape, (n_samples,))
     pred = clusterer.labels_
+    assert_equal(pred.shape, (n_samples,))
     assert_greater(adjusted_rand_score(pred, y), 0.4)
     # fit another time with ``fit_predict`` and compare results
     if name == 'SpectralClustering':
@@ -1046,6 +1046,30 @@ def check_clustering(name, clusterer_orig):
     with warnings.catch_warnings(record=True):
         pred2 = clusterer.fit_predict(X)
     assert_array_equal(pred, pred2)
+
+    # fit_predict(X) and labels_ should be of type int
+    assert_in(pred.dtype, [np.dtype('int32'), np.dtype('int64')])
+    assert_in(pred2.dtype, [np.dtype('int32'), np.dtype('int64')])
+
+    # Add noise to X to test the possible values of the labels
+    rng = np.random.RandomState(7)
+    X_noise = np.concatenate([X, rng.uniform(low=-3, high=3, size=(5, 2))])
+    labels = clusterer.fit_predict(X_noise)
+
+    # There should be at least one sample in every cluster. Equivalently
+    # labels_ should contain all the consecutive values between its
+    # min and its max.
+    labels_sorted = np.unique(labels)
+    assert_array_equal(labels_sorted, np.arange(labels_sorted[0],
+                                                labels_sorted[-1] + 1))
+
+    # Labels are expected to start at 0 (no noise) or -1 (if noise)
+    assert_true(labels_sorted[0] in [0, -1])
+    # Labels should be less than n_clusters - 1
+    if hasattr(clusterer, 'n_clusters'):
+        n_clusters = getattr(clusterer, 'n_clusters')
+        assert_greater_equal(n_clusters - 1, labels_sorted[-1])
+    # else labels should be less than max(labels_) which is necessarily true
 
 
 @ignore_warnings(category=DeprecationWarning)
@@ -1281,7 +1305,7 @@ def check_classifiers_classes(name, classifier_orig):
 
         classes = np.unique(y_)
         classifier = clone(classifier_orig)
-        if name in ['BernoulliNB', 'ComplementNB']:
+        if name == 'BernoulliNB':
             X = X > X.mean()
         set_random_state(classifier)
         # fit
@@ -1289,7 +1313,9 @@ def check_classifiers_classes(name, classifier_orig):
 
         y_pred = classifier.predict(X)
         # training set performance
-        assert_array_equal(np.unique(y_), np.unique(y_pred))
+        if name != "ComplementNB":
+            # This is a pathological data set for ComplementNB.
+            assert_array_equal(np.unique(y_), np.unique(y_pred))
         if np.any(classifier.classes_ != classes):
             print("Unexpected classes_ attribute for %r: "
                   "expected %s, got %s" %
