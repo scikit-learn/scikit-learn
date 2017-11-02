@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
@@ -389,6 +390,15 @@ def test_pca_validation():
                                     .format(n_components, smallest_d),
                                     PCA(n_components, svd_solver=solver)
                                     .fit, data)
+
+        n_components = 1.0
+        type_ncom = type(n_components)
+        assert_raise_message(ValueError,
+                             "n_components={} must be of type int "
+                             "when greater than or equal to 1, was of type={}"
+                             .format(n_components, type_ncom),
+                             PCA(n_components, svd_solver=solver).fit, data)
+
 
 
 def test_n_components_none():
