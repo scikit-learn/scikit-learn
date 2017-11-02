@@ -45,7 +45,7 @@ class AgglomerationTransform(TransformerMixin):
         if len(self.labels_) != X.shape[1]:
             raise ValueError("X has a different number of features than "
                              "during fitting.")
-        if (pooling_func == np.mean) & (not issparse(X)):
+        if pooling_func == np.mean and not issparse(X):
             size = np.bincount(self.labels_)
             n_samples = X.shape[0]
             # a fast way to compute the mean of grouped features
