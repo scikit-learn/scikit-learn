@@ -1256,8 +1256,8 @@ class SGDRegressor(BaseSGDRegressor):
         The learning rate schedule:
 
         - 'constant': eta = eta0
-        - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
-        - 'invscaling': eta = eta0 / pow(t, power_t)
+        - 'optimal': eta = 1.0 / (alpha * (t + t0))
+        - 'invscaling': eta = eta0 / pow(t, power_t) [default]
 
         where t0 is chosen by a heuristic proposed by Leon Bottou.
 
