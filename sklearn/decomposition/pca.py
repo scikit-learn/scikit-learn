@@ -11,6 +11,7 @@
 # License: BSD 3 clause
 
 from math import log, sqrt
+import numbers
 
 import numpy as np
 from scipy import linalg
@@ -421,6 +422,12 @@ class PCA(_BasePCA):
                              "min(n_samples, n_features)=%r with "
                              "svd_solver='full'"
                              % (n_components, min(n_samples, n_features)))
+        elif n_components >= 1:
+            if not isinstance(n_components, (numbers.Integral, np.integer)):
+                raise ValueError("n_components=%r must be of type int "
+                                 "when greater than or equal to 1, "
+                                 "was of type=%r"
+                                 % (n_components, type(n_components)))
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -481,6 +488,10 @@ class PCA(_BasePCA):
                              "svd_solver='%s'"
                              % (n_components, min(n_samples, n_features),
                                 svd_solver))
+        elif not isinstance(n_components, (numbers.Integral, np.integer)):
+            raise ValueError("n_components=%r must be of type int "
+                             "when greater than or equal to 1, was of type=%r"
+                             % (n_components, type(n_components)))
         elif svd_solver == 'arpack' and n_components == min(n_samples,
                                                             n_features):
             raise ValueError("n_components=%r must be strictly less than "
