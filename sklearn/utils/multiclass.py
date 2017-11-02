@@ -243,6 +243,10 @@ def type_of_target(y):
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
 
+    sparseseries = (y.__class__.__name__ == 'SparseSeries')
+    if sparseseries:
+        raise ValueError("y cannot be class 'SparseSeries'.")
+
     if is_multilabel(y):
         return 'multilabel-indicator'
 
