@@ -34,7 +34,7 @@ with different biases per method:
 
 .. currentmodule:: sklearn.naive_bayes
 
-*  :class:`GaussianNB` tends to push probabilties to 0 or 1 (note the
+*  :class:`GaussianNB` tends to push probabilities to 0 or 1 (note the
    counts in the histograms). This is mainly because it makes the assumption
    that features are conditionally independent given the class, which is not
    the case in this dataset which contains 2 redundant features.
@@ -59,7 +59,7 @@ with different biases per method:
    relatively high variance due to feature subsetting." As a result, the
    calibration curve also referred to as the reliability diagram (Wilks 1995 [5]_) shows a
    characteristic sigmoid shape, indicating that the classifier could trust its
-   "intuition" more and return probabilties closer to 0 or 1 typically.
+   "intuition" more and return probabilities closer to 0 or 1 typically.
 
 .. currentmodule:: sklearn.svm
 
