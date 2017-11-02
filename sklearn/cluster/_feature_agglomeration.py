@@ -10,6 +10,7 @@ import numpy as np
 from ..base import TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
+from scipy.sparse import issparse
 
 ###############################################################################
 # Mixin class for feature agglomeration.
@@ -44,7 +45,7 @@ class AgglomerationTransform(TransformerMixin):
         if len(self.labels_) != X.shape[1]:
             raise ValueError("X has a different number of features than "
                              "during fitting.")
-        if pooling_func == np.mean:
+        if (pooling_func == np.mean) & (not issparse(X)):
             size = np.bincount(self.labels_)
             n_samples = X.shape[0]
             # a fast way to compute the mean of grouped features
