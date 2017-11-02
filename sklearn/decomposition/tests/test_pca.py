@@ -400,7 +400,6 @@ def test_pca_validation():
                              PCA(n_components, svd_solver=solver).fit, data)
 
 
-
 def test_n_components_none():
     # Ensures that n_components == None is handled correctly
     X = iris.data
