@@ -42,6 +42,8 @@ Functions
    :template: function.rst
 
    base.clone
+   base.is_classifier
+   base.is_regressor
    config_context
    get_config
    set_config
