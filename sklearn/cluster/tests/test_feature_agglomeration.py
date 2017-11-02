@@ -10,7 +10,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 
 def test_feature_agglomeration():
     n_clusters = 1
-    X = np.array([0, 0, 1], ndmin=2)  # (n_samples, n_features)
+    X = np.array([0, 0, 1]).reshape(1, 3)  # (n_samples, n_features)
 
     agglo_mean = FeatureAgglomeration(n_clusters=n_clusters,
                                       pooling_func=np.mean)
@@ -20,12 +20,16 @@ def test_feature_agglomeration():
     agglo_median.fit(X)
     assert_true(np.size(np.unique(agglo_mean.labels_)) == n_clusters)
     assert_true(np.size(np.unique(agglo_median.labels_)) == n_clusters)
+    assert_true(np.size(agglo_mean.labels_) == X.shape[1])
+    assert_true(np.size(agglo_median.labels_) == X.shape[1])
 
     # Test transform
     Xt_mean = agglo_mean.transform(X)
     Xt_median = agglo_median.transform(X)
     assert_true(Xt_mean.shape[1] == n_clusters)
     assert_true(Xt_median.shape[1] == n_clusters)
+    assert_true(Xt_mean == np.array([1/3.]))
+    assert_true(Xt_median == np.array([0.]))
 
     # Test inverse transform
     X_full_mean = agglo_mean.inverse_transform(Xt_mean)
