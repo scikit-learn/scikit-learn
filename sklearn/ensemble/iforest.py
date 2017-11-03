@@ -11,16 +11,14 @@ from sklearn.utils.fixes import euler_gamma
 
 from scipy.sparse import issparse
 
-import numbers
 from ..externals import six
 from ..tree import ExtraTreeRegressor
 from ..utils import check_random_state, check_array
+from ..utils.validation import SCALAR_INTEGER_TYPES
 
 from .bagging import BaseBagging
 
 __all__ = ["IsolationForest"]
-
-INTEGER_TYPES = (numbers.Integral, np.integer)
 
 
 class IsolationForest(BaseBagging):
@@ -179,7 +177,7 @@ class IsolationForest(BaseBagging):
                                  'Valid choices are: "auto", int or'
                                  'float' % self.max_samples)
 
-        elif isinstance(self.max_samples, INTEGER_TYPES):
+        elif isinstance(self.max_samples, SCALAR_INTEGER_TYPES):
             if self.max_samples > n_samples:
                 warn("max_samples (%s) is greater than the "
                      "total number of samples (%s). max_samples "
@@ -302,7 +300,7 @@ def _average_path_length(n_samples_leaf):
     average_path_length : array, same shape as n_samples_leaf
 
     """
-    if isinstance(n_samples_leaf, INTEGER_TYPES):
+    if isinstance(n_samples_leaf, SCALAR_INTEGER_TYPES):
         if n_samples_leaf <= 1:
             return 1.
         else:

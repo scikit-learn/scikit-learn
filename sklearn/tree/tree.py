@@ -17,7 +17,6 @@ randomized trees. Single and multi-output problems are both handled.
 from __future__ import division
 
 
-import numbers
 import warnings
 from abc import ABCMeta
 from abc import abstractmethod
@@ -35,7 +34,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, SCALAR_INTEGER_TYPES
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -173,7 +172,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         max_leaf_nodes = (-1 if self.max_leaf_nodes is None
                           else self.max_leaf_nodes)
 
-        if isinstance(self.min_samples_leaf, (numbers.Integral, np.integer)):
+        if isinstance(self.min_samples_leaf, SCALAR_INTEGER_TYPES):
             if not 1 <= self.min_samples_leaf:
                 raise ValueError("min_samples_leaf must be at least 1 "
                                  "or in (0, 0.5], got %s"
@@ -186,7 +185,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  % self.min_samples_leaf)
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
-        if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
+        if isinstance(self.min_samples_split, SCALAR_INTEGER_TYPES):
             if not 2 <= self.min_samples_split:
                 raise ValueError("min_samples_split must be an integer "
                                  "greater than 1 or a float in (0.0, 1.0]; "
@@ -220,7 +219,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
                     'values are "auto", "sqrt" or "log2".')
         elif self.max_features is None:
             max_features = self.n_features_
-        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
+        elif isinstance(self.max_features, SCALAR_INTEGER_TYPES):
             max_features = self.max_features
         else:  # float
             if self.max_features > 0.0:
@@ -240,7 +239,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("max_depth must be greater than zero. ")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
-        if not isinstance(max_leaf_nodes, (numbers.Integral, np.integer)):
+        if not isinstance(max_leaf_nodes, SCALAR_INTEGER_TYPES):
             raise ValueError("max_leaf_nodes must be integral number but was "
                              "%r" % max_leaf_nodes)
         if -1 < max_leaf_nodes < 2:

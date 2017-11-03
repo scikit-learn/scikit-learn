@@ -6,12 +6,12 @@ Base class for ensemble-based estimators.
 # License: BSD 3 clause
 
 import numpy as np
-import numbers
 
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..utils import _get_n_jobs, check_random_state
+from ..utils.validation import SCALAR_INTEGER_TYPES
 from ..externals import six
 from abc import ABCMeta, abstractmethod
 
@@ -100,7 +100,7 @@ class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
     def _validate_estimator(self, default=None):
         """Check the estimator and the n_estimator attribute, set the
         `base_estimator_` attribute."""
-        if not isinstance(self.n_estimators, (numbers.Integral, np.integer)):
+        if not isinstance(self.n_estimators, SCALAR_INTEGER_TYPES):
             raise ValueError("n_estimators must be an integer, "
                              "got {0}.".format(type(self.n_estimators)))
 

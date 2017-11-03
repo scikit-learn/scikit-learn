@@ -24,7 +24,7 @@ from ..exceptions import DataConversionWarning
 from ..externals.joblib import Memory
 
 
-integer_types = (numbers.Integral, np.integer)
+SCALAR_INTEGER_TYPES = (numbers.Integral, np.integer)
 floating_types = (float, np.floating)
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
@@ -662,7 +662,7 @@ def check_random_state(seed):
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
-    if isinstance(seed, (numbers.Integral, np.integer)):
+    if isinstance(seed, SCALAR_INTEGER_TYPES):
         return np.random.RandomState(seed)
     if isinstance(seed, np.random.RandomState):
         return seed

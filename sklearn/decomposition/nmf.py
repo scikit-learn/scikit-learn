@@ -22,12 +22,11 @@ from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.extmath import safe_min
 from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import SCALAR_INTEGER_TYPES
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
 
 EPSILON = np.finfo(np.float32).eps
-
-INTEGER_TYPES = (numbers.Integral, np.integer)
 
 
 def norm(x):
@@ -984,10 +983,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     if n_components is None:
         n_components = n_features
 
-    if not isinstance(n_components, INTEGER_TYPES) or n_components <= 0:
+    if not isinstance(n_components, SCALAR_INTEGER_TYPES) or n_components <= 0:
         raise ValueError("Number of components must be a positive integer;"
                          " got (n_components=%r)" % n_components)
-    if not isinstance(max_iter, INTEGER_TYPES) or max_iter < 0:
+    if not isinstance(max_iter, SCALAR_INTEGER_TYPES) or max_iter < 0:
         raise ValueError("Maximum number of iterations must be a positive "
                          "integer; got (max_iter=%r)" % max_iter)
     if not isinstance(tol, numbers.Number) or tol < 0:

@@ -11,7 +11,6 @@
 # License: BSD 3 clause
 
 from math import log, sqrt
-import numbers
 
 import numpy as np
 from scipy import linalg
@@ -28,7 +27,7 @@ from ..utils import check_random_state, as_float_array
 from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, SCALAR_INTEGER_TYPES
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -423,7 +422,7 @@ class PCA(_BasePCA):
                              "svd_solver='full'"
                              % (n_components, min(n_samples, n_features)))
         elif n_components >= 1:
-            if not isinstance(n_components, (numbers.Integral, np.integer)):
+            if not isinstance(n_components, SCALAR_INTEGER_TYPES):
                 raise ValueError("n_components=%r must be of type int "
                                  "when greater than or equal to 1, "
                                  "was of type=%r"
@@ -488,7 +487,7 @@ class PCA(_BasePCA):
                              "svd_solver='%s'"
                              % (n_components, min(n_samples, n_features),
                                 svd_solver))
-        elif not isinstance(n_components, (numbers.Integral, np.integer)):
+        elif not isinstance(n_components, SCALAR_INTEGER_TYPES):
             raise ValueError("n_components=%r must be of type int "
                              "when greater than or equal to 1, was of type=%r"
                              % (n_components, type(n_components)))

@@ -35,7 +35,6 @@ from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
 from ._gradient_boosting import _random_sample_mask
 
-import numbers
 import numpy as np
 
 from scipy import stats
@@ -59,6 +58,7 @@ from ..utils import deprecated
 from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
+from ..utils.validation import SCALAR_INTEGER_TYPES
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
 
@@ -870,7 +870,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                  "or 'log2'." % self.max_features)
         elif self.max_features is None:
             max_features = self.n_features_
-        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
+        elif isinstance(self.max_features, SCALAR_INTEGER_TYPES):
             max_features = self.max_features
         else:  # float
             if 0. < self.max_features <= 1.:
@@ -881,8 +881,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         self.max_features_ = max_features
 
-        if not isinstance(self.n_iter_no_change,
-                          (numbers.Integral, np.integer, type(None))):
+        if not (isinstance(self.n_iter_no_change, SCALAR_INTEGER_TYPES) or
+                self.n_iter_no_change is None):
             raise ValueError("n_iter_no_change should either be None or an "
                              "integer. %r was passed"
                              % self.n_iter_no_change)

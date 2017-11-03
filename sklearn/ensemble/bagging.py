@@ -6,7 +6,6 @@
 from __future__ import division
 
 import itertools
-import numbers
 import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
@@ -20,6 +19,7 @@ from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_X_y, check_array, column_or_1d
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted
+from ..utils.validation import SCALAR_INTEGER_TYPES
 from ..utils import indices_to_mask, check_consistent_length
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
@@ -299,7 +299,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         # Validate max_samples
         if max_samples is None:
             max_samples = self.max_samples
-        elif not isinstance(max_samples, (numbers.Integral, np.integer)):
+        elif not isinstance(max_samples, SCALAR_INTEGER_TYPES):
             max_samples = int(max_samples * X.shape[0])
 
         if not (0 < max_samples <= X.shape[0]):
@@ -309,7 +309,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         self._max_samples = max_samples
 
         # Validate max_features
-        if isinstance(self.max_features, (numbers.Integral, np.integer)):
+        if isinstance(self.max_features, SCALAR_INTEGER_TYPES):
             max_features = self.max_features
         else:  # float
             max_features = int(self.max_features * self.n_features_)
