@@ -83,7 +83,7 @@ X2_train = layer0.fit_transform(X_train, y_train)
 
 combiner = LogisticRegression(random_state=RANDOM_SEED)
 final_classifier = Pipeline([('layer0', layer0),
-                            ('layer1', combiner)])
+                             ('layer1', combiner)])
 
 plot_model('Stacked classifiers', final_classifier, SUBPLOT_Y)
 
