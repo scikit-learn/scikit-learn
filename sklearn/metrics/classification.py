@@ -1451,8 +1451,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     digits : int
         Number of digits for formatting output floating point values
 
-    average : string, ['weighted' (default), 'binary', 'micro', 'macro', 'samples']
-        Determines the type of averaging performed on the data, after reporting the individual results per class:
+    average : string, ['weighted' (default), 'binary', 'micro', 'macro',
+                       'samples']
+        Determines the type of averaging performed on the data, after
+        reporting the individual results per class:
 
         ``'binary'``:
             Only report results for the class specified by ``pos_label``.
@@ -1476,10 +1478,12 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     Returns
     -------
     report : string
-        Text summary of the precision, recall, F1 score for each class, including averages across classes.
+        Text summary of the precision, recall, F1 score for each class,
+        including averages across classes.
 
-        Unless specified otherwise, the reported averages are a prevalence-weighted macro-average across
-        classes (equivalent to :func:`precision_recall_fscore_support` with ``average='weighted'``).
+        Unless specified otherwise, the reported averages are a
+        prevalence-weighted macro-average across classes (equivalent to
+        :func:`precision_recall_fscore_support` with ``average='weighted'``).
 
         Note that in binary classification, recall of the positive class
         is also known as "sensitivity"; recall of the negative class is
@@ -1544,10 +1548,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     report += u'\n'
 
     # compute averages with specified averaging method
-    avg_p, avg_r, avg_f1, unused_s = precision_recall_fscore_support(y_true, y_pred,
-                                                                     labels=labels,
-                                                                     average=average,
-                                                                     sample_weight=sample_weight)
+    avg_p, avg_r, avg_f1, unused_s = \
+        precision_recall_fscore_support(y_true, y_pred, labels=labels,
+                                        average=average,
+                                        sample_weight=sample_weight)
 
     report += row_fmt.format(last_line_heading,
                              avg_p,
