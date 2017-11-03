@@ -278,7 +278,8 @@ class IsolationForest(BaseBagging):
 
         depths += _average_path_length(n_samples_leaf)
 
-        scores = 2 ** (-depths.mean(axis=1) / _average_path_length(self.max_samples_))
+        scores = 2 ** (-depths.mean(axis=1) /
+                       _average_path_length(self.max_samples_))
 
         # Take the opposite of the scores as bigger is better (here less
         # abnormal) and add 0.5 (this value plays a special role as described
