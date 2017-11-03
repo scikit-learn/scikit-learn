@@ -578,7 +578,6 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
         n_classes_ = self.n_classes_
-        classes_ = self.classes_
 
         predictions = np.zeros((n_samples, n_classes_))
 
