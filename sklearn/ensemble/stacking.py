@@ -85,6 +85,10 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
     def transform(self, *args, **kwargs):
         """Transform dataset.
 
+        Note that, unlike ``fit_transform()``, this won't return the cross
+        validation predictions. See the :ref:`User Guide <ensemble>` for more
+        info.
+
         Parameters
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
@@ -96,6 +100,7 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         -------
         X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
+
         """
         t = getattr(self.base_estimator, self._method_name())
         preds = t(*args, **kwargs)
@@ -107,6 +112,10 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
 
     def fit_transform(self, X, y, **fit_params):
         """Fit estimator and transform dataset.
+
+        Note that this behavior is different from ``fit().transform()`` as it
+        will return the cross validation predictions instead.. See the
+        :ref:`User Guide <ensemble>` for more info.
 
         Parameters
         ----------
