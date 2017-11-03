@@ -585,7 +585,8 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     Parameters
     ----------
     n_samples : int, optional (default=100)
-        The total number of points generated.
+        The total number of points generated. If odd, the inner circle will
+        have one point more than the outer circle.
 
     shuffle : bool, optional (default=True)
         Whether to shuffle the samples.
@@ -599,7 +600,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    factor : double < 1 (default=.8)
+    factor : 0 < double < 1 (default=.8)
         Scale factor between inner and outer circle.
 
     Returns
@@ -611,7 +612,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
         The integer labels (0 or 1) for class membership of each sample.
     """
 
-    if factor > 1 or factor < 0:
+    if factor >= 1 or factor < 0:
         raise ValueError("'factor' has to be between 0 and 1.")
 
     n_samples_out = n_samples // 2

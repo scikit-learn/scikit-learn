@@ -400,9 +400,10 @@ def test_make_circles():
         assert_almost_equal(dist_sqr, dist_exp,
                             err_msg="Point is not on expected circle")
 
-    X, y = make_circles(10, shuffle=False, noise=None)
-    assert_equal(X.shape, (10, 2), "X shape mismatch")
-    assert_equal(y.shape, (10,), "y shape mismatch")
-
-    assert_equal(X[y == 0].shape, (5, 2),
+    assert_equal(X[y == 0].shape, (3, 2),
                  "Samples not correctly distributed across circles.")
+    assert_equal(X[y == 1].shape, (4, 2),
+                 "Samples not correctly distributed across circles.")
+
+    assert_raises(ValueError, make_circles, factor=-0.01)
+    assert_raises(ValueError, make_circles, factor=1.)
