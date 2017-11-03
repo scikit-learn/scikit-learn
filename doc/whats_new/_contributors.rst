@@ -141,3 +141,5 @@
 .. _Neeraj Gangwar: http://neerajgangwar.in
 
 .. _Arthur Mensch: https://amensch.fr
+
+.. _Christian Braune: https://github.com/christianbraune79
