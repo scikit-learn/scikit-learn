@@ -3,7 +3,6 @@
 # List all available versions of the documentation
 
 from urllib.request import urlopen
-import sys
 import json
 import re
 
