@@ -23,9 +23,9 @@ def human_readable_data_quantity(quantity, multiple=1024):
     for suffix in SUFFIXES:
         if quantity < multiple or suffix == SUFFIXES[-1]:
             if suffix == SUFFIXES[0]:
-                return "%d%s" % (quantity, suffix)
+                return "%d %s" % (quantity, suffix)
             else:
-                return "%.1f%s" % (quantity, suffix)
+                return "%.1f %s" % (quantity, suffix)
         else:
             quantity /= multiple
 
@@ -47,20 +47,18 @@ print()
 ROOT_URL = 'https://api.github.com/repos/scikit-learn/scikit-learn.github.io/contents/'  # noqa
 RAW_FMT = 'https://raw.githubusercontent.com/scikit-learn/scikit-learn.github.io/master/%s/documentation.html'  # noqa
 VERSION_RE = re.compile(r"\bVERSION:\s*'([^']+)'")
+NAMED_DIRS = ['dev', 'stable']
 
-
+# Gather data for each version directory, including symlinks
 dirs = {}
 symlinks = {}
-
 root_listing = json_urlread(ROOT_URL)
 for path_details in root_listing:
     name = path_details['name']
+    if not (name[:1].isdigit() or name in NAMED_DIRS):
+        continue
     if path_details['type'] == 'dir':
-        try:
-            html = urlopen(RAW_FMT % name).read().decode('utf8')
-        except Exception:
-            print('Failed to fetch %s' % (RAW_FMT % name), file=sys.stderr)
-            continue
+        html = urlopen(RAW_FMT % name).read().decode('utf8')
         version_num = VERSION_RE.search(html).group(1)
         pdf_size = get_pdf_size(name)
         dirs[name] = (version_num, pdf_size)
@@ -69,20 +67,19 @@ for path_details in root_listing:
         symlinks[name] = json_urlread(path_details['_links']['self'])['target']
 
 
+# Symlinks should have same data as target
 for src, dst in symlinks.items():
     if dst in dirs:
         dirs[src] = dirs[dst]
 
-
-digit_names = [k for k in dirs if k[:1].isdigit()]
-word_names = [k for k in dirs if not k[:1].isdigit()]
-
-
+# Output in order: dev, stable, decreasing other version
 seen = set()
-for name in (sorted(word_names) +
-             sorted(digit_names, key=LooseVersion, reverse=True)):
+for name in (NAMED_DIRS +
+             sorted((k for k in dirs if k[:1].isdigit()),
+                    key=LooseVersion, reverse=True)):
     version_num, pdf_size = dirs[name]
     if version_num in seen:
+        # symlink came first
         continue
     else:
         seen.add(version_num)
