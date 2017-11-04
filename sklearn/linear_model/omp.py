@@ -91,7 +91,6 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
         # old scipy, we need the garbage upper triangle to be non-Inf
         L = np.zeros((max_features, max_features), dtype=X.dtype)
 
-    L[0, 0] = 1.
     if return_path:
         coefs = np.empty_like(L)
 
@@ -101,6 +100,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
             # atom already selected or inner product too small
             warnings.warn(premature, RuntimeWarning, stacklevel=2)
             break
+
         if n_active > 0:
             # Updates the Cholesky decomposition of X' X
             L[n_active, :n_active] = np.dot(X[:, :n_active].T, X[:, lam])
@@ -110,17 +110,23 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
                                     overwrite_b=True,
                                     **solve_triangular_args)
             v = nrm2(L[n_active, :n_active]) ** 2
-            if 1 - v <= min_float:  # selected atoms are dependent
+            Lkk = linalg.norm(X[:, lam]) ** 2 - v
+            if Lkk <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=2)
                 break
-            L[n_active, n_active] = np.sqrt(1 - v)
+            L[n_active, n_active] = np.sqrt(Lkk)
+        else:
+            L[0, 0] = linalg.norm(X[:, lam])
+
         X.T[n_active], X.T[lam] = swap(X.T[n_active], X.T[lam])
         alpha[n_active], alpha[lam] = alpha[lam], alpha[n_active]
         indices[n_active], indices[lam] = indices[lam], indices[n_active]
         n_active += 1
-        # solves LL'x = y as a composition of two triangular systems
+
+        # solves LL'x = X'y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], alpha[:n_active], lower=True,
                          overwrite_b=False)
+
         if return_path:
             coefs[:n_active, n_active - 1] = gamma
         residual = y - np.dot(X[:, :n_active], gamma)
