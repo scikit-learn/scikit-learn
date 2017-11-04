@@ -28,7 +28,7 @@ def test_feature_agglomeration():
     Xt_median = agglo_median.transform(X)
     assert_true(Xt_mean.shape[1] == n_clusters)
     assert_true(Xt_median.shape[1] == n_clusters)
-    assert_true(Xt_mean == np.array([1/3.]))
+    assert_true(Xt_mean == np.array([1 / 3.]))
     assert_true(Xt_median == np.array([0.]))
 
     # Test inverse transform
