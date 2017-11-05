@@ -160,6 +160,8 @@ Classes
    covariance.EllipticEnvelope
    covariance.GraphLasso
    covariance.GraphLassoCV
+   covariance.GraphicalLasso
+   covariance.GraphicalLassoCV
    covariance.LedoitWolf
    covariance.MinCovDet
    covariance.OAS
@@ -171,6 +173,7 @@ Classes
 
    covariance.empirical_covariance
    covariance.graph_lasso
+   covariance.graphical_lasso
    covariance.ledoit_wolf
    covariance.oas
    covariance.shrunk_covariance
