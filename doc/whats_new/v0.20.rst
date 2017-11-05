@@ -185,5 +185,6 @@ Cluster
 Changes to estimator checks
 ---------------------------
 
-- Pairwise Estimators
-
+- Allow tests in :func:`estimator_checks.check_estimator` to test functions
+  that accept pairwise data.
+  :issue:`9701` by :user:`Andreas Mueller <amueller>`
