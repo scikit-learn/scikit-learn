@@ -22,6 +22,9 @@ from sklearn.datasets import make_sparse_coded_signal
 n_samples, n_features, n_nonzero_coefs, n_targets = 20, 30, 5, 3
 y, X, gamma = make_sparse_coded_signal(n_targets, n_features, n_samples,
                                        n_nonzero_coefs, random_state=0)
+# Make X not of norm 1 for testing
+X *= 10
+y *= 10
 G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # this makes X (n_samples, n_features)
 # and y (n_samples, 3)

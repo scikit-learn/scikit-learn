@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 import warnings
+from math import sqrt
 
 import numpy as np
 from scipy import linalg
@@ -114,7 +115,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
             if Lkk <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=2)
                 break
-            L[n_active, n_active] = np.sqrt(Lkk)
+            L[n_active, n_active] = sqrt(Lkk)
         else:
             L[0, 0] = linalg.norm(X[:, lam])
 
@@ -235,16 +236,20 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
                                     overwrite_b=True,
                                     **solve_triangular_args)
             v = nrm2(L[n_active, :n_active]) ** 2
-            if 1 - v <= min_float:  # selected atoms are dependent
+            Lkk = Gram[lam, lam] - v
+            if Lkk <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=3)
                 break
-            L[n_active, n_active] = np.sqrt(1 - v)
+            L[n_active, n_active] = sqrt(Lkk)
+        else:
+            L[0, 0] = sqrt(Gram[lam, lam])
+
         Gram[n_active], Gram[lam] = swap(Gram[n_active], Gram[lam])
         Gram.T[n_active], Gram.T[lam] = swap(Gram.T[n_active], Gram.T[lam])
         indices[n_active], indices[lam] = indices[lam], indices[n_active]
         Xy[n_active], Xy[lam] = Xy[lam], Xy[n_active]
         n_active += 1
-        # solves LL'x = y as a composition of two triangular systems
+        # solves LL'x = X'y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], Xy[:n_active], lower=True,
                          overwrite_b=False)
         if return_path:
