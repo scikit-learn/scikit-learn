@@ -1,4 +1,4 @@
-""" Test the graph_lasso module.
+""" Test the graphical_lasso module.
 """
 import sys
 
@@ -8,9 +8,8 @@ from scipy import linalg
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import ignore_warnings
 
-from sklearn.covariance import (graph_lasso, GraphLasso, GraphLassoCV,
+from sklearn.covariance import (graphical_lasso, GraphicalLasso, GraphicalLassoCV,
                                 empirical_covariance)
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
 from sklearn.externals.six.moves import StringIO
@@ -20,8 +19,7 @@ from sklearn import datasets
 from numpy.testing import assert_equal
 
 
-@ignore_warnings(category=DeprecationWarning)
-def test_graph_lasso(random_state=0):
+def test_graphical_lasso(random_state=0):
     # Sample data from a sparse multivariate normal
     dim = 20
     n_samples = 100
@@ -36,7 +34,7 @@ def test_graph_lasso(random_state=0):
         covs = dict()
         icovs = dict()
         for method in ('cd', 'lars'):
-            cov_, icov_, costs = graph_lasso(emp_cov, alpha=alpha, mode=method,
+            cov_, icov_, costs = graphical_lasso(emp_cov, alpha=alpha, mode=method,
                                              return_costs=True)
             covs[method] = cov_
             icovs[method] = icov_
@@ -49,7 +47,7 @@ def test_graph_lasso(random_state=0):
         assert_array_almost_equal(icovs['cd'], icovs['lars'], decimal=4)
 
     # Smoke test the estimator
-    model = GraphLasso(alpha=.25).fit(X)
+    model = GraphicalLasso(alpha=.25).fit(X)
     model.score(X)
     assert_array_almost_equal(model.covariance_, covs['cd'], decimal=4)
     assert_array_almost_equal(model.covariance_, covs['lars'], decimal=4)
@@ -59,13 +57,12 @@ def test_graph_lasso(random_state=0):
     Z = X - X.mean(0)
     precs = list()
     for assume_centered in (False, True):
-        prec_ = GraphLasso(assume_centered=assume_centered).fit(Z).precision_
+        prec_ = GraphicalLasso(assume_centered=assume_centered).fit(Z).precision_
         precs.append(prec_)
     assert_array_almost_equal(precs[0], precs[1])
 
 
-@ignore_warnings(category=DeprecationWarning)
-def test_graph_lasso_iris():
+def test_graphical_lasso_iris():
     # Hard-coded solution from R glasso package for alpha=1.0
     # The iris datasets in R and scikit-learn do not match in a few places,
     # these values are for the scikit-learn version.
@@ -84,14 +81,13 @@ def test_graph_lasso_iris():
     X = datasets.load_iris().data
     emp_cov = empirical_covariance(X)
     for method in ('cd', 'lars'):
-        cov, icov = graph_lasso(emp_cov, alpha=1.0, return_costs=False,
+        cov, icov = graphical_lasso(emp_cov, alpha=1.0, return_costs=False,
                                 mode=method)
         assert_array_almost_equal(cov, cov_R)
         assert_array_almost_equal(icov, icov_R)
 
 
-@ignore_warnings(category=DeprecationWarning)
-def test_graph_lasso_iris_singular():
+def test_graphical_lasso_iris_singular():
     # Small subset of rows to test the rank-deficient case
     # Need to choose samples such that none of the variances are zero
     indices = np.arange(10, 13)
@@ -112,14 +108,13 @@ def test_graph_lasso_iris_singular():
     X = datasets.load_iris().data[indices, :]
     emp_cov = empirical_covariance(X)
     for method in ('cd', 'lars'):
-        cov, icov = graph_lasso(emp_cov, alpha=0.01, return_costs=False,
+        cov, icov = graphical_lasso(emp_cov, alpha=0.01, return_costs=False,
                                 mode=method)
         assert_array_almost_equal(cov, cov_R, decimal=5)
         assert_array_almost_equal(icov, icov_R, decimal=5)
 
 
-@ignore_warnings(category=DeprecationWarning)
-def test_graph_lasso_cv(random_state=1):
+def test_graphical_lasso_cv(random_state=1):
     # Sample data from a sparse multivariate normal
     dim = 5
     n_samples = 6
@@ -133,15 +128,14 @@ def test_graph_lasso_cv(random_state=1):
     try:
         sys.stdout = StringIO()
         # We need verbose very high so that Parallel prints on stdout
-        GraphLassoCV(verbose=100, alphas=5, tol=1e-1).fit(X)
+        GraphicalLassoCV(verbose=100, alphas=5, tol=1e-1).fit(X)
     finally:
         sys.stdout = orig_stdout
 
     # Smoke test with specified alphas
-    GraphLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
+    GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
 
 
-@ignore_warnings(category=DeprecationWarning)
 def test_deprecated_grid_scores(random_state=1):
     dim = 5
     n_samples = 6
@@ -150,13 +144,13 @@ def test_deprecated_grid_scores(random_state=1):
                                   random_state=random_state)
     cov = linalg.inv(prec)
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
-    graph_lasso = GraphLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1)
-    graph_lasso.fit(X)
+    graphical_lasso = GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1)
+    graphical_lasso.fit(X)
 
     depr_message = ("Attribute grid_scores was deprecated in version "
                     "0.19 and will be removed in 0.21. Use "
                     "``grid_scores_`` instead")
 
     assert_warns_message(DeprecationWarning, depr_message,
-                         lambda: graph_lasso.grid_scores)
-    assert_equal(graph_lasso.grid_scores, graph_lasso.grid_scores_)
+                         lambda: graphical_lasso.grid_scores)
+    assert_equal(graphical_lasso.grid_scores, graphical_lasso.grid_scores_)
