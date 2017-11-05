@@ -116,12 +116,16 @@ def test_estimator():
     assert_equal(omp.intercept_.shape, (n_targets,))
     assert_true(np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
 
-    omp.set_params(fit_intercept=False, normalize=False)
-
+    coef_normalized = omp.coef_[0].copy()
+    omp.set_params(fit_intercept=True, normalize=False)
     omp.fit(X, y[:, 0])
+    assert_array_almost_equal(coef_normalized, omp.coef_)
+
+    omp.set_params(fit_intercept=False, normalize=False)
+    omp.fit(X, y[:, 0])
+    assert_true(np.count_nonzero(omp.coef_) <= n_nonzero_coefs)
     assert_equal(omp.coef_.shape, (n_features,))
     assert_equal(omp.intercept_, 0)
-    assert_true(np.count_nonzero(omp.coef_) <= n_nonzero_coefs)
 
     omp.fit(X, y)
     assert_equal(omp.coef_.shape, (n_targets, n_features))
