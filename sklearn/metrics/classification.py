@@ -441,6 +441,13 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),\
         np.ones((2, 2)))
     0.75
+
+    In the multiclass case:
+
+    >>> y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
+    >>> y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
+    >>> jaccard_similarity_score(y_true, y_pred)
+    0.38888888888888884
     """
 
     # Compute accuracy for each possible representation
@@ -454,7 +461,9 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
             score = pred_and_true / pred_or_true
             score[pred_or_true == 0.0] = 1.0
     else:
-        score = y_true == y_pred
+        C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+        den = C.sum(0) + C.sum(1) - C.diagonal()
+        score = C.diagonal()/den
 
     return _weighted_sum(score, sample_weight, normalize)
 

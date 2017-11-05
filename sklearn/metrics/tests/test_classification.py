@@ -955,6 +955,10 @@ def test_multilabel_jaccard_similarity_score():
     assert_equal(jaccard_similarity_score(y1, np.zeros(y1.shape)), 0)
     assert_equal(jaccard_similarity_score(y2, np.zeros(y1.shape)), 0)
 
+    y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
+    y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
+    assert_almost_equal(jaccard_similarity_score(y1, y2), 7. / 18)
+
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
