@@ -404,7 +404,6 @@ class QuantileLossFunction(RegressionLossFunction):
 
     def __init__(self, n_classes, alpha=0.9):
         super(QuantileLossFunction, self).__init__(n_classes)
-        assert 0 < alpha < 1.0
         self.alpha = alpha
         self.percentile = alpha * 100.0
 
