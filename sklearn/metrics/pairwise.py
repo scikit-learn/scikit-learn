@@ -222,31 +222,9 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     """
     X, Y = check_pairwise_arrays(X, Y)
 
-    if X_norm_squared is not None:
-        XX = check_array(X_norm_squared)
-        if XX.shape == (1, X.shape[0]):
-            XX = XX.T
-        elif XX.shape != (X.shape[0], 1):
-            raise ValueError(
-                "Incompatible dimensions for X and X_norm_squared")
-    else:
-        XX = row_norms(X, squared=True)[:, np.newaxis]
+    diff = X.reshape(-1, 1, X.shape[1]) - Y.reshape(1, -1, X.shape[1])
+    distances = np.sum(np.power(diff, 2), axis=2)
 
-    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
-        YY = XX.T
-    elif Y_norm_squared is not None:
-        YY = np.atleast_2d(Y_norm_squared)
-
-        if YY.shape != (1, Y.shape[0]):
-            raise ValueError(
-                "Incompatible dimensions for Y and Y_norm_squared")
-    else:
-        YY = row_norms(Y, squared=True)[np.newaxis, :]
-
-    distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    distances *= -2
-    distances += XX
-    distances += YY
     np.maximum(distances, 0, out=distances)
 
     if X is Y:

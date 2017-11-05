@@ -384,6 +384,15 @@ def test_euclidean_distances():
     assert_array_almost_equal(D, [[1., 2.]])
 
     rng = np.random.RandomState(0)
+    #check if it works for float32
+    X = rng.rand(1,3000000).astype(np.float32)
+    Y = rng.rand(1,3000000).astype(np.float32)
+    #answer computed by np.linalg.norm
+    dist_np = np.linalg.norm(X-Y)[np.newaxis, np.newaxis]
+    #answer computed by scikit-learn
+    dist_sk = euclidean_distances(X, Y)
+    assert_almost_equal(dist_sk, dist_np)
+
     X = rng.random_sample((10, 4))
     Y = rng.random_sample((20, 4))
     X_norm_sq = (X ** 2).sum(axis=1).reshape(1, -1)
