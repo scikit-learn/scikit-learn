@@ -78,6 +78,8 @@ def alpha_max(emp_cov):
 
 # The g-lasso algorithm
 
+@deprecated("The 'graph_lasso' was renamed to 'graphical_lasso'"
+             "in version 0.19")
 def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 enet_tol=1e-4, max_iter=100, verbose=False,
                 return_costs=False, eps=np.finfo(np.float64).eps,
@@ -276,10 +278,12 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
             return covariance_, precision_
 
 
-@deprecated("The class GraphLasso is deprecated "
-            "Use class GraphicalLasso instead.")
+@deprecated("The 'GraphLasso' was renamed to 'GraphicalLasso'"
+             "in version 0.19")
 class GraphLasso(EmpiricalCovariance):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
+
+    This class implements the Graphical Lasso algorithm.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -464,10 +468,12 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     return covariances_, precisions_
 
 
-@deprecated("The class GraphLassoCV is deprecated "
-            "Use class GraphicalLassoCV instead.")
+@deprecated("The 'GraphLassoCV' was renamed to 'GraphicalLassoCV'"
+             "in version 0.19")
 class GraphLassoCV(GraphLasso):
     """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
+
+    This class implements the Graphical Lasso algorithm.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
