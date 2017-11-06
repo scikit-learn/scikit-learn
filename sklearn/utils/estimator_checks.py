@@ -394,9 +394,6 @@ def _is_pairwise_metric(estimator):
 
 def pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
 
-    if len(X.shape) == 1:
-        X = X.reshape(-1, 1)
-
     if _is_pairwise_metric(estimator):
         return pairwise_distances(X, metric='euclidean')
     if _is_pairwise(estimator):
