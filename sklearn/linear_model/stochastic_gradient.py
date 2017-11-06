@@ -119,7 +119,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             max_iter = self.n_iter
             self._tol = None
 
-        elif self.tol is None and self.max_iter is None:
+        elif self.tol is None and self.max_iter is None and set_max_iter!='quiet':
             warnings.warn(
                 "max_iter and tol parameters have been added in %s in 0.19. If"
                 " both are left unset, they default to max_iter=5 and tol=None"
@@ -539,7 +539,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        self._validate_params()
+        self._validate_params(set_max_iter='quiet')
         if self.class_weight in ['balanced']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
