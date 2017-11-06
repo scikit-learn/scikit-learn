@@ -125,7 +125,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                 " both are left unset, they default to max_iter=5 and tol=None"
                 ". If tol is not None, max_iter defaults to max_iter=1000. "
                 "From 0.21, default max_iter will be 1000, "
-                "and default tol will be 1e-3." % type(self), FutureWarning)
+                "and default tol will be 1e-3." % type(self).__name__,
+                FutureWarning)
             # Before 0.19, default was n_iter=5
             max_iter = 5
         else:
@@ -1256,8 +1257,8 @@ class SGDRegressor(BaseSGDRegressor):
         The learning rate schedule:
 
         - 'constant': eta = eta0
-        - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
-        - 'invscaling': eta = eta0 / pow(t, power_t)
+        - 'optimal': eta = 1.0 / (alpha * (t + t0))
+        - 'invscaling': eta = eta0 / pow(t, power_t) [default]
 
         where t0 is chosen by a heuristic proposed by Leon Bottou.
 
