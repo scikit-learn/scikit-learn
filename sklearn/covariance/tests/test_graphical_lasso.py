@@ -9,8 +9,8 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import assert_warns_message
 
-from sklearn.covariance import (graphical_lasso, GraphicalLasso, GraphicalLassoCV,
-                                empirical_covariance)
+from sklearn.covariance import (graphical_lasso, GraphicalLasso,
+                                GraphicalLassoCV, empirical_covariance)
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
 from sklearn.externals.six.moves import StringIO
 from sklearn.utils import check_random_state
@@ -34,8 +34,8 @@ def test_graphical_lasso(random_state=0):
         covs = dict()
         icovs = dict()
         for method in ('cd', 'lars'):
-            cov_, icov_, costs = graphical_lasso(emp_cov, alpha=alpha, mode=method,
-                                             return_costs=True)
+            cov_, icov_, costs = graphical_lasso(emp_cov, return_costs=True,
+                                                 alpha=alpha, mode=method)
             covs[method] = cov_
             icovs[method] = icov_
             costs, dual_gap = np.array(costs).T
@@ -71,18 +71,18 @@ def test_graphical_lasso_iris():
         [0.00, 0.1867507, 0.0, 0.00],
         [0.26519111, 0.0, 3.0924249, 0.28774489],
         [0.02467558, 0.0, 0.2877449, 0.57853156]
-        ])
+    ])
     icov_R = np.array([
         [1.5188780, 0.0, -0.1302515, 0.0],
         [0.0, 5.354733, 0.0, 0.0],
         [-0.1302515, 0.0, 0.3502322, -0.1686399],
         [0.0, 0.0, -0.1686399, 1.8123908]
-        ])
+    ])
     X = datasets.load_iris().data
     emp_cov = empirical_covariance(X)
     for method in ('cd', 'lars'):
         cov, icov = graphical_lasso(emp_cov, alpha=1.0, return_costs=False,
-                                mode=method)
+                                    mode=method)
         assert_array_almost_equal(cov, cov_R)
         assert_array_almost_equal(icov, icov_R)
 
@@ -109,7 +109,7 @@ def test_graphical_lasso_iris_singular():
     emp_cov = empirical_covariance(X)
     for method in ('cd', 'lars'):
         cov, icov = graphical_lasso(emp_cov, alpha=0.01, return_costs=False,
-                                mode=method)
+                                    mode=method)
         assert_array_almost_equal(cov, cov_R, decimal=5)
         assert_array_almost_equal(icov, icov_R, decimal=5)
 

@@ -79,9 +79,9 @@ def alpha_max(emp_cov):
 # The g-lasso algorithm
 
 def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
-                enet_tol=1e-4, max_iter=100, verbose=False,
-                return_costs=False, eps=np.finfo(np.float64).eps,
-                return_n_iter=False):
+                    enet_tol=1e-4, max_iter=100, verbose=False,
+                    return_costs=False, eps=np.finfo(np.float64).eps,
+                    return_n_iter=False):
     """l1-penalized covariance estimator
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
@@ -223,8 +223,9 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                         coefs = -(precision_[indices != idx, idx]
                                   / (precision_[idx, idx] + 1000 * eps))
                         coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
-                            coefs, alpha, 0, sub_covariance, row, row,
-                            max_iter, enet_tol, check_random_state(None), False)
+                            coefs, alpha, 0, sub_covariance,
+                            row, row, max_iter, enet_tol,
+                            check_random_state(None), False)
                     else:
                         # Use LARS
                         _, _, coefs = lars_path(
@@ -369,7 +370,7 @@ class GraphicalLasso(EmpiricalCovariance):
 
 # Cross-validation with GraphicalLasso
 def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
-                     tol=1e-4, enet_tol=1e-4, max_iter=100, verbose=False):
+                         tol=1e-4, enet_tol=1e-4, max_iter=100, verbose=False):
     """l1-penalized covariance estimator along a path of decreasing alphas
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
@@ -623,18 +624,19 @@ class GraphicalLassoCV(GraphicalLasso):
                 warnings.simplefilter('ignore', ConvergenceWarning)
                 # Compute the cross-validated loss on the current grid
 
-                # NOTE: Warm-restarting graphical_lasso_path has been tried, and
-                # this did not allow to gain anything (same execution time with
-                # or without).
+                # NOTE: Warm-restarting graphical_lasso_path has been tried,
+                # and this did not allow to gain anything
+                # (same execution time with or without).
                 this_path = Parallel(
                     n_jobs=self.n_jobs,
                     verbose=self.verbose
                 )(delayed(graphical_lasso_path)(X[train], alphas=alphas,
-                                            X_test=X[test], mode=self.mode,
-                                            tol=self.tol,
-                                            enet_tol=self.enet_tol,
-                                            max_iter=int(.1 * self.max_iter),
-                                            verbose=inner_verbose)
+                                                X_test=X[test], mode=self.mode,
+                                                tol=self.tol,
+                                                enet_tol=self.enet_tol,
+                                                max_iter=int(.1 *
+                                                             self.max_iter),
+                                                verbose=inner_verbose)
                   for train, test in cv.split(X, y))
 
             # Little danse to transform the list in what we need

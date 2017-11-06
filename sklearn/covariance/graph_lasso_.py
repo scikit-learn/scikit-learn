@@ -79,7 +79,7 @@ def alpha_max(emp_cov):
 # The g-lasso algorithm
 
 @deprecated("The 'graph_lasso' was renamed to 'graphical_lasso'"
-             "in version 0.19")
+            "in version 0.19")
 def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 enet_tol=1e-4, max_iter=100, verbose=False,
                 return_costs=False, eps=np.finfo(np.float64).eps,
@@ -225,8 +225,9 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                         coefs = -(precision_[indices != idx, idx]
                                   / (precision_[idx, idx] + 1000 * eps))
                         coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
-                            coefs, alpha, 0, sub_covariance, row, row,
-                            max_iter, enet_tol, check_random_state(None), False)
+                            coefs, alpha, 0, sub_covariance,
+                            row, row, max_iter, enet_tol,
+                            check_random_state(None), False)
                     else:
                         # Use LARS
                         _, _, coefs = lars_path(
@@ -279,7 +280,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 
 
 @deprecated("The 'GraphLasso' was renamed to 'GraphicalLasso'"
-             "in version 0.19")
+            "in version 0.19")
 class GraphLasso(EmpiricalCovariance):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
 
@@ -469,7 +470,7 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
 
 @deprecated("The 'GraphLassoCV' was renamed to 'GraphicalLassoCV'"
-             "in version 0.19")
+            "in version 0.19")
 class GraphLassoCV(GraphLasso):
     """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
 
