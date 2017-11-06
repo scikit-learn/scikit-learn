@@ -187,4 +187,4 @@ Changes to estimator checks
 
 - Allow tests in :func:`estimator_checks.check_estimator` to test functions
   that accept pairwise data.
-  :issue:`9701` by :user:`Andreas Mueller <amueller>`
+  :issue:`9701` by :user:`Kyle Johnson <gkjohns>`

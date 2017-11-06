@@ -733,11 +733,7 @@ def test_kneighbors_regressor_sparse(n_samples=40,
         knn.fit(sparsemat(X), y)
         for sparsev in SPARSE_OR_DENSE:
             X2 = sparsev(X)
-            # sparse precomputed distance matrices not supported for prediction
-            if knn.metric == 'precomputed':
-                assert_raises(ValueError, knn.predict, csr_matrix(X2))
-            else:
-                assert_true(np.mean(knn.predict(X2).round() == y) > 0.95)
+            assert_true(np.mean(knn.predict(X2).round() == y) > 0.95)
 
 
 def test_neighbors_iris():
