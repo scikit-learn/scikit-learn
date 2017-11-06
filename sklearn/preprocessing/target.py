@@ -19,23 +19,17 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
 
     Useful for applying a non-linear transformation in regression
     problems. This transformation can be given as a Transformer such as the
-    QuantileTransformer or as a function and its inverse such as ``np.log`` and
-    ``np.exp``.
+    QuantileTransformer or as a function and its inverse such as ``log`` and
+    ``exp``.
 
     The computation during ``fit`` is::
-
         regressor.fit(X, func(y))
-
     or::
-
         regressor.fit(X, transformer.transform(y))
 
     The computation during ``predict`` is::
-
         inverse_func(regressor.predict(X))
-
     or::
-
         transformer.inverse_transform(regressor.predict(X))
 
     Read more in the :ref:`User Guide <preprocessing_targets>`.
@@ -54,7 +48,6 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         transformer will be cloned during fitting.
 
     func : function, optional
-
         Function to apply to ``y`` before passing to ``fit``. Cannot be set at
         the same time as ``transformer``. The function needs to return a
         2-dimensional array. If ``func`` is ``None``, the function used will be
