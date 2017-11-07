@@ -2823,7 +2823,18 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 
         n_samples, _ = X.shape
         n_features = len(self.categories_)
+        n_transformed_features = sum([len(cats) for cats in self.categories_])
 
+        # validate shape of passed X
+        msg = ("Shape of the passed X data is not correct. Expected {0} "
+               "columns, got {1}.")
+        if self.encoding == 'ordinal' and X.shape[1] != n_features:
+            raise ValueError(msg.format(n_features, X.shape[1]))
+        elif (self.encoding.startswith('onehot')
+                and X.shape[1] != n_transformed_features):
+            raise ValueError(msg.format(n_transformed_features, X.shape[1]))
+
+        # create resulting array of appropriate dtype
         dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 

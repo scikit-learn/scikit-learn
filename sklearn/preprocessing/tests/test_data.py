@@ -2032,6 +2032,11 @@ def test_categorical_encoder_onehot_inverse():
         exp[:, 1] = None
         assert_array_equal(enc.inverse_transform(X_tr), exp)
 
+        # incorrect shape raises
+        X_tr = np.array([[0, 1, 1], [1, 0, 1]])
+        msg = re.escape('Shape of the passed X data is not correct')
+        assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+
 
 def test_categorical_encoder_handle_unknown():
     X = np.array([[1, 2, 3], [4, 5, 6]])
@@ -2143,6 +2148,11 @@ def test_categorical_encoder_ordinal_inverse():
     X_tr = enc.fit_transform(X)
     exp = np.array(X, dtype=object)
     assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+    # incorrect shape raises
+    X_tr = np.array([[0, 1, 1, 2], [1, 0, 1, 0]])
+    msg = re.escape('Shape of the passed X data is not correct')
+    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
 
 
 def test_categorical_encoder_dtypes():
