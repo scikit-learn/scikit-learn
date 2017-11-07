@@ -183,8 +183,6 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         # mask for fast lookup of same-class samples
         masks = OneHotEncoder(sparse=False,
                               dtype=bool).fit_transform(y_valid[:, np.newaxis])
-        # pairwise differences
-        diffs = X_valid[:, np.newaxis] - X_valid[np.newaxis]
 
         # Initialize the transformation
         transformation = self._initialize(X_valid, init)
@@ -193,7 +191,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         disp = self.verbose - 2 if self.verbose > 1 else -1
         optimizer_params = {'method': 'L-BFGS-B',
                             'fun': self._loss_grad_lbfgs,
-                            'args': (X_valid, y_valid, diffs, masks, -1.0),
+                            'args': (X_valid, y_valid, masks, -1.0),
                             'jac': True,
                             'x0': transformation,
                             'tol': self.tol,
@@ -400,8 +398,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         self.n_iter_ += 1
 
-    def _loss_grad_lbfgs(self, transformation, X, y, diffs,
-                         masks, sign=1.0):
+    def _loss_grad_lbfgs(self, transformation, X, y, masks, sign=1.0):
         """Compute the loss and the loss gradient w.r.t. ``transformation``.
 
         Parameters
@@ -414,9 +411,6 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
 
         y : array, shape (n_samples,)
             The corresponding training labels.
-
-        diffs : array, shape (n_samples, n_samples, n_features)
-            Pairwise differences between training samples.
 
         masks : array, shape (n_samples, n_classes)
             One-hot encoding of y.
@@ -462,8 +456,9 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                                        logsumexp(-dist_embedded))
             ci = masks[:, y[i]]  # samples that are in the same class as x_i
             p_i_j = exp_dist_embedded[ci]
-            diff_ci = diffs[i, ci, :]
-            diff_not_ci = diffs[i, ~ci, :]
+            diffs = X[i, :] - X
+            diff_ci = diffs[ci, :]
+            diff_not_ci = diffs[~ci, :]
             sum_ci = diff_ci.T.dot(
                 (p_i_j[:, np.newaxis] * diff_embedded[ci, :]))
             sum_not_ci = diff_not_ci.T.dot((exp_dist_embedded[~ci][:,

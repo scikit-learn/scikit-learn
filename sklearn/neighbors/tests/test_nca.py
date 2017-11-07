@@ -74,13 +74,11 @@ def test_finite_differences():
     X, y, init = nca._validate_params(X, y)
     masks = OneHotEncoder(sparse=False,
                           dtype=bool).fit_transform(y[:, np.newaxis])
-    diffs = X[:, np.newaxis] - X[np.newaxis]
     nca.n_iter_ = 0
 
     point = nca._initialize(X, init)
     # compute the gradient at `point`
-    _, gradient = nca._loss_grad_lbfgs(point, X, y, diffs,
-                                       masks)
+    _, gradient = nca._loss_grad_lbfgs(point, X, y, masks)
 
     # create a random direction of norm 1
     random_direction = rng.randn(*point.shape)
@@ -92,10 +90,10 @@ def test_finite_differences():
 
     # compute finite differences
     eps = 1e-5
-    right_loss, _ = nca._loss_grad_lbfgs(point + eps * random_direction,
-                                         X, y, diffs, masks)
-    left_loss, _ = nca._loss_grad_lbfgs(point - eps * random_direction,
-                                        X, y, diffs, masks)
+    right_loss, _ = nca._loss_grad_lbfgs(point + eps * random_direction, X, y,
+                                         masks)
+    left_loss, _ = nca._loss_grad_lbfgs(point - eps * random_direction, X, y,
+                                        masks)
     finite_differences = 1/(2*eps) * (right_loss - left_loss)
 
     # compute relative error
