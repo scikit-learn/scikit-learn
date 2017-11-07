@@ -246,9 +246,9 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
             d_gap = _dual_gap(emp_cov, precision_, alpha)
             cost = _objective(emp_cov, precision_, alpha)
             if verbose:
-                print(
-                    '[graphical_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e'
-                    % (i, cost, d_gap))
+                print('[graphical_lasso] Iteration '
+                      '% 3i, cost % 3.2e, dual gap %.3e'
+                      % (i, cost, d_gap))
             if return_costs:
                 costs.append((cost, d_gap))
             if np.abs(d_gap) < tol:
@@ -257,9 +257,9 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 raise FloatingPointError('Non SPD result: the system is '
                                          'too ill-conditioned for this solver')
         else:
-            warnings.warn('graphical_lasso: did not converge after %i iteration:'
-                          ' dual gap: %.3e' % (max_iter, d_gap),
-                          ConvergenceWarning)
+            warnings.warn('graphical_lasso: did not converge after'
+                          '%i iteration: dual gap: %.3e'
+                          % (max_iter, d_gap), ConvergenceWarning)
     except FloatingPointError as e:
         e.args = (e.args[0]
                   + '. The system is too ill-conditioned for this solver',)
@@ -687,8 +687,8 @@ class GraphicalLassoCV(GraphicalLasso):
                 alphas = alphas[1:-1]
 
             if self.verbose and n_refinements > 1:
-                print('[GraphicalLassoCV] Done refinement % 2i out of %i: % 3is'
-                      % (i + 1, n_refinements, time.time() - t0))
+                print('[GraphicalLassoCV] Done refinement % 2i out of'
+                      ' %i: % 3is' % (i + 1, n_refinements, time.time() - t0))
 
         path = list(zip(*path))
         grid_scores = list(path[1])

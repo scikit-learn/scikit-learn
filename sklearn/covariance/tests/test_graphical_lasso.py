@@ -57,7 +57,8 @@ def test_graphical_lasso(random_state=0):
     Z = X - X.mean(0)
     precs = list()
     for assume_centered in (False, True):
-        prec_ = GraphicalLasso(assume_centered=assume_centered).fit(Z).precision_
+        prec_ = GraphicalLasso(
+            assume_centered=assume_centered).fit(Z).precision_
         precs.append(prec_)
     assert_array_almost_equal(precs[0], precs[1])
 
