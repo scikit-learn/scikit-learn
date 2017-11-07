@@ -858,3 +858,33 @@ def ndcg_score(y_true, y_score, k=5):
         scores.append(actual / best)
 
     return np.mean(scores)
+
+
+def gini(y_true, y_score):
+    """ Compute Gini coefficient 
+
+    Compute the Gini coefficient as Gini = 2 × AUC - 1 [1].
+
+    Parameters
+    ----------
+    
+    y_true : array, shape = [n]
+            Actual target values for X.
+
+    y_score : array, shape = [n]
+        Probability estimates of the positive class.
+
+    Returns
+    -------
+    gini : float
+
+    References
+    ----------
+    .. [1] David J. Hand  and Robert J. Till (2001).
+            A Simple Generalisation of the Area Under the ROC Curve for
+            Multiple Class Classification Problems. In Machine Learning, 45,
+            pp.171–186 (Kluwer Academic Publishers).
+
+    """
+
+    return 2*roc_auc_score(y_true, y_score)-1
