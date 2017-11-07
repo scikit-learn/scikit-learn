@@ -14,6 +14,7 @@ from .ranking import roc_auc_score
 from .ranking import roc_curve
 from .ranking import dcg_score
 from .ranking import ndcg_score
+from .ranking import gini
 
 from .classification import accuracy_score
 from .classification import classification_report
