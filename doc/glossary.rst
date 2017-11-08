@@ -18,13 +18,18 @@ General Concepts
 .. glossary::
 
     API
-        TODO
-
         The specific interfaces for estimators implemented in Scikit-learn and
         the generalized conventions across types of estimators as described in
         this glossary.
 
-        TODO: Conventions about what's public and what's not.
+        The specific interfaces that constitute Scikit-learn's public API are
+        largely documented in :ref:`api_ref`. However we less formally consider
+        anything as public API if none of the identifiers required to access it
+        begins with ``_``.  We generally try to maintain :term:`backwards
+        compatibility` for all objects in the public API.
+
+        Private API, including functions, modules and methods beginning ``_``
+        are not assured to be stable.
 
     array-like
 
@@ -101,8 +106,10 @@ General Concepts
             will allow it to be unpickled to an equivalent model in the
             subsequent version.  See :ref:`persistence_limitations`.
         :func:`utils.estimator_checks.check_estimator`
-            TODO We provide limited backwards compatibility assurances for the
-            estimator checks. TODO
+            We provide limited backwards compatibility assurances for the
+            estimator checks: we may add extra requirements on estimators
+            covered by `estimator_checks`, usually when these were informally
+            assumed but not formally tested.
 
         Despite this informal contract with our users, the software is provided
         as is, as stated in the licence.  When a release inadvertently
@@ -110,7 +117,18 @@ General Concepts
         as software regressions.
 
     categorical feature
-        TODO
+        A categorical or nominal :term:`feature` is one that has a finite set
+        of discrete values across the population of data.  These should be
+        represented as a column of integers. In representation, categorical
+        features are not distinguished from other integer features: ordinal or
+        count-valued. In the future we hope to support string-valued
+        categorical features. Some estimators may handle categorical features
+        better when one-hot encoded.  See the
+        `http://contrib.scikit-learn.org/categorical-encoding
+        <category_encoders>`_ package,
+        :class:`~sklearn.preprocessing.OneHotEncoder`, and a proposed
+        :issue:`9151 <CategoricalEncoder>` for tools related to encoding
+        categorical features.
 
     clone
         To copy an :term:`estimator instance` and create a new one with

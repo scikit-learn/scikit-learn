@@ -1,3 +1,5 @@
+.. _api_ref:
+
 =============
 API Reference
 =============
@@ -8,8 +10,6 @@ function raw specifications may not be enough to give full guidelines on their
 uses.
 For reference on concepts repeated across the API, see :ref:`glossary`.
 
-
-.. _base_ref:
 
 :mod:`sklearn.base`: Base classes and utility functions
 =======================================================
