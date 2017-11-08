@@ -297,7 +297,7 @@ def test_mice_pipeline_grid_search():
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10).toarray()
-    Y = sparse_random_matrix(n, d, density=0.10).toarray()
+    Y = np.random.random((n, d))
     gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
