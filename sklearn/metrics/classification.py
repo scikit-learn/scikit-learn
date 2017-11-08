@@ -463,9 +463,10 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     else:
         C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
         den = C.sum(0) + C.sum(1) - C.diagonal()
-        score = C.diagonal()/den
+        score = C.diagonal() / den
 
     return _weighted_sum(score, sample_weight, normalize)
+
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):
