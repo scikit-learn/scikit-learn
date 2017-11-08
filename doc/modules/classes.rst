@@ -158,8 +158,6 @@ Classes
 
    covariance.EmpiricalCovariance
    covariance.EllipticEnvelope
-   covariance.GraphLasso
-   covariance.GraphLassoCV
    covariance.GraphicalLasso
    covariance.GraphicalLassoCV
    covariance.LedoitWolf
@@ -172,7 +170,6 @@ Classes
    :template: function.rst
 
    covariance.empirical_covariance
-   covariance.graph_lasso
    covariance.graphical_lasso
    covariance.ledoit_wolf
    covariance.oas
