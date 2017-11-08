@@ -578,12 +578,13 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    if tps.size == 0 or fps[0] != 0:
-        # Add an extra threshold position if necessary
-        tps = np.r_[0, tps]
-        fps = np.r_[0, fps]
-        thresholds = np.r_[thresholds[0] + 1, thresholds]
-
+    if tps.size == 0 or fps[0] != 0 or tps[0] != 0:
+        # Add an extra threshold to ensure that ROC curve always starts at (0,0)
+        # point  
+         tps = np.r_[0, tps]
+         fps = np.r_[0, fps]
+         thresholds = np.r_[thresholds[0] + 1, thresholds]
+                                                
     if fps[-1] <= 0:
         warnings.warn("No negative samples in y_true, "
                       "false positive value should be meaningless",
