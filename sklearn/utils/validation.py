@@ -25,7 +25,7 @@ from ..externals.joblib import Memory
 
 
 SCALAR_INTEGER_TYPES = (numbers.Integral, np.integer)
-floating_types = (float, np.floating)
+SCALAR_FLOATING_TYPES = (float, np.floating)
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 
 # Silenced by default to reduce verbosity. Turn on at runtime for

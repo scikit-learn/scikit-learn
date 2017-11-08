@@ -24,7 +24,7 @@ import numpy as np
 from ..utils import indexable, check_random_state, safe_indexing
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
-from ..utils.validation import SCALAR_INTEGER_TYPES, floating_types
+from ..utils.validation import SCALAR_INTEGER_TYPES, SCALAR_FLOATING_TYPES
 from ..utils.multiclass import type_of_target
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
@@ -1643,7 +1643,7 @@ def _validate_shuffle_split_init(test_size, train_size):
         raise ValueError('test_size and train_size can not both be None')
 
     if test_size is not None:
-        if isinstance(test_size, floating_types):
+        if isinstance(test_size, SCALAR_FLOATING_TYPES):
             if test_size >= 1.:
                 raise ValueError(
                     'test_size=%f should be smaller '
@@ -1653,11 +1653,11 @@ def _validate_shuffle_split_init(test_size, train_size):
             raise ValueError("Invalid value for test_size: %r" % test_size)
 
     if train_size is not None:
-        if isinstance(train_size, floating_types):
+        if isinstance(train_size, SCALAR_FLOATING_TYPES):
             if train_size >= 1.:
                 raise ValueError("train_size=%f should be smaller "
                                  "than 1.0 or be an integer" % train_size)
-            elif (isinstance(test_size, floating_types) and
+            elif (isinstance(test_size, SCALAR_FLOATING_TYPES) and
                     (train_size + test_size) > 1.):
                 raise ValueError('The sum of test_size and train_size = %f, '
                                  'should be smaller than 1.0. Reduce '
@@ -1690,14 +1690,14 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
     if test_size == "default":
         test_size = 0.1
 
-    if isinstance(test_size, floating_types):
+    if isinstance(test_size, SCALAR_FLOATING_TYPES):
         n_test = ceil(test_size * n_samples)
     elif isinstance(test_size, SCALAR_INTEGER_TYPES):
         n_test = float(test_size)
 
     if train_size is None:
         n_train = n_samples - n_test
-    elif isinstance(train_size, floating_types):
+    elif isinstance(train_size, SCALAR_FLOATING_TYPES):
         n_train = floor(train_size * n_samples)
     else:
         n_train = float(train_size)
