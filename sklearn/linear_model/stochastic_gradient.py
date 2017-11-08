@@ -593,6 +593,12 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        Repeatedly calling fit or partial_fit when warm_start is True can result
+        in a different solution than when calling fit a single time because of
+        the way the data is shuffled.
+        If a dynamic learning rate is used, the learning rate is adapted
+        depending on the number of samples already seen. Calling `fit` resets
+        this counter, while `partial_fit` will result in the expected behaviour.
 
     Attributes
     ----------
@@ -1028,6 +1034,12 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
+        Repeatedly calling fit or partial_fit when warm_start is True can result
+        in a different solution than when calling fit a single time because of
+        the way the data is shuffled.
+        If a dynamic learning rate is used, the learning rate is adapted
+        depending on the number of samples already seen. Calling `fit` resets
+        this counter, while `partial_fit` will result in the expected behaviour.
 
     Attributes
     ----------
