@@ -16,12 +16,14 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score
@@ -42,6 +44,7 @@ from sklearn.model_selection._validation import _check_is_permutation
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_iris
+from sklearn.datasets import load_digits
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
@@ -52,7 +55,7 @@ from sklearn.metrics import r2_score
 from sklearn.metrics.scorer import check_scoring
 
 from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
-from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.cluster import KMeans
@@ -377,6 +380,28 @@ def test_cross_validate():
 
         yield check_cross_validate_single_metric, est, X, y, scores
         yield check_cross_validate_multi_metric, est, X, y, scores
+
+
+def test_cross_validate_return_train_score_warn():
+    # Test that warnings are raised. Will be removed in 0.21
+
+    X, y = make_classification(random_state=0)
+    estimator = MockClassifier()
+
+    result = {}
+    for val in [False, True, 'warn']:
+        result[val] = assert_no_warnings(cross_validate, estimator, X, y,
+                                         return_train_score=val)
+
+    msg = (
+        'You are accessing a training score ({!r}), '
+        'which will not be available by default '
+        'any more in 0.21. If you need training scores, '
+        'please set return_train_score=True').format('train_score')
+    train_score = assert_warns_message(FutureWarning, msg,
+                                       result['warn'].get, 'train_score')
+    assert np.allclose(train_score, result[True]['train_score'])
+    assert 'train_score' not in result[False]
 
 
 def check_cross_validate_single_metric(clf, X, y, scores):
@@ -775,6 +800,89 @@ def test_cross_val_predict():
                 yield np.array([0, 1, 2, 3]), np.array([4, 5, 6, 7, 8])
 
     assert_raises(ValueError, cross_val_predict, est, X, y, cv=BadCV())
+
+    X, y = load_iris(return_X_y=True)
+
+    warning_message = ('Number of classes in training fold (2) does '
+                       'not match total number of classes (3). '
+                       'Results may not be appropriate for your use case.')
+    assert_warns_message(RuntimeWarning, warning_message,
+                         cross_val_predict, LogisticRegression(),
+                         X, y, method='predict_proba', cv=KFold(2))
+
+
+def test_cross_val_predict_decision_function_shape():
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='decision_function')
+    assert_equal(preds.shape, (50,))
+
+    X, y = load_iris(return_X_y=True)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='decision_function')
+    assert_equal(preds.shape, (150, 3))
+
+    # This specifically tests imbalanced splits for binary
+    # classification with decision_function. This is only
+    # applicable to classifiers that can be fit on a single
+    # class.
+    X = X[:100]
+    y = y[:100]
+    assert_raise_message(ValueError,
+                         'Only 1 class/es in training fold, this'
+                         ' is not supported for decision_function'
+                         ' with imbalanced folds. To fix '
+                         'this, use a cross-validation technique '
+                         'resulting in properly stratified folds',
+                         cross_val_predict, RidgeClassifier(), X, y,
+                         method='decision_function', cv=KFold(2))
+
+    X, y = load_digits(return_X_y=True)
+    est = SVC(kernel='linear', decision_function_shape='ovo')
+
+    preds = cross_val_predict(est,
+                              X, y,
+                              method='decision_function')
+    assert_equal(preds.shape, (1797, 45))
+
+    ind = np.argsort(y)
+    X, y = X[ind], y[ind]
+    assert_raises_regex(ValueError,
+                        'Output shape \(599L?, 21L?\) of decision_function '
+                        'does not match number of classes \(7\) in fold. '
+                        'Irregular decision_function .*',
+                        cross_val_predict, est, X, y,
+                        cv=KFold(n_splits=3), method='decision_function')
+
+
+def test_cross_val_predict_predict_proba_shape():
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_proba')
+    assert_equal(preds.shape, (50, 2))
+
+    X, y = load_iris(return_X_y=True)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_proba')
+    assert_equal(preds.shape, (150, 3))
+
+
+def test_cross_val_predict_predict_log_proba_shape():
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_log_proba')
+    assert_equal(preds.shape, (50, 2))
+
+    X, y = load_iris(return_X_y=True)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_log_proba')
+    assert_equal(preds.shape, (150, 3))
 
 
 def test_cross_val_predict_input_types():
@@ -1217,11 +1325,12 @@ def get_expected_predictions(X, y, cv, classes, est, method):
         est.fit(X[train], y[train])
         expected_predictions_ = func(X[test])
         # To avoid 2 dimensional indexing
-        exp_pred_test = np.zeros((len(test), classes))
-        if method is 'decision_function' and len(est.classes_) == 2:
-            exp_pred_test[:, est.classes_[-1]] = expected_predictions_
+        if method is 'predict_proba':
+            exp_pred_test = np.zeros((len(test), classes))
         else:
-            exp_pred_test[:, est.classes_] = expected_predictions_
+            exp_pred_test = np.full((len(test), classes),
+                                    np.finfo(expected_predictions.dtype).min)
+        exp_pred_test[:, est.classes_] = expected_predictions_
         expected_predictions[test] = exp_pred_test
 
     return expected_predictions
@@ -1229,9 +1338,9 @@ def get_expected_predictions(X, y, cv, classes, est, method):
 
 def test_cross_val_predict_class_subset():
 
-    X = np.arange(8).reshape(4, 2)
-    y = np.array([0, 0, 1, 2])
-    classes = 3
+    X = np.arange(200).reshape(100, 2)
+    y = np.array([x//10 for x in range(100)])
+    classes = 10
 
     kfold3 = KFold(n_splits=3)
     kfold4 = KFold(n_splits=4)
@@ -1259,7 +1368,7 @@ def test_cross_val_predict_class_subset():
         assert_array_almost_equal(expected_predictions, predictions)
 
         # Testing unordered labels
-        y = [1, 1, -4, 6]
+        y = shuffle(np.repeat(range(10), 10), random_state=0)
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold3)
         y = le.fit_transform(y)
