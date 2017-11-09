@@ -163,6 +163,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         # Initialization of the values of the parameters
         eps = np.spacing(1)
+        # Add `eps` in the denominator to omit division by zero if `np.var(y)`
+        # is zero
         alpha_ = 1. / (np.var(y) + eps)
         lambda_ = 1.
 
