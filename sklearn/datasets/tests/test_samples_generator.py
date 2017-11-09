@@ -391,6 +391,7 @@ def test_make_moons():
 def test_make_circles():
     f = 0.3
 
+    # Testing odd and even case, because in the past make_circles always created an even number of samples.
     for (n_samples, n_outer, n_inner) in [(7, 3, 4), (8, 4, 4)]:
         X, y = make_circles(n_samples, shuffle=False, noise=None, factor=f)
         assert_equal(X.shape, (n_samples, 2), "X shape mismatch")
