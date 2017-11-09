@@ -83,7 +83,7 @@ def test_std_bayesian_ridge_with_constant_input():
     constant_value = np.random.rand()
     X = np.random.random((n_samples, n_features))
     y = np.full(n_samples, constant_value)
-    expected_upper_boundary = 0.01
+    expected_upper_boundary = 0.1
 
     clf = BayesianRidge()
     _, y_std = clf.fit(X, y).predict(X, return_std=True)
