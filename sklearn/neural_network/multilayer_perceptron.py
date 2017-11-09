@@ -723,7 +723,9 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         hidden layer.
 
     activation : {'identity', 'logistic', 'tanh', 'relu'}, default 'relu'
-        Activation function for the hidden layer.
+        Activation function for the hidden layer. It can be a list of functions
+        for different activation function at each hidden layer such as
+        ['identity', 'relu'].
 
         - 'identity', no-op activation, useful to implement linear bottleneck,
           returns f(x) = x
