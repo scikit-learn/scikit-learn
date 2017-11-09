@@ -103,7 +103,7 @@ def test_score_bayesian_ridge_with_constant_input():
 
 
 def test_alpha_bayesian_ridge_with_constant_input():
-    # Test BayesianRidge score for edge case of constant target vector
+    # Test BayesianRidge alpha for edge case of constant target vector
     n_samples = 4
     n_features = 5
     constant_value = np.random.rand()
@@ -117,7 +117,7 @@ def test_alpha_bayesian_ridge_with_constant_input():
 
 
 def test_lambda_bayesian_ridge_with_constant_input():
-    # Test BayesianRidge score for edge case of constant target vector
+    # Test BayesianRidge lambda for edge case of constant target vector
     n_samples = 4
     n_features = 5
     constant_value = np.random.rand()
