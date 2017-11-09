@@ -111,7 +111,7 @@ def test_alpha_bayesian_ridge_with_constant_input():
     y = np.full(n_samples, constant_value)
     expected = np.nan
 
-    clf = BayesianRidge(compute_score=True)
+    clf = BayesianRidge()
     clf.fit(X, y)
     assert_array_equal(clf.alpha_, expected)
 
@@ -125,9 +125,24 @@ def test_lambda_bayesian_ridge_with_constant_input():
     y = np.full(n_samples, constant_value)
     expected = np.nan
 
-    clf = BayesianRidge(compute_score=True)
+    clf = BayesianRidge()
     clf.fit(X, y)
     assert_array_equal(clf.lambda_, expected)
+
+
+def test_prediction_bayesian_ridge_with_constant_input_no_intercept():
+    # Test BayesianRidge prediction for edge case of constant target vector when
+    # no intercept is fitted
+    n_samples = 4
+    n_features = 5
+    constant_value = np.random.rand()
+    X = np.random.random((n_samples, n_features))
+    y = np.full(n_samples, constant_value)
+    expected = np.full(n_samples, np.nan)
+
+    clf = BayesianRidge(fit_intercept=False)
+    y_pred  = clf.fit(X, y).predict(X)
+    assert_array_equal(y_pred, expected)
 
 
 def test_toy_ard_object():
