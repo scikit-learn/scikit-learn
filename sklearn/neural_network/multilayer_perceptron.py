@@ -53,6 +53,16 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                  warm_start, momentum, nesterovs_momentum, early_stopping,
                  validation_fraction, beta_1, beta_2, epsilon):
         self.activation = activation
+        # If a single activation function is given,
+        # use it for each hidden layer
+        if type(self.activation) == str and\
+                hasattr(hidden_layer_sizes, "__iter__"):
+            self.activation_fncs = [self.activation] * len(hidden_layer_sizes)
+        elif type(self.activation) == str and\
+                not hasattr(hidden_layer_sizes, "__iter__"):
+            self.activation_fncs = [self.activation]
+        else:
+            self.activation_fncs = self.activation
         self.solver = solver
         self.alpha = alpha
         self.batch_size = batch_size
@@ -106,7 +116,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             # For the hidden layers
             if (i + 1) != (self.n_layers_ - 1):
-                hidden_activation = ACTIVATIONS[self.activation[i]]
+                hidden_activation = ACTIVATIONS[self.activation_fncs[i]]
                 activations[i + 1] = hidden_activation(activations[i + 1])
 
         # For the last layer
@@ -249,7 +259,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 2, 0, -1):
             deltas[i - 1] = safe_sparse_dot(deltas[i], self.coefs_[i].T)
-            inplace_derivative = DERIVATIVES[self.activation[i-1]]
+            inplace_derivative = DERIVATIVES[self.activation_fncs[i-1]]
             inplace_derivative(activations[i], deltas[i - 1])
 
             coef_grads, intercept_grads = self._compute_loss_grad(
@@ -285,7 +295,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         for i in range(self.n_layers_ - 2):
             coef_init, intercept_init = self._init_coef(layer_units[i],
                                                         layer_units[i + 1],
-                                                        self.activation[i])
+                                                        self.activation_fncs[i]
+                                                        )
             self.coefs_.append(coef_init)
             self.intercepts_.append(intercept_init)
 
@@ -294,7 +305,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         coef_init, intercept_init = self._init_coef(
             layer_units[self.n_layers_ - 2],
             layer_units[self.n_layers_ - 1],
-            self.activation[self.n_layers_ - 3])
+            self.activation_fncs[self.n_layers_ - 3])
         self.coefs_.append(coef_init)
         self.intercepts_.append(intercept_init)
 
@@ -332,17 +343,12 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             hidden_layer_sizes = [hidden_layer_sizes]
         hidden_layer_sizes = list(hidden_layer_sizes)
 
-        # If a single activation function is given,
-        # use it for each hidden layer
-        if type(self.activation) == str:
-            self.activation = [self.activation] * len(hidden_layer_sizes)
-
         # Validate input parameters.
         self._validate_hyperparameters()
         if np.any(np.array(hidden_layer_sizes) <= 0):
             raise ValueError("hidden_layer_sizes must be > 0, got %s." %
                              hidden_layer_sizes)
-        if len(self.activation) != len(hidden_layer_sizes):
+        if len(self.activation_fncs) != len(hidden_layer_sizes):
             raise ValueError("Number of activation functions "
                              "cannot be different than the number "
                              "of hidden layers")
@@ -436,11 +442,12 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # raise ValueError if not registered
         supported_activations = ('identity', 'logistic', 'tanh', 'relu')
-        for idx_activation in range(len(self.activation)):
-            if self.activation[idx_activation] not in supported_activations:
+        for idx_activation in range(len(self.activation_fncs)):
+            if self.activation_fncs[idx_activation] \
+                    not in supported_activations:
                 raise ValueError("The activation '%s' is not supported. "
                                  "Supported activations are %s."
-                                 % (self.activation[idx_activation],
+                                 % (self.activation_fncs[idx_activation],
                                     supported_activations))
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " %
