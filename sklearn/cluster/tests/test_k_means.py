@@ -867,3 +867,17 @@ def test_sparse_validate_centers():
     msg = "The shape of the initial centers \(\(4L?, 4L?\)\) " \
           "does not match the number of clusters 3"
     assert_raises_regex(ValueError, msg, classifier.fit, X)
+
+
+def test_less_centers_than_unique_points():
+    X = np.asarray([[0, 0],
+                    [0, 1],
+                    [1, 0],
+                    [1, 0]])  # last point is duplicated
+
+    km = KMeans(n_clusters=4).fit(X)
+
+    assert_equal(set(km.labels_), set(range(3)))
+    # check warning when centers are passed
+    assert_warns(RuntimeWarning, k_means, X, n_clusters=4)
+
