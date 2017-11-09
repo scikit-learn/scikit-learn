@@ -217,7 +217,6 @@ def average_precision_score(y_true, y_score, average="macro",
                                  sample_weight=sample_weight)
 
 
-
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
@@ -266,6 +265,9 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
             <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+
+    .. [2] Fawcett T. An introduction to ROC analysis[J]. Pattern Recognition
+           Letters, 2006, 27(8):861-874.
 
     See also
     --------
@@ -541,6 +543,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     .. [1] `Wikipedia entry for the Receiver operating characteristic
             <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
+    .. [2] Fawcett T. An introduction to ROC analysis[J]. Pattern Recognition
+           Letters, 2006, 27(8):861-874.
 
     Examples
     --------
