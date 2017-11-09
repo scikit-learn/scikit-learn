@@ -776,9 +776,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             # Fill in each feature in the order of ordered_idx
             for feat_idx in ordered_idx:
                 neighbor_feat_idx = self._get_neighbor_feat_idx(n_features,
-                                                        feat_idx, abs_corr_mat)
+                    feat_idx, abs_corr_mat)
                 X_filled, estimator = self._impute_one_feature(X_filled,
-                        mask_missing_values, feat_idx, neighbor_feat_idx, None)
+                    mask_missing_values, feat_idx, neighbor_feat_idx, None)
                 estimator_triplet = (feat_idx, neighbor_feat_idx, estimator)
                 self._trained_estimator_triplets.append(estimator_triplet)
 
