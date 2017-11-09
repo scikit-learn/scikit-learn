@@ -12,6 +12,7 @@ from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..base import clone
+from ..dummy import DummyRegressor
 from ..externals import six
 from ..externals.funcsigs import signature
 from ..preprocessing import normalize
@@ -538,7 +539,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         if estimator is None:
             X_train = X_filled[:, neighbor_feat_idx][~missing_row_mask]
             y_train = X_filled[:, feat_idx][~missing_row_mask]
-            estimator = clone(self.estimator_)
+            if np.std(y_train) > 0:
+                estimator = clone(self.estimator_)
+            else:
+                estimator = DummyRegressor()
             estimator.fit(X_train, y_train)
 
         # get posterior samples
