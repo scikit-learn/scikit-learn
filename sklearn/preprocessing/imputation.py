@@ -570,7 +570,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         n_features : integer
-            Number of features in X.
+            Number of features in `X`.
 
         feat_idx : integer
             Index of the feature currently being imputed.
@@ -578,7 +578,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         abs_correlation_matrix : array-like, shape (n_features, n_features)
             Absolute correlation matrix of X at the beginning of the current
             round. The diagonal has been zeroed out and each feature has been
-            normalized to sum to 1. Can be None
+            normalized to sum to 1. Can be None.
 
         Returns
         -------
