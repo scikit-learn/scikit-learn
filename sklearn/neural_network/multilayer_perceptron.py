@@ -332,6 +332,11 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             hidden_layer_sizes = [hidden_layer_sizes]
         hidden_layer_sizes = list(hidden_layer_sizes)
 
+        # If a single activation function is given,
+        # use it for each hidden layer
+        if type(self.activation) == str:
+            self.activation = [self.activation] * len(hidden_layer_sizes)
+
         # Validate input parameters.
         self._validate_hyperparameters()
         if np.any(np.array(hidden_layer_sizes) <= 0):
