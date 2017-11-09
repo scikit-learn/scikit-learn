@@ -342,7 +342,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if np.any(np.array(hidden_layer_sizes) <= 0):
             raise ValueError("hidden_layer_sizes must be > 0, got %s." %
                              hidden_layer_sizes)
-
+        if len(self.activation) != len(hidden_layer_sizes):
+            raise ValueError("Number of activation functions "
+                             "cannot be different than the number "
+                             "of hidden layers")
         X, y = self._validate_input(X, y, incremental)
         n_samples, n_features = X.shape
 
@@ -726,6 +729,9 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
         - 'relu', the rectified linear unit function,
           returns f(x) = max(0, x)
+
+        - can be a list of function for different activation function
+         at each hidden layer
 
     solver : {'lbfgs', 'sgd', 'adam'}, default 'adam'
         The solver for weight optimization.
