@@ -28,12 +28,13 @@ from sklearn.linear_model import LogisticRegression, Lasso
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
 from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.dummy import DummyRegressor
+from sklearn.dummy import DummyRegressor, DummyClassifier
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.externals.joblib import Memory
+from sklearn.preprocessing import FunctionTransformer
 
 
 JUNK_FOOD_DOCS = (
@@ -214,6 +215,20 @@ def test_pipeline_init_tuple():
     # Pipeline accepts steps as tuple
     X = np.array([[1, 2]])
     pipe = Pipeline((('transf', Transf()), ('clf', FitParamT())))
+    pipe.fit(X, y=None)
+    pipe.score(X)
+
+    pipe.set_params(transf=None)
+    pipe.fit(X, y=None)
+    pipe.score(X)
+
+
+def test_pipeline_init_dict():
+    # Pipeline accepts steps as items of dict
+    X = np.array([[1, 2]])
+    pipeline_estimators = {'transf': Transf(),
+                           'clf': FitParamT()}
+    pipe = Pipeline(pipeline_estimators.items())
     pipe.fit(X, y=None)
     pipe.score(X)
 
@@ -664,6 +679,20 @@ def test_make_pipeline():
         'Unknown keyword arguments: "random_parameter"',
         make_pipeline, t1, t2, random_parameter='rnd'
     )
+
+
+def test_feature_union_init_dict():
+    # feature union accepts dict items
+    transformers = {
+        'unchanged': make_pipeline(
+            FunctionTransformer(lambda X: X, validate=False)),
+        'add_one': make_pipeline(
+            FunctionTransformer(lambda X: np.array(X)+1, validate=False))
+    }
+    X = [[0], [0], [1]]
+    y = ['x', 'y', 'y']
+    make_pipeline(FeatureUnion(transformers.items()),
+                  DummyClassifier()).fit(X, y)
 
 
 def test_feature_union_weights():

@@ -733,6 +733,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
+        self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
         result = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_transform_one)(trans, weight, X, y,
