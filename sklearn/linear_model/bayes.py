@@ -162,7 +162,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
 
         # Initialization of the values of the parameters
-        eps = np.spacing(1)
+        eps = np.finfo(np.float64).eps
         # Add `eps` in the denominator to omit division by zero if `np.var(y)`
         # is zero
         alpha_ = 1. / (np.var(y) + eps)
@@ -448,7 +448,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         verbose = self.verbose
 
         # Initialization of the values of the parameters
-        eps = np.spacing(1)
+        eps = np.finfo(np.float64).eps
         # Add `eps` in the denominator to omit division by zero if `np.var(y)`
         # is zero
         alpha_ = 1. / (np.var(y) + eps)
