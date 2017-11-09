@@ -518,11 +518,20 @@ dataset::
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
 
 If there is a possibility that the training data might have missing categorical
-features, it is especially important to explicitly set ``categories`` manually.
-Alternatively, one can specify ``handle_unknown='ignore'``. In that case, when
+features, it can often be better to specify ``handle_unknown='ignore'`` instead
+of setting the ``categories`` manually as above. In that case, when
 unknown categories are encountered during transform, no error will be raised but
 the resulting one-hot encoded columns for this feature will be all zeros
-(``handle_unknown='ignore'`` is only supported for one one-hot encoding).
+(``handle_unknown='ignore'`` is only supported for one one-hot encoding)::
+
+    >>> enc = preprocessing.CategoricalEncoder(handle_unknown='ignore')
+    >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+    >>> enc.fit(X) # doctest: +ELLIPSIS
+    CategoricalEncoder(categories='auto', dtype=<... 'numpy.float64'>,
+              encoding='onehot', handle_unknown='ignore')
+    >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
+    array([[ 1.,  0.,  0.,  0.,  0.,  0.]])
+
 
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as scalars.
