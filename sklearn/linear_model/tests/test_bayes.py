@@ -60,8 +60,8 @@ def test_toy_bayesian_ridge_object():
     assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
 
 
-def test_bayesian_ridge_prediction_with_constant_input():
-    # Test BayesianRidge for edge case of constant target vector
+def test_prediction_bayesian_ridge_with_constant_input():
+    # Test BayesianRidge prediction for edge case of constant target vector
     constant_value = np.random.rand()
     X = np.random.random((5, 5))
     y = np.full(5, constant_value)
@@ -72,8 +72,8 @@ def test_bayesian_ridge_prediction_with_constant_input():
     assert_array_almost_equal(y_pred, expected)
 
 
-def test_bayesian_ridge_std_with_constant_input():
-    # Test BayesianRidge for edge case of constant target vector
+def test_std_bayesian_ridge_with_constant_input():
+    # Test BayesianRidge standard dev. for edge case of constant target vector
     constant_value = np.random.rand()
     X = np.random.random((5, 5))
     y = np.full(5, constant_value)
@@ -82,6 +82,42 @@ def test_bayesian_ridge_std_with_constant_input():
     clf = BayesianRidge()
     _, y_std  = clf.fit(X, y).predict(X, return_std=True)
     assert_array_almost_equal(y_std, expected)
+
+
+def test_score_bayesian_ridge_with_constant_input():
+    # Test BayesianRidge score for edge case of constant target vector
+    constant_value = np.random.rand()
+    X = np.random.random((5, 5))
+    y = np.full(5, constant_value)
+    expected = np.nan
+
+    clf = BayesianRidge(compute_score=True)
+    clf.fit(X, y)
+    assert_array_almost_equal(clf.scores_, expected)
+
+
+def test_alpha_bayesian_ridge_with_constant_input():
+    # Test BayesianRidge score for edge case of constant target vector
+    constant_value = np.random.rand()
+    X = np.random.random((5, 5))
+    y = np.full(5, constant_value)
+    expected = np.nan
+
+    clf = BayesianRidge(compute_score=True)
+    clf.fit(X, y)
+    assert_array_equal(clf.alpha_, expected)
+
+
+def test_lambda_bayesian_ridge_with_constant_input():
+    # Test BayesianRidge score for edge case of constant target vector
+    constant_value = np.random.rand()
+    X = np.random.random((5, 5))
+    y = np.full(5, constant_value)
+    expected = np.nan
+
+    clf = BayesianRidge(compute_score=True)
+    clf.fit(X, y)
+    assert_array_equal(clf.lambda_, expected)
 
 
 def test_toy_ard_object():
