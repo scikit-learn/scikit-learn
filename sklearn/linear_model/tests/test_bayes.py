@@ -81,14 +81,14 @@ def test_prediction_bayesian_ridge_ard_with_constant_input():
 def test_std_bayesian_ridge_ard_with_constant_input():
     # Test BayesianRidge and ARDRegression standard dev. for edge case of
     # constant target vector
-    # The standard dev. should be relatively small (< 0.1 is tested here)
+    # The standard dev. should be relatively small (< 0.01 is tested here)
     n_samples = 4
     n_features = 5
     random_state = check_random_state(42)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
     y = np.full(n_samples, constant_value)
-    expected_upper_boundary = 0.1
+    expected_upper_boundary = 0.01
 
     for clf in [BayesianRidge(), ARDRegression()]:
         _, y_std = clf.fit(X, y).predict(X, return_std=True)
