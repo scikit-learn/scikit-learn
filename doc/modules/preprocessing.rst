@@ -519,9 +519,10 @@ dataset::
 
 If there is a possibility that the training data might have missing categorical
 features, it can often be better to specify ``handle_unknown='ignore'`` instead
-of setting the ``categories`` manually as above. In that case, when
-unknown categories are encountered during transform, no error will be raised but
-the resulting one-hot encoded columns for this feature will be all zeros
+of setting the ``categories`` manually as above. When
+``handle_unknown='ignore'`` is specified and unknown categories are encountered
+during transform, no error will be raised but the resulting one-hot encoded
+columns for this feature will be all zeros
 (``handle_unknown='ignore'`` is only supported for one one-hot encoding)::
 
     >>> enc = preprocessing.CategoricalEncoder(handle_unknown='ignore')
