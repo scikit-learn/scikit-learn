@@ -9,9 +9,10 @@ import warnings
 import numpy as np
 
 from .base import is_classifier, clone
-from .cross_validation import check_cv
+from .model_selection import check_cv
 from .externals.joblib import Parallel, delayed
-from .cross_validation import _safe_split, _score, _fit_and_score
+from .utils.metaestimators import _safe_split
+from .model_selection._validation import _fit_and_score, _score
 from .metrics.scorer import check_scoring
 from .utils import indexable
 

@@ -45,12 +45,12 @@ from sklearn.metrics import roc_auc_score
 from sklearn.linear_model import Ridge
 
 from sklearn.exceptions import FitFailedWarning
+from sklearn.model_selection import KFold, StratifiedKFold
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
                                      ParameterGrid, ParameterSampler)
-    from sklearn.cross_validation import KFold, StratifiedKFold
 
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline

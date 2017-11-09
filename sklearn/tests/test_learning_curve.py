@@ -14,11 +14,11 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_false
 from sklearn.datasets import make_classification
+from sklearn.model_selection import KFold
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
     from sklearn.learning_curve import learning_curve, validation_curve
-    from sklearn.cross_validation import KFold
 
 from sklearn.linear_model import PassiveAggressiveClassifier
 
