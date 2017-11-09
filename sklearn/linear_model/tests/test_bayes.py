@@ -61,13 +61,15 @@ def test_toy_bayesian_ridge_object():
 
 
 def test_bayesian_ridge_with_constant_y():
+    # Test BayesianRidge for edge case of constant target vector
     constant_value = np.random.rand()
     X = np.random.random((5, 5))
     y = np.full(5, constant_value)
+    expected_std = np.zeros(5)
+    expected_pred = np.full(5, constant_value)
+
     clf = BayesianRidge()
     y_pred, y_std  = clf.fit(X, y).predict(X, return_std=True)
-    expected_std = np.zeros(5)
-    expected_pred = y
     assert_array_almost_equal(y_pred, expected_pred)
     assert_array_almost_equal(y_std, expected_std)
 
