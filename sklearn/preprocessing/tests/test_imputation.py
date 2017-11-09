@@ -392,11 +392,11 @@ def test_imputation_copy():
 
 
 def test_mice_rank_one():
-    l = 100
-    A = np.random.random((l, 1))
-    B = np.random.random((1, l))
+    d = 100
+    A = np.random.random((d, 1))
+    B = np.random.random((1, d))
     X = np.dot(A, B)
-    nan_mask = np.random.random((l, l)) < 0.5
+    nan_mask = np.random.random((d, d)) < 0.5
     X_missing = X.copy()
     X_missing[nan_mask] = np.nan
 
@@ -408,8 +408,9 @@ def test_mice_rank_one():
 
 
 def test_mice_imputation_order():
-    l = 100
-    X = sparse_random_matrix(l, l, density=0.10).toarray()
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.10).toarray()
 
     for imputation_order in ['random', 'roman', 'monotone',
                              'revmonotone', 'arabic']:

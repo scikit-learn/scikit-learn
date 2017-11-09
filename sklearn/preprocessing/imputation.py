@@ -480,6 +480,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         self.max_value = max_value
         self.verbose = verbose
         self.random_state = random_state
+        self.initial_imputer_ = None
 
     def _impute_one_feature(self,
                             X_filled,
@@ -507,7 +508,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             Index of the feature currently being imputed.
 
         neighbor_feat_idx : array-like
-            Indices of the features to be used in imputing `feat_idx`
+            Indices of the features to be used in imputing `feat_idx`.
 
         estimator : object, default=BayesianRidgeRegression
             The estimator to use at this step of the round-robin imputation.
@@ -531,7 +532,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         # if nothing is missing, just return the default
         rng = check_random_state(self.random_state)
-        if mask_missing_values[:, feat_idx].sum() == 0:
+        if not np.any(mask_missing_values[:, feat_idx]):
             return X_filled, estimator
         missing_row_mask = mask_missing_values[:, feat_idx]
 
@@ -549,12 +550,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # get posterior samples
         X_test = X_filled[:, neighbor_feat_idx][missing_row_mask]
         mus, sigmas = estimator.predict(X_test, return_std=True)
-        mus[np.isnan(sigmas)] = 0
-        sigmas[np.isnan(sigmas)] = 0
-        imputed_values = rng.normal(
-            loc=mus,
-            scale=np.maximum(sigmas, min_std)
-        )
+        imputed_values = rng.normal(loc=mus, scale=np.maximum(sigmas, min_std))
 
         # clip the values (np.clip ignores np.nans)
         imputed_values = np.clip(imputed_values,
@@ -595,16 +591,14 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         neighbor_feat_idx : array-like
             The features to use to impute `feat_idx`.
         """
+        rng = check_random_state(self.random_state)
         if (self.n_nearest_features is not None and
-                self.n_nearest_features <= n_features - 1):
-            rng = check_random_state(self.random_state)
+                self.n_nearest_features < n_features):
             p = abs_correlation_matrix[:, feat_idx]
-            neighbor_feat_idx = rng.choice(
-                np.arange(n_features),
-                self.n_nearest_features,
-                replace=False,
-                p=p
-            )
+            neighbor_feat_idx = rng.choice(np.arange(n_features),
+                                           self.n_nearest_features,
+                                           replace=False,
+                                           p=p)
         else:
             inds_left = np.arange(feat_idx)
             inds_right = np.arange(feat_idx + 1, n_features)
@@ -685,6 +679,45 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                            axis=0)
         return abs_correlation_matrix
 
+    def _initial_imputation(self, X):
+        """Performs initial imputation for input X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Input data, where "n_samples" is the number of samples and
+            "n_features" is the number of features.
+
+        Returns
+        -------
+        X : array-like, shape (n_samples, n_features)
+            Input data, where "n_samples" is the number of samples and
+            "n_features" is the number of features.
+
+        X_filled : array-like, shape (n_samples, n_features)
+            Input data with the most recent imputations.
+
+        mask_missing_values : array-like, shape (n_samples, n_features)
+            Input data's missing indicator matrix, where "n_samples" is the
+            number of samples and "n_features" is the number of features.
+        """
+        X = check_array(X, dtype=np.float32, order="F", force_all_finite=False)
+
+        # initial imputation
+        mask_missing_values = _get_mask(X, self.missing_values)
+        if self.initial_imputer_ is None:
+            self.initial_imputer_ = Imputer(missing_values=self.missing_values,
+                                            strategy=self.initial_strategy,
+                                            axis=0)
+        X_filled = self.initial_imputer_.fit_transform(X)
+
+        valid_mask = np.flatnonzero(np.logical_not(
+                                np.isnan(self.initial_imputer_.statistics_)))
+        X = X[:, valid_mask]
+        mask_missing_values = mask_missing_values[:, valid_mask]
+
+        return X, X_filled, mask_missing_values
+
     def fit_transform(self, X, y=None, **fit_params):
         """Fits the imputer on X and return the transformed X.
 
@@ -705,6 +738,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         else:
             self.estimator_ = clone(self.estimator)
 
+        # parse min and max values
+        self.min_value_ = np.nan if self.min_value is None else self.min_value
+        self.max_value_ = np.nan if self.max_value is None else self.max_value
+
         # check that the estimator's predict method has return_std argument
         if 'return_std' not in signature(self.estimator_.predict).parameters:
             raise ValueError(
@@ -716,26 +753,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # pre-processing of X
         X = check_array(X, dtype=np.float32, order="F", force_all_finite=False)
 
-        # parse min and max values
-        self.min_value_ = np.nan if self.min_value is None else self.min_value
-        self.max_value_ = np.nan if self.max_value is None else self.max_value
-
         # initial imputation
-        mask_missing_values = _get_mask(X, self.missing_values)
-        self.initial_imputer_ = Imputer(missing_values=self.missing_values,
-                                        strategy=self.initial_strategy,
-                                        axis=0)
-        X_filled = self.initial_imputer_.fit_transform(X)
-
-        valid_mask = np.logical_not(np.isnan(
-            self.initial_imputer_.statistics_
-        ))
-        self._valid_statistics_indexes = np.flatnonzero(valid_mask)
-        X = X[:, self._valid_statistics_indexes]
-        mask_missing_values = mask_missing_values[
-                              :,
-                              self._valid_statistics_indexes
-        ]
+        X, X_filled, mask_missing_values = self._initial_imputation(X)
 
         # perform imputations
         self._trained_estimator_triplets = []
@@ -757,21 +776,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             # Fill in each feature in the order of ordered_idx
             for feat_idx in ordered_idx:
                 neighbor_feat_idx = self._get_neighbor_feat_idx(
-                    n_features,
-                    feat_idx,
-                    abs_corr_mat
-                )
+                                            n_features, feat_idx, abs_corr_mat)
                 X_filled, estimator = self._impute_one_feature(
-                    X_filled,
-                    mask_missing_values,
-                    feat_idx,
-                    neighbor_feat_idx
-                )
-                estimator_triplet = (
-                    feat_idx,
-                    neighbor_feat_idx,
-                    estimator
-                )
+                    X_filled, mask_missing_values, feat_idx, neighbor_feat_idx)
+                estimator_triplet = (feat_idx, neighbor_feat_idx, estimator)
                 self._trained_estimator_triplets.append(estimator_triplet)
 
             if iter >= self.n_burn_in:
@@ -801,20 +809,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             The imputed input data.
         """
         check_is_fitted(self, 'initial_imputer_')
-        X = check_array(X, dtype=np.float64, force_all_finite=False)
-        X = np.asarray(X, order="F")
-        mask_missing_values = _get_mask(X, self.missing_values)
+        X = check_array(X, dtype=np.float32, order="F", force_all_finite=False)
 
-        # initial imputation
-        X_filled = self.initial_imputer_.transform(X)
-        X = X[:, self._valid_statistics_indexes]
-        mask_missing_values = mask_missing_values[
-                              :,
-                              self._valid_statistics_indexes
-        ]
+        X, X_filled, mask_missing_values = self._initial_imputation(X)
 
-        # perform imputations
-        n_samples, n_features = X_filled.shape
+        # impute data
         total_rounds = self.n_burn_in + self.n_imputations
         results_list = []
         if total_rounds > 0:
@@ -824,9 +823,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             if self.verbose:
                 print("[MICE] Completing matrix with shape %s" % (X.shape,))
                 start_t = time()
-                mice_msg = '[MICE] Ending imputation round '
-            for i, estimator_triplet in \
-                    enumerate(self._trained_estimator_triplets):
+            for i, estimator_triplet in enumerate(
+                                            self._trained_estimator_triplets):
                 feat_idx, neighbor_feat_idx, estimator = estimator_triplet
                 X_filled, _ = self._impute_one_feature(X_filled,
                                                        mask_missing_values,
@@ -838,7 +836,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                     if round_index >= self.n_burn_in:
                         results_list.append(X_filled[mask_missing_values])
                     if self.verbose:
-                        print(mice_msg + '%d/%d, elapsed time %0.2f'
+                        print('[MICE] Ending imputation round '
+                              '%d/%d, elapsed time %0.2f'
                               % (round_index, total_rounds, time() - start_t))
 
         if total_rounds > 0 and len(results_list) > 0:
