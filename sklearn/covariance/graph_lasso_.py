@@ -13,7 +13,7 @@ from .graphical_lasso_ import GraphicalLasso, GraphicalLassoCV, graphical_lasso
 # The g-lasso algorithm
 
 @deprecated("The 'graph_lasso' was renamed to 'graphical_lasso' "
-            "in version 0.20")
+            "in version 0.20 and will be removed in 0.22.")
 def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 enet_tol=1e-4, max_iter=100, verbose=False,
                 return_costs=False, eps=np.finfo(np.float64).eps,
@@ -22,6 +22,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 
     .. deprecated:: 0.20
         The `graph_lasso` was renamed to `graphical_lasso` in version 0.20
+        and will be removed in 0.22.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -106,7 +107,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
 
 
 @deprecated("The 'GraphLasso' was renamed to 'GraphicalLasso' "
-            "in version 0.20")
+            "in version 0.20 and will be removed in 0.22.")
 class GraphLasso(GraphicalLasso):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
 
@@ -114,6 +115,7 @@ class GraphLasso(GraphicalLasso):
 
     .. deprecated:: 0.20
         The `GraphLasso` was renamed to `GraphicalLasso` in version 0.20
+        and will be removed in 0.22.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -169,7 +171,7 @@ class GraphLasso(GraphicalLasso):
 
 
 @deprecated("The 'GraphLassoCV' was renamed to 'GraphicalLassoCV' "
-            "in version 0.20")
+            "in version 0.20 and will be removed in 0.22.")
 class GraphLassoCV(GraphicalLassoCV):
     """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
 
@@ -177,6 +179,7 @@ class GraphLassoCV(GraphicalLassoCV):
 
     .. deprecated:: 0.20
         The `GraphLassoCV` was renamed to `GraphicalLassoCV` in version 0.20
+        and will be removed in 0.22.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 

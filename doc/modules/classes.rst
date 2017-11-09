@@ -1390,6 +1390,24 @@ Recently deprecated
 ===================
 
 
+To be removed in 0.22
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_class.rst
+
+   covariance.GraphLasso
+   covariance.GraphLassoCV
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: deprecated_function.rst
+
+   covariance.graph_lasso
+
+
 To be removed in 0.21
 ---------------------
 
