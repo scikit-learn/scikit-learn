@@ -550,11 +550,11 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores, pos_label=2)
     >>> fpr
-    array([ 0. ,  0.5,  0.5,  1. ])
+    array([ 0. ,  0. ,  0.5,  0.5,  1. ])
     >>> tpr
-    array([ 0.5,  0.5,  1. ,  1. ])
+    array([ 0. ,  0.5,  0.5,  1. ,  1. ])
     >>> thresholds
-    array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
+    array([ 1.8 ,  0.8 ,  0.4 ,  0.35,  0.1 ])
 
     """
     fps, tps, thresholds = _binary_clf_curve(
@@ -578,8 +578,9 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    if tps.size == 0 or fps[0] != 0:
+    if tps.size == 0 or fps[0] != 0 or tps[0] != 0:
         # Add an extra threshold position if necessary
+        # to make sure that the curve starts at (0, 0)
         tps = np.r_[0, tps]
         fps = np.r_[0, fps]
         thresholds = np.r_[thresholds[0] + 1, thresholds]
