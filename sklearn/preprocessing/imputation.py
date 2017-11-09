@@ -540,12 +540,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         if estimator is None:
             X_train = X_filled[:, neighbor_feat_idx][~missing_row_mask]
             y_train = X_filled[:, feat_idx][~missing_row_mask]
-            if np.std(y_train) > 0:
-                estimator = clone(self.estimator_)
-                estimator.fit(X_train, y_train)
-            else:
-                estimator = DummyRegressor()
-                estimator.fit(X_train, y_train)
+            estimator = clone(self.estimator_)
+            estimator.fit(X_train, y_train)
+
 
         # get posterior samples
         X_test = X_filled[:, neighbor_feat_idx][missing_row_mask]
@@ -709,7 +706,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             self.initial_imputer_ = Imputer(missing_values=self.missing_values,
                                             strategy=self.initial_strategy,
                                             axis=0)
-        X_filled = self.initial_imputer_.fit_transform(X)
+            X_filled = self.initial_imputer_.fit_transform(X)
+        else:
+            X_filled = self.initial_imputer_.transform(X)
 
         valid_mask = np.flatnonzero(np.logical_not(
                                 np.isnan(self.initial_imputer_.statistics_)))
@@ -812,6 +811,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         check_is_fitted(self, 'initial_imputer_')
         X = check_array(X, dtype=np.float32, order="F", force_all_finite=False)
 
+        # initial imputation
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
         # impute data
