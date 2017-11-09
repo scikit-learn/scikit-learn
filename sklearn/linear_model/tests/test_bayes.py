@@ -77,7 +77,7 @@ def test_prediction_bayesian_ridge_with_constant_input():
 
 def test_std_bayesian_ridge_with_constant_input():
     # Test BayesianRidge standard dev. for edge case of constant target vector
-    # The standard dev. should be relatively small (< 0.01 is tested here)
+    # The standard dev. should be relatively small (< 0.1 is tested here)
     n_samples = 4
     n_features = 5
     constant_value = np.random.rand()
@@ -86,6 +86,35 @@ def test_std_bayesian_ridge_with_constant_input():
     expected_upper_boundary = 0.1
 
     clf = BayesianRidge()
+    _, y_std = clf.fit(X, y).predict(X, return_std=True)
+    assert_array_less(y_std, expected_upper_boundary)
+
+
+def test_prediction_ard_with_constant_input():
+    # Test ARDRegression prediction for edge case of constant target vector
+    n_samples = 4
+    n_features = 5
+    constant_value = np.random.rand()
+    X = np.random.random((n_samples, n_features))
+    y = np.full(n_samples, constant_value)
+    expected = np.full(n_samples, constant_value)
+
+    clf = ARDRegression()
+    y_pred = clf.fit(X, y).predict(X)
+    assert_array_almost_equal(y_pred, expected)
+
+
+def test_std_ard_with_constant_input():
+    # Test ARDRegression standard dev. for edge case of constant target vector
+    # The standard dev. should be relatively small (< 0.1 is tested here)
+    n_samples = 4
+    n_features = 5
+    constant_value = np.random.rand()
+    X = np.random.random((n_samples, n_features))
+    y = np.full(n_samples, constant_value)
+    expected_upper_boundary = 0.1
+
+    clf = ARDRegression()
     _, y_std = clf.fit(X, y).predict(X, return_std=True)
     assert_array_less(y_std, expected_upper_boundary)
 

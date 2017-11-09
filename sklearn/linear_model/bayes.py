@@ -448,7 +448,10 @@ class ARDRegression(LinearModel, RegressorMixin):
         verbose = self.verbose
 
         # Initialization of the values of the parameters
-        alpha_ = 1. / np.var(y)
+        eps = np.spacing(1)
+        # Add `eps` in the denominator to omit division by zero if `np.var(y)`
+        # is zero
+        alpha_ = 1. / (np.var(y) + eps)
         lambda_ = np.ones(n_features)
 
         self.scores_ = list()
