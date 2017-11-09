@@ -764,7 +764,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         if self.verbose:
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
             start_t = time()
-            mice_msg = '[MICE] Ending imputation round '
         for iter in range(total_rounds):
             # order in which to impute
             ordered_idx = self._get_ordered_idx(mask_missing_values)
@@ -786,7 +785,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             if iter >= self.n_burn_in:
                 results_list.append(X_filled[mask_missing_values])
             if self.verbose:
-                print(mice_msg + 'round %d/%d, elapsed time %0.2f'
+                print('[MICE] Ending imputation round round '
+                      '%d/%d, elapsed time %0.2f'
                       % (iter + 1, total_rounds, time() - start_t))
 
         if len(results_list) > 0:
