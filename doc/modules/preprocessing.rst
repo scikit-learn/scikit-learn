@@ -523,7 +523,7 @@ of setting the ``categories`` manually as above. When
 ``handle_unknown='ignore'`` is specified and unknown categories are encountered
 during transform, no error will be raised but the resulting one-hot encoded
 columns for this feature will be all zeros
-(``handle_unknown='ignore'`` is only supported for one one-hot encoding)::
+(``handle_unknown='ignore'`` is only supported for one-hot encoding)::
 
     >>> enc = preprocessing.CategoricalEncoder(handle_unknown='ignore')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
