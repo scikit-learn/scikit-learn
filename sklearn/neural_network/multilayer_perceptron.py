@@ -291,12 +291,12 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # for output layer, use the rule according to the activation function
         # in the previous layer.
-        coef_init, intercept_init = self._init_coef(layer_units[self.n_layers_ - 2],
-                                                    layer_units[self.n_layers_ - 1],
-                                                    self.activation[self.n_layers_ - 3] )
+        coef_init, intercept_init = self._init_coef(
+            layer_units[self.n_layers_ - 2],
+            layer_units[self.n_layers_ - 1],
+            self.activation[self.n_layers_ - 3])
         self.coefs_.append(coef_init)
         self.intercepts_.append(intercept_init)
-
 
         if self.solver in _STOCHASTIC_SOLVERS:
             self.loss_curve_ = []
@@ -430,9 +430,10 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         supported_activations = ('identity', 'logistic', 'tanh', 'relu')
         for idx_activation in range(len(self.activation)):
             if self.activation[idx_activation] not in supported_activations:
-                raise ValueError("The activation '%s' is not supported. Supported "
-                                 "activations are %s." % (self.activation[idx_activation],
-                                                          supported_activations))
+                raise ValueError("The activation '%s' is not supported. "
+                                 "Supported activations are %s."
+                                 % (self.activation[idx_activation],
+                                    supported_activations))
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " %
                              self.learning_rate)
