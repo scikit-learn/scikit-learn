@@ -390,20 +390,22 @@ def test_make_moons():
 
 def test_make_circles():
     f = 0.3
-    X, y = make_circles(7, shuffle=False, noise=None, factor=f)
-    assert_equal(X.shape, (7, 2), "X shape mismatch")
-    assert_equal(y.shape, (7,), "y shape mismatch")
-    center = [0.0, 0.0]
-    for x, label in zip(X, y):
-        dist_sqr = ((x - center) ** 2).sum()
-        dist_exp = 1.0 if label == 0 else f**2
-        assert_almost_equal(dist_sqr, dist_exp,
-                            err_msg="Point is not on expected circle")
 
-    assert_equal(X[y == 0].shape, (3, 2),
-                 "Samples not correctly distributed across circles.")
-    assert_equal(X[y == 1].shape, (4, 2),
-                 "Samples not correctly distributed across circles.")
+    for (n_samples, n_outer, n_inner) in [(7, 3, 4), (8, 4, 4)]:
+        X, y = make_circles(n_samples, shuffle=False, noise=None, factor=f)
+        assert_equal(X.shape, (n_samples, 2), "X shape mismatch")
+        assert_equal(y.shape, (n_samples,), "y shape mismatch")
+        center = [0.0, 0.0]
+        for x, label in zip(X, y):
+            dist_sqr = ((x - center) ** 2).sum()
+            dist_exp = 1.0 if label == 0 else f**2
+            assert_almost_equal(dist_sqr, dist_exp,
+                                err_msg="Point is not on expected circle")
+
+        assert_equal(X[y == 0].shape, (n_outer, 2),
+                     "Samples not correctly distributed across circles.")
+        assert_equal(X[y == 1].shape, (n_inner, 2),
+                     "Samples not correctly distributed across circles.")
 
     assert_raises(ValueError, make_circles, factor=-0.01)
     assert_raises(ValueError, make_circles, factor=1.)
