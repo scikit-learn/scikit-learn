@@ -161,6 +161,19 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.X_scale_ = X_scale_
         n_samples, n_features = X.shape
 
+        # Handle case when target vector is constant and intercept is fitted
+        if np.unique(y).size == 1 and self.fit_intercept:
+            self.coef_ = np.zeros(n_features)
+            self.sigma_ = np.zeros((n_features, n_features))
+            self.alpha_ = np.nan
+            self.lambda_ = np.nan
+
+            if self.compute_score:
+                self.scores_= np.nan
+
+            self._set_intercept(X_offset_, y_offset_, X_scale_)
+            return self
+
         # Initialization of the values of the parameters
         alpha_ = 1. / np.var(y)
         lambda_ = 1.
@@ -270,8 +283,12 @@ class BayesianRidge(LinearModel, RegressorMixin):
         else:
             if self.normalize:
                 X = (X - self.X_offset_) / self.X_scale_
-            sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
-            y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
+            # Check if covariance matrix `self.sigma_` is zero
+            if not self.sigma_.any():
+                y_std = np.zeros(y_mean.shape)
+            else:
+                sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
+                y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
             return y_mean, y_std
 
 
