@@ -2160,25 +2160,13 @@ def test_categorical_encoder_dtypes():
     enc = CategoricalEncoder()
     exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
 
-    X = np.array([[1, 2], [3, 4]], dtype='int64')
-    enc.fit(X)
-    assert all([enc.categories_[i].dtype == 'int64' for i in range(2)])
-    assert_array_equal(enc.transform(X).toarray(), exp)
-
-    X = np.array([[1, 2], [3, 4]], dtype='float64')
-    enc.fit(X)
-    assert all([enc.categories_[i].dtype == 'float64' for i in range(2)])
-    assert_array_equal(enc.transform(X).toarray(), exp)
-
-    X = np.array([['a', 'b'], ['c', 'd']])  # string dtype
-    enc.fit(X)
-    assert all([enc.categories_[i].dtype == X.dtype for i in range(2)])
-    assert_array_equal(enc.transform(X).toarray(), exp)
-
-    X = np.array([[1, 'a'], [3, 'b']], dtype='object')
-    enc.fit(X)
-    assert all([enc.categories_[i].dtype == 'object' for i in range(2)])
-    assert_array_equal(enc.transform(X).toarray(), exp)
+    for X in [np.array([[1, 2], [3, 4]], dtype='int64'),
+              np.array([[1, 2], [3, 4]], dtype='float64'),
+              np.array([['a', 'b'], ['c', 'd']]),  # string dtype
+              np.array([[1, 'a'], [3, 'b']], dtype='object')]:
+        enc.fit(X)
+        assert all([enc.categories_[i].dtype == X.dtype for i in range(2)])
+        assert_array_equal(enc.transform(X).toarray(), exp)
 
     X = [[1, 2], [3, 4]]
     enc.fit(X)
