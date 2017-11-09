@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import SkipTest
+from sklearn.utils import check_random_state
 from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
 from sklearn import datasets
@@ -66,8 +67,9 @@ def test_prediction_bayesian_ridge_ard_with_constant_input():
     # constant target vectors
     n_samples = 4
     n_features = 5
-    constant_value = np.random.rand()
-    X = np.random.random((n_samples, n_features))
+    random_state = check_random_state(42)
+    constant_value = random_state.rand()
+    X = random_state.random_sample((n_samples, n_features))
     y = np.full(n_samples, constant_value)
     expected = np.full(n_samples, constant_value)
 
@@ -82,8 +84,9 @@ def test_std_bayesian_ridge_ard_with_constant_input():
     # The standard dev. should be relatively small (< 0.1 is tested here)
     n_samples = 4
     n_features = 5
-    constant_value = np.random.rand()
-    X = np.random.random((n_samples, n_features))
+    random_state = check_random_state(42)
+    constant_value = random_state.rand()
+    X = random_state.random_sample((n_samples, n_features))
     y = np.full(n_samples, constant_value)
     expected_upper_boundary = 0.1
 
