@@ -169,7 +169,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
             self.lambda_ = np.nan
 
             if self.compute_score:
-                self.scores_= np.nan
+                self.scores_ = np.nan
 
             self._set_intercept(X_offset_, y_offset_, X_scale_)
             return self
