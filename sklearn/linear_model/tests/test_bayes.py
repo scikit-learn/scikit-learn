@@ -62,10 +62,12 @@ def test_toy_bayesian_ridge_object():
 
 def test_prediction_bayesian_ridge_with_constant_input():
     # Test BayesianRidge prediction for edge case of constant target vector
+    n_samples = 4
+    n_features = 5
     constant_value = np.random.rand()
-    X = np.random.random((5, 5))
-    y = np.full(5, constant_value)
-    expected = np.full(5, constant_value)
+    X = np.random.random((n_samples, n_features))
+    y = np.full(n_samples, constant_value)
+    expected = np.full(n_samples, constant_value)
 
     clf = BayesianRidge()
     y_pred = clf.fit(X, y).predict(X)
@@ -74,10 +76,12 @@ def test_prediction_bayesian_ridge_with_constant_input():
 
 def test_std_bayesian_ridge_with_constant_input():
     # Test BayesianRidge standard dev. for edge case of constant target vector
+    n_samples = 4
+    n_features = 5
     constant_value = np.random.rand()
-    X = np.random.random((5, 5))
-    y = np.full(5, constant_value)
-    expected = np.zeros(5)
+    X = np.random.random((n_samples, n_features))
+    y = np.full(n_samples, constant_value)
+    expected = np.zeros(n_samples)
 
     clf = BayesianRidge()
     _, y_std  = clf.fit(X, y).predict(X, return_std=True)
@@ -86,9 +90,11 @@ def test_std_bayesian_ridge_with_constant_input():
 
 def test_score_bayesian_ridge_with_constant_input():
     # Test BayesianRidge score for edge case of constant target vector
+    n_samples = 4
+    n_features = 5
     constant_value = np.random.rand()
-    X = np.random.random((5, 5))
-    y = np.full(5, constant_value)
+    X = np.random.random((n_samples, n_features))
+    y = np.full(n_samples, constant_value)
     expected = np.nan
 
     clf = BayesianRidge(compute_score=True)
@@ -98,9 +104,11 @@ def test_score_bayesian_ridge_with_constant_input():
 
 def test_alpha_bayesian_ridge_with_constant_input():
     # Test BayesianRidge score for edge case of constant target vector
+    n_samples = 4
+    n_features = 5
     constant_value = np.random.rand()
-    X = np.random.random((5, 5))
-    y = np.full(5, constant_value)
+    X = np.random.random((n_samples, n_features))
+    y = np.full(n_samples, constant_value)
     expected = np.nan
 
     clf = BayesianRidge(compute_score=True)
@@ -110,9 +118,11 @@ def test_alpha_bayesian_ridge_with_constant_input():
 
 def test_lambda_bayesian_ridge_with_constant_input():
     # Test BayesianRidge score for edge case of constant target vector
+    n_samples = 4
+    n_features = 5
     constant_value = np.random.rand()
-    X = np.random.random((5, 5))
-    y = np.full(5, constant_value)
+    X = np.random.random((n_samples, n_features))
+    y = np.full(n_samples, constant_value)
     expected = np.nan
 
     clf = BayesianRidge(compute_score=True)
