@@ -878,6 +878,5 @@ def test_less_centers_than_unique_points():
     km = KMeans(n_clusters=4).fit(X)
 
     assert_equal(set(km.labels_), set(range(3)))
-    # check warning when centers are passed
     assert_warns(RuntimeWarning, k_means, X, n_clusters=4)
 
