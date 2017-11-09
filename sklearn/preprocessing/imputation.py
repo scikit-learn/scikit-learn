@@ -671,10 +671,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         abs_correlation_matrix = np.abs(np.corrcoef(X_filled.T))
         # np.corrcoef is not defined for features with zero std
         abs_correlation_matrix[np.isnan(abs_correlation_matrix)] = tolerance
+        # ensure that there are no zeros (prevents some edge cases)
+        abs_correlation_matrix[abs_correlation_matrix==0] = tolerance
         np.fill_diagonal(abs_correlation_matrix, 0)
         abs_correlation_matrix = normalize(abs_correlation_matrix,
-                                           norm='l1',
-                                           axis=0)
+                                           norm='l1', axis=0)
         return abs_correlation_matrix
 
     def _initial_imputation(self, X):

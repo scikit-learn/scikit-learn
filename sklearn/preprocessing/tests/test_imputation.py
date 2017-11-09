@@ -417,6 +417,9 @@ def test_mice_imputation_order():
         imputer = MICEImputer(missing_values=0,
                               n_imputations=1,
                               n_burn_in=1,
-                              n_nearest_features=10,
+                              n_nearest_features=5,
+                              min_value=0,
+                              max_value=1,
+                              verbose=True,
                               imputation_order=imputation_order)
         imputer.fit_transform(X)
