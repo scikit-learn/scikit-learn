@@ -27,7 +27,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from numpy.core.umath_tests import inner1d
-
+import math
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_regressor, is_classifier
 from ..externals import six
@@ -145,7 +145,11 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 random_state)
 
             # Early termination
-            if sample_weight is None:
+            
+            if sample_weight is None and math.isnan(estimator_error):
+                print("Underflow of weighted error occured during iterations! Iterations stopped ! High chances of Overfitting!, Try decreasing the learning rate or n_estimators to avoid this! ")
+                break
+            elif sample_weight is None:
                 break
 
             self.estimator_weights_[iboost] = estimator_weight
@@ -497,6 +501,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Error fraction
         estimator_error = np.mean(
             np.average(incorrect, weights=sample_weight, axis=0))
+        if math.isnan(estimator_error):
+            return None,None,estimator_error
+       
 
         # Stop if classification is perfect
         if estimator_error <= 0:
@@ -552,6 +559,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Error fraction
         estimator_error = np.mean(
             np.average(incorrect, weights=sample_weight, axis=0))
+        if math.isnan(estimator_error):
+            return None,None,estimator_error
 
         # Stop if classification is perfect
         if estimator_error <= 0:
