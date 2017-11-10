@@ -434,7 +434,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     >>> jaccard_similarity_score(y_true, y_pred)
     0.5
     >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
-    2
+    2.0
 
     In the multilabel case with binary label indicators:
 
@@ -460,13 +460,15 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
             pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
             score = pred_and_true / pred_or_true
             score[pred_or_true == 0.0] = 1.0
+        return _weighted_sum(score, sample_weight, normalize)
     else:
         C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
         den = C.sum(0) + C.sum(1) - C.diagonal()
         score = C.diagonal() / den
-
-    return _weighted_sum(score, sample_weight, normalize)
-
+        if normalize:
+            return np.average(score)
+        else:
+            return np.sum(score)
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):
