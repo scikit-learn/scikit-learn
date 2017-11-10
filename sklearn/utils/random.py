@@ -3,6 +3,8 @@
 # License: BSD 3 clause
 import numpy as np
 import scipy.sparse as sp
+from scipy.stats import rv_continuous
+
 import array
 
 from sklearn.utils import check_random_state
@@ -95,3 +97,11 @@ def random_choice_csc(n_samples, classes, class_probability=None,
     return sp.csc_matrix((data, indices, indptr),
                          (n_samples, len(classes)),
                          dtype=int)
+
+class loguniform(rv_continuous):
+    """
+
+    """
+
+    def _rvs(self, low=0, high=1, size=None, base=np.exp(1)):
+        return np.power(base, np.random.uniform(low, high, size))
