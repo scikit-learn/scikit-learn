@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 from sklearn.utils.testing import assert_raise_message
-
+from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
@@ -877,6 +877,10 @@ def test_less_centers_than_unique_points():
 
     km = KMeans(n_clusters=4).fit(X)
 
+    # only three distinct points, so only three clusters
+    # can have points assigned to them
     assert_equal(set(km.labels_), set(range(3)))
-    assert_warns(RuntimeWarning, k_means, X, n_clusters=4)
 
+    # k_means should warn that fewer labels than cluster
+    # centers have been used
+    assert_warns(ConvergenceWarning, k_means, X, n_clusters=4)

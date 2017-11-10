@@ -31,7 +31,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.six import string_types
-
+from ..exceptions import ConvergenceWarning
 from . import _k_means
 from ._k_means_elkan import k_means_elkan
 
@@ -375,8 +375,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
         best_centers += X_mean
 
     if len(set(best_labels)) < n_clusters:
-        warnings.warn("number of distinct clusters found smaller than n_clusters. "
-                      "Possibly due to duplicate points in X", RuntimeWarning, stacklevel=2)
+        warnings.warn("number of distinct clusters found smaller than "
+                      "n_clusters. Possibly due to duplicate points "
+                      "in X.", ConvergenceWarning, stacklevel=2)
 
     if return_n_iter:
         return best_centers, best_labels, best_inertia, best_n_iter
