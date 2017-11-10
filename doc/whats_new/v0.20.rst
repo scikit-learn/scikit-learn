@@ -163,6 +163,7 @@ Metrics
 
 - Fixed a bug where :func:`metrics.roc_curve` sometimes starts on y-axis instead
   of (0, 0), which is inconsistent with the document and other implementations.
+  Note that this will not influence the result from :func:`metrics.roc_auc_score`
   :issue:`10093` by :user:`alexryndin <alexryndin>`
   and :user:`Hanmin Qin <qinhanmin2014>`.
 
