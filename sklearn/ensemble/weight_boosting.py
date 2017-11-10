@@ -148,7 +148,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             
             if sample_weight is None:
                 if estimator_error is not None and math.isnan(estimator_error):
-                    print("Early termination due to underflow of estimated_error , iterations stopped")
+                    print("Early termination due to underflow of estimated_error.Iterations stopped")
                     break
                 break
 
