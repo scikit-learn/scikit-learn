@@ -46,7 +46,7 @@ Classifiers and regressors
 
 Model evaluation
 
-- Added the :func:`metrics.balanced_accuracy` metric and a corresponding
+- Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
@@ -61,11 +61,11 @@ Classifiers and regressors
   and :user:`Minghui Liu <minghui-liu>`.
 
 - Add `named_estimators_` parameter in
-  :class:`sklearn.ensemble.voting_classifier` to access fitted
+  :class:`ensemble.VotingClassifier` to access fitted
   estimators. :issue:`9157` by :user:`Herilalaina Rakotoarison <herilalaina>`.
 
 - Add `var_smoothing` parameter in
-  :class:`sklearn.naive_bayes.GaussianNB` to give a precise control over
+  :class:`naive_bayes.GaussianNB` to give a precise control over
   variances calculation. :issue:`9681` by :user:`Dmitry Mottl <Mottl>`.
 
 - Add `n_iter_no_change` parameter in
@@ -75,9 +75,9 @@ Classifiers and regressors
   maximum number of epochs to not meet ``tol`` improvement.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
 
-- A parameter ``check_inverse`` was added to :class:`FunctionTransformer`
-  to ensure that ``func`` and ``inverse_func`` are the inverse of each
-  other.
+- A parameter ``check_inverse`` was added to
+  :class:`preprocessing.FunctionTransformer` to ensure that ``func`` and
+  ``inverse_func`` are the inverse of each other.
   :issue:`9399` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Model evaluation and meta-estimators
@@ -133,7 +133,7 @@ Decomposition, manifold learning and clustering
   :user:`James Bourbeau <jrbourbeau>`.
 
 - Fixed a bug where the ``fit`` method of
-  :class:`cluster.affinity_propagation_.AffinityPropagation` stored cluster
+  :class:`cluster.AffinityPropagation` stored cluster
   centers as 3d array instead of 2d array in case of non-convergence. For the
   same class, fixed undefined and arbitrary behavior in case of training data
   where all samples had equal similarity.
