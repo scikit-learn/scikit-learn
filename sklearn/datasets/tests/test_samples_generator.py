@@ -389,18 +389,18 @@ def test_make_moons():
 
 
 def test_make_circles():
-    f = 0.3
+    factor = 0.3
 
-    # Testing odd and even case, because in the past make_circles always
-    # created an even number of samples.
     for (n_samples, n_outer, n_inner) in [(7, 3, 4), (8, 4, 4)]:
-        X, y = make_circles(n_samples, shuffle=False, noise=None, factor=f)
+        # Testing odd and even case, because in the past make_circles always
+        # created an even number of samples.
+        X, y = make_circles(n_samples, shuffle=False, noise=None, factor=factor)
         assert_equal(X.shape, (n_samples, 2), "X shape mismatch")
         assert_equal(y.shape, (n_samples,), "y shape mismatch")
         center = [0.0, 0.0]
         for x, label in zip(X, y):
             dist_sqr = ((x - center) ** 2).sum()
-            dist_exp = 1.0 if label == 0 else f**2
+            dist_exp = 1.0 if label == 0 else factor**2
             assert_almost_equal(dist_sqr, dist_exp,
                                 err_msg="Point is not on expected circle")
 
