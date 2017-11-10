@@ -18,6 +18,7 @@ random sampling procedures.
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 - :class:`isotonic.IsotonicRegression` (bug fix)
 - :class:`metrics.roc_auc_score` (bug fix)
+- :class:`metrics.roc_curve` (bug fix)
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
@@ -159,6 +160,12 @@ Metrics
 
 - Fixed a bug due to floating point error in :func:`metrics.roc_auc_score` with
   non-integer sample weights. :issue:`9786` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- Fixed a bug where :func:`metrics.roc_curve` sometimes starts on y-axis instead
+  of (0, 0), which is inconsistent with the document and other implementations.
+  Note that this will not influence the result from :func:`metrics.roc_auc_score`
+  :issue:`10093` by :user:`alexryndin <alexryndin>`
+  and :user:`Hanmin Qin <qinhanmin2014>`.
 
 API changes summary
 -------------------
