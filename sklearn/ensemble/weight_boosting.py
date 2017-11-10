@@ -146,10 +146,10 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
             # Early termination
             
-            if sample_weight is None and math.isnan(estimator_error):
-                print("Underflow of weighted error occured during iterations! Iterations stopped ! High chances of Overfitting!, Try decreasing the learning rate or n_estimators to avoid this! ")
-                break
-            elif sample_weight is None:
+            if sample_weight is None:
+                if estimator_error is not None and math.isnan(estimator_error):
+                    print("Early termination due to underflow of estimated_error , iterations stopped")
+                    break
                 break
 
             self.estimator_weights_[iboost] = estimator_weight
@@ -502,7 +502,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         estimator_error = np.mean(
             np.average(incorrect, weights=sample_weight, axis=0))
         if math.isnan(estimator_error):
-            return None,None,estimator_error
+            return None, None, estimator_error
        
 
         # Stop if classification is perfect
@@ -560,7 +560,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         estimator_error = np.mean(
             np.average(incorrect, weights=sample_weight, axis=0))
         if math.isnan(estimator_error):
-            return None,None,estimator_error
+            return None, None, estimator_error
 
         # Stop if classification is perfect
         if estimator_error <= 0:
