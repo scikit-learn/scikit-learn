@@ -394,7 +394,8 @@ def test_make_circles():
     for (n_samples, n_outer, n_inner) in [(7, 3, 4), (8, 4, 4)]:
         # Testing odd and even case, because in the past make_circles always
         # created an even number of samples.
-        X, y = make_circles(n_samples, shuffle=False, noise=None, factor=factor)
+        X, y = make_circles(n_samples, shuffle=False, noise=None,
+                            factor=factor)
         assert_equal(X.shape, (n_samples, 2), "X shape mismatch")
         assert_equal(y.shape, (n_samples,), "y shape mismatch")
         center = [0.0, 0.0]
