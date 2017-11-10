@@ -672,7 +672,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # np.corrcoef is not defined for features with zero std
         abs_correlation_matrix[np.isnan(abs_correlation_matrix)] = tolerance
         # ensure that there are no zeros (prevents some edge cases)
-        abs_correlation_matrix[abs_correlation_matrix==0] = tolerance
+        abs_correlation_matrix[abs_correlation_matrix == 0] = tolerance
         np.fill_diagonal(abs_correlation_matrix, 0)
         abs_correlation_matrix = normalize(abs_correlation_matrix,
                                            norm='l1', axis=0)
