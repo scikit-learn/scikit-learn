@@ -1528,8 +1528,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     return report
 
 
-def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
-                 classes=None):
+def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1554,13 +1553,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         Sample weights.
 
         .. versionadded:: 0.18
-
-    classes : array, shape = [n_labels], optional
-        Integer array of labels.
-
-        .. deprecated:: 0.18
-           This parameter has been deprecated in favor of ``labels`` in
-           version 0.18 and will be removed in 0.20. Use ``labels`` instead.
 
     Returns
     -------
@@ -1609,10 +1601,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
     >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
     """
-    if classes is not None:
-        warnings.warn("'classes' was renamed to 'labels' in version 0.18 and "
-                      "will be removed in 0.20.", DeprecationWarning)
-        labels = classes
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
