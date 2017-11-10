@@ -75,7 +75,7 @@ for i in range(NUM_TRIALS):
 
     # Choose cross-validation techniques for the inner and outer loops,
     # independently of the dataset.
-    # E.g "LabelKFold", "LeaveOneOut", "LeaveOneLabelOut", etc.
+    # E.g "GroupKFold", "LeaveOneOut", "LeaveOneGroupOut", etc.
     inner_cv = KFold(n_splits=4, shuffle=True, random_state=i)
     outer_cv = KFold(n_splits=4, shuffle=True, random_state=i)
 
