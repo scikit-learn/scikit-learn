@@ -102,6 +102,10 @@ def test_transform_target_regressor_functions_multioutput():
 
 
 def test_transform_target_regressor_1d_transformer():
+    # All transformer in scikit-learn expect 2D data. FunctionTransformer with
+    # validate=False lift this constraint without checking that the input is a
+    # 2D vector. This test check the consistency of the data shape using this
+    # transformer and a 1D y array
     X, y = friedman
     transformer = FunctionTransformer(func=lambda x: x + 1,
                                       inverse_func=lambda x: x - 1,
@@ -127,6 +131,10 @@ def test_transform_target_regressor_1d_transformer():
 
 
 def test_transform_target_regressor_1d_transformer_multioutput():
+    # All transformer in scikit-learn expect 2D data. FunctionTransformer with
+    # validate=False lift this constraint without checking that the input is a
+    # 2D vector. This test check the consistency of the data shape using this
+    # transformer and a 2D y array.
     X = friedman[0]
     y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
     transformer = FunctionTransformer(func=lambda x: x + 1,
@@ -153,6 +161,8 @@ def test_transform_target_regressor_1d_transformer_multioutput():
 
 
 def test_transform_target_regressor_2d_transformer():
+    # Check consistency with transformer accepting only 2D array and a 1D y
+    # array.
     X, y = friedman
     transformer = StandardScaler()
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
@@ -176,6 +186,8 @@ def test_transform_target_regressor_2d_transformer():
 
 
 def test_transform_target_regressor_2d_transformer_multioutput():
+    # Check consistency with transformer accepting only 2D array and a 2D y
+    # array.
     X = friedman[0]
     y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
     transformer = StandardScaler()
