@@ -158,9 +158,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
         y = check_array(y, accept_sparse='csr', force_all_finite=True,
-                        ensure_2d=False, dtype=None)
-        if isinstance(y.dtype, object):
-            y = y.astype(np.float64)
+                        ensure_2d=False, dtype='numeric')
 
         # store the number of dimension of the target to predict an array of
         # similar shape at predict
