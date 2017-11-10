@@ -227,18 +227,13 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-<<<<<<< 68c38761be8d86c944012b67d8d84feb3606ce6f
         True binary labels in binary label indicators.
         The multiclass case expects shape = [n_samples] and labels
         with values from 0 to (n_classes-1), inclusive.
-=======
-        True binary labels or binary label indicators.
->>>>>>> [MRG+1] Completely support binary y_true in roc_auc_score (#9828)
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
-<<<<<<< 68c38761be8d86c944012b67d8d84feb3606ce6f
         (as returned by "decision_function" on some classifiers).
         The multiclass case expects shape = [n_samples, n_classes]
         where the scores correspond to probability estimates.
@@ -253,11 +248,6 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
         ``'ovo'``:
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
-=======
-        (as returned by "decision_function" on some classifiers). For binary
-        y_true, y_score is supposed to be the score of the class with greater
-        label.
->>>>>>> [MRG+1] Completely support binary y_true in roc_auc_score (#9828)
 
     average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -286,6 +276,9 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
     ----------
     .. [1] `Wikipedia entry for the Receiver operating characteristic
             <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+
+    .. [2] Fawcett T. An introduction to ROC analysis[J]. Pattern Recognition
+           Letters, 2006, 27(8):861-874.
 
     See also
     --------
@@ -589,6 +582,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     .. [1] `Wikipedia entry for the Receiver operating characteristic
             <https://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
+    .. [2] Fawcett T. An introduction to ROC analysis[J]. Pattern Recognition
+           Letters, 2006, 27(8):861-874.
 
     Examples
     --------
@@ -598,11 +593,11 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores, pos_label=2)
     >>> fpr
-    array([ 0. ,  0.5,  0.5,  1. ])
+    array([ 0. ,  0. ,  0.5,  0.5,  1. ])
     >>> tpr
-    array([ 0.5,  0.5,  1. ,  1. ])
+    array([ 0. ,  0.5,  0.5,  1. ,  1. ])
     >>> thresholds
-    array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
+    array([ 1.8 ,  0.8 ,  0.4 ,  0.35,  0.1 ])
 
     """
     fps, tps, thresholds = _binary_clf_curve(
@@ -626,8 +621,9 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
 
-    if tps.size == 0 or fps[0] != 0:
+    if tps.size == 0 or fps[0] != 0 or tps[0] != 0:
         # Add an extra threshold position if necessary
+        # to make sure that the curve starts at (0, 0)
         tps = np.r_[0, tps]
         fps = np.r_[0, fps]
         thresholds = np.r_[thresholds[0] + 1, thresholds]

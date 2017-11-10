@@ -1138,11 +1138,11 @@ Here is a small example of how to use the :func:`roc_curve` function::
     >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = roc_curve(y, scores, pos_label=2)
     >>> fpr
-    array([ 0. ,  0.5,  0.5,  1. ])
+    array([ 0. ,  0. ,  0.5,  0.5,  1. ])
     >>> tpr
-    array([ 0.5,  0.5,  1. ,  1. ])
+    array([ 0. ,  0.5,  0.5,  1. ,  1. ])
     >>> thresholds
-    array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
+    array([ 1.8 ,  0.8 ,  0.4 ,  0.35,  0.1 ])
 
 This figure shows an example of such an ROC curve:
 
