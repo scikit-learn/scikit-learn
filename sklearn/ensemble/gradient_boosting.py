@@ -1034,6 +1034,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                  % (self.n_estimators,
                                     self.estimators_.shape[0]))
             begin_at_stage = self.estimators_.shape[0]
+            X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
             y_pred = self._decision_function(X)
             self._resize_state()
 
@@ -1167,6 +1168,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def _init_decision_function(self, X):
         """Check input and compute prediction of ``init``. """
         self._check_initialized()
+        X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
         if X.shape[1] != self.n_features_:
             raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
                 self.n_features_, X.shape[1]))
@@ -1174,8 +1176,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         return score
 
     def _decision_function(self, X):
-        # for use in inner loop, not raveling the output in single-class case.
-        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
+        # for use in inner loop, not raveling the output in single-class case,
+        # not doing input validation.
         score = self._init_decision_function(X)
         predict_stages(self.estimators_, X, self.learning_rate, score)
         return score
@@ -1565,6 +1567,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Regression and binary classification produce an array of shape
             [n_samples].
         """
+        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
         score = self._decision_function(X)
         if score.shape[1] == 1:
             return score.ravel()
@@ -1997,6 +2000,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted values.
         """
+        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
         return self._decision_function(X).ravel()
 
     def staged_predict(self, X):

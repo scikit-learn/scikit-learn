@@ -203,6 +203,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
     cdef Tree tree
 
     if issparse(X):
+        assert X.format == 'csr'
         _predict_regression_tree_stages_sparse(estimators, X, scale, out)
     else:
         if not isinstance(X, np.ndarray):
