@@ -82,6 +82,12 @@ def test_classification_toy():
 
 def test_classifier_parameter_checks():
     # Check input parameter validation for GradientBoostingClassifier.
+    assert_raise_message(ValueError, "Presort must be a boolean",
+                         GradientBoostingClassifier(presort= 'invalid')
+                         .fit, X, y)
+    assert_raise_message(ValueError, "Presort must be a boolean",
+                         GradientBoostingClassifier(presort= 'valid')
+                         .fit, X, y)
 
     assert_raises(ValueError,
                   GradientBoostingClassifier(n_estimators=0).fit, X, y)
@@ -158,6 +164,13 @@ def test_regressor_parameter_checks():
                          " or an integer. 'invalid' was passed",
                          GradientBoostingRegressor(n_iter_no_change='invalid')
                          .fit, X, y)
+    assert_raise_message(ValueError, "Presort must be a boolean",
+                         GradientBoostingRegressor(loss='huber', presort= 'invalid')
+                         .fit, X, y)
+    assert_raise_message(ValueError, "Presort must be a boolean",
+                         GradientBoostingRegressor(loss='quantile', presort= 'valid')
+                         .fit, X, y)
+
 
 
 def test_loss_function():
