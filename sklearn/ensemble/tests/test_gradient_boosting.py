@@ -86,7 +86,7 @@ def test_classifier_parameter_checks():
                          GradientBoostingClassifier(presort='invalid')
                          .fit, X, y)
     assert_raise_message(ValueError, "Presort must be a boolean",
-                         GradientBoostingClassifier(presort='valid')
+                         GradientBoostingClassifier(presort=4)
                          .fit, X, y)
 
     assert_raises(ValueError,
@@ -165,12 +165,10 @@ def test_regressor_parameter_checks():
                          GradientBoostingRegressor(n_iter_no_change='invalid')
                          .fit, X, y)
     assert_raise_message(ValueError, "Presort must be a boolean",
-                         GradientBoostingRegressor(loss='huber',
-                                                   presort='invalid')
+                         GradientBoostingRegressor(presort=5.324)
                          .fit, X, y)
     assert_raise_message(ValueError, "Presort must be a boolean",
-                         GradientBoostingRegressor(loss='quantile',
-                                                   presort='valid')
+                         GradientBoostingRegressor(presort=1e-1)
                          .fit, X, y)
 
 
