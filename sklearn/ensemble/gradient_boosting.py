@@ -1046,13 +1046,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         elif presort == 'auto':
             presort = True
 
-        if presort == True:
+        if presort is True:
             if issparse(X):
                 raise ValueError("Presorting is not supported for sparse matrices.")
             else:
                 X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
                                                  dtype=np.int32)
-        elif presort != False:
+        elif presort is not False:
             raise ValueError("Presort must be a boolean")
 
         # fit the boosting stages
