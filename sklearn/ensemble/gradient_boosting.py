@@ -1046,7 +1046,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         elif presort == 'auto':
             presort = True
 
-        if presort == True:
+        if presort:
             if issparse(X):
                 raise ValueError("Presorting is not supported for sparse matrices.")
             else:
