@@ -25,9 +25,17 @@ y = digits.target
 
 # Create the RFE object and rank each pixel
 svc = SVC(kernel="linear", C=1)
-rfe = RFE(estimator=svc, n_features_to_select=1, step=1)
+rfe = RFE(estimator=svc, n_features_to_select=1, step=1, step_ranking=True)
 rfe.fit(X, y)
 ranking = rfe.ranking_.reshape(digits.images[0].shape)
+
+# Plot pixel in grid_ranking_ every 10 steps
+rankings = [r.reshape(digits.images[0].shape) for r in rfe.grid_ranking_]
+for n, r in enumerate(rankings):
+    if n % 10 == 0:
+        plt.matshow(r, cmap=plt.cm.Blues)
+        plt.colorbar()
+        plt.title("Ranking of pixels at step {}".format(n))
 
 # Plot pixel ranking
 plt.matshow(ranking, cmap=plt.cm.Blues)
