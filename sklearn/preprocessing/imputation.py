@@ -528,15 +528,12 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             The fitted estimator used to impute
             `X_filled[missing_row_mask, feat_idx]`.
         """
-        rng = check_random_state(self.random_state)
 
-        # have to convert to dense to be able to do logical nor
-        missing_row_mask = mask_missing_values[:, feat_idx]
-        if sparse.issparse(missing_row_mask):
-            missing_row_mask = missing_row_mask.toarray().squeeze()
         # if nothing is missing, just return the default
-        if not np.any(missing_row_mask):
+        rng = check_random_state(self.random_state)
+        if not np.any(mask_missing_values[:, feat_idx]):
             return X_filled, estimator
+        missing_row_mask = mask_missing_values[:, feat_idx]
 
         # if no estimator provided, instantiate a new one and fit
         if estimator is None:
@@ -629,8 +626,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         rng = check_random_state(self.random_state)
         n_samples, n_features = mask_missing_values.shape
         fraction_of_missing_values = mask_missing_values.mean(axis=0)
-        fraction_of_missing_values = np.asarray(
-                                        fraction_of_missing_values).squeeze()
         every_feat_index = np.arange(n_features)
         if self.imputation_order == 'roman':
             ordered_idx = every_feat_index
@@ -677,7 +672,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # np.corrcoef is not defined for features with zero std
         abs_correlation_matrix[np.isnan(abs_correlation_matrix)] = tolerance
         # ensure that there are no zeros (prevents some edge cases)
-        abs_correlation_matrix[np.nonzero(abs_correlation_matrix)] = tolerance
+        abs_correlation_matrix[abs_correlation_matrix == 0] = tolerance
         np.fill_diagonal(abs_correlation_matrix, 0)
         abs_correlation_matrix = normalize(abs_correlation_matrix,
                                            norm='l1', axis=0)
@@ -705,10 +700,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
         """
-        X = check_array(X, dtype=FLOAT_DTYPES, accept_sparse='csc', order="F",
-                        force_all_finite=False)
+        X = check_array(X, dtype=np.float32, order="F", force_all_finite=False)
 
-        # do initial imputation with built-in Imputer
+        mask_missing_values = _get_mask(X, self.missing_values)
         if self.initial_imputer_ is None:
             self.initial_imputer_ = Imputer(missing_values=self.missing_values,
                                             strategy=self.initial_strategy,
@@ -717,18 +711,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         else:
             X_filled = self.initial_imputer_.transform(X)
 
-        # remove invalid columns from X (obtained from initial imputer)
-        valid_mask = np.flatnonzero(np.logical_not(np.isnan(
-                                        self.initial_imputer_.statistics_)))
+        valid_mask = np.flatnonzero(np.logical_not(
+                                np.isnan(self.initial_imputer_.statistics_)))
         X = X[:, valid_mask]
-        if sparse.issparse(X) and self.missing_values != 0:
-            mask_missing_values = _get_mask(X.data, self.missing_values)
-            mask_missing_values = sparse.csc_matrix((mask_missing_values,
-                            X.indices, X.indptr), dtype='bool', shape=X.shape)
-        else:
-            if sparse.issparse(X):
-                X = X.toarray()
-            mask_missing_values = _get_mask(X, self.missing_values)
+        mask_missing_values = mask_missing_values[:, valid_mask]
 
         return X, X_filled, mask_missing_values
 

@@ -423,14 +423,3 @@ def test_mice_imputation_order():
                               verbose=True,
                               imputation_order=imputation_order)
         imputer.fit_transform(X)
-
-#def test_mice_sparse_io():
-n = 100
-d = 10
-X = sparse_random_matrix(n, d, density=0.10).tocsc()
-missing_mask = np.random.random(X.shape) < 0.5
-X[missing_mask] = np.nan
-imputer = MICEImputer(missing_values=np.nan,
-                      n_imputations=1,
-                      n_burn_in=1)
-Xt = imputer.fit_transform(X)
