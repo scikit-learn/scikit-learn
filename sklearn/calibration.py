@@ -98,6 +98,7 @@ class CalibratedThresholdClassifier(BaseEstimator, ClassifierMixin):
                 )
             self.calibrated_threshold = sum(calibrated_thresholds) /\
                 len(calibrated_thresholds)
+            self.base_estimator.fit(X, y)
         return self
 
     def predict(self, X):
