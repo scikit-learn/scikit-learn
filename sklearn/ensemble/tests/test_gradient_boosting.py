@@ -858,9 +858,9 @@ def test_warm_start_sparse():
         for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
             est_dense = Cls(n_estimators=100, max_depth=1, subsample=0.5,
                             random_state=1, warm_start=True)
-            est_dense.fit(X_sparse, y)
+            est_dense.fit(X, y)
             est_dense.set_params(n_estimators=200)
-            est_dense.fit(X_sparse, y)
+            est_dense.fit(X, y)
 
             est_sparse = Cls(n_estimators=100, max_depth=1, subsample=0.5,
                              random_state=1, warm_start=True)
