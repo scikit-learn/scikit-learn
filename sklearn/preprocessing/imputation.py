@@ -12,7 +12,6 @@ from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..base import clone
-from ..dummy import DummyRegressor
 from ..externals import six
 from ..externals.funcsigs import signature
 from ..preprocessing import normalize
@@ -539,10 +538,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         if estimator is None:
             X_train = X_filled[:, neighbor_feat_idx][~missing_row_mask]
             y_train = X_filled[:, feat_idx][~missing_row_mask]
-            if np.std(y_train) > 0:
-                estimator = clone(self.estimator_)
-            else:
-                estimator = DummyRegressor()
+            estimator = clone(self.estimator_)
             estimator.fit(X_train, y_train)
 
         # get posterior samples
@@ -756,13 +752,13 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         # perform imputations
-        total_rounds = self.n_burn_in + self.n_imputations
+        n_rounds = self.n_burn_in + self.n_imputations
         results_list = []
         self.trained_estimator_triplets_ = []
         if self.verbose:
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
             start_t = time()
-        for iter in range(total_rounds):
+        for round in range(n_rounds):
             # order in which to impute
             ordered_idx = self._get_ordered_idx(mask_missing_values)
 
@@ -781,12 +777,12 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                 estimator_triplet = (feat_idx, neighbor_feat_idx, estimator)
                 self.trained_estimator_triplets_.append(estimator_triplet)
 
-            if iter >= self.n_burn_in:
+            if round >= self.n_burn_in:
                 results_list.append(X_filled[mask_missing_values])
             if self.verbose:
                 print('[MICE] Ending imputation round round '
                       '%d/%d, elapsed time %0.2f'
-                      % (iter + 1, total_rounds, time() - start_t))
+                      % (round + 1, n_rounds, time() - start_t))
 
         if len(results_list) > 0:
             X[mask_missing_values] = np.array(results_list).mean(axis=0)
@@ -814,15 +810,15 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
         # perform imputations
-        total_rounds = self.n_burn_in + self.n_imputations
-        total_iterations = len(self.trained_estimator_triplets_)
-        imputations_per_round = total_iterations / total_rounds
-        iter = 0
+        n_rounds = self.n_burn_in + self.n_imputations
+        n_imputations = len(self.trained_estimator_triplets_)
+        imputations_per_round = n_imputations / n_rounds
+        round = 0
         results_list = []
         if self.verbose:
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
             start_t = time()
-        for i, estimator_triplet in enumerate(
+        for it, estimator_triplet in enumerate(
                                         self.trained_estimator_triplets_):
             feat_idx, neighbor_feat_idx, estimator = estimator_triplet
             X_filled, _ = self._impute_one_feature(X_filled,
@@ -830,16 +826,16 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                                    feat_idx,
                                                    neighbor_feat_idx,
                                                    estimator)
-            if not (i + 1) % imputations_per_round:
-                iter += 1
-                if iter >= self.n_burn_in:
+            if not (it + 1) % imputations_per_round:
+                round += 1
+                if round >= self.n_burn_in:
                     results_list.append(X_filled[mask_missing_values])
                 if self.verbose:
                     print('[MICE] Ending imputation round '
                           '%d/%d, elapsed time %0.2f'
-                          % (iter, total_rounds, time() - start_t))
+                          % (round, n_rounds, time() - start_t))
 
-        if total_rounds > 0 and len(results_list) > 0:
+        if n_rounds > 0 and len(results_list) > 0:
             X[mask_missing_values] = np.array(results_list).mean(axis=0)
         else:
             X[mask_missing_values] = X_filled[mask_missing_values]

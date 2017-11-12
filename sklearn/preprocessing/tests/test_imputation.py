@@ -4,7 +4,6 @@ from scipy import sparse
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
-
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
@@ -86,16 +85,15 @@ def test_imputation_shape():
     X = np.random.randn(10, 2)
     X[::2] = np.nan
 
-    for strategy in ['mean', 'median', 'most_frequent']:
-        imputer = Imputer(strategy=strategy)
+    for strategy in ['mean', 'median', 'most_frequent', 'mice']:
+        if strategy == 'mice':
+            imputer = MICEImputer()
+        else:
+            imputer = Imputer(strategy=strategy)
+            X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
+            assert_equal(X_imputed.shape, (10, 2))
         X_imputed = imputer.fit_transform(X)
         assert_equal(X_imputed.shape, (10, 2))
-        X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
-        assert_equal(X_imputed.shape, (10, 2))
-
-    mice = MICEImputer()
-    X_imputed = mice.fit_transform(X)
-    assert_equal(X_imputed.shape, (10, 2))
 
 
 def test_imputation_mean_median_only_zero():
@@ -287,7 +285,8 @@ def test_mice_pipeline_grid_search():
     # Test imputation within a pipeline + gridsearch.
     pipeline = Pipeline([('imputer', MICEImputer(missing_values=0,
                                                  n_imputations=1,
-                                                 n_burn_in=1)),
+                                                 n_burn_in=1,
+                                                 random_state=0)),
                          ('tree', tree.DecisionTreeRegressor(random_state=0))])
 
     parameters = {
@@ -307,10 +306,14 @@ def test_imputation_pickle():
     import pickle
 
     l = 100
-    X = sparse_random_matrix(l, l, density=0.10)
+    X = sparse_random_matrix(l, l, density=0.10).todense()
 
-    for strategy in ["mean", "median", "most_frequent"]:
-        imputer = Imputer(missing_values=0, strategy=strategy)
+    for strategy in ["mean", "median", "most_frequent", "mice"]:
+        if strategy == 'mice':
+            imputer = MICEImputer(missing_values=0, n_imputations=1,
+                                  n_burn_in=1, random_state=0)
+        else:
+            imputer = Imputer(missing_values=0, strategy=strategy)
         imputer.fit(X)
 
         imputer_pickled = pickle.loads(pickle.dumps(imputer))
