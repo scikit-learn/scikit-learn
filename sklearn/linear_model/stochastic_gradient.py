@@ -772,7 +772,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     See also
     --------
-    LinearSVC, LogisticRegression, Perceptron
+    sklearn.svm.LinearSVC, LogisticRegression, Perceptron
 
     """
 
@@ -1323,7 +1323,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     See also
     --------
-    Ridge, ElasticNet, Lasso, SVR
+    Ridge, ElasticNet, Lasso, sklearn.svm.SVR
 
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
