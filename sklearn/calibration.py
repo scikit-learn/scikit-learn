@@ -4,6 +4,7 @@
 #         Balazs Kegl <balazs.kegl@gmail.com>
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #         Mathieu Blondel <mathieu@mblondel.org>
+#         Prokopis Gryllos <gryllosprokopis@gmail.com>
 #
 # License: BSD 3 clause
 
@@ -25,6 +26,134 @@ from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
 from .metrics.classification import _check_binary_probabilistic_predictions
+from .metrics.pairwise import euclidean_distances
+from .metrics.ranking import roc_curve
+
+
+class CalibratedThresholdClassifier(BaseEstimator, ClassifierMixin):
+    """Decision threshold calibration for binary classification using the
+    point on the roc curve that is closest to the ideal corner.
+
+    If cv="prefit" the base estimator is assumed to be fitted and all data will
+    be used for the calibration of the decision threshold that determines the
+    output of predict. Otherwise predict will use the average of the thresholds
+    of the calibrated classifiers resulting from the cross-validation loop.
+
+    Parameters
+    ----------
+    base_estimator : instance BaseEstimator
+        The classifier whose prediction threshold will be calibrated
+
+    pos_label : 0 or 1 (optional)
+        Label considered as positive.
+        (default value: 1)
+
+    cv : int, cross-validation generator, iterable or "prefit" (optional)
+        Determines the cross-validation splitting strategy. If cv="prefit" the
+        base estimator is assumed to be fitted and all data will be used for the
+        calibration of the probability threshold
+        (default value: "prefit")
+
+    Attributes
+    ----------
+    calibrated_threshold : float
+        Decision threshold for the positive class that determines the output
+        of predict
+    """
+    def __init__(self, base_estimator=None, pos_label=1, cv=3):
+        self.base_estimator = base_estimator
+        self.pos_label = pos_label
+        self.cv = cv
+        self.calibrated_threshold = None
+
+    def fit(self, X, y):
+        """Fit model
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data.
+
+        y : array-like, shape (n_samples,)
+            Target values.
+
+        Returns
+        -------
+        self : object
+            Instance of self.
+        """
+        if self.cv == 'prefit':
+            self.calibrated_threshold = _CalibratedThresholdClassifier(
+                self.base_estimator, self.pos_label
+            ).fit(X, y).threshold
+        else:
+            cv = check_cv(self.cv, y, classifier=True)
+            calibrated_thresholds = []
+
+            for train, test in cv.split(X, y):
+                estimator = clone(self.base_estimator).fit(X[train], y[train])
+                calibrated_thresholds.append(_CalibratedThresholdClassifier(
+                        estimator, self.pos_label
+                    ).fit(X[test], y[test]).threshold
+                )
+            self.calibrated_threshold = sum(calibrated_thresholds) /\
+                len(calibrated_thresholds)
+        return self
+
+    def predict(self, X):
+        return (self.base_estimator.predict_proba(X)[:, self.pos_label] >
+                self.calibrated_threshold).astype(int)
+
+
+class _CalibratedThresholdClassifier(object):
+    """Decision threshold calibration using the optimal point of the roc curve
+
+    It assumes that base_estimator has already been fit, and trains the
+    calibration on the input set of the fit function. Note that this class
+    should not be used as an estimator directly. Use CalibratedClassifierCV
+    with cv="prefit" instead.
+
+    Parameters
+    ----------
+    base_estimator : instance BaseEstimator
+        The classifier whose prediction threshold will be calibrated
+
+    pos_label : 0 or 1
+        Label considered as positive during the roc_curve construction.
+
+    Attributes
+    ----------
+    threshold : float
+        Calibrated decision threshold for the positive class
+    """
+    def __init__(self, base_estimator, pos_label):
+        self.base_estimator = base_estimator
+        self.pos_label = pos_label
+        self.threshold = None
+
+    def fit(self, X, y):
+        """Calibrate the decision threshold for the fitted model's positive
+        class
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data.
+
+        y : array-like, shape (n_samples,)
+            Target values.
+
+        Returns
+        -------
+        self : object
+            Instance of self.
+        """
+        y_score = self.base_estimator.predict_proba(X)[:, self.pos_label]
+        fpr, tpr, thresholds = roc_curve(y, y_score, self.pos_label)
+        self.threshold = thresholds[np.argmin(
+            euclidean_distances(np.column_stack((fpr, tpr)), [[0, 1]])
+        )]
+        return self
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin):
