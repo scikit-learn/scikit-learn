@@ -5,6 +5,7 @@
 
 import copy
 import warnings
+from collections import defaultdict
 
 import numpy as np
 from scipy import sparse
@@ -39,7 +40,7 @@ def clone(estimator, safe=True):
         The estimator or group of estimators to be cloned
 
     safe : boolean, optional
-        If safe is false, clone will fall back to a deepcopy on objects
+        If safe is false, clone will fall back to a deep copy on objects
         that are not estimators.
 
     """
@@ -225,21 +226,7 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            # We need deprecation warnings to always be on in order to
-            # catch deprecated param values.
-            # This is set in utils/__init__.py but it gets overwritten
-            # when running under python3 somehow.
-            warnings.simplefilter("always", DeprecationWarning)
-            try:
-                with warnings.catch_warnings(record=True) as w:
-                    value = getattr(self, key, None)
-                if len(w) and w[0].category == DeprecationWarning:
-                    # if the parameter is deprecated, don't show it
-                    continue
-            finally:
-                warnings.filters.pop(0)
-
-            # XXX: should we rather test if instance of estimator?
+            value = getattr(self, key, None)
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
@@ -259,29 +246,28 @@ class BaseEstimator(object):
         self
         """
         if not params:
-            # Simple optimisation to gain speed (inspect is slow)
+            # Simple optimization to gain speed (inspect is slow)
             return self
         valid_params = self.get_params(deep=True)
-        for key, value in six.iteritems(params):
-            split = key.split('__', 1)
-            if len(split) > 1:
-                # nested objects case
-                name, sub_name = split
-                if name not in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s. '
-                                     'Check the list of available parameters '
-                                     'with `estimator.get_params().keys()`.' %
-                                     (name, self))
-                sub_object = valid_params[name]
-                sub_object.set_params(**{sub_name: value})
+
+        nested_params = defaultdict(dict)  # grouped by prefix
+        for key, value in params.items():
+            key, delim, sub_key = key.partition('__')
+            if key not in valid_params:
+                raise ValueError('Invalid parameter %s for estimator %s. '
+                                 'Check the list of available parameters '
+                                 'with `estimator.get_params().keys()`.' %
+                                 (key, self))
+
+            if delim:
+                nested_params[key][sub_key] = value
             else:
-                # simple objects case
-                if key not in valid_params:
-                    raise ValueError('Invalid parameter %s for estimator %s. '
-                                     'Check the list of available parameters '
-                                     'with `estimator.get_params().keys()`.' %
-                                     (key, self.__class__.__name__))
                 setattr(self, key, value)
+                valid_params[key] = value
+
+        for key, sub_params in nested_params.items():
+            valid_params[key].set_params(**sub_params)
+
         return self
 
     def __repr__(self):
@@ -314,7 +300,6 @@ class BaseEstimator(object):
             super(BaseEstimator, self).__setstate__(state)
         except AttributeError:
             self.__dict__.update(state)
-
 
 
 ###############################################################################
@@ -358,10 +343,10 @@ class RegressorMixin(object):
     def score(self, X, y, sample_weight=None):
         """Returns the coefficient of determination R^2 of the prediction.
 
-        The coefficient R^2 is defined as (1 - u/v), where u is the regression
-        sum of squares ((y_true - y_pred) ** 2).sum() and v is the residual
+        The coefficient R^2 is defined as (1 - u/v), where u is the residual
+        sum of squares ((y_true - y_pred) ** 2).sum() and v is the total
         sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        Best possible score is 1.0 and it can be negative (because the
+        The best possible score is 1.0 and it can be negative (because the
         model can be arbitrarily worse). A constant model that always
         predicts the expected value of y, disregarding the input features,
         would get a R^2 score of 0.0.
@@ -428,6 +413,11 @@ class BiclusterMixin(object):
 
         Only works if ``rows_`` and ``columns_`` attributes exist.
 
+        Parameters
+        ----------
+        i : int
+            The index of the cluster.
+
         Returns
         -------
         row_ind : np.array, dtype=np.intp
@@ -443,6 +433,11 @@ class BiclusterMixin(object):
     def get_shape(self, i):
         """Shape of the i'th bicluster.
 
+        Parameters
+        ----------
+        i : int
+            The index of the cluster.
+
         Returns
         -------
         shape : (int, int)
@@ -454,9 +449,22 @@ class BiclusterMixin(object):
     def get_submatrix(self, i, data):
         """Returns the submatrix corresponding to bicluster `i`.
 
+        Parameters
+        ----------
+        i : int
+            The index of the cluster.
+        data : array
+            The data.
+
+        Returns
+        -------
+        submatrix : array
+            The submatrix corresponding to bicluster i.
+
+        Notes
+        -----
         Works with sparse matrices. Only works if ``rows_`` and
         ``columns_`` attributes exist.
-
         """
         from .utils.validation import check_array
         data = check_array(data, accept_sparse='csr')
@@ -525,10 +533,33 @@ class MetaEstimatorMixin(object):
 ###############################################################################
 
 def is_classifier(estimator):
-    """Returns True if the given estimator is (probably) a classifier."""
+    """Returns True if the given estimator is (probably) a classifier.
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a classifier and False otherwise.
+    """
     return getattr(estimator, "_estimator_type", None) == "classifier"
 
 
 def is_regressor(estimator):
-    """Returns True if the given estimator is (probably) a regressor."""
+    """Returns True if the given estimator is (probably) a regressor.
+
+
+    Parameters
+    ----------
+    estimator : object
+        Estimator object to test.
+
+    Returns
+    -------
+    out : bool
+        True if estimator is a regressor and False otherwise.
+    """
     return getattr(estimator, "_estimator_type", None) == "regressor"

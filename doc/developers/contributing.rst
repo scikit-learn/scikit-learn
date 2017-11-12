@@ -43,6 +43,32 @@ ticket to the
 also welcome to post feature requests or pull requests.
 
 
+Ways to contribute
+==================
+
+There are many ways to contribute to scikit-learn, with the most common ones
+being contribution of code or documentation to the project. Improving the
+documentation is no less important than improving the library itself.  If you
+find a typo in the documentation, or have made improvements, do not hesitate to
+send an email to the mailing list or preferably submit a GitHub pull request.
+Full documentation can be found under the doc/ directory.
+
+But there are many other ways to help. In particular answering queries on the
+`issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_,
+investigating bugs, and :ref:`reviewing other developers' pull requests
+<code_review>` are very valuable contributions that decrease the burden on the
+project maintainers.
+
+Another way to contribute is to report issues you're facing, and give a "thumbs up"
+on issues that others reported and that are relevant to you.
+It also helps us if you spread the word: reference the project from your blog
+and articles, link to it from your website, or simply say "I use it":
+
+.. raw:: html
+
+   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
+
+
 .. _git_repo:
 
 Retrieving the latest code
@@ -67,16 +93,20 @@ extension in place::
     python setup.py build_ext --inplace
 
 
-Another option is to use the ``develop`` option if you change your code a lot
-and do not want to have to reinstall every time. This basically builds the
-extension in place and creates a link to the development directory (see
-`the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_)::
+Another option is to install the package in editable mode if you change your
+code a lot and do not want to have to reinstall every time. This basically
+builds the extension in place and creates a link to the development directory
+(see `the pip docs <https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_)::
 
-    python setup.py develop
+    pip install --editable .
 
 .. note::
 
-    if you decide to do that you have to rerun::
+    This is fundamentally similar to using the command ``python setup.py develop`` (see `the setuptool docs <http://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_). It is however preferred to use pip.
+
+.. note::
+
+    If you decide to do an editable install you have to rerun::
 
         python setup.py build_ext --inplace
 
@@ -111,7 +141,8 @@ then submit a "pull request" (PR):
  2. Fork the `project repository
     <https://github.com/scikit-learn/scikit-learn>`__: click on the 'Fork'
     button near the top of the page. This creates a copy of the code under your
-    account on the GitHub server.
+    account on the GitHub server. For more details on how to fork a
+    repository see `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
  3. Clone this copy to your local disk::
 
@@ -133,10 +164,11 @@ then submit a "pull request" (PR):
 
         $ git push -u origin my-feature
 
-Finally, go to the web page of the your fork of the scikit-learn repo,
-and click 'Pull request' to send your changes to the maintainers for review.
-You may want to consider sending an email to the mailing list for more
-visibility.
+Finally, follow `these
+<https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
+instructions to create a pull request from your fork. This will send an
+email to the committers. You may want to consider sending an email to the
+mailing list for more visibility.
 
 .. note::
 
@@ -153,12 +185,22 @@ If any of the above seems like magic to you, then look up the `Git documentation
 <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ on the
 web.
 
-In particular, if some conflicts arise between your branch and the master
-branch, you will need to `rebase your branch on master
-<http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html#rebasing-on-master>`_.
-Please avoid merging master branch into yours. If you did it anyway, you can fix
-it following `this example
-<https://github.com/scikit-learn/scikit-learn/pull/7111#issuecomment-249175383>`_.
+If some conflicts arise between your branch and the ``master`` branch, you need
+to merge ``master``. The command will be::
+
+  $ git merge master
+
+with ``master`` being synchronized with the ``upstream``.
+
+Subsequently, you need to solve the conflicts. You can refer to the `Git
+documentation related to resolving merge conflict using the command line
+<https://help.github.com/articles/resolving-a-merge-conflict-using-the-command-line/>`_.
+
+.. note::
+
+   In the past, the policy to resolve conflicts was to rebase your branch on
+   ``master``. GitHub interface deals with merging ``master`` better than in
+   the past.
 
 
 Contributing pull requests
@@ -176,10 +218,20 @@ rules before submitting a pull request:
       ``sklearn.utils`` submodule.  A list of utility routines available
       for developers can be found in the :ref:`developers-utils` page.
 
-    * If your pull request addresses an issue, please use the title to describe
-      the issue and mention the issue number in the pull request description to
-      ensure a link is created to the original issue.
+    * Give your pull request a helpful title that summarises what your
+      contribution does. In some cases "Fix <ISSUE TITLE>" is enough.
+      "Fix #<ISSUE NUMBER>" is not enough.
 
+    * Often pull requests resolve one or more other issues (or pull requests).
+      If merging your pull request means that some other issues/PRs should
+      be closed, you should `use keywords to create link to them
+      <https://github.com/blog/1506-closing-issues-via-pull-requests/>`_
+      (e.g., ``Fixes #1234``; multiple issues/PRs are allowed as long as each
+      one is preceded by a keyword). Upon merging, those issues/PRs will
+      automatically be closed by GitHub. If your pull request is simply
+      related to some other issues/PRs, create a link to them without using
+      the keywords (e.g., ``See also #1234``).
+    
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
 
@@ -208,8 +260,15 @@ rules before submitting a pull request:
       practice and, if possible, compare it to other methods available in
       scikit-learn.
 
-    * Documentation and high-coverage tests are necessary for enhancements
-      to be accepted.
+    * Documentation and high-coverage tests are necessary for enhancements to be
+      accepted. Bug-fixes or new features should be provided with
+      `non-regression tests
+      <https://en.wikipedia.org/wiki/Non-regression_testing>`_. These tests
+      verify the correct behavior of the fix or feature. In this manner, further
+      modifications on the code base are granted to be consistent with the
+      desired behavior. For the case of bug fixes, at the time of the PR, the
+      non-regression tests should fail for the code base in the master branch
+      and pass for the PR code.
 
     * At least one paragraph of narrative documentation with links to
       references in the literature (with PDF links when possible) and
@@ -287,7 +346,7 @@ and Cython optimizations.
 Filing Bugs
 -----------
 
-We use Github issues to track all bugs and feature requests; feel free to
+We use GitHub issues to track all bugs and feature requests; feel free to
 open an issue if you have found a bug or wish to see a feature implemented.
 
 It is recommended to check that your issue complies with the
@@ -309,7 +368,7 @@ following rules before submitting:
 
 -  Please include your operating system type and version number, as well
    as your Python, scikit-learn, numpy, and scipy versions. This information
-   can be found by runnning the following code snippet::
+   can be found by running the following code snippet::
 
      import platform; print(platform.platform())
      import sys; print("Python", sys.version)
@@ -328,29 +387,37 @@ following rules before submitting:
 Issues for New Contributors
 ---------------------------
 
-New contributors should look for the following tags when looking for issues.
-We strongly recommend that new contributors tackle "easy" issues first: this
-helps the contributor become familiar with the contribution workflow, and
-for the core devs to become acquainted with the contributor; besides which,
-we frequently underestimate how easy an issue is to solve!
+New contributors should look for the following tags when looking for issues.  We
+strongly recommend that new contributors tackle "easy" issues first: this helps
+the contributor become familiar with the contribution workflow, and for the core
+devs to become acquainted with the contributor; besides which, we frequently
+underestimate how easy an issue is to solve!
 
-.. topic:: Easy Tags
+.. topic:: good first issue tag
 
-    A great way to start contributing to scikit-learn is to pick an item from the
-    list of `Easy issues
-    <https://github.com/scikit-learn/scikit-learn/issues?q=is%3Aopen+label%3AEasy+is%3Aissue>`_
+    A great way to start contributing to scikit-learn is to pick an item from
+    the list of `good first issues
+    <https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue>`_
     in the issue tracker. Resolving these issues allow you to start contributing
-    to the project without much prior knowledge. Your assistance in this area will
-    be greatly appreciated by the more experienced developers as it helps free up
-    their time to concentrate on other issues.
+    to the project without much prior knowledge. If you have already contributed
+    to scikit-learn, you should look at Easy issues instead.
 
-.. topic:: Need Contributor Tags
+.. topic:: Easy tag
 
-    We often use the Need Contributor tag to mark issues regardless of difficulty. Additionally,
-    we use the Need Contributor tag to mark Pull Requests which have been abandoned
+    Another great way to contribute to scikit-learn is to pick an item from the
+    list of `Easy issues
+    <https://github.com/scikit-learn/scikit-learn/labels/Easy>`_ in the issue
+    tracker.  Your assistance in this area will be greatly appreciated by the
+    more experienced developers as it helps free up their time to concentrate on
+    other issues.
+
+.. topic:: help wanted tag
+
+    We often use the help wanted tag to mark issues regardless of difficulty. Additionally,
+    we use the help wanted tag to mark Pull Requests which have been abandoned
     by their original contributor and are available for someone to pick up where the original
-    contributor left off. The list of issues with the Need Contributor tag can be found
-    `here <https://github.com/scikit-learn/scikit-learn/labels/Need%20Contributor>`_ .
+    contributor left off. The list of issues with the help wanted tag can be found
+    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_ .
 
     Note that not all issues which need contributors will have this tag.
 
@@ -405,7 +472,7 @@ opposed to how it works "under the hood".
 You may also be asked to show your changes when it's built. When you create
 a pull request or make changes in an existing one modifying the docs, CircleCI
 automatically builds them. Thus, you can easily view your changes in the built
-artifacts using the following formula:
+artifacts using the following URL:
 
 ``http://scikit-learn.org/circle?{BUILD_NUMBER}``
 
@@ -438,9 +505,12 @@ Finally, follow the formatting rules below to make it consistently good:
 .. warning:: **Sphinx version**
 
    While we do our best to have the documentation build under as many
-   version of Sphinx as possible, the different versions tend to behave
-   slightly differently. To get the best results, you should use version
-   1.0.
+   versions of Sphinx as possible, the different versions tend to
+   behave slightly differently. To get the best results, you should
+   use the same version as the one we used on CircleCI. Look at this
+   `github search <https://github.com/search?utf8=%E2%9C%93&q=sphinx+repo%3Ascikit-learn%2Fscikit-learn+extension%3Ash+path%3Abuild_tools%2Fcircle&type=Code>`_
+   to know the exact version.
+
 
 .. _testing_coverage:
 
@@ -485,7 +555,7 @@ More information can be found on the `developer's wiki
 Issue Tracker Tags
 ------------------
 All issues and pull requests on the
-`Github issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
+`GitHub issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
 should have (at least) one of the following tags:
 
 :Bug / Crash:
@@ -501,40 +571,26 @@ should have (at least) one of the following tags:
 :New Feature:
     Feature requests and pull requests implementing a new feature.
 
-There are three other tags to help new contributors:
+There are four other tags to help new contributors:
+
+:good first issue:
+    This issue is ideal for a first contribution to scikit-learn. Ask for help
+    if the formulation is unclear. If you have already contributed to
+    scikit-learn, look at Easy issues instead.
 
 :Easy:
-    This issue can be tackled by anyone, no experience needed.
-    Ask for help if the formulation is unclear.
+    This issue can be tackled without much prior experience.
 
 :Moderate:
     Might need some knowledge of machine learning or the package,
     but is still approachable for someone new to the project.
 
-:Needs Contributor:
+:help wanted:
     This tag marks an issue which currently lacks a contributor or a
     PR that needs another contributor to take over the work. These
     issues can range in difficulty, and may not be approachable
     for new contributors. Note that not all issues which need
     contributors will have this tag.
-
-
-Other ways to contribute
-========================
-
-Code is not the only way to contribute to scikit-learn. For instance,
-documentation is also a very important part of the project and often
-doesn't get as much attention as it deserves. If you find a typo in
-the documentation, or have made improvements, do not hesitate to send
-an email to the mailing list or submit a GitHub pull request. Full
-documentation can be found under the doc/ directory.
-
-It also helps us if you spread the word: reference the project from your blog
-and articles, link to it from your website, or simply say "I use it":
-
-.. raw:: html
-
-   <script type="text/javascript" src="http://www.ohloh.net/p/480792/widgets/project_users.js?style=rainbow"></script>
 
 
 .. _coding-guidelines:
@@ -728,16 +784,23 @@ the removal will be in 0.(x+2). For example, if the deprecation happened
 in version 0.18-dev, the message should say it happened in version 0.18
 and the old behavior will be removed in version 0.20.
 
+In addition, a deprecation note should be added in the docstring, recalling the
+same information as the deprecation warning as explained above. Use the
+``.. deprecated::`` directive::
+
+  .. deprecated:: 0.13
+     ``k`` was renamed to ``n_clusters`` in version 0.13 and will be removed
+     in 0.15.
+
 
 .. currentmodule:: sklearn
 
-Python 3.x support
-------------------
+Python versions supported
+-------------------------
 
-All scikit-learn code should work unchanged in both Python 2.[67]
-and 3.2 or newer. Since Python 3.x is not backwards compatible,
-that may require changes to code and it certainly requires testing
-on both 2.7 and 3.2 or newer.
+All scikit-learn code should work unchanged in both Python 2.7 and 3.4 or
+newer. Since Python 3.x is not backwards compatible, that may require changes
+to code and it certainly requires testing on both 2.7 and 3.4 or newer.
 
 For most numerical algorithms, Python 3.x support is easy:
 just remember that ``print`` is a function and
@@ -747,6 +810,66 @@ the Python standard library.
 The `six <http://pythonhosted.org/six/>`_ package helps with
 cross-compatibility and is included in scikit-learn as
 ``sklearn.externals.six``.
+
+
+.. _code_review:
+
+Code Review Guidelines
+======================
+Reviewing code contributed to the project as PRs is a crucial component of
+scikit-learn development. We encourage anyone to start reviewing code of other
+developers. The code review process is often highly educational for everybody
+involved. This is particularly appropriate if it is a feature you would like to
+use, and so can respond critically about whether the PR meets your needs. While
+each pull request needs to be signed off by two core developers, you can speed
+up this process by providing your feedback.
+
+Here are a few important aspects that need to be covered in any code review,
+from high-level questions to a more detailed check-list.
+
+- Do we want this in the library? Is it likely to be used? Do you, as
+  a scikit-learn user, like the change and intend to use it? Is it in
+  the scope of scikit-learn? Will the cost of maintaining a new
+  feature be worth its benefits?
+
+- Is the code consistent with the API of scikit-learn? Are public
+  functions/classes/parameters well named and intuitively designed?
+
+- Are all public functions/classes and their parameters, return types, and
+  stored attributes named according to scikit-learn conventions and documented clearly?
+
+- Is any new functionality described in the user-guide and illustrated with examples?
+
+- Is every public function/class tested? Are a reasonable set of
+  parameters, their values, value types, and combinations tested? Do
+  the tests validate that the code is correct, i.e. doing what the
+  documentation says it does? If the change is a bug-fix, is a
+  non-regression test included? Look at `this
+  <https://jeffknupp.com/blog/2013/12/09/improve-your-python-understanding-unit-testing>`_
+  to get started with testing in Python.
+
+- Do the tests pass in the continuous integration build? If
+  appropriate, help the contributor understand why tests failed.
+
+- Do the tests cover every line of code (see the coverage report in the build
+  log)? If not, are the lines missing coverage good exceptions?
+
+- Is the code easy to read and low on redundancy? Should variable names be
+  improved for clarity or consistency? Should comments be added? Should comments
+  be removed as unhelpful or extraneous?
+
+- Could the code easily be rewritten to run much more efficiently for
+  relevant settings?
+
+- Is the code backwards compatible with previous versions? (or is a
+  deprecation cycle necessary?)
+
+- Will the new code add any dependencies on other libraries? (this is
+  unlikely to be accepted)
+
+- Does the documentation render properly (see the
+  :ref:`contribute_documentation` section for more details), and are the plots
+  instructive?
 
 
 APIs of scikit-learn objects
@@ -1056,7 +1179,7 @@ implement the interface is::
 
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
-            self.setattr(parameter, value)
+            setattr(self, parameter, value)
         return self
 
 

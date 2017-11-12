@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_dict_equal
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
@@ -58,19 +59,6 @@ class ModifyInitParams(BaseEstimator):
     """
     def __init__(self, a=np.array([0])):
         self.a = a.copy()
-
-
-class DeprecatedAttributeEstimator(BaseEstimator):
-    def __init__(self, a=None, b=None):
-        self.a = a
-        if b is not None:
-            DeprecationWarning("b is deprecated and renamed 'a'")
-            self.a = b
-
-    @property
-    @deprecated("Parameter 'b' is deprecated and renamed to 'a'")
-    def b(self):
-        return self._b
 
 
 class Buggy(BaseEstimator):
@@ -218,19 +206,6 @@ def test_get_params():
     assert_raises(ValueError, test.set_params, a__a=2)
 
 
-def test_get_params_deprecated():
-    # deprecated attribute should not show up as params
-    est = DeprecatedAttributeEstimator(a=1)
-
-    assert_true('a' in est.get_params())
-    assert_true('a' in est.get_params(deep=True))
-    assert_true('a' in est.get_params(deep=False))
-
-    assert_true('b' not in est.get_params())
-    assert_true('b' not in est.get_params(deep=True))
-    assert_true('b' not in est.get_params(deep=False))
-
-
 def test_is_classifier():
     svc = SVC()
     assert_true(is_classifier(svc))
@@ -251,6 +226,32 @@ def test_set_params():
     # bad_pipeline = Pipeline([("bad", NoEstimator())])
     # assert_raises(AttributeError, bad_pipeline.set_params,
     #               bad__stupid_param=True)
+
+
+def test_set_params_passes_all_parameters():
+    # Make sure all parameters are passed together to set_params
+    # of nested estimator. Regression test for #9944
+
+    class TestDecisionTree(DecisionTreeClassifier):
+        def set_params(self, **kwargs):
+            super(TestDecisionTree, self).set_params(**kwargs)
+            # expected_kwargs is in test scope
+            assert kwargs == expected_kwargs
+            return self
+
+    expected_kwargs = {'max_depth': 5, 'min_samples_leaf': 2}
+    for est in [Pipeline([('estimator', TestDecisionTree())]),
+                GridSearchCV(TestDecisionTree(), {})]:
+        est.set_params(estimator__max_depth=5,
+                       estimator__min_samples_leaf=2)
+
+
+def test_set_params_updates_valid_params():
+    # Check that set_params tries to set SVC().C, not
+    # DecisionTreeClassifier().C
+    gscv = GridSearchCV(DecisionTreeClassifier(), {})
+    gscv.set_params(estimator=SVC(), estimator__C=42.0)
+    assert gscv.estimator.C == 42.0
 
 
 def test_score_sample_weight():
@@ -299,7 +300,7 @@ def test_clone_pandas_dataframe():
         def fit(self, X, y=None):
             pass
 
-        def transform(self, X, y=None):
+        def transform(self, X):
             pass
 
     # build and clone estimator
@@ -440,6 +441,7 @@ class SingleInheritanceEstimator(BaseEstimator):
         return data
 
 
+@ignore_warnings(category=(UserWarning))
 def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
     estimator = SingleInheritanceEstimator()
     estimator._attribute_not_pickled = "this attribute should not be pickled"

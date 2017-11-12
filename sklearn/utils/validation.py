@@ -13,12 +13,15 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
+from numpy.core.numeric import ComplexWarning
 
 from ..externals import six
 from ..utils.fixes import signature
+from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
+from ..externals.joblib import Memory
 
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -30,6 +33,8 @@ warnings.simplefilter('ignore', NonBLASDotWarning)
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
+    if _get_config()['assume_finite']:
+        return
     X = np.asanyarray(X)
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space np.isfinite to prevent
@@ -43,12 +48,15 @@ def _assert_all_finite(X):
 def assert_all_finite(X):
     """Throw a ValueError if X contains NaN or infinity.
 
-    Input MUST be an np.ndarray instance or a scipy.sparse matrix."""
+    Parameters
+    ----------
+    X : array or sparse matrix
+    """
     _assert_all_finite(X.data if sp.issparse(X) else X)
 
 
 def as_float_array(X, copy=True, force_all_finite=True):
-    """Converts an array-like to an array of floats
+    """Converts an array-like to an array of floats.
 
     The new dtype will be np.float32 or np.float64, depending on the original
     type. The function can create a copy or modify the argument depending
@@ -80,7 +88,11 @@ def as_float_array(X, copy=True, force_all_finite=True):
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
         return X.copy('F' if X.flags['F_CONTIGUOUS'] else 'C') if copy else X
     else:
-        return X.astype(np.float32 if X.dtype == np.int32 else np.float64)
+        if X.dtype.kind in 'uib' and X.dtype.itemsize <= 4:
+            return_dtype = np.float32
+        else:
+            return_dtype = np.float64
+        return X.astype(return_dtype)
 
 
 def _is_arraylike(x):
@@ -143,6 +155,36 @@ def _shape_repr(shape):
         # special notation for singleton tuples
         joined += ','
     return "(%s)" % joined
+
+
+def check_memory(memory):
+    """Check that ``memory`` is joblib.Memory-like.
+
+    joblib.Memory-like means that ``memory`` can be converted into a
+    sklearn.externals.joblib.Memory instance (typically a str denoting the
+    ``cachedir``) or has the same interface (has a ``cache`` method).
+
+    Parameters
+    ----------
+    memory : None, str or object with the joblib.Memory interface
+
+    Returns
+    -------
+    memory : object with the joblib.Memory interface
+
+    Raises
+    ------
+    ValueError
+        If ``memory`` is not joblib.Memory-like.
+    """
+
+    if memory is None or isinstance(memory, six.string_types):
+        memory = Memory(cachedir=memory, verbose=0)
+    elif not hasattr(memory, 'cache'):
+        raise ValueError("'memory' should be None, a string or have the same"
+                         " interface as sklearn.externals.joblib.Memory."
+                         " Got memory='{}' instead.".format(memory))
+    return memory
 
 
 def check_consistent_length(*arrays):
@@ -266,6 +308,13 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
     return spmatrix
 
 
+def _ensure_no_complex_data(array):
+    if hasattr(array, 'dtype') and array.dtype is not None \
+            and hasattr(array.dtype, 'kind') and array.dtype.kind == "c":
+        raise ValueError("Complex data not supported\n"
+                         "{}\n".format(array))
+
+
 def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                 copy=False, force_all_finite=True, ensure_2d=True,
                 allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
@@ -287,6 +336,11 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         it will be converted to the first listed format. True allows the input
         to be any format. False means that a sparse matrix input will
         raise an error.
+
+        .. deprecated:: 0.19
+           Passing 'None' to parameter ``accept_sparse`` in methods is
+           deprecated in version 0.19 "and will be removed in 0.21. Use
+           ``accept_sparse=False`` instead.
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
@@ -336,6 +390,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     -------
     X_converted : object
         The converted and validated X.
+
     """
     # accept_sparse 'None' deprecation check
     if accept_sparse is None:
@@ -347,7 +402,7 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         accept_sparse = False
 
     # store whether originally we wanted numeric dtype
-    dtype_numeric = dtype == "numeric"
+    dtype_numeric = isinstance(dtype, six.string_types) and dtype == "numeric"
 
     dtype_orig = getattr(array, "dtype", None)
     if not hasattr(dtype_orig, 'kind'):
@@ -380,18 +435,44 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     context = " by %s" % estimator_name if estimator is not None else ""
 
     if sp.issparse(array):
+        _ensure_no_complex_data(array)
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
     else:
-        array = np.array(array, dtype=dtype, order=order, copy=copy)
+        # If np.array(..) gives ComplexWarning, then we convert the warning
+        # to an error. This is needed because specifying a non complex
+        # dtype to the function converts complex to real dtype,
+        # thereby passing the test made in the lines following the scope
+        # of warnings context manager.
+        with warnings.catch_warnings():
+            try:
+                warnings.simplefilter('error', ComplexWarning)
+                array = np.array(array, dtype=dtype, order=order, copy=copy)
+            except ComplexWarning:
+                raise ValueError("Complex data not supported\n"
+                                 "{}\n".format(array))
+
+        # It is possible that the np.array(..) gave no warning. This happens
+        # when no dtype conversion happend, for example dtype = None. The
+        # result is that np.array(..) produces an array of complex dtype
+        # and we need to catch and raise exception for such cases.
+        _ensure_no_complex_data(array)
 
         if ensure_2d:
+            # If input is scalar raise error
+            if array.ndim == 0:
+                raise ValueError(
+                    "Expected 2D array, got scalar array instead:\narray={}.\n"
+                    "Reshape your data either using array.reshape(-1, 1) if "
+                    "your data has a single feature or array.reshape(1, -1) "
+                    "if it contains a single sample.".format(array))
+            # If input is 1D raise error
             if array.ndim == 1:
                 raise ValueError(
-                    "Got X with X.ndim=1. Reshape your data either using "
-                    "X.reshape(-1, 1) if your data has a single feature or "
-                    "X.reshape(1, -1) if it contains a single sample.")
-            array = np.atleast_2d(array)
+                    "Expected 2D array, got 1D array instead:\narray={}.\n"
+                    "Reshape your data either using array.reshape(-1, 1) if "
+                    "your data has a single feature or array.reshape(1, -1) "
+                    "if it contains a single sample.".format(array))
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
 
@@ -455,6 +536,11 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
         it will be converted to the first listed format. True allows the input
         to be any format. False means that a sparse matrix input will
         raise an error.
+
+        .. deprecated:: 0.19
+           Passing 'None' to parameter ``accept_sparse`` in methods is
+           deprecated in version 0.19 "and will be removed in 0.21. Use
+           ``accept_sparse=False`` instead.
 
     dtype : string, type, list of types or None (default="numeric")
         Data type of result. If None, the dtype of the input is preserved.
@@ -564,10 +650,13 @@ def column_or_1d(y, warn=False):
 def check_random_state(seed):
     """Turn seed into a np.random.RandomState instance
 
-    If seed is None, return the RandomState singleton used by np.random.
-    If seed is an int, return a new RandomState instance seeded with seed.
-    If seed is already a RandomState instance, return it.
-    Otherwise raise ValueError.
+    Parameters
+    ----------
+    seed : None | int | instance of RandomState
+        If seed is None, return the RandomState singleton used by np.random.
+        If seed is an int, return a new RandomState instance seeded with seed.
+        If seed is already a RandomState instance, return it.
+        Otherwise raise ValueError.
     """
     if seed is None or seed is np.random:
         return np.random.mtrand._rand
@@ -581,6 +670,20 @@ def check_random_state(seed):
 
 def has_fit_parameter(estimator, parameter):
     """Checks whether the estimator's fit method supports the given parameter.
+
+    Parameters
+    ----------
+    estimator : object
+        An estimator to inspect.
+
+    parameter: str
+        The searched parameter.
+
+    Returns
+    -------
+    is_parameter: bool
+        Whether the parameter was found to be a named parameter of the
+        estimator's fit method.
 
     Examples
     --------
@@ -660,7 +763,8 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
         estimator instance for which the check is performed.
 
     attributes : attribute name(s) given as string or a list/tuple of strings
-        Eg. : ["coef_", "estimator_", ...], "coef_"
+        Eg.:
+            ``["coef_", "estimator_", ...], "coef_"``
 
     msg : string
         The default error message is, "This %(name)s instance is not fitted
@@ -673,6 +777,15 @@ def check_is_fitted(estimator, attributes, msg=None, all_or_any=all):
 
     all_or_any : callable, {all, any}, default all
         Specify whether all or any of the given attributes must exist.
+
+    Returns
+    -------
+    None
+
+    Raises
+    ------
+    NotFittedError
+        If the attributes are not found.
     """
     if msg is None:
         msg = ("This %(name)s instance is not fitted yet. Call 'fit' with "

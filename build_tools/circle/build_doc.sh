@@ -74,7 +74,8 @@ fi
 
 if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
-    MAKE_TARGET=dist  # PDF linked into HTML
+    # PDF linked into HTML
+    MAKE_TARGET="dist LATEXMKOPTS=-halt-on-error"
 elif [[ "$build_type" =~ ^QUICK ]]
 then
 	MAKE_TARGET=html-noplot
@@ -88,7 +89,8 @@ sudo -E apt-get -yq update
 sudo -E apt-get -yq remove texlive-binaries --purge
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
     install dvipng texlive-latex-base texlive-latex-extra \
-    texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
+    texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
+    latexmk
 
 # deactivate circleci virtualenv and setup a miniconda env instead
 if [[ `type -t deactivate` ]]; then
@@ -96,28 +98,18 @@ if [[ `type -t deactivate` ]]; then
 fi
 
 # Install dependencies with miniconda
-pushd .
-cd
-mkdir -p download
-cd download
-echo "Cached in $HOME/download :"
-ls -l
-if [[ ! -f miniconda.sh ]]
-then
-   wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh \
+wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh \
    -O miniconda.sh
-fi
 chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
-cd ..
 export PATH="$MINICONDA_PATH/bin:$PATH"
 conda update --yes --quiet conda
-popd
 
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python numpy scipy \
-  cython nose coverage matplotlib sphinx pillow
+  cython nose coverage matplotlib sphinx=1.6.2 pillow
 source activate testenv
+pip install sphinx-gallery numpydoc
 
 # Build and install scikit-learn in dev mode
 python setup.py develop

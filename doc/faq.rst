@@ -24,8 +24,9 @@ Apart from scikit-learn, another popular one is `scikit-image <http://scikit-ima
 How can I contribute to scikit-learn?
 -----------------------------------------
 See :ref:`contributing`. Before wanting to add a new algorithm, which is
-usually a major and lengthy undertaking, it is recommended to start with :ref:`known
-issues <easy_issues>`.
+usually a major and lengthy undertaking, it is recommended to start with
+:ref:`known issues <new_contributors>`. Please do not contact the contributors
+of scikit-learn directly regarding contributing to scikit-learn.
 
 What's the best way to get help on scikit-learn usage?
 --------------------------------------------------------------
@@ -54,7 +55,7 @@ please make sure to include the full traceback that you obtain when running the
 reproduction script.
 
 For bug reports or feature requests, please make use of the
-`issue tracker on Github <https://github.com/scikit-learn/scikit-learn/issues>`_.
+`issue tracker on GitHub <https://github.com/scikit-learn/scikit-learn/issues>`_.
 
 There is also a `scikit-learn Gitter channel
 <https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers

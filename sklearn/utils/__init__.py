@@ -28,6 +28,52 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "check_symmetric", "indices_to_mask", "deprecated"]
 
 
+class Bunch(dict):
+    """Container object for datasets
+
+    Dictionary-like object that exposes its keys as attributes.
+
+    >>> b = Bunch(a=1, b=2)
+    >>> b['b']
+    2
+    >>> b.b
+    2
+    >>> b.a = 3
+    >>> b['a']
+    3
+    >>> b.c = 6
+    >>> b['c']
+    6
+
+    """
+
+    def __init__(self, **kwargs):
+        super(Bunch, self).__init__(kwargs)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __dir__(self):
+        return self.keys()
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    def __setstate__(self, state):
+        # Bunch pickles generated with scikit-learn 0.16.* have an non
+        # empty __dict__. This causes a surprising behaviour when
+        # loading these pickles scikit-learn 0.17: reading bunch.key
+        # uses __dict__ but assigning to bunch.key use __setattr__ and
+        # only changes bunch['key']. More details can be found at:
+        # https://github.com/scikit-learn/scikit-learn/issues/6196.
+        # Overriding __setstate__ to be a noop has the effect of
+        # ignoring the pickled __dict__
+        pass
+
+
 def safe_mask(X, mask):
     """Return a mask which is safe to use on X.
 
@@ -44,7 +90,7 @@ def safe_mask(X, mask):
         mask
     """
     mask = np.asarray(mask)
-    if np.issubdtype(mask.dtype, np.int):
+    if np.issubdtype(mask.dtype, np.signedinteger):
         return mask
 
     if hasattr(X, "toarray"):
@@ -80,13 +126,24 @@ def safe_indexing(X, indices):
 
     Parameters
     ----------
-    X : array-like, sparse-matrix, list.
+    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series.
         Data from which to sample rows or items.
-
-    indices : array-like, list
+    indices : array-like of int
         Indices according to which X will be subsampled.
+
+    Returns
+    -------
+    subset
+        Subset of X on first axis
+
+    Notes
+    -----
+    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
+    not supported.
     """
     if hasattr(X, "iloc"):
+        # Work-around for indexing with read-only indices in pandas
+        indices = indices if indices.flags.writeable else indices.copy()
         # Pandas Dataframes and Series
         try:
             return X.iloc[indices]
@@ -129,8 +186,12 @@ def resample(*arrays, **options):
         If replace is False it should not be larger than the length of
         arrays.
 
-    random_state : int or RandomState instance
-        Control the shuffling for reproducible behavior.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     Returns
     -------
@@ -225,8 +286,12 @@ def shuffle(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
-    random_state : int or RandomState instance
-        Control the shuffling for reproducible behavior.
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     n_samples : int, None by default
         Number of samples to generate. If left to None this is
@@ -405,7 +470,12 @@ def _get_n_jobs(n_jobs):
 
 
 def tosequence(x):
-    """Cast iterable x to a Sequence, avoiding a copy if possible."""
+    """Cast iterable x to a Sequence, avoiding a copy if possible.
+
+    Parameters
+    ----------
+    x : iterable
+    """
     if isinstance(x, np.ndarray):
         return np.asarray(x)
     elif isinstance(x, Sequence):

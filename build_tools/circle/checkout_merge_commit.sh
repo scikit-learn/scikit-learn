@@ -18,7 +18,10 @@ git fetch -u origin ${FETCH_REFS}
 # Checkout the PR merge ref.
 if [[ -n "${CIRCLE_PR_NUMBER}" ]]
 then
-    git checkout -qf "pr/${CIRCLE_PR_NUMBER}/merge"
+    git checkout -qf "pr/${CIRCLE_PR_NUMBER}/merge" || (
+        echo Could not fetch merge commit. >&2
+        echo There may be conflicts in merging PR \#${CIRCLE_PR_NUMBER} with master. >&2;
+        exit 1)
 fi
 
 # Check for merge conflicts.

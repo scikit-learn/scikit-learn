@@ -441,6 +441,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Input data.
+
+        y : Ignored
+
         """
         self.fit_, self.partial_fit_ = True, False
         return self._fit(X)
@@ -521,6 +524,9 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         X : {array-like, sparse matrix}, shape (n_samples, n_features), None
             Input data. If X is not provided, only the global clustering
             step is done.
+
+        y : Ignored
+
         """
         self.partial_fit_, self.fit_ = True, False
         if X is None:
@@ -569,7 +575,7 @@ class Birch(BaseEstimator, TransformerMixin, ClusterMixin):
         reduced_distance += self._subcluster_norms
         return self.subcluster_labels_[np.argmin(reduced_distance, axis=1)]
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         """
         Transform X into subcluster centroids dimension.
 

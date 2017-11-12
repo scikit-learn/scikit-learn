@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -100,7 +101,13 @@ def _auc(y_true, y_score):
 
 def _average_precision(y_true, y_score):
     """Alternative implementation to check for correctness of
-    `average_precision_score`."""
+    `average_precision_score`.
+
+    Note that this implementation fails on some edge cases.
+    For example, for constant predictions e.g. [0.5, 0.5, 0.5],
+    y_true = [1, 0, 0] returns an average precision of 0.33...
+    but y_true = [0, 0, 1] returns 1.0.
+    """
     pos_label = np.unique(y_true)[1]
     n_pos = np.sum(y_true == pos_label)
     order = np.argsort(y_score)[::-1]
@@ -120,6 +127,25 @@ def _average_precision(y_true, y_score):
             score += prec
 
     return score / n_pos
+
+
+def _average_precision_slow(y_true, y_score):
+    """A second alternative implementation of average precision that closely
+    follows the Wikipedia article's definition (see References). This should
+    give identical results as `average_precision_score` for all inputs.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Average precision
+       <http://en.wikipedia.org/wiki/Average_precision>`_
+    """
+    precision, recall, threshold = precision_recall_curve(y_true, y_score)
+    precision = list(reversed(precision))
+    recall = list(reversed(recall))
+    average_precision = 0
+    for i in range(1, len(precision)):
+        average_precision += precision[i] * (recall[i] - recall[i - 1])
+    return average_precision
 
 
 def test_roc_curve():
@@ -244,8 +270,8 @@ def test_roc_curve_toydata():
     y_score = [0, 1]
     tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
-    assert_array_almost_equal(tpr, [0, 1])
-    assert_array_almost_equal(fpr, [1, 1])
+    assert_array_almost_equal(tpr, [0, 0, 1])
+    assert_array_almost_equal(fpr, [0, 1, 1])
     assert_almost_equal(roc_auc, 1.)
 
     y_true = [0, 1]
@@ -268,8 +294,8 @@ def test_roc_curve_toydata():
     y_score = [1, 0]
     tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
-    assert_array_almost_equal(tpr, [0, 1])
-    assert_array_almost_equal(fpr, [1, 1])
+    assert_array_almost_equal(tpr, [0, 0, 1])
+    assert_array_almost_equal(fpr, [0, 1, 1])
     assert_almost_equal(roc_auc, 1.)
 
     y_true = [1, 0]
@@ -293,8 +319,8 @@ def test_roc_curve_toydata():
     # assert UndefinedMetricWarning because of no negative sample in y_true
     tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
-    assert_array_almost_equal(tpr, [np.nan, np.nan])
-    assert_array_almost_equal(fpr, [0.5, 1.])
+    assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
+    assert_array_almost_equal(fpr, [0., 0.5, 1.])
 
     # Multi-label classification task
     y_true = np.array([[0, 1], [0, 1]])
@@ -333,7 +359,7 @@ def test_roc_curve_drop_intermediate():
     y_true = [0, 0, 0, 0, 1, 1]
     y_score = [0., 0.2, 0.5, 0.6, 0.7, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
-    assert_array_almost_equal(thresholds, [1., 0.7, 0.])
+    assert_array_almost_equal(thresholds, [2., 1., 0.7, 0.])
 
     # Test dropping thresholds with repeating scores
     y_true = [0, 0, 0, 0, 0, 0, 0,
@@ -342,7 +368,19 @@ def test_roc_curve_drop_intermediate():
                0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
     assert_array_almost_equal(thresholds,
-                              [1.0, 0.9, 0.7, 0.6, 0.])
+                              [2.0, 1.0, 0.9, 0.7, 0.6, 0.])
+
+
+def test_roc_curve_fpr_tpr_increasing():
+    # Ensure that fpr and tpr returned by roc_curve are increasing.
+    # Construct an edge case with float y_score and sample_weight
+    # when some adjacent values of fpr and tpr are actually the same.
+    y_true = [0, 0, 1, 1, 1]
+    y_score = [0.1, 0.7, 0.3, 0.4, 0.5]
+    sample_weight = np.repeat(0.2, 5)
+    fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
+    assert_equal((np.diff(fpr) < 0).sum(), 0)
+    assert_equal((np.diff(tpr) < 0).sum(), 0)
 
 
 def test_auc():
@@ -388,7 +426,20 @@ def test_auc_errors():
     assert_raises(ValueError, auc, [0.0], [0.1])
 
     # x is not in order
-    assert_raises(ValueError, auc, [1.0, 0.0, 0.5], [0.0, 0.0, 0.0])
+    x = [2, 1, 3, 4]
+    y = [5, 6, 7, 8]
+    error_message = ("x is neither increasing nor decreasing : "
+                     "{}".format(np.array(x)))
+    assert_raise_message(ValueError, error_message, auc, x, y)
+
+
+def test_deprecated_auc_reorder():
+    depr_message = ("The 'reorder' parameter has been deprecated in version "
+                    "0.20 and will be removed in 0.22. It is recommended not "
+                    "to set 'reorder' and ensure that x is monotonic "
+                    "increasing or monotonic decreasing.")
+    assert_warns_message(DeprecationWarning, depr_message, auc,
+                         [1, 2], [2, 3], reorder=True)
 
 
 def test_auc_score_non_binary_class():
@@ -432,6 +483,14 @@ def test_auc_score_non_binary_class():
                              roc_auc_score, y_true, y_pred)
 
 
+def test_binary_clf_curve():
+    rng = check_random_state(404)
+    y_true = rng.randint(0, 3, size=10)
+    y_pred = rng.rand(10)
+    msg = "multiclass format is not supported"
+    assert_raise_message(ValueError, msg, precision_recall_curve,
+                         y_true, y_pred)
+
 def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
     _test_precision_recall_curve(y_true, probas_pred)
@@ -470,19 +529,17 @@ def test_precision_recall_curve_pos_label():
 def _test_precision_recall_curve(y_true, probas_pred):
     # Test Precision-Recall and aread under PR curve
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
-    precision_recall_auc = auc(r, p)
-    assert_array_almost_equal(precision_recall_auc, 0.85, 2)
+    precision_recall_auc = _average_precision_slow(y_true, probas_pred)
+    assert_array_almost_equal(precision_recall_auc, 0.859, 3)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
     assert_almost_equal(_average_precision(y_true, probas_pred),
-                        precision_recall_auc, 1)
+                        precision_recall_auc, decimal=3)
     assert_equal(p.size, r.size)
     assert_equal(p.size, thresholds.size + 1)
     # Smoke test in the case of proba having only one value
     p, r, thresholds = precision_recall_curve(y_true,
                                               np.zeros_like(probas_pred))
-    precision_recall_auc = auc(r, p)
-    assert_array_almost_equal(precision_recall_auc, 0.75, 3)
     assert_equal(p.size, r.size)
     assert_equal(p.size, thresholds.size + 1)
 
@@ -510,7 +567,10 @@ def test_precision_recall_curve_toydata():
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 0., 1.])
         assert_array_almost_equal(r, [1., 0.,  0.])
-        assert_almost_equal(auc_prc, 0.25)
+        # Here we are doing a terrible prediction: we are always getting
+        # it wrong, hence the average_precision_score is the accuracy at
+        # chance: 50%
+        assert_almost_equal(auc_prc, 0.5)
 
         y_true = [1, 0]
         y_score = [1, 1]
@@ -518,7 +578,7 @@ def test_precision_recall_curve_toydata():
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1])
         assert_array_almost_equal(r, [1., 0])
-        assert_almost_equal(auc_prc, .75)
+        assert_almost_equal(auc_prc, .5)
 
         y_true = [1, 0]
         y_score = [1, 0]
@@ -534,7 +594,7 @@ def test_precision_recall_curve_toydata():
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1])
         assert_array_almost_equal(r, [1, 0.])
-        assert_almost_equal(auc_prc, .75)
+        assert_almost_equal(auc_prc, .5)
 
         y_true = [0, 0]
         y_score = [0.25, 0.75]
@@ -567,31 +627,45 @@ def test_precision_recall_curve_toydata():
         assert_raises(Exception, average_precision_score, y_true, y_score,
                       average="weighted")
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.625)
+                            average="samples"), 0.75)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.625)
+                            average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0, 1], [1, 0]])
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.25)
+                            average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.25)
+                            average="weighted"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.25)
+                            average="samples"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.25)
+                            average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0.5, 0.5], [0.5, 0.5]])
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.75)
+                            average="macro"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.75)
+                            average="weighted"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.75)
+                            average="samples"), 0.5)
         assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.75)
+                            average="micro"), 0.5)
+
+
+def test_average_precision_constant_values():
+    # Check the average_precision_score of a constant predictor is
+    # the TPR
+
+    # Generate a dataset with 25% of positives
+    y_true = np.zeros(100, dtype=int)
+    y_true[::4] = 1
+    # And a constant score
+    y_score = np.ones(100)
+    # The precision is then the fraction of positive whatever the recall
+    # is, as there is only one threshold:
+    assert_equal(average_precision_score(y_true, y_score), .25)
 
 
 def test_score_scale_invariance():

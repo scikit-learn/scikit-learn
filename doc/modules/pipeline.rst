@@ -16,11 +16,16 @@ into one. This is useful as there is often a fixed sequence
 of steps in processing the data, for example feature selection, normalization
 and classification. :class:`Pipeline` serves two purposes here:
 
-    **Convenience**: You only have to call ``fit`` and ``predict`` once on your
+Convenience and encapsulation
+    You only have to call ``fit`` and ``predict`` once on your
     data to fit a whole sequence of estimators.
-
-    **Joint parameter selection**: You can :ref:`grid search <grid_search>`
+Joint parameter selection
+    You can :ref:`grid search <grid_search>`
     over parameters of all estimators in the pipeline at once.
+Safety
+    Pipelines help avoid leaking statistics from your test data into the
+    trained model in cross-validation, by ensuring that the same samples are
+    used to train the transformers and predictors.
 
 All estimators in a pipeline, except the last one, must be transformers
 (i.e. must have a ``transform`` method).
@@ -79,6 +84,11 @@ Parameters of the estimators in the pipeline can be accessed using the
              steps=[('reduce_dim', PCA(copy=True, iterated_power='auto',...)),
                     ('clf', SVC(C=10, cache_size=200, class_weight=None,...))])
 
+Attributes of named_steps map to keys, enabling tab completion in interactive environments::
+
+    >>> pipe.named_steps.reduce_dim is pipe.named_steps['reduce_dim']
+    True
+
 This is particularly important for doing grid searches::
 
     >>> from sklearn.model_selection import GridSearchCV
@@ -97,7 +107,7 @@ ignored by setting them to ``None``::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_feature_selection_feature_selection_pipeline.py`
+ * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
  * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
  * :ref:`sphx_glr_auto_examples_plot_digits_pipe.py`
  * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
@@ -118,6 +128,8 @@ The pipeline has all the methods that the last estimator in the pipeline has,
 i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
 pipeline.
+
+.. _pipeline_cache:
 
 Caching transformers: avoid repeated computation
 -------------------------------------------------
@@ -152,7 +164,7 @@ object::
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
-.. warning:: **Side effect of caching transfomers**
+.. warning:: **Side effect of caching transformers**
 
    Using a :class:`Pipeline` without cache enabled, it is possible to
    inspect the original instance such as::
@@ -260,5 +272,5 @@ and ignored by setting to ``None``::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_feature_stacker.py`
+ * :ref:`sphx_glr_auto_examples_plot_feature_stacker.py`
  * :ref:`sphx_glr_auto_examples_hetero_feature_union.py`
