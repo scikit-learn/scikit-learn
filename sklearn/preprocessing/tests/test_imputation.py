@@ -174,8 +174,8 @@ def test_imputation_mean_median():
         # And a matrix X_true containing all true values
         for j in range(shape[1]):
             nb_zeros = (j - dec + 1 > 0) * (j - dec + 1) * (j - dec + 1)
-            nb_missing_values = max(shape[0] + dec * dec
-                                    - (j + dec) * (j + dec), 0)
+            nb_missing_values = max(shape[0] + dec * dec -
+                                    (j + dec) * (j + dec), 0)
             nb_values = shape[0] - nb_zeros - nb_missing_values
 
             z = zeros[:nb_zeros]
