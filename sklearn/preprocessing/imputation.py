@@ -573,11 +573,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                missing_row_mask)
         mus, sigmas = predictor.predict(X_test, return_std=True)
         # only sample where sigmas are > 0 to fix test errors
-        bad_sigmas = sigmas <= 0
+        good_sigmas = sigmas > 0
         imputed_values = np.zeros(mus.shape)
-        imputed_values[bad_sigmas] = mus[bad_sigmas]
-        imputed_values[~bad_sigmas] = self.random_state_.normal(
-            loc=mus[~bad_sigmas], scale=sigmas[~bad_sigmas])
+        imputed_values[~good_sigmas] = mus[~good_sigmas]
+        imputed_values[good_sigmas] = self.random_state_.normal(
+            loc=mus[good_sigmas], scale=sigmas[good_sigmas])
 
         # clip the values
         imputed_values = np.clip(imputed_values,
