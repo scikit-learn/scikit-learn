@@ -123,7 +123,10 @@ def test_MDS_transform():
     # Testing for extending MDS to new points
     sim2 = np.array([[3, 1, 1, 2],
                      [4, 1, 2, 2]])
-    mds_clf.transform(sim2)
+    result = mds_clf.transform(sim2)
+    expected = np.array([[-.705, -.452],
+                         [-1.051, -1.329]])
+    assert_array_almost_equal(result, expected, decimal=3)
 
 
 def test_MDS_transform_error():
