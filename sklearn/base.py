@@ -551,7 +551,6 @@ def is_classifier(estimator):
 def is_regressor(estimator):
     """Returns True if the given estimator is (probably) a regressor.
 
-
     Parameters
     ----------
     estimator : object

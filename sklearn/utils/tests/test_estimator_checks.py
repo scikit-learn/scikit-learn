@@ -18,6 +18,8 @@ from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -251,3 +253,16 @@ def test_check_no_fit_attributes_set_in_init():
                         check_no_fit_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimator)
+
+
+def test_check_estimator_pairwise():
+    # check that check_estimator() works on estimator with _pairwise
+    # kernel or  metric
+
+    # test precomputed kernel
+    est = SVC(kernel='precomputed')
+    check_estimator(est)
+
+    # test precomputed metric
+    est = KNeighborsRegressor(metric='precomputed')
+    check_estimator(est)
