@@ -503,6 +503,14 @@ def test_error():
 
     for name, TreeEstimator in ALL_TREES.items():
         # Invalid values for parameters
+        assert_raises(ValueError,
+                      "'presort' should be either 'auto' or a boolean"
+                      " (True/False). Got error instead",
+                      TreeEstimator(presort='error').fit, X, y)
+        assert_raises(ValueError,
+                      "'presort' should be either 'auto' or a boolean"
+                      " (True/False). Got 0.01 instead",
+                      TreeEstimator(presort=1e-2).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)

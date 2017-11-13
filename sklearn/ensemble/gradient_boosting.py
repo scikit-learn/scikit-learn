@@ -1053,7 +1053,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
                                                  dtype=np.int32)
         elif presort is not False:
-            raise ValueError("Presort must be a boolean")
+            raise ValueError("'presort' should be either 'auto' or a boolean"
+                             " (True/False). Got {} instead.".format(presort))
 
         # fit the boosting stages
         n_stages = self._fit_stages(X, y, y_pred, sample_weight, self._rng,

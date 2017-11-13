@@ -300,6 +300,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         elif self.presort == 'auto':
             presort = True
 
+        if presort is not True or False:
+            raise ValueError("'presort' should be either 'auto' or a boolean"
+                             " (True/False). Got {} instead.".format(presort))
+
         if presort is True and issparse(X):
             raise ValueError("Presorting is not supported for sparse "
                              "matrices.")
