@@ -256,7 +256,9 @@ def test_check_no_fit_attributes_set_in_init():
                         NonConformantEstimator)
 
 
-if __name__ == '__main__':
+def run_tests_without_pytest():
+    """Runs the tests in this file without using pytest.
+    """
     main_module = sys.modules['__main__']
     test_functions = [getattr(main_module, name) for name in dir(main_module)
                       if name.startswith('test_')]
@@ -265,3 +267,9 @@ if __name__ == '__main__':
     suite.addTests(test_cases)
     runner = unittest.TextTestRunner()
     runner.run(suite)
+
+
+if __name__ == '__main__':
+    # This module is run as a script to check that we have no dependency on
+    # pytest for estimator checks.
+    run_tests_without_pytest()
