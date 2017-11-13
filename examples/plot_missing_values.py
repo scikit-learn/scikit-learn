@@ -24,15 +24,10 @@ Script output::
     MSE with the entire dataset = 3354.15
     MSE without the samples containing missing values = 2968.98
     MSE after mean imputation of the missing values = 3507.77
-    MSE after MICE imputation of the missing values = 3315.67
+    MSE after MICE imputation of the missing values = 3365.82
 
-    Results for the boston dataset:
-    MSE with the entire dataset = 28.95
-    MSE without the samples containing missing values = 31.93
-    MSE after mean imputation of the missing values = 29.41
-    MSE after MICE imputation of the missing values = 31.47
-
-In this case, imputing helps the classifier get close to the original score.
+In this case, imputing helps the classifier get close to the original score
+than using mean imputation.
 """
 
 import numpy as np
@@ -91,7 +86,8 @@ def print_results(dataset):
     print("MSE after mean imputation of the missing values = %.2f" % score)
 
     # Estimate the score after imputation (MICE strategy) of the missing values
-    estimator = Pipeline([("imputer", MICEImputer(missing_values=0)),
+    estimator = Pipeline([("imputer", MICEImputer(missing_values=0,
+                                                  random_state=0)),
                           ("forest", RandomForestRegressor(random_state=0,
                                                            n_estimators=100))])
     score = cross_val_score(estimator, X_missing, y_missing,
@@ -105,6 +101,13 @@ print_results(load_diabetes())
 ###########################################################################
 # Note that MICE will not always be better than, e.g., simple mean imputation.
 # To see an example of this, we swap in ``boston`` for ``diabetes``.
+# Script output::
+#
+#    Results for the boston dataset:
+#    MSE with the entire dataset = 28.95
+#    MSE without the samples containing missing values = 31.93
+#    MSE after mean imputation of the missing values = 29.41
+#    MSE after MICE imputation of the missing values = 31.43
 
 print("\nResults for the boston dataset:")
 print_results(load_boston())

@@ -311,7 +311,7 @@ def test_imputation_pickle():
     for strategy in ["mean", "median", "most_frequent", "mice"]:
         if strategy == 'mice':
             imputer = MICEImputer(missing_values=0, n_imputations=1,
-                                  n_burn_in=1, random_state=0)
+                                  n_burn_in=1)
         else:
             imputer = Imputer(missing_values=0, strategy=strategy)
         imputer.fit(X)
@@ -414,6 +414,7 @@ def test_mice_imputation_order():
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10).toarray()
+    X[:, 0] = 1  # this column shouldn't be ever used
 
     for imputation_order in ['random', 'roman', 'monotone',
                              'revmonotone', 'arabic']:
@@ -423,6 +424,53 @@ def test_mice_imputation_order():
                               n_nearest_features=5,
                               min_value=0,
                               max_value=1,
-                              verbose=True,
+                              verbose=False,
                               imputation_order=imputation_order)
         imputer.fit_transform(X)
+        ordered_idx = [i.feat_idx for i in imputer.imputation_sequence_]
+        if imputation_order == 'roman':
+            assert np.all(ordered_idx[:d-1] == np.arange(1, d))
+        elif imputation_order == 'arabic':
+            assert np.all(ordered_idx[:d-1] == np.arange(d-1, 0, -1))
+        elif imputation_order == 'random':
+            ordered_idx_round_1 = ordered_idx[:d-1]
+            ordered_idx_round_2 = ordered_idx[d-1:]
+            assert ordered_idx_round_1 != ordered_idx_round_2
+
+
+def test_mice_predictors():
+    from sklearn.dummy import DummyRegressor
+    from sklearn.linear_model import BayesianRidge
+
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.10).toarray()
+
+    for predictor in [DummyRegressor, BayesianRidge]:
+        imputer = MICEImputer(missing_values=0,
+                              n_imputations=1,
+                              n_burn_in=1,
+                              predictor=predictor())
+        imputer.fit_transform(X)
+
+
+def test_mice_missing_at_transform():
+    n = 100
+    d = 10
+    Xtr = np.random.randint(low=0, high=3, size=(n, d))
+    Xts = np.random.randint(low=0, high=3, size=(n, d))
+
+    Xtr[:, 0] = 1  # definitely no missing values in 0th column
+    Xts[0, 0] = 0  # definitely missing value in 0th column
+
+    for strategy in ["mean", "median", "most_frequent"]:
+        mice = MICEImputer(missing_values=0,
+                           n_imputations=1,
+                           n_burn_in=1,
+                           initial_strategy=strategy).fit(Xtr)
+        initial_imputer = Imputer(missing_values=0, strategy=strategy).fit(Xtr)
+
+        # if there were no missing values at time of fit, then mice will
+        # only use the initial imputer for that feature at transform
+        assert np.all(mice.transform(Xts)[:, 0] ==
+                      initial_imputer.transform(Xts)[:, 0])
