@@ -12,6 +12,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.ensemble.gradient_boosting import BinomialDeviance
 from sklearn.ensemble.gradient_boosting import LogOddsEstimator
 from sklearn.ensemble.gradient_boosting import LeastSquaresError
+from sklearn.ensemble.gradient_boosting import MultinomialDeviance
 from sklearn.ensemble.gradient_boosting import RegressionLossFunction
 from sklearn.ensemble.gradient_boosting import LOSS_FUNCTIONS
 from sklearn.ensemble.gradient_boosting import _weighted_percentile
@@ -184,3 +185,22 @@ def test_sample_weight_deviance():
         deviance_w_w = loss(y, p, sample_weight)
         deviance_wo_w = loss(y, p)
         assert deviance_wo_w == deviance_w_w
+
+
+def test_multinomial_deviance():
+    # Check multinomial deviance with and without sample weights.
+    rng = check_random_state(13)
+    sample_weight = np.ones(100)
+    y = rng.randint(0, 3, size=sample_weight.shape[0])
+    p = np.zeros((y.shape[0], 3), dtype=np.float64)
+    for i in range(p.shape[1]):
+        p[:, i] = y == i
+
+    assert_raises(ValueError, MultinomialDeviance, 2)
+    loss = MultinomialDeviance(3)
+    loss_wo_sw = loss(y, p)
+    assert loss_wo_sw > 0
+    loss_w_sw = loss(y, p, np.ones(p.shape[0], dtype=np.float32))
+    assert_almost_equal(loss_wo_sw, loss_w_sw)
+    loss_w_sw = loss(y, p, 0.5 * np.ones(p.shape[0], dtype=np.float32))
+    assert_almost_equal(loss_wo_sw, loss_w_sw)
