@@ -522,9 +522,7 @@ class MDS(BaseEstimator):
 
     def _fit_transform_ext(self, X):
         self.fit(X)
-        X_new = np.dot(self.e_vecs_[:, :self.n_components],
-                       np.diag(np.sqrt(self.e_vals_[:self.n_components])))
-        return X_new
+        return self.transform(X)
 
     def center_similarities(self, D_aX, D_XX):
         """Centers similarities D_aX around D_XX

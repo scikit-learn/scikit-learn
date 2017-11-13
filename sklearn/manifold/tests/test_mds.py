@@ -104,19 +104,17 @@ def test_MDS_fit_transform_inductive():
                     [3, 2, 0, 1],
                     [4, 2, 1, 0]])
 
-    Z = np.array([[-.266, -.539],
-                  [.451, .252],
-                  [.016, -.238],
-                  [-.200, .524]])
-
     # test fit_transform under the inductive case
     mds_clf = mds.MDS(dissimilarity="euclidean", method="inductive")
-    mds_clf.fit_transform(sim)
+    result1 = mds_clf.fit_transform(sim)
 
     # test fit and transform for precomputed case
-    mds_clf = mds.MDS(dissimilarity="precomputed", method="inductive")
-    mds_clf.fit(sim, init=Z)
-    mds_clf.transform(sim)
+    mds_clf = mds.MDS(dissimilarity="euclidean", method="inductive")
+    mds_clf.fit(sim)
+    result2 = mds_clf.transform(sim)
+
+    # test that fit_transform is the same as fit + transform
+    assert_array_almost_equal(result1, result2, decimal=3)
 
 
 def test_MDS_transform():
