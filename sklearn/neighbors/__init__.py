@@ -28,4 +28,5 @@ __all__ = ['BallTree',
            'radius_neighbors_graph',
            'KernelDensity',
            'LSHForest',
-           'LocalOutlierFactor']
+           'LocalOutlierFactor',
+           'LocalOutlierProbability']

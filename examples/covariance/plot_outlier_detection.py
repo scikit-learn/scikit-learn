@@ -41,6 +41,10 @@ from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 
+# need to test this and make sure it works after building sklearn from src
+from sklearn.neighbors.loop import LocalOutlierProbability
+# from sklearn.neighbors import LocalOutlierProbability
+
 print(__doc__)
 
 rng = np.random.RandomState(42)
@@ -60,7 +64,11 @@ classifiers = {
                                         random_state=rng),
     "Local Outlier Factor": LocalOutlierFactor(
         n_neighbors=35,
-        contamination=outliers_fraction)}
+        contamination=outliers_fraction),
+    "Local Outlier Probability": LocalOutlierProbability(
+        n_neighbors=35, extent=0.75
+    )
+}
 
 # Compare given classifiers under given settings
 xx, yy = np.meshgrid(np.linspace(-7, 7, 100), np.linspace(-7, 7, 100))
@@ -86,21 +94,26 @@ for i, offset in enumerate(clusters_separation):
         if clf_name == "Local Outlier Factor":
             y_pred = clf.fit_predict(X)
             scores_pred = clf.negative_outlier_factor_
+        elif clf_name == "Local Outlier Probability":
+            y_pred = clf.fit_predict(X)
+            scores_pred = clf.lrd_ratios_
         else:
             clf.fit(X)
-            scores_pred = clf.decision_function(X)
             y_pred = clf.predict(X)
-        threshold = stats.scoreatpercentile(scores_pred,
-                                            100 * outliers_fraction)
+            scores_pred = clf.decision_function(X)
+        threshold = stats.scoreatpercentile(scores_pred, 100. * outliers_fraction)
         n_errors = (y_pred != ground_truth).sum()
         # plot the levels lines and the points
         if clf_name == "Local Outlier Factor":
             # decision_function is private for LOF
             Z = clf._decision_function(np.c_[xx.ravel(), yy.ravel()])
+        elif clf_name == "Local Outlier Probability":
+            # decision function is private for LoOP
+            Z = clf._decision_function(np.c_[xx.ravel(), yy.ravel()])
         else:
             Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         Z = Z.reshape(xx.shape)
-        subplot = plt.subplot(2, 2, i + 1)
+        subplot = plt.subplot(3, 2, i + 1)
         subplot.contourf(xx, yy, Z, levels=np.linspace(Z.min(), threshold, 7),
                          cmap=plt.cm.Blues_r)
         a = subplot.contour(xx, yy, Z, levels=[threshold],

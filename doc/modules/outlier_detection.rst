@@ -233,6 +233,68 @@ This strategy is illustrated below.
       <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
       Proc. ACM SIGMOD
 
+
+Local Outlier Probability
+-------------------------
+Another approach that performs well on moderately high dimensional datasets
+is the Local Outlier Probability (LoOP), based off of the work of the Local
+Outlier Factor (LOF) algorithm.
+
+The :class:`neighbors.LocalOutlierProbability` (LoOP) algorithm computes a score
+(called local outlier probability) reflecting the probability that a particular
+observation is an outlier. It measures the local density deviation of a given
+data point with respect to its neighbors. Like Local Outlier Factor (LOF),
+the idea is to detect the samples that have a substantially lower density than
+their neighbors. With Local Outlier Probability (LoOP), scores are normalized
+in the range [0,1].
+
+The outlier score of each sample is called the Local Outlier Probability. It
+measures the local deviation of density of a given sample with respect to its neighbors.
+These outlier scores are directly interpretable as a probability of an object being
+an outlier. It is local in that the anomaly score depends on how isolated the sample
+is with respect to the surrounding neighborhood. Locality is given by k-nearest
+neighbors via a specified distance metric, whose distance is used to estimate the
+local density. By comparing the local density of a sample to the local densities
+of its neighbors, one can identify samples that lie in regions of lower density
+compared to their neighbors and thus identify samples that may be outliers
+according to their Local Outlier Probability.
+
+Local Outlier Probability makes a critical assumption that must be considered
+in practice: the assumption that outliers in the data like outside normal, dense
+regions and in sparse regions of the overall data distribution.
+
+This strategy is illustrated below.
+
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_loop_001.png
+   :target: ../auto_examples/neighbors/plot_loop.html
+   :align: center
+   :scale: 75%
+
+.. topic:: Examples:
+
+   * See :ref:`sphx_glr_auto_examples_neighbors_plot_loop.py` for
+     an illustration of the use of :class:`neighbors.LocalOutlierProbability`.
+
+   * See :ref:`sphx_glr_auto_examples_covariance_plot_outlier_detection.py` for a
+     comparison with other anomaly detection methods.
+
+.. topic:: References:
+
+   *  Breunig, Kriegel, Ng, and Sander (2000)
+      `LOF: identifying density-based local outliers.
+      <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
+      Proc. ACM SIGMOD
+
+   *  Kriegel, Kröger, Schubert, Zimek (2009)
+      `LoOP: Local Outlier Probabilities.
+      <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LoOP1649.pdf>`_
+      Proc. 18th ACM conference on information and knowledge management, CIKM
+
+   * Goldstein, Uchida (2016)
+     `A Comparative Evaluation of Unsupervised Anomaly Detection Algorithms for Multivariate Data.
+      <http://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0152173&type=printable>`_
+
+
 One-class SVM versus Elliptic Envelope versus Isolation Forest versus LOF
 -------------------------------------------------------------------------
 
