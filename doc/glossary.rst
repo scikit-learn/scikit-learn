@@ -676,6 +676,10 @@ Methods
         Output conventions are like those for ``decision_function`` except
         in the :term:`binary` case.
 
+        Like other methods, ``predict_proba`` should only be present when the
+        estimator can make probabilistic predictions.  In some cases, this
+        means that the method will only appear after fitting.
+
     ``score``
         TODO
 
