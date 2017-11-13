@@ -83,19 +83,13 @@ def test_fit_transform_error():
     assert_raises(ValueError, mds_clf.fit_transform, sim, init=Z)
 
 
-def test_MDS_fit_transform():
+def test_MDS():
     sim = np.array([[0, 5, 3, 4],
                     [5, 0, 2, 2],
                     [3, 2, 0, 1],
                     [4, 2, 1, 0]])
     mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
     mds_clf.fit(sim)
-    mds_clf.fit_transform(sim)
-
-    # Test non-parallel case
-    mds_clf = mds.MDS(metric=False, n_jobs=1, dissimilarity="precomputed")
-    mds_clf.fit(sim)
-    mds_clf.fit_transform(sim)
 
 
 def test_MDS_fit_transform_inductive():
