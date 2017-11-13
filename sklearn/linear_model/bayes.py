@@ -11,7 +11,7 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg import pinvh
 
-from .base import LinearModel
+from .base import LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
 from ..utils import check_X_y
@@ -140,7 +140,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model
 
         Parameters
@@ -150,13 +150,25 @@ class BayesianRidge(LinearModel, RegressorMixin):
         y : numpy array of shape [n_samples]
             Target values. Will be cast to X's dtype if necessary
 
+        sample_weight : numpy array of shape [n_samples]
+            Individual weights for each sample
+
+            .. versionadded:: 0.20
+               parameter *sample_weight* support to BayesianRidge.
+
         Returns
         -------
         self : returns an instance of self.
         """
         X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
+
+        if sample_weight is not None:
+            # Sample weight can be implemented via a simple rescaling.
+            X, y = _rescale_data(X, y, sample_weight)
+
         self.X_offset_ = X_offset_
         self.X_scale_ = X_scale_
         n_samples, n_features = X.shape
