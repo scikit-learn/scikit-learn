@@ -331,10 +331,11 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
-    inductive : boolean, optional, default: False
+    method : string, optional, default: 'smacof'
         By default, the smacof algorithm is used and the model can not
-        transform new data points. If ``True`` the transform method can be used
-        with new data.
+        transform new data points. With method='inductive' the model is built
+        using eigen decomposition, allowing for the transform method to be
+        used with new data.
 
 
     Attributes
@@ -366,7 +367,7 @@ class MDS(BaseEstimator):
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=1,
                  random_state=None, dissimilarity="euclidean",
-                 inductive=False):
+                 method="smacof"):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
         self.metric = metric
@@ -376,7 +377,7 @@ class MDS(BaseEstimator):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
-        self.inductive = inductive
+        self.method = method
 
     @property
     def _pairwise(self):
@@ -398,9 +399,7 @@ class MDS(BaseEstimator):
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
         """
-        if not self.inductive:
-            self.fit_transform(X, init=init)
-        else:
+        if self.method == 'inductive':
             self.X_train_ = X
             if self.dissimilarity == 'precomputed':
                 D = X
@@ -423,6 +422,8 @@ class MDS(BaseEstimator):
             ind_sort = np.argsort(e_vals)[::-1]
             self.e_vecs_ = e_vecs[:, ind_sort]
             self.e_vals_ = e_vals[ind_sort]
+        else:
+            self.fit_transform(X, init=init)
         return self
 
     def fit_transform(self, X, y=None, init=None):
@@ -438,7 +439,7 @@ class MDS(BaseEstimator):
             If None, randomly chooses the initial configuration
             if ndarray, initialize the SMACOF algorithm with this array.
         """
-        if self.inductive:
+        if self.method == 'inductive':
             if init is not None:
                 raise ValueError("Init is only for the non-inductive MDS.")
             ret = self._fit_transform_ext(X)
@@ -474,7 +475,7 @@ class MDS(BaseEstimator):
 
         """
 
-        if not self.inductive:
+        if not self.method == 'inductive':
             raise ValueError("Method only available if inductive is True.")
         if self.dissimilarity == 'precomputed':
             D_new = X

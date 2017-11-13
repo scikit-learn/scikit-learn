@@ -62,7 +62,7 @@ def test_fit_error():
     mds_clf = mds.MDS(dissimilarity="unknown")
     assert_raises(ValueError, mds_clf.fit, sim)
 
-    mds_clf = mds.MDS(dissimilarity="unknown", inductive=True)
+    mds_clf = mds.MDS(dissimilarity="unknown", method="inductive")
     assert_raises(ValueError, mds_clf.fit, sim)
 
 
@@ -79,7 +79,7 @@ def test_fit_transform_error():
 
     # fit_transform should throw an error if init is not None
     # and dissimilarity="euclidean"
-    mds_clf = mds.MDS(dissimilarity="euclidean", inductive=True)
+    mds_clf = mds.MDS(dissimilarity="euclidean", method="inductive")
     assert_raises(ValueError, mds_clf.fit_transform, sim, init=Z)
 
 
@@ -110,11 +110,11 @@ def test_MDS_fit_transform_inductive():
                   [-.200, .524]])
 
     # test fit_transform under the inductive case
-    mds_clf = mds.MDS(dissimilarity="euclidean", inductive=True)
+    mds_clf = mds.MDS(dissimilarity="euclidean", method="inductive")
     mds_clf.fit_transform(sim)
 
     # test fit and transform for precomputed case
-    mds_clf = mds.MDS(dissimilarity="precomputed", inductive=True)
+    mds_clf = mds.MDS(dissimilarity="precomputed", method="inductive")
     mds_clf.fit(sim, init=Z)
     mds_clf.transform(sim)
 
@@ -125,7 +125,7 @@ def test_MDS_transform():
                     [3, 2, 0, 1],
                     [4, 2, 1, 0]])
 
-    mds_clf = mds.MDS(dissimilarity="euclidean", inductive=True)
+    mds_clf = mds.MDS(dissimilarity="euclidean", method="inductive")
     mds_clf.fit(sim)
 
     # Testing for extending MDS to new points
@@ -141,13 +141,13 @@ def test_MDS_transform_error():
                     [4, 2, 1, 0]])
 
     # calling transform with inductive=False causes an error
-    mds_clf = mds.MDS(dissimilarity="euclidean", inductive=False)
+    mds_clf = mds.MDS(dissimilarity="euclidean")
     assert_raises(ValueError, mds_clf.transform, sim)
 
     # it is necessary to fit the projection before transforming new points
-    mds_clf = mds.MDS(dissimilarity="euclidean", inductive=True)
+    mds_clf = mds.MDS(dissimilarity="euclidean", method="inductive")
     assert_raises(ValueError, mds_clf.transform, sim)
 
     # transform should throw an error if the dissimilarity metric is unknown
-    mds_clf = mds.MDS(dissimilarity="unknown", inductive=True)
+    mds_clf = mds.MDS(dissimilarity="unknown", method="inductive")
     assert_raises(ValueError, mds_clf.transform, sim)
