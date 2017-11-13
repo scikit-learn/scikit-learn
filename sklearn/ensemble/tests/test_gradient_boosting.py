@@ -82,11 +82,9 @@ def test_classification_toy():
 
 def test_classifier_parameter_checks():
     # Check input parameter validation for GradientBoostingClassifier.
-    assert_raise_message(ValueError, "'presort' should be either 'auto' or a boolean (True/False). Got invalid instead.",
+    assert_raise_message(ValueError, "'presort' should be either 'auto' or"
+                         " a boolean (True/False). Got invalid instead.",
                          GradientBoostingClassifier(presort='invalid')
-                         .fit, X, y)
-    assert_raise_message(ValueError, "'presort' should be either 'auto' or a boolean (True/False). Got 4 instead."
-                         GradientBoostingClassifier(presort=4)
                          .fit, X, y)
 
     assert_raises(ValueError,
@@ -164,11 +162,9 @@ def test_regressor_parameter_checks():
                          " or an integer. 'invalid' was passed",
                          GradientBoostingRegressor(n_iter_no_change='invalid')
                          .fit, X, y)
-    assert_raise_message(ValueError, "'presort' should be either 'auto' or a boolean (True/False). Got some_string instead.",
+    assert_raise_message(ValueError, "'presort' should be either 'auto' or"
+                         " a boolean (True/False). Got some_string instead.",
                          GradientBoostingRegressor(presort='some_string')
-                         .fit, X, y)
-    assert_raise_message(ValueError, "'presort' should be either 'auto' or a boolean (True/False). Got 0.1 instead.",
-                         GradientBoostingRegressor(presort=1e-1)
                          .fit, X, y)
 
 

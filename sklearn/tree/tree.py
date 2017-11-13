@@ -300,7 +300,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         elif self.presort == 'auto':
             presort = True
 
-        if presort is not True or False:
+        if presort is not in (True,False):
             raise ValueError("'presort' should be either 'auto' or a boolean"
                              " (True/False). Got {} instead.".format(presort))
 
