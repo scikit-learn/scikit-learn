@@ -496,6 +496,40 @@ def test_nmf_regularization():
 
 
 @ignore_warnings(category=ConvergenceWarning)
+def test_nmf_with_nan():
+    # test that the X can contain NaN values, but not W or H
+    n_samples = 20
+    n_features = 15
+    n_components = 10
+
+    rng = np.random.mtrand.RandomState(42)
+    X_nan = rng.randn(n_samples, n_features)
+    np.abs(X_nan, X_nan)
+    # add missing values
+    X_nan[rng.randint(2, size=(n_samples, n_features)) > 0] = np.nan
+
+    model = nmf.NMF(n_components=n_components, beta_loss=2.0,
+                    max_iter=1, solver='mu', init='random')
+    model.fit(X_nan)
+    W = model.transform(X_nan)
+    H = model.components_
+
+    W_nan, H_nan = W.copy(), H.copy()
+    W_nan[rng.randint(2, size=(n_samples, n_components)) > 0] = np.nan
+    H_nan[rng.randint(2, size=(n_components, n_features)) > 0] = np.nan
+
+    msg = "Input contains NaN, infinity or a value too large"
+    model.set_params(init='custom')
+    assert_raise_message(
+        ValueError, msg, model.fit_transform, X_nan, None, W_nan, H)
+    assert_raise_message(
+        ValueError, msg, model.fit_transform, X_nan, None, W, H_nan)
+
+    model.components_ = H_nan
+    assert_raise_message(ValueError, msg, model.transform, X_nan)
+
+
+@ignore_warnings(category=ConvergenceWarning)
 def test_nmf_decreasing():
     # test that the objective function is decreasing at each iteration
     n_samples = 20

@@ -83,6 +83,15 @@ def _safe_ravel(X):
     return ravel(X)
 
 
+def _safe_mean(X):
+    """Compute the arithmetic mean of an array, safe for sparse and NaN values
+    """
+    if sp.issparse(X):
+        return X.mean()
+    else:
+        return np.nanmean(X)
+
+
 def _beta_divergence(X, W, H, beta, square_root=False):
     """Compute the beta-divergence of X and dot(W, H).
 
@@ -388,10 +397,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
 
     # Random initialization
     if init == 'random':
-        if not sp.issparse(X) and np.any(np.isnan(X)):
-            X_mean = X[~np.isnan(X)].mean()
-        else:
-            X_mean = X.mean()
+        X_mean = _safe_mean(X)
         avg = np.sqrt(X_mean / n_components)
         rng = check_random_state(random_state)
         H = avg * rng.randn(n_components, n_features)
@@ -1143,7 +1149,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         _check_init(H, (n_components, n_features), "NMF (input H)")
         # 'mu' solver should not be initialized by zeros
         if solver == 'mu':
-            avg = np.sqrt(X.mean() / n_components)
+            avg = np.sqrt(_safe_mean(X) / n_components)
             W = avg * np.ones((n_samples, n_components))
         else:
             W = np.zeros((n_samples, n_components))
