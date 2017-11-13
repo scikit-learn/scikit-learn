@@ -73,9 +73,9 @@ run as a Cron job. Most of the time when this numpy-dev build fail, it is
 related to a numpy change and not a scikit-learn one, so it would not make sense
 to blame the PR author for the Travis failure.
 
-The definition of what's get run in the Cron job is done in the .travis.yml,
-exactly the same way as the other Travis job. We use a ``if: type = cron``
-filter in order for the build to be run only in Cron jobs.
+The definition of what gets run in the Cron job is done in the .travis.yml
+config file, exactly the same way as the other Travis jobs. We use a ``if: type
+= cron`` filter in order for the build to be run only in Cron jobs.
 
 The branch targetted by the Cron job and the frequency of the Cron job is set
 via the web UI at https://www.travis-ci.org/scikit-learn/scikit-learn/settings.
