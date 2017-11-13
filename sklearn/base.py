@@ -245,7 +245,8 @@ class BaseEstimator(object):
                     # if the parameter is deprecated, don't show it
                     continue
             finally:
-                warnings.filters.pop(0)
+                if warnings and len(warnings.filters):
+                    warnings.filters.pop(0)
 
             # XXX: should we rather test if instance of estimator?
             if deep and hasattr(value, 'get_params'):
