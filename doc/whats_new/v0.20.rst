@@ -81,6 +81,10 @@ Classifiers and regressors
   ``inverse_func`` are the inverse of each other.
   :issue:`9399` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Add `sample_weight` parameter to the fit method of
+  :class:`linear_model.BayesianRidge` for weighted linear regression.
+  :issue:`10111` by :user:`Peter St. John <pstjohn>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.

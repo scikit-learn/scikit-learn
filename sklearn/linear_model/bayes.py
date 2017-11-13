@@ -153,7 +153,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         sample_weight : numpy array of shape [n_samples]
             Individual weights for each sample
 
-            .. versionadded:: 0.19.2
+            .. versionadded:: 0.20
                parameter *sample_weight* support to BayesianRidge.
 
         Returns
