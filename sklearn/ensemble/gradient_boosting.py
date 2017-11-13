@@ -549,13 +549,8 @@ class MultinomialDeviance(ClassificationLossFunction):
         for k in range(self.K):
             Y[:, k] = y == k
 
-        if sample_weight is None:
-            return np.mean(-1 * (Y * pred).sum(axis=1) +
-                           logsumexp(pred, axis=1))
-        else:
-            return (-1.0 / sample_weight.sum() *
-                    np.sum(sample_weight * (Y * pred).sum(axis=1) +
-                           logsumexp(pred, axis=1)))
+        return np.average(-1 * (Y * pred).sum(axis=1) +
+                          logsumexp(pred, axis=1), weights=sample_weight)
 
     def negative_gradient(self, y, pred, k=0, **kwargs):
         """Compute negative gradient for the ``k``-th class. """
