@@ -6,7 +6,6 @@
 #         Tom Dupre la Tour
 # License: BSD 3 clause
 
-
 from __future__ import division, print_function
 
 from math import sqrt
@@ -1450,3 +1449,203 @@ class NMF(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'n_components_')
         return np.dot(W, self.components_)
+
+
+def _get_mask(X, value_to_mask):
+    """Compute the boolean mask X == missing_values."""
+    if value_to_mask == "NaN" or np.isnan(value_to_mask):
+        return np.isnan(X)
+    else:
+        return X == value_to_mask
+
+
+class ImputerNMF(BaseEstimator, TransformerMixin):
+    """Imputation transformer for completing missing values, using NMF
+
+    Parameters
+    ----------
+    missing_values : integer or "NaN", optional (default="NaN")
+        The placeholder for the missing values. All occurrences of
+        `missing_values` will be imputed. For missing values encoded as np.nan,
+        use the string value "NaN".
+
+    n_components : int or None
+        Number of components, if n_components is not set all features
+        are kept.
+
+    init :  'random' | 'custom', default 'random'
+        Method used to initialize the procedure.
+        Valid options:
+
+        - 'random': non-negative random matrices, scaled with:
+            sqrt(X.mean() / n_components)
+
+        - 'custom': use custom matrices W and H
+
+    beta_loss : float or string, default 'frobenius'
+        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
+        Beta divergence to be minimized, measuring the distance between X
+        and the dot product WH. Note that values different from 'frobenius'
+        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
+        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
+        matrix X cannot contain zeros.
+
+    tol : float, default: 1e-4
+        Tolerance of the stopping condition.
+
+    max_iter : integer, default: 200
+        Maximum number of iterations before timing out.
+
+    random_state : int, RandomState instance or None, optional, default: None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    alpha : double, default: 0.
+        Constant that multiplies the regularization terms. Set it to zero to
+        have no regularization.
+
+    l1_ratio : double, default: 0.
+        The regularization mixing parameter, with 0 <= l1_ratio <= 1.
+        For l1_ratio = 0 the penalty is an elementwise L2 penalty
+        (aka Frobenius Norm).
+        For l1_ratio = 1 it is an elementwise L1 penalty.
+        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
+
+    verbose : bool, default=False
+        Whether to be verbose.
+
+    Attributes
+    ----------
+    components_ : array, [n_components, n_features]
+        Factorization matrix, sometimes called 'dictionary'.
+
+    activations_ : array, [n_samples, n_components]
+        Factorization matrix.
+
+    reconstruction_err_ : number
+        Frobenius norm of the matrix difference, or beta-divergence, between
+        the training data ``X`` and the reconstructed data ``WH`` from
+        the fitted model.
+
+    mask_ : array, [n_samples, n_features]
+        Boolean array of masked values in the last transformed array.
+
+    n_iter_ : int
+        Actual number of iterations.
+
+    """
+
+    def __init__(self, missing_values="NaN", n_components=None, init='random',
+                 beta_loss='frobenius', tol=1e-4, max_iter=200,
+                 random_state=None, alpha=0., l1_ratio=0., verbose=0):
+        self.missing_values = missing_values
+        self.n_components = n_components
+        self.init = init
+        self.beta_loss = beta_loss
+        self.tol = tol
+        self.max_iter = max_iter
+        self.random_state = random_state
+        self.alpha = alpha
+        self.l1_ratio = l1_ratio
+        self.verbose = verbose
+
+    def fit_transform(self, X, y=None, W=None, H=None):
+        """Learn a NMF model for the data X and returns the transformed data.
+
+        This is more efficient than calling fit followed by transform.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data matrix to be decomposed
+
+        y : Ignored
+
+        W : array-like, shape (n_samples, n_components)
+            If init='custom', it is used as initial guess for the solution.
+
+        H : array-like, shape (n_components, n_features)
+            If init='custom', it is used as initial guess for the solution.
+
+        Returns
+        -------
+        X : array, shape (n_samples, n_features)
+            Transformed data, computed through np.dot(W, H)
+        """
+        # XXX: copy=False and pass a masked array to non_negative_factorization
+        X = check_array(X, dtype=float, force_all_finite=False, copy=True)
+        mask = _get_mask(X, self.missing_values)
+        X[mask] = np.nan
+
+        W, H, n_iter_ = non_negative_factorization(
+            X=X, W=W, H=H, n_components=self.n_components,
+            init=self.init, update_H=True, solver='mu',
+            beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
+            alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
+            random_state=self.random_state, verbose=self.verbose,
+            shuffle=False)
+
+        self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
+                                                    square_root=True)
+        self.mask_ = mask
+        self.n_components_ = H.shape[0]
+        self.components_ = H
+        self.activations_ = W
+        self.n_iter_ = n_iter_
+
+        X[mask] = np.dot(W, H)[mask]
+        return X
+
+    def fit(self, X, y=None, **params):
+        """Learn a NMF model for the data X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data matrix to be decomposed
+
+        y : Ignored
+
+        Returns
+        -------
+        self
+        """
+        self.fit_transform(X, **params)
+        return self
+
+    def transform(self, X):
+        """Transform the data X according to the fitted NMF model
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Data matrix to be transformed by the model
+
+        Returns
+        -------
+        X : array, shape (n_samples, n_features)
+            Transformed data
+        """
+        check_is_fitted(self, 'n_components_')
+
+        # XXX: copy=False and pass a masked array to non_negative_factorization
+        X = check_array(X, dtype=float, force_all_finite=False, copy=True)
+        mask = _get_mask(X, self.missing_values)
+        X[mask] = np.nan
+
+        W, _, n_iter_ = non_negative_factorization(
+            X=X, W=None, H=self.components_, n_components=self.n_components_,
+            init=self.init, update_H=False, solver='mu',
+            beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
+            alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
+            random_state=self.random_state, verbose=self.verbose,
+            shuffle=False)
+
+        self.activations_ = W
+        self.mask_ = mask
+        self.n_iter_ = n_iter_
+
+        X[mask] = np.dot(W, self.components_)[mask]
+        return X

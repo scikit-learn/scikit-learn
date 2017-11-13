@@ -18,7 +18,8 @@ Script output::
 
   Score with the entire dataset = 0.56
   Score without the samples containing missing values = 0.48
-  Score after imputation of the missing values = 0.55
+  Score after imputation of the missing values (mean) = 0.57
+  Score after imputation of the missing values (NMF) = 0.51
 
 In this case, imputing helps the classifier get close to the original score.
 
@@ -29,7 +30,10 @@ from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import Imputer
+from sklearn.decomposition import ImputerNMF
 from sklearn.model_selection import cross_val_score
+
+print(__doc__)
 
 rng = np.random.RandomState(0)
 
@@ -60,14 +64,25 @@ estimator = RandomForestRegressor(random_state=0, n_estimators=100)
 score = cross_val_score(estimator, X_filtered, y_filtered).mean()
 print("Score without the samples containing missing values = %.2f" % score)
 
-# Estimate the score after imputation of the missing values
+# Estimate the score after imputation using a 'mean' strategy
 X_missing = X_full.copy()
-X_missing[np.where(missing_samples)[0], missing_features] = 0
+X_missing[np.where(missing_samples)[0], missing_features] = np.nan
 y_missing = y_full.copy()
-estimator = Pipeline([("imputer", Imputer(missing_values=0,
+estimator = Pipeline([("imputer", Imputer(missing_values=np.nan,
                                           strategy="mean",
                                           axis=0)),
                       ("forest", RandomForestRegressor(random_state=0,
                                                        n_estimators=100))])
 score = cross_val_score(estimator, X_missing, y_missing).mean()
-print("Score after imputation of the missing values = %.2f" % score)
+
+print("Score after imputation of the missing values (mean) = %.2f" % score)
+
+# Estimate the score after imputation using non-negative matrix factorization
+estimator = Pipeline([("imputer", ImputerNMF(missing_values=np.nan,
+                                             n_components=3,
+                                             max_iter=2000,
+                                             random_state=0)),
+                      ("forest", RandomForestRegressor(random_state=0,
+                                                       n_estimators=100))])
+score = cross_val_score(estimator, X_missing, y_missing).mean()
+print("Score after imputation of the missing values (NMF) = %.2f" % score)
