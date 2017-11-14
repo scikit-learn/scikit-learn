@@ -872,6 +872,51 @@ from high-level questions to a more detailed check-list.
   instructive?
 
 
+Standard replies
+................
+
+It may be helpful to store some of these in GitHub's [saved
+replies](https://github.com/settings/replies/) for reviewing:
+
+Issue: Update the docs svp
+    ::
+        Please feel free to offer a pull request updating the documentation if
+        you feel it could be improved.
+
+PR-NEW: Better description
+    ::
+        Please make the title of the PR descriptive so that we can easily
+        recall the issue it is resolving.  You should state what issue it
+        fixes/resolves in the description (see
+        [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests)).
+
+PR-WIP: What's needed before merge?
+    ::
+        Please clarify (perhaps as a TODO list in the PR description) what work
+        you believe still needs to be done before it can be reviewed for merge.
+        When it is ready, please prefix the PR title with `[MRG]`.
+
+PR-MRG: Patience
+    ::
+        Before merging, we generally require two core developers to agree that
+        your pull request is desirable and ready.  Please be patient, as we
+        mostly rely on volunteered time from busy core developers. (You are
+        also welcome to help us out with [reviewing other
+        PRs](http://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines).)
+
+PR-MRG: Add to what's new
+    ::
+        Please add an entry to the change log at
+        `doc/whats_new/v|version|.rst`. Like the other entries there, please
+        reference this pull request with `:issue:` and credit yourself (and
+        other contributors if applicable) with `:user:`
+
+PR: Don't change unrelated
+    ::
+        Please do not change unrelated lines. It makes your contribution harder
+        to review and may introduce merge conflicts to other pull requests.
+
+
 APIs of scikit-learn objects
 ============================
 
