@@ -14,6 +14,7 @@ from .nearest_centroid import NearestCentroid
 from .kde import KernelDensity
 from .approximate import LSHForest
 from .lof import LocalOutlierFactor
+from .loop import LocalOutlierProbability
 
 __all__ = ['BallTree',
            'DistanceMetric',

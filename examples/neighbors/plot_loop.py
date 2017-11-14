@@ -23,8 +23,7 @@ print(__doc__)
 
 import numpy as np
 from matplotlib import pyplot as plt
-from sklearn.neighbors.loop import LocalOutlierProbability
-# from sklearn.neighbors import LocalOutlierProbability
+from sklearn.neighbors import LocalOutlierProbability
 
 np.random.seed(42)
 

@@ -40,10 +40,7 @@ from sklearn import svm
 from sklearn.covariance import EllipticEnvelope
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
-
-# need to test this and make sure it works after building sklearn from src
-from sklearn.neighbors.loop import LocalOutlierProbability
-# from sklearn.neighbors import LocalOutlierProbability
+from sklearn.neighbors import LocalOutlierProbability
 
 print(__doc__)
 

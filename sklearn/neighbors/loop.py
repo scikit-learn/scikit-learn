@@ -100,9 +100,9 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
 
     Attributes
     ----------
-    local_outlier_probability_ : numpy array, shape (n_samples,)
-        The LoOP of the training samples. The lower, the more normal.
-        Outliers tend to have a LoOP score close to 1, while normal values tend
+    negative_local_outlier_probability_ : numpy array, shape (n_samples,)
+        The negative LoOP of the training samples. The higher, the more normal.
+        Outliers tend to have a LoOP score close to -1, while normal values tend
         to have a LoOP score at or close to 0.
 
         The local outlier probability (LoOP) of a sample captures its
@@ -131,7 +131,6 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
                           metric_params=metric_params)
 
         self.extent = extent
-        self.local_outlier_probability_ = None
 
     def fit_predict(self, X, y=None):
         """"Fits the model to the training set X and returns the labels
@@ -231,7 +230,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
         is_inlier : array, shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
-        check_is_fitted(self, ["threshold_", "local_outlier_probability_",
+        check_is_fitted(self, ["threshold_", "negative_local_outlier_probability_",
                                "n_neighbors_", "_distances_fit_X_"])
 
         if X is not None:
@@ -267,7 +266,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
             warn('Sum of square distances equals zero. Validate the chosen distance metric.', RuntimeWarning)
         n_obs = X.shape[0]
         ssd_array = np.array([ssd] * n_obs)
-        ssd_array = np.tile(ssd_array, (self.n_neighbors, 1)).T
+        ssd_array = np.tile(ssd_array, (self.n_neighbors_, 1)).T
 
         return ssd_array
 
@@ -449,7 +448,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
             The opposite of the local reachability density of each input samples.
             The lower, the more abnormal.
         """
-        check_is_fitted(self, ["extent", "n_neighbors", "_distances_fit_X_", "local_outlier_probability_"])
+        check_is_fitted(self, ["extent", "n_neighbors", "_distances_fit_X_", "negative_local_outlier_probability_"])
 
         X = check_array(X, accept_sparse='csr')
 
@@ -490,7 +489,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
         local_reachability_density : array, shape (n_samples,)
             The local reachability density of each sample.
         """
-        dist_k = self._prob_set_distances_fit_X_[neighbors_indices,
+        dist_k = self._distances_fit_X_[neighbors_indices,
                                         self.n_neighbors_ - 1]
         reach_dist_array = np.maximum(distances_X, dist_k)
 

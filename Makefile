@@ -2,7 +2,7 @@
 
 # caution: testing won't work on windows, see README
 
-PYTHON ?= python
+PYTHON ?= python3
 CYTHON ?= cython
 NOSETESTS ?= nosetests
 CTAGS ?= ctags
