@@ -471,6 +471,8 @@ given binary ``y_true`` and ``y_pred``:
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
+    * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and selectivity
+      is computed for each class and then averaged over total number of classes.
 
     Note that none of these different definitions are currently implemented within
     the :func:`balanced_accuracy_score` function. However, the macro-averaged recall
@@ -490,6 +492,8 @@ given binary ``y_true`` and ``y_pred``:
      Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
      and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
      2015.
+  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. `ExSTraCS 2.0: description and evaluation of a scalable learning
+     classifier system < https://doi.org/10.1007/s12065-015-0128-8>`_, Evol. Intel. (2015) 8: 89.
 
 .. _cohen_kappa:
 
