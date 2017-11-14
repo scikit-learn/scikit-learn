@@ -503,14 +503,9 @@ def test_error():
 
     for name, TreeEstimator in ALL_TREES.items():
         # Invalid values for parameters
-        assert_raises(ValueError,
-                      "'presort' should be either 'auto' or a boolean"
-                      " (True/False). Got error instead",
-                      TreeEstimator(presort='error').fit, X, y)
-        assert_raises(ValueError,
-                      "'presort' should be either 'auto' or a boolean"
-                      " (True/False). Got 0.01 instead",
-                      TreeEstimator(presort=1e-2).fit, X, y)
+        if name is "DecisionTreeRegressor" or name is "DecisionTreeClassifier":
+            assert_raises(ValueError, TreeEstimator(presort="some_string")
+                          .fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
@@ -1245,7 +1240,8 @@ def test_arrays_persist():
     # non-regression for #2726
     for attr in ['n_classes', 'value', 'children_left', 'children_right',
                  'threshold', 'impurity', 'feature', 'n_node_samples']:
-        value = getattr(DecisionTreeClassifier().fit([[0], [1]], [0, 1]).tree_, attr)
+        value = getattr(DecisionTreeClassifier()
+                        .fit([[0], [1]], [0, 1]).tree_, attr)
         # if pointing to freed memory, contents may be arbitrary
         assert_true(-3 <= value.flat[0] < 3,
                     'Array points to arbitrary memory')
