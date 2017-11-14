@@ -24,10 +24,11 @@ sets from the repository using the function
 For example, to download a dataset of gene expressions in mice brains::
 
   >>> from sklearn.datasets import fetch_openml
-  >>> mice = fetch_openml('miceprotein', data_home=custom_data_home)
+  >>> mice = fetch_openml('miceprotein', version=2, data_home=custom_data_home)
 
-The dataset contains a total of 70000 examples of handwritten digits
-of size 28x28 pixels, labeled from 0 to 9::
+To fully specify a dataset, you need to provide a name and a version, though the
+version is optional, see :ref:`openml_versions`_ below.
+The dataset contains a total of 1080 examples belonging to 8 different classes::
 
   >>> mice.data.shape
   (1080, 81)
@@ -80,11 +81,14 @@ The id is also the best way to specify how to fetch a dataset from OpenML::
   'study_34'], 'visibility': 'public', 'status': 'active', 'md5_checksum':
   '3c479a6885bfa0438971388283a1ce32'}
 
+.. _openml_versions:
+
 Dataset Versions
 ----------------
 
 A dataset is uniquely specified by its id, but not necessarily by its name.
-Several different "versions" of a dataset with the same name can exist.
+Several different "versions" of a dataset with the same name can exist which can contain
+entirely different datasets.
 If a particular version of a dataset has been found to contain significant
 issues, it might be inactivated. Using a name to specify a dataset will yield
 the earliest version of a dataset that is still active. That means that

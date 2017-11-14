@@ -11,7 +11,7 @@ try:
 except ImportError:
     # Python 3+
     from urllib.request import urlopen
-    # from http.client import IncompleteRead
+
 
 from scipy.io.arff import loadarff
 import numpy as np
@@ -19,6 +19,7 @@ import numpy as np
 from .base import get_data_home
 from ..externals.joblib import Memory
 from ..externals.six import StringIO
+from ..externals.six.moves.urllib.error import HTTPError
 from ..utils import Bunch
 
 _SEARCH_NAME = "https://openml.org/api/v1/json/data/list/data_name/{}/limit/1"
@@ -26,11 +27,25 @@ _DATA_INFO = "https://openml.org/api/v1/json/data/{}"
 
 
 def _get_data_info_by_name(name, version):
-    if version == "active":
-        json_string = urlopen(_SEARCH_NAME.format(name + "/status/active/"))
-    else:
-        json_string = urlopen(_SEARCH_NAME.format(name)
-                              + "/data_version/{}".format(version))
+    data_found = True
+    try:
+        if version == "active":
+            json_string = urlopen(_SEARCH_NAME.format(name
+                                                      + "/status/active/"))
+        else:
+            json_string = urlopen(_SEARCH_NAME.format(name)
+                                  + "/data_version/{}".format(version))
+    except HTTPError as error:
+        if error.code == 412:
+            data_found = False
+
+    if not data_found:
+        # not in except for nicer traceback
+        if version == "active":
+            raise ValueError("No active dataset {} found.".format(name))
+        raise ValueError("Dataset {} with version {}"
+                         " not found.".format(name, version))
+
     json_data = json.load(json_string)
     return json_data['data']['dataset'][0]
 
