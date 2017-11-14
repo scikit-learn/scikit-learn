@@ -145,7 +145,7 @@ PR-MRG: Add to what's new
     ::
 
         Please add an entry to the change log at
-        `doc/whats_new/v|version|.rst`. Like the other entries there, please
+        `doc/whats_new/v0.20.rst`. Like the other entries there, please
         reference this pull request with `:issue:` and credit yourself (and
         other contributors if applicable) with `:user:`
 
