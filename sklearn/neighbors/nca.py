@@ -466,7 +466,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                                             diff_embedded[~ci, :]))
             p_i = np.sum(p_i_j)  # probability of x_i to be correctly
             # classified
-            gradient += 2 * (p_i * (sum_ci + sum_not_ci) - sum_ci).T
+            gradient += 2 * (p_i * sum_not_ci + (p_i - 1) * sum_ci).T
             loss += p_i
 
         if self.verbose:
