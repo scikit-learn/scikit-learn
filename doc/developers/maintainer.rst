@@ -1,10 +1,10 @@
 Maintainer / core-developer information
 ========================================
 
-For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-to-make-a-release
-
 Making a release
 ------------------
+For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-to-make-a-release
+
 
 1. Update docs:
 
@@ -55,3 +55,27 @@ Making a release
 
 
 7. FOR FINAL RELEASE: Update the release date in What's New
+
+Travis Cron jobs
+----------------
+
+From `<https://docs.travis-ci.com/user/cron-jobs>`_: Travis CI cron jobs work
+similarly to the cron utility, they run builds at regular scheduled intervals
+independently of whether any commits were pushed to the repository. Cron jobs
+always fetch the most recent commit on a particular branch and build the project
+at that state. Cron jobs can run daily, weekly or monthly, which in practice
+means up to an hour after the selected time span, and you cannot set them to run
+at a specific time.
+
+For scikit-learn, Cron jobs are used for builds that we do not want to run in
+each PR. As an example the build with the dev versions of numpy and scipy is
+run as a Cron job. Most of the time when this numpy-dev build fail, it is
+related to a numpy change and not a scikit-learn one, so it would not make sense
+to blame the PR author for the Travis failure.
+
+The definition of what gets run in the Cron job is done in the .travis.yml
+config file, exactly the same way as the other Travis jobs. We use a ``if: type
+= cron`` filter in order for the build to be run only in Cron jobs.
+
+The branch targetted by the Cron job and the frequency of the Cron job is set
+via the web UI at https://www.travis-ci.org/scikit-learn/scikit-learn/settings.

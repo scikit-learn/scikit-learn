@@ -8,7 +8,9 @@ import numpy as np
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import SkipTest
+from sklearn.utils import check_random_state
 from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
 from sklearn import datasets
@@ -48,6 +50,21 @@ def test_bayesian_ridge_parameter():
     assert_almost_equal(rr_model.intercept_, br_model.intercept_)
 
 
+def test_bayesian_sample_weights():
+    # Test correctness of the sample_weights method
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
+    y = np.array([1, 2, 3, 2, 0, 4, 5]).T
+    w = np.array([4, 3, 3, 1, 1, 2, 3]).T
+
+    # A Ridge regression model using an alpha value equal to the ratio of
+    # lambda_ and alpha_ from the Bayesian Ridge model must be identical
+    br_model = BayesianRidge(compute_score=True).fit(X, y, sample_weight=w)
+    rr_model = Ridge(alpha=br_model.lambda_ / br_model.alpha_).fit(
+        X, y, sample_weight=w)
+    assert_array_almost_equal(rr_model.coef_, br_model.coef_)
+    assert_almost_equal(rr_model.intercept_, br_model.intercept_)
+
+
 def test_toy_bayesian_ridge_object():
     # Test BayesianRidge on toy
     X = np.array([[1], [2], [6], [8], [10]])
@@ -58,6 +75,39 @@ def test_toy_bayesian_ridge_object():
     # Check that the model could approximately learn the identity function
     test = [[1], [3], [4]]
     assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
+
+
+def test_prediction_bayesian_ridge_ard_with_constant_input():
+    # Test BayesianRidge and ARDRegression predictions for edge case of
+    # constant target vectors
+    n_samples = 4
+    n_features = 5
+    random_state = check_random_state(42)
+    constant_value = random_state.rand()
+    X = random_state.random_sample((n_samples, n_features))
+    y = np.full(n_samples, constant_value)
+    expected = np.full(n_samples, constant_value)
+
+    for clf in [BayesianRidge(), ARDRegression()]:
+        y_pred = clf.fit(X, y).predict(X)
+        assert_array_almost_equal(y_pred, expected)
+
+
+def test_std_bayesian_ridge_ard_with_constant_input():
+    # Test BayesianRidge and ARDRegression standard dev. for edge case of
+    # constant target vector
+    # The standard dev. should be relatively small (< 0.01 is tested here)
+    n_samples = 4
+    n_features = 5
+    random_state = check_random_state(42)
+    constant_value = random_state.rand()
+    X = random_state.random_sample((n_samples, n_features))
+    y = np.full(n_samples, constant_value)
+    expected_upper_boundary = 0.01
+
+    for clf in [BayesianRidge(), ARDRegression()]:
+        _, y_std = clf.fit(X, y).predict(X, return_std=True)
+        assert_array_less(y_std, expected_upper_boundary)
 
 
 def test_toy_ard_object():

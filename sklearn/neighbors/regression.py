@@ -9,6 +9,7 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 import numpy as np
+from scipy.sparse import issparse
 
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
@@ -139,6 +140,11 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
+        if issparse(X) and self.metric == 'precomputed':
+            raise ValueError(
+                "Sparse matrices not supported for prediction with "
+                "precomputed kernels. Densify your matrix."
+            )
         X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)

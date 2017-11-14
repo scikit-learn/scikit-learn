@@ -651,7 +651,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     See also
     --------
     adjusted_rand_score: Adjusted Rand Index
-    mutual_information_score: Mutual Information (not adjusted for chance)
+    mutual_info_score: Mutual Information (not adjusted for chance)
 
     Examples
     --------
