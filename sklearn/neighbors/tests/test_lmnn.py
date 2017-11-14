@@ -237,6 +237,14 @@ def test_max_impostors():
     lmnn.fit(iris_data, iris_target)
 
 
+def test_neighbors_params():
+    from scipy.spatial.distance import hamming
+
+    params = {'algorithm': 'brute', 'metric': hamming}
+    lmnn = LargeMarginNearestNeighbor(n_neighbors=3, neighbors_params=params)
+    lmnn.fit(iris_data, iris_target)
+
+
 def test_impostor_store():
     X = iris_data
     y = iris_target

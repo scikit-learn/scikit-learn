@@ -257,7 +257,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         transformation = self._initialize(X_valid, init)
 
         # Find the target neighbors
-        target_neighbors = self._select_target_neighbors(X_valid, y_valid)
+        target_neighbors = self._select_target_neighbors_wrapper(
+            X_valid, y_valid, classes)
 
         # Compute the gradient part contributed by the target neighbors
         grad_static = self._compute_grad_static(X_valid, target_neighbors)
@@ -549,7 +550,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         return transformation
 
-    def _select_target_neighbors(self, X, y):
+    def _select_target_neighbors_wrapper(self, X, y, classes=None):
         """Find the target neighbors of each data sample.
 
         Parameters
@@ -559,6 +560,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         y : array, shape (n_samples,)
             The corresponding training labels indices.
+
+        classes : array, shape (n_classes,), optional (default=None)
+            The non-singleton classes, encoded as integers in [0, n_classes).
+            If None (default), they will be inferred from ``y``.
 
         Returns
         -------
@@ -578,7 +583,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         neighbors_params.setdefault('n_jobs', self.n_jobs)
         target_neighbors = _select_target_neighbors(
-            X, y, self.n_neighbors_, **neighbors_params)
+            X, y, self.n_neighbors_, classes=classes, **neighbors_params)
 
         if self.verbose:
             print('[{}] Found the target neighbors in {:5.2f}s.'.format(
@@ -856,7 +861,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 #######################
 
 
-def _select_target_neighbors(X, y, n_neighbors, **nn_kwargs):
+def _select_target_neighbors(X, y, n_neighbors, classes=None, **nn_kwargs):
     """Find the target neighbors of each data sample.
 
     Parameters
@@ -865,10 +870,14 @@ def _select_target_neighbors(X, y, n_neighbors, **nn_kwargs):
         The training samples.
 
     y : array, shape (n_samples,)
-        The corresponding training labels indices.
+        The corresponding (encoded) training labels.
 
     n_neighbors : int
         The number of target neighbors to select for each sample in X.
+
+    classes : array, shape (n_classes,), optional (default=None)
+        The non-singleton classes, encoded as integers in [0, n_classes).
+        If None (default), they will be inferred from ``y``.
 
     **nn_kwargs : keyword arguments
         Parameters to be passed to a :class:`neighbors.NearestNeighbors`
@@ -884,7 +893,9 @@ def _select_target_neighbors(X, y, n_neighbors, **nn_kwargs):
 
     nn = NearestNeighbors(n_neighbors=n_neighbors, **nn_kwargs)
 
-    classes = np.unique(y)
+    if classes is None:
+        classes = np.unique(y)
+
     for class_id in classes:
         ind_class, = np.where(y == class_id)
         nn.fit(X[ind_class])
