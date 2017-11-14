@@ -72,7 +72,7 @@ small to be representative of real world machine learning tasks.
 Sample images
 =============
 
-The scikit also embed a couple of sample JPEG images published under Creative
+Scikit-learn also embed a couple of sample JPEG images published under Creative
 Commons license by their authors. Those image can be useful to test algorithms
 and pipeline on 2D data.
 
