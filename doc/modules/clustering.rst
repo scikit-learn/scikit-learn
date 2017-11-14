@@ -875,6 +875,16 @@ children of a larger parent cluster.
     of samples. Different distance metrics can be supplied via the
     ``metric`` keyword.
 
+.. topic:: Computational Complexity
+
+    For large datasets, similar (but not identical) results can be obtained via
+    `HDBSCAN <https://hdbscan.readthedocs.io>`_. The HDBSCAN implementation is
+    multithreaded, and has better algorithmic runtime complexity than OPTICS--
+    at the cost of worse memory scaling. For extremely large datasets that
+    exhaust system memory using HDBSCAN, OPTICS will maintain *n* (as opposed
+    to *n^2* memory scaling); however, tuning of the `max_bound` parameter will
+    likely need to used to give a solution in a reasonable amount of wall time.
+
 .. topic:: References:
 
  * "OPTICS: ordering points to identify the clustering structure."

@@ -553,13 +553,14 @@ def _extract_optics(ordering, reachability, maxima_ratio=.75,
         labels[index] = clustid
         is_core[index] = 1
         clustid += 1
-    return(np.arange(n_samples)[is_core], labels)
+    return np.arange(n_samples)[is_core], labels
 
 
 def _automatic_cluster(reachability_plot, reachability_ordering,
                        maxima_ratio, rejection_ratio,
                        similarity_threshold, significant_min,
                        min_cluster_size_ratio, min_maxima_ratio):
+    """Converts reachability plot to cluster tree and returns root node."""
 
     min_neighborhood_size = 2
     min_cluster_size = int(min_cluster_size_ratio *
