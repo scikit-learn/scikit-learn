@@ -20,9 +20,6 @@ set -o pipefail
 PROJECT=scikit-learn/scikit-learn
 PROJECT_URL=https://github.com/$PROJECT.git
 
-DEFAULT_FLAKE8_CONFIG=./setup.cfg
-EXAMPLES_FLAKE8_CONFIG=./examples/.flake8
-
 # Find the remote with the project name (upstream in most cases)
 REMOTE=$(git remote -v | grep $PROJECT | cut -f1 | head -1 || echo '')
 
@@ -141,10 +138,8 @@ if [[ "$MODIFIED_FILES" == "no_match" ]]; then
     echo "No file outside sklearn/externals and doc/sphinxext/sphinx_gallery has been modified"
 else
 
-    check_files "$(echo "$MODIFIED_FILES" | grep -v ^examples)" \
-        --config $DEFAULT_FLAKE8_CONFIG
-    # Examples are allowed to not have imports at top of file
+    check_files "$(echo "$MODIFIED_FILES" | grep -v ^examples)"
     check_files "$(echo "$MODIFIED_FILES" | grep ^examples)" \
-        --config $EXAMPLES_FLAKE8_CONFIG
+        --config ./examples/.flake8
 fi
 echo -e "No problem detected by flake8\n"
