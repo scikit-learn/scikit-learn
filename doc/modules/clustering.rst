@@ -883,7 +883,8 @@ children of a larger parent cluster.
     at the cost of worse memory scaling. For extremely large datasets that
     exhaust system memory using HDBSCAN, OPTICS will maintain *n* (as opposed
     to *n^2* memory scaling); however, tuning of the `max_bound` parameter will
-    likely need to used to give a solution in a reasonable amount of wall time.
+    likely need to be used to give a solution in a reasonable amount of wall
+    time.
 
 .. topic:: References:
 
