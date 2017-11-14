@@ -80,6 +80,8 @@ Standard replies for reviewing
 It may be helpful to store some of these in GitHub's `saved
 replies <https://github.com/settings/replies/>`_ for reviewing:
 
+.. highlight:: none
+
 Issue: You're welcome to update the docs
     ::
 
@@ -152,6 +154,8 @@ PR: Don't change unrelated
 
         Please do not change unrelated lines. It makes your contribution harder
         to review and may introduce merge conflicts to other pull requests.
+
+.. highlight:: default
 
 Debugging memory errors in Cython with valgrind
 ===============================================
