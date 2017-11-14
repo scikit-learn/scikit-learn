@@ -163,7 +163,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
         # Initialization of the values of the parameters
         alpha_ = 1. / np.var(y)
-
+        lambda_ = 1.
 
         verbose = self.verbose
         lambda_1 = self.lambda_1
