@@ -978,6 +978,9 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.18
 
+    gauss_adjust : boolean, False by default
+        If True, scale data to a standard Gaussian distributtion.
+
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
@@ -1014,10 +1017,12 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, with_centering=True, with_scaling=True,
-                 quantile_range=(25.0, 75.0), copy=True):
+                 quantile_range=(25.0, 75.0), gauss_adjust=False,
+                 copy=True):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
         self.quantile_range = quantile_range
+        self.gauss_adjust = gauss_adjust
         self.copy = copy
 
     def _check_array(self, X, copy):
@@ -1055,6 +1060,12 @@ class RobustScaler(BaseEstimator, TransformerMixin):
 
             q = np.percentile(X, self.quantile_range, axis=0)
             self.scale_ = (q[1] - q[0])
+            if self.gauss_adjust:
+                # Create scipy.stats.norm object
+                output_distribution = getattr(stats, 'norm')
+                self.adjust_ = output_distribution.ppf(q_max / 100.0) - \
+                    output_distribution.ppf(q_min / 100.0)
+                self.scale_ = self.scale_ / self.adjust_
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
         return self
 
@@ -1252,6 +1263,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/linear_model/plot_polynomial_interpolation.py
     <sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py>`
     """
+
     def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
         self.interaction_only = interaction_only
@@ -1945,6 +1957,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
       and n_classes-1.
     """
+
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float64, sparse=True, handle_unknown='error'):
         self.n_values = n_values
@@ -2332,9 +2345,9 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
             # If we don't do this, only one extreme of the duplicated is
             # used (the upper when we do assending, and the
             # lower for descending). We take the mean of these two
-            X_col = .5 * (np.interp(X_col, quantiles, self.references_)
-                          - np.interp(-X_col, -quantiles[::-1],
-                                      -self.references_[::-1]))
+            X_col = .5 * (np.interp(X_col, quantiles, self.references_) -
+                          np.interp(-X_col, -quantiles[::-1],
+                                    -self.references_[::-1]))
         else:
             X_col = np.interp(X_col, self.references_, quantiles)
 
