@@ -64,7 +64,7 @@ require to download any file from some external website.
    load_breast_cancer
 
 These datasets are useful to quickly illustrate the behavior of the
-various algorithms implemented in the scikit. They are however often too
+various algorithms implemented in scikit-learn. They are however often too
 small to be representative of real world machine learning tasks.
 
 .. _sample_images:
@@ -72,7 +72,7 @@ small to be representative of real world machine learning tasks.
 Sample images
 =============
 
-The scikit also embed a couple of sample JPEG images published under Creative
+Scikit-learn also embed a couple of sample JPEG images published under Creative
 Commons license by their authors. Those image can be useful to test algorithms
 and pipeline on 2D data.
 
