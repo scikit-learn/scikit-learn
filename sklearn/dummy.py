@@ -486,5 +486,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         return y
 
-def func(x, y):
-    return x + y
+
+def func():
+    return 42
