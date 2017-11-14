@@ -162,7 +162,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
 
         # Initialization of the values of the parameters
-        alpha_ = 1. / np.var(y)
+        var_y = np.var(y)
+        if var_y:
+            alpha_ = 1. / var_y
+        else:
+            alpha_ = 0.1
         lambda_ = 1.
 
         verbose = self.verbose
