@@ -106,9 +106,10 @@ PR-NEW: Better description
 PR-NEW or Issue:
     ::
 
-        Every feature we include has a maintenance cost. Our maintainers are
-        mostly volunteers. For a new feature to be included, we need evidence
-        that it is often useful and, ideally,
+        Every feature we include has a [maintenance
+        cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn).
+        Our maintainers are mostly volunteers. For a new feature to be
+        included, we need evidence that it is often useful and, ideally,
         [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms)
         in the literature or in practice. That doesn't stop you implementing it
         for yourself and publishing it in a separate repository, or even
