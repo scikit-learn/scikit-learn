@@ -440,7 +440,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         transformation = transformation.reshape(-1, X.shape[1])
         loss = 0
         gradient = np.zeros(transformation.shape)
-        X_embedded = transformation.dot(X.T).T
+        X_embedded = np.dot(X, transformation.T)
 
         # for every sample x_i, compute its contribution to loss and gradient
         for i in range(X.shape[0]):
@@ -466,7 +466,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
                                             diff_embedded[~ci, :]))
             p_i = np.sum(p_i_j)  # probability of x_i to be correctly
             # classified
-            gradient += 2 * (p_i * (sum_ci.T + sum_not_ci.T) - sum_ci.T)
+            gradient += 2 * (p_i * (sum_ci + sum_not_ci) - sum_ci).T
             loss += p_i
 
         if self.verbose:
