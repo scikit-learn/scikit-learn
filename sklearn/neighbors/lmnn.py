@@ -131,10 +131,6 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         The provided ``n_neighbors`` is decreased if it is greater than or
         equal to  min(number of elements in each class).
 
-    classes_inverse_non_singleton_ : array, shape (n_classes_non_singleton,)
-        The appearing classes that have more than one sample, encoded as
-        integers within the range(0, n_classes).
-
     n_iter_ : int
         Counts the number of iterations performed by the optimizer.
 
@@ -249,7 +245,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         check_classification_targets(y)
 
         # Check that the inputs are consistent with the parameters
-        X_valid, y_valid, init = self._validate_params(X, y)
+        X_valid, y_valid, classes, init = self._validate_params(X, y)
 
         # Initialize the random generator
         self.random_state_ = check_random_state(self.random_state)
@@ -280,8 +276,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         optimizer_params = {'method': 'L-BFGS-B',
                             'fun': self._loss_grad_lbfgs,
                             'jac': True,
-                            'args': (X_valid, y_valid, target_neighbors,
-                                     grad_static, use_sparse),
+                            'args': (X_valid, y_valid, classes,
+                                     target_neighbors, grad_static,
+                                     use_sparse),
                             'x0': transformation,
                             'tol': self.tol,
                             'options': dict(maxiter=self.max_iter, disp=disp),
@@ -367,6 +364,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             The validated training labels, encoded to be integers in
             the range(0, n_classes).
 
+        classes_inverse_non_singleton : array, shape (n_classes_non_singleton,)
+            The non-singleton classes, encoded as integers in [0, n_classes).
+
         init : string or numpy array of shape (n_features_a, n_features_b)
             The validated initialization of the linear transformation.
 
@@ -404,8 +404,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                              'non-singleton classes, got {}.'
                              .format(n_classes_non_singleton))
 
-        self.classes_inverse_non_singleton_ = \
-            classes_inverse[~mask_singleton_class]
+        classes_inverse_non_singleton = classes_inverse[~mask_singleton_class]
 
         # Check the preferred embedding dimensionality
         if self.n_features_out is not None:
@@ -498,7 +497,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             # raise any errors before actually fitting
             NearestNeighbors(n_neighbors=self.n_neighbors_, **neighbors_params)
 
-        return X, y_inverse, init
+        return X, y_inverse, classes_inverse_non_singleton, init
 
     def _initialize(self, X, init):
         """
@@ -637,7 +636,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         self.n_iter_ += 1
 
-    def _loss_grad_lbfgs(self, transformation, X, y, target_neighbors,
+    def _loss_grad_lbfgs(self, transformation, X, y, classes, target_neighbors,
                          grad_static, use_sparse):
         """Compute the loss and the loss gradient w.r.t. ``transformation``.
 
@@ -651,6 +650,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         y : array, shape (n_samples,)
             The corresponding training labels.
+
+        classes : array, shape (n_classes,)
+            The non-singleton classes, encoded as integers in [0, n_classes).
 
         target_neighbors : array, shape (n_samples, n_neighbors)
             The target neighbors of each sample.
@@ -702,8 +704,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         dist_tn += 1
 
         # Find the impostors and compute (squared) distances to them
-        impostors_graph = \
-            self._find_impostors(X_embedded, y, dist_tn[:, -1], use_sparse)
+        impostors_graph = self._find_impostors(
+            X_embedded, y, classes, dist_tn[:, -1], use_sparse)
 
         # Compute the push loss and its gradient
         loss, grad_new, n_active_triplets = \
@@ -726,7 +728,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         return loss, grad.ravel()
 
-    def _find_impostors(self, X_embedded, y, margin_radii, use_sparse=True):
+    def _find_impostors(self, X_embedded, y, classes, margin_radii,
+                        use_sparse=True):
         """Compute the (sample, impostor) pairs exactly.
 
         Parameters
@@ -736,6 +739,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         y : array, shape (n_samples,)
             The corresponding (possibly encoded) class labels.
+
+        classes : array, shape (n_classes,)
+            The non-singleton classes, encoded as integers in [0, n_classes).
 
         margin_radii : array, shape (n_samples,)
             (Squared) distances of samples to their farthest target
@@ -757,7 +763,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         if use_sparse:
             # Initialize a sparse (indicator) matrix for impostors storage
             impostors_sp = csr_matrix((n_samples, n_samples), dtype=np.int8)
-            for class_id in self.classes_inverse_non_singleton_[:-1]:
+            for class_id in classes[:-1]:
                 ind_in, = np.where(y == class_id)
                 ind_out, = np.where(y > class_id)
 
@@ -800,7 +806,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         else:
             # Initialize lists for impostors storage
             imp_row, imp_col, imp_dist = [], [], []
-            for class_id in self.classes_inverse_non_singleton_[:-1]:
+            for class_id in classes[:-1]:
                 ind_in, = np.where(y == class_id)
                 ind_out, = np.where(y > class_id)
 
