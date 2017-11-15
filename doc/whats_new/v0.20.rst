@@ -203,6 +203,14 @@ Neighbors
   warning when no neighbors are found for samples.  :issue:`9655` by
   :user:`Andreas Bjerre-Nielsen <abjer>`.
 
+Feature Extraction
+
+- Fixed a bug in :func:`feature_extraction.image.extract_patches_2d` which would
+  throw an exception if ``max_patches`` was greater than or equal to the number
+  of all possible patches rather than simply returning the number of possible
+  patches. :issue:`10100` by :user:`Varun Agrawal <varunagrawal>`
+
+	
 API changes summary
 -------------------
 
