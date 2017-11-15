@@ -17,8 +17,8 @@ Downloading datasets from the openml.org repository
 `openml.org <https://openml.org>`_ is a public repository for machine learning
 data and experiments, that allows everybody to upload open datasets.
 
-The ``sklearn.datasets`` package is able to directly download data
-sets from the repository using the function
+The ``sklearn.datasets`` package is able to directly download datasets
+from the repository using the function
 :func:`sklearn.datasets.fetch_openml`.
 
 For example, to download a dataset of gene expressions in mice brains::
@@ -64,7 +64,11 @@ and ``details`` attributes::
 The ``DESCR`` contains a free-text description of the data, while ``details``
 contains a dictionary of meta-data stored by openml, like the dataset id.
 The id of the mice protein dataset is 4550, and you can use this (or the name)
-to get more information on the dataset on the openml website: https://www.openml.org/d/4550.
+to get more information on the dataset on the openml website::
+
+  >>> print(mice.url)
+
+  https://www.openml.org/d/4550
 
 The id is also the best way to specify how to fetch a dataset from OpenML::
 

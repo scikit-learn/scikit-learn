@@ -38,6 +38,21 @@ def _get_data_info_by_name(name, version):
     except HTTPError as error:
         if error.code == 412:
             data_found = False
+        else:
+            raise error
+
+    if not data_found and version != "active":
+        # might have been deactivated. will warn later
+        data_found = True
+        try:
+            json_string = urlopen(_SEARCH_NAME.format(name) +
+                                  "/data_version/{}/status/deactivated".format(
+                                      version))
+        except HTTPError as error:
+            if error.code == 412:
+                data_found = False
+            else:
+                raise error
 
     if not data_found:
         # not in except for nicer traceback
@@ -162,12 +177,12 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
     # TODO: stacking the content of the structured array
     # this results in a copy. If the data was homogeneous
     # and target at start or end, we could use a view instead.
+    data_columns = meta.names()
     if target_column is not None:
         y = data[target_column]
-        data_columns = meta.names().remove(target_column)
+        data_columns.remove(target_column)
     else:
         y = None
-        data_columns = meta.names()
     if all([x == "numeric" for x in meta.types()]):
         dtype = None
     else:
@@ -179,6 +194,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
 
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
-        DESCR=description, details=data_description, meta=meta)
+        DESCR=description, details=data_description, meta=meta,
+        url="https://www.openml.org/d/{}".format(data_id))
 
     return bunch
