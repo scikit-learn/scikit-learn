@@ -1171,10 +1171,12 @@ def _sum_weighted_outer_differences(X, weights):
     """
 
     weights_sym = weights + weights.T
-    diag = spdiags(weights_sym.sum(1).ravel(), 0, *weights_sym.shape)
-    laplacian = diag - weights_sym
+    diagonal = weights_sym.sum(1).getA()
+    laplacian_dot_X = diagonal * X - safe_sparse_dot(weights_sym, X,
+                                                     dense_output=True)
+    result = np.dot(X.T, laplacian_dot_X)
 
-    return np.dot(X.T, safe_sparse_dot(laplacian, X, dense_output=True))
+    return result
 
 
 def _check_scalar(x, name, target_type, min_val=None, max_val=None):
