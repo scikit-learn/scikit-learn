@@ -86,6 +86,8 @@ arrays such as pandas DataFrame are also acceptable.
 For more information on loading your data files into these usable data 
 structures, please refer to :ref:`loading external datasets <external_datasets>`.
 
+.. _new_algorithms_inclusion_criteria:
+
 What are the inclusion criteria for new algorithms ?
 ----------------------------------------------------
 
@@ -110,7 +112,8 @@ in scikit-learn at least in some areas.
 Also note that your implementation need not be in scikit-learn to be used
 together with scikit-learn tools. You can implement your favorite algorithm in
 a scikit-learn compatible way, upload it to github and let us know. We will
-list it under :ref:`related_projects`.
+list it under :ref:`related_projects`, or even include it in
+`scikit-learn-contrib <http://scikit-learn-contrib.github.io>`_.
 
 .. _selectiveness:
 
@@ -123,7 +126,8 @@ The package relies on core developers using their free time to
 fix bugs, maintain code and review contributions.
 Any algorithm that is added needs future attention by the developers,
 at which point the original author might long have lost interest.
-Also see `the maintenance cost of FLOSS
+Also see :ref:`new_algorithms_inclusion_criteria` and
+`the maintenance cost of FLOSS
 <https://www.fordfoundation.org/library/reports-and-studies/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure/>`_.
 
 Why did you remove HMMs from scikit-learn?
