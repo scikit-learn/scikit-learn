@@ -159,17 +159,20 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
 
     # download actual data
     data, meta = _download_data_(data_description['url'])
-    columns = np.array(meta.names())
-    data_columns = columns[columns != target_column]
     # TODO: stacking the content of the structured array
     # this results in a copy. If the data was homogeneous
-    # we could use a view instead.
-    dtype = object if "nominal" in meta.types() else None
-    X = np.array([data[c] for c in data_columns], dtype=dtype).T
+    # and target at start or end, we could use a view instead.
     if target_column is not None:
         y = data[target_column]
+        data_columns = meta.names().remove(target_column)
     else:
         y = None
+        data_columns = meta.names()
+    if all([x == "numeric" for x in meta.types()]):
+        dtype = None
+    else:
+        dtype = object
+    X = np.array([data[c] for c in data_columns], dtype=dtype).T
 
     description = u"{}\n\nDownloaded from openml.org.".format(
         data_description.pop('description'))
