@@ -485,3 +485,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             y = np.ravel(y)
 
         return y
+
+
+def func():
+    return 42
