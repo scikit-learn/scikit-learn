@@ -51,6 +51,12 @@ Model evaluation
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
+Datasets
+
+- Added :func:`dataset.fetch_openml` to fetch any dataset from `OpenML <http://openml.org>`.
+  OpenML is a free, open data sharing platform and will replace mldata, which
+  is no longer maintained. :issue:`9908` by `Andreas Müller`_
+
 Enhancements
 ............
 
