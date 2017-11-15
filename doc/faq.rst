@@ -124,8 +124,7 @@ fix bugs, maintain code and review contributions.
 Any algorithm that is added needs future attention by the developers,
 at which point the original author might long have lost interest.
 Also see `the maintenance cost of FLOSS
-<https://www.fordfoundation.org/library/reports-and-studies
-/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure/>`_.
+<https://www.fordfoundation.org/library/reports-and-studies/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure/>`_.
 
 Why did you remove HMMs from scikit-learn?
 --------------------------------------------
