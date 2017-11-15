@@ -24,7 +24,7 @@ from the repository using the function
 For example, to download a dataset of gene expressions in mice brains::
 
   >>> from sklearn.datasets import fetch_openml
-  >>> mice = fetch_openml('miceprotein', version=2, data_home=custom_data_home)
+  >>> mice = fetch_openml('miceprotein', version=4, data_home=custom_data_home)
 
 To fully specify a dataset, you need to provide a name and a version, though the
 version is optional, see :ref:`openml_versions`_ below.
@@ -63,16 +63,15 @@ and ``details`` attributes::
 
 The ``DESCR`` contains a free-text description of the data, while ``details``
 contains a dictionary of meta-data stored by openml, like the dataset id.
-The id of the mice protein dataset is 4550, and you can use this (or the name)
+The id of the mice protein dataset is 40966, and you can use this (or the name)
 to get more information on the dataset on the openml website::
 
   >>> print(mice.url)
-
-  https://www.openml.org/d/4550
+  https://www.openml.org/d/40966
 
 The id is also the best way to specify how to fetch a dataset from OpenML::
 
-  >>> mice = fetch_openml(4550, data_home=custom_data_home)
+  >>> mice = fetch_openml(40966, data_home=custom_data_home)
   >>> mice.details # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS +SKIP
   {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
   'creator': ...,
@@ -96,9 +95,9 @@ entirely different datasets.
 If a particular version of a dataset has been found to contain significant
 issues, it might be inactivated. Using a name to specify a dataset will yield
 the earliest version of a dataset that is still active. That means that
-``fetch_openml("miceprotein")`` can yield different results at differnt times
+``fetch_openml("miceprotein")`` can yield different results at different times
 if earlier versions become inactive.
-You can see that the dataset with id 4550 that we fetched above is the version 1
+You can see that the dataset with id 40966 that we fetched above is the version 1
 of the "miceprotein" dataset::
 
   >>> mice.details['version']  #doctest: +SKIP
