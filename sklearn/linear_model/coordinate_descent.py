@@ -628,7 +628,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     >>> print(regr.coef_) # doctest: +ELLIPSIS
     [ 18.83816048  64.55968825]
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
-    1.45126075617
+    1.45126075...
     >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
     [ 1.45126076]
 
@@ -895,8 +895,8 @@ class Lasso(ElasticNet):
        selection='cyclic', tol=0.0001, warm_start=False)
     >>> print(clf.coef_)
     [ 0.85  0.  ]
-    >>> print(clf.intercept_)
-    0.15
+    >>> print(clf.intercept_) # doctest: +ELLIPSIS
+    0.15...
 
     See also
     --------
@@ -1520,9 +1520,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
            normalize=False, positive=False, precompute='auto', random_state=0,
            selection='cyclic', tol=0.0001, verbose=0)
     >>> print(regr.alpha_) # doctest: +ELLIPSIS
-    0.19947279427
+    0.199472794...
     >>> print(regr.intercept_) # doctest: +ELLIPSIS
-    0.398882965428
+    0.398882965...
     >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
     [ 0.39888297]
 
