@@ -687,9 +687,10 @@ LMNN solves the following (nonconvex) minimization problem:
     \min_L \varepsilon(L) = (1 - \mu) \varepsilon_{\text{pull}} (L) +
     \mu \varepsilon_{\text{push}} (L) \text{, } \quad \mu \in [0,1].
 
-The parameter :math:`\mu` is a trade-off between penalizing large distances
-to target neighbors and penalizing margin violations by impostors. In
-practice, the two terms are weighted equally.
+The parameter :math:`\mu` (``weight_push_loss``) is a trade-off between
+penalizing large distances to target neighbors and penalizing margin
+violations by impostors. In practice, the two terms are usually weighted
+equally.
 
 
 Mahalanobis distance
@@ -716,8 +717,7 @@ https://bitbucket.org/mlcircus/lmnn which solves the unconstrained problem.
 It finds a linear transformation :math:`L` by optimization with L-BFGS instead
 of solving the constrained problem that finds the globally optimal distance
 metric. Different from the paper, the problem solved by this implementation is
-with the *squared* hinge loss (to make the problem differentiable). The
-parameter :math:`\mu` is fixed to :math:`0.5`.
+with the *squared* hinge loss (to make the problem differentiable).
 
 See the examples below and the doc string of :meth:`LargeMarginNearestNeighbor.fit`
 for further information.

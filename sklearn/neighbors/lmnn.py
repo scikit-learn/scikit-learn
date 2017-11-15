@@ -73,6 +73,12 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         apart from ``n_neighbors`` - that will be used to select the target
         neighbors.
 
+    weight_push_loss : float, optional (default=0.5)
+        A float in (0, 1], weighting the push loss. This is parameter ``mu``
+        in the journal paper (See references below). Since the pull loss stays
+        fixed during optimization, it will be weighted by a factor
+        ``(1 - push_loss_weight) / push_loss_weight`` instead.
+
     impostor_store : str ['auto'|'list'|'sparse'], optional
         list :
             Three lists will be used to store the indices of reference
@@ -203,9 +209,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_neighbors=3, n_features_out=None, init='pca',
                  warm_start=False, max_impostors=500000, neighbors_params=None,
-                 impostor_store='auto', max_iter=50, tol=1e-5, callback=None,
-                 store_opt_result=False, verbose=0, random_state=None,
-                 n_jobs=1):
+                 weight_push_loss=0.5, impostor_store='auto', max_iter=50,
+                 tol=1e-5, callback=None, store_opt_result=False, verbose=0,
+                 random_state=None, n_jobs=1):
 
         # Parameters
         self.n_neighbors = n_neighbors
@@ -214,6 +220,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         self.warm_start = warm_start
         self.max_impostors = max_impostors
         self.neighbors_params = neighbors_params
+        self.weight_push_loss = weight_push_loss
         self.impostor_store = impostor_store
         self.max_iter = max_iter
         self.tol = tol
@@ -262,6 +269,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
 
         # Compute the gradient part contributed by the target neighbors
         grad_static = self._compute_grad_static(X_valid, target_neighbors)
+
+        # Compute the regularization coefficient
+        reg_coef = (1 - self.weight_push_loss) / self.weight_push_loss
+        grad_static *= reg_coef
 
         # Decide how to store the impostors
         if self.impostor_store == 'sparse':
@@ -432,6 +443,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                       X.shape[0] - 1)
         _check_scalar(self.max_iter, 'max_iter', integer_types, 1)
         _check_scalar(self.tol, 'tol', float, 0.)
+        _check_scalar(self.weight_push_loss, 'weight_push_loss', float, 0., 1.)
+        if self.weight_push_loss == 0:
+            raise ValueError('`weight_push_loss` cannot be zero.')
+
         _check_scalar(self.max_impostors, 'max_impostors', integer_types, 1)
         _check_scalar(self.impostor_store, 'impostor_store', string_types)
         _check_scalar(self.n_jobs, 'n_jobs', integer_types)
@@ -663,8 +678,8 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             The target neighbors of each sample.
 
         grad_static : array, shape (n_features, n_features)
-            The gradient component caused by target neighbors, that stays
-            fixed throughout the algorithm.
+            The (regularized) gradient component caused by target neighbors,
+            that stays fixed throughout the algorithm.
 
         use_sparse : bool
             Whether to use a sparse matrix to store the impostors.
@@ -720,7 +735,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         grad = np.dot(transformation, grad_static + grad_new)
         grad *= 2
 
-        # Add the pull loss to the total loss
+        # Add the (regularized) pull loss to the total loss
         metric = np.dot(transformation.T, transformation)
         loss += np.dot(grad_static.ravel(), metric.ravel())
 
@@ -1233,11 +1248,11 @@ def _check_scalar(x, name, target_type, min_val=None, max_val=None):
 
 def make_lmnn_pipeline(
         n_neighbors=3, n_features_out=None, init='pca', warm_start=False,
-        max_impostors=500000, neighbors_params=None, impostor_store='auto',
-        max_iter=50, tol=1e-5, callback=None, store_opt_result=False,
-        verbose=0, random_state=None, n_jobs=1, n_neighbors_predict=None,
-        weights='uniform', algorithm='auto', leaf_size=30,
-        n_jobs_predict=None, **kwargs):
+        max_impostors=500000, neighbors_params=None,
+        weight_push_loss=0.5, impostor_store='auto', max_iter=50, tol=1e-5,
+        callback=None, store_opt_result=False, verbose=0, random_state=None,
+        n_jobs=1, n_neighbors_predict=None, weights='uniform',
+        algorithm='auto', leaf_size=30, n_jobs_predict=None, **kwargs):
     """Constructs the trivial LMNN - KNN pipeline.
 
     Parameters
@@ -1282,6 +1297,12 @@ def make_lmnn_pipeline(
         Parameters to pass to a :class:`neighbors.NearestNeighbors` instance -
         apart from ``n_neighbors`` - that will be used to select the target
         neighbors.
+
+    weight_push_loss : float, optional (default=0.5)
+        A float in (0, 1], weighting the push loss. This is parameter ``mu``
+        in the journal paper (See references below). Since the pull loss stays
+        fixed during optimization, it will be weighted by a factor
+        ``(1 - push_loss_weight) / push_loss_weight`` instead.
 
     impostor_store : str ['auto'|'list'|'sparse'], optional
         list :
@@ -1414,9 +1435,9 @@ def make_lmnn_pipeline(
     lmnn = LargeMarginNearestNeighbor(
         n_neighbors=n_neighbors, n_features_out=n_features_out, init=init,
         warm_start=warm_start, max_impostors=max_impostors,
-        neighbors_params=neighbors_params, impostor_store=impostor_store,
-        max_iter=max_iter, tol=tol, callback=callback,
-        store_opt_result=store_opt_result, verbose=verbose,
+        neighbors_params=neighbors_params, weight_push_loss=weight_push_loss,
+        impostor_store=impostor_store, max_iter=max_iter, tol=tol,
+        callback=callback, store_opt_result=store_opt_result, verbose=verbose,
         random_state=random_state, n_jobs=n_jobs)
 
     if n_neighbors_predict is None:

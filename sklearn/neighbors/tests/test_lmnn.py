@@ -100,6 +100,7 @@ def test_params_validation():
     assert_raises(TypeError, LMNN(warm_start=1).fit, X, y)
     assert_raises(TypeError, LMNN(impostor_store=0.5).fit, X, y)
     assert_raises(TypeError, LMNN(neighbors_params=65).fit, X, y)
+    assert_raises(TypeError, LMNN(weight_push_loss='0.3').fit, X, y)
 
     # ValueError
     assert_raises(ValueError, LMNN(init=1).fit, X, y)
@@ -107,8 +108,9 @@ def test_params_validation():
     assert_raises(ValueError, LMNN(n_neighbors=len(X)).fit, X, y)
     assert_raises(ValueError, LMNN(max_iter=-1).fit, X, y)
     assert_raises(ValueError, LMNN(max_impostors=-1).fit, X, y)
-    assert_raises(ValueError, LMNN(impostor_store='dense').fit,
-                  X, y)
+    assert_raises(ValueError, LMNN(impostor_store='dense').fit, X, y)
+    assert_raises(ValueError, LMNN(weight_push_loss=2.).fit, X, y)
+    assert_raises(ValueError, LMNN(weight_push_loss=0.).fit, X, y)
 
     fit_func = LMNN(init=np.random.rand(5, 3)).fit
     assert_raises(ValueError, fit_func, X, y)
