@@ -76,15 +76,15 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     impostor_store : str ['auto'|'list'|'sparse'], optional
         list :
             Three lists will be used to store the indices of reference
-            samples, the indices of their impostors and the distances between
-            the (sample, impostor) pairs.
+            samples, the indices of their impostors and the (squared)
+            distances between the (sample, impostor) pairs.
 
         sparse :
             A sparse indicator matrix will be used to store the (sample,
-            impostor) pairs. The distances to the impostors will be computed
-            twice (once to determine the impostors and once to be stored),
-            but this option tends to be faster than 'list' as the size of
-            the data set increases.
+            impostor) pairs. The (squared) distances to the impostors will be
+            computed twice (once to determine the impostors and once to be
+            stored), but this option tends to be faster than 'list' as the
+            size of the data set increases.
 
         auto :
             Will attempt to decide the most appropriate choice of data
@@ -697,7 +697,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         t_funcall = time.time()
         X_embedded = self._transform_without_checks(X)
 
-        # Compute squared distances to the target neighbors
+        # Compute (squared) distances to the target neighbors
         n_neighbors = target_neighbors.shape[1]
         dist_tn = np.zeros((n_samples, n_neighbors))
         for k in range(n_neighbors):
@@ -705,7 +705,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
                                       X_embedded[target_neighbors[:, k]],
                                       squared=True)
 
-        # Add the margin to all distances to target neighbors
+        # Add the margin to all (squared) distances to target neighbors
         dist_tn += 1
 
         # Find the impostors and compute (squared) distances to them
@@ -925,7 +925,7 @@ def _find_impostors_blockwise(X_a, X_b, radii_a, radii_b,
 
     block_size : int, optional (default=8)
         The maximum number of mebibytes (MiB) of memory to use at a time for
-        calculating paired distances.
+        calculating paired squared distances.
 
     return_distance : bool, optional (default=False)
         Whether to return the squared distances to the impostors.
@@ -994,7 +994,7 @@ def _compute_push_loss(X, target_neighbors, dist_tn, impostors_graph):
         Indices of target neighbors of each sample.
 
     dist_tn : array, shape (n_samples, n_neighbors)
-        Distances of samples to their target neighbors.
+        (Squared) distances of samples to their target neighbors.
 
     impostors_graph : coo_matrix, shape (n_samples, n_samples)
         Element (i, j) is the distance between sample i and j if j is an
@@ -1071,10 +1071,16 @@ def _euclidean_distances_without_checks(X, Y=None, Y_norm_squared=None,
         ``(X**2).sum(axis=1)``)
 
     clip : bool, optional (default=True)
+        Whether to explicitly enforce computed distances to be non-negative.
+        Some algorithms, such as LMNN, compare distances to strictly positive
+        values (distances to farthest target neighbors + margin) only to make
+        a binary decision (if a sample is an impostor or not). In such cases,
+        it does not matter if the distance is zero or negative, since it is
+        definitely smaller than a strictly positive value.
 
     Returns
     -------
-    distances : {array, sparse matrix}, shape (n_samples_1, n_samples_2)
+    distances : array, shape (n_samples_1, n_samples_2)
 
     """
 
@@ -1130,7 +1136,7 @@ def _paired_distances_blockwise(X, ind_a, ind_b, squared=True, block_size=8):
 
     block_size : int, optional (default=8)
         The maximum number of mebibytes (MiB) of memory to use at a time for
-        calculating paired distances.
+        calculating paired (squared) distances.
 
     Returns
     -------
@@ -1280,15 +1286,15 @@ def make_lmnn_pipeline(
     impostor_store : str ['auto'|'list'|'sparse'], optional
         list :
             Three lists will be used to store the indices of reference
-            samples, the indices of their impostors and the distances between
-            the (sample, impostor) pairs.
+            samples, the indices of their impostors and the (squared)
+            distances between the (sample, impostor) pairs.
 
         sparse :
             A sparse indicator matrix will be used to store the (sample,
-            impostor) pairs. The distances to the impostors will be computed
-            twice (once to determine the impostors and once to be stored),
-            but this option tends to be faster than 'list' as the size of
-            the data set increases.
+            impostor) pairs. The (squared) distances to the impostors will be
+            computed twice (once to determine the impostors and once to be
+            stored), but this option tends to be faster than 'list' as the
+            size of the data set increases.
 
         auto :
             Will attempt to decide the most appropriate choice of data
