@@ -51,7 +51,16 @@ def _get_data_info_by_name(name, version):
 
 
 def _get_data_description_by_id(data_id):
-    json_string = urlopen(_DATA_INFO.format(data_id))
+    data_found = True
+    try:
+        json_string = urlopen(_DATA_INFO.format(data_id))
+    except HTTPError as error:
+        if error.code == 412:
+            data_found = False
+    if not data_found:
+        # not in except for nicer traceback
+        raise ValueError("Dataset with id {} "
+                         "not found.".format(data_id))
     json_data = json.load(json_string)
     return json_data['data_set_description']
 
