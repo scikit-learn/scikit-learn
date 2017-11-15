@@ -130,7 +130,7 @@ Any algorithm that is added needs future attention by the developers,
 at which point the original author might long have lost interest.
 See also :ref:`new_algorithms_inclusion_criteria`. For a great read about 
 long-term maintenance issues in open-source software, look at 
-`the Executive Summary of Road and Bridges
+`the Executive Summary of Roads and Bridges
 <https://www.fordfoundation.org/media/2976/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=8>`_
 
 Why did you remove HMMs from scikit-learn?
