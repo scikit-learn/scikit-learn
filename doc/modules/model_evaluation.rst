@@ -468,6 +468,7 @@ given binary ``y_true`` and ``y_pred``:
       the recall for each class is computed independently and the average is taken over all classes.
       In [Guyon2015]_, the macro-average recall is then adjusted to ensure that random predictions
       have a score of :math:`0` while perfect predictions have a score of :math:`1`.
+      One can compute the macro-average recall using ``recall_score(average="macro")`` in :func:`recall_score`.
     * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
       and the recall for each class is computed. Those values are then averaged over the total
       number of classes to get the balanced accuracy.
@@ -475,9 +476,7 @@ given binary ``y_true`` and ``y_pred``:
       is computed for each class and then averaged over total number of classes.
 
     Note that none of these different definitions are currently implemented within
-    the :func:`balanced_accuracy_score` function. However, the macro-averaged recall
-    is implemented in :func:`sklearn.metrics.recall_score`: set ``average`` parameter
-    to ``"macro"``.
+    the :func:`balanced_accuracy_score` function.
 
 .. topic:: References:
 
