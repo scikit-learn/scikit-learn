@@ -82,78 +82,54 @@ replies <https://github.com/settings/replies/>`_ for reviewing:
 
 .. highlight:: none
 
+..
+
+    Note that putting this content on a single line in a literal is the easiest way to make it copyable and wrapped on screen.
+
 Issue: You're welcome to update the docs
     ::
 
-        Please feel free to offer a pull request updating the documentation if
-        you feel it could be improved.
+        Please feel free to offer a pull request updating the documentation if you feel it could be improved.
 
 Issue: Self-contained example for bug
     ::
 
-        Please provide [self-contained example
-        code](https://stackoverflow.com/help/mcve), including imports and data
-        (if possible), so that other contributors can just run it and reproduce
-        your issue.  Ideally your example code should be minimal.
+        Please provide [self-contained example code](https://stackoverflow.com/help/mcve), including imports and data (if possible), so that other contributors can just run it and reproduce your issue.  Ideally your example code should be minimal.
 
 PR-NEW: Better description
     ::
 
-        Thanks for the pull request!  Please make the title of the PR
-        descriptive so that we can easily recall the issue it is resolving.
-        You should state what issue (or PR) it fixes/resolves in the
-        description (see
-        [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests)).
+        Thanks for the pull request!  Please make the title of the PR descriptive so that we can easily recall the issue it is resolving. You should state what issue (or PR) it fixes/resolves in the description (see [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests)).``
 
 PR-NEW or Issue:
     ::
 
-        Every feature we include has a [maintenance
-        cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn).
-        Our maintainers are mostly volunteers. For a new feature to be
-        included, we need evidence that it is often useful and, ideally,
-        [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms)
-        in the literature or in practice. That doesn't stop you implementing it
-        for yourself and publishing it in a separate repository, or even
-        [scikit-learn-contrib](http://scikit-learn-contrib.github.io).
+        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](http://scikit-learn-contrib.github.io).``
 
 PR-WIP: What's needed before merge?
     ::
 
-        Please clarify (perhaps as a TODO list in the PR description) what work
-        you believe still needs to be done before it can be reviewed for merge.
-        When it is ready, please prefix the PR title with `[MRG]`.
+        Please clarify (perhaps as a TODO list in the PR description) what work you believe still needs to be done before it can be reviewed for merge. When it is ready, please prefix the PR title with `[MRG]`.
 
 PR-WIP: Regression test needed
     ::
 
-        Please add a
-        [non-regression](https://en.wikipedia.org/wiki/Non-regression_testing)
-        that would fail at master but pass in this PR.
+        Please add a [non-regression](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at master but pass in this PR.
 
 PR-MRG: Patience
     ::
 
-        Before merging, we generally require two core developers to agree that
-        your pull request is desirable and ready.  [Please be
-        patient](http://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention),
-        as we mostly rely on volunteered time from busy core developers. (You
-        are also welcome to help us out with [reviewing other
-        PRs](http://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines).)
+        Before merging, we generally require two core developers to agree that your pull request is desirable and ready.  [Please be patient](http://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention), as we mostly rely on volunteered time from busy core developers. (You are also welcome to help us out with [reviewing other PRs](http://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines).)
 
 PR-MRG: Add to what's new
     ::
 
-        Please add an entry to the change log at
-        `doc/whats_new/v0.20.rst`. Like the other entries there, please
-        reference this pull request with `:issue:` and credit yourself (and
-        other contributors if applicable) with `:user:`
+        Please add an entry to the change log at `doc/whats_new/v0.20.rst`. Like the other entries there, please reference this pull request with `:issue:` and credit yourself (and other contributors if applicable) with `:user:`.
 
 PR: Don't change unrelated
     ::
 
-        Please do not change unrelated lines. It makes your contribution harder
-        to review and may introduce merge conflicts to other pull requests.
+        Please do not change unrelated lines. It makes your contribution harder to review and may introduce merge conflicts to other pull requests.
 
 .. highlight:: default
 
