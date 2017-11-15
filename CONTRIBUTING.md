@@ -70,9 +70,19 @@ following rules before you submit a pull request:
    [Utilities for Developers](http://scikit-learn.org/dev/developers/utilities.html#developers-utils)
    page.
 
--  If your pull request addresses an issue, please use the pull request title
-   to describe the issue and mention the issue number in the pull request description. This will make sure a link back to the original issue is
-   created.
+-  Give your pull request a helpful title that summarises what your
+   contribution does. In some cases `Fix <ISSUE TITLE>` is enough.
+   `Fix #<ISSUE NUMBER>` is not enough.
+
+-  Often pull requests resolve one or more other issues (or pull requests).
+   If merging your pull request means that some other issues/PRs should
+   be closed, you should
+   [use keywords to create link to them](https://github.com/blog/1506-closing-issues-via-pull-requests/)
+   (e.g., `Fixes #1234`; multiple issues/PRs are allowed as long as each one
+   is preceded by a keyword). Upon merging, those issues/PRs will
+   automatically be closed by GitHub. If your pull request is simply related
+   to some other issues/PRs, create a link to them without using the keywords
+   (e.g., `See also #1234`).
 
 -  All public methods should have informative docstrings with sample
    usage presented as doctests when appropriate.
@@ -199,13 +209,15 @@ following rules before submitting:
 New contributor tips
 --------------------
 
-A great way to start contributing to scikit-learn is to pick an item
-from the list of [Easy issues](https://github.com/scikit-learn/scikit-learn/issues?labels=Easy)
-in the issue tracker. Resolving these issues allow you to start
-contributing to the project without much prior knowledge. Your
-assistance in this area will be greatly appreciated by the more
-experienced developers as it helps free up their time to concentrate on
-other issues.
+A great way to start contributing to scikit-learn is to pick an item from the
+list of
+[good first issues](https://github.com/scikit-learn/scikit-learn/labels/good%20first%20issue). If
+you have already contributed to scikit-learn look at
+[Easy issues](https://github.com/scikit-learn/scikit-learn/labels/Easy)
+instead. Resolving these issues allow you to start contributing to the project
+without much prior knowledge. Your assistance in this area will be greatly
+appreciated by the more experienced developers as it helps free up their time to
+concentrate on other issues.
 
 Documentation
 -------------
