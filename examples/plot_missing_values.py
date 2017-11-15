@@ -16,34 +16,35 @@ which could dominate results (otherwise known as a 'long tail').
 
 Script output::
 
-  Score with the entire dataset = 0.56
-  Score without the samples containing missing values = 0.48
-  Score after imputation of the missing values (mean) = 0.57
-  Score after imputation of the missing values (NMF) = 0.51
+  Score with the entire dataset = 0.88
+  Score without the samples containing missing values = 0.68
+  Score after imputation of the missing values (mean) = 0.88
+  Score with NMF representation robust to missing values = 0.87
 
 In this case, imputing helps the classifier get close to the original score.
 
 """
 import numpy as np
 
-from sklearn.datasets import load_boston
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.datasets import fetch_olivetti_faces
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import Imputer
-from sklearn.decomposition import ImputerNMF
+from sklearn.decomposition import NMF
 from sklearn.model_selection import cross_val_score
 
 print(__doc__)
 
 rng = np.random.RandomState(0)
 
-dataset = load_boston()
+dataset = fetch_olivetti_faces()
 X_full, y_full = dataset.data, dataset.target
+
 n_samples = X_full.shape[0]
 n_features = X_full.shape[1]
 
 # Estimate the score on the entire dataset, with no missing values
-estimator = RandomForestRegressor(random_state=0, n_estimators=100)
+estimator = RandomForestClassifier(random_state=0, n_estimators=100)
 score = cross_val_score(estimator, X_full, y_full).mean()
 print("Score with the entire dataset = %.2f" % score)
 
@@ -60,7 +61,7 @@ missing_features = rng.randint(0, n_features, n_missing_samples)
 # Estimate the score without the lines containing missing values
 X_filtered = X_full[~missing_samples, :]
 y_filtered = y_full[~missing_samples]
-estimator = RandomForestRegressor(random_state=0, n_estimators=100)
+estimator = RandomForestClassifier(random_state=0, n_estimators=100)
 score = cross_val_score(estimator, X_filtered, y_filtered).mean()
 print("Score without the samples containing missing values = %.2f" % score)
 
@@ -71,18 +72,15 @@ y_missing = y_full.copy()
 estimator = Pipeline([("imputer", Imputer(missing_values=np.nan,
                                           strategy="mean",
                                           axis=0)),
-                      ("forest", RandomForestRegressor(random_state=0,
-                                                       n_estimators=100))])
+                      ("forest", RandomForestClassifier(random_state=0,
+                                                        n_estimators=100))])
 score = cross_val_score(estimator, X_missing, y_missing).mean()
-
 print("Score after imputation of the missing values (mean) = %.2f" % score)
 
 # Estimate the score after imputation using non-negative matrix factorization
-estimator = Pipeline([("imputer", ImputerNMF(missing_values=np.nan,
-                                             n_components=3,
-                                             max_iter=2000,
-                                             random_state=0)),
-                      ("forest", RandomForestRegressor(random_state=0,
-                                                       n_estimators=100))])
+estimator = Pipeline([("nmf", NMF(solver='mu', init='random', n_components=19,
+                                  random_state=0, max_iter=1000)),
+                      ("forest", RandomForestClassifier(random_state=0,
+                                                        n_estimators=100))])
 score = cross_val_score(estimator, X_missing, y_missing).mean()
-print("Score after imputation of the missing values (NMF) = %.2f" % score)
+print("Score with NMF representation robust to missing values = %.2f" % score)
