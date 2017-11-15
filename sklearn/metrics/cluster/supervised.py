@@ -417,7 +417,7 @@ def completeness_score(labels_true, labels_pred):
 
       >>> completeness_score([0, 0, 1, 1], [0, 0, 0, 0])
       1.0
-      >>> completeness_score([0, 1, 2, 3], [0, 0, 1, 1])
+      >>> completeness_score([0, 1, 2, 3], [0, 0, 1, 1]) # doctest: +ELLIPSIS
       0.99999999...
 
     If classes members are split across different clusters, the
