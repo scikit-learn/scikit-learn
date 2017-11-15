@@ -439,6 +439,7 @@ Class APIs and Estimator Types
 
         Mention duck typing. Mention that duck typing of methods only works
         after fitting. Mention lenient validation. ?Mention sample props.
+        Mention clone.
 
     outlier detector
         TODO
