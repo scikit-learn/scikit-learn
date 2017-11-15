@@ -13,7 +13,7 @@ import sys
 import time
 import numpy as np
 from scipy.optimize import minimize
-from scipy.sparse import csr_matrix, csc_matrix, coo_matrix, spdiags
+from scipy.sparse import csr_matrix, csc_matrix, coo_matrix
 
 from ..base import BaseEstimator, TransformerMixin
 from ..pipeline import Pipeline
