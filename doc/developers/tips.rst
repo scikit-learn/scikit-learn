@@ -98,7 +98,7 @@ Issue: Self-contained example for bug
 PR-NEW: Better description
     ::
 
-        Thanks for the pull request!  Please make the title of the PR descriptive so that we can easily recall the issue it is resolving. You should state what issue (or PR) it fixes/resolves in the description (see [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests)).
+        Thanks for the pull request! Please make the title of the PR descriptive so that we can easily recall the issue it is resolving. You should state what issue (or PR) it fixes/resolves in the description (see [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests)).
 
 PR-NEW or Issue:
     ::
@@ -123,7 +123,7 @@ PR-MRG: Patience
 PR-MRG: Add to what's new
     ::
 
-        Please add an entry to the change log at `doc/whats_new/v0.20.rst`. Like the other entries there, please reference this pull request with `:issue:` and credit yourself (and other contributors if applicable) with `:user:`.
+        Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:issue:` and credit yourself (and other contributors if applicable) with `:user:`.
 
 PR: Don't change unrelated
     ::
