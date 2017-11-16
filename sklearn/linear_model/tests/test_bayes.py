@@ -114,7 +114,6 @@ def test_std_bayesian_ridge_ard_with_constant_input():
 
 def test_regression_issue_10128():
     # this test throws a `ValueError` on master, commit 5963fd2
-    from sklearn.random_projection import sparse_random_matrix
     np.random.seed(752)
     n = 100
     d = 10
