@@ -509,6 +509,7 @@ def test_mice_transform_correctness():
 def test_mice_additive_matrix():
         n = 100
         d = 10
+        np.random.seed(0)
         A = np.random.randn(n, d)
         B = np.random.randn(n, d)
         Xfilled = np.zeros(A.shape)
@@ -530,4 +531,4 @@ def test_mice_additive_matrix():
                               n_burn_in=10,
                               verbose=True).fit(Xtr)
         Xts_est = imputer.fit_transform(Xts)
-        assert_array_almost_equal(Xts_filled, Xts_est, decimal=0)
+        assert_array_almost_equal(Xts_filled, Xts_est, decimal=2)
