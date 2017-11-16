@@ -871,6 +871,8 @@ from high-level questions to a more detailed check-list.
   :ref:`contribute_documentation` section for more details), and are the plots
   instructive?
 
+:ref:`saved_replies` includes some frequent comments that reviewers may make.
+
 
 APIs of scikit-learn objects
 ============================
