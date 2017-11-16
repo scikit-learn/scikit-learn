@@ -274,9 +274,9 @@ def test_imputation_pipeline_grid_search():
         'imputer__axis': [0, 1]
     }
 
-    l = 100
-    X = sparse_random_matrix(l, l, density=0.10)
-    Y = sparse_random_matrix(l, 1, density=0.10).toarray()
+    n = 100
+    X = sparse_random_matrix(n, n, density=0.10)
+    Y = sparse_random_matrix(n, n, density=0.10).toarray()
     gs = GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
@@ -305,8 +305,8 @@ def test_imputation_pickle():
     # Test for pickling imputers.
     import pickle
 
-    l = 100
-    X = sparse_random_matrix(l, l, density=0.10).todense()
+    n = 100
+    X = sparse_random_matrix(n, n, density=0.10).todense()
 
     for strategy in ["mean", "median", "most_frequent", "mice"]:
         if strategy == 'mice':
@@ -474,3 +474,60 @@ def test_mice_missing_at_transform():
         # only use the initial imputer for that feature at transform
         assert np.all(mice.transform(Xts)[:, 0] ==
                       initial_imputer.transform(Xts)[:, 0])
+
+
+def test_mice_transform_correctness():
+    # make data
+    def make_data(rank):
+        n = 100
+        d = 100
+        A = np.random.random((n, rank))
+        B = np.random.random((rank, d))
+        Xfilled = np.dot(A, B)
+        # half is randomly missing
+        nan_mask = np.random.random((n, d)) < 0.5
+        X_missing = Xfilled.copy()
+        X_missing[nan_mask] = np.nan
+
+        # split up data
+        n = int(n/2)
+        Xtr_filled = Xfilled[:n]
+        Xtr = X_missing[:n]
+        Xts_filled = Xfilled[n:]
+        Xts = X_missing[n:]
+        return Xtr_filled, Xtr, Xts_filled, Xts
+
+    for rank in [5, 10]:
+        Xtr_filled, Xtr, Xts_filled, Xts = make_data(rank)
+        imputer = MICEImputer(n_imputations=10,
+                              n_burn_in=10,
+                              verbose=True).fit(Xtr)
+        Xts_est = imputer.fit_transform(Xts)
+        assert_array_almost_equal(Xts_filled, Xts_est, decimal=1)
+
+
+def test_mice_additive_matrix():
+        n = 100
+        d = 10
+        A = np.random.randn(n, d)
+        B = np.random.randn(n, d)
+        Xfilled = np.zeros(A.shape)
+        for i in range(d):
+            for j in range(d):
+                Xfilled[:, (i+j) % d] += (A[:, i] + B[:, j])/2
+        # a quarter is randomly missing
+        nan_mask = np.random.random((n, d)) < 0.25
+        X_missing = Xfilled.copy()
+        X_missing[nan_mask] = np.nan
+
+        # split up data
+        n = int(n/2)
+        Xtr = X_missing[:n]
+        Xts_filled = Xfilled[n:]
+        Xts = X_missing[n:]
+
+        imputer = MICEImputer(n_imputations=10,
+                              n_burn_in=10,
+                              verbose=True).fit(Xtr)
+        Xts_est = imputer.fit_transform(Xts)
+        assert_array_almost_equal(Xts_filled, Xts_est, decimal=1)

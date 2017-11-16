@@ -608,9 +608,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             Index of the feature currently being imputed.
 
         abs_corr_mat : array-like, shape (n_features, n_features)
-            Absolute correlation matrix of X at the beginning of the current
-            round. The diagonal has been zeroed out and each feature has been
-            normalized to sum to 1. Can be None.
+            Absolute correlation matrix of X. The diagonal has been zeroed out
+            and each feature has been normalized to sum to 1. Can be None.
 
         Returns
         -------
@@ -693,9 +692,11 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         abs_corr_mat = np.abs(np.corrcoef(X_filled.T))
         # np.corrcoef is not defined for features with zero std
         abs_corr_mat[np.isnan(abs_corr_mat)] = tolerance
-        # ensure that there are no zeros (prevents some edge cases)
-        abs_corr_mat[abs_corr_mat == 0] = tolerance
+        # ensures exploration
+        abs_corr_mat[abs_corr_mat < tolerance] = tolerance
+        # features are not their own neighbors
         np.fill_diagonal(abs_corr_mat, 0)
+        # needs to sum to 1 for np.random.choice sampling
         abs_corr_mat = normalize(abs_corr_mat, norm='l1', axis=0)
         return abs_corr_mat
 
@@ -773,7 +774,14 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         # order in which to impute
+        # note this is probably too slow for large feature data (d > 100000)
+        # and a better way would be good.
+        # see: https://goo.gl/KyCNwj and subsequent comments
         ordered_idx = self._get_ordered_idx(mask_missing_values)
+
+        # absolute correlation matrix is used to randomly choose a subset of
+        # other features to impute from
+        abs_corr_mat = self._get_abs_corr_mat(X_filled)
 
         # perform imputations
         n_rounds = self.n_burn_in + self.n_imputations
@@ -783,13 +791,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
             start_t = time()
         for rnd in range(n_rounds):
-            # redo order if random
+            # recompute order if random
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
-
-            # abs_correlation matrix is used to choose a subset of other
-            # features to impute from
-            abs_corr_mat = self._get_abs_corr_mat(X_filled)
 
             # fill in each feature in the order of ordered_idx
             for feat_idx in ordered_idx:
@@ -849,7 +853,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
             start_t = time()
         for it, predictor_triplet in enumerate(self.imputation_sequence_):
-
             X_filled, _ = self._impute_one_feature(
                 X_filled,
                 mask_missing_values,
