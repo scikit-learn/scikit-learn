@@ -77,7 +77,7 @@ def test_non_meta_estimators():
 
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
-    # 'configure' functions in the setup.pys in the scikit
+    # 'configure' functions in the setup.pys in scikit-learn
     cwd = os.getcwd()
     setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
     setup_filename = os.path.join(setup_path, 'setup.py')

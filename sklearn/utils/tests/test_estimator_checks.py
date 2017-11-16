@@ -1,6 +1,10 @@
-import scipy.sparse as sp
-import numpy as np
+import unittest
 import sys
+
+import numpy as np
+
+import scipy.sparse as sp
+
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals import joblib
 
@@ -18,6 +22,8 @@ from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.utils.validation import check_X_y, check_array
 
 
@@ -246,8 +252,39 @@ def test_check_no_fit_attributes_set_in_init():
            'should not be initialized in the constructor.+'
            "Attribute 'you_should_not_set_this_' was found.+"
            'in estimator estimator_name')
-
     assert_raises_regex(AssertionError, msg,
                         check_no_fit_attributes_set_in_init,
                         'estimator_name',
                         NonConformantEstimator)
+
+
+def test_check_estimator_pairwise():
+    # check that check_estimator() works on estimator with _pairwise
+    # kernel or  metric
+
+    # test precomputed kernel
+    est = SVC(kernel='precomputed')
+    check_estimator(est)
+
+    # test precomputed metric
+    est = KNeighborsRegressor(metric='precomputed')
+    check_estimator(est)
+
+
+def run_tests_without_pytest():
+    """Runs the tests in this file without using pytest.
+    """
+    main_module = sys.modules['__main__']
+    test_functions = [getattr(main_module, name) for name in dir(main_module)
+                      if name.startswith('test_')]
+    test_cases = [unittest.FunctionTestCase(fn) for fn in test_functions]
+    suite = unittest.TestSuite()
+    suite.addTests(test_cases)
+    runner = unittest.TextTestRunner()
+    runner.run(suite)
+
+
+if __name__ == '__main__':
+    # This module is run as a script to check that we have no dependency on
+    # pytest for estimator checks.
+    run_tests_without_pytest()
