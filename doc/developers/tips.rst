@@ -99,7 +99,6 @@ Issue: Software versions
     ::
 
         To help diagnose your issue, could you please paste the output of:
-
         ```py
         import platform; print(platform.platform())
         import sys; print("Python", sys.version)
@@ -107,7 +106,6 @@ Issue: Software versions
         import scipy; print("SciPy", scipy.__version__)
         import sklearn; print("Scikit-Learn", sklearn.__version__)
         ```
-
         ? Thanks.
 
 Issue: Code blocks
