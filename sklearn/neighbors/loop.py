@@ -146,7 +146,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
     def fit_predict(self, X, y=None):
         """"Fits the model to the training set X and returns the labels
         (1 inlier, -1 outlier) on the training set according to the probabilistic
-        set distance and the extent parameter.
+        set distance and the norm_factor parameter.
 
 
         Parameters
@@ -178,7 +178,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
             Returns self.
         """
         if not (0. < self.norm_factor <= 1.):
-            raise ValueError("extent must be in (0, 1.0]")
+            raise ValueError("norm_factor must be in (0, 1.0]")
 
         super(LocalOutlierProbability, self).fit(X)
 
@@ -461,7 +461,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
             The opposite of the local reachability density of each input samples.
             The lower, the more abnormal.
         """
-        check_is_fitted(self, ["extent", "n_neighbors", "_distances_fit_X_", "negative_local_outlier_probability_"])
+        check_is_fitted(self, ["norm_factor", "n_neighbors", "_distances_fit_X_", "negative_local_outlier_probability_"])
 
         X = check_array(X, accept_sparse='csr')
 
