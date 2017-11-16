@@ -530,4 +530,4 @@ def test_mice_additive_matrix():
                               n_burn_in=10,
                               verbose=True).fit(Xtr)
         Xts_est = imputer.fit_transform(Xts)
-        assert_array_almost_equal(Xts_filled, Xts_est, decimal=1)
+        assert_array_almost_equal(Xts_filled, Xts_est, decimal=0)
