@@ -783,7 +783,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # other features to impute from
         abs_corr_mat = self._get_abs_corr_mat(X_filled)
 
-        # perform imputations
+        # impute data
         n_rounds = self.n_burn_in + self.n_imputations
         results_list = []
         self.imputation_sequence_ = []
@@ -843,7 +843,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # initial imputation
         X, X_filled, mask_missing_values = self._initial_imputation(X)
 
-        # perform imputations
+        # impute data
         n_rounds = self.n_burn_in + self.n_imputations
         n_imputations = len(self.imputation_sequence_)
         imputations_per_round = n_imputations / n_rounds
