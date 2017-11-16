@@ -163,17 +163,18 @@ def test_nmf_sparse_input():
     A_sparse = csc_matrix(A)
 
     for solver in ('cd', 'mu'):
-        est1 = NMF(solver=solver, n_components=5, init='random',
-                   random_state=0, tol=1e-2)
-        est2 = clone(est1)
+        for init in ('random', 'nndsvdar'):
+            est1 = NMF(solver=solver, n_components=5, init=init,
+                       random_state=0, tol=1e-2)
+            est2 = clone(est1)
 
-    W1 = est1.fit_transform(A)
-    W2 = est2.fit_transform(A_sparse)
-    H1 = est1.components_
-    H2 = est2.components_
+            W1 = est1.fit_transform(A)
+            W2 = est2.fit_transform(A_sparse)
+            H1 = est1.components_
+            H2 = est2.components_
 
-    assert_array_almost_equal(W1, W2)
-    assert_array_almost_equal(H1, H2)
+            assert_array_almost_equal(W1, W2)
+            assert_array_almost_equal(H1, H2)
 
 
 def test_nmf_sparse_transform():
@@ -511,6 +512,7 @@ def test_nmf_with_nan():
     model = nmf.NMF(n_components=n_components, beta_loss=2.0,
                     max_iter=1, solver='mu', init='random')
     model.fit(X_nan)
+    # test than the transform also accept NaN in X
     W = model.transform(X_nan)
     H = model.components_
 

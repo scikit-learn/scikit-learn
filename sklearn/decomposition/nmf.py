@@ -9,7 +9,6 @@
 from __future__ import division, print_function
 
 from math import sqrt
-from functools import partial
 import warnings
 import numbers
 import time
@@ -21,7 +20,6 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.extmath import safe_min
-from ..utils.fixes import np_version
 from ..utils.validation import check_is_fitted, check_non_negative
 from ..exceptions import ConvergenceWarning
 from .cdnmf_fast import _update_cdnmf_fast
@@ -66,20 +64,11 @@ def _safe_squared_norm(X):
 
 def _safe_ravel(X):
     """Guarantee that we preserve masked array in ravel.
-    Use a ravel that needs less copying with newer numpy.
     """
     if isinstance(X, np.ma.masked_array):
-        if np_version < (1, 10, 0):
-            ravel = np.ma.ravel
-        else:
-            ravel = partial(np.ma.ravel, order='K')
+        return np.ma.ravel(X)
     else:
-        if np_version < (1, 7, 1):
-            ravel = np.ravel
-        else:
-            ravel = partial(np.ravel, order='K')
-
-    return ravel(X)
+        return np.ravel(X)
 
 
 def _safe_mean(X):
@@ -154,6 +143,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
             res = _safe_squared_norm(X - np.dot(W, H)) / 2.
 
         assert not np.isnan(res)
+        assert res >= 0
         if square_root:
             return np.sqrt(res * 2)
         else:
@@ -408,7 +398,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
         np.abs(W, W)
         return W, H
 
-    if np.any(np.isnan(X)):
+    if not sp.issparse(X) and np.any(np.isnan(X)):
         raise ValueError("NMF initializations with NNDSVD are not available "
                          "with missing values (np.nan).")
 
