@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_less
 from sklearn.utils.testing import SkipTest
 from sklearn.utils import check_random_state
+from sklearn.random_projection import sparse_random_matrix
 from sklearn.linear_model.bayes import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
 from sklearn import datasets
@@ -108,6 +109,24 @@ def test_std_bayesian_ridge_ard_with_constant_input():
     for clf in [BayesianRidge(), ARDRegression()]:
         _, y_std = clf.fit(X, y).predict(X, return_std=True)
         assert_array_less(y_std, expected_upper_boundary)
+
+
+
+def test_regression_issue_10128():
+    # this test throws a `ValueError` on master, commit 5963fd2
+    from sklearn.random_projection import sparse_random_matrix
+    np.random.seed(752)
+    n = 100
+    d = 10
+    n_samples = 96
+    n_features = 9
+    X = sparse_random_matrix(n, d, density=0.10).toarray()
+    X, y = X[: ,:n_features], X[:, -1]
+    X_train, y_train = X[:n_samples], y[:n_samples]
+    X_test = np.zeros((1, n_features))
+    clf = ARDRegression()
+    clf.fit(X_train, y_train)
+    clf.predict(X_test, return_std=True)
 
 
 def test_toy_ard_object():
