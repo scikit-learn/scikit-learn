@@ -235,9 +235,8 @@ data.
   independently, since a downstream model can further make some assumption
   on the linear independence of the features.
 
-  To address this issue you can use :class:`sklearn.decomposition.PCA`
-  or :class:`sklearn.decomposition.RandomizedPCA` with ``whiten=True``
-  to further remove the linear correlation across features.
+  To address this issue you can use :class:`sklearn.decomposition.PCA` with
+  ``whiten=True`` to further remove the linear correlation across features.
 
 .. topic:: Scaling a 1D array
 

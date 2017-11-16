@@ -135,17 +135,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         as 0.99 (the default) and e is the current fraction of inliers w.r.t.
         the total number of samples.
 
-    residual_metric : callable, optional
-        Metric to reduce the dimensionality of the residuals to 1 for
-        multi-dimensional target values ``y.shape[1] > 1``. By default the sum
-        of absolute differences is used::
-
-            lambda dy: np.sum(np.abs(dy), axis=1)
-
-        .. deprecated:: 0.18
-           ``residual_metric`` is deprecated from 0.18 and will be removed in
-           0.20. Use ``loss`` instead.
-
     loss : string, callable, optional, default "absolute_loss"
         String inputs, "absolute_loss" and "squared_loss" are supported which
         find the absolute loss and squared loss per sample
@@ -205,8 +194,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100, max_skips=np.inf,
                  stop_n_inliers=np.inf, stop_score=np.inf,
-                 stop_probability=0.99, residual_metric=None,
-                 loss='absolute_loss', random_state=None):
+                 stop_probability=0.99, loss='absolute_loss',
+                 random_state=None):
 
         self.base_estimator = base_estimator
         self.min_samples = min_samples
@@ -218,7 +207,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         self.stop_n_inliers = stop_n_inliers
         self.stop_score = stop_score
         self.stop_probability = stop_probability
-        self.residual_metric = residual_metric
         self.random_state = random_state
         self.loss = loss
 
@@ -280,12 +268,6 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             residual_threshold = np.median(np.abs(y - np.median(y)))
         else:
             residual_threshold = self.residual_threshold
-
-        if self.residual_metric is not None:
-            warnings.warn(
-                "'residual_metric' was deprecated in version 0.18 and "
-                "will be removed in version 0.20. Use 'loss' instead.",
-                DeprecationWarning)
 
         if self.loss == "absolute_loss":
             if y.ndim == 1:
@@ -379,15 +361,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             # residuals of all data for current random sample model
             y_pred = base_estimator.predict(X)
-
-            # XXX: Deprecation: Remove this if block in 0.20
-            if self.residual_metric is not None:
-                diff = y_pred - y
-                if diff.ndim == 1:
-                    diff = diff.reshape(-1, 1)
-                residuals_subset = self.residual_metric(diff)
-            else:
-                residuals_subset = loss_function(y, y_pred)
+            residuals_subset = loss_function(y, y_pred)
 
             # classify data into inliers and outliers
             inlier_mask_subset = residuals_subset < residual_threshold

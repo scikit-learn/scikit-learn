@@ -136,7 +136,6 @@ class IncrementalPCA(_BasePCA):
     See also
     --------
     PCA
-    RandomizedPCA
     KernelPCA
     SparsePCA
     TruncatedSVD

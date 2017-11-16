@@ -226,9 +226,7 @@ def _yield_all_checks(name, estimator):
         for check in _yield_clustering_checks(name, estimator):
             yield check
     yield check_fit2d_predict1d
-    if name != 'GaussianProcess':  # FIXME
-        # XXX GaussianProcess deprecated in 0.20
-        yield check_fit2d_1sample
+    yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_fit1d
     yield check_get_params_invariance
