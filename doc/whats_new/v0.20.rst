@@ -121,7 +121,7 @@ Classifiers and regressors
   :issue:`10005` by :user:`Gaurav Dhingra <gxyd>`.
 
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
-  broken for X having non-normalized columns.
+  broken when setting ``normalize=False``.
   by `Alexandre Gramfort`_.
 
 Decomposition, manifold learning and clustering
