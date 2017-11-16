@@ -111,16 +111,15 @@ def test_std_bayesian_ridge_ard_with_constant_input():
         assert_array_less(y_std, expected_upper_boundary)
 
 
-
 def test_regression_issue_10128():
-    # this test throws a `ValueError` on master, commit 5963fd2
+    # this ARDRegression test throws a `ValueError` on master, commit 5963fd2
     np.random.seed(752)
     n = 100
     d = 10
     n_samples = 96
     n_features = 9
     X = sparse_random_matrix(n, d, density=0.10).toarray()
-    X, y = X[: ,:n_features], X[:, -1]
+    X, y = X[:, :n_features], X[:, -1]
     X_train, y_train = X[:n_samples], y[:n_samples]
     X_test = np.zeros((1, n_features))
     clf = ARDRegression()
