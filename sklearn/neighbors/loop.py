@@ -93,10 +93,17 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
 
-    extent : float in (0, 1.0], optional (default=0.95)
-        Defines the threshold in which objects may be considered as outliers.
-        Default value of 0.997 corresponds to a threshold of 3 standard deviations
-        from the mean (0.95 for 2 standard deviations, 0.68 for 1 standard deviation).
+    norm_factor : float in (0, 1.0], optional (default=0.95)
+        A normalization factor that gives control over the density approximation.
+        The norm_factor does not affect the ranking of outliers. norm_factor is
+        defined according to the triple sigma rule. The default value of 0.997
+        corresponds to a threshold of 3 standard deviations from the mean
+        (0.95 for 2 standard deviations, 0.68 for 1 standard deviation).
+
+    n_jobs : int, optional (default=1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
+        Affects only :meth:`kneighbors` and :meth:`kneighbors_graph` methods.
 
     Attributes
     ----------
@@ -110,6 +117,9 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
         It is the probability that a sample is an outlier with respect to
         its n_neighbors.
 
+    n_neighbors_ : integer
+        The actual number of neighbors used for :meth:`kneighbors` queries.
+
     References
     ----------
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
@@ -121,16 +131,17 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
            Detection Algorithms for Multivariate Data. PLoS ONE 11(4): e0152173 (2016)
     """
 
-    def __init__(self, n_neighbors=20, extent=0.95, algorithm='auto', leaf_size=30,
+    def __init__(self, n_neighbors=20, norm_factor=0.95, algorithm='auto', leaf_size=30,
                  metric='euclidean', p=2, metric_params=None, n_jobs=1):
 
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
                           metric=metric, p=p,
-                          metric_params=metric_params)
+                          metric_params=metric_params,
+                          n_jobs=n_jobs)
 
-        self.extent = extent
+        self.norm_factor = norm_factor
 
     def fit_predict(self, X, y=None):
         """"Fits the model to the training set X and returns the labels
@@ -166,7 +177,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
         self : object
             Returns self.
         """
-        if not (0. < self.extent <= 1.):
+        if not (0. < self.norm_factor <= 1.):
             raise ValueError("extent must be in (0, 1.0]")
 
         super(LocalOutlierProbability, self).fit(X)
@@ -186,19 +197,21 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
             warn('Neighborhood distances all zero. Try using a larger value for n_neighbors.', RuntimeWarning)
 
         # Compute loop score
-        ssd = self._ssd(np.mean(self._distances_fit_X_, axis=1))
-        self._standard_distances_fit_X_ = self._standard_distances(ssd, self._distances_fit_X_)
-        self._prob_set_distances_fit_X_ = self._prob_set_distances(self._standard_distances_fit_X_)
-        self._prob_set_distances_ev_fit_X_ = self._prob_set_distances_ev(self._prob_set_distances_fit_X_)
-        prob_local_outlier_factors = self._prob_local_outlier_factors(self._prob_set_distances_fit_X_, self._prob_set_distances_ev_fit_X_)
+        ssd = self._ssd(self._distances_fit_X_)
+        self._standard_distances_fit_X_ = self._standard_distances(ssd)
+        self._prob_distances_fit_X_ = self._prob_distances(self._standard_distances_fit_X_)
+        self._prob_distances_ev_fit_X_ = self._prob_distances_ev(self._prob_distances_fit_X_)
+        prob_local_outlier_factors = self._prob_local_outlier_factors(self._prob_distances_fit_X_,
+                                                                      self._prob_distances_ev_fit_X_)
         self._prob_local_outlier_factors_ev_fit_X_ = self._prob_local_outlier_factors_ev(prob_local_outlier_factors)
-        norm_prob_local_outlier_factors = self._norm_prob_local_outlier_factors(self._prob_local_outlier_factors_ev_fit_X_)
+        norm_prob_local_outlier_factors = self._norm_prob_local_outlier_factors(
+            self._prob_local_outlier_factors_ev_fit_X_)
         self.negative_local_outlier_probability_ = self._neg_local_outlier_probability(prob_local_outlier_factors,
-                                                                          norm_prob_local_outlier_factors)
+                                                                                       norm_prob_local_outlier_factors)
 
         # Compute the local reachability density using the probabilistic set distance to define threshold_:
         self._lrd = self._local_reachability_density(
-            self._prob_set_distances_fit_X_, _neighbors_indices_fit_X_)
+            self._prob_distances_fit_X_, _neighbors_indices_fit_X_)
 
         lrd_ratios_array = (self._lrd[_neighbors_indices_fit_X_] /
                             self._lrd[:, np.newaxis])
@@ -206,7 +219,7 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
         self.lrd_ratios_ = -np.mean(lrd_ratios_array, axis=1)
 
         self.threshold_ = scoreatpercentile(
-            self.lrd_ratios_, 100. * (1. - self.extent))
+            self.lrd_ratios_, 100. * (1. - self.norm_factor))
 
         return self
 
@@ -243,7 +256,8 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
 
             return is_inlier
 
-    def _ssd(self, X):
+    @staticmethod
+    def _ssd(distances_X):
         """
         Calculates the sum of square distance of X. As this method is used in the
         calculation of the local probability of each sample, this method is kept
@@ -260,17 +274,11 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
             Returns the sum of square distance of X as an array of
             repeated values.
         """
-        self._distances_fit_X_nonan_ = X[np.logical_not(np.isnan(X))]
-        ssd = np.sum(np.power(self._distances_fit_X_nonan_, 2))
-        if ssd == 0.:
-            warn('Sum of square distances equals zero. Validate the chosen distance metric.', RuntimeWarning)
-        n_obs = X.shape[0]
-        ssd_array = np.array([ssd] * n_obs)
-        ssd_array = np.tile(ssd_array, (self.n_neighbors_, 1)).T
+        ssd_array = np.sum(np.power(distances_X, 2), axis=1)
 
         return ssd_array
 
-    def _standard_distances(self, ssd_X, distances_X):
+    def _standard_distances(self, ssd_X):
         """
         Calculates the standard distance of each sample in the input data. As
         this method is used in the calculation of the local probability of each sample,
@@ -286,13 +294,13 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
         standard_distances : array, shape (n_samples,)
             The standard distance of each sample.
         """
-        standard_distances = np.sqrt(np.divide(ssd_X, np.fabs(distances_X)))
+        standard_distances = np.sqrt(np.divide(ssd_X, self.n_neighbors))
 
         return standard_distances
 
-    def _prob_set_distances(self, standard_distances_X):
+    def _prob_distances(self, standard_distances_X):
         """
-        Calculates the probabilistic set distance of each sample in the input data.
+        Calculates the probabilistic distance of each sample in the input data.
         As this method is used in the calculation of the local probability of each sample,
         this method is kept private.
 
@@ -303,31 +311,33 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
 
         Returns
         -------
-        prob_set_distances : array, shape(n_samples,)
-            The probabilistic set distances of each sample.
+        prob_distances : array, shape(n_samples,)
+            The probabilistic distances of each sample.
         """
-        prob_set_distances = 1. / (self.extent * standard_distances_X)
+        prob_distances = (self.norm_factor * standard_distances_X)
 
-        return prob_set_distances
+        return prob_distances
 
-    def _prob_set_distances_ev(self, probabilistic_set_distances_X):
+    @staticmethod
+    def _prob_distances_ev(probabilistic_set_distances_X):
         """
-        Calculates the expected value of the probabilistic set distance. As this method is used in the
+        Calculates the expected value of the probabilistic distance. As this method is used in the
         calculation of the local probability of each sample, this method is kept private.
 
         Parameters
         ----------
-        probabilistic_set_distances_X : array-like, shape (n_samples,)
+        probabilistic_distances_X : array-like, shape (n_samples,)
             The probabilistic set distances of X.
 
         Returns
         -------
-        prob_set_distance_ev_array : array, shape (n_samples,)
-            The expected value of the probabilistic set distance of X as an array
+        prob_distance_ev_array : array, shape (n_samples,)
+            The expected value of the probabilistic distance of X as an array
             of repeated values.
         """
-        probabilistic_set_distances_X = np.mean(probabilistic_set_distances_X, axis=1)
-        prob_set_distance_ev_array = np.array([np.mean(probabilistic_set_distances_X[~np.isinf(probabilistic_set_distances_X)])] * probabilistic_set_distances_X.shape[0])
+        prob_set_distance_ev_array = np.array(
+            [np.mean(probabilistic_set_distances_X[~np.isinf(probabilistic_set_distances_X)])] *
+            probabilistic_set_distances_X.shape[0])
 
         return prob_set_distance_ev_array
 
@@ -340,23 +350,23 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
 
         Parameters
         ----------
-        probabilistic_set_distances_X : array-like, shape (n_samples,)
-            The probabilistic set distances of X.
+        probabilistic_distances_X : array-like, shape (n_samples,)
+            The probabilistic distances of X.
 
-        probabilistic_set_distances_ev_X : array-like, shape (n_samples,)
-            The expected value of the probabilistic set distances of X.
+        probabilistic_distances_ev_X : array-like, shape (n_samples,)
+            The expected value of the probabilistic distances of X.
 
         Returns
         -------
         prob_local_outlier_factors : array, shape (n_samples,)
             The probabilistic local outlier factor of each sample.
         """
-        probabilistic_set_distances_X = np.mean(probabilistic_set_distances_X, axis=1)
         prob_local_outlier_factors = (probabilistic_set_distances_X / probabilistic_set_distances_ev_X) - 1.
 
         return prob_local_outlier_factors
 
-    def _prob_local_outlier_factors_ev(self, probabilistic_local_outlier_factors_X):
+    @staticmethod
+    def _prob_local_outlier_factors_ev(probabilistic_local_outlier_factors_X):
         """
         Calculates the expected value of the probabilistic local outlier factor.
         As this method is used in the calculation of the local probability of each sample,
@@ -373,8 +383,9 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
             The expected value of the probabilistic local outlier factor of X as an array
             of repeated values.
         """
-
-        prob_local_outlier_factors_ev = np.array([np.sum(np.power(probabilistic_local_outlier_factors_X[~np.isinf(probabilistic_local_outlier_factors_X)], 2) / probabilistic_local_outlier_factors_X.shape[0])] * probabilistic_local_outlier_factors_X.shape[0])
+        prob_local_outlier_factors_ev = np.array([np.sum(
+            np.power(probabilistic_local_outlier_factors_X[~np.isinf(probabilistic_local_outlier_factors_X)], 2) /
+            probabilistic_local_outlier_factors_X.shape[0])] * probabilistic_local_outlier_factors_X.shape[0])
 
         return prob_local_outlier_factors_ev
 
@@ -395,12 +406,13 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
         norm_prob_local_outlier_factors : array, shape (n_samples,)
             The normalized probabilistic local outlier factor of each sample.
         """
-        norm_prob_local_outlier_factors = self.extent * np.sqrt(prob_local_outlier_factors_ev_X)
+        norm_prob_local_outlier_factors = self.norm_factor * np.sqrt(prob_local_outlier_factors_ev_X)
 
         return norm_prob_local_outlier_factors
 
     @staticmethod
-    def _neg_local_outlier_probability(probabilistic_local_outlier_factors_X, normalized_probabilistic_local_outlier_factors):
+    def _neg_local_outlier_probability(probabilistic_local_outlier_factors_X,
+                                       normalized_probabilistic_local_outlier_factors):
         """
         Calculates the negative local outlier probability of each sample. As this method is used in the
         calculation of the local probability of each sample, this method is kept
@@ -421,7 +433,8 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
 
         """
         erf_vec = np.vectorize(erf)
-        negative_local_outlier_probability = -1. * np.maximum(0., erf_vec(probabilistic_local_outlier_factors_X / (normalized_probabilistic_local_outlier_factors * np.sqrt(2.))))
+        negative_local_outlier_probability = -1. * np.maximum(0., erf_vec(
+            probabilistic_local_outlier_factors_X / (normalized_probabilistic_local_outlier_factors * np.sqrt(2.))))
 
         return negative_local_outlier_probability
 
@@ -455,11 +468,11 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
         distances_X, neighbors_indices_X = (
             self.kneighbors(X, n_neighbors=self.n_neighbors_))
 
-        ssd = self._ssd(np.mean(distances_X, axis=1))
-        standard_distances_X = self._standard_distances(ssd, distances_X)
-        prob_set_distances = self._prob_set_distances(standard_distances_X)
+        ssd = self._ssd(distances_X)
+        standard_distances_X = self._standard_distances(ssd)
+        prob_distances = self._prob_distances(standard_distances_X)
 
-        X_lrd = self._local_reachability_density(prob_set_distances,
+        X_lrd = self._local_reachability_density(prob_distances,
                                                  neighbors_indices_X)
 
         lrd_ratios_array = (self._lrd[neighbors_indices_X] /
@@ -471,13 +484,13 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
     def _local_reachability_density(self, distances_X, neighbors_indices):
         """The local reachability density (LRD)
 
-        The LRD of a sample is the inverse of the average reachability
+        The LRD of a sample is the inverse of the probabilistic
         distance of its k-nearest neighbors.
 
         Parameters
         ----------
         distances_X : array, shape (n_query, self.n_neighbors)
-            Distances to the neighbors (in the training samples `self._fit_X`)
+            Probabilistic distances to the neighbors (in the training samples `self._fit_X`)
             of each query point to compute the LRD.
 
         neighbors_indices : array, shape (n_query, self.n_neighbors)
@@ -489,14 +502,11 @@ class LocalOutlierProbability(NeighborsBase, KNeighborsMixin, UnsupervisedMixin)
         local_reachability_density : array, shape (n_samples,)
             The local reachability density of each sample.
         """
-        dist_k = self._distances_fit_X_[neighbors_indices,
-                                        self.n_neighbors_ - 1]
-        reach_dist_array = np.maximum(distances_X, dist_k)
+        self._prob_set_distances_fit_X_tiled_ = np.tile(self._prob_distances_fit_X_, (self.n_neighbors_, 1)).T
+        dist_k = self._prob_set_distances_fit_X_tiled_[neighbors_indices, self.n_neighbors_ - 1]
+        prob_set_distances_tiled = np.tile(distances_X, (self.n_neighbors_, 1)).T
+
+        reach_dist_array = np.maximum(prob_set_distances_tiled, dist_k)
 
         #  1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
         return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)
-
-
-
-
-

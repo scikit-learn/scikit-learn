@@ -63,7 +63,7 @@ classifiers = {
         n_neighbors=35,
         contamination=outliers_fraction),
     "Local Outlier Probability": LocalOutlierProbability(
-        n_neighbors=35, extent=0.75
+        n_neighbors=35, norm_factor=0.75
     )
 }
 
