@@ -1,7 +1,7 @@
 """
-====================================================
+======================================================
 Imputing missing values before building an estimator
-====================================================
+======================================================
 
 This example shows that imputing the missing values can give better results
 than discarding the samples containing any missing value. Imputing does not
@@ -41,7 +41,6 @@ from sklearn.preprocessing import MICEImputer
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
-
 
 def print_results(dataset):
     X_full, y_full = dataset.data, dataset.target

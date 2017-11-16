@@ -107,9 +107,11 @@ conda update --yes --quiet conda
 # Configure the conda environment and put it in the path using the
 # provided versions
 conda create -n $CONDA_ENV_NAME --yes --quiet python numpy scipy \
-  cython nose coverage matplotlib sphinx=1.6.2 pillow
+  cython pytest coverage matplotlib sphinx=1.6.2 pillow
 source activate testenv
-pip install sphinx-gallery numpydoc
+pip install sphinx-gallery
+# Use numpydoc master (for now)
+pip install git+https://github.com/numpy/numpydoc
 
 # Build and install scikit-learn in dev mode
 python setup.py develop

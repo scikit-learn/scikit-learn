@@ -50,6 +50,21 @@ def test_bayesian_ridge_parameter():
     assert_almost_equal(rr_model.intercept_, br_model.intercept_)
 
 
+def test_bayesian_sample_weights():
+    # Test correctness of the sample_weights method
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
+    y = np.array([1, 2, 3, 2, 0, 4, 5]).T
+    w = np.array([4, 3, 3, 1, 1, 2, 3]).T
+
+    # A Ridge regression model using an alpha value equal to the ratio of
+    # lambda_ and alpha_ from the Bayesian Ridge model must be identical
+    br_model = BayesianRidge(compute_score=True).fit(X, y, sample_weight=w)
+    rr_model = Ridge(alpha=br_model.lambda_ / br_model.alpha_).fit(
+        X, y, sample_weight=w)
+    assert_array_almost_equal(rr_model.coef_, br_model.coef_)
+    assert_almost_equal(rr_model.intercept_, br_model.intercept_)
+
+
 def test_toy_bayesian_ridge_object():
     # Test BayesianRidge on toy
     X = np.array([[1], [2], [6], [8], [10]])
