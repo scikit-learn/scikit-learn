@@ -125,6 +125,10 @@ Classifiers and regressors
   error for prior list which summed to 1.
   :issue:`10005` by :user:`Gaurav Dhingra <gxyd>`.
 
+- Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
+  broken when setting ``normalize=False``.
+  by `Alexandre Gramfort`_.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
