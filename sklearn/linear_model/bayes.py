@@ -485,7 +485,6 @@ class ARDRegression(LinearModel, RegressorMixin):
                 sigma_, np.dot(X[:, keep_lambda].T, y))
 
             # Update alpha and lambda
-            lambda_old = np.copy(lambda_)
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
             gamma_ = 1. - lambda_[keep_lambda] * np.diag(sigma_)
             lambda_[keep_lambda] = ((gamma_ + 2. * lambda_1) /
