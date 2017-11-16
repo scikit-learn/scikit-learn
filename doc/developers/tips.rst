@@ -95,10 +95,67 @@ Issue: Self-contained example for bug
 
         Please provide [self-contained example code](https://stackoverflow.com/help/mcve), including imports and data (if possible), so that other contributors can just run it and reproduce your issue. Ideally your example code should be minimal.
 
+Issue: Software versions
+    ::
+
+        To help diagnose your issue, could you please paste the output of:
+
+        ```py
+        import platform; print(platform.platform())
+        import sys; print("Python", sys.version)
+        import numpy; print("NumPy", numpy.__version__)
+        import scipy; print("SciPy", scipy.__version__)
+        import sklearn; print("Scikit-Learn", sklearn.__version__)
+        ```
+
+        ? Thanks.
+
+Issue: Code blocks
+    ::
+
+        Readability can be greatly improved if you [format](https://help.github.com/articles/creating-and-highlighting-code-blocks/) your code snippets and complete error messages appropriately. For example:
+
+            ```python
+            print(something)
+            ```
+        generates:
+        ```python
+        print(something)
+        ```
+        And:
+
+            ```pytb
+            Traceback (most recent call last):
+              File "<stdin>", line 1, in <module>
+            ImportError: No module named 'hello'
+            ```
+        generates:
+        ```pytb
+        Traceback (most recent call last):
+          File "<stdin>", line 1, in <module>
+        ImportError: No module named 'hello'
+        ```
+        You can edit your issue descriptions and comments at any time to improve readability. This helps maintainers a lot. Thanks!
+
+Issue/Comment: Linking to code
+    ::
+
+        Friendly advice: for clarity's sake, you can link to code like [this](https://help.github.com/articles/creating-a-permanent-link-to-a-code-snippet/).
+
+Issue/Comment: Linking to issues
+    ::
+
+        Please use links to comments, which make it a lot easier to see what you are referring to, rather than just linking to the issue. See [this](https://stackoverflow.com/questions/25163598/how-do-i-reference-a-specific-issue-comment-on-github) for more details.
+
 PR-NEW: Better description
     ::
 
         Thanks for the pull request! Please make the title of the PR descriptive so that we can easily recall the issue it is resolving. You should state what issue (or PR) it fixes/resolves in the description (see [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests)).
+
+PR-NEW: Fix #
+    ::
+
+        Please use "Fix #issueNumber" in your PR description (and you can do it more than once). This way the associated issue gets closed automatically when the PR is merged. For more details, look at [this](https://github.com/blog/1506-closing-issues-via-pull-requests).
 
 PR-NEW or Issue:
     ::
@@ -114,6 +171,11 @@ PR-WIP: Regression test needed
     ::
 
         Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at master but pass in this PR.
+
+PR-WIP: PEP8
+    ::
+
+        You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in Travis CI. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
 
 PR-MRG: Patience
     ::
