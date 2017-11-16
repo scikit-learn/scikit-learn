@@ -690,7 +690,7 @@ LMNN solves the following (nonconvex) minimization problem:
 The parameter :math:`\mu` (``weight_push_loss``) is a trade-off between
 penalizing large distances to target neighbors and penalizing margin
 violations by impostors. In practice, the two terms are usually weighted
-equally.
+equally (:math:`\mu = 0.5`).
 
 
 Mahalanobis distance

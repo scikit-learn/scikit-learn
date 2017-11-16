@@ -74,10 +74,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         neighbors.
 
     weight_push_loss : float, optional (default=0.5)
-        A float in (0, 1], weighting the push loss. This is parameter ``mu``
-        in the journal paper (See references below). Since the pull loss stays
-        fixed during optimization, it will be weighted by a factor
-        ``(1 - push_loss_weight) / push_loss_weight`` instead.
+        A float in (0, 1], weighting the push loss. This is parameter ``μ``
+        in the journal paper (See references below). In practice, the objective
+        function will be normalized so that the push loss has weight 1 and
+        hence the pull loss has weight ``(1 - μ)/μ``.
 
     impostor_store : str ['auto'|'list'|'sparse'], optional
         list :
@@ -270,9 +270,9 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         # Compute the gradient part contributed by the target neighbors
         grad_static = self._compute_grad_static(X_valid, target_neighbors)
 
-        # Compute the regularization coefficient
-        reg_coef = (1 - self.weight_push_loss) / self.weight_push_loss
-        grad_static *= reg_coef
+        # Compute the pull loss coefficient
+        pull_loss_coef = (1. - self.weight_push_loss) / self.weight_push_loss
+        grad_static *= pull_loss_coef
 
         # Decide how to store the impostors
         if self.impostor_store == 'sparse':
@@ -678,7 +678,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
             The target neighbors of each sample.
 
         grad_static : array, shape (n_features, n_features)
-            The (regularized) gradient component caused by target neighbors,
+            The (weighted) gradient component caused by target neighbors,
             that stays fixed throughout the algorithm.
 
         use_sparse : bool
@@ -735,7 +735,7 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
         grad = np.dot(transformation, grad_static + grad_new)
         grad *= 2
 
-        # Add the (regularized) pull loss to the total loss
+        # Add the (weighted) pull loss to the total loss
         metric = np.dot(transformation.T, transformation)
         loss += np.dot(grad_static.ravel(), metric.ravel())
 
@@ -1248,111 +1248,17 @@ def _check_scalar(x, name, target_type, min_val=None, max_val=None):
 
 def make_lmnn_pipeline(
         n_neighbors=3, n_features_out=None, init='pca', warm_start=False,
-        max_impostors=500000, neighbors_params=None,
-        weight_push_loss=0.5, impostor_store='auto', max_iter=50, tol=1e-5,
-        callback=None, store_opt_result=False, verbose=0, random_state=None,
-        n_jobs=1, n_neighbors_predict=None, weights='uniform',
-        algorithm='auto', leaf_size=30, n_jobs_predict=None, **kwargs):
-    """Constructs the trivial LMNN - KNN pipeline.
+        max_impostors=500000, neighbors_params=None, weight_push_loss=0.5,
+        impostor_store='auto', max_iter=50, tol=1e-5, callback=None,
+        store_opt_result=False, verbose=0, random_state=None, n_jobs=1,
+        n_neighbors_predict=None, weights='uniform', algorithm='auto',
+        leaf_size=30, n_jobs_predict=None, **kwargs):
+    """Constructs a LargeMarginNearestNeighbor - KNeighborsClassifier pipeline.
+
+    See LargeMarginNearestNeighbor module documentation for details.
 
     Parameters
     ----------
-    n_neighbors : int, optional (default=3)
-        Number of neighbors to use as target neighbors for each sample.
-
-    n_features_out : int, optional (default=None)
-        Preferred dimensionality of the embedding.
-        If None it is inferred from ``init``.
-
-    init : string or numpy array, optional (default='pca')
-        Initialization of the linear transformation. Possible options are
-        'pca', 'identity' and a numpy array of shape (n_features_a,
-        n_features_b).
-
-        pca:
-            ``n_features_out`` many principal components of the inputs passed
-            to :meth:`fit` will be used to initialize the transformation.
-
-        identity:
-            If ``n_features_out`` is strictly smaller than the
-            dimensionality of the inputs passed to :meth:`fit`, the identity
-            matrix will be truncated to the first ``n_features_out`` rows.
-
-        numpy array:
-            n_features_b must match the dimensionality of the inputs passed to
-            :meth:`fit` and n_features_a must be less than or equal to that.
-            If ``n_features_out`` is not None, n_features_a must match it.
-
-    warm_start : bool, optional, (default=False)
-        If True and :meth:`fit` has been called before, the solution of the
-        previous call to :meth:`fit` is used as the initial linear
-        transformation (``n_features_out`` and ``init`` will be ignored).
-
-    max_impostors : int, optional (default=500000)
-        Maximum number of impostors to consider per iteration. In the worst
-        case this will allow ``max_impostors * n_neighbors`` constraints to be
-        active.
-
-    neighbors_params : dict, optional (default=None)
-        Parameters to pass to a :class:`neighbors.NearestNeighbors` instance -
-        apart from ``n_neighbors`` - that will be used to select the target
-        neighbors.
-
-    weight_push_loss : float, optional (default=0.5)
-        A float in (0, 1], weighting the push loss. This is parameter ``mu``
-        in the journal paper (See references below). Since the pull loss stays
-        fixed during optimization, it will be weighted by a factor
-        ``(1 - push_loss_weight) / push_loss_weight`` instead.
-
-    impostor_store : str ['auto'|'list'|'sparse'], optional
-        list :
-            Three lists will be used to store the indices of reference
-            samples, the indices of their impostors and the (squared)
-            distances between the (sample, impostor) pairs.
-
-        sparse :
-            A sparse indicator matrix will be used to store the (sample,
-            impostor) pairs. The (squared) distances to the impostors will be
-            computed twice (once to determine the impostors and once to be
-            stored), but this option tends to be faster than 'list' as the
-            size of the data set increases.
-
-        auto :
-            Will attempt to decide the most appropriate choice of data
-            structure based on the values passed to :meth:`fit`.
-
-    max_iter : int, optional (default=50)
-        Maximum number of iterations in the optimization.
-
-    tol : float, optional (default=1e-5)
-        Convergence tolerance for the optimization.
-
-    callback : callable, optional (default=None)
-        If not None, this function is called after every iteration of the
-        optimizer, taking as arguments the current solution (transformation)
-        and the number of iterations. This might be useful in case one wants
-        to examine or store the transformation found after each iteration.
-
-    store_opt_result : bool, optional (default=False)
-        If True, the :class:`scipy.optimize.OptimizeResult` object returned by
-        :meth:`minimize` of `scipy.optimize` will be stored as attribute
-        ``opt_result_``.
-
-    verbose : int, optional (default=0)
-        If 0, no progress messages will be printed.
-        If 1, progress messages will be printed to stdout.
-        If > 1, progress messages will be printed and the ``iprint``
-        parameter of :meth:`_minimize_lbfgsb` of `scipy.optimize` will be set
-        to ``verbose - 2``.
-
-    random_state : int or numpy.RandomState or None, optional (default=None)
-        A pseudo random number generator object or a seed for it if int.
-
-    n_jobs : int, optional (default=1)
-        The number of parallel jobs to run for neighbors search.
-        If ``-1``, then the number of jobs is set to the number of CPU cores.
-        Doesn't affect :meth:`fit` method.
-
     n_neighbors_predict : int, optional (default=None)
         The number of neighbors to use during prediction. If None (default)
         the value of ``n_neighbors`` used to train the model is used.
