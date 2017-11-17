@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import _named_check
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
@@ -53,8 +52,7 @@ def test_all_estimators():
 
     for name, Estimator in estimators:
         # some can just not be sensibly default constructed
-        yield (_named_check(check_parameters_default_constructible, name),
-               name, Estimator)
+        yield check_parameters_default_constructible, name, Estimator
 
 
 def test_non_meta_estimators():
@@ -67,12 +65,11 @@ def test_non_meta_estimators():
             continue
         estimator = Estimator()
         # check this on class
-        yield _named_check(
-            check_no_fit_attributes_set_in_init, name), name, Estimator
+        yield check_no_fit_attributes_set_in_init, name, Estimator
 
         for check in _yield_all_checks(name, estimator):
             set_checking_parameters(estimator)
-            yield _named_check(check, name), name, estimator
+            yield check, name, estimator
 
 
 def test_configure():
@@ -114,8 +111,7 @@ def test_class_weight_balanced_linear_classifiers():
                 issubclass(clazz, LinearClassifierMixin))]
 
     for name, Classifier in linear_classifiers:
-        yield _named_check(check_class_weight_balanced_linear_classifier,
-                           name), name, Classifier
+        yield check_class_weight_balanced_linear_classifier, name, Classifier
 
 
 @ignore_warnings
