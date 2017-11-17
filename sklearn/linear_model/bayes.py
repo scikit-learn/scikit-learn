@@ -502,7 +502,6 @@ class ARDRegression(LinearModel, RegressorMixin):
                       (rmse_ + 2. * alpha_2))
 
             # Prune the weights with a precision over a threshold
-            keep_lambda_old = np.copy(keep_lambda)
             keep_lambda = lambda_ < self.threshold_lambda
             coef_[~keep_lambda] = 0
 
@@ -530,7 +529,6 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.alpha_ = alpha_
         self.sigma_ = sigma_
         self.lambda_ = lambda_
-        self._keep_lambda_old = keep_lambda_old
         self._set_intercept(X_offset_, y_offset_, X_scale_)
         return self
 
@@ -562,7 +560,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         else:
             if self.normalize:
                 X = (X - self.X_offset_) / self.X_scale_
-            X = X[:, self._keep_lambda_old]
+            X = X[:, self.lambda_ < self.threshold_lambda]
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
             return y_mean, y_std
