@@ -14,7 +14,6 @@ mp = int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)) or None
 if mp:
     try:
         import multiprocessing as mp
-        import multiprocessing.pool
     except ImportError:
         mp = None
 
@@ -23,7 +22,7 @@ if mp:
 if mp is not None:
     try:
         _sem = mp.Semaphore()
-        del _sem # cleanup
+        del _sem  # cleanup
     except (ImportError, OSError) as e:
         mp = None
         warnings.warn('%s.  joblib will operate in serial mode' % (e,))

@@ -5,18 +5,19 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
+from warnings import warn
 
 import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..utils import array2d, atleast2d_or_csr, safe_mask
+from ..utils import check_array, safe_mask
 from ..externals import six
 
 
 class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
     """
-    Tranformer mixin that performs feature selection given a support mask
+    Transformer mixin that performs feature selection given a support mask
 
     This mixin provides a feature selector implementation with `transform` and
     `inverse_transform` functionality given an implementation of
@@ -71,11 +72,16 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        X = atleast2d_or_csr(X)
+        X = check_array(X, accept_sparse='csr')
         mask = self.get_support()
+        if not mask.any():
+            warn("No features were selected: either the data is"
+                 " too noisy or the selection test too strict.",
+                 UserWarning)
+            return np.empty(0).reshape((X.shape[0], 0))
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
-        return atleast2d_or_csr(X)[:, safe_mask(X, mask)]
+        return X[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """
@@ -97,14 +103,15 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
             # insert additional entries in indptr:
             # e.g. if transform changed indptr from [0 2 6 7] to [0 2 3]
             # col_nonzeros here will be [2 0 1] so indptr becomes [0 2 2 3]
-            col_nonzeros = self.inverse_transform(np.diff(X.indptr)).ravel()
+            it = self.inverse_transform(np.diff(X.indptr).reshape(1, -1))
+            col_nonzeros = it.ravel()
             indptr = np.concatenate([[0], np.cumsum(col_nonzeros)])
             Xt = csc_matrix((X.data, X.indices, indptr),
                             shape=(X.shape[0], len(indptr) - 1), dtype=X.dtype)
             return Xt
 
         support = self.get_support()
-        X = array2d(X)
+        X = check_array(X)
         if support.sum() != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
 

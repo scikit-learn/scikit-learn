@@ -3,5 +3,5 @@
 Decomposition
 -------------
 
-Examples concerning the :mod:`sklearn.decomposition` package.
+Examples concerning the :mod:`sklearn.decomposition` module.
 

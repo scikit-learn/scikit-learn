@@ -5,28 +5,30 @@ Exceptions
 # Copyright: 2010, Gael Varoquaux
 # License: BSD 3 clause
 
-import sys
-
+from ._compat import PY3_OR_LATER
 
 class JoblibException(Exception):
     """A simple exception with an error message that you can get to."""
-
     def __init__(self, *args):
-        self.args = args
-
-    def __reduce__(self):
-        # For pickling
-        return self.__class__, self.args, {}
+        # We need to implement __init__ so that it is picked in the
+        # multiple heritance hierarchy in the class created in
+        # _mk_exception. Note: in Python 2, if you implement __init__
+        # in your exception class you need to set .args correctly,
+        # otherwise you can dump an exception instance with pickle but
+        # not load it (at load time an empty .args will be passed to
+        # the constructor). Also we want to be explicit and not use
+        # 'super' here. Using 'super' can cause a sibling class method
+        # to be called and we have no control the sibling class method
+        # constructor signature in the exception returned by
+        # _mk_exception.
+        Exception.__init__(self, *args)
 
     def __repr__(self):
-        if hasattr(self, 'args'):
+        if hasattr(self, 'args') and len(self.args) > 0:
             message = self.args[0]
         else:
-            # Python 2 compat: instances of JoblibException can be created
-            # without calling JoblibException __init__ in case of
-            # multi-inheritance: in that case the message is stored as an
-            # explicit attribute under Python 2 (only)
-            message = self.message
+            message = ''
+
         name = self.__class__.__name__
         return '%s\n%s\n%s\n%s' % (name, 75 * '_', message, 75 * '_')
 
@@ -39,12 +41,18 @@ class TransportableException(JoblibException):
     """
 
     def __init__(self, message, etype):
+        # The next line set the .args correctly. This is needed to
+        # make the exception loadable with pickle
+        JoblibException.__init__(self, message, etype)
         self.message = message
         self.etype = etype
 
-    def __reduce__(self):
-        # For pickling
-        return self.__class__, (self.message, self.etype), {}
+
+class WorkerInterrupt(Exception):
+    """ An exception that is not KeyboardInterrupt to allow subprocesses
+        to be interrupted.
+    """
+    pass
 
 
 _exception_mapping = dict()
@@ -61,20 +69,26 @@ def _mk_exception(exception, name=None):
         this_exception = _exception_mapping[this_name]
     else:
         if exception is Exception:
-            # We cannot create a subclass: we are already a trivial
-            # subclass
+            # JoblibException is already a subclass of Exception. No
+            # need to use multiple inheritance
             return JoblibException, this_name
-        this_exception = type(this_name, (exception, JoblibException),
-                    dict(__repr__=JoblibException.__repr__,
-                        __str__=JoblibException.__str__),
-                    )
-        _exception_mapping[this_name] = this_exception
+        try:
+            this_exception = type(
+                this_name, (JoblibException, exception), {})
+            _exception_mapping[this_name] = this_exception
+        except TypeError:
+            # This happens if "Cannot create a consistent method
+            # resolution order", e.g. because 'exception' is a
+            # subclass of JoblibException or 'exception' is not an
+            # acceptable base class
+            this_exception = JoblibException
+
     return this_exception, this_name
 
 
 def _mk_common_exceptions():
     namespace = dict()
-    if sys.version_info[0] == 3:
+    if PY3_OR_LATER:
         import builtins as _builtin_exceptions
         common_exceptions = filter(
             lambda x: x.endswith('Error'),
@@ -86,14 +100,8 @@ def _mk_common_exceptions():
     for name in common_exceptions:
         obj = getattr(_builtin_exceptions, name)
         if isinstance(obj, type) and issubclass(obj, BaseException):
-            try:
-                this_obj, this_name = _mk_exception(obj, name=name)
-                namespace[this_name] = this_obj
-            except TypeError:
-                # Cannot create a consistent method resolution order:
-                # a class that we can't subclass properly, probably
-                # BaseException
-                pass
+            this_obj, this_name = _mk_exception(obj, name=name)
+            namespace[this_name] = this_obj
     return namespace
 
 

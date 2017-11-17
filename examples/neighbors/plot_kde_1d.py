@@ -13,7 +13,7 @@ can lead to wildly divergent ideas about the underlying shape of the density
 distribution.  If we instead center each block on the point it represents, we
 get the estimate shown in the bottom left panel.  This is a kernel density
 estimation with a "top hat" kernel.  This idea can be generalized to other
-kernel shapes: the bottom-right panel of the first figure shows a gaussian
+kernel shapes: the bottom-right panel of the first figure shows a Gaussian
 kernel density estimate over the same distribution.
 
 Scikit-learn implements efficient kernel density estimation using either
@@ -38,8 +38,8 @@ from sklearn.neighbors import KernelDensity
 # Plot the progression of histograms to kernels
 np.random.seed(1)
 N = 20
-X = np.concatenate((np.random.normal(0, 1, 0.3 * N),
-                    np.random.normal(5, 1, 0.7 * N)))[:, np.newaxis]
+X = np.concatenate((np.random.normal(0, 1, int(0.3 * N)),
+                    np.random.normal(5, 1, int(0.7 * N))))[:, np.newaxis]
 X_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
 bins = np.linspace(-5, 10, 10)
 
@@ -60,7 +60,7 @@ log_dens = kde.score_samples(X_plot)
 ax[1, 0].fill(X_plot[:, 0], np.exp(log_dens), fc='#AAAAFF')
 ax[1, 0].text(-3.5, 0.31, "Tophat Kernel Density")
 
-# gaussian KDE
+# Gaussian KDE
 kde = KernelDensity(kernel='gaussian', bandwidth=0.75).fit(X)
 log_dens = kde.score_samples(X_plot)
 ax[1, 1].fill(X_plot[:, 0], np.exp(log_dens), fc='#AAAAFF')
@@ -116,8 +116,8 @@ ax[0, 1].set_title('Available Kernels')
 # Plot a 1D density example
 N = 100
 np.random.seed(1)
-X = np.concatenate((np.random.normal(0, 1, 0.3 * N),
-                    np.random.normal(5, 1, 0.7 * N)))[:, np.newaxis]
+X = np.concatenate((np.random.normal(0, 1, int(0.3 * N)),
+                    np.random.normal(5, 1, int(0.7 * N))))[:, np.newaxis]
 
 X_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
 

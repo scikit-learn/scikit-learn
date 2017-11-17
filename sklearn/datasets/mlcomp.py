@@ -5,6 +5,7 @@
 import os
 import numbers
 from sklearn.datasets.base import load_files
+from sklearn.utils import deprecated
 
 
 def _load_document_classification(dataset_path, metadata, set_=None, **kwargs):
@@ -19,6 +20,9 @@ LOADERS = {
 }
 
 
+@deprecated("since the http://mlcomp.org/ website will shut down "
+            "in March 2017, the load_mlcomp function was deprecated "
+            "in version 0.19 and will be removed in 0.21.")
 def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     """Load a datasets as downloaded from http://mlcomp.org
 
@@ -28,13 +32,15 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     name_or_id : the integer id or the string name metadata of the MLComp
                  dataset to load
 
-    `set_` : select the portion to load: 'train', 'test' or 'raw'
+    set_ : select the portion to load: 'train', 'test' or 'raw'
 
     mlcomp_root : the filesystem path to the root folder where MLComp datasets
                   are stored, if mlcomp_root is None, the MLCOMP_DATASETS_HOME
                   environment variable is looked up instead.
 
     **kwargs : domain specific kwargs to be passed to the dataset loader.
+
+    Read more in the :ref:`User Guide <datasets>`.
 
     Returns
     -------

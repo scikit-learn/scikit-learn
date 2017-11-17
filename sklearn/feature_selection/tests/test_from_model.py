@@ -1,43 +1,200 @@
 import numpy as np
-import scipy.sparse as sp
 
-from nose.tools import assert_raises, assert_true
-
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import skip_if_32bit
 
-from sklearn.datasets import load_iris
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import SGDClassifier
+from sklearn import datasets
+from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
+from sklearn.feature_selection import SelectFromModel
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import PassiveAggressiveClassifier
 
-iris = load_iris()
-
-
-def test_transform_linear_model():
-    for clf in (LogisticRegression(C=0.1),
-                LinearSVC(C=0.01, dual=False),
-                SGDClassifier(alpha=0.001, n_iter=50, shuffle=True,
-                              random_state=0)):
-        for thresh in (None, ".09*mean", "1e-5 * median"):
-            for func in (np.array, sp.csr_matrix):
-                X = func(iris.data)
-                clf.set_params(penalty="l1")
-                clf.fit(X, iris.target)
-                X_new = clf.transform(X, thresh)
-                if isinstance(clf, SGDClassifier):
-                    assert_true(X_new.shape[1] <= X.shape[1])
-                else:
-                    assert_less(X_new.shape[1], X.shape[1])
-                clf.set_params(penalty="l2")
-                clf.fit(X_new, iris.target)
-                pred = clf.predict(X_new)
-                assert_greater(np.mean(pred == iris.target), 0.7)
+iris = datasets.load_iris()
+data, y = iris.data, iris.target
+rng = np.random.RandomState(0)
 
 
 def test_invalid_input():
-    clf = SGDClassifier(alpha=0.1, n_iter=10, shuffle=True, random_state=None)
+    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
+                        random_state=None, tol=None)
+    for threshold in ["gobbledigook", ".5 * gobbledigook"]:
+        model = SelectFromModel(clf, threshold=threshold)
+        model.fit(data, y)
+        assert_raises(ValueError, model.transform, data)
 
-    clf.fit(iris.data, iris.target)
-    assert_raises(ValueError, clf.transform, iris.data, "gobbledigook")
-    assert_raises(ValueError, clf.transform, iris.data, ".5 * gobbledigook")
+
+def test_input_estimator_unchanged():
+    # Test that SelectFromModel fits on a clone of the estimator.
+    est = RandomForestClassifier()
+    transformer = SelectFromModel(estimator=est)
+    transformer.fit(data, y)
+    assert_true(transformer.estimator is est)
+
+
+def test_feature_importances():
+    X, y = datasets.make_classification(
+        n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
+        n_repeated=0, shuffle=False, random_state=0)
+
+    est = RandomForestClassifier(n_estimators=50, random_state=0)
+    for threshold, func in zip(["mean", "median"], [np.mean, np.median]):
+        transformer = SelectFromModel(estimator=est, threshold=threshold)
+        transformer.fit(X, y)
+        assert_true(hasattr(transformer.estimator_, 'feature_importances_'))
+
+        X_new = transformer.transform(X)
+        assert_less(X_new.shape[1], X.shape[1])
+        importances = transformer.estimator_.feature_importances_
+
+        feature_mask = np.abs(importances) > func(importances)
+        assert_array_almost_equal(X_new, X[:, feature_mask])
+
+
+def test_sample_weight():
+    # Ensure sample weights are passed to underlying estimator
+    X, y = datasets.make_classification(
+        n_samples=100, n_features=10, n_informative=3, n_redundant=0,
+        n_repeated=0, shuffle=False, random_state=0)
+
+    # Check with sample weights
+    sample_weight = np.ones(y.shape)
+    sample_weight[y == 1] *= 100
+
+    est = LogisticRegression(random_state=0, fit_intercept=False)
+    transformer = SelectFromModel(estimator=est)
+    transformer.fit(X, y, sample_weight=None)
+    mask = transformer._get_support_mask()
+    transformer.fit(X, y, sample_weight=sample_weight)
+    weighted_mask = transformer._get_support_mask()
+    assert not np.all(weighted_mask == mask)
+    transformer.fit(X, y, sample_weight=3 * sample_weight)
+    reweighted_mask = transformer._get_support_mask()
+    assert np.all(weighted_mask == reweighted_mask)
+
+
+def test_coef_default_threshold():
+    X, y = datasets.make_classification(
+        n_samples=100, n_features=10, n_informative=3, n_redundant=0,
+        n_repeated=0, shuffle=False, random_state=0)
+
+    # For the Lasso and related models, the threshold defaults to 1e-5
+    transformer = SelectFromModel(estimator=Lasso(alpha=0.1))
+    transformer.fit(X, y)
+    X_new = transformer.transform(X)
+    mask = np.abs(transformer.estimator_.coef_) > 1e-5
+    assert_array_almost_equal(X_new, X[:, mask])
+
+
+@skip_if_32bit
+def test_2d_coef():
+    X, y = datasets.make_classification(
+        n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
+        n_repeated=0, shuffle=False, random_state=0, n_classes=4)
+
+    est = LogisticRegression()
+    for threshold, func in zip(["mean", "median"], [np.mean, np.median]):
+        for order in [1, 2, np.inf]:
+            # Fit SelectFromModel a multi-class problem
+            transformer = SelectFromModel(estimator=LogisticRegression(),
+                                          threshold=threshold,
+                                          norm_order=order)
+            transformer.fit(X, y)
+            assert_true(hasattr(transformer.estimator_, 'coef_'))
+            X_new = transformer.transform(X)
+            assert_less(X_new.shape[1], X.shape[1])
+
+            # Manually check that the norm is correctly performed
+            est.fit(X, y)
+            importances = np.linalg.norm(est.coef_, axis=0, ord=order)
+            feature_mask = importances > func(importances)
+            assert_array_almost_equal(X_new, X[:, feature_mask])
+
+
+def test_partial_fit():
+    est = PassiveAggressiveClassifier(random_state=0, shuffle=False,
+                                      max_iter=5, tol=None)
+    transformer = SelectFromModel(estimator=est)
+    transformer.partial_fit(data, y,
+                            classes=np.unique(y))
+    old_model = transformer.estimator_
+    transformer.partial_fit(data, y,
+                            classes=np.unique(y))
+    new_model = transformer.estimator_
+    assert_true(old_model is new_model)
+
+    X_transform = transformer.transform(data)
+    transformer.fit(np.vstack((data, data)), np.concatenate((y, y)))
+    assert_array_almost_equal(X_transform, transformer.transform(data))
+
+    # check that if est doesn't have partial_fit, neither does SelectFromModel
+    transformer = SelectFromModel(estimator=RandomForestClassifier())
+    assert_false(hasattr(transformer, "partial_fit"))
+
+
+def test_calling_fit_reinitializes():
+    est = LinearSVC(random_state=0)
+    transformer = SelectFromModel(estimator=est)
+    transformer.fit(data, y)
+    transformer.set_params(estimator__C=100)
+    transformer.fit(data, y)
+    assert_equal(transformer.estimator_.C, 100)
+
+
+def test_prefit():
+    # Test all possible combinations of the prefit parameter.
+
+    # Passing a prefit parameter with the selected model
+    # and fitting a unfit model with prefit=False should give same results.
+    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
+                        random_state=0, tol=None)
+    model = SelectFromModel(clf)
+    model.fit(data, y)
+    X_transform = model.transform(data)
+    clf.fit(data, y)
+    model = SelectFromModel(clf, prefit=True)
+    assert_array_almost_equal(model.transform(data), X_transform)
+
+    # Check that the model is rewritten if prefit=False and a fitted model is
+    # passed
+    model = SelectFromModel(clf, prefit=False)
+    model.fit(data, y)
+    assert_array_almost_equal(model.transform(data), X_transform)
+
+    # Check that prefit=True and calling fit raises a ValueError
+    model = SelectFromModel(clf, prefit=True)
+    assert_raises(ValueError, model.fit, data, y)
+
+
+def test_threshold_string():
+    est = RandomForestClassifier(n_estimators=50, random_state=0)
+    model = SelectFromModel(est, threshold="0.5*mean")
+    model.fit(data, y)
+    X_transform = model.transform(data)
+
+    # Calculate the threshold from the estimator directly.
+    est.fit(data, y)
+    threshold = 0.5 * np.mean(est.feature_importances_)
+    mask = est.feature_importances_ > threshold
+    assert_array_almost_equal(X_transform, data[:, mask])
+
+
+def test_threshold_without_refitting():
+    # Test that the threshold can be set without refitting the model.
+    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
+                        random_state=0, tol=None)
+    model = SelectFromModel(clf, threshold="0.1 * mean")
+    model.fit(data, y)
+    X_transform = model.transform(data)
+
+    # Set a higher threshold to filter out more features.
+    model.threshold = "1.0 * mean"
+    assert_greater(X_transform.shape[1], model.transform(data).shape[1])

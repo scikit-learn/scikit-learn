@@ -5,7 +5,7 @@
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Lars Buitinck
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from libc.string cimport memset
 import numpy as np
@@ -14,8 +14,8 @@ cimport numpy as np
 cdef extern from "cblas.h":
     double cblas_dasum(int, const double *, int) nogil
 
-ctypedef float [:, :] float_array_2d_t 
-ctypedef double [:, :] double_array_2d_t 
+ctypedef float [:, :] float_array_2d_t
+ctypedef double [:, :] double_array_2d_t
 
 cdef fused floating1d:
     float[::1]

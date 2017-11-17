@@ -7,7 +7,7 @@ This example illustrates the need for robust covariance estimation
 on a real data set. It is useful both for outlier detection and for
 a better understanding of the data structure.
 
-We selected two sets of two variables from the boston housing data set
+We selected two sets of two variables from the Boston housing data set
 as an illustration of what kind of analysis can be done with several
 outlier detection tools. For the purpose of visualization, we are working
 with two-dimensional examples, but one should be aware that things are
@@ -19,7 +19,8 @@ structure of the observations. Although the robust covariance estimate is
 able to focus on the main mode of the data distribution, it sticks to the
 assumption that the data should be Gaussian distributed, yielding some biased
 estimation of the data structure, but yet accurate to some extent.
-The One-Class SVM algorithm
+The One-Class SVM does not assume any parametric form of the data distribution
+and can therefore model the complex shape of the data much better.
 
 First example
 -------------
@@ -89,8 +90,8 @@ for i, (clf_name, clf) in enumerate(classifiers.items()):
     legend2[clf_name] = plt.contour(
         xx2, yy2, Z2, levels=[0], linewidths=2, colors=colors[i])
 
-legend1_values_list = list( legend1.values() )
-legend1_keys_list = list( legend1.keys() )
+legend1_values_list = list(legend1.values())
+legend1_keys_list = list(legend1.keys())
 
 # Plot the results (= shape of the data points cloud)
 plt.figure(1)  # two clusters
@@ -110,10 +111,10 @@ plt.legend((legend1_values_list[0].collections[0],
            loc="upper center",
            prop=matplotlib.font_manager.FontProperties(size=12))
 plt.ylabel("accessibility to radial highways")
-plt.xlabel("pupil-teatcher ratio by town")
+plt.xlabel("pupil-teacher ratio by town")
 
-legend2_values_list = list( legend2.values() )
-legend2_keys_list = list( legend2.keys() )
+legend2_values_list = list(legend2.values())
+legend2_keys_list = list(legend2.keys())
 
 plt.figure(2)  # "banana" shape
 plt.title("Outlier detection on a real data set (boston housing)")
@@ -123,7 +124,7 @@ plt.ylim((yy2.min(), yy2.max()))
 plt.legend((legend2_values_list[0].collections[0],
             legend2_values_list[1].collections[0],
             legend2_values_list[2].collections[0]),
-           (legend2_values_list[0], legend2_values_list[1], legend2_values_list[2]),
+           (legend2_keys_list[0], legend2_keys_list[1], legend2_keys_list[2]),
            loc="upper center",
            prop=matplotlib.font_manager.FontProperties(size=12))
 plt.ylabel("% lower status of the population")

@@ -1,21 +1,69 @@
+# make it explicit that we favor the new container-based travis workers
+sudo: false
+
 language: python
-virtualenv:
-  system_site_packages: true
+
+cache:
+  apt: true
+  directories:
+  - $HOME/.cache/pip
+  - $HOME/.ccache
+
+dist: trusty
+
 env:
-  matrix:
-    - DISTRIB="ubuntu" PYTHON_VERSION="2.7" INSTALL_ATLAS="true"
-      COVERAGE="true"
+  global:
+    # Directory where tests are run from
+    - TEST_DIR=/tmp/sklearn
+    - OMP_NUM_THREADS=4
+    - OPENBLAS_NUM_THREADS=4
+
+matrix:
+  include:
+    # This environment tests that scikit-learn can be built against
+    # versions of numpy, scipy with ATLAS that comes with Ubuntu Trusty 14.04
+    - env: DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.5"
+           COVERAGE=true
+      if: type != cron
+      addons:
+        apt:
+          packages:
+            # these only required by the DISTRIB="ubuntu" builds:
+            - python-scipy
+            - libatlas3gf-base
+            - libatlas-dev
     # This environment tests the oldest supported anaconda env
-    - DISTRIB="conda" PYTHON_VERSION="2.6" INSTALL_MKL="false"
-      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0"
-    # This environment tests the newest supported anaconda env
-    - DISTRIB="conda" PYTHON_VERSION="3.4" INSTALL_MKL="true"
-      NUMPY_VERSION="1.8.1" SCIPY_VERSION="0.13.3"
-install: source continuous_integration/install.sh
-script: bash continuous_integration/test_script.sh
-after_success:
-    # Ignore coveralls failures as the coveralls server is not very reliable
-    # but we don't want travis to report a failure in the github UI just
-    # because the coverage report failed to be published.
-    - if [[ "$COVERAGE" == "true" ]]; then coveralls || echo "failed"; fi
-cache: apt
+    - env: DISTRIB="conda" PYTHON_VERSION="2.7" INSTALL_MKL="false"
+           NUMPY_VERSION="1.8.2" SCIPY_VERSION="0.13.3" CYTHON_VERSION="0.23.5"
+           COVERAGE=true
+      if: type != cron
+    # This environment tests the newest supported Anaconda release (5.0.0)
+    # It also runs tests requiring Pandas.
+    - env: DISTRIB="conda" PYTHON_VERSION="3.6.2" INSTALL_MKL="true"
+           NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1" PANDAS_VERSION="0.20.3"
+           CYTHON_VERSION="0.26.1" COVERAGE=true
+           CHECK_PYTEST_SOFT_DEPENDENCY="true"
+      if: type != cron
+    # flake8 linting on diff wrt common ancestor with upstream/master
+    - env: RUN_FLAKE8="true" SKIP_TESTS="true"
+           DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
+           NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
+           CYTHON_VERSION="0.26.1"
+      if: type != cron
+    # This environment tests scikit-learn against numpy and scipy master
+    # installed from their CI wheels in a virtualenv with the Python
+    # interpreter provided by travis.
+    -  python: 3.6
+       env: DISTRIB="scipy-dev-wheels"
+       if: type = cron
+
+install: source build_tools/travis/install.sh
+script: bash build_tools/travis/test_script.sh
+after_success: source build_tools/travis/after_success.sh
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/4ffabb4df010b70cd624
+    on_success: change  # options: [always|never|change] default: always
+    on_failure: always  # options: [always|never|change] default: always
+    on_start: never     # options: [always|never|change] default: always

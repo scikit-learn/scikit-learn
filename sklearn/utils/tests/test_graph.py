@@ -4,9 +4,11 @@
 import numpy as np
 from scipy import sparse
 
-from ..graph import graph_laplacian
+from sklearn.utils.graph import graph_laplacian
+from sklearn.utils.testing import ignore_warnings
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_graph_laplacian():
     for mat in (np.arange(10) * np.arange(10)[:, np.newaxis],
                 np.ones((7, 7)),

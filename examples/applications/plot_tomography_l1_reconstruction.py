@@ -56,8 +56,7 @@ def _weights(x, dx=1, orig=0):
 
 
 def _generate_center_coordinates(l_x):
-    l_x = float(l_x)
-    X, Y = np.mgrid[:l_x, :l_x]
+    X, Y = np.mgrid[:l_x, :l_x].astype(np.float64)
     center = l_x / 2.
     X += 0.5 - center
     Y += 0.5 - center
@@ -100,15 +99,15 @@ def build_projection_operator(l_x, n_dir):
 def generate_synthetic_data():
     """ Synthetic binary data """
     rs = np.random.RandomState(0)
-    n_pts = 36.
+    n_pts = 36
     x, y = np.ogrid[0:l, 0:l]
-    mask_outer = (x - l / 2) ** 2 + (y - l / 2) ** 2 < (l / 2) ** 2
+    mask_outer = (x - l / 2.) ** 2 + (y - l / 2.) ** 2 < (l / 2.) ** 2
     mask = np.zeros((l, l))
     points = l * rs.rand(2, n_pts)
     mask[(points[0]).astype(np.int), (points[1]).astype(np.int)] = 1
     mask = ndimage.gaussian_filter(mask, sigma=l / n_pts)
     res = np.logical_and(mask > mask.mean(), mask_outer)
-    return res - ndimage.binary_erosion(res)
+    return np.logical_xor(res, ndimage.binary_erosion(res))
 
 
 # Generate synthetic images, and projections

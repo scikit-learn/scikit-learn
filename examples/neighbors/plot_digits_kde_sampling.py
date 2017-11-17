@@ -16,11 +16,10 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import load_digits
 from sklearn.neighbors import KernelDensity
 from sklearn.decomposition import PCA
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 
 # load the data
 digits = load_digits()
-data = digits.data
 
 # project the 64-dimensional data to a lower dimension
 pca = PCA(n_components=15, whiten=False)

@@ -7,14 +7,19 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 import warnings
 from sklearn.base import BaseEstimator
-from sklearn.learning_curve import learning_curve, validation_curve
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_false
 from sklearn.datasets import make_classification
-from sklearn.cross_validation import KFold
+
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    from sklearn.learning_curve import learning_curve, validation_curve
+    from sklearn.cross_validation import KFold
+
 from sklearn.linear_model import PassiveAggressiveClassifier
 
 
@@ -47,8 +52,8 @@ class MockImprovingEstimator(BaseEstimator):
 class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     """Dummy classifier that provides partial_fit"""
     def __init__(self, n_max_train_sizes):
-        super(MockIncrementalImprovingEstimator, self).__init__(
-              n_max_train_sizes)
+        super(MockIncrementalImprovingEstimator,
+              self).__init__(n_max_train_sizes)
         self.x = None
 
     def _is_training_data(self, X):
@@ -80,6 +85,27 @@ class MockEstimatorWithParameter(BaseEstimator):
         return X is self.X_subset
 
 
+class MockEstimatorFailing(BaseEstimator):
+    """Dummy classifier to test error_score in learning curve"""
+    def fit(self, X_subset, y_subset):
+        raise ValueError()
+
+    def score(self, X=None, y=None):
+        return None
+
+
+class MockEstimatorWithSingleFitCallAllowed(MockEstimatorWithParameter):
+    """Dummy classifier that disallows repeated calls of fit method"""
+
+    def fit(self, X_subset, y_subset):
+        assert_false(
+            hasattr(self, 'fit_called_'),
+            'fit is called the second time'
+        )
+        self.fit_called_ = True
+        return super(type(self), self).fit(X_subset, y_subset)
+
+
 def test_learning_curve():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
@@ -89,7 +115,7 @@ def test_learning_curve():
         train_sizes, train_scores, test_scores = learning_curve(
             estimator, X, y, cv=3, train_sizes=np.linspace(0.1, 1.0, 10))
     if len(w) > 0:
-      raise RuntimeError("Unexpected warning: %r" % w[0].message)
+        raise RuntimeError("Unexpected warning: %r" % w[0].message)
     assert_equal(train_scores.shape, (10, 3))
     assert_equal(test_scores.shape, (10, 3))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
@@ -130,6 +156,24 @@ def test_learning_curve_verbose():
         sys.stdout = old_stdout
 
     assert("[learning_curve]" in out)
+
+
+def test_learning_curve_error_score():
+    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    estimator = MockEstimatorFailing()
+    _, _, test_scores = learning_curve(estimator, X, y, cv=3, error_score=0)
+    all_zeros = not np.any(test_scores)
+    assert(all_zeros)
+
+
+def test_learning_curve_error_score_default_raise():
+    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    estimator = MockEstimatorFailing()
+    assert_raises(ValueError, learning_curve, estimator, X, y, cv=3)
 
 
 def test_learning_curve_incremental_learning_not_possible():
@@ -177,7 +221,8 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     train_sizes = np.linspace(0.2, 1.0, 5)
-    estimator = PassiveAggressiveClassifier(n_iter=1, shuffle=False)
+    estimator = PassiveAggressiveClassifier(max_iter=1, tol=None,
+                                            shuffle=False)
 
     train_sizes_inc, train_scores_inc, test_scores_inc = \
         learning_curve(
@@ -228,7 +273,7 @@ def test_learning_curve_with_boolean_indices():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    cv = KFold(n=30, n_folds=3, indices=False)
+    cv = KFold(n=30, n_folds=3)
     train_sizes, train_scores, test_scores = learning_curve(
         estimator, X, y, cv=cv, train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
@@ -245,10 +290,23 @@ def test_validation_curve():
     param_range = np.linspace(0, 1, 10)
     with warnings.catch_warnings(record=True) as w:
         train_scores, test_scores = validation_curve(
-          MockEstimatorWithParameter(), X, y, param_name="param",
-          param_range=param_range, cv=2)
+            MockEstimatorWithParameter(), X, y, param_name="param",
+            param_range=param_range, cv=2
+        )
     if len(w) > 0:
-      raise RuntimeError("Unexpected warning: %r" % w[0].message)
+        raise RuntimeError("Unexpected warning: %r" % w[0].message)
 
     assert_array_almost_equal(train_scores.mean(axis=1), param_range)
     assert_array_almost_equal(test_scores.mean(axis=1), 1 - param_range)
+
+
+def test_validation_curve_clone_estimator():
+    X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+
+    param_range = np.linspace(1, 0, 10)
+    _, _ = validation_curve(
+        MockEstimatorWithSingleFitCallAllowed(), X, y,
+        param_name="param", param_range=param_range, cv=2
+    )

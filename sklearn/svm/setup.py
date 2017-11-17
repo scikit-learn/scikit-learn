@@ -2,14 +2,11 @@ import os
 from os.path import join
 import numpy
 
-import warnings
-
 from sklearn._build_utils import get_blas_info
 
 
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
-    from numpy.distutils.system_info import get_info, BlasNotFoundError
 
     config = Configuration('svm', parent_package, top_path)
 
@@ -27,7 +24,7 @@ def configuration(parent_package='', top_path=None):
                        extra_link_args=['-lstdc++'],
                        )
 
-    libsvm_sources = ['libsvm.c']
+    libsvm_sources = ['libsvm.pyx']
     libsvm_depends = [join('src', 'libsvm', 'libsvm_helper.c'),
                       join('src', 'libsvm', 'libsvm_template.cpp'),
                       join('src', 'libsvm', 'svm.cpp'),
@@ -41,12 +38,12 @@ def configuration(parent_package='', top_path=None):
                          depends=libsvm_depends,
                          )
 
-    ### liblinear module
+    # liblinear module
     cblas_libs, blas_info = get_blas_info()
     if os.name == 'posix':
         cblas_libs.append('m')
 
-    liblinear_sources = ['liblinear.c',
+    liblinear_sources = ['liblinear.pyx',
                          join('src', 'liblinear', '*.cpp')]
 
     liblinear_depends = [join('src', 'liblinear', '*.h'),
@@ -64,10 +61,10 @@ def configuration(parent_package='', top_path=None):
                          # extra_compile_args=['-O0 -fno-inline'],
                          ** blas_info)
 
-    ## end liblinear module
+    # end liblinear module
 
     # this should go *after* libsvm-skl
-    libsvm_sparse_sources = ['libsvm_sparse.c']
+    libsvm_sparse_sources = ['libsvm_sparse.pyx']
     config.add_extension('libsvm_sparse', libraries=['libsvm-skl'],
                          sources=libsvm_sparse_sources,
                          include_dirs=[numpy.get_include(),

@@ -2,9 +2,12 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 
-from ..utils import check_random_state, array2d
+from ..utils import check_random_state, check_array
+from ..utils.validation import check_is_fitted
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from .dict_learning import dict_learning, dict_learning_online
@@ -16,6 +19,8 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     Finds the set of sparse components that can optimally reconstruct
     the data.  The amount of sparseness is controllable by the coefficient
     of the L1 penalty, given by the parameter alpha.
+
+    Read more in the :ref:`User Guide <SparsePCA>`.
 
     Parameters
     ----------
@@ -52,19 +57,25 @@ class SparsePCA(BaseEstimator, TransformerMixin):
     V_init : array of shape (n_components, n_features),
         Initial values for the components for warm restart scenarios.
 
-    verbose :
-        Degree of verbosity of the printed output.
+    verbose : int
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         Sparse components extracted from the data.
 
-    `error_` : array
+    error_ : array
         Vector of errors at each iteration.
+
+    n_iter_ : int
+        Number of iterations run.
 
     See also
     --------
@@ -92,9 +103,11 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------
@@ -102,25 +115,29 @@ class SparsePCA(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = array2d(X)
+        X = check_array(X)
         if self.n_components is None:
             n_components = X.shape[1]
         else:
             n_components = self.n_components
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
-        Vt, _, E = dict_learning(X.T, n_components, self.alpha,
-                                 tol=self.tol, max_iter=self.max_iter,
-                                 method=self.method, n_jobs=self.n_jobs,
-                                 verbose=self.verbose,
-                                 random_state=random_state,
-                                 code_init=code_init,
-                                 dict_init=dict_init)
+        Vt, _, E, self.n_iter_ = dict_learning(X.T, n_components, self.alpha,
+                                               tol=self.tol,
+                                               max_iter=self.max_iter,
+                                               method=self.method,
+                                               n_jobs=self.n_jobs,
+                                               verbose=self.verbose,
+                                               random_state=random_state,
+                                               code_init=code_init,
+                                               dict_init=dict_init,
+                                               return_n_iter=True
+                                               )
         self.components_ = Vt.T
         self.error_ = E
         return self
 
-    def transform(self, X, ridge_alpha=None):
+    def transform(self, X, ridge_alpha='deprecated'):
         """Least Squares projection of the data onto the sparse components.
 
         To avoid instability issues in case the system is under-determined,
@@ -132,22 +149,37 @@ class SparsePCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array of shape (n_samples, n_features)
+        X : array of shape (n_samples, n_features)
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
-        ridge_alpha: float, default: 0.01
+        ridge_alpha : float, default: 0.01
             Amount of ridge shrinkage to apply in order to improve
             conditioning.
+
+            .. deprecated:: 0.19
+               This parameter will be removed in 0.21.
+               Specify ``ridge_alpha`` in the ``SparsePCA`` constructor.
 
         Returns
         -------
         X_new array, shape (n_samples, n_components)
             Transformed data.
         """
-        ridge_alpha = self.ridge_alpha if ridge_alpha is None else ridge_alpha
+        check_is_fitted(self, 'components_')
+
+        X = check_array(X)
+        if ridge_alpha != 'deprecated':
+            warnings.warn("The ridge_alpha parameter on transform() is "
+                          "deprecated since 0.19 and will be removed in 0.21. "
+                          "Specify ridge_alpha in the SparsePCA constructor.",
+                          DeprecationWarning)
+            if ridge_alpha is None:
+                ridge_alpha = self.ridge_alpha
+        else:
+            ridge_alpha = self.ridge_alpha
         U = ridge_regression(self.components_.T, X.T, ridge_alpha,
-                             solver='dense_cholesky')
+                             solver='cholesky')
         s = np.sqrt((U ** 2).sum(axis=0))
         s[s == 0] = 1
         U /= s
@@ -160,6 +192,8 @@ class MiniBatchSparsePCA(SparsePCA):
     Finds the set of sparse components that can optimally reconstruct
     the data.  The amount of sparseness is controllable by the coefficient
     of the L1 penalty, given by the parameter alpha.
+
+    Read more in the :ref:`User Guide <SparsePCA>`.
 
     Parameters
     ----------
@@ -177,14 +211,14 @@ class MiniBatchSparsePCA(SparsePCA):
     n_iter : int,
         number of iterations to perform for each mini batch
 
-    callback : callable,
+    callback : callable or None, optional (default: None)
         callable that gets invoked every five iterations
 
     batch_size : int,
         the number of features to take in each mini batch
 
-    verbose :
-        degree of output the procedure will print
+    verbose : int
+        Controls the verbosity; the higher, the more messages. Defaults to 0.
 
     shuffle : boolean,
         whether to shuffle the data before splitting it in batches
@@ -199,16 +233,22 @@ class MiniBatchSparsePCA(SparsePCA):
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Attributes
     ----------
-    `components_` : array, [n_components, n_features]
+    components_ : array, [n_components, n_features]
         Sparse components extracted from the data.
 
-    `error_` : array
+    error_ : array
         Vector of errors at each iteration.
+
+    n_iter_ : int
+        Number of iterations run.
 
     See also
     --------
@@ -219,27 +259,25 @@ class MiniBatchSparsePCA(SparsePCA):
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
                  shuffle=True, n_jobs=1, method='lars', random_state=None):
-
-        self.n_components = n_components
-        self.alpha = alpha
-        self.ridge_alpha = ridge_alpha
+        super(MiniBatchSparsePCA, self).__init__(
+            n_components=n_components, alpha=alpha, verbose=verbose,
+            ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
+            random_state=random_state)
         self.n_iter = n_iter
         self.callback = callback
         self.batch_size = batch_size
-        self.verbose = verbose
         self.shuffle = shuffle
-        self.n_jobs = n_jobs
-        self.method = method
-        self.random_state = random_state
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
+
+        y : Ignored
 
         Returns
         -------
@@ -247,18 +285,20 @@ class MiniBatchSparsePCA(SparsePCA):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = array2d(X)
+        X = check_array(X)
         if self.n_components is None:
             n_components = X.shape[1]
         else:
             n_components = self.n_components
-        Vt, _ = dict_learning_online(X.T, n_components, alpha=self.alpha,
-                                     n_iter=self.n_iter, return_code=True,
-                                     dict_init=None, verbose=self.verbose,
-                                     callback=self.callback,
-                                     batch_size=self.batch_size,
-                                     shuffle=self.shuffle,
-                                     n_jobs=self.n_jobs, method=self.method,
-                                     random_state=random_state)
+        Vt, _, self.n_iter_ = dict_learning_online(
+            X.T, n_components, alpha=self.alpha,
+            n_iter=self.n_iter, return_code=True,
+            dict_init=None, verbose=self.verbose,
+            callback=self.callback,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            n_jobs=self.n_jobs, method=self.method,
+            random_state=random_state,
+            return_n_iter=True)
         self.components_ = Vt.T
         return self

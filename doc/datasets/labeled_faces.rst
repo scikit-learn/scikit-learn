@@ -29,11 +29,11 @@ Usage
 
 ``scikit-learn`` provides two loaders that will automatically download,
 cache, parse the metadata files, decode the jpeg and convert the
-interesting slices into memmaped numpy arrays. This dataset size is more
+interesting slices into memmapped numpy arrays. This dataset size is more
 than 200 MB. The first load typically takes more than a couple of minutes
 to fully decode the relevant part of the JPEG files into numpy arrays. If
 the dataset has  been loaded once, the following times the loading times
-less than 200ms by using a memmaped version memoized on the disk in the
+less than 200ms by using a memmapped version memoized on the disk in the
 ``~/scikit_learn_data/lfw_home/`` folder using ``joblib``.
 
 The first loader is used for the Face Identification task: a multi-class
@@ -92,15 +92,16 @@ is a pair of two picture belonging or not to the same person::
   >>> lfw_pairs_train.target.shape
   (2200,)
 
-Both for the ``fetch_lfw_people`` and ``fetch_lfw_pairs`` function it is
+Both for the :func:`sklearn.datasets.fetch_lfw_people` and
+:func:`sklearn.datasets.fetch_lfw_pairs` function it is
 possible to get an additional dimension with the RGB color channels by
 passing ``color=True``, in that case the shape will be
 ``(2200, 2, 62, 47, 3)``.
 
-The ``fetch_lfw_pairs`` datasets is subdivided into 3 subsets: the development
-``train`` set, the development ``test`` set and an evaluation ``10_folds``
-set meant to compute performance metrics using a 10-folds cross
-validation scheme.
+The :func:`sklearn.datasets.fetch_lfw_pairs` datasets is subdivided into
+3 subsets: the development ``train`` set, the development ``test`` set and
+an evaluation ``10_folds`` set meant to compute performance metrics using a
+10-folds cross validation scheme.
 
 .. topic:: References:
 
@@ -114,4 +115,4 @@ validation scheme.
 Examples
 --------
 
-:ref:`example_applications_face_recognition.py`
+:ref:`sphx_glr_auto_examples_applications_plot_face_recognition.py`

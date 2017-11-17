@@ -15,7 +15,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.datasets import load_files
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn import metrics
 
 
@@ -28,7 +28,7 @@ docs_train, docs_test, y_train, y_test = train_test_split(
     dataset.data, dataset.target, test_size=0.5)
 
 
-# TASK: Build a an vectorizer that splits strings into sequence of 1 to 3
+# TASK: Build a vectorizer that splits strings into sequence of 1 to 3
 # characters instead of word tokens
 vectorizer = TfidfVectorizer(ngram_range=(1, 3), analyzer='char',
                              use_idf=False)
@@ -37,7 +37,7 @@ vectorizer = TfidfVectorizer(ngram_range=(1, 3), analyzer='char',
 # the pipeline instance should stored in a variable named clf
 clf = Pipeline([
     ('vec', vectorizer),
-    ('clf', Perceptron()),
+    ('clf', Perceptron(tol=1e-3)),
 ])
 
 # TASK: Fit the pipeline on the training set
@@ -54,9 +54,9 @@ print(metrics.classification_report(y_test, y_predicted,
 cm = metrics.confusion_matrix(y_test, y_predicted)
 print(cm)
 
-#import pylab as pl
-#pl.matshow(cm, cmap=pl.cm.jet)
-#pl.show()
+#import matlotlib.pyplot as plt
+#plt.matshow(cm, cmap=plt.cm.jet)
+#plt.show()
 
 # Predict the result on some short new sentences:
 sentences = [

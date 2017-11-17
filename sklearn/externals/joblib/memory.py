@@ -15,28 +15,34 @@ import shutil
 import time
 import pydoc
 import re
-import sys
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 import functools
 import traceback
 import warnings
 import inspect
 import json
 import weakref
+import io
+import operator
+import collections
+import datetime
+import threading
 
 # Local imports
 from . import hashing
 from .func_inspect import get_func_code, get_func_name, filter_args
-from .func_inspect import format_signature, format_call
+from .func_inspect import format_call
+from .func_inspect import format_signature
+from ._memory_helpers import open_py_source
 from .logger import Logger, format_time, pformat
 from . import numpy_pickle
-from .disk import mkdirp, rm_subdirs
-from ._compat import _basestring
+from .disk import mkdirp, rm_subdirs, memstr_to_bytes
+from ._compat import _basestring, PY3_OR_LATER
+from .backports import concurrency_safe_rename
 
 FIRST_LINE_TEXT = "# first line:"
+
+CacheItemInfo = collections.namedtuple('CacheItemInfo',
+                                       'path size last_access')
 
 # TODO: The following object should have a data store object as a sub
 # object, and the interface to persist and query should be separated in
@@ -95,7 +101,7 @@ def _cache_key_to_dir(cachedir, func, argument_hash):
     return os.path.join(*parts)
 
 
-def _load_output(output_dir, func, timestamp=None, metadata=None,
+def _load_output(output_dir, func_name, timestamp=None, metadata=None,
                  mmap_mode=None, verbose=0):
     """Load output of a computation."""
     if verbose > 1:
@@ -105,10 +111,10 @@ def _load_output(output_dir, func, timestamp=None, metadata=None,
                 args = ", ".join(['%s=%s' % (name, value)
                                   for name, value
                                   in metadata['input_args'].items()])
-                signature = "%s(%s)" % (os.path.basename(func),
+                signature = "%s(%s)" % (os.path.basename(func_name),
                                              args)
             else:
-                signature = os.path.basename(func)
+                signature = os.path.basename(func_name)
         except KeyError:
             pass
 
@@ -128,7 +134,82 @@ def _load_output(output_dir, func, timestamp=None, metadata=None,
         raise KeyError(
             "Non-existing cache value (may have been cleared).\n"
             "File %s does not exist" % filename)
-    return numpy_pickle.load(filename, mmap_mode=mmap_mode)
+    result = numpy_pickle.load(filename, mmap_mode=mmap_mode)
+
+    return result
+
+
+def _get_cache_items(root_path):
+    """Get cache information for reducing the size of the cache."""
+    cache_items = []
+
+    for dirpath, dirnames, filenames in os.walk(root_path):
+        is_cache_hash_dir = re.match('[a-f0-9]{32}', os.path.basename(dirpath))
+
+        if is_cache_hash_dir:
+            output_filename = os.path.join(dirpath, 'output.pkl')
+            try:
+                last_access = os.path.getatime(output_filename)
+            except OSError:
+                try:
+                    last_access = os.path.getatime(dirpath)
+                except OSError:
+                    # The directory has already been deleted
+                    continue
+
+            last_access = datetime.datetime.fromtimestamp(last_access)
+            try:
+                full_filenames = [os.path.join(dirpath, fn)
+                                  for fn in filenames]
+                dirsize = sum(os.path.getsize(fn)
+                              for fn in full_filenames)
+            except OSError:
+                # Either output_filename or one of the files in
+                # dirpath does not exist any more. We assume this
+                # directory is being cleaned by another process already
+                continue
+
+            cache_items.append(CacheItemInfo(dirpath, dirsize, last_access))
+
+    return cache_items
+
+
+def _get_cache_items_to_delete(root_path, bytes_limit):
+    """Get cache items to delete to keep the cache under a size limit."""
+    if isinstance(bytes_limit, _basestring):
+        bytes_limit = memstr_to_bytes(bytes_limit)
+
+    cache_items = _get_cache_items(root_path)
+    cache_size = sum(item.size for item in cache_items)
+
+    to_delete_size = cache_size - bytes_limit
+    if to_delete_size < 0:
+        return []
+
+    # We want to delete first the cache items that were accessed a
+    # long time ago
+    cache_items.sort(key=operator.attrgetter('last_access'))
+
+    cache_items_to_delete = []
+    size_so_far = 0
+
+    for item in cache_items:
+        if size_so_far > to_delete_size:
+            break
+
+        cache_items_to_delete.append(item)
+        size_so_far += item.size
+
+    return cache_items_to_delete
+
+
+def concurrency_safe_write(to_write, filename, write_func):
+    """Writes an object into a file in a concurrency-safe way."""
+    thread_id = id(threading.current_thread())
+    temporary_filename = '{}.thread-{}-pid-{}'.format(
+        filename, thread_id, os.getpid())
+    write_func(to_write, temporary_filename)
+    concurrency_safe_rename(temporary_filename, filename)
 
 
 # An in-memory store to avoid looking at the disk-based function
@@ -197,7 +278,7 @@ class MemorizedResult(Logger):
 
     def get(self):
         """Read value from cache and return it."""
-        return _load_output(self._output_dir, self.func,
+        return _load_output(self._output_dir, _get_func_fullname(self.func),
                             timestamp=self.timestamp,
                             metadata=self.metadata, mmap_mode=self.mmap_mode,
                             verbose=self.verbose)
@@ -417,9 +498,10 @@ class MemorizedFunc(Logger):
         # function code has changed
         output_dir, argument_hash = self._get_output_dir(*args, **kwargs)
         metadata = None
+        output_pickle_path = os.path.join(output_dir, 'output.pkl')
         # FIXME: The statements below should be try/excepted
         if not (self._check_previous_func_code(stacklevel=4) and
-                                 os.path.exists(output_dir)):
+                os.path.isfile(output_pickle_path)):
             if self._verbose > 10:
                 _, name = get_func_name(self.func)
                 self.warn('Computing func %s, argument hash %s in '
@@ -429,7 +511,7 @@ class MemorizedFunc(Logger):
             if self.mmap_mode is not None:
                 # Memmap the output at the first call to be consistent with
                 # later calls
-                out = _load_output(output_dir, self.func,
+                out = _load_output(output_dir, _get_func_fullname(self.func),
                                    timestamp=self.timestamp,
                                    mmap_mode=self.mmap_mode,
                                    verbose=self._verbose)
@@ -447,11 +529,10 @@ class MemorizedFunc(Logger):
                     print(max(0, (80 - len(msg))) * '_' + msg)
             except Exception:
                 # XXX: Should use an exception logger
+                _, signature = format_signature(self.func, *args, **kwargs)
                 self.warn('Exception while loading results for '
-                          '(args=%s, kwargs=%s)\n %s' %
-                          (args, kwargs, traceback.format_exc()))
-
-                shutil.rmtree(output_dir, ignore_errors=True)
+                          '{}\n {}'.format(
+                              signature, traceback.format_exc()))
                 out, metadata = self.call(*args, **kwargs)
                 argument_hash = None
         return (out, argument_hash, metadata)
@@ -487,16 +568,6 @@ class MemorizedFunc(Logger):
         """
         return (self.__class__, (self.func, self.cachedir, self.ignore,
                 self.mmap_mode, self.compress, self._verbose))
-
-    def format_signature(self, *args, **kwargs):
-        warnings.warn("MemorizedFunc.format_signature will be removed in a "
-                      "future version of joblib.", DeprecationWarning)
-        return format_signature(self.func, *args, **kwargs)
-
-    def format_call(self, *args, **kwargs):
-        warnings.warn("MemorizedFunc.format_call will be removed in a "
-                      "future version of joblib.", DeprecationWarning)
-        return format_call(self.func, args, kwargs)
 
     #-------------------------------------------------------------------------
     # Private interface
@@ -540,12 +611,12 @@ class MemorizedFunc(Logger):
         # sometimes have several functions named the same way in a
         # file. This is bad practice, but joblib should be robust to bad
         # practice.
-        func_code = '%s %i\n%s' % (FIRST_LINE_TEXT, first_line, func_code)
-        with open(filename, 'w') as out:
+        func_code = u'%s %i\n%s' % (FIRST_LINE_TEXT, first_line, func_code)
+        with io.open(filename, 'w', encoding="UTF-8") as out:
             out.write(func_code)
         # Also store in the in-memory store of function hashes
         is_named_callable = False
-        if sys.version_info[0] > 2:
+        if PY3_OR_LATER:
             is_named_callable = (hasattr(self.func, '__name__')
                                  and self.func.__name__ != '<lambda>')
         else:
@@ -590,7 +661,7 @@ class MemorizedFunc(Logger):
         func_code_file = os.path.join(func_dir, 'func_code.py')
 
         try:
-            with open(func_code_file) as infile:
+            with io.open(func_code_file, encoding="UTF-8") as infile:
                 old_func_code, old_first_line = \
                             extract_first_line(infile.read())
         except IOError:
@@ -624,7 +695,7 @@ class MemorizedFunc(Logger):
             if os.path.exists(source_file):
                 _, func_name = get_func_name(self.func, resolv_alias=False)
                 num_lines = len(func_code.split('\n'))
-                with open(source_file) as f:
+                with open_py_source(source_file) as f:
                     on_disk_func_code = f.readlines()[
                         old_first_line - 1:old_first_line - 1 + num_lines - 1]
                 on_disk_func_code = ''.join(on_disk_func_code)
@@ -686,9 +757,11 @@ class MemorizedFunc(Logger):
         """ Persist the given output tuple in the directory.
         """
         try:
-            mkdirp(dir)
             filename = os.path.join(dir, 'output.pkl')
-            numpy_pickle.dump(output, filename, compress=self.compress)
+            mkdirp(dir)
+            write_func = functools.partial(numpy_pickle.dump,
+                                           compress=self.compress)
+            concurrency_safe_write(output, filename, write_func)
             if self._verbose > 10:
                 print('Persisting in %s' % dir)
         except OSError:
@@ -722,9 +795,14 @@ class MemorizedFunc(Logger):
         metadata = {"duration": duration, "input_args": input_repr}
         try:
             mkdirp(output_dir)
-            with open(os.path.join(output_dir, 'metadata.json'), 'w') as f:
-                json.dump(metadata, f)
-        except:
+            filename = os.path.join(output_dir, 'metadata.json')
+
+            def write_func(output, dest_filename):
+                with open(dest_filename, 'w') as f:
+                    json.dump(output, f)
+
+            concurrency_safe_write(metadata, filename, write_func)
+        except Exception:
             pass
 
         this_duration = time.time() - start_time
@@ -748,19 +826,8 @@ class MemorizedFunc(Logger):
                           % this_duration, stacklevel=5)
         return metadata
 
-    def load_output(self, output_dir):
-        """ Read the results of a previous calculation from the directory
-            it was cached in.
-        """
-        warnings.warn("MemorizedFunc.load_output is deprecated and will be "
-                      "removed in a future version\n"
-                      "of joblib. A MemorizedResult provides similar features",
-                      DeprecationWarning)
-        # No metadata available here.
-        return _load_output(output_dir, self.func, timestamp=self.timestamp,
-                            mmap_mode=self.mmap_mode, verbose=self._verbose)
-
     # XXX: Need a method to check if results are available.
+
 
     #-------------------------------------------------------------------------
     # Private `object` interface
@@ -790,7 +857,8 @@ class Memory(Logger):
     # Public interface
     #-------------------------------------------------------------------------
 
-    def __init__(self, cachedir, mmap_mode=None, compress=False, verbose=1):
+    def __init__(self, cachedir, mmap_mode=None, compress=False, verbose=1,
+                 bytes_limit=None):
         """
             Parameters
             ----------
@@ -810,6 +878,8 @@ class Memory(Logger):
             verbose: int, optional
                 Verbosity flag, controls the debug messages that are issued
                 as functions are evaluated.
+            bytes_limit: int, optional
+                Limit in bytes of the size of the cache
         """
         # XXX: Bad explanation of the None value of cachedir
         Logger.__init__(self)
@@ -817,6 +887,7 @@ class Memory(Logger):
         self.mmap_mode = mmap_mode
         self.timestamp = time.time()
         self.compress = compress
+        self.bytes_limit = bytes_limit
         if compress and mmap_mode is not None:
             warnings.warn('Compressed results cannot be memmapped',
                           stacklevel=2)
@@ -878,7 +949,26 @@ class Memory(Logger):
         """
         if warn:
             self.warn('Flushing completely the cache')
-        rm_subdirs(self.cachedir)
+        if self.cachedir is not None:
+            rm_subdirs(self.cachedir)
+
+    def reduce_size(self):
+        """Remove cache folders to make cache size fit in ``bytes_limit``."""
+        if self.cachedir is not None and self.bytes_limit is not None:
+            cache_items_to_delete = _get_cache_items_to_delete(
+                self.cachedir, self.bytes_limit)
+
+            for cache_item in cache_items_to_delete:
+                if self._verbose > 10:
+                    print('Deleting cache item {}'.format(cache_item))
+                try:
+                    shutil.rmtree(cache_item.path, ignore_errors=True)
+                except OSError:
+                    # Even with ignore_errors=True can shutil.rmtree
+                    # can raise OSErrror with [Errno 116] Stale file
+                    # handle if another process has deleted the folder
+                    # already.
+                    pass
 
     def eval(self, func, *args, **kwargs):
         """ Eval function func with arguments `*args` and `**kwargs`,

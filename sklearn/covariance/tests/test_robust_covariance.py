@@ -4,15 +4,20 @@
 #
 # License: BSD 3 clause
 
+import itertools
+
 import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
+from sklearn.exceptions import NotFittedError
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, MinCovDet, \
     EllipticEnvelope
+from sklearn.covariance import fast_mcd
 
 X = datasets.load_iris().data
 X_1d = X[:, 0]
@@ -20,10 +25,8 @@ n_samples, n_features = X.shape
 
 
 def test_mcd():
-    """Tests the FastMCD algorithm implementation
-
-    """
-    ### Small data set
+    # Tests the FastMCD algorithm implementation
+    # Small data set
     # test without outliers (random independent normal data)
     launch_mcd_on_dataset(100, 5, 0, 0.01, 0.1, 80)
     # test with a contaminated data set (medium contamination)
@@ -31,14 +34,27 @@ def test_mcd():
     # test with a contaminated data set (strong contamination)
     launch_mcd_on_dataset(100, 5, 40, 0.1, 0.1, 50)
 
-    ### Medium data set
+    # Medium data set
     launch_mcd_on_dataset(1000, 5, 450, 0.1, 0.1, 540)
 
-    ### Large data set
+    # Large data set
     launch_mcd_on_dataset(1700, 5, 800, 0.1, 0.1, 870)
 
-    ### 1D data set
+    # 1D data set
     launch_mcd_on_dataset(500, 1, 100, 0.001, 0.001, 350)
+
+
+def test_fast_mcd_on_invalid_input():
+    X = np.arange(100)
+    assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
+                         fast_mcd, X)
+
+
+def test_mcd_class_on_invalid_input():
+    X = np.arange(100)
+    mcd = MinCovDet()
+    assert_raise_message(ValueError, 'Expected 2D array, got 1D array instead',
+                         mcd.fit, X)
 
 
 def launch_mcd_on_dataset(n_samples, n_features, n_outliers, tol_loc, tol_cov,
@@ -78,13 +94,57 @@ def test_mcd_issue1127():
     mcd.fit(X)
 
 
+def test_mcd_issue3367():
+    # Check that MCD completes when the covariance matrix is singular
+    # i.e. one of the rows and columns are all zeros
+    rand_gen = np.random.RandomState(0)
+
+    # Think of these as the values for X and Y -> 10 values between -5 and 5
+    data_values = np.linspace(-5, 5, 10).tolist()
+    # Get the cartesian product of all possible coordinate pairs from above set
+    data = np.array(list(itertools.product(data_values, data_values)))
+
+    # Add a third column that's all zeros to make our data a set of point
+    # within a plane, which means that the covariance matrix will be singular
+    data = np.hstack((data, np.zeros((data.shape[0], 1))))
+
+    # The below line of code should raise an exception if the covariance matrix
+    # is singular. As a further test, since we have points in XYZ, the
+    # principle components (Eigenvectors) of these directly relate to the
+    # geometry of the points. Since it's a plane, we should be able to test
+    # that the Eigenvector that corresponds to the smallest Eigenvalue is the
+    # plane normal, specifically [0, 0, 1], since everything is in the XY plane
+    # (as I've set it up above). To do this one would start by:
+    #
+    #     evals, evecs = np.linalg.eigh(mcd_fit.covariance_)
+    #     normal = evecs[:, np.argmin(evals)]
+    #
+    # After which we need to assert that our `normal` is equal to [0, 0, 1].
+    # Do note that there is floating point error associated with this, so it's
+    # best to subtract the two and then compare some small tolerance (e.g.
+    # 1e-12).
+    MinCovDet(random_state=rand_gen).fit(data)
+
+
+def test_mcd_support_covariance_is_zero():
+    # Check that MCD returns a ValueError with informative message when the
+    # covariance of the support data is equal to 0.
+    X_1 = np.array([0.5, 0.1, 0.1, 0.1, 0.957, 0.1, 0.1, 0.1, 0.4285, 0.1])
+    X_1 = X_1.reshape(-1, 1)
+    X_2 = np.array([0.5, 0.3, 0.3, 0.3, 0.957, 0.3, 0.3, 0.3, 0.4285, 0.3])
+    X_2 = X_2.reshape(-1, 1)
+    msg = ('The covariance matrix of the support data is equal to 0, try to '
+           'increase support_fraction')
+    for X in [X_1, X_2]:
+        assert_raise_message(ValueError, msg, MinCovDet().fit, X)
+
+
 def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
-    print(clf.threshold)
-    assert_raises(Exception, clf.predict, X)
-    assert_raises(Exception, clf.decision_function, X)
+    assert_raises(NotFittedError, clf.predict, X)
+    assert_raises(NotFittedError, clf.decision_function, X)
     clf.fit(X)
     y_pred = clf.predict(X)
     decision = clf.decision_function(X, raw_values=True)

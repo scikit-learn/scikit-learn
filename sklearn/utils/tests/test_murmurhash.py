@@ -7,7 +7,7 @@ from sklearn.externals.six import b, u
 from sklearn.utils.murmurhash import murmurhash3_32
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-from nose.tools import assert_equal, assert_true
+from sklearn.utils.testing import assert_equal, assert_true
 
 
 def test_mmhash3_int():
@@ -69,7 +69,7 @@ def test_no_collision_on_byte_range():
 
 def test_uniform_distribution():
     n_bins, n_samples = 10, 100000
-    bins = np.zeros(n_bins, dtype=np.float)
+    bins = np.zeros(n_bins, dtype=np.float64)
 
     for i in range(n_samples):
         bins[murmurhash3_32(i, positive=True) % n_bins] += 1

@@ -10,14 +10,21 @@ The ``sklearn.preprocessing`` package provides several common
 utility functions and transformer classes to change raw feature vectors
 into a representation that is more suitable for the downstream estimators.
 
+In general, learning algorithms benefit from standardization of the data set. If
+some outliers are present in the set, robust scalers or transformers are more
+appropriate. The behaviors of the different scalers, transformers, and
+normalizers on a dataset containing marginal outliers is highlighted in
+:ref:`sphx_glr_auto_examples_preprocessing_plot_all_scaling.py`.
+
+
 .. _preprocessing_scaler:
 
 Standardization, or mean removal and variance scaling
 =====================================================
 
 **Standardization** of datasets is a **common requirement for many
-machine learning estimators** implemented in the scikit: they might behave
-badly if the individual feature do not more or less look like standard
+machine learning estimators** implemented in scikit-learn; they might behave
+badly if the individual features do not more or less look like standard
 normally distributed data: Gaussian with **zero mean and unit variance**.
 
 In practice we often ignore the shape of the distribution and just
@@ -30,7 +37,7 @@ a learning algorithm (such as the RBF kernel of Support Vector
 Machines or the l1 and l2 regularizers of linear models) assume that
 all features are centered around zero and have variance in the same
 order. If a feature has a variance that is orders of magnitude larger
-that others, it might dominate the objective function and make the
+than others, it might dominate the objective function and make the
 estimator unable to learn from other features correctly as expected.
 
 
@@ -39,10 +46,10 @@ operation on a single array-like dataset::
 
   >>> from sklearn import preprocessing
   >>> import numpy as np
-  >>> X = np.array([[ 1., -1.,  2.],
-  ...               [ 2.,  0.,  0.],
-  ...               [ 0.,  1., -1.]])
-  >>> X_scaled = preprocessing.scale(X)
+  >>> X_train = np.array([[ 1., -1.,  2.],
+  ...                     [ 2.,  0.,  0.],
+  ...                     [ 0.,  1., -1.]])
+  >>> X_scaled = preprocessing.scale(X_train)
 
   >>> X_scaled                                          # doctest: +ELLIPSIS
   array([[ 0.  ..., -1.22...,  1.33...],
@@ -71,17 +78,17 @@ able to later reapply the same transformation on the testing set.
 This class is hence suitable for use in the early steps of a
 :class:`sklearn.pipeline.Pipeline`::
 
-  >>> scaler = preprocessing.StandardScaler().fit(X)
+  >>> scaler = preprocessing.StandardScaler().fit(X_train)
   >>> scaler
   StandardScaler(copy=True, with_mean=True, with_std=True)
 
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
   array([ 1. ...,  0. ...,  0.33...])
 
-  >>> scaler.std_                                       # doctest: +ELLIPSIS
+  >>> scaler.scale_                                       # doctest: +ELLIPSIS
   array([ 0.81...,  0.81...,  1.24...])
 
-  >>> scaler.transform(X)                               # doctest: +ELLIPSIS
+  >>> scaler.transform(X_train)                           # doctest: +ELLIPSIS
   array([[ 0.  ..., -1.22...,  1.33...],
          [ 1.22...,  0.  ..., -0.26...],
          [-1.22...,  1.22..., -1.06...]])
@@ -90,7 +97,8 @@ This class is hence suitable for use in the early steps of a
 The scaler instance can then be used on new data to transform it the
 same way it did on the training set::
 
-  >>> scaler.transform([[-1.,  1., 0.]])                # doctest: +ELLIPSIS
+  >>> X_test = [[-1., 1., 0.]]
+  >>> scaler.transform(X_test)                # doctest: +ELLIPSIS
   array([[-2.44...,  1.22..., -0.26...]])
 
 It is possible to disable either centering or scaling by either
@@ -100,9 +108,12 @@ of :class:`StandardScaler`.
 
 Scaling features to a range
 ---------------------------
+
 An alternative standardization is scaling features to
-lie between a given minimum and maximum value, often between zero and one.
-This can be achieved using :class:`MinMaxScaler`.
+lie between a given minimum and maximum value, often between zero and one,
+or so that the maximum absolute value of each feature is scaled to unit size.
+This can be achieved using :class:`MinMaxScaler` or :class:`MaxAbsScaler`,
+respectively.
 
 The motivation to use this scaling include robustness to very small
 standard deviations of features and preserving zero entries in sparse data.
@@ -143,7 +154,74 @@ full formula is::
 
     X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
 
-    X_scaled = X_std / (max - min) + min
+    X_scaled = X_std * (max - min) + min
+
+:class:`MaxAbsScaler` works in a very similar fashion, but scales in a way
+that the training data lies within the range ``[-1, 1]`` by dividing through
+the largest maximum value in each feature. It is meant for data
+that is already centered at zero or sparse data.
+
+Here is how to use the toy data from the previous example with this scaler::
+
+  >>> X_train = np.array([[ 1., -1.,  2.],
+  ...                     [ 2.,  0.,  0.],
+  ...                     [ 0.,  1., -1.]])
+  ...
+  >>> max_abs_scaler = preprocessing.MaxAbsScaler()
+  >>> X_train_maxabs = max_abs_scaler.fit_transform(X_train)
+  >>> X_train_maxabs                # doctest +NORMALIZE_WHITESPACE^
+  array([[ 0.5, -1. ,  1. ],
+         [ 1. ,  0. ,  0. ],
+         [ 0. ,  1. , -0.5]])
+  >>> X_test = np.array([[ -3., -1.,  4.]])
+  >>> X_test_maxabs = max_abs_scaler.transform(X_test)
+  >>> X_test_maxabs                 # doctest: +NORMALIZE_WHITESPACE
+  array([[-1.5, -1. ,  2. ]])
+  >>> max_abs_scaler.scale_         # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+  array([ 2.,  1.,  2.])
+
+
+As with :func:`scale`, the module further provides convenience functions
+:func:`minmax_scale` and :func:`maxabs_scale` if you don't want to create
+an object.
+
+
+Scaling sparse data
+-------------------
+Centering sparse data would destroy the sparseness structure in the data, and
+thus rarely is a sensible thing to do. However, it can make sense to scale
+sparse inputs, especially if features are on different scales.
+
+:class:`MaxAbsScaler`  and :func:`maxabs_scale` were specifically designed
+for scaling sparse data, and are the recommended way to go about this.
+However, :func:`scale` and :class:`StandardScaler` can accept ``scipy.sparse``
+matrices  as input, as long as ``with_mean=False`` is explicitly passed
+to the constructor. Otherwise a ``ValueError`` will be raised as
+silently centering would break the sparsity and would often crash the
+execution by allocating excessive amounts of memory unintentionally.
+:class:`RobustScaler` cannot be fitted to sparse inputs, but you can use
+the ``transform`` method on sparse inputs.
+
+Note that the scalers accept both Compressed Sparse Rows and Compressed
+Sparse Columns format (see ``scipy.sparse.csr_matrix`` and
+``scipy.sparse.csc_matrix``). Any other sparse input will be **converted to
+the Compressed Sparse Rows representation**.  To avoid unnecessary memory
+copies, it is recommended to choose the CSR or CSC representation upstream.
+
+Finally, if the centered data is expected to be small enough, explicitly
+converting the input to an array using the ``toarray`` method of sparse matrices
+is another option.
+
+
+Scaling data with outliers
+--------------------------
+
+If your data contains many outliers, scaling using the mean and variance
+of the data is likely to not work very well. In these cases, you can use
+:func:`robust_scale` and :class:`RobustScaler` as drop-in replacements
+instead. They use more robust estimates for the center and range of your
+data.
+
 
 .. topic:: References:
 
@@ -161,29 +239,13 @@ full formula is::
   or :class:`sklearn.decomposition.RandomizedPCA` with ``whiten=True``
   to further remove the linear correlation across features.
 
-.. topic:: Sparse input
+.. topic:: Scaling a 1D array
 
-  :func:`scale` and :class:`StandardScaler` accept ``scipy.sparse`` matrices
-  as input **only when with_mean=False is explicitly passed to the
-  constructor**. Otherwise a ``ValueError`` will be raised as
-  silently centering would break the sparsity and would often crash the
-  execution by allocating excessive amounts of memory unintentionally.
+   All above functions (i.e. :func:`scale`, :func:`minmax_scale`,
+   :func:`maxabs_scale`, and :func:`robust_scale`) accept 1D array which can be
+   useful in some specific case.
 
-  If the centered data is expected to be small enough, explicitly convert
-  the input to an array using the ``toarray`` method of sparse matrices
-  instead.
-
-  For sparse input the data is **converted to the Compressed Sparse Rows
-  representation** (see ``scipy.sparse.csr_matrix``).
-  To avoid unnecessary memory copies, it is recommended to choose the CSR
-  representation upstream.
-
-.. topic:: Scaling target variables in regression
-
-    :func:`scale` and :class:`StandardScaler` work out-of-the-box with 1d arrays.
-    This is very useful for scaling the target / response variables used
-    for regression.
-
+.. _kernel_centering:
 
 Centering kernel matrices
 -------------------------
@@ -194,6 +256,70 @@ a :class:`KernelCenterer` can transform the kernel matrix
 so that it contains inner products in the feature space
 defined by :math:`phi` followed by removal of the mean in that space.
 
+.. _preprocessing_transformer:
+
+Non-linear transformation
+=========================
+
+Like scalers, :class:`QuantileTransformer` puts each feature into the same
+range or distribution. However, by performing a rank transformation, it smooths
+out unusual distributions and is less influenced by outliers than scaling
+methods. It does, however, distort correlations and distances within and across
+features.
+
+:class:`QuantileTransformer` and :func:`quantile_transform` provide a
+non-parametric transformation based on the quantile function to map the data to
+a uniform distribution with values between 0 and 1::
+
+  >>> from sklearn.datasets import load_iris
+  >>> from sklearn.model_selection import train_test_split
+  >>> iris = load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+  >>> quantile_transformer = preprocessing.QuantileTransformer(random_state=0)
+  >>> X_train_trans = quantile_transformer.fit_transform(X_train)
+  >>> X_test_trans = quantile_transformer.transform(X_test)
+  >>> np.percentile(X_train[:, 0], [0, 25, 50, 75, 100]) # doctest: +SKIP
+  array([ 4.3,  5.1,  5.8,  6.5,  7.9])
+
+This feature corresponds to the sepal length in cm. Once the quantile
+transformation applied, those landmarks approach closely the percentiles
+previously defined::
+
+  >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
+  ... # doctest: +ELLIPSIS +SKIP
+  array([ 0.00... ,  0.24...,  0.49...,  0.73...,  0.99... ])
+
+This can be confirmed on a independent testing set with similar remarks::
+
+  >>> np.percentile(X_test[:, 0], [0, 25, 50, 75, 100])
+  ... # doctest: +SKIP
+  array([ 4.4  ,  5.125,  5.75 ,  6.175,  7.3  ])
+  >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
+  ... # doctest: +ELLIPSIS +SKIP
+  array([ 0.01...,  0.25...,  0.46...,  0.60... ,  0.94...])
+
+It is also possible to map the transformed data to a normal distribution by
+setting ``output_distribution='normal'``::
+
+  >>> quantile_transformer = preprocessing.QuantileTransformer(
+  ...     output_distribution='normal', random_state=0)
+  >>> X_trans = quantile_transformer.fit_transform(X)
+  >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+  array([[ 4.3...,   2...,     1...,     0.1...],
+         [ 4.31...,  2.02...,  1.01...,  0.1...],
+         [ 4.32...,  2.05...,  1.02...,  0.1...],
+         ...,
+         [ 7.84...,  4.34...,  6.84...,  2.5...],
+         [ 7.87...,  4.37...,  6.87...,  2.5...],
+         [ 7.9...,   4.4...,   6.9...,   2.5...]])
+
+Thus the median of the input becomes the mean of the output, centered at 0. The
+normal output is clipped so that the input's minimum and maximum ---
+corresponding to the 1e-7 and 1 - 1e-7 quantiles respectively --- do not
+become infinite under the transformation.
+
+.. _preprocessing_normalization:
 
 Normalization
 =============
@@ -204,7 +330,7 @@ such as the dot-product or any other kernel to quantify the similarity
 of any pair of samples.
 
 This assumption is the base of the `Vector Space Model
-<http://en.wikipedia.org/wiki/Vector_Space_Model>`_ often used in text
+<https://en.wikipedia.org/wiki/Vector_Space_Model>`_ often used in text
 classification and clustering contexts.
 
 The function :func:`normalize` provides a quick and easy way to perform this
@@ -255,6 +381,7 @@ The normalizer instance can then be used on sample vectors as any transformer::
   efficient Cython routines. To avoid unnecessary memory copies, it is
   recommended to choose the CSR representation upstream.
 
+.. _preprocessing_binarization:
 
 Binarization
 ============
@@ -266,7 +393,7 @@ Feature binarization
 features to get boolean values**. This can be useful for downstream
 probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
-<http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
+<https://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
 this is the case for the :class:`sklearn.neural_network.BernoulliRBM`.
 
 It is also common among the text processing community to use binary
@@ -342,8 +469,8 @@ Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
-  OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
-         n_values='auto', sparse=True)
+  OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
+         handle_unknown='error', n_values='auto', sparse=True)
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
@@ -355,68 +482,22 @@ Then we fit the estimator, and transform a data point.
 In the result, the first two numbers encode the gender, the next set of three
 numbers the continent and the last four the web browser.
 
+Note that, if there is a possibility that the training data might have missing categorical
+features, one has to explicitly set ``n_values``. For example,
+
+    >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
+    >>> # Note that there are missing categorical values for the 2nd and 3rd
+    >>> # features
+    >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
+    OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
+           handle_unknown='error', n_values=[2, 3, 4], sparse=True)
+    >>> enc.transform([[1, 0, 0]]).toarray()
+    array([[ 0.,  1.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
+
 See :ref:`dict_feature_extraction` for categorical features that are represented
 as a dict, not as integers.
 
-
-Label preprocessing
-===================
-
-Label binarization
-------------------
-
-:class:`LabelBinarizer` is a utility class to help create a label indicator
-matrix from a list of multi-class labels::
-
-    >>> lb = preprocessing.LabelBinarizer()
-    >>> lb.fit([1, 2, 6, 4, 2])
-    LabelBinarizer(neg_label=0, pos_label=1)
-    >>> lb.classes_
-    array([1, 2, 4, 6])
-    >>> lb.transform([1, 6])
-    array([[1, 0, 0, 0],
-           [0, 0, 0, 1]])
-
-:class:`LabelBinarizer` also supports multiple labels per instance::
-
-    >>> lb.fit_transform([(1, 2), (3,)])
-    array([[1, 1, 0],
-           [0, 0, 1]])
-    >>> lb.classes_
-    array([1, 2, 3])
-
-Label encoding
---------------
-
-:class:`LabelEncoder` is a utility class to help normalize labels such that
-they contain only values between 0 and n_classes-1. This is sometimes useful
-for writing efficient Cython routines. :class:`LabelEncoder` can be used as
-follows::
-
-    >>> from sklearn import preprocessing
-    >>> le = preprocessing.LabelEncoder()
-    >>> le.fit([1, 2, 2, 6])
-    LabelEncoder()
-    >>> le.classes_
-    array([1, 2, 6])
-    >>> le.transform([1, 1, 2, 6])
-    array([0, 0, 1, 2])
-    >>> le.inverse_transform([0, 0, 1, 2])
-    array([1, 1, 2, 6])
-
-It can also be used to transform non-numerical labels (as long as they are
-hashable and comparable) to numerical labels::
-
-    >>> le = preprocessing.LabelEncoder()
-    >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder()
-    >>> list(le.classes_)
-    ['amsterdam', 'paris', 'tokyo']
-    >>> le.transform(["tokyo", "tokyo", "paris"])
-    array([2, 2, 1])
-    >>> list(le.inverse_transform([2, 2, 1]))
-    ['tokyo', 'tokyo', 'paris']
-
+.. _imputation:
 
 Imputation of missing values
 ============================
@@ -468,63 +549,76 @@ in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
-estimator that supports imputation. See :ref:`example_imputation.py`
+estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
-.. _data_reduction:
+.. _polynomial_features:
 
-Unsupervised data reduction
-============================
+Generating polynomial features
+==============================
 
-If your number of features is high, it may be useful to reduce it with an
-unsupervised step prior to supervised steps. Many of the
-:ref:`unsupervised-learning` methods implement a `transform` method that
-can be used to reduce the dimensionality. Below we discuss two specific
-example of this pattern that are heavily used.
+Often it's useful to add complexity to the model by considering nonlinear features of the input data. A simple and common method to use is polynomial features, which can get features' high-order and interaction terms. It is implemented in :class:`PolynomialFeatures`::
 
-.. topic:: **Pipelining**
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> X = np.arange(6).reshape(3, 2)
+    >>> X                                                 # doctest: +ELLIPSIS
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> poly = PolynomialFeatures(2)
+    >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
+    array([[  1.,   0.,   1.,   0.,   0.,   1.],
+           [  1.,   2.,   3.,   4.,   6.,   9.],
+           [  1.,   4.,   5.,  16.,  20.,  25.]])
 
-    The unsupervised data reduction and the supervised estimator can be
-    chained in one step. See :ref:`pipeline`.
+The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
 
-.. currentmodule:: sklearn
+In some cases, only interaction terms among features are required, and it can be gotten with the setting ``interaction_only=True``::
 
-PCA: principal component analysis
-----------------------------------
+    >>> X = np.arange(9).reshape(3, 3)
+    >>> X                                                 # doctest: +ELLIPSIS
+    array([[0, 1, 2],
+           [3, 4, 5],
+           [6, 7, 8]])
+    >>> poly = PolynomialFeatures(degree=3, interaction_only=True)
+    >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
+    array([[   1.,    0.,    1.,    2.,    0.,    0.,    2.,    0.],
+           [   1.,    3.,    4.,    5.,   12.,   15.,   20.,   60.],
+           [   1.,    6.,    7.,    8.,   42.,   48.,   56.,  336.]])
 
-:class:`decomposition.PCA` looks for a combination of features that
-capture well the variance of the original features.
+The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
-.. topic:: **Examples**
+Note that polynomial features are used implicitly in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`sklearn.svm.SVC`, :class:`sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
-   * :ref:`example_applications_face_recognition.py`
+See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
 
-Random projections
--------------------
+.. _function_transformer:
 
-The module: :mod:`random_projection` provides several tools for data
-reduction by random projections. See the relevant section of the
-documentation: :ref:`random_projection`.
+Custom transformers
+===================
 
-.. topic:: **Examples**
+Often, you will want to convert an existing Python function into a transformer
+to assist in data cleaning or processing. You can implement a transformer from
+an arbitrary function with :class:`FunctionTransformer`. For example, to build
+a transformer that applies a log transformation in a pipeline, do::
 
-   * :ref:`example_plot_johnson_lindenstrauss_bound.py`
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import FunctionTransformer
+    >>> transformer = FunctionTransformer(np.log1p)
+    >>> X = np.array([[0, 1], [2, 3]])
+    >>> transformer.transform(X)
+    array([[ 0.        ,  0.69314718],
+           [ 1.09861229,  1.38629436]])
 
-Feature agglometration
-------------------------
+You can ensure that ``func`` and ``inverse_func`` are the inverse of each other
+by setting ``check_inverse=True`` and calling ``fit`` before
+``transform``. Please note that a warning is raised and can be turned into an
+error with a ``filterwarnings``::
 
-:class:`cluster.FeatureAgglomeration` applies
-:ref:`hierarchical_clustering` to group together features that behave
-similarly.
+  >>> import warnings
+  >>> warnings.filterwarnings("error", message=".*check_inverse*.",
+  ...                         category=UserWarning, append=False)
 
-.. topic:: **Examples**
-
-   * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
-   * :ref:`example_cluster_plot_digits_agglomeration.py`
-
-.. topic:: **Feature scaling**
-
-   Note that if features have very different scaling or statistical
-   properties, :class:`cluster.FeatureAgglomeration` maye not be able to
-   capture the links between related features. Using a 
-   :class:`preprocessing.StandardScaler` can be useful in these settings.
-
+For a full code example that demonstrates using a :class:`FunctionTransformer`
+to do custom feature selection,
+see :ref:`sphx_glr_auto_examples_preprocessing_plot_function_transformer.py`

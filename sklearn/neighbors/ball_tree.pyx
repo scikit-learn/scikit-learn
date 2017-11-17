@@ -4,7 +4,7 @@
 #cython: cdivision=True
 
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 __all__ = ['BallTree']
 
@@ -22,14 +22,12 @@ VALID_METRICS = ['EuclideanDistance', 'SEuclideanDistance',
                  'PyFuncDistance', 'HaversineDistance']
 
 
-#----------------------------------------------------------------------
-# Here's our big hack: we can't subclass BinaryTree, because polymorphism
-# doesn't work in cython.  The dual-tree queries defined in BinaryTree
-# break if we try this approach.  So we use a literal include to "inherit"
-# all the boiler-plate code, and assign BinaryTree to BallTree.  The
-# specifics of the implementation are the functions in this module.
 include "binary_tree.pxi"
-BallTree = BinaryTree
+
+# Inherit BallTree from BinaryTree
+cdef class BallTree(BinaryTree):
+    __doc__ = CLASS_DOC.format(**DOC_DICT)
+    pass
 
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a Ball Tree
@@ -91,7 +89,7 @@ cdef int init_node(BinaryTree tree, ITYPE_t i_node,
 
 
 cdef inline DTYPE_t min_dist(BinaryTree tree, ITYPE_t i_node,
-                             DTYPE_t* pt) except -1:
+                             DTYPE_t* pt) nogil except -1:
     """Compute the minimum distance between a point and a node"""
     cdef DTYPE_t dist_pt = tree.dist(pt, &tree.node_bounds[0, i_node, 0],
                                      tree.data.shape[1])
@@ -118,7 +116,7 @@ cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
 
 
 cdef inline DTYPE_t min_rdist(BinaryTree tree, ITYPE_t i_node,
-                              DTYPE_t* pt) except -1:
+                              DTYPE_t* pt) nogil except -1:
     """Compute the minimum reduced-distance between a point and a node"""
     if tree.euclidean:
         return euclidean_dist_to_rdist(min_dist(tree, i_node, pt))

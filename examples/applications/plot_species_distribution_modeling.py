@@ -13,17 +13,17 @@ density estimation problem and use the `OneClassSVM` provided
 by the package `sklearn.svm` as our modeling tool.
 The dataset is provided by Phillips et. al. (2006).
 If available, the example uses
-`basemap <http://matplotlib.sourceforge.net/basemap/doc/html/>`_
+`basemap <http://matplotlib.org/basemap>`_
 to plot the coast lines and national boundaries of South America.
 
 The two species are:
 
  - `"Bradypus variegatus"
-   <http://www.iucnredlist.org/apps/redlist/details/3038/0>`_ ,
+   <http://www.iucnredlist.org/details/3038/0>`_ ,
    the Brown-throated Sloth.
 
  - `"Microryzomys minutus"
-   <http://www.iucnredlist.org/apps/redlist/details/13408/0>`_ ,
+   <http://www.iucnredlist.org/details/13408/0>`_ ,
    also known as the Forest Small Rice Rat, a rodent that lives in Peru,
    Colombia, Ecuador, Peru, and Venezuela.
 
@@ -31,7 +31,7 @@ References
 ----------
 
  * `"Maximum entropy modeling of species geographic distributions"
-   <http://www.cs.princeton.edu/~schapire/papers/ecolmod.pdf>`_
+   <http://rob.schapire.net/papers/ecolmod.pdf>`_
    S. J. Phillips, R. P. Anderson, R. E. Schapire - Ecological Modelling,
    190:231-259, 2006.
 """
@@ -64,20 +64,17 @@ except ImportError:
 print(__doc__)
 
 
-def create_species_bunch(species_name,
-                         train, test,
-                         coverages, xgrid, ygrid):
-    """
-    create a bunch with information about a particular organism
+def create_species_bunch(species_name, train, test, coverages, xgrid, ygrid):
+    """Create a bunch with information about a particular organism
 
     This will use the test/train record arrays to extract the
     data specific to the given species name.
     """
     bunch = Bunch(name=' '.join(species_name.split("_")[:2]))
-
+    species_name = species_name.encode('ascii')
     points = dict(test=test, train=train)
 
-    for label, pts in points.iteritems():
+    for label, pts in points.items():
         # choose points associated with the desired species
         pts = pts[pts['species'] == species_name]
         bunch['pts_%s' % label] = pts
@@ -90,8 +87,8 @@ def create_species_bunch(species_name,
     return bunch
 
 
-def plot_species_distribution(species=["bradypus_variegatus_0",
-                                       "microryzomys_minutus_0"]):
+def plot_species_distribution(species=("bradypus_variegatus_0",
+                                       "microryzomys_minutus_0")):
     """
     Plot the species distribution.
     """

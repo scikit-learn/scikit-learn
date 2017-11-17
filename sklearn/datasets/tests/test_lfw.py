@@ -1,4 +1,4 @@
-"""This test for the LFW require medium-size data dowloading and processing
+"""This test for the LFW require medium-size data downloading and processing
 
 If the data has not been already downloaded by running the examples,
 the tests won't run (skipped).
@@ -22,13 +22,13 @@ try:
 except ImportError:
     imsave = None
 
-from sklearn.datasets import load_lfw_pairs
-from sklearn.datasets import load_lfw_people
+from sklearn.datasets import fetch_lfw_pairs
+from sklearn.datasets import fetch_lfw_people
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import raises
+from sklearn.utils.testing import assert_raises
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
@@ -110,17 +110,18 @@ def teardown_module():
         shutil.rmtree(SCIKIT_LEARN_EMPTY_DATA)
 
 
-@raises(IOError)
 def test_load_empty_lfw_people():
-    load_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA)
+    assert_raises(IOError, fetch_lfw_people, data_home=SCIKIT_LEARN_EMPTY_DATA,
+                  download_if_missing=False)
 
 
 def test_load_fake_lfw_people():
-    lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_DATA,
-                                 min_faces_per_person=3)
+    lfw_people = fetch_lfw_people(data_home=SCIKIT_LEARN_DATA,
+                                  min_faces_per_person=3,
+                                  download_if_missing=False)
 
     # The data is croped around the center as a rectangular bounding box
-    # arounthe the face. Colors are converted to gray levels:
+    # around the face. Colors are converted to gray levels:
     assert_equal(lfw_people.images.shape, (10, 62, 47))
     assert_equal(lfw_people.data.shape, (10, 2914))
 
@@ -133,8 +134,9 @@ def test_load_fake_lfw_people():
 
     # It is possible to ask for the original data without any croping or color
     # conversion and not limit on the number of picture per person
-    lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_DATA,
-                                 resize=None, slice_=None, color=True)
+    lfw_people = fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, resize=None,
+                                  slice_=None, color=True,
+                                  download_if_missing=False)
     assert_equal(lfw_people.images.shape, (17, 250, 250, 3))
 
     # the ids and class names are the same as previously
@@ -145,21 +147,23 @@ def test_load_fake_lfw_people():
                         'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
 
 
-@raises(ValueError)
 def test_load_fake_lfw_people_too_restrictive():
-    load_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100)
+    assert_raises(ValueError, fetch_lfw_people, data_home=SCIKIT_LEARN_DATA,
+                  min_faces_per_person=100, download_if_missing=False)
 
 
-@raises(IOError)
 def test_load_empty_lfw_pairs():
-    load_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA)
+    assert_raises(IOError, fetch_lfw_pairs,
+                  data_home=SCIKIT_LEARN_EMPTY_DATA,
+                  download_if_missing=False)
 
 
 def test_load_fake_lfw_pairs():
-    lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA)
+    lfw_pairs_train = fetch_lfw_pairs(data_home=SCIKIT_LEARN_DATA,
+                                      download_if_missing=False)
 
     # The data is croped around the center as a rectangular bounding box
-    # arounthe the face. Colors are converted to gray levels:
+    # around the face. Colors are converted to gray levels:
     assert_equal(lfw_pairs_train.pairs.shape, (10, 2, 62, 47))
 
     # the target is whether the person is the same or not
@@ -171,8 +175,9 @@ def test_load_fake_lfw_pairs():
 
     # It is possible to ask for the original data without any croping or color
     # conversion
-    lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA,
-                                     resize=None, slice_=None, color=True)
+    lfw_pairs_train = fetch_lfw_pairs(data_home=SCIKIT_LEARN_DATA, resize=None,
+                                      slice_=None, color=True,
+                                      download_if_missing=False)
     assert_equal(lfw_pairs_train.pairs.shape, (10, 2, 250, 250, 3))
 
     # the ids and class names are the same as previously

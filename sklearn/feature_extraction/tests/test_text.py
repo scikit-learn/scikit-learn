@@ -12,23 +12,23 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
+from sklearn.base import clone
 
 import numpy as np
-from nose import SkipTest
-from nose.tools import assert_equal
-from nose.tools import assert_false
-from nose.tools import assert_not_equal
-from nose.tools import assert_true
-from nose.tools import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_raises
-from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
-                                   assert_warns_message)
+from sklearn.utils.testing import (assert_equal, assert_false, assert_true,
+                                   assert_not_equal, assert_almost_equal,
+                                   assert_in, assert_less, assert_greater,
+                                   assert_warns_message, assert_raise_message,
+                                   clean_warning_registry, ignore_warnings,
+                                   SkipTest, assert_raises)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -179,14 +179,6 @@ def test_unicode_decode_error():
                          encoding='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, ca, text_bytes)
 
-    # Check the old interface
-    in_warning_message = 'charset'
-    ca = assert_warns_message(DeprecationWarning, in_warning_message,
-                              CountVectorizer, analyzer='char',
-                              ngram_range=(3, 6),
-                              charset='ascii').build_analyzer()
-    assert_raises(UnicodeDecodeError, ca, text_bytes)
-
 
 def test_char_ngram_analyzer():
     cnga = CountVectorizer(analyzer='char', strip_accents='unicode',
@@ -228,6 +220,25 @@ def test_char_wb_ngram_analyzer():
     text = StringIO("A test with a file-like object!")
     expected = [' a ', ' te', 'tes', 'est', 'st ', ' tes']
     assert_equal(cnga(text)[:6], expected)
+
+
+def test_word_ngram_analyzer():
+    cnga = CountVectorizer(analyzer='word', strip_accents='unicode',
+                           ngram_range=(3, 6)).build_analyzer()
+
+    text = "This \n\tis a test, really.\n\n I met Harry yesterday"
+    expected = ['this is test', 'is test really', 'test really met']
+    assert_equal(cnga(text)[:3], expected)
+
+    expected = ['test really met harry yesterday',
+                'this is test really met harry',
+                'is test really met harry yesterday']
+    assert_equal(cnga(text)[-3:], expected)
+
+    cnga_file = CountVectorizer(input='file', analyzer='word',
+                                ngram_range=(3, 6)).build_analyzer()
+    file = StringIO(text)
+    assert_equal(cnga_file(file), cnga(text))
 
 
 def test_countvectorizer_custom_vocabulary():
@@ -284,12 +295,13 @@ def test_countvectorizer_stop_words():
     assert_raises(ValueError, cv.get_stop_words)
     stoplist = ['some', 'other', 'words']
     cv.set_params(stop_words=stoplist)
-    assert_equal(cv.get_stop_words(), stoplist)
+    assert_equal(cv.get_stop_words(), set(stoplist))
 
 
 def test_countvectorizer_empty_vocabulary():
     try:
-        CountVectorizer(vocabulary=[])
+        vect = CountVectorizer(vocabulary=[])
+        vect.fit(["foo"])
         assert False, "we shouldn't get here"
     except ValueError as e:
         assert_in("empty vocabulary", str(e).lower())
@@ -348,6 +360,7 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1
@@ -425,7 +438,7 @@ def test_vectorizer():
     # test tf alone
     t2 = TfidfTransformer(norm='l1', use_idf=False)
     tf = t2.fit(counts_train).transform(counts_train).toarray()
-    assert_equal(t2.idf_, None)
+    assert_false(hasattr(t2, "idf_"))
 
     # test idf transform with unlearned idf vector
     t3 = TfidfTransformer(use_idf=True)
@@ -446,10 +459,10 @@ def test_vectorizer():
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
     tv = TfidfVectorizer(norm='l1')
-    assert_false(tv.fixed_vocabulary)
 
     tv.max_df = v1.max_df
     tfidf2 = tv.fit_transform(train_data).toarray()
+    assert_false(tv.fixed_vocabulary_)
     assert_array_almost_equal(tfidf, tfidf2)
 
     # test the direct tfidf vectorizer with new data
@@ -486,6 +499,7 @@ def test_tfidf_vectorizer_setters():
     assert_true(tv._tfidf.sublinear_tf)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_hashing_vectorizer():
     v = HashingVectorizer()
     X = v.transform(ALL_FOOD_DOCS)
@@ -563,7 +577,7 @@ def test_vectorizer_max_features():
 
 
 def test_count_vectorizer_max_features():
-    """Regression test: max_features didn't work correctly in 0.14."""
+    # Regression test: max_features didn't work correctly in 0.14.
 
     cv_1 = CountVectorizer(max_features=1)
     cv_3 = CountVectorizer(max_features=3)
@@ -657,6 +671,7 @@ def test_count_binary_occurrences():
     assert_equal(X_sparse.dtype, np.float32)
 
 
+@ignore_warnings(category=DeprecationWarning)
 def test_hashed_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = ['aaabc', 'abbde']
@@ -704,32 +719,30 @@ def test_vectorizer_inverse_transform():
 def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
-    # simulate iterables
-    train_data = iter(data[1:-1])
-    test_data = iter([data[0], data[-1]])
 
     # label junk food as -1, the others as +1
-    y = np.ones(len(data))
-    y[:6] = -1
-    y_train = y[1:-1]
-    y_test = np.array([y[0], y[-1]])
+    target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
+
+    # split the dataset for model development and final evaluation
+    train_data, test_data, target_train, target_test = train_test_split(
+        data, target, test_size=.2, random_state=0)
 
     pipeline = Pipeline([('vect', CountVectorizer()),
                          ('svc', LinearSVC())])
 
     parameters = {
         'vect__ngram_range': [(1, 1), (1, 2)],
-        'svc__loss': ('l1', 'l2')
+        'svc__loss': ('hinge', 'squared_hinge')
     }
 
     # find the best parameters for both the feature extraction and the
     # classifier
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
 
-    # cross-validation doesn't work if the length of the data is not known,
-    # hence use lists instead of iterators
-    pred = grid_search.fit(list(train_data), y_train).predict(list(test_data))
-    assert_array_equal(pred, y_test)
+    # Check that the best model found by grid search is 100% correct on the
+    # held out evaluation set.
+    pred = grid_search.fit(train_data, target_train).predict(test_data)
+    assert_array_equal(pred, target_test)
 
     # on this toy dataset bigram representation which is used in the last of
     # the grid_search is considered the best estimator since they all converge
@@ -742,15 +755,13 @@ def test_count_vectorizer_pipeline_grid_selection():
 def test_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
-    # simulate iterables
-    train_data = iter(data[1:-1])
-    test_data = iter([data[0], data[-1]])
 
     # label junk food as -1, the others as +1
-    y = np.ones(len(data))
-    y[:6] = -1
-    y_train = y[1:-1]
-    y_test = np.array([y[0], y[-1]])
+    target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
+
+    # split the dataset for model development and final evaluation
+    train_data, test_data, target_train, target_test = train_test_split(
+        data, target, test_size=.1, random_state=0)
 
     pipeline = Pipeline([('vect', TfidfVectorizer()),
                          ('svc', LinearSVC())])
@@ -758,17 +769,17 @@ def test_vectorizer_pipeline_grid_selection():
     parameters = {
         'vect__ngram_range': [(1, 1), (1, 2)],
         'vect__norm': ('l1', 'l2'),
-        'svc__loss': ('l1', 'l2'),
+        'svc__loss': ('hinge', 'squared_hinge'),
     }
 
     # find the best parameters for both the feature extraction and the
     # classifier
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=1)
 
-    # cross-validation doesn't work if the length of the data is not known,
-    # hence use lists instead of iterators
-    pred = grid_search.fit(list(train_data), y_train).predict(list(test_data))
-    assert_array_equal(pred, y_test)
+    # Check that the best model found by grid search is 100% correct on the
+    # held out evaluation set.
+    pred = grid_search.fit(train_data, target_train).predict(test_data)
+    assert_array_equal(pred, target_test)
 
     # on this toy dataset bigram representation which is used in the last of
     # the grid_search is considered the best estimator since they all converge
@@ -777,9 +788,24 @@ def test_vectorizer_pipeline_grid_selection():
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.ngram_range, (1, 1))
     assert_equal(best_vectorizer.norm, 'l2')
-    assert_false(best_vectorizer.fixed_vocabulary)
+    assert_false(best_vectorizer.fixed_vocabulary_)
 
 
+def test_vectorizer_pipeline_cross_validation():
+    # raw documents
+    data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
+
+    # label junk food as -1, the others as +1
+    target = [-1] * len(JUNK_FOOD_DOCS) + [1] * len(NOTJUNK_FOOD_DOCS)
+
+    pipeline = Pipeline([('vect', TfidfVectorizer()),
+                         ('svc', LinearSVC())])
+
+    cv_scores = cross_val_score(pipeline, data, target, cv=3)
+    assert_array_equal(cv_scores, [1., 1., 1.])
+
+
+@ignore_warnings(category=DeprecationWarning)
 def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
     document = (
@@ -819,11 +845,10 @@ def test_tfidf_vectorizer_with_fixed_vocabulary():
     # non regression smoke test for inheritance issues
     vocabulary = ['pizza', 'celeri']
     vect = TfidfVectorizer(vocabulary=vocabulary)
-    assert_true(vect.fixed_vocabulary)
     X_1 = vect.fit_transform(ALL_FOOD_DOCS)
     X_2 = vect.transform(ALL_FOOD_DOCS)
     assert_array_almost_equal(X_1.toarray(), X_2.toarray())
-    assert_true(vect.fixed_vocabulary)
+    assert_true(vect.fixed_vocabulary_)
 
 
 def test_pickling_vectorizer():
@@ -852,6 +877,59 @@ def test_pickling_vectorizer():
             orig.fit_transform(JUNK_FOOD_DOCS).toarray())
 
 
+def test_countvectorizer_vocab_sets_when_pickling():
+    # ensure that vocabulary of type set is coerced to a list to
+    # preserve iteration ordering after deserialization
+    rng = np.random.RandomState(0)
+    vocab_words = np.array(['beer', 'burger', 'celeri', 'coke', 'pizza',
+                            'salad', 'sparkling', 'tomato', 'water'])
+    for x in range(0, 100):
+        vocab_set = set(rng.choice(vocab_words, size=5, replace=False))
+        cv = CountVectorizer(vocabulary=vocab_set)
+        unpickled_cv = pickle.loads(pickle.dumps(cv))
+        cv.fit(ALL_FOOD_DOCS)
+        unpickled_cv.fit(ALL_FOOD_DOCS)
+        assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
+
+
+def test_countvectorizer_vocab_dicts_when_pickling():
+    rng = np.random.RandomState(0)
+    vocab_words = np.array(['beer', 'burger', 'celeri', 'coke', 'pizza',
+                            'salad', 'sparkling', 'tomato', 'water'])
+    for x in range(0, 100):
+        vocab_dict = dict()
+        words = rng.choice(vocab_words, size=5, replace=False)
+        for y in range(0, 5):
+            vocab_dict[words[y]] = y
+        cv = CountVectorizer(vocabulary=vocab_dict)
+        unpickled_cv = pickle.loads(pickle.dumps(cv))
+        cv.fit(ALL_FOOD_DOCS)
+        unpickled_cv.fit(ALL_FOOD_DOCS)
+        assert_equal(cv.get_feature_names(), unpickled_cv.get_feature_names())
+
+
+def test_stop_words_removal():
+    # Ensure that deleting the stop_words_ attribute doesn't affect transform
+
+    fitted_vectorizers = (
+        TfidfVectorizer().fit(JUNK_FOOD_DOCS),
+        CountVectorizer(preprocessor=strip_tags).fit(JUNK_FOOD_DOCS),
+        CountVectorizer(strip_accents=strip_eacute).fit(JUNK_FOOD_DOCS)
+    )
+
+    for vect in fitted_vectorizers:
+        vect_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
+
+        vect.stop_words_ = None
+        stop_None_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
+
+        delattr(vect, 'stop_words_')
+        stop_del_transform = vect.transform(JUNK_FOOD_DOCS).toarray()
+
+        assert_array_equal(stop_None_transform, vect_transform)
+        assert_array_equal(stop_del_transform, vect_transform)
+
+
 def test_pickling_transformer():
     X = CountVectorizer().fit_transform(JUNK_FOOD_DOCS)
     orig = TfidfTransformer().fit(X)
@@ -865,7 +943,21 @@ def test_pickling_transformer():
 
 def test_non_unique_vocab():
     vocab = ['a', 'b', 'c', 'a', 'a']
-    assert_raises(ValueError, CountVectorizer, vocabulary=vocab)
+    vect = CountVectorizer(vocabulary=vocab)
+    assert_raises(ValueError, vect.fit, [])
+
+
+def test_hashingvectorizer_nan_in_docs():
+    # np.nan can appear when using pandas to load text fields from a csv file
+    # with missing values.
+    message = "np.nan is an invalid document, expected byte or unicode string."
+    exception = ValueError
+
+    def func():
+        hv = HashingVectorizer()
+        hv.fit_transform(['hello world', np.nan, 'hello hello'])
+
+    assert_raise_message(exception, message, func)
 
 
 def test_tfidfvectorizer_binary():
@@ -883,3 +975,23 @@ def test_tfidfvectorizer_export_idf():
     vect = TfidfVectorizer(use_idf=True)
     vect.fit(JUNK_FOOD_DOCS)
     assert_array_almost_equal(vect.idf_, vect._tfidf.idf_)
+
+
+def test_vectorizer_vocab_clone():
+    vect_vocab = TfidfVectorizer(vocabulary=["the"])
+    vect_vocab_clone = clone(vect_vocab)
+    vect_vocab.fit(ALL_FOOD_DOCS)
+    vect_vocab_clone.fit(ALL_FOOD_DOCS)
+    assert_equal(vect_vocab_clone.vocabulary_, vect_vocab.vocabulary_)
+
+
+def test_vectorizer_string_object_as_input():
+    message = ("Iterable over raw text documents expected, "
+               "string object received.")
+    for vec in [CountVectorizer(), TfidfVectorizer(), HashingVectorizer()]:
+        assert_raise_message(
+            ValueError, message, vec.fit_transform, "hello world!")
+        assert_raise_message(
+            ValueError, message, vec.fit, "hello world!")
+        assert_raise_message(
+            ValueError, message, vec.transform, "hello world!")

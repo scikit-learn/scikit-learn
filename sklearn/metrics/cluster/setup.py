@@ -10,7 +10,7 @@ def configuration(parent_package="", top_path=None):
     if os.name == 'posix':
         libraries.append('m')
     config.add_extension("expected_mutual_info_fast",
-                         sources=["expected_mutual_info_fast.c"],
+                         sources=["expected_mutual_info_fast.pyx"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

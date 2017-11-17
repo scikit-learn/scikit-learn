@@ -1,10 +1,10 @@
 .. title:: User guide: contents
 
-..
-    We are putting the title as a raw HTML so that it doesn't appear in
-    the contents
-
 .. _user_guide:
+
+==========
+User Guide
+==========
 
 .. include:: includes/big_toc_css.rst
 

@@ -1,4 +1,5 @@
 Linnerrud dataset
+=================
 
 Notes
 -----
@@ -17,5 +18,4 @@ The Linnerud dataset constains two small dataset:
 
 References
 ----------
-  * http://rgm2.lab.nig.ac.jp/RGM2/func.php?rd_id=mixOmics:linnerud
   * Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris: Editions Technic.

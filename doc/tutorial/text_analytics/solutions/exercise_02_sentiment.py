@@ -15,9 +15,9 @@ import sys
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.datasets import load_files
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn import metrics
 
 
@@ -53,9 +53,14 @@ if __name__ == "__main__":
     grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1)
     grid_search.fit(docs_train, y_train)
 
-    # TASK: print the cross-validated scores for the each parameters set
-    # explored by the grid search
-    print(grid_search.grid_scores_)
+    # TASK: print the mean and std for each candidate along with the parameter
+    # settings for all the candidates explored by grid search.
+    n_candidates = len(grid_search.cv_results_['params'])
+    for i in range(n_candidates):
+        print(i, 'params - %s; mean - %0.2f; std - %0.2f'
+                 % (grid_search.cv_results_['params'][i],
+                    grid_search.cv_results_['mean_test_score'][i],
+                    grid_search.cv_results_['std_test_score'][i]))
 
     # TASK: Predict the outcome on the testing set and store it in a variable
     # named y_predicted

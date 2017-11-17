@@ -14,7 +14,7 @@ the different items on the image upon mouseover.
 Modifying the map on the docs is currently a little bit tedious,
 so I'll try to make it as simple as possible.
 
-1. Editing the layout of the map and it's paths.
+1. Editing the layout of the map and its paths.
 ------------------------------------------------
 
 Use a Graphics editor like Inkscape Vector Graphics Editor

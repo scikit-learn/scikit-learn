@@ -10,59 +10,42 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
-import inspect
+import warnings
+import os
+import errno
 
 import numpy as np
 import scipy.sparse as sp
-
-
-np_version = []
-for x in np.__version__.split('.'):
-    try:
-        np_version.append(int(x))
-    except ValueError:
-        # x may be of the form dev-1ea1592
-        np_version.append(x)
-np_version = tuple(np_version)
-
+import scipy
 
 try:
-    from scipy.special import expit     # SciPy >= 0.10
-    with np.errstate(invalid='ignore', over='ignore'):
-        if np.isnan(expit(1000)):       # SciPy < 0.14
-            raise ImportError("no stable expit in scipy.special")
+    from inspect import signature
 except ImportError:
-    def expit(x, out=None):
-        """Logistic sigmoid function, ``1 / (1 + exp(-x))``.
-
-        See sklearn.utils.extmath.log_logistic for the log of this function.
-        """
-        if out is None:
-            out = np.copy(x)
-
-        # 1 / (1 + exp(-x)) = (1 + tanh(x / 2)) / 2
-        # This way of computing the logistic is both fast and stable.
-        out *= .5
-        np.tanh(out, out)
-        out += 1
-        out *= .5
-
-        return out
+    from ..externals.funcsigs import signature
 
 
-# little danse to see if np.copy has an 'order' keyword argument
-if 'order' in inspect.getargspec(np.copy)[0]:
-    def safe_copy(X):
-        # Copy, but keep the order
-        return np.copy(X, order='K')
-else:
-    # Before an 'order' argument was introduced, numpy wouldn't muck with
-    # the ordering
-    safe_copy = np.copy
+def _parse_version(version_string):
+    version = []
+    for x in version_string.split('.'):
+        try:
+            version.append(int(x))
+        except ValueError:
+            # x may be of the form dev-1ea1592
+            version.append(x)
+    return tuple(version)
 
+
+euler_gamma = getattr(np, 'euler_gamma',
+                      0.577215664901532860606512090082402431)
+
+np_version = _parse_version(np.__version__)
+sp_version = _parse_version(scipy.__version__)
+
+
+# Remove when minimum required NumPy >= 1.10
 try:
     if (not np.allclose(np.divide(.4, 1, casting="unsafe"),
-                        np.divide(.4, 1, casting="unsafe", dtype=np.float))
+                        np.divide(.4, 1, casting="unsafe", dtype=np.float64))
             or not np.allclose(np.divide(.4, 1), .4)):
         raise TypeError('Divide not working with dtype: '
                         'https://github.com/numpy/numpy/issues/3484')
@@ -89,30 +72,18 @@ except TypeError:
 
 
 try:
-    np.array(5).astype(float, copy=False)
-except TypeError:
-    # Compat where astype accepted no copy argument
-    def astype(array, dtype, copy=True):
-        if array.dtype == dtype:
-            return array
-        return array.astype(dtype)
-else:
-    astype = np.ndarray.astype
-
-
-try:
-    sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
+    with warnings.catch_warnings(record=True):
+        # Don't raise the numpy deprecation warnings that appear in
+        # 1.9, but avoid Python bug due to simplefilter('ignore')
+        warnings.simplefilter('always')
+        sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
 except (TypeError, AttributeError):
     # in scipy < 14.0, sparse matrix min/max doesn't accept an `axis` argument
     # the following code is taken from the scipy 0.14 codebase
 
     def _minor_reduce(X, ufunc):
         major_index = np.flatnonzero(np.diff(X.indptr))
-        if X.data.size == 0 and major_index.size == 0:
-            # Numpy < 1.8.0 don't handle empty arrays in reduceat
-            value = np.zeros_like(X.data)
-        else:
-            value = ufunc.reduceat(X.data, X.indptr[major_index])
+        value = ufunc.reduceat(X.data, X.indptr[major_index])
         return major_index, value
 
     def _min_or_max_axis(X, axis, min_or_max):
@@ -164,3 +135,61 @@ else:
     def sparse_min_max(X, axis):
         return (X.min(axis=axis).toarray().ravel(),
                 X.max(axis=axis).toarray().ravel())
+
+
+if sp_version < (0, 15):
+    # Backport fix for scikit-learn/scikit-learn#2986 / scipy/scipy#4142
+    from ._scipy_sparse_lsqr_backport import lsqr as sparse_lsqr
+else:
+    from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
+
+
+try:  # SciPy >= 0.19
+    from scipy.special import comb, logsumexp
+except ImportError:
+    from scipy.misc import comb, logsumexp  # noqa
+
+
+def parallel_helper(obj, methodname, *args, **kwargs):
+    """Workaround for Python 2 limitations of pickling instance methods"""
+    return getattr(obj, methodname)(*args, **kwargs)
+
+
+if 'exist_ok' in signature(os.makedirs).parameters:
+    makedirs = os.makedirs
+else:
+    def makedirs(name, mode=0o777, exist_ok=False):
+        """makedirs(name [, mode=0o777][, exist_ok=False])
+
+        Super-mkdir; create a leaf directory and all intermediate ones.  Works
+        like mkdir, except that any intermediate path segment (not just the
+        rightmost) will be created if it does not exist. If the target
+        directory already exists, raise an OSError if exist_ok is False.
+        Otherwise no exception is raised.  This is recursive.
+
+        """
+
+        try:
+            os.makedirs(name, mode=mode)
+        except OSError as e:
+            if (not exist_ok or e.errno != errno.EEXIST
+                    or not os.path.isdir(name)):
+                raise
+
+
+if np_version < (1, 12):
+    class MaskedArray(np.ma.MaskedArray):
+        # Before numpy 1.12, np.ma.MaskedArray object is not picklable
+        # This fix is needed to make our model_selection.GridSearchCV
+        # picklable as the ``cv_results_`` param uses MaskedArray
+        def __getstate__(self):
+            """Return the internal state of the masked array, for pickling
+            purposes.
+
+            """
+            cf = 'CF'[self.flags.fnc]
+            data_state = super(np.ma.MaskedArray, self).__reduce__()[2]
+            return data_state + (np.ma.getmaskarray(self).tostring(cf),
+                                 self._fill_value)
+else:
+    from numpy.ma import MaskedArray    # noqa

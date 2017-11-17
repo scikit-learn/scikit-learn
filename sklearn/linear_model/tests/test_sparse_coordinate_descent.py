@@ -15,7 +15,7 @@ from sklearn.linear_model.coordinate_descent import (Lasso, ElasticNet,
 
 
 def test_sparse_coef():
-    """ Check that the sparse_coef propery works """
+    # Check that the sparse_coef property works
     clf = ElasticNet()
     clf.coef_ = [1, 2, 3]
 
@@ -24,7 +24,7 @@ def test_sparse_coef():
 
 
 def test_normalize_option():
-    """ Check that the normalize option in enet works """
+    # Check that the normalize option in enet works
     X = sp.csc_matrix([[-1], [0], [1]])
     y = [-1, 0, 1]
     clf_dense = ElasticNet(fit_intercept=True, normalize=True)
@@ -37,7 +37,7 @@ def test_normalize_option():
 
 
 def test_lasso_zero():
-    """Check that the sparse lasso can handle zero data without crashing"""
+    # Check that the sparse lasso can handle zero data without crashing
     X = sp.csc_matrix((3, 1))
     y = [0, 0, 0]
     T = np.array([[1], [2], [3]])
@@ -49,7 +49,7 @@ def test_lasso_zero():
 
 
 def test_enet_toy_list_input():
-    """Test ElasticNet for various values of alpha and l1_ratio with list X"""
+    # Test ElasticNet for various values of alpha and l1_ratio with list X
 
     X = np.array([[-1], [0], [1]])
     X = sp.csc_matrix(X)
@@ -82,8 +82,7 @@ def test_enet_toy_list_input():
 
 
 def test_enet_toy_explicit_sparse_input():
-    """Test ElasticNet for various values of alpha and l1_ratio with sparse
-    X"""
+    # Test ElasticNet for various values of alpha and l1_ratio with sparse X
     f = ignore_warnings
     # training samples
     X = sp.lil_matrix((3, 1))
@@ -153,8 +152,8 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     X, y = make_sparse_data(n_samples, n_features, n_informative,
                             positive=positive)
 
-    X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
-    y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
+    X_train, X_test = X[n_samples // 2:], X[:n_samples // 2]
+    y_train, y_test = y[n_samples // 2:], y[:n_samples // 2]
 
     s_clf = ElasticNet(alpha=alpha, l1_ratio=0.8, fit_intercept=fit_intercept,
                        max_iter=max_iter, tol=1e-7, positive=positive,
@@ -197,8 +196,8 @@ def test_sparse_lasso_not_as_toy_dataset():
     n_informative = 10
     X, y = make_sparse_data(n_samples=n_samples, n_informative=n_informative)
 
-    X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
-    y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
+    X_train, X_test = X[n_samples // 2:], X[:n_samples // 2]
+    y_train, y_test = y[n_samples // 2:], y[:n_samples // 2]
 
     s_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
     s_clf.fit(X_train, y_train)
@@ -268,3 +267,27 @@ def test_same_output_sparse_dense_lasso_and_enet_cv():
         assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
         assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
         assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
+
+
+def test_same_multiple_output_sparse_dense():
+    for normalize in [True, False]:
+        l = ElasticNet(normalize=normalize)
+        X = [[0, 1, 2, 3, 4],
+             [0, 2, 5, 8, 11],
+             [9, 10, 11, 12, 13],
+             [10, 11, 12, 13, 14]]
+        y = [[1, 2, 3, 4, 5],
+             [1, 3, 6, 9, 12],
+             [10, 11, 12, 13, 14],
+             [11, 12, 13, 14, 15]]
+        ignore_warnings(l.fit)(X, y)
+        sample = np.array([1, 2, 3, 4, 5]).reshape(1, -1)
+        predict_dense = l.predict(sample)
+
+        l_sp = ElasticNet(normalize=normalize)
+        X_sp = sp.coo_matrix(X)
+        ignore_warnings(l_sp.fit)(X_sp, y)
+        sample_sparse = sp.coo_matrix(sample)
+        predict_sparse = l_sp.predict(sample_sparse)
+
+        assert_array_almost_equal(predict_sparse, predict_dense)

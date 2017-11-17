@@ -1,4 +1,4 @@
-"""
+r"""
 ================================================================
 Robust covariance estimation and Mahalanobis distances relevance
 ================================================================
@@ -10,7 +10,7 @@ For Gaussian distributed data, the distance of an observation
 :math:`x_i` to the mode of the distribution can be computed using its
 Mahalanobis distance: :math:`d_{(\mu,\Sigma)}(x_i)^2 = (x_i -
 \mu)'\Sigma^{-1}(x_i - \mu)` where :math:`\mu` and :math:`\Sigma` are
-the location and the covariance of the underlying gaussian
+the location and the covariance of the underlying Gaussian
 distribution.
 
 In practice, :math:`\mu` and :math:`\Sigma` are replaced by some
@@ -25,8 +25,9 @@ organisation of the observations.
 The Minimum Covariance Determinant estimator is a robust,
 high-breakdown point (i.e. it can be used to estimate the covariance
 matrix of highly contaminated datasets, up to
-:math:`\frac{n_samples-n_features-1}{2}` outliers) estimator of
-covariance. The idea is to find :math:`\frac{n_samples+n_features+1}{2}`
+:math:`\frac{n_\text{samples}-n_\text{features}-1}{2}` outliers)
+estimator of covariance. The idea is to find
+:math:`\frac{n_\text{samples}+n_\text{features}+1}{2}`
 observations whose empirical covariance has the smallest determinant,
 yielding a "pure" subset of observations from which to compute
 standards estimates of location and covariance.
@@ -77,7 +78,7 @@ robust_cov = MinCovDet().fit(X)
 # compare estimators learnt from the full data set with true parameters
 emp_cov = EmpiricalCovariance().fit(X)
 
-###############################################################################
+# #############################################################################
 # Display results
 fig = plt.figure()
 plt.subplots_adjust(hspace=-.1, wspace=.4, top=.95, bottom=.05)

@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 
 from sklearn.decomposition import PCA, FastICA
 
-###############################################################################
+# #############################################################################
 # Generate sample data
 rng = np.random.RandomState(42)
 S = rng.standard_t(1.5, size=(20000, 2))
@@ -57,11 +57,11 @@ S_ica_ = ica.fit(X).transform(X)  # Estimate the sources
 S_ica_ /= S_ica_.std(axis=0)
 
 
-###############################################################################
+# #############################################################################
 # Plot results
 
 def plot_samples(S, axis_list=None):
-    plt.scatter(S[:, 0], S[:, 1], s=2, marker='o', linewidths=0, zorder=10,
+    plt.scatter(S[:, 0], S[:, 1], s=2, marker='o', zorder=10,
                 color='steelblue', alpha=0.5)
     if axis_list is not None:
         colors = ['orange', 'red']

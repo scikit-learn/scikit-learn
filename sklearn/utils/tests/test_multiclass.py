@@ -1,44 +1,68 @@
+
+from __future__ import division
 import numpy as np
+import scipy.sparse as sp
 from itertools import product
+
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.six import iteritems
 
+from scipy.sparse import issparse
+from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix
+from scipy.sparse import dok_matrix
+from scipy.sparse import lil_matrix
+
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import SkipTest
 
 from sklearn.utils.multiclass import unique_labels
-from sklearn.utils.multiclass import is_label_indicator_matrix
 from sklearn.utils.multiclass import is_multilabel
-from sklearn.utils.multiclass import is_sequence_of_sequences
 from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.multiclass import class_distribution
+from sklearn.utils.multiclass import check_classification_targets
+
+from sklearn.utils.metaestimators import _safe_split
+from sklearn.model_selection import ShuffleSplit
+from sklearn.svm import SVC
+from sklearn import datasets
+
+
+class NotAnArray(object):
+    """An object that is convertable to an array. This is useful to
+    simulate a Pandas timeseries."""
+
+    def __init__(self, data):
+        self.data = data
+
+    def __array__(self, dtype=None):
+        return self.data
+
 
 EXAMPLES = {
     'multilabel-indicator': [
-        np.random.RandomState(42).randint(2, size=(10, 10)),
-        np.array([[0, 1], [1, 0]]),
-        np.array([[0, 1], [1, 0]], dtype=np.bool),
-        np.array([[0, 1], [1, 0]], dtype=np.int8),
-        np.array([[0, 1], [1, 0]], dtype=np.uint8),
-        np.array([[0, 1], [1, 0]], dtype=np.float),
-        np.array([[0, 1], [1, 0]], dtype=np.float32),
-        np.array([[0, 0], [0, 0]]),
+        # valid when the data is formatted as sparse or dense, identified
+        # by CSR format when the testing takes place
+        csr_matrix(np.random.RandomState(42).randint(2, size=(10, 10))),
+        csr_matrix(np.array([[0, 1], [1, 0]])),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.bool)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.int8)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.uint8)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.float)),
+        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.float32)),
+        csr_matrix(np.array([[0, 0], [0, 0]])),
+        csr_matrix(np.array([[0, 1]])),
+        # Only valid when data is dense
         np.array([[-1, 1], [1, -1]]),
         np.array([[-3, 3], [3, -3]]),
-        np.array([[0, 1]]),
-    ],
-    'multilabel-sequences': [
-        [[0, 1]],
-        [[0], [1]],
-        [[1, 2, 3]],
-        [[1, 2, 1]],  # duplicate values, why not?
-        [[1], [2], [0, 1]],
-        [[1], [2]],
-        [[]],
-        [()],
-        np.array([[], [1, 2]], dtype='object'),
+        NotAnArray(np.array([[-3, 3], [3, -3]])),
     ],
     'multiclass': [
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
@@ -48,6 +72,7 @@ EXAMPLES = {
         np.array([1, 0, 2], dtype=np.float),
         np.array([1, 0, 2], dtype=np.float32),
         np.array([[1], [0], [2]]),
+        NotAnArray(np.array([1, 0, 2])),
         [0, 1, 2],
         ['a', 'b', 'c'],
         np.array([u'a', u'b', u'c']),
@@ -64,6 +89,7 @@ EXAMPLES = {
         np.array([[u'a', u'b'], [u'c', u'd']]),
         np.array([[u'a', u'b'], [u'c', u'd']], dtype=object),
         np.array([[1, 0, 2]]),
+        NotAnArray(np.array([[1, 0, 2]])),
     ],
     'binary': [
         [0, 1],
@@ -77,6 +103,7 @@ EXAMPLES = {
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float),
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1], dtype=np.float32),
         np.array([[0], [1]]),
+        NotAnArray(np.array([[0], [1]])),
         [1, -1],
         [3, 5],
         ['a'],
@@ -98,17 +125,22 @@ EXAMPLES = {
         np.array([[0, .5]]),
     ],
     'unknown': [
-        # empty second dimension
-        np.array([[], []]),
-        # 3d
-        np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]]),
-        # not currently supported sequence of sequences
+        [[]],
+        [()],
+        # sequence of sequences that weren't supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
         [np.array([]), np.array([1, 2, 3])],
         [set([1, 2, 3]), set([1, 2])],
         [frozenset([1, 2, 3]), frozenset([1, 2])],
+
         # and also confusable as sequences of sequences
         [{0: 'a', 1: 'b'}, {0: 'a'}],
+
+        # empty second dimension
+        np.array([[], []]),
+
+        # 3d
+        np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]]),
     ]
 }
 
@@ -121,6 +153,13 @@ NON_ARRAY_LIKE_EXAMPLES = [
     None,
 ]
 
+MULTILABEL_SEQUENCES = [
+    [[1], [2], [0, 1]],
+    [(), (2), (0, 1)],
+    np.array([[], [1, 2]], dtype='object'),
+    NotAnArray(np.array([[], [1, 2]], dtype='object'))
+]
+
 
 def test_unique_labels():
     # Empty iterable
@@ -131,11 +170,7 @@ def test_unique_labels():
     assert_array_equal(unique_labels(np.arange(10)), np.arange(10))
     assert_array_equal(unique_labels([4, 0, 2]), np.array([0, 2, 4]))
 
-    # Multilabels
-    assert_array_equal(unique_labels([(0, 1, 2), (0,), tuple(), (2, 1)]),
-                       np.arange(3))
-    assert_array_equal(unique_labels([[0, 1, 2], [0], list(), [2, 1]]),
-                       np.arange(3))
+    # Multilabel indicator
     assert_array_equal(unique_labels(np.array([[0, 0, 1],
                                                [1, 0, 1],
                                                [0, 0, 0]])),
@@ -157,15 +192,12 @@ def test_unique_labels():
     assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))),
                        np.arange(5))
 
-    # Some tests with strings input
-    assert_array_equal(unique_labels(["a", "b", "c"], ["d"]),
-                       ["a", "b", "c", "d"])
-    assert_array_equal(unique_labels([["a", "b"], ["c"]], [["d"]]),
-                       ["a", "b", "c", "d"])
+
+def test_unique_labels_non_specific():
+    # Test unique_labels with a variety of collected examples
 
     # Smoke test for all supported format
-    for format in ["binary", "multiclass", "multilabel-sequences",
-                   "multilabel-indicator"]:
+    for format in ["binary", "multiclass", "multilabel-indicator"]:
         for y in EXAMPLES[format]:
             unique_labels(y)
 
@@ -178,16 +210,10 @@ def test_unique_labels():
         for example in EXAMPLES[y_type]:
             assert_raises(ValueError, unique_labels, example)
 
-    #Mix of multilabel-indicator and multilabel-sequences
-    mix_multilabel_format = product(EXAMPLES["multilabel-indicator"],
-                                    EXAMPLES["multilabel-sequences"])
-    for y_multilabel, y_multiclass in mix_multilabel_format:
-        assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
-        assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
 
-    #Mix with binary or multiclass and multilabel
-    mix_clf_format = product(EXAMPLES["multilabel-indicator"] +
-                             EXAMPLES["multilabel-sequences"],
+def test_unique_labels_mixed_types():
+    # Mix with binary or multiclass and multilabel
+    mix_clf_format = product(EXAMPLES["multilabel-indicator"],
                              EXAMPLES["multiclass"] +
                              EXAMPLES["binary"])
 
@@ -195,59 +221,163 @@ def test_unique_labels():
         assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
         assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
 
-    # Mix string and number input type
-    assert_raises(ValueError, unique_labels, [[1, 2], [3]],
-                  [["a", "d"]])
+    assert_raises(ValueError, unique_labels, [[1, 2]], [["a", "d"]])
     assert_raises(ValueError, unique_labels, ["1", 2])
-    assert_raises(ValueError, unique_labels, [["1", 2], [3]])
-    assert_raises(ValueError, unique_labels, [["1", "2"], [3]])
-
-    assert_array_equal(unique_labels([(2,), (0, 2,)], [(), ()]), [0, 2])
-    assert_array_equal(unique_labels([("2",), ("0", "2",)], [(), ()]),
-                       ["0", "2"])
+    assert_raises(ValueError, unique_labels, [["1", 2], [1, 3]])
+    assert_raises(ValueError, unique_labels, [["1", "2"], [2, 3]])
 
 
 def test_is_multilabel():
     for group, group_examples in iteritems(EXAMPLES):
-        if group.startswith('multilabel'):
-            assert_, exp = assert_true, 'True'
+        if group in ['multilabel-indicator']:
+            dense_assert_, dense_exp = assert_true, 'True'
         else:
-            assert_, exp = assert_false, 'False'
+            dense_assert_, dense_exp = assert_false, 'False'
+
         for example in group_examples:
-            assert_(is_multilabel(example),
-                    msg='is_multilabel(%r) should be %s' % (example, exp))
+            # Only mark explicitly defined sparse examples as valid sparse
+            # multilabel-indicators
+            if group == 'multilabel-indicator' and issparse(example):
+                sparse_assert_, sparse_exp = assert_true, 'True'
+            else:
+                sparse_assert_, sparse_exp = assert_false, 'False'
 
+            if (issparse(example) or
+                (hasattr(example, '__array__') and
+                 np.asarray(example).ndim == 2 and
+                 np.asarray(example).dtype.kind in 'biuf' and
+                 np.asarray(example).shape[1] > 0)):
+                examples_sparse = [sparse_matrix(example)
+                                   for sparse_matrix in [coo_matrix,
+                                                         csc_matrix,
+                                                         csr_matrix,
+                                                         dok_matrix,
+                                                         lil_matrix]]
+                for exmpl_sparse in examples_sparse:
+                    sparse_assert_(is_multilabel(exmpl_sparse),
+                                   msg=('is_multilabel(%r)'
+                                   ' should be %s')
+                                   % (exmpl_sparse, sparse_exp))
 
-def test_is_label_indicator_matrix():
-    for group, group_examples in iteritems(EXAMPLES):
-        if group == 'multilabel-indicator':
-            assert_, exp = assert_true, 'True'
+            # Densify sparse examples before testing
+            if issparse(example):
+                example = example.toarray()
+
+            dense_assert_(is_multilabel(example),
+                          msg='is_multilabel(%r) should be %s'
+                          % (example, dense_exp))
+
+def test_check_classification_targets():
+    for y_type in EXAMPLES.keys():
+        if y_type in ["unknown", "continuous", 'continuous-multioutput']:
+            for example in EXAMPLES[y_type]:
+                msg = 'Unknown label type: '
+                assert_raises_regex(ValueError, msg,
+                    check_classification_targets, example)
         else:
-            assert_, exp = assert_false, 'False'
-        for example in group_examples:
-            assert_(is_label_indicator_matrix(example),
-                    msg='is_label_indicator_matrix(%r) should be %s'
-                    % (example, exp))
+            for example in EXAMPLES[y_type]:
+                check_classification_targets(example)
 
-
-def test_is_sequence_of_sequences():
-    for group, group_examples in iteritems(EXAMPLES):
-        if group == 'multilabel-sequences':
-            assert_, exp = assert_true, 'True'
-        else:
-            assert_, exp = assert_false, 'False'
-        for example in group_examples:
-            assert_(is_sequence_of_sequences(example),
-                    msg='is_sequence_of_sequences(%r) should be %s'
-                    % (example, exp))
-
-
+# @ignore_warnings
 def test_type_of_target():
     for group, group_examples in iteritems(EXAMPLES):
         for example in group_examples:
             assert_equal(type_of_target(example), group,
-                         msg='type_of_target(%r) should be %r, got %r'
-                         % (example, group, type_of_target(example)))
+                         msg=('type_of_target(%r) should be %r, got %r'
+                              % (example, group, type_of_target(example))))
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
-        assert_raises(ValueError, type_of_target, example)
+        msg_regex = 'Expected array-like \(array or non-string sequence\).*'
+        assert_raises_regex(ValueError, msg_regex, type_of_target, example)
+
+    for example in MULTILABEL_SEQUENCES:
+        msg = ('You appear to be using a legacy multi-label data '
+               'representation. Sequence of sequences are no longer supported;'
+               ' use a binary array or sparse matrix instead.')
+        assert_raises_regex(ValueError, msg, type_of_target, example)
+
+    try:
+        from pandas import SparseSeries
+    except ImportError:
+        raise SkipTest("Pandas not found")
+
+    y = SparseSeries([1, 0, 0, 1, 0])
+    msg = "y cannot be class 'SparseSeries'."
+    assert_raises_regex(ValueError, msg, type_of_target, y)
+
+def test_class_distribution():
+    y = np.array([[1, 0, 0, 1],
+                  [2, 2, 0, 1],
+                  [1, 3, 0, 1],
+                  [4, 2, 0, 1],
+                  [2, 0, 0, 1],
+                  [1, 3, 0, 1]])
+    # Define the sparse matrix with a mix of implicit and explicit zeros
+    data = np.array([1, 2, 1, 4, 2, 1, 0, 2, 3, 2, 3, 1, 1, 1, 1, 1, 1])
+    indices = np.array([0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 5, 0, 1, 2, 3, 4, 5])
+    indptr = np.array([0, 6, 11, 11, 17])
+    y_sp = sp.csc_matrix((data, indices, indptr), shape=(6, 4))
+
+    classes, n_classes, class_prior = class_distribution(y)
+    classes_sp, n_classes_sp, class_prior_sp = class_distribution(y_sp)
+    classes_expected = [[1, 2, 4],
+                        [0, 2, 3],
+                        [0],
+                        [1]]
+    n_classes_expected = [3, 3, 1, 1]
+    class_prior_expected = [[3/6, 2/6, 1/6],
+                            [1/3, 1/3, 1/3],
+                            [1.0],
+                            [1.0]]
+
+    for k in range(y.shape[1]):
+        assert_array_almost_equal(classes[k], classes_expected[k])
+        assert_array_almost_equal(n_classes[k], n_classes_expected[k])
+        assert_array_almost_equal(class_prior[k], class_prior_expected[k])
+
+        assert_array_almost_equal(classes_sp[k], classes_expected[k])
+        assert_array_almost_equal(n_classes_sp[k], n_classes_expected[k])
+        assert_array_almost_equal(class_prior_sp[k], class_prior_expected[k])
+
+    # Test again with explicit sample weights
+    (classes,
+     n_classes,
+     class_prior) = class_distribution(y, [1.0, 2.0, 1.0, 2.0, 1.0, 2.0])
+    (classes_sp,
+     n_classes_sp,
+     class_prior_sp) = class_distribution(y, [1.0, 2.0, 1.0, 2.0, 1.0, 2.0])
+    class_prior_expected = [[4/9, 3/9, 2/9],
+                            [2/9, 4/9, 3/9],
+                            [1.0],
+                            [1.0]]
+
+    for k in range(y.shape[1]):
+        assert_array_almost_equal(classes[k], classes_expected[k])
+        assert_array_almost_equal(n_classes[k], n_classes_expected[k])
+        assert_array_almost_equal(class_prior[k], class_prior_expected[k])
+
+        assert_array_almost_equal(classes_sp[k], classes_expected[k])
+        assert_array_almost_equal(n_classes_sp[k], n_classes_expected[k])
+        assert_array_almost_equal(class_prior_sp[k], class_prior_expected[k])
+
+
+def test_safe_split_with_precomputed_kernel():
+    clf = SVC()
+    clfp = SVC(kernel="precomputed")
+
+    iris = datasets.load_iris()
+    X, y = iris.data, iris.target
+    K = np.dot(X, X.T)
+
+    cv = ShuffleSplit(test_size=0.25, random_state=0)
+    train, test = list(cv.split(X))[0]
+
+    X_train, y_train = _safe_split(clf, X, y, train)
+    K_train, y_train2 = _safe_split(clfp, K, y, train)
+    assert_array_almost_equal(K_train, np.dot(X_train, X_train.T))
+    assert_array_almost_equal(y_train, y_train2)
+
+    X_test, y_test = _safe_split(clf, X, y, test, train)
+    K_test, y_test2 = _safe_split(clfp, K, y, test, train)
+    assert_array_almost_equal(K_test, np.dot(X_test, X_train.T))
+    assert_array_almost_equal(y_test, y_test2)

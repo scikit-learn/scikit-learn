@@ -8,8 +8,8 @@ images patches that constitute faces.
 From the programming standpoint, it is interesting because it shows how
 to use the online API of the scikit-learn to process a very large
 dataset by chunks. The way we proceed is that we load an image at a time
-and extract randomly 15 patches from this image. Once we have accumulated
-750 of these patches (using 50 images), we run the `partial_fit` method
+and extract randomly 50 patches from this image. Once we have accumulated
+500 of these patches (using 10 images), we run the `partial_fit` method
 of the online KMeans object, MiniBatchKMeans.
 
 The verbose setting on the MiniBatchKMeans enables us to see that some
@@ -32,7 +32,7 @@ from sklearn.feature_extraction.image import extract_patches_2d
 
 faces = datasets.fetch_olivetti_faces()
 
-###############################################################################
+# #############################################################################
 # Learn the dictionary of images
 
 print('Learning the dictionary... ')
@@ -41,10 +41,9 @@ kmeans = MiniBatchKMeans(n_clusters=81, random_state=rng, verbose=True)
 patch_size = (20, 20)
 
 buffer = []
-index = 1
 t0 = time.time()
 
-# The online learning part: cycle over the whole dataset 4 times
+# The online learning part: cycle over the whole dataset 6 times
 index = 0
 for _ in range(6):
     for img in faces.images:
@@ -66,7 +65,7 @@ for _ in range(6):
 dt = time.time() - t0
 print('done in %.2fs.' % dt)
 
-###############################################################################
+# #############################################################################
 # Plot the results
 plt.figure(figsize=(4.2, 4))
 for i, patch in enumerate(kmeans.cluster_centers_):

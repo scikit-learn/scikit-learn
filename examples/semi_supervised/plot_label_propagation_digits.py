@@ -17,7 +17,7 @@ At the end, the top 10 most uncertain predictions will be shown.
 print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
-# Licence: BSD
+# License: BSD
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,8 +27,7 @@ from scipy import stats
 from sklearn import datasets
 from sklearn.semi_supervised import label_propagation
 
-from sklearn.metrics import metrics
-from sklearn.metrics.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, classification_report
 
 digits = datasets.load_digits()
 rng = np.random.RandomState(0)
@@ -46,11 +45,12 @@ indices = np.arange(n_total_samples)
 
 unlabeled_set = indices[n_labeled_points:]
 
-# shuffle everything around
+# #############################################################################
+# Shuffle everything around
 y_train = np.copy(y)
 y_train[unlabeled_set] = -1
 
-###############################################################################
+# #############################################################################
 # Learn with LabelSpreading
 lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iter=5)
 lp_model.fit(X, y_train)
@@ -62,19 +62,21 @@ cm = confusion_matrix(true_labels, predicted_labels, labels=lp_model.classes_)
 print("Label Spreading model: %d labeled & %d unlabeled points (%d total)" %
       (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples))
 
-print(metrics.classification_report(true_labels, predicted_labels))
+print(classification_report(true_labels, predicted_labels))
 
 print("Confusion matrix")
 print(cm)
 
-# calculate uncertainty values for each transduced distribution
+# #############################################################################
+# Calculate uncertainty values for each transduced distribution
 pred_entropies = stats.distributions.entropy(lp_model.label_distributions_.T)
 
-# pick the top 10 most uncertain labels
+# #############################################################################
+# Pick the top 10 most uncertain labels
 uncertainty_index = np.argsort(pred_entropies)[-10:]
 
-###############################################################################
-# plot
+# #############################################################################
+# Plot
 f = plt.figure(figsize=(7, 5))
 for index, image_index in enumerate(uncertainty_index):
     image = images[image_index]

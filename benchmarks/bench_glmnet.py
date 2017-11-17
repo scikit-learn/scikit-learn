@@ -47,8 +47,8 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
 if __name__ == '__main__':
     from glmnet.elastic_net import Lasso as GlmnetLasso
     from sklearn.linear_model import Lasso as ScikitLasso
-    # Delayed import of pylab
-    import pylab as pl
+    # Delayed import of matplotlib.pyplot
+    import matplotlib.pyplot as plt
 
     scikit_results = []
     glmnet_results = []
@@ -76,15 +76,15 @@ if __name__ == '__main__':
         print("benchmarking glmnet: ")
         glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef_))
 
-    pl.clf()
+    plt.clf()
     xx = range(0, n * step, step)
-    pl.title('Lasso regression on sample dataset (%d features)' % n_features)
-    pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
-    pl.plot(xx, glmnet_results, 'r-', label='glmnet')
-    pl.legend()
-    pl.xlabel('number of samples to classify')
-    pl.ylabel('Time (s)')
-    pl.show()
+    plt.title('Lasso regression on sample dataset (%d features)' % n_features)
+    plt.plot(xx, scikit_results, 'b-', label='scikit-learn')
+    plt.plot(xx, glmnet_results, 'r-', label='glmnet')
+    plt.legend()
+    plt.xlabel('number of samples to classify')
+    plt.ylabel('Time (s)')
+    plt.show()
 
     # now do a benchmark where the number of points is fixed
     # and the variable is the number of features
@@ -117,12 +117,12 @@ if __name__ == '__main__':
         glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef_))
 
     xx = np.arange(100, 100 + n * step, step)
-    pl.figure('scikit-learn vs. glmnet benchmark results')
-    pl.title('Regression in high dimensional spaces (%d samples)' % n_samples)
-    pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
-    pl.plot(xx, glmnet_results, 'r-', label='glmnet')
-    pl.legend()
-    pl.xlabel('number of features')
-    pl.ylabel('Time (s)')
-    pl.axis('tight')
-    pl.show()
+    plt.figure('scikit-learn vs. glmnet benchmark results')
+    plt.title('Regression in high dimensional spaces (%d samples)' % n_samples)
+    plt.plot(xx, scikit_results, 'b-', label='scikit-learn')
+    plt.plot(xx, glmnet_results, 'r-', label='glmnet')
+    plt.legend()
+    plt.xlabel('number of features')
+    plt.ylabel('Time (s)')
+    plt.axis('tight')
+    plt.show()
