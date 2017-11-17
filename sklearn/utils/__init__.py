@@ -196,8 +196,8 @@ def resample(*arrays, **options):
     Returns
     -------
     resampled_arrays : sequence of indexable data-structures
-        Sequence of resampled copies of the collections. The original arrays are
-        not impacted.
+        Sequence of resampled copies of the collections. The original arrays
+        are not impacted.
 
     Examples
     --------
@@ -300,8 +300,8 @@ def shuffle(*arrays, **options):
     Returns
     -------
     shuffled_arrays : sequence of indexable data-structures
-        Sequence of shuffled copies of the collections. The original arrays are
-        not impacted.
+        Sequence of shuffled copies of the collections. The original arrays
+        are not impacted.
 
     Examples
     --------
