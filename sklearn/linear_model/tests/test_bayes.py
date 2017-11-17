@@ -126,7 +126,7 @@ def test_regression_issue_10128():
     clf.fit(X_train, y_train)
     assert_array_almost_equal(clf.sigma_, np.empty(shape=(0, 0)))
     assert_array_almost_equal(clf.coef_, np.zeros(shape=n_features))
-    # Check that no `ValueError` is thrown
+    # Ensure that no error is thrown
     clf.predict(X_test, return_std=True)
 
 
