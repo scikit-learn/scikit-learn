@@ -490,7 +490,7 @@ def test_mice_transform_correctness():
         X_missing = Xfilled.copy()
         X_missing[nan_mask] = np.nan
 
-        # split up data
+        # split up data in half
         n = int(n/2)
         Xtr_filled = Xfilled[:n]
         Xtr = X_missing[:n]
