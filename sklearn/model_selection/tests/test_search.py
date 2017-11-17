@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
@@ -330,6 +331,41 @@ def test_grid_search_groups():
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
+
+
+def test_return_train_score_warn():
+    # Test that warnings are raised. Will be removed in 0.21
+
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    grid = {'C': [1, 2]}
+
+    estimators = [GridSearchCV(LinearSVC(random_state=0), grid),
+                  RandomizedSearchCV(LinearSVC(random_state=0), grid,
+                                     n_iter=2)]
+
+    result = {}
+    for estimator in estimators:
+        for val in [True, False, 'warn']:
+            estimator.set_params(return_train_score=val)
+            result[val] = assert_no_warnings(estimator.fit, X, y).cv_results_
+
+    train_keys = ['split0_train_score', 'split1_train_score',
+                  'split2_train_score', 'mean_train_score', 'std_train_score']
+    for key in train_keys:
+        msg = (
+            'You are accessing a training score ({!r}), '
+            'which will not be available by default '
+            'any more in 0.21. If you need training scores, '
+            'please set return_train_score=True').format(key)
+        train_score = assert_warns_message(FutureWarning, msg,
+                                           result['warn'].get, key)
+        assert np.allclose(train_score, result[True][key])
+        assert key not in result[False]
+
+    for key in result['warn']:
+        if key not in train_keys:
+            assert_no_warnings(result['warn'].get, key)
 
 
 def test_classes__property():

@@ -1548,7 +1548,6 @@ def test_1d_input():
 
 
 def _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight):
-    # Private function to keep pretty printing in nose yielded tests
     est = TreeEstimator(random_state=0)
     est.fit(X, y, sample_weight=sample_weight)
     assert_equal(est.tree_.max_depth, 1)

@@ -581,6 +581,14 @@ class StratifiedKFold(_BaseKFold):
     def _make_test_folds(self, X, y=None):
         rng = self.random_state
         y = np.asarray(y)
+        type_of_target_y = type_of_target(y)
+        allowed_target_types = ('binary', 'multiclass')
+        if type_of_target_y not in allowed_target_types:
+            raise ValueError(
+                'Supported target types are: {}. Got {!r} instead.'.format(
+                    allowed_target_types, type_of_target_y))
+
+        y = column_or_1d(y)
         n_samples = y.shape[0]
         unique_y, y_inversed = np.unique(y, return_inverse=True)
         y_counts = np.bincount(y_inversed)
@@ -1526,8 +1534,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                                                   self.train_size)
 
         if y.ndim == 2:
-            # for multi-label y, map each distinct row to its string repr:
-            y = np.array([str(row) for row in y])
+            # for multi-label y, map each distinct row to a string repr
+            # using join because str(row) uses an ellipsis if len(row) > 1000
+            y = np.array([' '.join(row.astype('str')) for row in y])
 
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
@@ -2048,9 +2057,6 @@ def train_test_split(*arrays, **options):
 
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
-
-
-train_test_split.__test__ = False  # to avoid a pb with nosetests
 
 
 def _build_repr(self):

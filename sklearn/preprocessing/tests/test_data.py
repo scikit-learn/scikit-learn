@@ -13,6 +13,7 @@ from distutils.version import LooseVersion
 
 from sklearn.utils import gen_batches
 
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import clean_warning_registry
 from sklearn.utils.testing import assert_array_almost_equal
@@ -932,6 +933,10 @@ def test_quantile_transform_check_error():
     assert_raises_regex(ValueError, "'output_distribution' has to be either"
                         " 'normal' or 'uniform'. Got 'rnd' instead.",
                         transformer.inverse_transform, X_tran)
+    # check that an error is raised if input is scalar
+    assert_raise_message(ValueError,
+                         'Expected 2D array, got scalar array instead',
+                         transformer.transform, 10)
 
 
 def test_quantile_transform_sparse_ignore_zeros():
@@ -1157,14 +1162,16 @@ def test_quantile_transform_bounds():
     X = np.random.random((1000, 1))
     transformer = QuantileTransformer()
     transformer.fit(X)
-    assert_equal(transformer.transform(-10), transformer.transform(np.min(X)))
-    assert_equal(transformer.transform(10), transformer.transform(np.max(X)))
-    assert_equal(transformer.inverse_transform(-10),
+    assert_equal(transformer.transform([[-10]]),
+                 transformer.transform([[np.min(X)]]))
+    assert_equal(transformer.transform([[10]]),
+                 transformer.transform([[np.max(X)]]))
+    assert_equal(transformer.inverse_transform([[-10]]),
                  transformer.inverse_transform(
-                     np.min(transformer.references_)))
-    assert_equal(transformer.inverse_transform(10),
+                     [[np.min(transformer.references_)]]))
+    assert_equal(transformer.inverse_transform([[10]]),
                  transformer.inverse_transform(
-                     np.max(transformer.references_)))
+                     [[np.max(transformer.references_)]]))
 
 
 def test_quantile_transform_and_inverse():

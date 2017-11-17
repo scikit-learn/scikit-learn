@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 import warnings
+from math import sqrt
 
 import numpy as np
 from scipy import linalg
@@ -91,7 +92,6 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
         # old scipy, we need the garbage upper triangle to be non-Inf
         L = np.zeros((max_features, max_features), dtype=X.dtype)
 
-    L[0, 0] = 1.
     if return_path:
         coefs = np.empty_like(L)
 
@@ -101,6 +101,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
             # atom already selected or inner product too small
             warnings.warn(premature, RuntimeWarning, stacklevel=2)
             break
+
         if n_active > 0:
             # Updates the Cholesky decomposition of X' X
             L[n_active, :n_active] = np.dot(X[:, :n_active].T, X[:, lam])
@@ -110,17 +111,23 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
                                     overwrite_b=True,
                                     **solve_triangular_args)
             v = nrm2(L[n_active, :n_active]) ** 2
-            if 1 - v <= min_float:  # selected atoms are dependent
+            Lkk = linalg.norm(X[:, lam]) ** 2 - v
+            if Lkk <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=2)
                 break
-            L[n_active, n_active] = np.sqrt(1 - v)
+            L[n_active, n_active] = sqrt(Lkk)
+        else:
+            L[0, 0] = linalg.norm(X[:, lam])
+
         X.T[n_active], X.T[lam] = swap(X.T[n_active], X.T[lam])
         alpha[n_active], alpha[lam] = alpha[lam], alpha[n_active]
         indices[n_active], indices[lam] = indices[lam], indices[n_active]
         n_active += 1
-        # solves LL'x = y as a composition of two triangular systems
+
+        # solves LL'x = X'y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], alpha[:n_active], lower=True,
                          overwrite_b=False)
+
         if return_path:
             coefs[:n_active, n_active - 1] = gamma
         residual = y - np.dot(X[:, :n_active], gamma)
@@ -229,16 +236,20 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
                                     overwrite_b=True,
                                     **solve_triangular_args)
             v = nrm2(L[n_active, :n_active]) ** 2
-            if 1 - v <= min_float:  # selected atoms are dependent
+            Lkk = Gram[lam, lam] - v
+            if Lkk <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=3)
                 break
-            L[n_active, n_active] = np.sqrt(1 - v)
+            L[n_active, n_active] = sqrt(Lkk)
+        else:
+            L[0, 0] = sqrt(Gram[lam, lam])
+
         Gram[n_active], Gram[lam] = swap(Gram[n_active], Gram[lam])
         Gram.T[n_active], Gram.T[lam] = swap(Gram.T[n_active], Gram.T[lam])
         indices[n_active], indices[lam] = indices[lam], indices[n_active]
         Xy[n_active], Xy[lam] = Xy[lam], Xy[n_active]
         n_active += 1
-        # solves LL'x = y as a composition of two triangular systems
+        # solves LL'x = X'y as a composition of two triangular systems
         gamma, _ = potrs(L[:n_active, :n_active], Xy[:n_active], lower=True,
                          overwrite_b=False)
         if return_path:
@@ -598,7 +609,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     Lars
     LassoLars
     decomposition.sparse_encode
-
+    OrthogonalMatchingPursuitCV
     """
     def __init__(self, n_nonzero_coefs=None, tol=None, fit_intercept=True,
                  normalize=True, precompute='auto'):

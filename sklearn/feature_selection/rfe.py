@@ -101,6 +101,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
+    See also
+    --------
+    RFECV : Recursive feature elimination with built-in cross-validated
+        selection of the best number of features
+
     References
     ----------
 
@@ -365,6 +370,10 @@ class RFECV(RFE, MetaEstimatorMixin):
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
 
+    See also
+    --------
+    RFE : Recursive feature elimination
+
     References
     ----------
 
@@ -442,7 +451,8 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select, step=self.step)
+                  n_features_to_select=n_features_to_select, step=self.step,
+                  verbose=self.verbose)
 
         rfe.fit(X, y)
 

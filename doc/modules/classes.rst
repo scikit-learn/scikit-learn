@@ -26,8 +26,10 @@ Base classes
    :template: class.rst
 
    base.BaseEstimator
+   base.BiclusterMixin
    base.ClassifierMixin
    base.ClusterMixin
+   base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
 
@@ -40,6 +42,8 @@ Functions
    :template: function.rst
 
    base.clone
+   base.is_classifier
+   base.is_regressor
    config_context
    get_config
    set_config
@@ -779,11 +783,11 @@ details.
    metrics.accuracy_score
    metrics.auc
    metrics.average_precision_score
+   metrics.balanced_accuracy_score
    metrics.brier_score_loss
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
-   metrics.dcg_score
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
@@ -791,7 +795,6 @@ details.
    metrics.jaccard_similarity_score
    metrics.log_loss
    metrics.matthews_corrcoef
-   metrics.ndcg_score
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
