@@ -112,7 +112,7 @@ def test_std_bayesian_ridge_ard_with_constant_input():
 
 
 def test_regression_issue_10128():
-    # this ARDRegression test throws a `ValueError` on master, commit 5963fd2
+    # Reproduces the bug in ARDRegression reported in issue #10128
     np.random.seed(752)
     n = 100
     d = 10
@@ -124,6 +124,9 @@ def test_regression_issue_10128():
     X_test = np.zeros((1, n_features))
     clf = ARDRegression()
     clf.fit(X_train, y_train)
+    assert_array_almost_equal(clf.sigma_, np.empty(shape=(0, 0)))
+    assert_array_almost_equal(clf.coef_, np.zeros(shape=n_features))
+    # Check that no `ValueError` is thrown
     clf.predict(X_test, return_std=True)
 
 
