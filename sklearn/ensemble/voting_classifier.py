@@ -33,6 +33,16 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     return estimator
 
 
+def _parallel_predict_estimator(estimator, X):
+    """Privaye function used to predict an estimator within a job."""
+    return estimator.predict(X)
+
+
+def _parallel_predict_proba_estimator(estimator, X):
+    """Privaye function used to predict an estimator within a job."""
+    return estimator.predict_proba(X)
+
+
 class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
 
@@ -193,9 +203,9 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         transformed_y = self.le_.transform(y)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
-                                                 sample_weight=sample_weight)
-                for clf in clfs if clf is not None)
+            delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
+                                             sample_weight=sample_weight)
+            for clf in clfs if clf is not None)
 
         self.named_estimators_ = Bunch(**dict())
         for k, e in zip(self.estimators, self.estimators_):
@@ -242,7 +252,9 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
     def _collect_probas(self, X):
         """Collect results from clf.predict calls. """
-        return np.asarray([clf.predict_proba(X) for clf in self.estimators_])
+        return np.asarray(Parallel(n_jobs=self.n_jobs)(
+            delayed(_parallel_predict_proba_estimator)(clf, X)
+            for clf in self.estimators_))
 
     def _predict_proba(self, X):
         """Predict class probabilities for X in 'soft' voting """
@@ -347,5 +359,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
                      self)._get_params('estimators', deep=deep)
 
     def _predict(self, X):
-        """Collect results from clf.predict calls. """
-        return np.asarray([clf.predict(X) for clf in self.estimators_]).T
+        """Collect results from clf.predict calls."""
+        return np.asarray(Parallel(n_jobs=self.n_jobs)(
+            delayed(_parallel_predict_estimator)(clf, X)
+            for clf in self.estimators_)).T
