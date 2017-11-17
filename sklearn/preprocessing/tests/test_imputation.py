@@ -481,6 +481,7 @@ def test_mice_transform_correctness():
     def make_data(rank):
         n = 100
         d = 100
+        np.random.seed(0)
         A = np.random.random((n, rank))
         B = np.random.random((rank, d))
         Xfilled = np.dot(A, B)
