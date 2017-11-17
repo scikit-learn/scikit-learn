@@ -34,12 +34,14 @@ def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
 
 
 def _parallel_predict_estimator(estimator, X):
-    """Privaye function used to predict an estimator within a job."""
+    """Private function used to make an estimator prediction within a job."""
     return estimator.predict(X)
 
 
 def _parallel_predict_proba_estimator(estimator, X):
-    """Privaye function used to predict an estimator within a job."""
+    """Private function used to make an estimator
+    probabilities prediction within a job.
+    """
     return estimator.predict_proba(X)
 
 
