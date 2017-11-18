@@ -32,7 +32,7 @@ import numpy as np
 from .base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
 from ..externals.joblib import Memory
-
+from sklearn.utils.image_read import _imread
 from ..externals.six import b
 
 logger = logging.getLogger(__name__)
@@ -137,14 +137,9 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 def _load_imgs(file_paths, slice_, color, resize):
     """Internally used to load images"""
 
-    # Try to import from PIL as imread is deprecated in SciPy 1.0.0,
-    # and will be removed in 1.2.0.
-    # Github Issue: https://github.com/scikit-learn/scikit-learn/issues/10147
+    # Try to import imread from scipy. We do this lazily here to prevent
+    # this module from depending on PIL.
     try:
-        try:
-            from PIL import Image
-        except ImportError:
-            import Image
         from scipy.misc import imresize
     except ImportError:
         raise ImportError("The Python Imaging Library (PIL)"
@@ -182,7 +177,7 @@ def _load_imgs(file_paths, slice_, color, resize):
 
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
-        img = Image.open(file_path)
+        img = _imread(file_path)
         if img.ndim is 0:
             raise RuntimeError("Failed to read the image file %s, "
                                "Please make sure that libjpeg is installed"

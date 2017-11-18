@@ -162,14 +162,8 @@ def test_load_sample_image():
 
 def test_load_missing_sample_image_error():
     have_PIL = True
-    # Try to import from PIL as imread is deprecated in SciPy 1.0.0,
-    # and will be removed in 1.2.0.
-    # Github Issue: https://github.com/scikit-learn/scikit-learn/issues/10147
     try:
-        try:
-            from PIL import Image
-        except ImportError:
-            import Image  # noqa
+        from sklearn.utils.image_read import _imread
     except ImportError:
         have_PIL = False
     if have_PIL:

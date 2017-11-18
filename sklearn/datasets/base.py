@@ -19,6 +19,7 @@ import hashlib
 
 from ..utils import Bunch
 from ..utils import check_random_state
+from sklearn.utils.image_read import _imread
 
 import numpy as np
 
@@ -742,17 +743,6 @@ def load_sample_images():
     >>> first_img_data.dtype               #doctest: +SKIP
     dtype('uint8')
     """
-    # Try to import from PIL as imread is deprecated in SciPy 1.0.0,
-    # and will be removed in 1.2.0.
-    # Github Issue: https://github.com/scikit-learn/scikit-learn/issues/10147
-    try:
-        try:
-            from PIL import Image
-        except ImportError:
-            import Image
-    except ImportError:
-        raise ImportError("The Python Imaging Library (PIL) "
-                          "is required to load data from jpeg files")
     module_path = join(dirname(__file__), "images")
     with open(join(module_path, 'README.txt')) as f:
         descr = f.read()
@@ -760,7 +750,7 @@ def load_sample_images():
                  for filename in os.listdir(module_path)
                  if filename.endswith(".jpg")]
     # Load image data for each image in the source folder.
-    images = [Image.open(filename) for filename in filenames]
+    images = [_imread(filename) for filename in filenames]
 
     return Bunch(images=images,
                  filenames=filenames,
