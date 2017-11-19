@@ -856,19 +856,6 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
     discounted_cumulative_gain : array, shape = [n_samples,], dtype = float
         The DCG score for each sample.
 
-    References
-    ----------
-    `Wikipedia entry for Discounted Cumulative Gain
-        <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
-
-    Jarvelin, K., & Kekalainen, J. (2002).
-    Cumulated gain-based evaluation of IR techniques. ACM Transactions on
-    Information Systems (TOIS), 20(4), 422-446.
-
-    Wang, Y., Wang, L., Li, Y., He, D., Chen, W., & Liu, T. Y. (2013, May).
-    A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
-    Annual Conference on Learning Theory (COLT 2013)
-
     See also
     --------
     ndcg_score :
@@ -987,19 +974,6 @@ def _ndcg_sample_scores(y_true, y_score, k=None):
     -------
     normalized_discounted_cumulative_gain : array, shape = [n_samples,]
         The NDCG score for each sample (float in [0., 1.]).
-
-    References
-    ----------
-    `Wikipedia entry for Discounted Cumulative Gain
-        <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
-
-    Jarvelin, K., & Kekalainen, J. (2002).
-    Cumulated gain-based evaluation of IR techniques. ACM Transactions on
-    Information Systems (TOIS), 20(4), 422-446.
-
-    Wang, Y., Wang, L., Li, Y., He, D., Chen, W., & Liu, T. Y. (2013, May).
-    A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
-    Annual Conference on Learning Theory (COLT 2013)
 
     See also
     --------
