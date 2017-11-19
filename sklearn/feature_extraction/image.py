@@ -438,7 +438,8 @@ def reconstruct_from_patches_2d(patches, image_size, overlap_mode='average'):
         for i in range(i_h):
             for j in range(i_w):
                 # divide by the amount of overlap
-                # XXX: is this the most efficient way? memory-wise yes, cpu wise?
+                # XXX: is this the most efficient way? memory-wise yes,
+                #      cpu wise?
                 img[i, j] /= float(min(i + 1, p_h, i_h - i) *
                                    min(j + 1, p_w, i_w - j))
         return img
