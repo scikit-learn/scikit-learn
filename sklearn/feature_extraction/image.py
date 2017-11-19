@@ -422,14 +422,13 @@ def reconstruct_from_patches_2d(patches, image_size, overlap_mode='average'):
     """
     i_h, i_w = image_size[:2]
     p_h, p_w = patches.shape[1:3]
+    # compute the dimensions of the patches array
     n_h = i_h - p_h + 1
     n_w = i_w - p_w + 1
     img = np.zeros(image_size)
     img[:] = np.nan
     if overlap_mode == 'median':
         imgs = [img.copy() for _ in range(p_h * p_w)]
-        # compute the dimensions of the patches array
-
         for p, (i, j) in zip(patches, product(range(n_h), range(n_w))):
             imgs[(i % p_h) * p_w + j % p_w][i:i + p_h, j:j + p_w] = p
         return np.ma.median(imgs, axis=0)
