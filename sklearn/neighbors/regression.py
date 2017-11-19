@@ -13,6 +13,7 @@
 import warnings
 
 import numpy as np
+from scipy.sparse import issparse
 
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
@@ -143,6 +144,11 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
+        if issparse(X) and self.metric == 'precomputed':
+            raise ValueError(
+                "Sparse matrices not supported for prediction with "
+                "precomputed kernels. Densify your matrix."
+            )
         X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
@@ -292,17 +298,14 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
             _y = _y.reshape((-1, 1))
 
         if weights is None:
+            y_pred = np.array([np.mean(_y[ind, :],
+                                       axis=0)
+                               if len(ind) else empty_obs
+                               for (i, ind) in enumerate(neigh_ind)])
 
-            with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', "Mean of empty slice")
-                warn_div = "invalid value encountered in true_divide"
-                warnings.filterwarnings('ignore', warn_div)
-
-                y_pred = np.array([np.mean(_y[ind, :], axis=0)
-                                   for ind in neigh_ind])
         else:
-            empty_obs = np.full_like(_y[0], np.nan)
-            y_pred = np.array([np.average(_y[ind, :], axis=0,
+            y_pred = np.array([np.average(_y[ind, :],
+                                          axis=0,
                                           weights=weights[i])
                                if len(ind) else empty_obs
                                for (i, ind) in enumerate(neigh_ind)])
