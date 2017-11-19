@@ -392,12 +392,12 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         return patches
 
 
-def reconstruct_from_patches_2d(patches, image_size):
+def reconstruct_from_patches_2d(patches, image_size, overlap_mode='average'):
     """Reconstruct the image from all of its patches.
 
     Patches are assumed to overlap and the image is constructed by filling in
-    the patches from left to right, top to bottom, averaging the overlapping
-    regions.
+    the patches from left to right, top to bottom, computing the average or 
+    the median of the overlapping regions.
 
     Read more in the :ref:`User Guide <image_feature_extraction>`.
 
@@ -413,6 +413,7 @@ def reconstruct_from_patches_2d(patches, image_size):
         (image_height, image_width, n_channels)
         the size of the image that will be reconstructed
 
+    overlap_mode: overlapping mode = {'average','median'}
     Returns
     -------
     image : array, shape = image_size
@@ -422,20 +423,25 @@ def reconstruct_from_patches_2d(patches, image_size):
     i_h, i_w = image_size[:2]
     p_h, p_w = patches.shape[1:3]
     img = np.zeros(image_size)
-    # compute the dimensions of the patches array
-    n_h = i_h - p_h + 1
-    n_w = i_w - p_w + 1
-    for p, (i, j) in zip(patches, product(range(n_h), range(n_w))):
-        img[i:i + p_h, j:j + p_w] += p
-
-    for i in range(i_h):
-        for j in range(i_w):
-            # divide by the amount of overlap
-            # XXX: is this the most efficient way? memory-wise yes, cpu wise?
-            img[i, j] /= float(min(i + 1, p_h, i_h - i) *
-                               min(j + 1, p_w, i_w - j))
-    return img
-
+    img[:] = np.nan
+    if overlap_mode == 'median':
+        imgs = [img.copy() for _ in range(p_h * p_w)]
+        # compute the dimensions of the patches array
+        n_h = i_h - p_h + 1
+        n_w = i_w - p_w + 1
+        for p, (i, j) in zip(patches, product(range(n_h), range(n_w))):
+            imgs[(i % p_h) * p_w + j % p_w][i:i + p_h, j:j + p_w] = p
+        return np.ma.median(imgs, axis=0)
+    elif overlap_mode == 'average':
+        for p, (i, j) in zip(patches, product(range(n_h), range(n_w))):
+            img[i:i + p_h, j:j + p_w] += p
+        for i in range(i_h):
+            for j in range(i_w):
+                # divide by the amount of overlap
+                # XXX: is this the most efficient way? memory-wise yes, cpu wise?
+                img[i, j] /= float(min(i + 1, p_h, i_h - i) *
+                                   min(j + 1, p_w, i_w - j))
+        return img
 
 class PatchExtractor(BaseEstimator):
     """Extracts patches from a collection of images
