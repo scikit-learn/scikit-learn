@@ -431,7 +431,7 @@ def reconstruct_from_patches_2d(patches, image_size, overlap_mode='average'):
         imgs = [img.copy() for _ in range(p_h * p_w)]
         for p, (i, j) in zip(patches, product(range(n_h), range(n_w))):
             imgs[(i % p_h) * p_w + j % p_w][i:i + p_h, j:j + p_w] = p
-        return np.ma.median(imgs, axis=0)
+        return np.ma.median(np.ma.masked_invalid(imgs), axis=0).filled()
     elif overlap_mode == 'average':
         for p, (i, j) in zip(patches, product(range(n_h), range(n_w))):
             img[i:i + p_h, j:j + p_w] += p
