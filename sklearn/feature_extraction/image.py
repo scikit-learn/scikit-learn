@@ -426,8 +426,8 @@ def reconstruct_from_patches_2d(patches, image_size, overlap_mode='average'):
     n_h = i_h - p_h + 1
     n_w = i_w - p_w + 1
     img = np.zeros(image_size)
-    img[:] = np.nan
     if overlap_mode == 'median':
+        img[:] = np.nan
         imgs = [img.copy() for _ in range(p_h * p_w)]
         for p, (i, j) in zip(patches, product(range(n_h), range(n_w))):
             imgs[(i % p_h) * p_w + j % p_w][i:i + p_h, j:j + p_w] = p
