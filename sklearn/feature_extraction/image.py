@@ -396,7 +396,7 @@ def reconstruct_from_patches_2d(patches, image_size, overlap_mode='average'):
     """Reconstruct the image from all of its patches.
 
     Patches are assumed to overlap and the image is constructed by filling in
-    the patches from left to right, top to bottom, computing the average or 
+    the patches from left to right, top to bottom, computing the average or
     the median of the overlapping regions.
 
     Read more in the :ref:`User Guide <image_feature_extraction>`.
