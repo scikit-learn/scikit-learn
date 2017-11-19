@@ -81,6 +81,10 @@ Classifiers and regressors
   ``inverse_func`` are the inverse of each other.
   :issue:`9399` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Add `sample_weight` parameter to the fit method of
+  :class:`linear_model.BayesianRidge` for weighted linear regression.
+  :issue:`10111` by :user:`Peter St. John <pstjohn>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -120,6 +124,10 @@ Classifiers and regressors
 - Fixed a bug in :class:`naive_bayes.GaussianNB` which incorrectly raised
   error for prior list which summed to 1.
   :issue:`10005` by :user:`Gaurav Dhingra <gxyd>`.
+
+- Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
+  broken when setting ``normalize=False``.
+  by `Alexandre Gramfort`_.
 
 Decomposition, manifold learning and clustering
 
@@ -192,3 +200,10 @@ Cluster
 - Deprecate ``pooling_func`` unused parameter in
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
+
+Changes to estimator checks
+---------------------------
+
+- Allow tests in :func:`estimator_checks.check_estimator` to test functions
+  that accept pairwise data.
+  :issue:`9701` by :user:`Kyle Johnson <gkjohns>`

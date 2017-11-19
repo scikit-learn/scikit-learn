@@ -248,7 +248,7 @@ def sag(SequentialDataset dataset,
     ---------
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
-    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+    https://hal.inria.fr/hal-00860051/document
     (section 4.3)
 
     Defazio, A., Bach, F., Lacoste-Julien, S. (2014),
