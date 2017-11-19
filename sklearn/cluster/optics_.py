@@ -137,11 +137,11 @@ def optics(X, min_samples=5, max_bound=np.inf, metric='euclidean',
     Record 28, no. 2 (1999): 49-60.
     """
 
-    clust = OPTICS.fit_predict(min_samples, max_bound, metric, algorithm,
-                               leaf_size, p, metric_params, maxima_ratio,
-                               rejection_ratio, similarity_threshold,
-                               significant_min, min_cluster_size_ratio,
-                               min_maxima_ratio, n_jobs)
+    clust = OPTICS(min_samples, max_bound, metric, algorithm, leaf_size,
+                   p, metric_params, n_jobs, maxima_ratio, rejection_ratio,
+                   similarity_threshold, significant_min,
+                   min_cluster_size_ratio, min_maxima_ratio)
+    clust.fit(X)
     return clust.core_sample_indices_, clust.labels_
 
 
