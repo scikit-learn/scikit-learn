@@ -179,14 +179,13 @@ Metrics
   :issue:`10093` by :user:`alexryndin <alexryndin>`
   and :user:`Hanmin Qin <qinhanmin2014>`.
 
-  Neighbors
+Neighbors
 
-  - Fix bug so that the method ``predict`` for
-    :class:`neighbors.RadiusNeighborsRegressor` can handle empty neighbor set
-    when using non uniform weights. Also raises a new warning, irrespective of
-    weighting, when no neighbors are found for samples, in place of unclear
-    numpy errors.. :issue:`9655`. By :user:`Andreas Bjerre-Nielsen <abjer>`.
-    
+- Fixed a bug so ``predict`` in :class:`neighbors.RadiusNeighborsRegressor` can
+  handle empty neighbor set when using non uniform weights. Also raises a new
+  warning, irrespective of, when no neighbors are found for samples, in place of
+  duplicate. (numpy errors..) :issue:`9655`. By :user:`Andreas Bjerre-Nielsen <abjer>`.
+
 API changes summary
 -------------------
 

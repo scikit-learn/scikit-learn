@@ -298,22 +298,19 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
             _y = _y.reshape((-1, 1))
 
         if weights is None:
-            y_pred = np.array([np.mean(_y[ind, :],
-                                       axis=0)
+            y_pred = np.array([np.mean(_y[ind, :], axis=0)
                                if len(ind) else empty_obs
                                for (i, ind) in enumerate(neigh_ind)])
 
         else:
-            y_pred = np.array([np.average(_y[ind, :],
-                                          axis=0,
-                                          weights=weights[i])
+            y_pred = np.array([np.average(_y[ind, :], axis=0,
+                               weights=weights[i])
                                if len(ind) else empty_obs
                                for (i, ind) in enumerate(neigh_ind)])
 
         if np.max(np.isnan(y_pred)):
             empty_warning_msg = ("One or more samples have no neighbors "
                                  "within specified radius; predicting NaN.")
-
             warnings.warn(empty_warning_msg)
 
 
