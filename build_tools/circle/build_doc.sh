@@ -114,6 +114,13 @@ source activate testenv
 # Build and install scikit-learn in dev mode
 python setup.py develop
 
+# TO BE UNCOMMENTED BEFORE MERGE
+###if [[ "$CIRCLE_BRANCH" =~ ^master$ && -z "$CI_PULL_REQUEST" ]]
+###then
+    # List available documentation versions if on master
+    python build_tools/circle/list_versions.py > doc/versions.rst
+###fi
+
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $MAKE_TARGET 2>&1 | tee ~/log.txt
 

@@ -13,10 +13,7 @@ Making a release
 
         $ git shortlog -ns 0.998..
 
-    - edit the doc/conf.py to increase the version number
-
-    - edit the doc/themes/scikit-learn/layout.html to change the 'News'
-      entry of the front page.
+    - edit the doc/index.rst to change the 'News' entry of the front page.
 
 2. Update the version number in sklearn/__init__.py, the __version__
    variable
@@ -38,7 +35,8 @@ Making a release
        $ python setup.py sdist register upload
 
 
-5. Push the documentation to the website (see README in doc folder)
+5. Push the documentation to the website. Circle CI should do this
+   automatically for master and <N>.<N>.X branches.
 
 
 6. Build binaries using dedicated CI servers by updating the git submodule
