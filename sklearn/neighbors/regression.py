@@ -296,7 +296,9 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         _y = self._y
         if _y.ndim == 1:
             _y = _y.reshape((-1, 1))
-
+            
+        empty_obs = np.full_like(_y[0], np.nan)
+        
         if weights is None:
             y_pred = np.array([np.mean(_y[ind, :], axis=0)
                                if len(ind) else empty_obs

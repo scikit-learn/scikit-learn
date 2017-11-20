@@ -661,7 +661,7 @@ def test_radius_neighbors_regressor(n_samples=40,
 
     # test that nan is returned when no nearby observations
     for weights in ['uniform', 'distance']:
-        neigh = RadiusNeighborsRegressor(radius=radius,
+        neigh = neighbors.RadiusNeighborsRegressor(radius=radius,
                                          weights=weights,
                                          algorithm='auto')
         neigh.fit(X, y)
