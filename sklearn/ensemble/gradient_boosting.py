@@ -61,6 +61,7 @@ from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
+import warnings
 
 
 class QuantileEstimator(object):
@@ -750,6 +751,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
+		
+        if self.min_impurity_split is not None:
+            warnings.warn("The min_impurity_split parameter is deprecated and"
+                          " will be removed in version 0.21. "
+                          "Use the min_impurity_decrease parameter instead.",
+                          DeprecationWarning)
 
     def _fit_stage(self, i, X, y, y_pred, sample_weight, sample_mask,
                    random_state, X_idx_sorted, X_csc=None, X_csr=None):
