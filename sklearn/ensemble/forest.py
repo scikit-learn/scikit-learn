@@ -1020,7 +1020,7 @@ class RandomForestClassifier(ForestClassifier):
             warnings.warn("The min_impurity_split parameter is deprecated and"
                           " will be removed in version 0.21. "
                           "Use the min_impurity_decrease parameter instead.", DeprecationWarning)
-		
+
 class RandomForestRegressor(ForestRegressor):
     """A random forest regressor.
 
@@ -1262,7 +1262,7 @@ class RandomForestRegressor(ForestRegressor):
             warnings.warn("The min_impurity_split parameter is deprecated and"
                           " will be removed in version 0.21. "
                           "Use the min_impurity_decrease parameter instead.", DeprecationWarning)
-		
+
 
 class ExtraTreesClassifier(ForestClassifier):
     """An extra-trees classifier.
@@ -1726,7 +1726,7 @@ class ExtraTreesRegressor(ForestRegressor):
             warnings.warn("The min_impurity_split parameter is deprecated and"
                           " will be removed in version 0.21. "
                           "Use the min_impurity_decrease parameter instead.", DeprecationWarning)
-			
+
 
 class RandomTreesEmbedding(BaseForest):
     """An ensemble of totally random trees.
@@ -1896,7 +1896,7 @@ class RandomTreesEmbedding(BaseForest):
             warnings.warn("The min_impurity_split parameter is deprecated and"
                           " will be removed in version 0.21. "
                           "Use the min_impurity_decrease parameter instead.", DeprecationWarning)
-		
+
     def _set_oob_score(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
 

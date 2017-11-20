@@ -751,7 +751,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
-		
+
         if self.min_impurity_split is not None:
             warnings.warn("The min_impurity_split parameter is deprecated and"
                           " will be removed in version 0.21. "
