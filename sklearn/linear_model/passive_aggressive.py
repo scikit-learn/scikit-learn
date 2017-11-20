@@ -63,9 +63,9 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-        Repeatedly calling fit or partial_fit when warm_start is True can result
-        in a different solution than when calling fit a single time because of
-        the way the data is shuffled.
+        Repeatedly calling fit or partial_fit when warm_start is True can
+        result in a different solution than when calling fit a single time
+        because of the way the data is shuffled.
 
     class_weight : dict, {class_label: weight} or "balanced" or None, optional
         Preset for the class_weight fit parameter.
@@ -286,9 +286,9 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-        Repeatedly calling fit or partial_fit when warm_start is True can result
-        in a different solution than when calling fit a single time because of
-        the way the data is shuffled.
+        Repeatedly calling fit or partial_fit when warm_start is True can
+        result in a different solution than when calling fit a single time
+        because of the way the data is shuffled.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
