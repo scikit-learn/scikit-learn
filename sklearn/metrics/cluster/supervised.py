@@ -415,17 +415,17 @@ def completeness_score(labels_true, labels_pred):
     Non-perfect labelings that assign all classes members to the same clusters
     are still complete::
 
-      >>> print(completeness_score([0, 0, 1, 1], [0, 0, 0, 0]))
+      >>> completeness_score([0, 0, 1, 1], [0, 0, 0, 0])
       1.0
-      >>> print(completeness_score([0, 1, 2, 3], [0, 0, 1, 1]))
-      1.0
+      >>> completeness_score([0, 1, 2, 3], [0, 0, 1, 1]) # doctest: +ELLIPSIS
+      0.99999999...
 
     If classes members are split across different clusters, the
     assignment cannot be complete::
 
-      >>> print(completeness_score([0, 0, 1, 1], [0, 1, 0, 1]))
+      >>> completeness_score([0, 0, 1, 1], [0, 1, 0, 1])
       0.0
-      >>> print(completeness_score([0, 0, 0, 0], [0, 1, 2, 3]))
+      >>> completeness_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
     """

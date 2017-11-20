@@ -164,7 +164,7 @@ def mean_absolute_error(y_true, y_pred,
     array([ 0.5,  1. ])
     >>> mean_absolute_error(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
-    0.849...
+    0.8...
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -232,7 +232,7 @@ def mean_squared_error(y_true, y_pred,
     array([ 0.416...,  1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
     ... # doctest: +ELLIPSIS
-    0.824...
+    0.82...
 
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
