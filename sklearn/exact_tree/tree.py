@@ -377,7 +377,7 @@ class RegressionTree(BaseDecisionTree, RegressorMixin):
 
         # block the depth
         builder = ExactTreeBuilder(min_samples_split, min_samples_leaf,
-                                   min_weight_leaf, self.min_impurity_split,
+                                   min_weight_leaf, min_impurity_split,
                                    max_depth, max_features)
 
         # cythonize this variable probably
