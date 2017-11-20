@@ -675,8 +675,6 @@ def test_radius_neighbors_regressor(n_samples=40,
         assert_true(np.all(np.isnan(pred)))
 
 
-
-
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
     # Test radius neighbors in multi-output regression (uniform weight)
 
