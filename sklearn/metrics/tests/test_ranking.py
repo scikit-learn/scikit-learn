@@ -32,6 +32,7 @@ from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics.ranking import _ndcg_sample_scores, _dcg_sample_scores
+from sklearn.metrics.ranking import ndcg_score, dcg_score
 
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -1074,6 +1075,30 @@ def _test_dcg_score_for(y_true, y_score):
     assert_equal(score.shape, (y_true.shape[0], ))
     assert_array_almost_equal(
         ideal, (np.sort(y_true)[:, ::-1] / discount).sum(axis=1))
+
+
+def test_ndcg_toy_examples():
+    y_true = 3 * np.eye(7)[:5]
+    y_score = np.tile(np.arange(6, -1, -1), (5, 1))
+    assert_array_almost_equal(
+        _dcg_sample_scores(y_true, y_score), 3 / np.log2(np.arange(2, 7)))
+    assert_array_almost_equal(
+        _ndcg_sample_scores(y_true, y_score), 1 / np.log2(np.arange(2, 7)))
+    assert_array_almost_equal(
+        _dcg_sample_scores(
+            y_true, y_score, log_basis=10), 3 / np.log10(np.arange(2, 7)))
+    assert_almost_equal(
+        ndcg_score(y_true, y_score), (1 / np.log2(np.arange(2, 7))).mean())
+    assert_almost_equal(
+        dcg_score(y_true, y_score), (3 / np.log2(np.arange(2, 7))).mean())
+    y_true = 3 * np.ones((5, 7))
+    expected_dcg_score = (3 / np.log2(np.arange(2, 9))).sum()
+    assert_array_almost_equal(
+        _dcg_sample_scores(y_true, y_score),
+        expected_dcg_score * np.ones(5))
+    assert_array_almost_equal(_ndcg_sample_scores(y_true, y_score), np.ones(5))
+    assert_almost_equal(dcg_score(y_true, y_score), expected_dcg_score)
+    assert_almost_equal(ndcg_score(y_true, y_score), 1.)
 
 
 def test_ndcg_score():
