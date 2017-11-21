@@ -940,16 +940,17 @@ def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
     Examples
     --------
     >>> from sklearn.metrics import dcg_score
-    >>> y_true = np.random.randint(4, size=(3, 5))
-    >>> y_score = np.random.randn(15).reshape((3, 5))
+    >>> rng = np.random.RandomState(0)
+    >>> y_true = rng.randint(4, size=(3, 5))
+    >>> y_score = rng.randn(15).reshape((3, 5))
     >>> dcg_score(y_true, y_score) # doctest: +ELLIPSIS
-    5.394...
+    5.724...
     >>> dcg_score(y_true, y_true) # doctest: +ELLIPSIS
-    6.327...
+    6.385...
     >>> dcg_score(y_true, y_score, k=2) # doctest: +ELLIPSIS
-    2.630...
+    3.384...
     >>> dcg_score(y_true, y_true, k=2) # doctest: +ELLIPSIS
-    4.472...
+    4.682...
 
     """
     check_consistent_length(y_true, y_score, sample_weight)
@@ -1056,13 +1057,14 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None):
     Examples
     --------
     >>> from sklearn.metrics import ndcg_score
-    >>> y_true = np.random.randint(4, size=(3, 5))
-    >>> y_score = np.random.randn(15).reshape((3, 5))
+    >>> rng = np.random.RandomState(0)
+    >>> y_true = rng.randint(4, size=(3, 5))
+    >>> y_score = rng.randn(15).reshape((3, 5))
     >>> ndcg_score(y_true, y_score) # doctest: +ELLIPSIS
-    0.779...
+    0.877...
     >>> ndcg_score(y_true, y_score, k=2) # doctest: +ELLIPSIS
-    0.610...
-    # Score for a perfect ranking is 1.0
+    0.734...
+    >>> # Score for a perfect ranking is 1.0
     >>> ndcg_score(y_true, y_true)
     1.0
     >>> ndcg_score(y_true, y_true, k=2)
