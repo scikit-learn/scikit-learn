@@ -1,4 +1,4 @@
-"""Stacking API"""
+"""Stacked ensembles"""
 
 # Author: Caio Oliveira <caioaao@gmail.com>
 # License: BSD 3 clause
@@ -18,8 +18,7 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
     part of the set and predicts the other part. In ``StackingTransformer``, it
     happens during ``fit_transform``, as the result of this procedure is what
     should be used by the next layers. Note that this behavior is different
-    from ``fit().transform()``. See the :ref:`User Guide <ensemble>` for more
-    info.
+    from ``fit().transform()``. Read more in the :ref:`User Guide <ensemble>`.
 
     Parameters
     ----------
@@ -47,8 +46,8 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
     def fit(self, X, y, **fit_params):
         """Fit the estimator.
 
-        This should only be used in special situations. See :ref:`user guide`
-        for more info.
+        This should only be used in special situations. Read more in the
+        :ref:`User Guide <ensemble>`.
 
         Parameters
         ----------
@@ -86,8 +85,7 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         """Transform dataset.
 
         Note that, unlike ``fit_transform()``, this won't return the cross
-        validation predictions. See the :ref:`User Guide <ensemble>` for more
-        info.
+        validation predictions. Read more in the :ref:`User Guide <ensemble>`.
 
         Parameters
         ----------
@@ -114,8 +112,8 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         """Fit estimator and transform dataset.
 
         Note that this behavior is different from ``fit().transform()`` as it
-        will return the cross validation predictions instead.. See the
-        :ref:`User Guide <ensemble>` for more info.
+        will return the cross validation predictions instead.. Read more in the
+        :ref:`User Guide <ensemble>`.
 
         Parameters
         ----------
