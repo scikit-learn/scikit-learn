@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
@@ -657,6 +658,21 @@ def test_radius_neighbors_regressor(n_samples=40,
             epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
             assert_true(np.all(abs(y_pred - y_target) < radius / 2))
+
+    # test that nan is returned when no nearby observations
+    for weights in ['uniform', 'distance']:
+        neigh = neighbors.RadiusNeighborsRegressor(radius=radius,
+                                                   weights=weights,
+                                                   algorithm='auto')
+        neigh.fit(X, y)
+        X_test_nan = np.ones((1, n_features))*-1
+        empty_warning_msg = ("One or more samples have no neighbors "
+                             "within specified radius; predicting NaN.")
+        pred = assert_warns_message(UserWarning,
+                                    empty_warning_msg,
+                                    neigh.predict,
+                                    X_test_nan)
+        assert_true(np.all(np.isnan(pred)))
 
 
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
