@@ -1246,9 +1246,10 @@ fitted model to transform the second part::
     >>> l0 = l0.fit(X0, y0)
     >>> X1_transformed = l0.transform(X1)
 
-Now train the combiner using the transformed data.
+Now train another estimator using the transformed data, so it will combine the
+information from the other estimators into a single one.
 
-    >>> combiner = LogisticRegression().fit(X1_transformed, y1)
+    >>> final_estimator = LogisticRegression().fit(X1_transformed, y1)
 
 That's it. The advantage of doing this method is that it can be faster than
 doing a full cross validation split on the first layer. The obvious
