@@ -45,6 +45,17 @@ Classifiers and regressors
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
 
+Preprocessing
+
+- Added :class:`preprocessing.CategoricalEncoder`, which allows to encode
+  categorical features as a numeric array, either using a one-hot (or
+  dummy) encoding scheme or by converting to ordinal integers.
+  Compared to the existing :class:`OneHotEncoder`, this new class handles
+  encoding of all feature types (also handles string-valued features) and
+  derives the categories based on the unique values in the features instead of
+  the maximum value in the features.
+  By :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
