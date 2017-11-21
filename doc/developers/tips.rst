@@ -72,6 +72,126 @@ following tricks can make debugging easier:
 
          pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
 
+.. _saved_replies:
+
+Standard replies for reviewing
+------------------------------
+
+It may be helpful to store some of these in GitHub's `saved
+replies <https://github.com/settings/replies/>`_ for reviewing:
+
+.. highlight:: none
+
+..
+    Note that putting this content on a single line in a literal is the easiest way to make it copyable and wrapped on screen.
+
+Issue: You're welcome to update the docs
+    ::
+
+        Please feel free to offer a pull request updating the documentation if you feel it could be improved.
+
+Issue: Self-contained example for bug
+    ::
+
+        Please provide [self-contained example code](https://stackoverflow.com/help/mcve), including imports and data (if possible), so that other contributors can just run it and reproduce your issue. Ideally your example code should be minimal.
+
+Issue: Software versions
+    ::
+
+        To help diagnose your issue, could you please paste the output of:
+        ```py
+        import platform; print(platform.platform())
+        import sys; print("Python", sys.version)
+        import numpy; print("NumPy", numpy.__version__)
+        import scipy; print("SciPy", scipy.__version__)
+        import sklearn; print("Scikit-Learn", sklearn.__version__)
+        ```
+        ? Thanks.
+
+Issue: Code blocks
+    ::
+
+        Readability can be greatly improved if you [format](https://help.github.com/articles/creating-and-highlighting-code-blocks/) your code snippets and complete error messages appropriately. For example:
+
+            ```python
+            print(something)
+            ```
+        generates:
+        ```python
+        print(something)
+        ```
+        And:
+
+            ```pytb
+            Traceback (most recent call last):
+              File "<stdin>", line 1, in <module>
+            ImportError: No module named 'hello'
+            ```
+        generates:
+        ```pytb
+        Traceback (most recent call last):
+          File "<stdin>", line 1, in <module>
+        ImportError: No module named 'hello'
+        ```
+        You can edit your issue descriptions and comments at any time to improve readability. This helps maintainers a lot. Thanks!
+
+Issue/Comment: Linking to code
+    ::
+
+        Friendly advice: for clarity's sake, you can link to code like [this](https://help.github.com/articles/creating-a-permanent-link-to-a-code-snippet/).
+
+Issue/Comment: Linking to comments
+    ::
+
+        Please use links to comments, which make it a lot easier to see what you are referring to, rather than just linking to the issue. See [this](https://stackoverflow.com/questions/25163598/how-do-i-reference-a-specific-issue-comment-on-github) for more details.
+
+PR-NEW: Better description
+    ::
+
+        Thanks for the pull request! Please make the title of the PR descriptive so that we can easily recall the issue it is resolving. You should state what issue (or PR) it fixes/resolves in the description (see [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests)).
+
+PR-NEW: Fix #
+    ::
+
+        Please use "Fix #issueNumber" in your PR description (and you can do it more than once). This way the associated issue gets closed automatically when the PR is merged. For more details, look at [this](https://github.com/blog/1506-closing-issues-via-pull-requests).
+
+PR-NEW or Issue: Maintenance cost
+    ::
+
+        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](http://scikit-learn-contrib.github.io).
+
+PR-WIP: What's needed before merge?
+    ::
+
+        Please clarify (perhaps as a TODO list in the PR description) what work you believe still needs to be done before it can be reviewed for merge. When it is ready, please prefix the PR title with `[MRG]`.
+
+PR-WIP: Regression test needed
+    ::
+
+        Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at master but pass in this PR.
+
+PR-WIP: PEP8
+    ::
+
+        You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in Travis CI. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
+
+PR-MRG: Patience
+    ::
+
+        Before merging, we generally require two core developers to agree that your pull request is desirable and ready. [Please be patient](http://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention), as we mostly rely on volunteered time from busy core developers. (You are also welcome to help us out with [reviewing other PRs](http://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines).)
+
+PR-MRG: Add to what's new
+    ::
+
+        Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:issue:` and credit yourself (and other contributors if applicable) with `:user:`.
+
+PR: Don't change unrelated
+    ::
+
+        Please do not change unrelated lines. It makes your contribution harder to review and may introduce merge conflicts to other pull requests.
+
+.. highlight:: default
+
 Debugging memory errors in Cython with valgrind
 ===============================================
 
