@@ -8,6 +8,7 @@ from __future__ import division
 import warnings
 import numpy as np
 import numpy.linalg as la
+import scipy.stats as stats
 from scipy import sparse
 from distutils.version import LooseVersion
 
@@ -51,6 +52,8 @@ from sklearn.preprocessing.data import RobustScaler
 from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
+from sklearn.preprocessing.data import boxcox
+from sklearn.preprocessing.data import BoxCoxTransformer
 from sklearn.exceptions import DataConversionWarning
 
 from sklearn.pipeline import Pipeline
@@ -1991,3 +1994,57 @@ def test_quantile_transform_valid_axis():
 
     assert_raises_regex(ValueError, "axis should be either equal to 0 or 1"
                         ". Got axis=2", quantile_transform, X.T, axis=2)
+
+
+def test_boxcox_transform():
+    # Apply boxcox transform and check if it is
+    # applying individually on each feature
+    X = np.array([[4, 2, 1], [1, 6, 3], [1, 5, 2], [3, 1, 3]])
+    X_tr = boxcox(X)
+    n_features = X.shape[1]
+    for k in range(n_features):
+        assert_array_equal(stats.boxcox(X[:, k])[0], X_tr[:, k])
+        assert_array_equal(boxcox(X[:, k:k + 1]).ravel(),
+                           X_tr[:, k])
+
+
+def test_boxcox_transformer():
+    n_samples = 3000
+    n_features = 2
+    rng = np.random.RandomState(42)
+    X_orig = rng.randn(n_samples, n_features)
+    lambda0 = 0.1
+    X = np.ones((n_samples, n_features))
+    X[:, 0] = np.exp(X_orig[:, 0])
+    X[:, 1] = ((X_orig[:, 1] * lambda0 + 1)) ** (1. / lambda0)
+
+    transformed_features = [0]
+    bct = BoxCoxTransformer(transformed_features=transformed_features)
+
+    bct.fit(X)
+    assert_true(len(bct.lambdas_), 1)
+    X_tr = bct.transform(X)
+    assert_true(X_tr.shape, X.shape)
+    assert_true(np.min(X_tr[:, 0]) < 0.)
+    assert_true(np.min(X_tr[:, 1]) > 0.)
+    X_or = bct.inverse_transform(X_tr)
+    assert_array_almost_equal(X_or, X, 10)
+
+    bct.set_params(transformed_features=np.array([False, True]))
+    bct.fit(X)
+    assert_true(len(bct.lambdas_), 1)
+    X_tr = bct.transform(X)
+    X_or = bct.inverse_transform(X_tr)
+    assert_true(X_tr.shape, X.shape)
+    assert_true(np.min(X_tr[:, 0]) > 0.)
+    assert_true(np.min(X_tr[:, 1]) < 0.)
+    assert_array_almost_equal(X_or, X, 10)
+
+    bct.set_params(transformed_features="all")
+    bct.fit(X)
+    assert_true(len(bct.lambdas_), 2)
+    X_tr = bct.transform(X)
+    assert_true(X_tr.shape, X.shape)
+    assert_true(np.min(X_tr[:, 0]) < 0.)
+    assert_true(np.min(X_tr[:, 1]) < 0.)
+    assert_array_almost_equal(X_or, X, 10)

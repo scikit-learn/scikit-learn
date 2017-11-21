@@ -22,7 +22,8 @@ from .data import maxabs_scale
 from .data import minmax_scale
 from .data import quantile_transform
 from .data import OneHotEncoder
-
+from .data import boxcox
+from .data import BoxCoxTransformer
 from .data import PolynomialFeatures
 
 from .label import label_binarize
@@ -58,4 +59,5 @@ __all__ = [
     'minmax_scale',
     'label_binarize',
     'quantile_transform',
+    'BoxCoxTransformer',
 ]
