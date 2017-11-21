@@ -728,8 +728,8 @@ class SGDClassifier(BaseSGDClassifier):
         result in a different solution than when calling fit a single time
         because of the way the data is shuffled.
         If a dynamic learning rate is used, the learning rate is adapted
-        depending on the number of samples already seen. Calling `fit` resets
-        this counter, while `partial_fit` will result in the expected
+        depending on the number of samples already seen. Calling ``fit`` resets
+        this counter, while ``partial_fit`` will result in the expected
         behaviour.
 
     average : bool or int, optional
@@ -1285,8 +1285,8 @@ class SGDRegressor(BaseSGDRegressor):
         result in a different solution than when calling fit a single time
         because of the way the data is shuffled.
         If a dynamic learning rate is used, the learning rate is adapted
-        depending on the number of samples already seen. Calling `fit` resets
-        this counter, while `partial_fit` will result in the expected
+        depending on the number of samples already seen. Calling ``fit`` resets
+        this counter, while ``partial_fit`` will result in the expected
         behaviour.
 
     average : bool or int, optional
