@@ -46,9 +46,10 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         cross-validation strategies that can be used here.
 
     method : string, optional (default='auto')
-        Invokes the passed method name of the passed estimator. If the method
-        is ``auto``, will try to invoke, for each estimator, ``predict_proba``,
-        ``decision_function`` or ``predict`` in that order.
+        This method will be called on the estimator to produce the output of
+        transform. If the method is ``auto``, will try to invoke, for each
+        estimator, ``predict_proba``, ``decision_function`` or ``predict``
+        in that order.
 
     n_jobs : int, optional (default=1)
         Number of jobs to be passed to ``cross_val_predict`` during
