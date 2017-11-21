@@ -144,6 +144,10 @@ def plot_tree(decision_tree, max_depth=None, feature_names=None,
     ax : matplotlib axis, optional (default=None)
         Axes to plot to. If None, use current axis.
 
+    fontsize : int, optional (default=None)
+        Size of text font. If None, determined automatically to fit figure.
+        
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
