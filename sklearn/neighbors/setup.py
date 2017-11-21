@@ -31,6 +31,10 @@ def configuration(parent_package='', top_path=None):
                          sources=['typedefs.pyx'],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
+    config.add_extension("quad_tree",
+                         sources=["quad_tree.pyx"],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
 
     config.add_subpackage('tests')
 

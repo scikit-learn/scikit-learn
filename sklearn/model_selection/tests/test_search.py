@@ -7,6 +7,7 @@ from sklearn.externals.joblib._compat import PY3_OR_LATER
 from itertools import chain, product
 import pickle
 import sys
+from types import GeneratorType
 import re
 
 import numpy as np
@@ -18,6 +19,7 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
@@ -188,7 +190,7 @@ def check_hyperparameter_searcher_with_fit_params(klass, **klass_kwargs):
     clf = CheckingClassifier(expected_fit_params=['spam', 'eggs'])
     searcher = klass(clf, {'foo_param': [1, 2, 3]}, cv=2, **klass_kwargs)
 
-    # The CheckingClassifer generates an assertion error if
+    # The CheckingClassifier generates an assertion error if
     # a parameter is missing or has length != len(X).
     assert_raise_message(AssertionError,
                          "Expected fit parameter(s) ['eggs'] not seen.",
@@ -329,6 +331,41 @@ def test_grid_search_groups():
         gs = GridSearchCV(clf, grid, cv=cv)
         # Should not raise an error
         gs.fit(X, y)
+
+
+def test_return_train_score_warn():
+    # Test that warnings are raised. Will be removed in 0.21
+
+    X = np.arange(100).reshape(10, 10)
+    y = np.array([0] * 5 + [1] * 5)
+    grid = {'C': [1, 2]}
+
+    estimators = [GridSearchCV(LinearSVC(random_state=0), grid),
+                  RandomizedSearchCV(LinearSVC(random_state=0), grid,
+                                     n_iter=2)]
+
+    result = {}
+    for estimator in estimators:
+        for val in [True, False, 'warn']:
+            estimator.set_params(return_train_score=val)
+            result[val] = assert_no_warnings(estimator.fit, X, y).cv_results_
+
+    train_keys = ['split0_train_score', 'split1_train_score',
+                  'split2_train_score', 'mean_train_score', 'std_train_score']
+    for key in train_keys:
+        msg = (
+            'You are accessing a training score ({!r}), '
+            'which will not be available by default '
+            'any more in 0.21. If you need training scores, '
+            'please set return_train_score=True').format(key)
+        train_score = assert_warns_message(FutureWarning, msg,
+                                           result['warn'].get, key)
+        assert np.allclose(train_score, result[True][key])
+        assert key not in result[False]
+
+    for key in result['warn']:
+        if key not in train_keys:
+            assert_no_warnings(result['warn'].get, key)
 
 
 def test_classes__property():
@@ -1070,16 +1107,10 @@ def test_search_cv_results_rank_tie_breaking():
                             cv_results['mean_test_score'][1])
         assert_almost_equal(cv_results['mean_train_score'][0],
                             cv_results['mean_train_score'][1])
-        try:
-            assert_almost_equal(cv_results['mean_test_score'][1],
-                                cv_results['mean_test_score'][2])
-        except AssertionError:
-            pass
-        try:
-            assert_almost_equal(cv_results['mean_train_score'][1],
-                                cv_results['mean_train_score'][2])
-        except AssertionError:
-            pass
+        assert_false(np.allclose(cv_results['mean_test_score'][1],
+                                 cv_results['mean_test_score'][2]))
+        assert_false(np.allclose(cv_results['mean_train_score'][1],
+                                 cv_results['mean_train_score'][2]))
         # 'min' rank should be assigned to the tied candidates
         assert_almost_equal(search.cv_results_['rank_test_score'], [1, 1, 3])
 
@@ -1420,6 +1451,33 @@ def test_grid_search_cv_splits_consistency():
                        param_grid={'C': [0.1, 0.2, 0.3]},
                        cv=KFold(n_splits=n_splits))
     gs2.fit(X, y)
+
+    # Give generator as a cv parameter
+    assert_true(isinstance(KFold(n_splits=n_splits,
+                                 shuffle=True, random_state=0).split(X, y),
+                           GeneratorType))
+    gs3 = GridSearchCV(LinearSVC(random_state=0),
+                       param_grid={'C': [0.1, 0.2, 0.3]},
+                       cv=KFold(n_splits=n_splits, shuffle=True,
+                                random_state=0).split(X, y))
+    gs3.fit(X, y)
+
+    gs4 = GridSearchCV(LinearSVC(random_state=0),
+                       param_grid={'C': [0.1, 0.2, 0.3]},
+                       cv=KFold(n_splits=n_splits, shuffle=True,
+                                random_state=0))
+    gs4.fit(X, y)
+
+    def _pop_time_keys(cv_results):
+        for key in ('mean_fit_time', 'std_fit_time',
+                    'mean_score_time', 'std_score_time'):
+            cv_results.pop(key)
+        return cv_results
+
+    # Check if generators are supported as cv and
+    # that the splits are consistent
+    np.testing.assert_equal(_pop_time_keys(gs3.cv_results_),
+                            _pop_time_keys(gs4.cv_results_))
 
     # OneTimeSplitter is a non-re-entrant cv where split can be called only
     # once if ``cv.split`` is called once per param setting in GridSearchCV.fit

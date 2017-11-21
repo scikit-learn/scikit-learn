@@ -29,6 +29,7 @@ from scipy.sparse import issparse
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
+from ..base import is_classifier
 from ..externals import six
 from ..utils import check_array
 from ..utils import check_random_state
@@ -123,7 +124,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
-        is_classification = isinstance(self, ClassifierMixin)
+        is_classification = is_classifier(self)
 
         y = np.atleast_1d(y)
         expanded_class_weight = None
@@ -413,7 +414,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
         n_samples = X.shape[0]
 
         # Classification
-        if isinstance(self, ClassifierMixin):
+        if is_classifier(self):
             if self.n_outputs_ == 1:
                 return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
@@ -879,8 +880,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. Supported criteria
         are "mse" for the mean squared error, which is equal to variance
-        reduction as feature selection criterion, and "mae" for the mean
-        absolute error.
+        reduction as feature selection criterion and minimizes the L2 loss
+        using the mean of each terminal node, "friedman_mse", which uses mean
+        squared error with Friedman's improvement score for potential splits,
+        and "mae" for the mean absolute error, which minimizes the L1 loss
+        using the median of each terminal node.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.

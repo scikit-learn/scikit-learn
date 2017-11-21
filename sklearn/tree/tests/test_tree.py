@@ -30,7 +30,6 @@ from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import raises
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.validation import check_random_state
@@ -365,7 +364,7 @@ def test_numerical_stability():
 
 def test_importances():
     # Check variable importances.
-    X, y = datasets.make_classification(n_samples=2000,
+    X, y = datasets.make_classification(n_samples=5000,
                                         n_features=10,
                                         n_informative=3,
                                         n_redundant=0,
@@ -394,11 +393,10 @@ def test_importances():
                        clf2.feature_importances_)
 
 
-@raises(ValueError)
 def test_importances_raises():
     # Check if variable importance before fit raises ValueError.
     clf = DecisionTreeClassifier()
-    clf.feature_importances_
+    assert_raises(ValueError, getattr, clf, 'feature_importances_')
 
 
 def test_importances_gini_equal_mse():
@@ -1551,7 +1549,6 @@ def test_1d_input():
 
 
 def _check_min_weight_leaf_split_level(TreeEstimator, X, y, sample_weight):
-    # Private function to keep pretty printing in nose yielded tests
     est = TreeEstimator(random_state=0)
     est.fit(X, y, sample_weight=sample_weight)
     assert_equal(est.tree_.max_depth, 1)

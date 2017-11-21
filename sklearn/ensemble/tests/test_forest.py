@@ -243,14 +243,14 @@ def check_importances(name, criterion, dtype, tolerance):
 
 def test_importances():
     for dtype in (np.float64, np.float32):
-        tolerance = 0.001
+        tolerance = 0.01
         for name, criterion in product(FOREST_CLASSIFIERS,
                                        ["gini", "entropy"]):
             yield check_importances, name, criterion, dtype, tolerance
 
         for name, criterion in product(FOREST_REGRESSORS,
                                        ["mse", "friedman_mse", "mae"]):
-            tolerance = 0.01 if criterion == "mae" else 0.001
+            tolerance = 0.05 if criterion == "mae" else 0.01
             yield check_importances, name, criterion, dtype, tolerance
 
 
@@ -847,43 +847,43 @@ def check_memory_layout(name, dtype):
     # Nothing
     X = np.asarray(iris.data, dtype=dtype)
     y = iris.target
-    assert_array_equal(est.fit(X, y).predict(X), y)
+    assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     # C-order
     X = np.asarray(iris.data, order="C", dtype=dtype)
     y = iris.target
-    assert_array_equal(est.fit(X, y).predict(X), y)
+    assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     # F-order
     X = np.asarray(iris.data, order="F", dtype=dtype)
     y = iris.target
-    assert_array_equal(est.fit(X, y).predict(X), y)
+    assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     # Contiguous
     X = np.ascontiguousarray(iris.data, dtype=dtype)
     y = iris.target
-    assert_array_equal(est.fit(X, y).predict(X), y)
+    assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     if est.base_estimator.splitter in SPARSE_SPLITTERS:
         # csr matrix
         X = csr_matrix(iris.data, dtype=dtype)
         y = iris.target
-        assert_array_equal(est.fit(X, y).predict(X), y)
+        assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
         # csc_matrix
         X = csc_matrix(iris.data, dtype=dtype)
         y = iris.target
-        assert_array_equal(est.fit(X, y).predict(X), y)
+        assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
         # coo_matrix
         X = coo_matrix(iris.data, dtype=dtype)
         y = iris.target
-        assert_array_equal(est.fit(X, y).predict(X), y)
+        assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     # Strided
     X = np.asarray(iris.data[::3], dtype=dtype)
     y = iris.target[::3]
-    assert_array_equal(est.fit(X, y).predict(X), y)
+    assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
 
 def test_memory_layout():

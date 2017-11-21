@@ -88,10 +88,13 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        the data for the dual coordinate descent (if ``dual=True``). When
+        ``dual=False`` the underlying implementation of :class:`LinearSVC`
+        is not random and ``random_state`` has no effect on the results. If
+        int, random_state is the seed used by the random number generator; If
+        RandomState instance, random_state is the random number generator; If
+        None, the random number generator is the RandomState instance used by
+        `np.random`.
 
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
@@ -107,6 +110,24 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
+
+    Examples
+    --------
+    >>> from sklearn.svm import LinearSVC
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_features=4, random_state=0)
+    >>> clf = LinearSVC(random_state=0)
+    >>> clf.fit(X, y)
+    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
+         multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
+         verbose=0)
+    >>> print(clf.coef_)
+    [[ 0.08551385  0.39414796  0.49847831  0.37513797]]
+    >>> print(clf.intercept_)
+    [ 0.28418066]
+    >>> print(clf.predict([[0, 0, 0, 0]]))
+    [1]
 
     Notes
     -----
@@ -302,6 +323,22 @@ class LinearSVR(LinearModel, RegressorMixin):
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    Examples
+    --------
+    >>> from sklearn.svm import LinearSVR
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_features=4, random_state=0)
+    >>> regr = LinearSVR(random_state=0)
+    >>> regr.fit(X, y)
+    LinearSVR(C=1.0, dual=True, epsilon=0.0, fit_intercept=True,
+         intercept_scaling=1.0, loss='epsilon_insensitive', max_iter=1000,
+         random_state=0, tol=0.0001, verbose=0)
+    >>> print(regr.coef_)
+    [ 16.35750999  26.91499923  42.30652207  60.47843124]
+    >>> print(regr.intercept_)
+    [-4.29756543]
+    >>> print(regr.predict([[0, 0, 0, 0]]))
+    [-4.29756543]
 
     See also
     --------
@@ -475,11 +512,11 @@ class SVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        The seed of the pseudo random number generator used when shuffling
+        the data for probability estimates. If int, random_state is the
+        seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random
+        number generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -631,11 +668,11 @@ class NuSVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        The seed of the pseudo random number generator used when shuffling
+        the data for probability estimates. If int, random_state is the seed
+        used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random
+        number generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -985,11 +1022,11 @@ class OneClassSVM(BaseLibSVM):
         Hard limit on iterations within solver, or -1 for no limit.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Ignored.
+
+        .. deprecated:: 0.20
+           ``random_state`` has been deprecated in 0.20 and will be removed in
+           0.22.
 
     Attributes
     ----------
@@ -1046,6 +1083,11 @@ class OneClassSVM(BaseLibSVM):
         If X is not a C-ordered contiguous array it is copied.
 
         """
+
+        if self.random_state is not None:
+            warnings.warn("The random_state parameter is deprecated and will"
+                          " be removed in version 0.22.", DeprecationWarning)
+
         super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
                                      sample_weight=sample_weight, **params)
         return self
