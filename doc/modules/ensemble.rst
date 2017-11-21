@@ -1110,8 +1110,8 @@ estimators. We implement it with the :func:`make_stack_layer` function.
 Stacked generalization applied to regression
 ............................................
 
-For this problem, assume some regressors were tested and have a good
-performance on the dataset. Here we used a ``LassoCV``, ``RidgeCV`` and
+For this problem, assume some regressors were tested and have a good performance
+on the train or validation dataset. Here we used a ``LassoCV``, ``RidgeCV`` and
 ``SVR``::
 
     >>> from sklearn.linear_model import LassoCV, RidgeCV
@@ -1132,7 +1132,9 @@ base regressors and turn them into a transformer::
     >>> layer0 = make_stack_layer(base_regressors)
 
 This transformer already implements the proper algorithm to train the base
-regressors without leaking data to the next layer, so no need to worry.
+regressors without leaking data to the next layer, so if the class is used
+properly, no need to worry. See the note about ``fit_transform()`` vs
+``fit().transform()`` under :ref:`stacking_transformer` for more info.
 
 The output for ``layer0`` is a matrix where each column is the prediction from
 one of the base regressors. We can now combine them in any way, including
@@ -1192,6 +1194,7 @@ boundaries from the base classifiers when applied to the Iris dataset
     :align: center
     :scale: 75%
 
+.. _stacking_transformer:
 The :class:`StackingTransformer`
 --------------------------------
 
