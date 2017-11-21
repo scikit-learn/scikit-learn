@@ -729,8 +729,8 @@ class SGDClassifier(BaseSGDClassifier):
         because of the way the data is shuffled.
         If a dynamic learning rate is used, the learning rate is adapted
         depending on the number of samples already seen. Calling ``fit`` resets
-        this counter, while ``partial_fit`` will result in the expected
-        behaviour.
+        this counter, while ``partial_fit`` will result in increasing the
+        existing counter.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
@@ -1286,8 +1286,8 @@ class SGDRegressor(BaseSGDRegressor):
         because of the way the data is shuffled.
         If a dynamic learning rate is used, the learning rate is adapted
         depending on the number of samples already seen. Calling ``fit`` resets
-        this counter, while ``partial_fit`` will result in the expected
-        behaviour.
+        this counter, while ``partial_fit``  will result in increasing the
+        existing counter.
 
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
