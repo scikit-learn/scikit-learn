@@ -26,13 +26,11 @@ from . import weight_boosting
 from . import gradient_boosting
 from . import partial_dependence
 
-__all__ = ["BaseEnsemble",
-           "RandomForestClassifier", "RandomForestRegressor",
+__all__ = ["BaseEnsemble", "RandomForestClassifier", "RandomForestRegressor",
            "RandomTreesEmbedding", "ExtraTreesClassifier",
-           "ExtraTreesRegressor", "BaggingClassifier",
-           "BaggingRegressor", "IsolationForest", "GradientBoostingClassifier",
+           "ExtraTreesRegressor", "BaggingClassifier", "BaggingRegressor",
+           "IsolationForest", "GradientBoostingClassifier",
            "GradientBoostingRegressor", "AdaBoostClassifier",
-           "AdaBoostRegressor", "VotingClassifier",
-           "StackingTransformer",
-           "make_stack_layer", "bagging", "forest",
-           "gradient_boosting", "partial_dependence", "weight_boosting"]
+           "AdaBoostRegressor", "VotingClassifier", "StackingTransformer",
+           "make_stack_layer", "bagging", "forest", "gradient_boosting",
+           "partial_dependence", "weight_boosting"]

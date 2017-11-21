@@ -1193,7 +1193,7 @@ boundaries from the base classifiers when applied to the Iris dataset
     :scale: 75%
 
 The :class:`StackingTransformer`
----------------------------
+--------------------------------
 
 Under the hood, this is the class that implements what's needed to turn an
 estimator into a transformer that can be used for stacked
