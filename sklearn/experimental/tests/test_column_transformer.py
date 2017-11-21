@@ -292,6 +292,7 @@ def test_column_transformer_get_set_params():
                             ('trans2', StandardScaler(), [1])])
 
     exp = {'n_jobs': 1,
+           'passthrough': None,
            'trans1': ct.transformers[0][1],
            'trans1__copy': True,
            'trans1__with_mean': True,
@@ -310,6 +311,7 @@ def test_column_transformer_get_set_params():
 
     ct.set_params(trans1=None)
     exp = {'n_jobs': 1,
+           'passthrough': None,
            'trans1': None,
            'trans2': ct.transformers[1][1],
            'trans2__copy': True,
@@ -386,3 +388,23 @@ def test_column_transformer_get_feature_names():
         [('col' + str(i), DictVectorizer(), i) for i in range(2)])
     ct.fit(X)
     assert_equal(ct.get_feature_names(), ['col0__a', 'col0__b', 'col1__c'])
+
+
+def test_column_transformer_passthrough():
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+
+    X_res_first = np.array([0, 1, 2]).reshape(-1, 1)
+    X_res_both = X_array
+
+    ct = ColumnTransformer([('trans', Trans(), [0])])
+    assert_array_equal(ct.fit_transform(X_array), X_res_first)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first)
+
+    ct = ColumnTransformer([('trans1', Trans(), [0])], passthrough=[1])
+    assert_array_equal(ct.fit_transform(X_array), X_res_both)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+
+    # column order is not preserved (passed through added to end)
+    ct = ColumnTransformer([('trans1', Trans(), [1])], passthrough=[0])
+    assert_array_equal(ct.fit_transform(X_array), X_res_both[:, ::-1])
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both[:, ::-1])

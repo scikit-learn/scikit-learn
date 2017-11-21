@@ -307,7 +307,8 @@ boolean mask array
 
         self._update_fitted_transformers(transformers)
 
-        Xs = list(Xs) + [_get_column(X, self.passthrough)]
+        if self.passthrough:
+            Xs = list(Xs) + [_get_column(X, self.passthrough)]
 
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
@@ -344,7 +345,8 @@ boolean mask array
             else:
                 return _get_column(X, self.passthrough)
 
-        Xs = list(Xs) + [_get_column(X, self.passthrough)]
+        if self.passthrough:
+            Xs = list(Xs) + [_get_column(X, self.passthrough)]
 
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
