@@ -22,10 +22,28 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
 
     Parameters
     ----------
-    base_estimator : the estimator to be blended.
+    base_estimator : predictor
+        The estimator to be blended.
 
-    cv : cv to be used, optional (default=3)
-        Will be passed to ``cross_val_predict`` during ``fit_transform``.
+    cv : int, cross-validation generator or an iterable, optional (default=3)
+        Determines the cross-validation splitting strategy to be used for
+        generating features to train the next layer on the stacked ensemble or,
+        more specifically, during ``fit_transform``.
+
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass,
+        :class:`sklearn.model_selection.StratifiedKFold` is used. In all
+        other cases, :class:`sklearn.model_selection.KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     method : string, optional (default='auto')
         Invokes the passed method name of the passed estimator. If the method
@@ -163,8 +181,25 @@ def make_stack_layer(base_estimators, restack=False, cv=3, method='auto',
     restack : bool, optional (default=False)
         Whether input should be concatenated to the transformation.
 
-    cv : cv to be used, optional (default=3)
-        Will be passed to ``StackingTransformer`` for each base estimator.
+    cv : int, cross-validation generator or an iterable, optional (default=3)
+        Determines the cross-validation splitting strategy to be used for
+        generating features to train the next layer on the stacked ensemble or,
+        more specifically, during ``fit_transform``.
+
+        Possible inputs for cv are:
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass,
+        :class:`sklearn.model_selection.StratifiedKFold` is used. In all
+        other cases, :class:`sklearn.model_selection.KFold` is used.
+
+        Refer :ref:`User Guide <cross_validation>` for the various
+        cross-validation strategies that can be used here.
 
     method : string, optional (default='auto')
         Invokes the passed method name of the estimators. If the method is
