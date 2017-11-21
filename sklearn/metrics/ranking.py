@@ -917,6 +917,13 @@ def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
     discounted_cumulative_gain : float
         The averaged sample DCG scores.
 
+    See also
+    --------
+    ndcg_score :
+        The Discounted Cumulative Gain divided by the Ideal Discounted
+        Cumulative Gain (the DCG obtained for a perfect ranking), in order to
+        have a score between 0 and 1.
+
     References
     ----------
     `Wikipedia entry for Discounted Cumulative Gain
@@ -930,12 +937,19 @@ def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
     A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
     Annual Conference on Learning Theory (COLT 2013)
 
-    See also
+    Examples
     --------
-    ndcg_score :
-        The Discounted Cumulative Gain divided by the Ideal Discounted
-        Cumulative Gain (the DCG obtained for a perfect ranking), in order to
-        have a score between 0 and 1.
+    >>> from sklearn.metrics import dcg_score
+    >>> y_true = np.random.randint(4, size=(3, 5))
+    >>> y_score = np.random.randn(15).reshape((3, 5))
+    >>> dcg_score(y_true, y_score) # doctest: +ELLIPSIS
+    5.394...
+    >>> dcg_score(y_true, y_true) # doctest: +ELLIPSIS
+    6.327...
+    >>> dcg_score(y_true, y_score, k=2) # doctest: +ELLIPSIS
+    2.630...
+    >>> dcg_score(y_true, y_true, k=2) # doctest: +ELLIPSIS
+    4.472...
 
     """
     check_consistent_length(y_true, y_score, sample_weight)
@@ -1022,6 +1036,10 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None):
     normalized_discounted_cumulative_gain : float in [0., 1.]
         The averaged NDCG scores for all samples.
 
+    See also
+    --------
+    dcg_score : Discounted Cumulative Gain (not normalized).
+
     References
     ----------
     `Wikipedia entry for Discounted Cumulative Gain
@@ -1035,9 +1053,20 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None):
     A theoretical analysis of NDCG ranking measures. In Proceedings of the 26th
     Annual Conference on Learning Theory (COLT 2013)
 
-    See also
+    Examples
     --------
-    dcg_score : Discounted Cumulative Gain (not normalized).
+    >>> from sklearn.metrics import ndcg_score
+    >>> y_true = np.random.randint(4, size=(3, 5))
+    >>> y_score = np.random.randn(15).reshape((3, 5))
+    >>> ndcg_score(y_true, y_score) # doctest: +ELLIPSIS
+    0.779...
+    >>> ndcg_score(y_true, y_score, k=2) # doctest: +ELLIPSIS
+    0.610...
+    # Score for a perfect ranking is 1.0
+    >>> ndcg_score(y_true, y_true)
+    1.0
+    >>> ndcg_score(y_true, y_true, k=2)
+    1.0
 
     """
     check_consistent_length(y_true, y_score, sample_weight)
