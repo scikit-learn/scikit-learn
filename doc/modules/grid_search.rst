@@ -270,7 +270,7 @@ Some models can offer an information-theoretic closed-form formula of the
 optimal estimate of the regularization parameter by computing a single
 regularization path (instead of several when using cross-validation).
 
-Here is the list of models benefitting from the Akaike Information
+Here is the list of models benefiting from the Akaike Information
 Criterion (AIC) or the Bayesian Information Criterion (BIC) for automated
 model selection:
 

@@ -404,7 +404,6 @@ class QuantileLossFunction(RegressionLossFunction):
 
     def __init__(self, n_classes, alpha=0.9):
         super(QuantileLossFunction, self).__init__(n_classes)
-        assert 0 < alpha < 1.0
         self.alpha = alpha
         self.percentile = alpha * 100.0
 
@@ -1484,7 +1483,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    init : BaseEstimator
+    init_ : BaseEstimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 
@@ -1930,7 +1929,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     loss_ : LossFunction
         The concrete ``LossFunction`` object.
 
-    init : BaseEstimator
+    init_ : BaseEstimator
         The estimator that provides the initial predictions.
         Set via the ``init`` argument or ``loss.init_estimator``.
 

@@ -341,22 +341,7 @@ class _IgnoreWarnings(object):
 assert_less = _dummy.assertLess
 assert_greater = _dummy.assertGreater
 
-
-def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
-                     err_msg='', verbose=True):
-    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
-    if np.allclose(actual, desired, rtol=rtol, atol=atol):
-        return
-    msg = ('Array not equal to tolerance rtol=%g, atol=%g: '
-           'actual %s, desired %s') % (rtol, atol, actual, desired)
-    raise AssertionError(msg)
-
-
-if hasattr(np.testing, 'assert_allclose'):
-    assert_allclose = np.testing.assert_allclose
-else:
-    assert_allclose = _assert_allclose
-
+assert_allclose = np.testing.assert_allclose
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
     """Helper function to test error messages in exceptions.
@@ -536,7 +521,7 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              'LabelBinarizer', 'LabelEncoder',
              'MultiLabelBinarizer', 'TfidfTransformer',
              'TfidfVectorizer', 'IsotonicRegression',
-             'OneHotEncoder', 'RandomTreesEmbedding',
+             'OneHotEncoder', 'RandomTreesEmbedding', 'CategoricalEncoder',
              'FeatureHasher', 'DummyClassifier', 'DummyRegressor',
              'TruncatedSVD', 'PolynomialFeatures',
              'GaussianRandomProjectionHash', 'HashingVectorizer',
@@ -767,26 +752,6 @@ class TempMemmap(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         _delete_folder(self.temp_folder)
 
-
-class _named_check(object):
-    """Wraps a check to show a useful description
-
-    Parameters
-    ----------
-    check : function
-        Must have ``__name__`` and ``__call__``
-    arg_text : str
-        A summary of arguments to the check
-    """
-    # Setting the description on the function itself can give incorrect results
-    # in failing tests
-    def __init__(self, check, arg_text):
-        self.check = check
-        self.description = ("{0[1]}.{0[3]}:{1.__name__}({2})".format(
-            inspect.stack()[1], check, arg_text))
-
-    def __call__(self, *args, **kwargs):
-        return self.check(*args, **kwargs)
 
 # Utils to test docstrings
 
