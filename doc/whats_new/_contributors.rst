@@ -1,6 +1,5 @@
 
 ..
-
     This file maps contributor names to their URLs. It should mostly be used
     for core contributors, and occasionally for contributors who do not want
     their github page to be their URL target. Historically it was used to

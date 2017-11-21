@@ -9,6 +9,6 @@
 # the doctests pass
 import numpy as np
 try:
-    np.set_printoptions(sign='legacy')
+    np.set_printoptions(legacy=True)
 except TypeError:
     pass
