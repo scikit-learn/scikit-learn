@@ -1214,7 +1214,7 @@ directly.
    should be used in almost every case. Calling ``fit_transform`` will output
    the cross validation transform, while ``fit().transform()`` won't. The
    latter should only be used when the cross validation prediction is not
-   wanted, for example when working with non i.i.d data. See the next session
+   wanted, for example when working with non i.i.d data. See the next section
    for more examples.
 
 Advanced usage
@@ -1229,7 +1229,7 @@ of using cross validation, train a layer with only part of the data and provide
 estimates to the other part. The combiner should be trained using only this
 transformed data.
 
-The simpler way is to train the layers separatelly. First, build the first
+The simpler way is to train the layers separately. First, build the first
 layer::
 
     >>> l0 = make_stack_layer(
