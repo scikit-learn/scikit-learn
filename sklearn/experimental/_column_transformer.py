@@ -465,7 +465,7 @@ def make_column_transformer(transformers, **kwargs):
     ...     {StandardScaler(): ['numerical_column'],
     ...      OneHotEncoder(): ['categorical_column']})
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    ColumnTransformer(n_jobs=1, transformer_weights=None,
+    ColumnTransformer(n_jobs=1, passthrough=None, transformer_weights=None,
          transformers=[('onehotencoder',
                         OneHotEncoder(...),
                         ['categorical_column']),
