@@ -47,6 +47,10 @@ def _check_estimator(estimator, **fit_params):
     # checks that the generated features is diferent from the original ones
     assert_false(np.allclose(Xt, Xt2))
 
+    # checks for determinism: every `transform` should yield the same result
+    for i in range(10):
+        assert_array_equal(Xt2, estimator.transform(X))
+
 
 def test_regression():
     # tests regression with various parameter settings
