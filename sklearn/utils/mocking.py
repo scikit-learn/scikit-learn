@@ -55,7 +55,10 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         self.expected_fit_params = expected_fit_params
 
     def fit(self, X, y, **fit_params):
-        assert_true(X.shape[0] == y.shape[0])
+        try:
+            assert_true(X.shape[0] == y.shape[0])
+        except AttributeError:
+            assert_true(len(X) == len(y))
         if self.check_X is not None:
             assert_true(self.check_X(X))
         if self.check_y is not None:

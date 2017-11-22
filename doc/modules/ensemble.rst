@@ -1179,13 +1179,13 @@ final classifier::
     ...                     ("RandomForest", rf)]
 
     >>> layer0 = make_stack_layer(base_classifiers)
-    >>> combiner = LogisticRegression()
-    >>> final_classifier = Pipeline([('layer0', layer0),
-    ...                              ('layer1', combiner)])
+    >>> layer1 = LogisticRegression()
+    >>> final_classifier = make_pipeline(layer0, layer1)
 
 We can then apply ``final_classifier`` in our classification problem.
 
 .. _stacking_transformer:
+
 The :class:`StackingTransformer`
 --------------------------------
 
@@ -1263,11 +1263,11 @@ the `Pipeline` API to stack everything together::
     ...           ('svc', SVC())]
     >>> layer2 = [('rf', RandomForestClassifier()),
     ...           ('svc', SVC())]
-    >>> combiner = LogisticRegression()
-    >>> clf = Pipeline([('layer0', make_stack_layer(layer0)),
-    ...                 ('layer1', make_stack_layer(layer1)),
-    ...                 ('layer2', make_stack_layer(layer2)),
-    ...                 ('combiner', combiner)])
+    >>> layer3 = LogisticRegression()
+    >>> clf = make_pipeline(make_stack_layer(layer0),
+    ...                     make_stack_layer(layer1),
+    ...                     make_stack_layer(layer2),
+    ...                     layer3)
 
 .. topic:: References
 
