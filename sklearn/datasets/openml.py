@@ -61,7 +61,7 @@ def _get_data_info_by_name(name, version):
         raise ValueError("Dataset {} with version {}"
                          " not found.".format(name, version))
 
-    json_data = json.load(json_string)
+    json_data = json.loads(json_string.read().decode("utf-8"))
     return json_data['data']['dataset'][0]
 
 
@@ -76,7 +76,7 @@ def _get_data_description_by_id(data_id):
         # not in except for nicer traceback
         raise ValueError("Dataset with id {} "
                          "not found.".format(data_id))
-    json_data = json.load(json_string)
+    json_data = json.loads(json_string.read().decode("utf-8"))
     return json_data['data_set_description']
 
 
