@@ -9,7 +9,7 @@ Testing for the stacking ensemble module (sklearn.ensemble.stacking).
 from copy import deepcopy
 import numpy as np
 from sklearn.utils.testing import (assert_equal, assert_array_equal,
-                                   assert_not_equal)
+                                   assert_false)
 from sklearn.utils.testing import SkipTest
 from sklearn.ensemble import (StackingTransformer, make_stack_layer)
 from sklearn.linear_model import (RidgeClassifier, LinearRegression)
@@ -45,7 +45,7 @@ def _check_estimator(estimator, **fit_params):
     assert_equal(Xt2.ndim, 2)
 
     # checks that the generated features is diferent from the original ones
-    assert_not_equal(Xt, Xt2)
+    assert_false(np.allclose(Xt, Xt2))
 
 
 def test_regression():
