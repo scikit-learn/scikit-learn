@@ -873,6 +873,7 @@ from high-level questions to a more detailed check-list.
   :ref:`contribute_documentation` section for more details), and are the plots
   instructive?
 
+.. _api_overview:
 
 APIs of scikit-learn objects
 ============================

@@ -12,15 +12,22 @@ for users and contributors. It aims to describe the concepts and either detail
 their corresponding API or link to other relevant parts of the documentation
 which do so.
 
+We begin by listing general concepts (and any that didn't fit elsewhere), but
+more specific sets of related terms are listed below:
+:ref:`glossary_estimator_types`, :ref:`glossary_target_types`,
+:ref:`glossary_methods`, :ref:`glossary_parameters`,
+:ref:`glossary_attributes`, :ref:`glossary_sample_props`.
+
 General Concepts
 ================
 
 .. glossary::
 
     API
-        The specific interfaces for estimators implemented in Scikit-learn and
-        the generalized conventions across types of estimators as described in
-        this glossary.
+        Refers to both the *specific* interfaces for estimators implemented in
+        Scikit-learn and the *generalized* conventions across types of
+        estimators as described in this glossary and :ref:`overviewed in the
+        contributor documentation <api_overview>`.
 
         The specific interfaces that constitute Scikit-learn's public API are
         largely documented in :ref:`api_ref`. However we less formally consider
@@ -54,25 +61,32 @@ General Concepts
 
         Note that *output* from scikit-learn estimators and functions (e.g.
         predictions) should generally be arrays or sparse matrices, or lists
-        thereof. An estimator where ``predict()`` returns a list or a Series is
-        not valid.
+        thereof (as in multi-output :class:`tree.DecisionTreeClassifier`'s
+        ``predict_proba``). An estimator where ``predict()`` returns a list or
+        a `pandas.Series` is not valid.
 
     attribute
     attributes
 
-        We mostly use *attribute* to refer to how model information is stored
-        on an estimator during fitting.  Public attributes on Scikit-learn
-        estimators conventionally begin with an alphabetic character and end
-        with a single underscore (``_``) -- for instance ``coef_`` -- are
-        available as attributes (in the Python object sense) of a
-        :term:`fitted` estimator, and are described in the estimator's
-        docstring.
-
-        The information stored in attributes are usually either: sufficient
-        statistics used for prediction or transformation; or diagnostic data,
-        such as :term:`feature_importances_`.
-
+        We mostly use attribute to refer to how model information is stored on
+        an estimator during fitting.  Any public attribute stored on an
+        estimator instance is required to begin with an alphabetic character
+        and end in a single underscore if it is set in :term:`fit` or
+        :term:`public_fit`.  These are what is documented under an estimator's
+        *Attributes* documentation.  The information stored in attributes are
+        usually either: sufficient statistics used for prediction or
+        transformation; or diagnostic data, such as
+        :term:`feature_importances_`.
         Common attributes are listed :ref:`below <glossary_attributes>`.
+
+        Further private attributes used in prediction/transformation/etc. may
+        also be set when fitting.  These begin with a single underscore and are
+        not assured to be stable for public access.
+
+        A public attribute on an estimator instance that does not end in an
+        underscore should be the stored, unmodified value of an ``__init__``
+        :term:`parameter` of the same name.  Because of this equivalence, these
+        are documented under an estimator's *Parameters* documentation.
 
     backwards compatibility
         We generally try to maintain backwards compatibility (i.e. interfaces
@@ -104,11 +118,13 @@ General Concepts
         Serialization
             We make no assurances that pickling an estimator in one version
             will allow it to be unpickled to an equivalent model in the
-            subsequent version.  See :ref:`persistence_limitations`.
+            subsequent version.  (For estimators in the sklearn package, we
+            issue a warning when this unpickling is attempted, even if it may
+            happen to work.)  See :ref:`persistence_limitations`.
         :func:`utils.estimator_checks.check_estimator`
             We provide limited backwards compatibility assurances for the
             estimator checks: we may add extra requirements on estimators
-            covered by `estimator_checks`, usually when these were informally
+            tested with this function, usually when these were informally
             assumed but not formally tested.
 
         Despite this informal contract with our users, the software is provided
@@ -121,13 +137,12 @@ General Concepts
         of discrete values across the population of data.  These should be
         represented as a column of integers. In representation, categorical
         features are not distinguished from other integer features: ordinal or
-        count-valued. In the future we hope to support string-valued
-        categorical features. Some estimators may handle categorical features
-        better when one-hot encoded.  See the
+        count-valued.  :class:`~sklearn.preprocessing.CategoricalEncoder` helps
+        encoding string-valued categorical features.  Some estimators may
+        handle categorical features better when one-hot encoded.  See also
+        :ref:`preprocessing_categorical_features` and the
         `http://contrib.scikit-learn.org/categorical-encoding
-        <category_encoders>`_ package,
-        :class:`~sklearn.preprocessing.OneHotEncoder`, and a proposed
-        :issue:`9151 <CategoricalEncoder>` for tools related to encoding
+        <category_encoders>`_ package for tools related to encoding
         categorical features.
 
     clone
@@ -172,7 +187,7 @@ General Concepts
 
     double underscore notation
         When specifying parameter names for nested estimators, ``__`` may be
-        used to separate between parent and child.
+        used to separate between parent and child in some contexts.
         See :term:`parameter`.
 
     dtype
@@ -180,9 +195,39 @@ General Concepts
         TODO. Mention casting.
 
     duck typing
-        TODO
-        Note that ``getattr`` should be preferred to ``hasattr`` since
-        ``hasattr`` can be expensive, particularly for some model attributes.
+        We try to apply [duck
+        typing](https://en.wikipedia.org/wiki/Duck_typing) to determine how to
+        handle some input values (e.g. checking whether a given estimator is a
+        classifier).  That is, we avoid using ``isinstance`` where possible,
+        and rely on the presence or absence of attributes to determine an
+        object's behaviour.  Some nuance is required when following this
+        approach:
+
+        * For some estimators, an attribute may only be available once it is
+          :term:`fitted`.  For instance, we cannot a priori determine if
+          :term:`predict_proba` is available in a grid search where the grid
+          includes alternating between a probabilistic and a non-probabilistic
+          predictor in the final step of the pipeline.  In the following, we
+          can only determine if ``clf`` is probabilistic after fitting it on
+          some data::
+
+              >>> from sklearn.model_selection import GridSearchCV
+              >>> from sklearn.linear_model import SGDClassifier
+              >>> clf = GridSearchCV(SGDClassifier(),
+              ...                    param_grid={'loss': ['log', 'hinge']})
+
+          This means that we can only check for duck-typed attributes after
+          fitting, and that we must be careful to make :term:`meta-estimators`
+          only present attributes according to the state of the underlying
+          estimator after fitting.
+
+        * Checking if an attribute is present (using ``hasattr``) is in general
+          just as expensive as getting the attribute (``getattr`` or dot
+          notation).  In some cases, getting the attribute may indeed be
+          expensive (e.g. for some implementations of
+          :term:`feature_importances_`, which may suggest this is an API design
+          flaw).  So code which does ``hasattr`` followed by ``getattr`` should
+          be avoided; ``getattr`` within a try-except block is preferred.
 
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
@@ -201,8 +246,10 @@ General Concepts
         * as doctests in their docstrings (i.e. within the ``sklearn/`` library
           code itself).
         * as examples in the :ref:`example gallery <general_examples>`
-          rendered from scripts in the ``examples/`` directory, exemplifying
-          key features or parameters of the estimator/function.
+          rendered (using `sphinx-gallery
+          <https://sphinx-gallery.readthedocs.io/>`_) from scripts in the
+          ``examples/`` directory, exemplifying key features or parameters
+          of the estimator/function.
         * sometimes in the :ref:`User Guide <user_guide>` (built from ``doc/``)
           alongside a technical description of the estimator.
 
@@ -233,24 +280,28 @@ General Concepts
             samples rather than a feature representation for each sample.  It
             is usually ``True`` where an estimator has a ``metric`` or
             ``affinity`` or ``kernel`` parameter with value 'precomputed'.
+            Its primary purpose is that when a :term:`meta-estimator`
+            extracts a sub-sample of data intended for a pairwise estimator,
+            the data needs to be indexed on both axes, while other data is
+            indexed only on the first axis.
 
     feature
     features
-        A feature is a function mapping a sampled object to a numeric or
-        categorical quantity.  "Feature" is also commonly used to refer to
-        these quantities, being the individual elements of a vector
-        representing a sample. In a data matrix, features are represented as
-        columns: each column contains the result of applying a feature
-        function to a set of samples.
+        In the abstract, a feature is a function (in its mathematical sense)
+        mapping a sampled object to a numeric or categorical quantity.
+        "Feature" is also commonly used to refer to these quantities, being the
+        individual elements of a vector representing a sample. In a data
+        matrix, features are represented as columns: each column contains the
+        result of applying a feature function to a set of samples.
 
         Elsewhere features are known as attributes, predictors, regressors, or
         independent variables.
 
-        Features in scikit-learn are generally expected to be numeric and
-        finite, even when they have semantically distinct domains and
-        distributions (categorical, ordinal, count-valued, real-valued,
-        interval). See also :term:`categorical feature` and :term:`missing
-        values`.
+        Nearly all estimators in scikit-learn assume that features are numeric,
+        finite and not missing, even when they have semantically distinct
+        domains and distributions (categorical, ordinal, count-valued,
+        real-valued, interval). See also :term:`categorical feature` and
+        :term:`missing values`.
 
         ``n_features`` indicates the number of features in a dataset.
 
@@ -265,6 +316,10 @@ General Concepts
         TODO
 
         Talk about where estimator fit or fit_transform functionality is present in a function.
+
+    hyperparameter
+    hyper-parameter
+        See :term:`parameter`.
 
     joblib
         A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
@@ -291,11 +346,6 @@ General Concepts
     missing values
         TODO
 
-    narrative docs
-    narrative documentation
-        An alias for :ref:`User Guide <user_guide>`, i.e. documentation written
-        in ``doc/modules/``.
-
     ``n_features``
         The number of :term:`features`.
 
@@ -307,6 +357,16 @@ General Concepts
 
     ``n_targets``
         Synonym for :term:`n_outputs`.
+
+    narrative docs
+    narrative documentation
+        An alias for :ref:`User Guide <user_guide>`, i.e. documentation written
+        in ``doc/modules/``.
+
+    np
+        A shorthand for Numpy due to the conventional import statement::
+
+            import numpy as np
 
     out-of-core
         TODO
@@ -321,10 +381,11 @@ General Concepts
         We mostly use *parameter* to refer to the aspects of an estimator that
         can be specified in its construction. For example, ``max_depth`` and
         ``random_state`` are parameters of :class:`RandomForestClassifier`.
-        Parameters to an estimator's constructor are stored as attributes the
-        estimator, and conventionally start with an alphabetic character and
-        end with an alphanumeric character.  Each estimator's constructor
-        parameters are described in the estimator's docstring.
+        Parameters to an estimator's constructor are stored unmodified as
+        attributes on the estimator instance, and conventionally start with an
+        alphabetic character and end with an alphanumeric character.  Each
+        estimator's constructor parameters are described in the estimator's
+        docstring.
 
         We do not use parameters in the statistical sense, where parameters are
         values that specify a model and can be estimated from data. What we
@@ -357,6 +418,11 @@ General Concepts
         TODO
 
         See precomputed.
+
+    pd
+        A shorthand for Pandas due to the conventional import statement::
+
+            import pandas as pd
 
     precomputed
         TODO
@@ -402,6 +468,8 @@ General Concepts
     unlabeled data
         TODO
 
+.. _glossary_estimator_types:
+
 Class APIs and Estimator Types
 ==============================
 
@@ -435,6 +503,7 @@ Class APIs and Estimator Types
         :term:`rectangular` data.
 
     meta-estimator
+    meta-estimators
         TODO
 
         Mention duck typing. Mention that duck typing of methods only works
@@ -448,8 +517,7 @@ Class APIs and Estimator Types
         An :term:`estimator` which provides :term:`predict`.
         This encompasses :term:`classifier`, :term:`regressor`,
         :term:`outlier detector` and sometimes :term:`clusterer` (at least when
-        they are inductive).  In scikit-learn, if an estimator is not a
-        predictor, it is usually a :term:`transformer`.
+        they are inductive).
 
     regressor
         TODO
@@ -470,6 +538,8 @@ such as:
 * :class:`neighbors.DistanceMetric`
 * :class:`gaussian_process.kernels.Kernel`
 * ``tree.Criterion``
+* :term:`scorer`
+* :term:`CV splitter`
 
 .. _glossary_target_types:
 
@@ -483,6 +553,14 @@ Target Types
         may represented as for a :term:`multiclass` problem but with only two
         labels.  A binary decision function is represented as a 1d array.
 
+        Semantically, one class is often considered the "positive" class.
+        Unless otherwise specified (e.g. using :term:`pos_label` in metrics),
+        we consider the class label with the greater value as the positive
+        class: of labels [0, 1], 1 is the positive class; of [1, 2], 2 is the
+        positive class; of ['no', 'yes'], 'yes' is the positive class; of
+        ['no', 'YES'], 'no' is the positive class.  This affects the output
+        of :term:`decision_function`, for instance.
+
         Note that a dataset sampled from a multiclass ``y`` or a continuous
         ``y`` may appear to be binary.
 
@@ -495,10 +573,12 @@ Target Types
     multiclass
         A classification problem consisting of more than two classes.  A
         multiclass target may be represented as a 1-dimensional array of
-        strings or integers. A 2d column vector of integers (i.e. a
-        single output is also accepted.
+        strings or integers.  A 2d column vector of integers (i.e. a
+        single output in :term:`multioutput` terms) is also accepted.
 
-        We may also support other orderable, hashable objects as class labels.
+        We do not officially support other orderable, hashable objects as class
+        labels, even if estimators may happen to work when given classification
+        targets of such type.
 
         For semi-supervised classification, :term:`unlabeled` samples should
         have the special label -1 in ``y``.
@@ -509,20 +589,25 @@ Target Types
         A :class:`preprocessing.LabelEncoder` helps to canonicalize multiclass
         targets as integers.
 
-        :func:`~utils.multiclass.type_of_target` will return 'multiclass' (or
-        'binary' in the degenerate case) for multiclass input.
+        :func:`~utils.multiclass.type_of_target` will return 'multiclass' for
+        multiclass input. The user may also want to handle 'binary' input
+        identically to 'multiclass'.
 
     multilabel
-        A multioutput target where each output is :term:`binary`.  This may be
-        represented as a 2d (dense) array or sparse matrix of integers, such
-        that each column is a separate binary target, where positive labels are
-        indicated with 1 and negative labels are usually -1 or 0.
+        A :term:`multioutput` target where each output is :term:`binary`.  This
+        may be represented as a 2d (dense) array or sparse matrix of integers,
+        such that each column is a separate binary target, where positive
+        labels are indicated with 1 and negative labels are usually -1 or 0.
+        Sparse multilabel targets are not supported everywhere that dense
+        multilabel targets are supported.
 
         Semantically, a multilabel target can be thought of as a set of labels
         for each sample.  While not used internally,
         :class:`preprocessing.MultiLabelBinarizer` is provided as a utility to
         convert from a list of sets representation to a 2d array or sparse
-        matrix.
+        matrix. One-hot encoding a multiclass target with
+        :class:`preprocessing.LabelBinarizer` turns it into a multilabel
+        problem.
 
         :func:`~utils.multiclass.type_of_target` will return
         'multilabel-indicator' for multilabel input, whether sparse or dense.
@@ -531,9 +616,17 @@ Target Types
         TODO
 
     multioutput multiclass
-        A classification problem .
+        A classification problem...
+
+        :mod:`multioutput` provides estimators which estimate multi-output
+        problems using multiple single-output estimators.  This may not fully
+        account for dependencies among the different outputs, which methods
+        natively handling the multioutput case (e.g. decision trees, nearest
+        neighbors, neural networks) may do better.
 
         TODO
+
+.. _glossary_methods:
 
 Methods
 =======
@@ -558,10 +651,10 @@ Methods
             :term:`classes_`.
         multilabel classification
             Scikit-learn is inconsistent in its representation of multilabel
-            decision functions.  Some represent it like multioutput multiclass,
-            i.e. a list of 2d arrays, each with two columns. Others represent
-            it with a single 2d array, whose columns correspond to the
-            individual binary classification decisions. The latter
+            decision functions.  Some estimators represent it like multioutput
+            multiclass, i.e. a list of 2d arrays, each with two columns. Others
+            represent it with a single 2d array, whose columns correspond to
+            the individual binary classification decisions. The latter
             representation is ambiguously identical to the multiclass
             classification format, though its semantics differ: it should be
             interpreted, like in the binary case, by thresholding at 0.
@@ -579,7 +672,10 @@ Methods
         TODO
 
     ``get_n_splits``
-        TODO
+        On a :term:`CV splitter` (not an estimator), returns the number of
+        elements one would get if iterating through the return value of
+        :term:`split` given the same parameters.  Takes the same parameters as
+        split.
 
     ``get_params``
         TODO
@@ -646,7 +742,7 @@ Methods
     ``predict``
         Makes a prediction for each sample. In a :term:`classifier` or
         :term:`regressor`, this prediction is in the same target space used in
-        fitting (e.g. one of {'red', 'amber', 'green'} if the `y` in fitting
+        fitting (e.g. one of {'red', 'amber', 'green'} if the ``y`` in fitting
         consisted of these strings).  In a :term:`clusterer` or :term:`outlier
         detector` the prediction is an integer.
 
@@ -793,6 +889,9 @@ non-estimator parameters with similar semantics.
         :func:`utils.validation.check_memory`.
 
     ``metric``
+        TODO
+
+    ``n_components``
         TODO
 
     ``n_jobs``
@@ -953,7 +1052,6 @@ See concept :term:`sample property`.
         See :ref:`group_cv`.
 
     ``sample_weight``
-
         A relative weight for each sample.  Intuitively, if all weights are
         integers, a weighted model or score should be equivalent to that
         calculated when repeating the sample the number of times specified in
