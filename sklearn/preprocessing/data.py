@@ -2619,8 +2619,7 @@ def boxcox(X, copy=True):
         raise ValueError("BoxCox transform can only be applied "
                          "on positive data")
     n_features = X.shape[1]
-    outputs = Parallel(n_jobs=-1)(delayed(_boxcox)(X, i, lambda_x=None)
-                                  for i in range(n_features))
+    outputs = [_boxcox(X, i, lambda_x=None) for i in range(n_features)]
     output = np.concatenate([o[0][..., np.newaxis] for o in outputs], axis=1)
     return output
 
@@ -2695,9 +2694,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         if np.any(X[:, self.transformed_features_] <= 0):
             raise ValueError("BoxCox transform can only be applied "
                              "on positive data")
-        out = Parallel(n_jobs=self.n_jobs)(delayed(_boxcox)(X, i,
-                                           lambda_x=None)
-                                           for i in self.transformed_features_)
+        out = [_boxcox(X, i, lambda_x=None) for i in self.transformed_features_]
         self.lambdas_ = np.array([o[1] for o in out])
         return self
 
@@ -2726,9 +2723,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         return X_tr
 
     def _transform(self, X):
-        outputs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_boxcox)(X, i, self.lambdas_[i])
-            for i in range(len(self.transformed_features_)))
+        outputs = [_boxcox(X, i, self.lambdas_[i]) for i in range(len(self.transformed_features_))]
         output = np.concatenate([o[..., np.newaxis] for o in outputs], axis=1)
         return output
 
