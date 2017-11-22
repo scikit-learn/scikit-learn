@@ -3,7 +3,7 @@
 # Author: Caio Oliveira <caioaao@gmail.com>
 # License: BSD 3 clause
 
-from ..base import (BaseEstimator, TransformerMixin, MetaEstimatorMixin)
+from ..base import (BaseEstimator, TransformerMixin, MetaEstimatorMixin, clone)
 from ..model_selection import cross_val_predict
 from ..pipeline import FeatureUnion
 from ..preprocessing import FunctionTransformer
@@ -22,7 +22,7 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
 
     Parameters
     ----------
-    base_estimator : predictor
+    estimator : predictor
         The estimator to be blended.
 
     cv : int, cross-validation generator or an iterable, optional (default=3)
@@ -56,8 +56,8 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         ``fit_transform``.
 
     """
-    def __init__(self, base_estimator, cv=3, method='auto', n_jobs=1):
-        self.base_estimator = base_estimator
+    def __init__(self, estimator, cv=3, method='auto', n_jobs=1):
+        self.estimator = estimator
         self.cv = cv
         self.method = method
         self.n_jobs = n_jobs
@@ -84,14 +84,15 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         self : object
 
         """
-        self.base_estimator.fit(X, y, **fit_params)
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.fit(X, y, **fit_params)
         return self
 
     def _method_name(self):
         if self.method == 'auto':
-            if getattr(self.base_estimator, 'predict_proba', None):
+            if getattr(self.estimator_, 'predict_proba', None):
                 method = 'predict_proba'
-            elif getattr(self.base_estimator, 'decision_function', None):
+            elif getattr(self.estimator_, 'decision_function', None):
                 method = 'decision_function'
             else:
                 method = 'predict'
@@ -119,7 +120,7 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
             Transformed dataset.
 
         """
-        t = getattr(self.base_estimator, self._method_name())
+        t = getattr(self.estimator_, self._method_name())
         preds = t(*args, **kwargs)
 
         if preds.ndim == 1:
@@ -150,11 +151,12 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
-        preds = cross_val_predict(self.base_estimator, X, y, cv=self.cv,
+        self.estimator_ = clone(self.estimator)
+        preds = cross_val_predict(self.estimator_, X, y, cv=self.cv,
                                   method=self._method_name(),
                                   n_jobs=self.n_jobs, fit_params=fit_params)
 
-        self.base_estimator.fit(X, y, **fit_params)
+        self.estimator_.fit(X, y, **fit_params)
 
         if preds.ndim == 1:
             preds = preds.reshape(-1, 1)
@@ -171,13 +173,13 @@ def _identity_transformer():
     return FunctionTransformer(_identity, accept_sparse=True)
 
 
-def make_stack_layer(base_estimators, restack=False, cv=3, method='auto',
+def make_stack_layer(estimators, restack=False, cv=3, method='auto',
                      n_jobs=1, n_cv_jobs=1, transformer_weights=None):
     """ Construct single layer for model stacking
 
     Parameters
     ----------
-    base_estimators : list of estimators to be used in stacking
+    estimators : list of estimators to be used in stacking
 
     restack : bool, optional (default=False)
         Whether input should be concatenated to the transformation.
@@ -247,7 +249,7 @@ def make_stack_layer(base_estimators, restack=False, cv=3, method='auto',
     transformer_list = [(name, StackingTransformer(estimator, cv=cv,
                                                    method=method,
                                                    n_jobs=n_cv_jobs))
-                        for name, estimator in base_estimators]
+                        for name, estimator in estimators]
     if restack:
         transformer_list.append(('restacker', _identity_transformer()))
 
