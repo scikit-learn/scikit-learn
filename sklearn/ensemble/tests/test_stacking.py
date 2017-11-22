@@ -8,6 +8,9 @@ Testing for the stacking ensemble module (sklearn.ensemble.stacking).
 
 from copy import deepcopy
 import numpy as np
+from scipy.sparse import csr_matrix
+
+from sklearn.utils.mocking import CheckingClassifier
 from sklearn.utils.testing import (assert_equal, assert_array_equal,
                                    assert_false)
 from sklearn.utils.testing import SkipTest
@@ -188,3 +191,28 @@ def test_method_selection():
     # asserts that cross_val_predict is called with different methods for each
     # case
     assert_false(np.allclose(Xt1, Xt2))
+
+
+def test_pipeline_consistency():
+    datasets = [{'X': np.asarray([[1, 2], [1, 2], [1, 2], [1, 2]]),
+                 'y': np.asarray([1, 0, 1, 0])},
+                {'X': csr_matrix(([1, 2, 1, 2, 1, 2, 1, 2],
+                                  ([0, 0, 1, 1, 2, 2, 3, 3],
+                                   [0, 1, 0, 1, 0, 1, 0, 1])),
+                                 shape=(4, 2)),
+                 'y': np.asarray([1, 0, 1, 0])}]
+    try:
+        from pandas import DataFrame, Series
+        datasets.append({'X': DataFrame({'col1': [1, 1, 1, 1],
+                                         'col2': [2, 2, 2, 2]}),
+                         'y': Series([1, 0, 1, 0])})
+    except ImportError:
+        pass
+
+    # checks that estimator receives input of the same type as it was passed to
+    # StackingTransformer
+    for data in datasets:
+        X_class = type(data['X'])
+        clf = CheckingClassifier(check_X=lambda X: isinstance(X, X_class))
+        clf_T = StackingTransformer(clf, cv=2)
+        clf_T.fit_transform(data['X'], data['y'])
