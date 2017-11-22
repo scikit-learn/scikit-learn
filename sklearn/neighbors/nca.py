@@ -12,8 +12,7 @@ import sys
 import time
 from scipy.misc import logsumexp
 from scipy.optimize import minimize
-from sklearn.preprocessing import OneHotEncoder
-
+from ..preprocessing import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelEncoder
 from ..decomposition import PCA
@@ -406,6 +405,7 @@ class NeighborhoodComponentsAnalysis(BaseEstimator, TransformerMixin):
         transformation : array, shape (n_features_out, n_features)
             The linear transformation on which to compute loss and evaluate
             gradient
+
         X : array, shape (n_samples, n_features)
             The training samples.
 

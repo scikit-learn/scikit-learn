@@ -95,8 +95,7 @@ for i, (name, model) in enumerate(dim_reduction_methods):
 
     # Plot the embedding and show the evaluation score
     plt.scatter(X_embedded[:, 0], X_embedded[:, 1], c=y)
-    plt.title("{}, KNN (k={})".format(name, n_neighbors))
-    plt.text(0.9, 0.1, '{:.2f}'.format(acc_knn), size=15,
-             ha='center', va='center', transform=plt.gca().transAxes)
-
+    plt.title("{}, KNN (k={})\nTest accuracy = {:.2f}".format(name,
+                                                              n_neighbors,
+                                                              acc_knn))
 plt.show()
