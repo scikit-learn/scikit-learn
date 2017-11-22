@@ -30,6 +30,7 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted
+from ..utils.fixes import sp_version
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -784,8 +785,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         analyze = self.build_analyzer()
         j_indices = []
-        # indptr stores indices into j_indices, which can be large
-        indptr = _make_int_array(dtype='l')
+        indptr = []
+
         values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
@@ -812,8 +813,20 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        j_indices = np.asarray(j_indices, dtype=np.intc)
-        indptr = np.frombuffer(indptr, dtype=np.int_)
+        if indptr[-1] > 2147483648:  # = 2**31 - 1
+            if sp_version >= (0, 14):
+                indices_dtype = np.int64
+            else:
+                raise ValueError(('sparse CSR array has {} non-zero '
+                                  'elements and requires 64 bit indexing, '
+                                  ' which is unsupported with scipy {}. '
+                                  'Please upgrade to scipy >=0.14')
+                                 .format(indptr[-1], '.'.join(sp_version)))
+
+        else:
+            indices_dtype = np.int32
+        j_indices = np.asarray(j_indices, dtype=indices_dtype)
+        indptr = np.asarray(indptr, dtype=indices_dtype)
         values = np.frombuffer(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
@@ -964,12 +977,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                      key=itemgetter(1))]
 
 
-def _make_int_array(dtype='i'):
-    """Construct an array.array of a type suitable for scipy.sparse indices.
-
-    NOTE: long on Windows is only 32 bits
-    """
-    return array.array(str(dtype))
+def _make_int_array():
+    """Construct an array.array of a type suitable for scipy.sparse indices."""
+    return array.array(str("i"))
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
