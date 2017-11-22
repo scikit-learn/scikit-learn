@@ -178,7 +178,8 @@ def make_stack_layer(estimators, restack=False, cv=3, method='auto',
 
     Parameters
     ----------
-    estimators : list of estimators to be used in stacking
+    estimators : list
+        List of (name, predictor) tuples to be used in stacking.
 
     restack : bool, optional (default=False)
         Whether input should be concatenated to the transformation.
@@ -216,8 +217,7 @@ def make_stack_layer(estimators, restack=False, cv=3, method='auto',
         Number of jobs to be passed to each base estimator's
         ``cross_val_predict`` during ``fit_transform``.
         If ``n_jobs != 1``, ``n_cv_jobs`` must be 1 and vice-versa, since
-        nested parallelism is not supported and will likely break in future
-        versions.
+        nested parallelism is not supported.
 
     transformer_weights : dict, optional (default=None)
         Multiplicative weights for features per transformer.
