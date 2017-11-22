@@ -1142,11 +1142,10 @@ training another regressor with it. For this example, we use a linear
 regression and build the final model using :class:`sklearn.pipeline.Pipeline`::
 
     >>> from sklearn.ensemble import make_stack_layer
-    >>> from sklearn.pipeline import Pipeline
+    >>> from sklearn.pipeline import make_pipeline
     >>> from sklearn.linear_model import LinearRegression
 
-    >>> final_regressor = Pipeline([('layer0', layer0),
-    ...                             ('layer1', LinearRegression())])
+    >>> final_regressor = make_pipeline(layer0, LinearRegression())
 
 If we apply this model to the Boston house price dataset
 (:func:`sklearn.datasets.load_boston`) and use mean squared error metric, the
