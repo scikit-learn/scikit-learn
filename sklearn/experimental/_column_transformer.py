@@ -114,7 +114,8 @@ boolean mask array
 
     """
 
-    def __init__(self, transformers, passthrough=None, n_jobs=1, transformer_weights=None):
+    def __init__(self, transformers, passthrough=None, n_jobs=1,
+                 transformer_weights=None):
         self.transformers = transformers
         self.passthrough = passthrough
         self.n_jobs = n_jobs
