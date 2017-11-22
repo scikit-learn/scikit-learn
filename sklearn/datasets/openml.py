@@ -168,7 +168,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
     if data_description['status'] != "active":
         warn("Version {} of dataset {} is inactive, meaning that issues have"
              " been found in the dataset. Try using a newer version.".format(
-                 data_description['name'], data_description['version']))
+                 data_description['version'], data_description['name']))
     if target_column == "default-target":
         target_column = data_description.get('default_target_attribute', None)
 
