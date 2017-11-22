@@ -36,13 +36,7 @@ from sklearn.metrics import mean_squared_error
 
 RANDOM_SEED = 89555
 
-# setup plot
-SUBPLOT_X = 1
-SUBPLOT_Y = 4
-SUBPLOT_OFFSET = (SUBPLOT_X * 10 + SUBPLOT_Y) * 10
-EXAMPLE_INDEX = 1
-
-plt.figure(EXAMPLE_INDEX, figsize=(9, 3))
+fig, axarr = plt.subplots(1, 4, figsize=(9, 3))
 
 # prepare data
 X, y = load_boston(return_X_y=True)
@@ -52,31 +46,29 @@ X_train, X_test, y_train, y_test = train_test_split(X, y,
 # Base regressors
 lasso = LassoCV(random_state=RANDOM_SEED)
 ridge = RidgeCV()
-svr = SVR(C=1e2, gamma=1e-3)
+svr = SVR(C=1e3, gamma=1e-4, kernel='rbf')
 
-base_regressors = [("lasso", lasso),
-                   ("ridge", ridge),
-                   ("svr", svr)]
+base_regressors = [("Lasso Regressor", lasso),
+                   ("Ridge Regressor", ridge),
+                   ("SVR", svr)]
 
 
-def evaluate_and_log_model(name, model, plot_idx):
+def evaluate_and_log_model(name, model, ax):
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
     score = mean_squared_error(y_test, y_pred)
     print("MSE for %s: %.5f" % (name, score))
 
-    plt.subplot(SUBPLOT_OFFSET + plot_idx)
-    plt.title(name)
-    plt.scatter(y_pred, y_test, )
-    plt.xlabel('Predicted')
-    plt.ylabel('Measured')
-    plt.xticks(())
-    plt.yticks(())
+    ax.scatter(y_pred, y_test)
+    ax.set_title(name)
+    ax.set_xlabel('Predicted')
+    ax.set_ylabel('Measured')
+    ax.set_xticks(())
+    ax.set_yticks(())
 
 
 for i, (name, regressor) in enumerate(base_regressors):
-    evaluate_and_log_model(name, regressor, 1 + i)
-
+    evaluate_and_log_model(name, regressor, axarr[i])
 
 # Stacked ensemble: we use the base regressors as features for a new linear
 # regressor.
@@ -84,6 +76,6 @@ layer0 = make_stack_layer(base_regressors)
 final_regressor = Pipeline([('layer0', layer0),
                             ('layer1', LinearRegression())])
 
-evaluate_and_log_model('Stacked Regressors', final_regressor, 4)
-plt.tight_layout()
-plt.show()
+evaluate_and_log_model('Stacked Regressors', final_regressor, axarr[-1])
+fig.tight_layout()
+fig.show()

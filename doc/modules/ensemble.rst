@@ -1184,15 +1184,7 @@ final classifier::
     >>> final_classifier = Pipeline([('layer0', layer0),
     ...                              ('layer1', combiner)])
 
-We can then apply ``final_classifier`` in our classification problem. The
-following figure shows how the final classifier combined the decision
-boundaries from the base classifiers when applied to the Iris dataset
-(:func:`sklearn.datasets.load_iris`).
-
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_stacked_generalization_classification_001.png
-    :target: ../auto_examples/ensemble/plot_stacked_generalization_classification.html
-    :align: center
-    :scale: 75%
+We can then apply ``final_classifier`` in our classification problem.
 
 .. _stacking_transformer:
 The :class:`StackingTransformer`
