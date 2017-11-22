@@ -31,6 +31,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.utils.validation import check_random_state
 
@@ -504,8 +505,9 @@ def test_error():
     for name, TreeEstimator in ALL_TREES.items():
         # Invalid values for parameters
         if name is "DecisionTreeRegressor" or name is "DecisionTreeClassifier":
-            assert_raises(ValueError, TreeEstimator(presort="some_string")
-                          .fit, X, y)
+            assert_raise_message(ValueError, "'presort' should be either 'auto' or"
+                         " a boolean (True/False). Got 'some_string' instead.",
+                         TreeEstimator(presort='some_string').fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
