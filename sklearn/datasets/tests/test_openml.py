@@ -4,7 +4,7 @@ Skipped on travis.
 """
 
 from sklearn.datasets import fetch_openml
-from sklearn.utils.testing import (check_skip_travis, assert_warns_message,
+from sklearn.utils.testing import (assert_warns_message,
                                    assert_raise_message)
 
 
