@@ -22,6 +22,7 @@ random sampling procedures.
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
 - :class:`neural_network.MLPRegressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
+- :class:`linear_model.ARDRegression` (bug fix)
 
 Details are listed in the changelog below.
 
@@ -139,6 +140,10 @@ Classifiers and regressors
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
   by `Alexandre Gramfort`_.
+
+- Fixed a bug in :class:`linear_model.ARDRegression` which caused incorrectly
+  updated estimates for the standard deviation and the coefficients.
+  :issue:`10153` by :user:`Jörg Döpfert <jdoepfert>`.
 
 Decomposition, manifold learning and clustering
 
