@@ -22,7 +22,6 @@ from .data import maxabs_scale
 from .data import minmax_scale
 from .data import quantile_transform
 from .data import OneHotEncoder
-from .data import boxcox
 from .data import BoxCoxTransformer
 from .data import PolynomialFeatures
 
