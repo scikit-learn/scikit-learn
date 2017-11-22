@@ -11,6 +11,7 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 from scipy.optimize import fmin_l_bfgs_b
 import warnings
+import collections
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..base import is_classifier
@@ -27,7 +28,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
-
+from sklearn.externals.six import string_types
 
 _STOCHASTIC_SOLVERS = ['sgd', 'adam']
 
@@ -55,14 +56,14 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.activation = activation
         # If a single activation function is given,
         # use it for each hidden layer
-        if type(self.activation) == str and\
-                hasattr(hidden_layer_sizes, "__iter__"):
-            self.activation_fncs = [self.activation] * len(hidden_layer_sizes)
-        elif type(self.activation) == str and\
-                not hasattr(hidden_layer_sizes, "__iter__"):
-            self.activation_fncs = [self.activation]
+        if (isinstance(self.activation, string_types) and
+                isinstance(hidden_layer_sizes, collections.Iterable)):
+            self.activation_funcs = [self.activation] * len(hidden_layer_sizes)
+        elif (isinstance(self.activation, string_types) and
+                not isinstance(hidden_layer_sizes, collections.Iterable)):
+            self.activation_funcs = [self.activation]
         else:
-            self.activation_fncs = self.activation
+            self.activation_funcs = self.activation
         self.solver = solver
         self.alpha = alpha
         self.batch_size = batch_size
@@ -116,7 +117,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
             # For the hidden layers
             if (i + 1) != (self.n_layers_ - 1):
-                hidden_activation = ACTIVATIONS[self.activation_fncs[i]]
+                hidden_activation = ACTIVATIONS[self.activation_funcs[i]]
                 activations[i + 1] = hidden_activation(activations[i + 1])
 
         # For the last layer
@@ -259,7 +260,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 2, 0, -1):
             deltas[i - 1] = safe_sparse_dot(deltas[i], self.coefs_[i].T)
-            inplace_derivative = DERIVATIVES[self.activation_fncs[i-1]]
+            inplace_derivative = DERIVATIVES[self.activation_funcs[i-1]]
             inplace_derivative(activations[i], deltas[i - 1])
 
             coef_grads, intercept_grads = self._compute_loss_grad(
@@ -289,23 +290,17 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.out_activation_ = 'logistic'
 
         # Initialize coefficient and intercept layers
-        self.coefs_ = []
-        self.intercepts_ = []
-
-        for i in range(self.n_layers_ - 2):
-            coef_init, intercept_init = self._init_coef(layer_units[i],
-                                                        layer_units[i + 1],
-                                                        self.activation_fncs[i]
-                                                        )
-            self.coefs_.append(coef_init)
-            self.intercepts_.append(intercept_init)
+        self.coefs_, self.intercepts_ = map(list, zip(*[self._init_coef(
+            layer_units[i], layer_units[i + 1],
+            self.activation_funcs[i])
+            for i in range(self.n_layers_ - 2)]))
 
         # for output layer, use the rule according to the activation function
         # in the previous layer.
         coef_init, intercept_init = self._init_coef(
             layer_units[self.n_layers_ - 2],
             layer_units[self.n_layers_ - 1],
-            self.activation_fncs[self.n_layers_ - 3])
+            self.activation_funcs[self.n_layers_ - 3])
         self.coefs_.append(coef_init)
         self.intercepts_.append(intercept_init)
 
@@ -348,7 +343,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if np.any(np.array(hidden_layer_sizes) <= 0):
             raise ValueError("hidden_layer_sizes must be > 0, got %s." %
                              hidden_layer_sizes)
-        if len(self.activation_fncs) != len(hidden_layer_sizes):
+        if len(self.activation_funcs) != len(hidden_layer_sizes):
             raise ValueError("Number of activation functions "
                              "cannot be different than the number "
                              "of hidden layers")
@@ -442,12 +437,12 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # raise ValueError if not registered
         supported_activations = ('identity', 'logistic', 'tanh', 'relu')
-        for idx_activation in range(len(self.activation_fncs)):
-            if self.activation_fncs[idx_activation] \
-                    not in supported_activations:
+        for idx_activation in range(len(self.activation_funcs)):
+            if (self.activation_funcs[idx_activation]
+                    not in supported_activations):
                 raise ValueError("The activation '%s' is not supported. "
                                  "Supported activations are %s."
-                                 % (self.activation_fncs[idx_activation],
+                                 % (self.activation_funcs[idx_activation],
                                     supported_activations))
         if self.learning_rate not in ["constant", "invscaling", "adaptive"]:
             raise ValueError("learning rate %s is not supported. " %
