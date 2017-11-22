@@ -425,6 +425,8 @@ def test_params_errors():
     assert_raises(ValueError, clf(learning_rate='converge').fit, X, y)
     assert_raises(ValueError, clf(activation='cloak').fit, X, y)
 
+    assert_raises(ValueError, clf(activation=['identity','softmax'],
+                                  hidden_layer_sizes=10).fit, X, y)
 
 def test_predict_proba_binary():
     # Test that predict_proba works as expected for binary class.
