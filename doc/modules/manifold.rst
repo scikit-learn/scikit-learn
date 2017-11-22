@@ -533,7 +533,7 @@ the quality of the resulting embedding:
 * maximum number of iterations
 * angle (not used in the exact method)
 
-The perplexity is defined as :math:`k=2^(S)` where :math:`S` is the Shannon
+The perplexity is defined as :math:`k=2^{(S)}` where :math:`S` is the Shannon
 entropy of the conditional probability distribution. The perplexity of a
 :math:`k`-sided die is :math:`k`, so that :math:`k` is effectively the number of
 nearest neighbors t-SNE considers when generating the conditional probabilities.
@@ -558,7 +558,7 @@ descent will get stuck in a bad local minimum. If it is too high the KL
 divergence will increase during optimization. More tips can be found in
 Laurens van der Maaten's FAQ (see references). The last parameter, angle,
 is a tradeoff between performance and accuracy. Larger angles imply that we
-can approximate larger regions by a single point,leading to better speed
+can approximate larger regions by a single point, leading to better speed
 but less accurate results.
 
 `"How to Use t-SNE Effectively" <http://distill.pub/2016/misread-tsne/>`_
@@ -598,8 +598,8 @@ where label regions largely overlap. This is a strong clue that this data can
 be well separated by non linear methods that focus on the local structure (e.g.
 an SVM with a Gaussian RBF kernel). However, failing to visualize well
 separated homogeneously labeled groups with t-SNE in 2D does not necessarily
-implie that the data cannot be correctly classified by a supervised model. It
-might be the case that 2 dimensions are not enough low to accurately represents
+imply that the data cannot be correctly classified by a supervised model. It
+might be the case that 2 dimensions are not low enough to accurately represents
 the internal structure of the data.
 
 

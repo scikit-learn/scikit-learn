@@ -49,6 +49,7 @@ MODULE_DOCS = __doc__
 
 logger = logging.getLogger(__name__)
 
+
 def fetch_california_housing(data_home=None, download_if_missing=True):
     """Loader for the California housing dataset from StatLib.
 
@@ -96,20 +97,21 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
 
         logger.info('Downloading Cal. housing from {} to {}'.format(
             ARCHIVE.url, data_home))
+
         archive_path = _fetch_remote(ARCHIVE, dirname=data_home)
 
-        fileobj = tarfile.open(
-            mode="r:gz",
-            name=archive_path).extractfile(
-                'CaliforniaHousing/cal_housing.data')
+        with tarfile.open(mode="r:gz", name=archive_path) as f:
+            cal_housing = np.loadtxt(
+                f.extractfile('CaliforniaHousing/cal_housing.data'),
+                delimiter=',')
+            # Columns are not in the same order compared to the previous
+            # URL resource on lib.stat.cmu.edu
+            columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
+            cal_housing = cal_housing[:, columns_index]
+
+            joblib.dump(cal_housing, filepath, compress=6)
         remove(archive_path)
 
-        cal_housing = np.loadtxt(fileobj, delimiter=',')
-        # Columns are not in the same order compared to the previous
-        # URL resource on lib.stat.cmu.edu
-        columns_index = [8, 7, 2, 3, 4, 5, 6, 1, 0]
-        cal_housing = cal_housing[:, columns_index]
-        joblib.dump(cal_housing, filepath, compress=6)
     else:
         cal_housing = joblib.load(filepath)
 

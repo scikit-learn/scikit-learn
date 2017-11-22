@@ -11,6 +11,7 @@ from scipy import sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh, lobpcg
 from scipy.sparse.csgraph import connected_components
+from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
 from ..base import BaseEstimator
 from ..externals import six
@@ -234,8 +235,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
 
-    laplacian, dd = sparse.csgraph.laplacian(adjacency, normed=norm_laplacian,
-                                             return_diag=True)
+    laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
+                                      return_diag=True)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
@@ -428,7 +429,7 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
-        Y: Ignored.
+        Y: Ignored
 
         Returns
         -------
@@ -476,7 +477,7 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
-        Y: Ignored.
+        Y: Ignored
 
         Returns
         -------
@@ -518,7 +519,7 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
-        Y: Ignored.
+        Y: Ignored
 
         Returns
         -------

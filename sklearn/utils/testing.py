@@ -47,6 +47,7 @@ from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
 from sklearn.utils import deprecated
 
+additional_names_in_all = []
 try:
     from nose.tools import raises as _nose_raises
     deprecation_message = (
@@ -54,9 +55,21 @@ try:
         'and will be removed in 0.22. Please use '
         'sklearn.utils.testing.assert_raises instead.')
     raises = deprecated(deprecation_message)(_nose_raises)
+    additional_names_in_all.append('raises')
 except ImportError:
     pass
-from nose import with_setup
+
+try:
+    from nose.tools import with_setup as _with_setup
+    deprecation_message = (
+        'sklearn.utils.testing.with_setup has been deprecated in version 0.20 '
+        'and will be removed in 0.22.'
+        'If your code relies on with_setup, please use'
+        ' nose.tools.with_setup instead.')
+    with_setup = deprecated(deprecation_message)(_with_setup)
+    additional_names_in_all.append('with_setup')
+except ImportError:
+    pass
 
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
@@ -70,12 +83,13 @@ from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
 from sklearn.utils._unittest_backport import TestCase
 
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises",
-           "assert_raises_regexp", "raises", "with_setup", "assert_true",
+           "assert_raises_regexp", "assert_true",
            "assert_false", "assert_almost_equal", "assert_array_equal",
            "assert_array_almost_equal", "assert_array_less",
            "assert_less", "assert_less_equal",
            "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "SkipTest"]
+__all__.extend(additional_names_in_all)
 
 _dummy = TestCase('__init__')
 assert_equal = _dummy.assertEqual
@@ -327,22 +341,7 @@ class _IgnoreWarnings(object):
 assert_less = _dummy.assertLess
 assert_greater = _dummy.assertGreater
 
-
-def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
-                     err_msg='', verbose=True):
-    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
-    if np.allclose(actual, desired, rtol=rtol, atol=atol):
-        return
-    msg = ('Array not equal to tolerance rtol=%g, atol=%g: '
-           'actual %s, desired %s') % (rtol, atol, actual, desired)
-    raise AssertionError(msg)
-
-
-if hasattr(np.testing, 'assert_allclose'):
-    assert_allclose = np.testing.assert_allclose
-else:
-    assert_allclose = _assert_allclose
-
+assert_allclose = np.testing.assert_allclose
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
     """Helper function to test error messages in exceptions.
@@ -522,7 +521,7 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              'LabelBinarizer', 'LabelEncoder',
              'MultiLabelBinarizer', 'TfidfTransformer',
              'TfidfVectorizer', 'IsotonicRegression',
-             'OneHotEncoder', 'RandomTreesEmbedding',
+             'OneHotEncoder', 'RandomTreesEmbedding', 'CategoricalEncoder',
              'FeatureHasher', 'DummyClassifier', 'DummyRegressor',
              'TruncatedSVD', 'PolynomialFeatures',
              'GaussianRandomProjectionHash', 'HashingVectorizer',
@@ -753,30 +752,6 @@ class TempMemmap(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         _delete_folder(self.temp_folder)
 
-
-with_network = with_setup(check_skip_network)
-with_travis = with_setup(check_skip_travis)
-
-
-class _named_check(object):
-    """Wraps a check to show a useful description
-
-    Parameters
-    ----------
-    check : function
-        Must have ``__name__`` and ``__call__``
-    arg_text : str
-        A summary of arguments to the check
-    """
-    # Setting the description on the function itself can give incorrect results
-    # in failing tests
-    def __init__(self, check, arg_text):
-        self.check = check
-        self.description = ("{0[1]}.{0[3]}:{1.__name__}({2})".format(
-            inspect.stack()[1], check, arg_text))
-
-    def __call__(self, *args, **kwargs):
-        return self.check(*args, **kwargs)
 
 # Utils to test docstrings
 
