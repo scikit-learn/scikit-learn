@@ -151,12 +151,11 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         X_transformed : sparse matrix, shape=(n_samples, n_out)
             Transformed dataset.
         """
-        self.estimator_ = clone(self.estimator)
-        preds = cross_val_predict(self.estimator_, X, y, cv=self.cv,
+        self.estimator_ = clone(self.estimator).fit(X, y, **fit_params)
+
+        preds = cross_val_predict(clone(self.estimator), X, y, cv=self.cv,
                                   method=self._method_name(),
                                   n_jobs=self.n_jobs, fit_params=fit_params)
-
-        self.estimator_.fit(X, y, **fit_params)
 
         if preds.ndim == 1:
             preds = preds.reshape(-1, 1)

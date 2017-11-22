@@ -14,7 +14,7 @@ from sklearn.utils.testing import SkipTest
 from sklearn.ensemble import (StackingTransformer, make_stack_layer)
 from sklearn.linear_model import (RidgeClassifier, LinearRegression)
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import LinearSVC, LinearSVR
+from sklearn.svm import LinearSVC, LinearSVR, SVC
 from sklearn import datasets
 from sklearn.model_selection import (ParameterGrid, StratifiedKFold)
 
@@ -135,7 +135,7 @@ def test_layer_regression():
         if params['method'] is 'predict_proba':
             continue
         # assert constructor
-        reg_layer = make_stack_layer(base_estimators=base_regs, **params)
+        reg_layer = make_stack_layer(estimators=base_regs, **params)
         _check_layer(reg_layer, params['restack'])
 
 
@@ -150,7 +150,7 @@ def test_layer_classification():
             continue  # nested parallelism is not supported
 
         # assert constructor
-        clf_layer = make_stack_layer(base_estimators=base_clfs, **params)
+        clf_layer = make_stack_layer(estimators=base_clfs, **params)
         _check_layer(clf_layer, params['restack'])
 
 
@@ -163,3 +163,24 @@ def test_layer_restack():
     y = np.random.rand(100)
     Xt = blended_layer.fit_transform(X, y)
     assert_array_equal(X, Xt[:, 2:])
+
+
+def test_method_selection():
+    clf = SVC()
+    X = np.asarray([[1, 2], [1, 2], [1, 2], [1, 2]])
+    y = np.asarray([1, 0, 1, 0])
+    clf_T = StackingTransformer(clf, cv=2, method='auto')
+
+    # asserts that fit results are taken into consideration when choosing
+    # method name
+    clf_T.set_params(estimator__probability=False)
+    Xt1 = clf_T.fit_transform(X, y)
+    assert_equal(clf_T._method_name(), "decision_function")
+
+    clf_T.set_params(estimator__probability=True)
+    Xt2 = clf_T.fit_transform(X, y)
+    assert_equal(clf_T._method_name(), "predict_proba")
+
+    # asserts that cross_val_predict is called with different methods for each
+    # case
+    assert_false(np.allclose(Xt1, Xt2))
