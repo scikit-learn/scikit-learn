@@ -17,6 +17,8 @@ random sampling procedures.
 
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 - :class:`isotonic.IsotonicRegression` (bug fix)
+- :class:`linear_model.ARDRegression` (bug fix)
+- :class:`linear_model.OrthogonalMatchingPursuit` (bug fix)
 - :class:`metrics.roc_auc_score` (bug fix)
 - :class:`metrics.roc_curve` (bug fix)
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
@@ -43,7 +45,18 @@ Classifiers and regressors
 
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
-  By :user:`Michael A. Alcorn <airalcorn2>`.
+  :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
+
+Preprocessing
+
+- Added :class:`preprocessing.CategoricalEncoder`, which allows to encode
+  categorical features as a numeric array, either using a one-hot (or
+  dummy) encoding scheme or by converting to ordinal integers.
+  Compared to the existing :class:`OneHotEncoder`, this new class handles
+  encoding of all feature types (also handles string-valued features) and
+  derives the categories based on the unique values in the features instead of
+  the maximum value in the features. :issue:`9151` by
+  :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
 Model evaluation
 
@@ -122,7 +135,7 @@ Classifiers and regressors
   :class:`neural_network.MLPClassifier` with new ``n_iter_no_change``
   parameter now at 10 from previously hardcoded 2.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
-  
+
 - Fixed a bug in :class:`neural_network.MLPRegressor` where fitting
   quit unexpectedly early due to local minima or fluctuations.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`
@@ -130,6 +143,14 @@ Classifiers and regressors
 - Fixed a bug in :class:`naive_bayes.GaussianNB` which incorrectly raised
   error for prior list which summed to 1.
   :issue:`10005` by :user:`Gaurav Dhingra <gxyd>`.
+
+- Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
+  broken when setting ``normalize=False``.
+  :issue:`10071` by `Alexandre Gramfort`_.
+
+- Fixed a bug in :class:`linear_model.ARDRegression` which caused incorrectly
+  updated estimates for the standard deviation and the coefficients.
+  :issue:`10153` by :user:`Jörg Döpfert <jdoepfert>`.
 
 Decomposition, manifold learning and clustering
 
@@ -166,10 +187,10 @@ Decomposition, manifold learning and clustering
   wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
   <marcus-voss>` and `Joel Nothman`_.
 
-- Fixed a bug in :func:`datasets.make_circles`, where no odd number of data 
-  points could be generated. :issue:`10037` by :user:`Christian Braune 
+- Fixed a bug in :func:`datasets.make_circles`, where no odd number of data
+  points could be generated. :issue:`10037` by :user:`Christian Braune
   <christianbraune79>`_.
-  
+
 Metrics
 
 - Fixed a bug due to floating point error in :func:`metrics.roc_auc_score` with
@@ -180,6 +201,13 @@ Metrics
   Note that this will not influence the result from :func:`metrics.roc_auc_score`
   :issue:`10093` by :user:`alexryndin <alexryndin>`
   and :user:`Hanmin Qin <qinhanmin2014>`.
+
+Neighbors
+
+- Fixed a bug so ``predict`` in :class:`neighbors.RadiusNeighborsRegressor` can
+  handle empty neighbor set when using non uniform weights. Also raises a new
+  warning when no neighbors are found for samples.  :issue:`9655` by
+  :user:`Andreas Bjerre-Nielsen <abjer>`.
 
 API changes summary
 -------------------
