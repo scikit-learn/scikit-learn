@@ -9,12 +9,15 @@ from __future__ import print_function
 from math import log
 import numpy as np
 from scipy import linalg
+from scipy import sparse
 from scipy.linalg import pinvh
+from scipy.sparse import issparse
 
 from .base import LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
 from ..utils import check_X_y
+from ..utils.extmath import safe_sparse_dot
 
 
 ###############################################################################
@@ -160,7 +163,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
+        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'], dtype=np.float64,
+                         y_numeric=True)
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
@@ -189,8 +193,11 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.scores_ = list()
         coef_old_ = None
 
-        XT_y = np.dot(X.T, y)
-        U, S, Vh = linalg.svd(X, full_matrices=False)
+        XT_y = safe_sparse_dot(X.T, y)
+        if issparse(X):
+            U, S, Vh = sparse.linalg.svds(X, min(X.shape) - 1)
+        else:
+            U, S, Vh = linalg.svd(X, full_matrices=False)
         eigen_vals_ = S ** 2
 
         # Convergence loop of the bayesian ridge regression
@@ -200,17 +207,17 @@ class BayesianRidge(LinearModel, RegressorMixin):
             # sigma_ = lambda_ / alpha_ * np.eye(n_features) + np.dot(X.T, X)
             # coef_ = sigma_^-1 * XT * y
             if n_samples > n_features:
-                coef_ = np.dot(Vh.T,
-                               Vh / (eigen_vals_ +
-                                     lambda_ / alpha_)[:, np.newaxis])
-                coef_ = np.dot(coef_, XT_y)
+                coef_ = safe_sparse_dot(Vh.T,
+                                        Vh / (eigen_vals_ +
+                                              lambda_ / alpha_)[:, np.newaxis])
+                coef_ = safe_sparse_dot(coef_, XT_y, dense_output=True)
                 if self.compute_score:
                     logdet_sigma_ = - np.sum(
                         np.log(lambda_ + alpha_ * eigen_vals_))
             else:
-                coef_ = np.dot(X.T, np.dot(
+                coef_ = safe_sparse_dot(X.T, safe_sparse_dot(
                     U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
-                coef_ = np.dot(coef_, y)
+                coef_ = safe_sparse_dot(coef_, y, dense_output=True)
                 if self.compute_score:
                     logdet_sigma_ = lambda_ * np.ones(n_features)
                     logdet_sigma_[:n_samples] += alpha_ * eigen_vals_
@@ -222,7 +229,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
             self.lambda_ = lambda_
 
             # Update alpha and lambda
-            rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
+            rmse_ = np.sum((y - safe_sparse_dot(X, coef_,
+                                                dense_output=True)) ** 2)
             gamma_ = (np.sum((alpha_ * eigen_vals_) /
                       (lambda_ + alpha_ * eigen_vals_)))
             lambda_ = ((gamma_ + 2 * lambda_1) /
@@ -250,8 +258,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
             coef_old_ = np.copy(coef_)
 
         self.coef_ = coef_
-        sigma_ = np.dot(Vh.T,
-                        Vh / (eigen_vals_ + lambda_ / alpha_)[:, np.newaxis])
+        sigma_ = safe_sparse_dot(Vh.T,
+                                 Vh / (eigen_vals_ +
+                                       lambda_ / alpha_)[:, np.newaxis])
         self.sigma_ = (1. / alpha_) * sigma_
 
         self._set_intercept(X_offset_, y_offset_, X_scale_)
@@ -285,7 +294,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
         else:
             if self.normalize:
                 X = (X - self.X_offset_) / self.X_scale_
-            sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
+            sigmas_squared_data = (safe_sparse_dot(X, self.sigma_) *
+                                   X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
             return y_mean, y_std
 
