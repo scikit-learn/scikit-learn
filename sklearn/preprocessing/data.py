@@ -1801,8 +1801,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.ones((n_samples, 1)) * value, X))
 
 
-def _transform_selected(X, transform, selected="all", copy=True,
-                        retain_ordering=False):
+def _transform_selected(X, transform, selected="all", copy=True):
     """Apply a transform function to portion of selected features
 
     Parameters
@@ -1816,12 +1815,8 @@ def _transform_selected(X, transform, selected="all", copy=True,
     copy : boolean, optional
         Copy X even if it could be avoided.
 
-    selected : "all" or array of indices or mask
+    selected: "all" or array of indices or mask
         Specify which features to apply the transform to.
-
-    retain_ordering : boolean, default False
-        Specify whether the initial order of features has
-        to be maintained in the output
 
     Returns
     -------
@@ -1852,10 +1847,6 @@ def _transform_selected(X, transform, selected="all", copy=True,
         X_sel = transform(X[:, ind[sel]])
         X_not_sel = X[:, ind[not_sel]]
 
-        if retain_ordering:
-            # As of now, X is expected to be dense array
-            X[:, ind[sel]] = X_sel
-            return X
         if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
             return sparse.hstack((X_sel, X_not_sel))
         else:
