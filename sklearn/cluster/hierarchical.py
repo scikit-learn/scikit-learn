@@ -796,7 +796,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         # Cut the tree
         # if compute_full_tree or self.linkage == 'single':
         if compute_full_tree:
-                self.labels_ = _hc_cut(self.n_clusters, self.children_,
+            self.labels_ = _hc_cut(self.n_clusters, self.children_,
                                    self.n_leaves_)
         else:
             labels = _hierarchical.hc_get_heads(parents, copy=False)
