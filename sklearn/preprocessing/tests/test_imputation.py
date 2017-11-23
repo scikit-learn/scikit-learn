@@ -440,13 +440,13 @@ def test_mice_imputation_order():
 
 def test_mice_predictors():
     from sklearn.dummy import DummyRegressor
-    from sklearn.linear_model import BayesianRidge
+    from sklearn.linear_model import BayesianRidge, ARDRegression
 
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10).toarray()
 
-    for predictor in [DummyRegressor, BayesianRidge]:
+    for predictor in [DummyRegressor, BayesianRidge, ARDRegression]:
         imputer = MICEImputer(missing_values=0,
                               n_imputations=1,
                               n_burn_in=1,

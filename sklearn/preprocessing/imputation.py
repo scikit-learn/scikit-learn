@@ -790,7 +790,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         if self.verbose:
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
             start_t = time()
-        for rnd in range(n_rounds):
+        for i_rnd in range(n_rounds):
             # recompute order if random
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
@@ -808,12 +808,12 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                                 predictor)
                 self.imputation_sequence_.append(predictor_triplet)
 
-            if rnd >= self.n_burn_in:
+            if i_rnd >= self.n_burn_in:
                 results_list.append(X_filled[mask_missing_values])
             if self.verbose:
                 print('[MICE] Ending imputation round '
                       '%d/%d, elapsed time %0.2f'
-                      % (rnd + 1, n_rounds, time() - start_t))
+                      % (i_rnd + 1, n_rounds, time() - start_t))
 
         if len(results_list) > 0:
             X[mask_missing_values] = np.array(results_list).mean(axis=0)
@@ -847,7 +847,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         n_rounds = self.n_burn_in + self.n_imputations
         n_imputations = len(self.imputation_sequence_)
         imputations_per_round = n_imputations / n_rounds
-        rnd = 0
+        i_rnd = 0
         results_list = []
         if self.verbose:
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
@@ -861,13 +861,13 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                 predictor_triplet.predictor
             )
             if not (it + 1) % imputations_per_round:
-                rnd += 1
-                if rnd >= self.n_burn_in:
+                i_rnd += 1
+                if i_rnd >= self.n_burn_in:
                     results_list.append(X_filled[mask_missing_values])
                 if self.verbose:
-                    print('[MICE] Ending imputation rnd '
+                    print('[MICE] Ending imputation round '
                           '%d/%d, elapsed time %0.2f'
-                          % (rnd, n_rounds, time() - start_t))
+                          % (i_rnd, n_rounds, time() - start_t))
 
         if n_rounds > 0 and len(results_list) > 0:
             X[mask_missing_values] = np.array(results_list).mean(axis=0)
