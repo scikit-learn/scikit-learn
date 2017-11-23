@@ -380,6 +380,24 @@ cdef class UnionFind(object):
 @cython.nonecheck(False)
 cpdef np.ndarray[DTYPE_t, ndim=2] single_linkage_label(
     np.ndarray[DTYPE_t, ndim=2] L):
+    """
+    Convert an linkage array or MST to a tree by labelling clusters at merges.
+    This is done by using a Union find structure to keep track of merges
+    efficiently.
+
+    Parameters
+    ----------
+
+    L: array of shape (n_samples - 1, 3)
+        The linkage array or MST where each row specifies two samples
+        to be merged and a distance or weight at which the merge occurs. This
+         array is assumed to be sorted by the distance/weight.
+
+    Returns
+    -------
+
+    A tree in the format used by scipy.cluster.hierarchy.
+    """
 
     cdef np.ndarray[DTYPE_t, ndim=2] result_arr
     cdef DTYPE_t[:, ::1] result
