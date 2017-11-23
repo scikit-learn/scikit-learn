@@ -44,7 +44,7 @@ y = (y_no_noise + rnd.normal(size=len(X))) / 2
 X = X.reshape(-1, 1)
 
 # transform the dataset with KBinsDiscretizer
-enc = KBinsDiscretizer(n_bins=10, encode='onehot-dense')
+enc = KBinsDiscretizer(n_bins=10, encode='onehot')
 X_binned = enc.fit_transform(X)
 
 # predict with original dataset
@@ -54,7 +54,7 @@ line = np.linspace(-3, 3, 1000, endpoint=False).reshape(-1, 1)
 reg = LinearRegression().fit(X, y)
 plt.plot(line, reg.predict(line), linewidth=2, color='green',
          label="linear regression")
-reg = DecisionTreeRegressor(min_samples_split=3).fit(X, y)
+reg = DecisionTreeRegressor(min_samples_split=3, random_state=0).fit(X, y)
 plt.plot(line, reg.predict(line), linewidth=2, color='red',
          label="decision tree")
 plt.plot(X[:, 0], y, 'o', c='k')
@@ -69,7 +69,8 @@ line_binned = enc.transform(line)
 reg = LinearRegression().fit(X_binned, y)
 plt.plot(line, reg.predict(line_binned), linewidth=2, color='green',
          linestyle='-', label='linear regression')
-reg = DecisionTreeRegressor(min_samples_split=3).fit(X_binned, y)
+reg = DecisionTreeRegressor(min_samples_split=3,
+                            random_state=0).fit(X_binned, y)
 plt.plot(line, reg.predict(line_binned), linewidth=2, color='red',
          linestyle=':', label='decision tree')
 plt.plot(X[:, 0], y, 'o', c='k')
