@@ -51,12 +51,12 @@ X_binned = enc.fit_transform(X)
 plt.figure(figsize=(10, 4))
 plt.subplot(121)
 line = np.linspace(-3, 3, 1000, endpoint=False).reshape(-1, 1)
-reg = DecisionTreeRegressor(min_samples_split=3).fit(X, y)
-plt.plot(line, reg.predict(line), linewidth=2, color='green',
-         label="decision tree")
 reg = LinearRegression().fit(X, y)
-plt.plot(line, reg.predict(line), linewidth=2, color='red',
+plt.plot(line, reg.predict(line), linewidth=2, color='green',
          label="linear regression")
+reg = DecisionTreeRegressor(min_samples_split=3).fit(X, y)
+plt.plot(line, reg.predict(line), linewidth=2, color='red',
+         label="decision tree")
 plt.plot(X[:, 0], y, 'o', c='k')
 plt.ylabel("Regression output")
 plt.xlabel("Input feature")
