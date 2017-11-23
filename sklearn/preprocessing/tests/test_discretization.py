@@ -29,6 +29,11 @@ def test_fit_transform():
     assert_array_equal(expected, est.transform(X))
 
 
+def test_valid_n_bins():
+    KBinsDiscretizer(n_bins=2).fit_transform(X)
+    KBinsDiscretizer(n_bins=np.array([2])[0]).fit_transform(X)
+
+
 def test_invalid_n_bins():
     est = KBinsDiscretizer(n_bins=1)
     assert_raise_message(ValueError, "KBinsDiscretizer received an invalid "
