@@ -39,8 +39,7 @@ print(__doc__)
 # construct the dataset
 rnd = np.random.RandomState(42)
 X = rnd.uniform(-3, 3, size=100)
-y_no_noise = (np.sin(4 * X) + X)
-y = (y_no_noise + rnd.normal(size=len(X))) / 2
+y = np.sin(X) + rnd.normal(size=len(X)) / 3
 X = X.reshape(-1, 1)
 
 # transform the dataset with KBinsDiscretizer
@@ -48,8 +47,8 @@ enc = KBinsDiscretizer(n_bins=10, encode='onehot')
 X_binned = enc.fit_transform(X)
 
 # predict with original dataset
-plt.figure(figsize=(10, 4))
-plt.subplot(121)
+fig, axes = plt.subplots(ncols=2, sharey=True, figsize=(10, 4))
+plt.sca(axes[0])
 line = np.linspace(-3, 3, 1000, endpoint=False).reshape(-1, 1)
 reg = LinearRegression().fit(X, y)
 plt.plot(line, reg.predict(line), linewidth=2, color='green',
@@ -64,7 +63,7 @@ plt.legend(loc="best")
 plt.title("Result before discretization")
 
 # predict with transformed dataset
-plt.subplot(122)
+plt.sca(axes[1])
 line_binned = enc.transform(line)
 reg = LinearRegression().fit(X_binned, y)
 plt.plot(line, reg.predict(line_binned), linewidth=2, color='green',
@@ -75,7 +74,7 @@ plt.plot(line, reg.predict(line_binned), linewidth=2, color='red',
          linestyle=':', label='decision tree')
 plt.plot(X[:, 0], y, 'o', c='k')
 bins = enc.offset_[0] + enc.bin_width_[0] * np.arange(1, enc.n_bins_[0])
-plt.vlines(bins, -3, 3, linewidth=1, alpha=.2)
+plt.vlines(bins, *plt.gca().get_ylim(), linewidth=1, alpha=.2)
 plt.legend(loc="best")
 plt.ylabel("Regression output")
 plt.xlabel("Input feature")
