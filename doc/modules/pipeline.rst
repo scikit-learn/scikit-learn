@@ -164,7 +164,7 @@ object::
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
-.. warning:: **Side effect of caching transfomers**
+.. warning:: **Side effect of caching transformers**
 
    Using a :class:`Pipeline` without cache enabled, it is possible to
    inspect the original instance such as::

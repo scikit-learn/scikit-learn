@@ -73,8 +73,6 @@ def plot_figs(fig_num, elev, azim):
     pca_score = pca.explained_variance_ratio_
     V = pca.components_
 
-    x_pca_axis, y_pca_axis, z_pca_axis = V.T * pca_score / pca_score.min()
-
     x_pca_axis, y_pca_axis, z_pca_axis = 3 * V.T
     x_pca_plane = np.r_[x_pca_axis[:2], - x_pca_axis[1::-1]]
     y_pca_plane = np.r_[y_pca_axis[:2], - y_pca_axis[1::-1]]

@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 
 from .base import clone, TransformerMixin
-from .externals.joblib import Parallel, delayed, Memory
+from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch
@@ -110,8 +110,7 @@ class Pipeline(_BaseComposition):
     # BaseEstimator interface
 
     def __init__(self, steps, memory=None):
-        # shallow copy of steps
-        self.steps = list(steps)
+        self.steps = steps
         self._validate_steps()
         self.memory = memory
 
@@ -184,6 +183,8 @@ class Pipeline(_BaseComposition):
     # Estimator interface
 
     def _fit(self, X, y=None, **fit_params):
+        # shallow copy of steps - this should really be steps_
+        self.steps = list(self.steps)
         self._validate_steps()
         # Setup the memory
         memory = check_memory(self.memory)
@@ -413,6 +414,7 @@ class Pipeline(_BaseComposition):
         Xt : array-like, shape = [n_samples, n_transformed_features]
         """
         # _final_estimator is None or has transform, otherwise attribute error
+        # XXX: Handling the None case means we can't use if_delegate_has_method
         if self._final_estimator is not None:
             self._final_estimator.transform
         return self._transform
@@ -443,6 +445,7 @@ class Pipeline(_BaseComposition):
         Xt : array-like, shape = [n_samples, n_features]
         """
         # raise AttributeError if necessary for hasattr behaviour
+        # XXX: Handling the None case means we can't use if_delegate_has_method
         for name, transform in self.steps:
             if transform is not None:
                 transform.inverse_transform
@@ -547,7 +550,8 @@ def make_pipeline(*steps, **kwargs):
     Pipeline(memory=None,
              steps=[('standardscaler',
                      StandardScaler(copy=True, with_mean=True, with_std=True)),
-                    ('gaussiannb', GaussianNB(priors=None))])
+                    ('gaussiannb',
+                     GaussianNB(priors=None, var_smoothing=1e-09))])
 
     Returns
     -------
@@ -613,7 +617,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
 
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
-        self.transformer_list = list(transformer_list)
+        self.transformer_list = transformer_list
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
         self._validate_transformers()
@@ -704,6 +708,7 @@ class FeatureUnion(_BaseComposition, TransformerMixin):
         self : FeatureUnion
             This estimator
         """
+        self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
         transformers = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_one_transformer)(trans, X, y)

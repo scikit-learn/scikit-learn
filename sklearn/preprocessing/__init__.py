@@ -22,6 +22,7 @@ from .data import maxabs_scale
 from .data import minmax_scale
 from .data import quantile_transform
 from .data import OneHotEncoder
+from .data import CategoricalEncoder
 
 from .data import PolynomialFeatures
 from .discretization import KBinsDiscretizer
@@ -48,6 +49,7 @@ __all__ = [
     'QuantileTransformer',
     'Normalizer',
     'OneHotEncoder',
+    'CategoricalEncoder',
     'RobustScaler',
     'StandardScaler',
     'add_dummy_feature',
