@@ -59,3 +59,19 @@ def test_MDS():
                     [4, 2, 1, 0]])
     mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
     mds_clf.fit(sim)
+
+
+def test_normed_stress():
+    # Generate random, symmetric matrix
+    sim = np.random.rand(4, 4)
+    sim = (sim + sim.T)/2
+
+    # Calculate normed stress for matrix
+    # and its multiplied copy
+    k = 15
+    X1, stress1 = mds.smacof(sim, normalize=True)
+    X2, stress2 = mds.smacof(k * sim, normalize=True)
+
+    # Normed stress should be the same for
+    # values multiplied by some factor "k"
+    assert_array_almost_equal(stress1, stress2, decimal=3)
