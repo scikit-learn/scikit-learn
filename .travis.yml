@@ -22,6 +22,7 @@ matrix:
   include:
     # This environment tests that scikit-learn can be built against
     # versions of numpy, scipy with ATLAS that comes with Ubuntu Trusty 14.04
+    # i.e. numpy 1.8.2 and scipy 0.13.3
     - env: DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.5"
            COVERAGE=true
       if: type != cron
