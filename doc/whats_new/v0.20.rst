@@ -32,6 +32,8 @@ cannot assure that this list is complete.)
 Changelog
 ---------
 
+Support for Python 3.3 has been dropped.
+
 New features
 ............
 
