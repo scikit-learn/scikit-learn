@@ -2693,19 +2693,16 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             Returns self.
         """
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES)
-        self.n_features_ = X.shape[1]
-        if self.transformed_features is "all":
-            self.transformed_features_ = np.arange(self.n_features_)
-        else:
-            self.transformed_features_ = np.copy(self.transformed_features)
-            if self.transformed_features_.dtype == np.bool:
-                self.transformed_features_ = \
-                    np.where(self.transformed_features_)[0]
-        if np.any(X[:, self.transformed_features_] <= 0):
-            raise ValueError("BoxCox transform can only be applied "
-                             "on positive data")
-        out = [_boxcox(X, i, lambda_x=None) for i in self.transformed_features_]
-        self.lambdas_ = np.array([o[1] for o in out])
+
+        if np.any(X <= 0):
+            raise ValueError("The Box-Cox transformation can only be applied "
+                             "to strictly positive data")
+
+        self.lmbdas = []
+        for col in X.T:
+            _, lmbda = stats.boxcox(col, lmbda=None)
+            self.lmbdas.append(lmbda)
+
         return self
 
     def transform(self, X):
@@ -2721,21 +2718,19 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         X_tr : array-like, shape (n_samples, n_features)
             The transformed data.
         """
+        check_is_fitted(self, 'lmbdas')
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
-        if any(np.any(X[:, self.transformed_features_] <= 0, axis=0)):
-            raise ValueError("BoxCox transform can only be applied "
-                             "on positive data")
-        if X.shape[1] != self.n_features_:
-            raise ValueError("X has a different shape than during fitting.")
-        X_tr = _transform_selected(X, self._transform,
-                                   self.transformed_features_,
-                                   copy=False, retain_ordering=True)
-        return X_tr
 
-    def _transform(self, X):
-        outputs = [_boxcox(X, i, self.lambdas_[i]) for i in range(len(self.transformed_features_))]
-        output = np.concatenate([o[..., np.newaxis] for o in outputs], axis=1)
-        return output
+        if np.any(X <= 0):
+            raise ValueError("The Box-Cox transformation can only be applied "
+                             "to strictly positive data")
+        if not X.shape[1] == len(self.lmbdas):
+            raise ValueError("X has a different shape than during fitting.")
+
+        for i, lmbda in enumerate(self.lmbdas):
+            X[:, i] = stats.boxcox(X[:, i].flatten(), lmbda=lmbda)
+
+        return X
 
     def inverse_transform(self, X):
         """Inverse transform each feature using the lambdas evaluated during fit time
