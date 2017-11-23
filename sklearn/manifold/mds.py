@@ -18,7 +18,8 @@ from ..isotonic import IsotonicRegression
 
 
 def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
-                   max_iter=300, verbose=0, eps=1e-3, random_state=None):
+                   max_iter=300, verbose=0, eps=1e-3, random_state=None,
+                   normalize=False):
     """Computes multidimensional scaling using SMACOF algorithm
 
     Parameters
@@ -55,14 +56,21 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         random_state is the random number generator; If None, the random number
         generator is the RandomState instance used by `np.random`.
 
+    normalize : boolean, optional, default: False
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default.
+
     Returns
     -------
     X : ndarray, shape (n_samples, n_components)
         Coordinates of the points in a ``n_components``-space.
 
     stress : float
-        The final value of the stress (sum of squared distance of the
-        disparities and the distances for all constrained points).
+        The final value of the stress. By default, sum of squared distance
+        of the disparities and the distances for all constrained points.
+        If normalize is set to True, returns Stress-1 (according to
+        Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
+        excellent, 0.05 good, 0.1 fair, and 0.2 poor).
 
     n_iter : int
         The number of iterations corresponding to the best stress.
@@ -107,8 +115,13 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
             disparities *= np.sqrt((n_samples * (n_samples - 1) / 2) /
                                    (disparities ** 2).sum())
 
-        # Compute stress
+        # Compute raw stress
         stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
+
+        # Use Stress-1
+        if normalize:
+            stress = np.sqrt(stress /
+                             ((disparities.ravel() ** 2).sum() / 2))
 
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
@@ -133,7 +146,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 
 def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
            n_jobs=1, max_iter=300, verbose=0, eps=1e-3, random_state=None,
-           return_n_iter=False):
+           return_n_iter=False, normalize=False):
     """Computes multidimensional scaling using the SMACOF algorithm.
 
     The SMACOF (Scaling by MAjorizing a COmplicated Function) algorithm is a
@@ -206,14 +219,21 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
     return_n_iter : bool, optional, default: False
         Whether or not to return the number of iterations.
 
+    normalize : boolean, optional, default: False
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default.
+
     Returns
     -------
     X : ndarray, shape (n_samples, n_components)
         Coordinates of the points in a ``n_components``-space.
 
     stress : float
-        The final value of the stress (sum of squared distance of the
-        disparities and the distances for all constrained points).
+        The final value of the stress. By default, sum of squared distance
+        of the disparities and the distances for all constrained points.
+        If normalize is set to True, returns Stress-1 (according to
+        Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
+        excellent, 0.05 good, 0.1 fair, and 0.2 poor).
 
     n_iter : int
         The number of iterations corresponding to the best stress. Returned
@@ -251,7 +271,8 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
                 dissimilarities, metric=metric,
                 n_components=n_components, init=init,
                 max_iter=max_iter, verbose=verbose,
-                eps=eps, random_state=random_state)
+                eps=eps, random_state=random_state,
+                normalize=normalize)
             if best_stress is None or stress < best_stress:
                 best_stress = stress
                 best_pos = pos.copy()
@@ -262,7 +283,7 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
             delayed(_smacof_single)(
                 dissimilarities, metric=metric, n_components=n_components,
                 init=init, max_iter=max_iter, verbose=verbose, eps=eps,
-                random_state=seed)
+                random_state=seed, normalize=normalize)
             for seed in seeds)
         positions, stress, n_iters = zip(*results)
         best = np.argmin(stress)
@@ -330,15 +351,21 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
+    normalize : boolean, optional, default: False
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default.
+
     Attributes
     ----------
     embedding_ : array-like, shape (n_components, n_samples)
         Stores the position of the dataset in the embedding space.
 
     stress_ : float
-        The final value of the stress (sum of squared distance of the
-        disparities and the distances for all constrained points).
-
+        The final value of the stress. By default, sum of squared distance
+        of the disparities and the distances for all constrained points.
+        If normalize is set to True, returns Stress-1 (according to
+        Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
+        excellent, 0.05 good, 0.1 fair, and 0.2 poor).
 
     References
     ----------
