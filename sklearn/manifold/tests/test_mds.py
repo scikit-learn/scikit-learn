@@ -62,16 +62,17 @@ def test_MDS():
 
 
 def test_normed_stress():
-    # Generate random, symmetric matrix
-    sim = np.random.rand(4, 4)
-    sim = (sim + sim.T)/2
+    sim = np.array([[0, 5, 3, 4],
+                    [5, 0, 2, 2],
+                    [3, 2, 0, 1],
+                    [4, 2, 1, 0]])
 
     # Calculate normed stress for matrix
     # and its multiplied copy
-    k = 15
+    k = 2
     X1, stress1 = mds.smacof(sim, normalize=True)
     X2, stress2 = mds.smacof(k * sim, normalize=True)
 
     # Normed stress should be the same for
     # values multiplied by some factor "k"
-    assert_array_almost_equal(stress1, stress2, decimal=3)
+    assert_array_almost_equal(stress1, stress2, decimal=2)
