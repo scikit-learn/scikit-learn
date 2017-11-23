@@ -7,6 +7,7 @@ from __future__ import division
 import numpy as np
 import scipy as sp
 from warnings import warn
+from sklearn.utils.fixes import euler_gamma
 
 from scipy.sparse import issparse
 
@@ -56,6 +57,7 @@ class IsolationForest(BaseBagging):
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
             - If "auto", then `max_samples=min(256, n_samples)`.
+
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
@@ -148,6 +150,9 @@ class IsolationForest(BaseBagging):
             The input samples. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
 
         Returns
         -------
@@ -300,7 +305,7 @@ def _average_path_length(n_samples_leaf):
         if n_samples_leaf <= 1:
             return 1.
         else:
-            return 2. * (np.log(n_samples_leaf) + 0.5772156649) - 2. * (
+            return 2. * (np.log(n_samples_leaf - 1.) + euler_gamma) - 2. * (
                 n_samples_leaf - 1.) / n_samples_leaf
 
     else:
@@ -314,7 +319,7 @@ def _average_path_length(n_samples_leaf):
 
         average_path_length[mask] = 1.
         average_path_length[not_mask] = 2. * (
-            np.log(n_samples_leaf[not_mask]) + 0.5772156649) - 2. * (
+            np.log(n_samples_leaf[not_mask] - 1.) + euler_gamma) - 2. * (
                 n_samples_leaf[not_mask] - 1.) / n_samples_leaf[not_mask]
 
         return average_path_length.reshape(n_samples_leaf_shape)

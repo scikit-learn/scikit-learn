@@ -50,8 +50,10 @@ Dependencies
 scikit-learn requires:
 
 - Python (>= 2.7 or >= 3.3)
-- NumPy (>= 1.6.1)
-- SciPy (>= 0.9)
+- NumPy (>= 1.8.2)
+- SciPy (>= 0.13.3)
+
+For running the examples Matplotlib >= 1.1.1 is required.
 
 scikit-learn also uses CBLAS, the C interface to the Basic Linear Algebra
 Subprograms library. scikit-learn comes with a reference implementation, but
@@ -108,15 +110,9 @@ Testing
 ~~~~~~~
 
 After installation, you can launch the test suite from outside the
-source directory (you will need to have the ``nose`` package installed)::
+source directory (you will need to have the ``pytest`` package installed)::
 
-    nosetests -v sklearn
-
-Under Windows, it is recommended to use the following command (adjust the path
-to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
-interact with tests that use ``multiprocessing``::
-
-    C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
+    pytest sklearn
 
 See the web page http://scikit-learn.org/stable/developers/advanced_installation.html#testing
 for more information.

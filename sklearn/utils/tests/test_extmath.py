@@ -16,10 +16,11 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import skip_if_32bit
 from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.fixes import np_version
 
 from sklearn.utils.extmath import density
@@ -30,7 +31,6 @@ from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import log_logistic
-from sklearn.utils.extmath import fast_dot, _fast_dot
 from sklearn.utils.extmath import svd_flip
 from sklearn.utils.extmath import _incremental_mean_and_var
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
@@ -85,6 +85,7 @@ def test_random_weights():
     assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
 
 
+@ignore_warnings  # Test deprecated backport to be removed in 0.21
 def test_logsumexp():
     # Try to add some smallish numbers in logspace
     x = np.array([1e-40] * 1000000)
@@ -97,38 +98,58 @@ def test_logsumexp():
     assert_array_almost_equal(np.exp(logsumexp(logX, axis=1)), X.sum(axis=1))
 
 
-def test_randomized_svd_low_rank():
+def check_randomized_svd_low_rank(dtype):
     # Check that extmath.randomized_svd is consistent with linalg.svd
     n_samples = 100
     n_features = 500
     rank = 5
     k = 10
+    decimal = 5 if dtype == np.float32 else 7
+    dtype = np.dtype(dtype)
 
     # generate a matrix X of approximate effective rank `rank` and no noise
     # component (very structured signal):
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
                              effective_rank=rank, tail_strength=0.0,
-                             random_state=0)
+                             random_state=0).astype(dtype, copy=False)
     assert_equal(X.shape, (n_samples, n_features))
 
     # compute the singular values of X using the slow exact method
     U, s, V = linalg.svd(X, full_matrices=False)
 
+    # Convert the singular values to the specific dtype
+    U = U.astype(dtype, copy=False)
+    s = s.astype(dtype, copy=False)
+    V = V.astype(dtype, copy=False)
+
     for normalizer in ['auto', 'LU', 'QR']:  # 'none' would not be stable
         # compute the singular values of X using the fast approximate method
-        Ua, sa, Va = \
-            randomized_svd(X, k, power_iteration_normalizer=normalizer,
-                           random_state=0)
+        Ua, sa, Va = randomized_svd(
+            X, k, power_iteration_normalizer=normalizer, random_state=0)
+
+        # If the input dtype is float, then the output dtype is float of the
+        # same bit size (f32 is not upcast to f64)
+        # But if the input dtype is int, the output dtype is float64
+        if dtype.kind == 'f':
+            assert Ua.dtype == dtype
+            assert sa.dtype == dtype
+            assert Va.dtype == dtype
+        else:
+            assert Ua.dtype == np.float64
+            assert sa.dtype == np.float64
+            assert Va.dtype == np.float64
+
         assert_equal(Ua.shape, (n_samples, k))
         assert_equal(sa.shape, (k,))
         assert_equal(Va.shape, (k, n_features))
 
         # ensure that the singular values of both methods are equal up to the
         # real rank of the matrix
-        assert_almost_equal(s[:k], sa)
+        assert_almost_equal(s[:k], sa, decimal=decimal)
 
         # check the singular vectors too (while not checking the sign)
-        assert_almost_equal(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va))
+        assert_almost_equal(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va),
+                            decimal=decimal)
 
         # check the sparse matrix representation
         X = sparse.csr_matrix(X)
@@ -137,9 +158,24 @@ def test_randomized_svd_low_rank():
         Ua, sa, Va = \
             randomized_svd(X, k, power_iteration_normalizer=normalizer,
                            random_state=0)
-        assert_almost_equal(s[:rank], sa[:rank])
+        if dtype.kind == 'f':
+            assert Ua.dtype == dtype
+            assert sa.dtype == dtype
+            assert Va.dtype == dtype
+        else:
+            assert Ua.dtype.kind == 'f'
+            assert sa.dtype.kind == 'f'
+            assert Va.dtype.kind == 'f'
+
+        assert_almost_equal(s[:rank], sa[:rank], decimal=decimal)
 
 
+def test_randomized_svd_low_rank_all_dtypes():
+    for dtype in (np.int32, np.int64, np.float32, np.float64):
+        yield check_randomized_svd_low_rank, dtype
+
+
+@ignore_warnings  # extmath.norm is deprecated to be removed in 0.21
 def test_norm_squared_norm():
     X = np.random.RandomState(42).randn(50, 63)
     X *= 100        # check stability
@@ -148,6 +184,11 @@ def test_norm_squared_norm():
     assert_almost_equal(np.linalg.norm(X.ravel()), norm(X))
     assert_almost_equal(norm(X) ** 2, squared_norm(X), decimal=6)
     assert_almost_equal(np.linalg.norm(X), np.sqrt(squared_norm(X)), decimal=6)
+    # Check the warning with an int array and np.dot potential overflow
+    assert_warns_message(
+                    UserWarning, 'Array type is integer, np.dot may '
+                    'overflow. Data should be float type to avoid this issue',
+                    squared_norm, X.astype(int))
 
 
 def test_row_norms():
@@ -165,10 +206,19 @@ def test_row_norms():
                                   precision)
         assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X), precision)
 
-        Xcsr = sparse.csr_matrix(X, dtype=dtype)
-        assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
-                                  precision)
-        assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr), precision)
+        for csr_index_dtype in [np.int32, np.int64]:
+            Xcsr = sparse.csr_matrix(X, dtype=dtype)
+            # csr_matrix will use int32 indices by default,
+            # up-casting those to int64 when necessary
+            if csr_index_dtype is np.int64:
+                Xcsr.indptr = Xcsr.indptr.astype(csr_index_dtype)
+                Xcsr.indices = Xcsr.indices.astype(csr_index_dtype)
+            assert Xcsr.indices.dtype == csr_index_dtype
+            assert Xcsr.indptr.dtype == csr_index_dtype
+            assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True),
+                                      precision)
+            assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr),
+                                      precision)
 
 
 def test_randomized_svd_low_rank_with_noise():
@@ -415,84 +465,6 @@ def test_logistic_sigmoid():
 
     extreme_x = np.array([-100., 100.])
     assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
-
-
-def test_fast_dot():
-    # Check fast dot blas wrapper function
-    if fast_dot is np.dot:
-        return
-
-    rng = np.random.RandomState(42)
-    A = rng.random_sample([2, 10])
-    B = rng.random_sample([2, 10])
-
-    try:
-        linalg.get_blas_funcs(['gemm'])[0]
-        has_blas = True
-    except (AttributeError, ValueError):
-        has_blas = False
-
-    if has_blas:
-        # Test _fast_dot for invalid input.
-
-        # Maltyped data.
-        for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
-            assert_raises(ValueError, _fast_dot, A.astype(dt1),
-                          B.astype(dt2).T)
-
-        # Malformed data.
-
-        # ndim == 0
-        E = np.empty(0)
-        assert_raises(ValueError, _fast_dot, E, E)
-
-        # ndim == 1
-        assert_raises(ValueError, _fast_dot, A, A[0])
-
-        # ndim > 2
-        assert_raises(ValueError, _fast_dot, A.T, np.array([A, A]))
-
-        # min(shape) == 1
-        assert_raises(ValueError, _fast_dot, A, A[0, :][None, :])
-
-        # test for matrix mismatch error
-        assert_raises(ValueError, _fast_dot, A, A)
-
-    # Test cov-like use case + dtypes.
-    for dtype in ['f8', 'f4']:
-        A = A.astype(dtype)
-        B = B.astype(dtype)
-
-        #  col < row
-        C = np.dot(A.T, A)
-        C_ = fast_dot(A.T, A)
-        assert_almost_equal(C, C_, decimal=5)
-
-        C = np.dot(A.T, B)
-        C_ = fast_dot(A.T, B)
-        assert_almost_equal(C, C_, decimal=5)
-
-        C = np.dot(A, B.T)
-        C_ = fast_dot(A, B.T)
-        assert_almost_equal(C, C_, decimal=5)
-
-    # Test square matrix * rectangular use case.
-    A = rng.random_sample([2, 2])
-    for dtype in ['f8', 'f4']:
-        A = A.astype(dtype)
-        B = B.astype(dtype)
-
-        C = np.dot(A, B)
-        C_ = fast_dot(A, B)
-        assert_almost_equal(C, C_, decimal=5)
-
-        C = np.dot(A.T, B)
-        C_ = fast_dot(A.T, B)
-        assert_almost_equal(C, C_, decimal=5)
-
-    if has_blas:
-        for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
-            assert_raises(ValueError, _fast_dot, x, x.T)
 
 
 def test_incremental_variance_update_formulas():

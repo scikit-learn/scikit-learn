@@ -16,7 +16,6 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
-from ..utils.fixes import astype
 from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
@@ -108,7 +107,7 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
         n_voxels = diag.size
     else:
         if mask is not None:
-            mask = astype(mask, dtype=np.bool, copy=False)
+            mask = mask.astype(dtype=np.bool, copy=False)
             mask = np.asarray(mask, dtype=np.bool)
             edges = _mask_edges_weights(mask, edges)
             n_voxels = np.sum(mask)
@@ -319,9 +318,12 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
         between 0 and 1, it is taken to be a proportion of the total number
         of patches.
 
-    random_state : int or RandomState
+    random_state : int, RandomState instance or None, optional (default=None)
         Pseudo number generator state used for random sampling to use if
-        `max_patches` is not None.
+        `max_patches` is not None.  If int, random_state is the seed used by
+        the random number generator; If RandomState instance, random_state is
+        the random number generator; If None, the random number generator is
+        the RandomState instance used by `np.random`.
 
     Returns
     -------
@@ -450,8 +452,11 @@ class PatchExtractor(BaseEstimator):
         float in (0, 1), it is taken to mean a proportion of the total number
         of patches.
 
-    random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     """
     def __init__(self, patch_size=None, max_patches=None, random_state=None):

@@ -36,6 +36,20 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 
 
+def test_deprecation_of_n_components_in_linkage_tree():
+    rng = np.random.RandomState(0)
+    X = rng.randn(50, 100)
+    # Test for warning of deprecation of n_components in linkage_tree
+    children, n_nodes, n_leaves, parent = assert_warns(DeprecationWarning,
+                                                       linkage_tree,
+                                                       X.T,
+                                                       n_components=10)
+    children_t, n_nodes_t, n_leaves_t, parent_t = linkage_tree(X.T)
+    assert_array_equal(children, children_t)
+    assert_equal(n_nodes, n_nodes_t)
+    assert_equal(n_leaves, n_leaves_t)
+    assert_equal(parent, parent_t)
+
 def test_linkage_misc():
     # Misc tests on linkage
     rng = np.random.RandomState(42)
@@ -518,3 +532,30 @@ def test_agg_n_clusters():
         msg = ("n_clusters should be an integer greater than 0."
                " %s was provided." % str(agc.n_clusters))
         assert_raise_message(ValueError, msg, agc.fit, X)
+
+
+def test_affinity_passed_to_fix_connectivity():
+    # Test that the affinity parameter is actually passed to the pairwise
+    # function
+
+    size = 2
+    rng = np.random.RandomState(0)
+    X = rng.randn(size, size)
+    mask = np.array([True, False, False, True])
+
+    connectivity = grid_to_graph(n_x=size, n_y=size,
+                                 mask=mask, return_as=np.ndarray)
+
+    class FakeAffinity:
+        def __init__(self):
+            self.counter = 0
+
+        def increment(self, *args, **kwargs):
+            self.counter += 1
+            return self.counter
+
+    fa = FakeAffinity()
+
+    linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
+
+    assert_equal(fa.counter, 3)
