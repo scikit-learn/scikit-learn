@@ -3,15 +3,10 @@
 Imputing missing values before building an estimator
 ====================================================
 
-This example shows that imputing the missing values can give better results
-than discarding the samples containing any missing value. Imputing does not
-always improve the predictions, so please check via cross-validation. Sometimes
-dropping rows or using marker values is more effective.
-
-Missing values can be replaced by the mean, the median, or the most frequent
-value using the ``strategy`` hyper-parameter. The median is a more robust
-estimator for data with high magnitude variables which could dominate results
-(otherwise known as a 'long tail').
+Missing values can be replaced by the mean, the median or the most frequent
+value using the ``strategy`` hyper-parameter.
+The median is a more robust estimator for data with high magnitude variables
+which could dominate results (otherwise known as a 'long tail').
 
 Another option is the MICE imputer. This uses round-robin linear regression,
 treating every variable as an output in turn. The simple version implemented
@@ -26,8 +21,7 @@ Script output::
     MSE after mean imputation of the missing values = 3507.77
     MSE after MICE imputation of the missing values = 3365.82
 
-In this case, imputing helps the classifier get close to the original score
-than using mean imputation.
+In this case, imputing helps the classifier get close to the original score.
 """
 
 import numpy as np
