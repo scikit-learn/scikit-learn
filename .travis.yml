@@ -56,6 +56,10 @@ matrix:
     -  python: 3.6
        env: DISTRIB="scipy-dev-wheels"
        if: type = cron
+    # Python 3.4 build
+    - env: DISTRIB="conda" PYTHON_VERSION="3.4"
+           NUMPY_VERSION="1.11.3" SCIPY_VERSION="0.18.1" CYTHON_VERSION="0.25.2"
+      if: type = cron
 
 install: source build_tools/travis/install.sh
 script: bash build_tools/travis/test_script.sh
