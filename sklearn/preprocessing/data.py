@@ -2588,52 +2588,6 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                          " axis={}".format(axis))
 
 
-def _boxcox(X, i, lambda_x=None):
-    x = X[:, i]
-    if lambda_x is None:
-        x, lambda_x = stats.boxcox(x, lambda_x)
-        return x, lambda_x
-    else:
-        x = stats.boxcox(x, lambda_x)
-        return x
-
-
-def boxcox(X, copy=True):
-    """BoxCox transform to the input data
-
-    Apply boxcox transform on individual features with lambda
-    that maximizes the log-likelihood function for each feature
-
-    Parameters
-    ----------
-    X : array-like, shape (n_samples, n_features)
-        The data to be transformed. Should contain only positive data.
-
-    copy : boolean, optional, default=True
-        Set to False to perform inplace transformation and avoid a
-        copy (if the input is already a numpy array or a scipy.sparse
-        CSR matrix and if axis is 1).
-
-    Returns
-    -------
-    X_tr : array-like, shape (n_samples, n_features)
-        The transformed data.
-
-    References
-    ----------
-    G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
-    Royal Statistical Society B, 26, 211-252 (1964).
-    """
-    X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=copy)
-    if np.any(X <= 0):
-        raise ValueError("BoxCox transform can only be applied "
-                         "on positive data")
-    n_features = X.shape[1]
-    outputs = [_boxcox(X, i, lambda_x=None) for i in range(n_features)]
-    output = np.concatenate([o[0][..., np.newaxis] for o in outputs], axis=1)
-    return output
-
-
 class BoxCoxTransformer(BaseEstimator, TransformerMixin):
     """BoxCox transformation on individual features.
 
@@ -2670,14 +2624,18 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
 
     ``boxcox`` requires the input data to be positive.
 
+    References
+    ----------
+    G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
+    Royal Statistical Society B, 26, 211-252 (1964).
+
     """
-    def __init__(self, transformed_features="all", n_jobs=1, copy=True):
+    def __init__(self, transformed_features="all", copy=True):
         self.transformed_features = transformed_features
-        self.n_jobs = n_jobs
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Estimate lambda for each feature to maximise log-likelihood
+        """Estimate lambda for each feature to maximise log-likelihood.
 
         Parameters
         ----------
