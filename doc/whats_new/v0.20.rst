@@ -111,7 +111,7 @@ Classifiers and regressors
   :class:`neural_network.MLPClassifier` with new ``n_iter_no_change``
   parameter now at 10 from previously hardcoded 2.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
-  
+
 - Fixed a bug in :class:`neural_network.MLPRegressor` where fitting
   quit unexpectedly early due to local minima or fluctuations.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`
@@ -154,6 +154,12 @@ Decomposition, manifold learning and clustering
 - Fixed a bug when setting parameters on meta-estimator, involving both a
   wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
   <marcus-voss>` and `Joel Nothman`_.
+
+- Fixed a bug when fitting :class:`ensemble.GradientBoostingClassifier` or
+  :class:`ensemble.GradientBoostingRegressor` with ``warm_start=True`` which
+  previously raised a segmentation fault due to a non-conversion of CSC
+  matrix into CSR format expected by ``decision_function``. :issue:`9991` by
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 Metrics
 
