@@ -210,5 +210,5 @@ def test_multinomial_deviance():
                      [0, 0.5, 0.5]])
     y = np.array([0, 1])
     weights = np.array([1, 3])
-    expected_loss = 0.8563
+    expected_loss = 0.85637
     assert_almost_equal(loss(y, pred, weights), expected_loss, decimal=4)
