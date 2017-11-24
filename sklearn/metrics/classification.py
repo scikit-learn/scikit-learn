@@ -451,6 +451,9 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     """
 
     # Compute accuracy for each possible representation
+    average_options = (None, 'micro', 'macro', 'weighted')
+    if average not in average_options:
+        raise ValueError("average has to be one of " + str(average_options))
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith('multilabel'):
@@ -464,11 +467,20 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     else:
         C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
         den = C.sum(0) + C.sum(1) - C.diagonal()
-        score = C.diagonal() / den
-        if normalize:
+        if average == 'macro':
+            den = C.sum(0) + C.sum(1) - C.diagonal()
+            score = C.diagonal() / den
             return np.average(score)
-        else:
-            return np.sum(score)
+        elif average == 'micro':
+            den = 2*np.sum(C) - np.sum(C.diagonal())
+            score = np.sum(C.diagonal())
+            return score / den
+        elif average == 'weighted':
+            den = C.sum(0) + C.sum(1) - C.diagonal()
+            score = C.diagonal()/den
+            if sample_weight == None:
+                sample_weight = C.sum(0)/C.sum()
+            return np.sum(sample_weight*score)
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):
