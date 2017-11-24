@@ -149,3 +149,5 @@
 .. _Neeraj Gangwar: http://neerajgangwar.in
 
 .. _Arthur Mensch: https://amensch.fr
+
+.. _Joris Van den Bossche: https://github.com/jorisvandenbossche

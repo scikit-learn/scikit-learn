@@ -5,10 +5,15 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
+#          Empty radius support by Andreas Bjerre-Nielsen
 #
-# License: BSD 3 clause (C) INRIA, University of Amsterdam
+# License: BSD 3 clause (C) INRIA, University of Amsterdam,
+#                           University of Copenhagen
+
+import warnings
 
 import numpy as np
+from scipy.sparse import issparse
 
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
@@ -139,6 +144,11 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         y : array of int, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
+        if issparse(X) and self.metric == 'precomputed':
+            raise ValueError(
+                "Sparse matrices not supported for prediction with "
+                "precomputed kernels. Densify your matrix."
+            )
         X = check_array(X, accept_sparse='csr')
 
         neigh_dist, neigh_ind = self.kneighbors(X)
@@ -274,7 +284,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
         Returns
         -------
-        y : array of int, shape = [n_samples] or [n_samples, n_outputs]
+        y : array of float, shape = [n_samples] or [n_samples, n_outputs]
             Target values
         """
         X = check_array(X, accept_sparse='csr')
@@ -287,13 +297,24 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         if _y.ndim == 1:
             _y = _y.reshape((-1, 1))
 
+        empty_obs = np.full_like(_y[0], np.nan)
+
         if weights is None:
             y_pred = np.array([np.mean(_y[ind, :], axis=0)
-                               for ind in neigh_ind])
-        else:
-            y_pred = np.array([(np.average(_y[ind, :], axis=0,
-                                           weights=weights[i]))
+                               if len(ind) else empty_obs
                                for (i, ind) in enumerate(neigh_ind)])
+
+        else:
+            y_pred = np.array([np.average(_y[ind, :], axis=0,
+                               weights=weights[i])
+                               if len(ind) else empty_obs
+                               for (i, ind) in enumerate(neigh_ind)])
+
+        if np.max(np.isnan(y_pred)):
+            empty_warning_msg = ("One or more samples have no neighbors "
+                                 "within specified radius; predicting NaN.")
+            warnings.warn(empty_warning_msg)
+
 
         if self._y.ndim == 1:
             y_pred = y_pred.ravel()
