@@ -1021,6 +1021,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     It is possible to compute per-label precisions, recalls, F1-scores and
     supports instead of averaging:
+
     >>> precision_recall_fscore_support(y_true, y_pred, average=None,
     ... labels=['pig', 'dog', 'cat'])
     ... # doctest: +ELLIPSIS,+NORMALIZE_WHITESPACE
