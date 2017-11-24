@@ -6,12 +6,18 @@ Using KBinsDiscretizer to discretize continuous features
 ================================================================
 
 The example compares prediction result of linear regression (linear model)
-and decision tree (tree based model) before and after discretization.
+and decision tree (tree based model) with and without discretization of
+real-valued features.
 
-As is shown in the result before discretization, linear model can only model
+As is shown in the result before discretization, linear model is fast to
+build and relatively straightforward to interpret, but can only model
 linear relationships, while decision tree can build a much more complex model
 of the data. One way to make linear model more powerful on continuous data
-is to use discretization (also known as binning).
+is to use discretization (also known as binning). In the example, we
+discretize the feature and one-hot encode the transformed data. Note that if
+the bins are not reasonably wide, there would appear to be a substantially
+increased risk of overfitting, so the discretiser parameters need to be tuned
+under cv.
 
 After discretization, linear regression and decision tree make exactly the
 same prediction. As features are constant within each bin, any model must
@@ -19,7 +25,7 @@ predict the same value for all points within a bin. Compared with the result
 before discretization, linear model become much more flexible while decision
 tree gets much less flexible. Note that binning features generally has no
 beneficial effect for tree-based models, as these models can learn to split
-up the data anywhere.
+up the data anywhere. 
 
 """
 
