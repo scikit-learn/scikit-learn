@@ -17,6 +17,8 @@ random sampling procedures.
 
 - :class:`decomposition.IncrementalPCA` in Python 2 (bug fix)
 - :class:`isotonic.IsotonicRegression` (bug fix)
+- :class:`linear_model.ARDRegression` (bug fix)
+- :class:`linear_model.OrthogonalMatchingPursuit` (bug fix)
 - :class:`metrics.roc_auc_score` (bug fix)
 - :class:`metrics.roc_curve` (bug fix)
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
@@ -43,7 +45,7 @@ Classifiers and regressors
 
 - Added :class:`naive_bayes.ComplementNB`, which implements the Complement
   Naive Bayes classifier described in Rennie et al. (2003).
-  By :user:`Michael A. Alcorn <airalcorn2>`.
+  :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
 
 Preprocessing
 
@@ -53,8 +55,8 @@ Preprocessing
   Compared to the existing :class:`OneHotEncoder`, this new class handles
   encoding of all feature types (also handles string-valued features) and
   derives the categories based on the unique values in the features instead of
-  the maximum value in the features.
-  By :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
+  the maximum value in the features. :issue:`9151` by
+  :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
 - Added :class:`experimental.ColumnTransformer`, which allows to apply
   different transformers to different columns of arrays or pandas
@@ -142,7 +144,11 @@ Classifiers and regressors
 
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
-  by `Alexandre Gramfort`_.
+  :issue:`10071` by `Alexandre Gramfort`_.
+
+- Fixed a bug in :class:`linear_model.ARDRegression` which caused incorrectly
+  updated estimates for the standard deviation and the coefficients.
+  :issue:`10153` by :user:`Jörg Döpfert <jdoepfert>`.
 
 Decomposition, manifold learning and clustering
 
