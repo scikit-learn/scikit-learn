@@ -25,7 +25,7 @@ predict the same value for all points within a bin. Compared with the result
 before discretization, linear model become much more flexible while decision
 tree gets much less flexible. Note that binning features generally has no
 beneficial effect for tree-based models, as these models can learn to split
-up the data anywhere. 
+up the data anywhere.
 
 """
 
