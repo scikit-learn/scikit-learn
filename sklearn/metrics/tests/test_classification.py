@@ -958,8 +958,13 @@ def test_multilabel_jaccard_similarity_score():
     y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
     y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                normalize=False), 7. / 6)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred), 7. / 18)
+                                                average='macro'), 7. / 18)
+    assert_equal(jaccard_similarity_score(y_true, y_pred,
+                                                average='micro'), 1. / 2)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                average='weighted'), 7. / 12)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred),
+                        np.array([2. / 3, 0., 1. / 2]))
 
 
 @ignore_warnings

@@ -676,10 +676,14 @@ score is equal to the classification accuracy.
   >>> from sklearn.metrics import jaccard_similarity_score
   >>> y_pred = [0, 2, 1, 3]
   >>> y_true = [0, 1, 2, 3]
-  >>> jaccard_similarity_score(y_true, y_pred)
+  >>> jaccard_similarity_score(y_true, y_pred, average='macro')
   0.5
-  >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
-  2
+  >>> jaccard_similarity_score(y_true, y_pred, average='micro')
+  0.33...
+  >>> jaccard_similarity_score(y_true, y_pred, average='weighted')
+  0.5
+  >>> jaccard_similarity_score(y_true, y_pred)
+  array([ 1.,  0.,  0.,  1. ])
 
 In the multilabel case with binary label indicators: ::
 

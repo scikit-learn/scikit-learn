@@ -372,7 +372,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     return 1 - k
 
 
-def jaccard_similarity_score(y_true, y_pred, normalize=True,
+def jaccard_similarity_score(y_true, y_pred, average=None,
                              sample_weight=None):
     """Jaccard similarity coefficient score
 
@@ -391,23 +391,28 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    normalize : bool, optional (default=True)
-        If ``False``, return the sum of the Jaccard similarity coefficient
-        over the sample set. Otherwise, return the average of Jaccard
-        similarity coefficient.
-
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
+    average : string, [None (default), 'micro', 'macro', 'weighted']
+        If ``None``, the scores for each class are returned. Otherwise, this
+        determines the type of averaging performed on the data:
+
+        ``'micro'``:
+            Calculate metrics globally by counting the total true positives,
+            false negatives and false positives.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance.
+
     Returns
     -------
-    score : float
-        If ``normalize == True``, return the average Jaccard similarity
-        coefficient, else it returns the sum of the Jaccard similarity
-        coefficient over the sample set.
-
-        The best performance is 1 with ``normalize == True`` and the number
-        of samples with ``normalize == False``.
+    score: float (if average is not None) or array of float, shape =\
+            [n_unique_labels]
 
     See also
     --------
@@ -415,15 +420,13 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     Notes
     -----
-    In binary and multiclass classification, this function is equivalent
-    to the ``accuracy_score``. It differs in the multilabel classification
-    problem.
+    In differs in implementation from ``accuracy_score`` from all three
+    classifications i.e. binary, mutliclass and multilabel.
 
     References
     ----------
     .. [1] `Wikipedia entry for the Jaccard index
            <https://en.wikipedia.org/wiki/Jaccard_index>`_
-
 
     Examples
     --------
@@ -431,10 +434,10 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     >>> from sklearn.metrics import jaccard_similarity_score
     >>> y_pred = [0, 2, 1, 3]
     >>> y_true = [0, 1, 2, 3]
-    >>> jaccard_similarity_score(y_true, y_pred)
+    >>> jaccard_similarity_score(y_true, y_pred, average='macro')
     0.5
-    >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
-    2.0
+    >>> jaccard_similarity_score(y_true, y_pred, normalize='micro')
+    0.33...
 
     In the multilabel case with binary label indicators:
 
@@ -450,12 +453,14 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
     0.38888888888888884
     """
 
-    # Compute accuracy for each possible representation
     average_options = (None, 'micro', 'macro', 'weighted')
     if average not in average_options:
         raise ValueError("average has to be one of " + str(average_options))
+
+    # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
+
     if y_type.startswith('multilabel'):
         with np.errstate(divide='ignore', invalid='ignore'):
             # oddly, we may get an "invalid" rather than a "divide" error here
@@ -466,7 +471,6 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
         return _weighted_sum(score, sample_weight, normalize)
     else:
         C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
-        den = C.sum(0) + C.sum(1) - C.diagonal()
         if average == 'macro':
             den = C.sum(0) + C.sum(1) - C.diagonal()
             score = C.diagonal() / den
@@ -481,6 +485,10 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
             if sample_weight == None:
                 sample_weight = C.sum(0)/C.sum()
             return np.sum(sample_weight*score)
+        else:
+            den = C.sum(0) + C.sum(1) - C.diagonal()
+            score = C.diagonal() / den
+            return score
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):
