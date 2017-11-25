@@ -30,7 +30,7 @@ matrix:
           packages:
             # these only required by the DISTRIB="ubuntu" builds:
             - python-scipy
-            - libatlas3gf-base
+            - libatlas3-base
             - libatlas-dev
     # This environment tests the oldest supported anaconda env
     - env: DISTRIB="conda" PYTHON_VERSION="2.7" INSTALL_MKL="false"
