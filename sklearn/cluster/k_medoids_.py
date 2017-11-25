@@ -43,10 +43,10 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
     Attributes
     ----------
-    cluster_centers_ : array, [n_clusters, n_features]
+    cluster_centers_ : array, shape = (n_clusters, n_features)
         Cluster centers, i.e. medoids (elements from the original dataset)
 
-    labels_ :
+    labels_ : array, shape = (n_samples,)
         Labels of each point
 
     inertia_ : float
@@ -122,7 +122,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape=(n_samples, n_features).
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features).
             Dataset to cluster.
 
         Returns
@@ -206,7 +206,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
             Data to transform.
 
         Returns
@@ -225,12 +225,12 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
             New data to predict.
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : array, shape = (n_samples,)
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self, "cluster_centers_")
@@ -251,7 +251,7 @@ class KMedoids(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
             Samples to compute inertia for.
 
         Returns

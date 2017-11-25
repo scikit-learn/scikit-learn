@@ -32,11 +32,10 @@ def test_kmedoids_input_validation_and_fit_check():
                          KMedoids(init=None).fit, X)
 
     # Trying to fit 3 samples to 8 clusters
-    model = KMedoids(n_clusters=8)
     Xsmall = rng.rand(5, 2)
     assert_raise_message(ValueError, "The number of medoids 8 must be less "
                                      "than the number of samples 5.",
-                         model.fit, Xsmall)
+                         KMedoids(n_clusters=8).fit, Xsmall)
 
     # Test if NotFittedError is raised appropriately
     assert_raises(NotFittedError, KMedoids().transform, X)

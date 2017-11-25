@@ -332,10 +332,10 @@ PAM works as follows:
 * Repeat the assignment and update step while the medoids keep changing or
   maximum number of iterations ``max_iter`` is reached.
 
-The complexity of K-Medoids is :math:`O(N^2 k T)` where :math:`N` is the number
-of samples, :math:`T` is the number of iterations and :math:`k` is the number of
+The complexity of K-Medoids is :math:`O(N^2 K T)` where :math:`N` is the number
+of samples, :math:`T` is the number of iterations and :math:`K` is the number of
 clusters. This makes it more suitable for smaller datasets in comparison to
-:class:`KMeans` which is :math:`O(N k T)`.
+:class:`KMeans` which is :math:`O(N K T)`.
 
 .. topic:: References:
 
