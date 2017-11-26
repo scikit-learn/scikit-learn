@@ -117,12 +117,7 @@ class LogOddsEstimator(BaseEstimator):
             neg = np.sum(sample_weight * (1 - y))
 
         if neg == 0 or pos == 0:
-            if sample_weight is None:
-                raise ValueError("y should contain 2 classes.")
-            else:
-                raise ValueError("y should contain 2 classes after "
-                                 "sample_weight trims samples with "
-                                 "zero weights.")
+            raise ValueError('y contains non binary labels.')
         self.prior = self.scale * np.log(pos / neg)
 
     def predict(self, X):
@@ -977,8 +972,18 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         n_samples, self.n_features = X.shape
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
+            n_pos = np.sum(y)
+            n_neg = y.shape[0] - n_pos
+            if n_pos == 0 or n_neg == 0:
+                raise ValueError("y should contain 2 classes.")
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
+            n_pos = np.sum(sample_weight * y)
+            n_neg = np.sum(sample_weight * (1 - y))
+            if n_pos == 0 or n_neg == 0:
+                raise ValueError("y should contain 2 classes after "
+                                "sample_weight trims samples with "
+                                "zero weights.")
 
         check_consistent_length(X, y, sample_weight)
 
