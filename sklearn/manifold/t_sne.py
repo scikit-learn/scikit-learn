@@ -645,23 +645,8 @@ class TSNE(BaseEstimator):
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
-            if np.any(X < 0):
-                raise ValueError("All distances should be positive, the "
-                                 "precomputed distances given as X is not "
-                                 "correct")
-        if self.method == 'barnes_hut' and sp.issparse(X):
-            raise TypeError('A sparse matrix was passed, but dense '
-                            'data is required for method="barnes_hut". Use '
-                            'X.toarray() to convert to a dense numpy array if '
-                            'the array is small enough for it to fit in '
-                            'memory. Otherwise consider dimensionality '
-                            'reduction techniques (e.g. TruncatedSVD)')
-        if self.method == 'barnes_hut':
-            X = check_array(X, ensure_min_samples=2,
-                            dtype=[np.float32, np.float64])
-        else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                            dtype=[np.float32, np.float64])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        dtype=[np.float32, np.float64])
         if self.method == 'barnes_hut' and self.n_components > 3:
             raise ValueError("'n_components' should be inferior to 4 for the "
                              "barnes_hut algorithm as it relies on "
