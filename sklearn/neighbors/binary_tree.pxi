@@ -312,7 +312,7 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
     >>> tree = {BinaryTree}(X, leaf_size=2)        # doctest: +SKIP
     >>> s = pickle.dumps(tree)                     # doctest: +SKIP
     >>> tree_copy = pickle.loads(s)                # doctest: +SKIP
-    >>> dist, ind = tree_copy.query(X[0], k=3)     # doctest: +SKIP
+    >>> dist, ind = tree_copy.query([X[0]], k=3)     # doctest: +SKIP
     >>> print(ind)  # indices of 3 closest neighbors
     [0 3 1]
     >>> print(dist)  # distances to 3 closest neighbors
@@ -324,9 +324,9 @@ Query for neighbors within a given radius
     >>> np.random.seed(0)
     >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)     # doctest: +SKIP
-    >>> print(tree.query_radius(X[0], r=0.3, count_only=True))
+    >>> print(tree.query_radius([X[0]], r=0.3, count_only=True))
     3
-    >>> ind = tree.query_radius(X[0], r=0.3)  # doctest: +SKIP
+    >>> ind = tree.query_radius([X[0]], r=0.3)  # doctest: +SKIP
     >>> print(ind)  # indices of neighbors within distance 0.3
     [3 0 1]
 
@@ -1280,8 +1280,8 @@ cdef class BinaryTree:
             >>> import numpy as np
             >>> np.random.seed(0)
             >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
-            >>> tree = BinaryTree(X, leaf_size=2)    # doctest: +SKIP
-            >>> dist, ind = tree.query(X[0], k=3)    # doctest: +SKIP
+            >>> tree = {BinaryTree}(X, leaf_size=2)    # doctest: +SKIP
+            >>> dist, ind = tree.query([X[0]], k=3)    # doctest: +SKIP
             >>> print(ind)  # indices of 3 closest neighbors
             [0 3 1]
             >>> print(dist)  # distances to 3 closest neighbors
@@ -1414,10 +1414,10 @@ cdef class BinaryTree:
         >>> import numpy as np
         >>> np.random.seed(0)
         >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
-        >>> tree = BinaryTree(X, leaf_size=2)     # doctest: +SKIP
-        >>> print(tree.query_radius(X[0], r=0.3, count_only=True))
+        >>> tree = {BinaryTree}(X, leaf_size=2)     # doctest: +SKIP
+        >>> print(tree.query_radius([X[0]], r=0.3, count_only=True))
         3
-        >>> ind = tree.query_radius(X[0], r=0.3)  # doctest: +SKIP
+        >>> ind = tree.query_radius([X[0]], r=0.3)  # doctest: +SKIP
         >>> print(ind)  # indices of neighbors within distance 0.3
         [3 0 1]
         """
@@ -1552,7 +1552,7 @@ cdef class BinaryTree:
         >>> import numpy as np
         >>> np.random.seed(1)
         >>> X = np.random.random((100, 3))
-        >>> tree = BinaryTree(X)           # doctest: +SKIP
+        >>> tree = {BinaryTree}(X)           # doctest: +SKIP
         >>> tree.kernel_density(X[:3], h=0.1, kernel='gaussian')
         array([ 6.94114649,  7.83281226,  7.2071716 ])
         """
@@ -1681,7 +1681,7 @@ cdef class BinaryTree:
         >>> np.random.seed(0)
         >>> X = np.random.random((30, 3))
         >>> r = np.linspace(0, 1, 5)
-        >>> tree = BinaryTree(X)     # doctest: +SKIP
+        >>> tree = {BinaryTree}(X)     # doctest: +SKIP
         >>> tree.two_point_correlation(X, r)
         array([ 30,  62, 278, 580, 820])
         """
