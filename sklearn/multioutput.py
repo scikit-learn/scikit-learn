@@ -503,7 +503,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
         If order is 'random' a random ordering will be used.
 
-    cv : int, cross-validation generator or an iterable, optional \ 
+    cv : int, cross-validation generator or an iterable, optional \
     (default=None)
         Determines whether to use cross validated predictions or true
         labels for the results of previous estimators in the chain.
