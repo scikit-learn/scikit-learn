@@ -429,6 +429,7 @@ averaged together.
 Regressor Chain
 ================
 
-Regressor chains (see :class:`RegressorChain`) are a way of combining a
-number of regressions into a single multi-target model that is capable
- of exploiting correlations among targets.
+Regressor chains (see :class:`RegressorChain`) is analogous to 
+ClassifierChain as a way of combining a number of regressions 
+into a single multi-target model that is capable of exploiting 
+correlations among targets.

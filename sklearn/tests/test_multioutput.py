@@ -496,7 +496,7 @@ def test_classifier_chain_vs_independent_models():
 
 
 def test_regressor_chain_fit_and_predict_with_linear_regression():
-    # Fit regressor chain and verify predict performance
+    # Fit regressor chain and verify coefficients are of correct size
     X, Y = generate_multilabel_dataset_with_correlations()
     regressor_chain = RegressorChain(LinearRegression())
     regressor_chain.fit(X, Y)

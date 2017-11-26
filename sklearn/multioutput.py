@@ -503,8 +503,8 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
         If order is 'random' a random ordering will be used.
 
-    cv : int, cross-validation generator or an iterable, optional (
-    default=None)
+    cv : int, cross-validation generator or an iterable, optional \ 
+    (default=None)
         Determines whether to use cross validated predictions or true
         labels for the results of previous estimators in the chain.
         If cv is None the true labels are used when fitting. Otherwise
@@ -656,8 +656,8 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
 
         If order is 'random' a random ordering will be used.
 
-    cv : int, cross-validation generator or an iterable, optional (
-    default=None)
+    cv : int, cross-validation generator or an iterable, optional \
+    (default=None)
         Determines whether to use cross validated predictions or true
         labels for the results of previous estimators in the chain.
         If cv is None the true labels are used when fitting. Otherwise
