@@ -154,7 +154,7 @@ calculating the weights is as follows:
 
     w_{ci} = \log \hat{\theta}_{ci}
 
-    w_{ci} = \frac{w_{ci}}{\sum_{j} w_{cj}}
+    w_{ci} = \frac{w_{ci}}{\sum_{j} |w_{cj}|}
 
 where the summations are over all documents :math:`j` not in class :math:`c`,
 :math:`d_{ij}` is either the count or tf-idf value of term :math:`i` in document
