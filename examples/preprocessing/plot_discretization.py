@@ -16,8 +16,8 @@ of the data. One way to make linear model more powerful on continuous data
 is to use discretization (also known as binning). In the example, we
 discretize the feature and one-hot encode the transformed data. Note that if
 the bins are not reasonably wide, there would appear to be a substantially
-increased risk of overfitting, so the discretiser parameters need to be tuned
-under cv.
+increased risk of overfitting, so the discretiser parameters should usually
+be tuned under cv.
 
 After discretization, linear regression and decision tree make exactly the
 same prediction. As features are constant within each bin, any model must
@@ -53,37 +53,35 @@ enc = KBinsDiscretizer(n_bins=10, encode='onehot')
 X_binned = enc.fit_transform(X)
 
 # predict with original dataset
-fig, axes = plt.subplots(ncols=2, sharey=True, figsize=(10, 4))
-plt.sca(axes[0])
+fig, (ax1, ax2) = plt.subplots(ncols=2, sharey=True, figsize=(10, 4))
 line = np.linspace(-3, 3, 1000, endpoint=False).reshape(-1, 1)
 reg = LinearRegression().fit(X, y)
-plt.plot(line, reg.predict(line), linewidth=2, color='green',
+ax1.plot(line, reg.predict(line), linewidth=2, color='green',
          label="linear regression")
 reg = DecisionTreeRegressor(min_samples_split=3, random_state=0).fit(X, y)
-plt.plot(line, reg.predict(line), linewidth=2, color='red',
+ax1.plot(line, reg.predict(line), linewidth=2, color='red',
          label="decision tree")
-plt.plot(X[:, 0], y, 'o', c='k')
-plt.ylabel("Regression output")
-plt.xlabel("Input feature")
-plt.legend(loc="best")
-plt.title("Result before discretization")
+ax1.plot(X[:, 0], y, 'o', c='k')
+ax1.legend(loc="best")
+ax1.set_ylabel("Regression output")
+ax1.set_xlabel("Input feature")
+ax1.set_title("Result before discretization")
 
 # predict with transformed dataset
-plt.sca(axes[1])
 line_binned = enc.transform(line)
 reg = LinearRegression().fit(X_binned, y)
-plt.plot(line, reg.predict(line_binned), linewidth=2, color='green',
+ax2.plot(line, reg.predict(line_binned), linewidth=2, color='green',
          linestyle='-', label='linear regression')
 reg = DecisionTreeRegressor(min_samples_split=3,
                             random_state=0).fit(X_binned, y)
-plt.plot(line, reg.predict(line_binned), linewidth=2, color='red',
+ax2.plot(line, reg.predict(line_binned), linewidth=2, color='red',
          linestyle=':', label='decision tree')
-plt.plot(X[:, 0], y, 'o', c='k')
+ax2.plot(X[:, 0], y, 'o', c='k')
 bins = enc.offset_[0] + enc.bin_width_[0] * np.arange(1, enc.n_bins_[0])
-plt.vlines(bins, *plt.gca().get_ylim(), linewidth=1, alpha=.2)
-plt.legend(loc="best")
-plt.ylabel("Regression output")
-plt.xlabel("Input feature")
-plt.title("Result after discretization")
+ax2.vlines(bins, *plt.gca().get_ylim(), linewidth=1, alpha=.2)
+ax2.legend(loc="best")
+ax2.set_xlabel("Input feature")
+ax2.set_title("Result after discretization")
+
 plt.tight_layout()
 plt.show()
