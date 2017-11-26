@@ -526,7 +526,7 @@ def test_error():
         # catch deprecation warnings for min_impurity_split
         with ignore_warnings(category=DeprecationWarning):
             assert_raises(ValueError,
-                          TreeEstimator(min_impurity_split=-1.0).fit,X, y)
+                          TreeEstimator(min_impurity_split=-1.0).fit, X, y)
         assert_raises(ValueError,
                       TreeEstimator(min_impurity_decrease=-1.0).fit, X, y)
 
@@ -1239,7 +1239,8 @@ def test_arrays_persist():
     # non-regression for #2726
     for attr in ['n_classes', 'value', 'children_left', 'children_right',
                  'threshold', 'impurity', 'feature', 'n_node_samples']:
-        value = getattr(DecisionTreeClassifier().fit([[0], [1]], [0, 1]).tree_, attr)
+        value = getattr(DecisionTreeClassifier().fit([[0], [1]],
+                                                     [0, 1]).tree_, attr)
         # if pointing to freed memory, contents may be arbitrary
         assert_true(-3 <= value.flat[0] < 3,
                     'Array points to arbitrary memory')
