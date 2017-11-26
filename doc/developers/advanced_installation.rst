@@ -67,15 +67,15 @@ Python 2 you can install all these requirements by issuing::
 
     sudo apt-get install build-essential python-dev python-setuptools \
                          python-numpy python-scipy \
-                         libatlas-dev libatlas3gf-base
+                         libatlas-dev libatlas3-base
 
 If you have Python 3::
 
     sudo apt-get install build-essential python3-dev python3-setuptools \
                          python3-numpy python3-scipy \
-                         libatlas-dev libatlas3gf-base
+                         libatlas-dev libatlas3-base
 
-On recent Debian and Ubuntu (e.g. Ubuntu 13.04 or later) make sure that ATLAS
+On recent Debian and Ubuntu (e.g. Ubuntu 14.04 or later) make sure that ATLAS
 is used to provide the implementation of the BLAS and LAPACK linear algebra
 routines::
 
