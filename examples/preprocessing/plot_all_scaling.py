@@ -59,7 +59,8 @@ from sklearn.preprocessing import MaxAbsScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing.data import QuantileTransformer
+from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import BoxCoxTransformer
 
 from sklearn.datasets import fetch_california_housing
 
@@ -91,7 +92,9 @@ distributions = [
         QuantileTransformer(output_distribution='normal')
         .fit_transform(X)),
     ('Data after sample-wise L2 normalizing',
-        Normalizer().fit_transform(X))
+        Normalizer().fit_transform(X)),
+    ('Data after Box-Cox transformation',
+        BoxCoxTransformer().fit_transform(X))
 ]
 
 # scale the output between 0 and 1 for the colorbar
@@ -327,4 +330,20 @@ make_plot(6)
 # case if some original features had a mix of positive and negative values.
 
 make_plot(7)
+
+##############################################################################
+# BoxCoxTransformer
+# -----------------
+#
+# ``BoxCoxTransformer`` applies the Box-Cox power transformation to each
+# feature to make the data more Gaussian-like. It differs from the
+# QuantileTransformer (Gaussian output) in that it does not fit the
+# data to a zero-mean, unit-variance Gaussian distribution, instead finding
+# the optimal scaling factor using maximum likelihood estimation. Note that
+# Box-Cox can only be applied to positive and nonzero data. Income and number
+# of households are strictly positive, but if negative values are present,
+# a constant can be added to each feature to shift it into the positive range.
+
+make_plot(8)
+
 plt.show()
