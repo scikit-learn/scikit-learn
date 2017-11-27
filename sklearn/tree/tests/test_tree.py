@@ -505,7 +505,8 @@ def test_error():
     for name, TreeEstimator in ALL_TREES.items():
         # Invalid values for parameters
         if name == "DecisionTreeRegressor" or name == "DecisionTreeClassifier":
-            assert_raise_message(ValueError, "'presort' should be either 'auto' or"
+            assert_raise_message(ValueError,
+                                 "'presort' should be either 'auto' or"
                                  " a boolean (True/False)."
                                  " Got 'some_string' instead.",
                                  TreeEstimator(presort='some_string')
