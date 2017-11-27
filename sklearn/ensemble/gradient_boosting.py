@@ -1177,13 +1177,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         score = self.init_.predict(X).astype(np.float64)
         return score
 
-
     def _decision_function(self, X):
         # for use in inner loop, not raveling the output in single-class case,
         # not doing input validation.
         score = self._init_decision_function(X)
         predict_stages(self.estimators_, X, self.learning_rate, score)
         return score
+
 
     def _staged_decision_function(self, X):
         """Compute decision function of ``X`` for each iteration.
