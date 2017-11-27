@@ -2599,9 +2599,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    transformed_features_ : array of int
-        The indices of the features to be transformed
-    lambdas_ : array of float, shape (n_transformed_features,)
+    lmbdas_ : array of float, shape (n_transformed_features,)
         The parameters of the BoxCox transform for the selected features.
     n_features_ : int
         Number of features in input during fit
@@ -2628,6 +2626,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Estimate lambda for each feature to maximise log-likelihood.
 
+
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
@@ -2647,10 +2646,10 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             raise ValueError("The Box-Cox transformation can only be applied "
                              "to strictly positive data")
 
-        self.lmbdas = []
+        self.lmbdas_ = []
         for col in X.T:
             _, lmbda = stats.boxcox(col, lmbda=None)
-            self.lmbdas.append(lmbda)
+            self.lmbdas_.append(lmbda)
 
         return self
 
@@ -2667,16 +2666,17 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         X_tr : array-like, shape (n_samples, n_features)
             The transformed data.
         """
-        check_is_fitted(self, 'lmbdas')
+        check_is_fitted(self, 'lmbdas_')
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
 
         if np.any(X <= 0):
             raise ValueError("The Box-Cox transformation can only be applied "
                              "to strictly positive data")
-        if not X.shape[1] == len(self.lmbdas):
+
+        if not len(self.lmbdas_) == X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
 
-        for i, lmbda in enumerate(self.lmbdas):
+        for i, lmbda in enumerate(self.lmbdas_):
             X[:, i] = stats.boxcox(X[:, i].flatten(), lmbda=lmbda)
 
         return X
@@ -2704,26 +2704,30 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         """
 
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
-        if X.shape[1] != self.n_features_:
+
+        if not X.shape[1] == len(self.lmbdas_):
             raise ValueError("X has a different shape than during fitting.")
+
         X_inv = _transform_selected(X, self._inverse_transform,
-                                    self.transformed_features_, copy=False,
+                                    np.arange(len(self.lmbdas_)), copy=False,
                                     retain_ordering=True)
         return X_inv
 
     def _inverse_transform(self, X):
         X_inv = X.copy()
 
-        mask = self.lambdas_ != 0
-        mask_lambdas = self.lambdas_[mask]
+        mask = self.lmbdas_ != 0
+        mask_lambdas = self.lmbdas_[mask]
         Xinv_mask = X_inv[:, mask]
         Xinv_mask *= mask_lambdas
+
         np.log1p(Xinv_mask, out=Xinv_mask)
         Xinv_mask /= mask_lambdas
+
         np.exp(Xinv_mask, out=Xinv_mask)
         X_inv[:, mask] = Xinv_mask
 
-        mask = self.lambdas_ == 0
+        mask = self.lmbdas_ == 0
         X_inv[:, mask] = np.exp(X_inv[:, mask])
         return X_inv
 
