@@ -523,7 +523,7 @@ def test_error():
                       X, y)
         assert_raises(ValueError, TreeEstimator(max_depth=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(max_features=42).fit, X, y)
-        # catch deprecation warnings for min_impurity_split
+        # min_impurity_split warning
         with ignore_warnings(category=DeprecationWarning):
             assert_raises(ValueError,
                           TreeEstimator(min_impurity_split=-1.0).fit, X, y)
