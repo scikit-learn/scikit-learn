@@ -19,7 +19,7 @@ import codecs
 pages = {
     u'ar': u'http://ar.wikipedia.org/wiki/%D9%88%D9%8A%D9%83%D9%8A%D8%A8%D9%8A%D8%AF%D9%8A%D8%A7',
     u'de': u'http://de.wikipedia.org/wiki/Wikipedia',
-    u'en': u'http://en.wikipedia.org/wiki/Wikipedia',
+    u'en': u'https://en.wikipedia.org/wiki/Wikipedia',
     u'es': u'http://es.wikipedia.org/wiki/Wikipedia',
     u'fr': u'http://fr.wikipedia.org/wiki/Wikip%C3%A9dia',
     u'it': u'http://it.wikipedia.org/wiki/Wikipedia',

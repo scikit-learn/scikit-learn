@@ -184,7 +184,7 @@ The most intuitive way to do so is the bags of words representation:
 
 The bags of words representation implies that ``n_features`` is
 the number of distinct words in the corpus: this number is typically
-larger that 100,000.
+larger than 100,000.
 
 If ``n_samples == 10000``, storing ``X`` as a numpy array of type
 float32 would require 10000 x 100000 x 4 bytes = **4GB in RAM** which
@@ -212,7 +212,7 @@ dictionary of features and transform documents to feature vectors::
   >>> X_train_counts.shape
   (2257, 35788)
 
-:class:`CountVectorizer` supports counts of N-grams of words or consequective characters.
+:class:`CountVectorizer` supports counts of N-grams of words or consecutive characters.
 Once fitted, the vectorizer has built a dictionary of feature indices::
 
   >>> count_vect.vocabulary_.get(u'algorithm')
@@ -251,7 +251,7 @@ corpus.
 This downscaling is called `tf–idf`_ for "Term Frequency times
 Inverse Document Frequency".
 
-.. _`tf–idf`: http://en.wikipedia.org/wiki/Tf–idf
+.. _`tf–idf`: https://en.wikipedia.org/wiki/Tf–idf
 
 
 Both **tf** and **tf–idf** can be computed as follows::
@@ -324,7 +324,8 @@ The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We shall see their use in the section on grid search, below.
 We can now train the model with a single command::
 
-  >>> text_clf = text_clf.fit(twenty_train.data, twenty_train.target)
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  Pipeline(...)
 
 
 Evaluation of the performance on the test set
@@ -351,9 +352,11 @@ classifier object into our pipeline::
   >>> text_clf = Pipeline([('vect', CountVectorizer()),
   ...                      ('tfidf', TfidfTransformer()),
   ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                                            alpha=1e-3, n_iter=5, random_state=42)),
+  ...                                            alpha=1e-3, random_state=42,
+  ...                                            max_iter=5, tol=None)),
   ... ])
-  >>> _ = text_clf.fit(twenty_train.data, twenty_train.target)
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
   0.912...
@@ -393,7 +396,7 @@ with computer graphics.
   has many samples.
 
   By setting ``loss="hinge"`` and ``penalty="l2"`` we are configuring
-  the classifier model to tune it's parameters for the linear Support
+  the classifier model to tune its parameters for the linear Support
   Vector Machine cost function.
 
   Alternatively we could have used ``sklearn.svm.LinearSVC`` (Linear
@@ -443,24 +446,25 @@ to speed up the computation::
 The result of calling ``fit`` on a ``GridSearchCV`` object is a classifier
 that we can use to ``predict``::
 
-  >>> twenty_train.target_names[gs_clf.predict(['God is love'])]
+  >>> twenty_train.target_names[gs_clf.predict(['God is love'])[0]]
   'soc.religion.christian'
 
-but otherwise, it's a pretty large and clumsy object. We can, however, get the
-optimal parameters out by inspecting the object's ``grid_scores_`` attribute,
-which is a list of parameters/score pairs. To get the best scoring attributes,
-we can do::
+The object's ``best_score_`` and ``best_params_`` attributes store the best
+mean score and the parameters setting corresponding to that score::
 
-  >>> best_parameters, score, _ = max(gs_clf.grid_scores_, key=lambda x: x[1])
+  >>> gs_clf.best_score_                                  # doctest: +ELLIPSIS
+  0.900...
   >>> for param_name in sorted(parameters.keys()):
-  ...     print("%s: %r" % (param_name, best_parameters[param_name]))
+  ...     print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
   ...
   clf__alpha: 0.001
   tfidf__use_idf: True
   vect__ngram_range: (1, 1)
 
-  >>> score                                              # doctest: +ELLIPSIS
-  0.900...
+A more detailed summary of the search is available at ``gs_clf.cv_results_``.
+
+The ``cv_results_`` parameter can be easily imported into pandas as a
+``DataFrame`` for further inspection.
 
 .. note:
 
@@ -491,7 +495,7 @@ Refine the implementation and iterate until the exercise is solved.
 
 **For each exercise, the skeleton file provides all the necessary import
 statements, boilerplate code to load the data and sample code to evaluate
-the predictive accurracy of the model.**
+the predictive accuracy of the model.**
 
 
 Exercise 1: Language identification
@@ -546,20 +550,19 @@ upon the completion of this tutorial:
   :class:`CountVectorizer`
 
 * If you don't have labels, try using
-  :ref:`Clustering <example_text_document_clustering.py>`
+  :ref:`Clustering <sphx_glr_auto_examples_text_document_clustering.py>`
   on your problem.
 
 * If you have multiple labels per document, e.g categories, have a look
   at the :ref:`Multiclass and multilabel section <multiclass>`
 
 * Try using :ref:`Truncated SVD <LSA>` for
-  `latent semantic analysis <http://en.wikipedia.org/wiki/Latent_semantic_analysis>`_.
+  `latent semantic analysis <https://en.wikipedia.org/wiki/Latent_semantic_analysis>`_.
 
 * Have a look at using
   :ref:`Out-of-core Classification
-  <example_applications_plot_out_of_core_classification.py>` to
+  <sphx_glr_auto_examples_applications_plot_out_of_core_classification.py>` to
   learn from data that would not fit into the computer main memory.
 
 * Have a look at the :ref:`Hashing Vectorizer <hashing_vectorizer>`
   as a memory efficient alternative to :class:`CountVectorizer`.
-

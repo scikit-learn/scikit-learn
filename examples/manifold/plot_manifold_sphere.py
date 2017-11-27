@@ -15,7 +15,7 @@ side. This enables the manifold learning techniques to
 'spread it open' whilst projecting it onto two dimensions.
 
 For a similar example, where the methods are applied to the
-S-curve dataset, see :ref:`example_manifold_plot_compare_methods.py`
+S-curve dataset, see :ref:`sphx_glr_auto_examples_manifold_plot_compare_methods.py`
 
 Note that the purpose of the :ref:`MDS <multidimensional_scaling>` is
 to find a low-dimensional representation of the data (here 2D) in
@@ -24,7 +24,7 @@ high-dimensional space, unlike other manifold-learning algorithms,
 it does not seeks an isotropic representation of the data in
 the low-dimensional space. Here the manifold problem matches fairly
 that of representing a flat map of the Earth, as with
-`map projection <http://en.wikipedia.org/wiki/Map_projection>`_
+`map projection <https://en.wikipedia.org/wiki/Map_projection>`_
 """
 
 # Author: Jaques Grobler <jaques.grobler@inria.fr>
@@ -68,11 +68,7 @@ plt.suptitle("Manifold Learning with %i points, %i neighbors"
 
 ax = fig.add_subplot(251, projection='3d')
 ax.scatter(x, y, z, c=p[indices], cmap=plt.cm.rainbow)
-try:
-    # compatibility matplotlib < 1.0
-    ax.view_init(40, -10)
-except:
-    pass
+ax.view_init(40, -10)
 
 sphere_data = np.array([x, y, z]).T
 

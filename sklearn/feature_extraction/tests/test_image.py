@@ -2,24 +2,17 @@
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
+from __future__ import division
 import numpy as np
 import scipy as sp
 from scipy import ndimage
-from scipy import misc
-
-from nose.tools import assert_equal, assert_true
-from numpy.testing import assert_raises
+from scipy.sparse.csgraph import connected_components
 
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
     reconstruct_from_patches_2d, PatchExtractor, extract_patches)
-from sklearn.utils.graph import connected_components
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.fixes import sp_version
+from sklearn.utils.testing import assert_equal, assert_true, assert_raises
 
-if sp_version < (0, 12):
-    raise SkipTest("Skipping because SciPy version earlier than 0.12.0 and "
-                   "thus does not include the scipy.misc.face() image.")
 
 def test_img_to_graph():
     x, y = np.mgrid[:4, :4] - 10
@@ -34,7 +27,7 @@ def test_img_to_graph():
 
 
 def test_grid_to_graph():
-    #Checking that the function works with graphs containing no edges
+    # Checking that the function works with graphs containing no edges
     size = 2
     roi_size = 1
     # Generating two convex parts with one vertex
@@ -57,7 +50,8 @@ def test_grid_to_graph():
     assert_true(A.dtype == np.bool)
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.int)
     assert_true(A.dtype == np.int)
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.float64)
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask,
+                      dtype=np.float64)
     assert_true(A.dtype == np.float64)
 
 
@@ -177,13 +171,32 @@ def test_extract_patches_max_patches():
                   max_patches=-1.0)
 
 
+def test_extract_patch_same_size_image():
+    face = downsampled_face
+    # Request patches of the same size as image
+    # Should return just the single patch a.k.a. the image
+    patches = extract_patches_2d(face, face.shape, max_patches=2)
+    assert_equal(patches.shape[0], 1)
+
+
+def test_extract_patches_less_than_max_patches():
+    face = downsampled_face
+    i_h, i_w = face.shape
+    p_h, p_w = 3 * i_h // 4, 3 * i_w // 4
+    # this is 3185
+    expected_n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
+
+    patches = extract_patches_2d(face, (p_h, p_w), max_patches=4000)
+    assert_equal(patches.shape, (expected_n_patches, p_h, p_w))
+
+
 def test_reconstruct_patches_perfect():
     face = downsampled_face
     p_h, p_w = 16, 16
 
     patches = extract_patches_2d(face, (p_h, p_w))
     face_reconstructed = reconstruct_from_patches_2d(patches, face.shape)
-    np.testing.assert_array_equal(face, face_reconstructed)
+    np.testing.assert_array_almost_equal(face, face_reconstructed)
 
 
 def test_reconstruct_patches_perfect_color():
@@ -192,7 +205,7 @@ def test_reconstruct_patches_perfect_color():
 
     patches = extract_patches_2d(face, (p_h, p_w))
     face_reconstructed = reconstruct_from_patches_2d(patches, face.shape)
-    np.testing.assert_array_equal(face, face_reconstructed)
+    np.testing.assert_array_almost_equal(face, face_reconstructed)
 
 
 def test_patch_extractor_fit():
@@ -299,7 +312,7 @@ def test_extract_patches_square():
     face = downsampled_face
     i_h, i_w = face.shape
     p = 8
-    expected_n_patches = ((i_h - p + 1),  (i_w - p + 1))
+    expected_n_patches = ((i_h - p + 1), (i_w - p + 1))
     patches = extract_patches(face, patch_shape=p)
     assert_true(patches.shape == (expected_n_patches[0], expected_n_patches[1],
                                   p, p))

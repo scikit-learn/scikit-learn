@@ -9,6 +9,7 @@ import scipy.sparse as sp
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _num_samples
 from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
 
@@ -19,10 +20,12 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import cohen_kappa_score
@@ -98,6 +101,7 @@ REGRESSION_METRICS = {
 
 CLASSIFICATION_METRICS = {
     "accuracy_score": accuracy_score,
+    "balanced_accuracy_score": balanced_accuracy_score,
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
     "confusion_matrix": confusion_matrix,
     "hamming_loss": hamming_loss,
@@ -196,12 +200,6 @@ METRIC_UNDEFINED_BINARY = [
     "samples_recall_score",
     "coverage_error",
 
-    "roc_auc_score",
-    "micro_roc_auc",
-    "weighted_roc_auc",
-    "macro_roc_auc",
-    "samples_roc_auc",
-
     "average_precision_score",
     "weighted_average_precision_score",
     "micro_average_precision_score",
@@ -215,7 +213,20 @@ METRIC_UNDEFINED_BINARY = [
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = [
     "brier_score_loss",
-    "matthews_corrcoef_score",
+    "balanced_accuracy_score",
+
+    "roc_auc_score",
+    "micro_roc_auc",
+    "weighted_roc_auc",
+    "macro_roc_auc",
+    "samples_roc_auc",
+
+    # with default average='binary', multiclass is prohibited
+    "precision_score",
+    "recall_score",
+    "f1_score",
+    "f2_score",
+    "f0.5_score",
 ]
 
 # Metric undefined with "binary" or "multiclass" input
@@ -256,6 +267,8 @@ METRICS_WITH_POS_LABEL = [
 # decision function argument. e.g hinge_loss
 METRICS_WITH_LABELS = [
     "confusion_matrix",
+
+    "hamming_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
 
@@ -300,16 +313,14 @@ MULTILABELS_METRICS = [
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
-    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
-
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
 
-    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
-    "micro_precision_score", "micro_recall_score",
-
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
+
+    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
+    "micro_precision_score", "micro_recall_score",
 
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
@@ -329,7 +340,11 @@ SYMMETRIC_METRICS = [
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
-    "f1_score", "weighted_f1_score", "micro_f1_score", "macro_f1_score",
+    "f1_score", "micro_f1_score", "macro_f1_score",
+    "weighted_recall_score",
+    # P = R = F = accuracy in multiclass case
+    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
+    "micro_precision_score", "micro_recall_score",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error",
@@ -340,17 +355,15 @@ SYMMETRIC_METRICS = [
 # Asymmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) != metric(y_pred, y_true).
 NOT_SYMMETRIC_METRICS = [
+    "balanced_accuracy_score",
     "explained_variance_score",
     "r2_score",
     "confusion_matrix",
 
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
-    "weighted_f0.5_score", "weighted_f2_score", "weighted_precision_score",
-    "weighted_recall_score",
-
-    "micro_f0.5_score", "micro_f2_score", "micro_precision_score",
-    "micro_recall_score",
+    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
+    "weighted_precision_score",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss"
@@ -359,7 +372,6 @@ NOT_SYMMETRIC_METRICS = [
 
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
-    "cohen_kappa_score",
     "confusion_matrix", # Left this one here because the tests in this file do
                         # not work for confusion_matrix, as its output is a
                         # matrix instead of a number. Testing of
@@ -379,7 +391,8 @@ def test_symmetry():
     # We shouldn't forget any metrics
     assert_equal(set(SYMMETRIC_METRICS).union(
         NOT_SYMMETRIC_METRICS, THRESHOLDED_METRICS,
-        METRIC_UNDEFINED_BINARY_MULTICLASS), set(ALL_METRICS))
+        METRIC_UNDEFINED_BINARY_MULTICLASS),
+        set(ALL_METRICS))
 
     assert_equal(
         set(SYMMETRIC_METRICS).intersection(set(NOT_SYMMETRIC_METRICS)),
@@ -585,8 +598,7 @@ def test_invariance_string_vs_numbers_labels():
                                        "invariance test".format(name))
 
     for name, metric in THRESHOLDED_METRICS.items():
-        if name in ("log_loss", "hinge_loss", "unnormalized_log_loss",
-                    "brier_score_loss"):
+        if name not in METRIC_UNDEFINED_BINARY:
             # Ugly, but handle case with a pos_label and label
             metric_str = metric
             if name in METRICS_WITH_POS_LABEL:
@@ -606,6 +618,30 @@ def test_invariance_string_vs_numbers_labels():
             # TODO those metrics doesn't support string label yet
             assert_raises(ValueError, metric, y1_str, y2)
             assert_raises(ValueError, metric, y1_str.astype('O'), y2)
+
+
+def test_inf_nan_input():
+    invalids =[([0, 1], [np.inf, np.inf]),
+               ([0, 1], [np.nan, np.nan]),
+               ([0, 1], [np.nan, np.inf])]
+
+    METRICS = dict()
+    METRICS.update(THRESHOLDED_METRICS)
+    METRICS.update(REGRESSION_METRICS)
+
+    for metric in METRICS.values():
+        for y_true, y_score in invalids:
+            assert_raise_message(ValueError,
+                                 "contains NaN, infinity",
+                                 metric, y_true, y_score)
+
+    # Classification metrics all raise a mixed input exception
+    for metric in CLASSIFICATION_METRICS.values():
+        for y_true, y_score in invalids:
+            assert_raise_message(ValueError,
+                                 "Classification metrics can't handle a mix "
+                                 "of binary and continuous targets",
+                                 metric, y_true, y_score)
 
 
 @ignore_warnings
@@ -683,8 +719,8 @@ def test_multilabel_representation_invariance():
                                            allow_unlabeled=True)
 
     # To make sure at least one empty label is present
-    y1 += [0]*n_classes
-    y2 += [0]*n_classes
+    y1 = np.vstack([y1, [[0] * n_classes]])
+    y2 = np.vstack([y2, [[0] * n_classes]])
 
     y1_sparse_indicator = sp.coo_matrix(y1)
     y2_sparse_indicator = sp.coo_matrix(y2)
@@ -739,7 +775,7 @@ def test_normalize_option_binary_classification(n_samples=20):
                             / n_samples, measure)
 
 
-def test_normalize_option_multiclasss_classification():
+def test_normalize_option_multiclass_classification():
     # Test in the multiclass case
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 4, size=(20, ))
@@ -858,8 +894,8 @@ def test_averaging_multiclass(n_samples=50, n_classes=3):
     y_pred_binarize = lb.transform(y_pred)
 
     for name in METRICS_WITH_AVERAGING:
-        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
-               y_pred_binarize, y_score)
+        yield (check_averaging, name, y_true, y_true_binarize,
+               y_pred, y_pred_binarize, y_score)
 
 
 def test_averaging_multilabel(n_classes=5, n_samples=40):
@@ -873,8 +909,8 @@ def test_averaging_multilabel(n_classes=5, n_samples=40):
     y_pred_binarize = y_pred
 
     for name in METRICS_WITH_AVERAGING + THRESHOLDED_METRICS_WITH_AVERAGING:
-        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
-               y_pred_binarize, y_score)
+        yield (check_averaging, name, y_true, y_true_binarize,
+               y_pred, y_pred_binarize, y_score)
 
 
 def test_averaging_multilabel_all_zeroes():
@@ -885,8 +921,8 @@ def test_averaging_multilabel_all_zeroes():
     y_pred_binarize = y_pred
 
     for name in METRICS_WITH_AVERAGING:
-        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
-               y_pred_binarize, y_score)
+        yield (check_averaging, name, y_true, y_true_binarize,
+               y_pred, y_pred_binarize, y_score)
 
     # Test _average_binary_score for weight.sum() == 0
     binary_metric = (lambda y_true, y_score, average="macro":
@@ -904,8 +940,8 @@ def test_averaging_multilabel_all_ones():
     y_pred_binarize = y_pred
 
     for name in METRICS_WITH_AVERAGING:
-        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
-               y_pred_binarize, y_score)
+        yield (check_averaging, name, y_true, y_true_binarize,
+               y_pred, y_pred_binarize, y_score)
 
 
 @ignore_warnings
@@ -972,14 +1008,29 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                 err_msg="%s sample_weight is not invariant "
                         "under scaling" % name)
 
-    # Check that if sample_weight.shape[0] != y_true.shape[0], it raised an
-    # error
-    assert_raises(Exception, metric, y1, y2,
-                  sample_weight=np.hstack([sample_weight, sample_weight]))
+    # Check that if number of samples in y_true and sample_weight are not
+    # equal, meaningful error is raised.
+    error_message = ("Found input variables with inconsistent numbers of "
+                     "samples: [{}, {}, {}]".format(
+                         _num_samples(y1), _num_samples(y2),
+                         _num_samples(sample_weight) * 2))
+    assert_raise_message(ValueError, error_message, metric, y1, y2,
+                         sample_weight=np.hstack([sample_weight,
+                                                  sample_weight]))
 
 
 def test_sample_weight_invariance(n_samples=50):
     random_state = check_random_state(0)
+    # regression
+    y_true = random_state.random_sample(size=(n_samples,))
+    y_pred = random_state.random_sample(size=(n_samples,))
+    for name in ALL_METRICS:
+        if name not in REGRESSION_METRICS:
+            continue
+        if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
+            continue
+        metric = ALL_METRICS[name]
+        yield check_sample_weight_invariance, name, metric, y_true, y_pred
 
     # binary
     random_state = check_random_state(0)
@@ -987,6 +1038,8 @@ def test_sample_weight_invariance(n_samples=50):
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples,))
     for name in ALL_METRICS:
+        if name in REGRESSION_METRICS:
+            continue
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_BINARY):
             continue
@@ -1002,6 +1055,8 @@ def test_sample_weight_invariance(n_samples=50):
     y_pred = random_state.randint(0, 5, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples, 5))
     for name in ALL_METRICS:
+        if name in REGRESSION_METRICS:
+            continue
         if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
                 name in METRIC_UNDEFINED_BINARY_MULTICLASS):
             continue
@@ -1029,13 +1084,14 @@ def test_sample_weight_invariance(n_samples=50):
 
         metric = ALL_METRICS[name]
         if name in THRESHOLDED_METRICS:
-            yield (check_sample_weight_invariance, name, metric, y_true,
-                   y_score)
+            yield (check_sample_weight_invariance, name, metric,
+                   y_true, y_score)
         else:
-            yield (check_sample_weight_invariance, name, metric, y_true,
-                   y_pred)
+            yield (check_sample_weight_invariance, name, metric,
+                   y_true, y_pred)
 
 
+@ignore_warnings
 def test_no_averaging_labels():
     # test labels argument when not using averaging
     # in multi-class and multi-label cases
@@ -1049,7 +1105,7 @@ def test_no_averaging_labels():
     for name in METRICS_WITH_AVERAGING:
         for y_true, y_pred in [[y_true_multiclass, y_pred_multiclass],
                                [y_true_multilabel, y_pred_multilabel]]:
-            if name not in MULTILABELS_METRICS and y_pred.shape[1] > 0:
+            if name not in MULTILABELS_METRICS and y_pred.ndim > 1:
                 continue
 
             metric = ALL_METRICS[name]

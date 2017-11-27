@@ -110,9 +110,9 @@ samples for accurate estimation.
 
 .. topic:: Examples:
 
-    * :ref:`example_feature_selection_plot_feature_selection.py`
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection.py`
 
-    * :ref:`example_feature_selection_plot_f_test_vs_mi.py`
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_f_test_vs_mi.py`
 
 .. _rfe:
 
@@ -123,20 +123,21 @@ Given an external estimator that assigns weights to features (e.g., the
 coefficients of a linear model), recursive feature elimination (:class:`RFE`)
 is to select features by recursively considering smaller and smaller sets of
 features.  First, the estimator is trained on the initial set of features and
-weights are assigned to each one of them. Then, features whose absolute weights
-are the smallest are pruned from the current set features. That procedure is
-recursively repeated on the pruned set until the desired number of features to
-select is eventually reached.
+the importance of each feature is obtained either through a ``coef_`` attribute
+or through a ``feature_importances_`` attribute. Then, the least important
+features are pruned from current set of features.That procedure is recursively
+repeated on the pruned set until the desired number of features to select is
+eventually reached.
 
 :class:`RFECV` performs RFE in a cross-validation loop to find the optimal
 number of features.
 
 .. topic:: Examples:
 
-    * :ref:`example_feature_selection_plot_rfe_digits.py`: A recursive feature elimination example
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_digits.py`: A recursive feature elimination example
       showing the relevance of pixels in a digit classification task.
 
-    * :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`: A recursive feature
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`: A recursive feature
       elimination example with automatic tuning of the number of features
       selected with cross-validation.
 
@@ -150,7 +151,7 @@ estimator that has a ``coef_`` or ``feature_importances_`` attribute after fitti
 The features are considered unimportant and removed, if the corresponding
 ``coef_`` or ``feature_importances_`` values are below the provided
 ``threshold`` parameter. Apart from specifying the threshold numerically,
-there are build-in heuristics for finding a threshold using a string argument.
+there are built-in heuristics for finding a threshold using a string argument.
 Available heuristics are "mean", "median" and float multiples of these like
 "0.1*mean".
 
@@ -158,7 +159,7 @@ For examples on how it is to be used refer to the sections below.
 
 .. topic:: Examples
 
-    * :ref:`example_feature_selection_plot_select_from_model_boston.py`: Selecting the two
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_boston.py`: Selecting the two
       most important features from the Boston dataset without knowing the
       threshold beforehand.
 
@@ -173,8 +174,8 @@ L1-based feature selection
 sparse solutions: many of their estimated coefficients are zero. When the goal
 is to reduce the dimensionality of the data to use with another classifier,
 they can be used along with :class:`feature_selection.SelectFromModel`
-to select the non-zero coefficients. In particular, sparse estimators useful for
-this purpose are the :class:`linear_model.Lasso` for regression, and
+to select the non-zero coefficients. In particular, sparse estimators useful
+for this purpose are the :class:`linear_model.Lasso` for regression, and
 of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
 for classification::
 
@@ -197,7 +198,7 @@ alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
-    * :ref:`example_text_document_classification_20newsgroups.py`: Comparison
+    * :ref:`sphx_glr_auto_examples_text_document_classification_20newsgroups.py`: Comparison
       of different algorithms for document classification including L1-based
       feature selection.
 
@@ -225,50 +226,8 @@ alpha parameter, the fewer features selected.
 
    **Reference** Richard G. Baraniuk "Compressive Sensing", IEEE Signal
    Processing Magazine [120] July 2007
-   http://dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
+   http://dsp.rice.edu/sites/dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
 
-.. _randomized_l1:
-
-Randomized sparse models
--------------------------
-
-.. currentmodule:: sklearn.linear_model
-
-The limitation of L1-based sparse models is that faced with a group of
-very correlated features, they will select only one. To mitigate this
-problem, it is possible to use randomization techniques, reestimating the
-sparse model many times perturbing the design matrix or sub-sampling data
-and counting how many times a given regressor is selected.
-
-:class:`RandomizedLasso` implements this strategy for regression
-settings, using the Lasso, while :class:`RandomizedLogisticRegression` uses the
-logistic regression and is suitable for classification tasks.  To get a full
-path of stability scores you can use :func:`lasso_stability_path`.
-
-.. figure:: ../auto_examples/linear_model/images/plot_sparse_recovery_003.png
-   :target: ../auto_examples/linear_model/plot_sparse_recovery.html
-   :align: center
-   :scale: 60
-
-Note that for randomized sparse models to be more powerful than standard
-F statistics at detecting non-zero features, the ground truth model
-should be sparse, in other words, there should be only a small fraction
-of features non zero.
-
-.. topic:: Examples:
-
-   * :ref:`example_linear_model_plot_sparse_recovery.py`: An example
-     comparing different feature selection approaches and discussing in
-     which situation each approach is to be favored.
-
-.. topic:: References:
-
-   * N. Meinshausen, P. Buhlmann, "Stability selection",
-     Journal of the Royal Statistical Society, 72 (2010)
-     http://arxiv.org/pdf/0809.2932
-
-   * F. Bach, "Model-Consistent Sparse Estimation through the Bootstrap"
-     http://hal.inria.fr/hal-00354771/
 
 Tree-based feature selection
 ----------------------------
@@ -297,11 +256,11 @@ meta-transformer)::
 
 .. topic:: Examples:
 
-    * :ref:`example_ensemble_plot_forest_importances.py`: example on
+    * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances.py`: example on
       synthetic data showing the recovery of the actually meaningful
       features.
 
-    * :ref:`example_ensemble_plot_forest_importances_faces.py`: example
+    * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`: example
       on face recognition data.
 
 Feature selection as part of a pipeline

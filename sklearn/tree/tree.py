@@ -10,13 +10,15 @@ randomized trees. Single and multi-output problems are both handled.
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Joly Arnaud <arnaud.v.joly@gmail.com>
 #          Fares Hedayati <fares.hedayati@gmail.com>
+#          Nelson Liu <nelson@nelsonliu.me>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from __future__ import division
 
 
 import numbers
+import warnings
 from abc import ABCMeta
 from abc import abstractmethod
 from math import ceil
@@ -27,13 +29,13 @@ from scipy.sparse import issparse
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
+from ..base import is_classifier
 from ..externals import six
-from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..exceptions import NotFittedError
+from ..utils.validation import check_is_fitted
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -56,7 +58,8 @@ DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
-CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE}
+CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE,
+                "mae": _criterion.MAE}
 
 DENSE_SPLITTERS = {"best": _splitter.BestSplitter,
                    "random": _splitter.RandomSplitter}
@@ -69,8 +72,7 @@ SPARSE_SPLITTERS = {"best": _splitter.BestSparseSplitter,
 # =============================================================================
 
 
-class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
-                                          _LearntSelectorMixin)):
+class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -88,6 +90,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  max_features,
                  max_leaf_nodes,
                  random_state,
+                 min_impurity_decrease,
+                 min_impurity_split,
                  class_weight=None,
                  presort=False):
         self.criterion = criterion
@@ -99,55 +103,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.max_features = max_features
         self.random_state = random_state
         self.max_leaf_nodes = max_leaf_nodes
+        self.min_impurity_decrease = min_impurity_decrease
+        self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.presort = presort
 
-        self.n_features_ = None
-        self.n_outputs_ = None
-        self.classes_ = None
-        self.n_classes_ = None
-
-        self.tree_ = None
-        self.max_features_ = None
-
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted=None):
-        """Build a decision tree from the training set (X, y).
-
-        Parameters
-        ----------
-        X : array-like or sparse matrix, shape = [n_samples, n_features]
-            The training input samples. Internally, it will be converted to
-            ``dtype=np.float32`` and if a sparse matrix is provided
-            to a sparse ``csc_matrix``.
-
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (class labels in classification, real numbers in
-            regression). In the regression case, use ``dtype=np.float64`` and
-            ``order='C'`` for maximum efficiency.
-
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
-        check_input : boolean, (default=True)
-            Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
-
-        X_idx_sorted : array-like, shape = [n_samples, n_features], optional
-            The indexes of the sorted training input samples. If many tree
-            are grown on the same dataset, this allows the ordering to be
-            cached between trees. If None, the data will be sorted here.
-            Don't use this parameter unless you know what to do.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
 
         random_state = check_random_state(self.random_state)
         if check_input:
@@ -162,7 +124,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
-        is_classification = isinstance(self, ClassifierMixin)
+        is_classification = is_classifier(self)
 
         y = np.atleast_1d(y)
         expanded_class_weight = None
@@ -212,13 +174,31 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                           else self.max_leaf_nodes)
 
         if isinstance(self.min_samples_leaf, (numbers.Integral, np.integer)):
+            if not 1 <= self.min_samples_leaf:
+                raise ValueError("min_samples_leaf must be at least 1 "
+                                 "or in (0, 0.5], got %s"
+                                 % self.min_samples_leaf)
             min_samples_leaf = self.min_samples_leaf
         else:  # float
+            if not 0. < self.min_samples_leaf <= 0.5:
+                raise ValueError("min_samples_leaf must be at least 1 "
+                                 "or in (0, 0.5], got %s"
+                                 % self.min_samples_leaf)
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, (numbers.Integral, np.integer)):
+            if not 2 <= self.min_samples_split:
+                raise ValueError("min_samples_split must be an integer "
+                                 "greater than 1 or a float in (0.0, 1.0]; "
+                                 "got the integer %s"
+                                 % self.min_samples_split)
             min_samples_split = self.min_samples_split
         else:  # float
+            if not 0. < self.min_samples_split <= 1.:
+                raise ValueError("min_samples_split must be an integer "
+                                 "greater than 1 or a float in (0.0, 1.0]; "
+                                 "got the float %s"
+                                 % self.min_samples_split)
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 
@@ -254,15 +234,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
                              "number of samples=%d" % (len(y), n_samples))
-        if not (0. < self.min_samples_split <= 1. or
-                2 <= self.min_samples_split):
-            raise ValueError("min_samples_split must be in at least 2"
-                             " or in (0, 1], got %s" % min_samples_split)
-        if not (0. < self.min_samples_leaf <= 0.5 or
-                1 <= self.min_samples_leaf):
-            raise ValueError("min_samples_leaf must be at least than 1 "
-                             "or in (0, 0.5], got %s" % min_samples_leaf)
-
         if not 0 <= self.min_weight_fraction_leaf <= 0.5:
             raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
         if max_depth <= 0:
@@ -273,8 +244,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("max_leaf_nodes must be integral number but was "
                              "%r" % max_leaf_nodes)
         if -1 < max_leaf_nodes < 2:
-            raise ValueError(("max_leaf_nodes {0} must be either smaller than "
-                              "0 or larger than 1").format(max_leaf_nodes))
+            raise ValueError(("max_leaf_nodes {0} must be either None "
+                              "or larger than 1").format(max_leaf_nodes))
 
         if sample_weight is not None:
             if (getattr(sample_weight, "dtype", None) != DOUBLE or
@@ -297,11 +268,29 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 sample_weight = expanded_class_weight
 
         # Set min_weight_leaf from min_weight_fraction_leaf
-        if self.min_weight_fraction_leaf != 0. and sample_weight is not None:
+        if sample_weight is None:
+            min_weight_leaf = (self.min_weight_fraction_leaf *
+                               n_samples)
+        else:
             min_weight_leaf = (self.min_weight_fraction_leaf *
                                np.sum(sample_weight))
+
+        if self.min_impurity_split is not None:
+            warnings.warn("The min_impurity_split parameter is deprecated and"
+                          " will be removed in version 0.21. "
+                          "Use the min_impurity_decrease parameter instead.",
+                          DeprecationWarning)
+            min_impurity_split = self.min_impurity_split
         else:
-            min_weight_leaf = 0.
+            min_impurity_split = 1e-7
+
+        if min_impurity_split < 0.:
+            raise ValueError("min_impurity_split must be greater than "
+                             "or equal to 0")
+
+        if self.min_impurity_decrease < 0.:
+            raise ValueError("min_impurity_decrease must be greater than "
+                             "or equal to 0")
 
         presort = self.presort
         # Allow presort to be 'auto', which means True if the dataset is dense,
@@ -337,7 +326,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                 criterion = CRITERIA_CLF[self.criterion](self.n_outputs_,
                                                          self.n_classes_)
             else:
-                criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
+                criterion = CRITERIA_REG[self.criterion](self.n_outputs_,
+                                                         n_samples)
 
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
@@ -357,13 +347,17 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             builder = DepthFirstTreeBuilder(splitter, min_samples_split,
                                             min_samples_leaf,
                                             min_weight_leaf,
-                                            max_depth)
+                                            max_depth,
+                                            self.min_impurity_decrease,
+                                            min_impurity_split)
         else:
             builder = BestFirstTreeBuilder(splitter, min_samples_split,
                                            min_samples_leaf,
                                            min_weight_leaf,
                                            max_depth,
-                                           max_leaf_nodes)
+                                           max_leaf_nodes,
+                                           self.min_impurity_decrease,
+                                           min_impurity_split)
 
         builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
 
@@ -375,10 +369,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def _validate_X_predict(self, X, check_input):
         """Validate X whenever one tries to predict, apply, predict_proba"""
-        if self.tree_ is None:
-            raise NotFittedError("Estimator not fitted, "
-                                 "call `fit` before exploiting the model.")
-
         if check_input:
             X = check_array(X, dtype=DTYPE, accept_sparse="csr")
             if issparse(X) and (X.indices.dtype != np.intc or
@@ -418,13 +408,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
         n_samples = X.shape[0]
 
         # Classification
-        if isinstance(self, ClassifierMixin):
+        if is_classifier(self):
             if self.n_outputs_ == 1:
                 return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
@@ -471,11 +461,14 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             ``[0; self.tree_.node_count)``, possibly with gaps in the
             numbering.
         """
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
 
     def decision_path(self, X, check_input=True):
         """Return the decision path in the tree
+
+        .. versionadded:: 0.18
 
         Parameters
         ----------
@@ -510,9 +503,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         feature_importances_ : array, shape = [n_features]
         """
-        if self.tree_ is None:
-            raise NotFittedError("Estimator not fitted, call `fit` before"
-                                 " `feature_importances_`.")
+        check_is_fitted(self, 'tree_')
 
         return self.tree_.compute_feature_importances()
 
@@ -537,6 +528,38 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
 
+    max_depth : int or None, optional (default=None)
+        The maximum depth of the tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
+
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
+
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `ceil(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `ceil(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node. Samples have
+        equal weight when sample_weight is not provided.
+
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
 
@@ -553,43 +576,55 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    max_depth : int or None, optional (default=None)
-        The maximum depth of the tree. If None, then nodes are expanded until
-        all leaves are pure or until all leaves contain less than
-        min_samples_split samples.
-        Ignored if ``max_leaf_nodes`` is not None.
-
-    min_samples_split : int, float, optional (default=2)
-        The minimum number of samples required to split an internal node:
-
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
-          `ceil(min_samples_split * n_samples)` are the minimum
-          number of samples for each split.
-
-    min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
-
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
-          `ceil(min_samples_leaf * n_samples)` are the minimum
-          number of samples for each node.
-
-    min_weight_fraction_leaf : float, optional (default=0.)
-        The minimum weighted fraction of the input samples required to be at a
-        leaf node.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
-        If not None then ``max_depth`` will be ignored.
 
-    class_weight : dict, list of dicts, "balanced" or None, optional (default=None)
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
+
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
+    class_weight : dict, list of dicts, "balanced" or None, default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one. For
         multi-output problems, a list of dicts can be provided in the same
         order as the columns of y.
+
+        Note that for multioutput (including multilabel) weights should be
+        defined for each class of every column in its own dict. For example,
+        for four-class multilabel classification weights should be
+        [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
+        [{1:1}, {2:5}, {3:1}, {4:1}].
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
@@ -599,12 +634,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
 
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
@@ -642,6 +671,21 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     tree_ : Tree object
         The underlying Tree object.
 
+    Notes
+    -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
+
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
+
     See also
     --------
     DecisionTreeRegressor
@@ -649,7 +693,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     References
     ----------
 
-    .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
+    .. [1] https://en.wikipedia.org/wiki/Decision_tree_learning
 
     .. [2] L. Breiman, J. Friedman, R. Olshen, and C. Stone, "Classification
            and Regression Trees", Wadsworth, Belmont, CA, 1984.
@@ -683,6 +727,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  class_weight=None,
                  presort=False):
         super(DecisionTreeClassifier, self).__init__(
@@ -696,7 +742,53 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             max_leaf_nodes=max_leaf_nodes,
             class_weight=class_weight,
             random_state=random_state,
+            min_impurity_decrease=min_impurity_decrease,
+            min_impurity_split=min_impurity_split,
             presort=presort)
+
+    def fit(self, X, y, sample_weight=None, check_input=True,
+            X_idx_sorted=None):
+        """Build a decision tree classifier from the training set (X, y).
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+            The target values (class labels) as integers or strings.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. Splits are also
+            ignored if they would result in any single class carrying a
+            negative weight in either child node.
+
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
+        X_idx_sorted : array-like, shape = [n_samples, n_features], optional
+            The indexes of the sorted training input samples. If many tree
+            are grown on the same dataset, this allows the ordering to be
+            cached between trees. If None, the data will be sorted here.
+            Don't use this parameter unless you know what to do.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        super(DecisionTreeClassifier, self).fit(
+            X, y,
+            sample_weight=sample_weight,
+            check_input=check_input,
+            X_idx_sorted=X_idx_sorted)
+        return self
 
     def predict_proba(self, X, check_input=True):
         """Predict class probabilities of the input samples X.
@@ -715,6 +807,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             ``dtype=np.float32`` and if a sparse matrix is provided
             to a sparse ``csr_matrix``.
 
+        check_input : bool
+            Run check_array on X.
+
         Returns
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
@@ -722,6 +817,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        check_is_fitted(self, 'tree_')
         X = self._validate_X_predict(X, check_input)
         proba = self.tree_.predict(X)
 
@@ -782,14 +878,53 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     Parameters
     ----------
     criterion : string, optional (default="mse")
-        The function to measure the quality of a split. The only supported
-        criterion is "mse" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion.
+        The function to measure the quality of a split. Supported criteria
+        are "mse" for the mean squared error, which is equal to variance
+        reduction as feature selection criterion and minimizes the L2 loss
+        using the mean of each terminal node, "friedman_mse", which uses mean
+        squared error with Friedman's improvement score for potential splits,
+        and "mae" for the mean absolute error, which minimizes the L1 loss
+        using the median of each terminal node.
+
+        .. versionadded:: 0.18
+           Mean Absolute Error (MAE) criterion.
 
     splitter : string, optional (default="best")
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
         the best random split.
+
+    max_depth : int or None, optional (default=None)
+        The maximum depth of the tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
+
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
+
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `ceil(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `ceil(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node. Samples have
+        equal weight when sample_weight is not provided.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
@@ -807,43 +942,43 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         valid partition of the node samples is found, even if it requires to
         effectively inspect more than ``max_features`` features.
 
-    max_depth : int or None, optional (default=None)
-        The maximum depth of the tree. If None, then nodes are expanded until
-        all leaves are pure or until all leaves contain less than
-        min_samples_split samples.
-        Ignored if ``max_leaf_nodes`` is not None.
-
-    min_samples_split : int, float, optional (default=2)
-        The minimum number of samples required to split an internal node:
-
-        - If int, then consider `min_samples_split` as the minimum number.
-        - If float, then `min_samples_split` is a percentage and
-          `ceil(min_samples_split * n_samples)` are the minimum
-          number of samples for each split.
-
-    min_samples_leaf : int, float, optional (default=1)
-        The minimum number of samples required to be at a leaf node:
-
-        - If int, then consider `min_samples_leaf` as the minimum number.
-        - If float, then `min_samples_leaf` is a percentage and
-          `ceil(min_samples_leaf * n_samples)` are the minimum
-          number of samples for each node.
-
-    min_weight_fraction_leaf : float, optional (default=0.)
-        The minimum weighted fraction of the input samples required to be at a
-        leaf node.
-
-    max_leaf_nodes : int or None, optional (default=None)
-        Grow a tree with ``max_leaf_nodes`` in best-first fashion.
-        Best nodes are defined as relative reduction in impurity.
-        If None then unlimited number of leaf nodes.
-        If not None then ``max_depth`` will be ignored.
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow a tree with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
+
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
 
     presort : bool, optional (default=False)
         Whether to presort the data to speed up the finding of best splits in
@@ -873,6 +1008,21 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     tree_ : Tree object
         The underlying Tree object.
 
+    Notes
+    -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
+
+    The features are always randomly permuted at each split. Therefore,
+    the best found split may vary, even with the same training data and
+    ``max_features=n_features``, if the improvement of the criterion is
+    identical for several splits enumerated during the search of the best
+    split. To obtain a deterministic behaviour during fitting,
+    ``random_state`` has to be fixed.
+
     See also
     --------
     DecisionTreeClassifier
@@ -880,7 +1030,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     References
     ----------
 
-    .. [1] http://en.wikipedia.org/wiki/Decision_tree_learning
+    .. [1] https://en.wikipedia.org/wiki/Decision_tree_learning
 
     .. [2] L. Breiman, J. Friedman, R. Olshen, and C. Stone, "Classification
            and Regression Trees", Wadsworth, Belmont, CA, 1984.
@@ -914,6 +1064,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_features=None,
                  random_state=None,
                  max_leaf_nodes=None,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  presort=False):
         super(DecisionTreeRegressor, self).__init__(
             criterion=criterion,
@@ -925,7 +1077,52 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             random_state=random_state,
+            min_impurity_decrease=min_impurity_decrease,
+            min_impurity_split=min_impurity_split,
             presort=presort)
+
+    def fit(self, X, y, sample_weight=None, check_input=True,
+            X_idx_sorted=None):
+        """Build a decision tree regressor from the training set (X, y).
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
+
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+            The target values (real numbers). Use ``dtype=np.float64`` and
+            ``order='C'`` for maximum efficiency.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node.
+
+        check_input : boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
+        X_idx_sorted : array-like, shape = [n_samples, n_features], optional
+            The indexes of the sorted training input samples. If many tree
+            are grown on the same dataset, this allows the ordering to be
+            cached between trees. If None, the data will be sorted here.
+            Don't use this parameter unless you know what to do.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+
+        super(DecisionTreeRegressor, self).fit(
+            X, y,
+            sample_weight=sample_weight,
+            check_input=check_input,
+            X_idx_sorted=X_idx_sorted)
+        return self
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -942,9 +1139,135 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Read more in the :ref:`User Guide <tree>`.
 
+    Parameters
+    ----------
+    criterion : string, optional (default="gini")
+        The function to measure the quality of a split. Supported criteria are
+        "gini" for the Gini impurity and "entropy" for the information gain.
+
+    splitter : string, optional (default="best")
+        The strategy used to choose the split at each node. Supported
+        strategies are "best" to choose the best split and "random" to choose
+        the best random split.
+
+    max_depth : int or None, optional (default=None)
+        The maximum depth of the tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
+
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
+
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `ceil(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `ceil(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node. Samples have
+        equal weight when sample_weight is not provided.
+
+    max_features : int, float, string or None, optional (default=None)
+        The number of features to consider when looking for the best split:
+
+            - If int, then consider `max_features` features at each split.
+            - If float, then `max_features` is a percentage and
+              `int(max_features * n_features)` features are considered at each
+              split.
+            - If "auto", then `max_features=sqrt(n_features)`.
+            - If "sqrt", then `max_features=sqrt(n_features)`.
+            - If "log2", then `max_features=log2(n_features)`.
+            - If None, then `max_features=n_features`.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow a tree with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
+
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
+    class_weight : dict, list of dicts, "balanced" or None, default=None
+        Weights associated with classes in the form ``{class_label: weight}``.
+        If not given, all classes are supposed to have weight one. For
+        multi-output problems, a list of dicts can be provided in the same
+        order as the columns of y.
+
+        Note that for multioutput (including multilabel) weights should be
+        defined for each class of every column in its own dict. For example,
+        for four-class multilabel classification weights should be
+        [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
+        [{1:1}, {2:5}, {3:1}, {4:1}].
+
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as ``n_samples / (n_classes * np.bincount(y))``
+
+        For multi-output, the weights of each column of y will be multiplied.
+
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
+
     See also
     --------
     ExtraTreeRegressor, ExtraTreesClassifier, ExtraTreesRegressor
+
+    Notes
+    -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
 
     References
     ----------
@@ -962,6 +1285,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_features="auto",
                  random_state=None,
                  max_leaf_nodes=None,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  class_weight=None):
         super(ExtraTreeClassifier, self).__init__(
             criterion=criterion,
@@ -973,6 +1298,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
             class_weight=class_weight,
+            min_impurity_decrease=min_impurity_decrease,
+            min_impurity_split=min_impurity_split,
             random_state=random_state)
 
 
@@ -990,9 +1317,120 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Read more in the :ref:`User Guide <tree>`.
 
+    Parameters
+    ----------
+    criterion : string, optional (default="mse")
+        The function to measure the quality of a split. Supported criteria
+        are "mse" for the mean squared error, which is equal to variance
+        reduction as feature selection criterion, and "mae" for the mean
+        absolute error.
+
+        .. versionadded:: 0.18
+           Mean Absolute Error (MAE) criterion.
+
+    splitter : string, optional (default="best")
+        The strategy used to choose the split at each node. Supported
+        strategies are "best" to choose the best split and "random" to choose
+        the best random split.
+
+    max_depth : int or None, optional (default=None)
+        The maximum depth of the tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
+
+    min_samples_split : int, float, optional (default=2)
+        The minimum number of samples required to split an internal node:
+
+        - If int, then consider `min_samples_split` as the minimum number.
+        - If float, then `min_samples_split` is a percentage and
+          `ceil(min_samples_split * n_samples)` are the minimum
+          number of samples for each split.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
+    min_samples_leaf : int, float, optional (default=1)
+        The minimum number of samples required to be at a leaf node:
+
+        - If int, then consider `min_samples_leaf` as the minimum number.
+        - If float, then `min_samples_leaf` is a percentage and
+          `ceil(min_samples_leaf * n_samples)` are the minimum
+          number of samples for each node.
+
+        .. versionchanged:: 0.18
+           Added float values for percentages.
+
+    min_weight_fraction_leaf : float, optional (default=0.)
+        The minimum weighted fraction of the sum total of weights (of all
+        the input samples) required to be at a leaf node. Samples have
+        equal weight when sample_weight is not provided.
+
+    max_features : int, float, string or None, optional (default=None)
+        The number of features to consider when looking for the best split:
+
+        - If int, then consider `max_features` features at each split.
+        - If float, then `max_features` is a percentage and
+          `int(max_features * n_features)` features are considered at each
+          split.
+        - If "auto", then `max_features=n_features`.
+        - If "sqrt", then `max_features=sqrt(n_features)`.
+        - If "log2", then `max_features=log2(n_features)`.
+        - If None, then `max_features=n_features`.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    min_impurity_decrease : float, optional (default=0.)
+        A node will be split if this split induces a decrease of the impurity
+        greater than or equal to this value.
+
+        The weighted impurity decrease equation is the following::
+
+            N_t / N * (impurity - N_t_R / N_t * right_impurity
+                                - N_t_L / N_t * left_impurity)
+
+        where ``N`` is the total number of samples, ``N_t`` is the number of
+        samples at the current node, ``N_t_L`` is the number of samples in the
+        left child, and ``N_t_R`` is the number of samples in the right child.
+
+        ``N``, ``N_t``, ``N_t_R`` and ``N_t_L`` all refer to the weighted sum,
+        if ``sample_weight`` is passed.
+
+        .. versionadded:: 0.19
+
+    min_impurity_split : float,
+        Threshold for early stopping in tree growth. A node will split
+        if its impurity is above the threshold, otherwise it is a leaf.
+
+        .. deprecated:: 0.19
+           ``min_impurity_split`` has been deprecated in favor of
+           ``min_impurity_decrease`` in 0.19 and will be removed in 0.21.
+           Use ``min_impurity_decrease`` instead.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow a tree with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+
+
     See also
     --------
     ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
+
+    Notes
+    -----
+    The default values for the parameters controlling the size of the trees
+    (e.g. ``max_depth``, ``min_samples_leaf``, etc.) lead to fully grown and
+    unpruned trees which can potentially be very large on some data sets. To
+    reduce memory consumption, the complexity and size of the trees should be
+    controlled by setting those parameter values.
 
     References
     ----------
@@ -1009,6 +1447,8 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_weight_fraction_leaf=0.,
                  max_features="auto",
                  random_state=None,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
                  max_leaf_nodes=None):
         super(ExtraTreeRegressor, self).__init__(
             criterion=criterion,
@@ -1019,4 +1459,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
             min_weight_fraction_leaf=min_weight_fraction_leaf,
             max_features=max_features,
             max_leaf_nodes=max_leaf_nodes,
+            min_impurity_decrease=min_impurity_decrease,
+            min_impurity_split=min_impurity_split,
             random_state=random_state)

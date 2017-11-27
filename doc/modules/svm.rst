@@ -28,7 +28,8 @@ The advantages of support vector machines are:
 The disadvantages of support vector machines include:
 
     - If the number of features is much greater than the number of
-      samples, the method is likely to give poor performances.
+      samples, avoid over-fitting in choosing :ref:`svm_kernels` and regularization
+      term is crucial.
 
     - SVMs do not directly provide probability estimates, these are
       calculated using an expensive five-fold cross-validation
@@ -51,7 +52,7 @@ Classification
 capable of performing multi-class classification on a dataset.
 
 
-.. figure:: ../auto_examples/svm/images/plot_iris_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_iris_001.png
    :target: ../auto_examples/svm/plot_iris.html
    :align: center
 
@@ -77,7 +78,7 @@ n_features]`` holding the training samples, and an array y of class labels
     >>> clf = svm.SVC()
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+        decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
 
@@ -211,13 +212,12 @@ Then ``dual_coef_`` looks like this:
 Scores and probabilities
 ------------------------
 
-The :class:`SVC` method ``decision_function`` gives per-class scores 
-for each sample (or a single score per sample in the binary case).
-When the constructor option ``probability`` is set to ``True``,
-class membership probability estimates
-(from the methods ``predict_proba`` and ``predict_log_proba``) are enabled.
-In the binary case, the probabilities are calibrated using Platt scaling:
-logistic regression on the SVM's scores,
+The ``decision_function`` method of :class:`SVC` and :class:`NuSVC` gives
+per-class scores for each sample (or a single score per sample in the binary
+case). When the constructor option ``probability`` is set to ``True``,
+class membership probability estimates (from the methods ``predict_proba`` and
+``predict_log_proba``) are enabled. In the binary case, the probabilities are
+calibrated using Platt scaling: logistic regression on the SVM's scores,
 fit by an additional cross-validation on the training data.
 In the multiclass case, this is extended as per Wu et al. (2004).
 
@@ -240,7 +240,11 @@ and use ``decision_function`` instead of ``predict_proba``.
    `"Probability estimates for multi-class classification by pairwise coupling"
    <http://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_,
    JMLR 5:975-1005, 2004.
-
+ 
+ 
+ * Platt
+   `"Probabilistic outputs for SVMs and comparisons to regularized likelihood methods"
+   <http://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_.
 
 Unbalanced problems
 --------------------
@@ -254,7 +258,7 @@ classes or certain individual samples keywords ``class_weight`` and
 ``{class_label : value}``, where value is a floating point number > 0
 that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_unbalanced_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_unbalanced_001.png
    :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
    :align: center
    :scale: 75
@@ -266,7 +270,7 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 
-.. figure:: ../auto_examples/svm/images/plot_weighted_samples_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_weighted_samples_001.png
    :target: ../auto_examples/svm/plot_weighted_samples.html
    :align: center
    :scale: 75
@@ -274,12 +278,12 @@ set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_iris.py`,
- * :ref:`example_svm_plot_separating_hyperplane.py`,
- * :ref:`example_svm_plot_separating_hyperplane_unbalanced.py`
- * :ref:`example_svm_plot_svm_anova.py`,
- * :ref:`example_svm_plot_svm_nonlinear.py`
- * :ref:`example_svm_plot_weighted_samples.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_iris.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_separating_hyperplane_unbalanced.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`,
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_nonlinear.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_weighted_samples.py`,
 
 
 .. _svm_regression:
@@ -322,7 +326,7 @@ floating point values instead of integer values::
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_svm_regression.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_svm_regression.py`
 
 
 
@@ -341,7 +345,7 @@ will only take as input an array X, as there are no class labels.
 
 See, section :ref:`outlier_detection` for more details on this usage.
 
-.. figure:: ../auto_examples/svm/images/plot_oneclass_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_oneclass_001.png
    :target: ../auto_examples/svm/plot_oneclass.html
    :align: center
    :scale: 75
@@ -349,8 +353,8 @@ See, section :ref:`outlier_detection` for more details on this usage.
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_oneclass.py`
- * :ref:`example_applications_plot_species_distribution_modeling.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_oneclass.py`
+ * :ref:`sphx_glr_auto_examples_applications_plot_species_distribution_modeling.py`
 
 
 Complexity
@@ -394,7 +398,7 @@ Tips on Practical Use
     function can be configured to be almost the same as the :class:`LinearSVC`
     model.
 
-  * **Kernel cache size**: For :class:`SVC`, :class:`SVR`, :class:`nuSVC` and
+  * **Kernel cache size**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC` and
     :class:`NuSVR`, the size of the kernel cache has a strong impact on run
     times for larger problems.  If you have enough RAM available, it is
     recommended to set ``cache_size`` to a higher value than the default of
@@ -418,10 +422,24 @@ Tips on Practical Use
     positive and few negative), set ``class_weight='balanced'`` and/or try
     different penalty parameters ``C``.
 
-  * The underlying :class:`LinearSVC` implementation uses a random
-    number generator to select features when fitting the model. It is
-    thus not uncommon, to have slightly different results for the same
-    input data. If that happens, try with a smaller tol parameter.
+  * **Randomness of the underlying implementations**: The underlying 
+    implementations of :class:`SVC` and :class:`NuSVC` use a random number
+    generator only to shuffle the data for probability estimation (when
+    ``probability`` is set to ``True``). This randomness can be controlled
+    with the ``random_state`` parameter. If ``probability`` is set to ``False``
+    these estimators are not random and ``random_state`` has no effect on the
+    results. The underlying :class:`OneClassSVM` implementation is similar to
+    the ones of :class:`SVC` and :class:`NuSVC`. As no probability estimation
+    is provided for :class:`OneClassSVM`, it is not random.
+
+    The underlying :class:`LinearSVC` implementation uses a random number
+    generator to select features when fitting the model with a dual coordinate
+    descent (i.e when ``dual`` is set to ``True``). It is thus not uncommon,
+    to have slightly different results for the same input data. If that
+    happens, try with a smaller tol parameter. This randomness can also be
+    controlled with the ``random_state`` parameter. When ``dual`` is
+    set to ``False`` the underlying implementation of :class:`LinearSVC` is
+    not random and ``random_state`` has no effect on the results.
 
   * Using L1 penalization as provided by ``LinearSVC(loss='l2', penalty='l1',
     dual=False)`` yields a sparse solution, i.e. only a subset of feature
@@ -443,7 +461,7 @@ The *kernel function* can be any of the following:
   * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`.
     :math:`d` is specified by keyword ``degree``, :math:`r` by ``coef0``.
 
-  * rbf: :math:`\exp(-\gamma |x-x'|^2)`. :math:`\gamma` is
+  * rbf: :math:`\exp(-\gamma \|x-x'\|^2)`. :math:`\gamma` is
     specified by keyword ``gamma``, must be greater than 0.
 
   * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`),
@@ -498,7 +516,7 @@ instance that will use that kernel::
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_custom_kernel.py`.
+ * :ref:`sphx_glr_auto_examples_svm_plot_custom_kernel.py`.
 
 Using the Gram matrix
 ~~~~~~~~~~~~~~~~~~~~~
@@ -516,7 +534,7 @@ test vectors must be provided.
     >>> gram = np.dot(X, X.T)
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape=None, degree=3, gamma='auto',
+        decision_function_shape='ovr', degree=3, gamma='auto',
         kernel='precomputed', max_iter=-1, probability=False,
         random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
@@ -540,7 +558,7 @@ is advised to use :class:`sklearn.model_selection.GridSearchCV` with
 
 .. topic:: Examples:
 
- * :ref:`example_svm_plot_rbf_parameters.py`
+ * :ref:`sphx_glr_auto_examples_svm_plot_rbf_parameters.py`
 
 .. _svm_mathematical_formulation:
 
@@ -556,7 +574,7 @@ margin), since in general the larger the margin the lower the
 generalization error of the classifier.
 
 
-.. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_001.png
+.. figure:: ../auto_examples/svm/images/sphx_glr_plot_separating_hyperplane_001.png
    :align: center
    :scale: 75
 
@@ -600,8 +618,11 @@ The decision function is:
 .. note::
 
     While SVM models derived from `libsvm`_ and `liblinear`_ use ``C`` as
-    regularization parameter, most other estimators use ``alpha``. The relation
-    between both is :math:`C = \frac{n\_samples}{alpha}`.
+    regularization parameter, most other estimators use ``alpha``. The exact
+    equivalence between the amount of regularization of two models depends on
+    the exact objective function optimized by the model. For example, when the
+    estimator used is :class:`sklearn.linear_model.Ridge <ridge>` regression,
+    the relation between them is given as :math:`C = \frac{1}{alpha}`.
 
 .. TODO multiclass case ?/
 
@@ -619,7 +640,7 @@ term :math:`\rho` :
 
 
  * `"Support-vector networks"
-   <http://www.springerlink.com/content/k238jx04hm87j80g/>`_,
+   <http://link.springer.com/article/10.1007%2FBF00994018>`_,
    C. Cortes, V. Vapnik - Machine Learning, 20, 273-297 (1995).
 
 
@@ -632,7 +653,7 @@ support vectors and training errors. The parameter :math:`\nu \in (0,
 1]` is an upper bound on the fraction of training errors and a lower
 bound of the fraction of support vectors.
 
-It can be shown that the :math:`\nu`-SVC formulation is a reparametrization
+It can be shown that the :math:`\nu`-SVC formulation is a reparameterization
 of the :math:`C`-SVC and therefore mathematically equivalent.
 
 

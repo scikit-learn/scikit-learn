@@ -1,10 +1,9 @@
-# cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
 #
 # Author: Arnaud Joly
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 """
 Random utility function
 =======================
@@ -249,7 +248,11 @@ cpdef sample_without_replacement(np.int_t n_population,
         by `np.random`.
 
     method : "auto", "tracking_selection", "reservoir_sampling" or "pool"
-        If method == "auto", an algorithm is automatically selected.
+        If method == "auto", the ratio of n_samples / n_population is used
+        to determine which algorithm to use:
+        If ratio is between 0 and 0.01, tracking selection is used.
+        If ratio is between 0.01 and 0.99, numpy.random.permutation is used.
+        If ratio is greater than 0.99, reservoir sampling is used.
         The order of the selected integers is undefined. If a random order is
         desired, the selected subset should be shuffled.
 
@@ -277,11 +280,17 @@ cpdef sample_without_replacement(np.int_t n_population,
 
     all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
 
+    ratio = n_samples / n_population if n_population != 0.0 else 1.0
+
+    # Check ratio and use permutation unless ratio < 0.01 or ratio > 0.99
+    if method == "auto" and ratio > 0.01 and ratio < 0.99:
+        rng = check_random_state(random_state)
+        return rng.permutation(n_population)[:n_samples]
+
     if method == "auto" or method == "tracking_selection":
         # TODO the pool based method can also be used.
         #      however, it requires special benchmark to take into account
         #      the memory requirement of the array vs the set.
-        ratio = n_samples / n_population if n_population != 0.0 else 1.0
 
         # The value 0.2 has been determined through benchmarking.
         if ratio < 0.2:
@@ -297,7 +306,7 @@ cpdef sample_without_replacement(np.int_t n_population,
 
     elif method == "pool":
         return _sample_without_replacement_with_pool(n_population, n_samples,
-                                                    random_state)
+                                                     random_state)
     else:
         raise ValueError('Expected a method name in %s, got %s. '
                          % (all_methods, method))

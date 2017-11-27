@@ -7,9 +7,11 @@
 import numpy as np
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
+from scipy.sparse.linalg import eigsh
+
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state, check_array
-from ..utils.arpack import eigsh
+from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..neighbors import NearestNeighbors
@@ -27,7 +29,7 @@ def barycenter_weights(X, Z, reg=1e-3):
 
     Z : array-like, shape (n_samples, n_neighbors, n_dim)
 
-    reg: float, optional
+    reg : float, optional
         amount of regularization to add for the problem to be
         well-posed in the case of n_neighbors > n_dim
 
@@ -139,9 +141,11 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
     max_iter : maximum number of iterations for 'arpack' method
         not used if eigen_solver=='dense'
 
-    random_state: numpy.RandomState or int, optional
-        The generator or seed used to determine the starting vector for arpack
-        iterations.  Defaults to numpy.random.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``solver`` == 'arpack'.
 
     """
     if eigen_solver == 'auto':
@@ -244,9 +248,11 @@ def locally_linear_embedding(
         Tolerance for modified LLE method.
         Only used if method == 'modified'
 
-    random_state: numpy.RandomState or int, optional
-        The generator or seed used to determine the starting vector for arpack
-        iterations.  Defaults to numpy.random.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``solver`` == 'arpack'.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run for neighbors search.
@@ -292,7 +298,11 @@ def locally_linear_embedding(
         raise ValueError("output dimension must be less than or equal "
                          "to input dimension")
     if n_neighbors >= N:
-        raise ValueError("n_neighbors must be less than number of points")
+        raise ValueError(
+            "Expected n_neighbors <= n_samples, "
+            " but n_samples = %d, n_neighbors = %d" %
+            (N, n_neighbors)
+        )
 
     if n_neighbors <= 0:
         raise ValueError("n_neighbors must be positive")
@@ -420,7 +430,7 @@ def locally_linear_embedding(
         # this is the size of the largest set of eigenvalues
         # such that Sum[v; v in set]/Sum[v; v not in set] < eta
         s_range = np.zeros(N, dtype=int)
-        evals_cumsum = np.cumsum(evals, 1)
+        evals_cumsum = stable_cumsum(evals, 1)
         eta_range = evals_cumsum[:, -1:] / evals_cumsum[:, :-1] - 1
         for i in range(N):
             s_range[i] = np.searchsorted(eta_range[i, ::-1], eta)
@@ -567,9 +577,11 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance
 
-    random_state: numpy.RandomState or int, optional
-        The generator or seed used to determine the starting vector for arpack
-        iterations.  Defaults to numpy.random.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
 
     n_jobs : int, optional (default = 1)
         The number of parallel jobs to run.
@@ -577,11 +589,11 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    embedding_vectors_ : array-like, shape [n_components, n_samples]
+    embedding_ : array-like, shape [n_samples, n_components]
         Stores the embedding vectors
 
     reconstruction_error_ : float
-        Reconstruction error associated with `embedding_vectors_`
+        Reconstruction error associated with `embedding_`
 
     nbrs_ : NearestNeighbors object
         Stores nearest neighbors instance, including BallTree or KDtree
@@ -626,7 +638,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                                       n_jobs=self.n_jobs)
 
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = check_array(X, dtype=float)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
@@ -644,6 +656,8 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
+        y: Ignored
+
         Returns
         -------
         self : returns an instance of self.
@@ -659,9 +673,11 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         X : array-like of shape [n_samples, n_features]
             training set.
 
+        y: Ignored
+
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         self._fit_transform(X)
         return self.embedding_

@@ -4,7 +4,7 @@ Plot the scaling of the nearest neighbors algorithms with k, D, and N
 from time import time
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from matplotlib import ticker
 
 from sklearn import neighbors, datasets
@@ -106,7 +106,7 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
             k_results_build[algorithm][i] = (t1 - t0)
             k_results_query[algorithm][i] = (t2 - t1)
 
-    pl.figure(figsize=(8, 11))
+    plt.figure(figsize=(8, 11))
 
     for (sbplt, vals, quantity,
          build_time, query_time) in [(311, Nrange, 'N',
@@ -118,8 +118,8 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
                                      (313, krange, 'k',
                                       k_results_build,
                                       k_results_query)]:
-        ax = pl.subplot(sbplt, yscale='log')
-        pl.grid(True)
+        ax = plt.subplot(sbplt, yscale='log')
+        plt.grid(True)
 
         tick_vals = []
         tick_labels = []
@@ -131,21 +131,21 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
             xvals = 0.1 + i * (1 + len(vals)) + np.arange(len(vals))
             width = 0.8
 
-            c_bar = pl.bar(xvals, build_time[alg] - bottom,
-                           width, bottom, color='r')
-            q_bar = pl.bar(xvals, query_time[alg],
-                           width, build_time[alg], color='b')
+            c_bar = plt.bar(xvals, build_time[alg] - bottom,
+                            width, bottom, color='r')
+            q_bar = plt.bar(xvals, query_time[alg],
+                            width, build_time[alg], color='b')
 
             tick_vals += list(xvals + 0.5 * width)
             tick_labels += ['%i' % val for val in vals]
 
-            pl.text((i + 0.02) / len(algorithms), 0.98, alg,
-                    transform=ax.transAxes,
-                    ha='left',
-                    va='top',
-                    bbox=dict(facecolor='w', edgecolor='w', alpha=0.5))
+            plt.text((i + 0.02) / len(algorithms), 0.98, alg,
+                     transform=ax.transAxes,
+                     ha='left',
+                     va='top',
+                     bbox=dict(facecolor='w', edgecolor='w', alpha=0.5))
 
-            pl.ylabel('Time (s)')
+            plt.ylabel('Time (s)')
 
         ax.xaxis.set_major_locator(ticker.FixedLocator(tick_vals))
         ax.xaxis.set_major_formatter(ticker.FixedFormatter(tick_labels))
@@ -166,20 +166,20 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
 
         descr_string = descr_string[:-2]
 
-        pl.text(1.01, 0.5, title_string,
-                transform=ax.transAxes, rotation=-90,
-                ha='left', va='center', fontsize=20)
+        plt.text(1.01, 0.5, title_string,
+                 transform=ax.transAxes, rotation=-90,
+                 ha='left', va='center', fontsize=20)
 
-        pl.text(0.99, 0.5, descr_string,
-                transform=ax.transAxes, rotation=-90,
-                ha='right', va='center')
+        plt.text(0.99, 0.5, descr_string,
+                 transform=ax.transAxes, rotation=-90,
+                 ha='right', va='center')
 
-        pl.gcf().suptitle("%s data set" % dataset.capitalize(), fontsize=16)
+        plt.gcf().suptitle("%s data set" % dataset.capitalize(), fontsize=16)
 
-    pl.figlegend((c_bar, q_bar), ('construction', 'N-point query'),
-                 'upper right')
+    plt.figlegend((c_bar, q_bar), ('construction', 'N-point query'),
+                  'upper right')
 
 if __name__ == '__main__':
     barplot_neighbors(dataset='digits')
     barplot_neighbors(dataset='dense')
-    pl.show()
+    plt.show()

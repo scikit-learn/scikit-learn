@@ -1,4 +1,3 @@
-
 """
 Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 """
@@ -9,6 +8,8 @@ Testing for Isolation Forest algorithm (sklearn.ensemble.iforest).
 
 import numpy as np
 
+from sklearn.utils.fixes import euler_gamma
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -18,9 +19,10 @@ from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.grid_search import ParameterGrid
+from sklearn.model_selection import ParameterGrid
 from sklearn.ensemble import IsolationForest
-from sklearn.cross_validation import train_test_split
+from sklearn.ensemble.iforest import _average_path_length
+from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
@@ -84,7 +86,6 @@ def test_iforest_sparse():
             dense_results = dense_classifier.predict(X_test)
 
             assert_array_equal(sparse_results, dense_results)
-            assert_array_equal(sparse_results, dense_results)
 
 
 def test_iforest_error():
@@ -98,18 +99,20 @@ def test_iforest_error():
                   IsolationForest(max_samples=0.0).fit, X)
     assert_raises(ValueError,
                   IsolationForest(max_samples=2.0).fit, X)
-    # The dataset has less than 256 samples, explicitly setting max_samples > n_samples
-    # should result in a warning. If not set explicitly there should be no warning
+    # The dataset has less than 256 samples, explicitly setting
+    # max_samples > n_samples should result in a warning. If not set
+    # explicitly there should be no warning
     assert_warns_message(UserWarning,
                          "max_samples will be set to n_samples for estimation",
                          IsolationForest(max_samples=1000).fit, X)
     assert_no_warnings(IsolationForest(max_samples='auto').fit, X)
-    assert_raises(ValueError,
-                  IsolationForest(max_samples='foobar').fit, X)
+    assert_no_warnings(IsolationForest(max_samples=np.int64(2)).fit, X)
+    assert_raises(ValueError, IsolationForest(max_samples='foobar').fit, X)
+    assert_raises(ValueError, IsolationForest(max_samples=1.5).fit, X)
 
 
 def test_recalculate_max_depth():
-    """Check that max_depth is recalculated when max_samples is reset to n_samples"""
+    """Check max_depth recalculation when max_samples is reset to n_samples"""
     X = iris.data
     clf = IsolationForest().fit(X)
     for est in clf.estimators_:
@@ -173,7 +176,7 @@ def test_iforest_performance():
     clf = IsolationForest(max_samples=100, random_state=rng).fit(X_train)
 
     # predict scores (the lower, the more normal)
-    y_pred = clf.predict(X_test)
+    y_pred = - clf.decision_function(X_test)
 
     # check that there is at most 6 errors (false positive or false negative)
     assert_greater(roc_auc_score(y_test, y_pred), 0.98)
@@ -184,9 +187,42 @@ def test_iforest_works():
     X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [6, 3], [-4, 7]]
 
     # Test LOF
-    clf = IsolationForest(random_state=rng)
+    clf = IsolationForest(random_state=rng, contamination=0.25)
     clf.fit(X)
+    decision_func = - clf.decision_function(X)
     pred = clf.predict(X)
 
     # assert detect outliers:
-    assert_greater(np.min(pred[-2:]), np.max(pred[:-2]))
+    assert_greater(np.min(decision_func[-2:]), np.max(decision_func[:-2]))
+    assert_array_equal(pred, 6 * [1] + 2 * [-1])
+
+
+def test_max_samples_consistency():
+    # Make sure validated max_samples in iforest and BaseBagging are identical
+    X = iris.data
+    clf = IsolationForest().fit(X)
+    assert_equal(clf.max_samples_, clf._max_samples)
+
+
+def test_iforest_subsampled_features():
+    # It tests non-regression for #5732 which failed at predict.
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
+                                                        boston.target[:50],
+                                                        random_state=rng)
+    clf = IsolationForest(max_features=0.8)
+    clf.fit(X_train, y_train)
+    clf.predict(X_test)
+
+
+def test_iforest_average_path_length():
+    # It tests non-regression for #8549 which used the wrong formula
+    # for average path length, strictly for the integer case
+
+    result_one = 2. * (np.log(4.) + euler_gamma) - 2. * 4. / 5.
+    result_two = 2. * (np.log(998.) + euler_gamma) - 2. * 998. / 999.
+    assert_almost_equal(_average_path_length(1), 1., decimal=10)
+    assert_almost_equal(_average_path_length(5), result_one, decimal=10)
+    assert_almost_equal(_average_path_length(999), result_two, decimal=10)
+    assert_array_almost_equal(_average_path_length(np.array([1, 5, 999])),
+                              [1., result_one, result_two], decimal=10)

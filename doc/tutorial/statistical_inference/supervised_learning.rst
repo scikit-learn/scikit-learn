@@ -13,7 +13,7 @@ Supervised learning: predicting an output variable from high-dimensional observa
    are trying to predict, usually called "target" or "labels". Most often,
    ``y`` is a 1D array of length ``n_samples``.
 
-   All supervised `estimators <http://en.wikipedia.org/wiki/Estimator>`_
+   All supervised `estimators <https://en.wikipedia.org/wiki/Estimator>`_
    in scikit-learn implement a ``fit(X, y)`` method to fit the model
    and a ``predict(X)`` method that, given unlabeled observations ``X``,
    returns the predicted labels ``y``.
@@ -38,7 +38,7 @@ Nearest neighbor and the curse of dimensionality
 
 .. topic:: Classifying irises:
 
-    .. image:: ../../auto_examples/datasets/images/plot_iris_dataset_001.png
+    .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
         :target: ../../auto_examples/datasets/plot_iris_dataset.html
         :align: right
 	:scale: 65
@@ -59,7 +59,7 @@ k-Nearest neighbors classifier
 -------------------------------
 
 The simplest possible classifier is the
-`nearest neighbor <http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm>`_:
+`nearest neighbor <https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm>`_:
 given a new observation ``X_test``, find in the training set (i.e. the data
 used to train the estimator) the observation with the closest feature vector.
 (Please see the :ref:`Nearest Neighbors section<neighbors>` of the online
@@ -75,7 +75,7 @@ Scikit-learn documentation for more information about this type of classifier.)
 
 **KNN (k nearest neighbors) classification example**:
 
-.. image:: ../../auto_examples/neighbors/images/plot_classification_001.png
+.. image:: /auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
    :target: ../../auto_examples/neighbors/plot_classification.html
    :align: center
    :scale: 70
@@ -109,26 +109,26 @@ The curse of dimensionality
 
 For an estimator to be effective, you need the distance between neighboring
 points to be less than some value :math:`d`, which depends on the problem.
-In one dimension, this requires on average :math:`n ~ 1/d` points.
+In one dimension, this requires on average :math:`n \sim 1/d` points.
 In the context of the above :math:`k`-NN example, if the data is described by
 just one feature with values ranging from 0 to 1 and with :math:`n` training
 observations, then new data will be no further away than :math:`1/n`.
 Therefore, the nearest neighbor decision rule will be efficient as soon as
 :math:`1/n` is small compared to the scale of between-class feature variations.
 
-If the number of features is :math:`p`, you now require :math:`n ~ 1/d^p`
+If the number of features is :math:`p`, you now require :math:`n \sim 1/d^p`
 points.  Let's say that we require 10 points in one dimension: now :math:`10^p`
 points are required in :math:`p` dimensions to pave the :math:`[0, 1]` space.
 As :math:`p` becomes large, the number of training points required for a good
 estimator grows exponentially.
 
 For example, if each point is just a single number (8 bytes), then an
-effective :math:`k`-NN estimator in a paltry :math:`p~20` dimensions would
+effective :math:`k`-NN estimator in a paltry :math:`p \sim 20` dimensions would
 require more training data than the current estimated size of the entire
 internet (±1000 Exabytes or so).
 
 This is called the
-`curse of dimensionality  <http://en.wikipedia.org/wiki/Curse_of_dimensionality>`_
+`curse of dimensionality  <https://en.wikipedia.org/wiki/Curse_of_dimensionality>`_
 and is a core problem that machine learning addresses.
 
 Linear model: from regression to sparsity
@@ -155,11 +155,11 @@ Linear regression
 .. currentmodule:: sklearn.linear_model
 
 :class:`LinearRegression`,
-in it's simplest form, fits a linear model to the data set by adjusting
+in its simplest form, fits a linear model to the data set by adjusting
 a set of parameters in order to make the sum of the squared residuals
 of the model as small as possible.
 
-.. image:: ../../auto_examples/linear_model/images/plot_ols_001.png
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
    :target: ../../auto_examples/linear_model/plot_ols.html
    :scale: 40
    :align: right
@@ -187,7 +187,7 @@ Linear models: :math:`y = X\beta + \epsilon`
 
     >>> # Explained variance score: 1 is perfect prediction
     >>> # and 0 means that there is no linear relationship
-    >>> # between X and Y.
+    >>> # between X and y.
     >>> regr.score(diabetes_X_test, diabetes_y_test) # doctest: +ELLIPSIS
     0.5850753022690...
 
@@ -200,7 +200,7 @@ Shrinkage
 If there are few data points per dimension, noise in the observations
 induces high variance:
 
-.. image:: ../../auto_examples/linear_model/images/plot_ols_ridge_variance_001.png
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_001.png
    :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
    :scale: 70
    :align: right
@@ -212,15 +212,15 @@ induces high variance:
     >>> test = np.c_[ 0, 2].T
     >>> regr = linear_model.LinearRegression()
 
-    >>> import pylab as pl # doctest: +SKIP
-    >>> pl.figure() # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt # doctest: +SKIP
+    >>> plt.figure() # doctest: +SKIP
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
     ...    this_X = .1*np.random.normal(size=(2, 1)) + X
     ...    regr.fit(this_X, y)
-    ...    pl.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...    pl.scatter(this_X, y, s=3)  # doctest: +SKIP
+    ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...    plt.scatter(this_X, y, s=3)  # doctest: +SKIP
 
 
 
@@ -229,7 +229,7 @@ regression coefficients to zero: any two randomly chosen set of
 observations are likely to be uncorrelated. This is called :class:`Ridge`
 regression:
 
-.. image:: ../../auto_examples/linear_model/images/plot_ols_ridge_variance_002.png
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_002.png
    :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
    :scale: 70
    :align: right
@@ -238,14 +238,14 @@ regression:
 
     >>> regr = linear_model.Ridge(alpha=.1)
 
-    >>> pl.figure() # doctest: +SKIP
+    >>> plt.figure() # doctest: +SKIP
 
     >>> np.random.seed(0)
     >>> for _ in range(6): # doctest: +SKIP
     ...    this_X = .1*np.random.normal(size=(2, 1)) + X
     ...    regr.fit(this_X, y)
-    ...    pl.plot(test, regr.predict(test)) # doctest: +SKIP
-    ...    pl.scatter(this_X, y, s=3) # doctest: +SKIP
+    ...    plt.plot(test, regr.predict(test)) # doctest: +SKIP
+    ...    plt.scatter(this_X, y, s=3) # doctest: +SKIP
 
 This is an example of **bias/variance tradeoff**: the larger the ridge
 ``alpha`` parameter, the higher the bias and the lower the variance.
@@ -265,9 +265,9 @@ diabetes dataset rather than our synthetic data::
 
     Capturing in the fitted parameters noise that prevents the model to
     generalize to new data is called
-    `overfitting <http://en.wikipedia.org/wiki/Overfitting>`_. The bias introduced
+    `overfitting <https://en.wikipedia.org/wiki/Overfitting>`_. The bias introduced
     by the ridge regression is called a
-    `regularization <http://en.wikipedia.org/wiki/Regularization_%28machine_learning%29>`_.
+    `regularization <https://en.wikipedia.org/wiki/Regularization_%28machine_learning%29>`_.
 
 .. _sparsity:
 
@@ -275,15 +275,15 @@ Sparsity
 ----------
 
 
-.. |diabetes_ols_1| image:: ../../auto_examples/linear_model/images/plot_ols_3d_001.png
+.. |diabetes_ols_1| image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_3d_001.png
    :target: ../../auto_examples/linear_model/plot_ols_3d.html
    :scale: 65
 
-.. |diabetes_ols_3| image:: ../../auto_examples/linear_model/images/plot_ols_3d_003.png
+.. |diabetes_ols_3| image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_3d_003.png
    :target: ../../auto_examples/linear_model/plot_ols_3d.html
    :scale: 65
 
-.. |diabetes_ols_2| image:: ../../auto_examples/linear_model/images/plot_ols_3d_002.png
+.. |diabetes_ols_2| image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_3d_002.png
    :target: ../../auto_examples/linear_model/plot_ols_3d.html
    :scale: 65
 
@@ -339,9 +339,9 @@ application of Occam's razor: *prefer simpler models*.
     Different algorithms can be used to solve the same mathematical
     problem. For instance the ``Lasso`` object in scikit-learn
     solves the lasso regression problem using a
-    `coordinate decent <http://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
+    `coordinate descent <https://en.wikipedia.org/wiki/Coordinate_descent>`_ method,
     that is efficient on large datasets. However, scikit-learn also
-    provides the :class:`LassoLars` object using the *LARS* algorthm,
+    provides the :class:`LassoLars` object using the *LARS* algorithm,
     which is very efficient for problems in which the weight vector estimated
     is very sparse (i.e. problems with very few observations).
 
@@ -350,13 +350,13 @@ application of Occam's razor: *prefer simpler models*.
 Classification
 ---------------
 
-.. image:: ../../auto_examples/linear_model/images/plot_logistic_001.png
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_logistic_001.png
    :target: ../../auto_examples/linear_model/plot_logistic.html
    :scale: 65
    :align: right
 
 For classification, as in the labeling
-`iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ task, linear
+`iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ task, linear
 regression is not the right approach as it will give too much weight to
 data far from the decision frontier. A linear approach is to fit a sigmoid
 function or **logistic** function:
@@ -377,7 +377,7 @@ function or **logistic** function:
 
 This is known as :class:`LogisticRegression`.
 
-.. image:: ../../auto_examples/linear_model/images/plot_iris_logistic_001.png
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_iris_logistic_001.png
    :target: ../../auto_examples/linear_model/plot_iris_logistic.html
    :scale: 83
 
@@ -402,10 +402,10 @@ This is known as :class:`LogisticRegression`.
    model. Leave out the last 10% and test prediction performance on these
    observations.
 
-   .. literalinclude:: ../../auto_examples/exercises/digits_classification_exercise.py
+   .. literalinclude:: ../../auto_examples/exercises/plot_digits_classification_exercise.py
        :lines: 15-19
 
-   Solution: :download:`../../auto_examples/exercises/digits_classification_exercise.py`
+   Solution: :download:`../../auto_examples/exercises/plot_digits_classification_exercise.py`
 
 
 Support vector machines (SVMs)
@@ -425,11 +425,11 @@ the separating line (less regularization).
 
 .. currentmodule :: sklearn.svm
 
-.. |svm_margin_unreg| image:: ../../auto_examples/svm/images/plot_svm_margin_001.png
+.. |svm_margin_unreg| image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_001.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
    :scale: 70
 
-.. |svm_margin_reg| image:: ../../auto_examples/svm/images/plot_svm_margin_002.png
+.. |svm_margin_reg| image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_002.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
    :scale: 70
 
@@ -443,7 +443,7 @@ the separating line (less regularization).
 
 .. topic:: Example:
 
- - :ref:`example_svm_plot_iris.py`
+ - :ref:`sphx_glr_auto_examples_svm_plot_iris.py`
 
 
 SVMs can be used in regression --:class:`SVR` (Support Vector Regression)--, or in
@@ -455,7 +455,7 @@ classification --:class:`SVC` (Support Vector Classification).
     >>> svc = svm.SVC(kernel='linear')
     >>> svc.fit(iris_X_train, iris_y_train)    # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-        decision_function_shape=None, degree=3, gamma='auto', kernel='linear',
+        decision_function_shape='ovr', degree=3, gamma='auto', kernel='linear',
         max_iter=-1, probability=False, random_state=None, shrinking=True,
         tol=0.001, verbose=False)
 
@@ -476,11 +476,11 @@ build a decision function that is not linear but may be polynomial instead.
 This is done using the *kernel trick* that can be seen as
 creating a decision energy by positioning *kernels* on observations:
 
-.. |svm_kernel_linear| image:: ../../auto_examples/svm/images/plot_svm_kernels_001.png
+.. |svm_kernel_linear| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
    :scale: 65
 
-.. |svm_kernel_poly| image:: ../../auto_examples/svm/images/plot_svm_kernels_002.png
+.. |svm_kernel_poly| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
    :scale: 65
 
@@ -518,7 +518,7 @@ creating a decision energy by positioning *kernels* on observations:
 
 
 
-.. |svm_kernel_rbf| image:: ../../auto_examples/svm/images/plot_svm_kernels_003.png
+.. |svm_kernel_rbf| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
    :scale: 65
 
@@ -547,11 +547,11 @@ creating a decision energy by positioning *kernels* on observations:
 
 .. topic:: **Interactive example**
 
-   See the :ref:`SVM GUI <example_applications_svm_gui.py>` to download
+   See the :ref:`SVM GUI <sphx_glr_auto_examples_applications_svm_gui.py>` to download
    ``svm_gui.py``; add data points of both classes with right and left button,
    fit the model and change parameters and data.
 
-.. image:: ../../auto_examples/datasets/images/plot_iris_dataset_001.png
+.. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
     :target: ../../auto_examples/datasets/plot_iris_dataset.html
     :align: right
     :scale: 70

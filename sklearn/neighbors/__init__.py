@@ -13,6 +13,7 @@ from .regression import KNeighborsRegressor, RadiusNeighborsRegressor
 from .nearest_centroid import NearestCentroid
 from .kde import KernelDensity
 from .approximate import LSHForest
+from .lof import LocalOutlierFactor
 
 __all__ = ['BallTree',
            'DistanceMetric',
@@ -26,4 +27,5 @@ __all__ = ['BallTree',
            'kneighbors_graph',
            'radius_neighbors_graph',
            'KernelDensity',
-           'LSHForest']
+           'LSHForest',
+           'LocalOutlierFactor']

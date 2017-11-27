@@ -14,7 +14,7 @@ training set, classify a sample and plot the time taken as a function
 of the number of dimensions.
 """
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 import gc
 from datetime import datetime
 
@@ -84,14 +84,14 @@ if __name__ == '__main__':
         bench_scikit_tree_regressor(X, Y)
 
     xx = range(0, n * step, step)
-    pl.figure('scikit-learn tree benchmark results')
-    pl.subplot(211)
-    pl.title('Learning with varying number of samples')
-    pl.plot(xx, scikit_classifier_results, 'g-', label='classification')
-    pl.plot(xx, scikit_regressor_results, 'r-', label='regression')
-    pl.legend(loc='upper left')
-    pl.xlabel('number of samples')
-    pl.ylabel('Time (s)')
+    plt.figure('scikit-learn tree benchmark results')
+    plt.subplot(211)
+    plt.title('Learning with varying number of samples')
+    plt.plot(xx, scikit_classifier_results, 'g-', label='classification')
+    plt.plot(xx, scikit_regressor_results, 'r-', label='regression')
+    plt.legend(loc='upper left')
+    plt.xlabel('number of samples')
+    plt.ylabel('Time (s)')
 
     scikit_classifier_results = []
     scikit_regressor_results = []
@@ -113,12 +113,12 @@ if __name__ == '__main__':
         bench_scikit_tree_regressor(X, Y)
 
     xx = np.arange(start_dim, start_dim + n * step, step)
-    pl.subplot(212)
-    pl.title('Learning in high dimensional spaces')
-    pl.plot(xx, scikit_classifier_results, 'g-', label='classification')
-    pl.plot(xx, scikit_regressor_results, 'r-', label='regression')
-    pl.legend(loc='upper left')
-    pl.xlabel('number of dimensions')
-    pl.ylabel('Time (s)')
-    pl.axis('tight')
-    pl.show()
+    plt.subplot(212)
+    plt.title('Learning in high dimensional spaces')
+    plt.plot(xx, scikit_classifier_results, 'g-', label='classification')
+    plt.plot(xx, scikit_regressor_results, 'r-', label='regression')
+    plt.legend(loc='upper left')
+    plt.xlabel('number of dimensions')
+    plt.ylabel('Time (s)')
+    plt.axis('tight')
+    plt.show()

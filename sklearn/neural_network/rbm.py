@@ -11,6 +11,7 @@ import time
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
@@ -21,7 +22,6 @@ from ..utils import gen_even_slices
 from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
-from ..utils.fixes import expit             # logistic function
 from ..utils.validation import check_is_fitted
 
 
@@ -243,7 +243,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                     0.01,
                     (self.n_components, X.shape[1])
                 ),
-                order='fortran')
+                order='F')
         if not hasattr(self, 'intercept_hidden_'):
             self.intercept_hidden_ = np.zeros(self.n_components, )
         if not hasattr(self, 'intercept_visible_'):
@@ -340,7 +340,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         self.components_ = np.asarray(
             rng.normal(0, 0.01, (self.n_components, X.shape[1])),
-            order='fortran')
+            order='F')
         self.intercept_hidden_ = np.zeros(self.n_components, )
         self.intercept_visible_ = np.zeros(X.shape[1], )
         self.h_samples_ = np.zeros((self.batch_size, self.n_components))

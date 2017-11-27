@@ -10,7 +10,7 @@ shifted to avoid overlapping.
 """
 
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# Licence: BSD
+# License: BSD
 
 print(__doc__)
 import numpy as np

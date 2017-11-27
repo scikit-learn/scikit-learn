@@ -34,7 +34,7 @@ different :ref:`feature extraction <feature_extraction>` methods supported by
 scikit-learn. However, when working with data that needs vectorization and
 where the set of features or values is not known in advance one should take
 explicit care. A good example is text classification where unknown terms are
-likely to be found during training. It is possible to use a statefull
+likely to be found during training. It is possible to use a stateful
 vectorizer if making multiple passes over the data is reasonable from an
 application point of view. Otherwise, one can turn up the difficulty by using
 a stateless feature extractor. Currently the preferred way to do this is to
@@ -62,16 +62,22 @@ Here is a list of incremental estimators for different tasks:
       + :class:`sklearn.linear_model.Perceptron`
       + :class:`sklearn.linear_model.SGDClassifier`
       + :class:`sklearn.linear_model.PassiveAggressiveClassifier`
+      + :class:`sklearn.neural_network.MLPClassifier`
   - Regression
       + :class:`sklearn.linear_model.SGDRegressor`
       + :class:`sklearn.linear_model.PassiveAggressiveRegressor`
+      + :class:`sklearn.neural_network.MLPRegressor`
   - Clustering
       + :class:`sklearn.cluster.MiniBatchKMeans`
+      + :class:`sklearn.cluster.Birch`
   - Decomposition / feature Extraction
       + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
       + :class:`sklearn.decomposition.IncrementalPCA`
       + :class:`sklearn.decomposition.LatentDirichletAllocation`
-      + :class:`sklearn.cluster.MiniBatchKMeans`
+  - Preprocessing
+      + :class:`sklearn.preprocessing.StandardScaler`
+      + :class:`sklearn.preprocessing.MinMaxScaler`
+      + :class:`sklearn.preprocessing.MaxAbsScaler`
 
 For classification, a somewhat important thing to note is that although a
 stateless feature extraction routine may be able to cope with new/unseen
@@ -90,14 +96,14 @@ come late in the stream as their learning rate decreases over time.
 Examples
 --------
 Finally, we have a full-fledged example of
-:ref:`example_applications_plot_out_of_core_classification.py`. It is aimed at
+:ref:`sphx_glr_auto_examples_applications_plot_out_of_core_classification.py`. It is aimed at
 providing a starting point for people wanting to build out-of-core learning
 systems and demonstrates most of the notions discussed above.
 
 Furthermore, it also shows the evolution of the performance of different
 algorithms with the number of processed examples.
 
-.. |accuracy_over_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_001.png
+.. |accuracy_over_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_001.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 
@@ -109,7 +115,7 @@ algorithms, ``MultinomialNB`` is the most expensive, but its overhead can be
 mitigated by increasing the size of the mini-batches (exercise: change
 ``minibatch_size`` to 100 and 10000 in the program and compare).
 
-.. |computation_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_003.png
+.. |computation_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_003.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 

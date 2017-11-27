@@ -13,7 +13,7 @@ The rows being the samples and the columns being:
 Sepal Length, Sepal Width, Petal Length	and Petal Width.
 
 The below plot uses the first two features.
-See `here <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
+See `here <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
 information on this dataset.
 """
 print(__doc__)
@@ -31,7 +31,7 @@ from sklearn.decomposition import PCA
 # import some data to play with
 iris = datasets.load_iris()
 X = iris.data[:, :2]  # we only take the first two features.
-Y = iris.target
+y = iris.target
 
 x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
 y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
@@ -40,7 +40,8 @@ plt.figure(2, figsize=(8, 6))
 plt.clf()
 
 # Plot the training points
-plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired)
+plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Set1,
+            edgecolor='k')
 plt.xlabel('Sepal length')
 plt.ylabel('Sepal width')
 
@@ -54,8 +55,8 @@ plt.yticks(())
 fig = plt.figure(1, figsize=(8, 6))
 ax = Axes3D(fig, elev=-150, azim=110)
 X_reduced = PCA(n_components=3).fit_transform(iris.data)
-ax.scatter(X_reduced[:, 0], X_reduced[:, 1], X_reduced[:, 2], c=Y,
-           cmap=plt.cm.Paired)
+ax.scatter(X_reduced[:, 0], X_reduced[:, 1], X_reduced[:, 2], c=y,
+           cmap=plt.cm.Set1, edgecolor='k', s=40)
 ax.set_title("First three PCA directions")
 ax.set_xlabel("1st eigenvector")
 ax.w_xaxis.set_ticklabels([])

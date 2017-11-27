@@ -1,4 +1,4 @@
-# Authors: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Authors: Lars Buitinck
 #          Dan Blanchard <dblanchard@ets.org>
 # License: BSD 3 clause
 

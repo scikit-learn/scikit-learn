@@ -51,13 +51,13 @@ linear algebra libraries optimizations etc.). Here we see on a setting
 with few features that independently of estimator choice the bulk mode is
 always faster, and for some of them by 1 to 2 orders of magnitude:
 
-.. |atomic_prediction_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_001.png
+.. |atomic_prediction_latency| image::  ../auto_examples/applications/images/sphx_glr_plot_prediction_latency_001.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
 .. centered:: |atomic_prediction_latency|
 
-.. |bulk_prediction_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_002.png
+.. |bulk_prediction_latency| image::  ../auto_examples/applications/images/sphx_glr_plot_prediction_latency_002.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
@@ -65,8 +65,27 @@ always faster, and for some of them by 1 to 2 orders of magnitude:
 
 To benchmark different estimators for your case you can simply change the
 ``n_features`` parameter in this example:
-:ref:`example_applications_plot_prediction_latency.py`. This should give
+:ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py`. This should give
 you an estimate of the order of magnitude of the prediction latency.
+
+.. topic:: Configuring Scikit-learn for reduced validation overhead
+
+    Scikit-learn does some validation on data that increases the overhead per
+    call to ``predict`` and similar functions. In particular, checking that
+    features are finite (not NaN or infinite) involves a full pass over the
+    data. If you ensure that your data is acceptable, you may suppress
+    checking for finiteness by setting the environment variable
+    ``SKLEARN_ASSUME_FINITE`` to a non-empty string before importing
+    scikit-learn, or configure it in Python with :func:`sklearn.set_config`.
+    For more control than these global settings, a :func:`config_context`
+    allows you to set this configuration within a specified context::
+
+      >>> import sklearn
+      >>> with sklearn.config_context(assume_finite=True):
+      ...    pass  # do learning/prediction here with reduced validation
+
+    Note that this will affect all uses of
+    :func:`sklearn.utils.assert_all_finite` within the context.
 
 Influence of the Number of Features
 -----------------------------------
@@ -79,7 +98,7 @@ From a computing perspective it also means that the number of basic operations
 too. Here is a graph of the evolution of the prediction latency with the
 number of features:
 
-.. |influence_of_n_features_on_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_003.png
+.. |influence_of_n_features_on_latency| image::  ../auto_examples/applications/images/sphx_glr_plot_prediction_latency_003.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
@@ -92,7 +111,7 @@ memory footprint and estimator).
 Influence of the Input Data Representation
 ------------------------------------------
 
-Scipy provides sparse matrix datastructures which are optimized for storing
+Scipy provides sparse matrix data structures which are optimized for storing
 sparse data. The main feature of sparse formats is that you don't store zeros
 so if your data is sparse then you use much less memory. A non-zero value in
 a sparse (`CSR or CSC <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_)
@@ -148,7 +167,7 @@ describe it fully. Of course sparsity influences in turn the prediction time
 as the sparse dot-product takes time roughly proportional to the number of
 non-zero coefficients.
 
-.. |en_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_001.png
+.. |en_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_001.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
     :scale: 80
 
@@ -163,7 +182,7 @@ support vector. In the following graph the ``nu`` parameter of
 :class:`sklearn.svm.classes.NuSVR` was used to influence the number of
 support vectors.
 
-.. |nusvr_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_002.png
+.. |nusvr_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_002.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
     :scale: 80
 
@@ -175,7 +194,7 @@ important role. Latency and throughput should scale linearly with the number
 of trees. In this case we used directly the ``n_estimators`` parameter of
 :class:`sklearn.ensemble.gradient_boosting.GradientBoostingRegressor`.
 
-.. |gbt_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_003.png
+.. |gbt_model_complexity| image::  ../auto_examples/applications/images/sphx_glr_plot_model_complexity_influence_003.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
     :scale: 80
 
@@ -199,7 +218,7 @@ files, tokenizing the text and hashing it into a common vector space) is
 taking 100 to 500 times more time than the actual prediction code, depending on
 the chosen model.
 
- .. |prediction_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_004.png
+ .. |prediction_time| image::  ../auto_examples/applications/images/sphx_glr_plot_out_of_core_classification_004.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 
@@ -215,10 +234,10 @@ Prediction Throughput
 Another important metric to care about when sizing production systems is the
 throughput i.e. the number of predictions you can make in a given amount of
 time. Here is a benchmark from the
-:ref:`example_applications_plot_prediction_latency.py` example that measures
+:ref:`sphx_glr_auto_examples_applications_plot_prediction_latency.py` example that measures
 this quantity for a number of estimators on synthetic data:
 
-.. |throughput_benchmark| image::  ../auto_examples/applications/images/plot_prediction_latency_004.png
+.. |throughput_benchmark| image::  ../auto_examples/applications/images/sphx_glr_plot_prediction_latency_004.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
@@ -241,8 +260,8 @@ Linear algebra libraries
 As scikit-learn relies heavily on Numpy/Scipy and linear algebra in general it
 makes sense to take explicit care of the versions of these libraries.
 Basically, you ought to make sure that Numpy is built using an optimized `BLAS
-<http://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_ /
-`LAPACK <http://en.wikipedia.org/wiki/LAPACK>`_ library.
+<https://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_ /
+`LAPACK <https://en.wikipedia.org/wiki/LAPACK>`_ library.
 
 Not all models benefit from optimized BLAS and Lapack implementations. For
 instance models based on (randomized) decision trees typically do not rely on
@@ -308,7 +327,7 @@ compromise between model compactness and prediction power. One can also
 further tune the ``l1_ratio`` parameter (in combination with the
 regularization strength ``alpha``) to control this tradeoff.
 
-A typical `benchmark <https://github.com/scikit-learn/scikit-learn/tree/master/benchmarks/bench_sparsify.py>`_
+A typical `benchmark <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_sparsify.py>`_
 on synthetic data yields a >30% decrease in latency when both the model and
 input are sparse (with 0.000024 and 0.027400 non-zero coefficients ratio
 respectively). Your mileage may vary depending on the sparsity and size of
