@@ -16,8 +16,8 @@ of the data. One way to make linear model more powerful on continuous data
 is to use discretization (also known as binning). In the example, we
 discretize the feature and one-hot encode the transformed data. Note that if
 the bins are not reasonably wide, there would appear to be a substantially
-increased risk of overfitting, so the discretiser parameters should usually
-be tuned under cv.
+increased risk of overfitting, so the discretizer parameters should usually
+be tuned under cross validation.
 
 After discretization, linear regression and decision tree make exactly the
 same prediction. As features are constant within each bin, any model must
