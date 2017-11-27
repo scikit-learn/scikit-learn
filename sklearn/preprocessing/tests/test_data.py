@@ -2229,15 +2229,16 @@ def test_quantile_transform_valid_axis():
 
 def test_boxcox_transformer():
     bct = BoxCoxTransformer()
-
-    # 1D functionality test
     X = np.abs(X_1col)
     assert_raises(NotFittedError, bct.transform, X)
+    assert_raises(NotFittedError, bct.inverse_transform, X)
 
+    # 1D functionality test
     X_trans = bct.fit_transform(X)
     X_expected, lmbda_expected = stats.boxcox(X.flatten())
 
     assert_almost_equal(X_expected.reshape(-1, 1), X_trans)
+    assert_almost_equal(X, bct.inverse_transform(X_trans))
     assert_almost_equal(lmbda_expected, bct.lmbdas_[0])
 
     # 2D functionality test
@@ -2247,9 +2248,16 @@ def test_boxcox_transformer():
         X_expected, _ = stats.boxcox(X[:, j].flatten())
         assert_almost_equal(X_trans[:, j], X_expected)
 
-    assert_raises(ValueError, bct.transform, X[:, 0])
 
     # Test that exceptions are raised for negative arrays
     X_with_negatives = X_2d
     assert_raises(ValueError, bct.transform, X_with_negatives)
     assert_raises(ValueError, bct.fit, X_with_negatives)
+
+    # Test that exceptions are raised for arrays with different num_columns
+    assert_raises(ValueError, bct.transform, X[:, 0])
+    assert_raises(ValueError, bct.inverse_transform, X_trans[:, 0])
+
+    # Test inverse transformation
+    X_inv = bct.inverse_transform(X_trans)
+    assert_array_almost_equal(X_inv, X)

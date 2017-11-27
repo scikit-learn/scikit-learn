@@ -2689,47 +2689,29 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             The transformed data after boxcox transform.
 
-        Returns
-        -------
-        X_inv : array-like, shape (n_samples, n_features)
-            The original data.
-
         Notes
         -----
-        The inverse Box-Cox transform is given by::
+        The inverse of the Box-Cox transformation is given by::
 
-        y = log(x * lmbda + 1.) / lmbda,  for lmbda > 0
-            exp(x),                       for lmbda = 0
+        y = (x * lmbda + 1) ** (1 / lmbda),  for lmbda != 0
+            exp(x),                           for lmbda = 0
 
         """
-
+        check_is_fitted(self, 'lmbdas_')
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
 
         if not X.shape[1] == len(self.lmbdas_):
             raise ValueError("X has a different shape than during fitting.")
 
-        X_inv = _transform_selected(X, self._inverse_transform,
-                                    np.arange(len(self.lmbdas_)), copy=False,
-                                    retain_ordering=True)
-        return X_inv
+        for i, lmbda in enumerate(self.lmbdas_):
+            x = X[:, i]
+            if lmbda == 0:
+                x_inv = np.exp(x)
+            else:
+                x_inv = (x * lmbda + 1) ** (1 / lmbda)
+            X[:, i] = x_inv
 
-    def _inverse_transform(self, X):
-        X_inv = X.copy()
-
-        mask = self.lmbdas_ != 0
-        mask_lambdas = self.lmbdas_[mask]
-        Xinv_mask = X_inv[:, mask]
-        Xinv_mask *= mask_lambdas
-
-        np.log1p(Xinv_mask, out=Xinv_mask)
-        Xinv_mask /= mask_lambdas
-
-        np.exp(Xinv_mask, out=Xinv_mask)
-        X_inv[:, mask] = Xinv_mask
-
-        mask = self.lmbdas_ == 0
-        X_inv[:, mask] = np.exp(X_inv[:, mask])
-        return X_inv
+        return X
 
 
 class CategoricalEncoder(BaseEstimator, TransformerMixin):
