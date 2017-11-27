@@ -2249,15 +2249,14 @@ def test_boxcox_transformer():
         assert_almost_equal(X_trans[:, j], X_expected)
         assert_almost_equal(lmbda, bct.lambdas_[j])
 
-
     # Test that exceptions are raised for negative arrays
     X_with_negatives = X_2d
     assert_raises(ValueError, bct.transform, X_with_negatives)
     assert_raises(ValueError, bct.fit, X_with_negatives)
 
     # Test that exceptions are raised for arrays with different num_columns
-    assert_raises(ValueError, bct.transform, X[:, 0])
-    assert_raises(ValueError, bct.inverse_transform, X_trans[:, 0])
+    assert_raises(ValueError, bct.transform, X[:, 0:1])
+    assert_raises(ValueError, bct.inverse_transform, X_trans[:, 0:1])
 
     # Test inverse transformation
     X_inv = bct.inverse_transform(X_trans)

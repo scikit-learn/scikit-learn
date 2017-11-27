@@ -2611,9 +2611,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
     --------
     >>> from sklearn.preprocessing import BoxCoxTransformer
     >>> boxcox = BoxCoxTransformer()
-    >>> data = [[1, 2],
-                [3, 2],
-                [4, 5]]
+    >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(boxcox.fit(data))
     BoxCoxTransformer(copy=True)
     >>> print(boxcox.lambdas_)
