@@ -1,5 +1,7 @@
 import numpy as np
 
+import pytest
+
 from scipy.sparse import issparse
 from scipy.sparse import coo_matrix
 from scipy.sparse import csc_matrix
@@ -23,6 +25,9 @@ from sklearn.preprocessing.label import label_binarize
 
 from sklearn.preprocessing.label import _inverse_binarize_thresholding
 from sklearn.preprocessing.label import _inverse_binarize_multiclass
+from sklearn.preprocessing.label import (
+    _encode_numpy, _encode_pandas, _encode_dict, _factorize_numpy,
+    _factorize_pandas, _factorize_sets)
 
 from sklearn import datasets
 
@@ -513,3 +518,33 @@ def test_inverse_binarize_multiclass():
                                                    [0, 0, 0]]),
                                        np.arange(3))
     assert_array_equal(got, np.array([1, 1, 0]))
+
+
+@pytest.mark.parametrize('engine', ['numpy', 'python', 'pandas'])
+@pytest.mark.parametrize(
+        "values, expected",
+        [(np.array([2, 1, 3, 1, 3], dtype='int64'),
+          np.array([1, 2, 3], dtype='int64')),
+         (np.array(['b', 'a', 'c', 'a', 'c'], dtype=object),
+          np.array(['a', 'b', 'c'], dtype=object)),
+         (np.array(['b', 'a', 'c', 'a', 'c']),
+          np.array(['a', 'b', 'c']))],
+        ids=['int64', 'object', 'str'])
+def test_factorize_encode_utils(engine, values, expected):
+    # test that all different encoders are equivalent
+
+    if engine == 'numpy':
+        factorize = lambda values: _factorize_numpy(values)
+        encode = lambda values, uniques, table: _encode_numpy(values, uniques)
+    elif engine == 'python':
+        factorize = lambda values: _factorize_sets(values)
+        encode = lambda values, uniques, table: _encode_dict(values, uniques, table)
+    elif engine == 'pandas':
+        pytest.importorskip('pandas')
+        factorize = lambda values: _factorize_pandas(values)
+        encode = lambda values, uniques, table: _encode_pandas(values, uniques)
+
+    uniques, table = factorize(values)
+    assert_array_equal(uniques, expected)
+    encoded = encode(values, uniques, table)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))

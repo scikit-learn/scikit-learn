@@ -36,6 +36,91 @@ __all__ = [
 ]
 
 
+_PANDAS_INSTALLED = None
+
+
+def _check_pandas():
+    # return False
+    global _PANDAS_INSTALLED
+
+    if _PANDAS_INSTALLED is None:
+        try:
+            import pandas
+            _PANDAS_INSTALLED = True
+        except ImportError:
+            _PANDAS_INSTALLED = False
+
+    return _PANDAS_INSTALLED
+
+
+# def _encode_numpy(values, uniques=None, encode=True):
+#     if uniques is None:
+#         if encode:
+#             uniques, encoded = np.unique(values, return_inverse=True)
+#             return uniques, encoded
+#         else:
+#             # unique sorts
+#             return np.unique(values)
+#     if encode:
+#         encoded = np.searchsorted(uniques, values)
+#         return uniques, encoded
+#     else:
+#         return uniques
+
+
+def _factorize_numpy(values):
+    # unique sorts
+    return np.unique(values), None
+
+
+def _encode_numpy(values, uniques):
+    return np.searchsorted(uniques, values)
+
+
+def _factorize_sets(values, uniques=None, encode=True):
+    uniques = sorted(set(values))
+    uniques = np.array(uniques, dtype=values.dtype)
+    table = {val: i for i, val in enumerate(uniques)}
+    return uniques, table
+
+
+def _encode_dict(values, uniques, table):
+    return np.array([table[v] for v in values])
+
+
+def _factorize_pandas(values):
+    import pandas as pd
+    _, categories = pd.factorize(values, sort=True)
+    return categories, None
+
+
+def _encode_pandas(values, uniques):
+    import pandas as pd
+    return pd.Categorical(values, categories=uniques).codes
+
+
+def _factorize(values):
+    has_pd = _check_pandas()
+    if has_pd:
+        return _factorize_pandas(values)
+    elif values.dtype == object:
+        return _factorize_sets(values)
+    else:
+        return _factorize_numpy(values)
+
+
+def _encode(values, uniques, table):
+    has_pd = _check_pandas()
+    if has_pd:
+        return _encode_pandas(values, uniques)
+    elif values.dtype == object:
+        if table is None:
+            table = {val: i for i, val in enumerate(uniques)}
+        return _encode_dict(values, uniques, table)
+    else:
+        return _encode_numpy(values, uniques)
+
+
 class LabelEncoder(BaseEstimator, TransformerMixin):
     """Encode labels with value between 0 and n_classes-1.
 
@@ -93,24 +178,24 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        self.classes_ = np.unique(y)
+        self.classes_, self._table = _factorize(y)
         return self
 
-    def fit_transform(self, y):
-        """Fit label encoder and return encoded labels
-
-        Parameters
-        ----------
-        y : array-like of shape [n_samples]
-            Target values.
-
-        Returns
-        -------
-        y : array-like of shape [n_samples]
-        """
-        y = column_or_1d(y, warn=True)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        return y
+    # def fit_transform(self, y):
+    #     """Fit label encoder and return encoded labels
+    #
+    #     Parameters
+    #     ----------
+    #     y : array-like of shape [n_samples]
+    #         Target values.
+    #
+    #     Returns
+    #     -------
+    #     y : array-like of shape [n_samples]
+    #     """
+    #     y = column_or_1d(y, warn=True)
+    #     self.classes_, y = np.unique(y, return_inverse=True)
+    #     return y
 
     def transform(self, y):
         """Transform labels to normalized encoding.
@@ -132,7 +217,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError(
                     "y contains previously unseen labels: %s" % str(diff))
-        return np.searchsorted(self.classes_, y)
+        return _encode(y, uniques=self.classes_, table=self._table)
 
     def inverse_transform(self, y):
         """Transform labels back to original encoding.
