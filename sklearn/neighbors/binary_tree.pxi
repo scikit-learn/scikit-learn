@@ -1513,7 +1513,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array_like
+        X : array-like, shape = [n_samples, n_features]
             An array of points to query.  Last dimension should match dimension
             of training data.
         h : float
@@ -1657,7 +1657,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array_like
+        X : array-like, shape = [n_samples, n_features]
             An array of points to query.  Last dimension should match dimension
             of training data.
         r : array_like
