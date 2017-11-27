@@ -58,6 +58,12 @@ Preprocessing
   the maximum value in the features. :issue:`9151` by
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
+- Added :class:`preprocessing.KBinsDiscretizer` for turning
+  continuous features into categorical or one-hot encoded
+  features. :issue:`7668`, :issue:`9647`, :issue:`10195` and
+  :issue:`10192` by :user:`Henry Lin <hlin117>`, `Hanmin Qin`_
+  and `Tom Dupre la Tour`_.
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
