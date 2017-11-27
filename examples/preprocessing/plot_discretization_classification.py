@@ -116,7 +116,7 @@ for ds_cnt, (X, y) in enumerate(datasets):
     xx, yy = np.meshgrid(
         np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
-    # plot the dataset first
+    # plot the dataset first
     ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
     if ds_cnt == 0:
         ax.set_title("Input data")
@@ -165,8 +165,10 @@ for ds_cnt, (X, y) in enumerate(datasets):
 
         if ds_cnt == 0:
             ax.set_title(name.replace(' + ', '\n'))
-        ax.text(0.95, 0.05, ('%.2f' % score).lstrip('0'), size=15,
+        ax.text(0.95, 0.06, ('%.2f' % score).lstrip('0'), size=15,
+                bbox=dict(boxstyle='round', alpha=0.8, facecolor='white'),
                 transform=ax.transAxes, horizontalalignment='right')
+
         i += 1
 
 plt.tight_layout()
