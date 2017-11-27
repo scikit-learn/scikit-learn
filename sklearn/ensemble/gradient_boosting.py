@@ -1057,7 +1057,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             else:
                 X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
                                                  dtype=np.int32)
-        
+
         # fit the boosting stages
         n_stages = self._fit_stages(X, y, y_pred, sample_weight, self._rng,
                                     X_val, y_val, sample_weight_val,

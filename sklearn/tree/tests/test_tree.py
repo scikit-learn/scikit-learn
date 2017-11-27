@@ -506,8 +506,10 @@ def test_error():
         # Invalid values for parameters
         if name == "DecisionTreeRegressor" or name == "DecisionTreeClassifier":
             assert_raise_message(ValueError, "'presort' should be either 'auto' or"
-                                 " a boolean (True/False). Got 'some_string' instead.",
-                                 TreeEstimator(presort='some_string').fit, X, y)
+                                 " a boolean (True/False)."
+                                 " Got 'some_string' instead.",
+                                 TreeEstimator(presort='some_string')
+                                 .fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
