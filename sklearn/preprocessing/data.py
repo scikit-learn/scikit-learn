@@ -2609,17 +2609,18 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.preprocessing import BoxCoxTransformer
     >>> boxcox = BoxCoxTransformer()
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(boxcox.fit(data))
     BoxCoxTransformer(copy=True)
-    >>> print(boxcox.lambdas_)
-    [1.051, -2.345]
-    >>> print(boxcox.transform(data))
-    [[ 0.          0.34246381]
-     [ 2.06843241  0.34246381]
-     [ 3.13520569  0.41657454]]
+    >>> print(np.round(boxcox.lambdas_, 3))
+    [ 1.052 -2.345]
+    >>> print(np.round(boxcox.transform(data), 3))
+    [[ 0.     0.342]
+     [ 2.068  0.342]
+     [ 3.135  0.417]]
 
     Notes
     -----
