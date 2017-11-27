@@ -209,8 +209,7 @@ def check_classification_synthetic(presort, loss):
 
 
 def test_classification_synthetic():
-    for presort, loss in product(('auto', True, False),
-                                 ('deviance', 'exponential')):
+    for presort, loss in product(('auto', True, False), ('deviance', 'exponential')):
         yield check_classification_synthetic, presort, loss
 
 
