@@ -2235,18 +2235,19 @@ def test_boxcox_transformer():
 
     # 1D functionality test
     X_trans = bct.fit_transform(X)
-    X_expected, lmbda_expected = stats.boxcox(X.flatten())
+    X_expected, lambda_expected = stats.boxcox(X.flatten())
 
     assert_almost_equal(X_expected.reshape(-1, 1), X_trans)
     assert_almost_equal(X, bct.inverse_transform(X_trans))
-    assert_almost_equal(lmbda_expected, bct.lmbdas_[0])
+    assert_almost_equal(lambda_expected, bct.lambdas_[0])
 
     # 2D functionality test
     X = np.abs(X_2d)
     X_trans = bct.fit_transform(X)
     for j in range(X_trans.shape[1]):
-        X_expected, _ = stats.boxcox(X[:, j].flatten())
+        X_expected, lmbda = stats.boxcox(X[:, j].flatten())
         assert_almost_equal(X_trans[:, j], X_expected)
+        assert_almost_equal(lmbda, bct.lambdas_[j])
 
 
     # Test that exceptions are raised for negative arrays

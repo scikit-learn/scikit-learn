@@ -2580,38 +2580,54 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
 
 class BoxCoxTransformer(BaseEstimator, TransformerMixin):
-    """BoxCox transformation on individual features.
+    """Apply the Box-Cox transform featurewise to make data more Gaussian-like.
 
-    Boxcox transform wil be applied on each feature (each column of
-    the data matrix) with lambda evaluated to maximise the log-likelihood
+    The Box-Cox transformation is a monotonic transformation that is
+    applied to make data more Gaussian-like. This is useful for solving
+    modeling issues related to heteroscedasticity (non-constant variance),
+    or other situations where normality is desired.
+
+    Box-Cox requires input data to be strictly positive. The optimal value
+    for the parameter, lambda, is estimated through maximum likelihood.
+
+    The Box-Cox transformation is given by::
+
+        if lambda == 0:
+            X_trans = log(X)
+        else:
+            X_trans = (X ** lambda - 1) / lambda
 
     Parameters
     ----------
-    transformed_features : "all" or array of indices or mask
-        Specify what features are to be transformed.
-
-        - "all" (default): All features are to be transformed.
-        - array of int: Array of feature indices to be transformed..
-        - mask: Array of length n_features and with dtype=bool.
-
     copy : boolean, optional, default=True
         Set to False to perform inplace computation.
 
     Attributes
     ----------
-    lmbdas_ : array of float, shape (n_transformed_features,)
-        The parameters of the BoxCox transform for the selected features.
-    n_features_ : int
-        Number of features in input during fit
+    lambdas_ : array of float, shape (n_features,)
+        The parameters of the Box-Cox transformation for the selected features.
+
+    Examples
+    --------
+    >>> from sklearn.preprocessing import BoxCoxTransformer
+    >>> boxcox = BoxCoxTransformer()
+    >>> data = [[1, 2],
+                [3, 2],
+                [4, 5]]
+    >>> print(boxcox.fit(data))
+    BoxCoxTransformer(copy=True)
+    >>> print(boxcox.lambdas_)
+    [1.051, -2.345]
+    >>> print(boxcox.transform(data))
+    [[ 0.          0.34246381]
+     [ 2.06843241  0.34246381]
+     [ 3.13520569  0.41657454]]
 
     Notes
     -----
-    The Box-Cox transform is given by::
-
-        y = (x ** lmbda - 1.) / lmbda,  for lmbda > 0
-            log(x),                     for lmbda = 0
-
-    ``boxcox`` requires the input data to be positive.
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
     References
     ----------
@@ -2619,21 +2635,18 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
     Royal Statistical Society B, 26, 211-252 (1964).
 
     """
-    def __init__(self, transformed_features="all", copy=True):
-        self.transformed_features = transformed_features
+    def __init__(self, copy=True):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Estimate lambda for each feature to maximise log-likelihood.
-
+        """Estimate the optimal parameter for each feature using maximum likelihood.
 
         Parameters
         ----------
         X : array-like, shape [n_samples, n_features]
-            The data to fit by apply boxcox transform,
-            to each of the features and learn the lambda.
+            The data used to estimate the Box-Cox transformation parameters.
 
-        y : ignored
+        y : Ignored
 
         Returns
         -------
@@ -2646,10 +2659,10 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             raise ValueError("The Box-Cox transformation can only be applied "
                              "to strictly positive data")
 
-        self.lmbdas_ = []
+        self.lambdas_ = []
         for col in X.T:
             _, lmbda = stats.boxcox(col, lmbda=None)
-            self.lmbdas_.append(lmbda)
+            self.lambdas_.append(lmbda)
 
         return self
 
@@ -2659,51 +2672,45 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            The data to apply boxcox transform.
-
-        Returns
-        -------
-        X_tr : array-like, shape (n_samples, n_features)
-            The transformed data.
+            The data to be transformed using the Box-Cox transformation.
         """
-        check_is_fitted(self, 'lmbdas_')
+        check_is_fitted(self, 'lambdas_')
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
 
         if np.any(X <= 0):
             raise ValueError("The Box-Cox transformation can only be applied "
                              "to strictly positive data")
 
-        if not len(self.lmbdas_) == X.shape[1]:
+        if not len(self.lambdas_) == X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
 
-        for i, lmbda in enumerate(self.lmbdas_):
+        for i, lmbda in enumerate(self.lambdas_):
             X[:, i] = stats.boxcox(X[:, i].flatten(), lmbda=lmbda)
 
         return X
 
     def inverse_transform(self, X):
-        """Inverse transform each feature using the lambdas evaluated during fit time
+        """Undo the normalization of each feature.
+
+        The inverse of the Box-Cox transformation is given by::
+
+            if lambda == 0:
+                X = exp(X_trans)
+            else:
+                X = (X_trans * lambda + 1) ** (1 / lambda)
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            The transformed data after boxcox transform.
-
-        Notes
-        -----
-        The inverse of the Box-Cox transformation is given by::
-
-        y = (x * lmbda + 1) ** (1 / lmbda),  for lmbda != 0
-            exp(x),                           for lmbda = 0
-
+            The Box-Cox transformed data.
         """
-        check_is_fitted(self, 'lmbdas_')
+        check_is_fitted(self, 'lambdas_')
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
 
-        if not X.shape[1] == len(self.lmbdas_):
+        if not X.shape[1] == len(self.lambdas_):
             raise ValueError("X has a different shape than during fitting.")
 
-        for i, lmbda in enumerate(self.lmbdas_):
+        for i, lmbda in enumerate(self.lambdas_):
             x = X[:, i]
             if lmbda == 0:
                 x_inv = np.exp(x)
