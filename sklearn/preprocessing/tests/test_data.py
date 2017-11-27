@@ -9,7 +9,7 @@ import warnings
 import re
 import numpy as np
 import numpy.linalg as la
-from scipy import sparse
+from scipy import sparse, stats
 from distutils.version import LooseVersion
 
 from sklearn.utils import gen_batches
@@ -55,7 +55,7 @@ from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.preprocessing.data import BoxCoxTransformer
-from sklearn.exceptions import DataConversionWarning
+from sklearn.exceptions import DataConversionWarning, NotFittedError
 
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import cross_val_predict
@@ -2228,42 +2228,28 @@ def test_quantile_transform_valid_axis():
 
 
 def test_boxcox_transformer():
-    n_samples = 3000
-    n_features = 2
-    rng = np.random.RandomState(42)
-    X_orig = rng.randn(n_samples, n_features)
-    lambda0 = 0.1
-    X = np.ones((n_samples, n_features))
-    X[:, 0] = np.exp(X_orig[:, 0])
-    X[:, 1] = ((X_orig[:, 1] * lambda0 + 1)) ** (1. / lambda0)
+    bct = BoxCoxTransformer()
 
-    transformed_features = [0]
-    bct = BoxCoxTransformer(transformed_features=transformed_features)
+    # 1D functionality test
+    X = np.abs(X_1col)
+    assert_raises(NotFittedError, bct.transform, X)
 
-    bct.fit(X)
-    assert_true(len(bct.lambdas_), 1)
-    X_tr = bct.transform(X)
-    assert_true(X_tr.shape, X.shape)
-    assert_true(np.min(X_tr[:, 0]) < 0.)
-    assert_true(np.min(X_tr[:, 1]) > 0.)
-    X_or = bct.inverse_transform(X_tr)
-    assert_array_almost_equal(X_or, X, 10)
+    X_trans = bct.fit_transform(X)
+    X_expected, lmbda_expected = stats.boxcox(X.flatten())
 
-    bct.set_params(transformed_features=np.array([False, True]))
-    bct.fit(X)
-    assert_true(len(bct.lambdas_), 1)
-    X_tr = bct.transform(X)
-    X_or = bct.inverse_transform(X_tr)
-    assert_true(X_tr.shape, X.shape)
-    assert_true(np.min(X_tr[:, 0]) > 0.)
-    assert_true(np.min(X_tr[:, 1]) < 0.)
-    assert_array_almost_equal(X_or, X, 10)
+    assert_almost_equal(X_expected.reshape(-1, 1), X_trans)
+    assert_almost_equal(lmbda_expected, bct.lmbdas_[0])
 
-    bct.set_params(transformed_features="all")
-    bct.fit(X)
-    assert_true(len(bct.lambdas_), 2)
-    X_tr = bct.transform(X)
-    assert_true(X_tr.shape, X.shape)
-    assert_true(np.min(X_tr[:, 0]) < 0.)
-    assert_true(np.min(X_tr[:, 1]) < 0.)
-    assert_array_almost_equal(X_or, X, 10)
+    # 2D functionality test
+    X = np.abs(X_2d)
+    X_trans = bct.fit_transform(X)
+    for j in range(X_trans.shape[1]):
+        X_expected, _ = stats.boxcox(X[:, j].flatten())
+        assert_almost_equal(X_trans[:, j], X_expected)
+
+    assert_raises(ValueError, bct.transform, X[:, 0])
+
+    # Test that exceptions are raised for negative arrays
+    X_with_negatives = X_2d
+    assert_raises(ValueError, bct.transform, X_with_negatives)
+    assert_raises(ValueError, bct.fit, X_with_negatives)
