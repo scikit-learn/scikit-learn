@@ -202,13 +202,15 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
     cdef Py_ssize_t K = estimators.shape[1]
     cdef Tree tree
 
+    err_msg_wrong_type = ("X should be in np.ndarray or csr_matrix format,"
+                          " got {}".format(type(X)))
     if issparse(X):
-        assert X.format == 'csr'
+        if X.format != 'csr':
+            raise ValueError(err_msg_wrong_type)
         _predict_regression_tree_stages_sparse(estimators, X, scale, out)
     else:
         if not isinstance(X, np.ndarray):
-            raise ValueError("X should be in np.ndarray or csr_matrix format,"
-                             "got %s" % type(X))
+            raise ValueError(err_msg_wrong_type)
 
         for i in range(n_estimators):
             for k in range(K):

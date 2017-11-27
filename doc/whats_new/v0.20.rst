@@ -146,6 +146,12 @@ Classifiers and regressors
   updated estimates for the standard deviation and the coefficients.
   :issue:`10153` by :user:`Jörg Döpfert <jdoepfert>`.
 
+- Fixed a bug when fitting :class:`ensemble.GradientBoostingClassifier` or
+  :class:`ensemble.GradientBoostingRegressor` with ``warm_start=True`` which
+  previously raised a segmentation fault due to a non-conversion of CSC
+  matrix into CSR format expected by ``decision_function``. :issue:`9991` by
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
@@ -184,12 +190,6 @@ Decomposition, manifold learning and clustering
 - Fixed a bug in :func:`datasets.make_circles`, where no odd number of data
   points could be generated. :issue:`10037` by :user:`Christian Braune
   <christianbraune79>`_.
-
-- Fixed a bug when fitting :class:`ensemble.GradientBoostingClassifier` or
-  :class:`ensemble.GradientBoostingRegressor` with ``warm_start=True`` which
-  previously raised a segmentation fault due to a non-conversion of CSC
-  matrix into CSR format expected by ``decision_function``. :issue:`9991` by
-  :user:`Guillaume Lemaitre <glemaitre>`.
 
 Metrics
 

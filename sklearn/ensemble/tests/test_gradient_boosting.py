@@ -16,6 +16,7 @@ from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
+from sklearn.ensemble._gradient_boosting import predict_stages
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
@@ -377,6 +378,20 @@ def test_check_inputs_predict():
 
     x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
     assert_raises(ValueError, clf.predict, x)
+
+
+def test_check_inputs_predict_stages():
+    # check that predict_stages through an error if the type of X is not
+    # supported
+    x, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    x_sparse_csc = csc_matrix(x)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(x, y)
+    score = np.zeros((y.shape)).reshape(-1, 1)
+    assert_raise_message(ValueError,
+                         "X should be in np.ndarray or csr_matrix format",
+                         predict_stages, clf.estimators_, x_sparse_csc,
+                         clf.learning_rate, score)
 
 
 def test_check_max_features():
