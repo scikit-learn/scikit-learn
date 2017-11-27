@@ -1177,6 +1177,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         score = self.init_.predict(X).astype(np.float64)
         return score
 
+
     def _decision_function(self, X):
         # for use in inner loop, not raveling the output in single-class case,
         # not doing input validation.
@@ -1569,7 +1570,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Regression and binary classification produce an array of shape
             [n_samples].
         """
-        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
         score = self._decision_function(X)
         if score.shape[1] == 1:
             return score.ravel()
@@ -2002,7 +2003,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted values.
         """
-        X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
+        X = check_array(X, dtype=DTYPE, order="C",  accept_sparse='csr')
         return self._decision_function(X).ravel()
 
     def staged_predict(self, X):
