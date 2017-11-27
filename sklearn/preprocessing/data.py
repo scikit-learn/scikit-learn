@@ -2639,11 +2639,11 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Estimate the optimal parameter for each feature using maximum likelihood.
+        """Estimate the optimal lambda for each feature using MLE.
 
         Parameters
         ----------
-        X : array-like, shape [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             The data used to estimate the Box-Cox transformation parameters.
 
         y : Ignored
@@ -2667,7 +2667,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        """Transform each feature using the lambdas evaluated during fit time
+        """Apply Box-Cox to each feature using the fitted lambdas.
 
         Parameters
         ----------
@@ -2682,7 +2682,9 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
                              "to strictly positive data")
 
         if not len(self.lambdas_) == X.shape[1]:
-            raise ValueError("X has a different shape than during fitting.")
+            raise ValueError("Input data has a different number of features "
+                             "than fitting data. Should have {n}, data has {m}"
+                             .format(n=len(self.lambdas_), m=X.shape[1]))
 
         for i, lmbda in enumerate(self.lambdas_):
             X[:, i] = stats.boxcox(X[:, i].flatten(), lmbda=lmbda)
@@ -2690,7 +2692,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         return X
 
     def inverse_transform(self, X):
-        """Undo the normalization of each feature.
+        """Undo the Box-Cox transformation using the fitted lambdas.
 
         The inverse of the Box-Cox transformation is given by::
 
@@ -2708,7 +2710,9 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
 
         if not X.shape[1] == len(self.lambdas_):
-            raise ValueError("X has a different shape than during fitting.")
+            raise ValueError("Input data has a different number of features "
+                             "than fitting data. Should have {n}, data has {m}"
+                             .format(n=len(self.lambdas_), m=X.shape[1]))
 
         for i, lmbda in enumerate(self.lambdas_):
             x = X[:, i]
