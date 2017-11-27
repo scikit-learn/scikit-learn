@@ -853,20 +853,25 @@ def test_warm_start_sparse():
     # Test that all sparse matrix types are supported
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     sparse_matrix_type = [csr_matrix, csc_matrix, coo_matrix]
-    for sparse_constructor in sparse_matrix_type:
-        X_sparse = sparse_constructor(X)
-        for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-            est_dense = Cls(n_estimators=100, max_depth=1, subsample=0.5,
-                            random_state=1, warm_start=True)
-            est_dense.fit(X, y)
-            est_dense.set_params(n_estimators=200)
-            est_dense.fit(X, y)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est_dense = Cls(n_estimators=100, max_depth=1, subsample=0.5,
+                        random_state=1, warm_start=True)
+        est_dense.fit(X, y)
+        est_dense.predict(X)
+        est_dense.set_params(n_estimators=200)
+        est_dense.fit(X, y)
+        est_dense.predict(X)
+
+        for sparse_constructor in sparse_matrix_type:
+            X_sparse = sparse_constructor(X)
 
             est_sparse = Cls(n_estimators=100, max_depth=1, subsample=0.5,
                              random_state=1, warm_start=True)
             est_sparse.fit(X_sparse, y)
+            est_sparse.predict(X)
             est_sparse.set_params(n_estimators=200)
             est_sparse.fit(X_sparse, y)
+            est_sparse.predict(X)
 
             assert_array_almost_equal(est_dense.oob_improvement_[:100],
                                       est_sparse.oob_improvement_[:100])
