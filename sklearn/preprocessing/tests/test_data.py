@@ -2233,31 +2233,43 @@ def test_boxcox_transformer():
     assert_raises(NotFittedError, bct.transform, X)
     assert_raises(NotFittedError, bct.inverse_transform, X)
 
-    # 1D functionality test
+    # 1D test
     X_trans = bct.fit_transform(X)
     X_expected, lambda_expected = stats.boxcox(X.flatten())
 
     assert_almost_equal(X_expected.reshape(-1, 1), X_trans)
     assert_almost_equal(X, bct.inverse_transform(X_trans))
     assert_almost_equal(lambda_expected, bct.lambdas_[0])
+    assert_equal(len(bct.lambdas_), X.shape[1])
+    assert_true(isinstance(bct.lambdas_, np.ndarray))
 
-    # 2D functionality test
+    # 2D test
     X = np.abs(X_2d)
     X_trans = bct.fit_transform(X)
     for j in range(X_trans.shape[1]):
         X_expected, lmbda = stats.boxcox(X[:, j].flatten())
         assert_almost_equal(X_trans[:, j], X_expected)
         assert_almost_equal(lmbda, bct.lambdas_[j])
+    assert_equal(len(bct.lambdas_), X.shape[1])
+    assert_true(isinstance(bct.lambdas_, np.ndarray))
 
-    # Test that exceptions are raised for negative arrays
+    # Exceptions should be raised for negative arrays and zero arrays
     X_with_negatives = X_2d
     assert_raises(ValueError, bct.transform, X_with_negatives)
     assert_raises(ValueError, bct.fit, X_with_negatives)
+    assert_raises(ValueError, bct.fit, np.zeros(X_2d.shape))
 
-    # Test that exceptions are raised for arrays with different num_columns
+    # Exceptions should be raised for arrays with different num_columns
+    # than during fitting
     assert_raises(ValueError, bct.transform, X[:, 0:1])
     assert_raises(ValueError, bct.inverse_transform, X_trans[:, 0:1])
 
     # Test inverse transformation
     X_inv = bct.inverse_transform(X_trans)
     assert_array_almost_equal(X_inv, X)
+
+    # Test 0 case
+    X = np.abs(X_2d)[:, 0:1]
+    bct.lambdas_ = np.array([0])
+    X_trans = bct.transform(X)
+    assert_array_almost_equal(bct.inverse_transform(X_trans), X)

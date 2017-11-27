@@ -2624,6 +2624,9 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
+    See also QuantileTransformer(output_distribution='uniform') for another
+    transformer to normalize data to the Gaussian distribution.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -2662,6 +2665,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         for col in X.T:
             _, lmbda = stats.boxcox(col, lmbda=None)
             self.lambdas_.append(lmbda)
+        self.lambdas_ = np.array(self.lambdas_)
 
         return self
 
