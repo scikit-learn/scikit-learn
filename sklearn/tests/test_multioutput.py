@@ -32,7 +32,7 @@ from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
-from skleann.base import RegressorMixin
+from sklearn.base import RegressorMixin
 from sklearn.utils import shuffle
 
 
