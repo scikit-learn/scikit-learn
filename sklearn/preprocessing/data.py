@@ -2590,12 +2590,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
     Box-Cox requires input data to be strictly positive. The optimal value
     for the parameter, lambda, is estimated through maximum likelihood.
 
-    The Box-Cox transformation is given by::
-
-        if lambda == 0:
-            X_trans = log(X)
-        else:
-            X_trans = (X ** lambda - 1) / lambda
+    Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
     Parameters
     ----------

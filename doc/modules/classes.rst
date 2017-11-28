@@ -1201,6 +1201,7 @@ Model validation
    preprocessing.CategoricalEncoder
    preprocessing.PolynomialFeatures
    preprocessing.QuantileTransformer
+   preprocessing.BoxCoxTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
 

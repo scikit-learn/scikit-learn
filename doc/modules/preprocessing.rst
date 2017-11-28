@@ -261,11 +261,14 @@ defined by :math:`phi` followed by removal of the mean in that space.
 Non-linear transformation
 =========================
 
-Like scalers, :class:`QuantileTransformer` puts all features into the same,
-known range or distribution. However, by performing a rank transformation, it
-smooths out unusual distributions and is less influenced by outliers than
-scaling methods. It does, however, distort correlations and distances within
-and across features.
+Mapping to a Uniform distribution
+---------------------------------
+
+Like scalers, :class:`QuantileTransformer` puts each feature into the same
+range or distribution. However, by performing a rank transformation, it smooths
+out unusual distributions and is less influenced by outliers than scaling
+methods. It does, however, distort correlations and distances within and across
+features.
 
 :class:`QuantileTransformer` and :func:`quantile_transform` provide a
 non-parametric transformation based on the quantile function to map the data to
@@ -299,8 +302,38 @@ This can be confirmed on a independent testing set with similar remarks::
   ... # doctest: +ELLIPSIS +SKIP
   array([ 0.01...,  0.25...,  0.46...,  0.60... ,  0.94...])
 
-It is also possible to map the transformed data to a normal distribution by
-setting ``output_distribution='normal'``::
+Mapping to a Gaussian distribution
+----------------------------------
+
+In many modeling scenarios, normality of the features in a dataset is desirable.
+Power transforms are a family of parameteric transformations that aim to
+map data of any distribution to as close to a Gaussian distribution as possible.
+
+:class:`BoxCoxTransformer` provides one such transformation. The Box-Cox transform is given by:
+
+.. math::
+    y_i^{(\lambda)} =
+    \begin{cases}
+    \dfrac{y_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
+    \ln{(y_i)} & \text{if } \lambda = 0,
+    \end{cases}
+
+The transformation is parameterized by :math:`\lambda`, which is determined through
+maximum likelihood estimation. Here is an example of using Box-Cox to map samples
+drawn from a lognormal distribution to a normal distribution::
+
+  >>> boxcox = preprocessing.BoxCoxTransformer()
+  >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
+  array([[ 1.28331718,  1.18092228,  0.84160269],
+         [ 0.94293279,  1.60960836,  0.3879099 ],
+         [ 1.35235668,  0.21715673,  1.09977091]])
+  >>> boxcox.fit_transform(X_lognormal)
+  array([[ 0.49024349,  0.17881995, -0.1563781 ],
+         [-0.05102892,  0.58863196, -0.57612415],
+         [ 0.69420008, -0.84857822,  0.10051454]])
+
+It is also possible to map data to a normal distribution using :class:`QuantileTransformer`
+by setting ``output_distribution='normal'``. Using the earlier example with the iris dataset::
 
   >>> quantile_transformer = preprocessing.QuantileTransformer(
   ...     output_distribution='normal', random_state=0)
