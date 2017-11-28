@@ -437,12 +437,12 @@ def test_base_chain_fit_and_predict():
         assert_equal([c.coef_.size for c in chains[i].estimators_],
                      list(range(X.shape[1], X.shape[1] + Y.shape[1])))
 
-    Y_prob = chains[0].predict_proba(X)
+    Y_prob = chains[1].predict_proba(X)
     Y_binary = (Y_prob >= .5)
     assert_array_equal(Y_binary, Y_pred)
 
-    assert isinstance(chains[0], ClassifierMixin)
-    assert isinstance(chains[1], RegressorMixin)
+    assert isinstance(chains[0], RegressorMixin)
+    assert isinstance(chains[1], ClassifierMixin)
 
 
 def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
