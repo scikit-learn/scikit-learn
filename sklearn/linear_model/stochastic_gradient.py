@@ -82,7 +82,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     def fit(self, X, y):
         """Fit model."""
 
-    def _validate_params(self, set_max_iter=True):
+    def _validate_params(self, set_max_iter=True, for_partial_fit=False):
         """Validate input params. """
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
@@ -120,13 +120,15 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             self._tol = None
 
         elif self.tol is None and self.max_iter is None:
-            warnings.warn(
-                "max_iter and tol parameters have been added in %s in 0.19. If"
-                " both are left unset, they default to max_iter=5 and tol=None"
-                ". If tol is not None, max_iter defaults to max_iter=1000. "
-                "From 0.21, default max_iter will be 1000, "
-                "and default tol will be 1e-3." % type(self), FutureWarning)
-            # Before 0.19, default was n_iter=5
+            if not for_partial_fit:
+                warnings.warn(
+                    "max_iter and tol parameters have been "
+                    "added in %s in 0.19. If both are left unset, "
+                    "they default to max_iter=5 and tol=None. "
+                    "If tol is not None, max_iter defaults to max_iter=1000. "
+                    "From 0.21, default max_iter will be 1000, and"
+                    " default tol will be 1e-3." % type(self), FutureWarning)
+                # Before 0.19, default was n_iter=5
             max_iter = 5
         else:
             max_iter = self.max_iter if self.max_iter is not None else 1000
@@ -538,7 +540,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
-        self._validate_params()
+        self._validate_params(for_partial_fit=True)
         if self.class_weight in ['balanced']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
@@ -771,7 +773,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     See also
     --------
-    LinearSVC, LogisticRegression, Perceptron
+    sklearn.svm.LinearSVC, LogisticRegression, Perceptron
 
     """
 
@@ -983,7 +985,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        self._validate_params()
+        self._validate_params(for_partial_fit=True)
         return self._partial_fit(X, y, self.alpha, C=1.0,
                                  loss=self.loss,
                                  learning_rate=self.learning_rate, max_iter=1,
@@ -1256,8 +1258,8 @@ class SGDRegressor(BaseSGDRegressor):
         The learning rate schedule:
 
         - 'constant': eta = eta0
-        - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
-        - 'invscaling': eta = eta0 / pow(t, power_t)
+        - 'optimal': eta = 1.0 / (alpha * (t + t0))
+        - 'invscaling': eta = eta0 / pow(t, power_t) [default]
 
         where t0 is chosen by a heuristic proposed by Leon Bottou.
 
@@ -1322,7 +1324,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     See also
     --------
-    Ridge, ElasticNet, Lasso, SVR
+    Ridge, ElasticNet, Lasso, sklearn.svm.SVR
 
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,

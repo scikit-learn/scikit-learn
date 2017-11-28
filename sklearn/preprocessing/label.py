@@ -76,8 +76,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    sklearn.preprocessing.OneHotEncoder : encode categorical integer features
-        using a one-hot aka one-of-K scheme.
+    sklearn.preprocessing.CategoricalEncoder : encode categorical features
+        using a one-hot or ordinal encoding scheme.
     """
 
     def fit(self, y):
@@ -160,7 +160,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
-    available in the scikit. A simple way to extend these algorithms
+    available in scikit-learn. A simple way to extend these algorithms
     to the multi-class classification case is to use the so-called
     one-vs-all scheme.
 
@@ -393,7 +393,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
-    available in the scikit. A simple way to extend these algorithms
+    available in scikit-learn. A simple way to extend these algorithms
     to the multi-class classification case is to use the so-called
     one-vs-all scheme.
 
