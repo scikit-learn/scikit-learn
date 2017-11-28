@@ -887,6 +887,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                              "integer. %r was passed"
                              % self.n_iter_no_change)
 
+        allowed_presort = ('auto', True, False)
+        if self.presort not in allowed_presort:
+            raise ValueError("'presort' should be in {}. Got {!r} instead."
+                             .format(allowed_presort, self.presort))
+
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
 
@@ -1037,26 +1042,20 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             y_pred = self._decision_function(X)
             self._resize_state()
 
-        X_idx_sorted = None
+        if self.presort is True and issparse(X):
+            raise ValueError(
+                "Presorting is not supported for sparse matrices.")
+
         presort = self.presort
         # Allow presort to be 'auto', which means True if the dataset is dense,
         # otherwise it will be False.
-        if presort == 'auto' and issparse(X):
-            presort = False
-        elif presort == 'auto':
-            presort = True
+        if presort == 'auto':
+            presort = not issparse(X)
 
-        if not isinstance(presort, bool):
-            raise ValueError("'presort' should be either 'auto' or a boolean"
-                             " (True/False). Got {!r} instead."
-                             .format(presort))
-
-        elif presort is True:
-            if issparse(X):
-                raise ValueError("Presorting is not supported for sparse matrices.")
-            else:
-                X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
-                                                 dtype=np.int32)
+        X_idx_sorted = None
+        if presort:
+            X_idx_sorted = np.asfortranarray(np.argsort(X, axis=0),
+                                             dtype=np.int32)
 
         # fit the boosting stages
         n_stages = self._fit_stages(X, y, y_pred, sample_weight, self._rng,

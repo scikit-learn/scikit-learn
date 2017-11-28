@@ -503,14 +503,6 @@ def test_error():
         assert_raises(ValueError, est.predict_proba, X2)
 
     for name, TreeEstimator in ALL_TREES.items():
-        # Invalid values for parameters
-        if name == "DecisionTreeRegressor" or name == "DecisionTreeClassifier":
-            assert_raise_message(ValueError,
-                                 "'presort' should be either 'auto' or"
-                                 " a boolean (True/False)."
-                                 " Got 'some_string' instead.",
-                                 TreeEstimator(presort='some_string')
-                                 .fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=-1).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=.6).fit, X, y)
         assert_raises(ValueError, TreeEstimator(min_samples_leaf=0.).fit, X, y)
@@ -1628,6 +1620,18 @@ def test_presort_sparse():
 
     for est, sparse_matrix in product(ests, sparse_matrices):
         yield check_presort_sparse, est, sparse_matrix(X), y
+
+
+def test_invalid_presort():
+    classes = (DecisionTreeRegressor, DecisionTreeClassifier)
+    allowed_presort = ('auto', True, False)
+    invalid_presort = 'invalid'
+    msg = ("'presort' should be in {}. "
+           "Got {!r} instead.".format(allowed_presort, invalid_presort))
+    for cls in classes:
+        est = cls(presort=invalid_presort)
+        assert_raise_message(ValueError, msg,
+                             est.fit, X, y)
 
 
 def test_decision_path_hardcoded():
