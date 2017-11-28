@@ -427,7 +427,7 @@ def test_base_chain_fit_and_predict():
     # Fit base chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
     chains = [ClassifierChain(LogisticRegression()),
-             RegressorChain(LinearRegression())]
+              RegressorChain(LinearRegression())]
     [chain.fit(X, Y) for chain in chains]
 
     for i in range(0, 2):
@@ -435,7 +435,7 @@ def test_base_chain_fit_and_predict():
         assert_equal(Y_pred.shape, Y.shape)
 
         assert_equal([c.coef_.size for c in chains[i].estimators_],
-                 list(range(X.shape[1], X.shape[1] + Y.shape[1])))
+                     list(range(X.shape[1], X.shape[1] + Y.shape[1])))
 
     Y_prob = chains[0].predict_proba(X)
     Y_binary = (Y_prob >= .5)
@@ -468,14 +468,14 @@ def test_base_chain_random_order():
     base_chain_fixed = [ClassifierChain(LogisticRegression(),
                                         order=base_chain_random[0].order_),
                         RegressorChain(LinearRegression(),
-                                        order=base_chain_random[1].order_)]
+                                       order=base_chain_random[1].order_)]
     [chain_fixed.fit(X, Y) for chain_fixed in base_chain_fixed]
     for i in range(0, 2):
         assert_not_equal(list(base_chain_random[i].order), list(range(4)))
         assert_equal(len(base_chain_random[i].order_), 4)
         assert_equal(len(set(base_chain_random[i].order_)), 4)
-        # Randomly ordered chain should behave identically to a fixed order chain
-        # with the same order.
+        # Randomly ordered chain should behave identically to a fixed order
+        # chain with the same order.
         for est1, est2 in zip(base_chain_random[i].estimators_,
                               base_chain_fixed[i].estimators_):
             assert_array_almost_equal(est1.coef_, est2.coef_)
