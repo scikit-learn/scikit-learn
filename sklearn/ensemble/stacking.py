@@ -18,7 +18,8 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
     part of the set and predicts the other part. In ``StackingTransformer``, it
     happens during ``fit_transform``, as the result of this procedure is what
     should be used by the next layers. Note that this behavior is different
-    from ``fit().transform()``. Read more in the :ref:`User Guide <ensemble>`.
+    from ``fit().transform()``. Read more in the
+    :ref:`User Guide <stacking_transformer>`.
 
     Parameters
     ----------
@@ -54,7 +55,6 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
     n_jobs : int, optional (default=1)
         Number of jobs to be passed to ``cross_val_predict`` during
         ``fit_transform``.
-
     """
     def __init__(self, estimator, cv=3, method='auto', n_jobs=1):
         self.estimator = estimator
@@ -66,7 +66,7 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         """Fit the estimator.
 
         This should only be used in special situations. Read more in the
-        :ref:`User Guide <ensemble>`.
+        :ref:`User Guide <stacking_transformer>`.
 
         Parameters
         ----------
@@ -105,7 +105,8 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         """Transform dataset.
 
         Note that, unlike ``fit_transform()``, this won't return the cross
-        validation predictions. Read more in the :ref:`User Guide <ensemble>`.
+        validation predictions. Read more in the
+        :ref:`User Guide <stacking_transformer>`.
 
         Parameters
         ----------
@@ -132,8 +133,8 @@ class StackingTransformer(BaseEstimator, MetaEstimatorMixin, TransformerMixin):
         """Fit estimator and transform dataset.
 
         Note that this behavior is different from ``fit().transform()`` as it
-        will return the cross validation predictions instead.. Read more in the
-        :ref:`User Guide <ensemble>`.
+        will return the cross validation predictions instead. Read more in the
+        :ref:`User Guide <stacking_transformer>`.
 
         Parameters
         ----------
@@ -174,7 +175,9 @@ def _identity_transformer():
 
 def make_stack_layer(estimators, restack=False, cv=3, method='auto',
                      n_jobs=1, n_cv_jobs=1, transformer_weights=None):
-    """ Construct single layer for model stacking
+    """ Construct a single layer for model stacking
+
+    Read more in the :ref:`User Guide <stacking>`.
 
     Parameters
     ----------

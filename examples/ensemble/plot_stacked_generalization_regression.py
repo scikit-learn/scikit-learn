@@ -11,14 +11,10 @@ We use Boston's house pricing dataset to compare the mean squared error between
 three regressors (SVM, Lasso and Ridge regressions) and the combination of
 their outputs with a single linear regression. The following result is
 achieved.
-
-MSE for lasso: 22.91279
-MSE for ridge: 21.69905
-MSE for svr: 32.25357
-MSE for Stacked Regressors: 18.93744
 """
 
 # utils
+from time import time
 import matplotlib.pyplot as plt
 
 # import base regressors
@@ -54,15 +50,20 @@ base_regressors = [("Lasso Regressor", lasso),
 
 
 def evaluate_and_log_model(name, model, ax):
+    t0_train = time()
     model.fit(X_train, y_train)
+    train_time = time() - t0_train
     y_pred = model.predict(X_test)
     score = mean_squared_error(y_test, y_pred)
-    print("MSE for %s: %.5f" % (name, score))
+    print("MSE for %s: %.3f (train time: %.3f seconds)"
+          % (name, score, train_time))
 
-    ax.scatter(y_pred, y_test)
+    ax.scatter(y_test, y_pred, edgecolors=(0, 0, 0))
+    ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()],
+            'k--', lw=4)
     ax.set_title(name)
-    ax.set_xlabel('Predicted')
-    ax.set_ylabel('Measured')
+    ax.set_xlabel('Measured')
+    ax.set_ylabel('Predicted')
     ax.set_xticks(())
     ax.set_yticks(())
 

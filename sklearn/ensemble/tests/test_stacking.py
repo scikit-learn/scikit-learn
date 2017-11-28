@@ -36,7 +36,7 @@ def _check_estimator(estimator, **fit_params):
     Xt = estimator.fit_transform(X, y, **fit_params)
 
     # checks that we get a column vector
-    assert_equal(Xt.ndim, 2)
+    assert_array_equal(Xt.shape, [X.shape[0], 2])
 
     # checks that `fit` is available
     estimator.fit(X, y, **fit_params)
@@ -45,9 +45,9 @@ def _check_estimator(estimator, **fit_params):
     Xt2 = estimator.transform(X)
 
     # checks that transformed data is always a column vector
-    assert_equal(Xt2.ndim, 2)
+    assert_array_equal(Xt.shape, [X.shape[0], 2])
 
-    # checks that the generated features is diferent from the original ones
+    # checks that transform is different from fit_transform
     assert_false(np.allclose(Xt, Xt2))
 
     # checks for determinism: every `transform` should yield the same result
@@ -70,7 +70,7 @@ def test_regression():
                 _check_estimator(blended_reg, **fit_params)
 
 
-def test_classification():
+def test_transformer_from_classification():
     # tests classification with various parameter settings
 
     testcases = [{'clf': RandomForestClassifier(random_state=RANDOM_SEED),
@@ -100,8 +100,6 @@ def test_multi_output_classification():
     clf = StackingTransformer(clf_base, method='predict_proba')
     X, y = datasets.make_multilabel_classification()
     Xt = clf.fit_transform(X[:-10], y[:-10])
-    print(Xt)
-    print(Xt.ndim)
 
 
 STACK_LAYER_PARAMS = {'restack': [True, False],
@@ -181,6 +179,7 @@ def test_method_selection():
     # asserts that fit results are taken into consideration when choosing
     # method name
     clf_T.set_params(estimator__probability=False)
+    assert(not hasattr(clf_T.estimator, 'predict_proba'))
     Xt1 = clf_T.fit_transform(X, y)
     assert_equal(clf_T._method_name(), "decision_function")
 
