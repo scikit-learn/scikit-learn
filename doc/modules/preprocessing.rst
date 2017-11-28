@@ -324,13 +324,14 @@ drawn from a lognormal distribution to a normal distribution::
 
   >>> boxcox = preprocessing.BoxCoxTransformer()
   >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
-  array([[ 1.28331718,  1.18092228,  0.84160269],
-         [ 0.94293279,  1.60960836,  0.3879099 ],
-         [ 1.35235668,  0.21715673,  1.09977091]])
-  >>> boxcox.fit_transform(X_lognormal)
-  array([[ 0.49024349,  0.17881995, -0.1563781 ],
-         [-0.05102892,  0.58863196, -0.57612415],
-         [ 0.69420008, -0.84857822,  0.10051454]])
+  >>> X_lognormal                                                     # doctest: +ELLIPSIS
+  array([[ 1.28...,  1.18...,  0.84...],
+         [ 0.94...,  1.60...,  0.38...],
+         [ 1.35...,  0.21...,  1.09...]])
+  >>> boxcox.fit_transform(X_lognormal)                               # doctest: +ELLIPSIS
+  array([[ 0.49...,  0.17..., -0.15...],
+         [-0.05...,  0.58..., -0.57...],
+         [ 0.69..., -0.84...,  0.10...]])
 
 It is also possible to map data to a normal distribution using :class:`QuantileTransformer`
 by setting ``output_distribution='normal'``. Using the earlier example with the iris dataset::
