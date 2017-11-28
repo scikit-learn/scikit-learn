@@ -1034,8 +1034,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                  % (self.n_estimators,
                                     self.estimators_.shape[0]))
             begin_at_stage = self.estimators_.shape[0]
-            # The requirements of _decision_function are more constrained than
-            # fit. It accepts only CSR matrices.
+            # The requirements of _decision_function (called in two lines
+            # below) are more constrained than fit. It accepts only CSR
+            # matrices.
             X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
             y_pred = self._decision_function(X)
             self._resize_state()

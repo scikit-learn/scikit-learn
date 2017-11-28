@@ -875,7 +875,7 @@ def test_warm_start_sparse():
         est_dense.predict(X)
         est_dense.set_params(n_estimators=200)
         est_dense.fit(X, y)
-        est_dense.predict(X)
+        y_pred_dense = est_dense.predict(X)
 
         for sparse_constructor in sparse_matrix_type:
             X_sparse = sparse_constructor(X)
@@ -886,10 +886,11 @@ def test_warm_start_sparse():
             est_sparse.predict(X)
             est_sparse.set_params(n_estimators=200)
             est_sparse.fit(X_sparse, y)
-            est_sparse.predict(X)
+            y_pred_sparse = est_sparse.predict(X)
 
             assert_array_almost_equal(est_dense.oob_improvement_[:100],
                                       est_sparse.oob_improvement_[:100])
+            assert_array_almost_equal(y_pred_dense, y_pred_sparse)
 
 
 def early_stopping_monitor(i, est, locals):
