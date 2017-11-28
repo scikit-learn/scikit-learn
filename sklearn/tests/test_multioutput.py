@@ -426,8 +426,8 @@ def test_classifier_chain_vs_independent_models():
 def test_base_chain_fit_and_predict():
     # Fit base chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
-    chains = [ClassifierChain(LogisticRegression()),
-              RegressorChain(LinearRegression())]
+    chains = [RegressorChain(LinearRegression()),
+              ClassifierChain(LogisticRegression())]
     [chain.fit(X, Y) for chain in chains]
 
     for i in range(0, 2):
