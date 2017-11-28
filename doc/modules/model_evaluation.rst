@@ -461,6 +461,39 @@ given binary ``y_true`` and ``y_pred``:
     Currently this score function is only defined for binary classification problems, you
     may need to wrap it by yourself if you want to use it for multilabel problems.
 
+    There is no clear consensus on the definition of a balanced accuracy for the
+    multiclass setting. Here are some definitions that can be found in the literature:
+
+    * Macro-average recall as described in [Mosley2013]_, [Kelleher2015]_ and [Guyon2015]_:
+      the recall for each class is computed independently and the average is taken over all classes.
+      In [Guyon2015]_, the macro-average recall is then adjusted to ensure that random predictions
+      have a score of :math:`0` while perfect predictions have a score of :math:`1`.
+      One can compute the macro-average recall using ``recall_score(average="macro")`` in :func:`recall_score`.
+    * Class balanced accuracy as described in [Mosley2013]_: the minimum between the precision
+      and the recall for each class is computed. Those values are then averaged over the total
+      number of classes to get the balanced accuracy.
+    * Balanced Accuracy as described in [Urbanowicz2015]_: the average of sensitivity and selectivity
+      is computed for each class and then averaged over total number of classes.
+
+    Note that none of these different definitions are currently implemented within
+    the :func:`balanced_accuracy_score` function.
+
+.. topic:: References:
+
+  .. [Guyon2015] I. Guyon, K. Bennett, G. Cawley, H.J. Escalante, S. Escalera, T.K. Ho, N. Macià,
+     B. Ray, M. Saeed, A.R. Statnikov, E. Viegas, `Design of the 2015 ChaLearn AutoML Challenge
+     <http://ieeexplore.ieee.org/document/7280767/>`_,
+     IJCNN 2015.
+  .. [Mosley2013] L. Mosley, `A balanced approach to the multi-class imbalance problem
+     <http://lib.dr.iastate.edu/etd/13537/>`_,
+     IJCV 2010.
+  .. [Kelleher2015] John. D. Kelleher, Brian Mac Namee, Aoife D'Arcy, `Fundamentals of
+     Machine Learning for Predictive Data Analytics: Algorithms, Worked Examples,
+     and Case Studies <https://mitpress.mit.edu/books/fundamentals-machine-learning-predictive-data-analytics>`_,
+     2015.
+  .. [Urbanowicz2015] Urbanowicz R.J.,  Moore, J.H. `ExSTraCS 2.0: description and evaluation of a scalable learning
+     classifier system < https://doi.org/10.1007/s12065-015-0128-8>`_, Evol. Intel. (2015) 8: 89.
+
 .. _cohen_kappa:
 
 Cohen's kappa
@@ -1105,11 +1138,11 @@ Here is a small example of how to use the :func:`roc_curve` function::
     >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> fpr, tpr, thresholds = roc_curve(y, scores, pos_label=2)
     >>> fpr
-    array([ 0. ,  0.5,  0.5,  1. ])
+    array([ 0. ,  0. ,  0.5,  0.5,  1. ])
     >>> tpr
-    array([ 0.5,  0.5,  1. ,  1. ])
+    array([ 0. ,  0.5,  0.5,  1. ,  1. ])
     >>> thresholds
-    array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
+    array([ 1.8 ,  0.8 ,  0.4 ,  0.35,  0.1 ])
 
 This figure shows an example of such an ROC curve:
 

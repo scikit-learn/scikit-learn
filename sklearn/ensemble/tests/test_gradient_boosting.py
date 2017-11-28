@@ -25,6 +25,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
@@ -79,9 +80,8 @@ def test_classification_toy():
         yield check_classification_toy, presort, loss
 
 
-def test_parameter_checks():
-    # Check input parameter validation.
-
+def test_classifier_parameter_checks():
+    # Check input parameter validation for GradientBoostingClassifier.
     assert_raises(ValueError,
                   GradientBoostingClassifier(n_estimators=0).fit, X, y)
     assert_raises(ValueError,
@@ -138,6 +138,38 @@ def test_parameter_checks():
                   lambda X, y: GradientBoostingClassifier(
                       loss='deviance').fit(X, y),
                   X, [0, 0, 0, 0])
+
+    allowed_presort = ('auto', True, False)
+    assert_raise_message(ValueError,
+                         "'presort' should be in {}. "
+                         "Got 'invalid' instead.".format(allowed_presort),
+                         GradientBoostingClassifier(presort='invalid')
+                         .fit, X, y)
+
+
+def test_regressor_parameter_checks():
+    # Check input parameter validation for GradientBoostingRegressor
+    assert_raise_message(ValueError, "alpha must be in (0.0, 1.0) but was 1.2",
+                         GradientBoostingRegressor(loss='huber', alpha=1.2)
+                         .fit, X, y)
+    assert_raise_message(ValueError, "alpha must be in (0.0, 1.0) but was 1.2",
+                         GradientBoostingRegressor(loss='quantile', alpha=1.2)
+                         .fit, X, y)
+    assert_raise_message(ValueError, "Invalid value for max_features: "
+                         "'invalid'. Allowed string values are 'auto', 'sqrt'"
+                         " or 'log2'.",
+                         GradientBoostingRegressor(max_features='invalid').fit,
+                         X, y)
+    assert_raise_message(ValueError, "n_iter_no_change should either be None"
+                         " or an integer. 'invalid' was passed",
+                         GradientBoostingRegressor(n_iter_no_change='invalid')
+                         .fit, X, y)
+    allowed_presort = ('auto', True, False)
+    assert_raise_message(ValueError,
+                         "'presort' should be in {}. "
+                         "Got 'invalid' instead.".format(allowed_presort),
+                         GradientBoostingRegressor(presort='invalid')
+                         .fit, X, y)
 
 
 def test_loss_function():

@@ -1253,7 +1253,7 @@ class ShuffleSplit(BaseShuffleSplit):
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
-        complement of the train size. By default (the is parameter
+        complement of the train size. By default (the parameter is
         unspecified), the value is set to 0.1.
         The default will change in version 0.21. It will remain 0.1 only
         if ``train_size`` is unspecified, otherwise it will complement
@@ -2057,9 +2057,6 @@ def train_test_split(*arrays, **options):
 
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
-
-
-train_test_split.__test__ = False  # to avoid a pb with nosetests
 
 
 def _build_repr(self):
