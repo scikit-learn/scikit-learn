@@ -430,7 +430,7 @@ def test_base_chain_fit_and_predict():
              RegressorChain(LinearRegression())]
     [chain.fit(X, Y) for chain in chains]
 
-    for i in range(0,2):
+    for i in range(0, 2):
         Y_pred = chains[i].predict(X)
         assert_equal(Y_pred.shape, Y.shape)
 
@@ -452,7 +452,7 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
     base_chain = [ClassifierChain(LogisticRegression(), cv=3),
                   RegressorChain(LinearRegression(), cv=3)]
     [chain.fit(X_sparse, Y) for chain in base_chain]
-    for i in range(0,2):
+    for i in range(0, 2):
         Y_pred = base_chain[i].predict(X_sparse)
         assert_equal(Y_pred.shape, Y.shape)
 
@@ -470,7 +470,7 @@ def test_base_chain_random_order():
                         RegressorChain(LinearRegression(),
                                         order=base_chain_random[1].order_)]
     [chain_fixed.fit(X, Y) for chain_fixed in base_chain_fixed]
-    for i in range(0,2):
+    for i in range(0, 2):
         assert_not_equal(list(base_chain_random[i].order), list(range(4)))
         assert_equal(len(base_chain_random[i].order_), 4)
         assert_equal(len(set(base_chain_random[i].order_)), 4)
