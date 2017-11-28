@@ -45,7 +45,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         set at the same time as ``func`` and ``inverse_func``. If
         ``transformer`` is ``None`` as well as ``func`` and ``inverse_func``,
         the transformer will be an identity transformer. Note that the
-        transformer will be cloned during fitting.
+        transformer will be cloned during fitting. Also, the transformer is
+        restricting ``y`` to be a numpy array.
 
     func : function, optional
         Function to apply to ``y`` before passing to ``fit``. Cannot be set at

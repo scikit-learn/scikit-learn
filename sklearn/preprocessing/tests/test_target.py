@@ -1,6 +1,8 @@
 import numpy as np
 
 from sklearn.base import clone
+from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises_regex
@@ -239,3 +241,23 @@ def test_transform_target_regressor_multi_to_single():
     assert_equal(y_pred_1d_func.shape, (100, 1))
 
     assert_allclose(y_pred_1d_func, y_pred_2d_func)
+
+
+class DummyTransformer(BaseEstimator, TransformerMixin):
+
+    def fit(self, X, y=None):
+        assert isinstance(X, np.ndarray)
+        return self
+
+    def transform(self, X):
+        assert isinstance(X, np.ndarray)
+        return X
+
+
+def test_transform_target_regressor_ensure_y_array():
+    # check that the target ``y`` passed to the transformer will always be a
+    # numpy array
+    X, y = friedman
+    tt = TransformedTargetRegressor(transformer=DummyTransformer(),
+                                    check_inverse=False)
+    tt.fit(X.tolist(), y.tolist())
