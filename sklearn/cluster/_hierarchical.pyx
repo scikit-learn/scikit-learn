@@ -338,18 +338,16 @@ cdef class WeightedEdge:
 
 cdef class UnionFind(object):
 
-    cdef np.ndarray parent_arr
     cdef np.ndarray size_arr
     cdef ITYPE_t next_label
-    cdef ITYPE_t *parent
+    cdef ITYPE_t[:] parent
     cdef ITYPE_t *size
 
     def __init__(self, N):
-        self.parent_arr = -1 * np.ones(2 * N - 1, dtype=ITYPE, order='C')
+        self.parent = -1 * np.ones(2 * N - 1, dtype=ITYPE, order='C')
         self.next_label = N
         self.size_arr = np.hstack((np.ones(N, dtype=ITYPE),
                                    np.zeros(N-1, dtype=ITYPE)))
-        self.parent = (<ITYPE_t *> self.parent_arr.data)
         self.size = (<ITYPE_t *> self.size_arr.data)
 
     @cython.boundscheck(False)
@@ -368,11 +366,12 @@ cdef class UnionFind(object):
     cdef ITYPE_t fast_find(self, ITYPE_t n):
         cdef ITYPE_t p
         p = n
-        while self.parent_arr[n] != -1:
-            n = self.parent_arr[n]
-        # label up to the root
-        while self.parent_arr[p] != n:
-            p, self.parent_arr[p] = self.parent_arr[p], n
+        # find the highest node in the linkage graph so far
+        while self.parent[n] != -1:
+            n = self.parent[n]
+        # provide a shortcut up to the highest node
+        while self.parent[p] != n:
+            p, self.parent[p] = self.parent[p], n
         return n
 
 
@@ -387,7 +386,6 @@ cpdef np.ndarray[DTYPE_t, ndim=2] single_linkage_label(
 
     Parameters
     ----------
-
     L: array of shape (n_samples - 1, 3)
         The linkage array or MST where each row specifies two samples
         to be merged and a distance or weight at which the merge occurs. This
@@ -395,35 +393,34 @@ cpdef np.ndarray[DTYPE_t, ndim=2] single_linkage_label(
 
     Returns
     -------
-
     A tree in the format used by scipy.cluster.hierarchy.
     """
 
     cdef np.ndarray[DTYPE_t, ndim=2] result_arr
     cdef DTYPE_t[:, ::1] result
 
-    cdef ITYPE_t N, a, aa, b, bb, index
+    cdef ITYPE_t left, left_cluster, right, right_cluster, index
     cdef DTYPE_t delta
 
-    result_arr = np.zeros((L.shape[0], L.shape[1] + 1), dtype=DTYPE)
+    result_arr = np.zeros((L.shape[0], 4), dtype=DTYPE)
     result = (<DTYPE_t[:L.shape[0], :4:1]> (
         <DTYPE_t *> result_arr.data))
-    N = L.shape[0] + 1
-    U = UnionFind(N)
+    U = UnionFind(L.shape[0] + 1)
 
     for index in range(L.shape[0]):
 
-        a = <ITYPE_t> L[index, 0]
-        b = <ITYPE_t> L[index, 1]
+        left = <ITYPE_t> L[index, 0]
+        right = <ITYPE_t> L[index, 1]
         delta = L[index, 2]
 
-        aa, bb = U.fast_find(a), U.fast_find(b)
+        left_cluster = U.fast_find(left)
+        right_cluster = U.fast_find(right)
 
-        result[index][0] = aa
-        result[index][1] = bb
+        result[index][0] = left_cluster
+        result[index][1] = right_cluster
         result[index][2] = delta
-        result[index][3] = U.size[aa] + U.size[bb]
+        result[index][3] = U.size[left_cluster] + U.size[right_cluster]
 
-        U.union(aa, bb)
+        U.union(left_cluster, right_cluster)
 
     return result_arr
