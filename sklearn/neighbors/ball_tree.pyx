@@ -23,14 +23,36 @@ VALID_METRICS = ['EuclideanDistance', 'SEuclideanDistance',
 
 
 include "binary_tree.pxi"
+import types
+import functools
+
+class SubstituteDoc(type):
+    def __init__(cls, clsname, superclasses, attributedict):
+        for d in dir(cls):
+            #Exclude special methods and non functions
+            if d.startswith("__"):
+                continue
+            dc = getattr(cls, d)
+            if not callable(dc):
+                continue
+            #Copy the function, this is necessary to avoid modifying the docstrings of the superclass
+            g = types.FunctionType(dc.__code__, dc.__globals__, name=dc.__name__,
+                           argdefs=dc.__defaults__,
+                           closure=dc.__closure__)
+            g = functools.update_wrapper(g, dc)
+            g.__kwdefaults__ = dc.__kwdefaults__
+
+            g.__doc__ = dc.__doc__.format(**DOC_DICT)
+            setattr(cls,d,g)
 
 # Inherit BallTree from BinaryTree
 cdef class BallTree(BinaryTree):
+    __metaclass__ = SubstituteDoc
     __doc__ = CLASS_DOC.format(**DOC_DICT)
     pass
 
 #----------------------------------------------------------------------
-# The functions below specialized the Binary Tree as a Ball Tree 
+# The functions below specialized the Binary Tree as a Ball Tree
 #
 #   Note that these functions use the concept of "reduced distance".
 #   The reduced distance, defined for some metrics, is a quantity which
