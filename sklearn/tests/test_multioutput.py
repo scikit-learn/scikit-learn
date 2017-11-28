@@ -453,26 +453,6 @@ def test_classifier_chain_random_order():
         assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
-def test_classifier_chain_crossval_fit_and_predict():
-    # Fit classifier chain with cross_val_predict and verify predict
-    # performance
-    X, Y = generate_multilabel_dataset_with_correlations()
-    classifier_chain_cv = ClassifierChain(LogisticRegression(), cv=3)
-    classifier_chain_cv.fit(X, Y)
-
-    classifier_chain = ClassifierChain(LogisticRegression())
-    classifier_chain.fit(X, Y)
-
-    Y_pred_cv = classifier_chain_cv.predict(X)
-    Y_pred = classifier_chain.predict(X)
-
-    assert_equal(Y_pred_cv.shape, Y.shape)
-    assert_greater(jaccard_similarity_score(Y, Y_pred_cv), 0.4)
-
-    assert_not_equal(jaccard_similarity_score(Y, Y_pred_cv),
-                     jaccard_similarity_score(Y, Y_pred))
-
-
 def test_classifier_chain_vs_independent_models():
     # Verify that an ensemble of classifier chains (each of length
     # N) can achieve a higher Jaccard similarity score than N independent
@@ -542,21 +522,29 @@ def test_regressor_chain_random_order():
         assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
-def test_regressor_chain_crossval_fit_and_predict():
+def test_base_chain_crossval_fit_and_predict():
     # Fit regressor chain with cross_val_predict and verify predict
     # performance
     X, Y = generate_multilabel_dataset_with_correlations()
-    regressor_chain_cv = RegressorChain(LinearRegression(), cv=3)
-    regressor_chain_cv.fit(X, Y)
+    chains_cv = [ClassifierChain(LogisticRegression(), cv=3),
+                 RegressorChain(LinearRegression(), cv=3)]
+    for chain in chains_cv:
+        chain.fit(X, Y)
 
-    regressor_chain = RegressorChain(LinearRegression())
-    regressor_chain.fit(X, Y)
+    chains = [ClassifierChain(LogisticRegression()),
+              RegressorChain(LinearRegression())]
+    for chain in chains:
+        chain.fit(X, Y)
 
-    Y_pred_cv = regressor_chain_cv.predict(X)
-    Y_pred = regressor_chain.predict(X)
+    Y_pred_cv = [chain.predict(X) for chain in chains_cv]
+    Y_pred = [chain.predict(X) for chain in chains]
 
-    assert_equal(Y_pred_cv.shape, Y.shape)
-    assert_less(mean_squared_error(Y, Y_pred_cv), 0.25)
+    for i in range(0, 2):
+        assert_equal(Y_pred_cv[i].shape, Y_pred[i].shape)
+    assert_greater(jaccard_similarity_score(Y, Y_pred_cv[0]), 0.4)
+    assert_less(mean_squared_error(Y, Y_pred_cv[1]), 0.25)
 
-    assert_not_equal(mean_squared_error(Y, Y_pred_cv),
-                     mean_squared_error(Y, Y_pred))
+    assert_not_equal(jaccard_similarity_score(Y, Y_pred_cv[0]),
+                     jaccard_similarity_score(Y, Y_pred[0]))
+    assert_not_equal(mean_squared_error(Y, Y_pred_cv[1]),
+                     mean_squared_error(Y, Y_pred[1]))
