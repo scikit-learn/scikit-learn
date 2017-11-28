@@ -64,6 +64,12 @@ Model evaluation
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
+Clustering
+
+- :class:`cluster.AgglomerativeClustering` now supports Single Linkage
+  clustering via ``linkage='single'``. :issue:`9372` by
+  :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
+
 Enhancements
 ............
 
