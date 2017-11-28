@@ -338,17 +338,15 @@ cdef class WeightedEdge:
 
 cdef class UnionFind(object):
 
-    cdef np.ndarray size_arr
     cdef ITYPE_t next_label
     cdef ITYPE_t[:] parent
-    cdef ITYPE_t *size
+    cdef ITYPE_t[:] size
 
     def __init__(self, N):
         self.parent = -1 * np.ones(2 * N - 1, dtype=ITYPE, order='C')
         self.next_label = N
-        self.size_arr = np.hstack((np.ones(N, dtype=ITYPE),
-                                   np.zeros(N-1, dtype=ITYPE)))
-        self.size = (<ITYPE_t *> self.size_arr.data)
+        self.size = np.hstack((np.ones(N, dtype=ITYPE),
+                               np.zeros(N - 1, dtype=ITYPE)))
 
     @cython.boundscheck(False)
     @cython.nonecheck(False)
