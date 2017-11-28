@@ -11,8 +11,8 @@ Linear Discriminant Analysis and Quadratic Discriminant Analysis
 
 from __future__ import print_function
 import warnings
-
 import numpy as np
+from .utils import deprecated
 from scipy import linalg
 from .externals.six import string_types
 from .externals.six.moves import xrange
@@ -170,7 +170,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Number of components (< n_classes - 1) for dimensionality reduction.
 
     store_covariance : bool, optional
-        Additionally compute class covariance matrix (default False).
+        Additionally compute class covariance matrix (default False), used
+        only in 'svd' solver.
 
         .. versionadded:: 0.17
 
@@ -245,6 +246,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
+
     def __init__(self, solver='svd', shrinkage=None, priors=None,
                  n_components=None, store_covariance=False, tol=1e-4):
         self.solver = solver
@@ -554,9 +556,9 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Regularizes the covariance estimate as
         ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
 
-    store_covariances : boolean
+    store_covariance : boolean
         If True the covariance matrices are computed and stored in the
-        `self.covariances_` attribute.
+        `self.covariance_` attribute.
 
         .. versionadded:: 0.17
 
@@ -567,7 +569,7 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    covariances_ : list of array-like, shape = [n_features, n_features]
+    covariance_ : list of array-like, shape = [n_features, n_features]
         Covariance matrices of each class.
 
     means_ : array-like, shape = [n_classes, n_features]
@@ -597,7 +599,8 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
     >>> clf.fit(X, y)
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     QuadraticDiscriminantAnalysis(priors=None, reg_param=0.0,
-                                  store_covariances=False, tol=0.0001)
+                                  store_covariance=False,
+                                  store_covariances=None, tol=0.0001)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -607,21 +610,30 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         Discriminant Analysis
     """
 
-    def __init__(self, priors=None, reg_param=0., store_covariances=False,
-                 tol=1.0e-4):
+    def __init__(self, priors=None, reg_param=0., store_covariance=False,
+                 tol=1.0e-4, store_covariances=None):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
         self.store_covariances = store_covariances
+        self.store_covariance = store_covariance
         self.tol = tol
+
+    @property
+    @deprecated("Attribute covariances_ was deprecated in version"
+                " 0.19 and will be removed in 0.21. Use "
+                "covariance_ instead")
+    def covariances_(self):
+        return self.covariance_
 
     def fit(self, X, y):
         """Fit the model according to the given training data and parameters.
 
             .. versionchanged:: 0.19
-               *store_covariance* has been moved to main constructor.
+               ``store_covariances`` has been moved to main constructor as
+               ``store_covariance``
 
             .. versionchanged:: 0.19
-               *tol* has been moved to main constructor.
+               ``tol`` has been moved to main constructor.
 
         Parameters
         ----------
@@ -638,14 +650,20 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
         if n_classes < 2:
-            raise ValueError('y has less than 2 classes')
+            raise ValueError('The number of classes has to be greater than'
+                             ' one; got %d class' % (n_classes))
         if self.priors is None:
             self.priors_ = np.bincount(y) / float(n_samples)
         else:
             self.priors_ = self.priors
 
         cov = None
+        store_covariance = self.store_covariance or self.store_covariances
         if self.store_covariances:
+            warnings.warn("'store_covariances' was renamed to store_covariance"
+                          " in version 0.19 and will be removed in 0.21.",
+                          DeprecationWarning)
+        if store_covariance:
             cov = []
         means = []
         scalings = []
@@ -665,13 +683,13 @@ class QuadraticDiscriminantAnalysis(BaseEstimator, ClassifierMixin):
                 warnings.warn("Variables are collinear")
             S2 = (S ** 2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
-            if self.store_covariances:
+            if self.store_covariance or store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
             scalings.append(S2)
             rotations.append(Vt.T)
-        if self.store_covariances:
-            self.covariances_ = cov
+        if self.store_covariance or store_covariance:
+            self.covariance_ = cov
         self.means_ = np.asarray(means)
         self.scalings_ = scalings
         self.rotations_ = rotations

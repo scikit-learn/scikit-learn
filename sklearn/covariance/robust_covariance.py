@@ -190,7 +190,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     Starting from a random support, the pure data set is found by the
     c_step procedure introduced by Rousseeuw and Van Driessen in
-    [Rouseeuw1999]_.
+    [RV]_.
 
     Parameters
     ----------
@@ -250,7 +250,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     References
     ----------
-    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant
+    .. [RV] A Fast Algorithm for the Minimum Covariance Determinant
         Estimator, 1999, American Statistical Association and the American
         Society for Quality, TECHNOMETRICS
 
@@ -339,13 +339,13 @@ def fast_mcd(X, support_fraction=None,
     such computation levels.
 
     Note that only raw estimates are returned. If one is interested in
-    the correction and reweighting steps described in [Rouseeuw1999]_,
+    the correction and reweighting steps described in [RouseeuwVan]_,
     see the MinCovDet object.
 
     References
     ----------
 
-    .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance
+    .. [RouseeuwVan] A Fast Algorithm for the Minimum Covariance
         Determinant Estimator, 1999, American Statistical Association
         and the American Society for Quality, TECHNOMETRICS
 
@@ -405,7 +405,7 @@ def fast_mcd(X, support_fraction=None,
             # get precision matrix in an optimized way
             precision = linalg.pinvh(covariance)
             dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
-# Starting FastMCD algorithm for p-dimensional case
+    # Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
         # 1. Find candidate supports on subsets
         # a. split the set in subsets of size ~ 300
@@ -580,10 +580,10 @@ class MinCovDet(EmpiricalCovariance):
 
     .. [Rouseeuw1984] `P. J. Rousseeuw. Least median of squares regression.
         J. Am Stat Ass, 79:871, 1984.`
-    .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance Determinant
+    .. [Rousseeuw] `A Fast Algorithm for the Minimum Covariance Determinant
         Estimator, 1999, American Statistical Association and the American
         Society for Quality, TECHNOMETRICS`
-    .. [Butler1993] `R. W. Butler, P. L. Davies and M. Jhun,
+    .. [ButlerDavies] `R. W. Butler, P. L. Davies and M. Jhun,
         Asymptotics For The Minimum Covariance Determinant Estimator,
         The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400`
 
@@ -650,7 +650,7 @@ class MinCovDet(EmpiricalCovariance):
         """Apply a correction to raw Minimum Covariance Determinant estimates.
 
         Correction using the empirical correction factor suggested
-        by Rousseeuw and Van Driessen in [Rouseeuw1984]_.
+        by Rousseeuw and Van Driessen in [RVD]_.
 
         Parameters
         ----------
@@ -659,12 +659,27 @@ class MinCovDet(EmpiricalCovariance):
             The data set must be the one which was used to compute
             the raw estimates.
 
+        References
+        ----------
+
+        .. [RVD] `A Fast Algorithm for the Minimum Covariance
+            Determinant Estimator, 1999, American Statistical Association
+            and the American Society for Quality, TECHNOMETRICS`
+
         Returns
         -------
         covariance_corrected : array-like, shape (n_features, n_features)
             Corrected robust covariance estimate.
 
         """
+
+        # Check that the covariance of the support data is not equal to 0.
+        # Otherwise self.dist_ = 0 and thus correction = 0.
+        n_samples = len(self.dist_)
+        n_support = np.sum(self.support_)
+        if n_support < n_samples and np.allclose(self.raw_covariance_, 0):
+            raise ValueError('The covariance matrix of the support data '
+                             'is equal to 0, try to increase support_fraction')
         correction = np.median(self.dist_) / chi2(data.shape[1]).isf(0.5)
         covariance_corrected = self.raw_covariance_ * correction
         self.dist_ /= correction
@@ -675,7 +690,8 @@ class MinCovDet(EmpiricalCovariance):
 
         Re-weight observations using Rousseeuw's method (equivalent to
         deleting outlying observations from the data set before
-        computing location and covariance estimates). [Rouseeuw1984]_
+        computing location and covariance estimates) described
+        in [RVDriessen]_.
 
         Parameters
         ----------
@@ -683,6 +699,13 @@ class MinCovDet(EmpiricalCovariance):
             The data matrix, with p features and n samples.
             The data set must be the one which was used to compute
             the raw estimates.
+
+        References
+        ----------
+
+        .. [RVDriessen] `A Fast Algorithm for the Minimum Covariance
+            Determinant Estimator, 1999, American Statistical Association
+            and the American Society for Quality, TECHNOMETRICS`
 
         Returns
         -------

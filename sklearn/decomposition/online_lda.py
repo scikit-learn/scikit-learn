@@ -5,7 +5,7 @@ Online Latent Dirichlet Allocation with variational inference
 =============================================================
 
 This implementation is modified from Matthew D. Hoffman's onlineldavb code
-Link: http://matthewdhoffman.com/code/onlineldavb.tar
+Link: https://github.com/blei-lab/onlineldavb
 """
 
 # Author: Chyi-Kwei Yau
@@ -191,7 +191,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Number of documents to use in each EM iteration. Only used in online
         learning.
 
-    evaluate_every : int optional (default=0)
+    evaluate_every : int, optional (default=0)
         How often to evaluate perplexity. Only used in `fit` method.
         set it to 0 or negative number to not evalute perplexity in
         training at all. Evaluating perplexity can help you check convergence
@@ -257,7 +257,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Chong Wang, John Paisley, 2013
 
     [3] Matthew D. Hoffman's onlineldavb code. Link:
-        http://matthewdhoffman.com//code/onlineldavb.tar
+        https://github.com/blei-lab/onlineldavb
 
     """
 
@@ -473,6 +473,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
 
+        y : Ignored
+
         Returns
         -------
         self
@@ -514,6 +516,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
+
+        y : Ignored
 
         Returns
         -------
@@ -713,6 +717,8 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Document word matrix.
+
+        y : Ignored
 
         Returns
         -------

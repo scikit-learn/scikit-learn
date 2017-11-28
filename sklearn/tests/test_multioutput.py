@@ -15,10 +15,10 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import fetch_mldata
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.externals.joblib import cpu_count
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import SGDClassifier
@@ -29,6 +29,7 @@ from sklearn.multioutput import ClassifierChain
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
+from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 
 
@@ -166,8 +167,9 @@ def test_multi_output_classification_partial_fit_parallelism():
     est1 = mor.estimators_[0]
     mor.partial_fit(X, y)
     est2 = mor.estimators_[0]
-    # parallelism requires this to be the case for a sane implementation
-    assert_false(est1 is est2)
+    if cpu_count() > 1:
+        # parallelism requires this to be the case for a sane implementation
+        assert_false(est1 is est2)
 
 
 def test_multi_output_classification_partial_fit():
@@ -379,6 +381,8 @@ def test_classifier_chain_fit_and_predict_with_logistic_regression():
 
     assert_equal([c.coef_.size for c in classifier_chain.estimators_],
                  list(range(X.shape[1], X.shape[1] + Y.shape[1])))
+
+    assert isinstance(classifier_chain, ClassifierMixin)
 
 
 def test_classifier_chain_fit_and_predict_with_linear_svc():

@@ -28,7 +28,7 @@ from sklearn.datasets import fetch_lfw_people
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import raises
+from sklearn.utils.testing import assert_raises
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
@@ -110,10 +110,9 @@ def teardown_module():
         shutil.rmtree(SCIKIT_LEARN_EMPTY_DATA)
 
 
-@raises(IOError)
 def test_load_empty_lfw_people():
-    fetch_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA,
-                     download_if_missing=False)
+    assert_raises(IOError, fetch_lfw_people, data_home=SCIKIT_LEARN_EMPTY_DATA,
+                  download_if_missing=False)
 
 
 def test_load_fake_lfw_people():
@@ -148,16 +147,15 @@ def test_load_fake_lfw_people():
                         'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
 
 
-@raises(ValueError)
 def test_load_fake_lfw_people_too_restrictive():
-    fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100,
-                     download_if_missing=False)
+    assert_raises(ValueError, fetch_lfw_people, data_home=SCIKIT_LEARN_DATA,
+                  min_faces_per_person=100, download_if_missing=False)
 
 
-@raises(IOError)
 def test_load_empty_lfw_pairs():
-    fetch_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA,
-                    download_if_missing=False)
+    assert_raises(IOError, fetch_lfw_pairs,
+                  data_home=SCIKIT_LEARN_EMPTY_DATA,
+                  download_if_missing=False)
 
 
 def test_load_fake_lfw_pairs():
