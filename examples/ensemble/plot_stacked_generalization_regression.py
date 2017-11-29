@@ -15,7 +15,9 @@ achieved.
 
 # utils
 from time import time
+
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
 
 # import base regressors
 from sklearn.linear_model import LassoCV, RidgeCV, LinearRegression
@@ -32,7 +34,13 @@ from sklearn.metrics import mean_squared_error
 
 RANDOM_SEED = 89555
 
-fig, axarr = plt.subplots(1, 4, figsize=(9, 3))
+fig = plt.figure(figsize=(9, 4))
+gs_outer = GridSpec(2, 1, wspace=0.1)
+
+gs_regressors = GridSpecFromSubplotSpec(1, 4, subplot_spec=gs_outer[0])
+regs_axarr = [plt.Subplot(fig, gridspec) for gridspec in gs_regressors]
+
+time_ax = plt.Subplot(fig, gs_outer[1])
 
 # prepare data
 X, y = load_boston(return_X_y=True)
@@ -66,10 +74,19 @@ def evaluate_and_log_model(name, model, ax):
     ax.set_ylabel('Predicted')
     ax.set_xticks(())
     ax.set_yticks(())
+    fig.add_subplot(ax)
 
+    return train_time, score
+
+
+train_times = []
+scores = []
+labels = [name for name, _ in base_regressors]
 
 for i, (name, regressor) in enumerate(base_regressors):
-    evaluate_and_log_model(name, regressor, axarr[i])
+    train_time, score = evaluate_and_log_model(name, regressor, regs_axarr[i])
+    train_times.append(train_time)
+    scores.append(score)
 
 # Stacked ensemble: we use the base regressors as features for a new linear
 # regressor.
@@ -77,6 +94,25 @@ layer0 = make_stack_layer(base_regressors)
 final_regressor = Pipeline([('layer0', layer0),
                             ('layer1', LinearRegression())])
 
-evaluate_and_log_model('Stacked Regressors', final_regressor, axarr[-1])
-fig.tight_layout()
+train_time, score = evaluate_and_log_model('Stacked Regressors',
+                                           final_regressor, regs_axarr[-1])
+
+train_times.append(train_time)
+scores.append(score)
+labels.append('Stacked Regressors')
+
+time_ax.scatter(train_times, scores, edgecolors=[0, 0, 0])
+time_ax.set_title("Train time x MSE")
+time_ax.set_xlabel('Train time (seconds)')
+time_ax.set_ylabel('MSE')
+for i, label in enumerate(labels):
+    time_ax.annotate(label, (train_times[i], scores[i]), xytext=(0, -20),
+                     textcoords='offset points', ha='left', va='bottom',
+                     annotation_clip=True)
+
+time_ax.set_xlim(right=max(train_times) * 1.25)
+time_ax.set_ylim(bottom=min(scores) - 3, top=max(scores) + 1)
+fig.add_subplot(time_ax)
+
+gs_outer.tight_layout(fig)
 fig.show()
