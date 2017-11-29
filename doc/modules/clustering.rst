@@ -312,7 +312,7 @@ which does not exist in the original data, and thus cannot be a medoid.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_kmedoids_digits.py`: Applying K-Medoids on digits
+ * :ref:`sphx_glr_auto_examples_cluster_plot_kmedoids_digits.py`: Applying K-Medoids on digits
    with various distance metrics.
 
 
