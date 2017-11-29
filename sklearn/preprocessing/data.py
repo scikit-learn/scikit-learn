@@ -2587,15 +2587,16 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
     modeling issues related to heteroscedasticity (non-constant variance),
     or other situations where normality is desired.
 
-    Box-Cox requires input data to be strictly positive. The optimal value
-    for the parameter, lambda, is estimated through maximum likelihood.
+    Box-Cox requires input data to be strictly positive and non-zero.
+    The optimal value for the parameter, lambda, is estimated through maximum
+    likelihood.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
     Parameters
     ----------
     copy : boolean, optional, default=True
-        Set to False to perform inplace computation.
+        Set to False to perform inplace computation during transformation.
 
     Attributes
     ----------
@@ -2610,17 +2611,17 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(boxcox.fit(data))
     BoxCoxTransformer(copy=True)
-    >>> print(np.round(boxcox.lambdas_, 3))
-    [ 1.052 -2.345]
-    >>> print(np.round(boxcox.transform(data), 3))
-    [[ 0.     0.342]
-     [ 2.068  0.342]
-     [ 3.135  0.417]]
+    >>> print(boxcox.lambdas_)  # doctest: +ELLIPSIS
+    [ 1.051... -2.345...]
+    >>> print(boxcox.transform(data))  # doctest: +ELLIPSIS
+    [[ 0...      0.342...]
+     [ 2.068...  0.342...]
+     [ 3.135...  0.416...]]
 
     Notes
     -----
-    See also QuantileTransformer(output_distribution='uniform') for another
-    transformer to normalize data to the Gaussian distribution.
+    See also QuantileTransformer(output_distribution='normal') for another
+    transformer to map data to the Gaussian distribution.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
@@ -2650,11 +2651,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
-        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES)
-
-        if np.any(X <= 0):
-            raise ValueError("The Box-Cox transformation can only be applied "
-                             "to strictly positive data")
+        X = self._check_input(X, check_positive=True)
 
         self.lambdas_ = []
         for col in X.T:
@@ -2673,19 +2670,10 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             The data to be transformed using the Box-Cox transformation.
         """
         check_is_fitted(self, 'lambdas_')
-        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
-
-        if np.any(X <= 0):
-            raise ValueError("The Box-Cox transformation can only be applied "
-                             "to strictly positive data")
-
-        if not len(self.lambdas_) == X.shape[1]:
-            raise ValueError("Input data has a different number of features "
-                             "than fitting data. Should have {n}, data has {m}"
-                             .format(n=len(self.lambdas_), m=X.shape[1]))
+        X = self._check_input(X, check_positive=True, check_shape=True)
 
         for i, lmbda in enumerate(self.lambdas_):
-            X[:, i] = stats.boxcox(X[:, i].flatten(), lmbda=lmbda)
+            X[:, i] = stats.boxcox(X[:, i], lmbda=lmbda)
 
         return X
 
@@ -2705,12 +2693,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             The Box-Cox transformed data.
         """
         check_is_fitted(self, 'lambdas_')
-        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
-
-        if not X.shape[1] == len(self.lambdas_):
-            raise ValueError("Input data has a different number of features "
-                             "than fitting data. Should have {n}, data has {m}"
-                             .format(n=len(self.lambdas_), m=X.shape[1]))
+        X = self._check_input(X, check_shape=True)
 
         for i, lmbda in enumerate(self.lambdas_):
             x = X[:, i]
@@ -2719,6 +2702,30 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             else:
                 x_inv = (x * lmbda + 1) ** (1 / lmbda)
             X[:, i] = x_inv
+
+        return X
+
+    def _check_input(self, X, check_positive=False, check_shape=False):
+        """Check that input is positive and nonzero before fit and transform.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+        check_positive : bool
+            If True, check that all data is postive and non-zero.
+        check_shape : bool
+            If True, check that n_features matches the length of self.lambdas_
+        """
+        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
+
+        if check_positive and np.any(X <= 0):
+            raise ValueError("The Box-Cox transformation can only be applied "
+                             "to strictly positive and non-zero data")
+
+        if check_shape and not X.shape[1] == len(self.lambdas_):
+            raise ValueError("Input data has a different number of features "
+                             "than fitting data. Should have {n}, data has {m}"
+                             .format(n=len(self.lambdas_), m=X.shape[1]))
 
         return X
 
