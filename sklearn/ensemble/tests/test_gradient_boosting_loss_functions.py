@@ -196,7 +196,6 @@ def test_multinomial_deviance():
     for i in range(p.shape[1]):
         p[:, i] = y == i
 
-    assert_raises(ValueError, MultinomialDeviance, 2)
     loss = MultinomialDeviance(3)
     loss_wo_sw = loss(y, p)
     assert loss_wo_sw > 0
@@ -205,10 +204,18 @@ def test_multinomial_deviance():
     loss_w_sw = loss(y, p, 0.5 * np.ones(p.shape[0], dtype=np.float32))
     assert_almost_equal(loss_wo_sw, loss_w_sw)
 
-    # second check
-    pred = np.array([[1.0, 0, 0],
-                     [0, 0.5, 0.5]])
-    y = np.array([0, 1])
-    weights = np.array([1, 3])
-    expected_loss = 0.85637
+
+def test_mdl_computation_weighted(pred=np.array([[1.0, 0, 0],
+                                                 [0, 0.5, 0.5]]),
+                                  y=np.array([0, 1]),
+                                  weights=np.array([1, 3]),
+                                  expected_loss=0.85637):
+    # MultinomialDeviance loss computation with weights.
+    loss = MultinomialDeviance(3)
     assert_almost_equal(loss(y, pred, weights), expected_loss, decimal=4)
+
+
+def test_mdl_exception():
+    # Check that MultinomialDeviance throws when n_classes <= 2
+    assert_raises(ValueError, MultinomialDeviance, 2)
+    assert_raises(ValueError, MultinomialDeviance, 1)
