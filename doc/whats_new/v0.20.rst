@@ -58,6 +58,13 @@ Preprocessing
   the maximum value in the features. :issue:`9151` by
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
+- Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
+  power transformation, allowing users to map data of any distribution to a
+  Gaussian distribution. This is useful in any situation where normality and
+  heteroschedasticity are desirable. :issue:`10210` by
+  :user:`Eric Chang <ericchang00>` and :user:`maniteja123<maniteja123>`.
+
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
@@ -210,7 +217,7 @@ Feature Extraction
   of all possible patches rather than simply returning the number of possible
   patches. :issue:`10100` by :user:`Varun Agrawal <varunagrawal>`
 
-	
+
 API changes summary
 -------------------
 

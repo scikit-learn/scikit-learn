@@ -4,6 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Eric Martin <eric@ericmart.in>
 #          Giorgio Patrini <giorgio.patrini@anu.edu.au>
+#          Eric Chang <ericchang2017@u.northwestern.edu>
 # License: BSD 3 clause
 
 from __future__ import division
