@@ -60,6 +60,7 @@ from abc import ABCMeta, abstractmethod
 import warnings
 import numpy as np
 from scipy import sparse
+from scipy.sparse import csgraph
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..externals import six
@@ -514,7 +515,7 @@ class LabelSpreading(BaseLabelPropagation):
             self.nn_fit = None
         n_samples = self.X_.shape[0]
         affinity_matrix = self._get_kernel(self.X_)
-        laplacian = sparse.csgraph.laplacian(affinity_matrix, normed=True)
+        laplacian = csgraph.laplacian(affinity_matrix, normed=True)
         laplacian = -laplacian
         if sparse.isspmatrix(laplacian):
             diag_mask = (laplacian.row == laplacian.col)

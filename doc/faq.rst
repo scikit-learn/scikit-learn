@@ -86,6 +86,8 @@ arrays such as pandas DataFrame are also acceptable.
 For more information on loading your data files into these usable data 
 structures, please refer to :ref:`loading external datasets <external_datasets>`.
 
+.. _new_algorithms_inclusion_criteria:
+
 What are the inclusion criteria for new algorithms ?
 ----------------------------------------------------
 
@@ -108,9 +110,12 @@ proposed algorithm should outperform the methods that are already implemented
 in scikit-learn at least in some areas.
 
 Also note that your implementation need not be in scikit-learn to be used
-together with scikit-learn tools. You can implement your favorite algorithm in
-a scikit-learn compatible way, upload it to github and let us know. We will
-list it under :ref:`related_projects`.
+together with scikit-learn tools. You can implement your favorite algorithm
+in a scikit-learn compatible way, upload it to GitHub and let us know. We
+will be happy to list it under :ref:`related_projects`. If you already have
+a package on GitHub following the scikit-learn API, you may also be
+interested to look at `scikit-learn-contrib
+<http://scikit-learn-contrib.github.io>`_.
 
 .. _selectiveness:
 
@@ -123,8 +128,10 @@ The package relies on core developers using their free time to
 fix bugs, maintain code and review contributions.
 Any algorithm that is added needs future attention by the developers,
 at which point the original author might long have lost interest.
-Also see `this thread on the mailing list
-<https://sourceforge.net/p/scikit-learn/mailman/scikit-learn-general/thread/CAAkaFLWcBG+gtsFQzpTLfZoCsHMDv9UG5WaqT0LwUApte0TVzg@mail.gmail.com/#msg33104380>`_.
+See also :ref:`new_algorithms_inclusion_criteria`. For a great read about 
+long-term maintenance issues in open-source software, look at 
+`the Executive Summary of Roads and Bridges
+<https://www.fordfoundation.org/media/2976/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=8>`_
 
 Why did you remove HMMs from scikit-learn?
 --------------------------------------------

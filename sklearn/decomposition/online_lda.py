@@ -5,7 +5,7 @@ Online Latent Dirichlet Allocation with variational inference
 =============================================================
 
 This implementation is modified from Matthew D. Hoffman's onlineldavb code
-Link: http://matthewdhoffman.com/code/onlineldavb.tar
+Link: https://github.com/blei-lab/onlineldavb
 """
 
 # Author: Chyi-Kwei Yau
@@ -257,7 +257,7 @@ class LatentDirichletAllocation(BaseEstimator, TransformerMixin):
         Chong Wang, John Paisley, 2013
 
     [3] Matthew D. Hoffman's onlineldavb code. Link:
-        http://matthewdhoffman.com//code/onlineldavb.tar
+        https://github.com/blei-lab/onlineldavb
 
     """
 

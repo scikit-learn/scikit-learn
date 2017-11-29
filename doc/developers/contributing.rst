@@ -280,8 +280,8 @@ You can also check for common programming errors with the following tools:
     * Code with a good unittest coverage (at least 90%, better 100%), check
       with::
 
-        $ pip install nose coverage
-        $ nosetests --with-coverage path/to/tests_for_package
+        $ pip install pytest pytest-cov
+        $ pytest --cov sklearn path/to/tests_for_package
 
       see also :ref:`testing_coverage`
 
@@ -519,13 +519,13 @@ Testing and improving test coverage
 
 High-quality `unit testing <https://en.wikipedia.org/wiki/Unit_testing>`_
 is a corner-stone of the scikit-learn development process. For this
-purpose, we use the `nose <http://nose.readthedocs.io/en/latest/>`_
+purpose, we use the `pytest <https://docs.pytest.org>`_
 package. The tests are functions appropriately named, located in `tests`
 subdirectories, that check the validity of the algorithms and the
 different options of the code.
 
 The full scikit-learn tests can be run using 'make' in the root folder.
-Alternatively, running 'nosetests' in a folder will run all the tests of
+Alternatively, running 'pytest' in a folder will run all the tests of
 the corresponding subpackages.
 
 We expect code coverage of new features to be at least around 90%.
@@ -533,7 +533,7 @@ We expect code coverage of new features to be at least around 90%.
 .. note:: **Workflow to improve test coverage**
 
    To test code coverage, you need to install the `coverage
-   <https://pypi.python.org/pypi/coverage>`_ package in addition to nose.
+   <https://pypi.python.org/pypi/coverage>`_ package in addition to pytest.
 
    1. Run 'make test-coverage'. The output lists for each file the line
       numbers that are not tested.
@@ -872,6 +872,8 @@ from high-level questions to a more detailed check-list.
 - Does the documentation render properly (see the
   :ref:`contribute_documentation` section for more details), and are the plots
   instructive?
+
+:ref:`saved_replies` includes some frequent comments that reviewers may make.
 
 .. _api_overview:
 
