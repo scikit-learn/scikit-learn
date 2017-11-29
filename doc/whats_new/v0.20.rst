@@ -44,6 +44,11 @@ Classifiers and regressors
   Naive Bayes classifier described in Rennie et al. (2003).
   By :user:`Michael A. Alcorn <airalcorn2>`.
 
+- Added :class:`ensemble.StackingTransformer` and helper function
+  :func:`ensemble.make_stack_layer` which implements an approach to Stacked
+  Generalization using cross validation predictions.
+  :issue:`8960` by :user:`Caio Oliveira <caioaao>`.
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy` metric and a corresponding
@@ -111,7 +116,7 @@ Classifiers and regressors
   :class:`neural_network.MLPClassifier` with new ``n_iter_no_change``
   parameter now at 10 from previously hardcoded 2.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`.
-  
+
 - Fixed a bug in :class:`neural_network.MLPRegressor` where fitting
   quit unexpectedly early due to local minima or fluctuations.
   :issue:`9456` by :user:`Nicholas Nadeau <nnadeau>`
