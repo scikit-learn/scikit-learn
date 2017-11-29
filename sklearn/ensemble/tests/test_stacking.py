@@ -36,7 +36,7 @@ def _check_estimator(estimator, **fit_params):
     Xt = estimator.fit_transform(X, y, **fit_params)
 
     # checks that we get a column vector
-    assert_array_equal(Xt.shape, [X.shape[0], 2])
+    assert_equal(Xt.ndim, 2)
 
     # checks that `fit` is available
     estimator.fit(X, y, **fit_params)
@@ -45,7 +45,7 @@ def _check_estimator(estimator, **fit_params):
     Xt2 = estimator.transform(X)
 
     # checks that transformed data is always a column vector
-    assert_array_equal(Xt.shape, [X.shape[0], 2])
+    assert_equal(Xt.ndim, 2)
 
     # checks that transform is different from fit_transform
     assert_false(np.allclose(Xt, Xt2))
