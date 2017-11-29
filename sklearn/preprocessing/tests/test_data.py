@@ -2259,7 +2259,7 @@ def test_power_transformer():
 
     # Exceptions should be raised for negative arrays and zero arrays
     X_with_negatives = X_2d
-    not_positive_message = 'strictly positive and non-zero data'
+    not_positive_message = 'strictly positive'
 
     assert_raise_message(ValueError, not_positive_message,
                          pt.transform, X_with_negatives)

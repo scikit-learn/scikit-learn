@@ -2585,7 +2585,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
-    or other situations where normality is desired.
+    or other situations where normality is desired. Note that power
+    transforms do not result in standard normal distributions.
 
     Currently, PowerTransformer supports the Box-Cox transform. Box-Cox
     requires input data to be strictly positive. The optimal parameter
@@ -2737,7 +2738,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         if check_positive and self.method == 'boxcox' and np.any(X <= 0):
             raise ValueError("The Box-Cox transformation can only be applied "
-                             "to strictly positive and non-zero data")
+                             "to strictly positive data")
 
         if check_shape and not X.shape[1] == len(self.lambdas_):
             raise ValueError("Input data has a different number of features "
