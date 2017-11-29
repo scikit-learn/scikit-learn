@@ -59,7 +59,7 @@ For bug reports or feature requests, please make use of the
 
 There is also a `scikit-learn Gitter channel
 <https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
-might be found.
+might be found. 
 
 **Please do not email any authors directly to ask for assistance, report bugs,
 or for any other issue related to scikit-learn.**
@@ -80,10 +80,10 @@ How can I load my own datasets into a format usable by scikit-learn?
 --------------------------------------------------------------------
 
 Generally, scikit-learn works on any numeric data stored as numpy arrays
-or scipy sparse matrices. Other types that are convertible to numeric
+or scipy sparse matrices. Other types that are convertible to numeric 
 arrays such as pandas DataFrame are also acceptable.
 
-For more information on loading your data files into these usable data
+For more information on loading your data files into these usable data 
 structures, please refer to :ref:`loading external datasets <external_datasets>`.
 
 .. _new_algorithms_inclusion_criteria:
@@ -105,7 +105,7 @@ numpy array or sparse matrix, are accepted.
 The contributor should support the importance of the proposed addition with
 research papers and/or implementations in other similar packages, demonstrate
 its usefulness via common use-cases/applications and corroborate performance
-improvements, if any, with benchmarks and/or plots. It is expected that the
+improvements, if any, with benchmarks and/or plots. It is expected that the 
 proposed algorithm should outperform the methods that are already implemented
 in scikit-learn at least in some areas.
 
@@ -128,8 +128,8 @@ The package relies on core developers using their free time to
 fix bugs, maintain code and review contributions.
 Any algorithm that is added needs future attention by the developers,
 at which point the original author might long have lost interest.
-See also :ref:`new_algorithms_inclusion_criteria`. For a great read about
-long-term maintenance issues in open-source software, look at
+See also :ref:`new_algorithms_inclusion_criteria`. For a great read about 
+long-term maintenance issues in open-source software, look at 
 `the Executive Summary of Roads and Bridges
 <https://www.fordfoundation.org/media/2976/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=8>`_
 
