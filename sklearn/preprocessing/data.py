@@ -2624,10 +2624,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
      [ 2.068...  0.342...]
      [ 3.135...  0.416...]]
 
-    See Also
+    See also
     --------
-    QuantileTransformer(output_distribution='normal') for another transformer
-    to map data to the Gaussian distribution.
+    QuantileTransformer : Maps data to a standard normal distribution with
+    output_distribution='normal'.
 
     Notes
     -----
@@ -2720,7 +2720,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
     def _check_input(self, X, check_positive=False, check_shape=False,
                      check_method=False):
-        """Check that input is positive and nonzero before fit and transform.
+        """Validate the input before fit and transform.
 
         Parameters
         ----------
