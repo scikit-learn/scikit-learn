@@ -2580,28 +2580,32 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
 
 
 class PowerTransformer(BaseEstimator, TransformerMixin):
-    """Apply the Box-Cox transform featurewise to make data more Gaussian-like.
+    """Apply a power transform featurewise to make data more Gaussian-like.
 
-    The Box-Cox transformation is a monotonic transformation that is
-    applied to make data more Gaussian-like. This is useful for solving
+    Power transforms are a family of parametric, monotonic transformations
+    that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
     or other situations where normality is desired.
 
-    Box-Cox requires input data to be strictly positive and non-zero.
-    The optimal value for the parameter, lambda, is estimated through maximum
-    likelihood.
+    Currently, PowerTransformer supports the Box-Cox transform. Box-Cox
+    requires input data to be strictly positive. The optimal parameter
+    for minimizing skewness is estimated through maximum likelihood.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
     Parameters
     ----------
+    method : str, (default='boxcox')
+        The power transform method. Currently, 'boxcox' (Box-Cox transform)
+        is the only option available.
+
     copy : boolean, optional, default=True
         Set to False to perform inplace computation during transformation.
 
     Attributes
     ----------
     lambdas_ : array of float, shape (n_features,)
-        The parameters of the Box-Cox transformation for the selected features.
+        The parameters of the power transformation for the selected features.
 
     Examples
     --------
@@ -2618,11 +2622,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
      [ 2.068...  0.342...]
      [ 3.135...  0.416...]]
 
+    See Also
+    --------
+    QuantileTransformer(output_distribution='normal') for another transformer
+    to map data to the Gaussian distribution.
+
     Notes
     -----
-    See also QuantileTransformer(output_distribution='normal') for another
-    transformer to map data to the Gaussian distribution.
-
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
@@ -2638,12 +2644,16 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Estimate the optimal lambda for each feature using MLE.
+        """Estimate the optimal parameter for each feature.
+
+        The optimal parameter for minimizing skewness is estimated
+        on each feature independently. If the method is Box-Cox,
+        the lambdas are estimated using maximum likelihood.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            The data used to estimate the Box-Cox transformation parameters.
+            The data used to estimate the optimal transformation parameters.
 
         y : Ignored
 
@@ -2663,12 +2673,12 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
-        """Apply Box-Cox to each feature using the fitted lambdas.
+        """Apply the power transform to each feature using the fitted lambdas.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            The data to be transformed using the Box-Cox transformation.
+            The data to be transformed using a power transformation.
         """
         check_is_fitted(self, 'lambdas_')
         X = self._check_input(X, check_positive=True, check_shape=True)
@@ -2679,7 +2689,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return X
 
     def inverse_transform(self, X):
-        """Undo the Box-Cox transformation using the fitted lambdas.
+        """Apply the inverse power transformation using the fitted lambdas.
 
         The inverse of the Box-Cox transformation is given by::
 
@@ -2691,7 +2701,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            The Box-Cox transformed data.
+            The transformed data.
         """
         check_is_fitted(self, 'lambdas_')
         X = self._check_input(X, check_shape=True)

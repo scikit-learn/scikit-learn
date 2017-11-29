@@ -306,12 +306,12 @@ Mapping to a Gaussian distribution
 ----------------------------------
 
 In many modeling scenarios, normality of the features in a dataset is desirable.
-Power transforms are a family of parameteric transformations that aim to
-map data from any distribution to as close to a Gaussian distribution as
-possible.
+Power transforms are a family of parametric, monotonic transformations that aim
+to map data from any distribution to as close to a Gaussian distribution as
+possible in order to minimize skewness.
 
-:class:`PowerTransformer` provides one such power transformation.
-The Box-Cox transform is given by:
+:class:`PowerTransformer` currently provides one such power transformation,
+the Box-Cox transform. The Box-Cox transform is given by:
 
 .. math::
     y_i^{(\lambda)} =
@@ -320,11 +320,12 @@ The Box-Cox transform is given by:
     \ln{(y_i)} & \text{if } \lambda = 0,
     \end{cases}
 
+Note that Box-Cox can only be applied to strictly positive data.
 The transformation is parameterized by :math:`\lambda`, which is determined
 through maximum likelihood estimation. Here is an example of using Box-Cox to
 map samples drawn from a lognormal distribution to a normal distribution::
 
-  >>> pt = preprocessing.PowerTransformer()
+  >>> pt = preprocessing.PowerTransformer(method='boxcox')
   >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
   >>> X_lognormal                                         # doctest: +ELLIPSIS
   array([[ 1.28...,  1.18...,  0.84...],
