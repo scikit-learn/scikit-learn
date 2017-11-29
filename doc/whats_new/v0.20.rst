@@ -61,8 +61,8 @@ Preprocessing
 - Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
   power transformation, allowing users to map data of any distribution to a
   Gaussian distribution. This is useful in any situation where normality and
-  heteroschedasticity are desirable. :issue:`10210` by
-  :user:`Eric Chang <ericchang00>` and :user:`maniteja123<maniteja123>`.
+  homoscedasticity are desirable. :issue:`10210` by
+  :user:`Eric Chang <ericchang00>` and :user:`Maniteja Nandana <maniteja123>`.
 
 
 Model evaluation
