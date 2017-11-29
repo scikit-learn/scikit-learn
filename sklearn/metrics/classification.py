@@ -463,12 +463,22 @@ def jaccard_similarity_score(y_true, y_pred, average=None,
 
     if y_type.startswith('multilabel'):
         with np.errstate(divide='ignore', invalid='ignore'):
-            # oddly, we may get an "invalid" rather than a "divide" error here
-            pred_or_true = count_nonzero(y_true + y_pred, axis=1)
-            pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
-            score = pred_and_true / pred_or_true
-            score[pred_or_true == 0.0] = 1.0
-        return _weighted_sum(score, sample_weight, normalize)
+            pred_or_true = count_nonzero(y_true + y_pred, axis=0)
+            pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=0)
+            if average == 'macro':
+                score = pred_and_true / pred_or_true
+                n_features = y_true.shape[1]
+                return np.sum(score) / n_features
+            elif average == 'micro':
+                score = np.sum(pred_and_true) / np.sum(pred_or_true)
+                return score
+            elif average == 'weighted':
+                score = pred_and_true / pred_or_true
+                score = _weighted_sum(score, sample_weight, normalize=True)
+                return score
+            else:
+                score = pred_and_true / pred_or_true
+                return score
     else:
         C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
         if average == 'macro':

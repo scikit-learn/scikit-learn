@@ -966,6 +966,16 @@ def test_multilabel_jaccard_similarity_score():
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred),
                         np.array([2. / 3, 0., 1. / 2]))
 
+    # multilabel testing
+    y_true = np.array([[0, 1, 1], [1, 0, 0]])
+    y_pred = np.array([[1, 1, 1], [1, 0, 1]])
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                average='macro'), 2. / 3)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                average='mirco'), 3. / 5)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred),
+                                    np.array([1. / 2, 1., 1. / 2]))
+
 
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
