@@ -54,7 +54,7 @@ from sklearn.preprocessing.data import RobustScaler
 from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
-from sklearn.preprocessing.data import BoxCoxTransformer
+from sklearn.preprocessing.data import PowerTransformer
 from sklearn.exceptions import DataConversionWarning, NotFittedError
 
 from sklearn.pipeline import Pipeline
@@ -2227,64 +2227,70 @@ def test_quantile_transform_valid_axis():
                         ". Got axis=2", quantile_transform, X.T, axis=2)
 
 
-def test_boxcox_transformer():
-    bct = BoxCoxTransformer()
+def test_power_transformer():
+    pt = PowerTransformer()
     X = np.abs(X_1col)
-    assert_raises(NotFittedError, bct.transform, X)
-    assert_raises(NotFittedError, bct.inverse_transform, X)
+    assert_raises(NotFittedError, pt.transform, X)
+    assert_raises(NotFittedError, pt.inverse_transform, X)
 
     # 1D test
-    X_trans = bct.fit_transform(X)
+    X_trans = pt.fit_transform(X)
     X_expected, lambda_expected = stats.boxcox(X.flatten())
 
     assert_almost_equal(X_expected.reshape(-1, 1), X_trans)
-    assert_almost_equal(X, bct.inverse_transform(X_trans))
-    assert_almost_equal(lambda_expected, bct.lambdas_[0])
-    assert len(bct.lambdas_) == X.shape[1]
-    assert isinstance(bct.lambdas_, np.ndarray)
+    assert_almost_equal(X, pt.inverse_transform(X_trans))
+    assert_almost_equal(lambda_expected, pt.lambdas_[0])
+    assert len(pt.lambdas_) == X.shape[1]
+    assert isinstance(pt.lambdas_, np.ndarray)
 
     # 2D test
     X = np.abs(X_2d)
-    X_trans = bct.fit_transform(X)
+    X_trans = pt.fit_transform(X)
     for j in range(X_trans.shape[1]):
         X_expected, lmbda = stats.boxcox(X[:, j].flatten())
         assert_almost_equal(X_trans[:, j], X_expected)
-        assert_almost_equal(lmbda, bct.lambdas_[j])
-    assert len(bct.lambdas_) == X.shape[1]
-    assert isinstance(bct.lambdas_, np.ndarray)
+        assert_almost_equal(lmbda, pt.lambdas_[j])
+    assert len(pt.lambdas_) == X.shape[1]
+    assert isinstance(pt.lambdas_, np.ndarray)
+
+    # Test inverse transformation
+    X_inv = pt.inverse_transform(X_trans)
+    assert_array_almost_equal(X_inv, X)
 
     # Exceptions should be raised for negative arrays and zero arrays
     X_with_negatives = X_2d
     not_positive_message = 'strictly positive and non-zero data'
 
     assert_raise_message(ValueError, not_positive_message,
-                         bct.transform, X_with_negatives)
+                         pt.transform, X_with_negatives)
 
     assert_raise_message(ValueError, not_positive_message,
-                         bct.fit, X_with_negatives)
+                         pt.fit, X_with_negatives)
 
     assert_raise_message(ValueError, not_positive_message,
-                         bct.transform, np.zeros(X_2d.shape))
+                         pt.transform, np.zeros(X_2d.shape))
 
     assert_raise_message(ValueError, not_positive_message,
-                         bct.fit, np.zeros(X_2d.shape))
+                         pt.fit, np.zeros(X_2d.shape))
 
     # Exceptions should be raised for arrays with different num_columns
     # than during fitting
     wrong_shape_message = 'Input data has a different number of features'
 
     assert_raise_message(ValueError, wrong_shape_message,
-                         bct.transform, X[:, 0:1])
+                         pt.transform, X[:, 0:1])
 
     assert_raise_message(ValueError, wrong_shape_message,
-                         bct.inverse_transform, X_trans[:, 0:1])
+                         pt.inverse_transform, X_trans[:, 0:1])
 
-    # Test inverse transformation
-    X_inv = bct.inverse_transform(X_trans)
-    assert_array_almost_equal(X_inv, X)
+    # An exception should be raised if PowerTransform.method isn't valid
+    bad_method_message = "'method' must be one of"
+    pt.method = 'montypython'
+    assert_raise_message(ValueError, bad_method_message,
+                         pt.fit, X)
 
     # Test the lambda = 0 case
     X = np.abs(X_2d)[:, 0:1]
-    bct.lambdas_ = np.array([0])
-    X_trans = bct.transform(X)
-    assert_array_almost_equal(bct.inverse_transform(X_trans), X)
+    pt.lambdas_ = np.array([0])
+    X_trans = pt.transform(X)
+    assert_array_almost_equal(pt.inverse_transform(X_trans), X)

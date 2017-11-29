@@ -310,7 +310,7 @@ Power transforms are a family of parameteric transformations that aim to
 map data from any distribution to as close to a Gaussian distribution as
 possible.
 
-:class:`BoxCoxTransformer` provides one such power transformation.
+:class:`PowerTransformer` provides one such power transformation.
 The Box-Cox transform is given by:
 
 .. math::
@@ -324,13 +324,13 @@ The transformation is parameterized by :math:`\lambda`, which is determined
 through maximum likelihood estimation. Here is an example of using Box-Cox to
 map samples drawn from a lognormal distribution to a normal distribution::
 
-  >>> boxcox = preprocessing.BoxCoxTransformer()
+  >>> pt = preprocessing.PowerTransformer()
   >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
   >>> X_lognormal                                         # doctest: +ELLIPSIS
   array([[ 1.28...,  1.18...,  0.84...],
          [ 0.94...,  1.60...,  0.38...],
          [ 1.35...,  0.21...,  1.09...]])
-  >>> boxcox.fit_transform(X_lognormal)                   # doctest: +ELLIPSIS
+  >>> pt.fit_transform(X_lognormal)                   # doctest: +ELLIPSIS
   array([[ 0.49...,  0.17..., -0.15...],
          [-0.05...,  0.58..., -0.57...],
          [ 0.69..., -0.84...,  0.10...]])

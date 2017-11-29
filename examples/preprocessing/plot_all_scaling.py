@@ -29,8 +29,9 @@ Scalers are linear (or more precisely affine) transformers and differ from each
 other in the way to estimate the parameters used to shift and scale each
 feature.
 
-``QuantileTransformer`` provides a non-linear transformation in which distances
-between marginal outliers and inliers are shrunk.
+``QuantileTransformer`` and ``PowerTransformer`` provide non-linear
+transformations in which distances between marginal outliers and inliers are
+shrunk.
 
 Unlike the previous transformations, normalization refers to a per sample
 transformation instead of a per feature transformation.
@@ -60,7 +61,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import QuantileTransformer
-from sklearn.preprocessing import BoxCoxTransformer
+from sklearn.preprocessing import PowerTransformer
 
 from sklearn.datasets import fetch_california_housing
 
@@ -93,8 +94,8 @@ distributions = [
         .fit_transform(X)),
     ('Data after sample-wise L2 normalizing',
         Normalizer().fit_transform(X)),
-    ('Data after Box-Cox transformation',
-        BoxCoxTransformer().fit_transform(X))
+    ('Data after power transformation (Box-Cox)',
+     PowerTransformer(method='boxcox').fit_transform(X))
 ]
 
 # scale the output between 0 and 1 for the colorbar
@@ -332,10 +333,10 @@ make_plot(6)
 make_plot(7)
 
 ##############################################################################
-# BoxCoxTransformer
+# PowerTransformer
 # -----------------
 #
-# ``BoxCoxTransformer`` applies the Box-Cox power transformation to each
+# ``PowerTransformer`` applies the Box-Cox power transformation to each
 # feature to make the data more Gaussian-like. It differs from the
 # QuantileTransformer (Gaussian output) in that it does not fit the
 # data to a zero-mean, unit-variance Gaussian distribution, instead finding

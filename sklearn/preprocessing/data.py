@@ -2579,7 +2579,7 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
                          " axis={}".format(axis))
 
 
-class BoxCoxTransformer(BaseEstimator, TransformerMixin):
+class PowerTransformer(BaseEstimator, TransformerMixin):
     """Apply the Box-Cox transform featurewise to make data more Gaussian-like.
 
     The Box-Cox transformation is a monotonic transformation that is
@@ -2606,14 +2606,14 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.preprocessing import BoxCoxTransformer
-    >>> boxcox = BoxCoxTransformer()
+    >>> from sklearn.preprocessing import PowerTransformer
+    >>> pt = PowerTransformer()
     >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(boxcox.fit(data))
-    BoxCoxTransformer(copy=True)
-    >>> print(boxcox.lambdas_)  # doctest: +ELLIPSIS
+    >>> print(pt.fit(data))
+    PowerTransformer(copy=True, method='boxcox')
+    >>> print(pt.lambdas_)  # doctest: +ELLIPSIS
     [ 1.051... -2.345...]
-    >>> print(boxcox.transform(data))  # doctest: +ELLIPSIS
+    >>> print(pt.transform(data))  # doctest: +ELLIPSIS
     [[ 0...      0.342...]
      [ 2.068...  0.342...]
      [ 3.135...  0.416...]]
@@ -2633,7 +2633,8 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
     Royal Statistical Society B, 26, 211-252 (1964).
 
     """
-    def __init__(self, copy=True):
+    def __init__(self, method='boxcox', copy=True):
+        self.method = method
         self.copy = copy
 
     def fit(self, X, y=None):
@@ -2651,7 +2652,7 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
         self : object
             Returns self.
         """
-        X = self._check_input(X, check_positive=True)
+        X = self._check_input(X, check_positive=True, check_method=True)
 
         self.lambdas_ = []
         for col in X.T:
@@ -2705,20 +2706,26 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
 
         return X
 
-    def _check_input(self, X, check_positive=False, check_shape=False):
+    def _check_input(self, X, check_positive=False, check_shape=False,
+                     check_method=False):
         """Check that input is positive and nonzero before fit and transform.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
+
         check_positive : bool
             If True, check that all data is postive and non-zero.
+
         check_shape : bool
             If True, check that n_features matches the length of self.lambdas_
+
+        check_method : bool
+            If True, check that the transformation method is valid.
         """
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
 
-        if check_positive and np.any(X <= 0):
+        if check_positive and self.method == 'boxcox' and np.any(X <= 0):
             raise ValueError("The Box-Cox transformation can only be applied "
                              "to strictly positive and non-zero data")
 
@@ -2726,6 +2733,12 @@ class BoxCoxTransformer(BaseEstimator, TransformerMixin):
             raise ValueError("Input data has a different number of features "
                              "than fitting data. Should have {n}, data has {m}"
                              .format(n=len(self.lambdas_), m=X.shape[1]))
+
+        valid_methods = ('boxcox',)
+        if check_method and self.method not in valid_methods:
+            raise ValueError("'method' must be one of {}, ",
+                             "got {} instead."
+                             .format(valid_methods, self.method))
 
         return X
 
