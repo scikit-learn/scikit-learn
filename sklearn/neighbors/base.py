@@ -365,10 +365,8 @@ class KNeighborsMixin(object):
                 for i in range(0, dist.shape[0]):
                     row = dist.getrow(i)
                     non_zero = row.size
-                    if non_zero < n_neighbors:
-                        raise ValueError("Invalid Format")
-                    else:
-                        neigh_ind[i][:n_neighbors] = row.indices[np.argsort(row.data)][:n_neighbors]
+                    neigh_ind[i][:n_neighbors] = \
+                        row.indices[np.argsort(row.data)][:n_neighbors]
             else:
                 neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
                 neigh_ind = neigh_ind[:, :n_neighbors]

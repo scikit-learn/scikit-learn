@@ -699,6 +699,13 @@ class TSNE(BaseEstimator):
             if self.verbose:
                 print("[t-SNE] Computing {} nearest neighbors...".format(k))
 
+            for i in range(0, X.shape[0]):
+                    row = X.getrow(i)
+                    non_zero = row.size
+                    if non_zero < k:
+                        raise ValueError("Perplexity is more in case of T-SNE."
+                                         " Please reduce the perplexity.")
+
             # Find the nearest neighbors for every point
             knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
                                    metric=self.metric)
