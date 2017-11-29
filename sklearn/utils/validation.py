@@ -13,6 +13,7 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
+from numpy.core.numeric import ComplexWarning
 
 from ..externals import six
 from ..utils.fixes import signature
@@ -20,6 +21,7 @@ from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
+from ..externals.joblib import Memory
 
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -155,6 +157,36 @@ def _shape_repr(shape):
     return "(%s)" % joined
 
 
+def check_memory(memory):
+    """Check that ``memory`` is joblib.Memory-like.
+
+    joblib.Memory-like means that ``memory`` can be converted into a
+    sklearn.externals.joblib.Memory instance (typically a str denoting the
+    ``cachedir``) or has the same interface (has a ``cache`` method).
+
+    Parameters
+    ----------
+    memory : None, str or object with the joblib.Memory interface
+
+    Returns
+    -------
+    memory : object with the joblib.Memory interface
+
+    Raises
+    ------
+    ValueError
+        If ``memory`` is not joblib.Memory-like.
+    """
+
+    if memory is None or isinstance(memory, six.string_types):
+        memory = Memory(cachedir=memory, verbose=0)
+    elif not hasattr(memory, 'cache'):
+        raise ValueError("'memory' should be None, a string or have the same"
+                         " interface as sklearn.externals.joblib.Memory."
+                         " Got memory='{}' instead.".format(memory))
+    return memory
+
+
 def check_consistent_length(*arrays):
     """Check that all arrays have consistent first dimensions.
 
@@ -274,6 +306,13 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
         else:
             _assert_all_finite(spmatrix.data)
     return spmatrix
+
+
+def _ensure_no_complex_data(array):
+    if hasattr(array, 'dtype') and array.dtype is not None \
+            and hasattr(array.dtype, 'kind') and array.dtype.kind == "c":
+        raise ValueError("Complex data not supported\n"
+                         "{}\n".format(array))
 
 
 def check_array(array, accept_sparse=False, dtype="numeric", order=None,
@@ -396,19 +435,44 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
     context = " by %s" % estimator_name if estimator is not None else ""
 
     if sp.issparse(array):
+        _ensure_no_complex_data(array)
         array = _ensure_sparse_format(array, accept_sparse, dtype, copy,
                                       force_all_finite)
     else:
-        array = np.array(array, dtype=dtype, order=order, copy=copy)
+        # If np.array(..) gives ComplexWarning, then we convert the warning
+        # to an error. This is needed because specifying a non complex
+        # dtype to the function converts complex to real dtype,
+        # thereby passing the test made in the lines following the scope
+        # of warnings context manager.
+        with warnings.catch_warnings():
+            try:
+                warnings.simplefilter('error', ComplexWarning)
+                array = np.array(array, dtype=dtype, order=order, copy=copy)
+            except ComplexWarning:
+                raise ValueError("Complex data not supported\n"
+                                 "{}\n".format(array))
+
+        # It is possible that the np.array(..) gave no warning. This happens
+        # when no dtype conversion happend, for example dtype = None. The
+        # result is that np.array(..) produces an array of complex dtype
+        # and we need to catch and raise exception for such cases.
+        _ensure_no_complex_data(array)
 
         if ensure_2d:
+            # If input is scalar raise error
+            if array.ndim == 0:
+                raise ValueError(
+                    "Expected 2D array, got scalar array instead:\narray={}.\n"
+                    "Reshape your data either using array.reshape(-1, 1) if "
+                    "your data has a single feature or array.reshape(1, -1) "
+                    "if it contains a single sample.".format(array))
+            # If input is 1D raise error
             if array.ndim == 1:
                 raise ValueError(
                     "Expected 2D array, got 1D array instead:\narray={}.\n"
                     "Reshape your data either using array.reshape(-1, 1) if "
                     "your data has a single feature or array.reshape(1, -1) "
                     "if it contains a single sample.".format(array))
-            array = np.atleast_2d(array)
             # To ensure that array flags are maintained
             array = np.array(array, dtype=dtype, order=order, copy=copy)
 

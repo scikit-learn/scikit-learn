@@ -427,7 +427,7 @@ Spectral clustering
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
 dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <http://pyamg.org/>`_ module is installed.
+sparse and the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.
 SpectralClustering requires the number of clusters to be specified. It
 works well for a small number of clusters but is not advised when using
 many clusters.
@@ -676,7 +676,7 @@ affinities), in particular Euclidean distance (*l2*), Manhattan distance
 (or Cityblock, or *l1*), cosine distance, or any precomputed affinity
 matrix.
 
-* *l1* distance is often good for sparse features, or sparse noise: ie
+* *l1* distance is often good for sparse features, or sparse noise: i.e.
   many of the features are zero, as in text mining using occurrences of
   rare words.
 
@@ -872,7 +872,7 @@ the user is advised
  2. Train all data by multiple calls to partial_fit.
  3. Set ``n_clusters`` to a required value using
     ``brc.set_params(n_clusters=n_clusters)``.
- 4. Call ``partial_fit`` finally with no arguments, i.e ``brc.partial_fit()``
+ 4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
     which performs the global clustering.
 
 .. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png

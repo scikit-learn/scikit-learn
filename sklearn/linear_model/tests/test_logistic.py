@@ -17,7 +17,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import raises
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model.logistic import (
@@ -74,6 +73,11 @@ def test_error():
                          LogisticRegression(C=-1).fit, X, Y1)
     assert_raise_message(ValueError, msg,
                          LogisticRegression(C="test").fit, X, Y1)
+
+    msg = "is not a valid scoring value"
+    assert_raise_message(ValueError, msg,
+                         LogisticRegressionCV(scoring='bad-scorer', cv=2).fit,
+                         X, Y1)
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
         msg = "Tolerance for stopping criteria must be positive"
@@ -244,13 +248,13 @@ def test_write_parameters():
     assert_array_almost_equal(clf.decision_function(X), 0)
 
 
-@raises(ValueError)
 def test_nan():
     # Test proper NaN handling.
     # Regression test for Issue #252: fit used to go into an infinite loop.
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
-    LogisticRegression(random_state=0).fit(Xnan, Y1)
+    logistic = LogisticRegression(random_state=0)
+    assert_raises(ValueError, logistic.fit, Xnan, Y1)
 
 
 def test_consistency_path():

@@ -42,9 +42,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     """Generate a random n-class classification problem.
 
     This initially creates clusters of points normally distributed (std=1)
-    about vertices of a `2 * class_sep`-sided hypercube, and assigns an equal
-    number of clusters to each class. It introduces interdependence between
-    these features and adds various types of further noise to the data.
+    about vertices of an `n_informative`-dimensional hypercube with sides of
+    length `2*class_sep` and assigns an equal number of clusters to each
+    class. It introduces interdependence between these features and adds
+    various types of further noise to the data.
 
     Prior to shuffling, `X` stacks a number of these primary "informative"
     features, "redundant" linear combinations of these, "repeated" duplicates
@@ -94,10 +95,13 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         exceeds 1.
 
     flip_y : float, optional (default=0.01)
-        The fraction of samples whose class are randomly exchanged.
+        The fraction of samples whose class are randomly exchanged. Larger
+        values introduce noise in the labels and make the classification
+        task harder.
 
     class_sep : float, optional (default=1.0)
-        The factor multiplying the hypercube dimension.
+        The factor multiplying the hypercube size.  Larger values spread
+        out the clusters/classes and make the classification task easier.
 
     hypercube : boolean, optional (default=True)
         If True, the clusters are put on the vertices of a hypercube. If
@@ -162,7 +166,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     n_clusters = n_classes * n_clusters_per_class
 
     if weights and len(weights) == (n_classes - 1):
-        weights.append(1.0 - sum(weights))
+        weights = weights + [1.0 - sum(weights)]
 
     if weights is None:
         weights = [1.0 / n_classes] * n_classes
@@ -581,7 +585,8 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     Parameters
     ----------
     n_samples : int, optional (default=100)
-        The total number of points generated.
+        The total number of points generated. If odd, the inner circle will
+        have one point more than the outer circle.
 
     shuffle : bool, optional (default=True)
         Whether to shuffle the samples.
@@ -595,7 +600,7 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    factor : double < 1 (default=.8)
+    factor : 0 < double < 1 (default=.8)
         Scale factor between inner and outer circle.
 
     Returns
@@ -607,22 +612,25 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
         The integer labels (0 or 1) for class membership of each sample.
     """
 
-    if factor > 1 or factor < 0:
+    if factor >= 1 or factor < 0:
         raise ValueError("'factor' has to be between 0 and 1.")
 
+    n_samples_out = n_samples // 2
+    n_samples_in = n_samples - n_samples_out
+
     generator = check_random_state(random_state)
-    # so as not to have the first point = last point, we add one and then
-    # remove it.
-    linspace = np.linspace(0, 2 * np.pi, n_samples // 2 + 1)[:-1]
-    outer_circ_x = np.cos(linspace)
-    outer_circ_y = np.sin(linspace)
-    inner_circ_x = outer_circ_x * factor
-    inner_circ_y = outer_circ_y * factor
+    # so as not to have the first point = last point, we set endpoint=False
+    linspace_out = np.linspace(0, 2 * np.pi, n_samples_out, endpoint=False)
+    linspace_in = np.linspace(0, 2 * np.pi, n_samples_in, endpoint=False)
+    outer_circ_x = np.cos(linspace_out)
+    outer_circ_y = np.sin(linspace_out)
+    inner_circ_x = np.cos(linspace_in) * factor
+    inner_circ_y = np.sin(linspace_in) * factor
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),
                    np.append(outer_circ_y, inner_circ_y))).T
-    y = np.hstack([np.zeros(n_samples // 2, dtype=np.intp),
-                   np.ones(n_samples // 2, dtype=np.intp)])
+    y = np.hstack([np.zeros(n_samples_out, dtype=np.intp),
+                   np.ones(n_samples_in, dtype=np.intp)])
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 

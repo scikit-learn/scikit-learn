@@ -47,11 +47,12 @@ REGRESSION_SCORERS = ['explained_variance', 'r2',
                       'neg_median_absolute_error', 'mean_absolute_error',
                       'mean_squared_error', 'median_absolute_error']
 
-CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
+CLF_SCORERS = ['accuracy', 'balanced_accuracy',
+               'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'neg_log_loss', 'log_loss']
+               'neg_log_loss', 'log_loss', 'brier_score_loss']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",

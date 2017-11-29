@@ -521,7 +521,7 @@ cdef class _QuadTree:
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""
         d = {}
-        # capacity is infered during the __setstate__ using nodes
+        # capacity is inferred during the __setstate__ using nodes
         d["max_depth"] = self.max_depth
         d["cell_count"] = self.cell_count
         d["capacity"] = self.capacity
