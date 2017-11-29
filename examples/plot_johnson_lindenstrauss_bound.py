@@ -187,7 +187,7 @@ for n_components in n_components_range:
           % (np.mean(rates), np.std(rates)))
 
     plt.figure()
-    plt.hist(rates, bins=50, normed=True, range=(0., 2.))
+    plt.hist(rates, bins=50, normed=True, range=(0., 2.), edgecolor='k')
     plt.xlabel("Squared distances rate: projected / original")
     plt.ylabel("Distribution of samples pairs")
     plt.title("Histogram of pairwise distance rates for n_components=%d" %

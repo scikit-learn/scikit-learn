@@ -5,9 +5,9 @@
 
 import numpy as np
 from scipy import linalg
+from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
-from ..utils.arpack import eigsh
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
@@ -31,12 +31,12 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     kernel : "linear" | "poly" | "rbf" | "sigmoid" | "cosine" | "precomputed"
         Kernel. Default="linear".
 
+    gamma : float, default=1/n_features
+        Kernel coefficient for rbf, poly and sigmoid kernels. Ignored by other
+        kernels.
+
     degree : int, default=3
         Degree for poly kernels. Ignored by other kernels.
-
-    gamma : float, default=1/n_features
-        Kernel coefficient for rbf and poly kernels. Ignored by other
-        kernels.
 
     coef0 : float, default=1
         Independent term in poly and sigmoid kernels.
@@ -74,15 +74,11 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
-    random_state : int seed, RandomState instance, or None, default=None
-        A pseudo random number generator used for the initialization of the
-        residuals when eigen_solver == 'arpack'.
-
-        .. versionadded:: 0.18
-
-    n_jobs : int, default=1
-        The number of parallel jobs to run.
-        If `-1`, then the number of jobs is set to the number of CPU cores.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
 
         .. versionadded:: 0.18
 
@@ -90,6 +86,12 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         If True, input X is copied and stored by the model in the `X_fit_`
         attribute. If no further changes will be done to X, setting
         `copy_X=False` saves memory by storing a reference.
+
+        .. versionadded:: 0.18
+
+    n_jobs : int, default=1
+        The number of parallel jobs to run.
+        If `-1`, then the number of jobs is set to the number of CPU cores.
 
         .. versionadded:: 0.18
 

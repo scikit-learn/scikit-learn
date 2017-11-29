@@ -13,7 +13,6 @@
 
 from libc.stdlib cimport free
 from libc.stdlib cimport malloc
-from libc.stdlib cimport calloc
 from libc.stdlib cimport realloc
 from libc.math cimport log as ln
 
@@ -25,17 +24,19 @@ np.import_array()
 # Helper functions
 # =============================================================================
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except *:
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *:
     # sizeof(realloc_ptr[0]) would be more like idiomatic C, but causes Cython
     # 0.20.1 to crash.
     cdef size_t nbytes = nelems * sizeof(p[0][0])
     if nbytes / sizeof(p[0][0]) != nelems:
         # Overflow in the multiplication
-        raise MemoryError("could not allocate (%d * %d) bytes"
-                          % (nelems, sizeof(p[0][0])))
+        with gil:
+            raise MemoryError("could not allocate (%d * %d) bytes"
+                              % (nelems, sizeof(p[0][0])))
     cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], nbytes)
     if tmp == NULL:
-        raise MemoryError("could not allocate %d bytes" % nbytes)
+        with gil:
+            raise MemoryError("could not allocate %d bytes" % nbytes)
 
     p[0] = tmp
     return tmp  # for convenience
@@ -70,7 +71,7 @@ cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
 
 cdef inline SIZE_t rand_int(SIZE_t low, SIZE_t high,
                             UINT32_t* random_state) nogil:
-    """Generate a random integer in [0; end)."""
+    """Generate a random integer in [low; end)."""
     return low + our_rand_r(random_state) % (high - low)
 
 
@@ -109,8 +110,6 @@ cdef class Stack:
         self.capacity = capacity
         self.top = 0
         self.stack_ = <StackRecord*> malloc(capacity * sizeof(StackRecord))
-        if self.stack_ == NULL:
-            raise MemoryError()
 
     def __dealloc__(self):
         free(self.stack_)
@@ -120,10 +119,11 @@ cdef class Stack:
 
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                   bint is_left, double impurity,
-                  SIZE_t n_constant_features) nogil:
+                  SIZE_t n_constant_features) nogil except -1:
         """Push a new element onto the stack.
 
-        Returns 0 if successful; -1 on out of memory error.
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         cdef SIZE_t top = self.top
         cdef StackRecord* stack = NULL
@@ -131,12 +131,8 @@ cdef class Stack:
         # Resize if capacity not sufficient
         if top >= self.capacity:
             self.capacity *= 2
-            stack = <StackRecord*> realloc(self.stack_,
-                                           self.capacity * sizeof(StackRecord))
-            if stack == NULL:
-                # no free; __dealloc__ handles that
-                return -1
-            self.stack_ = stack
+            # Since safe_realloc can raise MemoryError, use `except -1`
+            safe_realloc(&self.stack_, self.capacity)
 
         stack = self.stack_
         stack[top].start = start
@@ -196,9 +192,7 @@ cdef class PriorityHeap:
     def __cinit__(self, SIZE_t capacity):
         self.capacity = capacity
         self.heap_ptr = 0
-        self.heap_ = <PriorityHeapRecord*> malloc(capacity * sizeof(PriorityHeapRecord))
-        if self.heap_ == NULL:
-            raise MemoryError()
+        safe_realloc(&self.heap_, capacity)
 
     def __dealloc__(self):
         free(self.heap_)
@@ -241,10 +235,11 @@ cdef class PriorityHeap:
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
                   double impurity, double impurity_left,
-                  double impurity_right) nogil:
+                  double impurity_right) nogil except -1:
         """Push record on the priority heap.
 
-        Returns 0 if successful; -1 on out of memory error.
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         cdef SIZE_t heap_ptr = self.heap_ptr
         cdef PriorityHeapRecord* heap = NULL
@@ -252,13 +247,8 @@ cdef class PriorityHeap:
         # Resize if capacity not sufficient
         if heap_ptr >= self.capacity:
             self.capacity *= 2
-            heap = <PriorityHeapRecord*> realloc(self.heap_,
-                                                 self.capacity *
-                                                 sizeof(PriorityHeapRecord))
-            if heap == NULL:
-                # no free; __dealloc__ handles that
-                return -1
-            self.heap_ = heap
+            # Since safe_realloc can raise MemoryError, use `except -1`
+            safe_realloc(&self.heap_, self.capacity)
 
         # Put element as last element of heap
         heap = self.heap_
@@ -330,17 +320,19 @@ cdef class WeightedPQueue:
         self.array_ptr = 0
         safe_realloc(&self.array_, capacity)
 
-        if self.array_ == NULL:
-            raise MemoryError()
-
     def __dealloc__(self):
         free(self.array_)
 
-    cdef void reset(self) nogil:
-        """Reset the WeightedPQueue to its state at construction"""
+    cdef int reset(self) nogil except -1:
+        """Reset the WeightedPQueue to its state at construction
+
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
         self.array_ptr = 0
-        self.array_ = <WeightedPQueueRecord*> calloc(self.capacity,
-                                                     sizeof(WeightedPQueueRecord))
+        # Since safe_realloc can raise MemoryError, use `except *`
+        safe_realloc(&self.array_, self.capacity)
+        return 0
 
     cdef bint is_empty(self) nogil:
         return self.array_ptr <= 0
@@ -348,9 +340,11 @@ cdef class WeightedPQueue:
     cdef SIZE_t size(self) nogil:
         return self.array_ptr
 
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil:
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1:
         """Push record on the array.
-        Returns 0 if successful; -1 on out of memory error.
+
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         cdef SIZE_t array_ptr = self.array_ptr
         cdef WeightedPQueueRecord* array = NULL
@@ -359,14 +353,8 @@ cdef class WeightedPQueue:
         # Resize if capacity not sufficient
         if array_ptr >= self.capacity:
             self.capacity *= 2
-            array = <WeightedPQueueRecord*> realloc(self.array_,
-                                                    self.capacity *
-                                                    sizeof(WeightedPQueueRecord))
-
-            if array == NULL:
-                # no free; __dealloc__ handles that
-                return -1
-            self.array_ = array
+            # Since safe_realloc can raise MemoryError, use `except -1`
+            safe_realloc(&self.array_, self.capacity)
 
         # Put element as last element of array
         array = self.array_
@@ -510,31 +498,40 @@ cdef class WeightedMedianCalculator:
         WeightedMedianCalculator"""
         return self.samples.size()
 
-    cdef void reset(self) nogil:
-        """Reset the WeightedMedianCalculator to its state at construction"""
+    cdef int reset(self) nogil except -1:
+        """Reset the WeightedMedianCalculator to its state at construction
+
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
+        # samples.reset (WeightedPQueue.reset) uses safe_realloc, hence
+        # except -1
         self.samples.reset()
         self.total_weight = 0
         self.k = 0
         self.sum_w_0_k = 0
+        return 0
 
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil:
-        """Push a value and its associated weight
-        to the WeightedMedianCalculator to be considered
-        in the median calculation.
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1:
+        """Push a value and its associated weight to the WeightedMedianCalculator
+
+        Return -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
         """
         cdef int return_value
         cdef DOUBLE_t original_median
 
         if self.size() != 0:
             original_median = self.get_median()
+        # samples.push (WeightedPQueue.push) uses safe_realloc, hence except -1
         return_value = self.samples.push(data, weight)
         self.update_median_parameters_post_push(data, weight,
                                                 original_median)
         return return_value
 
-    cdef int update_median_parameters_post_push(self, DOUBLE_t data,
-                                                DOUBLE_t weight,
-                                                DOUBLE_t original_median) nogil:
+    cdef int update_median_parameters_post_push(
+            self, DOUBLE_t data, DOUBLE_t weight,
+            DOUBLE_t original_median) nogil:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after an insertion"""
 
@@ -609,9 +606,9 @@ cdef class WeightedMedianCalculator:
                                                   original_median)
         return return_value
 
-    cdef int update_median_parameters_post_remove(self, DOUBLE_t data,
-                                                  DOUBLE_t weight,
-                                                  double original_median) nogil:
+    cdef int update_median_parameters_post_remove(
+            self, DOUBLE_t data, DOUBLE_t weight,
+            double original_median) nogil:
         """Update the parameters used in the median calculation,
         namely `k` and `sum_w_0_k` after a removal"""
         # reset parameters because it there are no elements

@@ -78,7 +78,7 @@ robust_cov = MinCovDet().fit(X)
 # compare estimators learnt from the full data set with true parameters
 emp_cov = EmpiricalCovariance().fit(X)
 
-###############################################################################
+# #############################################################################
 # Display results
 fig = plt.figure()
 plt.subplots_adjust(hspace=-.1, wspace=.4, top=.95, bottom=.05)

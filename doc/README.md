@@ -1,8 +1,13 @@
-#Documentation for scikit-learn
+# Documentation for scikit-learn
 
 This section contains the full manual and web page as displayed in
-http://scikit-learn.org. To generate the full web page, including
-the example gallery (this might take a while):
+http://scikit-learn.org.
+Building the website requires the sphinx and sphinx-gallery packages:
+
+    pip install sphinx sphinx-gallery
+
+To generate the full web page, including the example gallery (this might take a
+while):
 
     make html
 
@@ -16,7 +21,6 @@ To build the PDF manual, run
 
     make latexpdf
 
-
 The website is hosted at github and can be updated manually (for releases)
 by pushing to the https://github.com/scikit-learn/scikit-learn.github.io repository.
 
@@ -26,7 +30,7 @@ costing us bandwidth. You can run OptiPNG with::
 
     make optipng
 
-#Development documentation automated build
+# Development documentation automated build
 
 A Rackspace cloud server named 'docbuilder' is continuously building the master branch
 to update the http://scikit-learn.org/dev tree of the website.

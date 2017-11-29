@@ -30,7 +30,6 @@ from .utils.random import sample_without_replacement
 from .utils.validation import _num_samples, indexable
 from .utils.metaestimators import if_delegate_has_method
 from .metrics.scorer import check_scoring
-from .exceptions import ChangedBehaviorWarning
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -200,9 +199,13 @@ class ParameterSampler(object):
     n_iter : integer
         Number of parameter settings that are produced.
 
-    random_state : int or RandomState
+    random_state : int, RandomState instance or None, optional (default=None)
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
@@ -434,12 +437,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        if self.scoring is not None and hasattr(self.best_estimator_, 'score'):
-            warnings.warn("The long-standing behavior to use the estimator's "
-                          "score function in {0}.score has changed. The "
-                          "scoring parameter is now used."
-                          "".format(self.__class__.__name__),
-                          ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
@@ -536,7 +533,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             underlying estimator.
 
         """
-        return self.best_estimator_.transform(Xt)
+        return self.best_estimator_.inverse_transform(Xt)
 
     def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
@@ -954,9 +951,13 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-    random_state : int or RandomState
+    random_state : int, RandomState instance or None, optional, default=None
         Pseudo random number generator state used for random uniform sampling
         from lists of possible values instead of scipy.stats distributions.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     error_score : 'raise' (default) or numeric
         Value to assign to the score if an error occurs in estimator fitting.

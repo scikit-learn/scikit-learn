@@ -1,26 +1,36 @@
 from __future__ import division
+
 import numpy as np
 import scipy.sparse as sp
-from sklearn.utils import shuffle
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.base import clone
+from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.exceptions import NotFittedError
+from sklearn.externals.joblib import cpu_count
 from sklearn.linear_model import Lasso
+from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import LinearSVC
+from sklearn.metrics import jaccard_similarity_score
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
+from sklearn.multioutput import ClassifierChain
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.multioutput import MultiOutputRegressor
+from sklearn.svm import LinearSVC
+from sklearn.base import ClassifierMixin
+from sklearn.utils import shuffle
 
 
 def test_multi_target_regression():
@@ -49,24 +59,24 @@ def test_multi_target_regression_partial_fit():
     references = np.zeros_like(y_test)
     half_index = 25
     for n in range(3):
-        sgr = SGDRegressor(random_state=0)
+        sgr = SGDRegressor(random_state=0, max_iter=5)
         sgr.partial_fit(X_train[:half_index], y_train[:half_index, n])
         sgr.partial_fit(X_train[half_index:], y_train[half_index:, n])
         references[:, n] = sgr.predict(X_test)
 
-    sgr = MultiOutputRegressor(SGDRegressor(random_state=0))
+    sgr = MultiOutputRegressor(SGDRegressor(random_state=0, max_iter=5))
 
     sgr.partial_fit(X_train[:half_index], y_train[:half_index])
     sgr.partial_fit(X_train[half_index:], y_train[half_index:])
 
     y_pred = sgr.predict(X_test)
     assert_almost_equal(references, y_pred)
+    assert_false(hasattr(MultiOutputRegressor(Lasso), 'partial_fit'))
 
 
 def test_multi_target_regression_one_target():
     # Test multi target regression raises
     X, y = datasets.make_regression(n_targets=1)
-
     rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
     assert_raises(ValueError, rgr.fit, X, y)
 
@@ -107,12 +117,12 @@ def test_multi_target_sample_weight_partial_fit():
     X = [[1, 2, 3], [4, 5, 6]]
     y = [[3.141, 2.718], [2.718, 3.141]]
     w = [2., 1.]
-    rgr_w = MultiOutputRegressor(SGDRegressor(random_state=0))
+    rgr_w = MultiOutputRegressor(SGDRegressor(random_state=0, max_iter=5))
     rgr_w.partial_fit(X, y, w)
 
     # weighted with different weights
     w = [2., 2.]
-    rgr = MultiOutputRegressor(SGDRegressor(random_state=0))
+    rgr = MultiOutputRegressor(SGDRegressor(random_state=0, max_iter=5))
     rgr.partial_fit(X, y, w)
 
     assert_not_equal(rgr.predict(X)[0][0], rgr_w.predict(X)[0][0])
@@ -151,21 +161,22 @@ classes = list(map(np.unique, (y1, y2, y3)))
 
 
 def test_multi_output_classification_partial_fit_parallelism():
-    sgd_linear_clf = SGDClassifier(loss='log', random_state=1)
+    sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
     mor = MultiOutputClassifier(sgd_linear_clf, n_jobs=-1)
     mor.partial_fit(X, y, classes)
     est1 = mor.estimators_[0]
     mor.partial_fit(X, y)
     est2 = mor.estimators_[0]
-    # parallelism requires this to be the case for a sane implementation
-    assert_false(est1 is est2)
+    if cpu_count() > 1:
+        # parallelism requires this to be the case for a sane implementation
+        assert_false(est1 is est2)
 
 
 def test_multi_output_classification_partial_fit():
     # test if multi_target initializes correctly with base estimator and fit
     # assert predictions work as expected for predict
 
-    sgd_linear_clf = SGDClassifier(loss='log', random_state=1)
+    sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
 
     # train the multi_target_linear and also get the predictions.
@@ -193,7 +204,7 @@ def test_multi_output_classification_partial_fit():
 
 
 def test_mutli_output_classifiation_partial_fit_no_first_classes_exception():
-    sgd_linear_clf = SGDClassifier(loss='log', random_state=1)
+    sgd_linear_clf = SGDClassifier(loss='log', random_state=1, max_iter=5)
     multi_target_linear = MultiOutputClassifier(sgd_linear_clf)
     assert_raises_regex(ValueError, "classes must be passed on the first call "
                                     "to partial_fit.",
@@ -310,14 +321,14 @@ def test_multi_output_classification_partial_fit_sample_weights():
     Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     yw = [[3, 2], [2, 3], [3, 2]]
     w = np.asarray([2., 1., 1.])
-    sgd_linear_clf = SGDClassifier(random_state=1)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     clf_w = MultiOutputClassifier(sgd_linear_clf)
     clf_w.fit(Xw, yw, w)
 
     # unweighted, but with repeated samples
     X = [[1, 2, 3], [1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     y = [[3, 2], [3, 2], [2, 3], [3, 2]]
-    sgd_linear_clf = SGDClassifier(random_state=1)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=5)
     clf = MultiOutputClassifier(sgd_linear_clf)
     clf.fit(X, y)
     X_test = [[1.5, 2.5, 3.5]]
@@ -336,3 +347,147 @@ def test_multi_output_exceptions():
     y_new = np.column_stack((y1, y2))
     moc.fit(X, y)
     assert_raises(ValueError, moc.score, X, y_new)
+    # ValueError when y is continuous
+    assert_raise_message(ValueError, "Unknown label type", moc.fit, X, X[:, 1])
+
+
+def generate_multilabel_dataset_with_correlations():
+    # Generate a multilabel data set from a multiclass dataset as a way of
+    # by representing the integer number of the original class using a binary
+    # encoding.
+    X, y = make_classification(n_samples=1000,
+                               n_features=100,
+                               n_classes=16,
+                               n_informative=10,
+                               random_state=0)
+
+    Y_multi = np.array([[int(yyy) for yyy in format(yy, '#06b')[2:]]
+                        for yy in y])
+    return X, Y_multi
+
+
+def test_classifier_chain_fit_and_predict_with_logistic_regression():
+    # Fit classifier chain and verify predict performance
+    X, Y = generate_multilabel_dataset_with_correlations()
+    classifier_chain = ClassifierChain(LogisticRegression())
+    classifier_chain.fit(X, Y)
+
+    Y_pred = classifier_chain.predict(X)
+    assert_equal(Y_pred.shape, Y.shape)
+
+    Y_prob = classifier_chain.predict_proba(X)
+    Y_binary = (Y_prob >= .5)
+    assert_array_equal(Y_binary, Y_pred)
+
+    assert_equal([c.coef_.size for c in classifier_chain.estimators_],
+                 list(range(X.shape[1], X.shape[1] + Y.shape[1])))
+
+    assert isinstance(classifier_chain, ClassifierMixin)
+
+
+def test_classifier_chain_fit_and_predict_with_linear_svc():
+    # Fit classifier chain and verify predict performance using LinearSVC
+    X, Y = generate_multilabel_dataset_with_correlations()
+    classifier_chain = ClassifierChain(LinearSVC())
+    classifier_chain.fit(X, Y)
+
+    Y_pred = classifier_chain.predict(X)
+    assert_equal(Y_pred.shape, Y.shape)
+
+    Y_decision = classifier_chain.decision_function(X)
+
+    Y_binary = (Y_decision >= 0)
+    assert_array_equal(Y_binary, Y_pred)
+    assert not hasattr(classifier_chain, 'predict_proba')
+
+
+def test_classifier_chain_fit_and_predict_with_sparse_data():
+    # Fit classifier chain with sparse data
+    X, Y = generate_multilabel_dataset_with_correlations()
+    X_sparse = sp.csr_matrix(X)
+
+    classifier_chain = ClassifierChain(LogisticRegression())
+    classifier_chain.fit(X_sparse, Y)
+    Y_pred_sparse = classifier_chain.predict(X_sparse)
+
+    classifier_chain = ClassifierChain(LogisticRegression())
+    classifier_chain.fit(X, Y)
+    Y_pred_dense = classifier_chain.predict(X)
+
+    assert_array_equal(Y_pred_sparse, Y_pred_dense)
+
+
+def test_classifier_chain_fit_and_predict_with_sparse_data_and_cv():
+    # Fit classifier chain with sparse data cross_val_predict
+    X, Y = generate_multilabel_dataset_with_correlations()
+    X_sparse = sp.csr_matrix(X)
+    classifier_chain = ClassifierChain(LogisticRegression(), cv=3)
+    classifier_chain.fit(X_sparse, Y)
+    Y_pred = classifier_chain.predict(X_sparse)
+    assert_equal(Y_pred.shape, Y.shape)
+
+
+def test_classifier_chain_random_order():
+    # Fit classifier chain with random order
+    X, Y = generate_multilabel_dataset_with_correlations()
+    classifier_chain_random = ClassifierChain(LogisticRegression(),
+                                              order='random',
+                                              random_state=42)
+    classifier_chain_random.fit(X, Y)
+    Y_pred_random = classifier_chain_random.predict(X)
+
+    assert_not_equal(list(classifier_chain_random.order), list(range(4)))
+    assert_equal(len(classifier_chain_random.order_), 4)
+    assert_equal(len(set(classifier_chain_random.order_)), 4)
+
+    classifier_chain_fixed = \
+        ClassifierChain(LogisticRegression(),
+                        order=classifier_chain_random.order_)
+    classifier_chain_fixed.fit(X, Y)
+    Y_pred_fixed = classifier_chain_fixed.predict(X)
+
+    # Randomly ordered chain should behave identically to a fixed order chain
+    # with the same order.
+    assert_array_equal(Y_pred_random, Y_pred_fixed)
+
+
+def test_classifier_chain_crossval_fit_and_predict():
+    # Fit classifier chain with cross_val_predict and verify predict
+    # performance
+    X, Y = generate_multilabel_dataset_with_correlations()
+    classifier_chain_cv = ClassifierChain(LogisticRegression(), cv=3)
+    classifier_chain_cv.fit(X, Y)
+
+    classifier_chain = ClassifierChain(LogisticRegression())
+    classifier_chain.fit(X, Y)
+
+    Y_pred_cv = classifier_chain_cv.predict(X)
+    Y_pred = classifier_chain.predict(X)
+
+    assert_equal(Y_pred_cv.shape, Y.shape)
+    assert_greater(jaccard_similarity_score(Y, Y_pred_cv), 0.4)
+
+    assert_not_equal(jaccard_similarity_score(Y, Y_pred_cv),
+                     jaccard_similarity_score(Y, Y_pred))
+
+
+def test_classifier_chain_vs_independent_models():
+    # Verify that an ensemble of classifier chains (each of length
+    # N) can achieve a higher Jaccard similarity score than N independent
+    # models
+    X, Y = generate_multilabel_dataset_with_correlations()
+    X_train = X[:600, :]
+    X_test = X[600:, :]
+    Y_train = Y[:600, :]
+    Y_test = Y[600:, :]
+
+    ovr = OneVsRestClassifier(LogisticRegression())
+    ovr.fit(X_train, Y_train)
+    Y_pred_ovr = ovr.predict(X_test)
+
+    chain = ClassifierChain(LogisticRegression())
+    chain.fit(X_train, Y_train)
+    Y_pred_chain = chain.predict(X_test)
+
+    assert_greater(jaccard_similarity_score(Y_test, Y_pred_chain),
+                   jaccard_similarity_score(Y_test, Y_pred_ovr))
