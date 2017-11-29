@@ -1597,16 +1597,15 @@ variable be :math:`Y`.
 In a contingency matrix :math:`M`, entry :math:`M(i, j)` is the number of
 observations with :math:`X=X_i` and :math:`Y=Y_j`.
 
-Here is an example:
+Here is an example::
 
-
-	>>> from sklearn.metrics.cluster import contingency_matrix
-	>>> x = ["male", "male", "male", "female", "female", "female"]
-	>>> y = ["right_handed", "right_handed", "left_handed", "left_handed",
-	... "ambidextrous", "ambidextrous"]
-	>>> contingency_matrix(x, y) # doctest: +ELLIPSIS
-	array([[2, 1, 0],
-	       [0, 1, 2]])
+   >>> from sklearn.metrics.cluster import contingency_matrix
+   >>> x = ["male", "male", "male", "female", "female", "female"]
+   >>> y = ["right_handed", "right_handed", "left_handed", "left_handed",
+   ...      "ambidextrous", "ambidextrous"]
+   >>> contingency_matrix(x, y)
+   array([[2, 1, 0],
+          [0, 1, 2]])
 
 Confusion matrix is a special case of contingency matrix with
 two dimensions.
