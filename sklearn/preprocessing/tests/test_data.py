@@ -2240,8 +2240,8 @@ def test_boxcox_transformer():
     assert_almost_equal(X_expected.reshape(-1, 1), X_trans)
     assert_almost_equal(X, bct.inverse_transform(X_trans))
     assert_almost_equal(lambda_expected, bct.lambdas_[0])
-    assert_equal(len(bct.lambdas_), X.shape[1])
-    assert_true(isinstance(bct.lambdas_, np.ndarray))
+    assert len(bct.lambdas_) == X.shape[1]
+    assert isinstance(bct.lambdas_, np.ndarray)
 
     # 2D test
     X = np.abs(X_2d)
@@ -2250,25 +2250,40 @@ def test_boxcox_transformer():
         X_expected, lmbda = stats.boxcox(X[:, j].flatten())
         assert_almost_equal(X_trans[:, j], X_expected)
         assert_almost_equal(lmbda, bct.lambdas_[j])
-    assert_equal(len(bct.lambdas_), X.shape[1])
-    assert_true(isinstance(bct.lambdas_, np.ndarray))
+    assert len(bct.lambdas_) == X.shape[1]
+    assert isinstance(bct.lambdas_, np.ndarray)
 
     # Exceptions should be raised for negative arrays and zero arrays
     X_with_negatives = X_2d
-    assert_raises(ValueError, bct.transform, X_with_negatives)
-    assert_raises(ValueError, bct.fit, X_with_negatives)
-    assert_raises(ValueError, bct.fit, np.zeros(X_2d.shape))
+    not_positive_message = 'strictly positive and non-zero data'
+
+    assert_raise_message(ValueError, not_positive_message,
+                         bct.transform, X_with_negatives)
+
+    assert_raise_message(ValueError, not_positive_message,
+                         bct.fit, X_with_negatives)
+
+    assert_raise_message(ValueError, not_positive_message,
+                         bct.transform, np.zeros(X_2d.shape))
+
+    assert_raise_message(ValueError, not_positive_message,
+                         bct.fit, np.zeros(X_2d.shape))
 
     # Exceptions should be raised for arrays with different num_columns
     # than during fitting
-    assert_raises(ValueError, bct.transform, X[:, 0:1])
-    assert_raises(ValueError, bct.inverse_transform, X_trans[:, 0:1])
+    wrong_shape_message = 'Input data has a different number of features'
+
+    assert_raise_message(ValueError, wrong_shape_message,
+                         bct.transform, X[:, 0:1])
+
+    assert_raise_message(ValueError, wrong_shape_message,
+                         bct.inverse_transform, X_trans[:, 0:1])
 
     # Test inverse transformation
     X_inv = bct.inverse_transform(X_trans)
     assert_array_almost_equal(X_inv, X)
 
-    # Test 0 case
+    # Test the lambda = 0 case
     X = np.abs(X_2d)[:, 0:1]
     bct.lambdas_ = np.array([0])
     X_trans = bct.transform(X)
