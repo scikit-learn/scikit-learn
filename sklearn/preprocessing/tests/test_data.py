@@ -2227,13 +2227,16 @@ def test_quantile_transform_valid_axis():
                         ". Got axis=2", quantile_transform, X.T, axis=2)
 
 
-def test_power_transformer():
-    pt = PowerTransformer()
+def test_power_transformer_notfitted():
+    pt = PowerTransformer(method='box-cox')
     X = np.abs(X_1col)
     assert_raises(NotFittedError, pt.transform, X)
     assert_raises(NotFittedError, pt.inverse_transform, X)
 
-    # 1D test
+
+def test_power_transformer_1d():
+    pt = PowerTransformer(method='box-cox')
+    X = np.abs(X_1col)
     X_trans = pt.fit_transform(X)
     X_expected, lambda_expected = stats.boxcox(X.flatten())
 
@@ -2243,7 +2246,9 @@ def test_power_transformer():
     assert len(pt.lambdas_) == X.shape[1]
     assert isinstance(pt.lambdas_, np.ndarray)
 
-    # 2D test
+
+def test_power_transformer_2d():
+    pt = PowerTransformer(method='box-cox')
     X = np.abs(X_2d)
     X_trans = pt.fit_transform(X)
     for j in range(X_trans.shape[1]):
@@ -2256,6 +2261,11 @@ def test_power_transformer():
     # Test inverse transformation
     X_inv = pt.inverse_transform(X_trans)
     assert_array_almost_equal(X_inv, X)
+
+
+def test_power_transformer_strictly_positive_exception():
+    pt = PowerTransformer(method='box-cox')
+    pt.fit(np.abs(X_2d))
 
     # Exceptions should be raised for negative arrays and zero arrays
     X_with_negatives = X_2d
@@ -2273,6 +2283,12 @@ def test_power_transformer():
     assert_raise_message(ValueError, not_positive_message,
                          pt.fit, np.zeros(X_2d.shape))
 
+
+def test_power_transformer_shape_exception():
+    pt = PowerTransformer(method='box-cox')
+    X = np.abs(X_2d)
+    pt.fit(X)
+
     # Exceptions should be raised for arrays with different num_columns
     # than during fitting
     wrong_shape_message = 'Input data has a different number of features'
@@ -2281,16 +2297,24 @@ def test_power_transformer():
                          pt.transform, X[:, 0:1])
 
     assert_raise_message(ValueError, wrong_shape_message,
-                         pt.inverse_transform, X_trans[:, 0:1])
+                         pt.inverse_transform, X[:, 0:1])
 
-    # An exception should be raised if PowerTransform.method isn't valid
+
+def test_power_transformer_method_exception():
+    pt = PowerTransformer(method='monty-python')
+    X = np.abs(X_2d)
+
+    # An exception should be raised if PowerTransformer.method isn't valid
     bad_method_message = "'method' must be one of"
-    pt.method = 'montypython'
     assert_raise_message(ValueError, bad_method_message,
                          pt.fit, X)
 
-    # Test the lambda = 0 case
+
+def test_power_transformer_lambda_zero():
+    pt = PowerTransformer(method='box-cox')
     X = np.abs(X_2d)[:, 0:1]
+
+    # Test the lambda = 0 case
     pt.lambdas_ = np.array([0])
     X_trans = pt.transform(X)
     assert_array_almost_equal(pt.inverse_transform(X_trans), X)
