@@ -84,6 +84,8 @@ class BaseEnsemble(six.with_metaclass(ABCMeta, BaseEstimator,
     estimators_ : list of estimators
         The collection of fitted base estimators.
     """
+    # overwrite _required_parameters from MetaEstimatorMixin
+    _required_parameters = []
 
     @abstractmethod
     def __init__(self, base_estimator, n_estimators=10,

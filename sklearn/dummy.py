@@ -9,6 +9,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
+from .base import MultiOutputMixin, _update_tags
 from .utils import check_random_state
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
@@ -18,7 +19,7 @@ from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
 
 
-class DummyClassifier(BaseEstimator, ClassifierMixin):
+class DummyClassifier(BaseEstimator, ClassifierMixin, MultiOutputMixin):
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -188,7 +189,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         classes_ = self.classes_
         class_prior_ = self.class_prior_
         constant = self.constant
-        if self.n_outputs_ == 1:
+        if self.n_outputs_ == 1 and not self.output_2d_:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
@@ -197,7 +198,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         # Compute probability only once
         if self.strategy == "stratified":
             proba = self.predict_proba(X)
-            if self.n_outputs_ == 1:
+            if self.n_outputs_ == 1 and not self.output_2d_:
                 proba = [proba]
 
         if self.sparse_output_:
@@ -327,8 +328,12 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         else:
             return [np.log(p) for p in proba]
 
+    def _get_tags(self):
+        return _update_tags(super(DummyClassifier, self),
+                            input_validation=False, test_predictions=False)
 
-class DummyRegressor(BaseEstimator, RegressorMixin):
+
+class DummyRegressor(BaseEstimator, RegressorMixin, MultiOutputMixin):
     """
     DummyRegressor is a regressor that makes predictions using
     simple rules.
@@ -485,3 +490,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             y = np.ravel(y)
 
         return y
+
+    def _get_tags(self):
+        return _update_tags(super(DummyRegressor, self),
+                            test_predictions=False, input_validation=False)

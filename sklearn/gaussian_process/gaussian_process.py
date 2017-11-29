@@ -9,7 +9,7 @@ from __future__ import print_function
 import numpy as np
 from scipy import linalg, optimize
 
-from ..base import BaseEstimator, RegressorMixin
+from ..base import BaseEstimator, RegressorMixin, MultiOutputMixin, _update_tags
 from ..metrics.pairwise import manhattan_distances
 from ..utils import check_random_state, check_array, check_X_y
 from ..utils.validation import check_is_fitted
@@ -61,7 +61,7 @@ def l1_cross_distances(X):
 
 @deprecated("GaussianProcess was deprecated in version 0.18 and will be "
             "removed in 0.20. Use the GaussianProcessRegressor instead.")
-class GaussianProcess(BaseEstimator, RegressorMixin):
+class GaussianProcess(BaseEstimator, RegressorMixin, MultiOutputMixin):
     """The legacy Gaussian Process model class.
 
     .. deprecated:: 0.18
@@ -880,3 +880,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Force random_start type to int
         self.random_start = int(self.random_start)
+
+    def _get_tags(self):
+        return _update_tags(super(GaussianProcess, self),
+                            _skip_test=True)

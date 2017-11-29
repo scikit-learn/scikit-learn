@@ -1252,22 +1252,18 @@ advised to maintain notes on the `GitHub wiki
 Specific models
 ---------------
 
-Classifiers should accept ``y`` (target) arguments to ``fit``
-that are sequences (lists, arrays) of either strings or integers.
-They should not assume that the class labels
-are a contiguous range of integers;
-instead, they should store a list of classes
-in a ``classes_`` attribute or property.
-The order of class labels in this attribute
-should match the order in which ``predict_proba``, ``predict_log_proba``
-and ``decision_function`` return their values.
-The easiest way to achieve this is to put::
+Classifiers should accept ``y`` (target) arguments to ``fit`` that are
+sequences (lists, arrays) of either strings or integers.  They should not
+assume that the class labels are a contiguous range of integers; instead, they
+should store a list of classes in a ``classes_`` attribute or property.  The
+order of class labels in this attribute should match the order in which
+``predict_proba``, ``predict_log_proba`` and ``decision_function`` return their
+values.  The easiest way to achieve this is to put::
 
     self.classes_, y = np.unique(y, return_inverse=True)
 
-in ``fit``.
-This returns a new ``y`` that contains class indexes, rather than labels,
-in the range [0, ``n_classes``).
+in ``fit``.  This returns a new ``y`` that contains class indexes, rather than
+labels, in the range [0, ``n_classes``).
 
 A classifier's ``predict`` method should return
 arrays containing class labels from ``classes_``.
@@ -1278,10 +1274,38 @@ this can be achieved with::
         D = self.decision_function(X)
         return self.classes_[np.argmax(D, axis=1)]
 
-In linear models, coefficients are stored in an array called ``coef_``,
-and the independent term is stored in ``intercept_``.
-``sklearn.linear_model.base`` contains a few base classes and mixins
-that implement common linear model patterns.
+In linear models, coefficients are stored in an array called ``coef_``, and the
+independent term is stored in ``intercept_``.  ``sklearn.linear_model.base``
+contains a few base classes and mixins that implement common linear model
+patterns.
 
 The :mod:`sklearn.utils.multiclass` module contains useful functions
 for working with multiclass and multilabel problems.
+
+Estimator Tags
+--------------
+Scikit-learn introduced estimator tags in version 0.19.  These are annotations
+of estimators that allow programmatic inspection of their capabilities, such as
+sparse matrix support, supported output types and supported methods.  The
+estimator tags are a dictionary returned by the method ``_get_tags()``.  These
+tags are used by the common tests and the ``check_estimator`` function to
+decide what tests to run and what input data is appropriate.
+
+The current set of estimator tags are:
+
+input_validation - whether the estimator does input-validation. This is only meant for stateless and dummy transformers!
+multioutput - whether a regressor supports multi-target outputs or a classifier supports multi-class multi-output.
+multilabel -  whether the estimator supports multilabel output
+stateless - whether the estimator needs access to data for fitting. Even though
+an estimator is stateless, it might still need a call to ``fit`` for initialization.
+missing_values - whether the estimator supports data with missing values
+test_predictions - whether to test estimator for reasonable test set score.
+multioutput_only - whether estimator supports only multi-output classification or regression.
+_skip_test - whether to skip common tests entirely. Don't use this unless you have a *very good* reason.
+
+
+In addition to the tags, estimators are also need to declare any non-optional
+parameters to ``__init__`` in the ``_required_parameters`` class attribute,
+which is a list or tuple.  If ``_required_parameters`` is only ``["estimator"]`` or ``["base_estimator"]``, then the
+estimator will be instantiated with an instance of
+``LinearDiscriminantAnalysis`` (or ``RidgeRegression`` if the estimator is a regressor) in the tests.

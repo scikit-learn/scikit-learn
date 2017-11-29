@@ -18,13 +18,14 @@ import numpy as np
 import scipy.sparse as sp
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
-from .base import RegressorMixin, ClassifierMixin, is_classifier
+from .base import RegressorMixin, ClassifierMixin, is_classifier, _update_tags
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.fixes import parallel_helper
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import check_is_fitted, has_fit_parameter
 from .utils.multiclass import check_classification_targets
+from .utils.metaestimators import if_delegate_has_method
 from .externals.joblib import Parallel, delayed
 from .externals import six
 
@@ -197,6 +198,10 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return np.asarray(y).T
 
+    def _get_tags(self):
+        return _update_tags(super(MultiOutputEstimator, self),
+                            multioutput_only=True)
+
 
 class MultiOutputRegressor(MultiOutputEstimator, RegressorMixin):
     """Multi target regression
@@ -366,6 +371,10 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
                              format(n_outputs_, y.shape[1]))
         y_pred = self.predict(X)
         return np.mean(np.all(y == y_pred, axis=1))
+
+    def _get_tags(self):
+        return _update_tags(super(MultiOutputClassifier, self),
+                            _skip_test=True)
 
 
 class ClassifierChain(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
@@ -598,3 +607,7 @@ class ClassifierChain(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Y_decision = Y_decision_chain[:, inv_order]
 
         return Y_decision
+
+    def _get_tags(self):
+        return _update_tags(super(ClassifierChain, self),
+                            _skip_test=True)

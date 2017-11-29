@@ -23,7 +23,7 @@ import unicodedata
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
@@ -529,6 +529,10 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
                              alternate_sign=self.alternate_sign,
                              non_negative=self.non_negative)
 
+    def _get_tags(self):
+        return _update_tags(super(HashingVectorizer, self),
+                            input_types=["string"])
+
 
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
@@ -962,6 +966,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return [t for t, i in sorted(six.iteritems(self.vocabulary_),
                                      key=itemgetter(1))]
 
+    def _get_tags(self):
+        return _update_tags(super(CountVectorizer, self),
+                            input_types=["string"])
+
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
@@ -1120,6 +1128,10 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         # if _idf_diag is not set, this will raise an attribute error,
         # which means hasattr(self, "idf_") is False
         return np.ravel(self._idf_diag.sum(axis=0))
+
+    def _get_tags(self):
+        return _update_tags(super(TfidfTransformer, self),
+                            input_types=["sparse"])
 
 
 class TfidfVectorizer(CountVectorizer):
@@ -1408,3 +1420,7 @@ class TfidfVectorizer(CountVectorizer):
 
         X = super(TfidfVectorizer, self).transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
+
+    def _get_tags(self):
+        return _update_tags(super(TfidfVectorizer, self),
+                            input_types=["string"])

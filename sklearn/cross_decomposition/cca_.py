@@ -1,9 +1,10 @@
 from .pls_ import _PLS
+from ..base import _UnstableOn32BitMixin
 
 __all__ = ['CCA']
 
 
-class CCA(_PLS):
+class CCA(_PLS, _UnstableOn32BitMixin):
     """CCA Canonical Correlation Analysis.
 
     CCA inherits from PLS with mode="B" and deflation_mode="canonical".

@@ -21,7 +21,6 @@ from ..externals.six import string_types
 from .validation import check_array
 
 
-
 def _unique_multiclass(y):
     if hasattr(y, '__array__'):
         return np.unique(np.asarray(y))

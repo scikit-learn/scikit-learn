@@ -120,6 +120,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     (6, 6)
     >>>
     """
+    _required_parameters = ['estimators']
 
     def __init__(self, estimators, voting='hard', weights=None, n_jobs=1,
                  flatten_transform=None):

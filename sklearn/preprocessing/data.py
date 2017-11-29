@@ -17,7 +17,7 @@ import numpy as np
 from scipy import sparse
 from scipy import stats
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 from ..externals import six
 from ..externals.six import string_types
 from ..utils import check_array
@@ -1546,6 +1546,9 @@ class Normalizer(BaseEstimator, TransformerMixin):
         X = check_array(X, accept_sparse='csr')
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
+    def _get_tags(self):
+        return _update_tags(super(Normalizer, self), stateless=True)
+
 
 def binarize(X, threshold=0.0, copy=True):
     """Boolean thresholding of array-like or scipy.sparse matrix
@@ -1670,6 +1673,9 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
+
+    def _get_tags(self):
+        return _update_tags(super(Binarizer, self), stateless=True)
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):

@@ -1,6 +1,6 @@
 import warnings
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 from ..utils import check_array
 from ..utils.testing import assert_allclose_dense_sparse
 from ..externals.six import string_types
@@ -182,3 +182,7 @@ class FunctionTransformer(BaseEstimator, TransformerMixin):
 
         return func(X, *((y,) if pass_y else ()),
                     **(kw_args if kw_args else {}))
+
+    def _get_tags(self):
+        return _update_tags(super(FunctionTransformer, self),
+                            stateless=True)
