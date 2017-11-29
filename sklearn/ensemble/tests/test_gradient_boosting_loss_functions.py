@@ -205,6 +205,18 @@ def test_multinomial_deviance():
     assert_almost_equal(loss_wo_sw, loss_w_sw)
 
 
+def test_mdl_computation_unweighted(pred=np.array([[1.0, 0, 0],
+                                                   [0, 0.5, 0.5]]),
+                                    y=np.array([0, 1]),
+                                    expected_loss=0.75473):
+    # MultinomialDeviance loss computation with uniform/without weights.
+    weights = np.array([1, 1])
+    loss = MultinomialDeviance(3)
+    assert_almost_equal(loss(y, pred, weights), expected_loss, decimal=4)
+    assert_almost_equal(loss(y, pred, None), expected_loss, decimal=4)
+    assert_almost_equal(loss(y, pred), expected_loss, decimal=4)
+
+
 def test_mdl_computation_weighted(pred=np.array([[1.0, 0, 0],
                                                  [0, 0.5, 0.5]]),
                                   y=np.array([0, 1]),
