@@ -292,17 +292,20 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("min_impurity_decrease must be greater than "
                              "or equal to 0")
 
+        allowed_presort = ('auto', True, False)
+        if self.presort not in allowed_presort:
+            raise ValueError("'presort' should be in {}. Got {!r} instead."
+                             .format(allowed_presort, self.presort))
+
+        if self.presort is True and issparse(X):
+            raise ValueError("Presorting is not supported for sparse "
+                             "matrices.")
+
         presort = self.presort
         # Allow presort to be 'auto', which means True if the dataset is dense,
         # otherwise it will be False.
-        if self.presort == 'auto' and issparse(X):
-            presort = False
-        elif self.presort == 'auto':
-            presort = True
-
-        if presort is True and issparse(X):
-            raise ValueError("Presorting is not supported for sparse "
-                             "matrices.")
+        if self.presort == 'auto':
+            presort = not issparse(X)
 
         # If multiple trees are built on the same dataset, we only want to
         # presort once. Splitters now can accept presorted indices if desired,
