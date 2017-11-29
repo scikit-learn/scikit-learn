@@ -2925,16 +2925,10 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    active_features_ : array
-        Indices for active features, meaning values that actually occur
-        in the training set. All featurs are available when n_values is
-        ``'auto'``.
-
     feature_indices_ : array of shape (n_features,)
         Indices to feature ranges.
         Feature ``i`` in the original data is mapped to features
         from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
-        (and then potentially masked by `active_features_` afterwards)
 
     n_values_ : array of shape (n_features,)
         Maximum number of values per feature.
@@ -2955,8 +2949,6 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     array([2, 3, 4])
     >>> enc.feature_indices_
     array([0, 1, 3, 6])
-    >>> enc.active_features_
-    array([0, 1, 2, 3, 4, 5])
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
 
@@ -3036,10 +3028,6 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()
-
-        if (isinstance(self.n_values, six.string_types) and
-                self.n_values == 'auto'):
-            self.active_features_ = np.arange(out.shape[1])
 
         return out if self.sparse else out.toarray()
 
