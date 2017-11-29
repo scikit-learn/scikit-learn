@@ -969,12 +969,18 @@ def test_multilabel_jaccard_similarity_score():
     # multilabel testing
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
+    # average='macro'
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                 average='macro'), 2. / 3)
+    # average='micro'
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                 average='mirco'), 3. / 5)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred),
-                                    np.array([1. / 2, 1., 1. / 2]))
+    # average='samples' (default)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred), 7. / 12)
+    # average='binary'
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                    average='binary', pos_label=1), 1. / 2)
+    # average='weighted'
 
 
 @ignore_warnings

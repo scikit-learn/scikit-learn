@@ -372,7 +372,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     return 1 - k
 
 
-def jaccard_similarity_score(y_true, y_pred, average=None,
+def jaccard_similarity_score(y_true, y_pred, pos_label=1, average=None,
                              sample_weight=None):
     """Jaccard similarity coefficient score
 
@@ -394,10 +394,14 @@ def jaccard_similarity_score(y_true, y_pred, average=None,
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
-    average : string, [None (default), 'micro', 'macro', 'weighted']
+    average : string, [None (default), 'binary', 'micro', 'macro', 'samples', \
+                       'weighted',]
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
+        ``'binary'``:
+            Only report results for the class specified by ``pos_label``.
+            This is applicable only if targets (``y_{true,pred}``) are binary.
         ``'micro'``:
             Calculate metrics globally by counting the total true positives,
             false negatives and false positives.
@@ -408,6 +412,9 @@ def jaccard_similarity_score(y_true, y_pred, average=None,
             Calculate metrics for each label, and find their average, weighted
             by support (the number of true instances for each label). This
             alters 'macro' to account for label imbalance.
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average (only
+            meaningful for multilabel classification).
 
     Returns
     -------
@@ -420,7 +427,7 @@ def jaccard_similarity_score(y_true, y_pred, average=None,
 
     Notes
     -----
-    In differs in implementation from ``accuracy_score`` from all three
+    It differs in implementation from ``accuracy_score`` from all three
     classifications i.e. binary, mutliclass and multilabel.
 
     References
@@ -453,18 +460,47 @@ def jaccard_similarity_score(y_true, y_pred, average=None,
     0.38888888888888884
     """
 
-    average_options = (None, 'micro', 'macro', 'weighted')
+    average_options = (None, 'binary', 'micro', 'macro', 'weighted', 'samples')
     if average not in average_options:
         raise ValueError("average has to be one of " + str(average_options))
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
+    present_labels = unique_labels(y_true, y_pred)
 
     if y_type.startswith('multilabel'):
+        # default average in multilabel is 'samples'
+        if average == None:
+            average = 'samples'
+
         with np.errstate(divide='ignore', invalid='ignore'):
+
+            if average == 'samples':
+                pred_or_true = count_nonzero(y_true + y_pred, axis=1)
+                pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
+                score = pred_and_true / pred_or_true
+                score[pred_or_true == 0.0] = 1.0
+                return _weighted_sum(score, sample_weight, normalize=True)
+
+            if average == 'binary':
+                if pos_label not in present_labels:
+                    if len(present_labels) < 2:
+                        # only -ve labels
+                        return 0.
+                    else:
+                        raise ValueError("pos_label=%r is not a valid label"
+                                         ": %r" % (pos_label, present_labels))
+                y_true_pos = y_true[:, pos_label - 1]
+                y_pred_pos = y_pred[:, pos_label - 1]
+                pred_or_true = count_nonzero(y_true_pos + y_pred_pos)
+                pred_and_true = count_nonzero(y_true_pos.multiply(y_pred_pos))
+                score = pred_and_true / pred_or_true
+                return score
+
             pred_or_true = count_nonzero(y_true + y_pred, axis=0)
             pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=0)
+
             if average == 'macro':
                 score = pred_and_true / pred_or_true
                 n_features = y_true.shape[1]
