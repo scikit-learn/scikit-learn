@@ -59,7 +59,7 @@ For bug reports or feature requests, please make use of the
 
 There is also a `scikit-learn Gitter channel
 <https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
-might be found. 
+might be found.
 
 **Please do not email any authors directly to ask for assistance, report bugs,
 or for any other issue related to scikit-learn.**
@@ -80,10 +80,10 @@ How can I load my own datasets into a format usable by scikit-learn?
 --------------------------------------------------------------------
 
 Generally, scikit-learn works on any numeric data stored as numpy arrays
-or scipy sparse matrices. Other types that are convertible to numeric 
+or scipy sparse matrices. Other types that are convertible to numeric
 arrays such as pandas DataFrame are also acceptable.
 
-For more information on loading your data files into these usable data 
+For more information on loading your data files into these usable data
 structures, please refer to :ref:`loading external datasets <external_datasets>`.
 
 .. _new_algorithms_inclusion_criteria:
@@ -105,7 +105,7 @@ numpy array or sparse matrix, are accepted.
 The contributor should support the importance of the proposed addition with
 research papers and/or implementations in other similar packages, demonstrate
 its usefulness via common use-cases/applications and corroborate performance
-improvements, if any, with benchmarks and/or plots. It is expected that the 
+improvements, if any, with benchmarks and/or plots. It is expected that the
 proposed algorithm should outperform the methods that are already implemented
 in scikit-learn at least in some areas.
 
@@ -128,8 +128,8 @@ The package relies on core developers using their free time to
 fix bugs, maintain code and review contributions.
 Any algorithm that is added needs future attention by the developers,
 at which point the original author might long have lost interest.
-See also :ref:`new_algorithms_inclusion_criteria`. For a great read about 
-long-term maintenance issues in open-source software, look at 
+See also :ref:`new_algorithms_inclusion_criteria`. For a great read about
+long-term maintenance issues in open-source software, look at
 `the Executive Summary of Roads and Bridges
 <https://www.fordfoundation.org/media/2976/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=8>`_
 
@@ -331,28 +331,29 @@ execution. Thus, the only way to ensure replicability is to pass ``RandomState``
 instances everywhere and ensure that both estimators and cross-validation
 splitters have their ``random_state`` parameter set.
 
-Why is handling categorical variables so hard in scikit-learn, compared to other tools?
+Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
 --------------------------------------------------------------------------------
 
 The problem of categorical variables is at its core a Python data science
-open issue, rather than one specific to the scikit-learn project.
+open issue, rather than one specific to the scikit-learn project's design.
 
 scikit-learn builds on Numpy arrays, which have no categorical data type. They
-also do not handle missing values, which is especially relevant when working
-with categorical data. And thirdly, still at a Python-wide level, dealing with
-heterogeneous data in general has not found a solution satisfying on all fronts:
-there are the Numpy recarrays and the Pandas DataFrames, but scikit-learn can handle
-neither in a manner that is efficient enough.
+also do not handle missing values, which is a very related problem.
+And thirdly, still at a Python-wide level, dealing with heterogeneous data in
+general has not found a solution satisfying on all fronts: there are the Numpy
+recarrays and the Pandas DataFrames, but scikit-learn can handle neither in a
+manner that is efficient enough.
 
-Pandas, more generally, is the forefront Python data science library handling categorical
-variables at the moment, but the issue concerning the overall compatibility of
-scikit-learn with Pandas remains. Calling upon the Pandas own dtype system
-would not be fast enough, especially because Pandas does not have a C-level API.
-On a deeper level, making a complete transition to using the Pandas Dataframes
-as its main data structure is not a commitment scikit-learn see as right, since
-Numpy arrays are both more efficient and convenient for most algorithms. 
+Pandas, more generally, is the forefront Python data science library handling
+categorical variables at the moment, but the issue concerning the overall
+compatibility of scikit-learn with Pandas remains. Calling upon the Pandas own dtype
+system would not be fast enough, especially because Pandas does not have a C-level
+API.
+On a deeper level, the commitment of a complete transition to using the Pandas
+Dataframes as its main data structure is not one scikit-learn see as right, since
+Numpy arrays are both more efficient and convenient for most algorithms.
 
 
-The best way to deal with this added workload when working with categorical variables
-is to put all the feature encoding in a preprocessing step. Unfortunately, that
-currently makes it hard to track the origin of features.
+As a solution, scikit-learn has preprocessing classes especially designed for the
+handling of categorical variables, as well as similar aids to dealing with heterogeneous
+data structures.
