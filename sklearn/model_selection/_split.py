@@ -2058,6 +2058,7 @@ def train_test_split(*arrays, **options):
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
 
+train_test_split.__test__ = False
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params
