@@ -5,7 +5,7 @@
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 # See _splitter.pyx for details.
 
@@ -75,23 +75,23 @@ cdef class Splitter:
     # The 1-d `constant_features` array of size n_features holds in
     # `constant_features[:n_constant_features]` the feature ids with
     # constant values for all the samples that reached a specific node.
-    # The value `n_constant_features` is given by the the parent node to its
+    # The value `n_constant_features` is given by the parent node to its
     # child nodes.  The content of the range `[n_constant_features:]` is left
     # undefined, but preallocated for performance reasons
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef void init(self, object X, np.ndarray y,
-                   DOUBLE_t* sample_weight,
-                   np.ndarray X_idx_sorted=*) except *
+    cdef int init(self, object X, np.ndarray y,
+                  DOUBLE_t* sample_weight,
+                  np.ndarray X_idx_sorted=*) except -1
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end,
-                         double* weighted_n_node_samples) nogil
+    cdef int node_reset(self, SIZE_t start, SIZE_t end,
+                        double* weighted_n_node_samples) nogil except -1
 
-    cdef void node_split(self,
-                         double impurity,   # Impurity of the node
-                         SplitRecord* split,
-                         SIZE_t* n_constant_features) nogil
+    cdef int node_split(self,
+                        double impurity,   # Impurity of the node
+                        SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1
 
     cdef void node_value(self, double* dest) nogil
 

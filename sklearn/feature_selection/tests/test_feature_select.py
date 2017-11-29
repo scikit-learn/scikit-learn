@@ -7,6 +7,7 @@ import warnings
 import numpy as np
 from scipy import stats, sparse
 
+from numpy.testing import run_module_suite
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -24,10 +25,10 @@ from sklearn.utils import safe_mask
 
 from sklearn.datasets.samples_generator import (make_classification,
                                                 make_regression)
-from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
-                                       SelectPercentile, SelectKBest,
-                                       SelectFpr, SelectFdr, SelectFwe,
-                                       GenericUnivariateSelect)
+from sklearn.feature_selection import (
+    chi2, f_classif, f_oneway, f_regression, mutual_info_classif,
+    mutual_info_regression, SelectPercentile, SelectKBest, SelectFpr,
+    SelectFdr, SelectFwe, GenericUnivariateSelect)
 
 
 ##############################################################################
@@ -90,6 +91,12 @@ def test_f_regression():
     assert_true((pv < 1).all())
     assert_true((pv[:5] < 0.05).all())
     assert_true((pv[5:] > 1.e-4).all())
+
+    # with centering, compare with sparse
+    F, pv = f_regression(X, y, center=True)
+    F_sparse, pv_sparse = f_regression(sparse.csr_matrix(X), y, center=True)
+    assert_array_almost_equal(F_sparse, F)
+    assert_array_almost_equal(pv_sparse, pv)
 
     # again without centering, compare with sparse
     F, pv = f_regression(X, y, center=False)
@@ -273,8 +280,8 @@ def test_select_heuristics_classif():
 def assert_best_scores_kept(score_filter):
     scores = score_filter.scores_
     support = score_filter.get_support()
-    assert_array_equal(np.sort(scores[support]),
-                       np.sort(scores)[-support.sum():])
+    assert_array_almost_equal(np.sort(scores[support]),
+                              np.sort(scores)[-support.sum():])
 
 
 def test_select_percentile_regression():
@@ -370,6 +377,40 @@ def test_select_heuristics_regression():
         assert_less(np.sum(support[5:] == 1), 3)
 
 
+def test_boundary_case_ch2():
+    # Test boundary case, and always aim to select 1 feature.
+    X = np.array([[10, 20], [20, 20], [20, 30]])
+    y = np.array([[1], [0], [0]])
+    scores, pvalues = chi2(X, y)
+    assert_array_almost_equal(scores, np.array([4., 0.71428571]))
+    assert_array_almost_equal(pvalues, np.array([0.04550026, 0.39802472]))
+
+    filter_fdr = SelectFdr(chi2, alpha=0.1)
+    filter_fdr.fit(X, y)
+    support_fdr = filter_fdr.get_support()
+    assert_array_equal(support_fdr, np.array([True, False]))
+
+    filter_kbest = SelectKBest(chi2, k=1)
+    filter_kbest.fit(X, y)
+    support_kbest = filter_kbest.get_support()
+    assert_array_equal(support_kbest, np.array([True, False]))
+
+    filter_percentile = SelectPercentile(chi2, percentile=50)
+    filter_percentile.fit(X, y)
+    support_percentile = filter_percentile.get_support()
+    assert_array_equal(support_percentile, np.array([True, False]))
+
+    filter_fpr = SelectFpr(chi2, alpha=0.1)
+    filter_fpr.fit(X, y)
+    support_fpr = filter_fpr.get_support()
+    assert_array_equal(support_fpr, np.array([True, False]))
+
+    filter_fwe = SelectFwe(chi2, alpha=0.1)
+    filter_fwe.fit(X, y)
+    support_fwe = filter_fwe.get_support()
+    assert_array_equal(support_fwe, np.array([True, False]))
+
+
 def test_select_fdr_regression():
     # Test that fdr heuristic actually has low FDR.
     def single_fdr(alpha, n_informative, random_state):
@@ -403,7 +444,7 @@ def test_select_fdr_regression():
             # FDR = E(FP / (TP + FP)) <= alpha
             false_discovery_rate = np.mean([single_fdr(alpha, n_informative,
                                                        random_state) for
-                                            random_state in range(30)])
+                                            random_state in range(100)])
             assert_greater_equal(alpha, false_discovery_rate)
 
             # Make sure that the empirical false discovery rate increases
@@ -484,6 +525,21 @@ def test_tied_pvalues():
         assert_not_in(9998, Xt)
 
 
+def test_scorefunc_multilabel():
+    # Test whether k-best and percentiles works with multilabels with chi2.
+
+    X = np.array([[10000, 9999, 0], [100, 9999, 0], [1000, 99, 0]])
+    y = [[1, 1], [0, 1], [1, 0]]
+
+    Xt = SelectKBest(chi2, k=2).fit_transform(X, y)
+    assert_equal(Xt.shape, (3, 2))
+    assert_not_in(0, Xt)
+
+    Xt = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
+    assert_equal(Xt.shape, (3, 2))
+    assert_not_in(0, Xt)
+
+
 def test_tied_scores():
     # Test for stable sorting in k-best with tied scores.
     X_train = np.array([[0, 0, 0], [1, 1, 1]])
@@ -556,3 +612,65 @@ def test_no_feature_selected():
         X_selected = assert_warns_message(
             UserWarning, 'No features were selected', selector.transform, X)
         assert_equal(X_selected.shape, (40, 0))
+
+
+def test_mutual_info_classif():
+    X, y = make_classification(n_samples=100, n_features=5,
+                               n_informative=1, n_redundant=1,
+                               n_repeated=0, n_classes=2,
+                               n_clusters_per_class=1, flip_y=0.0,
+                               class_sep=10, shuffle=False, random_state=0)
+
+    # Test in KBest mode.
+    univariate_filter = SelectKBest(mutual_info_classif, k=2)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(
+        mutual_info_classif, mode='k_best', param=2).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(5)
+    gtruth[:2] = 1
+    assert_array_equal(support, gtruth)
+
+    # Test in Percentile mode.
+    univariate_filter = SelectPercentile(mutual_info_classif, percentile=40)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(
+        mutual_info_classif, mode='percentile', param=40).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(5)
+    gtruth[:2] = 1
+    assert_array_equal(support, gtruth)
+
+
+def test_mutual_info_regression():
+    X, y = make_regression(n_samples=100, n_features=10, n_informative=2,
+                           shuffle=False, random_state=0, noise=10)
+
+    # Test in KBest mode.
+    univariate_filter = SelectKBest(mutual_info_regression, k=2)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    assert_best_scores_kept(univariate_filter)
+    X_r2 = GenericUnivariateSelect(
+        mutual_info_regression, mode='k_best', param=2).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(10)
+    gtruth[:2] = 1
+    assert_array_equal(support, gtruth)
+
+    # Test in Percentile mode.
+    univariate_filter = SelectPercentile(mutual_info_regression, percentile=20)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(mutual_info_regression, mode='percentile',
+                                   param=20).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(10)
+    gtruth[:2] = 1
+    assert_array_equal(support, gtruth)
+
+
+if __name__ == '__main__':
+    run_module_suite()

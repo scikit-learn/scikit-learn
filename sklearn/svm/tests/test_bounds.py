@@ -1,14 +1,12 @@
-import nose
-from nose.tools import assert_equal, assert_true
-from sklearn.utils.testing import clean_warning_registry
-import warnings
-
 import numpy as np
 from scipy import sparse as sp
 
 from sklearn.svm.bounds import l1_min_c
 from sklearn.svm import LinearSVC
 from sklearn.linear_model.logistic import LogisticRegression
+
+from sklearn.utils.testing import assert_true, assert_raises
+from sklearn.utils.testing import assert_raise_message
 
 
 dense_X = [[-1, 0], [0, 1], [1, 1], [1, 1]]
@@ -37,13 +35,9 @@ def test_l1_min_c():
                                           intercept_label))
                     yield check
 
-
-def test_l2_deprecation():
-    clean_warning_registry()
-    with warnings.catch_warnings(record=True) as w:
-        assert_equal(l1_min_c(dense_X, Y1, "l2"),
-                     l1_min_c(dense_X, Y1, "squared_hinge"))
-        assert_equal(w[0].category, DeprecationWarning)
+    # loss='l2' should raise ValueError
+    assert_raise_message(ValueError, "loss type not in",
+                         l1_min_c, dense_X, Y1, "l2")
 
 
 def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
@@ -69,13 +63,11 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
                 (np.asarray(clf.intercept_) != 0).any())
 
 
-@nose.tools.raises(ValueError)
 def test_ill_posed_min_c():
     X = [[0, 0], [0, 0]]
     y = [0, 1]
-    l1_min_c(X, y)
+    assert_raises(ValueError, l1_min_c, X, y)
 
 
-@nose.tools.raises(ValueError)
 def test_unsupported_loss():
-    l1_min_c(dense_X, Y1, 'l1')
+    assert_raises(ValueError, l1_min_c, dense_X, Y1, 'l1')

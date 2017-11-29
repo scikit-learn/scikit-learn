@@ -10,10 +10,10 @@ such that among the samples to which it gave a predict_proba value close to
 0.8, approx. 80% actually belong to the positive class.
 
 LogisticRegression returns well calibrated predictions as it directly
-optimizes log-loss. In contrast, the other methods return biased probilities,
+optimizes log-loss. In contrast, the other methods return biased probabilities,
 with different biases per method:
 
-* GaussianNaiveBayes tends to push probabilties to 0 or 1 (note the counts in
+* GaussianNaiveBayes tends to push probabilities to 0 or 1 (note the counts in
   the histograms). This is mainly because it makes the assumption that features
   are conditionally independent given the class, which is not the case in this
   dataset which contains 2 redundant features.
@@ -33,9 +33,9 @@ with different biases per method:
   moving the average prediction of the bagged ensemble away from 0. We observe
   this effect most strongly with random forests because the base-level trees
   trained with random forests have relatively high variance due to feature
-  subseting." As a result, the calibration curve shows a characteristic sigmoid
-  shape, indicating that the classifier could trust its "intuition" more and
-  return probabilties closer to 0 or 1 typically.
+  subsetting." As a result, the calibration curve shows a characteristic
+  sigmoid shape, indicating that the classifier could trust its "intuition"
+  more and return probabilities closer to 0 or 1 typically.
 
 * Support Vector Classification (SVC) shows an even more sigmoid curve as
   the  RandomForestClassifier, which is typical for maximum-margin methods
@@ -81,7 +81,7 @@ svc = LinearSVC(C=1.0)
 rfc = RandomForestClassifier(n_estimators=100)
 
 
-###############################################################################
+# #############################################################################
 # Plot calibration plots
 
 plt.figure(figsize=(10, 10))

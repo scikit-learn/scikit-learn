@@ -60,9 +60,11 @@ require to download any file from some external website.
    load_diabetes
    load_digits
    load_linnerud
+   load_wine
+   load_breast_cancer
 
 These datasets are useful to quickly illustrate the behavior of the
-various algorithms implemented in the scikit. They are however often too
+various algorithms implemented in scikit-learn. They are however often too
 small to be representative of real world machine learning tasks.
 
 .. _sample_images:
@@ -70,7 +72,7 @@ small to be representative of real world machine learning tasks.
 Sample images
 =============
 
-The scikit also embed a couple of sample JPEG images published under Creative
+Scikit-learn also embed a couple of sample JPEG images published under Creative
 Commons license by their authors. Those image can be useful to test algorithms
 and pipeline on 2D data.
 
@@ -82,7 +84,7 @@ and pipeline on 2D data.
    load_sample_images
    load_sample_image
 
-.. image:: ../auto_examples/cluster/images/plot_color_quantization_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_color_quantization_001.png
    :target: ../auto_examples/cluster/plot_color_quantization.html
    :scale: 30
    :align: right
@@ -93,12 +95,12 @@ and pipeline on 2D data.
   The default coding of images is based on the ``uint8`` dtype to
   spare memory.  Often machine learning algorithms work best if the
   input is converted to a floating point representation first.  Also,
-  if you plan to use ``pylab.imshow`` don't forget to scale to the range
+  if you plan to use ``matplotlib.pyplpt.imshow`` don't forget to scale to the range
   0 - 1 as done in the following example.
 
 .. topic:: Examples:
 
-    * :ref:`example_cluster_plot_color_quantization.py`
+    * :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
 
 
 .. _sample_generators:
@@ -130,7 +132,7 @@ per class; and linear transformations of the feature space.
 near-equal-size classes separated by concentric hyperspheres.
 :func:`make_hastie_10_2` generates a similar binary, 10-dimensional problem.
 
-.. image:: ../auto_examples/datasets/images/plot_random_dataset_001.png
+.. image:: ../auto_examples/datasets/images/sphx_glr_plot_random_dataset_001.png
    :target: ../auto_examples/datasets/plot_random_dataset.html
    :scale: 50
    :align: center
@@ -159,7 +161,7 @@ respect to true bag-of-words mixtures include:
 * Documents without labels words at random, rather than from a base
   distribution.
 
-.. image:: ../auto_examples/datasets/images/plot_random_multilabel_dataset_001.png
+.. image:: ../auto_examples/datasets/images/sphx_glr_plot_random_multilabel_dataset_001.png
    :target: ../auto_examples/datasets/plot_random_multilabel_dataset.html
    :scale: 50
    :align: center
@@ -250,9 +252,76 @@ features::
 
 .. topic:: Related links:
 
- _`Public datasets in svmlight / libsvm format`: http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/
+ _`Public datasets in svmlight / libsvm format`: https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets
 
  _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
+
+.. _external_datasets:
+
+Loading from external datasets
+==============================
+
+scikit-learn works on any numeric data stored as numpy arrays or scipy sparse
+matrices. Other types that are convertible to numeric arrays such as pandas
+DataFrame are also acceptable.
+ 
+Here are some recommended ways to load standard columnar data into a 
+format usable by scikit-learn: 
+
+* `pandas.io <https://pandas.pydata.org/pandas-docs/stable/io.html>`_ 
+  provides tools to read data from common formats including CSV, Excel, JSON
+  and SQL. DataFrames may also be constructed from lists of tuples or dicts.
+  Pandas handles heterogeneous data smoothly and provides tools for
+  manipulation and conversion into a numeric array suitable for scikit-learn.
+* `scipy.io <https://docs.scipy.org/doc/scipy/reference/io.html>`_ 
+  specializes in binary formats often used in scientific computing 
+  context such as .mat and .arff
+* `numpy/routines.io <https://docs.scipy.org/doc/numpy/reference/routines.io.html>`_
+  for standard loading of columnar data into numpy arrays
+* scikit-learn's :func:`datasets.load_svmlight_file` for the svmlight or libSVM
+  sparse format
+* scikit-learn's :func:`datasets.load_files` for directories of text files where
+  the name of each directory is the name of each category and each file inside
+  of each directory corresponds to one sample from that category
+
+For some miscellaneous data such as images, videos, and audio, you may wish to
+refer to:
+
+* `skimage.io <http://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
+  `Imageio <https://imageio.readthedocs.io/en/latest/userapi.html>`_ 
+  for loading images and videos to numpy arrays
+* `scipy.misc.imread <https://docs.scipy.org/doc/scipy/reference/generated/scipy.
+  misc.imread.html#scipy.misc.imread>`_ (requires the `Pillow
+  <https://pypi.python.org/pypi/Pillow>`_ package) to load pixel intensities
+  data from various image file formats
+* `scipy.io.wavfile.read 
+  <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_ 
+  for reading WAV files into a numpy array
+
+Categorical (or nominal) features stored as strings (common in pandas DataFrames) 
+will need converting to integers, and integer categorical variables may be best 
+exploited when encoded as one-hot variables 
+(:class:`sklearn.preprocessing.OneHotEncoder`) or similar. 
+See :ref:`preprocessing`.
+
+Note: if you manage your own numerical data it is recommended to use an 
+optimized file format such as HDF5 to reduce data load times. Various libraries
+such as H5Py, PyTables and pandas provides a Python interface for reading and 
+writing data in that format.
+
+.. make sure everything is in a toc tree
+
+.. toctree::
+    :maxdepth: 2
+    :hidden:
+
+    olivetti_faces
+    twenty_newsgroups
+    mldata
+    labeled_faces
+    covtype
+    rcv1
+    kddcup99
 
 
 .. include:: olivetti_faces.rst
@@ -267,26 +336,28 @@ features::
 
 .. include:: rcv1.rst
 
-.. _boston_house_prices
+.. include:: kddcup99.rst
+
+.. _boston_house_prices:
 
 .. include:: ../../sklearn/datasets/descr/boston_house_prices.rst
 
-.. _breast_cancer
+.. _breast_cancer:
 
 .. include:: ../../sklearn/datasets/descr/breast_cancer.rst
 
-.. _diabetes
+.. _diabetes:
 
 .. include:: ../../sklearn/datasets/descr/diabetes.rst
 
-.. _digits
+.. _digits:
 
 .. include:: ../../sklearn/datasets/descr/digits.rst
 
-.. _iris
+.. _iris:
 
 .. include:: ../../sklearn/datasets/descr/iris.rst
 
-.. _linnerud
+.. _linnerud:
 
 .. include:: ../../sklearn/datasets/descr/linnerud.rst

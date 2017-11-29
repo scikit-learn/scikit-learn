@@ -1,14 +1,10 @@
-from nose.tools import assert_true
-from nose.tools import assert_equal
-
-from scipy.sparse import csr_matrix
-from scipy.sparse import csc_matrix
-from scipy.linalg import eigh
 import numpy as np
 from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_equal
 
-from nose.tools import assert_raises
-from nose.plugins.skip import SkipTest
+from scipy import sparse
+from scipy.sparse import csgraph
+from scipy.linalg import eigh
 
 from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
 from sklearn.manifold.spectral_embedding_ import _graph_is_connected
@@ -18,8 +14,9 @@ from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
-from sklearn.utils.graph import graph_laplacian
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
+from sklearn.utils.testing import assert_true, assert_equal, assert_raises
+from sklearn.utils.testing import SkipTest
 
 
 # non centered, sparse centers to check the
@@ -48,12 +45,50 @@ def _check_with_col_sign_flipping(A, B, tol=0.0):
     return True
 
 
+def test_sparse_graph_connected_component():
+    rng = np.random.RandomState(42)
+    n_samples = 300
+    boundaries = [0, 42, 121, 200, n_samples]
+    p = rng.permutation(n_samples)
+    connections = []
+
+    for start, stop in zip(boundaries[:-1], boundaries[1:]):
+        group = p[start:stop]
+        # Connect all elements within the group at least once via an
+        # arbitrary path that spans the group.
+        for i in range(len(group) - 1):
+            connections.append((group[i], group[i + 1]))
+
+        # Add some more random connections within the group
+        min_idx, max_idx = 0, len(group) - 1
+        n_random_connections = 1000
+        source = rng.randint(min_idx, max_idx, size=n_random_connections)
+        target = rng.randint(min_idx, max_idx, size=n_random_connections)
+        connections.extend(zip(group[source], group[target]))
+
+    # Build a symmetric affinity matrix
+    row_idx, column_idx = tuple(np.array(connections).T)
+    data = rng.uniform(.1, 42, size=len(connections))
+    affinity = sparse.coo_matrix((data, (row_idx, column_idx)))
+    affinity = 0.5 * (affinity + affinity.T)
+
+    for start, stop in zip(boundaries[:-1], boundaries[1:]):
+        component_1 = _graph_connected_component(affinity, p[start])
+        component_size = stop - start
+        assert_equal(component_1.sum(), component_size)
+
+        # We should retrieve the same component mask by starting by both ends
+        # of the group
+        component_2 = _graph_connected_component(affinity, p[stop - 1])
+        assert_equal(component_2.sum(), component_size)
+        assert_array_equal(component_1, component_2)
+
+
 def test_spectral_embedding_two_components(seed=36):
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
     n_sample = 100
-    affinity = np.zeros(shape=[n_sample * 2,
-                               n_sample * 2])
+    affinity = np.zeros(shape=[n_sample * 2, n_sample * 2])
     # first component
     affinity[0:n_sample,
              0:n_sample] = np.abs(random_state.randn(n_sample, n_sample)) + 2
@@ -128,7 +163,7 @@ def test_spectral_embedding_callable_affinity(seed=36):
 def test_spectral_embedding_amg_solver(seed=36):
     # Test spectral embedding with amg solver
     try:
-        from pyamg import smoothed_aggregation_solver
+        from pyamg import smoothed_aggregation_solver  # noqa
     except ImportError:
         raise SkipTest("pyamg not available.")
 
@@ -185,16 +220,16 @@ def test_connectivity(seed=36):
                       [0, 0, 1, 1, 1],
                       [0, 0, 0, 1, 1]])
     assert_equal(_graph_is_connected(graph), False)
-    assert_equal(_graph_is_connected(csr_matrix(graph)), False)
-    assert_equal(_graph_is_connected(csc_matrix(graph)), False)
+    assert_equal(_graph_is_connected(sparse.csr_matrix(graph)), False)
+    assert_equal(_graph_is_connected(sparse.csc_matrix(graph)), False)
     graph = np.array([[1, 1, 0, 0, 0],
                       [1, 1, 1, 0, 0],
                       [0, 1, 1, 1, 0],
                       [0, 0, 1, 1, 1],
                       [0, 0, 0, 1, 1]])
     assert_equal(_graph_is_connected(graph), True)
-    assert_equal(_graph_is_connected(csr_matrix(graph)), True)
-    assert_equal(_graph_is_connected(csc_matrix(graph)), True)
+    assert_equal(_graph_is_connected(sparse.csr_matrix(graph)), True)
+    assert_equal(_graph_is_connected(sparse.csc_matrix(graph)), True)
 
 
 def test_spectral_embedding_deterministic():
@@ -208,7 +243,8 @@ def test_spectral_embedding_deterministic():
 
 
 def test_spectral_embedding_unnormalized():
-    # Test that spectral_embedding is also processing unnormalized laplacian correctly
+    # Test that spectral_embedding is also processing unnormalized laplacian
+    # correctly
     random_state = np.random.RandomState(36)
     data = random_state.randn(10, 30)
     sims = rbf_kernel(data)
@@ -219,7 +255,8 @@ def test_spectral_embedding_unnormalized():
                                      drop_first=False)
 
     # Verify using manual computation with dense eigh
-    laplacian, dd = graph_laplacian(sims, normed=False, return_diag=True)
+    laplacian, dd = csgraph.laplacian(sims, normed=False,
+                                      return_diag=True)
     _, diffusion_map = eigh(laplacian)
     embedding_2 = diffusion_map.T[:n_components] * dd
     embedding_2 = _deterministic_vector_sign_flip(embedding_2).T

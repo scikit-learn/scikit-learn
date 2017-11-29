@@ -59,103 +59,179 @@ is to position the labels minimizing overlap. For this we use an
 heuristic based on the direction of the nearest neighbor along each
 axis.
 """
-print(__doc__)
+from __future__ import print_function
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD 3 clause
 
-import datetime
+import sys
+from datetime import datetime
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import finance
 from matplotlib.collections import LineCollection
-
+from six.moves.urllib.request import urlopen
+from six.moves.urllib.parse import urlencode
 from sklearn import cluster, covariance, manifold
 
-###############################################################################
+print(__doc__)
+
+
+def retry(f, n_attempts=3):
+    "Wrapper function to retry function calls in case of exceptions"
+    def wrapper(*args, **kwargs):
+        for i in range(n_attempts):
+            try:
+                return f(*args, **kwargs)
+            except Exception:
+                if i == n_attempts - 1:
+                    raise
+    return wrapper
+
+
+def quotes_historical_google(symbol, start_date, end_date):
+    """Get the historical data from Google finance.
+
+    Parameters
+    ----------
+    symbol : str
+        Ticker symbol to query for, for example ``"DELL"``.
+    start_date : datetime.datetime
+        Start date.
+    end_date : datetime.datetime
+        End date.
+
+    Returns
+    -------
+    X : array
+        The columns are ``date`` -- date, ``open``, ``high``,
+        ``low``, ``close`` and ``volume`` of type float.
+    """
+    params = {
+        'q': symbol,
+        'startdate': start_date.strftime('%Y-%m-%d'),
+        'enddate': end_date.strftime('%Y-%m-%d'),
+        'output': 'csv',
+    }
+    url = 'https://finance.google.com/finance/historical?' + urlencode(params)
+    response = urlopen(url)
+    dtype = {
+        'names': ['date', 'open', 'high', 'low', 'close', 'volume'],
+        'formats': ['object', 'f4', 'f4', 'f4', 'f4', 'f4']
+    }
+    converters = {
+        0: lambda s: datetime.strptime(s.decode(), '%d-%b-%y').date()}
+    data = np.genfromtxt(response, delimiter=',', skip_header=1,
+                         dtype=dtype, converters=converters,
+                         missing_values='-', filling_values=-1)
+    min_date = min(data['date']) if len(data) else datetime.min.date()
+    max_date = max(data['date']) if len(data) else datetime.max.date()
+    start_end_diff = (end_date - start_date).days
+    min_max_diff = (max_date - min_date).days
+    data_is_fine = (
+        start_date <= min_date <= end_date and
+        start_date <= max_date <= end_date and
+        start_end_diff - 7 <= min_max_diff <= start_end_diff)
+
+    if not data_is_fine:
+        message = (
+            'Data looks wrong for symbol {}, url {}\n'
+            '  - start_date: {}, end_date: {}\n'
+            '  - min_date:   {}, max_date: {}\n'
+            '  - start_end_diff: {}, min_max_diff: {}'.format(
+                symbol, url,
+                start_date, end_date,
+                min_date, max_date,
+                start_end_diff, min_max_diff))
+        raise RuntimeError(message)
+    return data
+
+# #############################################################################
 # Retrieve the data from Internet
 
-# Choose a time period reasonnably calm (not too long ago so that we get
+# Choose a time period reasonably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
-d1 = datetime.datetime(2003, 1, 1)
-d2 = datetime.datetime(2008, 1, 1)
+start_date = datetime(2003, 1, 1).date()
+end_date = datetime(2008, 1, 1).date()
 
-# kraft symbol has now changed from KFT to MDLZ in yahoo
 symbol_dict = {
-    'TOT': 'Total',
-    'XOM': 'Exxon',
-    'CVX': 'Chevron',
-    'COP': 'ConocoPhillips',
-    'VLO': 'Valero Energy',
-    'MSFT': 'Microsoft',
-    'IBM': 'IBM',
-    'TWX': 'Time Warner',
-    'CMCSA': 'Comcast',
-    'CVC': 'Cablevision',
-    'YHOO': 'Yahoo',
-    'DELL': 'Dell',
-    'HPQ': 'HP',
-    'AMZN': 'Amazon',
-    'TM': 'Toyota',
-    'CAJ': 'Canon',
-    'MTU': 'Mitsubishi',
-    'SNE': 'Sony',
-    'F': 'Ford',
-    'HMC': 'Honda',
-    'NAV': 'Navistar',
-    'NOC': 'Northrop Grumman',
-    'BA': 'Boeing',
-    'KO': 'Coca Cola',
-    'MMM': '3M',
-    'MCD': 'Mc Donalds',
-    'PEP': 'Pepsi',
-    'MDLZ': 'Kraft Foods',
-    'K': 'Kellogg',
-    'UN': 'Unilever',
-    'MAR': 'Marriott',
-    'PG': 'Procter Gamble',
-    'CL': 'Colgate-Palmolive',
-    'GE': 'General Electrics',
-    'WFC': 'Wells Fargo',
-    'JPM': 'JPMorgan Chase',
-    'AIG': 'AIG',
-    'AXP': 'American express',
-    'BAC': 'Bank of America',
-    'GS': 'Goldman Sachs',
-    'AAPL': 'Apple',
-    'SAP': 'SAP',
-    'CSCO': 'Cisco',
-    'TXN': 'Texas instruments',
-    'XRX': 'Xerox',
-    'LMT': 'Lookheed Martin',
-    'WMT': 'Wal-Mart',
-    'WBA': 'Walgreen',
-    'HD': 'Home Depot',
-    'GSK': 'GlaxoSmithKline',
-    'PFE': 'Pfizer',
-    'SNY': 'Sanofi-Aventis',
-    'NVS': 'Novartis',
-    'KMB': 'Kimberly-Clark',
-    'R': 'Ryder',
-    'GD': 'General Dynamics',
-    'RTN': 'Raytheon',
-    'CVS': 'CVS',
-    'CAT': 'Caterpillar',
-    'DD': 'DuPont de Nemours'}
+    'NYSE:TOT': 'Total',
+    'NYSE:XOM': 'Exxon',
+    'NYSE:CVX': 'Chevron',
+    'NYSE:COP': 'ConocoPhillips',
+    'NYSE:VLO': 'Valero Energy',
+    'NASDAQ:MSFT': 'Microsoft',
+    'NYSE:IBM': 'IBM',
+    'NYSE:TWX': 'Time Warner',
+    'NASDAQ:CMCSA': 'Comcast',
+    'NYSE:CVC': 'Cablevision',
+    'NASDAQ:YHOO': 'Yahoo',
+    'NASDAQ:DELL': 'Dell',
+    'NYSE:HPQ': 'HP',
+    'NASDAQ:AMZN': 'Amazon',
+    'NYSE:TM': 'Toyota',
+    'NYSE:CAJ': 'Canon',
+    'NYSE:SNE': 'Sony',
+    'NYSE:F': 'Ford',
+    'NYSE:HMC': 'Honda',
+    'NYSE:NAV': 'Navistar',
+    'NYSE:NOC': 'Northrop Grumman',
+    'NYSE:BA': 'Boeing',
+    'NYSE:KO': 'Coca Cola',
+    'NYSE:MMM': '3M',
+    'NYSE:MCD': 'McDonald\'s',
+    'NYSE:PEP': 'Pepsi',
+    'NYSE:K': 'Kellogg',
+    'NYSE:UN': 'Unilever',
+    'NASDAQ:MAR': 'Marriott',
+    'NYSE:PG': 'Procter Gamble',
+    'NYSE:CL': 'Colgate-Palmolive',
+    'NYSE:GE': 'General Electrics',
+    'NYSE:WFC': 'Wells Fargo',
+    'NYSE:JPM': 'JPMorgan Chase',
+    'NYSE:AIG': 'AIG',
+    'NYSE:AXP': 'American express',
+    'NYSE:BAC': 'Bank of America',
+    'NYSE:GS': 'Goldman Sachs',
+    'NASDAQ:AAPL': 'Apple',
+    'NYSE:SAP': 'SAP',
+    'NASDAQ:CSCO': 'Cisco',
+    'NASDAQ:TXN': 'Texas Instruments',
+    'NYSE:XRX': 'Xerox',
+    'NYSE:WMT': 'Wal-Mart',
+    'NYSE:HD': 'Home Depot',
+    'NYSE:GSK': 'GlaxoSmithKline',
+    'NYSE:PFE': 'Pfizer',
+    'NYSE:SNY': 'Sanofi-Aventis',
+    'NYSE:NVS': 'Novartis',
+    'NYSE:KMB': 'Kimberly-Clark',
+    'NYSE:R': 'Ryder',
+    'NYSE:GD': 'General Dynamics',
+    'NYSE:RTN': 'Raytheon',
+    'NYSE:CVS': 'CVS',
+    'NYSE:CAT': 'Caterpillar',
+    'NYSE:DD': 'DuPont de Nemours'}
 
-symbols, names = np.array(list(symbol_dict.items())).T
 
-quotes = [finance.quotes_historical_yahoo(symbol, d1, d2, asobject=True)
-          for symbol in symbols]
+symbols, names = np.array(sorted(symbol_dict.items())).T
 
-open = np.array([q.open for q in quotes]).astype(np.float)
-close = np.array([q.close for q in quotes]).astype(np.float)
+# retry is used because quotes_historical_google can temporarily fail
+# for various reasons (e.g. empty result from Google API).
+quotes = []
+
+for symbol in symbols:
+    print('Fetching quote history for %r' % symbol, file=sys.stderr)
+    quotes.append(retry(quotes_historical_google)(
+        symbol, start_date, end_date))
+
+close_prices = np.vstack([q['close'] for q in quotes])
+open_prices = np.vstack([q['open'] for q in quotes])
 
 # The daily variations of the quotes are what carry most information
-variation = close - open
+variation = close_prices - open_prices
 
-###############################################################################
+
+# #############################################################################
 # Learn a graphical structure from the correlations
 edge_model = covariance.GraphLassoCV()
 
@@ -165,7 +241,7 @@ X = variation.copy().T
 X /= X.std(axis=0)
 edge_model.fit(X)
 
-###############################################################################
+# #############################################################################
 # Cluster using affinity propagation
 
 _, labels = cluster.affinity_propagation(edge_model.covariance_)
@@ -174,7 +250,7 @@ n_labels = labels.max()
 for i in range(n_labels + 1):
     print('Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i])))
 
-###############################################################################
+# #############################################################################
 # Find a low-dimension embedding for visualization: find the best position of
 # the nodes (the stocks) on a 2D plane
 
@@ -186,7 +262,7 @@ node_position_model = manifold.LocallyLinearEmbedding(
 
 embedding = node_position_model.fit_transform(X.T).T
 
-###############################################################################
+# #############################################################################
 # Visualization
 plt.figure(1, facecolor='w', figsize=(10, 8))
 plt.clf()
@@ -206,7 +282,7 @@ plt.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
 
 # Plot the edges
 start_idx, end_idx = np.where(non_zero)
-#a sequence of (*line0*, *line1*, *line2*), where::
+# a sequence of (*line0*, *line1*, *line2*), where::
 #            linen = (x0, y0), (x1, y1), ... (xm, ym)
 segments = [[embedding[:, start], embedding[:, stop]]
             for start, stop in zip(start_idx, end_idx)]

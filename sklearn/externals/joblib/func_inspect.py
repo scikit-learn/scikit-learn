@@ -15,6 +15,8 @@ import os
 from ._compat import _basestring
 from .logger import pformat
 from ._memory_helpers import open_py_source
+from ._compat import PY3_OR_LATER
+
 
 def get_func_code(func):
     """ Attempts to retrieve a reliable function code hash.
@@ -48,8 +50,7 @@ def get_func_code(func):
             line_no = 1
             if source_file.startswith('<doctest '):
                 source_file, line_no = re.match(
-                            '\<doctest (.*\.rst)\[(.*)\]\>',
-                            source_file).groups()
+                    '\<doctest (.*\.rst)\[(.*)\]\>', source_file).groups()
                 line_no = int(line_no)
                 source_file = '<doctest %s>' % source_file
             return source_code, source_file, line_no
@@ -156,6 +157,53 @@ def get_func_name(func, resolv_alias=True, win_characters=True):
     return module, name
 
 
+def getfullargspec(func):
+    """Compatibility function to provide inspect.getfullargspec in Python 2
+
+    This should be rewritten using a backport of Python 3 signature
+    once we drop support for Python 2.6. We went for a simpler
+    approach at the time of writing because signature uses OrderedDict
+    which is not available in Python 2.6.
+    """
+    try:
+        return inspect.getfullargspec(func)
+    except AttributeError:
+        arg_spec = inspect.getargspec(func)
+        import collections
+        tuple_fields = ('args varargs varkw defaults kwonlyargs '
+                        'kwonlydefaults annotations')
+        tuple_type = collections.namedtuple('FullArgSpec', tuple_fields)
+
+        return tuple_type(args=arg_spec.args,
+                          varargs=arg_spec.varargs,
+                          varkw=arg_spec.keywords,
+                          defaults=arg_spec.defaults,
+                          kwonlyargs=[],
+                          kwonlydefaults=None,
+                          annotations={})
+
+
+def _signature_str(function_name, arg_spec):
+    """Helper function to output a function signature"""
+    # inspect.formatargspec can not deal with the same
+    # number of arguments in python 2 and 3
+    arg_spec_for_format = arg_spec[:7 if PY3_OR_LATER else 4]
+
+    arg_spec_str = inspect.formatargspec(*arg_spec_for_format)
+    return '{}{}'.format(function_name, arg_spec_str)
+
+
+def _function_called_str(function_name, args, kwargs):
+    """Helper function to output a function call"""
+    template_str = '{0}({1}, {2})'
+
+    args_str = repr(args)[1:-1]
+    kwargs_str = ', '.join('%s=%s' % (k, v)
+                           for k, v in kwargs.items())
+    return template_str.format(function_name, args_str,
+                               kwargs_str)
+
+
 def filter_args(func, ignore_lst, args=(), kwargs=dict()):
     """ Filters the given args and kwargs using a list of arguments to
         ignore, and a function specification.
@@ -180,24 +228,23 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
     args = list(args)
     if isinstance(ignore_lst, _basestring):
         # Catch a common mistake
-        raise ValueError('ignore_lst must be a list of parameters to ignore '
+        raise ValueError(
+            'ignore_lst must be a list of parameters to ignore '
             '%s (type %s) was given' % (ignore_lst, type(ignore_lst)))
     # Special case for functools.partial objects
     if (not inspect.ismethod(func) and not inspect.isfunction(func)):
         if ignore_lst:
             warnings.warn('Cannot inspect object %s, ignore list will '
-                'not work.' % func, stacklevel=2)
+                          'not work.' % func, stacklevel=2)
         return {'*': args, '**': kwargs}
-    arg_spec = inspect.getargspec(func)
-    # We need to if/them to account for different versions of Python
-    if hasattr(arg_spec, 'args'):
-        arg_names = arg_spec.args
-        arg_defaults = arg_spec.defaults
-        arg_keywords = arg_spec.keywords
-        arg_varargs = arg_spec.varargs
-    else:
-        arg_names, arg_varargs, arg_keywords, arg_defaults = arg_spec
-    arg_defaults = arg_defaults or {}
+    arg_spec = getfullargspec(func)
+    arg_names = arg_spec.args + arg_spec.kwonlyargs
+    arg_defaults = arg_spec.defaults or ()
+    arg_defaults = arg_defaults + tuple(arg_spec.kwonlydefaults[k]
+                                        for k in arg_spec.kwonlyargs)
+    arg_varargs = arg_spec.varargs
+    arg_varkw = arg_spec.varkw
+
     if inspect.ismethod(func):
         # First argument is 'self', it has been removed by Python
         # we need to add it back:
@@ -211,7 +258,18 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
     for arg_position, arg_name in enumerate(arg_names):
         if arg_position < len(args):
             # Positional argument or keyword argument given as positional
-            arg_dict[arg_name] = args[arg_position]
+            if arg_name not in arg_spec.kwonlyargs:
+                arg_dict[arg_name] = args[arg_position]
+            else:
+                raise ValueError(
+                    "Keyword-only parameter '%s' was passed as "
+                    'positional parameter for %s:\n'
+                    '     %s was called.'
+                    % (arg_name,
+                       _signature_str(name, arg_spec),
+                       _function_called_str(name, args, kwargs))
+                )
+
         else:
             position = arg_position - len(arg_names)
             if arg_name in kwargs:
@@ -221,28 +279,24 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
                     arg_dict[arg_name] = arg_defaults[position]
                 except (IndexError, KeyError):
                     # Missing argument
-                    raise ValueError('Wrong number of arguments for %s%s:\n'
-                                     '     %s(%s, %s) was called.'
-                        % (name,
-                           inspect.formatargspec(*inspect.getargspec(func)),
-                           name,
-                           repr(args)[1:-1],
-                           ', '.join('%s=%s' % (k, v)
-                                    for k, v in kwargs.items())
-                           )
-                        )
+                    raise ValueError(
+                        'Wrong number of arguments for %s:\n'
+                        '     %s was called.'
+                        % (_signature_str(name, arg_spec),
+                           _function_called_str(name, args, kwargs))
+                    )
 
     varkwargs = dict()
     for arg_name, arg_value in sorted(kwargs.items()):
         if arg_name in arg_dict:
             arg_dict[arg_name] = arg_value
-        elif arg_keywords is not None:
+        elif arg_varkw is not None:
             varkwargs[arg_name] = arg_value
         else:
             raise TypeError("Ignore list for %s() contains an unexpected "
                             "keyword argument '%s'" % (name, arg_name))
 
-    if arg_keywords is not None:
+    if arg_varkw is not None:
         arg_dict['**'] = varkwargs
     if arg_varargs is not None:
         varargs = args[arg_position + 1:]
@@ -254,15 +308,19 @@ def filter_args(func, ignore_lst, args=(), kwargs=dict()):
             arg_dict.pop(item)
         else:
             raise ValueError("Ignore list: argument '%s' is not defined for "
-            "function %s%s" %
-                            (item, name,
-                             inspect.formatargspec(arg_names,
-                                                   arg_varargs,
-                                                   arg_keywords,
-                                                   arg_defaults,
-                                                   )))
+                             "function %s"
+                             % (item,
+                                _signature_str(name, arg_spec))
+                             )
     # XXX: Return a sorted list of pairs?
     return arg_dict
+
+
+def _format_arg(arg):
+    formatted_arg = pformat(arg, indent=2)
+    if len(formatted_arg) > 1500:
+        formatted_arg = '%s...' % formatted_arg[:700]
+    return formatted_arg
 
 
 def format_signature(func, *args, **kwargs):
@@ -277,14 +335,12 @@ def format_signature(func, *args, **kwargs):
     arg_str = list()
     previous_length = 0
     for arg in args:
-        arg = pformat(arg, indent=2)
-        if len(arg) > 1500:
-            arg = '%s...' % arg[:700]
+        formatted_arg = _format_arg(arg)
         if previous_length > 80:
-            arg = '\n%s' % arg
-        previous_length = len(arg)
-        arg_str.append(arg)
-    arg_str.extend(['%s=%s' % (v, pformat(i)) for v, i in kwargs.items()])
+            formatted_arg = '\n%s' % formatted_arg
+        previous_length = len(formatted_arg)
+        arg_str.append(formatted_arg)
+    arg_str.extend(['%s=%s' % (v, _format_arg(i)) for v, i in kwargs.items()])
     arg_str = ', '.join(arg_str)
 
     signature = '%s(%s)' % (name, arg_str)
@@ -300,4 +356,4 @@ def format_call(func, args, kwargs, object_name="Memory"):
                                           path, signature)
     return msg
     # XXX: Not using logging framework
-    #self.debug(msg)
+    # self.debug(msg)

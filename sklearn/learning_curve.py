@@ -14,12 +14,11 @@ from .externals.joblib import Parallel, delayed
 from .cross_validation import _safe_split, _score, _fit_and_score
 from .metrics.scorer import check_scoring
 from .utils import indexable
-from .utils.fixes import astype
 
 
-warnings.warn("This module has been deprecated in favor of the "
+warnings.warn("This module was deprecated in version 0.18 in favor of the "
               "model_selection module into which all the functions are moved."
-              " This module will be removed in 0.19",
+              " This module will be removed in 0.20",
               DeprecationWarning)
 
 
@@ -28,8 +27,13 @@ __all__ = ['learning_curve', 'validation_curve']
 
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
                    cv=None, scoring=None, exploit_incremental_learning=False,
-                   n_jobs=1, pre_dispatch="all", verbose=0):
+                   n_jobs=1, pre_dispatch="all", verbose=0,
+                   error_score='raise'):
     """Learning curve.
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.learning_curve` instead.
 
     Determines cross-validated training and test scores for different training
     set sizes.
@@ -68,14 +72,16 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass,
+        :class:`sklearn.model_selection.StratifiedKFold` is used. In all
+        other cases, :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -100,6 +106,12 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
+    error_score : 'raise' (default) or numeric
+        Value to assign to the score if an error occurs in estimator fitting.
+        If set to 'raise', the error is raised. If a numeric value is given,
+        FitFailedWarning is raised. This parameter does not affect the refit
+        step, which will always raise the error.
+
     Returns
     -------
     train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
@@ -116,7 +128,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     Notes
     -----
     See :ref:`examples/model_selection/plot_learning_curve.py
-    <example_model_selection_plot_learning_curve.py>`
+    <sphx_glr_auto_examples_model_selection_plot_learning_curve.py>`
     """
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError("An estimator must support the partial_fit interface "
@@ -154,7 +166,8 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     else:
         out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train[:n_train_samples], test,
-            verbose, parameters=None, fit_params=None, return_train_score=True)
+            verbose, parameters=None, fit_params=None, return_train_score=True,
+            error_score=error_score)
             for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)[:, :2]
         n_cv_folds = out.shape[0] // n_unique_ticks
@@ -193,14 +206,14 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     n_ticks = train_sizes_abs.shape[0]
     n_min_required_samples = np.min(train_sizes_abs)
     n_max_required_samples = np.max(train_sizes_abs)
-    if np.issubdtype(train_sizes_abs.dtype, np.float):
+    if np.issubdtype(train_sizes_abs.dtype, np.floating):
         if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
             raise ValueError("train_sizes has been interpreted as fractions "
                              "of the maximum number of training samples and "
                              "must be within (0, 1], but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
-        train_sizes_abs = astype(train_sizes_abs * n_max_training_samples,
+        train_sizes_abs = (train_sizes_abs * n_max_training_samples).astype(
                                  dtype=np.int, copy=False)
         train_sizes_abs = np.clip(train_sizes_abs, 1,
                                   n_max_training_samples)
@@ -217,7 +230,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     train_sizes_abs = np.unique(train_sizes_abs)
     if n_ticks > train_sizes_abs.shape[0]:
         warnings.warn("Removed duplicate entries from 'train_sizes'. Number "
-                      "of ticks will be less than than the size of "
+                      "of ticks will be less than the size of "
                       "'train_sizes' %d instead of %d)."
                       % (train_sizes_abs.shape[0], n_ticks), RuntimeWarning)
 
@@ -248,6 +261,10 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 def validation_curve(estimator, X, y, param_name, param_range, cv=None,
                      scoring=None, n_jobs=1, pre_dispatch="all", verbose=0):
     """Validation curve.
+
+    .. deprecated:: 0.18
+        This module will be removed in 0.20.
+        Use :func:`sklearn.model_selection.validation_curve` instead.
 
     Determine training and test scores for varying parameter values.
 
@@ -280,14 +297,16 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
 
-        For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`StratifiedKFold` used. If the estimator is a classifier
-        or if ``y`` is neither binary nor multiclass, :class:`KFold` is used.
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
+
+        For integer/None inputs, if the estimator is a classifier and ``y`` is
+        either binary or multiclass,
+        :class:`sklearn.model_selection.StratifiedKFold` is used. In all
+        other cases, :class:`sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -320,7 +339,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     -----
     See
     :ref:`examples/model_selection/plot_validation_curve.py
-    <example_model_selection_plot_validation_curve.py>`
+    <sphx_glr_auto_examples_model_selection_plot_validation_curve.py>`
     """
     X, y = indexable(X, y)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
@@ -329,7 +348,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
-        estimator, X, y, scorer, train, test, verbose,
+        clone(estimator), X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
         for train, test in cv for v in param_range)
 

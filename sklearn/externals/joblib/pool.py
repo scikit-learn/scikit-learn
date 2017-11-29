@@ -1,4 +1,4 @@
-"""Custom implementation of multiprocessing.Pool with custom pickler
+"""Custom implementation of multiprocessing.Pool with custom pickler.
 
 This module provides efficient ways of working with data stored in
 shared memory with numpy.memmap arrays without inducing any memory
@@ -22,7 +22,15 @@ import threading
 import atexit
 import tempfile
 import shutil
+import warnings
+from time import sleep
 
+try:
+    WindowsError
+except NameError:
+    WindowsError = type(None)
+
+from pickle import whichmodule
 try:
     # Python 2 compat
     from cPickle import loads
@@ -53,7 +61,7 @@ except ImportError:
 from .numpy_pickle import load
 from .numpy_pickle import dump
 from .hashing import hash
-
+from .backports import make_memmap
 # Some system have a ramdisk mounted by default, we can use it instead of /tmp
 # as the default folder to dump big arrays to share with subprocesses
 SYSTEM_SHARED_MEM_FS = '/dev/shm'
@@ -69,7 +77,7 @@ FILE_PERMISSIONS = stat.S_IRUSR | stat.S_IWUSR
 
 
 def _get_backing_memmap(a):
-    """Recursively look up the original np.memmap instance base if any"""
+    """Recursively look up the original np.memmap instance base if any."""
     b = getattr(a, 'base', None)
     if b is None:
         # TODO: check scipy sparse datastructure if scipy is installed
@@ -86,31 +94,31 @@ def _get_backing_memmap(a):
 
 
 def has_shareable_memory(a):
-    """Return True if a is backed by some mmap buffer directly or not"""
+    """Return True if a is backed by some mmap buffer directly or not."""
     return _get_backing_memmap(a) is not None
 
 
 def _strided_from_memmap(filename, dtype, mode, offset, order, shape, strides,
                          total_buffer_len):
-    """Reconstruct an array view on a memmory mapped file"""
+    """Reconstruct an array view on a memory mapped file."""
     if mode == 'w+':
         # Do not zero the original data when unpickling
         mode = 'r+'
 
     if strides is None:
         # Simple, contiguous memmap
-        return np.memmap(filename, dtype=dtype, shape=shape, mode=mode,
-                         offset=offset, order=order)
+        return make_memmap(filename, dtype=dtype, shape=shape, mode=mode,
+                           offset=offset, order=order)
     else:
         # For non-contiguous data, memmap the total enclosing buffer and then
         # extract the non-contiguous view with the stride-tricks API
-        base = np.memmap(filename, dtype=dtype, shape=total_buffer_len,
-                         mode=mode, offset=offset, order=order)
+        base = make_memmap(filename, dtype=dtype, shape=total_buffer_len,
+                           mode=mode, offset=offset, order=order)
         return as_strided(base, shape=shape, strides=strides)
 
 
 def _reduce_memmap_backed(a, m):
-    """Pickling reduction for memmap backed arrays
+    """Pickling reduction for memmap backed arrays.
 
     a is expected to be an instance of np.ndarray (or np.memmap)
     m is expected to be an instance of np.memmap on the top of the ``base``
@@ -146,7 +154,7 @@ def _reduce_memmap_backed(a, m):
 
 
 def reduce_memmap(a):
-    """Pickle the descriptors of a memmap instance to reopen on same file"""
+    """Pickle the descriptors of a memmap instance to reopen on same file."""
     m = _get_backing_memmap(a)
     if m is not None:
         # m is a real mmap backed memmap instance, reduce a preserving striding
@@ -177,13 +185,6 @@ class ArrayMemmapReducer(object):
         If verbose > 0, memmap creations are logged.
         If verbose > 1, both memmap creations, reuse and array pickling are
         logged.
-    context_id: int, optional, None by default
-        Set to a value identifying a call context to spare costly hashing of
-        the content of the input arrays when it is safe to assume that each
-        array will not be mutated by the parent process for the duration of the
-        dispatch process. This is the case when using the high level Parallel
-        API. It might not be the case when using the MemmapingPool API
-        directly.
     prewarm: bool, optional, False by default.
         Force a read on newly memmaped array to make sure that OS pre-cache it
         memory. This can be useful to avoid concurrent disk access when the
@@ -196,8 +197,11 @@ class ArrayMemmapReducer(object):
         self._temp_folder = temp_folder
         self._mmap_mode = mmap_mode
         self.verbose = int(verbose)
-        self._context_id = context_id
         self._prewarm = prewarm
+        if context_id is not None:
+            warnings.warn('context_id is deprecated and ignored in joblib'
+                          ' 0.9.4 and will be removed in 0.11',
+                          DeprecationWarning)
 
     def __call__(self, a):
         m = _get_backing_memmap(a)
@@ -219,12 +223,8 @@ class ArrayMemmapReducer(object):
 
             # Find a unique, concurrent safe filename for writing the
             # content of this array only once.
-            if self._context_id is not None:
-                marker = self._context_id
-            else:
-                marker = hash(a)
-            basename = "%d-%d-%d-%s.pkl" % (
-                os.getpid(), id(threading.current_thread()), id(a), marker)
+            basename = "%d-%d-%s.pkl" % (
+                os.getpid(), id(threading.current_thread()), hash(a))
             filename = os.path.join(self._temp_folder, basename)
 
             # In case the same array with the same content is passed several
@@ -248,8 +248,8 @@ class ArrayMemmapReducer(object):
                 print("Memmaping (shape=%s, dtype=%s) to old file %s" % (
                     a.shape, a.dtype, filename))
 
-            # Let's use the memmap reducer
-            return reduce_memmap(load(filename, mmap_mode=self._mmap_mode))
+            # The worker process will use joblib.load to memmap the data
+            return (load, (filename, self._mmap_mode))
         else:
             # do not convert a into memmap, let pickler do its usual copy with
             # the default system pickler
@@ -269,7 +269,7 @@ class CustomizablePickler(Pickler):
     to pickle ephemeral datastructures for interprocess communication
     hence no backward compatibility is required.
 
-    `reducers` is expected expected to be a dictionary with key/values
+    `reducers` is expected to be a dictionary with key/values
     being `(type, callable)` pairs where `callable` is a function that
     give an instance of `type` will return a tuple `(constructor,
     tuple_of_objects)` to rebuild an instance out of the pickled
@@ -279,7 +279,7 @@ class CustomizablePickler(Pickler):
     """
 
     # We override the pure Python pickler as its the only way to be able to
-    # customize the dispatch table without side effects in Python 2.6
+    # customize the dispatch table without side effects in Python 2.7
     # to 3.2. For Python 3.3+ leverage the new dispatch_table
     # feature from http://bugs.python.org/issue14166 that makes it possible
     # to use the C implementation of the Pickler which is faster.
@@ -300,6 +300,7 @@ class CustomizablePickler(Pickler):
             self.register(type, reduce_func)
 
     def register(self, type, reduce_func):
+        """Attach a reducer function to a given type in the dispatch table."""
         if hasattr(Pickler, 'dispatch'):
             # Python 2 pickler dispatching is not explicitly customizable.
             # Let us use a closure to workaround this limitation.
@@ -317,14 +318,15 @@ class CustomizablePicklingQueue(object):
     This class is an alternative to the multiprocessing implementation
     of SimpleQueue in order to make it possible to pass custom
     pickling reducers, for instance to avoid memory copy when passing
-    memmory mapped datastructures.
+    memory mapped datastructures.
 
-    `reducers` is expected expected to be a dictionary with key/values
-    being `(type, callable)` pairs where `callable` is a function that
-    give an instance of `type` will return a tuple `(constructor,
-    tuple_of_objects)` to rebuild an instance out of the pickled
-    `tuple_of_objects` as would return a `__reduce__` method. See the
-    standard library documentation on pickling for more details.
+    `reducers` is expected to be a dict with key / values being
+    `(type, callable)` pairs where `callable` is a function that, given an
+    instance of `type`, will return a tuple `(constructor, tuple_of_objects)`
+    to rebuild an instance out of the pickled `tuple_of_objects` as would
+    return a `__reduce__` method.
+
+    See the standard library documentation on pickling for more details.
     """
 
     def __init__(self, context, reducers=None):
@@ -398,11 +400,10 @@ class PicklingPool(Pool):
 
     `forward_reducers` and `backward_reducers` are expected to be
     dictionaries with key/values being `(type, callable)` pairs where
-    `callable` is a function that give an instance of `type` will return
-    a tuple `(constructor, tuple_of_objects)` to rebuild an instance out
-    of the pickled `tuple_of_objects` as would return a `__reduce__`
-    method. See the standard library documentation on pickling for more
-    details.
+    `callable` is a function that, given an instance of `type`, will return a
+    tuple `(constructor, tuple_of_objects)` to rebuild an instance out of the
+    pickled `tuple_of_objects` as would return a `__reduce__` method.
+    See the standard library documentation about pickling for more details.
 
     """
 
@@ -429,9 +430,12 @@ class PicklingPool(Pool):
 
 
 def delete_folder(folder_path):
-    """Utility function to cleanup a temporary folder if still existing"""
-    if os.path.exists(folder_path):
-        shutil.rmtree(folder_path)
+    """Utility function to cleanup a temporary folder if still existing."""
+    try:
+        if os.path.exists(folder_path):
+            shutil.rmtree(folder_path)
+    except WindowsError:
+        warnings.warn("Failed to clean temporary folder: %s" % folder_path)
 
 
 class MemmapingPool(PicklingPool):
@@ -475,8 +479,11 @@ class MemmapingPool(PicklingPool):
           under Unix operating systems.
     max_nbytes int or None, optional, 1e6 by default
         Threshold on the size of arrays passed to the workers that
-        triggers automated memmory mapping in temp_folder.
+        triggers automated memory mapping in temp_folder.
         Use None to disable memmaping of large arrays.
+    mmap_mode: {'r+', 'r', 'w+', 'c'}
+        Memmapping mode for numpy arrays passed to workers.
+        See 'max_nbytes' parameter documentation for more details.
     forward_reducers: dictionary, optional
         Reducers used to pickle objects passed from master to worker
         processes: see below.
@@ -486,12 +493,6 @@ class MemmapingPool(PicklingPool):
     verbose: int, optional
         Make it possible to monitor how the communication of numpy arrays
         with the subprocess is handled (pickling or memmaping)
-    context_id: int, optional, None by default
-        Set to a value identifying a call context to spare costly hashing of
-        the content of the input arrays when it is safe to assume that each
-        array will not be mutated by the parent process for the duration of the
-        dispatch process. This is the case when using the high level Parallel
-        API.
     prewarm: bool or str, optional, "auto" by default.
         If True, force a read on newly memmaped array to make sure that OS pre-
         cache it in memory. This can be useful to avoid concurrent disk access
@@ -516,6 +517,10 @@ class MemmapingPool(PicklingPool):
             forward_reducers = dict()
         if backward_reducers is None:
             backward_reducers = dict()
+        if context_id is not None:
+            warnings.warn('context_id is deprecated and ignored in joblib'
+                          ' 0.9.4 and will be removed in 0.11',
+                          DeprecationWarning)
 
         # Prepare a sub-folder name for the serialization of this particular
         # pool instance (do not create in advance to spare FS write access if
@@ -534,7 +539,7 @@ class MemmapingPool(PicklingPool):
                         os.makedirs(pool_folder)
                     use_shared_mem = True
                 except IOError:
-                    # Missing rights in the the /dev/shm partition,
+                    # Missing rights in the /dev/shm partition,
                     # fallback to regular temp folder.
                     temp_folder = None
         if temp_folder is None:
@@ -549,7 +554,22 @@ class MemmapingPool(PicklingPool):
         # self to ensure that this callback won't prevent garbage collection of
         # the pool instance and related file handler resources such as POSIX
         # semaphores and pipes
-        atexit.register(lambda: delete_folder(pool_folder))
+        pool_module_name = whichmodule(delete_folder, 'delete_folder')
+
+        def _cleanup():
+            # In some cases the Python runtime seems to set delete_folder to
+            # None just before exiting when accessing the delete_folder
+            # function from the closure namespace. So instead we reimport
+            # the delete_folder function explicitly.
+            # https://github.com/joblib/joblib/issues/328
+            # We cannot just use from 'joblib.pool import delete_folder'
+            # because joblib should only use relative imports to allow
+            # easy vendoring.
+            delete_folder = __import__(
+                pool_module_name, fromlist=['delete_folder']).delete_folder
+            delete_folder(pool_folder)
+
+        atexit.register(_cleanup)
 
         if np is not None:
             # Register smart numpy.ndarray reducers that detects memmap backed
@@ -559,7 +579,7 @@ class MemmapingPool(PicklingPool):
                 prewarm = not use_shared_mem
             forward_reduce_ndarray = ArrayMemmapReducer(
                 max_nbytes, pool_folder, mmap_mode, verbose,
-                context_id=context_id, prewarm=prewarm)
+                prewarm=prewarm)
             forward_reducers[np.ndarray] = forward_reduce_ndarray
             forward_reducers[np.memmap] = reduce_memmap
 
@@ -580,5 +600,17 @@ class MemmapingPool(PicklingPool):
         super(MemmapingPool, self).__init__(**poolargs)
 
     def terminate(self):
-        super(MemmapingPool, self).terminate()
+        n_retries = 10
+        for i in range(n_retries):
+            try:
+                super(MemmapingPool, self).terminate()
+                break
+            except OSError as e:
+                if isinstance(e, WindowsError):
+                    # Workaround  occasional "[Error 5] Access is denied" issue
+                    # when trying to terminate a process under windows.
+                    sleep(0.1)
+                    if i + 1 == n_retries:
+                        warnings.warn("Failed to terminate worker processes in"
+                                      " multiprocessing pool: %r" % e)
         delete_folder(self._temp_folder)

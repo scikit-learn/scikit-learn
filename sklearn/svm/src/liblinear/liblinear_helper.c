@@ -219,6 +219,7 @@ void free_problem(struct problem *problem)
     int i;
     for(i=problem->l-1; i>=0; --i) free(problem->x[i]);
     free(problem->x);
+    free(problem);
 }
 
 void free_parameter(struct parameter *param)

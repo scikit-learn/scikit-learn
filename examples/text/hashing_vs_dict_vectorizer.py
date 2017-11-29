@@ -15,7 +15,7 @@ A discrepancy between the number of terms reported for DictVectorizer and
 for FeatureHasher is to be expected due to hash collisions.
 """
 
-# Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+# Author: Lars Buitinck
 # License: BSD 3 clause
 
 from __future__ import print_function

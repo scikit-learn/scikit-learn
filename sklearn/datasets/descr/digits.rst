@@ -1,4 +1,4 @@
- Optical Recognition of Handwritten Digits Data Set
+Optical Recognition of Handwritten Digits Data Set
 ===================================================
 
 Notes

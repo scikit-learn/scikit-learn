@@ -5,13 +5,14 @@ from sklearn.utils.testing import assert_array_equal, assert_equal, assert_true
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 from sklearn.utils.testing import assert_less_equal
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
-from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
+from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
 
 # generate data
 rng = np.random.RandomState(0)
@@ -25,7 +26,7 @@ def test_additive_chi2_sampler():
     # test that AdditiveChi2Sampler approximates kernel on random data
 
     # compute exact kernel
-    # appreviations for easier formular
+    # abbreviations for easier formula
     X_ = X[:, np.newaxis, :]
     Y_ = Y[np.newaxis, :, :]
 
@@ -84,7 +85,12 @@ def test_skewed_chi2_sampler():
 
     # compute exact kernel
     c = 0.03
-    # appreviations for easier formular
+    # set on negative component but greater than c to ensure that the kernel
+    # approximation is valid on the group (-c; +\infty) endowed with the skewed
+    # multiplication.
+    Y[0, 0] = -c / 2.
+
+    # abbreviations for easier formula
     X_c = (X + c)[:, np.newaxis, :]
     Y_c = (Y + c)[np.newaxis, :, :]
 
@@ -103,10 +109,14 @@ def test_skewed_chi2_sampler():
 
     kernel_approx = np.dot(X_trans, Y_trans.T)
     assert_array_almost_equal(kernel, kernel_approx, 1)
+    assert_true(np.isfinite(kernel).all(),
+                'NaNs found in the Gram matrix')
+    assert_true(np.isfinite(kernel_approx).all(),
+                'NaNs found in the approximate Gram matrix')
 
-    # test error is raised on negative input
+    # test error is raised on when inputs contains values smaller than -c
     Y_neg = Y.copy()
-    Y_neg[0, 0] = -1
+    Y_neg[0, 0] = -c * 2.
     assert_raises(ValueError, transform.transform, Y_neg)
 
 
@@ -156,7 +166,8 @@ def test_nystroem_approximation():
     assert_equal(X_transformed.shape, (X.shape[0], 2))
 
     # test callable kernel
-    linear_kernel = lambda X, Y: np.dot(X, Y.T)
+    def linear_kernel(X, Y):
+        return np.dot(X, Y.T)
     trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd)
     X_transformed = trans.fit(X).transform(X)
     assert_equal(X_transformed.shape, (X.shape[0], 2))
@@ -167,6 +178,26 @@ def test_nystroem_approximation():
         trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
         X_transformed = trans.fit(X).transform(X)
         assert_equal(X_transformed.shape, (X.shape[0], 2))
+
+
+def test_nystroem_default_parameters():
+    rnd = np.random.RandomState(42)
+    X = rnd.uniform(size=(10, 4))
+
+    # rbf kernel should behave as gamma=None by default
+    # aka gamma = 1 / n_features
+    nystroem = Nystroem(n_components=10)
+    X_transformed = nystroem.fit_transform(X)
+    K = rbf_kernel(X, gamma=None)
+    K2 = np.dot(X_transformed, X_transformed.T)
+    assert_array_almost_equal(K, K2)
+
+    # chi2 kernel should behave as gamma=1 by default
+    nystroem = Nystroem(kernel='chi2', n_components=10)
+    X_transformed = nystroem.fit_transform(X)
+    K = chi2_kernel(X, gamma=1)
+    K2 = np.dot(X_transformed, X_transformed.T)
+    assert_array_almost_equal(K, K2)
 
 
 def test_nystroem_singular_kernel():
@@ -214,3 +245,13 @@ def test_nystroem_callable():
              n_components=(n_samples - 1),
              kernel_params={'log': kernel_log}).fit(X)
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
+
+    def linear_kernel(X, Y):
+        return np.dot(X, Y.T)
+
+    # if degree, gamma or coef0 is passed, we raise a warning
+    msg = "Passing gamma, coef0 or degree to Nystroem"
+    params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
+    for param in params:
+        ny = Nystroem(kernel=linear_kernel, **param)
+        assert_warns_message(DeprecationWarning, msg, ny.fit, X)

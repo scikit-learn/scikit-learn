@@ -1,4 +1,4 @@
-# Author: Nelle Varoquaux, Andrew Tulloch
+# Author: Nelle Varoquaux, Andrew Tulloch, Antony Lee
 
 # Uses the pool adjacent violators algorithm (PAVA), with the
 # enhancement of searching for the longest decreasing subsequence to
@@ -10,73 +10,67 @@ cimport cython
 
 ctypedef np.float64_t DOUBLE
 
-np.import_array()
-
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
-                         np.ndarray[DOUBLE, ndim=1] weight,
-                         np.ndarray[DOUBLE, ndim=1] solution):
+def _inplace_contiguous_isotonic_regression(DOUBLE[::1] y, DOUBLE[::1] w):
     cdef:
-        DOUBLE numerator, denominator, ratio
-        Py_ssize_t i, pooled, n, k
+        Py_ssize_t n = y.shape[0], i, k
+        DOUBLE prev_y, sum_wy, sum_w
+        Py_ssize_t[::1] target = np.arange(n, dtype=np.intp)
 
-    n = y.shape[0]
-    # The algorithm proceeds by iteratively updating the solution
-    # array.
+    # target describes a list of blocks.  At any time, if [i..j] (inclusive) is
+    # an active block, then target[i] := j and target[j] := i.
 
-    # TODO - should we just pass in a pre-copied solution
-    # array and mutate that?
-    for i in range(n):
-        solution[i] = y[i]
+    # For "active" indices (block starts):
+    # w[i] := sum{w_orig[j], j=[i..target[i]]}
+    # y[i] := sum{y_orig[j]*w_orig[j], j=[i..target[i]]} / w[i]
 
-    if n <= 1:
-        return solution
-
-    n -= 1
-    while 1:
-        # repeat until there are no more adjacent violators.
+    with nogil:
         i = 0
-        pooled = 0
         while i < n:
-            k = i
-            while k < n and solution[k] >= solution[k + 1]:
-                k += 1
-            if solution[i] != solution[k]:
-                # solution[i:k + 1] is a decreasing subsequence, so
-                # replace each point in the subsequence with the
-                # weighted average of the subsequence.
-
-                # TODO: explore replacing each subsequence with a
-                # _single_ weighted point, and reconstruct the whole
-                # sequence from the sequence of collapsed points.
-                # Theoretically should reduce running time, though
-                # initial experiments weren't promising.
-                numerator = 0.0
-                denominator = 0.0
-                for j in range(i, k + 1):
-                    numerator += solution[j] * weight[j]
-                    denominator += weight[j]
-                ratio = numerator / denominator
-                for j in range(i, k + 1):
-                    solution[j] = ratio
-                pooled = 1
-            i = k + 1
-        # Check for convergence
-        if pooled == 0:
-            break
-
-    return solution
+            k = target[i] + 1
+            if k == n:
+                break
+            if y[i] < y[k]:
+                i = k
+                continue
+            sum_wy = w[i] * y[i]
+            sum_w = w[i]
+            while True:
+                # We are within a decreasing subsequence.
+                prev_y = y[k]
+                sum_wy += w[k] * y[k]
+                sum_w += w[k]
+                k = target[k] + 1
+                if k == n or prev_y < y[k]:
+                    # Non-singleton decreasing subsequence is finished,
+                    # update first entry.
+                    y[i] = sum_wy / sum_w
+                    w[i] = sum_w
+                    target[i] = k - 1
+                    target[k - 1] = i
+                    if i > 0:
+                        # Backtrack if we can.  This makes the algorithm
+                        # single-pass and ensures O(n) complexity.
+                        i = target[i - 1]
+                    # Otherwise, restart from the same point.
+                    break
+        # Reconstruct the solution.
+        i = 0
+        while i < n:
+            k = target[i] + 1
+            y[i + 1 : k] = y[i]
+            i = k
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
 def _make_unique(np.ndarray[dtype=np.float64_t] X,
-                  np.ndarray[dtype=np.float64_t] y,
-                  np.ndarray[dtype=np.float64_t] sample_weights):
+                 np.ndarray[dtype=np.float64_t] y,
+                 np.ndarray[dtype=np.float64_t] sample_weights):
     """Average targets for duplicate X, drop duplicates.
 
     Aggregates duplicate X values into a single X value where
@@ -106,7 +100,7 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
         if x != current_x:
             # next unique value
             x_out[i] = current_x
-            weights_out[i] = current_weight / current_count
+            weights_out[i] = current_weight
             y_out[i] = current_y / current_weight
             i += 1
             current_x = x
@@ -119,6 +113,6 @@ def _make_unique(np.ndarray[dtype=np.float64_t] X,
             current_count += 1
 
     x_out[i] = current_x
-    weights_out[i] = current_weight / current_count
+    weights_out[i] = current_weight
     y_out[i] = current_y / current_weight
     return x_out, y_out, weights_out

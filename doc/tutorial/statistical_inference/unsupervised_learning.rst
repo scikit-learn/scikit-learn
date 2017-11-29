@@ -12,8 +12,8 @@ Clustering: grouping observations together
     **clustering task**: split the observations into well-separated group
     called *clusters*.
 
-..   
-   >>> # Set the PRNG   
+..
+   >>> # Set the PRNG
    >>> import numpy as np
    >>> np.random.seed(1)
 
@@ -21,16 +21,16 @@ K-means clustering
 -------------------
 
 Note that there exist a lot of different clustering criteria and associated
-algorithms. The simplest clustering algorithm is 
+algorithms. The simplest clustering algorithm is
 :ref:`k_means`.
 
-.. image:: ../../auto_examples/cluster/images/plot_cluster_iris_002.png
+.. image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_002.png
     :target: ../../auto_examples/cluster/plot_cluster_iris.html
     :scale: 70
     :align: right
 
 
-:: 
+::
 
     >>> from sklearn import cluster, datasets
     >>> iris = datasets.load_iris()
@@ -39,26 +39,26 @@ algorithms. The simplest clustering algorithm is
 
     >>> k_means = cluster.KMeans(n_clusters=3)
     >>> k_means.fit(X_iris) # doctest: +ELLIPSIS
-    KMeans(copy_x=True, init='k-means++', ...
+    KMeans(algorithm='auto', copy_x=True, init='k-means++', ...
     >>> print(k_means.labels_[::10])
     [1 1 1 1 1 0 0 0 0 0 2 2 2 2 2]
     >>> print(y_iris[::10])
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
 
-.. |k_means_iris_bad_init| image:: ../../auto_examples/cluster/images/plot_cluster_iris_003.png
+.. |k_means_iris_bad_init| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_003.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
-.. |k_means_iris_8| image:: ../../auto_examples/cluster/images/plot_cluster_iris_001.png
+.. |k_means_iris_8| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_001.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
-.. |cluster_iris_truth| image:: ../../auto_examples/cluster/images/plot_cluster_iris_004.png
+.. |cluster_iris_truth| image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_004.png
    :target: ../../auto_examples/cluster/plot_cluster_iris.html
    :scale: 63
 
-.. warning:: 
-   
+.. warning::
+
     There is absolutely no guarantee of recovering a ground truth. First,
     choosing the right number of clusters is hard. Second, the algorithm
     is sensitive to initialization, and can fall into local minima,
@@ -66,75 +66,75 @@ algorithms. The simplest clustering algorithm is
 
     .. list-table::
         :class: centered
-        
-        * 
-        
+
+        *
+
             - |k_means_iris_bad_init|
 
             - |k_means_iris_8|
 
             - |cluster_iris_truth|
 
-        * 
-        
+        *
+
             - **Bad initialization**
-            
+
             - **8 clusters**
-            
+
             - **Ground truth**
 
     **Don't over-interpret clustering results**
 
-.. |lena| image:: ../../auto_examples/cluster/images/plot_lena_compress_001.png
-   :target: ../../auto_examples/cluster/plot_lena_compress.html
+.. |face| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_001.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
-.. |lena_regular| image:: ../../auto_examples/cluster/images/plot_lena_compress_002.png
-   :target: ../../auto_examples/cluster/plot_lena_compress.html
+.. |face_regular| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_002.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
-.. |lena_compressed| image:: ../../auto_examples/cluster/images/plot_lena_compress_003.png
-   :target: ../../auto_examples/cluster/plot_lena_compress.html
+.. |face_compressed| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_003.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
-.. |lena_histogram| image:: ../../auto_examples/cluster/images/plot_lena_compress_004.png
-   :target: ../../auto_examples/cluster/plot_lena_compress.html
+.. |face_histogram| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_004.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
    :scale: 60
 
 .. topic:: **Application example: vector quantization**
 
     Clustering in general and KMeans, in particular, can be seen as a way
     of choosing a small number of exemplars to compress the information.
-    The problem is sometimes known as 
-    `vector quantization <http://en.wikipedia.org/wiki/Vector_quantization>`_. 
+    The problem is sometimes known as
+    `vector quantization <https://en.wikipedia.org/wiki/Vector_quantization>`_.
     For instance, this can be used to posterize an image::
 
         >>> import scipy as sp
         >>> try:
-        ...    lena = sp.lena()
+        ...    face = sp.face(gray=True)
         ... except AttributeError:
         ...    from scipy import misc
-        ...    lena = misc.lena()
-    	>>> X = lena.reshape((-1, 1)) # We need an (n_sample, n_feature) array
+        ...    face = misc.face(gray=True)
+    	>>> X = face.reshape((-1, 1)) # We need an (n_sample, n_feature) array
     	>>> k_means = cluster.KMeans(n_clusters=5, n_init=1)
     	>>> k_means.fit(X) # doctest: +ELLIPSIS
-    	KMeans(copy_x=True, init='k-means++', ...
+    	KMeans(algorithm='auto', copy_x=True, init='k-means++', ...
     	>>> values = k_means.cluster_centers_.squeeze()
     	>>> labels = k_means.labels_
-    	>>> lena_compressed = np.choose(labels, values)
-    	>>> lena_compressed.shape = lena.shape
+    	>>> face_compressed = np.choose(labels, values)
+    	>>> face_compressed.shape = face.shape
 
     .. list-table::
-      :class: centered 
+      :class: centered
 
       *
-        - |lena|
+        - |face|
 
-        - |lena_compressed|
+        - |face_compressed|
 
-        - |lena_regular|
+        - |face_regular|
 
-        - |lena_histogram|
+        - |face_histogram|
 
       *
 
@@ -155,7 +155,7 @@ that aims to build a hierarchy of clusters. In general, the various approaches
 of this technique are either:
 
   * **Agglomerative** - bottom-up approaches: each observation starts in its
-    own cluster, and clusters are iterativelly merged in such a way to
+    own cluster, and clusters are iteratively merged in such a way to
     minimize a *linkage* criterion. This approach is particularly interesting
     when the clusters of interest are made of only a few observations. When
     the number of clusters is large, it is much more computationally efficient
@@ -171,23 +171,23 @@ Connectivity-constrained clustering
 .....................................
 
 With agglomerative clustering, it is possible to specify which samples can be
-clustered together by giving a connectivity graph. Graphs in the scikit
+clustered together by giving a connectivity graph. Graphs in scikit-learn
 are represented by their adjacency matrix. Often, a sparse matrix is used.
 This can be useful, for instance, to retrieve connected regions (sometimes
 also referred to as connected components) when
 clustering an image:
 
-.. image:: ../../auto_examples/cluster/images/plot_lena_ward_segmentation_001.png
-    :target: ../../auto_examples/cluster/plot_lena_ward_segmentation.html
+.. image:: /auto_examples/cluster/images/sphx_glr_plot_face_ward_segmentation_001.png
+    :target: ../../auto_examples/cluster/plot_face_ward_segmentation.html
     :scale: 40
     :align: right
 
-.. literalinclude:: ../../auto_examples/cluster/plot_lena_ward_segmentation.py
+.. literalinclude:: ../../auto_examples/cluster/plot_face_ward_segmentation.py
     :lines: 21-45
 
 ..
     >>> from sklearn.feature_extraction.image import grid_to_graph
-    >>> connectivity = grid_to_graph(*lena.shape)
+    >>> connectivity = grid_to_graph(*face.shape)
 
 
 Feature agglomeration
@@ -200,7 +200,7 @@ features: **feature agglomeration**. This approach can be implemented by
 clustering in the feature direction, in other words clustering the
 transposed data.
 
-.. image:: ../../auto_examples/cluster/images/plot_digits_agglomeration_001.png
+.. image:: /auto_examples/cluster/images/sphx_glr_plot_digits_agglomeration_001.png
     :target: ../../auto_examples/cluster/plot_digits_agglomeration.html
     :align: right
     :scale: 57
@@ -242,11 +242,11 @@ Principal component analysis: PCA
 :ref:`PCA` selects the successive components that
 explain the maximum variance in the signal.
 
-.. |pca_3d_axis| image:: ../../auto_examples/decomposition/images/plot_pca_3d_001.png
+.. |pca_3d_axis| image:: /auto_examples/decomposition/images/sphx_glr_plot_pca_3d_001.png
    :target: ../../auto_examples/decomposition/plot_pca_3d.html
    :scale: 70
 
-.. |pca_3d_aligned| image:: ../../auto_examples/decomposition/images/plot_pca_3d_002.png
+.. |pca_3d_aligned| image:: /auto_examples/decomposition/images/sphx_glr_plot_pca_3d_002.png
    :target: ../../auto_examples/decomposition/plot_pca_3d.html
    :scale: 70
 
@@ -275,7 +275,8 @@ data by projecting on a principal subspace.
     >>> from sklearn import decomposition
     >>> pca = decomposition.PCA()
     >>> pca.fit(X)
-    PCA(copy=True, n_components=None, whiten=False)
+    PCA(copy=True, iterated_power='auto', n_components=None, random_state=None,
+      svd_solver='auto', tol=0.0, whiten=False)
     >>> print(pca.explained_variance_)  # doctest: +SKIP
     [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
 
@@ -294,7 +295,7 @@ Independent Component Analysis: ICA
 a maximum amount of independent information. It is able to recover
 **non-Gaussian** independent signals:
 
-.. image:: ../../auto_examples/decomposition/images/plot_ica_blind_source_separation_001.png
+.. image:: /auto_examples/decomposition/images/sphx_glr_plot_ica_blind_source_separation_001.png
    :target: ../../auto_examples/decomposition/plot_ica_blind_source_separation.html
    :scale: 70
    :align: center
@@ -304,14 +305,17 @@ a maximum amount of independent information. It is able to recover
 ::
 
     >>> # Generate sample data
+    >>> import numpy as np
+    >>> from scipy import signal
     >>> time = np.linspace(0, 10, 2000)
     >>> s1 = np.sin(2 * time)  # Signal 1 : sinusoidal signal
     >>> s2 = np.sign(np.sin(3 * time))  # Signal 2 : square signal
-    >>> S = np.c_[s1, s2]
+    >>> s3 = signal.sawtooth(2 * np.pi * time)  # Signal 3: saw tooth signal
+    >>> S = np.c_[s1, s2, s3]
     >>> S += 0.2 * np.random.normal(size=S.shape)  # Add noise
     >>> S /= S.std(axis=0)  # Standardize data
     >>> # Mix data
-    >>> A = np.array([[1, 1], [0.5, 2]])  # Mixing matrix
+    >>> A = np.array([[1, 1, 1], [0.5, 2, 1], [1.5, 1, 2]])  # Mixing matrix
     >>> X = np.dot(S, A.T)  # Generate observations
 
     >>> # Compute ICA
@@ -320,4 +324,3 @@ a maximum amount of independent information. It is able to recover
     >>> A_ = ica.mixing_.T
     >>> np.allclose(X,  np.dot(S_, A_) + ica.mean_)
     True
-

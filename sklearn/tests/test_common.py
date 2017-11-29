@@ -10,30 +10,27 @@ from __future__ import print_function
 import os
 import warnings
 import sys
+import re
 import pkgutil
 
 from sklearn.externals.six import PY3
 from sklearn.utils.testing import assert_false, clean_warning_registry
 from sklearn.utils.testing import all_estimators
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
-from sklearn.decomposition import ProjectedGradientNMF
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
     _yield_all_checks,
-    CROSS_DECOMPOSITION,
+    set_checking_parameters,
     check_parameters_default_constructible,
-    check_class_weight_balanced_linear_classifier,
-    check_transformer_n_iter,
-    check_non_transformer_estimators_n_iter,
-    check_get_params_invariance,
-    check_fit2d_predict1d,
-    check_fit1d_1sample)
+    check_no_fit_attributes_set_in_init,
+    check_class_weight_balanced_linear_classifier)
 
 
 def test_all_estimator_no_base_class():
@@ -45,7 +42,7 @@ def test_all_estimator_no_base_class():
 
 
 def test_all_estimators():
-    # Test that estimators are default-constructible, clonable
+    # Test that estimators are default-constructible, cloneable
     # and have working repr.
     estimators = all_estimators(include_meta_estimators=True)
 
@@ -66,17 +63,18 @@ def test_non_meta_estimators():
             continue
         if name.startswith("_"):
             continue
-        for check in _yield_all_checks(name, Estimator):
-            if issubclass(Estimator, ProjectedGradientNMF):
-                # The ProjectedGradientNMF class is deprecated
-                with ignore_warnings():
-                    yield check, name, Estimator
-            else:
-                yield check, name, Estimator
+        estimator = Estimator()
+        # check this on class
+        yield check_no_fit_attributes_set_in_init, name, Estimator
+
+        for check in _yield_all_checks(name, estimator):
+            set_checking_parameters(estimator)
+            yield check, name, estimator
+
 
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
-    # 'configure' functions in the setup.pys in the scikit
+    # 'configure' functions in the setup.pys in scikit-learn
     cwd = os.getcwd()
     setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
     setup_filename = os.path.join(setup_path, 'setup.py')
@@ -109,8 +107,8 @@ def test_class_weight_balanced_linear_classifiers():
         linear_classifiers = [
             (name, clazz)
             for name, clazz in classifiers
-            if 'class_weight' in clazz().get_params().keys()
-               and issubclass(clazz, LinearClassifierMixin)]
+            if ('class_weight' in clazz().get_params().keys() and
+                issubclass(clazz, LinearClassifierMixin))]
 
     for name, Classifier in linear_classifiers:
         yield check_class_weight_balanced_linear_classifier, name, Classifier
@@ -143,73 +141,24 @@ def test_root_import_all_completeness():
         assert_in(modname, sklearn.__all__)
 
 
-def test_non_transformer_estimators_n_iter():
-    # Test that all estimators of type which are non-transformer
-    # and which have an attribute of max_iter, return the attribute
-    # of n_iter atleast 1.
-    for est_type in ['regressor', 'classifier', 'cluster']:
-        regressors = all_estimators(type_filter=est_type)
-        for name, Estimator in regressors:
-            # LassoLars stops early for the default alpha=1.0 for
-            # the iris dataset.
-            if name == 'LassoLars':
-                estimator = Estimator(alpha=0.)
-            else:
-                estimator = Estimator()
-            if hasattr(estimator, "max_iter"):
-                # These models are dependent on external solvers like
-                # libsvm and accessing the iter parameter is non-trivial.
-                if name in (['Ridge', 'SVR', 'NuSVR', 'NuSVC',
-                             'RidgeClassifier', 'SVC', 'RandomizedLasso',
-                             'LogisticRegressionCV']):
-                    continue
+def test_all_tests_are_importable():
+    # Ensure that for each contentful subpackage, there is a test directory
+    # within it that is also a subpackage (i.e. a directory with __init__.py)
 
-                # Tested in test_transformer_n_iter below
-                elif (name in CROSS_DECOMPOSITION or
-                      name in ['LinearSVC', 'LogisticRegression']):
-                    continue
-
-                else:
-                    # Multitask models related to ENet cannot handle
-                    # if y is mono-output.
-                    yield (check_non_transformer_estimators_n_iter,
-                           name, estimator, 'Multi' in name)
-
-
-def test_transformer_n_iter():
-    transformers = all_estimators(type_filter='transformer')
-    for name, Estimator in transformers:
-        if issubclass(Estimator, ProjectedGradientNMF):
-            # The ProjectedGradientNMF class is deprecated
-            with ignore_warnings():
-                estimator = Estimator()
-        else:
-            estimator = Estimator()
-        # Dependent on external solvers and hence accessing the iter
-        # param is non-trivial.
-        external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
-                           'RandomizedLasso', 'LogisticRegressionCV']
-
-        if hasattr(estimator, "max_iter") and name not in external_solver:
-            if isinstance(estimator, ProjectedGradientNMF):
-                # The ProjectedGradientNMF class is deprecated
-                with ignore_warnings():
-                    yield check_transformer_n_iter, name, estimator
-            else:
-                yield check_transformer_n_iter, name, estimator
-
-
-def test_get_params_invariance():
-    # Test for estimators that support get_params, that
-    # get_params(deep=False) is a subset of get_params(deep=True)
-    # Related to issue #4465
-
-    estimators = all_estimators(include_meta_estimators=False, include_other=True)
-    for name, Estimator in estimators:
-        if hasattr(Estimator, 'get_params'):
-            # The ProjectedGradientNMF class is deprecated
-            if issubclass(Estimator, ProjectedGradientNMF):
-                with ignore_warnings():
-                    yield check_get_params_invariance, name, Estimator
-            else:
-                yield check_get_params_invariance, name, Estimator
+    HAS_TESTS_EXCEPTIONS = re.compile(r'''(?x)
+                                      \.externals(\.|$)|
+                                      \.tests(\.|$)|
+                                      \._
+                                      ''')
+    lookup = dict((name, ispkg)
+                  for _, name, ispkg
+                  in pkgutil.walk_packages(sklearn.__path__,
+                                           prefix='sklearn.'))
+    missing_tests = [name for name, ispkg in lookup.items()
+                     if ispkg
+                     and not HAS_TESTS_EXCEPTIONS.search(name)
+                     and name + '.tests' not in lookup]
+    assert_equal(missing_tests, [],
+                 '{0} do not have `tests` subpackages. Perhaps they require '
+                 '__init__.py or an add_subpackage directive in the parent '
+                 'setup.py'.format(missing_tests))

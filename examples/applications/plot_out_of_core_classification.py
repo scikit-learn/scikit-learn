@@ -41,7 +41,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 
 from sklearn.externals.six.moves import html_parser
-from sklearn.externals.six.moves import urllib
+from sklearn.externals.six.moves.urllib.request import urlretrieve
 from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model import SGDClassifier
@@ -57,7 +57,8 @@ def _not_in_sphinx():
 
 ###############################################################################
 # Reuters Dataset related routines
-###############################################################################
+# --------------------------------
+#
 
 
 class ReutersParser(html_parser.HTMLParser):
@@ -171,8 +172,8 @@ def stream_reuters_documents(data_path=None):
                       end='')
 
         archive_path = os.path.join(data_path, ARCHIVE_FILENAME)
-        urllib.request.urlretrieve(DOWNLOAD_URL, filename=archive_path,
-                                   reporthook=progress)
+        urlretrieve(DOWNLOAD_URL, filename=archive_path,
+                    reporthook=progress)
         if _not_in_sphinx():
             print('\r', end='')
         print("untarring Reuters dataset...")
@@ -187,11 +188,13 @@ def stream_reuters_documents(data_path=None):
 
 ###############################################################################
 # Main
-###############################################################################
+# ----
+#
 # Create the vectorizer and limit the number of features to a reasonable
 # maximum
+
 vectorizer = HashingVectorizer(decode_error='ignore', n_features=2 ** 18,
-                               non_negative=True)
+                               alternate_sign=False)
 
 
 # Iterator over parsed Reuters SGML files.
@@ -206,10 +209,10 @@ positive_class = 'acq'
 
 # Here are some classifiers that support the `partial_fit` method
 partial_fit_classifiers = {
-    'SGD': SGDClassifier(),
-    'Perceptron': Perceptron(),
+    'SGD': SGDClassifier(max_iter=5),
+    'Perceptron': Perceptron(tol=1e-3),
     'NB Multinomial': MultinomialNB(alpha=0.01),
-    'Passive-Aggressive': PassiveAggressiveClassifier(),
+    'Passive-Aggressive': PassiveAggressiveClassifier(tol=1e-3),
 }
 
 
@@ -284,7 +287,7 @@ minibatch_size = 1000
 minibatch_iterators = iter_minibatches(data_stream, minibatch_size)
 total_vect_time = 0.0
 
-# Main loop : iterate on mini-batchs of examples
+# Main loop : iterate on mini-batches of examples
 for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 
     tick = time.time()
@@ -318,7 +321,7 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 
 ###############################################################################
 # Plot results
-###############################################################################
+# ------------
 
 
 def plot_accuracy(x, y, x_legend):
@@ -362,7 +365,7 @@ for cls_name, stats in sorted(cls_stats.items()):
 
 cls_runtime.append(total_vect_time)
 cls_names.append('Vectorization')
-bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
+bar_colors = ['b', 'g', 'r', 'c', 'm', 'y']
 
 ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
@@ -389,7 +392,6 @@ plt.show()
 
 # Plot prediction times
 plt.figure()
-#fig = plt.gcf()
 cls_runtime = []
 cls_names = list(sorted(cls_stats.keys()))
 for cls_name, stats in sorted(cls_stats.items()):
@@ -398,7 +400,6 @@ cls_runtime.append(parsing_time)
 cls_names.append('Read/Parse\n+Feat.Extr.')
 cls_runtime.append(vectorizing_time)
 cls_names.append('Hashing\n+Vect.')
-bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
 
 ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,

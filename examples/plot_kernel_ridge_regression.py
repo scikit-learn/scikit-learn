@@ -48,17 +48,17 @@ import matplotlib.pyplot as plt
 
 rng = np.random.RandomState(0)
 
-#############################################################################
+# #############################################################################
 # Generate sample data
 X = 5 * rng.rand(10000, 1)
 y = np.sin(X).ravel()
 
 # Add noise to targets
-y[::5] += 3 * (0.5 - rng.rand(X.shape[0]/5))
+y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
 
 X_plot = np.linspace(0, 5, 100000)[:, None]
 
-#############################################################################
+# #############################################################################
 # Fit regression model
 train_size = 100
 svr = GridSearchCV(SVR(kernel='rbf', gamma=0.1), cv=5,
@@ -97,12 +97,13 @@ print("KRR prediction for %d inputs in %.3f s"
       % (X_plot.shape[0], kr_predict))
 
 
-#############################################################################
-# look at the results
+# #############################################################################
+# Look at the results
 sv_ind = svr.best_estimator_.support_
-plt.scatter(X[sv_ind], y[sv_ind], c='r', s=50, label='SVR support vectors')
-plt.scatter(X[:100], y[:100], c='k', label='data')
-plt.hold('on')
+plt.scatter(X[sv_ind], y[sv_ind], c='r', s=50, label='SVR support vectors',
+            zorder=2, edgecolors=(0, 0, 0))
+plt.scatter(X[:100], y[:100], c='k', label='data', zorder=1,
+            edgecolors=(0, 0, 0))
 plt.plot(X_plot, y_svr, c='r',
          label='SVR (fit: %.3fs, predict: %.3fs)' % (svr_fit, svr_predict))
 plt.plot(X_plot, y_kr, c='g',
@@ -118,8 +119,8 @@ plt.figure()
 # Generate sample data
 X = 5 * rng.rand(10000, 1)
 y = np.sin(X).ravel()
-y[::5] += 3 * (0.5 - rng.rand(X.shape[0]/5))
-sizes = np.logspace(1, 4, 7)
+y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
+sizes = np.logspace(1, 4, 7, dtype=np.int)
 for name, estimator in {"KRR": KernelRidge(kernel='rbf', alpha=0.1,
                                            gamma=10),
                         "SVR": SVR(kernel='rbf', C=1e1, gamma=10)}.items():
@@ -153,14 +154,14 @@ svr = SVR(kernel='rbf', C=1e1, gamma=0.1)
 kr = KernelRidge(kernel='rbf', alpha=0.1, gamma=0.1)
 train_sizes, train_scores_svr, test_scores_svr = \
     learning_curve(svr, X[:100], y[:100], train_sizes=np.linspace(0.1, 1, 10),
-                   scoring="mean_squared_error", cv=10)
+                   scoring="neg_mean_squared_error", cv=10)
 train_sizes_abs, train_scores_kr, test_scores_kr = \
     learning_curve(kr, X[:100], y[:100], train_sizes=np.linspace(0.1, 1, 10),
-                   scoring="mean_squared_error", cv=10)
+                   scoring="neg_mean_squared_error", cv=10)
 
-plt.plot(train_sizes, test_scores_svr.mean(1), 'o-', color="r",
+plt.plot(train_sizes, -test_scores_svr.mean(1), 'o-', color="r",
          label="SVR")
-plt.plot(train_sizes, test_scores_kr.mean(1), 'o-', color="g",
+plt.plot(train_sizes, -test_scores_kr.mean(1), 'o-', color="g",
          label="KRR")
 plt.xlabel("Train size")
 plt.ylabel("Mean Squared Error")

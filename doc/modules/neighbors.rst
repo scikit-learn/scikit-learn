@@ -184,11 +184,11 @@ distance can be supplied which is used to compute the weights.
 
 
 
-.. |classification_1| image:: ../auto_examples/neighbors/images/plot_classification_001.png
+.. |classification_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_001.png
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
 
-.. |classification_2| image:: ../auto_examples/neighbors/images/plot_classification_002.png
+.. |classification_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_classification_002.png
    :target: ../auto_examples/neighbors/plot_classification.html
    :scale: 50
 
@@ -196,7 +196,7 @@ distance can be supplied which is used to compute the weights.
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_classification.py`: an example of
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_classification.py`: an example of
     classification using nearest neighbors.
 
 .. _regression:
@@ -206,7 +206,7 @@ Nearest Neighbors Regression
 
 Neighbors-based regression can be used in cases where the data labels are
 continuous rather than discrete variables.  The label assigned to a query
-point is computed based the mean of the labels of its nearest neighbors.
+point is computed based on the mean of the labels of its nearest neighbors.
 
 scikit-learn implements two different neighbors regressors:
 :class:`KNeighborsRegressor` implements learning based on the :math:`k`
@@ -227,17 +227,17 @@ weights proportional to the inverse of the distance from the query point.
 Alternatively, a user-defined function of the distance can be supplied,
 which will be used to compute the weights.
 
-.. figure:: ../auto_examples/neighbors/images/plot_regression_001.png
+.. figure:: ../auto_examples/neighbors/images/sphx_glr_plot_regression_001.png
    :target: ../auto_examples/neighbors/plot_regression.html
    :align: center
    :scale: 75
 
 The use of multi-output nearest neighbors for regression is demonstrated in
-:ref:`example_plot_multioutput_face_completion.py`. In this example, the inputs
+:ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/plot_multioutput_face_completion_001.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_multioutput_face_completion_001.png
    :target: ../auto_examples/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
@@ -245,10 +245,10 @@ the lower half of those faces.
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_regression.py`: an example of regression
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
     using nearest neighbors.
 
-  * :ref:`example_plot_multioutput_face_completion.py`: an example of
+  * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`: an example of
     multi-output regression using nearest neighbors.
 
 
@@ -294,7 +294,7 @@ the *KD tree* data structure (short for *K-dimensional tree*), which
 generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
 to an arbitrary number of dimensions.  The KD tree is a binary tree
 structure which recursively partitions the parameter space along the data
-axes, dividing it into nested orthotopic regions into which data points
+axes, dividing it into nested orthotropic regions into which data points
 are filed.  The construction of a KD tree is very fast: because partitioning
 is performed only along the data axes, no :math:`D`-dimensional distances
 need to be computed.  Once constructed, the nearest neighbor of a query
@@ -419,13 +419,16 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2` 
-and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of 
-``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the 
-``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of 
-``'kd_tree'``. It selects ``'brute'`` if :math:`k >= N/2`. This choice is based on the assumption that the number of query points is at least the 
-same order as the number of training points, and that ``leaf_size`` is 
-close to its default value of ``30``.
+Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2`
+and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
+``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the
+``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of
+``'ball_tree'``. It selects ``'brute'`` if :math:`k < N/2` and the
+``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of
+``'kd_tree'`` or ``'ball_tree'``. It selects ``'brute'`` if :math:`k >= N/2`.
+This choice is based on the assumption that the number of query points is at
+least the same order as the number of training points, and that ``leaf_size``
+is close to its default value of ``30``.
 
 Effect of ``leaf_size``
 -----------------------
@@ -497,194 +500,17 @@ This is useful, for example, for removing noisy features.
 In the example below, using a small shrink threshold increases the accuracy of
 the model from 0.81 to 0.82.
 
-.. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_001.png
-   :target: ../auto_examples/neighbors/plot_classification.html
+.. |nearest_centroid_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nearest_centroid_001.png
+   :target: ../auto_examples/neighbors/plot_nearest_centroid.html
    :scale: 50
 
-.. |nearest_centroid_2| image:: ../auto_examples/neighbors/images/plot_nearest_centroid_002.png
-   :target: ../auto_examples/neighbors/plot_classification.html
+.. |nearest_centroid_2| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nearest_centroid_002.png
+   :target: ../auto_examples/neighbors/plot_nearest_centroid.html
    :scale: 50
 
 .. centered:: |nearest_centroid_1| |nearest_centroid_2|
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_nearest_centroid.py`: an example of
+  * :ref:`sphx_glr_auto_examples_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
-
-.. _approximate_nearest_neighbors:
-
-Approximate Nearest Neighbors
-=============================
-
-There are many efficient exact nearest neighbor search algorithms for low
-dimensions :math:`d` (approximately 50). However these algorithms perform poorly
-with respect to space and query time when :math:`d` increases. These algorithms
-are not any better than comparing query point to each point from the database in
-a high dimension (see :ref:`brute_force`). This is a well-known consequence of
-the phenomenon called “The Curse of Dimensionality”.
-
-There are certain applications where we do not need the exact nearest neighbors
-but having a “good guess” would suffice.  When answers do not have to be exact,
-the :class:`LSHForest` class implements an approximate nearest neighbor search.
-Approximate nearest neighbor search methods have been designed to try to speedup
-query time with high dimensional data. These techniques are useful when the aim
-is to characterize the neighborhood rather than identifying the exact neighbors
-themselves (eg: k-nearest neighbors classification and regression). Some of the
-most popular approximate nearest neighbor search techniques are locality
-sensitive hashing, best bin fit and balanced box-decomposition tree based
-search.
-
-Locality Sensitive Hashing Forest
----------------------------------
-
-The vanilla implementation of locality sensitive hashing has a hyper-parameter
-that is hard to tune in practice, therefore scikit-learn implements a variant
-called :class:`LSHForest` that has more reasonable hyperparameters.
-Both methods use internally random hyperplanes to index the samples into
-buckets and actual cosine similarities are only computed for samples that
-collide with the query hence achieving sublinear scaling.
-(see :ref:`Mathematical description of Locality Sensitive
-Hashing <mathematical_description_of_lsh>`).
-
-:class:`LSHForest` has two main hyper-parameters: ``n_estimators`` and
-``n_candidates``. The accuracy of queries can be controlled using these
-parameters as demonstrated in the following plots:
-
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_hyperparameters_001.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_hyperparameters.html
-   :align: center
-   :scale: 50
-
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_hyperparameters_002.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_hyperparameters.html
-   :align: center
-   :scale: 50
-
-As a rule of thumb, a user can set ``n_estimators`` to a large enough value
-(e.g. between 10 and 50) and then adjust ``n_candidates`` to trade off accuracy
-for query time.
-
-For small data sets, the brute force method for exact nearest neighbor search
-can be faster than LSH Forest. However LSH Forest has a sub-linear query time
-scalability with the index size. The exact break even point where LSH Forest
-queries become faster than brute force depends on the dimensionality, structure
-of the dataset, required level of precision, characteristics of the runtime
-environment such as availability of BLAS optimizations, number of CPU cores and
-size of the CPU caches. Following graphs depict scalability of LSHForest queries
-with index size.
-
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_scalability_001.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
-   :align: center
-   :scale: 50
-
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_scalability_002.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
-   :align: center
-   :scale: 50
-
-.. figure:: ../auto_examples/neighbors/images/plot_approximate_nearest_neighbors_scalability_003.png
-   :target: ../auto_examples/neighbors/plot_approximate_nearest_neighbors_scalability.html
-   :align: center
-   :scale: 50
-
-For fixed :class:`LSHForest` parameters, the accuracy of queries tends to slowly
-decrease with larger datasets. The error bars on the previous plots represent
-standard deviation across different queries.
-
-.. topic:: Examples:
-
-  * :ref:`example_neighbors_plot_approximate_nearest_neighbors_hyperparameters.py`: an example of
-    the behavior of hyperparameters of approximate nearest neighbor search using LSH Forest.
-
-  * :ref:`example_neighbors_plot_approximate_nearest_neighbors_scalability.py`: an example of
-    scalability of approximate nearest neighbor search using LSH Forest.
-
-.. _mathematical_description_of_lsh:
-
-Mathematical description of Locality Sensitive Hashing
-------------------------------------------------------
-
-Locality sensitive hashing (LSH) techniques have been used in many areas where
-nearest neighbor search is performed in high dimensions. The main concept
-behind LSH is to hash each data point in the database using multiple
-(often simple) hash functions to form a digest (also called a *hash*). At this
-point the probability of collision - where two objects have similar digests
-- is much higher for the points which are close to each other than that of the
-distant points. We describe the requirements for a hash function family to be
-locality sensitive as follows.
-
-A family :math:`H` of functions from a domain :math:`S` to a range :math:`U`
-is called :math:`(r, e , p1 , p2 )`-sensitive, with :math:`r, e > 0`,
-:math:`p_1 > p_2 > 0`, if for any :math:`p, q \in S`, the following conditions
-hold (:math:`D` is the distance function):
-
-* If :math:`D(p,q) <= r` then :math:`P_H[h(p) = h(q)] >= p_1`,
-* If :math:`D(p,q) > r(1 + e)` then :math:`P_H[h(p) = h(q)] <= p_2`.
-
-As defined, nearby points within a distance of :math:`r` to each other are
-likely to collide with probability :math:`p_1`. In contrast, distant points
-which are located with the distance more than :math:`r(1 + e)` have a small
-probability of :math:`p_2` of collision. Suppose there is a family of LSH
-function :math:`H`. An *LSH index* is built as follows:
-
-1. Choose :math:`k` functions :math:`h_1, h_2, … h_k` uniformly at
-   random (with replacement) from :math:`H`. For any :math:`p \in S`, place
-   :math:`p` in the bucket with label
-   :math:`g(p) = (h_1(p), h_2(p), … h_k(p))`. Observe that if
-   each :math:`h_i` outputs one “digit”, each bucket has a k-digit label.
-
-2. Independently perform step 1 :math:`l` times to construct :math:`l`
-   separate estimators, with hash functions :math:`g_1, g_2, … g_l`.
-
-The reason to concatenate hash functions in the step 1 is to decrease the
-probability of the collision of distant points as much as possible. The
-probability drops from :math:`p_2` to :math:`p_2^k` which is negligibly
-small for large :math:`k`.  The choice of :math:`k` is strongly dependent on
-the data set size and structure and is therefore hard to tune in practice.
-There is a side effect of having a large :math:`k`; it has the potential of
-decreasing the chance of nearby points getting collided. To address this
-issue, multiple estimators are constructed in step 2.
-
-The requirement to tune :math:`k` for a given dataset makes classical LSH
-cumbersome to use in practice. The LSH Forest variant has benn designed to
-alleviate this requirement by automatically adjusting the number of digits
-used to hash the samples.
-
-LSH Forest is formulated with prefix trees with each leaf of
-a tree corresponding to an actual data point in the database. There are
-:math:`l` such trees which compose the forest and they are constructed using
-independently drawn random sequence of hash functions from :math:`H`. In this
-implementation, "Random Projections" is being used as the LSH technique which
-is an approximation for the cosine distance. The length of the sequence of
-hash functions is kept fixed at 32. Moreover, a prefix tree is implemented
-using sorted arrays and binary search.
-
-There are two phases of tree traversals used in order to answer a query to find
-the :math:`m` nearest neighbors of a point :math:`q`. First, a top-down
-traversal is performed using a binary search to identify the leaf having the
-longest prefix match (maximum depth) with :math:`q`'s label after subjecting
-:math:`q` to the same hash functions. :math:`M >> m` points (total candidates)
-are extracted from the forest, moving up from the previously found maximum 
-depth towards the root synchronously across all trees in the bottom-up
-traversal. `M` is set to  :math:`cl` where :math:`c`, the number of candidates
-extracted from each tree, is a constant. Finally, the similarity of each of
-these :math:`M` points against point :math:`q` is calculated and the top
-:math:`m` points are returned as the nearest neighbors of :math:`q`. Since
-most of the time in these queries is spent calculating the distances to
-candidates, the speedup compared to brute force search is approximately
-:math:`N/M`, where :math:`N` is the number of points in database.
-
-.. topic:: References:
-
-   * `"Near-Optimal Hashing Algorithms for Approximate Nearest Neighbor in
-     High Dimensions"
-     <http://web.mit.edu/andoni/www/papers/cSquared.pdf>`_,
-     Alexandr, A., Indyk, P., Foundations of Computer Science, 2006. FOCS
-     '06. 47th Annual IEEE Symposium
-
-   * `“LSH Forest: Self-Tuning Indexes for Similarity Search”
-     <http://www2005.org/docs/p651.pdf>`_,
-     Bawa, M., Condie, T., Ganesan, P., WWW '05 Proceedings of the 14th
-     international conference on World Wide Web  Pages 651-660

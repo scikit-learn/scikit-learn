@@ -65,7 +65,7 @@ def test_spectral_amg_mode():
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
     try:
-        from pyamg import smoothed_aggregation_solver
+        from pyamg import smoothed_aggregation_solver  # noqa
 
         amg_loaded = True
     except ImportError:
@@ -181,7 +181,7 @@ def test_discretize(seed=8):
     for n_samples in [50, 100, 150, 500]:
         for n_class in range(2, 10):
             # random class labels
-            y_true = random_state.random_integers(0, n_class, n_samples)
+            y_true = random_state.randint(0, n_class + 1, n_samples)
             y_true = np.array(y_true, np.float)
             # noise class assignment matrix
             y_indicator = sparse.coo_matrix((np.ones(n_samples),

@@ -3,6 +3,8 @@ Maintainer / core-developer information
 
 Making a release
 ------------------
+For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-to-make-a-release
+
 
 1. Update docs:
 
@@ -11,10 +13,7 @@ Making a release
 
         $ git shortlog -ns 0.998..
 
-    - edit the doc/conf.py to increase the version number
-
-    - edit the doc/themes/scikit-learn/layout.html to change the 'News'
-      entry of the front page.
+    - edit the doc/index.rst to change the 'News' entry of the front page.
 
 2. Update the version number in sklearn/__init__.py, the __version__
    variable
@@ -35,14 +34,46 @@ Making a release
 
        $ python setup.py sdist register upload
 
-   - Upload manually the tarball on SourceForge:
-     https://sourceforge.net/projects/scikit-learn/files/
 
-5. Push the documentation to the website (see README in doc folder)
+5. Push the documentation to the website. Circle CI should do this
+   automatically for master and <N>.<N>.X branches.
 
 
-6. Build binaries for windows and push them to PyPI::
+6. Build binaries using dedicated CI servers by updating the git submodule
+   reference to the new scikit-learn tag of the release at:
 
-    $ python setup.py bdist_wininst upload
+   https://github.com/MacPython/scikit-learn-wheels
 
-   And upload them also to sourceforge
+   Once the CI has completed successfully, collect the generated binary wheel
+   packages and upload them to PyPI by running the following commands in the
+   scikit-learn source folder (checked out at the release tag)::
+
+       $ pip install -U wheelhouse_uploader
+       $ python setup.py sdist fetch_artifacts upload_all
+
+
+7. FOR FINAL RELEASE: Update the release date in What's New
+
+Travis Cron jobs
+----------------
+
+From `<https://docs.travis-ci.com/user/cron-jobs>`_: Travis CI cron jobs work
+similarly to the cron utility, they run builds at regular scheduled intervals
+independently of whether any commits were pushed to the repository. Cron jobs
+always fetch the most recent commit on a particular branch and build the project
+at that state. Cron jobs can run daily, weekly or monthly, which in practice
+means up to an hour after the selected time span, and you cannot set them to run
+at a specific time.
+
+For scikit-learn, Cron jobs are used for builds that we do not want to run in
+each PR. As an example the build with the dev versions of numpy and scipy is
+run as a Cron job. Most of the time when this numpy-dev build fail, it is
+related to a numpy change and not a scikit-learn one, so it would not make sense
+to blame the PR author for the Travis failure.
+
+The definition of what gets run in the Cron job is done in the .travis.yml
+config file, exactly the same way as the other Travis jobs. We use a ``if: type
+= cron`` filter in order for the build to be run only in Cron jobs.
+
+The branch targetted by the Cron job and the frequency of the Cron job is set
+via the web UI at https://www.travis-ci.org/scikit-learn/scikit-learn/settings.

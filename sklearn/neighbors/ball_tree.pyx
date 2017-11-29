@@ -4,7 +4,7 @@
 #cython: cdivision=True
 
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 __all__ = ['BallTree']
 

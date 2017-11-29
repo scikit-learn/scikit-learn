@@ -83,7 +83,7 @@ nonnegativeNumber.setParseAction(convertToFloat)
 
 coordinate = number
 
-#comma or whitespace can seperate values all over the place in SVG
+#comma or whitespace can separate values all over the place in SVG
 maybeComma = Optional(Literal(',')).suppress()
 
 coordinateSequence = Sequence(coordinate)

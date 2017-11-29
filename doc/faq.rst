@@ -8,7 +8,8 @@ Here we try to give some answers to questions that regularly pop up on the maili
 
 What is the project name (a lot of people get it wrong)?
 --------------------------------------------------------
-scikit-learn, but not scikit or SciKit nor sci-kit learn. Also not scikits.learn or scikits-learn, which where previously used.
+scikit-learn, but not scikit or SciKit nor sci-kit learn.
+Also not scikits.learn or scikits-learn, which were previously used.
 
 How do you pronounce the project name?
 ------------------------------------------
@@ -16,16 +17,52 @@ sy-kit learn. sci stands for science!
 
 Why scikit?
 ------------
-There are multiple scikits, which are scientific toolboxes build around SciPy.
+There are multiple scikits, which are scientific toolboxes built around SciPy.
 You can find a list at `<https://scikits.appspot.com/scikits>`_.
 Apart from scikit-learn, another popular one is `scikit-image <http://scikit-image.org/>`_.
 
 How can I contribute to scikit-learn?
 -----------------------------------------
 See :ref:`contributing`. Before wanting to add a new algorithm, which is
-usually a major and lengthy undertaking, it is recommended to start with :ref:`known
-issues <easy_issues>`.
+usually a major and lengthy undertaking, it is recommended to start with
+:ref:`known issues <new_contributors>`. Please do not contact the contributors
+of scikit-learn directly regarding contributing to scikit-learn.
 
+What's the best way to get help on scikit-learn usage?
+--------------------------------------------------------------
+**For general machine learning questions**, please use
+`Cross Validated <http://stats.stackexchange.com>`_ with the ``[machine-learning]`` tag.
+
+**For scikit-learn usage questions**, please use `Stack Overflow <http://stackoverflow.com/questions/tagged/scikit-learn>`_
+with the ``[scikit-learn]`` and ``[python]`` tags. You can alternatively use the `mailing list
+<https://mail.python.org/mailman/listinfo/scikit-learn>`_.
+
+Please make sure to include a minimal reproduction code snippet (ideally shorter
+than 10 lines) that highlights your problem on a toy dataset (for instance from
+``sklearn.datasets`` or randomly generated with functions of ``numpy.random`` with
+a fixed random seed). Please remove any line of code that is not necessary to
+reproduce your problem.
+
+The problem should be reproducible by simply copy-pasting your code snippet in a Python
+shell with scikit-learn installed. Do not forget to include the import statements.
+
+More guidance to write good reproduction code snippets can be found at:
+
+http://stackoverflow.com/help/mcve
+
+If your problem raises an exception that you do not understand (even after googling it),
+please make sure to include the full traceback that you obtain when running the
+reproduction script.
+
+For bug reports or feature requests, please make use of the
+`issue tracker on GitHub <https://github.com/scikit-learn/scikit-learn/issues>`_.
+
+There is also a `scikit-learn Gitter channel
+<https://gitter.im/scikit-learn/scikit-learn>`_ where some users and developers
+might be found. 
+
+**Please do not email any authors directly to ask for assistance, report bugs,
+or for any other issue related to scikit-learn.**
 
 How can I create a bunch object?
 ------------------------------------------------
@@ -39,51 +76,46 @@ input variables and a 1D array ``y`` for the target variables. The array ``X``
 holds the features as columns and samples as rows . The array ``y`` contains
 integer values to encode the class membership of each sample in ``X``.
 
-To load data as numpy arrays you can use different libraries depending on the
-original data format:
+How can I load my own datasets into a format usable by scikit-learn?
+--------------------------------------------------------------------
 
-* `numpy.loadtxt
-  <http://docs.scipy.org/doc/numpy/reference/generated/numpy.loadtxt.html>`_ to
-  load text files (such as CSV) assuming that all the columns have an
-  homogeneous data type (e.g. all numeric values).
+Generally, scikit-learn works on any numeric data stored as numpy arrays
+or scipy sparse matrices. Other types that are convertible to numeric 
+arrays such as pandas DataFrame are also acceptable.
 
-* `scipy.io <http://docs.scipy.org/doc/scipy/reference/io.html>`_ for common
-  binary formats often used in scientific computing context.
+For more information on loading your data files into these usable data 
+structures, please refer to :ref:`loading external datasets <external_datasets>`.
 
-* `scipy.misc.imread <http://docs.scipy.org/doc/scipy/reference/generated/scipy.
-  misc.imread.html#scipy.misc.imread>`_ (requires the `Pillow
-  <https://pypi.python.org/pypi/Pillow>`_ package) to load pixel intensities
-  data from various image file formats.
+.. _new_algorithms_inclusion_criteria:
 
-* `pandas.io <http://pandas.pydata.org/pandas-docs/stable/io.html>`_ to load
-  heterogeneously typed data from various file formats and database protocols
-  that can slice and dice before conversion to numerical features in a numpy
-  array.
+What are the inclusion criteria for new algorithms ?
+----------------------------------------------------
 
-Note: if you manage your own numerical data it is recommended to use an
-optimized file format such as HDF5 to reduce data load times. Various libraries
-such as H5Py, PyTables and pandas provides a Python interface for reading and
-writing data in that format.
+We only consider well-established algorithms for inclusion. A rule of thumb is
+at least 3 years since publication, 200+ citations and wide use and
+usefulness. A technique that provides a clear-cut improvement (e.g. an
+enhanced data structure or a more efficient approximation technique) on
+a widely-used method will also be considered for inclusion.
 
-Can I add this new algorithm that I (or someone else) just published?
--------------------------------------------------------------------------
-No. As a rule we only add well-established algorithms. A rule of thumb is at least
-3 years since publications, 200+ citations and wide use and usefullness. A
-technique that provides a clear-cut improvement (e.g. an enhanced  data
-structure or efficient approximation) on a widely-used method will also be
-considered for inclusion.
-Your implementation doesn't need to be in scikit-learn to be used together
-with scikit-learn tools, though. Implement your favorite algorithm
-in a scikit-learn compatible way, upload it to github and we will list
-it under :ref:`related_projects`.
-Also see selectiveness_.
+From the algorithms or techniques that meet the above criteria, only those
+which fit well within the current API of scikit-learn, that is a ``fit``,
+``predict/transform`` interface and ordinarily having input/output that is a
+numpy array or sparse matrix, are accepted.
 
+The contributor should support the importance of the proposed addition with
+research papers and/or implementations in other similar packages, demonstrate
+its usefulness via common use-cases/applications and corroborate performance
+improvements, if any, with benchmarks and/or plots. It is expected that the 
+proposed algorithm should outperform the methods that are already implemented
+in scikit-learn at least in some areas.
 
-Can I add this classical algorithm from the 80s?
----------------------------------------------------
-Depends. If there is a common usecase within the scope of scikit-learn, such
-as classification, regression or clustering, where it outperforms methods
-that are already implemented in scikit-learn, we will consider it.
+Also note that your implementation need not be in scikit-learn to be used
+together with scikit-learn tools. You can implement your favorite algorithm
+in a scikit-learn compatible way, upload it to GitHub and let us know. We
+will be happy to list it under :ref:`related_projects`. If you already have
+a package on GitHub following the scikit-learn API, you may also be
+interested to look at `scikit-learn-contrib
+<http://scikit-learn-contrib.github.io>`_.
 
 .. _selectiveness:
 
@@ -96,8 +128,10 @@ The package relies on core developers using their free time to
 fix bugs, maintain code and review contributions.
 Any algorithm that is added needs future attention by the developers,
 at which point the original author might long have lost interest.
-Also see `this thread on the mailing list
-<http://sourceforge.net/p/scikit-learn/mailman/scikit-learn-general/thread/CAAkaFLWcBG%2BgtsFQzpTLfZoCsHMDv9UG5WaqT0LwUApte0TVzg%40mail.gmail.com/#msg33104380>`_.
+See also :ref:`new_algorithms_inclusion_criteria`. For a great read about 
+long-term maintenance issues in open-source software, look at 
+`the Executive Summary of Roads and Bridges
+<https://www.fordfoundation.org/media/2976/roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=8>`_
 
 Why did you remove HMMs from scikit-learn?
 --------------------------------------------
@@ -196,7 +230,6 @@ DBSCAN with Levenshtein distances::
 Similar tricks can be used, with some care, for tree kernels, graph kernels,
 etc.
 
-
 Why do I sometime get a crash/freeze with n_jobs > 1 under OSX or Linux?
 ------------------------------------------------------------------------
 
@@ -223,14 +256,16 @@ Python processes for parallel computing. Unfortunately this is a violation of
 the POSIX standard and therefore some software editors like Apple refuse to
 consider the lack of fork-safety in Accelerate / vecLib as a bug.
 
-In Python 3.4+ it is now possible to configure ``multiprocessing`` to use the
-'forkserver' or 'spawn' start methods (instead of the default 'fork') to manage
-the process pools. This makes it possible to not be subject to this issue
-anymore. The version of joblib shipped with scikit-learn automatically uses
-that setting by default (under Python 3.4 and later).
+In Python 3.4+ it is now possible to configure ``multiprocessing`` to
+use the 'forkserver' or 'spawn' start methods (instead of the default
+'fork') to manage the process pools. To work around this issue when
+using scikit-learn, you can set the JOBLIB_START_METHOD environment
+variable to 'forkserver'. However the user should be aware that using
+the 'forkserver' method prevents joblib.Parallel to call function
+interactively defined in a shell session.
 
 If you have custom code that uses ``multiprocessing`` directly instead of using
-it via joblib you can enable the the 'forkserver' mode globally for your
+it via joblib you can enable the 'forkserver' mode globally for your
 program: Insert the following instructions in your main script::
 
     import multiprocessing
@@ -244,3 +279,54 @@ program: Insert the following instructions in your main script::
 
 You can find more default on the new start methods in the `multiprocessing
 documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods>`_.
+
+Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
+--------------------------------------------------------------------------------------------------------------------------------------
+
+Deep learning and reinforcement learning both require a rich vocabulary to
+define an architecture, with deep learning additionally requiring
+GPUs for efficient computing. However, neither of these fit within
+the design constraints of scikit-learn; as a result, deep learning
+and reinforcement learning are currently out of scope for what
+scikit-learn seeks to achieve.
+
+You can find more information about addition of gpu support at
+`Will you add GPU support?`_.
+
+Why is my pull request not getting any attention?
+-------------------------------------------------
+
+The scikit-learn review process takes a significant amount of time, and
+contributors should not be discouraged by a lack of activity or review on
+their pull request. We care a lot about getting things right
+the first time, as maintenance and later change comes at a high cost.
+We rarely release any "experimental" code, so all of our contributions
+will be subject to high use immediately and should be of the highest
+quality possible initially.
+
+Beyond that, scikit-learn is limited in its reviewing bandwidth; many of the
+reviewers and core developers are working on scikit-learn on their own time.
+If a review of your pull request comes slowly, it is likely because the
+reviewers are busy. We ask for your understanding and request that you
+not close your pull request or discontinue your work solely because of
+this reason.
+
+How do I set a ``random_state`` for an entire execution?
+---------------------------------------------------------
+
+For testing and replicability, it is often important to have the entire execution
+controlled by a single seed for the pseudo-random number generator used in
+algorithms that have a randomized component. Scikit-learn does not use its own
+global random state; whenever a RandomState instance or an integer random seed
+is not provided as an argument, it relies on the numpy global random state,
+which can be set using :func:`numpy.random.seed`.
+For example, to set an execution's numpy global random state to 42, one could
+execute the following in his or her script::
+
+    import numpy as np
+    np.random.seed(42)
+
+However, a global random state is prone to modification by other code during
+execution. Thus, the only way to ensure replicability is to pass ``RandomState``
+instances everywhere and ensure that both estimators and cross-validation
+splitters have their ``random_state`` parameter set.

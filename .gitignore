@@ -23,6 +23,7 @@ scikit_learn.egg-info/
 .coverage
 coverage
 *.py,cover
+.tags*
 tags
 covtype.data.gz
 20news-18828/
@@ -53,3 +54,14 @@ benchmarks/bench_covertype_data/
 *.prefs
 .pydevproject
 .idea
+
+*.c
+*.cpp
+
+!*/src/*.c
+!*/src/*.cpp
+*.sln
+*.pyproj
+
+# Used by py.test
+.cache

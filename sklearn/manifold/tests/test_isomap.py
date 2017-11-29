@@ -1,6 +1,7 @@
 from itertools import product
 import numpy as np
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from numpy.testing import (assert_almost_equal, assert_array_almost_equal,
+                           assert_equal)
 
 from sklearn import datasets
 from sklearn import manifold
@@ -111,3 +112,13 @@ def test_pipeline():
          ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
     assert_less(.9, clf.score(X, y))
+
+
+def test_isomap_clone_bug():
+    # regression test for bug reported in #6062
+    model = manifold.Isomap()
+    for n_neighbors in [10, 15, 20]:
+        model.set_params(n_neighbors=n_neighbors)
+        model.fit(np.random.rand(50, 2))
+        assert_equal(model.nbrs_.n_neighbors,
+                     n_neighbors)

@@ -13,8 +13,8 @@ security and maintainability issues when working with pickle serialization.
 Persistence example
 -------------------
 
-It is possible to save a model in the scikit by using Python's built-in
-persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_::
+It is possible to save a model in scikit-learn by using Python's built-in
+persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html>`_::
 
   >>> from sklearn import svm
   >>> from sklearn import datasets
@@ -23,7 +23,7 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+      decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
       max_iter=-1, probability=False, random_state=None, shrinking=True,
       tol=0.001, verbose=False)
 
@@ -35,7 +35,7 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> y[0]
   0
 
-In the specific case of the scikit, it may be more interesting to use
+In the specific case of scikit-learn, it may be more interesting to use
 joblib's replacement of pickle (``joblib.dump`` & ``joblib.load``),
 which is more efficient on objects that carry large numpy arrays internally as
 is often the case for fitted scikit-learn estimators, but can only pickle to the
@@ -51,11 +51,11 @@ with::
 
 .. note::
 
-   joblib.dump returns a list of filenames. Each individual numpy array
-   contained in the ``clf`` object is serialized as a separate file on the
-   filesystem. All files are required in the same folder when reloading the
-   model with joblib.load.
+   ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
+   instead of filenames. More information on data persistence with Joblib is
+   available `here <https://pythonhosted.org/joblib/persistence.html>`_.
 
+.. _persistence_limitations:
 
 Security & maintainability limitations
 --------------------------------------
@@ -63,20 +63,27 @@ Security & maintainability limitations
 pickle (and joblib by extension), has some issues regarding maintainability
 and security. Because of this,
 
-* Never unpickle untrusted data
-* Models saved in one version of scikit-learn might not load in another
-  version.
+* Never unpickle untrusted data as it could lead to malicious code being 
+  executed upon loading.
+* While models saved using one version of scikit-learn might load in 
+  other versions, this is entirely unsupported and inadvisable. It should 
+  also be kept in mind that operations performed on such data could give
+  different and unexpected results.
 
 In order to rebuild a similar model with future versions of scikit-learn,
 additional metadata should be saved along the pickled model:
 
-* The training data, e.g. a reference to a immutable snapshot
+* The training data, e.g. a reference to an immutable snapshot
 * The python source code used to generate the model
 * The versions of scikit-learn and its dependencies
 * The cross validation score obtained on the training data
 
 This should make it possible to check that the cross-validation score is in the
 same range as before.
+
+Since a model internal representation may be different on two different
+architectures, dumping a model on one architecture and loading it on
+another architecture is not supported.
 
 If you want to know more about these issues and explore other possible
 serialization methods, please refer to this

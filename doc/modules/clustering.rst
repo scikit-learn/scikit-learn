@@ -4,7 +4,7 @@
 Clustering
 ==========
 
-`Clustering <https://en.wikipedia.org/wiki/Cluster_analysis>`_ of
+`Clustering <https://en.wikipedia.org/wiki/Cluster_analysis>`__ of
 unlabeled data can be performed with the module :mod:`sklearn.cluster`.
 
 Each clustering algorithm comes in two variants: a class, that implements
@@ -18,22 +18,18 @@ data can be found in the ``labels_`` attribute.
 .. topic:: Input data
 
     One important thing to note is that the algorithms implemented in
-    this module take different kinds of matrix as input.  On one hand,
-    :class:`MeanShift` and :class:`KMeans` take data matrices of shape
-    [n_samples, n_features]. These can be obtained from the classes in
-    the :mod:`sklearn.feature_extraction` module. On the other hand,
-    :class:`AffinityPropagation` and :class:`SpectralClustering` take
-    similarity matrices of shape [n_samples, n_samples].  These can be
-    obtained from the functions in the :mod:`sklearn.metrics.pairwise`
-    module. In other words, :class:`MeanShift` and :class:`KMeans` work
-    with points in a vector space, whereas :class:`AffinityPropagation`
-    and :class:`SpectralClustering` can work with arbitrary objects, as
-    long as a similarity measure exists for such objects.
+    this module can take different kinds of matrix as input. All the
+    methods accept standard data matrices of shape ``[n_samples, n_features]``.
+    These can be obtained from the classes in the :mod:`sklearn.feature_extraction`
+    module. For :class:`AffinityPropagation`, :class:`SpectralClustering`
+    and :class:`DBSCAN` one can also input similarity matrices of shape
+    ``[n_samples, n_samples]``. These can be obtained from the functions
+    in the :mod:`sklearn.metrics.pairwise` module.
 
 Overview of clustering methods
 ===============================
 
-.. figure:: ../auto_examples/cluster/images/plot_cluster_comparison_001.png
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_cluster_comparison_001.png
    :target: ../auto_examples/cluster/plot_cluster_comparison.html
    :align: center
    :scale: 50
@@ -156,7 +152,7 @@ It suffers from various drawbacks:
   prior to k-means clustering can alleviate this problem
   and speed up the computations.
 
-.. image:: ../auto_examples/cluster/images/plot_kmeans_assumptions_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_001.png
    :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
    :align: center
    :scale: 50
@@ -172,7 +168,7 @@ and the new centroids are computed and the algorithm repeats these last two
 steps until this value is less than a threshold. In other words, it repeats
 until the centroids do not move significantly.
 
-.. image:: ../auto_examples/cluster/images/plot_kmeans_digits_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_digits_001.png
    :target: ../auto_examples/cluster/plot_kmeans_digits.html
    :align: right
    :scale: 35
@@ -195,7 +191,7 @@ minimum. This is highly dependent on the initialization of the centroids.
 As a result, the computation is often done several times, with different
 initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
-(use the ``init='kmeans++'`` parameter). This initializes the centroids to be
+(use the ``init='k-means++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
 random initialization, as shown in the reference.
 
@@ -218,9 +214,9 @@ transform method of a trained model of :class:`KMeans`.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_kmeans_assumptions.py`: Demonstrating when
+ * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_assumptions.py`: Demonstrating when
    k-means performs intuitively and when it does not
- * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
+ * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
 .. topic:: References:
 
@@ -258,7 +254,7 @@ convergence or a predetermined number of iterations is reached.
 of the results is reduced. In practice this difference in quality can be quite
 small, as shown in the example and cited reference.
 
-.. figure:: ../auto_examples/cluster/images/plot_mini_batch_kmeans_001.png
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_mini_batch_kmeans_001.png
    :target: ../auto_examples/cluster/plot_mini_batch_kmeans.html
    :align: center
    :scale: 100
@@ -266,13 +262,13 @@ small, as shown in the example and cited reference.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
+ * :ref:`sphx_glr_auto_examples_cluster_plot_mini_batch_kmeans.py`: Comparison of KMeans and
    MiniBatchKMeans
 
- * :ref:`example_text_document_clustering.py`: Document clustering using sparse
+ * :ref:`sphx_glr_auto_examples_text_document_clustering.py`: Document clustering using sparse
    MiniBatchKMeans
 
- * :ref:`example_cluster_plot_dict_face_patches.py`
+ * :ref:`sphx_glr_auto_examples_cluster_plot_dict_face_patches.py`
 
 
 .. topic:: References:
@@ -296,7 +292,7 @@ values from other pairs. This updating happens iteratively until convergence,
 at which point the final exemplars are chosen, and hence the final clustering
 is given.
 
-.. figure:: ../auto_examples/cluster/images/plot_affinity_propagation_001.png
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_affinity_propagation_001.png
    :target: ../auto_examples/cluster/plot_affinity_propagation.html
    :align: center
    :scale: 50
@@ -305,7 +301,9 @@ is given.
 Affinity Propagation can be interesting as it chooses the number of
 clusters based on the data provided. For this purpose, the two important
 parameters are the *preference*, which controls how many exemplars are
-used, and the *damping factor*.
+used, and the *damping factor* which damps the responsibility and 
+availability messages to avoid numerical oscillations when updating these
+messages.
 
 The main drawback of Affinity Propagation is its complexity. The
 algorithm has a time complexity of the order :math:`O(N^2 T)`, where :math:`N`
@@ -317,10 +315,10 @@ appropriate for small to medium sized datasets.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_affinity_propagation.py`: Affinity
+ * :ref:`sphx_glr_auto_examples_cluster_plot_affinity_propagation.py`: Affinity
    Propagation on a synthetic 2D datasets with 3 classes.
 
- * :ref:`example_applications_plot_stock_market.py` Affinity Propagation on
+ * :ref:`sphx_glr_auto_examples_applications_plot_stock_market.py` Affinity Propagation on
    Financial time series to find groups of companies
 
 
@@ -342,7 +340,7 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    r(i, k) \leftarrow s(i, k) - max [ a(i, \acute{k}) + s(i, \acute{k}) \forall \acute{k} \neq k ]
+    r(i, k) \leftarrow s(i, k) - max [ a(i, k') + s(i, k') \forall k' \neq k ]
 
 Where :math:`s(i, k)` is the similarity between samples :math:`i` and :math:`k`.
 The availability of sample :math:`k`
@@ -350,10 +348,17 @@ to be the exemplar of sample :math:`i` is given by:
 
 .. math::
 
-    a(i, k) \leftarrow min [0, r(k, k) + \sum_{\acute{i}~s.t.~\acute{i} \notin \{i, k\}}{r(\acute{i}, k)}]
+    a(i, k) \leftarrow min [0, r(k, k) + \sum_{i'~s.t.~i' \notin \{i, k\}}{r(i', k)}]
 
 To begin with, all values for :math:`r` and :math:`a` are set to zero,
 and the calculation of each iterates until convergence.
+As discussed above, in order to avoid numerical oscillations when updating the 
+messages, the damping factor :math:`\lambda` is introduced to iteration process:
+
+.. math:: r_{t+1}(i, k) = \lambda\cdot r_{t}(i, k) + (1-\lambda)\cdot r_{t+1}(i, k)
+.. math:: a_{t+1}(i, k) = \lambda\cdot a_{t}(i, k) + (1-\lambda)\cdot a_{t+1}(i, k)
+
+where :math:`t` indicates the iteration times.
 
 .. _mean_shift:
 
@@ -396,7 +401,7 @@ Labelling a new sample is performed by finding the nearest centroid for a
 given sample.
 
 
-.. figure:: ../auto_examples/cluster/images/plot_mean_shift_001.png
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_mean_shift_001.png
    :target: ../auto_examples/cluster/plot_mean_shift.html
    :align: center
    :scale: 50
@@ -404,7 +409,7 @@ given sample.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_mean_shift.py`: Mean Shift clustering
+ * :ref:`sphx_glr_auto_examples_cluster_plot_mean_shift.py`: Mean Shift clustering
    on a synthetic 2D datasets with 3 classes.
 
 .. topic:: References:
@@ -422,13 +427,13 @@ Spectral clustering
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
 dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <http://pyamg.org/>`_ module is installed.
+sparse and the `pyamg <https://github.com/pyamg/pyamg>`_ module is installed.
 SpectralClustering requires the number of clusters to be specified. It
 works well for a small number of clusters but is not advised when using
 many clusters.
 
 For two clusters, it solves a convex relaxation of the `normalised
-cuts <http://www.cs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
+cuts <http://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
 the similarity graph: cutting the graph in two so that the weight of the
 edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images:
@@ -436,11 +441,11 @@ graph vertices are pixels, and edges of the similarity graph are a
 function of the gradient of the image.
 
 
-.. |noisy_img| image:: ../auto_examples/cluster/images/plot_segmentation_toy_001.png
+.. |noisy_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_001.png
     :target: ../auto_examples/cluster/plot_segmentation_toy.html
     :scale: 50
 
-.. |segmented_img| image:: ../auto_examples/cluster/images/plot_segmentation_toy_002.png
+.. |segmented_img| image:: ../auto_examples/cluster/images/sphx_glr_plot_segmentation_toy_002.png
     :target: ../auto_examples/cluster/plot_segmentation_toy.html
     :scale: 50
 
@@ -461,18 +466,18 @@ function of the gradient of the image.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_segmentation_toy.py`: Segmenting objects
+ * :ref:`sphx_glr_auto_examples_cluster_plot_segmentation_toy.py`: Segmenting objects
    from a noisy background using spectral clustering.
 
- * :ref:`example_cluster_plot_lena_segmentation.py`: Spectral clustering
-   to split the image of lena in regions.
+ * :ref:`sphx_glr_auto_examples_cluster_plot_face_segmentation.py`: Spectral clustering
+   to split the image of the raccoon face in regions.
 
-.. |lena_kmeans| image:: ../auto_examples/cluster/images/plot_lena_segmentation_001.png
-    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+.. |face_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_face_segmentation_001.png
+    :target: ../auto_examples/cluster/plot_face_segmentation.html
     :scale: 65
 
-.. |lena_discretize| image:: ../auto_examples/cluster/images/plot_lena_segmentation_002.png
-    :target: ../auto_examples/cluster/plot_lena_segmentation.html
+.. |face_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_face_segmentation_002.png
+    :target: ../auto_examples/cluster/plot_face_segmentation.html
     :scale: 65
 
 Different label assignment strategies
@@ -490,7 +495,7 @@ geometrical shape.
 =====================================  =====================================
  ``assign_labels="kmeans"``              ``assign_labels="discretize"``
 =====================================  =====================================
-|lena_kmeans|                          |lena_discretize|
+|face_kmeans|                          |face_discretize|
 =====================================  =====================================
 
 
@@ -557,15 +562,15 @@ Different linkage type: Ward, complete and average linkage
 :class:`AgglomerativeClustering` supports Ward, average, and complete
 linkage strategies.
 
-.. image:: ../auto_examples/cluster/images/plot_digits_linkage_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_001.png
     :target: ../auto_examples/cluster/plot_digits_linkage.html
     :scale: 43
 
-.. image:: ../auto_examples/cluster/images/plot_digits_linkage_002.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_002.png
     :target: ../auto_examples/cluster/plot_digits_linkage.html
     :scale: 43
 
-.. image:: ../auto_examples/cluster/images/plot_digits_linkage_003.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_digits_linkage_003.png
     :target: ../auto_examples/cluster/plot_digits_linkage.html
     :scale: 43
 
@@ -578,7 +583,7 @@ Euclidean metrics, average linkage is a good alternative.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_digits_linkage.py`: exploration of the
+ * :ref:`sphx_glr_auto_examples_cluster_plot_digits_linkage.py`: exploration of the
    different linkage strategies in a real dataset.
 
 
@@ -594,11 +599,11 @@ constraints forbid the merging of points that are not adjacent on the swiss
 roll, and thus avoid forming clusters that extend across overlapping folds of
 the roll.
 
-.. |unstructured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_001.png
+.. |unstructured| image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_001.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
         :scale: 49
 
-.. |structured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_002.png
+.. |structured| image:: ../auto_examples/cluster/images/sphx_glr_plot_ward_structured_vs_unstructured_002.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
         :scale: 49
 
@@ -616,25 +621,25 @@ may wish to cluster web pages by only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
 using :func:`sklearn.neighbors.kneighbors_graph` to restrict
 merging to nearest neighbors as in :ref:`this example
-<example_cluster_plot_agglomerative_clustering.py>`, or
+<sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
-:ref:`Lena <example_cluster_plot_lena_ward_segmentation.py>` example.
+:ref:`raccoon face <sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py>` example.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_lena_ward_segmentation.py`: Ward clustering
-   to split the image of lena in regions.
+ * :ref:`sphx_glr_auto_examples_cluster_plot_face_ward_segmentation.py`: Ward clustering
+   to split the image of a raccoon face in regions.
 
- * :ref:`example_cluster_plot_ward_structured_vs_unstructured.py`: Example of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_ward_structured_vs_unstructured.py`: Example of
    Ward algorithm on a swiss-roll, comparison of structured approaches
    versus unstructured approaches.
 
- * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
+ * :ref:`sphx_glr_auto_examples_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
    Example of dimensionality reduction with feature agglomeration based on
    Ward hierarchical clustering.
 
- * :ref:`example_cluster_plot_agglomerative_clustering.py`
+ * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`
 
 .. warning:: **Connectivity constraints with average and complete linkage**
 
@@ -644,21 +649,21 @@ enable only merging of neighboring pixels on an image, as in the
     :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
     number of clusters, they tend to give a few macroscopically occupied
     clusters and almost empty ones. (see the discussion in
-    :ref:`example_cluster_plot_agglomerative_clustering.py`).
+    :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering.py`).
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_001.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_002.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_002.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_003.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_003.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_004.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_004.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
     :scale: 38
 
@@ -671,8 +676,8 @@ affinities), in particular Euclidean distance (*l2*), Manhattan distance
 (or Cityblock, or *l1*), cosine distance, or any precomputed affinity
 matrix.
 
-* *l1* distance is often good for sparse features, or sparse noise: ie
-  many of the features are zero, as in text mining using occurences of
+* *l1* distance is often good for sparse features, or sparse noise: i.e.
+  many of the features are zero, as in text mining using occurrences of
   rare words.
 
 * *cosine* distance is interesting because it is invariant to global
@@ -682,21 +687,21 @@ The guidelines for choosing a metric is to use one that maximizes the
 distance between samples in different classes, and minimizes that within
 each class.
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_005.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_005.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_006.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_006.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_007.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_agglomerative_clustering_metrics_007.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_agglomerative_clustering_metrics.py`
+ * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
 
 .. _dbscan:
@@ -722,25 +727,23 @@ More formally, we define a core sample as being a sample in the dataset such
 that there exist ``min_samples`` other samples within a distance of
 ``eps``, which are defined as *neighbors* of the core sample. This tells
 us that the core sample is in a dense area of the vector space. A cluster
-is a set of core samples, that can be built by recursively by taking a core
+is a set of core samples that can be built by recursively taking a core
 sample, finding all of its neighbors that are core samples, finding all of
 *their* neighbors that are core samples, and so on. A cluster also has a
 set of non-core samples, which are samples that are neighbors of a core sample
 in the cluster but are not themselves core samples. Intuitively, these samples
 are on the fringes of a cluster.
 
-Any core sample is part of a cluster, by definition. Further, any cluster has
-at least ``min_samples`` points in it, following the definition of a core
-sample. For any sample that is not a core sample, and does have a
-distance higher than ``eps`` to any core sample, it is considered an outlier by
-the algorithm.
+Any core sample is part of a cluster, by definition. Any sample that is not a 
+core sample, and is at least ``eps`` in distance from any core sample, is 
+considered an outlier by the algorithm.
 
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
 by black points below.
 
-.. |dbscan_results| image:: ../auto_examples/cluster/images/plot_dbscan_001.png
+.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_001.png
         :target: ../auto_examples/cluster/plot_dbscan.html
         :scale: 50
 
@@ -748,21 +751,22 @@ by black points below.
 
 .. topic:: Examples:
 
-    * :ref:`example_cluster_plot_dbscan.py`
+    * :ref:`sphx_glr_auto_examples_cluster_plot_dbscan.py`
 
 .. topic:: Implementation
 
-    The algorithm is non-deterministic, but the core samples will
-    always belong to the same clusters (although the labels may be
-    different). The non-determinism comes from deciding to which cluster a
-    non-core sample belongs. A non-core sample can have a distance lower
-    than ``eps`` to two core samples in different clusters. By the
+    The DBSCAN algorithm is deterministic, always generating the same clusters 
+    when given the same data in the same order.  However, the results can differ when
+    data is provided in a different order. First, even though the core samples 
+    will always be assigned to the same clusters, the labels of those clusters
+    will depend on the order in which those samples are encountered in the data.
+    Second and more importantly, the clusters to which non-core samples are assigned
+    can differ depending on the data order.  This would happen when a non-core sample
+    has a distance lower than ``eps`` to two core samples in different clusters. By the
     triangular inequality, those two core samples must be more distant than
     ``eps`` from each other, or they would be in the same cluster. The non-core
-    sample is assigned to whichever cluster is generated first, where
-    the order is determined randomly. Other than the ordering of
-    the dataset, the algorithm is deterministic, making the results relatively
-    stable between runs on the same data.
+    sample is assigned to whichever cluster is generated first in a pass
+    through the data, and so the results will depend on the data ordering.
 
     The current implementation uses ball trees and kd-trees
     to determine the neighborhood of points,
@@ -770,6 +774,22 @@ by black points below.
     (as was done in scikit-learn versions before 0.14).
     The possibility to use custom metrics is retained;
     for details, see :class:`NearestNeighbors`.
+
+.. topic:: Memory consumption for large sample sizes
+
+    This implementation is by default not memory efficient because it constructs
+    a full pairwise similarity matrix in the case where kd-trees or ball-trees cannot
+    be used (e.g. with sparse matrices). This matrix will consume n^2 floats.
+    A couple of mechanisms for getting around this are:
+
+    - A sparse radius neighborhood graph (where missing
+      entries are presumed to be out of eps) can be precomputed in a memory-efficient
+      way and dbscan can be run over this with ``metric='precomputed'``.
+
+    - The dataset can be compressed, either by removing exact duplicates if
+      these occur in your data, or by using BIRCH. Then you only have a
+      relatively small number of representatives for a large number of points.
+      You can then provide a ``sample_weight`` when fitting DBSCAN.
 
 .. topic:: References:
 
@@ -852,10 +872,10 @@ the user is advised
  2. Train all data by multiple calls to partial_fit.
  3. Set ``n_clusters`` to a required value using
     ``brc.set_params(n_clusters=n_clusters)``.
- 4. Call ``partial_fit`` finally with no arguments, i.e ``brc.partial_fit()``
+ 4. Call ``partial_fit`` finally with no arguments, i.e. ``brc.partial_fit()``
     which performs the global clustering.
 
-.. image:: ../auto_examples/cluster/images/plot_birch_vs_minibatchkmeans_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_birch_vs_minibatchkmeans_001.png
     :target: ../auto_examples/cluster/plot_birch_vs_minibatchkmeans.html
 
 .. topic:: References:
@@ -866,7 +886,7 @@ the user is advised
 
  * Roberto Perdisci
    JBirch - Java implementation of BIRCH clustering algorithm
-   https://code.google.com/p/jbirch/
+   https://code.google.com/archive/p/jbirch
 
 
 .. _clustering_evaluation:
@@ -962,7 +982,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
    for random assignments.
 
@@ -998,7 +1018,7 @@ random labelings by defining the adjusted Rand index as follows:
 .. topic:: References
 
  * `Comparing Partitions
-   <http://www.springerlink.com/content/x64124718341j1j0/>`_
+   <http://link.springer.com/article/10.1007%2FBF01908075>`_
    L. Hubert and P. Arabie, Journal of Classification 1985
 
  * `Wikipedia entry for the adjusted Rand index
@@ -1096,7 +1116,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
    for random assignments. This example also includes the Adjusted Rand
    Index.
@@ -1108,20 +1128,24 @@ Mathematical formulation
 Assume two label assignments (of the same N objects), :math:`U` and :math:`V`.
 Their entropy is the amount of uncertainty for a partition set, defined by:
 
-.. math:: H(U) = \sum_{i=1}^{|U|}P(i)\log(P(i))
+.. math:: H(U) = - \sum_{i=1}^{|U|}P(i)\log(P(i))
 
 where :math:`P(i) = |U_i| / N` is the probability that an object picked at
 random from :math:`U` falls into class :math:`U_i`. Likewise for :math:`V`:
 
-.. math:: H(V) = \sum_{j=1}^{|V|}P'(j)\log(P'(j))
+.. math:: H(V) = - \sum_{j=1}^{|V|}P'(j)\log(P'(j))
 
 With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U`
 and :math:`V` is calculated by:
 
 .. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|}\sum_{j=1}^{|V|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
-
+ 
 where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object
 picked at random falls into both classes :math:`U_i` and :math:`V_j`.
+
+It also can be expressed in set cardinality formulation:
+
+.. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \frac{|U_i \cap V_j|}{N}\log\left(\frac{N|U_i \cap V_j|}{|U_i||V_j|}\right)
 
 The normalized mutual information is defined as
 
@@ -1158,7 +1182,7 @@ calculated using a similar form to that of the adjusted Rand index:
  * Vinh, Epps, and Bailey, (2009). "Information theoretic measures
    for clusterings comparison". Proceedings of the 26th Annual International
    Conference on Machine Learning - ICML '09.
-   `doi:10.1145/1553374.1553511 <http://dx.doi.org/10.1145/1553374.1553511>`_.
+   `doi:10.1145/1553374.1553511 <https://dl.acm.org/citation.cfm?doid=1553374.1553511>`_.
    ISBN 9781605585161.
 
  * Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
@@ -1268,7 +1292,7 @@ Drawbacks
   smaller sample sizes or larger number of clusters it is safer to use
   an adjusted index such as the Adjusted Rand Index (ARI)**.
 
-.. figure:: ../auto_examples/cluster/images/plot_adjusted_for_chance_measures_001.png
+.. figure:: ../auto_examples/cluster/images/sphx_glr_plot_adjusted_for_chance_measures_001.png
    :target: ../auto_examples/cluster/plot_adjusted_for_chance_measures.html
    :align: center
    :scale: 100
@@ -1280,7 +1304,7 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
+ * :ref:`sphx_glr_auto_examples_cluster_plot_adjusted_for_chance_measures.py`: Analysis of
    the impact of the dataset size on the value of clustering measures
    for random assignments.
 
@@ -1319,13 +1343,100 @@ mean of homogeneity and completeness**:
 
 .. topic:: References
 
- .. [RH2007] `V-Measure: A conditional entropy-based external cluster evaluation
+ * `V-Measure: A conditional entropy-based external cluster evaluation
    measure <http://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
    Andrew Rosenberg and Julia Hirschberg, 2007
 
  .. [B2011] `Identication and Characterization of Events in Social Media
    <http://www.cs.columbia.edu/~hila/hila-thesis-distributed.pdf>`_, Hila
    Becker, PhD Thesis.
+
+.. _fowlkes_mallows_scores:
+
+Fowlkes-Mallows scores
+----------------------
+
+The Fowlkes-Mallows index (:func:`sklearn.metrics.fowlkes_mallows_score`) can be
+used when the ground truth class assignments of the samples is known. The
+Fowlkes-Mallows score FMI is defined as the geometric mean of the
+pairwise precision and recall:
+
+.. math:: \text{FMI} = \frac{\text{TP}}{\sqrt{(\text{TP} + \text{FP}) (\text{TP} + \text{FN})}}
+
+Where ``TP`` is the number of **True Positive** (i.e. the number of pair
+of points that belong to the same clusters in both the true labels and the
+predicted labels), ``FP`` is the number of **False Positive** (i.e. the number
+of pair of points that belong to the same clusters in the true labels and not
+in the predicted labels) and ``FN`` is the number of **False Negative** (i.e the
+number of pair of points that belongs in the same clusters in the predicted
+labels and not in the true labels).
+
+The score ranges from 0 to 1. A high value indicates a good similarity
+between two clusters.
+
+  >>> from sklearn import metrics
+  >>> labels_true = [0, 0, 0, 1, 1, 1]
+  >>> labels_pred = [0, 0, 1, 1, 2, 2]
+
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.47140...
+
+One can permute 0 and 1 in the predicted labels, rename 2 to 3 and get
+the same score::
+
+  >>> labels_pred = [1, 1, 0, 0, 3, 3]
+
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.47140...
+
+Perfect labeling is scored 1.0::
+
+  >>> labels_pred = labels_true[:]
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  1.0
+
+Bad (e.g. independent labelings) have zero scores::
+
+  >>> labels_true = [0, 1, 2, 0, 3, 4, 5, 1]
+  >>> labels_pred = [1, 1, 0, 0, 2, 2, 2, 2]
+  >>> metrics.fowlkes_mallows_score(labels_true, labels_pred)  # doctest: +ELLIPSIS
+  0.0
+
+Advantages
+~~~~~~~~~~
+
+- **Random (uniform) label assignments have a FMI score close to 0.0**
+  for any value of ``n_clusters`` and ``n_samples`` (which is not the
+  case for raw Mutual Information or the V-measure for instance).
+
+- **Bounded range [0, 1]**:  Values close to zero indicate two label
+  assignments that are largely independent, while values close to one
+  indicate significant agreement. Further, values of exactly 0 indicate
+  **purely** independent label assignments and a AMI of exactly 1 indicates
+  that the two label assignments are equal (with or without permutation).
+
+- **No assumption is made on the cluster structure**: can be used
+  to compare clustering algorithms such as k-means which assumes isotropic
+  blob shapes with results of spectral clustering algorithms which can
+  find cluster with "folded" shapes.
+
+
+Drawbacks
+~~~~~~~~~
+
+- Contrary to inertia, **FMI-based measures require the knowledge
+  of the ground truth classes** while almost never available in practice or
+  requires manual assignment by human annotators (as in the supervised learning
+  setting).
+
+.. topic:: References
+
+  * E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
+    hierarchical clusterings". Journal of the American Statistical Association.
+    http://wildfire.stat.ucla.edu/pdflibrary/fowlkes.pdf
+
+  * `Wikipedia entry for the Fowlkes-Mallows Index
+    <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
 
 .. _silhouette_coefficient:
 
@@ -1399,9 +1510,78 @@ Drawbacks
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_kmeans_silhouette_analysis.py` : In this example
+ * :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py` : In this example
    the silhouette analysis is used to choose an optimal value for n_clusters.
 
+.. _calinski_harabaz_index:
+
+Calinski-Harabaz Index
+----------------------
+
+If the ground truth labels are not known, the Calinski-Harabaz index
+(:func:`sklearn.metrics.calinski_harabaz_score`) can be used to evaluate the
+model, where a higher Calinski-Harabaz score relates to a model with better
+defined clusters.
+
+For :math:`k` clusters, the Calinski-Harabaz score :math:`s` is given as the
+ratio of the between-clusters dispersion mean and the within-cluster
+dispersion:
+
+.. math::
+  s(k) = \frac{\mathrm{Tr}(B_k)}{\mathrm{Tr}(W_k)} \times \frac{N - k}{k - 1}
+
+where :math:`B_K` is the between group dispersion matrix and :math:`W_K`
+is the within-cluster dispersion matrix defined by:
+
+.. math:: W_k = \sum_{q=1}^k \sum_{x \in C_q} (x - c_q) (x - c_q)^T
+
+.. math:: B_k = \sum_q n_q (c_q - c) (c_q - c)^T
+
+with :math:`N` be the number of points in our data, :math:`C_q` be the set of
+points in cluster :math:`q`, :math:`c_q` be the center of cluster
+:math:`q`, :math:`c` be the center of :math:`E`, :math:`n_q` be the number of
+points in cluster :math:`q`.
+
+
+  >>> from sklearn import metrics
+  >>> from sklearn.metrics import pairwise_distances
+  >>> from sklearn import datasets
+  >>> dataset = datasets.load_iris()
+  >>> X = dataset.data
+  >>> y = dataset.target
+
+In normal usage, the Calinski-Harabaz index is applied to the results of a
+cluster analysis.
+
+  >>> import numpy as np
+  >>> from sklearn.cluster import KMeans
+  >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
+  >>> labels = kmeans_model.labels_
+  >>> metrics.calinski_harabaz_score(X, labels)  # doctest: +ELLIPSIS
+  560.39...
+
+
+Advantages
+~~~~~~~~~~
+
+- The score is higher when clusters are dense and well separated, which relates
+  to a standard concept of a cluster.
+
+- The score is fast to compute
+
+
+Drawbacks
+~~~~~~~~~
+
+- The Calinski-Harabaz index is generally higher for convex clusters than other
+  concepts of clusters, such as density based clusters like those obtained
+  through DBSCAN.
+
+.. topic:: References
+
+ *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
+    analysis". Communications in Statistics-theory and Methods 3: 1-27.
+    `doi:10.1080/03610926.2011.560741 <http://dx.doi.org/10.1080/03610926.2011.560741>`_.
 
 .. _contingency_matrix:
 Contingency Matrix

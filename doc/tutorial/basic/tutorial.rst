@@ -6,7 +6,7 @@ An introduction to machine learning with scikit-learn
 .. topic:: Section contents
 
     In this section, we introduce the `machine learning
-    <http://en.wikipedia.org/wiki/Machine_learning>`_
+    <https://en.wikipedia.org/wiki/Machine_learning>`_
     vocabulary that we use throughout scikit-learn and give a
     simple learning example.
 
@@ -15,22 +15,22 @@ Machine learning: the problem setting
 -------------------------------------
 
 In general, a learning problem considers a set of n
-`samples <http://en.wikipedia.org/wiki/Sample_(statistics)>`_ of
+`samples <https://en.wikipedia.org/wiki/Sample_(statistics)>`_ of
 data and then tries to predict properties of unknown data. If each sample is
 more than a single number and, for instance, a multi-dimensional entry
-(aka `multivariate <http://en.wikipedia.org/wiki/Multivariate_random_variable>`_
-data), is it said to have several attributes or **features**.
+(aka `multivariate <https://en.wikipedia.org/wiki/Multivariate_random_variable>`_
+data), it is said to have several attributes or **features**.
 
 We can separate learning problems in a few large categories:
 
- * `supervised learning <http://en.wikipedia.org/wiki/Supervised_learning>`_,
+ * `supervised learning <https://en.wikipedia.org/wiki/Supervised_learning>`_,
    in which the data comes with additional attributes that we want to predict
    (:ref:`Click here <supervised-learning>`
    to go to the scikit-learn supervised learning page).This problem
    can be either:
 
     * `classification
-      <http://en.wikipedia.org/wiki/Classification_in_machine_learning>`_:
+      <https://en.wikipedia.org/wiki/Classification_in_machine_learning>`_:
       samples belong to two or more classes and we
       want to learn from already labeled data how to predict the class
       of unlabeled data. An example of classification problem would
@@ -41,19 +41,19 @@ We can separate learning problems in a few large categories:
       limited number of categories and for each of the n samples provided,
       one is to try to label them with the correct category or class.
 
-    * `regression <http://en.wikipedia.org/wiki/Regression_analysis>`_:
+    * `regression <https://en.wikipedia.org/wiki/Regression_analysis>`_:
       if the desired output consists of one or more
       continuous variables, then the task is called *regression*. An
       example of a regression problem would be the prediction of the
       length of a salmon as a function of its age and weight.
 
- * `unsupervised learning <http://en.wikipedia.org/wiki/Unsupervised_learning>`_,
+ * `unsupervised learning <https://en.wikipedia.org/wiki/Unsupervised_learning>`_,
    in which the training data consists of a set of input vectors x
    without any corresponding target values. The goal in such problems
    may be to discover groups of similar examples within the data, where
-   it is called `clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`_,
+   it is called `clustering <https://en.wikipedia.org/wiki/Cluster_analysis>`_,
    or to determine the distribution of data within the input space, known as
-   `density estimation <http://en.wikipedia.org/wiki/Density_estimation>`_, or
+   `density estimation <https://en.wikipedia.org/wiki/Density_estimation>`_, or
    to project the data from a high-dimensional space down to two or three
    dimensions for the purpose of *visualization*
    (:ref:`Click here <unsupervised-learning>`
@@ -74,7 +74,7 @@ Loading an example dataset
 --------------------------
 
 `scikit-learn` comes with a few standard datasets, for instance the
-`iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
+`iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
 <http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
 datasets for classification and the `boston house prices dataset
 <http://archive.ics.uci.edu/ml/datasets/Housing>`_ for regression.
@@ -133,10 +133,13 @@ learn::
              [  0.,   0.,   6.,  13.,  10.,   0.,   0.,   0.]])
 
     The :ref:`simple example on this dataset
-    <example_classification_plot_digits_classification.py>` illustrates how starting
+    <sphx_glr_auto_examples_classification_plot_digits_classification.py>` illustrates how starting
     from the original problem one can shape the data for consumption in
     scikit-learn.
+    
+.. topic:: Loading from external datasets
 
+    To load from an external dataset, please refer to :ref:`loading external datasets <external_datasets>`.
 
 Learning and predicting
 ------------------------
@@ -144,7 +147,7 @@ Learning and predicting
 In the case of the digits dataset, the task is to predict, given an image,
 which digit it represents. We are given samples of each of the 10
 possible classes (the digits zero through nine) on which we *fit* an
-`estimator <http://en.wikipedia.org/wiki/Estimator>`_ to be able to *predict*
+`estimator <https://en.wikipedia.org/wiki/Estimator>`_ to be able to *predict*
 the classes to which unseen samples belong.
 
 In scikit-learn, an estimator for classification is a Python object that
@@ -152,7 +155,7 @@ implements the methods ``fit(X, y)`` and ``predict(T)``.
 
 An example of an estimator is the class ``sklearn.svm.SVC`` that
 implements `support vector classification
-<http://en.wikipedia.org/wiki/Support_vector_machine>`_. The
+<https://en.wikipedia.org/wiki/Support_vector_machine>`_. The
 constructor of an estimator takes as arguments the parameters of the
 model, but for the time being, we will consider the estimator as a black
 box::
@@ -177,7 +180,7 @@ the last entry of ``digits.data``::
 
   >>> clf.fit(digits.data[:-1], digits.target[:-1])  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape=None, degree=3, gamma=0.001, kernel='rbf',
+    decision_function_shape='ovr', degree=3, gamma=0.001, kernel='rbf',
     max_iter=-1, probability=False, random_state=None, shrinking=True,
     tol=0.001, verbose=False)
 
@@ -190,7 +193,7 @@ which we have not used to train the classifier::
 
 The corresponding image is the following:
 
-.. image:: ../../auto_examples/datasets/images/plot_digits_last_image_001.png
+.. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
     :target: ../../auto_examples/datasets/plot_digits_last_image.html
     :align: center
     :scale: 50
@@ -200,14 +203,14 @@ resolution. Do you agree with the classifier?
 
 A complete example of this classification problem is available as an
 example that you can run and study:
-:ref:`example_classification_plot_digits_classification.py`.
+:ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`.
 
 
 Model persistence
 -----------------
 
-It is possible to save a model in the scikit by using Python's built-in
-persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_::
+It is possible to save a model in scikit-learn by using Python's built-in
+persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html>`_::
 
   >>> from sklearn import svm
   >>> from sklearn import datasets
@@ -216,7 +219,7 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+    decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
     max_iter=-1, probability=False, random_state=None, shrinking=True,
     tol=0.001, verbose=False)
 
@@ -228,7 +231,7 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> y[0]
   0
 
-In the specific case of the scikit, it may be more interesting to use
+In the specific case of scikit-learn, it may be more interesting to use
 joblib's replacement of pickle (``joblib.dump`` & ``joblib.load``),
 which is more efficient on big data, but can only pickle to the disk
 and not to a string::
@@ -243,10 +246,9 @@ with::
 
 .. note::
 
-   joblib.dump returns a list of filenames. Each individual numpy array
-   contained in the ``clf`` object is serialized as a separate file on the
-   filesystem. All files are required in the same folder when reloading the
-   model with joblib.load.
+    ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
+    instead of filenames. More information on data persistence with Joblib is
+    available `here <https://pythonhosted.org/joblib/persistence.html>`_.
 
 Note that pickle has some security and maintainability issues. Please refer to
 section :ref:`model_persistence` for more detailed information about model
@@ -291,7 +293,7 @@ maintained::
     >>> clf = SVC()
     >>> clf.fit(iris.data, iris.target)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+      decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
       max_iter=-1, probability=False, random_state=None, shrinking=True,
       tol=0.001, verbose=False)
 
@@ -300,7 +302,7 @@ maintained::
 
     >>> clf.fit(iris.data, iris.target_names[iris.target])  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+      decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
       max_iter=-1, probability=False, random_state=None, shrinking=True,
       tol=0.001, verbose=False)
 
@@ -308,9 +310,8 @@ maintained::
     ['setosa', 'setosa', 'setosa']
 
 Here, the first ``predict()`` returns an integer array, since ``iris.target``
-(an integer array) was used in ``fit``. The second ``predict`` returns a string
+(an integer array) was used in ``fit``. The second ``predict()`` returns a string
 array, since ``iris.target_names`` was for fitting.
-
 
 Refitting and updating parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -330,7 +331,7 @@ more than once will overwrite what was learned by any previous ``fit()``::
   >>> clf = SVC()
   >>> clf.set_params(kernel='linear').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape=None, degree=3, gamma='auto', kernel='linear',
+    decision_function_shape='ovr', degree=3, gamma='auto', kernel='linear',
     max_iter=-1, probability=False, random_state=None, shrinking=True,
     tol=0.001, verbose=False)
   >>> clf.predict(X_test)
@@ -338,7 +339,7 @@ more than once will overwrite what was learned by any previous ``fit()``::
 
   >>> clf.set_params(kernel='rbf').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape=None, degree=3, gamma='auto', kernel='rbf',
+    decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
     max_iter=-1, probability=False, random_state=None, shrinking=True,
     tol=0.001, verbose=False)
   >>> clf.predict(X_test)
@@ -347,3 +348,57 @@ more than once will overwrite what was learned by any previous ``fit()``::
 Here, the default kernel ``rbf`` is first changed to ``linear`` after the
 estimator has been constructed via ``SVC()``, and changed back to ``rbf`` to
 refit the estimator and to make a second prediction.
+
+Multiclass vs. multilabel fitting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When using :class:`multiclass classifiers <sklearn.multiclass>`,
+the learning and prediction task that is performed is dependent on the format of
+the target data fit upon::
+
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.multiclass import OneVsRestClassifier
+    >>> from sklearn.preprocessing import LabelBinarizer
+
+    >>> X = [[1, 2], [2, 4], [4, 5], [3, 2], [3, 1]]
+    >>> y = [0, 0, 1, 1, 2]
+
+    >>> classif = OneVsRestClassifier(estimator=SVC(random_state=0))
+    >>> classif.fit(X, y).predict(X)
+    array([0, 0, 1, 1, 2])
+
+In the above case, the classifier is fit on a 1d array of multiclass labels and
+the ``predict()`` method therefore provides corresponding multiclass predictions.
+It is also possible to fit upon a 2d array of binary label indicators::
+
+    >>> y = LabelBinarizer().fit_transform(y)
+    >>> classif.fit(X, y).predict(X)
+    array([[1, 0, 0],
+           [1, 0, 0],
+           [0, 1, 0],
+           [0, 0, 0],
+           [0, 0, 0]])
+
+Here, the classifier is ``fit()``  on a 2d binary label representation of ``y``,
+using the :class:`LabelBinarizer <sklearn.preprocessing.LabelBinarizer>`.
+In this case ``predict()`` returns a 2d array representing the corresponding
+multilabel predictions.
+
+Note that the fourth and fifth instances returned all zeroes, indicating that
+they matched none of the three labels ``fit`` upon. With multilabel outputs, it
+is similarly possible for an instance to be assigned multiple labels::
+
+  >> from sklearn.preprocessing import MultiLabelBinarizer
+  >> y = [[0, 1], [0, 2], [1, 3], [0, 2, 3], [2, 4]]
+  >> y = MultiLabelBinarizer().fit_transform(y)
+  >> classif.fit(X, y).predict(X)
+  array([[1, 1, 0, 0, 0],
+         [1, 0, 1, 0, 0],
+         [0, 1, 0, 1, 0],
+         [1, 0, 1, 1, 0],
+         [0, 0, 1, 0, 1]])
+
+In this case, the classifier is fit upon instances each assigned multiple labels.
+The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>` is
+used to binarize the 2d array of multilabels to ``fit`` upon. As a result,
+``predict()`` returns a 2d array with multiple predicted labels for each instance.

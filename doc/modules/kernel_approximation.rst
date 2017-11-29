@@ -13,7 +13,7 @@ algorithms.
 .. currentmodule:: sklearn.linear_model
 
 The advantage of using approximate explicit feature maps compared to the
-`kernel trick <http://en.wikipedia.org/wiki/Kernel_trick>`_,
+`kernel trick <https://en.wikipedia.org/wiki/Kernel_trick>`_,
 which makes use of feature maps implicitly, is that explicit mappings
 can be better suited for online learning and can significantly reduce the cost
 of learning with very large datasets.
@@ -59,13 +59,13 @@ a linear algorithm, for example a linear SVM::
     >>> y = [0, 0, 1, 1]
     >>> rbf_feature = RBFSampler(gamma=1, random_state=1)
     >>> X_features = rbf_feature.fit_transform(X)
-    >>> clf = SGDClassifier()   # doctest: +NORMALIZE_WHITESPACE
+    >>> clf = SGDClassifier(max_iter=5)   # doctest: +NORMALIZE_WHITESPACE
     >>> clf.fit(X_features, y)
     SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
            eta0=0.0, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-           penalty='l2', power_t=0.5, random_state=None, shuffle=True,
-           verbose=0, warm_start=False)
+           learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
+           n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
+           shuffle=True, tol=None, verbose=0, warm_start=False)
     >>> clf.score(X_features, y)
     1.0
 
@@ -88,7 +88,7 @@ For a given value of ``n_components`` :class:`RBFSampler` is often less accurate
 as :class:`Nystroem`. :class:`RBFSampler` is cheaper to compute, though, making
 use of larger feature spaces more efficient.
 
-.. figure:: ../auto_examples/images/plot_kernel_approximation_002.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_kernel_approximation_002.png
     :target: ../auto_examples/plot_kernel_approximation.html
     :scale: 50%
     :align: center
@@ -97,7 +97,7 @@ use of larger feature spaces more efficient.
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_kernel_approximation.py`
+    * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
 
 .. _additive_chi_kernel_approx:
 
@@ -196,12 +196,12 @@ or store training examples.
       <http://www.robots.ox.ac.uk/~vgg/rg/papers/randomfeatures.pdf>`_
       Rahimi, A. and Recht, B. - Advances in neural information processing 2007,
     .. [LS2010] `"Random Fourier approximations for skewed multiplicative histogram kernels"
-      <http://sminchisescu.ins.uni-bonn.de/papers/lis_dagm10.pdf>`_
+      <http://www.maths.lth.se/matematiklth/personal/sminchis/papers/lis_dagm10.pdf>`_
       Random Fourier approximations for skewed multiplicative histogram kernels
       - Lecture Notes for Computer Sciencd (DAGM)
     .. [VZ2010] `"Efficient additive kernels via explicit feature maps"
-      <http://eprints.pascal-network.org/archive/00006964/01/vedaldi10.pdf>`_
+      <https://www.robots.ox.ac.uk/~vgg/publications/2011/Vedaldi11/vedaldi11.pdf>`_
       Vedaldi, A. and Zisserman, A. - Computer Vision and Pattern Recognition 2010
     .. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
-      <http://eprints.pascal-network.org/archive/00007024/01/inproceedings.pdf.8a865c2a5421e40d.537265656b616e7468313047656e6572616c697a65642e706466.pdf>`_
+      <https://www.robots.ox.ac.uk/~vgg/publications/2010/Sreekanth10/sreekanth10.pdf>`_
       Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010

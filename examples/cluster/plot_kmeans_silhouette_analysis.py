@@ -9,7 +9,7 @@ point in one cluster is to points in the neighboring clusters and thus provides
 a way to assess parameters like number of clusters visually. This measure has a
 range of [-1, 1].
 
-Silhoette coefficients (as these values are referred to as) near +1 indicate
+Silhouette coefficients (as these values are referred to as) near +1 indicate
 that the sample is far away from the neighboring clusters. A value of 0
 indicates that the sample is on or very close to the decision boundary between
 two neighboring clusters and negative values indicate that those samples might
@@ -43,7 +43,7 @@ import numpy as np
 print(__doc__)
 
 # Generating the sample data from make_blobs
-# This particular setting has one distict cluster and 3 clusters placed close
+# This particular setting has one distinct cluster and 3 clusters placed close
 # together.
 X, y = make_blobs(n_samples=500,
                   n_features=2,
@@ -110,7 +110,7 @@ for n_clusters in range_n_clusters:
     ax1.set_xlabel("The silhouette coefficient values")
     ax1.set_ylabel("Cluster label")
 
-    # The vertical line for average silhoutte score of all the values
+    # The vertical line for average silhouette score of all the values
     ax1.axvline(x=silhouette_avg, color="red", linestyle="--")
 
     ax1.set_yticks([])  # Clear the yaxis labels / ticks
@@ -119,16 +119,17 @@ for n_clusters in range_n_clusters:
     # 2nd Plot showing the actual clusters formed
     colors = cm.spectral(cluster_labels.astype(float) / n_clusters)
     ax2.scatter(X[:, 0], X[:, 1], marker='.', s=30, lw=0, alpha=0.7,
-                c=colors)
+                c=colors, edgecolor='k')
 
     # Labeling the clusters
     centers = clusterer.cluster_centers_
     # Draw white circles at cluster centers
-    ax2.scatter(centers[:, 0], centers[:, 1],
-                marker='o', c="white", alpha=1, s=200)
+    ax2.scatter(centers[:, 0], centers[:, 1], marker='o',
+                c="white", alpha=1, s=200, edgecolor='k')
 
     for i, c in enumerate(centers):
-        ax2.scatter(c[0], c[1], marker='$%d$' % i, alpha=1, s=50)
+        ax2.scatter(c[0], c[1], marker='$%d$' % i, alpha=1,
+                    s=50, edgecolor='k')
 
     ax2.set_title("The visualization of the clustered data.")
     ax2.set_xlabel("Feature space for the 1st feature")

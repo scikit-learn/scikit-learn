@@ -27,8 +27,8 @@ Two feature extraction methods can be used in this example:
 Two algorithms are demoed: ordinary k-means and its more scalable cousin
 minibatch k-means.
 
-Additionally, latent sematic analysis can also be used to reduce dimensionality
-and discover latent patterns in the data. 
+Additionally, latent semantic analysis can also be used to reduce dimensionality
+and discover latent patterns in the data.
 
 It can be noted that k-means (and minibatch k-means) are very sensitive to
 feature scaling and that in this case the IDF weighting helps improve the
@@ -50,7 +50,7 @@ necessary to get a good convergence.
 """
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Lars Buitinck <L.J.Buitinck@uva.nl>
+#         Lars Buitinck
 # License: BSD 3 clause
 
 from __future__ import print_function
@@ -102,13 +102,19 @@ op.add_option("--verbose",
 print(__doc__)
 op.print_help()
 
-(opts, args) = op.parse_args()
+
+def is_interactive():
+    return not hasattr(sys.modules['__main__'], '__file__')
+
+# work-around for Jupyter notebook and IPython console
+argv = [] if is_interactive() else sys.argv[1:]
+(opts, args) = op.parse_args(argv)
 if len(args) > 0:
     op.error("this script takes no arguments.")
     sys.exit(1)
 
 
-###############################################################################
+# #############################################################################
 # Load some categories from the training set
 categories = [
     'alt.atheism',
@@ -117,7 +123,7 @@ categories = [
     'sci.space',
 ]
 # Uncomment the following to do the analysis on all the categories
-#categories = None
+# categories = None
 
 print("Loading 20 newsgroups dataset for categories:")
 print(categories)
@@ -138,13 +144,13 @@ if opts.use_hashing:
     if opts.use_idf:
         # Perform an IDF normalization on the output of HashingVectorizer
         hasher = HashingVectorizer(n_features=opts.n_features,
-                                   stop_words='english', non_negative=True,
+                                   stop_words='english', alternate_sign=False,
                                    norm=None, binary=False)
         vectorizer = make_pipeline(hasher, TfidfTransformer())
     else:
         vectorizer = HashingVectorizer(n_features=opts.n_features,
                                        stop_words='english',
-                                       non_negative=False, norm='l2',
+                                       alternate_sign=False, norm='l2',
                                        binary=False)
 else:
     vectorizer = TfidfVectorizer(max_df=0.5, max_features=opts.n_features,
@@ -177,7 +183,7 @@ if opts.n_components:
     print()
 
 
-###############################################################################
+# #############################################################################
 # Do the actual clustering
 
 if opts.minibatch:

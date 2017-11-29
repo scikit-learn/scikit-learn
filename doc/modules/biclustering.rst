@@ -44,8 +44,8 @@ biclusters on the diagonal. Here is an example of this structure
 where biclusters have higher average values than the other rows and
 columns:
 
-.. figure:: ../auto_examples/bicluster/images/plot_spectral_coclustering_003.png
-   :target: ../auto_examples/bicluster/images/plot_spectral_coclustering_003.png
+.. figure:: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_coclustering_003.png
+   :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_coclustering_003.png
    :align: center
    :scale: 50
 
@@ -56,8 +56,8 @@ each column belongs to all row clusters. Here is an example of this
 structure where the variance of the values within each bicluster is
 small:
 
-.. figure:: ../auto_examples/bicluster/images/plot_spectral_biclustering_003.png
-   :target: ../auto_examples/bicluster/images/plot_spectral_biclustering_003.png
+.. figure:: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_biclustering_003.png
+   :target: ../auto_examples/bicluster/images/sphx_glr_plot_spectral_biclustering_003.png
    :align: center
    :scale: 50
 
@@ -140,7 +140,7 @@ are used to form the matrix :math:`Z`:
                         C^{-1/2} V
           \end{bmatrix}
 
-where the the columns of :math:`U` are :math:`u_2, \dots, u_{\ell +
+where the columns of :math:`U` are :math:`u_2, \dots, u_{\ell +
 1}`, and similarly for :math:`V`.
 
 Then the rows of :math:`Z` are clustered using :ref:`k-means
@@ -150,11 +150,11 @@ and the remaining ``n_columns`` labels provide the column partitioning.
 
 .. topic:: Examples:
 
- * :ref:`example_bicluster_plot_spectral_coclustering.py`: A simple example
+ * :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_coclustering.py`: A simple example
    showing how to generate a data matrix with biclusters and apply
    this method to it.
 
- * :ref:`example_bicluster_bicluster_newsgroups.py`: An example of finding
+ * :ref:`sphx_glr_auto_examples_bicluster_plot_bicluster_newsgroups.py`: An example of finding
    biclusters in the twenty newsgroup dataset.
 
 
@@ -174,7 +174,7 @@ The :class:`SpectralBiclustering` algorithm assumes that the input
 data matrix has a hidden checkerboard structure. The rows and columns
 of a matrix with this structure may be partitioned so that the entries
 of any bicluster in the Cartesian product of row clusters and column
-clusters is are approximately constant. For instance, if there are two
+clusters are approximately constant. For instance, if there are two
 row partitions and three column partitions, each row will belong to
 three biclusters, and each column will belong to two biclusters.
 
@@ -237,7 +237,7 @@ clustering this :math:`n \times q` matrix yields the column labels.
 
 .. topic:: Examples:
 
- * :ref:`example_bicluster_plot_spectral_biclustering.py`: a simple example
+ * :ref:`sphx_glr_auto_examples_bicluster_plot_spectral_biclustering.py`: a simple example
    showing how to generate a checkerboard matrix and bicluster it.
 
 

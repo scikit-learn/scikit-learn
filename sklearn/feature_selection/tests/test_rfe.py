@@ -1,10 +1,8 @@
 """
 Testing Recursive feature elimination
 """
-import warnings
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
-from nose.tools import assert_equal, assert_true
 from scipy import sparse
 
 from sklearn.feature_selection.rfe import RFE, RFECV
@@ -13,11 +11,11 @@ from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC, SVR
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GroupKFold
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_greater, assert_equal, assert_true
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
@@ -25,7 +23,7 @@ from sklearn.metrics import get_scorer
 
 class MockClassifier(object):
     """
-    Dummy classifier to test recursive feature ellimination
+    Dummy classifier to test recursive feature elimination
     """
 
     def __init__(self, foo_param=0):
@@ -184,6 +182,13 @@ def test_rfecv():
     X_r_sparse = rfecv_sparse.transform(X_sparse)
     assert_array_equal(X_r_sparse.toarray(), iris.data)
 
+    # Verifying that steps < 1 don't blow up.
+    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=.2, cv=5)
+    X_sparse = sparse.csr_matrix(X)
+    rfecv_sparse.fit(X_sparse, y)
+    X_r_sparse = rfecv_sparse.transform(X_sparse)
+    assert_array_equal(X_r_sparse.toarray(), iris.data)
+
 
 def test_rfecv_mockclassifier():
     generator = check_random_state(0)
@@ -197,6 +202,25 @@ def test_rfecv_mockclassifier():
     # non-regression test for missing worst feature:
     assert_equal(len(rfecv.grid_scores_), X.shape[1])
     assert_equal(len(rfecv.ranking_), X.shape[1])
+
+
+def test_rfecv_verbose_output():
+    # Check verbose=1 is producing an output.
+    from sklearn.externals.six.moves import cStringIO as StringIO
+    import sys
+    sys.stdout = StringIO()
+
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = list(iris.target)
+
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5, verbose=1)
+    rfecv.fit(X, y)
+
+    verbose_output = sys.stdout
+    verbose_output.seek(0)
+    assert_greater(len(verbose_output.readline()), 0)
 
 
 def test_rfe_estimator_tags():
@@ -288,3 +312,38 @@ def test_number_of_subsets_of_features():
                      formula1(n_features, n_features_to_select, step))
         assert_equal(rfecv.grid_scores_.shape[0],
                      formula2(n_features, n_features_to_select, step))
+
+
+def test_rfe_cv_n_jobs():
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+
+    rfecv = RFECV(estimator=SVC(kernel='linear'))
+    rfecv.fit(X, y)
+    rfecv_ranking = rfecv.ranking_
+    rfecv_grid_scores = rfecv.grid_scores_
+
+    rfecv.set_params(n_jobs=2)
+    rfecv.fit(X, y)
+    assert_array_almost_equal(rfecv.ranking_, rfecv_ranking)
+    assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)
+
+
+def test_rfe_cv_groups():
+    generator = check_random_state(0)
+    iris = load_iris()
+    number_groups = 4
+    groups = np.floor(np.linspace(0, number_groups, len(iris.target)))
+    X = iris.data
+    y = (iris.target > 0).astype(int)
+
+    est_groups = RFECV(
+        estimator=RandomForestClassifier(random_state=generator),
+        step=1,
+        scoring='accuracy',
+        cv=GroupKFold(n_splits=2)
+    )
+    est_groups.fit(X, y, groups=groups)
+    assert est_groups.n_features_ > 0

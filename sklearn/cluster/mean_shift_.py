@@ -20,7 +20,7 @@ import warnings
 from collections import defaultdict
 from ..externals import six
 from ..utils.validation import check_is_fitted
-from ..utils import extmath, check_random_state, gen_batches, check_array
+from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
@@ -28,7 +28,8 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
 
-def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
+def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
+                       n_jobs=1):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
     That this function takes time at least quadratic in n_samples. For large
@@ -46,19 +47,32 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
     n_samples : int, optional
         The number of samples to use. If not given, all samples are used.
 
-    random_state : int or RandomState
-        Pseudo-random number generator state used for random sampling.
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    n_jobs : int, optional (default = 1)
+        The number of parallel jobs to run for neighbors search.
+        If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     Returns
     -------
     bandwidth : float
         The bandwidth parameter.
     """
+    X = check_array(X)
+
     random_state = check_random_state(random_state)
     if n_samples is not None:
         idx = random_state.permutation(X.shape[0])[:n_samples]
         X = X[idx]
-    nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile))
+    n_neighbors = int(X.shape[0] * quantile)
+    if n_neighbors < 1:  # cannot fit NearestNeighbors with n_neighbors = 0
+        n_neighbors = 1
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors,
+                            n_jobs=n_jobs)
     nbrs.fit(X)
 
     bandwidth = 0.
@@ -85,7 +99,7 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         my_old_mean = my_mean  # save the old mean
         my_mean = np.mean(points_within, axis=0)
         # If converged or at max_iter, adds the cluster
-        if (extmath.norm(my_mean - my_old_mean) < stop_thresh or
+        if (np.linalg.norm(my_mean - my_old_mean) < stop_thresh or
                 completed_iterations == max_iter):
             return tuple(my_mean), len(points_within)
         completed_iterations += 1
@@ -147,6 +161,9 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
+        .. versionadded:: 0.17
+           Parallel Execution using *n_jobs*.
+
     Returns
     -------
 
@@ -158,12 +175,13 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     Notes
     -----
-    See examples/cluster/plot_meanshift.py for an example.
+    For an example, see :ref:`examples/cluster/plot_mean_shift.py
+    <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
 
     """
 
     if bandwidth is None:
-        bandwidth = estimate_bandwidth(X)
+        bandwidth = estimate_bandwidth(X, n_jobs=n_jobs)
     elif bandwidth <= 0:
         raise ValueError("bandwidth needs to be greater than zero or None,\
             got %f" % bandwidth)
@@ -174,7 +192,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             seeds = X
     n_samples, n_features = X.shape
     center_intensity_dict = {}
-    nbrs = NearestNeighbors(radius=bandwidth).fit(X)
+    nbrs = NearestNeighbors(radius=bandwidth, n_jobs=n_jobs).fit(X)
 
     # execute iterations on all seeds in parallel
     all_res = Parallel(n_jobs=n_jobs)(
@@ -200,7 +218,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                                  key=lambda tup: tup[1], reverse=True)
     sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
     unique = np.ones(len(sorted_centers), dtype=np.bool)
-    nbrs = NearestNeighbors(radius=bandwidth).fit(sorted_centers)
+    nbrs = NearestNeighbors(radius=bandwidth,
+                            n_jobs=n_jobs).fit(sorted_centers)
     for i, center in enumerate(sorted_centers):
         if unique[i]:
             neighbor_idxs = nbrs.radius_neighbors([center],
@@ -210,7 +229,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     cluster_centers = sorted_centers[unique]
 
     # ASSIGN LABELS: a point belongs to the cluster that it is closest to
-    nbrs = NearestNeighbors(n_neighbors=1).fit(cluster_centers)
+    nbrs = NearestNeighbors(n_neighbors=1, n_jobs=n_jobs).fit(cluster_centers)
     labels = np.zeros(n_samples, dtype=np.int)
     distances, idxs = nbrs.kneighbors(X)
     if cluster_all:
@@ -338,8 +357,8 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Scalability:
 
     Because this implementation uses a flat kernel and
-    a Ball Tree to look up members of each kernel, the complexity will is
-    to O(T*n*log(n)) in lower dimensions, with n the number of samples
+    a Ball Tree to look up members of each kernel, the complexity will tend
+    towards O(T*n*log(n)) in lower dimensions, with n the number of samples
     and T the number of points. In higher dimensions the complexity will
     tend towards O(T*n^2).
 
@@ -373,6 +392,9 @@ class MeanShift(BaseEstimator, ClusterMixin):
         -----------
         X : array-like, shape=[n_samples, n_features]
             Samples to cluster.
+
+        y : Ignored
+
         """
         X = check_array(X)
         self.cluster_centers_, self.labels_ = \

@@ -2,7 +2,7 @@
 """
 
 # Authors:  Jiyuan Qian <jq401@nyu.edu>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -64,7 +64,7 @@ class BaseOptimizer(object):
         Returns
         -------
         is_stopping : bool
-            True if traning needs to stop
+            True if training needs to stop
         """
         if verbose:
             print(msg + " Stopping.")
@@ -96,7 +96,7 @@ class SGDOptimizer(BaseOptimizer):
 
         -'adaptive', keeps the learning rate constant to
          'learning_rate_init' as long as the training keeps decreasing.
-         Each time 2 consecitive epochs fail to decrease the training loss by
+         Each time 2 consecutive epochs fail to decrease the training loss by
          tol, or fail to increase validation score by tol if 'early_stopping'
          is on, the current learning rate is divided by 5.
 

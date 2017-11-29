@@ -36,6 +36,20 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 
 
+def test_deprecation_of_n_components_in_linkage_tree():
+    rng = np.random.RandomState(0)
+    X = rng.randn(50, 100)
+    # Test for warning of deprecation of n_components in linkage_tree
+    children, n_nodes, n_leaves, parent = assert_warns(DeprecationWarning,
+                                                       linkage_tree,
+                                                       X.T,
+                                                       n_components=10)
+    children_t, n_nodes_t, n_leaves_t, parent_t = linkage_tree(X.T)
+    assert_array_equal(children, children_t)
+    assert_equal(n_nodes, n_nodes_t)
+    assert_equal(n_leaves, n_leaves_t)
+    assert_equal(parent, parent_t)
+
 def test_linkage_misc():
     # Misc tests on linkage
     rng = np.random.RandomState(42)
@@ -47,13 +61,13 @@ def test_linkage_misc():
     # Smoke test FeatureAgglomeration
     FeatureAgglomeration().fit(X)
 
-    # test hiearchical clustering on a precomputed distances matrix
+    # test hierarchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
 
     res = linkage_tree(dis, affinity="precomputed")
     assert_array_equal(res[0], linkage_tree(X, affinity="cosine")[0])
 
-    # test hiearchical clustering on a precomputed distances matrix
+    # test hierarchical clustering on a precomputed distances matrix
     res = linkage_tree(X, affinity=manhattan_distances)
     assert_array_equal(res[0], linkage_tree(X, affinity="manhattan")[0])
 
@@ -113,6 +127,17 @@ def test_height_linkage_tree():
         children, n_nodes, n_leaves, parent = linkage_func(X.T, connectivity)
         n_nodes = 2 * X.shape[1] - 1
         assert_true(len(children) + n_leaves == n_nodes)
+
+
+def test_agglomerative_clustering_wrong_arg_memory():
+    # Test either if an error is raised when memory is not
+    # either a str or a joblib.Memory instance
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    memory = 5
+    clustering = AgglomerativeClustering(memory=memory)
+    assert_raises(ValueError, clustering.fit, X)
 
 
 def test_agglomerative_clustering():
@@ -507,3 +532,30 @@ def test_agg_n_clusters():
         msg = ("n_clusters should be an integer greater than 0."
                " %s was provided." % str(agc.n_clusters))
         assert_raise_message(ValueError, msg, agc.fit, X)
+
+
+def test_affinity_passed_to_fix_connectivity():
+    # Test that the affinity parameter is actually passed to the pairwise
+    # function
+
+    size = 2
+    rng = np.random.RandomState(0)
+    X = rng.randn(size, size)
+    mask = np.array([True, False, False, True])
+
+    connectivity = grid_to_graph(n_x=size, n_y=size,
+                                 mask=mask, return_as=np.ndarray)
+
+    class FakeAffinity:
+        def __init__(self):
+            self.counter = 0
+
+        def increment(self, *args, **kwargs):
+            self.counter += 1
+            return self.counter
+
+    fa = FakeAffinity()
+
+    linkage_tree(X, connectivity=connectivity, affinity=fa.increment)
+
+    assert_equal(fa.counter, 3)

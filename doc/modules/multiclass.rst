@@ -14,40 +14,45 @@ Multiclass and multilabel algorithms
 
 The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
 ``multiclass`` and ``multilabel`` classification problems
-by decomposing such problems into binary classification problems.
+by decomposing such problems into binary classification problems. Multitarget
+regression is also supported.
 
-  - **Multiclass classification** means a classification task with more than
-    two classes; e.g., classify a set of images of fruits which may be oranges,
-    apples, or pears. Multiclass classification makes the assumption that each
-    sample is assigned to one and only one label: a fruit can be either an
-    apple or a pear but not both at the same time.
+- **Multiclass classification** means a classification task with more than
+  two classes; e.g., classify a set of images of fruits which may be oranges,
+  apples, or pears. Multiclass classification makes the assumption that each
+  sample is assigned to one and only one label: a fruit can be either an
+  apple or a pear but not both at the same time.
 
-  - **Multilabel classification** assigns to each sample a set of target
-    labels. This can be thought as predicting properties of a data-point
-    that are not mutually exclusive, such as topics that are relevant for a
-    document. A text might be about any of religion, politics, finance or
-    education at the same time or none of these.
+- **Multilabel classification** assigns to each sample a set of target
+  labels. This can be thought as predicting properties of a data-point
+  that are not mutually exclusive, such as topics that are relevant for a
+  document. A text might be about any of religion, politics, finance or
+  education at the same time or none of these.
 
-  - **Multioutput-multiclass classification** and **multi-task classification**
-    means that a single estimator has to handle
-    several joint classification tasks. This is a generalization
-    of the multi-label classification task, where the set of classification
-    problem is restricted to binary classification, and of the multi-class
-    classification task. *The output format is a 2d numpy array or sparse
-    matrix.*
+- **Multioutput regression** assigns each sample a set of target
+  values.  This can be thought of as predicting several properties
+  for each data-point, such as wind direction and magnitude at a
+  certain location.
 
-    The set of labels can be different for each output variable.
-    For instance a sample could be assigned "pear" for an output variable that
-    takes possible values in a finite set of species such as "pear", "apple",
-    "orange" and "green" for a second output variable that takes possible values
-    in a finite set of colors such as "green", "red", "orange", "yellow"...
+- **Multioutput-multiclass classification** and **multi-task classification**
+  means that a single estimator has to handle several joint classification
+  tasks. This is both a generalization of the multi-label classification
+  task, which only considers binary classification, as well as a
+  generalization of the multi-class classification task.  *The output format
+  is a 2d numpy array or sparse matrix.*
 
-    This means that any classifiers handling multi-output
-    multiclass or multi-task classification task
-    supports the multi-label classification task as a special case.
-    Multi-task classification is similar to the multi-output
-    classification task with different model formulations. For
-    more information, see the relevant estimator documentation.
+  The set of labels can be different for each output variable.
+  For instance, a sample could be assigned "pear" for an output variable that
+  takes possible values in a finite set of species such as "pear", "apple"; 
+  and "blue" or "green" for a second output variable that takes possible values
+  in a finite set of colors such as "green", "red", "blue", "yellow"...
+
+  This means that any classifiers handling multi-output
+  multiclass or multi-task classification tasks,
+  support the multi-label classification task as a special case.
+  Multi-task classification is similar to the multi-output
+  classification task with different model formulations. For
+  more information, see the relevant estimator documentation.
 
 All scikit-learn classifiers are capable of multiclass classification,
 but the meta-estimators offered by :mod:`sklearn.multiclass`
@@ -57,23 +62,71 @@ because this may have an effect on classifier performance
 
 Below is a summary of the classifiers supported by scikit-learn
 grouped by strategy; you don't need the meta-estimators in this class
-if you're using one of these unless you want custom multiclass behavior:
+if you're using one of these, unless you want custom multiclass behavior:
 
-  - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
-    :ref:`LDA and QDA <lda_qda>`,
-    :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-    :ref:`Nearest Neighbors <neighbors>`,
-    setting ``multi_class='multinomial'`` in
-    :class:`sklearn.linear_model.LogisticRegression`.
-  - Support multilabel: :ref:`Decision Trees <tree>`,
-    :ref:`Random Forests <forest>`, :ref:`Nearest Neighbors <neighbors>`,
-    :ref:`Ridge Regression <ridge_regression>`.
-  - One-Vs-One: :class:`sklearn.svm.SVC`.
-  - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
+- **Inherently multiclass:**
 
-Some estimators also support multioutput-multiclass classification
-tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-:ref:`Nearest Neighbors <neighbors>`.
+  - :class:`sklearn.naive_bayes.BernoulliNB`
+  - :class:`sklearn.tree.DecisionTreeClassifier`
+  - :class:`sklearn.tree.ExtraTreeClassifier`
+  - :class:`sklearn.ensemble.ExtraTreesClassifier`
+  - :class:`sklearn.naive_bayes.GaussianNB`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.semi_supervised.LabelPropagation`
+  - :class:`sklearn.semi_supervised.LabelSpreading`
+  - :class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`
+  - :class:`sklearn.svm.LinearSVC` (setting multi_class="crammer_singer")
+  - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="multinomial")
+  - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="multinomial")
+  - :class:`sklearn.neural_network.MLPClassifier`
+  - :class:`sklearn.neighbors.NearestCentroid`
+  - :class:`sklearn.discriminant_analysis.QuadraticDiscriminantAnalysis`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.ensemble.RandomForestClassifier`
+  - :class:`sklearn.linear_model.RidgeClassifier`
+  - :class:`sklearn.linear_model.RidgeClassifierCV`
+
+
+- **Multiclass as One-Vs-One:**
+
+  - :class:`sklearn.svm.NuSVC`
+  - :class:`sklearn.svm.SVC`.
+  - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_one")
+
+
+- **Multiclass as One-Vs-All:**
+
+  - :class:`sklearn.ensemble.GradientBoostingClassifier`
+  - :class:`sklearn.gaussian_process.GaussianProcessClassifier` (setting multi_class = "one_vs_rest")
+  - :class:`sklearn.svm.LinearSVC` (setting multi_class="ovr")
+  - :class:`sklearn.linear_model.LogisticRegression` (setting multi_class="ovr")
+  - :class:`sklearn.linear_model.LogisticRegressionCV` (setting multi_class="ovr")
+  - :class:`sklearn.linear_model.SGDClassifier`
+  - :class:`sklearn.linear_model.Perceptron`
+  - :class:`sklearn.linear_model.PassiveAggressiveClassifier`
+
+
+- **Support multilabel:**
+
+  - :class:`sklearn.tree.DecisionTreeClassifier`
+  - :class:`sklearn.tree.ExtraTreeClassifier`
+  - :class:`sklearn.ensemble.ExtraTreesClassifier`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neural_network.MLPClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.ensemble.RandomForestClassifier`
+  - :class:`sklearn.linear_model.RidgeClassifierCV`
+
+
+- **Support multiclass-multioutput:**
+
+  - :class:`sklearn.tree.DecisionTreeClassifier`
+  - :class:`sklearn.tree.ExtraTreeClassifier`
+  - :class:`sklearn.ensemble.ExtraTreesClassifier`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.ensemble.RandomForestClassifier`
+
 
 .. warning::
 
@@ -114,8 +167,8 @@ This strategy, also known as **one-vs-all**, is implemented in
 per class. For each classifier, the class is fitted against all the other
 classes. In addition to its computational efficiency (only `n_classes`
 classifiers are needed), one advantage of this approach is its
-interpretability. Since each class is represented by one and one classifier
-only, it is possible to gain knowledge about the class by inspecting its
+interpretability. Since each class is represented by one and only one classifier, 
+it is possible to gain knowledge about the class by inspecting its
 corresponding classifier. This is the most commonly used strategy and is a fair
 default choice.
 
@@ -146,7 +199,7 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 [i, j] indicates the presence of label j in sample i.
 
 
-.. figure:: ../auto_examples/images/plot_multilabel_001.png
+.. figure:: ../auto_examples/images/sphx_glr_plot_multilabel_001.png
     :target: ../auto_examples/plot_multilabel.html
     :align: center
     :scale: 75%
@@ -154,7 +207,7 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_multilabel.py`
+    * :ref:`sphx_glr_auto_examples_plot_multilabel.py`
 
 .. _ovo_classification:
 
@@ -198,8 +251,8 @@ Below is an example of multiclass learning using OvO::
 
 .. topic:: References:
 
-    .. [1] "Pattern Recognition and Machine Learning. Springer",
-        Christopher M. Bishop, page 183, (First Edition)
+    * "Pattern Recognition and Machine Learning. Springer",
+      Christopher M. Bishop, page 183, (First Edition)
 
 .. _ecoc:
 
@@ -207,7 +260,7 @@ Error-Correcting Output-Codes
 =============================
 
 Output-code based strategies are fairly different from one-vs-the-rest and
-one-vs-one. With these strategies, each class is represented in a euclidean
+one-vs-one. With these strategies, each class is represented in a Euclidean
 space, where each dimension can only be 0 or 1. Another way to put it is
 that each class is represented by a binary code (an array of 0 and 1). The
 matrix which keeps track of the location/code of each class is called the
@@ -215,7 +268,7 @@ code book. The code size is the dimensionality of the aforementioned space.
 Intuitively, each class should be represented by a code as unique as
 possible and a good code book should be designed to optimize classification
 accuracy. In this implementation, we simply use a randomly-generated code
-book as advocated in [2]_ although more elaborate methods may be added in the
+book as advocated in [3]_ although more elaborate methods may be added in the
 future.
 
 At fitting time, one binary classifier per bit in the code book is fitted.
@@ -231,7 +284,7 @@ one-vs-the-rest. In theory, ``log2(n_classes) / n_classes`` is sufficient to
 represent each class unambiguously. However, in practice, it may not lead to
 good accuracy since ``log2(n_classes)`` is much smaller than n_classes.
 
-A number greater than than 1 will require more classifiers than
+A number greater than 1 will require more classifiers than
 one-vs-the-rest. In this case, some classifiers will in theory correct for
 the mistakes made by other classifiers, hence the name "error-correcting".
 In practice, however, this may not happen as classifier mistakes will
@@ -262,16 +315,113 @@ Below is an example of multiclass learning using Output-Codes::
 
 .. topic:: References:
 
-    .. [1] "Solving multiclass learning problems via error-correcting output codes",
-        Dietterich T., Bakiri G.,
-        Journal of Artificial Intelligence Research 2,
-        1995.
+    * "Solving multiclass learning problems via error-correcting output codes",
+      Dietterich T., Bakiri G.,
+      Journal of Artificial Intelligence Research 2,
+      1995.
 
-    .. [2] "The error coding method and PICTs",
+    .. [3] "The error coding method and PICTs",
         James G., Hastie T.,
         Journal of Computational and Graphical statistics 7,
         1998.
 
-    .. [3] "The Elements of Statistical Learning",
-        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
-        2008.
+    * "The Elements of Statistical Learning",
+      Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
+      2008.
+
+Multioutput regression
+======================
+
+Multioutput regression support can be added to any regressor with
+:class:`MultiOutputRegressor`.  This strategy consists of fitting one
+regressor per target. Since each target is represented by exactly one
+regressor it is possible to gain knowledge about the target by
+inspecting its corresponding regressor. As
+:class:`MultiOutputRegressor` fits one regressor per target it can not
+take advantage of correlations between targets.
+
+Below is an example of multioutput regression:
+
+  >>> from sklearn.datasets import make_regression
+  >>> from sklearn.multioutput import MultiOutputRegressor
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+  >>> X, y = make_regression(n_samples=10, n_targets=3, random_state=1)
+  >>> MultiOutputRegressor(GradientBoostingRegressor(random_state=0)).fit(X, y).predict(X)
+  array([[-154.75474165, -147.03498585,  -50.03812219],
+         [   7.12165031,    5.12914884,  -81.46081961],
+         [-187.8948621 , -100.44373091,   13.88978285],
+         [-141.62745778,   95.02891072, -191.48204257],
+         [  97.03260883,  165.34867495,  139.52003279],
+         [ 123.92529176,   21.25719016,   -7.84253   ],
+         [-122.25193977,  -85.16443186, -107.12274212],
+         [ -30.170388  ,  -94.80956739,   12.16979946],
+         [ 140.72667194,  176.50941682,  -17.50447799],
+         [ 149.37967282,  -81.15699552,   -5.72850319]])
+
+Multioutput classification
+==========================
+
+Multioutput classification support can be added to any classifier with
+:class:`MultiOutputClassifier`. This strategy consists of fitting one
+classifier per target.  This allows multiple target variable
+classifications. The purpose of this class is to extend estimators
+to be able to estimate a series of target functions (f1,f2,f3...,fn)
+that are trained on a single X predictor matrix to predict a series
+of responses (y1,y2,y3...,yn).
+
+Below is an example of multioutput classification:
+    
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.utils import shuffle
+    >>> import numpy as np
+    >>> X, y1 = make_classification(n_samples=10, n_features=100, n_informative=30, n_classes=3, random_state=1)
+    >>> y2 = shuffle(y1, random_state=1)
+    >>> y3 = shuffle(y1, random_state=2)
+    >>> Y = np.vstack((y1, y2, y3)).T
+    >>> n_samples, n_features = X.shape # 10,100
+    >>> n_outputs = Y.shape[1] # 3
+    >>> n_classes = 3
+    >>> forest = RandomForestClassifier(n_estimators=100, random_state=1)
+    >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=-1)
+    >>> multi_target_forest.fit(X, Y).predict(X)
+    array([[2, 2, 0],
+           [1, 2, 1],
+           [2, 1, 0],
+           [0, 0, 2],
+           [0, 2, 1],
+           [0, 0, 2],
+           [1, 1, 0],
+           [1, 1, 1],
+           [0, 0, 2],
+           [2, 0, 0]])
+
+Classifier Chain
+================
+
+Classifier chains (see :class:`ClassifierChain`) are a way of combining a
+number of binary classifiers into a single multi-label model that is capable
+of exploiting correlations among targets.
+
+For a multi-label classification problem with N classes, N binary
+classifiers are assigned an integer between 0 and N-1. These integers
+define the order of models in the chain. Each classifier is then fit on the
+available training data plus the true labels of the classes whose
+models were assigned a lower number.
+
+When predicting, the true labels will not be available. Instead the
+predictions of each model are passed on to the subsequent models in the
+chain to be used as features.
+
+Clearly the order of the chain is important. The first model in the chain
+has no information about the other labels while the last model in the chain
+has features indicating the presence of all of the other labels. In general
+one does not know the optimal ordering of the models in the chain so
+typically many randomly ordered chains are fit and their predictions are
+averaged together.
+
+.. topic:: References:
+
+    Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
+        "Classifier Chains for Multi-label Classification", 2009.

@@ -13,7 +13,7 @@ high variance (a sign of overfitting) by encouraging smaller weights, resulting
 in a decision boundary plot that appears with lesser curvatures.
 Similarly, decreasing alpha may fix high bias (a sign of underfitting) by
 encouraging larger weights, potentially resulting in a more complicated
-decision boundery.
+decision boundary.
 """
 print(__doc__)
 
@@ -84,7 +84,7 @@ for X, y in datasets:
         score = clf.score(X_test, y_test)
 
         # Plot the decision boundary. For that, we will assign a color to each
-        # point in the mesh [x_min, m_max]x[y_min, y_max].
+        # point in the mesh [x_min, x_max]x[y_min, y_max].
         if hasattr(clf, "decision_function"):
             Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         else:
@@ -95,10 +95,11 @@ for X, y in datasets:
         ax.contourf(xx, yy, Z, cmap=cm, alpha=.8)
 
         # Plot also the training points
-        ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright)
+        ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright,
+                   edgecolors='black', s=25)
         # and testing points
         ax.scatter(X_test[:, 0], X_test[:, 1], c=y_test, cmap=cm_bright,
-                   alpha=0.6)
+                   alpha=0.6, edgecolors='black', s=25)
 
         ax.set_xlim(xx.min(), xx.max())
         ax.set_ylim(yy.min(), yy.max())

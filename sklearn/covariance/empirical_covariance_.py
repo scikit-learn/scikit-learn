@@ -17,7 +17,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator
 from ..utils import check_array
-from ..utils.extmath import fast_logdet, pinvh
+from ..utils.extmath import fast_logdet
 
 
 def log_likelihood(emp_cov, precision):
@@ -133,7 +133,7 @@ class EmpiricalCovariance(BaseEstimator):
         self.covariance_ = covariance
         # set precision
         if self.store_precision:
-            self.precision_ = pinvh(covariance)
+            self.precision_ = linalg.pinvh(covariance)
         else:
             self.precision_ = None
 
@@ -149,7 +149,7 @@ class EmpiricalCovariance(BaseEstimator):
         if self.store_precision:
             precision = self.precision_
         else:
-            precision = pinvh(self.covariance_)
+            precision = linalg.pinvh(self.covariance_)
         return precision
 
     def fit(self, X, y=None):
@@ -251,7 +251,7 @@ class EmpiricalCovariance(BaseEstimator):
         else:
             raise NotImplementedError(
                 "Only spectral and frobenius norms are implemented")
-        # optionaly scale the error norm
+        # optionally scale the error norm
         if scaling:
             squared_norm = squared_norm / error.shape[0]
         # finally get either the squared norm or the norm

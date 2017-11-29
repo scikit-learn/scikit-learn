@@ -21,12 +21,18 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils.testing import SkipTest
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
 from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.multiclass import class_distribution
 from sklearn.utils.multiclass import check_classification_targets
+
+from sklearn.utils.metaestimators import _safe_split
+from sklearn.model_selection import ShuffleSplit
+from sklearn.svm import SVC
+from sklearn import datasets
 
 
 class NotAnArray(object):
@@ -36,13 +42,13 @@ class NotAnArray(object):
     def __init__(self, data):
         self.data = data
 
-    def __array__(self):
+    def __array__(self, dtype=None):
         return self.data
 
 
 EXAMPLES = {
     'multilabel-indicator': [
-        # valid when the data is formated as sparse or dense, identified
+        # valid when the data is formatted as sparse or dense, identified
         # by CSR format when the testing takes place
         csr_matrix(np.random.RandomState(42).randint(2, size=(10, 10))),
         csr_matrix(np.array([[0, 1], [1, 0]])),
@@ -121,7 +127,7 @@ EXAMPLES = {
     'unknown': [
         [[]],
         [()],
-        # sequence of sequences that were'nt supported even before deprecation
+        # sequence of sequences that weren't supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
         [np.array([]), np.array([1, 2, 3])],
         [set([1, 2, 3]), set([1, 2])],
@@ -266,7 +272,7 @@ def test_check_classification_targets():
         if y_type in ["unknown", "continuous", 'continuous-multioutput']:
             for example in EXAMPLES[y_type]:
                 msg = 'Unknown label type: '
-                assert_raises_regex(ValueError, msg, 
+                assert_raises_regex(ValueError, msg,
                     check_classification_targets, example)
         else:
             for example in EXAMPLES[y_type]:
@@ -290,6 +296,14 @@ def test_type_of_target():
                ' use a binary array or sparse matrix instead.')
         assert_raises_regex(ValueError, msg, type_of_target, example)
 
+    try:
+        from pandas import SparseSeries
+    except ImportError:
+        raise SkipTest("Pandas not found")
+
+    y = SparseSeries([1, 0, 0, 1, 0])
+    msg = "y cannot be class 'SparseSeries'."
+    assert_raises_regex(ValueError, msg, type_of_target, y)
 
 def test_class_distribution():
     y = np.array([[1, 0, 0, 1],
@@ -345,3 +359,25 @@ def test_class_distribution():
         assert_array_almost_equal(classes_sp[k], classes_expected[k])
         assert_array_almost_equal(n_classes_sp[k], n_classes_expected[k])
         assert_array_almost_equal(class_prior_sp[k], class_prior_expected[k])
+
+
+def test_safe_split_with_precomputed_kernel():
+    clf = SVC()
+    clfp = SVC(kernel="precomputed")
+
+    iris = datasets.load_iris()
+    X, y = iris.data, iris.target
+    K = np.dot(X, X.T)
+
+    cv = ShuffleSplit(test_size=0.25, random_state=0)
+    train, test = list(cv.split(X))[0]
+
+    X_train, y_train = _safe_split(clf, X, y, train)
+    K_train, y_train2 = _safe_split(clfp, K, y, train)
+    assert_array_almost_equal(K_train, np.dot(X_train, X_train.T))
+    assert_array_almost_equal(y_train, y_train2)
+
+    X_test, y_test = _safe_split(clf, X, y, test, train)
+    K_test, y_test2 = _safe_split(clfp, K, y, test, train)
+    assert_array_almost_equal(K_test, np.dot(X_test, X_train.T))
+    assert_array_almost_equal(y_test, y_test2)
