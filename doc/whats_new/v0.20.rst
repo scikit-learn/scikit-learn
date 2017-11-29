@@ -49,6 +49,11 @@ Classifiers and regressors
   Naive Bayes classifier described in Rennie et al. (2003).
   :issue:`8190` by :user:`Michael A. Alcorn <airalcorn2>`.
 
+- Added :class:`ensemble.StackingTransformer` and helper function
+  :func:`ensemble.make_stack_layer` which implements an approach to Stacked
+  Generalization using cross validation predictions.
+  :issue:`8960` by :user:`Caio Oliveira <caioaao>`.
+
 Preprocessing
 
 - Added :class:`preprocessing.CategoricalEncoder`, which allows to encode
@@ -59,11 +64,6 @@ Preprocessing
   derives the categories based on the unique values in the features instead of
   the maximum value in the features. :issue:`9151` by
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
-
-- Added :class:`ensemble.StackingTransformer` and helper function
-  :func:`ensemble.make_stack_layer` which implements an approach to Stacked
-  Generalization using cross validation predictions.
-  :issue:`8960` by :user:`Caio Oliveira <caioaao>`.
 
 Model evaluation
 
@@ -217,7 +217,7 @@ Feature Extraction
   of all possible patches rather than simply returning the number of possible
   patches. :issue:`10100` by :user:`Varun Agrawal <varunagrawal>`
 
-	
+
 API changes summary
 -------------------
 
