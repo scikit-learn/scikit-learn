@@ -543,10 +543,12 @@ Encoding ordinal features
 =============================
 Often categorical features have a clear ordering. For example a person could
 have features
-``["short", "tall"]``,
-``["low income", "medium income", "high income"]``,
-``["elementary school graduate", "high school graduate", "some college",
-   "college graduate"]``.
+
+* ``["short", "tall"]``
+* ``["low income", "medium income", "high income"]``
+* ``["elementary school graduate", "high school graduate", "some college",
+   "college graduate"]``
+
 Even though these features can be ordered, we shouldn't necessarily assign
 scores to them, as the difference between categories one and two is not the
 same as the difference between categories two and three.

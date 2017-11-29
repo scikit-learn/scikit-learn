@@ -2885,7 +2885,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     the values taken on by ordinal (discrete) features. The output will be
     a sparse matrix where each column corresponds to one possible value of one
     feature. It is assumed that input features take on values in the range
-    [0, n_values).
+    0 to (n_values - 1).
 
     This encoding is needed for feeding ordinal features to many scikit-learn
     estimators, notably linear models and SVMs with the standard kernels.
@@ -2916,7 +2916,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     dtype : number type, default=np.float
         Desired dtype of output.
 
-    sparse : boolean, default=True
+    sparse : boolean, default=False
         Will return sparse matrix if set True else will return an array.
 
     handle_unknown : str, 'error' or 'ignore'
@@ -2941,35 +2941,26 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
 
     >>> from sklearn.preprocessing import UnaryEncoder
     >>> enc = UnaryEncoder()
-    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
-[1, 0, 2]])  # doctest: +ELLIPSIS
+    >>> enc.fit([[0, 0, 3],
+                 [1, 1, 0],
+                 [0, 2, 1],
+                 [1, 0, 2]])  # doctest: +ELLIPSIS
     UnaryEncoder(dtype=<... 'numpy.float64'>, handle_unknown='error',
-           n_values='auto', ordinal_features='all', sparse=True)
+           n_values='auto', ordinal_features='all', sparse=False)
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
     array([0, 1, 3, 6])
-    >>> enc.transform([[0, 1, 1]]).toarray()
-    array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
+    >>> enc.transform([[0, 1, 2]]).toarray()
+    array([[ 0.,  1.,  0.,  1.,  1.,  0.]])
 
     See also
     --------
-    sklearn.feature_extraction.DictVectorizer : performs a Ordinal encoding of
-      dictionary items (also handles string-valued features).
-    sklearn.feature_extraction.FeatureHasher : performs an approximate Ordinal
-      encoding of dictionary items or strings.
     sklearn.preprocessing.OneHotEncoder: encodes categorical integer features
       using a one-hot aka one-of-K scheme.
-    sklearn.preprocessing.LabelBinarizer : binarizes labels in a one-vs-all
-      fashion.
-    sklearn.preprocessing.MultiLabelBinarizer : transforms between iterable of
-      iterables and a multilabel format, e.g. a (samples x classes) binary
-      matrix indicating the presence of a class label.
-    sklearn.preprocessing.LabelEncoder : encodes labels with values between 0
-      and n_classes-1.
     """
     def __init__(self, n_values="auto", ordinal_features="all",
-                 dtype=np.float64, sparse=True, handle_unknown='error'):
+                 dtype=np.float64, sparse=False, handle_unknown='error'):
         self.n_values = n_values
         self.ordinal_features = ordinal_features
         self.dtype = dtype
@@ -2983,6 +2974,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape [n_samples, n_feature]
             Input array of type int.
+            All feature values should be non-negative otherwise will raise a
+            ValueError.
         """
         self.fit_transform(X)
         return self
@@ -3088,6 +3081,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         ----------
         X : array-like, shape [n_samples, n_features]
             Input array of type int.
+            All feature values should be non-negative otherwise will raise a
+            ValueError.
 
         Returns
         -------
