@@ -325,7 +325,7 @@ The transformation is parameterized by :math:`\lambda`, which is determined
 through maximum likelihood estimation. Here is an example of using Box-Cox to
 map samples drawn from a lognormal distribution to a normal distribution::
 
-  >>> pt = preprocessing.PowerTransformer(method='boxcox')
+  >>> pt = preprocessing.PowerTransformer(method='box-cox')
   >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
   >>> X_lognormal                                         # doctest: +ELLIPSIS
   array([[ 1.28...,  1.18...,  0.84...],

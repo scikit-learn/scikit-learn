@@ -87,7 +87,7 @@ distributions = [
     ('Data after robust scaling',
         RobustScaler(quantile_range=(25, 75)).fit_transform(X)),
     ('Data after power transformation (Box-Cox)',
-     PowerTransformer(method='boxcox').fit_transform(X)),
+     PowerTransformer(method='box-cox').fit_transform(X)),
     ('Data after quantile transformation (gaussian pdf)',
         QuantileTransformer(output_distribution='normal')
         .fit_transform(X)),

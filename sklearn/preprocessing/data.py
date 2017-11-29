@@ -2597,8 +2597,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    method : str, (default='boxcox')
-        The power transform method. Currently, 'boxcox' (Box-Cox transform)
+    method : str, (default='box-cox')
+        The power transform method. Currently, 'box-cox' (Box-Cox transform)
         is the only option available.
 
     copy : boolean, optional, default=True
@@ -2616,7 +2616,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> pt = PowerTransformer()
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(pt.fit(data))
-    PowerTransformer(copy=True, method='boxcox')
+    PowerTransformer(copy=True, method='box-cox')
     >>> print(pt.lambdas_)  # doctest: +ELLIPSIS
     [ 1.051... -2.345...]
     >>> print(pt.transform(data))  # doctest: +ELLIPSIS
@@ -2641,7 +2641,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Royal Statistical Society B, 26, 211-252 (1964).
 
     """
-    def __init__(self, method='boxcox', copy=True):
+    def __init__(self, method='box-cox', copy=True):
         self.method = method
         self.copy = copy
 
@@ -2737,7 +2737,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         """
         X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
 
-        if check_positive and self.method == 'boxcox' and np.any(X <= 0):
+        if check_positive and self.method == 'box-cox' and np.any(X <= 0):
             raise ValueError("The Box-Cox transformation can only be applied "
                              "to strictly positive data")
 
@@ -2746,7 +2746,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
                              "than fitting data. Should have {n}, data has {m}"
                              .format(n=len(self.lambdas_), m=X.shape[1]))
 
-        valid_methods = ('boxcox',)
+        valid_methods = ('box-cox',)
         if check_method and self.method not in valid_methods:
             raise ValueError("'method' must be one of {}, ",
                              "got {} instead."
