@@ -273,9 +273,10 @@ def test_sparse_oneclasssvm():
     kernels = ["linear", "poly", "rbf", "sigmoid"]
     for dataset in datasets:
         for kernel in kernels:
-            clf = svm.OneClassSVM(kernel=kernel, random_state=0)
-            sp_clf = svm.OneClassSVM(kernel=kernel, random_state=0)
-            check_svm_model_equal(clf, sp_clf, *dataset)
+            with ignore_warnings(category=DeprecationWarning):		
+                clf = svm.OneClassSVM(kernel=kernel, random_state=0)
+                sp_clf = svm.OneClassSVM(kernel=kernel, random_state=0)
+                check_svm_model_equal(clf, sp_clf, *dataset)
 
 
 def test_sparse_realdata():
