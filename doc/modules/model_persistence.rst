@@ -13,7 +13,7 @@ security and maintainability issues when working with pickle serialization.
 Persistence example
 -------------------
 
-It is possible to save a model in the scikit by using Python's built-in
+It is possible to save a model in scikit-learn by using Python's built-in
 persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html>`_::
 
   >>> from sklearn import svm
@@ -35,7 +35,7 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
   >>> y[0]
   0
 
-In the specific case of the scikit, it may be more interesting to use
+In the specific case of scikit-learn, it may be more interesting to use
 joblib's replacement of pickle (``joblib.dump`` & ``joblib.load``),
 which is more efficient on objects that carry large numpy arrays internally as
 is often the case for fitted scikit-learn estimators, but can only pickle to the

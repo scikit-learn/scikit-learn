@@ -42,6 +42,8 @@ Functions
    :template: function.rst
 
    base.clone
+   base.is_classifier
+   base.is_regressor
    config_context
    get_config
    set_config
@@ -1199,6 +1201,7 @@ Model validation
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
+   preprocessing.CategoricalEncoder
    preprocessing.PolynomialFeatures
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
