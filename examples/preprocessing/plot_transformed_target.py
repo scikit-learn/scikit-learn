@@ -40,7 +40,7 @@ from sklearn.metrics import median_absolute_error, r2_score
 # non-negative and (ii) applying an exponential function to obtain non-linear
 # targets which cannot be fitted using a simple linear model.
 #
-# Therefore, a logarithmic and an exponential functions will be used to
+# Therefore, a logarithmic and an exponential function will be used to
 # transform the targets before training a linear regression model and using it
 # for prediction.
 

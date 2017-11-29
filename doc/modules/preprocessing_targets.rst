@@ -48,7 +48,7 @@ functions can be passed, defining the transformation and its inverse mapping::
 Subsequently, the object is created as::
 
   >>> regr = TransformedTargetRegressor(regressor=regressor,
-  ...                                 func=func,
+  ...                                   func=func,
   ...                                 inverse_func=inverse_func)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
   TransformedTargetRegressor(...)

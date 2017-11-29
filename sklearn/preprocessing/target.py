@@ -78,7 +78,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.preprocessing import TransformedTargetRegressor
     >>> tt = TransformedTargetRegressor(regressor=LinearRegression(),
-    ...                               func=np.log, inverse_func=np.exp)
+    ...                                 func=np.log, inverse_func=np.exp)
     >>> X = np.arange(4).reshape(-1, 1)
     >>> y = np.exp(2 * X).ravel()
     >>> tt.fit(X, y) # doctest: +ELLIPSIS
@@ -92,7 +92,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
     -----
     Internally, the target ``y`` is always converted into a 2-dimensional array
     to be used by scikit-learn transformers. At the time of prediction, the
-    output will be reshaped to a have the same number of dimension as ``y``.
+    output will be reshaped to a have the same number of dimensions as ``y``.
 
     See :ref:`examples/preprocessing/plot_transform_target.py
     <sphx_glr_auto_examples_preprocessing_plot_transform_target.py> `.
@@ -115,8 +115,8 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
             self.transformer_ = clone(self.transformer)
         else:
             if self.func is not None and self.inverse_func is None:
-                raise ValueError("When 'func' is not None, 'inverse_func'"
-                                 " cannot be None.")
+                raise ValueError("When 'func' is provided, 'inverse_func' must"
+                                 " also be provided")
             self.transformer_ = FunctionTransformer(
                 func=self.func, inverse_func=self.inverse_func, validate=True,
                 check_inverse=self.check_inverse)
@@ -127,11 +127,10 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         self.transformer_.fit(y)
         if self.check_inverse:
             idx_selected = slice(None, None, max(1, y.shape[0] // 10))
-            if not np.allclose(
-                    safe_indexing(y, idx_selected),
-                    self.transformer_.inverse_transform(
-                        self.transformer_.transform(
-                            safe_indexing(y, idx_selected)))):
+            y_sel = safe_indexing(y, idx_selected)
+            y_sel_t = self.transformer_.transform(y_sel)
+            if not np.allclose(y_sel,
+                               self.transformer_.inverse_transform(y_sel_t)):
                 warnings.warn("The provided functions or transformer are"
                               " not strictly inverse of each other. If"
                               " you are sure you want to proceed regardless"
@@ -158,14 +157,14 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
-        y = check_array(y, accept_sparse='csr', force_all_finite=True,
+        y = check_array(y, accept_sparse=False, force_all_finite=True,
                         ensure_2d=False, dtype='numeric')
 
         # store the number of dimension of the target to predict an array of
         # similar shape at predict
-        self.training_dim_ = y.ndim
+        self._training_dim = y.ndim
 
-        # transformers are designed to modify X which is a 2d dimensional, we
+        # transformers are designed to modify X which is 2d dimensional, we
         # need to modify y accordingly.
         if y.ndim == 1:
             y_2d = y.reshape(-1, 1)
@@ -217,7 +216,7 @@ class TransformedTargetRegressor(BaseEstimator, RegressorMixin):
                 pred.reshape(-1, 1))
         else:
             pred_trans = self.transformer_.inverse_transform(pred)
-        if (self.training_dim_ == 1 and
+        if (self._training_dim == 1 and
                 pred_trans.ndim == 2 and pred_trans.shape[1] == 1):
             pred_trans = pred_trans.squeeze(axis=1)
 
