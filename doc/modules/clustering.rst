@@ -1588,11 +1588,11 @@ Drawbacks
 Contingency Matrix
 ----------------------
 
-Contingency matrix reports the intersection cardinality for every
-true/predicted cluster pair. The contingency matrix provides sufficient
-statistics for all clustering metrics where the samples are
-independent and identically distributed and one doesn't need to account
-for some instances not being clustered.
+Contingency matrix (:func:`sklearn.metrics.cluster.contingency_matrix`)
+reports the intersection cardinality for every true/predicted cluster pair.
+The contingency matrix provides sufficient statistics for all clustering
+metrics where the samples are independent and identically distributed and
+one doesn't need to account for some instances not being clustered.
 
 Here is an example::
 
@@ -1604,8 +1604,34 @@ Here is an example::
    array([[2, 1, 0],
           [0, 1, 2]])
 
-Confusion matrix is a special case of contingency matrix and both are 2d.
+The first row of output array indicates that there are three samples labelled
+'male', two of which are also labelled 'right_handed', one is labelled
+'left_handed' while none is labelled 'ambidextrous'. Similarly the second row
+indicates there are three samples labelled 'female' of which none is labelled
+'right_handed', two are labelled 'left_handed' and two are labelled
+'ambidextrous'.
+
 Confusion matrix is square matrix and the order of columns and rows is significant.
+
+
+Advantages
+~~~~~~~~~~
+
+- The table allows us to compare at glance the proportion of samples with
+  labels.
+
+- Can help us detect if random variables are independent or not. If the
+  proportionsof individuals in the different columns vary significantly
+  between rows (or vice versa), we say that there is a contingency between the
+  two variables. In other words, the two variables are not independent. If
+  there is no contingency, we say that the two variables are independent.
+
+Drawbacks
+~~~~~~~~~
+
+- Higher order contingency tables are difficult to represent visually.
+
+- Mostly used only for categorical variables.
 
 .. topic:: References
 
