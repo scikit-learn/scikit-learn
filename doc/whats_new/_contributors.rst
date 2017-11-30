@@ -152,4 +152,6 @@
 
 .. _Joris Van den Bossche: https://github.com/jorisvandenbossche
 
+.. _Roman Yurchak: https://github.com/rth
+
 .. _Hanmin Qin: https://github.com/qinhanmin2014

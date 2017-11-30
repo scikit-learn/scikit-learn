@@ -261,11 +261,11 @@ defined by :math:`phi` followed by removal of the mean in that space.
 Non-linear transformation
 =========================
 
-Like scalers, :class:`QuantileTransformer` puts each feature into the same
-range or distribution. However, by performing a rank transformation, it smooths
-out unusual distributions and is less influenced by outliers than scaling
-methods. It does, however, distort correlations and distances within and across
-features.
+Like scalers, :class:`QuantileTransformer` puts all features into the same,
+known range or distribution. However, by performing a rank transformation, it
+smooths out unusual distributions and is less influenced by outliers than
+scaling methods. It does, however, distort correlations and distances within
+and across features.
 
 :class:`QuantileTransformer` and :func:`quantile_transform` provide a
 non-parametric transformation based on the quantile function to map the data to
