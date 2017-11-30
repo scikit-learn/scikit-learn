@@ -8,7 +8,7 @@ http://scikit-learn.org.
 Building the website requires the sphinx, sphinx-gallery and matplotlib
 packages:
 
-    pip install sphinx sphinx-gallery matplotlib
+    pip install sphinx numpydoc sphinx-gallery matplotlib
 
 It also requires having the version of scikit-learn installed that corresponds
 to the documentation, e.g.:

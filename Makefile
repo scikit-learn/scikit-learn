@@ -50,10 +50,10 @@ ctags:
 	$(CTAGS) --python-kinds=-i -R sklearn
 
 doc: inplace
-	$(MAKE) -C doc html
+	PYTHONPATH=$$PWD:$$PYTHONPATH $(MAKE) -C doc html
 
 doc-noplot: inplace
-	$(MAKE) -C doc html-noplot
+	PYTHONPATH=$$PWD:$$PYTHONPATH $(MAKE) -C doc html-noplot
 
 code-analysis:
 	flake8 sklearn | grep -v __init__ | grep -v external
