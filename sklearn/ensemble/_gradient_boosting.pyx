@@ -203,11 +203,14 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
     cdef Tree tree
 
     if issparse(X):
+        if X.format != 'csr':
+            raise ValueError("When X is a sparse matrix, a CSR format is"
+                             " expected, got {!r}".format(type(X)))
         _predict_regression_tree_stages_sparse(estimators, X, scale, out)
     else:
-        if not isinstance(X, np.ndarray):
-            raise ValueError("X should be in np.ndarray or csr_matrix format,"
-                             "got %s" % type(X))
+        if not isinstance(X, np.ndarray) or np.isfortran(X):
+            raise ValueError("X should be C-ordered np.ndarray,"
+                             " got {}".format(type(X)))
 
         for i in range(n_estimators):
             for k in range(K):
