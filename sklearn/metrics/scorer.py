@@ -26,8 +26,9 @@ import numpy as np
 from . import (r2_score, median_absolute_error, mean_absolute_error,
                mean_squared_error, mean_squared_log_error, accuracy_score,
                f1_score, roc_auc_score, average_precision_score,
-               precision_score, recall_score, log_loss, balanced_accuracy_score,
-               explained_variance_score, brier_score_loss)
+               precision_score, recall_score, log_loss,
+               balanced_accuracy_score, explained_variance_score,
+               brier_score_loss)
 
 from .cluster import adjusted_rand_score
 from .cluster import homogeneity_score
