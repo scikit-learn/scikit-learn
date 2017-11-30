@@ -34,7 +34,7 @@ from sklearn.metrics import mean_squared_error
 
 RANDOM_SEED = 89555
 
-fig = plt.figure(figsize=(9, 4))
+fig = plt.figure(figsize=(9, 5))
 gs_outer = GridSpec(2, 1, wspace=0.1)
 
 gs_regressors = GridSpecFromSubplotSpec(1, 4, subplot_spec=gs_outer[0])
@@ -74,6 +74,7 @@ def evaluate_and_log_model(name, model, ax):
     ax.set_ylabel('Predicted')
     ax.set_xticks(())
     ax.set_yticks(())
+    ax.set_aspect("equal")
     fig.add_subplot(ax)
 
     return train_time, score
