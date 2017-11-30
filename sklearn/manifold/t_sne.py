@@ -645,16 +645,16 @@ class TSNE(BaseEstimator):
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
-            try:
+            if sp.issparse(X):
                 if np.any(X.data < 0):
                     raise ValueError("All distances should be positive, the "
--                                    "precomputed distances given as X is not "
--                                    "correct")
-            except:
+                                     "precomputed distances given as X is not "
+                                     "correct")
+            else:
                 if np.any(X < 0):
                     raise ValueError("All distances should be positive, the "
--                                    "precomputed distances given as X is not "
--                                    "correct")
+                                     "precomputed distances given as X is not "
+                                     "correct")
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
                         dtype=[np.float32, np.float64])
         if self.method == 'barnes_hut' and self.n_components > 3:
