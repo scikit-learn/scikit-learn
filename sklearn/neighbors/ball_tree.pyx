@@ -23,33 +23,14 @@ VALID_METRICS = ['EuclideanDistance', 'SEuclideanDistance',
 
 
 include "binary_tree.pxi"
-import types
-import functools
-
-class SubstituteDoc(type):
-    def __init__(cls, clsname, superclasses, attributedict):
-        for d in dir(cls):
-            #Exclude special methods and non functions
-            if d.startswith("__"):
-                continue
-            dc = getattr(cls, d)
-            if not callable(dc):
-                continue
-            #Copy the function, this is necessary to avoid modifying the docstrings of the superclass
-            g = types.FunctionType(dc.__code__, dc.__globals__, name=dc.__name__,
-                           argdefs=dc.__defaults__,
-                           closure=dc.__closure__)
-            g = functools.update_wrapper(g, dc)
-            g.__kwdefaults__ = dc.__kwdefaults__
-
-            g.__doc__ = dc.__doc__.format(**DOC_DICT)
-            setattr(cls,d,g)
 
 # Inherit BallTree from BinaryTree
 cdef class BallTree(BinaryTree):
-    __metaclass__ = SubstituteDoc
     __doc__ = CLASS_DOC.format(**DOC_DICT)
-    pass
+
+    def __init__(self, data, leaf_size=40, metric='minkowski', **kwargs):
+        super(BallTree,self).__init__(data, leaf_size, metric, **kwargs)
+        self.substituteDoc(DOC_DICT)
 
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a Ball Tree
@@ -60,6 +41,10 @@ cdef class BallTree(BinaryTree):
 #   relative rankings of the true distance.  For example, the reduced
 #   distance for the Euclidean metric is the squared-euclidean distance.
 #   For some metrics, the reduced distance is simply the distance.
+
+
+
+
 
 
 cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
