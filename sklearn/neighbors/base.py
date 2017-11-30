@@ -361,6 +361,9 @@ class KNeighborsMixin(object):
                     **self.effective_metric_params_)
 
             if issparse(dist):
+                if np.any(X.getnnz(axis=1) < n_neighbors):
+                    raise ValueError("Perplexity is more in case of T-SNE."
+                                     " Please reduce the perplexity.")
                 neigh_ind = np.zeros((dist.shape[0], n_neighbors))
                 for i in range(0, dist.shape[0]):
                     row = dist.getrow(i)
