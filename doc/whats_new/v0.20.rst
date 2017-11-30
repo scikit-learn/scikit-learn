@@ -148,6 +148,13 @@ Classifiers and regressors
   updated estimates for the standard deviation and the coefficients.
   :issue:`10153` by :user:`Jörg Döpfert <jdoepfert>`.
 
+- Fixed a bug when fitting :class:`ensemble.GradientBoostingClassifier` or
+  :class:`ensemble.GradientBoostingRegressor` with ``warm_start=True`` which
+  previously raised a segmentation fault due to a non-conversion of CSC matrix
+  into CSR format expected by ``decision_function``. Similarly, Fortran-ordered
+  arrays are converted to C-ordered arrays in the dense case. :issue:`9991` by
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
