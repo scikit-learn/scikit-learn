@@ -14,10 +14,10 @@ from sklearn.utils.testing import (
     assert_warns_message
 )
 
-X = np.array([[-2, 1.5, -4, -1],
-              [-1, 2.5, -3, -0.5],
-              [0, 3.5, -2, 0.5],
-              [1, 4.5, -1, 2]])
+X = [[-2, 1.5, -4, -1],
+     [-1, 2.5, -3, -0.5],
+     [0, 3.5, -2, 0.5],
+     [1, 4.5, -1, 2]]
 
 
 def test_fit_transform():
