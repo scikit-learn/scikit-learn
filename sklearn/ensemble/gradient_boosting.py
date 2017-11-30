@@ -452,7 +452,7 @@ class QuantileLossFunction(RegressionLossFunction):
                     (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
         else:
             loss = (((alpha * np.sum(sample_weight[mask] * diff[mask]) -
-                    (1.0 - alpha) * np.sum(sample_weight[~mask] * 
+                    (1.0 - alpha) * np.sum(sample_weight[~mask] *
                     diff[~mask])) / sample_weight.sum()))
         return loss
 
