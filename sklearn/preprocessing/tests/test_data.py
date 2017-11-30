@@ -2236,13 +2236,13 @@ def _generate_random_features_matrix(n_values=3, size=10):
 def test_unary_encoder():
     X = np.arange(5).reshape(-1, 1)
     enc = UnaryEncoder(5)
-    Xt = enc.fit_transform(X).toarray()
+    Xt = enc.fit_transform(X)
     assert_array_equal(Xt, [[0, 0, 0, 0],   # 0
                             [1, 0, 0, 0],   # 1
                             [1, 1, 0, 0],   # 2
                             [1, 1, 1, 0],   # 3
                             [1, 1, 1, 1]])  # 4
-    Xt2 = enc.transform(X).toarray()
+    Xt2 = enc.transform(X)
     assert_array_equal(Xt2, Xt)
 
 
@@ -2266,8 +2266,8 @@ def test_unary_encoder_dense_sparse():
     n_values = np.random.randint(1, 10)
     size = np.random.randint(1, 10)
 
-    sparse_encoder = UnaryEncoder(n_values)
-    dense_encoder = UnaryEncoder(n_values, sparse=False)
+    sparse_encoder = UnaryEncoder(n_values, sparse=True)
+    dense_encoder = UnaryEncoder(n_values)
 
     X = _generate_random_features_matrix(n_values, size)
     X_trans_sparse = sparse_encoder.fit_transform(X)
@@ -2289,7 +2289,7 @@ def test_unary_encoder_handle_unknown():
     encoder = UnaryEncoder(handle_unknown='ignore')
     encoder.fit(X)
     assert_array_equal(
-        encoder.transform(y).toarray(),
+        encoder.transform(y),
         np.array([[0.,  1.,  0.,  1.,  0.,  0.]]))
 
     # Raise error if handle_unknown is neither ignore or error.
@@ -2355,11 +2355,11 @@ def test_unary_encoder_edge_cases():
 
     for input_matrix, expected_matrix in EDGE_CASES:
         transformed = UnaryEncoder().fit_transform(input_matrix)
-        assert_array_equal(transformed.toarray(), expected_matrix)
+        assert_array_equal(transformed, expected_matrix)
 
 
 def test_unary_encoder_n_values_int():
-    # Test UnaryEncoder's fit and transform.
+    # Test UnaryEncoder's n_values parameter when set as an int.
     n_values = np.random.randint(2, 10)
     size = np.random.randint(1, 10)
     delta = np.random.randint(1, 10)
@@ -2375,3 +2375,25 @@ def test_unary_encoder_n_values_int():
         enc.feature_indices_,
         np.arange(0, unary_n_values * len(X[0]) + 1, unary_n_values)
     )
+
+
+def test_unary_encoder_n_values_array():
+    # Test UnaryEncoder's n_values parameter when set as an array.
+    n_features = np.random.randint(2, 10)
+    size = np.random.randint(1, 10)
+    delta = np.random.randint(1, 10)
+
+    n_values_array = [n_features] * n_features
+    enc = UnaryEncoder(n_values=n_values_array)
+    X = _generate_random_features_matrix(n_features, size)
+    X_trans = enc.fit_transform(X)
+    assert_equal(X_trans.shape, (size, sum(n_values_array) - n_features))
+
+    n_values_array = np.random.randint(2, 10, n_features + delta)
+    enc = UnaryEncoder(n_values=n_values_array)
+    X = _generate_random_features_matrix(n_features, size)
+    assert_raises(ValueError, enc.fit_transform, X)
+
+    enc = UnaryEncoder(n_values=[])
+    X = _generate_random_features_matrix(n_features, size)
+    assert_raises(ValueError, enc.fit_transform, X)
