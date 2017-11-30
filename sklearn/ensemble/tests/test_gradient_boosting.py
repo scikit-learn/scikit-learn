@@ -146,15 +146,6 @@ def test_classifier_parameter_checks():
                          GradientBoostingClassifier(presort='invalid')
                          .fit, X, y)
 
-    # Tobit model needs positive variance parameter
-    assert_raises(ValueError,
-                  GradientBoostingRegressor(loss='tobit', sigma=-1.).fit, X, y)
-
-    # Tobit: upper limit needs to be larger than lower limit
-    assert_raises(ValueError,
-                  GradientBoostingRegressor(loss='tobit', yl=1.,
-                                            yu=0.).fit, X, y)
-
 
 def test_regressor_parameter_checks():
     # Check input parameter validation for GradientBoostingRegressor
@@ -179,6 +170,13 @@ def test_regressor_parameter_checks():
                          "Got 'invalid' instead.".format(allowed_presort),
                          GradientBoostingRegressor(presort='invalid')
                          .fit, X, y)
+    # Tobit model needs positive variance parameter
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='tobit', sigma=-1.).fit, X, y)
+    # Tobit: upper limit needs to be larger than lower limit
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='tobit', yl=1.,
+                                            yu=0.).fit, X, y)
 
 
 def test_loss_function():
