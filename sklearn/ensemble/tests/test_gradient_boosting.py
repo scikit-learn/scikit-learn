@@ -893,6 +893,27 @@ def test_warm_start_sparse():
             assert_array_almost_equal(y_pred_dense, y_pred_sparse)
 
 
+def test_warm_start_fortran():
+    # Test that feeding a X in Fortran-ordered is giving the same results as
+    # in C-ordered
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est_c = Cls(n_estimators=1, random_state=1, warm_start=True)
+        est_fortran = Cls(n_estimators=1, random_state=1, warm_start=True)
+
+        est_c.fit(X, y)
+        est_c.set_params(n_estimators=11)
+        est_c.fit(X, y)
+
+        X_fortran = np.asfortranarray(X)
+        est_fortran.fit(X_fortran, y)
+        est_fortran.set_params(n_estimators=11)
+        est_fortran.fit(X_fortran, y)
+
+        assert_array_almost_equal(est_c.predict(X),
+                                  est_fortran.predict(X))
+
+
 def early_stopping_monitor(i, est, locals):
     """Returns True on the 10th iteration. """
     if i == 9:
