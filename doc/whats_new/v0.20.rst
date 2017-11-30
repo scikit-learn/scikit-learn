@@ -150,7 +150,7 @@ Classifiers and regressors
   :class:`ensemble.GradientBoostingRegressor` with ``warm_start=True`` which
   previously raised a segmentation fault due to a non-conversion of CSC matrix
   into CSR format expected by ``decision_function``. Similarly, Fortran-ordered
-  arrays are converted to C-ordered arrays in the dense case :issue:`9991` by
+  arrays are converted to C-ordered arrays in the dense case. :issue:`9991` by
   :user:`Guillaume Lemaitre <glemaitre>`.
 
 Decomposition, manifold learning and clustering
