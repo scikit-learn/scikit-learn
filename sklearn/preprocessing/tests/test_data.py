@@ -1893,7 +1893,6 @@ def test_transform_selected():
 
 
 def test_transform_selected_retain_order():
-
     X = [[-1, 1], [2, -2]]
 
     assert_raise_message(ValueError,
