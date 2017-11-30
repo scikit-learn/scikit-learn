@@ -18,7 +18,7 @@ cdef DTYPE_t _inner_log_logistic_sigmoid(DTYPE_t x):
         return x - log(1 + exp(x))
 
 
-def _log_logistic_sigmoid(int n_samples, int n_features, 
+def _log_logistic_sigmoid(int n_samples, int n_features,
                            np.ndarray[DTYPE_t, ndim=2] X,
                            np.ndarray[DTYPE_t, ndim=2] out):
     for i in range(n_samples):

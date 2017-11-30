@@ -17,7 +17,7 @@ Data Set Characteristics:
         - compactness (perimeter^2 / area - 1.0)
         - concavity (severity of concave portions of the contour)
         - concave points (number of concave portions of the contour)
-        - symmetry 
+        - symmetry
         - fractal dimension ("coastline approximation" - 1)
 
         The mean, standard error, and "worst" or largest (mean of the three
@@ -105,13 +105,13 @@ cd math-prog/cpo-dataset/machine-learn/WDBC/
 
 References
 ----------
-   - W.N. Street, W.H. Wolberg and O.L. Mangasarian. Nuclear feature extraction 
-     for breast tumor diagnosis. IS&T/SPIE 1993 International Symposium on 
+   - W.N. Street, W.H. Wolberg and O.L. Mangasarian. Nuclear feature extraction
+     for breast tumor diagnosis. IS&T/SPIE 1993 International Symposium on
      Electronic Imaging: Science and Technology, volume 1905, pages 861-870,
      San Jose, CA, 1993.
-   - O.L. Mangasarian, W.N. Street and W.H. Wolberg. Breast cancer diagnosis and 
-     prognosis via linear programming. Operations Research, 43(4), pages 570-577, 
+   - O.L. Mangasarian, W.N. Street and W.H. Wolberg. Breast cancer diagnosis and
+     prognosis via linear programming. Operations Research, 43(4), pages 570-577,
      July-August 1995.
    - W.H. Wolberg, W.N. Street, and O.L. Mangasarian. Machine learning techniques
-     to diagnose breast cancer from fine-needle aspirates. Cancer Letters 77 (1994) 
+     to diagnose breast cancer from fine-needle aspirates. Cancer Letters 77 (1994)
      163-171.

@@ -143,7 +143,7 @@ struct problem * set_problem(char *X,char *Y, npy_intp *dims, double bias, char*
     problem->x = dense_to_sparse((double *) X, dims, bias);
     problem->bias = bias;
     problem->sample_weight = sample_weight;
-    if (problem->x == NULL) { 
+    if (problem->x == NULL) {
         free(problem);
         return NULL;
     }
@@ -185,7 +185,7 @@ struct problem * csr_set_problem (char *values, npy_intp *n_indices,
 /* Create a paramater struct with and return it */
 struct parameter *set_parameter(int solver_type, double eps, double C,
                                 npy_intp nr_weight, char *weight_label,
-                                char *weight, int max_iter, unsigned seed, 
+                                char *weight, int max_iter, unsigned seed,
                                 double epsilon)
 {
     struct parameter *param = malloc(sizeof(struct parameter));
@@ -206,7 +206,7 @@ struct parameter *set_parameter(int solver_type, double eps, double C,
 
 void copy_w(void *data, struct model *model, int len)
 {
-    memcpy(data, model->w, len * sizeof(double)); 
+    memcpy(data, model->w, len * sizeof(double));
 }
 
 double get_bias(struct model *model)

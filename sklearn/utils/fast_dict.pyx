@@ -70,7 +70,7 @@ cdef class IntFloatDict:
     #    while it != end:
     #        yield deref(it).first, deref(it).second
     #        inc(it)
-    
+
     def __iter__(self):
         cdef int size = self.my_map.size()
         cdef ITYPE_t [:] keys = np.empty(size, dtype=np.intp)

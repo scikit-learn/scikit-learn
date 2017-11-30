@@ -39,7 +39,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype, bint alternate_sign=1):
         indices_array_dtype = "q"
         indices_np_dtype = np.longlong
     else:
-        # On Windows with PY2.7 long int would still correspond to 32 bit. 
+        # On Windows with PY2.7 long int would still correspond to 32 bit.
         indices_array_dtype = "l"
         indices_np_dtype = np.int_
 

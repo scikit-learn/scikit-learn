@@ -3,12 +3,12 @@ Boston House Prices dataset
 
 Notes
 ------
-Data Set Characteristics:  
+Data Set Characteristics:
 
-    :Number of Instances: 506 
+    :Number of Instances: 506
 
     :Number of Attributes: 13 numeric/categorical predictive
-    
+
     :Median Value (attribute 14) is usually the target
 
     :Attribute Information (in order):
@@ -44,8 +44,8 @@ vol.5, 81-102, 1978.   Used in Belsley, Kuh & Welsch, 'Regression diagnostics
 pages 244-261 of the latter.
 
 The Boston house-price data has been used in many machine learning papers that address regression
-problems.   
-     
+problems.
+
 **References**
 
    - Belsley, Kuh & Welsch, 'Regression diagnostics: Identifying Influential Data and Sources of Collinearity', Wiley, 1980. 244-261.

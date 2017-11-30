@@ -185,7 +185,7 @@ def libsvm_sparse_train ( int n_features,
 
     # copy model.nSV
     # TODO: do only in classification
-    cdef np.ndarray n_class_SV 
+    cdef np.ndarray n_class_SV
     n_class_SV = np.empty(n_class, dtype=np.int32)
     copy_nSV(n_class_SV.data, model)
 
