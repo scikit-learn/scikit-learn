@@ -33,6 +33,8 @@ cannot assure that this list is complete.)
 Changelog
 ---------
 
+Support for Python 3.3 has been officially dropped.
+
 New features
 ............
 
@@ -218,6 +220,12 @@ Feature Extraction
   of all possible patches rather than simply returning the number of possible
   patches. :issue:`10100` by :user:`Varun Agrawal <varunagrawal>`
 
+- Fixed a bug in :class:`feature_extraction.text.CountVectorizer`,
+  :class:`feature_extraction.text.TfidfVectorizer`,
+  :class:`feature_extraction.text.HashingVectorizer` to support 64 bit sparse
+  array indexing necessary to process large datasets with more than 2·10⁹ tokens
+  (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
+  and `Roman Yurchak`_.
 
 API changes summary
 -------------------
