@@ -555,14 +555,24 @@ def test_reduction_to_one_component():
     assert(np.all(np.isfinite(X_embedded)))
 
 
-def test_no_sparse_on_barnes_hut():
+def test_sparse_on_barnes_hut_high_perplexity():
+    # No sparse matrices allowed on Barnes-Hut.
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 100)
+    X[(np.random.randint(0, 100, 50), np.random.randint(0, 100, 50))] = 0.0
+    X_csr = sp.csr_matrix(X)
+    tsne = TSNE(n_iter=300, method='barnes_hut')
+    tsne.fit_transform(X_csr)
+
+
+def test_sparse_on_barnes_hut_low_perplexity():
     # No sparse matrices allowed on Barnes-Hut.
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
     X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
     X_csr = sp.csr_matrix(X)
-    tsne = TSNE(n_iter=199, method='barnes_hut')
-    assert_raises_regexp(TypeError, "A sparse matrix was.*",
+    tsne = TSNE(n_iter=300, method='barnes_hut')
+    assert_raises_regexp(ValueError, "Perplexity is more in case of.*",
                          tsne.fit_transform, X_csr)
 
 
