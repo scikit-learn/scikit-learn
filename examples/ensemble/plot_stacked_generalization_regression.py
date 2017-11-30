@@ -66,9 +66,9 @@ def evaluate_and_log_model(name, model, ax):
     print("MSE for %s: %.3f (train time: %.3f seconds)"
           % (name, score, train_time))
 
-    ax.scatter(y_test, y_pred, edgecolors=(0, 0, 0))
     ax.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()],
-            'k--', lw=4)
+            'k--', lw=4, zorder=1)
+    ax.scatter(y_test, y_pred, edgecolors=(0, 0, 0), zorder=2)
     ax.set_title(name)
     ax.set_xlabel('Measured')
     ax.set_ylabel('Predicted')
