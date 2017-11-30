@@ -452,8 +452,8 @@ class QuantileLossFunction(RegressionLossFunction):
                     (1.0 - alpha) * diff[~mask].sum()) / y.shape[0]
         else:
             loss = (((alpha * np.sum(sample_weight[mask] * diff[mask]) -
-                    (1.0 - alpha) * np.sum(sample_weight[~mask] * diff[~mask])) /
-                    sample_weight.sum()))
+                    (1.0 - alpha) * np.sum(sample_weight[~mask] * 
+                    diff[~mask])) / sample_weight.sum()))
         return loss
 
     def negative_gradient(self, y, pred, **kargs):
@@ -477,10 +477,10 @@ class TobitLossFunction(RegressionLossFunction):
     """Loss function for the Tobit model.
 
     The Tobit model is used, for instance, for modeling censored data.
-    
+
     References
     ----------
-    F. Sigrist and C. Hirnschall, Grabit: Gradient Tree Boosted Tobit Models 
+    F. Sigrist and C. Hirnschall, Grabit: Gradient Tree Boosted Tobit Models
     for Default Prediction, arXiv, 2017, https://arxiv.org/abs/1711.08695
     """
 
@@ -1026,6 +1026,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("n_iter_no_change should either be None or an "
                              "integer. %r was passed"
                              % self.n_iter_no_change)
+
+        allowed_presort = ('auto', True, False)
+        if self.presort not in allowed_presort:
+            raise ValueError("'presort' should be in {}. Got {!r} instead."
+                             .format(allowed_presort, self.presort))
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
