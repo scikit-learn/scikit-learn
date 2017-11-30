@@ -699,9 +699,10 @@ class TSNE(BaseEstimator):
             if self.verbose:
                 print("[t-SNE] Computing {} nearest neighbors...".format(k))
 
-            if np.any(X.getnnz(axis=1) < k):
-                raise ValueError("Perplexity is more in case of T-SNE."
-                                 " Please reduce the perplexity.")
+            if(sp.issparse(X)):
+                if np.any(X.getnnz(axis=1) < k):
+                    raise ValueError("Perplexity is more in case of T-SNE."
+                                     " Please reduce the perplexity.")
 
             # Find the nearest neighbors for every point
             knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
