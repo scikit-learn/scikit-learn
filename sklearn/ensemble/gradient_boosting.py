@@ -17,7 +17,7 @@ The module structure is the following:
 """
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
-#          Arnaud Joly, Jacob Schreiber
+#          Arnaud Joly, Jacob Schreiber, Fabio Sigrist
 # License: BSD 3 clause
 
 from __future__ import print_function
@@ -477,6 +477,11 @@ class TobitLossFunction(RegressionLossFunction):
     """Loss function for the Tobit model.
 
     The Tobit model is used, for instance, for modeling censored data.
+    
+    References
+    ----------
+    F. Sigrist and C. Hirnschall, Grabit: Gradient Tree Boosted Tobit Models 
+    for Default Prediction, arXiv, 2017, https://arxiv.org/abs/1711.08695
     """
 
     def __init__(self, n_classes, sigma=1, yl=0, yu=1):
