@@ -389,8 +389,13 @@ def test_check_inputs_predict_stages():
     clf.fit(x, y)
     score = np.zeros((y.shape)).reshape(-1, 1)
     assert_raise_message(ValueError,
-                         "X should be in np.ndarray or csr_matrix format",
+                         "When X is a sparse matrix, a CSR format is expected",
                          predict_stages, clf.estimators_, x_sparse_csc,
+                         clf.learning_rate, score)
+    x_fortran = np.asfortranarray(x)
+    assert_raise_message(ValueError,
+                         "X should be C-ordered np.ndarray",
+                         predict_stages, clf.estimators_, x_fortran,
                          clf.learning_rate, score)
 
 

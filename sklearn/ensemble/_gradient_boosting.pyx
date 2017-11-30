@@ -208,7 +208,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                              " expected, got {!r}".format(type(X)))
         _predict_regression_tree_stages_sparse(estimators, X, scale, out)
     else:
-        if not isinstance(X, np.ndarray) and np.isfortran(X):
+        if not isinstance(X, np.ndarray) or np.isfortran(X):
             raise ValueError("X should be C-ordered np.ndarray,"
                              " got {}".format(type(X)))
 
