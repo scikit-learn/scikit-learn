@@ -367,7 +367,6 @@ class KNeighborsMixin(object):
                 neigh_ind = np.zeros((dist.shape[0], n_neighbors))
                 for i in range(0, dist.shape[0]):
                     row = dist.getrow(i)
-                    non_zero = row.size
                     neigh_ind[i][:n_neighbors] = \
                         row.indices[np.argsort(row.data)][:n_neighbors]
             else:
