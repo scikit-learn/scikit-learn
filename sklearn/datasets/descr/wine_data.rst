@@ -10,7 +10,7 @@ Data Set Characteristics:
  		- 1) Alcohol
  		- 2) Malic acid
  		- 3) Ash
-		- 4) Alcalinity of ash  
+		- 4) Alcalinity of ash
  		- 5) Magnesium
 		- 6) Total phenols
  		- 7) Flavanoids
@@ -26,7 +26,7 @@ Data Set Characteristics:
                 - class_2
 		
     :Summary Statistics:
-    
+
     ============================= ==== ===== ======= =====
                                    Min   Max   Mean     SD
     ============================= ==== ===== ======= =====
@@ -59,10 +59,10 @@ region in Italy by three different cultivators. There are thirteen different
 measurements taken for different constituents found in the three types of
 wine.
 
-Original Owners: 
+Original Owners:
 
-Forina, M. et al, PARVUS - 
-An Extendible Package for Data Exploration, Classification and Correlation. 
+Forina, M. et al, PARVUS -
+An Extendible Package for Data Exploration, Classification and Correlation.
 Institute of Pharmaceutical and Food Analysis and Technologies,
 Via Brigata Salerno, 16147 Genoa, Italy.
 
@@ -70,26 +70,26 @@ Citation:
 
 Lichman, M. (2013). UCI Machine Learning Repository
 [http://archive.ics.uci.edu/ml]. Irvine, CA: University of California,
-School of Information and Computer Science. 
+School of Information and Computer Science.
 
 References
 ----------
-(1) 
-S. Aeberhard, D. Coomans and O. de Vel, 
-Comparison of Classifiers in High Dimensional Settings, 
-Tech. Rep. no. 92-02, (1992), Dept. of Computer Science and Dept. of 
-Mathematics and Statistics, James Cook University of North Queensland. 
-(Also submitted to Technometrics). 
+(1)
+S. Aeberhard, D. Coomans and O. de Vel,
+Comparison of Classifiers in High Dimensional Settings,
+Tech. Rep. no. 92-02, (1992), Dept. of Computer Science and Dept. of
+Mathematics and Statistics, James Cook University of North Queensland.
+(Also submitted to Technometrics).
 
-The data was used with many others for comparing various 
-classifiers. The classes are separable, though only RDA 
-has achieved 100% correct classification. 
-(RDA : 100%, QDA 99.4%, LDA 98.9%, 1NN 96.1% (z-transformed data)) 
-(All results using the leave-one-out technique) 
+The data was used with many others for comparing various
+classifiers. The classes are separable, though only RDA
+has achieved 100% correct classification.
+(RDA : 100%, QDA 99.4%, LDA 98.9%, 1NN 96.1% (z-transformed data))
+(All results using the leave-one-out technique)
 
-(2) 
-S. Aeberhard, D. Coomans and O. de Vel, 
-"THE CLASSIFICATION PERFORMANCE OF RDA" 
-Tech. Rep. no. 92-01, (1992), Dept. of Computer Science and Dept. of 
-Mathematics and Statistics, James Cook University of North Queensland. 
-(Also submitted to Journal of Chemometrics). 
+(2)
+S. Aeberhard, D. Coomans and O. de Vel,
+"THE CLASSIFICATION PERFORMANCE OF RDA"
+Tech. Rep. no. 92-01, (1992), Dept. of Computer Science and Dept. of
+Mathematics and Statistics, James Cook University of North Queensland.
+(Also submitted to Journal of Chemometrics).

@@ -37,5 +37,5 @@ def _update_cdnmf_fast(double[:, ::1] W, double[:, :] HHt, double[:, :] XHt,
 
                 if hess != 0:
                     W[i, t] = max(W[i, t] - grad / hess, 0.)
-                
+
     return violation

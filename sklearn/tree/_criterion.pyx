@@ -203,9 +203,9 @@ cdef class Criterion:
         self.children_impurity(&impurity_left, &impurity_right)
 
         return ((self.weighted_n_node_samples / self.weighted_n_samples) *
-                (impurity - (self.weighted_n_right / 
+                (impurity - (self.weighted_n_right /
                              self.weighted_n_node_samples * impurity_right)
-                          - (self.weighted_n_left / 
+                          - (self.weighted_n_left /
                              self.weighted_n_node_samples * impurity_left)))
 
 
@@ -748,7 +748,7 @@ cdef class RegressionCriterion(Criterion):
         self.sum_left = <double*> calloc(n_outputs, sizeof(double))
         self.sum_right = <double*> calloc(n_outputs, sizeof(double))
 
-        if (self.sum_total == NULL or 
+        if (self.sum_total == NULL or
                 self.sum_left == NULL or
                 self.sum_right == NULL):
             raise MemoryError()
