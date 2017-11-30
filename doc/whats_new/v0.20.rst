@@ -148,8 +148,9 @@ Classifiers and regressors
 
 - Fixed a bug when fitting :class:`ensemble.GradientBoostingClassifier` or
   :class:`ensemble.GradientBoostingRegressor` with ``warm_start=True`` which
-  previously raised a segmentation fault due to a non-conversion of CSC
-  matrix into CSR format expected by ``decision_function``. :issue:`9991` by
+  previously raised a segmentation fault due to a non-conversion of CSC matrix
+  into CSR format expected by ``decision_function``. Similarly, Fortran-ordered
+  arrays are converted to C-ordered arrays in the dense case :issue:`9991` by
   :user:`Guillaume Lemaitre <glemaitre>`.
 
 Decomposition, manifold learning and clustering
