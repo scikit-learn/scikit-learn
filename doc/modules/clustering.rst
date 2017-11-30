@@ -1588,14 +1588,11 @@ Drawbacks
 Contingency Matrix
 ----------------------
 
-Contingency matrix is a format describing the relationship between
-discrete-valued random variables.
-It shows the multivariate frequency distribution of the variables.
-
-Let the first random variable be :math:`X`, and the second random
-variable be :math:`Y`.
-In a contingency matrix :math:`M`, entry :math:`M(i, j)` is the number of
-observations with :math:`X=X_i` and :math:`Y=Y_j`.
+Contingency matrix reports the intersection cardinality for every
+true/predicted cluster pair. The contingency matrix provides sufficient
+statistics for all clustering metrics where the samples are
+independent and identically distributed and one doesn't need to account
+for some instances not being clustered.
 
 Here is an example::
 
@@ -1607,8 +1604,8 @@ Here is an example::
    array([[2, 1, 0],
           [0, 1, 2]])
 
-Confusion matrix is a special case of contingency matrix with
-two dimensions.
+Confusion matrix is a special case of contingency matrix and both are 2d.
+Confusion matrix is square matrix and the order of columns and rows is significant.
 
 .. topic:: References
 
