@@ -2748,7 +2748,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         valid_methods = ('box-cox',)
         if check_method and self.method not in valid_methods:
-            raise ValueError("'method' must be one of {}, ",
+            raise ValueError("'method' must be one of {}, "
                              "got {} instead."
                              .format(valid_methods, self.method))
 

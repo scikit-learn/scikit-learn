@@ -59,10 +59,11 @@ Preprocessing
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
 - Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
-  power transformation, allowing users to map data of any distribution to a
-  Gaussian distribution. This is useful in any situation where normality and
-  homoscedasticity are desirable. :issue:`10210` by
-  :user:`Eric Chang <ericchang00>` and :user:`Maniteja Nandana <maniteja123>`.
+  power transformation, allowing users to map data from any distribution to a
+  Gaussian distribution. This is useful as a variance-stabilizing transformation
+  in situations where normality and homoscedasticity are desirable.
+  :issue:`10210` by :user:`Eric Chang <ericchang00>` and
+  :user:`Maniteja Nandana <maniteja123>`.
 
 
 Model evaluation
