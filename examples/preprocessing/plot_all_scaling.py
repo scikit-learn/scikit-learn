@@ -292,7 +292,7 @@ make_plot(4)
 
 ##############################################################################
 # PowerTransformer (Box-Cox)
-# -----------------
+# --------------------------
 #
 # ``PowerTransformer`` applies a power transformation to each
 # feature to make the data more Gaussian-like. Currently,

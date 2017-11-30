@@ -336,6 +336,17 @@ map samples drawn from a lognormal distribution to a normal distribution::
          [-0.05...,  0.58..., -0.57...],
          [ 0.69..., -0.84...,  0.10...]])
 
+Below are examples of Box-Cox applied to various skewed probability
+distributions. Note that the optimal estimated parameters achieve very
+close results to the Gaussian, but that the resulting distributions are
+not standard normal, with zero mean and unit variance.
+
+.. figure:: ../auto_examples/preprocessing/images/sphx_glr_plot_power_transformer_001.png
+   :target: ../auto_examples/preprocessing/plot_power_transformer.html
+   :align: center
+   :scale: 100
+
+
 It is also possible to map data to a normal distribution using
 :class:`QuantileTransformer` by setting ``output_distribution='normal'``.
 Using the earlier example with the iris dataset::
