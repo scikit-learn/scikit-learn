@@ -2,10 +2,13 @@
 Testing for the gradient boosting loss functions and initial estimators.
 """
 
+import pytest
+
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
+from numpy.testing import assert_raises_regex
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_raises
@@ -187,16 +190,18 @@ def test_sample_weight_deviance():
         assert deviance_wo_w == deviance_w_w
 
 
-def test_multinomial_deviance():
+@pytest.mark.parametrize('n_classes, n_samples',
+                         [(3, 100), (5, 57), (7, 13)])
+def test_multinomial_deviance(n_classes, n_samples):
     # Check multinomial deviance with and without sample weights.
     rng = check_random_state(13)
-    sample_weight = np.ones(100)
-    y = rng.randint(0, 3, size=sample_weight.shape[0])
-    p = np.zeros((y.shape[0], 3), dtype=np.float64)
+    sample_weight = np.ones(n_samples)
+    y = rng.randint(0, n_classes, size=sample_weight.shape[0])
+    p = np.zeros((y.shape[0], n_classes), dtype=np.float64)
     for i in range(p.shape[1]):
         p[:, i] = y == i
 
-    loss = MultinomialDeviance(3)
+    loss = MultinomialDeviance(n_classes)
     loss_wo_sw = loss(y, p)
     assert loss_wo_sw > 0
     loss_w_sw = loss(y, p, np.ones(p.shape[0], dtype=np.float32))
@@ -205,10 +210,12 @@ def test_multinomial_deviance():
     assert_almost_equal(loss_wo_sw, loss_w_sw)
 
 
-def test_mdl_computation_unweighted(pred=np.array([[1.0, 0, 0],
-                                                   [0, 0.5, 0.5]]),
-                                    y=np.array([0, 1]),
-                                    expected_loss=0.75473):
+@pytest.mark.parametrize('pred, y, expected_loss',
+                         [(np.array([[1.0, 0, 0],
+                                     [0, 0.5, 0.5]]),
+                           np.array([0, 1]),
+                           0.75473)])
+def test_mdl_computation_unweighted(pred, y, expected_loss):
     # MultinomialDeviance loss computation with uniform/without weights.
     weights = np.array([1, 1])
     loss = MultinomialDeviance(3)
@@ -217,17 +224,20 @@ def test_mdl_computation_unweighted(pred=np.array([[1.0, 0, 0],
     assert_almost_equal(loss(y, pred), expected_loss, decimal=4)
 
 
-def test_mdl_computation_weighted(pred=np.array([[1.0, 0, 0],
-                                                 [0, 0.5, 0.5]]),
-                                  y=np.array([0, 1]),
-                                  weights=np.array([1, 3]),
-                                  expected_loss=0.85637):
+@pytest.mark.parametrize('pred, y, weights, expected_loss',
+                         [(np.array([[1.0, 0, 0],
+                                     [0, 0.5, 0.5]]),
+                           np.array([0, 1]),
+                           np.array([1, 3]),
+                           0.85637)])
+def test_mdl_computation_weighted(pred, y, weights, expected_loss):
     # MultinomialDeviance loss computation with weights.
     loss = MultinomialDeviance(3)
     assert_almost_equal(loss(y, pred, weights), expected_loss, decimal=4)
 
 
-def test_mdl_exception():
-    # Check that MultinomialDeviance throws when n_classes <= 2
-    assert_raises(ValueError, MultinomialDeviance, 2)
-    assert_raises(ValueError, MultinomialDeviance, 1)
+@pytest.mark.parametrize('n', [0, 1, 2])
+def test_mdl_exception(n):
+    # Check that MultinomialDeviance throws an exception when n_classes <= 2
+    err_msg = 'MultinomialDeviance requires more than 2 classes.'
+    assert_raises_regex(ValueError, err_msg, MultinomialDeviance, n)
