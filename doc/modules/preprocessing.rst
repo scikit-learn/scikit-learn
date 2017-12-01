@@ -559,6 +559,12 @@ implemented in :class:`UnaryEncoder`.  This estimator transforms each
 ordinal feature with ``m`` possible values into ``m - 1`` binary features,
 where the ith feature is active if x > i (for i = 0, ... k - 1).
 
+**NOTE**: This encoding is likely to help when used with linear models and
+kernel-based models like SVMs with the standard kernels. On the other hand, this
+transformation is unlikely to help when using with tree-based models,
+since those already work on the basis of a particular feature value being
+< or > than a threshold, unlike linear and kernel-based models.
+
 Continuing the example above::
 
   >>> enc = preprocessing.UnaryEncoder()

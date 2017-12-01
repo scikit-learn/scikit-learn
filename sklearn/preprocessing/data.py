@@ -2002,7 +2002,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             except (ValueError, TypeError):
                 raise TypeError("Wrong type for parameter `n_values`. Expected"
                                 " 'auto', int or array of ints, got %r"
-                                % self.n_values)
+                                % type(X))
             if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
@@ -2881,14 +2881,18 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
 class UnaryEncoder(BaseEstimator, TransformerMixin):
     """Encode ordinal integer features using a unary scheme.
 
-    The input to this transformer should be a matrix of integers, denoting
-    the values taken on by ordinal (discrete) features. The output will be
-    a sparse matrix where each column corresponds to one possible value of one
-    feature. It is assumed that input features take on values in the range
+    The input to this transformer should be a matrix of non-negative integers,
+    denoting the values taken on by ordinal (discrete) features. The output
+    will be a matrix where each column corresponds to one possible value of
+    one feature. It is assumed that input features take on values in the range
     0 to (n_values - 1).
 
     This encoding is needed for feeding ordinal features to many scikit-learn
-    estimators, notably linear models and SVMs with the standard kernels.
+    estimators, notably linear models and kernel-based models like SVMs with
+    the standard kernels.
+    This transformation is unlikely to help when using with tree-based models,
+    since those already work on the basis of a particular feature value being
+    < or > than a threshold, unlike linear and kernel-based models.
 
     Read more in the :ref:`User Guide <preprocessing_ordinal_features>`.
 
@@ -2919,9 +2923,10 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     sparse : boolean, default=False
         Will return sparse matrix if set True else will return an array.
 
-    handle_unknown : str, 'error' or 'ignore'
-        Whether to raise an error or ignore if a unknown ordinal feature is
-        present during transform.
+    handle_greater : str, 'error' or 'clip'
+        Whether to raise an error or clip if a greater ordinal feature value is
+        present during transform as compare to largest feature value seen
+        during fit.
 
     Attributes
     ----------
@@ -2942,16 +2947,16 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     >>> from sklearn.preprocessing import UnaryEncoder
     >>> enc = UnaryEncoder()
     >>> enc.fit([[0, 0, 3],
-                 [1, 1, 0],
-                 [0, 2, 1],
-                 [1, 0, 2]])  # doctest: +ELLIPSIS
-    UnaryEncoder(dtype=<... 'numpy.float64'>, handle_unknown='error',
+    ...          [1, 1, 0],
+    ...          [0, 2, 1],
+    ...          [1, 0, 2]])  # doctest: +ELLIPSIS
+    UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='error',
            n_values='auto', ordinal_features='all', sparse=False)
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
     array([0, 1, 3, 6])
-    >>> enc.transform([[0, 1, 2]]).toarray()
+    >>> enc.transform([[0, 1, 2]])
     array([[ 0.,  1.,  0.,  1.,  1.,  0.]])
 
     See also
@@ -2960,12 +2965,12 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
       using a one-hot aka one-of-K scheme.
     """
     def __init__(self, n_values="auto", ordinal_features="all",
-                 dtype=np.float64, sparse=False, handle_unknown='error'):
+                 dtype=np.float64, sparse=False, handle_greater='error'):
         self.n_values = n_values
         self.ordinal_features = ordinal_features
         self.dtype = dtype
         self.sparse = sparse
-        self.handle_unknown = handle_unknown
+        self.handle_greater = handle_greater
 
     def fit(self, X, y=None):
         """Fit UnaryEncoder to X.
@@ -3028,7 +3033,20 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         """Fit UnaryEncoder to X, then transform X.
 
         Equivalent to self.fit(X).transform(X), but more convenient and more
-        efficient. See fit for the parameters, transform for the return value.
+        efficient.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_feature]
+            Input array of type int.
+            All feature values should be non-negative otherwise will raise a
+            ValueError.
+
+        Returns
+        -------
+        X_out : sparse matrix or a 2-d array
+            Transformed input.
+
         """
         return _transform_selected(X, self._fit_transform,
                                    self.ordinal_features, copy=True)
@@ -3046,28 +3064,28 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
                              " Expected %d, got %d."
                              % (indices.shape[0] - 1, n_features))
 
-        # We use only those ordinal features of X that are known using fit.
-        # i.e lesser than n_values_ using mask.
-        # This means, if self.handle_unknown is "ignore", the row_indices and
-        # col_indices corresponding to the unknown ordinal feature are
-        # ignored.
+        # We clip those ordinal features of X that are greater than n_values_
+        # using mask.
+        # This means, if self.handle_greater is "ignore", the row_indices and
+        # col_indices corresponding to the greater ordinal feature are all
+        # filled with ones.
         mask = (X < self.n_values_).ravel()
         if np.any(~mask):
-            if self.handle_unknown not in ['error', 'ignore']:
-                raise ValueError("handle_unknown should be either 'error' or "
-                                 "'ignore' got %s" % self.handle_unknown)
-            if self.handle_unknown == 'error':
+            if self.handle_greater not in ['error', 'clip']:
+                raise ValueError("handle_greater should be either 'error' or "
+                                 "'clip' got %s" % self.handle_greater)
+            if self.handle_greater == 'error':
                 raise ValueError("unknown ordinal feature present %s "
                                  "during transform." % X.ravel()[~mask])
 
-        column_start = np.tile(indices[:-1], n_samples)[mask]
-        column_end = (X + indices[:-1]).ravel()[mask]
+        X_ceil = np.where(mask.reshape(X.shape), X, self.n_values_ - 1)
+        column_start = np.tile(indices[:-1], n_samples)
+        column_end = (indices[:-1] + X_ceil).ravel()
         column_indices = np.hstack([np.arange(s, e) for s, e
                                    in zip(column_start, column_end)])
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
-                                np.where(mask.reshape(X.shape), X,
-                                0).sum(axis=1))
-        data = np.ones(X.ravel()[mask].sum())
+                                X_ceil.sum(axis=1))
+        data = np.ones(X_ceil.ravel().sum())
         out = sparse.coo_matrix((data, (row_indices, column_indices)),
                                 shape=(n_samples, indices[-1]),
                                 dtype=self.dtype).tocsr()

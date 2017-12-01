@@ -2276,24 +2276,24 @@ def test_unary_encoder_dense_sparse():
     assert_array_equal(X_trans_sparse.toarray(), X_trans_dense)
 
 
-def test_unary_encoder_handle_unknown():
-    X = np.array([[0, 2, 1], [1, 0, 3], [1, 0, 2]])
+def test_unary_encoder_handle_greater():
+    X = np.array([[0, 2, 1], [1, 0, 3], [2, 0, 2]])
     y = np.array([[4, 1, 1]])
 
-    # Test that encoder raises error for unknown features.
-    encoder = UnaryEncoder(handle_unknown='error')
+    # Test that encoder raises error for greater features.
+    encoder = UnaryEncoder(handle_greater='error')
     encoder.fit(X)
     assert_raises(ValueError, encoder.transform, y)
 
-    # Test the ignore option, ignores unknown features.
-    encoder = UnaryEncoder(handle_unknown='ignore')
+    # Test the ignore option, clips greater features.
+    encoder = UnaryEncoder(handle_greater='clip')
     encoder.fit(X)
     assert_array_equal(
         encoder.transform(y),
-        np.array([[0.,  1.,  0.,  1.,  0.,  0.]]))
+        np.array([[1.,  1.,  1.,  0.,  1.,  0.,  0.]]))
 
-    # Raise error if handle_unknown is neither ignore or error.
-    encoder = UnaryEncoder(handle_unknown='42')
+    # Raise error if handle_greater is neither ignore or error.
+    encoder = UnaryEncoder(handle_greater='42')
     encoder.fit(X)
     assert_raises(ValueError, encoder.transform, y)
 
