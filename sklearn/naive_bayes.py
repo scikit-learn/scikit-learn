@@ -122,6 +122,10 @@ class GaussianNB(BaseNB):
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
+    var_smoothing : float, optional (default=1e-9)
+        Portion of the largest variance of all features that is added to
+        variances for calculation stability.
+
     Attributes
     ----------
     class_prior_ : array, shape (n_classes,)
@@ -136,6 +140,9 @@ class GaussianNB(BaseNB):
     sigma_ : array, shape (n_classes, n_features)
         variance of each feature per class
 
+    epsilon_ : float
+        absolute additive value to variances
+
     Examples
     --------
     >>> import numpy as np
@@ -144,18 +151,19 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB(priors=None)
+    GaussianNB(priors=None, var_smoothing=1e-09)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     >>> clf_pf = GaussianNB()
     >>> clf_pf.partial_fit(X, Y, np.unique(Y))
-    GaussianNB(priors=None)
+    GaussianNB(priors=None, var_smoothing=1e-09)
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
 
-    def __init__(self, priors=None):
+    def __init__(self, priors=None, var_smoothing=1e-9):
         self.priors = priors
+        self.var_smoothing = var_smoothing
 
     def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
@@ -321,7 +329,7 @@ class GaussianNB(BaseNB):
             Must be provided at the first call to partial_fit, can be omitted
             in subsequent calls.
 
-        _refit: bool, optional (default=False)
+        _refit : bool, optional (default=False)
             If true, act as though this were the first time we called
             _partial_fit (ie, throw away any past fitting and start over).
 
@@ -342,7 +350,7 @@ class GaussianNB(BaseNB):
         # will cause numerical errors. To address this, we artificially
         # boost the variance by epsilon, a small fraction of the standard
         # deviation of the largest dimension.
-        epsilon = 1e-9 * np.var(X, axis=0).max()
+        self.epsilon_ = self.var_smoothing * np.var(X, axis=0).max()
 
         if _refit:
             self.classes_ = None
@@ -358,7 +366,6 @@ class GaussianNB(BaseNB):
             self.class_count_ = np.zeros(n_classes, dtype=np.float64)
 
             # Initialise the class prior
-            n_classes = len(self.classes_)
             # Take into account the priors
             if self.priors is not None:
                 priors = np.asarray(self.priors)
@@ -367,7 +374,7 @@ class GaussianNB(BaseNB):
                     raise ValueError('Number of priors must match number of'
                                      ' classes.')
                 # Check that the sum is 1
-                if priors.sum() != 1.0:
+                if not np.isclose(priors.sum(), 1.0):
                     raise ValueError('The sum of the priors should be 1.')
                 # Check that the prior are non-negative
                 if (priors < 0).any():
@@ -382,7 +389,7 @@ class GaussianNB(BaseNB):
                 msg = "Number of features %d does not match previous data %d."
                 raise ValueError(msg % (X.shape[1], self.theta_.shape[1]))
             # Put epsilon back in each time
-            self.sigma_[:, :] -= epsilon
+            self.sigma_[:, :] -= self.epsilon_
 
         classes = self.classes_
 
@@ -413,7 +420,7 @@ class GaussianNB(BaseNB):
             self.sigma_[i, :] = new_sigma
             self.class_count_[i] += N_i
 
-        self.sigma_[:, :] += epsilon
+        self.sigma_[:, :] += self.epsilon_
 
         # Update if only no priors is provided
         if self.priors is None:
@@ -746,6 +753,12 @@ class ComplementNB(BaseDiscreteNB):
     class_prior : array-like, size (n_classes,), optional (default=None)
         Prior probabilities of the classes. Not used.
 
+    norm : boolean, optional (default=False)
+        Whether or not a second normalization of the weights is performed. The
+        default behavior mirrors the implementations found in Mahout and Weka,
+        which do not follow the full algorithm described in Table 9 of the
+        paper.
+
     Attributes
     ----------
     class_log_prior_ : array, shape (n_classes, )
@@ -775,7 +788,7 @@ class ComplementNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import ComplementNB
     >>> clf = ComplementNB()
     >>> clf.fit(X, y)
-    ComplementNB(alpha=1.0, class_prior=None, fit_prior=True)
+    ComplementNB(alpha=1.0, class_prior=None, fit_prior=True, norm=False)
     >>> print(clf.predict(X[2:3]))
     [3]
 
@@ -787,10 +800,12 @@ class ComplementNB(BaseDiscreteNB):
     http://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None,
+                 norm=False):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+        self.norm = norm
 
     def _count(self, X, Y):
         """Count feature occurrences."""
@@ -804,7 +819,12 @@ class ComplementNB(BaseDiscreteNB):
         """Apply smoothing to raw counts and compute the weights."""
         comp_count = self.feature_all_ + alpha - self.feature_count_
         logged = np.log(comp_count / comp_count.sum(axis=1, keepdims=True))
-        self.feature_log_prob_ = logged / logged.sum(axis=1, keepdims=True)
+        # BaseNB.predict uses argmax, but ComplementNB operates with argmin.
+        feature_log_prob = -logged
+        if self.norm:
+            summed = logged.sum(axis=1, keepdims=True)
+            feature_log_prob = -feature_log_prob / summed
+        self.feature_log_prob_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
         """Calculate the class scores for the samples in X."""

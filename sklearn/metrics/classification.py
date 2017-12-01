@@ -174,6 +174,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith('multilabel'):
         differing_labels = count_nonzero(y_true - y_pred, axis=1)
         score = differing_labels == 0
@@ -263,7 +264,7 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None):
     else:
         sample_weight = np.asarray(sample_weight)
 
-    check_consistent_length(sample_weight, y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
@@ -444,6 +445,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True,
 
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     if y_type.startswith('multilabel'):
         with np.errstate(divide='ignore', invalid='ignore'):
             # oddly, we may get an "invalid" rather than a "divide" error here
@@ -519,6 +521,7 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
     -0.33...
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     if y_type not in {"binary", "multiclass"}:
         raise ValueError("%s is not supported" % y_type)
 
@@ -1023,6 +1026,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         raise ValueError("beta should be >0 in the F-beta score")
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
     present_labels = unique_labels(y_true, y_pred)
 
     if average == 'binary':
@@ -1360,6 +1364,67 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     return r
 
 
+def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
+    """Compute the balanced accuracy
+
+    The balanced accuracy is used in binary classification problems to deal
+    with imbalanced datasets. It is defined as the arithmetic mean of
+    sensitivity (true positive rate) and specificity (true negative rate),
+    or the average recall obtained on either class. It is also equal to the
+    ROC AUC score given binary inputs.
+
+    The best value is 1 and the worst value is 0.
+
+    Read more in the :ref:`User Guide <balanced_accuracy_score>`.
+
+    Parameters
+    ----------
+    y_true : 1d array-like
+        Ground truth (correct) target values.
+
+    y_pred : 1d array-like
+        Estimated targets as returned by a classifier.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    balanced_accuracy : float.
+        The average of sensitivity and specificity
+
+    See also
+    --------
+    recall_score, roc_auc_score
+
+    References
+    ----------
+    .. [1] Brodersen, K.H.; Ong, C.S.; Stephan, K.E.; Buhmann, J.M. (2010).
+           The balanced accuracy and its posterior distribution.
+           Proceedings of the 20th International Conference on Pattern
+           Recognition, 3121-24.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import balanced_accuracy_score
+    >>> y_true = [0, 1, 0, 0, 1, 0]
+    >>> y_pred = [0, 1, 0, 0, 0, 1]
+    >>> balanced_accuracy_score(y_true, y_pred)
+    0.625
+
+    """
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+
+    if y_type != 'binary':
+        raise ValueError('Balanced accuracy is only meaningful '
+                         'for binary classification problems.')
+    # simply wrap the ``recall_score`` function
+    return recall_score(y_true, y_pred,
+                        pos_label=None,
+                        average='macro',
+                        sample_weight=sample_weight)
+
+
 def classification_report(y_true, y_pred, labels=None, target_names=None,
                           sample_weight=None, digits=2):
     """Build a text report showing the main classification metrics
@@ -1417,16 +1482,25 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     """
 
+    labels_given = True
     if labels is None:
         labels = unique_labels(y_true, y_pred)
+        labels_given = False
     else:
         labels = np.asarray(labels)
 
     if target_names is not None and len(labels) != len(target_names):
-        warnings.warn(
-            "labels size, {0}, does not match size of target_names, {1}"
-            .format(len(labels), len(target_names))
-        )
+        if labels_given:
+            warnings.warn(
+                "labels size, {0}, does not match size of target_names, {1}"
+                .format(len(labels), len(target_names))
+            )
+        else:
+            raise ValueError(
+                "Number of classes, {0}, does not match size of "
+                "target_names, {1}. Try specifying the labels "
+                "parameter".format(len(labels), len(target_names))
+            )
 
     last_line_heading = 'avg / total'
 
@@ -1550,6 +1624,7 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None,
         labels = classes
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -1638,7 +1713,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     The logarithm used is the natural logarithm (base-e).
     """
     y_pred = check_array(y_pred, ensure_2d=False)
-    check_consistent_length(y_pred, y_true)
+    check_consistent_length(y_pred, y_true, sample_weight)
 
     lb = LabelBinarizer()
 
@@ -1911,6 +1986,7 @@ def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
     y_prob = column_or_1d(y_prob)
     assert_all_finite(y_true)
     assert_all_finite(y_prob)
+    check_consistent_length(y_true, y_prob, sample_weight)
 
     if pos_label is None:
         pos_label = y_true.max()

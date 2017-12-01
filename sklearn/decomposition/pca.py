@@ -11,6 +11,7 @@
 # License: BSD 3 clause
 
 from math import log, sqrt
+import numbers
 
 import numpy as np
 from scipy import linalg
@@ -130,14 +131,18 @@ class PCA(_BasePCA):
 
             n_components == min(n_samples, n_features)
 
-        if n_components == 'mle' and svd_solver == 'full', Minka\'s MLE is used
-        to guess the dimension
-        if ``0 < n_components < 1`` and svd_solver == 'full', select the number
-        of components such that the amount of variance that needs to be
+        If ``n_components == 'mle'`` and ``svd_solver == 'full'``, Minka\'s
+        MLE is used to guess the dimension. Use of ``n_components == 'mle'``
+        will interpret ``svd_solver == 'auto'`` as ``svd_solver == 'full'``.
+
+        If ``0 < n_components < 1`` and ``svd_solver == 'full'``, select the
+        number of components such that the amount of variance that needs to be
         explained is greater than the percentage specified by n_components.
-        If svd_solver == 'arpack', the number of components must be strictly
-        less than the minimum of n_features and n_samples.
-        Hence, the None case results in:
+
+        If ``svd_solver == 'arpack'``, the number of components must be
+        strictly less than the minimum of n_features and n_samples.
+
+        Hence, the None case results in::
 
             n_components == min(n_samples, n_features) - 1
 
@@ -386,8 +391,8 @@ class PCA(_BasePCA):
         # Handle svd_solver
         svd_solver = self.svd_solver
         if svd_solver == 'auto':
-            # Small problem, just call full PCA
-            if max(X.shape) <= 500:
+            # Small problem or n_components == 'mle', just call full PCA
+            if max(X.shape) <= 500 or n_components == 'mle':
                 svd_solver = 'full'
             elif n_components >= 1 and n_components < .8 * min(X.shape):
                 svd_solver = 'randomized'
@@ -417,6 +422,12 @@ class PCA(_BasePCA):
                              "min(n_samples, n_features)=%r with "
                              "svd_solver='full'"
                              % (n_components, min(n_samples, n_features)))
+        elif n_components >= 1:
+            if not isinstance(n_components, (numbers.Integral, np.integer)):
+                raise ValueError("n_components=%r must be of type int "
+                                 "when greater than or equal to 1, "
+                                 "was of type=%r"
+                                 % (n_components, type(n_components)))
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -477,6 +488,10 @@ class PCA(_BasePCA):
                              "svd_solver='%s'"
                              % (n_components, min(n_samples, n_features),
                                 svd_solver))
+        elif not isinstance(n_components, (numbers.Integral, np.integer)):
+            raise ValueError("n_components=%r must be of type int "
+                             "when greater than or equal to 1, was of type=%r"
+                             % (n_components, type(n_components)))
         elif svd_solver == 'arpack' and n_components == min(n_samples,
                                                             n_features):
             raise ValueError("n_components=%r must be strictly less than "
@@ -550,7 +565,6 @@ class PCA(_BasePCA):
         X = check_array(X)
         Xr = X - self.mean_
         n_features = X.shape[1]
-        log_like = np.zeros(X.shape[0])
         precision = self.get_precision()
         log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
         log_like -= .5 * (n_features * log(2. * np.pi) -
