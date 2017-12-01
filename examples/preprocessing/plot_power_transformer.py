@@ -32,53 +32,69 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import PowerTransformer
 
 N_SAMPLES = 3000
+SEED = 304
 
 pt = PowerTransformer(method='box-cox')
-rng = np.random.RandomState(304)
+rng = np.random.RandomState(SEED)
 size = (N_SAMPLES, 1)
+
 
 # lognormal distribution
 X_lognormal = rng.lognormal(size=size)
-X_lognormal_trans = pt.fit_transform(X_lognormal)
-lambda_lognormal = round(pt.lambdas_[0], 2)
 
 # chi-squared distribution
 df = 3
 X_chisq = rng.chisquare(df=df, size=size)
-X_chisq_trans = pt.fit_transform(X_chisq)
-lambda_chisq = round(pt.lambdas_[0], 2)
 
 # weibull distribution
 a = 50
 X_weibull = rng.weibull(a=a, size=size)
-X_weibull_trans = pt.fit_transform(X_weibull)
-lambda_weibull = round(pt.lambdas_[0], 2)
+
+# gaussian distribution
+loc = 100
+X_gaussian = rng.normal(loc=loc, size=size)
+
+# uniform distirbution
+X_uniform = rng.uniform(low=0, high=1, size=size)
+
+# bimodal distribution
+loc_a, loc_b = 100, 105
+X_a, X_b = rng.normal(loc=loc_a, size=size), rng.normal(loc=loc_b, size=size)
+X_bimodal = np.concatenate([X_a, X_b], axis=0)
+
 
 # create plots
+distributions = [
+    ('Lognormal', X_lognormal),
+    ('Chi-squared', X_chisq),
+    ('Weibull', X_weibull),
+    ('Gaussian', X_gaussian),
+    ('Uniform', X_uniform),
+    ('Bimodal', X_bimodal),
+]
+
+colors = ['firebrick', 'darkorange', 'goldenrod',
+          'seagreen', 'royalblue', 'darkorchid']
+
+fig, axes = plt.subplots(nrows=4, ncols=3)
+axes_idxs = [(0, 3), (1, 4), (2, 5), (6, 9), (7, 10), (8, 11)]
+axes = axes.flatten().tolist()
+
 params = {'font.size': 6, 'hist.bins': 150}
 matplotlib.rcParams.update(params)
 
-fig, axes = plt.subplots(nrows=2, ncols=3)
-ax0, ax2, ax4, ax1, ax3, ax5 = axes.flatten()
+for distribution, color, idxs in zip(distributions, colors, axes_idxs):
+    name, X = distribution
+    ax_original, ax_trans = axes[idxs[0]], axes[idxs[1]]
 
-color = 'firebrick'
-ax0.hist(X_lognormal, color=color)
-ax0.set_title('Lognormal')
-ax1.hist(X_lognormal_trans, color=color)
-ax1.set_title('Lognormal after Box-Cox, $\lambda$ = {}'
-              .format(lambda_lognormal))
+    # perform power transform
+    X_trans = pt.fit_transform(X)
+    lmbda = round(pt.lambdas_[0], 2)
 
-color = 'seagreen'
-ax2.hist(X_chisq, color=color)
-ax2.set_title('Chi-squared, df = {df}'.format(df=df))
-ax3.hist(X_chisq_trans, color=color)
-ax3.set_title('Chi-squared after Box-Cox, $\lambda$ = {}'.format(lambda_chisq))
-
-color = 'royalblue'
-ax4.hist(X_weibull, color=color)
-ax4.set_title('Weibull, a = {a}'.format(a=a))
-ax5.hist(X_weibull_trans, color=color)
-ax5.set_title('Weibull after Box-Cox, $\lambda$ = {}'.format(lambda_weibull))
+    ax_original.hist(X, color=color)
+    ax_original.set_title(name)
+    ax_trans.hist(X_trans, color=color)
+    ax_trans.set_title('{} after Box-Cox, $\lambda$ = {}'.format(name, lmbda))
 
 plt.tight_layout()
 plt.show()
