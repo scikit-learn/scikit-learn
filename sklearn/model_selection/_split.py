@@ -2058,6 +2058,8 @@ def train_test_split(*arrays, **options):
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
 
+
+# Tell nose that train_test_split is not a test
 train_test_split.__test__ = False
 
 def _build_repr(self):
