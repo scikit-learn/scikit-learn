@@ -320,10 +320,10 @@ the Box-Cox transform. The Box-Cox transform is given by:
     \ln{(y_i)} & \text{if } \lambda = 0,
     \end{cases}
 
-Note that Box-Cox can only be applied to strictly positive data.
-The transformation is parameterized by :math:`\lambda`, which is determined
-through maximum likelihood estimation. Here is an example of using Box-Cox to
-map samples drawn from a lognormal distribution to a normal distribution::
+Box-Cox can only be applied to strictly positive data. The transformation is
+parameterized by :math:`\lambda`, which is determined through maximum likelihood
+estimation. Here is an example of using Box-Cox to map samples drawn from a
+lognormal distribution to a normal distribution::
 
   >>> pt = preprocessing.PowerTransformer(method='box-cox')
   >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
@@ -336,16 +336,15 @@ map samples drawn from a lognormal distribution to a normal distribution::
          [-0.05...,  0.58..., -0.57...],
          [ 0.69..., -0.84...,  0.10...]])
 
-Below are examples of Box-Cox applied to various skewed probability
-distributions. Note that the optimal estimated parameters achieve very
-close results to the Gaussian, but that the resulting distributions are
-not standard normal, with zero mean and unit variance.
+Below are examples of Box-Cox applied to various probability distributions.
+Note that when applied to certain distributions, Box-Cox achieves very
+Gaussian-like results, but with others, it is ineffective. This highlights
+the importance of visualizing the data before and after transformation.
 
 .. figure:: ../auto_examples/preprocessing/images/sphx_glr_plot_power_transformer_001.png
    :target: ../auto_examples/preprocessing/plot_power_transformer.html
    :align: center
    :scale: 100
-
 
 It is also possible to map data to a normal distribution using
 :class:`QuantileTransformer` by setting ``output_distribution='normal'``.

@@ -5,22 +5,19 @@ Using PowerTransformer to apply the Box-Cox transformation
 
 This example demonstrates the use of the Box-Cox transform
 through :class:`preprocessing.PowerTransformer` to map data
-from various distributions to a Gaussian distribution.
+from various distributions to a normal distribution.
 
 Box-Cox is useful as a transformation in modeling problems
 where homoscedasticity and normality are desired. Below
-are examples of Box-Cox applied to three distributions: a
-heavily left-skewed lognormal distribution, a left-skewed
-chi-squared distribution, and a right-skewed Weibull
-distribution.
+are examples of Box-Cox applied to six different probability
+distributions: Lognormal, Chi-squared, Weibull, Gaussian,
+Uniform, and Bimodal.
 
-Note that when Box-Cox is applied to the lognormal distribution,
-the estimated parameter (lambda) takes on a value close to
-zero, since Box-Cox is defined as the natural logarithm when
-lambda = 0. In all cases, the maximum likelihood estimated
-lambdas achieve very close results to the normal distribution.
+Note that the transformation successfully maps the data to a
+normal distribution when applied to certain datasets, but is
+ineffective with others. This highlights the importance of
+visualizing the data before and after transformation.
 """
-print(__doc__)
 
 # Author: Eric Chang <ericchang2017@u.northwestern.edu>
 # License: BSD 3 clause
@@ -30,6 +27,9 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import PowerTransformer
+
+print(__doc__)
+
 
 N_SAMPLES = 3000
 SEED = 304
@@ -70,22 +70,26 @@ distributions = [
     ('Weibull', X_weibull),
     ('Gaussian', X_gaussian),
     ('Uniform', X_uniform),
-    ('Bimodal', X_bimodal),
+    ('Bimodal', X_bimodal)
 ]
 
 colors = ['firebrick', 'darkorange', 'goldenrod',
           'seagreen', 'royalblue', 'darkorchid']
 
-fig, axes = plt.subplots(nrows=4, ncols=3)
-axes_idxs = [(0, 3), (1, 4), (2, 5), (6, 9), (7, 10), (8, 11)]
-axes = axes.flatten().tolist()
-
-params = {'font.size': 6, 'hist.bins': 150}
+params = {
+    'font.size': 6,
+    'hist.bins': 150
+}
 matplotlib.rcParams.update(params)
 
-for distribution, color, idxs in zip(distributions, colors, axes_idxs):
+fig, axes = plt.subplots(nrows=4, ncols=3)
+axes_idxs = [(0, 3), (1, 4), (2, 5), (6, 9), (7, 10), (8, 11)]
+axes = axes.flatten()
+axes_list = [(axes[i], axes[j]) for i, j in axes_idxs]
+
+for distribution, color, axes in zip(distributions, colors, axes_list):
     name, X = distribution
-    ax_original, ax_trans = axes[idxs[0]], axes[idxs[1]]
+    ax_original, ax_trans = axes
 
     # perform power transform
     X_trans = pt.fit_transform(X)
@@ -95,6 +99,7 @@ for distribution, color, idxs in zip(distributions, colors, axes_idxs):
     ax_original.set_title(name)
     ax_trans.hist(X_trans, color=color)
     ax_trans.set_title('{} after Box-Cox, $\lambda$ = {}'.format(name, lmbda))
+
 
 plt.tight_layout()
 plt.show()
