@@ -469,6 +469,25 @@ def jaccard_similarity_score(y_true, y_pred, pos_label=1, average=None,
     check_consistent_length(y_true, y_pred, sample_weight)
     present_labels = unique_labels(y_true, y_pred)
 
+    if average == 'binary':
+        if y_type == 'binary':
+            if pos_label not in present_labels:
+                if len(present_labels) < 2:
+                    # only -ve labels
+                    return 0.
+                else:
+                    raise ValueError("pos_label=%r is not a valid label: "
+                                    "%r" % (pos_label, present_labels))
+            labels = [pos_label]
+        else:
+            raise ValueError("Target is %s but average='binary'. Please "
+                            "choose another average setting." % y_type)
+    elif pos_label not in (None, 1):
+        warnings.warn("Note that pos_label (set to %r) is ignored when "
+                      "average != 'binary' (got %r). You may use "
+                      "labels=[pos_label] to specify a single positive class."
+                      % (pos_label, average), UserWarning)
+
     if y_type.startswith('multilabel'):
         # default average in multilabel is 'samples'
         if average == None:
@@ -483,14 +502,6 @@ def jaccard_similarity_score(y_true, y_pred, pos_label=1, average=None,
                 score[pred_or_true == 0.0] = 1.0
                 return _weighted_sum(score, sample_weight, normalize=True)
 
-            if average == 'binary':
-                if pos_label not in present_labels:
-                    if len(present_labels) < 2:
-                        # only -ve labels
-                        return 0.
-                    else:
-                        raise ValueError("pos_label=%r is not a valid label"
-                                         ": %r" % (pos_label, present_labels))
                 y_true_pos = y_true[:, pos_label - 1]
                 y_pred_pos = y_pred[:, pos_label - 1]
                 pred_or_true = count_nonzero(y_true_pos + y_pred_pos)
