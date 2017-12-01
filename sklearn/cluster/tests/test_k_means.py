@@ -15,6 +15,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 from sklearn.utils.testing import assert_raise_message
 from sklearn.exceptions import ConvergenceWarning
@@ -883,4 +884,6 @@ def test_less_centers_than_unique_points():
 
     # k_means should warn that fewer labels than cluster
     # centers have been used
-    assert_warns(ConvergenceWarning, k_means, X, n_clusters=4)
+    msg = ("Number of distinct clusters (3) found smaller than "
+           "n_clusters (4). Possibly due to duplicate points in X.")
+    assert_warns_message(ConvergenceWarning, msg, k_means, X, n_clusters=4)
