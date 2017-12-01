@@ -49,6 +49,7 @@ __all__ = [
     'Normalizer',
     'OneHotEncoder',
     'CategoricalEncoder',
+    'PowerTransformer',
     'RobustScaler',
     'StandardScaler',
     'add_dummy_feature',
@@ -61,5 +62,4 @@ __all__ = [
     'minmax_scale',
     'label_binarize',
     'quantile_transform',
-    'PowerTransformer',
 ]

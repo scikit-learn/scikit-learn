@@ -1200,8 +1200,8 @@ Model validation
    preprocessing.OneHotEncoder
    preprocessing.CategoricalEncoder
    preprocessing.PolynomialFeatures
-   preprocessing.QuantileTransformer
    preprocessing.PowerTransformer
+   preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
 
