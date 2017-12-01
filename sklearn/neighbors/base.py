@@ -363,7 +363,7 @@ class KNeighborsMixin(object):
 
             if issparse(dist):
                 if np.any(getnnz(X,axis=1) < n_neighbors):
-                    raise ValueError("Perplexity is more in case of T-SNE."
+                    raise ValueError("Perplexity of the sparse matrix is high."
                                      " Please reduce the perplexity.")
                 neigh_ind = np.zeros((dist.shape[0], n_neighbors))
                 for i in range(0, dist.shape[0]):

@@ -572,7 +572,7 @@ def test_sparse_on_barnes_hut_low_perplexity():
     X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
     X_csr = sp.csr_matrix(X)
     tsne = TSNE(n_iter=300, method='barnes_hut')
-    assert_raises_regexp(ValueError, "Perplexity is more in case of.*",
+    assert_raises_regexp(ValueError, "Perplexity of the sparse matrix.*",
                          tsne.fit_transform, X_csr)
 
 

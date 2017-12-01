@@ -712,7 +712,7 @@ class TSNE(BaseEstimator):
 
             if(sp.issparse(X)):
                 if np.any(getnnz(X, axis=1) < k):
-                    raise ValueError("Perplexity is more in case of T-SNE."
+                    raise ValueError("Perplexity of the sparse matrix is high."
                                      " Please reduce the perplexity.")
 
             # Find the nearest neighbors for every point
