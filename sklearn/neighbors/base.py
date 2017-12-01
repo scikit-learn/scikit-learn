@@ -18,6 +18,7 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
+from ..utils.fixes import getnnz
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
@@ -361,7 +362,7 @@ class KNeighborsMixin(object):
                     **self.effective_metric_params_)
 
             if issparse(dist):
-                if np.any(X.getnnz(axis=1) < n_neighbors):
+                if np.any(getnnz(X,axis=1) < n_neighbors):
                     raise ValueError("Perplexity is more in case of T-SNE."
                                      " Please reduce the perplexity.")
                 neigh_ind = np.zeros((dist.shape[0], n_neighbors))

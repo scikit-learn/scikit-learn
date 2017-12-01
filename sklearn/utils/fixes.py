@@ -295,3 +295,20 @@ if np_version < (1, 12):
                                  self._fill_value)
 else:
     from numpy.ma import MaskedArray    # noqa
+
+
+# Remove when minimum required SciPy >= 0.17.0
+def getnnz(X, axis=None):
+        if axis is None:
+            return int(X.indptr[-1])
+        else:
+            if axis < 0:
+                axis += 2
+            axis, _ = X._swap((axis, 1 - axis))
+            _, N = X._swap(X.shape)
+            if axis == 0:
+                return np.bincount(downcast_intp_index(X.indices),
+                                   minlength=N)
+            elif axis == 1:
+                return np.diff(X.indptr)
+            raise ValueError('axis out of bounds')

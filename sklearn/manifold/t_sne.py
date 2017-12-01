@@ -25,6 +25,7 @@ from . import _utils
 from . import _barnes_hut_tsne
 from ..externals.six import string_types
 from ..utils import deprecated
+from ..utils.fixes import getnnz
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -710,7 +711,7 @@ class TSNE(BaseEstimator):
                 print("[t-SNE] Computing {} nearest neighbors...".format(k))
 
             if(sp.issparse(X)):
-                if np.any(X.getnnz(axis=1) < k):
+                if np.any(getnnz(X, axis=1) < k):
                     raise ValueError("Perplexity is more in case of T-SNE."
                                      " Please reduce the perplexity.")
 
