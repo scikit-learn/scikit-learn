@@ -939,6 +939,24 @@ def test_multilabel_hamming_loss():
     assert_warns(DeprecationWarning, hamming_loss, y1, y2, classes=[0, 1])
 
 
+@ignore_warnings
+def test_jaccard_similarity_score():
+    y_true = np.array([0, 0])
+    y_pred = np.array([0, 0])
+    assert_equal(jaccard_similarity_score(y_true, y_pred, average='binary',
+                                          pos_label=-1), 0.)
+
+    y_true = np.array([[0, 1, 1], [1, 0, 0]])
+    y_pred = np.array([[1, 1, 1], [1, 0, 1]])
+    assert_raises(ValueError, jaccard_similarity_score, y_true, y_pred,
+                  average='binary', pos_label=-1)
+
+    y_true = np.array([0, 1, 1, 0, 2])
+    y_pred = np.array([1, 1, 1, 1, 0])
+    assert_raises(ValueError, jaccard_similarity_score, y_true, y_pred,
+                  average='binary')
+
+
 def test_multilabel_jaccard_similarity_score():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
@@ -955,18 +973,6 @@ def test_multilabel_jaccard_similarity_score():
     assert_equal(jaccard_similarity_score(y1, np.zeros(y1.shape)), 0)
     assert_equal(jaccard_similarity_score(y2, np.zeros(y1.shape)), 0)
 
-    y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
-    y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                average='macro'), 7. / 18)
-    assert_equal(jaccard_similarity_score(y_true, y_pred,
-                                                average='micro'), 1. / 2)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                average='weighted'), 7. / 12)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred),
-                        np.array([2. / 3, 0., 1. / 2]))
-
-    # multilabel testing
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
     # average='macro'
@@ -981,6 +987,19 @@ def test_multilabel_jaccard_similarity_score():
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                     average='binary', pos_label=1), 1. / 2)
     # average='weighted'
+
+
+def test_multiclass_jaccard_similarity_score():
+    y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
+    y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                average='macro'), 7. / 18)
+    assert_equal(jaccard_similarity_score(y_true, y_pred,
+                                                average='micro'), 1. / 2)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                average='weighted'), 7. / 12)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred),
+                        np.array([2. / 3, 0., 1. / 2]))
 
 
 @ignore_warnings
