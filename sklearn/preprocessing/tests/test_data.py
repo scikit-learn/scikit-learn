@@ -55,6 +55,7 @@ from sklearn.preprocessing.data import robust_scale
 from sklearn.preprocessing.data import add_dummy_feature
 from sklearn.preprocessing.data import PolynomialFeatures
 from sklearn.preprocessing.data import PowerTransformer
+from sklearn.preprocessing.data import power_transform
 from sklearn.exceptions import DataConversionWarning, NotFittedError
 
 from sklearn.pipeline import Pipeline
@@ -2241,8 +2242,11 @@ def test_power_transformer_1d():
     X_expected, lambda_expected = stats.boxcox(X.flatten())
 
     assert_almost_equal(X_expected.reshape(-1, 1), X_trans)
+    assert_almost_equal(X_expected.reshape(-1, 1), power_transform(X))
+
     assert_almost_equal(X, pt.inverse_transform(X_trans))
     assert_almost_equal(lambda_expected, pt.lambdas_[0])
+
     assert len(pt.lambdas_) == X.shape[1]
     assert isinstance(pt.lambdas_, np.ndarray)
 
@@ -2250,17 +2254,22 @@ def test_power_transformer_1d():
 def test_power_transformer_2d():
     pt = PowerTransformer(method='box-cox')
     X = np.abs(X_2d)
-    X_trans = pt.fit_transform(X)
-    for j in range(X_trans.shape[1]):
-        X_expected, lmbda = stats.boxcox(X[:, j].flatten())
-        assert_almost_equal(X_trans[:, j], X_expected)
-        assert_almost_equal(lmbda, pt.lambdas_[j])
+
+    X_trans_class = pt.fit_transform(X)
+    X_trans_func = power_transform(X)
+
+    for X_trans in [X_trans_class, X_trans_func]:
+        for j in range(X_trans.shape[1]):
+            X_expected, lmbda = stats.boxcox(X[:, j].flatten())
+            assert_almost_equal(X_trans[:, j], X_expected)
+            assert_almost_equal(lmbda, pt.lambdas_[j])
+
+        # Test inverse transformation
+        X_inv = pt.inverse_transform(X_trans)
+        assert_array_almost_equal(X_inv, X)
+
     assert len(pt.lambdas_) == X.shape[1]
     assert isinstance(pt.lambdas_, np.ndarray)
-
-    # Test inverse transformation
-    X_inv = pt.inverse_transform(X_trans)
-    assert_array_almost_equal(X_inv, X)
 
 
 def test_power_transformer_strictly_positive_exception():
@@ -2278,10 +2287,16 @@ def test_power_transformer_strictly_positive_exception():
                          pt.fit, X_with_negatives)
 
     assert_raise_message(ValueError, not_positive_message,
+                         power_transform, X_with_negatives)
+
+    assert_raise_message(ValueError, not_positive_message,
                          pt.transform, np.zeros(X_2d.shape))
 
     assert_raise_message(ValueError, not_positive_message,
                          pt.fit, np.zeros(X_2d.shape))
+
+    assert_raise_message(ValueError, not_positive_message,
+                         power_transform, np.zeros(X_2d.shape))
 
 
 def test_power_transformer_shape_exception():

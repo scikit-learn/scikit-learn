@@ -21,6 +21,7 @@ from .data import robust_scale
 from .data import maxabs_scale
 from .data import minmax_scale
 from .data import quantile_transform
+from .data import power_transform
 from .data import OneHotEncoder
 from .data import PowerTransformer
 from .data import CategoricalEncoder
@@ -62,4 +63,5 @@ __all__ = [
     'minmax_scale',
     'label_binarize',
     'quantile_transform',
+    'power_transform',
 ]
