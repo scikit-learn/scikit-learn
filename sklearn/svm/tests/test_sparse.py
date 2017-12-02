@@ -273,8 +273,8 @@ def test_sparse_oneclasssvm():
     kernels = ["linear", "poly", "rbf", "sigmoid"]
     for dataset in datasets:
         for kernel in kernels:
-            clf = svm.OneClassSVM(kernel=kernel, random_state=0)
-            sp_clf = svm.OneClassSVM(kernel=kernel, random_state=0)
+            clf = svm.OneClassSVM(kernel=kernel)
+            sp_clf = svm.OneClassSVM(kernel=kernel)
             check_svm_model_equal(clf, sp_clf, *dataset)
 
 
