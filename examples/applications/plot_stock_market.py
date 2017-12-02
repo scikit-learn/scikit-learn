@@ -146,6 +146,7 @@ def quotes_historical_google(symbol, start_date, end_date):
         raise RuntimeError(message)
     return data
 
+
 # #############################################################################
 # Retrieve the data from Internet
 
