@@ -372,8 +372,8 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     return 1 - k
 
 
-def jaccard_similarity_score(y_true, y_pred, pos_label=1, average=None,
-                             sample_weight=None):
+def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
+                             average=None, warn=True, sample_weight=None):
     """Jaccard similarity coefficient score
 
     The Jaccard index [1], or Jaccard similarity coefficient, defined as
@@ -391,8 +391,20 @@ def jaccard_similarity_score(y_true, y_pred, pos_label=1, average=None,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    sample_weight : array-like of shape = [n_samples], optional
-        Sample weights.
+    labels : list, optional
+        The set of labels to include when ``average != 'binary'``, and their
+        order if ``average is None``. Labels present in the data can be
+        excluded, for example to calculate a multiclass average ignoring a
+        majority negative class, while labels not present in the data will
+        result in 0 components in a macro average. For multilabel targets,
+        labels are column indices. By default, all labels in ``y_true`` and
+        ``y_pred`` are used in sorted order.
+
+    pos_label : str or int, 1 by default
+        The class to report if ``average='binary'`` and the data is binary.
+        If the data are multiclass or multilabel, this will be ignored;
+        setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
+        scores for that label only.
 
     average : string, [None (default), 'binary', 'micro', 'macro', 'samples', \
                        'weighted',]
@@ -415,6 +427,12 @@ def jaccard_similarity_score(y_true, y_pred, pos_label=1, average=None,
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification).
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    warn : bool, for internal use
+        This determines whether warning will be raised or not.
 
     Returns
     -------
@@ -444,20 +462,21 @@ def jaccard_similarity_score(y_true, y_pred, pos_label=1, average=None,
     >>> jaccard_similarity_score(y_true, y_pred, average='macro')
     0.5
     >>> jaccard_similarity_score(y_true, y_pred, normalize='micro')
+    ... # doctest: +ELLIPSIS
     0.33...
 
     In the multilabel case with binary label indicators:
 
-    >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),\
-        np.ones((2, 2)))
+    >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),
+    ... np.ones((2, 2)))
     0.75
 
     In the multiclass case:
 
     >>> y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
     >>> y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
-    >>> jaccard_similarity_score(y_true, y_pred)
-    0.38888888888888884
+    >>> jaccard_similarity_score(y_true, y_pred) # doctest: +ELLIPSIS
+    0.388...
     """
 
     average_options = (None, 'binary', 'micro', 'macro', 'weighted', 'samples')

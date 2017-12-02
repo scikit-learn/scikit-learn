@@ -956,6 +956,13 @@ def test_jaccard_similarity_score():
     assert_raises(ValueError, jaccard_similarity_score, y_true, y_pred,
                   average='binary')
 
+    assert_warns_message(UserWarning,
+                        "Note that pos_label (set to 3) is ignored when"
+                        "average != 'binary' (got None). You may use "
+                        "labels=[pos_label] to specify a single positive"
+                        "class.", jaccard_similarity_score, y_true, y_pred,
+                        pos_label=3)
+
 
 def test_multilabel_jaccard_similarity_score():
     # Dense label indicator matrix format
