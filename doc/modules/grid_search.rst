@@ -84,6 +84,10 @@ evaluated and the best combination is retained.
       dataset. This is the best practice for evaluating the performance of a
       model with grid search.
 
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
+      for an example of :class:`GridSearchCV` being used to evaluate multiple
+      metrics simultaneously.
+
 .. _randomized_parameter_search:
 
 Randomized Parameter Optimization
@@ -160,6 +164,27 @@ scoring function can be specified via the ``scoring`` parameter to
 :class:`GridSearchCV`, :class:`RandomizedSearchCV` and many of the
 specialized cross-validation tools described below.
 See :ref:`scoring_parameter` for more details.
+
+.. _multimetric_grid_search:
+
+Specifying multiple metrics for evaluation
+------------------------------------------
+
+``GridSearchCV`` and ``RandomizedSearchCV`` allow specifying multiple metrics
+for the ``scoring`` parameter.
+
+Multimetric scoring can either be specified as a list of strings of predefined
+scores names or a dict mapping the scorer name to the scorer function and/or
+the predefined scorer name(s). See :ref:`multimetric_scoring` for more details.
+
+When specifying multiple metrics, the ``refit`` parameter must be set to the
+metric (string) for which the ``best_params_`` will be found and used to build
+the ``best_estimator_`` on the whole dataset. If the search should not be
+refit, set ``refit=False``. Leaving refit to the default value ``None`` will
+result in an error when using multiple metrics.
+
+See :ref:`sphx_glr_auto_examples_model_selection_plot_multi_metric_evaluation.py`
+for an example usage.
 
 Composite estimators and parameter spaces
 -----------------------------------------
@@ -245,7 +270,7 @@ Some models can offer an information-theoretic closed-form formula of the
 optimal estimate of the regularization parameter by computing a single
 regularization path (instead of several when using cross-validation).
 
-Here is the list of models benefitting from the Akaike Information
+Here is the list of models benefiting from the Akaike Information
 Criterion (AIC) or the Bayesian Information Criterion (BIC) for automated
 model selection:
 

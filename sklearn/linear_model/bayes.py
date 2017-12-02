@@ -11,7 +11,7 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg import pinvh
 
-from .base import LinearModel
+from .base import LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
 from ..utils import check_X_y
@@ -120,8 +120,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
     http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
-    Their beta is our self.alpha_
-    Their alpha is our self.lambda_
+    Their beta is our ``self.alpha_``
+    Their alpha is our ``self.lambda_``
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
@@ -140,7 +140,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model
 
         Parameters
@@ -148,7 +148,13 @@ class BayesianRidge(LinearModel, RegressorMixin):
         X : numpy array of shape [n_samples,n_features]
             Training data
         y : numpy array of shape [n_samples]
-            Target values
+            Target values. Will be cast to X's dtype if necessary
+
+        sample_weight : numpy array of shape [n_samples]
+            Individual weights for each sample
+
+            .. versionadded:: 0.20
+               parameter *sample_weight* support to BayesianRidge.
 
         Returns
         -------
@@ -156,13 +162,22 @@ class BayesianRidge(LinearModel, RegressorMixin):
         """
         X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
+
+        if sample_weight is not None:
+            # Sample weight can be implemented via a simple rescaling.
+            X, y = _rescale_data(X, y, sample_weight)
+
         self.X_offset_ = X_offset_
         self.X_scale_ = X_scale_
         n_samples, n_features = X.shape
 
         # Initialization of the values of the parameters
-        alpha_ = 1. / np.var(y)
+        eps = np.finfo(np.float64).eps
+        # Add `eps` in the denominator to omit division by zero if `np.var(y)`
+        # is zero
+        alpha_ = 1. / (np.var(y) + eps)
         lambda_ = 1.
 
         verbose = self.verbose
@@ -384,10 +399,10 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     R. Salakhutdinov, Lecture notes on Statistical Machine Learning,
     http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=15
-    Their beta is our self.alpha_
-    Their alpha is our self.lambda_
+    Their beta is our ``self.alpha_``
+    Their alpha is our ``self.lambda_``
     ARD is a little different than the slide: only dimensions/features for
-    which self.lambda_ < self.threshold_lambda are kept and the rest are
+    which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
     discarded.
     """
 
@@ -420,13 +435,14 @@ class ARDRegression(LinearModel, RegressorMixin):
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
         y : array, shape = [n_samples]
-            Target values (integers)
+            Target values (integers). Will be cast to X's dtype if necessary
 
         Returns
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
+        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True,
+                         ensure_min_samples=2)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
@@ -444,15 +460,17 @@ class ARDRegression(LinearModel, RegressorMixin):
         verbose = self.verbose
 
         # Initialization of the values of the parameters
-        alpha_ = 1. / np.var(y)
+        eps = np.finfo(np.float64).eps
+        # Add `eps` in the denominator to omit division by zero if `np.var(y)`
+        # is zero
+        alpha_ = 1. / (np.var(y) + eps)
         lambda_ = np.ones(n_features)
 
         self.scores_ = list()
         coef_old_ = None
 
-        # Iterative procedure of ARDRegression
-        for iter_ in range(self.n_iter):
-            # Compute mu and sigma (using Woodbury matrix identity)
+        # Compute sigma and mu (using Woodbury matrix identity)
+        def update_sigma(X, alpha_, lambda_, keep_lambda, n_samples):
             sigma_ = pinvh(np.eye(n_samples) / alpha_ +
                            np.dot(X[:, keep_lambda] *
                            np.reshape(1. / lambda_[keep_lambda], [1, -1]),
@@ -462,8 +480,17 @@ class ARDRegression(LinearModel, RegressorMixin):
             sigma_ = - np.dot(np.reshape(1. / lambda_[keep_lambda], [-1, 1]) *
                               X[:, keep_lambda].T, sigma_)
             sigma_.flat[::(sigma_.shape[1] + 1)] += 1. / lambda_[keep_lambda]
+            return sigma_
+
+        def update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_):
             coef_[keep_lambda] = alpha_ * np.dot(
                 sigma_, np.dot(X[:, keep_lambda].T, y))
+            return coef_
+
+        # Iterative procedure of ARDRegression
+        for iter_ in range(self.n_iter):
+            sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
+            coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
 
             # Update alpha and lambda
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
@@ -493,6 +520,10 @@ class ARDRegression(LinearModel, RegressorMixin):
                     print("Converged after %s iterations" % iter_)
                 break
             coef_old_ = np.copy(coef_)
+
+        # update sigma and mu using updated parameters from the last iteration
+        sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
+        coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
 
         self.coef_ = coef_
         self.alpha_ = alpha_

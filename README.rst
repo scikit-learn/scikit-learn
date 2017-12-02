@@ -49,7 +49,7 @@ Dependencies
 
 scikit-learn requires:
 
-- Python (>= 2.7 or >= 3.3)
+- Python (>= 2.7 or >= 3.4)
 - NumPy (>= 1.8.2)
 - SciPy (>= 0.13.3)
 
@@ -110,17 +110,11 @@ Testing
 ~~~~~~~
 
 After installation, you can launch the test suite from outside the
-source directory (you will need to have the ``nose`` package installed)::
+source directory (you will need to have the ``pytest`` package installed)::
 
-    nosetests -v sklearn
+    pytest sklearn
 
-Under Windows, it is recommended to use the following command (adjust the path
-to the ``python.exe`` program) as using the ``nosetests.exe`` program can badly
-interact with tests that use ``multiprocessing``::
-
-    C:\Python34\python.exe -c "import nose; nose.main()" -v sklearn
-
-See the web page http://scikit-learn.org/stable/developers/advanced_installation.html#testing
+See the web page http://scikit-learn.org/dev/developers/advanced_installation.html#testing
 for more information.
 
     Random number generation can be controlled during testing by setting

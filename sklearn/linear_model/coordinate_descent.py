@@ -185,15 +185,15 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     verbose : bool or integer
         Amount of verbosity.
 
-    params : kwargs
-        keyword arguments passed to the coordinate descent solver.
+    return_n_iter : bool
+        whether to return the number of iterations or not.
 
     positive : bool, default False
         If set to True, forces coefficients to be positive.
         (Only allowed when ``y.ndim == 1``).
 
-    return_n_iter : bool
-        whether to return the number of iterations or not.
+    **params : kwargs
+        keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
@@ -336,9 +336,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     verbose : bool or integer
         Amount of verbosity.
 
-    params : kwargs
-        keyword arguments passed to the coordinate descent solver.
-
     return_n_iter : bool
         whether to return the number of iterations or not.
 
@@ -349,6 +346,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     check_input : bool, default True
         Skip input validation checks, including the Gram matrix when provided
         assuming there are handled by the caller when check_input=False.
+
+    **params : kwargs
+        keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
@@ -584,12 +584,6 @@ class ElasticNet(LinearModel, RegressorMixin):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    selection : str, default 'cyclic'
-        If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default. This
-        (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4.
-
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
@@ -597,6 +591,12 @@ class ElasticNet(LinearModel, RegressorMixin):
         number generator; If None, the random number generator is the
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
+
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
 
     Attributes
     ----------
@@ -614,6 +614,25 @@ class ElasticNet(LinearModel, RegressorMixin):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
+    Examples
+    --------
+    >>> from sklearn.linear_model import ElasticNet
+    >>> from sklearn.datasets import make_regression
+    >>>
+    >>> X, y = make_regression(n_features=2, random_state=0)
+    >>> regr = ElasticNet(random_state=0)
+    >>> regr.fit(X, y)
+    ElasticNet(alpha=1.0, copy_X=True, fit_intercept=True, l1_ratio=0.5,
+          max_iter=1000, normalize=False, positive=False, precompute=False,
+          random_state=0, selection='cyclic', tol=0.0001, warm_start=False)
+    >>> print(regr.coef_) # doctest: +ELLIPSIS
+    [ 18.83816048  64.55968825]
+    >>> print(regr.intercept_) # doctest: +ELLIPSIS
+    1.45126075617
+    >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
+    [ 1.45126076]
+
+
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -621,6 +640,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     See also
     --------
+    ElasticNetCV : Elastic net model with best model selection by
+        cross-validation.
     SGDRegressor: implements elastic net regression with incremental training.
     SGDClassifier: implements logistic regression with elastic net penalty
         (``SGDClassifier(loss="log", penalty="elasticnet")``).
@@ -653,7 +674,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             Data
 
         y : ndarray, shape (n_samples,) or (n_samples, n_targets)
-            Target
+            Target. Will be cast to X's dtype if necessary
 
         check_input : boolean, (default=True)
             Allow to bypass several input checking.
@@ -809,14 +830,14 @@ class Lasso(ElasticNet):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
-
     precompute : True | False | array-like, default=False
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -834,12 +855,6 @@ class Lasso(ElasticNet):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    selection : str, default 'cyclic'
-        If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default. This
-        (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4.
-
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
@@ -847,6 +862,12 @@ class Lasso(ElasticNet):
         number generator; If None, the random number generator is the
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
+
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
 
     Attributes
     ----------
@@ -1236,6 +1257,19 @@ class LassoCV(LinearModelCV, RegressorMixin):
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically
 
+    fit_intercept : boolean, default True
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        This parameter is ignored when ``fit_intercept`` is set to False.
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
+
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
@@ -1249,6 +1283,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -1274,12 +1311,6 @@ class LassoCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
 
-    selection : str, default 'cyclic'
-        If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default. This
-        (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4.
-
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
@@ -1288,21 +1319,11 @@ class LassoCV(LinearModelCV, RegressorMixin):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
-    fit_intercept : boolean, default True
-        whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
-
-    normalize : boolean, optional, default False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
 
     Attributes
     ----------
@@ -1392,6 +1413,19 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         List of alphas where to compute the models.
         If None alphas are set automatically
 
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        This parameter is ignored when ``fit_intercept`` is set to False.
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
+        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
+
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
@@ -1420,6 +1454,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
     verbose : bool or integer
         Amount of verbosity.
 
@@ -1430,12 +1467,6 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-    selection : str, default 'cyclic'
-        If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default. This
-        (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4.
-
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
@@ -1444,21 +1475,11 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
 
-    fit_intercept : boolean
-        whether to calculate the intercept for this model. If set
-        to false, no intercept will be used in calculations
-        (e.g. data is expected to be already centered).
-
-    normalize : boolean, optional, default False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
 
     Attributes
     ----------
@@ -1485,6 +1506,26 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
+
+    Examples
+    --------
+    >>> from sklearn.linear_model import ElasticNetCV
+    >>> from sklearn.datasets import make_regression
+    >>>
+    >>> X, y = make_regression(n_features=2, random_state=0)
+    >>> regr = ElasticNetCV(cv=5, random_state=0)
+    >>> regr.fit(X, y)
+    ElasticNetCV(alphas=None, copy_X=True, cv=5, eps=0.001, fit_intercept=True,
+           l1_ratio=0.5, max_iter=1000, n_alphas=100, n_jobs=1,
+           normalize=False, positive=False, precompute='auto', random_state=0,
+           selection='cyclic', tol=0.0001, verbose=0)
+    >>> print(regr.alpha_) # doctest: +ELLIPSIS
+    0.19947279427
+    >>> print(regr.intercept_) # doctest: +ELLIPSIS
+    0.398882965428
+    >>> print(regr.predict([[0, 0]])) # doctest: +ELLIPSIS
+    [ 0.39888297]
+
 
     Notes
     -----
@@ -1604,12 +1645,6 @@ class MultiTaskElasticNet(Lasso):
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-    selection : str, default 'cyclic'
-        If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default. This
-        (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4.
-
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
@@ -1617,6 +1652,12 @@ class MultiTaskElasticNet(Lasso):
         number generator; If None, the random number generator is the
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
+
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
 
     Attributes
     ----------
@@ -1649,7 +1690,10 @@ class MultiTaskElasticNet(Lasso):
 
     See also
     --------
-    ElasticNet, MultiTaskLasso
+    MultiTaskElasticNet : Multi-task L1/L2 ElasticNet with built-in
+        cross-validation.
+    ElasticNet
+    MultiTaskLasso
 
     Notes
     -----
@@ -1680,7 +1724,7 @@ class MultiTaskElasticNet(Lasso):
         X : ndarray, shape (n_samples, n_features)
             Data
         y : ndarray, shape (n_samples, n_tasks)
-            Target
+            Target. Will be cast to X's dtype if necessary
 
         Notes
         -----
@@ -1791,12 +1835,6 @@ class MultiTaskLasso(MultiTaskElasticNet):
         When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
-    selection : str, default 'cyclic'
-        If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default. This
-        (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4
-
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
@@ -1804,6 +1842,12 @@ class MultiTaskLasso(MultiTaskElasticNet):
         number generator; If None, the random number generator is the
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
+
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4
 
     Attributes
     ----------
@@ -1834,7 +1878,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     See also
     --------
-    Lasso, MultiTaskElasticNet
+    MultiTaskLasso : Multi-task L1/L2 Lasso with built-in cross-validation
+    Lasso
+    MultiTaskElasticNet
 
     Notes
     -----
@@ -1877,17 +1923,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     Parameters
     ----------
-    eps : float, optional
-        Length of the path. ``eps=1e-3`` means that
-        ``alpha_min / alpha_max = 1e-3``.
-
-    alphas : array-like, optional
-        List of alphas where to compute the models.
-        If not provided, set automatically.
-
-    n_alphas : int, optional
-        Number of alphas along the regularization path
-
     l1_ratio : float or array of floats
         The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
         For l1_ratio = 1 the penalty is an L1/L2 penalty. For l1_ratio = 0 it
@@ -1899,6 +1934,17 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         values for l1_ratio is often to put more values close to 1
         (i.e. Lasso) and less close to 0 (i.e. Ridge), as in ``[.1, .5, .7,
         .9, .95, .99, 1]``
+
+    eps : float, optional
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``.
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
+
+    alphas : array-like, optional
+        List of alphas where to compute the models.
+        If not provided, set automatically.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -1912,9 +1958,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         If you wish to standardize, please use
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
-
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
 
     max_iter : int, optional
         The maximum number of iterations
@@ -1939,6 +1982,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
     verbose : bool or integer
         Amount of verbosity.
 
@@ -1947,12 +1993,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
-    selection : str, default 'cyclic'
-        If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default. This
-        (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4.
-
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
@@ -1960,6 +2000,12 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         number generator; If None, the random number generator is the
         RandomState instance used by `np.random`. Used when ``selection`` ==
         'random'.
+
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
 
     Attributes
     ----------
@@ -2060,12 +2106,12 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         Length of the path. ``eps=1e-3`` means that
         ``alpha_min / alpha_max = 1e-3``.
 
+    n_alphas : int, optional
+        Number of alphas along the regularization path
+
     alphas : array-like, optional
         List of alphas where to compute the models.
         If not provided, set automatically.
-
-    n_alphas : int, optional
-        Number of alphas along the regularization path
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -2080,9 +2126,6 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
-
     max_iter : int, optional
         The maximum number of iterations.
 
@@ -2091,6 +2134,9 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -2114,19 +2160,19 @@ class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
-    selection : str, default 'cyclic'
-        If set to 'random', a random coefficient is updated every iteration
-        rather than looping over features sequentially by default. This
-        (setting to 'random') often leads to significantly faster convergence
-        especially when tol is higher than 1e-4.
-
     random_state : int, RandomState instance or None, optional, default None
         The seed of the pseudo random number generator that selects a random
         feature to update.  If int, random_state is the seed used by the random
         number generator; If RandomState instance, random_state is the random
         number generator; If None, the random number generator is the
         RandomState instance used by `np.random`. Used when ``selection`` ==
-        'random'/
+        'random'
+
+    selection : str, default 'cyclic'
+        If set to 'random', a random coefficient is updated every iteration
+        rather than looping over features sequentially by default. This
+        (setting to 'random') often leads to significantly faster convergence
+        especially when tol is higher than 1e-4.
 
     Attributes
     ----------

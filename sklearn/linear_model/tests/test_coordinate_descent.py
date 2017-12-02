@@ -2,8 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
-from sys import version_info
-
 import numpy as np
 from scipy import interpolate, sparse
 from copy import deepcopy
@@ -13,7 +11,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
@@ -661,12 +658,11 @@ def test_check_input_false():
     clf = ElasticNet(selection='cyclic', tol=1e-8)
     # Check that no error is raised if data is provided in the right format
     clf.fit(X, y, check_input=False)
+    # With check_input=False, an exhaustive check is not made on y but its
+    # dtype is still cast in _preprocess_data to X's dtype. So the test should
+    # pass anyway
     X = check_array(X, order='F', dtype='float32')
-    clf.fit(X, y, check_input=True)
-    # Check that an error is raised if data is provided in the wrong dtype,
-    # because of check bypassing
-    assert_raises(ValueError, clf.fit, X, y, check_input=False)
-
+    clf.fit(X, y, check_input=False)
     # With no input checking, providing X in C order should result in false
     # computation
     X = check_array(X, order='C', dtype='float64')

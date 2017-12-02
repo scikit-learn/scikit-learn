@@ -763,7 +763,7 @@ defined by :
     :scale: 75%
 
 Note that this definition is not valid if :math:`\beta \in (0; 1)`, yet it can
-be continously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
+be continuously extended to the definitions of :math:`d_{KL}` and :math:`d_{IS}`
 respectively.
 
 :class:`NMF` implements two solvers, using Coordinate Descent ('cd') [5]_, and

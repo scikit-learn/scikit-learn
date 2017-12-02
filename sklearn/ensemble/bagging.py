@@ -411,7 +411,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         """The subset of drawn samples for each base estimator.
 
         Returns a dynamically generated list of boolean masks identifying
-        the samples used for for fitting each member of the ensemble, i.e.,
+        the samples used for fitting each member of the ensemble, i.e.,
         the in-bag samples.
 
         Note: the list is re-created at each call to the property in order
@@ -459,13 +459,15 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     max_samples : int or float, optional (default=1.0)
         The number of samples to draw from X to train each base estimator.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples.
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
-            - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+
+        - If int, then draw `max_features` features.
+        - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
         Whether samples are drawn with replacement.
@@ -773,8 +775,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
-                             "match the input. Model n_features is {1} and "
-                             "input n_features is {2} "
+                             "match the input. Model n_features is {0} and "
+                             "input n_features is {1} "
                              "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
@@ -827,13 +829,15 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     max_samples : int or float, optional (default=1.0)
         The number of samples to draw from X to train each base estimator.
-            - If int, then draw `max_samples` samples.
-            - If float, then draw `max_samples * X.shape[0]` samples.
+
+        - If int, then draw `max_samples` samples.
+        - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
-            - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+
+        - If int, then draw `max_features` features.
+        - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=True)
         Whether samples are drawn with replacement.

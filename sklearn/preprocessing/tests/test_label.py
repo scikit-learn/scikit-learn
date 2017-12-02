@@ -203,8 +203,10 @@ def test_label_encoder_errors():
 
     # Fail on unseen labels
     le = LabelEncoder()
-    le.fit([1, 2, 3, 1, -1])
-    assert_raises(ValueError, le.inverse_transform, [-1])
+    le.fit([1, 2, 3, -1, 1])
+    msg = "contains previously unseen labels"
+    assert_raise_message(ValueError, msg, le.inverse_transform, [-2])
+    assert_raise_message(ValueError, msg, le.inverse_transform, [-2, -3, -4])
 
 
 def test_sparse_output_multilabel_binarizer():
@@ -221,7 +223,7 @@ def test_sparse_output_multilabel_binarizer():
     inverse = inputs[0]()
     for sparse_output in [True, False]:
         for inp in inputs:
-            # With fit_tranform
+            # With fit_transform
             mlb = MultiLabelBinarizer(sparse_output=sparse_output)
             got = mlb.fit_transform(inp())
             assert_equal(issparse(got), sparse_output)
@@ -263,7 +265,7 @@ def test_multilabel_binarizer():
                               [1, 1, 0]])
     inverse = inputs[0]()
     for inp in inputs:
-        # With fit_tranform
+        # With fit_transform
         mlb = MultiLabelBinarizer()
         got = mlb.fit_transform(inp())
         assert_array_equal(indicator_mat, got)
