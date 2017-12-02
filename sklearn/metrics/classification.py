@@ -373,7 +373,8 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
 
 
 def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
-                             average=None, warn=True, sample_weight=None):
+                             average=None, warn=True, normalize=None,
+                             sample_weight=None):
     """Jaccard similarity coefficient score
 
     The Jaccard index [1], or Jaccard similarity coefficient, defined as
@@ -428,11 +429,16 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification).
 
+    warn : bool, for internal use
+        This determines whether warning will be raised or not,
+
+    normalize: True, False or None (default)
+        whether to normalize (default) the result or return an array
+        (specified with `normalize=False`). This is only to be specified
+        in case `average='samples'`.
+
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
-
-    warn : bool, for internal use
-        This determines whether warning will be raised or not.
 
     Returns
     -------
@@ -461,7 +467,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     >>> y_true = [0, 1, 2, 3]
     >>> jaccard_similarity_score(y_true, y_pred, average='macro')
     0.5
-    >>> jaccard_similarity_score(y_true, y_pred, normalize='micro')
+    >>> jaccard_similarity_score(y_true, y_pred, average='micro')
     ... # doctest: +ELLIPSIS
     0.33...
 
@@ -506,6 +512,17 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                       "labels=[pos_label] to specify a single positive class."
                       % (pos_label, average), UserWarning)
 
+    if average == None:
+        average = 'samples'
+
+    if average == 'samples':
+        if normalize is None:
+            normalize = True
+    elif normalize is not None:
+        warnings.warn("Note that normalize (set to %r) is ignored when "
+                      "average != 'samples' (got %r)."
+                      % (normalize, average), UserWarning)
+
     if labels is None:
         labels = present_labels
         n_labels = None
@@ -516,8 +533,6 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
 
     if y_type.startswith('multilabel'):
         # default average in multilabel is 'samples'
-        if average == None:
-            average = 'samples'
 
         with np.errstate(divide='ignore', invalid='ignore'):
             sum_axis = 1 if average == 'samples' else 0
@@ -529,7 +544,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             if average == 'samples':
                 score = pred_and_true / pred_or_true
                 score[pred_or_true == 0.0] = 1.0
-                return _weighted_sum(score, sample_weight, normalize=True)
+                return _weighted_sum(score, sample_weight, normalize=normalize)
             elif average == 'macro':
                 score = pred_and_true / pred_or_true
                 n_features = y_true.shape[1]
@@ -559,6 +574,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                 sample_weight = C.sum(0)/C.sum()
             return np.sum(sample_weight*score)
         else:
+            # average='samples'
             den = C.sum(0) + C.sum(1) - C.diagonal()
             score = C.diagonal() / den
             return score
