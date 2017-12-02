@@ -506,43 +506,41 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                       "labels=[pos_label] to specify a single positive class."
                       % (pos_label, average), UserWarning)
 
+    if labels is None:
+        labels = present_labels
+        n_labels = None
+    else:
+        n_labels = len(labels)
+        labels = np.hstack([labels, np.setdiff1d(present_labels, labels,
+                                                 assume_unique=True)])
+
     if y_type.startswith('multilabel'):
         # default average in multilabel is 'samples'
         if average == None:
             average = 'samples'
 
         with np.errstate(divide='ignore', invalid='ignore'):
+            sum_axis = 1 if average == 'samples' else 0
+
+            pred_or_true = count_nonzero(y_true + y_pred, axis=sum_axis)
+            pred_and_true = count_nonzero(y_true.multiply(y_pred),
+                                          axis=sum_axis)
 
             if average == 'samples':
-                pred_or_true = count_nonzero(y_true + y_pred, axis=1)
-                pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
                 score = pred_and_true / pred_or_true
                 score[pred_or_true == 0.0] = 1.0
                 return _weighted_sum(score, sample_weight, normalize=True)
-
-                y_true_pos = y_true[:, pos_label - 1]
-                y_pred_pos = y_pred[:, pos_label - 1]
-                pred_or_true = count_nonzero(y_true_pos + y_pred_pos)
-                pred_and_true = count_nonzero(y_true_pos.multiply(y_pred_pos))
-                score = pred_and_true / pred_or_true
-                return score
-
-            pred_or_true = count_nonzero(y_true + y_pred, axis=0)
-            pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=0)
-
-            if average == 'macro':
+            elif average == 'macro':
                 score = pred_and_true / pred_or_true
                 n_features = y_true.shape[1]
                 return np.sum(score) / n_features
             elif average == 'micro':
                 score = np.sum(pred_and_true) / np.sum(pred_or_true)
                 return score
-            elif average == 'weighted':
+            else:
+                # average='weighted'
                 score = pred_and_true / pred_or_true
                 score = _weighted_sum(score, sample_weight, normalize=True)
-                return score
-            else:
-                score = pred_and_true / pred_or_true
                 return score
     else:
         C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)

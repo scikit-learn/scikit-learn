@@ -987,10 +987,12 @@ def test_multilabel_jaccard_similarity_score():
                                                 average='macro'), 2. / 3)
     # average='micro'
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                average='mirco'), 3. / 5)
+                                                average='micro'), 3. / 5)
     # average='samples' (default)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred), 7. / 12)
-    # average='binary'
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                sample_weight=np.array([0.1, 0.9])), 31. / 60)
+    # average='binary' (wrong example)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                     average='binary', pos_label=1), 1. / 2)
     # average='weighted'
