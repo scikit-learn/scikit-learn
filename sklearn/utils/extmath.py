@@ -129,7 +129,7 @@ def safe_sparse_dot(a, b, dense_output=False):
     Returns
     -------
     dot_product : array or sparse matrix
-        sparse if ``a`` or ``b`` is sparse and ``dense_output``=False.
+        sparse if ``a`` or ``b`` is sparse and ``dense_output=False``.
     """
     if issparse(a) or issparse(b):
         ret = a * b
@@ -195,6 +195,9 @@ def randomized_range_finder(A, size, n_iter,
 
     # Generating normal random vectors with shape: (A.shape[1], size)
     Q = random_state.normal(size=(A.shape[1], size))
+    if A.dtype.kind == 'f':
+        # Ensure f32 is preserved as f32
+        Q = Q.astype(A.dtype, copy=False)
 
     # Deal with "auto" mode
     if power_iteration_normalizer == 'auto':
@@ -327,6 +330,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     # compute the SVD on the thin matrix: (k + p) wide
     Uhat, s, V = linalg.svd(B, full_matrices=False)
+
     del B
     U = np.dot(Q, Uhat)
 
@@ -417,7 +421,6 @@ def weighted_mode(a, w, axis=0):
     else:
         a = np.asarray(a)
         w = np.asarray(w)
-        axis = axis
 
     if a.shape != w.shape:
         w = np.zeros(a.shape, dtype=w.dtype) + w

@@ -83,6 +83,12 @@ class BaseCrossValidator(with_metaclass(ABCMeta)):
 
         test : ndarray
             The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         indices = np.arange(_num_samples(X))
@@ -308,14 +314,20 @@ class _BaseKFold(with_metaclass(ABCMeta, BaseCrossValidator)):
 
         test : ndarray
             The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
         if self.n_splits > n_samples:
             raise ValueError(
                 ("Cannot have number of splits n_splits={0} greater"
-                 " than the number of samples: {1}.").format(self.n_splits,
-                                                             n_samples))
+                 " than the number of samples: n_samples={1}.")
+                .format(self.n_splits, n_samples))
 
         for train, test in super(_BaseKFold, self).split(X, y, groups):
             yield train, test
@@ -566,24 +578,29 @@ class StratifiedKFold(_BaseKFold):
     def __init__(self, n_splits=3, shuffle=False, random_state=None):
         super(StratifiedKFold, self).__init__(n_splits, shuffle, random_state)
 
-    def _make_test_folds(self, X, y=None, groups=None):
-        if self.shuffle:
-            rng = check_random_state(self.random_state)
-        else:
-            rng = self.random_state
+    def _make_test_folds(self, X, y=None):
+        rng = self.random_state
         y = np.asarray(y)
+        type_of_target_y = type_of_target(y)
+        allowed_target_types = ('binary', 'multiclass')
+        if type_of_target_y not in allowed_target_types:
+            raise ValueError(
+                'Supported target types are: {}. Got {!r} instead.'.format(
+                    allowed_target_types, type_of_target_y))
+
+        y = column_or_1d(y)
         n_samples = y.shape[0]
         unique_y, y_inversed = np.unique(y, return_inverse=True)
         y_counts = np.bincount(y_inversed)
         min_groups = np.min(y_counts)
         if np.all(self.n_splits > y_counts):
-            raise ValueError("All the n_groups for individual classes"
-                             " are less than n_splits=%d."
+            raise ValueError("n_splits=%d cannot be greater than the"
+                             " number of members in each class."
                              % (self.n_splits))
         if self.n_splits > min_groups:
             warnings.warn(("The least populated class in y has only %d"
                            " members, which is too few. The minimum"
-                           " number of groups for any class cannot"
+                           " number of members in any class cannot"
                            " be less than n_splits=%d."
                            % (min_groups, self.n_splits)), Warning)
 
@@ -645,6 +662,12 @@ class StratifiedKFold(_BaseKFold):
 
         test : ndarray
             The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
         return super(StratifiedKFold, self).split(X, y, groups)
@@ -726,6 +749,12 @@ class TimeSeriesSplit(_BaseKFold):
 
         test : ndarray
             The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         n_samples = _num_samples(X)
@@ -1164,6 +1193,12 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
         test : ndarray
             The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         X, y, groups = indexable(X, y, groups)
         for train, test in self._iter_indices(X, y, groups):
@@ -1218,7 +1253,7 @@ class ShuffleSplit(BaseShuffleSplit):
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
-        complement of the train size. By default (the is parameter
+        complement of the train size. By default (the parameter is
         unspecified), the value is set to 0.1.
         The default will change in version 0.21. It will remain 0.1 only
         if ``train_size`` is unspecified, otherwise it will complement
@@ -1499,8 +1534,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                                                   self.train_size)
 
         if y.ndim == 2:
-            # for multi-label y, map each distinct row to its string repr:
-            y = np.array([str(row) for row in y])
+            # for multi-label y, map each distinct row to a string repr
+            # using join because str(row) uses an ellipsis if len(row) > 1000
+            y = np.array([' '.join(row.astype('str')) for row in y])
 
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
@@ -1521,6 +1557,11 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              'equal to the number of classes = %d' %
                              (n_test, n_classes))
 
+        # Find the sorted list of instances for each class:
+        # (np.unique above performs a sort, so code is O(n logn) already)
+        class_indices = np.split(np.argsort(y_indices, kind='mergesort'),
+                                 np.cumsum(class_counts)[:-1])
+
         rng = check_random_state(self.random_state)
 
         for _ in range(self.n_splits):
@@ -1533,12 +1574,14 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             train = []
             test = []
 
-            for i, class_i in enumerate(classes):
+            for i in range(n_classes):
                 permutation = rng.permutation(class_counts[i])
-                perm_indices_class_i = np.where((y == class_i))[0][permutation]
+                perm_indices_class_i = class_indices[i].take(permutation,
+                                                             mode='clip')
 
                 train.extend(perm_indices_class_i[:n_i[i]])
                 test.extend(perm_indices_class_i[n_i[i]:n_i[i] + t_i[i]])
+
             train = rng.permutation(train)
             test = rng.permutation(test)
 
@@ -1571,6 +1614,12 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
         test : ndarray
             The testing set indices for that split.
+
+        Notes
+        -----
+        Randomized CV splitters may return different results for each call of
+        split. You can make the results identical by setting ``random_state``
+        to an integer.
         """
         y = check_array(y, ensure_2d=False, dtype=None)
         return super(StratifiedShuffleSplit, self).split(X, y, groups)
@@ -1666,11 +1715,18 @@ def _validate_shuffle_split(n_samples, test_size, train_size):
 class PredefinedSplit(BaseCrossValidator):
     """Predefined split cross-validator
 
-    Splits the data into training/test set folds according to a predefined
-    scheme. Each sample can be assigned to at most one test set fold, as
-    specified by the user through the ``test_fold`` parameter.
+    Provides train/test indices to split data into train/test sets using a
+    predefined scheme specified by the user with the ``test_fold`` parameter.
 
     Read more in the :ref:`User Guide <cross_validation>`.
+
+    Parameters
+    ----------
+    test_fold : array-like, shape (n_samples,)
+        The entry ``test_fold[i]`` represents the index of the test set that
+        sample ``i`` belongs to. It is possible to exclude sample ``i`` from
+        any test set (i.e. include sample ``i`` in every training set) by
+        setting ``test_fold[i]`` equal to -1.
 
     Examples
     --------
@@ -1815,10 +1871,11 @@ def check_cv(cv=3, y=None, classifier=False):
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
-          - None, to use the default 3-fold cross-validation,
-          - integer, to specify the number of folds.
-          - An object to be used as a cross-validation generator.
-          - An iterable yielding train/test splits.
+
+        - None, to use the default 3-fold cross-validation,
+        - integer, to specify the number of folds.
+        - An object to be used as a cross-validation generator.
+        - An iterable yielding train/test splits.
 
         For integer/None inputs, if classifier is True and ``y`` is either
         binary or multiclass, :class:`StratifiedKFold` is used. In all other
@@ -2000,9 +2057,6 @@ def train_test_split(*arrays, **options):
 
     return list(chain.from_iterable((safe_indexing(a, train),
                                      safe_indexing(a, test)) for a in arrays))
-
-
-train_test_split.__test__ = False  # to avoid a pb with nosetests
 
 
 def _build_repr(self):

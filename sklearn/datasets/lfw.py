@@ -23,18 +23,13 @@ detector from various online websites.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from os import listdir, makedirs, remove, rename
+from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
 
 import logging
 import numpy as np
 
-try:
-    import urllib.request as urllib  # for backwards compatibility
-except ImportError:
-    import urllib
-
-from .base import get_data_home
+from .base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
 from ..externals.joblib import Memory
 
@@ -42,15 +37,45 @@ from ..externals.six import b
 
 logger = logging.getLogger(__name__)
 
+# The original data can be found in:
+# http://vis-www.cs.umass.edu/lfw/lfw.tgz
+ARCHIVE = RemoteFileMetadata(
+    filename='lfw.tgz',
+    url='https://ndownloader.figshare.com/files/5976018',
+    checksum=('055f7d9c632d7370e6fb4afc7468d40f'
+              '970c34a80d4c6f50ffec63f5a8d536c0'))
 
-BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
-ARCHIVE_NAME = "lfw.tgz"
-FUNNELED_ARCHIVE_NAME = "lfw-funneled.tgz"
-TARGET_FILENAMES = [
-    'pairsDevTrain.txt',
-    'pairsDevTest.txt',
-    'pairs.txt',
-]
+# The original funneled data can be found in:
+# http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz
+FUNNELED_ARCHIVE = RemoteFileMetadata(
+    filename='lfw-funneled.tgz',
+    url='https://ndownloader.figshare.com/files/5976015',
+    checksum=('b47c8422c8cded889dc5a13418c4bc2a'
+              'bbda121092b3533a83306f90d900100a'))
+
+# The original target data can be found in:
+# http://vis-www.cs.umass.edu/lfw/pairsDevTrain.txt',
+# http://vis-www.cs.umass.edu/lfw/pairsDevTest.txt',
+# http://vis-www.cs.umass.edu/lfw/pairs.txt',
+TARGETS = (
+    RemoteFileMetadata(
+        filename='pairsDevTrain.txt',
+        url='https://ndownloader.figshare.com/files/5976012',
+        checksum=('1d454dada7dfeca0e7eab6f65dc4e97a'
+                  '6312d44cf142207be28d688be92aabfa')),
+
+    RemoteFileMetadata(
+        filename='pairsDevTest.txt',
+        url='https://ndownloader.figshare.com/files/5976009',
+        checksum=('7cb06600ea8b2814ac26e946201cdb30'
+                  '4296262aad67d046a16a7ec85d0ff87c')),
+
+    RemoteFileMetadata(
+        filename='pairs.txt',
+        url='https://ndownloader.figshare.com/files/5976006',
+        checksum=('ea42330c62c92989f9d7c03237ed5d59'
+                  '1365e89b3e649747777b70e692dc1592')),
+)
 
 
 def scale_face(face):
@@ -68,45 +93,41 @@ def scale_face(face):
 
 def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     """Helper function to download any missing LFW data"""
+
     data_home = get_data_home(data_home=data_home)
     lfw_home = join(data_home, "lfw_home")
-
-    if funneled:
-        archive_path = join(lfw_home, FUNNELED_ARCHIVE_NAME)
-        data_folder_path = join(lfw_home, "lfw_funneled")
-        archive_url = BASE_URL + FUNNELED_ARCHIVE_NAME
-    else:
-        archive_path = join(lfw_home, ARCHIVE_NAME)
-        data_folder_path = join(lfw_home, "lfw")
-        archive_url = BASE_URL + ARCHIVE_NAME
 
     if not exists(lfw_home):
         makedirs(lfw_home)
 
-    for target_filename in TARGET_FILENAMES:
-        target_filepath = join(lfw_home, target_filename)
+    for target in TARGETS:
+        target_filepath = join(lfw_home, target.filename)
         if not exists(target_filepath):
             if download_if_missing:
-                url = BASE_URL + target_filename
-                logger.warning("Downloading LFW metadata: %s", url)
-                urllib.urlretrieve(url, target_filepath)
+                logger.info("Downloading LFW metadata: %s", target.url)
+                _fetch_remote(target, dirname=lfw_home)
             else:
                 raise IOError("%s is missing" % target_filepath)
+
+    if funneled:
+        data_folder_path = join(lfw_home, "lfw_funneled")
+        archive = FUNNELED_ARCHIVE
+    else:
+        data_folder_path = join(lfw_home, "lfw")
+        archive = ARCHIVE
 
     if not exists(data_folder_path):
-
+        archive_path = join(lfw_home, archive.filename)
         if not exists(archive_path):
             if download_if_missing:
-                archive_path_temp = archive_path + ".tmp"
-                logger.warning("Downloading LFW data (~200MB): %s",
-                               archive_url)
-                urllib.urlretrieve(archive_url, archive_path_temp)
-                rename(archive_path_temp, archive_path)
+                logger.info("Downloading LFW data (~200MB): %s",
+                            archive.url)
+                _fetch_remote(archive, dirname=lfw_home)
             else:
-                raise IOError("%s is missing" % target_filepath)
+                raise IOError("%s is missing" % archive_path)
 
         import tarfile
-        logger.info("Decompressing the data archive to %s", data_folder_path)
+        logger.debug("Decompressing the data archive to %s", data_folder_path)
         tarfile.open(archive_path, "r:gz").extractall(path=lfw_home)
         remove(archive_path)
 
@@ -156,7 +177,7 @@ def _load_imgs(file_paths, slice_, color, resize):
     # arrays
     for i, file_path in enumerate(file_paths):
         if i % 1000 == 0:
-            logger.info("Loading face #%05d / %05d", i + 1, n_faces)
+            logger.debug("Loading face #%05d / %05d", i + 1, n_faces)
 
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
@@ -301,7 +322,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
-    logger.info('Loading LFW people faces from %s', lfw_home)
+    logger.debug('Loading LFW people faces from %s', lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
@@ -464,7 +485,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
-    logger.info('Loading %s LFW pairs from %s', subset, lfw_home)
+    logger.debug('Loading %s LFW pairs from %s', subset, lfw_home)
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage

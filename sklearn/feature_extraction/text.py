@@ -30,6 +30,7 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted
+from ..utils.fixes import sp_version
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -131,12 +132,24 @@ class VectorizerMixin(object):
         min_n, max_n = self.ngram_range
         if max_n != 1:
             original_tokens = tokens
-            tokens = []
+            if min_n == 1:
+                # no need to do any slicing for unigrams
+                # just iterate through the original tokens
+                tokens = list(original_tokens)
+                min_n += 1
+            else:
+                tokens = []
+
             n_original_tokens = len(original_tokens)
+
+            # bind method outside of loop to reduce overhead
+            tokens_append = tokens.append
+            space_join = " ".join
+
             for n in xrange(min_n,
                             min(max_n + 1, n_original_tokens + 1)):
                 for i in xrange(n_original_tokens - n + 1):
-                    tokens.append(" ".join(original_tokens[i: i + n]))
+                    tokens_append(space_join(original_tokens[i: i + n]))
 
         return tokens
 
@@ -146,11 +159,21 @@ class VectorizerMixin(object):
         text_document = self._white_spaces.sub(" ", text_document)
 
         text_len = len(text_document)
-        ngrams = []
         min_n, max_n = self.ngram_range
+        if min_n == 1:
+            # no need to do any slicing for unigrams
+            # iterate through the string
+            ngrams = list(text_document)
+            min_n += 1
+        else:
+            ngrams = []
+
+        # bind method outside of loop to reduce overhead
+        ngrams_append = ngrams.append
+
         for n in xrange(min_n, min(max_n + 1, text_len + 1)):
             for i in xrange(text_len - n + 1):
-                ngrams.append(text_document[i: i + n])
+                ngrams_append(text_document[i: i + n])
         return ngrams
 
     def _char_wb_ngrams(self, text_document):
@@ -164,15 +187,19 @@ class VectorizerMixin(object):
 
         min_n, max_n = self.ngram_range
         ngrams = []
+
+        # bind method outside of loop to reduce overhead
+        ngrams_append = ngrams.append
+
         for w in text_document.split():
             w = ' ' + w + ' '
             w_len = len(w)
             for n in xrange(min_n, max_n + 1):
                 offset = 0
-                ngrams.append(w[offset:offset + n])
+                ngrams_append(w[offset:offset + n])
                 while offset + n < w_len:
                     offset += 1
-                    ngrams.append(w[offset:offset + n])
+                    ngrams_append(w[offset:offset + n])
                 if offset == 0:   # count a short word (w_len < n) only once
                     break
         return ngrams
@@ -280,7 +307,7 @@ class VectorizerMixin(object):
             raise ValueError("Vocabulary is empty")
 
 
-class HashingVectorizer(BaseEstimator, VectorizerMixin):
+class HashingVectorizer(BaseEstimator, VectorizerMixin, TransformerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -483,7 +510,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         -------
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
             Document-term matrix.
-
         """
         if isinstance(X, six.string_types):
             raise ValueError(
@@ -497,9 +523,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         if self.norm is not None:
             X = normalize(X, norm=self.norm, copy=False)
         return X
-
-    # Alias transform to fit_transform for convenience
-    fit_transform = transform
 
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
@@ -762,7 +785,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         analyze = self.build_analyzer()
         j_indices = []
-        indptr = _make_int_array()
+        indptr = []
+
         values = _make_int_array()
         indptr.append(0)
         for doc in raw_documents:
@@ -789,8 +813,20 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 raise ValueError("empty vocabulary; perhaps the documents only"
                                  " contain stop words")
 
-        j_indices = np.asarray(j_indices, dtype=np.intc)
-        indptr = np.frombuffer(indptr, dtype=np.intc)
+        if indptr[-1] > 2147483648:  # = 2**31 - 1
+            if sp_version >= (0, 14):
+                indices_dtype = np.int64
+            else:
+                raise ValueError(('sparse CSR array has {} non-zero '
+                                  'elements and requires 64 bit indexing, '
+                                  ' which is unsupported with scipy {}. '
+                                  'Please upgrade to scipy >=0.14')
+                                 .format(indptr[-1], '.'.join(sp_version)))
+
+        else:
+            indices_dtype = np.int32
+        j_indices = np.asarray(j_indices, dtype=indices_dtype)
+        indptr = np.asarray(indptr, dtype=indices_dtype)
         values = np.frombuffer(values, dtype=np.intc)
 
         X = sp.csr_matrix((values, j_indices, indptr),
@@ -1064,7 +1100,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         -------
         vectors : sparse matrix, [n_samples, n_features]
         """
-        if hasattr(X, 'dtype') and np.issubdtype(X.dtype, np.float):
+        if hasattr(X, 'dtype') and np.issubdtype(X.dtype, np.floating):
             # preserve float family dtype
             X = sp.csr_matrix(X, copy=copy)
         else:

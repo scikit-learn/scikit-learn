@@ -309,7 +309,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         self.random_state = random_state
 
     @abstractmethod
-    def _make_random_matrix(n_components, n_features):
+    def _make_random_matrix(self, n_components, n_features):
         """ Generate the random projection matrix
 
         Parameters
@@ -404,7 +404,6 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         -------
         X_new : numpy array or scipy sparse of shape [n_samples, n_components]
             Projected array.
-
         """
         X = check_array(X, accept_sparse=['csr', 'csc'])
 

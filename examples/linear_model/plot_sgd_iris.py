@@ -38,7 +38,7 @@ X = (X - mean) / std
 
 h = .02  # step size in the mesh
 
-clf = SGDClassifier(alpha=0.001, n_iter=100).fit(X, y)
+clf = SGDClassifier(alpha=0.001, max_iter=100).fit(X, y)
 
 # create a mesh to plot in
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
@@ -75,6 +75,7 @@ def plot_hyperplane(c, color):
 
     plt.plot([xmin, xmax], [line(xmin), line(xmax)],
              ls="--", color=color)
+
 
 for i, color in zip(clf.classes_, colors):
     plot_hyperplane(i, color)

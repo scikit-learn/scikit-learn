@@ -66,7 +66,7 @@ def _color_brew(n):
 
 
 class Sentinel(object):
-    def __repr__():
+    def __repr__(self):
         return '"tree.dot"'
 SENTINEL = Sentinel()
 
@@ -92,7 +92,7 @@ def export_graphviz(decision_tree, out_file=SENTINEL, max_depth=None,
 
     Parameters
     ----------
-    decision_tree : decision tree classifier
+    decision_tree : decision tree regressor or classifier
         The decision tree to be exported to GraphViz.
 
     out_file : file object or string, optional (default='tree.dot')

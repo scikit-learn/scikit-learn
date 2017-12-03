@@ -10,11 +10,10 @@ sparse matrices.
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
 # License: BSD 3 clause
 
-import numpy as np
 from scipy import sparse
+from scipy.sparse import csgraph
 
-from .validation import check_array
-from .graph_shortest_path import graph_shortest_path
+from .graph_shortest_path import graph_shortest_path  # noqa
 from .deprecation import deprecated
 
 
@@ -75,11 +74,11 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
             "version 0.19 and will be removed in 0.21. Use "
             "scipy.sparse.csgraph.connected_components instead.")
 def connected_components(*args, **kwargs):
-    return sparse.csgraph.connected_components(*args, **kwargs)
+    return csgraph.connected_components(*args, **kwargs)
 
 
 @deprecated("sklearn.utils.graph.graph_laplacian was deprecated in version "
             "0.19 and will be removed in 0.21. Use "
             "scipy.sparse.csgraph.laplacian instead.")
 def graph_laplacian(*args, **kwargs):
-    return sparse.csgraph.laplacian(*args, **kwargs)
+    return csgraph.laplacian(*args, **kwargs)
