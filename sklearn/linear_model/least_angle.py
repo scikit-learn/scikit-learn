@@ -145,6 +145,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
+    if method == 'lar' and positive:
+        warnings.warn('positive option is broken for Least '
+                      ' Angle Regression (LAR). Use method="lasso".'
+                      ' This option will be removed in version 0.21.')
 
     n_features = X.shape[1]
     n_samples = y.size
