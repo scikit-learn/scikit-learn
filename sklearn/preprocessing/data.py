@@ -2924,9 +2924,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         Will return sparse matrix if set True else will return an array.
 
     handle_greater : str, 'error' or 'clip'
-        Whether to raise an error or clip if a greater ordinal feature value is
-        present during transform as compare to largest feature value seen
-        during fit.
+        Whether to raise an error or clip if an ordinal feature >= n_values is
+        passed in.
 
     Attributes
     ----------
@@ -2982,15 +2981,19 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
             All feature values should be non-negative otherwise will raise a
             ValueError.
         """
-        self.fit_transform(X)
+        _transform_selected(X, self._fit, self.ordinal_features, copy=True)
         return self
 
-    def _fit_transform(self, X):
+    def _fit(self, X):
         """Assumes X contains only ordinal features."""
         X = check_array(X, dtype=np.int)
+        if self.handle_greater not in ['error', 'clip']:
+            raise ValueError("handle_greater should be either 'error' or "
+                             "'clip' got %s" % self.handle_greater)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
+
         if (isinstance(self.n_values, six.string_types) and
                 self.n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
@@ -3016,24 +3019,18 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         indices = np.cumsum(n_values)
         self.feature_indices_ = indices
 
-        column_start = np.tile(indices[:-1], n_samples)
-        column_end = (X + indices[:-1]).ravel()
-        column_indices = np.hstack([np.arange(s, e) for s, e
-                                   in zip(column_start, column_end)])
-        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
-                                X.sum(axis=1))
-        data = np.ones(X.sum())
-        out = sparse.coo_matrix((data, (row_indices, column_indices)),
-                                shape=(n_samples, indices[-1]),
-                                dtype=self.dtype).tocsr()
+        mask = (X < self.n_values_).ravel()
+        if np.any(~mask):
+            if self.handle_greater == 'error':
+                raise ValueError("unknown ordinal feature present %s "
+                                 % X.ravel()[~mask])
 
-        return out if self.sparse else out.toarray()
+        return X
 
     def fit_transform(self, X, y=None):
         """Fit UnaryEncoder to X, then transform X.
 
-        Equivalent to self.fit(X).transform(X), but more convenient and more
-        efficient.
+        Equivalent to self.fit(X).transform(X), but more convenient.
 
         Parameters
         ----------
@@ -3048,8 +3045,8 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
             Transformed input.
 
         """
-        return _transform_selected(X, self._fit_transform,
-                                   self.ordinal_features, copy=True)
+
+        return self.fit(X).transform(X)
 
     def _transform(self, X):
         """Assumes X contains only ordinal features."""
@@ -3065,15 +3062,11 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
                              % (indices.shape[0] - 1, n_features))
 
         # We clip those ordinal features of X that are greater than n_values_
-        # using mask.
-        # This means, if self.handle_greater is "ignore", the row_indices and
-        # col_indices corresponding to the greater ordinal feature are all
-        # filled with ones.
+        # using mask if self.handle_greater is "clip".
+        # This means, the row_indices and col_indices corresponding to the
+        # greater ordinal feature are all filled with ones.
         mask = (X < self.n_values_).ravel()
         if np.any(~mask):
-            if self.handle_greater not in ['error', 'clip']:
-                raise ValueError("handle_greater should be either 'error' or "
-                                 "'clip' got %s" % self.handle_greater)
             if self.handle_greater == 'error':
                 raise ValueError("unknown ordinal feature present %s "
                                  "during transform." % X.ravel()[~mask])

@@ -2280,22 +2280,47 @@ def test_unary_encoder_handle_greater():
     X = np.array([[0, 2, 1], [1, 0, 3], [2, 0, 2]])
     y = np.array([[4, 1, 1]])
 
-    # Test that encoder raises error for greater features.
+    # Test that encoder raises error for greater features during transform.
     encoder = UnaryEncoder(handle_greater='error')
     encoder.fit(X)
     assert_raises(ValueError, encoder.transform, y)
 
-    # Test the ignore option, clips greater features.
+    encoder = UnaryEncoder(handle_greater='error')
+    assert_array_equal(encoder.fit_transform(y),
+                       np.array([[1.,  1.,  1.,  1.,  1.,  1.]]))
+
+    # Test that encoder raises error for greater features during fit when
+    # n_values is explicitly set.
+    encoder = UnaryEncoder(handle_greater='error', n_values=[2, 3, 4])
+    assert_raises(ValueError, encoder.fit, X)
+
+    encoder = UnaryEncoder(handle_greater='error', n_values=[2, 3, 4])
+    assert_raises(ValueError, encoder.fit_transform, X)
+
+    encoder = UnaryEncoder(handle_greater='error', n_values=[5, 2, 2])
+    encoder.fit(y)
+    assert_array_equal(encoder.transform(y),
+                       np.array([[1.,  1.,  1.,  1.,  1.,  1.]]))
+
+    encoder = UnaryEncoder(handle_greater='error', n_values=[5, 2, 2])
+    assert_array_equal(encoder.fit_transform(y),
+                       np.array([[1.,  1.,  1.,  1.,  1.,  1.]]))
+
+    # Test the clip option.
     encoder = UnaryEncoder(handle_greater='clip')
     encoder.fit(X)
     assert_array_equal(
         encoder.transform(y),
         np.array([[1.,  1.,  1.,  0.,  1.,  0.,  0.]]))
 
-    # Raise error if handle_greater is neither ignore or error.
+    encoder = UnaryEncoder(handle_greater='clip', n_values=[3, 2, 2])
+    assert_array_equal(
+        encoder.fit_transform(y),
+        np.array([[1.,  1.,  1.,  1.]]))
+
+    # Raise error if handle_greater is neither clip nor error.
     encoder = UnaryEncoder(handle_greater='42')
-    encoder.fit(X)
-    assert_raises(ValueError, encoder.transform, y)
+    assert_raises(ValueError, encoder.fit, y)
 
 
 def test_unary_encoder_errors():
@@ -2375,6 +2400,10 @@ def test_unary_encoder_n_values_int():
         enc.feature_indices_,
         np.arange(0, unary_n_values * len(X[0]) + 1, unary_n_values)
     )
+    assert_array_equal(
+        enc.n_values_,
+        np.array([encoder_n_values] * len(X[0]))
+    )
 
 
 def test_unary_encoder_n_values_array():
@@ -2383,17 +2412,28 @@ def test_unary_encoder_n_values_array():
     size = np.random.randint(1, 10)
     delta = np.random.randint(1, 10)
 
-    n_values_array = [n_features] * n_features
-    enc = UnaryEncoder(n_values=n_values_array)
+    # Test ideal case is working fine
     X = _generate_random_features_matrix(n_features, size)
+    n_values_array = list(np.max(X, axis=0) + 1)
+    enc = UnaryEncoder(n_values=n_values_array)
     X_trans = enc.fit_transform(X)
     assert_equal(X_trans.shape, (size, sum(n_values_array) - n_features))
+    assert_array_equal(
+        enc.feature_indices_,
+        np.cumsum(np.array([1] + n_values_array) - 1)
+    )
+    assert_array_equal(
+        enc.n_values_,
+        np.array(n_values_array)
+    )
 
+    # Test that fit_transform raises error when len(n_values) != n_features
     n_values_array = np.random.randint(2, 10, n_features + delta)
     enc = UnaryEncoder(n_values=n_values_array)
     X = _generate_random_features_matrix(n_features, size)
     assert_raises(ValueError, enc.fit_transform, X)
 
+    # Test that fit_transform raises error when len(n_values) != n_features
     enc = UnaryEncoder(n_values=[])
     X = _generate_random_features_matrix(n_features, size)
     assert_raises(ValueError, enc.fit_transform, X)
