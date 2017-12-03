@@ -15,6 +15,8 @@ Generalized Linear Models with Exponential Dispersion Family
 # TODO: Make it as much consistent to other estimators in linear_model as
 #       possible
 # TODO: options P1 and P2 in fit() or in __init__()???
+# TODO: Include further classes in class.rst? ExponentialDispersionModel?
+#       TweedieDistribution?
 
 # Design Decisions:
 # - Which name? GeneralizedLinearModel vs GeneralizedLinearRegressor.
@@ -42,7 +44,7 @@ from __future__ import division
 from abc import ABCMeta, abstractmethod, abstractproperty
 import numbers
 import numpy as np
-from scipy import linalg, optimize, sparse
+from scipy import linalg, optimize, sparse, special
 import warnings
 from .base import LinearRegression
 from .coordinate_descent import ElasticNet
@@ -340,7 +342,7 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
             = \mathbf{X}^T W \mathbf{X} \,,
 
         with :math:`\mathbf{W} = \mathbf{D}^2 \boldsymbol{\Sigma}^{-1}`,
-        see func:`score_function`.
+        see func:`_score`.
         """
         n_samples = X.shape[0]
         lin_pred = safe_sparse_dot(X, coef, dense_output=True)
@@ -363,7 +365,7 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
             \mathbf{H}(\boldsymbol{w}) =
             -\frac{\partial^2 loglike}{\partial\boldsymbol{w}
             \partial\boldsymbol{w}^T}
-            = \mathbf{X}^T \legt[
+            = \mathbf{X}^T \left[
             - \mathbf{D}' \mathbf{R}
             + \mathbf{D}^2 \mathbf{V} \mathbf{R}
             + \mathbf{D}^2
@@ -393,7 +395,7 @@ class ExponentialDispersionModel(six.with_metaclass(ABCMeta)):
         r"""The derivative w.r.t. `coef` (:math:`w`) of the deviance as a
         function of the coefficients `coef`.
         This is equivalent to :math:`-2\phi` times the score function
-        :func:`score_function` (derivative of the log-likelihood).
+        :func:`_score` (derivative of the log-likelihood).
         """
         score = self._score(coef=coef, phi=1, X=X, y=y, weights=weights,
                             link=link)
@@ -510,7 +512,8 @@ class TweedieDistribution(ExponentialDispersionModel):
             return (y-mu)**2
         if p == 1:
             # PoissonDistribution
-            return 2 * (np.where(y == 0, 0, y*np.log(y/mu))-y+mu)
+            # 2 * (y*log(y/mu) - y + mu), with y*log(y/mu)=0 if y=0
+            return 2 * (special.xlogy(y, y/mu) - y + mu)
         elif p == 2:
             # GammaDistribution
             return 2 * (np.log(mu/y)+y/mu-1)
@@ -921,7 +924,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         if (not isinstance(self.l1_ratio, numbers.Number) or
                 self.l1_ratio < 0 or self.l1_ratio > 1):
             raise ValueError("l1_ratio must be in interval [0, 1]; got"
-                             " (l1_ratio={0]})".format(self.l1_ratio))
+                             " (l1_ratio={0})".format(self.l1_ratio))
         if not isinstance(self.fit_intercept, bool):
             raise ValueError("The argument fit_intercept must be bool;"
                              " got {0}".format(self.fit_intercept))
@@ -948,7 +951,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             raise ValueError("The argument warm_start must be bool;"
                              " got {0}".format(self.warm_start))
         start_params = self.start_params
-        if start_params is not None and start_params is not 'least_squares':
+        if start_params is not None and start_params != 'least_squares':
             start_params = np.atleast_1d(start_params)
             if ((start_params.shape[0] != X.shape[1] + self.fit_intercept) or
                     (start_params.ndim != 1)):
@@ -986,7 +989,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                 raise ValueError("P2 must be either None or an array of shape "
                                  "(n_features, n_features) with "
                                  "n_features=X.shape[1]; "
-                                 "got (P2.shape=({0},{1})), needed ({3},{3})"
+                                 "got (P2.shape=({0}, {1})), needed ({2}, {2})"
                                  .format(P2.shape[0], P2.shape[1], X.shape[1]))
 
         family = self._family_instance
@@ -1058,7 +1061,7 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             else:
                 # with L1 penalty, start with coef = 0
                 coef = np.zeros(n_features)
-        elif self.start_params is 'least_squares':
+        elif self.start_params == 'least_squares':
             if self.alpha == 0:
                 reg = LinearRegression(copy_X=True, fit_intercept=False)
                 reg.fit(Xnew, link.link(y))
@@ -1277,11 +1280,9 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             dev = self._family_instance.deviance(y, mu, sample_weight)
             return dev/(n_samples - n_features)
 
-# TODO: Fix "AssertionError: -0.28014056555724598 not greater than 0.5"
-#       in check_estimator for score
-#       from sklearn.utils.estimator_checks import check_estimator
-#       from sklearn.linear_model import GeneralizedLinearRegressor
-#       check_estimator(GeneralizedLinearRegressor)
+    # Note: check_estimator(GeneralizedLinearRegressor) might raise
+    # "AssertionError: -0.28014056555724598 not greater than 0.5"
+    # unless GeneralizedLinearRegressor has a score which passes the test.
     def score(self, X, y, sample_weight=None):
         r"""Returns D^2, a generalization of the coefficient of determination
         R^2, which uses deviance instead of squared error.

@@ -1,4 +1,6 @@
 import numpy as np
+from numpy.testing import assert_allclose
+import scipy as sp
 
 from sklearn.linear_model.glm import (
     Link,
@@ -73,6 +75,46 @@ def test_deviance_zero():
         assert_almost_equal(family.deviance(1.5, 1.5), 0, decimal=10)
 
 
+def test_fisher_matrix():
+    """Test the Fisher matrix numerically.
+    Trick: Use numerical differentiation with y = mu"""
+    for family in [NormalDistribution(), PoissonDistribution(),
+                   GammaDistribution(), InverseGaussianDistribution()]:
+        link = LogLink()
+        rng = np.random.RandomState(0)
+        coef = np.array([-2, 1, 0, 1, 2.5])
+        phi = 0.5
+        X = rng.randn(10, 5)
+        lin_pred = np.dot(X, coef)
+        mu = link.inverse(lin_pred)
+        weights = rng.randn(10)**2 + 1
+        fisher = family._fisher_matrix(coef=coef, phi=phi, X=X, y=mu,
+                                       weights=weights, link=link)
+        approx = np.array([]).reshape(0, coef.shape[0])
+        for i in range(coef.shape[0]):
+            def f(coef):
+                return -family._score(coef=coef, phi=phi, X=X, y=mu,
+                                      weights=weights, link=link)[i]
+            approx = np.vstack(
+                [approx, sp.optimize.approx_fprime(xk=coef, f=f, epsilon=1e-5)]
+                )
+        assert_allclose(fisher, approx, rtol=1e-3)
+
+
+def test_glm_family_argument():
+    """Test GLM family argument set as string
+    """
+    y = np.array([1, 2])
+    X = np.array([[1], [1]])
+    for (f, fam) in [('normal', NormalDistribution()),
+                     ('poisson', PoissonDistribution()),
+                     ('gamma', GammaDistribution()),
+                     ('inverse.gaussian', InverseGaussianDistribution())]:
+        glm = GeneralizedLinearRegressor(family=f, fit_intercept=False,
+                                         alpha=0).fit(X, y)
+        assert_equal(type(glm._family_instance), type(fam))
+
+
 def test_glm_identiy_regression():
     """Test GLM regression with identity link on a simple dataset
     """
@@ -82,7 +124,8 @@ def test_glm_identiy_regression():
     families = (
         NormalDistribution(), PoissonDistribution(),
         GammaDistribution(), InverseGaussianDistribution(),
-        TweedieDistribution(power=1.5), TweedieDistribution(power=4.5))
+        TweedieDistribution(power=1.5), TweedieDistribution(power=4.5),
+        GeneralizedHyperbolicSecand())
     for solver in ['irls', 'lbfgs', 'newton-cg']:
         for family in families:
             glm = GeneralizedLinearRegressor(
@@ -100,7 +143,8 @@ def test_glm_log_regression():
     families = (
         NormalDistribution(), PoissonDistribution(),
         GammaDistribution(), InverseGaussianDistribution(),
-        TweedieDistribution(power=1.5), TweedieDistribution(power=4.5))
+        TweedieDistribution(power=1.5), TweedieDistribution(power=4.5),
+        GeneralizedHyperbolicSecand())
     for solver in ['irls', 'lbfgs', 'newton-cg']:
         for family in families:
             glm = GeneralizedLinearRegressor(
@@ -179,4 +223,26 @@ def test_normal_ridge():
     assert_array_almost_equal(glm.predict(T), ridge.predict(T))
 
 
-# TODO: Test compatibility with R's glm, glmnet
+def test_poisson_ridge():
+    """Test ridge regression with poisson family and LogLink
+
+    Compare to R's glmnet"""
+    # library("glmnet")
+    # options(digits=10)
+    # df <- data.frame(a=c(-2,-1,1,2), b=c(0,0,1,1), y=c(0,1,1,2))
+    # x <- data.matrix(df[,c("a", "b")])
+    # y <- df$y
+    # fit <- glmnet(x=x, y=y, alpha=0, intercept=T, family="poisson",
+    #               standardize=F, thresh=1e-10, nlambda=10000)
+    # coef(fit, s=1)
+    # (Intercept) -0.12889386979
+    # a            0.29019207995
+    # b            0.03741173122
+    X = np.array([[-2, -1, 1, 2], [0, 0, 1, 1]]).T
+    y = np.array([0, 1, 1, 2])
+    glm = GeneralizedLinearRegressor(alpha=1, l1_ratio=0, family='poisson',
+                                     link='log', tol=1e-10)
+    glm.fit(X, y)
+    assert_almost_equal(glm.intercept_, -0.12889386979, decimal=7)
+    assert_array_almost_equal(glm.coef_, [0.29019207995, 0.03741173122],
+                              decimal=7)
