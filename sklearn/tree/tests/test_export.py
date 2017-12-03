@@ -210,28 +210,6 @@ def test_graphviz_toy():
                 'fillcolor="#e5813900"] ;\n' \
                 '}'
 
-    # Test Gradient Boosting Classifier
-    clf = GradientBoostingClassifier(n_estimators=2, random_state=0)
-    clf.fit(X, y)
-
-    contents1 = export_graphviz(clf.estimators_[0][0], filled=True,
-                                out_file=None)
-    contents2 = 'digraph Tree {\n' \
-                'node [shape=box, style="filled", color="black"] ;\n' \
-                '0 [label="X[1] <= 0.0\\nfriedman_mse = 0.25' \
-                '\\nsamples = 6\\nvalue = 0.0", fillcolor="#e5813980"] ;\n' \
-                '1 [label="friedman_mse = 0.0\\nsamples = 3' \
-                '\\nvalue = -2.0", ' \
-                'fillcolor="#e5813900"] ;\n' \
-                '0 -> 1 [labeldistance=2.5, labelangle=45, ' \
-                'headlabel="True"] ;\n' \
-                '2 [label="friedman_mse = 0.0\\nsamples = 3\\nvalue = 2.0", ' \
-                'fillcolor="#e58139ff"] ;\n' \
-                '0 -> 2 [labeldistance=2.5, labelangle=-45, ' \
-                'headlabel="False"] ;\n' \
-                '}'
-    assert_equal(contents1, contents2)
-
 
 def test_graphviz_errors():
     # Check for errors of export_graphviz
@@ -254,6 +232,11 @@ def test_graphviz_errors():
                "3 does not match number of features, 2")
     assert_raise_message(ValueError, message, export_graphviz, clf, None,
                          feature_names=["a", "b", "c"])
+
+    # Check error when argument is not an estimator
+    message = "is not an estimator instance"
+    assert_raise_message(TypeError, message,
+                         export_graphviz, clf.fit(X, y).tree_)
 
     # Check class_names error
     out = StringIO()
