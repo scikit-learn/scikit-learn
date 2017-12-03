@@ -993,18 +993,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         n_samples, self.n_features_ = X.shape
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
-            n_pos = np.sum(y)
-            n_neg = y.shape[0] - n_pos
-            if np.isclose(n_pos, 0) or np.isclose(n_neg, 0):
-                raise ValueError("y should contain 2 classes.")
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
-            n_pos = np.sum(sample_weight * y)
-            n_neg = np.sum(sample_weight * (1 - y))
-            if np.isclose(n_pos, 0) or np.isclose(n_neg, 0):
-                raise ValueError("y should contain 2 classes after "
-                                "sample_weight trims samples with "
-                                "zero weights.")
+
+        if np.count_nonzero(np.bincount(y, weights=sample_weight)) < 2:
+            raise ValueError("y should contain atleast 2 classes")
 
         check_consistent_length(X, y, sample_weight)
 
