@@ -41,6 +41,22 @@ feature_names_inv = np.array(feature_names)
 feature_names_inv[1::2] = ''
 
 
+def ScoreFunction(X, y, **kwargs):
+    # Custom score function, using 'spearmanr' for returning 'scores' only.
+
+    score = []
+    p_val = []
+
+    score_func_ret = spearmanr(X, y, **kwargs)
+
+    if isinstance(score_func_ret, (list, tuple)):
+        score, p_val = score_func_ret
+    else:
+        score = score_func_ret
+
+    return score
+
+
 def test_transform_dense():
     sel = StepSelector()
     Xt_actual = sel.fit(X, y).transform(X)
@@ -126,8 +142,14 @@ def test_featurewise_scorer():
     skb.fit(X, y)
     new_X = skb.transform(X)
 
+    # Using custom score function
+    skb2 = SelectKBest(featurewise_scorer(ScoreFunction, axis=0), k=10)
+    skb2.fit(X, y)
+    new_X2 = skb2.transform(X)
+
     # Check if the feature selectors behave as expected
     assert_equal(new_X.shape[1], 10)
+    assert_equal(new_X2.shape[1], 10)
 
 
 def test_featurewise_scorer_list_input():

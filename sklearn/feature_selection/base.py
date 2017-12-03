@@ -128,7 +128,7 @@ def featurewise_scorer(score_func, **kwargs):
     Parameters
     ----------
     score_func : callable
-        Function taking array(s) X and/or y, and returning a pair of arrays
+        Function taking arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores. This function is also
         allowed to take other parameters as input.
 
@@ -159,20 +159,14 @@ def featurewise_scorer(score_func, **kwargs):
     >>> new_X = skb.transform(X)
 
     """
-    def call_scorer(X, y=None):
-        if y is None:
-            X = check_array(X, ('csr', 'csc'))
-        else:
-            X, y = check_X_y(X, y, ('csr', 'csc'), multi_output=True)
+    def call_scorer(X, y):
+        X, y = check_X_y(X, y, ('csr', 'csc'), multi_output=True)
 
         scores = []
         p_vals = []
 
         for i in six.moves.range(X.shape[1]):
-            if y is None:
-                score_func_ret = score_func(X[:, i], **kwargs)
-            else:
-                score_func_ret = score_func(X[:, i], y, **kwargs)
+            score_func_ret = score_func(X[:, i], y, **kwargs)
 
             if isinstance(score_func_ret, (list, tuple)):
                 score, p_val = score_func_ret
