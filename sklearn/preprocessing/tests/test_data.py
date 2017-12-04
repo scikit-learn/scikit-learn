@@ -2342,6 +2342,9 @@ def test_unary_encoder_errors():
     assert_raises(ValueError, UnaryEncoder(n_values=1).fit_transform, X)
 
     # test that an error is raised when out of bounds
+    encoder = UnaryEncoder(n_values, handle_greater='error')
+    X = _generate_random_features_matrix(n_values, size)
+    encoder.fit(X)
     X[0][0] = n_values + delta
     X_out_of_bounds = X
     assert_raises(ValueError, encoder.transform, X_out_of_bounds)

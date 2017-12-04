@@ -571,7 +571,7 @@ Continuing the example above::
 
   >>> enc = preprocessing.UnaryEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]]) # doctest: +ELLIPSIS
-  UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='error',
+  UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='warn',
          n_values='auto', ordinal_features='all', sparse=False)
   >>> enc.transform([[0, 1, 1]])
   array([[ 0.,  1.,  0.,  1.,  0.,  0.]])
@@ -592,7 +592,7 @@ categorical features, one has to explicitly set ``n_values``. For example,::
   >>> # Note that there are missing categorical values for the 2nd and 3rd
   >>> # features
   >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
-  UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='error',
+  UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='warn',
          n_values=[2, 3, 4], ordinal_features='all', sparse=False)
   >>> enc.transform([[1, 1, 2]])
   array([[ 1.,  1.,  0.,  1.,  1.,  0.]])
