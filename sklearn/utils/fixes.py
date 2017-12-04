@@ -298,6 +298,26 @@ else:
 
 
 # Remove when minimum required SciPy >= 0.17.0
+def downcast_intp_index(arr):
+    """
+    Down-cast index array to np.intp dtype if it is of a larger dtype.
+
+    Raise an error if the array contains a value that is too large for
+    intp.
+    """
+    if arr.dtype.itemsize > np.dtype(np.intp).itemsize:
+        if arr.size == 0:
+            return arr.astype(np.intp)
+        maxval = arr.max()
+        minval = arr.min()
+        if maxval > np.iinfo(np.intp).max or minval < np.iinfo(np.intp).min:
+            raise ValueError("Cannot deal with arrays with indices larger "
+                             "than the machine maximum address size "
+                             "(e.g. 64-bit indices on 32-bit machine).")
+        return arr.astype(np.intp)
+    return arr
+
+
 def getnnz(X, axis=None):
         if axis is None:
             return int(X.indptr[-1])
