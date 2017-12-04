@@ -28,9 +28,8 @@ include "binary_tree.pxi"
 cdef class BallTree(BinaryTree):
     __doc__ = CLASS_DOC.format(**DOC_DICT)
 
-    def __init__(self, data, leaf_size=40, metric='minkowski', **kwargs):
-        super(BallTree,self).__init__(data, leaf_size, metric, **kwargs)
-        self.substituteDoc(DOC_DICT)
+
+substitute_method_doc(BallTree,DOC_DICT)
 
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a Ball Tree

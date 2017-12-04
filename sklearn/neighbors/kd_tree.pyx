@@ -20,14 +20,10 @@ VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
 # Inherit KDTree from BinaryTree
 include "binary_tree.pxi"
 
-
 cdef class KDTree(BinaryTree):
-    # __metaclass__ = SubstituteDoc
     __doc__ = CLASS_DOC.format(**DOC_DICT)
 
-    def __init__(self, data, leaf_size=40, metric='minkowski', **kwargs):
-        super(KDTree,self).__init__(data, leaf_size, metric, **kwargs)
-        self.substituteDoc(DOC_DICT)
+substitute_method_doc(KDTree,DOC_DICT)
 
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a KD Tree

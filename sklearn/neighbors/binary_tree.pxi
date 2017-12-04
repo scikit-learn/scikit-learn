@@ -1231,25 +1231,6 @@ cdef class BinaryTree:
             self._recursive_build(2 * i_node + 2,
                                   idx_start + n_mid, idx_end)
 
-    def substituteDoc(self, DOC_DICT):
-        for d in dir(self):
-            #Exclude special methods and non functions
-            if d.startswith("__"):
-                continue
-            dc = getattr(self, d)
-            if not callable(dc):
-                continue
-            if dc.__doc__ != None and hasattr(dc, '__code__'):
-                #Copy the function, this is necessary to avoid modifying the docstrings of the superclass
-                g = types.FunctionType(dc.__code__, dc.__globals__, name=dc.__name__,
-                               argdefs=dc.__defaults__,
-                               closure=dc.__closure__)
-                g = functools.update_wrapper(g, dc)
-                g.__kwdefaults__ = dc.__kwdefaults__
-
-                g.__doc__ = dc.__doc__.format(**DOC_DICT)
-                setattr(self,d,g)
-
     def query(self, X, k=1, return_distance=True,
               dualtree=False, breadth_first=False,
               sort_results=True):
@@ -2490,6 +2471,27 @@ cdef class BinaryTree:
 
 ######################################################################
 # Python functions for benchmarking and testing C implementations
+
+def substitute_method_doc(cls, DOC_DICT):
+    """Format every method in the class according to the given dictionary""""
+    for d in dir(cls):
+        #Exclude special methods and non functions
+        if d.startswith("__"):
+            continue
+        dc = getattr(cls, d)
+        if not callable(dc):
+            continue
+        if dc.__doc__ != None and hasattr(dc, '__code__'):
+            #Copy the function, this is necessary to avoid modifying the docstrings of the superclass
+            g = types.FunctionType(dc.__code__, dc.__globals__, name=dc.__name__,
+                           argdefs=dc.__defaults__,
+                           closure=dc.__closure__)
+            g = functools.update_wrapper(g, dc)
+            g.__kwdefaults__ = dc.__kwdefaults__
+
+            g.__doc__ = dc.__doc__.format(**DOC_DICT)
+            setattr(cls, d, g)
+
 
 def load_heap(DTYPE_t[:, ::1] X, ITYPE_t k):
     """test fully loading the heap"""
