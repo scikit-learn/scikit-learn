@@ -148,7 +148,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     if method == 'lar' and positive:
         warnings.warn('positive option is broken for Least '
                       ' Angle Regression (LAR). Use method="lasso".'
-                      ' This option will be removed in version 0.21.')
+                      ' This option will be removed in version 0.21.',
+                      DeprecationWarning)
 
     n_features = X.shape[1]
     n_samples = y.size
@@ -548,6 +549,8 @@ class Lars(LinearModel, RegressorMixin):
     positive : boolean (default=False)
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
+
+        The option is deprecated and will be removed in v0.21.
 
     Attributes
     ----------
@@ -1037,6 +1040,7 @@ class LarsCV(Lars):
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
 
+        The option is deprecated and will be removed in v0.21.
 
     Attributes
     ----------
