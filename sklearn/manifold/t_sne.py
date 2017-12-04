@@ -646,7 +646,13 @@ class TSNE(BaseEstimator):
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
-            if sp.issparse(X):
+        if self.method == 'barnes_hut':
+            X = check_array(X, accept_sparse=['csr'], ensure_min_samples=2,
+                            dtype=[np.float32, np.float64])
+        else:
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                            dtype=[np.float32, np.float64])
+        if sp.issparse(X):
                 if np.any(X.data < 0):
                     raise ValueError("All distances should be positive, the "
                                      "precomputed distances given as X is not "
@@ -656,12 +662,6 @@ class TSNE(BaseEstimator):
                     raise ValueError("All distances should be positive, the "
                                      "precomputed distances given as X is not "
                                      "correct")
-        if self.method == 'barnes_hut':
-            X = check_array(X, accept_sparse=['csr'], ensure_min_samples=2,
-                            dtype=[np.float32, np.float64])
-        else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                            dtype=[np.float32, np.float64])
         if self.method == 'barnes_hut' and self.n_components > 3:
             raise ValueError("'n_components' should be inferior to 4 for the "
                              "barnes_hut algorithm as it relies on "
@@ -714,7 +714,7 @@ class TSNE(BaseEstimator):
             if self.verbose:
                 print("[t-SNE] Computing {} nearest neighbors...".format(k))
 
-            if(sp.issparse(X)):
+            if self.mertic == "precomputed" and sp.issparse(X):
                 if np.any(getnnz(X, axis=1) < k):
                     raise ValueError("Perplexity of the sparse matrix is high."
                                      " Please reduce the perplexity.")

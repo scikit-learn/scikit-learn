@@ -557,12 +557,13 @@ def test_reduction_to_one_component():
 
 def test_sparse_on_barnes_hut_high_perplexity():
     # No sparse matrices allowed on Barnes-Hut.
-    random_state = check_random_state(0)
+    random_state = check_random_state(4)
     X = random_state.randn(100, 100)
     X[(np.random.randint(0, 100, 50), np.random.randint(0, 100, 50))] = 0.0
     X_csr = sp.csr_matrix(X)
     tsne = TSNE(n_iter=300, method='barnes_hut')
     tsne.fit_transform(X_csr)
+    tsne.fit_transform(X_csr.A)
 
 
 def test_sparse_on_barnes_hut_low_perplexity():
@@ -571,7 +572,7 @@ def test_sparse_on_barnes_hut_low_perplexity():
     X = random_state.randn(100, 2)
     X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
     X_csr = sp.csr_matrix(X)
-    tsne = TSNE(n_iter=300, method='barnes_hut')
+    tsne = TSNE(n_iter=300, metric='precomputed', method='barnes_hut')
     assert_raises_regexp(ValueError, "Perplexity of the sparse matrix.*",
                          tsne.fit_transform, X_csr)
 
