@@ -34,6 +34,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('mixture/tests')
     config.add_subpackage('model_selection')
     config.add_subpackage('model_selection/tests')
+    config.add_subpackage('multiview')
+    config.add_subpackage('multiview/tests')
     config.add_subpackage('neural_network')
     config.add_subpackage('neural_network/tests')
     config.add_subpackage('preprocessing')
