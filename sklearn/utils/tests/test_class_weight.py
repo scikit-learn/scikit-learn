@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 
 from sklearn.linear_model import LogisticRegression
@@ -111,6 +112,22 @@ def test_compute_class_weight_balanced_negative():
     class_counts = np.bincount(y + 2)
     assert_almost_equal(np.dot(cw, class_counts), y.shape[0])
     assert_array_almost_equal(cw, [2. / 3, 2., 1.])
+
+
+@pytest.mark.parametrize(('freq0', 'freq1'),
+                         [(59, 19)] +  # a known issue
+                         # random checks for other architectures
+                         np.random.RandomState(0).randint(
+                             1, 100, size=(50, 2)).tolist())
+def test_balanced_class_weight_numerical_precision(freq0, freq1):
+    y = np.hstack([np.zeros(freq0), np.ones(freq1)])
+    # make sure we do comparisons as numpy floats to maintain imprecision
+    w = compute_class_weight('balanced', [0, 1], y)
+    wfreq = w * [freq0, freq1]
+    diff = np.diff(wfreq)
+    assert np.abs(diff) < 1e-6  # we want to be very close to true balance
+    # but in case of ambiguity, deterministically prefer original distribution
+    assert diff == 0 or np.sign(diff) == np.sign(np.diff([freq0, freq1]))
 
 
 def test_compute_class_weight_balanced_unordered():
