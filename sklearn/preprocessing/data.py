@@ -3019,34 +3019,13 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         indices = np.cumsum(n_values)
         self.feature_indices_ = indices
 
-        mask = (X < self.n_values_).ravel()
-        if np.any(~mask):
+        mask = (X >= self.n_values_).ravel()
+        if np.any(mask):
             if self.handle_greater == 'error':
-                raise ValueError("unknown ordinal feature present %s "
-                                 % X.ravel()[~mask])
+                raise ValueError("handle_greater='error' but %d feature values"
+                                 " exceed n_values" % np.count_nonzero(mask))
 
         return X
-
-    def fit_transform(self, X, y=None):
-        """Fit UnaryEncoder to X, then transform X.
-
-        Equivalent to self.fit(X).transform(X), but more convenient.
-
-        Parameters
-        ----------
-        X : array-like, shape [n_samples, n_feature]
-            Input array of type int.
-            All feature values should be non-negative otherwise will raise a
-            ValueError.
-
-        Returns
-        -------
-        X_out : sparse matrix or a 2-d array
-            Transformed input.
-
-        """
-
-        return self.fit(X).transform(X)
 
     def _transform(self, X):
         """Assumes X contains only ordinal features."""
@@ -3065,13 +3044,13 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         # using mask if self.handle_greater is "clip".
         # This means, the row_indices and col_indices corresponding to the
         # greater ordinal feature are all filled with ones.
-        mask = (X < self.n_values_).ravel()
-        if np.any(~mask):
+        mask = (X >= self.n_values_).ravel()
+        if np.any(mask):
             if self.handle_greater == 'error':
                 raise ValueError("unknown ordinal feature present %s "
-                                 "during transform." % X.ravel()[~mask])
+                                 "during transform." % X.ravel()[mask])
 
-        X_ceil = np.where(mask.reshape(X.shape), X, self.n_values_ - 1)
+        X_ceil = np.where(mask.reshape(X.shape), self.n_values_ - 1, X)
         column_start = np.tile(indices[:-1], n_samples)
         column_end = (indices[:-1] + X_ceil).ravel()
         column_indices = np.hstack([np.arange(s, e) for s, e
