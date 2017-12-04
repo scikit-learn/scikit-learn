@@ -5,12 +5,17 @@
 from urllib.request import urlopen
 import json
 import re
+import sys
 
 from distutils.version import LooseVersion
 
 
 def json_urlread(url):
-    return json.loads(urlopen(url).read().decode('utf8'))
+    try:
+        return json.loads(urlopen(url).read().decode('utf8'))
+    except Exception:
+        print('Error reading', url, file=sys.stderr)
+        raise
 
 
 def human_readable_data_quantity(quantity, multiple=1024):
