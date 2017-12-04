@@ -657,7 +657,7 @@ class TSNE(BaseEstimator):
                                      "precomputed distances given as X is not "
                                      "correct")
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        ensure_min_sample=2, dtype=[np.float32, np.float64])
+                        ensure_min_samples=2, dtype=[np.float32, np.float64])
         if self.method == 'barnes_hut' and self.n_components > 3:
             raise ValueError("'n_components' should be inferior to 4 for the "
                              "barnes_hut algorithm as it relies on "
