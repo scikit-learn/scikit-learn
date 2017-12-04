@@ -136,10 +136,42 @@ learn::
     <sphx_glr_auto_examples_classification_plot_digits_classification.py>` illustrates how starting
     from the original problem one can shape the data for consumption in
     scikit-learn.
-    
+
 .. topic:: Loading from external datasets
 
     To load from an external dataset, please refer to :ref:`loading external datasets <external_datasets>`.
+
+.. topic:: Loading from the data files
+
+    All standard datasets which you can import with ``load_`` have underlying source files that
+    you can read manually (consider :func:`numpy.loadtxt` and `pandas <http://pandas.pydata.org/>`_
+    for analysis). The data and target can be stored in one file (e.g. iris, boston, breast_cancer) or
+    in several (e.g. diabetes, linnerud).
+
+      >>> from sklearn.datasets import load_boston
+      >>> boston = load_boston()
+      >>> print(boston.filename)  # doctest: +SKIP
+      (some-path)/sklearn/datasets/data/boston_house_prices.csv
+
+      >>> from sklearn.datasets import load_diabetes
+      >>> diabetes = load_diabetes()
+      >>> print(diabetes.data_filename)  # doctest: +SKIP
+      (some-path)/sklearn/datasets/data/diabetes_data.csv.gz
+      >>> print(diabetes.target_filename)  # doctest: +SKIP
+      (some-path)/sklearn/datasets/data/diabetes_target.csv.gz
+
+    You can also read the data file directly with numpy. Consider the following example.
+    Boston dataset contains 2 header lines, that is why we are going to skip them::
+
+      >>> import numpy as np
+      >>> boston_data = np.loadtxt(boston.filename, delimiter=",", skiprows=2)
+      >>> boston.data.shape  # sklearn dataset
+      (506, 13)
+      >>> boston_data.shape  # also contains target columns
+      (506, 14)
+
+    .. seealso::
+        `pandas.read_csv <http://pandas.pydata.org/pandas-docs/stable/generated/pandas.read_csv.html>`_
 
 Learning and predicting
 ------------------------
