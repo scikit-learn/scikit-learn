@@ -54,7 +54,7 @@ def compute_class_weight(class_weight, classes, y):
         freq = np.bincount(y_ind).astype(np.float64)
         recip_freq = len(y) / (len(le.classes_) * freq)
         weight = recip_freq[le.transform(classes)]
-        if np.any(np.diff(freq)):
+        if np.any(np.diff(freq * weight)):
             # Numerical imprecision issues.
             # Just in case, we will add a little eps in order to prefer
             # true class distribution.
