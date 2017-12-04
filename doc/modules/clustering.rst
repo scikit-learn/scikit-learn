@@ -1597,20 +1597,18 @@ one doesn't need to account for some instances not being clustered.
 Here is an example::
 
    >>> from sklearn.metrics.cluster import contingency_matrix
-   >>> x = ["true cluster 1", "true cluster 1", "true cluster 1",
-   ...      "true cluster 2", "true cluster 2", "true cluster 2"]
-   >>> y = ["pred cluster 1", "pred cluster 1", "pred cluster 2",
-   ...      "pred cluster 2", "pred cluster 3", "pred cluster 3"]
+   >>> x = ["a", "a", "a", "b", "b", "b"]
+   >>> y = [0, 0, 1, 1, 2, 2]
    >>> contingency_matrix(x, y)
    array([[2, 1, 0],
           [0, 1, 2]])
 
-The first row of output array indicates that there are three samples labelled
-'true cluster 1', two of which are also labelled 'pred cluster 1', one is labelled
-'pred cluster 2' while none is labelled 'pred cluster 3'. Similarly the second row
-indicates there are three samples labelled 'true cluster 2' of which none is labelled
-'pred cluster 1', one is labelled 'pred cluster 2' and two are labelled
-'pred cluster 3'.
+The first row of output array indicates that there are three samples whose
+true cluster is "a", two whose predicted cluster is 0, one of whose predicted
+cluster is 1 and none of whose predicted cluster is 2. Seconds rows indicates
+that there are three samples whose true cluster is "b", none of whose
+predicted cluster is 0, one of whose predicted cluster is 1 and two of whose
+predicted cluster is 2.
 
 Confusion matrix is square matrix and the order of columns and rows is significant.
 
