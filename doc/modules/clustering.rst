@@ -1604,13 +1604,14 @@ Here is an example::
           [0, 1, 2]])
 
 The first row of output array indicates that there are three samples whose
-true cluster is "a", two whose predicted cluster is 0, one of whose predicted
-cluster is 1 and none of whose predicted cluster is 2. Seconds rows indicates
-that there are three samples whose true cluster is "b", none of whose
-predicted cluster is 0, one of whose predicted cluster is 1 and two of whose
-predicted cluster is 2.
+true cluster is "a". Of them, two are in predicted cluster 0, one is in 1,
+and none is in 2. And the second row indicates that there are three samples
+whose true cluster is "b". Of them, none is in predicted cluster 0, one is in
+1 and two are in 2.
 
-Confusion matrix is square matrix and the order of columns and rows is significant.
+A :ref:`confusion matrix <confusion_matrix>` for classification is a square
+contingency matrix where the order of rows and columns correspond to a list
+of classes.
 
 
 Advantages
