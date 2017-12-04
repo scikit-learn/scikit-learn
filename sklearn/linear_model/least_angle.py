@@ -98,11 +98,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     positive : boolean (default=False)
         Restrict coefficients to be >= 0.
-        When using this option together with method 'lasso' the model
+        This option is only allowed with method 'lasso'. Note that the model
         coefficients will not converge to the ordinary-least-squares solution
-        for small values of alpha (neither will they when using method 'lar'
-        ..). Only coefficients up to the smallest alpha value
-        (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by the
+        for small values of alpha. Only coefficients up to the smallest alpha
+        value (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by the
         stepwise Lars-Lasso algorithm are typically in congruence with the
         solution of the coordinate descent lasso_path function.
 
