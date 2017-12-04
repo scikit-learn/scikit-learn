@@ -27,6 +27,7 @@ include "binary_tree.pxi"
 # Inherit BallTree from BinaryTree
 cdef class BallTree(BinaryTree):
     __doc__ = CLASS_DOC.format(**DOC_DICT)
+    pass
 
 
 substitute_method_doc(BallTree,DOC_DICT)

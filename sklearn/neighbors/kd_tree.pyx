@@ -15,16 +15,35 @@ VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
                  'ChebyshevDistance', 'MinkowskiDistance']
 
 
-
+# def substitute_method_doc(cls, DOC_DICT):
+#     """Format every method in the class according to the given dictionary"""
+#     for d in dir(cls):
+#         #Exclude special methods and non functions
+#         if d.startswith("__"):
+#             continue
+#         dc = getattr(cls, d)
+#         if not callable(dc):
+#             continue
+#         if dc.__doc__ != None and hasattr(dc, '__code__'):
+#             #Copy the function, this is necessary to avoid modifying the docstrings of the superclass
+#             g = types.FunctionType(dc.__code__, dc.__globals__, name=dc.__name__,
+#                            argdefs=dc.__defaults__,
+#                            closure=dc.__closure__)
+#             g = functools.update_wrapper(g, dc)
+#             g.__kwdefaults__ = dc.__kwdefaults__
+#
+#             g.__doc__ = dc.__doc__.format(**DOC_DICT)
+#             setattr(cls, d, g)
 
 # Inherit KDTree from BinaryTree
 include "binary_tree.pxi"
 
 cdef class KDTree(BinaryTree):
     __doc__ = CLASS_DOC.format(**DOC_DICT)
+    pass
+
 
 substitute_method_doc(KDTree,DOC_DICT)
-
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a KD Tree
 #

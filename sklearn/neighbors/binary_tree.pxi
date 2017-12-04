@@ -1231,6 +1231,8 @@ cdef class BinaryTree:
             self._recursive_build(2 * i_node + 2,
                                   idx_start + n_mid, idx_end)
 
+
+
     def query(self, X, k=1, return_distance=True,
               dualtree=False, breadth_first=False,
               sort_results=True):
@@ -2473,7 +2475,7 @@ cdef class BinaryTree:
 # Python functions for benchmarking and testing C implementations
 
 def substitute_method_doc(cls, DOC_DICT):
-    """Format every method in the class according to the given dictionary""""
+    """Format every method in the class according to the given dictionary"""
     for d in dir(cls):
         #Exclude special methods and non functions
         if d.startswith("__"):
@@ -2491,7 +2493,6 @@ def substitute_method_doc(cls, DOC_DICT):
 
             g.__doc__ = dc.__doc__.format(**DOC_DICT)
             setattr(cls, d, g)
-
 
 def load_heap(DTYPE_t[:, ::1] X, ITYPE_t k):
     """test fully loading the heap"""
