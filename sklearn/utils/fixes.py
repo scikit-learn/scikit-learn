@@ -324,8 +324,8 @@ def getnnz(X, axis=None):
         else:
             if axis < 0:
                 axis += 2
-            axis, _ = axis, 1 - axis
-            _, N = X.shape
+            axis, _ = X._swap((axis, 1 - axis))
+            _, N = X._swap(X.shape)
             if axis == 0:
                 return np.bincount(downcast_intp_index(X.indices),
                                    minlength=N)

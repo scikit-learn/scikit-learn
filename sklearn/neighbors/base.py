@@ -362,7 +362,7 @@ class KNeighborsMixin(object):
                     **self.effective_metric_params_)
 
             if issparse(dist):
-                if np.any(getnnz(X, axis=1) < n_neighbors):
+                if np.any(getnnz(dist, axis=1) < n_neighbors):
                     raise ValueError("Perplexity of the sparse matrix is high."
                                      " Please reduce the perplexity.")
                 neigh_ind = np.zeros((dist.shape[0], n_neighbors))
