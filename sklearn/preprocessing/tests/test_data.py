@@ -2345,7 +2345,7 @@ def test_unary_encoder_errors():
     X[0][0] = n_values + delta
     X_out_of_bounds = X
     assert_raises(ValueError, encoder.transform, X_out_of_bounds)
-    error_msg = ("unknown ordinal feature present \[{}\] "
+    error_msg = ("Found feature values \[{}\] which exceeds n_values "
                  "during transform.".format(n_values + delta))
     assert_raises_regex(ValueError, error_msg, encoder.transform,
                         X_out_of_bounds)

@@ -2923,9 +2923,9 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     sparse : boolean, default=False
         Will return sparse matrix if set True else will return an array.
 
-    handle_greater : str, 'error' or 'clip'
-        Whether to raise an error or clip if an ordinal feature >= n_values is
-        passed in.
+    handle_greater : str, 'warn' or 'error' or 'clip', default='warn'
+        Whether to raise an error or clip or warn if an
+        ordinal feature >= n_values is passed in.
 
     Attributes
     ----------
@@ -2949,7 +2949,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     ...          [1, 1, 0],
     ...          [0, 2, 1],
     ...          [1, 0, 2]])  # doctest: +ELLIPSIS
-    UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='error',
+    UnaryEncoder(dtype=<... 'numpy.float64'>, handle_greater='warn',
            n_values='auto', ordinal_features='all', sparse=False)
     >>> enc.n_values_
     array([2, 3, 4])
@@ -2964,7 +2964,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
       using a one-hot aka one-of-K scheme.
     """
     def __init__(self, n_values="auto", ordinal_features="all",
-                 dtype=np.float64, sparse=False, handle_greater='error'):
+                 dtype=np.float64, sparse=False, handle_greater='warn'):
         self.n_values = n_values
         self.ordinal_features = ordinal_features
         self.dtype = dtype
@@ -2987,9 +2987,9 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     def _fit(self, X):
         """Assumes X contains only ordinal features."""
         X = check_array(X, dtype=np.int)
-        if self.handle_greater not in ['error', 'clip']:
-            raise ValueError("handle_greater should be either 'error' or "
-                             "'clip' got %s" % self.handle_greater)
+        if self.handle_greater not in ['warn', 'error', 'clip']:
+            raise ValueError("handle_greater should be either 'warn', 'error' "
+                             "or 'clip' got %s" % self.handle_greater)
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
         n_samples, n_features = X.shape
@@ -3023,7 +3023,7 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         if np.any(mask):
             if self.handle_greater == 'error':
                 raise ValueError("handle_greater='error' but %d feature values"
-                                 " exceed n_values" % np.count_nonzero(mask))
+                                 " exceed n_values." % np.count_nonzero(mask))
 
         return X
 
@@ -3046,9 +3046,13 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         # greater ordinal feature are all filled with ones.
         mask = (X >= self.n_values_).ravel()
         if np.any(mask):
-            if self.handle_greater == 'error':
-                raise ValueError("unknown ordinal feature present %s "
-                                 "during transform." % X.ravel()[mask])
+            if self.handle_greater == 'warn':
+                warnings.warn("Found feature values which "
+                              "exceeds n_values during transform.")
+            elif self.handle_greater == 'error':
+                raise ValueError("Found feature values %s which exceeds "
+                                 "n_values during transform."
+                                 % X.ravel()[mask])
 
         X_ceil = np.where(mask.reshape(X.shape), self.n_values_ - 1, X)
         column_start = np.tile(indices[:-1], n_samples)
