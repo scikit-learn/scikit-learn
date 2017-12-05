@@ -15,9 +15,10 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import if_safe_multiprocessing_with_blas
 from sklearn.utils.testing import assert_raise_message
-
+from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
@@ -867,3 +868,22 @@ def test_sparse_validate_centers():
     msg = "The shape of the initial centers \(\(4L?, 4L?\)\) " \
           "does not match the number of clusters 3"
     assert_raises_regex(ValueError, msg, classifier.fit, X)
+
+
+def test_less_centers_than_unique_points():
+    X = np.asarray([[0, 0],
+                    [0, 1],
+                    [1, 0],
+                    [1, 0]])  # last point is duplicated
+
+    km = KMeans(n_clusters=4).fit(X)
+
+    # only three distinct points, so only three clusters
+    # can have points assigned to them
+    assert_equal(set(km.labels_), set(range(3)))
+
+    # k_means should warn that fewer labels than cluster
+    # centers have been used
+    msg = ("Number of distinct clusters (3) found smaller than "
+           "n_clusters (4). Possibly due to duplicate points in X.")
+    assert_warns_message(ConvergenceWarning, msg, k_means, X, n_clusters=4)

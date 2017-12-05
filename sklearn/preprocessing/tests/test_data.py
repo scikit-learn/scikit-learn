@@ -6,6 +6,7 @@
 from __future__ import division
 
 import warnings
+import re
 import numpy as np
 import numpy.linalg as la
 from scipy import sparse
@@ -30,6 +31,7 @@ from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_allclose
 from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils.testing import SkipTest
 
 from sklearn.utils.sparsefuncs import mean_variance_axis
 from sklearn.preprocessing.data import _transform_selected
@@ -39,6 +41,7 @@ from sklearn.preprocessing.data import KernelCenterer
 from sklearn.preprocessing.data import Normalizer
 from sklearn.preprocessing.data import normalize
 from sklearn.preprocessing.data import OneHotEncoder
+from sklearn.preprocessing.data import CategoricalEncoder
 from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
@@ -1966,6 +1969,236 @@ def test_one_hot_encoder_unknown_transform():
     oh = OneHotEncoder(handle_unknown='42')
     oh.fit(X)
     assert_raises(ValueError, oh.transform, y)
+
+
+def check_categorical_onehot(X):
+    enc = CategoricalEncoder(encoding='onehot')
+    Xtr1 = enc.fit_transform(X)
+
+    enc = CategoricalEncoder(encoding='onehot-dense')
+    Xtr2 = enc.fit_transform(X)
+
+    assert_allclose(Xtr1.toarray(), Xtr2)
+
+    assert sparse.isspmatrix_csr(Xtr1)
+    return Xtr1.toarray()
+
+
+def test_categorical_encoder_onehot():
+    X = [['abc', 1, 55], ['def', 2, 55]]
+
+    Xtr = check_categorical_onehot(np.array(X)[:, [0]])
+    assert_allclose(Xtr, [[1, 0], [0, 1]])
+
+    Xtr = check_categorical_onehot(np.array(X)[:, [0, 1]])
+    assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
+
+    Xtr = CategoricalEncoder().fit_transform(X)
+    assert_allclose(Xtr.toarray(), [[1, 0, 1, 0,  1], [0, 1, 0, 1, 1]])
+
+
+def test_categorical_encoder_onehot_inverse():
+    for encoding in ['onehot', 'onehot-dense']:
+        X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
+        enc = CategoricalEncoder(encoding=encoding)
+        X_tr = enc.fit_transform(X)
+        exp = np.array(X, dtype=object)
+        assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+        X = [[2, 55], [1, 55], [3, 55]]
+        enc = CategoricalEncoder(encoding=encoding)
+        X_tr = enc.fit_transform(X)
+        exp = np.array(X)
+        assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+        # with unknown categories
+        X = [['abc', 2, 55], ['def', 1, 55], ['abc', 3, 55]]
+        enc = CategoricalEncoder(encoding=encoding, handle_unknown='ignore',
+                                 categories=[['abc', 'def'], [1, 2],
+                                             [54, 55, 56]])
+        X_tr = enc.fit_transform(X)
+        exp = np.array(X, dtype=object)
+        exp[2, 1] = None
+        assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+        # with an otherwise numerical output, still object if unknown
+        X = [[2, 55], [1, 55], [3, 55]]
+        enc = CategoricalEncoder(encoding=encoding,
+                                 categories=[[1, 2], [54, 56]],
+                                 handle_unknown='ignore')
+        X_tr = enc.fit_transform(X)
+        exp = np.array(X, dtype=object)
+        exp[2, 0] = None
+        exp[:, 1] = None
+        assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+        # incorrect shape raises
+        X_tr = np.array([[0, 1, 1], [1, 0, 1]])
+        msg = re.escape('Shape of the passed X data is not correct')
+        assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+
+
+def test_categorical_encoder_handle_unknown():
+    X = np.array([[1, 2, 3], [4, 5, 6]])
+    X2 = np.array([[7, 5, 3]])
+
+    # Test that encoder raises error for unknown features during transform.
+    enc = CategoricalEncoder()
+    enc.fit(X)
+    msg = re.escape('unknown categories [7] in column 0')
+    assert_raises_regex(ValueError, msg, enc.transform, X2)
+
+    # With 'ignore' you get all 0's in result
+    enc = CategoricalEncoder(handle_unknown='ignore')
+    enc.fit(X)
+    X2_passed = X2.copy()
+    Xtr = enc.transform(X2_passed)
+    assert_allclose(Xtr.toarray(), [[0, 0, 0, 1, 1, 0]])
+    # ensure transformed data was not modified in place
+    assert_allclose(X2, X2_passed)
+
+    # Invalid option
+    enc = CategoricalEncoder(handle_unknown='invalid')
+    assert_raises(ValueError, enc.fit, X)
+
+
+def test_categorical_encoder_categories():
+    X = [['abc', 1, 55], ['def', 2, 55]]
+
+    # order of categories should not depend on order of samples
+    for Xi in [X, X[::-1]]:
+        enc = CategoricalEncoder()
+        enc.fit(Xi)
+        assert enc.categories == 'auto'
+        assert isinstance(enc.categories_, list)
+        cat_exp = [['abc', 'def'], [1, 2], [55]]
+        for res, exp in zip(enc.categories_, cat_exp):
+            assert res.tolist() == exp
+
+
+def test_categorical_encoder_specified_categories():
+    X = np.array([['a', 'b']], dtype=object).T
+
+    enc = CategoricalEncoder(categories=[['a', 'b', 'c']])
+    exp = np.array([[1., 0., 0.],
+                    [0., 1., 0.]])
+    assert_array_equal(enc.fit_transform(X).toarray(), exp)
+    assert enc.categories[0] == ['a', 'b', 'c']
+    assert enc.categories_[0].tolist() == ['a', 'b', 'c']
+    assert np.issubdtype(enc.categories_[0].dtype, str)
+
+    # unsorted passed categories raises for now
+    enc = CategoricalEncoder(categories=[['c', 'b', 'a']])
+    msg = re.escape('Unsorted categories are not yet supported')
+    assert_raises_regex(ValueError, msg, enc.fit_transform, X)
+
+    # multiple columns
+    X = np.array([['a', 'b'], [0, 2]], dtype=object).T
+    enc = CategoricalEncoder(categories=[['a', 'b', 'c'], [0, 1, 2]])
+    exp = np.array([[1., 0., 0., 1., 0., 0.],
+                    [0., 1., 0., 0., 0., 1.]])
+    assert_array_equal(enc.fit_transform(X).toarray(), exp)
+    assert enc.categories_[0].tolist() == ['a', 'b', 'c']
+    assert np.issubdtype(enc.categories_[0].dtype, str)
+    assert enc.categories_[1].tolist() == [0, 1, 2]
+    assert np.issubdtype(enc.categories_[1].dtype, np.integer)
+
+    # when specifying categories manually, unknown categories should already
+    # raise when fitting
+    X = np.array([['a', 'b', 'c']]).T
+    enc = CategoricalEncoder(categories=[['a', 'b']])
+    assert_raises(ValueError, enc.fit, X)
+    enc = CategoricalEncoder(categories=[['a', 'b']], handle_unknown='ignore')
+    exp = np.array([[1., 0.], [0., 1.], [0., 0.]])
+    assert_array_equal(enc.fit(X).transform(X).toarray(), exp)
+
+
+def test_categorical_encoder_pandas():
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest("pandas is not installed")
+
+    X_df = pd.DataFrame({'A': ['a', 'b'], 'B': [1, 2]})
+
+    Xtr = check_categorical_onehot(X_df)
+    assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
+
+
+def test_categorical_encoder_ordinal():
+    X = [['abc', 2, 55], ['def', 1, 55]]
+
+    enc = CategoricalEncoder(encoding='other')
+    assert_raises(ValueError, enc.fit, X)
+
+    enc = CategoricalEncoder(encoding='ordinal', handle_unknown='ignore')
+    assert_raises(ValueError, enc.fit, X)
+
+    enc = CategoricalEncoder(encoding='ordinal')
+    exp = np.array([[0, 1, 0],
+                    [1, 0, 0]], dtype='int64')
+    assert_array_equal(enc.fit_transform(X), exp.astype('float64'))
+    enc = CategoricalEncoder(encoding='ordinal', dtype='int64')
+    assert_array_equal(enc.fit_transform(X), exp)
+
+
+def test_categorical_encoder_ordinal_inverse():
+    X = [['abc', 2, 55], ['def', 1, 55]]
+    enc = CategoricalEncoder(encoding='ordinal')
+    X_tr = enc.fit_transform(X)
+    exp = np.array(X, dtype=object)
+    assert_array_equal(enc.inverse_transform(X_tr), exp)
+
+    # incorrect shape raises
+    X_tr = np.array([[0, 1, 1, 2], [1, 0, 1, 0]])
+    msg = re.escape('Shape of the passed X data is not correct')
+    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+
+
+def test_categorical_encoder_dtypes():
+    # check that dtypes are preserved when determining categories
+    enc = CategoricalEncoder()
+    exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
+
+    for X in [np.array([[1, 2], [3, 4]], dtype='int64'),
+              np.array([[1, 2], [3, 4]], dtype='float64'),
+              np.array([['a', 'b'], ['c', 'd']]),  # string dtype
+              np.array([[1, 'a'], [3, 'b']], dtype='object')]:
+        enc.fit(X)
+        assert all([enc.categories_[i].dtype == X.dtype for i in range(2)])
+        assert_array_equal(enc.transform(X).toarray(), exp)
+
+    X = [[1, 2], [3, 4]]
+    enc.fit(X)
+    assert all([np.issubdtype(enc.categories_[i].dtype, np.integer)
+                for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
+
+    X = [[1, 'a'], [3, 'b']]
+    enc.fit(X)
+    assert all([enc.categories_[i].dtype == 'object' for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
+
+
+def test_categorical_encoder_dtypes_pandas():
+    # check dtype (similar to test_categorical_encoder_dtypes for dataframes)
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest("pandas is not installed")
+
+    enc = CategoricalEncoder()
+    exp = np.array([[1., 0., 1., 0.], [0., 1., 0., 1.]], dtype='float64')
+
+    X = pd.DataFrame({'A': [1, 2], 'B': [3, 4]}, dtype='int64')
+    enc.fit(X)
+    assert all([enc.categories_[i].dtype == 'int64' for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
+
+    X = pd.DataFrame({'A': [1, 2], 'B': ['a', 'b']})
+    enc.fit(X)
+    assert all([enc.categories_[i].dtype == 'object' for i in range(2)])
+    assert_array_equal(enc.transform(X).toarray(), exp)
 
 
 def test_fit_cold_start():
