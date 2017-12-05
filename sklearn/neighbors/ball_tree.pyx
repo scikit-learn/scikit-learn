@@ -30,8 +30,6 @@ cdef class BallTree(BinaryTree):
     pass
 
 
-substitute_method_doc(BallTree,DOC_DICT)
-
 #----------------------------------------------------------------------
 # The functions below specialized the Binary Tree as a Ball Tree
 #
@@ -41,11 +39,6 @@ substitute_method_doc(BallTree,DOC_DICT)
 #   relative rankings of the true distance.  For example, the reduced
 #   distance for the Euclidean metric is the squared-euclidean distance.
 #   For some metrics, the reduced distance is simply the distance.
-
-
-
-
-
 
 cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
                        ITYPE_t n_features) except -1:

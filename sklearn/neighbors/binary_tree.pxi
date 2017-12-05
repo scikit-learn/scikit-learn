@@ -149,8 +149,6 @@ from sklearn.utils.lgamma cimport lgamma
 import numpy as np
 import warnings
 from ..utils import check_array
-import types
-import functools
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
 from typedefs import DTYPE, ITYPE
@@ -1231,8 +1229,6 @@ cdef class BinaryTree:
             self._recursive_build(2 * i_node + 2,
                                   idx_start + n_mid, idx_end)
 
-
-
     def query(self, X, k=1, return_distance=True,
               dualtree=False, breadth_first=False,
               sort_results=True):
@@ -1276,20 +1272,6 @@ cdef class BinaryTree:
         i : array of integers - shape: x.shape[:-1] + (k,)
             each entry gives the list of indices of
             neighbors of the corresponding point
-
-        Examples
-        --------
-        Query for k-nearest neighbors
-
-            >>> import numpy as np
-            >>> np.random.seed(0)
-            >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
-            >>> tree = {BinaryTree}(X, leaf_size=2)    # doctest: +SKIP
-            >>> dist, ind = tree.query(X[:1], k=3)    # doctest: +SKIP
-            >>> print(ind)  # indices of 3 closest neighbors
-            [0 3 1]
-            >>> print(dist)  # distances to 3 closest neighbors
-            [ 0.          0.19662693  0.29473397]
         """
         # XXX: we should allow X to be a pre-built tree.
         X = check_array(X, dtype=DTYPE, order='C')
@@ -1410,20 +1392,6 @@ cdef class BinaryTree:
         dist : array of objects, shape = X.shape[:-1]
             each element is a numpy double array
             listing the distances corresponding to indices in i.
-
-        Examples
-        --------
-        Query for neighbors in a given radius
-
-        >>> import numpy as np
-        >>> np.random.seed(0)
-        >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
-        >>> tree = {BinaryTree}(X, leaf_size=2)     # doctest: +SKIP
-        >>> print(tree.query_radius(X[:1], r=0.3, count_only=True))
-        3
-        >>> ind = tree.query_radius(X[:1], r=0.3)  # doctest: +SKIP
-        >>> print(ind)  # indices of neighbors within distance 0.3
-        [3 0 1]
         """
         if count_only and return_distance:
             raise ValueError("count_only and return_distance "
@@ -1548,17 +1516,6 @@ cdef class BinaryTree:
         -------
         density : ndarray
             The array of (log)-density evaluations, shape = X.shape[:-1]
-
-        Examples
-        --------
-        Compute a gaussian kernel density estimate:
-
-        >>> import numpy as np
-        >>> np.random.seed(1)
-        >>> X = np.random.random((100, 3))
-        >>> tree = {BinaryTree}(X)           # doctest: +SKIP
-        >>> tree.kernel_density(X[:3], h=0.1, kernel='gaussian')
-        array([ 6.94114649,  7.83281226,  7.2071716 ])
         """
         cdef DTYPE_t h_c = h
         cdef DTYPE_t log_atol = log(atol)
@@ -1676,18 +1633,6 @@ cdef class BinaryTree:
         counts : ndarray
             counts[i] contains the number of pairs of points with distance
             less than or equal to r[i]
-
-        Examples
-        --------
-        Compute the two-point autocorrelation function of X:
-
-        >>> import numpy as np
-        >>> np.random.seed(0)
-        >>> X = np.random.random((30, 3))
-        >>> r = np.linspace(0, 1, 5)
-        >>> tree = {BinaryTree}(X)     # doctest: +SKIP
-        >>> tree.two_point_correlation(X, r)
-        array([ 30,  62, 278, 580, 820])
         """
         cdef ITYPE_t n_features = self.data.shape[1]
         cdef ITYPE_t i
@@ -2473,26 +2418,6 @@ cdef class BinaryTree:
 
 ######################################################################
 # Python functions for benchmarking and testing C implementations
-
-def substitute_method_doc(cls, DOC_DICT):
-    """Format every method in the class according to the given dictionary"""
-    for d in dir(cls):
-        #Exclude special methods and non functions
-        if d.startswith("__"):
-            continue
-        dc = getattr(cls, d)
-        if not callable(dc):
-            continue
-        if dc.__doc__ != None and hasattr(dc, '__code__'):
-            #Copy the function, this is necessary to avoid modifying the docstrings of the superclass
-            g = types.FunctionType(dc.__code__, dc.__globals__, name=dc.__name__,
-                           argdefs=dc.__defaults__,
-                           closure=dc.__closure__)
-            g = functools.update_wrapper(g, dc)
-            g.__kwdefaults__ = dc.__kwdefaults__
-
-            g.__doc__ = dc.__doc__.format(**DOC_DICT)
-            setattr(cls, d, g)
 
 def load_heap(DTYPE_t[:, ::1] X, ITYPE_t k):
     """test fully loading the heap"""
