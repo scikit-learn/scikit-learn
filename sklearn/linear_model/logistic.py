@@ -925,7 +925,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
 
     # The score method of Logistic Regression has a classes_ attribute.
-    if multi_class == 'ovr':
+    if multi_class == 'ovr' or multi_class == 'auto':
         log_reg.classes_ = np.array([-1, 1])
     elif multi_class == 'multinomial':
         log_reg.classes_ = np.unique(y_train)
