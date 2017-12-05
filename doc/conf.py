@@ -52,6 +52,7 @@ if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
 else:
     extensions.append('sphinx.ext.imgmath')
 
+imgmath_image_format = 'svg'
 
 autodoc_default_flags = ['members', 'inherited-members']
 
