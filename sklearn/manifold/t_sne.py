@@ -714,7 +714,7 @@ class TSNE(BaseEstimator):
             if self.verbose:
                 print("[t-SNE] Computing {} nearest neighbors...".format(k))
 
-            if self.mertic == "precomputed" and sp.issparse(X):
+            if self.metric == "precomputed" and sp.issparse(X):
                 if np.any(getnnz(X, axis=1) < k):
                     raise ValueError("Perplexity of the sparse matrix is high."
                                      " Please reduce the perplexity.")
