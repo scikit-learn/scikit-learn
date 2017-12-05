@@ -32,7 +32,7 @@ from sklearn.feature_extraction.image import extract_patches_2d
 
 faces = datasets.fetch_olivetti_faces()
 
-###############################################################################
+# #############################################################################
 # Learn the dictionary of images
 
 print('Learning the dictionary... ')
@@ -41,7 +41,6 @@ kmeans = MiniBatchKMeans(n_clusters=81, random_state=rng, verbose=True)
 patch_size = (20, 20)
 
 buffer = []
-index = 1
 t0 = time.time()
 
 # The online learning part: cycle over the whole dataset 6 times
@@ -66,7 +65,7 @@ for _ in range(6):
 dt = time.time() - t0
 print('done in %.2fs.' % dt)
 
-###############################################################################
+# #############################################################################
 # Plot the results
 plt.figure(figsize=(4.2, 4))
 for i, patch in enumerate(kmeans.cluster_centers_):

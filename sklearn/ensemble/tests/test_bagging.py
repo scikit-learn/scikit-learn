@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_raise_message
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import GridSearchCV, ParameterGrid
@@ -65,7 +66,7 @@ def test_classification():
 
     for base_estimator in [None,
                            DummyClassifier(),
-                           Perceptron(),
+                           Perceptron(tol=1e-3),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),
                            SVC()]:
@@ -212,9 +213,9 @@ def test_sparse_regression():
             sparse_type = type(X_train_sparse)
             types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            assert_array_equal(sparse_results, dense_results)
+            assert_array_almost_equal(sparse_results, dense_results)
             assert all([t == sparse_type for t in types])
-            assert_array_equal(sparse_results, dense_results)
+            assert_array_almost_equal(sparse_results, dense_results)
 
 
 def test_bootstrap_samples():
@@ -375,7 +376,7 @@ def test_single_estimator():
 
     clf2 = KNeighborsRegressor().fit(X_train, y_train)
 
-    assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
+    assert_array_almost_equal(clf1.predict(X_test), clf2.predict(X_test))
 
 
 def test_error():
@@ -449,6 +450,13 @@ def test_parallel_classification():
     decisions2 = ensemble.decision_function(X_test)
     assert_array_almost_equal(decisions1, decisions2)
 
+    X_err = np.hstack((X_test, np.zeros((X_test.shape[0], 1))))
+    assert_raise_message(ValueError, "Number of features of the model "
+                         "must match the input. Model n_features is {0} "
+                         "and input n_features is {1} "
+                         "".format(X_test.shape[1], X_err.shape[1]),
+                         ensemble.decision_function, X_err)
+
     ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
@@ -519,7 +527,7 @@ def test_base_estimator():
 
     assert_true(isinstance(ensemble.base_estimator_, DecisionTreeClassifier))
 
-    ensemble = BaggingClassifier(Perceptron(),
+    ensemble = BaggingClassifier(Perceptron(tol=1e-3),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
@@ -668,7 +676,7 @@ def test_oob_score_removed_on_warm_start():
 
 
 def test_oob_score_consistency():
-    # Make sure OOB scores are identical when random_state, estimator, and 
+    # Make sure OOB scores are identical when random_state, estimator, and
     # training data are fixed and fitting is done twice
     X, y = make_hastie_10_2(n_samples=200, random_state=1)
     bagging = BaggingClassifier(KNeighborsClassifier(), max_samples=0.5,

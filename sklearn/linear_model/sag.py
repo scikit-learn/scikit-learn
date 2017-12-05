@@ -131,7 +131,13 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
            *loss='multinomial'*
 
     alpha : float, optional
-        Constant that multiplies the regularization term. Defaults to 1.
+        L2 regularization term in the objective function
+        ``(0.5 * alpha * || W ||_F^2)``. Defaults to 1.
+
+    beta : float, optional
+        L1 regularization term in the objective function
+        ``(beta * || W ||_1)``. Only applied if ``is_saga`` is set to True.
+        Defaults to 0.
 
     max_iter : int, optional
         The max number of passes over the training data if the stopping

@@ -88,7 +88,7 @@ class ParallelBackendBase(with_metaclass(ABCMeta)):
         managed by the backend it-self: if we expect no new tasks, there is no
         point in re-creating a new working pool.
         """
-        # Does nothing by default: to be overriden in subclasses when canceling
+        # Does nothing by default: to be overridden in subclasses when canceling
         # tasks is possible.
         pass
 

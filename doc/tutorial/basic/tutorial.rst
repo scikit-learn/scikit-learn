@@ -136,7 +136,7 @@ learn::
     <sphx_glr_auto_examples_classification_plot_digits_classification.py>` illustrates how starting
     from the original problem one can shape the data for consumption in
     scikit-learn.
-    
+
 .. topic:: Loading from external datasets
 
     To load from an external dataset, please refer to :ref:`loading external datasets <external_datasets>`.
@@ -209,7 +209,7 @@ example that you can run and study:
 Model persistence
 -----------------
 
-It is possible to save a model in the scikit by using Python's built-in
+It is possible to save a model in scikit-learn by using Python's built-in
 persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html>`_::
 
   >>> from sklearn import svm
@@ -231,7 +231,7 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
   >>> y[0]
   0
 
-In the specific case of the scikit, it may be more interesting to use
+In the specific case of scikit-learn, it may be more interesting to use
 joblib's replacement of pickle (``joblib.dump`` & ``joblib.load``),
 which is more efficient on big data, but can only pickle to the disk
 and not to a string::

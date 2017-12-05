@@ -47,7 +47,7 @@ def gammaln(x):
 @deprecated("The function log_normalize is deprecated in 0.18 and "
             "will be removed in 0.20.")
 def log_normalize(v, axis=0):
-    """Normalized probabilities from unnormalized log-probabilites"""
+    """Normalized probabilities from unnormalized log-probabilities"""
     v = np.rollaxis(v, axis)
     v = v.copy()
     v -= v.max(axis=0)
@@ -273,7 +273,6 @@ class _DPGMMBase(_GMMBase):
         X = check_array(X)
         if X.ndim == 1:
             X = X[:, np.newaxis]
-        z = np.zeros((X.shape[0], self.n_components))
         sd = digamma(self.gamma_.T[1] + self.gamma_.T[2])
         dgamma1 = digamma(self.gamma_.T[1]) - sd
         dgamma2 = np.zeros(self.n_components)
@@ -672,7 +671,7 @@ class VBGMM(_DPGMMBase):
     Initialization is with normally-distributed means and identity
     covariance, for proper convergence.
 
-    Read more in the :ref:`User Guide <vbgmm>`.
+    Read more in the :ref:`User Guide <bgmm>`.
 
     Parameters
     ----------
@@ -844,7 +843,6 @@ class VBGMM(_DPGMMBase):
         return logprior
 
     def _bound_concentration(self):
-        logprior = 0.
         logprior = gammaln(np.sum(self.gamma_)) - gammaln(self.n_components
                                                           * self.alpha_)
         logprior -= np.sum(gammaln(self.gamma_) - gammaln(self.alpha_))

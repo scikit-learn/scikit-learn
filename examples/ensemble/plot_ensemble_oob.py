@@ -8,7 +8,7 @@ each new tree is fit from a bootstrap sample of the training observations
 :math:`z_i = (x_i, y_i)`. The *out-of-bag* (OOB) error is the average error for
 each :math:`z_i` calculated using predictions from the trees that do not
 contain :math:`z_i` in their respective bootstrap sample. This allows the
-``RandomForestClassifier`` to be fit and validated whilst being trained [1].
+``RandomForestClassifier`` to be fit and validated whilst being trained [1]_.
 
 The example below demonstrates how the OOB error can be measured at the
 addition of each new tree during training. The resulting plot allows a

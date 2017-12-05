@@ -352,7 +352,8 @@ classifier object into our pipeline::
   >>> text_clf = Pipeline([('vect', CountVectorizer()),
   ...                      ('tfidf', TfidfTransformer()),
   ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                                            alpha=1e-3, n_iter=5, random_state=42)),
+  ...                                            alpha=1e-3, random_state=42,
+  ...                                            max_iter=5, tol=None)),
   ... ])
   >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
   Pipeline(...)
@@ -494,7 +495,7 @@ Refine the implementation and iterate until the exercise is solved.
 
 **For each exercise, the skeleton file provides all the necessary import
 statements, boilerplate code to load the data and sample code to evaluate
-the predictive accurracy of the model.**
+the predictive accuracy of the model.**
 
 
 Exercise 1: Language identification

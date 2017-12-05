@@ -168,6 +168,7 @@ def mean_absolute_error(y_true, y_pred,
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average(np.abs(y_pred - y_true),
                                weights=sample_weight, axis=0)
     if isinstance(multioutput, string_types):
@@ -236,6 +237,7 @@ def mean_squared_error(y_true, y_pred,
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average((y_true - y_pred) ** 2, axis=0,
                                weights=sample_weight)
     if isinstance(multioutput, string_types):
@@ -306,8 +308,9 @@ def mean_squared_log_error(y_true, y_pred,
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
-    if not (y_true >= 0).all() and not (y_pred >= 0).all():
+    if (y_true < 0).any() or (y_pred < 0).any():
         raise ValueError("Mean Squared Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 
@@ -409,6 +412,7 @@ def explained_variance_score(y_true, y_pred,
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
     y_diff_avg = np.average(y_true - y_pred, weights=sample_weight, axis=0)
     numerator = np.average((y_true - y_pred - y_diff_avg) ** 2,
@@ -528,6 +532,7 @@ def r2_score(y_true, y_pred, sample_weight=None,
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    check_consistent_length(y_true, y_pred, sample_weight)
 
     if sample_weight is not None:
         sample_weight = column_or_1d(sample_weight)

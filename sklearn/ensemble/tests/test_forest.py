@@ -29,7 +29,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import skip_if_32bit
 
 from sklearn import datasets
 from sklearn.decomposition import TruncatedSVD
@@ -51,6 +50,11 @@ X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
+
+# Larger classification sample used for testing feature importances
+X_large, y_large = datasets.make_classification(
+    n_samples=500, n_features=10, n_informative=3, n_redundant=0,
+    n_repeated=0, shuffle=False, random_state=0)
 
 # also load the iris dataset
 # and randomly permute it
@@ -197,16 +201,24 @@ def test_probability():
         yield check_probability, name
 
 
-def check_importances(name, criterion, X, y):
+def check_importances(name, criterion, dtype, tolerance):
+    # cast as dype
+    X = X_large.astype(dtype, copy=False)
+    y = y_large.astype(dtype, copy=False)
+
     ForestEstimator = FOREST_ESTIMATORS[name]
 
-    est = ForestEstimator(n_estimators=20, criterion=criterion,
+    est = ForestEstimator(n_estimators=10, criterion=criterion,
                           random_state=0)
     est.fit(X, y)
     importances = est.feature_importances_
+
+    # The forest estimator can detect that only the first 3 features of the
+    # dataset are informative:
     n_important = np.sum(importances > 0.1)
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
+    assert np.all(importances[:3] > 0.1)
 
     # Check with parallel
     importances = est.feature_importances_
@@ -216,30 +228,30 @@ def check_importances(name, criterion, X, y):
 
     # Check with sample weights
     sample_weight = check_random_state(0).randint(1, 10, len(X))
-    est = ForestEstimator(n_estimators=20, random_state=0, criterion=criterion)
+    est = ForestEstimator(n_estimators=10, random_state=0, criterion=criterion)
     est.fit(X, y, sample_weight=sample_weight)
     importances = est.feature_importances_
     assert_true(np.all(importances >= 0.0))
 
-    for scale in [0.5, 10, 100]:
-        est = ForestEstimator(n_estimators=20, random_state=0, criterion=criterion)
+    for scale in [0.5, 100]:
+        est = ForestEstimator(n_estimators=10, random_state=0,
+                              criterion=criterion)
         est.fit(X, y, sample_weight=scale * sample_weight)
         importances_bis = est.feature_importances_
-        assert_less(np.abs(importances - importances_bis).mean(), 0.001)
+        assert_less(np.abs(importances - importances_bis).mean(), tolerance)
 
 
-@skip_if_32bit
 def test_importances():
-    X, y = datasets.make_classification(n_samples=500, n_features=10,
-                                        n_informative=3, n_redundant=0,
-                                        n_repeated=0, shuffle=False,
-                                        random_state=0)
+    for dtype in (np.float64, np.float32):
+        tolerance = 0.01
+        for name, criterion in product(FOREST_CLASSIFIERS,
+                                       ["gini", "entropy"]):
+            yield check_importances, name, criterion, dtype, tolerance
 
-    for name, criterion in product(FOREST_CLASSIFIERS, ["gini", "entropy"]):
-        yield check_importances, name, criterion, X, y
-
-    for name, criterion in product(FOREST_REGRESSORS, ["mse", "friedman_mse", "mae"]):
-        yield check_importances, name, criterion, X, y
+        for name, criterion in product(FOREST_REGRESSORS,
+                                       ["mse", "friedman_mse", "mae"]):
+            tolerance = 0.05 if criterion == "mae" else 0.01
+            yield check_importances, name, criterion, dtype, tolerance
 
 
 def test_importances_asymptotic():
@@ -835,43 +847,43 @@ def check_memory_layout(name, dtype):
     # Nothing
     X = np.asarray(iris.data, dtype=dtype)
     y = iris.target
-    assert_array_equal(est.fit(X, y).predict(X), y)
+    assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     # C-order
     X = np.asarray(iris.data, order="C", dtype=dtype)
     y = iris.target
-    assert_array_equal(est.fit(X, y).predict(X), y)
+    assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     # F-order
     X = np.asarray(iris.data, order="F", dtype=dtype)
     y = iris.target
-    assert_array_equal(est.fit(X, y).predict(X), y)
+    assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     # Contiguous
     X = np.ascontiguousarray(iris.data, dtype=dtype)
     y = iris.target
-    assert_array_equal(est.fit(X, y).predict(X), y)
+    assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     if est.base_estimator.splitter in SPARSE_SPLITTERS:
         # csr matrix
         X = csr_matrix(iris.data, dtype=dtype)
         y = iris.target
-        assert_array_equal(est.fit(X, y).predict(X), y)
+        assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
         # csc_matrix
         X = csc_matrix(iris.data, dtype=dtype)
         y = iris.target
-        assert_array_equal(est.fit(X, y).predict(X), y)
+        assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
         # coo_matrix
         X = coo_matrix(iris.data, dtype=dtype)
         y = iris.target
-        assert_array_equal(est.fit(X, y).predict(X), y)
+        assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     # Strided
     X = np.asarray(iris.data[::3], dtype=dtype)
     y = iris.target[::3]
-    assert_array_equal(est.fit(X, y).predict(X), y)
+    assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
 
 def test_memory_layout():

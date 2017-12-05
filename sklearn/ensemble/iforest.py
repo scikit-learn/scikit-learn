@@ -57,6 +57,7 @@ class IsolationForest(BaseBagging):
             - If int, then draw `max_samples` samples.
             - If float, then draw `max_samples * X.shape[0]` samples.
             - If "auto", then `max_samples=min(256, n_samples)`.
+
         If max_samples is larger than the number of samples provided,
         all samples will be used for all trees (no sampling).
 
@@ -149,6 +150,9 @@ class IsolationForest(BaseBagging):
             The input samples. Use ``dtype=np.float32`` for maximum
             efficiency. Sparse matrices are also supported, use sparse
             ``csc_matrix`` for maximum efficiency.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
 
         Returns
         -------

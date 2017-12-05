@@ -14,11 +14,14 @@ from sklearn.gaussian_process.kernels import DotProduct
 
 from sklearn.utils.testing \
     import (assert_true, assert_greater, assert_array_less,
-            assert_almost_equal, assert_equal, assert_raise_message)
+            assert_almost_equal, assert_equal, assert_raise_message,
+            assert_array_almost_equal, assert_array_equal)
 
 
 def f(x):
     return x * np.sin(x)
+
+
 X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
 X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
@@ -175,7 +178,6 @@ def test_random_starts():
     # Test that an increasing number of random-starts of GP fitting only
     # increases the log marginal likelihood of the chosen theta.
     n_samples, n_features = 25, 2
-    np.random.seed(0)
     rng = np.random.RandomState(0)
     X = rng.randn(n_samples, n_features) * 2 - 1
     y = np.sin(X).sum(axis=1) + np.sin(3 * X).sum(axis=1) \
@@ -328,3 +330,37 @@ def test_duplicate_input():
 
         assert_almost_equal(y_pred_equal, y_pred_similar)
         assert_almost_equal(y_std_equal, y_std_similar)
+
+
+def test_no_fit_default_predict():
+    # Test that GPR predictions without fit does not break by default.
+    default_kernel = (C(1.0, constant_value_bounds="fixed") *
+                      RBF(1.0, length_scale_bounds="fixed"))
+    gpr1 = GaussianProcessRegressor()
+    _, y_std1 = gpr1.predict(X, return_std=True)
+    _, y_cov1 = gpr1.predict(X, return_cov=True)
+
+    gpr2 = GaussianProcessRegressor(kernel=default_kernel)
+    _, y_std2 = gpr2.predict(X, return_std=True)
+    _, y_cov2 = gpr2.predict(X, return_cov=True)
+
+    assert_array_almost_equal(y_std1, y_std2)
+    assert_array_almost_equal(y_cov1, y_cov2)
+
+
+def test_K_inv_reset():
+    y2 = f(X2).ravel()
+    for kernel in kernels:
+        # Test that self._K_inv is reset after a new fit
+        gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+        assert_true(hasattr(gpr, '_K_inv'))
+        assert_true(gpr._K_inv is None)
+        gpr.predict(X, return_std=True)
+        assert_true(gpr._K_inv is not None)
+        gpr.fit(X2, y2)
+        assert_true(gpr._K_inv is None)
+        gpr.predict(X2, return_std=True)
+        gpr2 = GaussianProcessRegressor(kernel=kernel).fit(X2, y2)
+        gpr2.predict(X2, return_std=True)
+        # the value of K_inv should be independent of the first fit
+        assert_array_equal(gpr._K_inv, gpr2._K_inv)

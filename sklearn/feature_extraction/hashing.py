@@ -41,10 +41,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.
-    dtype : numpy type, optional, default np.float64
-        The type of feature values. Passed to scipy.sparse matrix constructors
-        as the dtype argument. Do not set this to bool, np.boolean or any
-        unsigned integer type.
     input_type : string, optional, default "dict"
         Either "dict" (the default) to accept dictionaries over
         (feature_name, value); "pair" to accept pairs of (feature_name, value);
@@ -54,14 +50,20 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         The feature_name is hashed to find the appropriate column for the
         feature. The value's sign might be flipped in the output (but see
         non_negative, below).
+    dtype : numpy type, optional, default np.float64
+        The type of feature values. Passed to scipy.sparse matrix constructors
+        as the dtype argument. Do not set this to bool, np.boolean or any
+        unsigned integer type.
     alternate_sign : boolean, optional, default True
         When True, an alternating sign is added to the features as to
         approximately conserve the inner product in the hashed space even for
         small n_features. This approach is similar to sparse random projection.
+
     non_negative : boolean, optional, default False
         When True, an absolute value is applied to the features matrix prior to
         returning it. When used in conjunction with alternate_sign=True, this
         significantly reduces the inner product preservation property.
+
         .. deprecated:: 0.19
             This option will be removed in 0.21.
 
@@ -80,7 +82,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     --------
     DictVectorizer : vectorizes string-valued features using a hash table.
     sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features
-      encoded as columns of integers.
+        encoded as columns of integers.
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",
@@ -117,6 +119,10 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         This method doesn't do anything. It exists purely for compatibility
         with the scikit-learn transformer API.
 
+        Parameters
+        ----------
+        X : array-like
+
         Returns
         -------
         self : FeatureHasher
@@ -126,7 +132,7 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         self._validate_params(self.n_features, self.input_type)
         return self
 
-    def transform(self, raw_X, y=None):
+    def transform(self, raw_X):
         """Transform a sequence of instances to a scipy.sparse matrix.
 
         Parameters
@@ -137,7 +143,6 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
             the input_type constructor argument) which will be hashed.
             raw_X need not support the len function, so it can be the result
             of a generator; n_samples is determined on the fly.
-        y : (ignored)
 
         Returns
         -------

@@ -43,6 +43,11 @@ should be used when applicable.
   be sliced or indexed using safe_index.  This is used to validate input for
   cross-validation.
 
+- :func:`validation.check_memory` checks that input is ``joblib.Memory``-like,
+  which means that it can be converted into a
+  ``sklearn.externals.joblib.Memory`` instance (typically a str denoting
+  the ``cachedir``) or has the same interface.
+
 If your code relies on a random number generator, it should never use
 functions like ``numpy.random.random`` or ``numpy.random.normal``.  This
 approach can lead to repeatability issues in unit tests.  Instead, a
