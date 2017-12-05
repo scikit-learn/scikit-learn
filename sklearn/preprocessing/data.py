@@ -2593,11 +2593,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
     or other situations where normality is desired. Note that power
-    transforms do not result in standard normal distributions.
+    transforms do not result in standard normal distributions (i.e. the
+    transformed data could be far from zero-mean, unit-variance).
 
     Currently, PowerTransformer supports the Box-Cox transform. Box-Cox
     requires input data to be strictly positive. The optimal parameter
-    for minimizing skewness is estimated through maximum likelihood.
+    for stabilizing variance and minimizing skewness is estimated through
+    maximum likelihood.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
@@ -2635,7 +2637,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     power_transform : Equivalent function without the estimator API.
 
     QuantileTransformer : Maps data to a standard normal distribution with
-        the parameter output_distribution='normal'.
+        the parameter `output_distribution='normal'`.
 
     Notes
     -----
@@ -2770,11 +2772,15 @@ def power_transform(X, method='box-cox', copy=True):
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
     or other situations where normality is desired. Note that power
-    transforms do not result in standard normal distributions.
+    transforms do not result in standard normal distributions (i.e. the
+    transformed data could be far from zero-mean, unit-variance).
+.
 
     Currently, power_transform() supports the Box-Cox transform. Box-Cox
     requires input data to be strictly positive. The optimal parameter
-    for minimizing skewness is estimated through maximum likelihood.
+    for stabilizing variance and minimizing skewness is estimated
+    through maximum likelihood.
+
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
@@ -2806,7 +2812,7 @@ def power_transform(X, method='box-cox', copy=True):
         API (as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
 
     quantile_transform : Maps data to a standard normal distribution with
-        the parameter output_distribution='normal'.
+        the parameter `output_distribution='normal'`.
 
     Notes
     -----

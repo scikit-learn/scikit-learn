@@ -308,7 +308,7 @@ Mapping to a Gaussian distribution
 In many modeling scenarios, normality of the features in a dataset is desirable.
 Power transforms are a family of parametric, monotonic transformations that aim
 to map data from any distribution to as close to a Gaussian distribution as
-possible in order to minimize skewness.
+possible in order to stabilize variance and minimize skewness.
 
 :class:`PowerTransformer` currently provides one such power transformation,
 the Box-Cox transform. The Box-Cox transform is given by:

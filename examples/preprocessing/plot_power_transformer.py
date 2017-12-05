@@ -14,7 +14,7 @@ Weibull, Gaussian, Uniform, and Bimodal.
 
 Note that the transformation successfully maps the data to a normal
 distribution when applied to certain datasets, but is ineffective with others.
-This highlights the importance ofvisualizing the data before and after
+This highlights the importance of visualizing the data before and after
 transformation.
 """
 
@@ -22,7 +22,6 @@ transformation.
 # License: BSD 3 clause
 
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import PowerTransformer, minmax_scale
@@ -31,6 +30,9 @@ print(__doc__)
 
 
 N_SAMPLES = 3000
+FONT_SIZE = 6
+BINS = 100
+
 
 pt = PowerTransformer(method='box-cox')
 rng = np.random.RandomState(304)
@@ -74,16 +76,11 @@ distributions = [
 colors = ['firebrick', 'darkorange', 'goldenrod',
           'seagreen', 'royalblue', 'darkorchid']
 
-params = {
-    'font.size': 6,
-    'hist.bins': 150
-}
-matplotlib.rcParams.update(params)
-
 fig, axes = plt.subplots(nrows=4, ncols=3)
 axes = axes.flatten()
 axes_idxs = [(0, 3), (1, 4), (2, 5), (6, 9), (7, 10), (8, 11)]
 axes_list = [(axes[i], axes[j]) for i, j in axes_idxs]
+
 
 for distribution, color, axes in zip(distributions, colors, axes_list):
     name, X = distribution
@@ -96,11 +93,14 @@ for distribution, color, axes in zip(distributions, colors, axes_list):
 
     ax_original, ax_trans = axes
 
-    ax_original.hist(X, color=color)
-    ax_original.set_title(name)
+    ax_original.hist(X, color=color, bins=BINS)
+    ax_original.set_title(name, fontsize=FONT_SIZE)
+    ax_original.tick_params(axis='both', which='major', labelsize=FONT_SIZE)
 
-    ax_trans.hist(X_trans, color=color)
-    ax_trans.set_title('{} after Box-Cox, $\lambda$ = {}'.format(name, lmbda))
+    ax_trans.hist(X_trans, color=color, bins=BINS)
+    ax_trans.set_title('{} after Box-Cox, $\lambda$ = {}'.format(name, lmbda),
+                       fontsize=FONT_SIZE)
+    ax_trans.tick_params(axis='both', which='major', labelsize=FONT_SIZE)
 
 
 plt.tight_layout()
