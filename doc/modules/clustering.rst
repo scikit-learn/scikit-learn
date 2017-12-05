@@ -1617,7 +1617,7 @@ of classes.
 Advantages
 ~~~~~~~~~~
 
-- Allows to examine the spread of each true clusters across predicted
+- Allows to examine the spread of each true cluster across predicted
   clusters and vice versa.
 
 - The contingency table calculated is typically utilized in the calculation
