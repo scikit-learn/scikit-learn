@@ -2,7 +2,6 @@ from __future__ import division
 
 import numpy as np
 import scipy.sparse as sp
-import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -462,22 +461,18 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
 def test_base_chain_random_order():
     # Fit base chain with random order
     X, Y = generate_multilabel_dataset_with_correlations()
-    base_chain_random = [ClassifierChain(LogisticRegression(),
-                                         order='random', random_state=42),
-                         RegressorChain(LinearRegression(),
-                                        order='random', random_state=42)]
-    [chain_random.fit(X, Y) for chain_random in base_chain_random]
-    base_chain_fixed = clone(base_chain_random).set_params(
-                       order=base_chain_random.order_)
-    [chain_fixed.fit(X, Y) for chain_fixed in base_chain_fixed]
-    for i in range(0, 2):
-        assert_not_equal(list(base_chain_random[i].order), list(range(4)))
-        assert_equal(len(base_chain_random[i].order_), 4)
-        assert_equal(len(set(base_chain_random[i].order_)), 4)
+    for chain in [ClassifierChain(LogisticRegression()),
+                  RegressorChain(LinearRegression())]:
+        chain_random = clone(chain).set_params(order='random', random_state=42)
+        chain_random.fit(X, Y)
+        chain_fixed = clone(chain).set_params(order=chain_random.order_)
+        chain_fixed.fit(X, Y)
+        assert_not_equal(list(chain_random.order), list(range(4)))
+        assert_equal(len(chain_random.order_), 4)
+        assert_equal(len(set(chain_random.order_)), 4)
         # Randomly ordered chain should behave identically to a fixed order
         # chain with the same order.
-        for est1, est2 in zip(base_chain_random[i].estimators_,
-                              base_chain_fixed[i].estimators_):
+        for est1, est2 in zip(chain_random.estimators_, chain_fixed.estimators_):
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
