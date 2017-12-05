@@ -1586,7 +1586,7 @@ Drawbacks
 .. _contingency_matrix:
 
 Contingency Matrix
-----------------------
+------------------
 
 Contingency matrix (:func:`sklearn.metrics.cluster.contingency_matrix`)
 reports the intersection cardinality for every true/predicted cluster pair.
@@ -1617,21 +1617,20 @@ of classes.
 Advantages
 ~~~~~~~~~~
 
-- The table allows us to compare at glance the proportion of samples with
-  labels.
+- Allows to examine the spread of each true clusters across predicted
+  clusters and vice versa.
 
-- Can help us detect if random variables are independent or not. If the
-  proportionsof individuals in the different columns vary significantly
-  between rows (or vice versa), we say that there is a contingency between the
-  two variables. In other words, the two variables are not independent. If
-  there is no contingency, we say that the two variables are independent.
+- The contingency table calculated is typically utilized in the calculation
+  of a similarity statistic (e.g.,
+  `Rand index <https://en.wikipedia.org/wiki/Rand_index>`,
+  `Jaccard index <https://en.wikipedia.org/wiki/Jaccard_index>`) between the
+  two clusterings.
 
 Drawbacks
 ~~~~~~~~~
 
-- Higher order contingency tables are difficult to represent visually.
+- We're only able to use categorical variables here.
 
-- Mostly used only for categorical variables.
 
 .. topic:: References
 
