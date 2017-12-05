@@ -429,7 +429,7 @@ def _check_solver_option(solver, multi_class, penalty, dual):
                          "newton-cg, lbfgs, sag and saga solvers, got %s"
                          % solver)
 
-    if multi_class not in ['multinomial', 'ovr']:
+    if multi_class not in ['multinomial', 'ovr', 'auto']:
         raise ValueError("multi_class should be either multinomial or "
                          "ovr, got %s" % multi_class)
 
