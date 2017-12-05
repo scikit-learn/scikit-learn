@@ -38,4 +38,5 @@ The website is hosted at github, but should rarely be updated manually
 by pushing to the https://github.com/scikit-learn/scikit-learn.github.io repository.
 
 Most updates can be made by pushing to master (for /dev) or a release branch
-like 0.00.X, from which Circle CI builds and uploads documentation.
+like 0.99.X, from which Circle CI builds and uploads documentation. (See the
+Developer Documentation for further details.)
