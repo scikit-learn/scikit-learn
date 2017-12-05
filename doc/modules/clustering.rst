@@ -1621,7 +1621,7 @@ Advantages
   clusters and vice versa.
 
 - The contingency table calculated is typically utilized in the calculation
-  of a similarity statistic (like the other listed in this document) between
+  of a similarity statistic (like the others listed in this document) between
   the two clusterings.
 
 Drawbacks
