@@ -408,3 +408,8 @@ def test_column_transformer_passthrough():
     ct = ColumnTransformer([('trans1', Trans(), [1])], passthrough=[0])
     assert_array_equal(ct.fit_transform(X_array), X_res_both[:, ::-1])
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both[:, ::-1])
+
+    # passthrough=True -> passthrough all none selected columns
+    ct = ColumnTransformer([('trans1', Trans(), [0])], passthrough=True)
+    assert_array_equal(ct.fit_transform(X_array), X_res_both)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)

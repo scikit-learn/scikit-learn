@@ -194,6 +194,18 @@ boolean mask array
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
 
+    def _validate_passthrough(self, X):
+
+        n_columns = X.shape[1]
+
+        if self.passthrough is True:
+            cols = []
+            for _, _, columns in self.transformers:
+                cols.extend(_get_column_indices(X, columns))
+            self._passthrough = sorted(list(set(range(n_columns)) - set(cols)))
+        else:
+            self._passthrough = self.passthrough
+
     @property
     def named_transformers_(self):
         """Access the fitted transformer by name.
@@ -272,6 +284,7 @@ boolean mask array
 
         """
         self._validate_transformers()
+        self._validate_passthrough(X)
 
         transformers = self._fit_transform(X, y, _fit_one_transformer)
 
@@ -299,6 +312,8 @@ boolean mask array
             sparse matrices.
 
         """
+        self._validate_passthrough(X)
+
         result = self._fit_transform(X, y, _fit_transform_one)
 
         if not result:
@@ -308,8 +323,8 @@ boolean mask array
 
         self._update_fitted_transformers(transformers)
 
-        if self.passthrough:
-            Xs = list(Xs) + [_get_column(X, self.passthrough)]
+        if self._passthrough:
+            Xs = list(Xs) + [_get_column(X, self._passthrough)]
 
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
@@ -341,13 +356,13 @@ boolean mask array
 
         if not Xs:
             # All transformers are None
-            if self.passthrough is None:
+            if self._passthrough is None:
                 return np.zeros((X.shape[0], 0))
             else:
-                return _get_column(X, self.passthrough)
+                return _get_column(X, self._passthrough)
 
-        if self.passthrough:
-            Xs = list(Xs) + [_get_column(X, self.passthrough)]
+        if self._passthrough:
+            Xs = list(Xs) + [_get_column(X, self._passthrough)]
 
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
@@ -423,6 +438,49 @@ def _get_column(X, key):
         else:
             # numpy arrays, sparse arrays
             return X[:, key]
+
+
+def _get_column_indices(X, key):
+    """
+    Get feature column indices for input data X and key.
+
+    """
+    n_columns = X.shape[1]
+
+    if _check_key_type(key, int):
+        if isinstance(key, int):
+            return [key]
+        elif isinstance(key, slice):
+            return list(range(n_columns)[key])
+        else:
+            return list(key)
+
+    elif _check_key_type(key, six.string_types):
+        all_columns = list(X.columns)
+        if isinstance(key, six.string_types):
+            columns = [key]
+        elif isinstance(key, slice):
+            start, stop = key.start, key.stop
+            if start is not None:
+                start = all_columns.index(start)
+            if stop is not None:
+                # pandas indexing with strings is endpoint included
+                stop = all_columns.index(stop) + 1
+            else:
+                stop = n_columns + 1
+            return list(range(n_columns)[slice(start, stop)])
+        else:
+            columns = list(key)
+
+        return [all_columns.index(col) for col in columns]
+
+    elif hasattr(key, 'dtype') and np.issubdtype(key.dtype, np.bool):
+        # boolean mask
+        return list(np.arange(n_columns)[key])
+    else:
+        raise ValueError("No valid specification of the columns. Only a "
+                         "scalar, list or slice of all integers or all "
+                         "strings, or boolean mask is allowed")
 
 
 def _get_transformer_list(estimators):
