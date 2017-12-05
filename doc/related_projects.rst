@@ -23,6 +23,9 @@ enhance the functionality of scikit-learn's estimators.
 
 - `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
   scikit-learn pipelines and pandas data frame with dedicated transformers.
+  
+- `sklearn_xarray <https://github.com/phausamann/sklearn-xarray/>`_ provides
+  compatibility of scikit-learn estimators with xarray data structures.
 
 **Auto-ML**
 
