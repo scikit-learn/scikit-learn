@@ -2923,9 +2923,14 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
     sparse : boolean, default=False
         Will return sparse matrix if set True else will return an array.
 
-    handle_greater : str, 'warn' or 'error' or 'clip', default='warn'
+    handle_greater : str, 'warn' or 'error' or 'clip'
         Whether to raise an error or clip or warn if an
         ordinal feature >= n_values is passed in.
+
+        - 'warn' (default): same as clip but with warning.
+        - 'error': raise error if feature >= n_values is passed in.
+        - 'clip': all the feature values >= n_values are clipped to
+                  (n_values-1) during transform.
 
     Attributes
     ----------
@@ -2998,9 +3003,6 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
                 self.n_values == 'auto'):
             n_values = np.max(X, axis=0) + 1
         elif isinstance(self.n_values, numbers.Integral):
-            if (np.max(X, axis=0) >= self.n_values).any():
-                raise ValueError("Feature out of bounds for n_values=%d"
-                                 % self.n_values)
             n_values = np.empty(n_features, dtype=np.int)
             n_values.fill(self.n_values)
         else:
@@ -3022,8 +3024,9 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         mask = (X >= self.n_values_).ravel()
         if np.any(mask):
             if self.handle_greater == 'error':
-                raise ValueError("handle_greater='error' but %d feature values"
-                                 " exceed n_values." % np.count_nonzero(mask))
+                raise ValueError("handle_greater='error' but found %d feature"
+                                 " values which exceeds n_values."
+                                 % np.count_nonzero(mask))
 
         return X
 
@@ -3047,12 +3050,13 @@ class UnaryEncoder(BaseEstimator, TransformerMixin):
         mask = (X >= self.n_values_).ravel()
         if np.any(mask):
             if self.handle_greater == 'warn':
-                warnings.warn("Found feature values which "
-                              "exceeds n_values during transform.")
+                warnings.warn("Found %d feature values which exceeds "
+                              "n_values during transform, clipping them."
+                              % np.count_nonzero(mask))
             elif self.handle_greater == 'error':
-                raise ValueError("Found feature values %s which exceeds "
-                                 "n_values during transform."
-                                 % X.ravel()[mask])
+                raise ValueError("handle_greater='error' but found %d feature"
+                                 " values which exceeds n_values during "
+                                 "transform." % np.count_nonzero(mask))
 
         X_ceil = np.where(mask.reshape(X.shape), self.n_values_ - 1, X)
         column_start = np.tile(indices[:-1], n_samples)

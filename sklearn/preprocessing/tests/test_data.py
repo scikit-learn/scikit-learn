@@ -2227,9 +2227,10 @@ def test_quantile_transform_valid_axis():
                         ". Got axis=2", quantile_transform, X.T, axis=2)
 
 
-def _generate_random_features_matrix(n_values=3, size=10):
-    rng = np.random.RandomState(0)
-    X = rng.randint(n_values, size=(size, n_values))
+def _generate_random_features_matrix(n_samples=10, n_features=3,
+                                     n_values_max=3):
+    rng = np.random.RandomState(6)
+    X = rng.randint(n_values_max, size=(n_samples, n_features))
     return X
 
 
@@ -2248,13 +2249,13 @@ def test_unary_encoder():
 
 def test_unary_encoder_stack():
     # multiple input features stack to same output
-    n_values = np.random.randint(2, 10)
-    size = np.random.randint(1, 10)
+    n_values = rng.randint(2, 10)
+    size = rng.randint(1, 10)
 
     encoder = UnaryEncoder(n_values, sparse=False)
-    X_multi = _generate_random_features_matrix(n_values, size)
+    X_multi = _generate_random_features_matrix(size, n_features, n_values)
     X_multi_t = encoder.fit_transform(X_multi)
-    assert_equal(X_multi_t.shape, (size, n_values * (n_values - 1)))
+    assert_equal(X_multi_t.shape, (size, n_features * (n_values - 1)))
 
     expected = np.hstack([encoder.fit_transform(X_multi[:, i:(i + 1)])
                           for i in range(X_multi.shape[1])])
@@ -2263,13 +2264,13 @@ def test_unary_encoder_stack():
 
 def test_unary_encoder_dense_sparse():
     # test dense output in comparison to sparse results.
-    n_values = np.random.randint(1, 10)
-    size = np.random.randint(1, 10)
+    n_values = rng.randint(1, 10)
+    size = rng.randint(1, 10)
 
     sparse_encoder = UnaryEncoder(n_values, sparse=True)
     dense_encoder = UnaryEncoder(n_values)
 
-    X = _generate_random_features_matrix(n_values, size)
+    X = _generate_random_features_matrix(size, n_features, n_values)
     X_trans_sparse = sparse_encoder.fit_transform(X)
     X_trans_dense = dense_encoder.fit_transform(X)
 
@@ -2318,38 +2319,60 @@ def test_unary_encoder_handle_greater():
         encoder.fit_transform(y),
         np.array([[1.,  1.,  1.,  1.]]))
 
+    # Test the warn option.
+    encoder = UnaryEncoder()
+    encoder.fit(X)
+    w = ('Found 1 feature values which exceeds n_values during transform, '
+         'clipping them.')
+    y_transformed = assert_warns_message(UserWarning, w, encoder.transform, y)
+    assert_array_equal(
+        y_transformed,
+        np.array([[1.,  1.,  1.,  0.,  1.,  0.,  0.]]))
+
+    encoder = UnaryEncoder(n_values=[3, 2, 2])
+    y_transformed = assert_warns_message(UserWarning, w,
+                                         encoder.fit_transform, y)
+    assert_array_equal(
+        y_transformed,
+        np.array([[1.,  1.,  1.,  1.]]))
+
+    encoder = UnaryEncoder(n_values=[5, 2, 2])
+    assert_array_equal(
+        encoder.fit_transform(y),
+        np.array([[1.,  1.,  1.,  1.,  1.,  1.]]))
+
     # Raise error if handle_greater is neither clip nor error.
     encoder = UnaryEncoder(handle_greater='42')
     assert_raises(ValueError, encoder.fit, y)
 
 
 def test_unary_encoder_errors():
-    n_values = np.random.randint(2, 10)
-    size = np.random.randint(1, 10)
-    delta = np.random.randint(1, 10)
+    n_values = rng.randint(2, 10)
+    size = rng.randint(1, 10)
+    delta = rng.randint(1, 10)
 
     encoder = UnaryEncoder(n_values)
-    X = _generate_random_features_matrix(n_values, size)
+    X = _generate_random_features_matrix(size, n_features, n_values)
     encoder.fit(X)
 
     # test that an error is raised when different shape
-    larger_n_values = n_values + delta
-    X_too_large = _generate_random_features_matrix(larger_n_values, size)
+    larger_n_features = n_features + delta
+    X_too_large = _generate_random_features_matrix(size, larger_n_features,
+                                                   n_values)
     assert_raises(ValueError, encoder.transform, X_too_large)
     error_msg = ("X has different shape than during fitting."
-                 " Expected {}, got {}.".format(n_values, larger_n_values))
+                 " Expected {}, got {}.".format(n_features, larger_n_features))
     assert_raises_regex(ValueError, error_msg, encoder.transform, X_too_large)
-    assert_raises(ValueError, UnaryEncoder(n_values=1).fit_transform, X)
 
     # test that an error is raised when out of bounds
     encoder = UnaryEncoder(n_values, handle_greater='error')
-    X = _generate_random_features_matrix(n_values, size)
+    X = _generate_random_features_matrix(size, n_features, n_values)
     encoder.fit(X)
     X[0][0] = n_values + delta
     X_out_of_bounds = X
     assert_raises(ValueError, encoder.transform, X_out_of_bounds)
-    error_msg = ("Found feature values \[{}\] which exceeds n_values "
-                 "during transform.".format(n_values + delta))
+    error_msg = ("handle_greater='error' but found 1 feature values which "
+                 "exceeds n_values during transform.")
     assert_raises_regex(ValueError, error_msg, encoder.transform,
                         X_out_of_bounds)
 
@@ -2388,35 +2411,35 @@ def test_unary_encoder_edge_cases():
 
 def test_unary_encoder_n_values_int():
     # Test UnaryEncoder's n_values parameter when set as an int.
-    n_values = np.random.randint(2, 10)
-    size = np.random.randint(1, 10)
-    delta = np.random.randint(1, 10)
+    n_values = rng.randint(2, 10)
+    size = rng.randint(1, 10)
+    delta = rng.randint(1, 10)
 
     encoder_n_values = n_values + delta
     unary_n_values = encoder_n_values - 1
     enc = UnaryEncoder(n_values=encoder_n_values)
 
-    X = _generate_random_features_matrix(n_values, size)
+    X = _generate_random_features_matrix(size, n_features, n_values)
     X_trans = enc.fit_transform(X)
-    assert_equal(X_trans.shape, (size, unary_n_values * len(X[0])))
+    assert_equal(X_trans.shape, (size, unary_n_values * n_features))
     assert_array_equal(
         enc.feature_indices_,
-        np.arange(0, unary_n_values * len(X[0]) + 1, unary_n_values)
+        np.arange(0, (unary_n_values * n_features) + 1, unary_n_values)
     )
     assert_array_equal(
         enc.n_values_,
-        np.array([encoder_n_values] * len(X[0]))
+        np.array([encoder_n_values] * n_features)
     )
 
 
 def test_unary_encoder_n_values_array():
     # Test UnaryEncoder's n_values parameter when set as an array.
-    n_features = np.random.randint(2, 10)
-    size = np.random.randint(1, 10)
-    delta = np.random.randint(1, 10)
+    n_values = rng.randint(2, 10)
+    size = rng.randint(1, 10)
+    delta = rng.randint(1, 10)
 
     # Test ideal case is working fine
-    X = _generate_random_features_matrix(n_features, size)
+    X = _generate_random_features_matrix(size, n_features, n_values)
     n_values_array = list(np.max(X, axis=0) + 1)
     enc = UnaryEncoder(n_values=n_values_array)
     X_trans = enc.fit_transform(X)
@@ -2431,12 +2454,12 @@ def test_unary_encoder_n_values_array():
     )
 
     # Test that fit_transform raises error when len(n_values) != n_features
-    n_values_array = np.random.randint(2, 10, n_features + delta)
+    n_values_array = rng.randint(2, 10, n_features + delta)
     enc = UnaryEncoder(n_values=n_values_array)
-    X = _generate_random_features_matrix(n_features, size)
+    X = _generate_random_features_matrix(size, n_features, n_values)
     assert_raises(ValueError, enc.fit_transform, X)
 
     # Test that fit_transform raises error when len(n_values) != n_features
     enc = UnaryEncoder(n_values=[])
-    X = _generate_random_features_matrix(n_features, size)
+    X = _generate_random_features_matrix(size, n_features, n_values)
     assert_raises(ValueError, enc.fit_transform, X)
