@@ -2,6 +2,7 @@ from __future__ import division
 
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
@@ -428,7 +429,8 @@ def test_base_chain_fit_and_predict():
     X, Y = generate_multilabel_dataset_with_correlations()
     chains = [RegressorChain(LinearRegression()),
               ClassifierChain(LogisticRegression())]
-    [chain.fit(X, Y) for chain in chains]
+    for chain in chains:
+        chain.fit(X, Y)
 
     for i in range(0, 2):
         Y_pred = chains[i].predict(X)
@@ -465,10 +467,8 @@ def test_base_chain_random_order():
                          RegressorChain(LinearRegression(),
                                         order='random', random_state=42)]
     [chain_random.fit(X, Y) for chain_random in base_chain_random]
-    base_chain_fixed = [ClassifierChain(LogisticRegression(),
-                                        order=base_chain_random[0].order_),
-                        RegressorChain(LinearRegression(),
-                                       order=base_chain_random[1].order_)]
+    base_chain_fixed = /
+    clone(base_chain_random).set_params(order=base_chain_random.order_)
     [chain_fixed.fit(X, Y) for chain_fixed in base_chain_fixed]
     for i in range(0, 2):
         assert_not_equal(list(base_chain_random[i].order), list(range(4)))
