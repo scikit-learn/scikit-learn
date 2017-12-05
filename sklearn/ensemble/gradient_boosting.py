@@ -61,6 +61,7 @@ from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
+from ..preprocessing import LabelEncoder
 
 
 class QuantileEstimator(object):
@@ -996,9 +997,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
 
-        if np.count_nonzero(np.bincount(y, weights=sample_weight)) < 2:
-            raise ValueError("y should contain 2 classes after sample_weight "
-                             "trims samples with zero weights.")
+        le = LabelEncoder()
+        le.fit(y)
+        y_ = le.transform(y)
+        if np.count_nonzero(np.bincount(y_, weights=sample_weight)) < 2:
+            raise ValueError("y should contain atleast 2 classes after "
+                             "sample_weight trims samples with zero weights.")
 
         check_consistent_length(X, y, sample_weight)
 

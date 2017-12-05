@@ -354,8 +354,8 @@ def test_check_inputs():
 
     weight = [0, 0, 0, 1, 1, 1]
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    msg = ("y should contain 2 classes after sample_weight trims samples with "
-           "zero weights.")
+    msg = ("y should contain atleast 2 classes after sample_weight trims "
+           "samples with zero weights.")
     assert_raise_message(ValueError, msg, clf.fit, X, y, sample_weight=weight)
 
 
