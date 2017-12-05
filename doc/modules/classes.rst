@@ -1201,6 +1201,7 @@ Model validation
    preprocessing.OneHotEncoder
    preprocessing.CategoricalEncoder
    preprocessing.PolynomialFeatures
+   preprocessing.PowerTransformer
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
@@ -1218,6 +1219,7 @@ Model validation
    preprocessing.quantile_transform
    preprocessing.robust_scale
    preprocessing.scale
+   preprocessing.power_transform
 
 
 .. _random_projection_ref:

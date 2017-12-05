@@ -60,6 +60,14 @@ Preprocessing
   the maximum value in the features. :issue:`9151` by
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
+- Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
+  power transformation, allowing users to map data from any distribution to a
+  Gaussian distribution. This is useful as a variance-stabilizing transformation
+  in situations where normality and homoscedasticity are desirable.
+  :issue:`10210` by :user:`Eric Chang <ericchang00>` and
+  :user:`Maniteja Nandana <maniteja123>`.
+
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
@@ -226,15 +234,13 @@ Feature Extraction
   throw an exception if ``max_patches`` was greater than or equal to the number
   of all possible patches rather than simply returning the number of possible
   patches. :issue:`10100` by :user:`Varun Agrawal <varunagrawal>`
-  
+
 - Fixed a bug in :class:`feature_extraction.text.CountVectorizer`,
   :class:`feature_extraction.text.TfidfVectorizer`,
   :class:`feature_extraction.text.HashingVectorizer` to support 64 bit sparse
   array indexing necessary to process large datasets with more than 2·10⁹ tokens
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
-
-	
 
 API changes summary
 -------------------
