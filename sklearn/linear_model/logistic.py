@@ -1198,11 +1198,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self : object
             Returns self.
         """
-        if self.solver == 'auto':
+        if self.solver == 'auto' and self.penalty == 'l2':
             self.solver = 'liblinear'
-            warnings.warn("Default solver will be changed to 'lbfgs' in 0.22",
+            warnings.warn("Auto solver will be changed to 'lbfgs' in 0.22",
                           FutureWarning)
-        if self.multi_class == 'auto':
+        if self.multi_class == 'auto' and self.solver != 'liblinear':
             self.multi_class = 'ovr'
             warnings.warn("Default multi_class will be changed to "
                           "'multinomial' in 0.22", FutureWarning)
