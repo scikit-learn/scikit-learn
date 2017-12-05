@@ -1631,7 +1631,7 @@ Drawbacks
   becomes very hard to interpret for a large number of clusters.
 
 - It doesn't give a single metric to use as an objective for clustering
-  optimisation
+  optimisation.
 
 
 .. topic:: References
