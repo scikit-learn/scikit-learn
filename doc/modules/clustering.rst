@@ -1621,15 +1621,17 @@ Advantages
   clusters and vice versa.
 
 - The contingency table calculated is typically utilized in the calculation
-  of a similarity statistic (e.g.,
-  `Rand index <https://en.wikipedia.org/wiki/Rand_index>`,
-  `Jaccard index <https://en.wikipedia.org/wiki/Jaccard_index>`) between the
-  two clusterings.
+  of a similarity statistic (like the other listed in this document) between
+  the two clusterings.
 
 Drawbacks
 ~~~~~~~~~
 
-- We're only able to use categorical variables here.
+- Contingency matrix is easy to interpret for a small number of clusters, but
+  becomes very hard to interpret for a large number of clusters.
+
+- It doesn't give a single metric to use as an objective for clustering
+  optimisation
 
 
 .. topic:: References
