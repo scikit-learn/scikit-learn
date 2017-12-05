@@ -265,7 +265,7 @@ def test_check_no_attributes_set_in_init():
                         " Found attributes \[\'you_should_not_set_this_\'\].",
                         check_no_attributes_set_in_init,
                         'estimator_name',
-                        NonConformantEstimatorPrivateSet)
+                        NonConformantEstimatorPrivateSet())
     assert_raises_regex(AssertionError,
                         "Estimator estimator_name should store all "
                         "parameters as an attribute during init. "
@@ -273,7 +273,7 @@ def test_check_no_attributes_set_in_init():
                         "\[\'you_should_set_this_\'\].",
                         check_no_attributes_set_in_init,
                         'estimator_name',
-                        NonConformantEstimatorNoParamSet)
+                        NonConformantEstimatorNoParamSet())
 
 
 def test_check_estimator_pairwise():

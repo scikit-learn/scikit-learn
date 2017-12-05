@@ -65,7 +65,7 @@ def test_non_meta_estimators():
             continue
         estimator = Estimator()
         # check this on class
-        yield check_no_attributes_set_in_init, name, Estimator
+        yield check_no_attributes_set_in_init, name, estimator
 
         for check in _yield_all_checks(name, estimator):
             set_checking_parameters(estimator)

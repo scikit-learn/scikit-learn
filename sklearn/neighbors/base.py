@@ -321,8 +321,7 @@ class KNeighborsMixin(object):
                [2]]...)
 
         """
-        if check_is_fitted(self, "_fit_method"):
-            raise NotFittedError("Must fit neighbors before querying.")
+        check_is_fitted(self, "_fit_method")
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -567,8 +566,7 @@ class RadiusNeighborsMixin(object):
         For efficiency, `radius_neighbors` returns arrays of objects, where
         each object is a 1D array of indices or distances.
         """
-        if not hasattr(self, "_fit_method"):
-            raise NotFittedError("Must fit neighbors before querying.")
+        check_is_fitted(self, "_fit_method")
 
         if X is not None:
             query_is_train = False
