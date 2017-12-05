@@ -467,8 +467,8 @@ def test_base_chain_random_order():
                          RegressorChain(LinearRegression(),
                                         order='random', random_state=42)]
     [chain_random.fit(X, Y) for chain_random in base_chain_random]
-    base_chain_fixed = /
-    clone(base_chain_random).set_params(order=base_chain_random.order_)
+    base_chain_fixed = clone(base_chain_random).set_params(
+                       order=base_chain_random.order_)
     [chain_fixed.fit(X, Y) for chain_fixed in base_chain_fixed]
     for i in range(0, 2):
         assert_not_equal(list(base_chain_random[i].order), list(range(4)))
