@@ -1,11 +1,10 @@
 """Testing for Spectral Clustering methods"""
 
-from sklearn.externals.six.moves import cPickle
-
-dumps, loads = cPickle.dumps, cPickle.loads
 
 import numpy as np
 from scipy import sparse
+
+from sklearn.externals.six.moves import cPickle
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal
@@ -23,9 +22,6 @@ from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics import v_measure_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.datasets.samples_generator import make_blobs
-
-
-dumps, loads = cPickle.dumps, cPickle.loads
 
 
 def test_spectral_clustering():
@@ -51,7 +47,7 @@ def test_spectral_clustering():
 
                 assert_array_equal(labels, [1, 1, 1, 0, 0, 0, 0])
 
-                model_copy = loads(dumps(model))
+                model_copy = cPickle.loads(cPickle.dumps(model))
                 assert_equal(model_copy.n_clusters, model.n_clusters)
                 assert_equal(model_copy.eigen_solver, model.eigen_solver)
                 assert_array_equal(model_copy.labels_, model.labels_)
@@ -211,3 +207,4 @@ def test_spectral_clustering_solvers():
         labels_amg = spectral_clustering(graph, n_clusters=2,
                                          eigen_solver='amg')
         assert_equal(v_measure_score(labels_amg, labels_lobpcg), 1)
+
