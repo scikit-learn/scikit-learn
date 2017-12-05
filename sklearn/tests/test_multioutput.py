@@ -472,7 +472,8 @@ def test_base_chain_random_order():
         assert_equal(len(set(chain_random.order_)), 4)
         # Randomly ordered chain should behave identically to a fixed order
         # chain with the same order.
-        for est1, est2 in zip(chain_random.estimators_, chain_fixed.estimators_):
+        for est1, est2 in zip(chain_random.estimators_,
+                              chain_fixed.estimators_):
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
