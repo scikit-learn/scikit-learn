@@ -52,6 +52,7 @@ __all__ = [
     'RobustScaler',
     'StandardScaler',
     'QuantileTransformer',
+    'PowerTransformer',
     'add_dummy_feature',
     'binarize',
     'normalize',
@@ -2169,9 +2170,11 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     See also
     --------
     quantile_transform : Equivalent function without the estimator API.
-    StandardScaler : perform standardization that is faster, but less robust
+    PowerTransformer : Perform mapping to a normal distribution using a power
+        transform.
+    StandardScaler : Perform standardization that is faster, but less robust
         to outliers.
-    RobustScaler : perform robust standardization that removes the influence
+    RobustScaler : Perform robust standardization that removes the influence
         of outliers but does not put outliers and inliers on the same scale.
 
     Notes
@@ -2555,9 +2558,11 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     QuantileTransformer : Performs quantile-based scaling using the
         ``Transformer`` API (e.g. as part of a preprocessing
         :class:`sklearn.pipeline.Pipeline`).
-    scale : perform standardization that is faster, but less robust
+    power_transform : Maps data to a normal distribution using a
+        power transformation.
+    scale : Performs standardization that is faster, but less robust
         to outliers.
-    robust_scale : perform robust standardization that removes the influence
+    robust_scale : Performs robust standardization that removes the influence
         of outliers but does not put outliers and inliers on the same scale.
 
     Notes
@@ -2630,7 +2635,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     power_transform : Equivalent function without the estimator API.
 
     QuantileTransformer : Maps data to a standard normal distribution with
-    the parameter 'output_distribution="normal"'.
+        the parameter output_distribution='normal'.
 
     Notes
     -----
@@ -2801,7 +2806,7 @@ def power_transform(X, method='box-cox', copy=True):
         API (as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
 
     quantile_transform : Maps data to a standard normal distribution with
-    the parameter 'output_distribution="normal"'.
+        the parameter output_distribution='normal'.
 
     Notes
     -----
