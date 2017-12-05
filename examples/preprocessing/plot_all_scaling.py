@@ -29,9 +29,10 @@ Scalers are linear (or more precisely affine) transformers and differ from each
 other in the way to estimate the parameters used to shift and scale each
 feature.
 
-``QuantileTransformer`` and ``PowerTransformer`` provide non-linear
-transformations in which distances between marginal outliers and inliers are
-shrunk.
+``QuantileTransformer`` provides non-linear transformations in which distances
+between marginal outliers and inliers are shrunk. ``PowerTransformer`` provides
+non-linear transformations in which data is mapped to a normal distribution to
+stabilize variance and minimize skewness.
 
 Unlike the previous transformations, normalization refers to a per sample
 transformation instead of a per feature transformation.
@@ -299,11 +300,12 @@ make_plot(4)
 # ``PowerTransformer`` implements the Box-Cox transform. It differs from
 # QuantileTransformer (Gaussian output) in that it does not map the
 # data to a zero-mean, unit-variance Gaussian distribution. Instead, Box-Cox
-# finds the optimal scaling factor to mimimize skewness through maximum
-# likelihood estimation. Note that Box-Cox can only be applied to positive
-# and non-zero data. Income and number of households happen to be strictly
-# positive, but if negative values are present, a constant can be added to each
-# feature to shift it into the positive range.
+# finds the optimal scaling factor to stabilize variance and mimimize skewness
+# through maximum likelihood estimation. Note that Box-Cox can only be applied
+# to positive, non-zero data. Income and number of households happen to be
+# strictly positive, but if negative values are present, a constant can be
+# added to each feature to shift it into the positive range - this is known as
+# the two-parameter Box-Cox transform.
 
 make_plot(5)
 
