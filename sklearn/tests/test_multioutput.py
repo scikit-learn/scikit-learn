@@ -32,7 +32,6 @@ from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
-from sklearn.base import RegressorMixin
 from sklearn.utils import shuffle
 
 
@@ -432,7 +431,7 @@ def test_base_chain_fit_and_predict():
         chain.fit(X, Y)
         Y_pred = chain.predict(X)
         assert_equal(Y_pred.shape, Y.shape)
-        assert_equal([c.coef_.size for c in chains[i].estimators_],
+        assert_equal([c.coef_.size for c in chain.estimators_],
                      list(range(X.shape[1], X.shape[1] + Y.shape[1])))
 
     Y_prob = chains[1].predict_proba(X)
@@ -446,9 +445,9 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
     # Fit base chain with sparse data cross_val_predict
     X, Y = generate_multilabel_dataset_with_correlations()
     X_sparse = sp.csr_matrix(X)
-    base_chain = [ClassifierChain(LogisticRegression(), cv=3),
-                  RegressorChain(LinearRegression(), cv=3)]
-    for chain in base_chain:
+    base_chains = [ClassifierChain(LogisticRegression(), cv=3),
+                   RegressorChain(LinearRegression(), cv=3)]
+    for chain in base_chains:
         chain.fit(X_sparse, Y)
         Y_pred = chain.predict(X_sparse)
         assert_equal(Y_pred.shape, Y.shape)
