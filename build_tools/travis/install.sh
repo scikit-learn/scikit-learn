@@ -53,7 +53,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
     fi
     source activate testenv
     # FIXME: required to test spectral clustering
-    conda install --yes pyamg
+    conda install --yes pyamg -c conda-forge
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
