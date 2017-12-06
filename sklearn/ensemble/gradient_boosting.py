@@ -964,8 +964,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
+            Target values (strings or integers in classification, real numbers
+            in regression)
             For classification, labels must correspond to classes.
 
         sample_weight : array-like, shape = [n_samples] or None
