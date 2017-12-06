@@ -282,11 +282,17 @@ documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-a
 
 Why does my job use more cores than specified with n_jobs under OSX or Linux?
 -----------------------------------------------------------------------------
-This can happen when the parallelized computation is handled outside of Python by another library,
-such as MKL or OpenBLAS. In that case, the value of ``n_jobs`` is ignored by the library,
-and the number of threads must be specified via an environment variable.
-For example, to set the maximum number of threads to some integer value ``N``,
-the following environment variables must be set:
+
+This happens when vectorized numpy operations are handled outside of Python
+by libraries such as MKL or OpenBLAS.
+
+While scikit-learn adheres to the limit set by ``n_jobs``,
+numpy operations vectorized using MKL (or OpenBLAS) will make use of multiple
+threads within each scikit-learn job (thread or process).
+
+The number of threads used by the BLAS library can be set via an environment
+variable. For example, to set the maximum number of threads to some integer
+value ``N``, the following environment variables should be set:
 
 * For MKL: ``export MKL_NUM_THREADS=N``
 
