@@ -342,9 +342,9 @@ def test_return_train_score_warn():
     y = np.array([0] * 5 + [1] * 5)
     grid = {'C': [1, 2]}
 
-    estimators = [GridSearchCV(LinearSVC(random_state=0), grid),
+    estimators = [GridSearchCV(LinearSVC(random_state=0), grid, iid=False),
                   RandomizedSearchCV(LinearSVC(random_state=0), grid,
-                                     n_iter=2)]
+                                     n_iter=2, iid=False)]
 
     result = {}
     for estimator in estimators:

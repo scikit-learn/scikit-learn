@@ -705,7 +705,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
         iid = self.iid
-        if self.iid is 'warn':
+        if self.iid == 'warn':
             if len(np.unique(test_sample_counts)) > 1:
                 warnings.warn("The default of the `iid` parameter will change "
                               "from True to False in version 0.22 and will be"
