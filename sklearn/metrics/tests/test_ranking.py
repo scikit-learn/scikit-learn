@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -29,7 +30,6 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
-from sklearn.metrics import ndcg_score
 
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -270,8 +270,8 @@ def test_roc_curve_toydata():
     y_score = [0, 1]
     tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
-    assert_array_almost_equal(tpr, [0, 1])
-    assert_array_almost_equal(fpr, [1, 1])
+    assert_array_almost_equal(tpr, [0, 0, 1])
+    assert_array_almost_equal(fpr, [0, 1, 1])
     assert_almost_equal(roc_auc, 1.)
 
     y_true = [0, 1]
@@ -294,8 +294,8 @@ def test_roc_curve_toydata():
     y_score = [1, 0]
     tpr, fpr, _ = roc_curve(y_true, y_score)
     roc_auc = roc_auc_score(y_true, y_score)
-    assert_array_almost_equal(tpr, [0, 1])
-    assert_array_almost_equal(fpr, [1, 1])
+    assert_array_almost_equal(tpr, [0, 0, 1])
+    assert_array_almost_equal(fpr, [0, 1, 1])
     assert_almost_equal(roc_auc, 1.)
 
     y_true = [1, 0]
@@ -319,8 +319,8 @@ def test_roc_curve_toydata():
     # assert UndefinedMetricWarning because of no negative sample in y_true
     tpr, fpr, _ = assert_warns(UndefinedMetricWarning, roc_curve, y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
-    assert_array_almost_equal(tpr, [np.nan, np.nan])
-    assert_array_almost_equal(fpr, [0.5, 1.])
+    assert_array_almost_equal(tpr, [np.nan, np.nan, np.nan])
+    assert_array_almost_equal(fpr, [0., 0.5, 1.])
 
     # Multi-label classification task
     y_true = np.array([[0, 1], [0, 1]])
@@ -359,7 +359,7 @@ def test_roc_curve_drop_intermediate():
     y_true = [0, 0, 0, 0, 1, 1]
     y_score = [0., 0.2, 0.5, 0.6, 0.7, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
-    assert_array_almost_equal(thresholds, [1., 0.7, 0.])
+    assert_array_almost_equal(thresholds, [2., 1., 0.7, 0.])
 
     # Test dropping thresholds with repeating scores
     y_true = [0, 0, 0, 0, 0, 0, 0,
@@ -368,7 +368,19 @@ def test_roc_curve_drop_intermediate():
                0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
     assert_array_almost_equal(thresholds,
-                              [1.0, 0.9, 0.7, 0.6, 0.])
+                              [2.0, 1.0, 0.9, 0.7, 0.6, 0.])
+
+
+def test_roc_curve_fpr_tpr_increasing():
+    # Ensure that fpr and tpr returned by roc_curve are increasing.
+    # Construct an edge case with float y_score and sample_weight
+    # when some adjacent values of fpr and tpr are actually the same.
+    y_true = [0, 0, 1, 1, 1]
+    y_score = [0.1, 0.7, 0.3, 0.4, 0.5]
+    sample_weight = np.repeat(0.2, 5)
+    fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
+    assert_equal((np.diff(fpr) < 0).sum(), 0)
+    assert_equal((np.diff(tpr) < 0).sum(), 0)
 
 
 def test_auc():
@@ -414,7 +426,20 @@ def test_auc_errors():
     assert_raises(ValueError, auc, [0.0], [0.1])
 
     # x is not in order
-    assert_raises(ValueError, auc, [1.0, 0.0, 0.5], [0.0, 0.0, 0.0])
+    x = [2, 1, 3, 4]
+    y = [5, 6, 7, 8]
+    error_message = ("x is neither increasing nor decreasing : "
+                     "{}".format(np.array(x)))
+    assert_raise_message(ValueError, error_message, auc, x, y)
+
+
+def test_deprecated_auc_reorder():
+    depr_message = ("The 'reorder' parameter has been deprecated in version "
+                    "0.20 and will be removed in 0.22. It is recommended not "
+                    "to set 'reorder' and ensure that x is monotonic "
+                    "increasing or monotonic decreasing.")
+    assert_warns_message(DeprecationWarning, depr_message, auc,
+                         [1, 2], [2, 3], reorder=True)
 
 
 def test_auc_score_non_binary_class():
@@ -457,6 +482,14 @@ def test_auc_score_non_binary_class():
         assert_raise_message(ValueError, "multiclass format is not supported",
                              roc_auc_score, y_true, y_pred)
 
+
+def test_binary_clf_curve():
+    rng = check_random_state(404)
+    y_true = rng.randint(0, 3, size=10)
+    y_pred = rng.rand(10)
+    msg = "multiclass format is not supported"
+    assert_raise_message(ValueError, msg, precision_recall_curve,
+                         y_true, y_pred)
 
 def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
@@ -736,38 +769,6 @@ def check_zero_or_all_relevant_labels(lrap_score):
     # Degenerate case: only one label
     assert_almost_equal(lrap_score([[1], [0], [1], [0]],
                                    [[0.5], [0.5], [0.5], [0.5]]), 1.)
-
-
-def test_ndcg_score():
-    # Check perfect ranking
-    y_true = [1, 0, 2]
-    y_score = [
-        [0.15, 0.55, 0.2],
-        [0.7, 0.2, 0.1],
-        [0.06, 0.04, 0.9]
-    ]
-    perfect = ndcg_score(y_true, y_score)
-    assert_equal(perfect, 1.0)
-
-    # Check bad ranking with a small K
-    y_true = [0, 2, 1]
-    y_score = [
-        [0.15, 0.55, 0.2],
-        [0.7, 0.2, 0.1],
-        [0.06, 0.04, 0.9]
-    ]
-    short_k = ndcg_score(y_true, y_score, k=1)
-    assert_equal(short_k, 0.0)
-
-    # Check a random scoring
-    y_true = [2, 1, 0]
-    y_score = [
-        [0.15, 0.55, 0.2],
-        [0.7, 0.2, 0.1],
-        [0.06, 0.04, 0.9]
-    ]
-    average_ranking = ndcg_score(y_true, y_score, k=2)
-    assert_almost_equal(average_ranking, 0.63092975)
 
 
 def check_lrap_error_raised(lrap_score):

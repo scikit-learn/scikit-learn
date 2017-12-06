@@ -166,10 +166,6 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
         Xy = load_svmlight_files(files, n_features=N_FEATURES)
 
-        # delete archives
-        for f in files:
-            remove(f.name)
-
         # Training data is before testing data
         X = sp.vstack([Xy[8], Xy[0], Xy[2], Xy[4], Xy[6]]).tocsr()
         sample_id = np.hstack((Xy[9], Xy[1], Xy[3], Xy[5], Xy[7]))
@@ -177,9 +173,15 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
 
         joblib.dump(X, samples_path, compress=9)
         joblib.dump(sample_id, sample_id_path, compress=9)
+
+        # delete archives
+        for f in files:
+            f.close()
+            remove(f.name)
     else:
         X = joblib.load(samples_path)
         sample_id = joblib.load(sample_id_path)
+
 
     # load target (y), categories, and sample_id_bis
     if download_if_missing and (not exists(sample_topics_path) or
@@ -195,20 +197,21 @@ def fetch_rcv1(data_home=None, subset='all', download_if_missing=True,
         y = np.zeros((N_SAMPLES, N_CATEGORIES), dtype=np.uint8)
         sample_id_bis = np.zeros(N_SAMPLES, dtype=np.int32)
         category_names = {}
-        for line in GzipFile(filename=topics_archive_path, mode='rb'):
-            line_components = line.decode("ascii").split(u" ")
-            if len(line_components) == 3:
-                cat, doc, _ = line_components
-                if cat not in category_names:
-                    n_cat += 1
-                    category_names[cat] = n_cat
+        with GzipFile(filename=topics_archive_path, mode='rb') as f:
+            for line in f:
+                line_components = line.decode("ascii").split(u" ")
+                if len(line_components) == 3:
+                    cat, doc, _ = line_components
+                    if cat not in category_names:
+                        n_cat += 1
+                        category_names[cat] = n_cat
 
-                doc = int(doc)
-                if doc != doc_previous:
-                    doc_previous = doc
-                    n_doc += 1
-                    sample_id_bis[n_doc] = doc
-                y[n_doc, category_names[cat]] = 1
+                    doc = int(doc)
+                    if doc != doc_previous:
+                        doc_previous = doc
+                        n_doc += 1
+                        sample_id_bis[n_doc] = doc
+                    y[n_doc, category_names[cat]] = 1
 
         # delete archive
         remove(topics_archive_path)
