@@ -425,9 +425,9 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
 
 def _check_solver_option(solver, multi_class, penalty, dual):
     if self.solver == 'auto' and self.penalty == 'l2':
-            self.solver = 'liblinear'
-        if self.multi_class == 'auto' and self.solver != 'liblinear':
-            self.multi_class = 'ovr'
+        self.solver = 'liblinear'
+    if self.multi_class == 'auto' and self.solver != 'liblinear':
+        self.multi_class = 'ovr'
     if solver not in ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga']:
         raise ValueError("Logistic Regression supports only liblinear, "
                          "newton-cg, lbfgs, sag and saga solvers, got %s"
