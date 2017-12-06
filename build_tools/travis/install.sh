@@ -44,7 +44,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
             pytest pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             mkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
-            
+
     else
         conda create -n testenv --yes python=$PYTHON_VERSION pip \
             pytest pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
@@ -52,6 +52,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
     fi
     source activate testenv
+    # FIXME: required to test spectral clustering
+    conda install --yes pyamg
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
