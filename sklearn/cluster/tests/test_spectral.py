@@ -207,4 +207,3 @@ def test_spectral_clustering_solvers():
         labels_amg = spectral_clustering(graph, n_clusters=2,
                                          eigen_solver='amg')
         assert_equal(v_measure_score(labels_amg, labels_lobpcg), 1)
-
