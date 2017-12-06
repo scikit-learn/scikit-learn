@@ -283,8 +283,8 @@ documentation <https://docs.python.org/3/library/multiprocessing.html#contexts-a
 Why does my job use more cores than specified with n_jobs under OSX or Linux?
 -----------------------------------------------------------------------------
 
-This happens when vectorized numpy operations are handled outside of Python
-by libraries such as MKL or OpenBLAS.
+This happens when vectorized numpy operations are handled by libraries such
+as MKL or OpenBLAS.
 
 While scikit-learn adheres to the limit set by ``n_jobs``,
 numpy operations vectorized using MKL (or OpenBLAS) will make use of multiple
