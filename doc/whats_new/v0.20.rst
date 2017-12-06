@@ -66,6 +66,13 @@ Preprocessing
   :issue:`10192` by :user:`Henry Lin <hlin117>`, `Hanmin Qin`_
   and `Tom Dupre la Tour`_.
 
+- Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
+  power transformation, allowing users to map data from any distribution to a
+  Gaussian distribution. This is useful as a variance-stabilizing transformation
+  in situations where normality and homoscedasticity are desirable.
+  :issue:`10210` by :user:`Eric Chang <ericchang00>` and
+  :user:`Maniteja Nandana <maniteja123>`.
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
@@ -154,6 +161,13 @@ Classifiers and regressors
   updated estimates for the standard deviation and the coefficients.
   :issue:`10153` by :user:`Jörg Döpfert <jdoepfert>`.
 
+- Fixed a bug when fitting :class:`ensemble.GradientBoostingClassifier` or
+  :class:`ensemble.GradientBoostingRegressor` with ``warm_start=True`` which
+  previously raised a segmentation fault due to a non-conversion of CSC matrix
+  into CSR format expected by ``decision_function``. Similarly, Fortran-ordered
+  arrays are converted to C-ordered arrays in the dense case. :issue:`9991` by
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
@@ -188,6 +202,11 @@ Decomposition, manifold learning and clustering
 - Fixed a bug when setting parameters on meta-estimator, involving both a
   wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
   <marcus-voss>` and `Joel Nothman`_.
+  
+- ``k_means`` now gives a warning, if the number of distinct clusters found
+  is smaller than ``n_clusters``. This may occur when the number of distinct 
+  points in the data set is actually smaller than the number of cluster one is 
+  looking for. :issue:`10059` by :user:`Christian Braune <christianbraune79>`.
 
 - Fixed a bug in :func:`datasets.make_circles`, where no odd number of data
   points could be generated. :issue:`10037` by :user:`Christian Braune
@@ -217,15 +236,13 @@ Feature Extraction
   throw an exception if ``max_patches`` was greater than or equal to the number
   of all possible patches rather than simply returning the number of possible
   patches. :issue:`10100` by :user:`Varun Agrawal <varunagrawal>`
-  
+
 - Fixed a bug in :class:`feature_extraction.text.CountVectorizer`,
   :class:`feature_extraction.text.TfidfVectorizer`,
   :class:`feature_extraction.text.HashingVectorizer` to support 64 bit sparse
   array indexing necessary to process large datasets with more than 2·10⁹ tokens
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
-
-	
 
 API changes summary
 -------------------

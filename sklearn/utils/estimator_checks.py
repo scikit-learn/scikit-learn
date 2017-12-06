@@ -729,6 +729,9 @@ def check_transformer_general(name, transformer):
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
     X -= X.min()
+    if name == 'PowerTransformer':
+        # Box-Cox requires positive, non-zero data
+        X += 1
     _check_transformer(name, transformer, X, y)
     _check_transformer(name, transformer, X.tolist(), y.tolist())
 
@@ -850,6 +853,9 @@ def check_pipeline_consistency(name, estimator_orig):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X -= X.min()
+    if name == 'PowerTransformer':
+        # Box-Cox requires positive, non-zero data
+        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -911,6 +917,9 @@ def check_estimators_dtypes(name, estimator_orig):
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
+        if name == 'PowerTransformer':
+            # Box-Cox requires positive, non-zero data
+            X_train = np.abs(X_train) + 1
         estimator = clone(estimator_orig)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
@@ -1025,6 +1034,9 @@ def check_estimators_pickle(name, estimator_orig):
 
     # some estimators can't do features less than 0
     X -= X.min()
+    if name == 'PowerTransformer':
+        # Box-Cox requires positive, non-zero data
+        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
 
     estimator = clone(estimator_orig)
@@ -1301,6 +1313,9 @@ def check_estimators_fit_returns_self(name, estimator_orig):
     X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
     # some want non-negative input
     X -= X.min()
+    if name == 'PowerTransformer':
+        # Box-Cox requires positive, non-zero data
+        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig)
 
     estimator = clone(estimator_orig)
@@ -1609,6 +1624,9 @@ def check_estimators_overwrite_params(name, estimator_orig):
     X, y = make_blobs(random_state=0, n_samples=9)
     # some want non-negative input
     X -= X.min()
+    if name == 'PowerTransformer':
+        # Box-Cox requires positive, non-zero data
+        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)

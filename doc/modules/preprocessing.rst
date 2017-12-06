@@ -261,6 +261,9 @@ defined by :math:`phi` followed by removal of the mean in that space.
 Non-linear transformation
 =========================
 
+Mapping to a Uniform distribution
+---------------------------------
+
 Like scalers, :class:`QuantileTransformer` puts all features into the same,
 known range or distribution. However, by performing a rank transformation, it
 smooths out unusual distributions and is less influenced by outliers than
@@ -299,8 +302,53 @@ This can be confirmed on a independent testing set with similar remarks::
   ... # doctest: +ELLIPSIS +SKIP
   array([ 0.01...,  0.25...,  0.46...,  0.60... ,  0.94...])
 
-It is also possible to map the transformed data to a normal distribution by
-setting ``output_distribution='normal'``::
+Mapping to a Gaussian distribution
+----------------------------------
+
+In many modeling scenarios, normality of the features in a dataset is desirable.
+Power transforms are a family of parametric, monotonic transformations that aim
+to map data from any distribution to as close to a Gaussian distribution as
+possible in order to stabilize variance and minimize skewness.
+
+:class:`PowerTransformer` currently provides one such power transformation,
+the Box-Cox transform. The Box-Cox transform is given by:
+
+.. math::
+    y_i^{(\lambda)} =
+    \begin{cases}
+    \dfrac{y_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
+    \ln{(y_i)} & \text{if } \lambda = 0,
+    \end{cases}
+
+Box-Cox can only be applied to strictly positive data. The transformation is
+parameterized by :math:`\lambda`, which is determined through maximum likelihood
+estimation. Here is an example of using Box-Cox to map samples drawn from a
+lognormal distribution to a normal distribution::
+
+  >>> pt = preprocessing.PowerTransformer(method='box-cox')
+  >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
+  >>> X_lognormal                                         # doctest: +ELLIPSIS
+  array([[ 1.28...,  1.18...,  0.84...],
+         [ 0.94...,  1.60...,  0.38...],
+         [ 1.35...,  0.21...,  1.09...]])
+  >>> pt.fit_transform(X_lognormal)                   # doctest: +ELLIPSIS
+  array([[ 0.49...,  0.17..., -0.15...],
+         [-0.05...,  0.58..., -0.57...],
+         [ 0.69..., -0.84...,  0.10...]])
+
+Below are examples of Box-Cox applied to various probability distributions.
+Note that when applied to certain distributions, Box-Cox achieves very
+Gaussian-like results, but with others, it is ineffective. This highlights
+the importance of visualizing the data before and after transformation.
+
+.. figure:: ../auto_examples/preprocessing/images/sphx_glr_plot_power_transformer_001.png
+   :target: ../auto_examples/preprocessing/plot_power_transformer.html
+   :align: center
+   :scale: 100
+
+It is also possible to map data to a normal distribution using
+:class:`QuantileTransformer` by setting ``output_distribution='normal'``.
+Using the earlier example with the iris dataset::
 
   >>> quantile_transformer = preprocessing.QuantileTransformer(
   ...     output_distribution='normal', random_state=0)
