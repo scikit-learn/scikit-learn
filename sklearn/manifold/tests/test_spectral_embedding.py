@@ -1,6 +1,6 @@
+import pytest
+
 import numpy as np
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
 
 from scipy import sparse
 from scipy.sparse import csgraph
@@ -15,7 +15,8 @@ from sklearn.metrics import normalized_mutual_info_score
 from sklearn.cluster import KMeans
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
-from sklearn.utils.testing import assert_almost_equal, assert_greater
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_true, assert_equal, assert_raises
 from sklearn.utils.testing import SkipTest
 
@@ -280,5 +281,5 @@ def test_spectral_embedding_first_eigen_vector():
                                        drop_first=False,
                                        random_state=seed)
 
-        assert_almost_equal(np.std(embedding[:, 0]), 0)
-        assert_greater(np.std(embedding[:, 1]), 1e-3)
+        assert np.std(embedding[:, 0]) == pytest.approx(0)
+        assert np.std(embedding[:, 1]) > 1e-3
