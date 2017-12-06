@@ -198,12 +198,15 @@ def test_spectral_clustering_solvers():
     graph.data = np.exp(-graph.data / graph.data.std())
 
     labels_arpack = spectral_clustering(graph, n_clusters=2,
-                                        eigen_solver='arpack')
+                                        eigen_solver='arpack',
+                                        random_state=0)
     labels_lobpcg = spectral_clustering(graph, n_clusters=2,
-                                        eigen_solver='lobpcg')
+                                        eigen_solver='lobpcg',
+                                        random_state=0)
+    assert v_measure_score(labels_arpack, labels_lobpcg) == 1
 
-    assert_equal(v_measure_score(labels_arpack, labels_lobpcg), 1)
     if amg_loaded:
         labels_amg = spectral_clustering(graph, n_clusters=2,
-                                         eigen_solver='amg')
-        assert_equal(v_measure_score(labels_amg, labels_lobpcg), 1)
+                                         eigen_solver='amg',
+                                         random_state=0)
+        assert v_measure_score(labels_amg, labels_lobpcg) == 1
