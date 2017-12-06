@@ -430,11 +430,8 @@ def test_base_chain_fit_and_predict():
               ClassifierChain(LogisticRegression())]
     for chain in chains:
         chain.fit(X, Y)
-
-    for i in range(0, 2):
-        Y_pred = chains[i].predict(X)
+        Y_pred = chain.predict(X)
         assert_equal(Y_pred.shape, Y.shape)
-
         assert_equal([c.coef_.size for c in chains[i].estimators_],
                      list(range(X.shape[1], X.shape[1] + Y.shape[1])))
 
@@ -442,7 +439,6 @@ def test_base_chain_fit_and_predict():
     Y_binary = (Y_prob >= .5)
     assert_array_equal(Y_binary, Y_pred)
 
-    assert isinstance(chains[0], RegressorMixin)
     assert isinstance(chains[1], ClassifierMixin)
 
 
@@ -452,9 +448,9 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
     X_sparse = sp.csr_matrix(X)
     base_chain = [ClassifierChain(LogisticRegression(), cv=3),
                   RegressorChain(LinearRegression(), cv=3)]
-    [chain.fit(X_sparse, Y) for chain in base_chain]
-    for i in range(0, 2):
-        Y_pred = base_chain[i].predict(X_sparse)
+    for chain in base_chain:
+        chain.fit(X_sparse, Y)
+        Y_pred = chain.predict(X_sparse)
         assert_equal(Y_pred.shape, Y.shape)
 
 
@@ -481,25 +477,24 @@ def test_base_chain_crossval_fit_and_predict():
     # Fit regressor chain with cross_val_predict and verify predict
     # performance
     X, Y = generate_multilabel_dataset_with_correlations()
+
     chains_cv = [ClassifierChain(LogisticRegression(), cv=3),
                  RegressorChain(LinearRegression(), cv=3)]
-    for chain in chains_cv:
-        chain.fit(X, Y)
 
     chains = [ClassifierChain(LogisticRegression()),
               RegressorChain(LinearRegression())]
-    for chain in chains:
+
+    similarity_condition = [jaccard_similarity_score, mean_squared_error]
+    asserts = [assert_greater, assert_less]
+    threshold = [0.4, 0.25]
+
+    for chain_cv, chain, condition, assertion, num in zip(chains_cv, chains,
+                                                          similarity_condition,
+                                                          asserts, threshold):
+        chain_cv.fit(X, Y)
         chain.fit(X, Y)
-
-    Y_pred_cv = [chain.predict(X) for chain in chains_cv]
-    Y_pred = [chain.predict(X) for chain in chains]
-
-    for i in range(0, 2):
-        assert_equal(Y_pred_cv[i].shape, Y_pred[i].shape)
-    assert_greater(jaccard_similarity_score(Y, Y_pred_cv[0]), 0.4)
-    assert_less(mean_squared_error(Y, Y_pred_cv[1]), 0.25)
-
-    assert_not_equal(jaccard_similarity_score(Y, Y_pred_cv[0]),
-                     jaccard_similarity_score(Y, Y_pred[0]))
-    assert_not_equal(mean_squared_error(Y, Y_pred_cv[1]),
-                     mean_squared_error(Y, Y_pred[1]))
+        Y_pred_cv = chain_cv.predict(X)
+        Y_pred = chain.predict(X)
+        assert_equal(Y_pred_cv.shape, Y_pred.shape)
+        assertion(condition(Y, Y_pred_cv), num)
+        assert_not_equal(condition(Y, Y_pred_cv), condition(Y, Y_pred))
