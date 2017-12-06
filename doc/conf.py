@@ -34,7 +34,6 @@ extensions = [
     'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
     'numpydoc',
     'sphinx.ext.linkcode', 'sphinx.ext.doctest',
-    'sphinx.ext.mathjax',
     'sphinx.ext.intersphinx',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
@@ -44,9 +43,22 @@ extensions = [
 # see https://github.com/numpy/numpydoc/issues/69
 numpydoc_class_members_toctree = False
 
-autodoc_default_flags = ['members', 'inherited-members']
 
-mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_SVG'
+# math compatibility layer for different sphinx versions and settings
+if os.environ.get('USE_MATHJAX'):
+    extensions.append('sphinx.ext.mathjax')
+    mathjax_path = ('https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/'
+                    'MathJax.js?config=TeX-AMS_SVG')
+else:
+    import sphinx
+    from distutils.version import LooseVersion
+    if LooseVersion(sphinx.__version__) < LooseVersion('1.4'):
+        extensions.append('sphinx.ext.pngmath')
+    else:
+        extensions.append('sphinx.ext.imgmath')
+
+
+autodoc_default_flags = ['members', 'inherited-members']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['templates']

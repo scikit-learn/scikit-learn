@@ -88,7 +88,7 @@ fi
 sudo -E apt-get -yq update
 sudo -E apt-get -yq remove texlive-binaries --purge
 sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes \
-    install dvipng texlive-extra-utils texlive-latex-base texlive-latex-extra \
+    install dvipng texlive-latex-base texlive-latex-extra \
     texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended\
     latexmk
 
@@ -121,6 +121,8 @@ then
     # List available documentation versions if on master
     python build_tools/circle/list_versions.py > doc/versions.rst
 fi
+
+export USE_MATHJAX=1  # more efficient and better aesthetics than imgmath
 
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $MAKE_TARGET 2>&1 | tee ~/log.txt

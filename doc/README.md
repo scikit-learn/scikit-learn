@@ -24,7 +24,9 @@ Or, if you'd rather not build the example gallery:
 
     make html-noplot
 
-That should create all the doc in directory `_build/html`
+That should create all the doc in directory `_build/html`.  Set the environment
+variable `USE_MATHJAX=1` if you intend to view the documentation in an online
+setting.
 
 To build the PDF manual, run
 
