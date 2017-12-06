@@ -424,12 +424,16 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
 
 
 def _check_solver_option(solver, multi_class, penalty, dual):
-    if solver not in ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga', 'auto']:
+    if self.solver == 'auto' and self.penalty == 'l2':
+            self.solver = 'liblinear'
+        if self.multi_class == 'auto' and self.solver != 'liblinear':
+            self.multi_class = 'ovr'
+    if solver not in ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga']:
         raise ValueError("Logistic Regression supports only liblinear, "
                          "newton-cg, lbfgs, sag and saga solvers, got %s"
                          % solver)
 
-    if multi_class not in ['multinomial', 'ovr', 'auto']:
+    if multi_class not in ['multinomial', 'ovr']:
         raise ValueError("multi_class should be either multinomial or "
                          "ovr, got %s" % multi_class)
 
@@ -925,7 +929,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
 
     # The score method of Logistic Regression has a classes_ attribute.
-    if multi_class == 'ovr' or multi_class == 'auto':
+    if multi_class == 'ovr':
         log_reg.classes_ = np.array([-1, 1])
     elif multi_class == 'multinomial':
         log_reg.classes_ = np.unique(y_train)
