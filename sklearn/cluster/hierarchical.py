@@ -541,8 +541,7 @@ _TREE_BUILDERS = dict(
 ###############################################################################
 # Functions for cutting  hierarchical clustering tree
 
-def _hc_cut(n_clusters, children, n_leaves,
-            distance_threshold=None, distances=None):
+def _hc_cut(n_clusters, children, n_leaves):
     """Function cutting the ward tree for a given number of clusters.
 
     Parameters
@@ -561,29 +560,12 @@ def _hc_cut(n_clusters, children, n_leaves,
     n_leaves : int
         Number of leaves of the tree.
 
-    distance_threshold : float (optional)
-        The distance threshold to cluster at.
-        If distance_threshold is set then n_clusters will be ignored. Instead,
-        the number of clusters will be determined by when distances between
-        clusters first exceed the distance_threshold during agglomeration.
-        NOTE: You should set either ``n_clusters`` or ``distance_threshold``,
-        NOT both. If the ``distance_threshold`` is set then ``n_clusters`` is
-        ignored.
-
-    distances : ndarray, shape (n_nodes-1,) (optional)
-        Only used when distance_threshold is set.
-        distances[i] refers to the distance between children[i][0] and
-        children[i][1] when they are merged.
-
     Returns
     -------
     labels : array [n_samples]
         cluster labels for each point
 
     """
-    # cut the tree when distance threshold is reached
-    if distance_threshold:
-        n_clusters = np.count_nonzero(distances >= distance_threshold) + 1
     if n_clusters > n_leaves:
         raise ValueError('Cannot extract more clusters than samples: '
                          '%s clusters where given for a tree with %s leaves.'
@@ -783,6 +765,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                                            n_clusters=n_clusters,
                                            return_distance=True,
                                            **kwargs)
+            # find number of clusters to cut the tree when distance threshold
+            # is reached
+            self.n_clusters = np.count_nonzero(
+                distances >= distance_threshold) + 1
         else:
             ch, n_comps, n_lvs, parents = \
                 memory.cache(tree_builder)(X, connectivity,
@@ -792,13 +778,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
         # Cut the tree
         if compute_full_tree:
-            if distance_threshold is not None:
-                self.labels_ = _hc_cut(self.n_clusters, self.children_,
-                                       self.n_leaves_,
-                                       distance_threshold, distances)
-            else:
-                self.labels_ = _hc_cut(self.n_clusters, self.children_,
-                                       self.n_leaves_)
+            self.labels_ = _hc_cut(self.n_clusters, self.children_,
+                                   self.n_leaves_)
         else:
             labels = _hierarchical.hc_get_heads(parents, copy=False)
             # copy to avoid holding a reference on the original array

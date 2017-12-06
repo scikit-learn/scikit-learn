@@ -529,16 +529,12 @@ def test_agg_n_clusters():
 
     rng = np.random.RandomState(0)
     X = rng.rand(20, 10)
-    n_clus = -1
-    agc = AgglomerativeClustering(n_clusters=n_clus)
-    msg = ("n_clusters should be an integer greater than 0."
-           " %s was provided." % str(agc.n_clusters))
-    assert_raise_message(ValueError, msg, agc.fit, X)
-    n_clus = 0
-    agc = AgglomerativeClustering(n_clusters=n_clus)
-    msg = ("n_clusters should be an integer greater than 0."
-           " %s was provided." % str(agc.n_clusters))
-    assert_raise_message(ValueError, msg, agc.fit, X)
+    n_clusters = [-1, 0]
+    for n_clus in n_clusters:
+        agc = AgglomerativeClustering(n_clusters=n_clus)
+        msg = ("n_clusters should be an integer greater than 0."
+               " %s was provided." % str(agc.n_clusters))
+        assert_raise_message(ValueError, msg, agc.fit, X)
 
 
 def test_agg_n_cluster_or_distance_threshold():
@@ -557,16 +553,17 @@ def test_agg_n_cluster_or_distance_threshold():
 
 
 def test_agg_n_cluster_and_distance_threshold():
-    # Test that when distance_threshold is set n_clusters_ is unchanged
+    # Test that when distance_threshold is set that n_clusters is ignored
 
-    n_clus, dist_thresh = 10, 10
+    n_clus, dist_thresh = None, 10
     rng = np.random.RandomState(0)
     X = rng.rand(20, 10)
     agc = AgglomerativeClustering(n_clusters=n_clus,
                                   distance_threshold=dist_thresh)
     agc.fit(X)
     # Expecting no errors here
-    assert_true(agc.n_clusters == n_clus)
+    assert_true(agc.n_clusters != n_clus)
+    assert_true(agc.n_clusters > 0)
 
 
 def test_affinity_passed_to_fix_connectivity():
