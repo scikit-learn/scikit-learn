@@ -49,6 +49,7 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 
+
 class Sammon(BaseEstimator):
     """Sammon Mapping
 
@@ -130,7 +131,6 @@ class Sammon(BaseEstimator):
         self.decay = decay
         self.eps = eps
 
-
     @property
     def _pairwise(self):
         return self.kernel == "precomputed"
@@ -154,7 +154,6 @@ class Sammon(BaseEstimator):
         """
         self.fit_transform(X, init=init)
         return self
-
 
     def fit_transform(self, X, y=None, init=None):
         """
@@ -204,16 +203,15 @@ class Sammon(BaseEstimator):
         return self.embedding_
 
 
-
 def sammon(dissimilarity_matrix, n_components,
            init, l_rate, decay, base_rate,
            max_iter, verbose, eps, sensitivity, random_state):
 
     dissimilarity_matrix = check_array(dissimilarity_matrix)
-    dissimilarity_matrix = check_symmetric(dissimilarity_matrix, raise_exception=True)
+    dissimilarity_matrix = check_symmetric(
+        dissimilarity_matrix, raise_exception=True)
     random_state = check_random_state(random_state)
     n_samples = dissimilarity_matrix.shape[0]
-
 
     if init is None:
         # Randomly choose initial configuration
@@ -253,7 +251,7 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
 
     for n_iter in range(max_iter):
         random.shuffle(indices)
-        lo_dists = squareform(pdist(points))
+        lo_dists = euclidean_distances(points)
         lo_dists = np.maximum(lo_dists, sensitivity)
         prod = dissimilarity_matrix * lo_dists
         diff = dissimilarity_matrix - lo_dists
@@ -263,18 +261,20 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
         true_rate = l_rate + base_rate
         for a in indices:
             coord_diff = (points - points[a]).T
-            grad = ratio[a] * coord_diff
-            grad_prime = diff
             left = (coord_diff * coord_diff) / lo_dists[a]
             right = 1.0 + diff[a] / lo_dists[a]
-            prime =  true_rate * (diff[a] * coord_diff).sum(axis=1)
-            grad_prime = (diff[a] - right * left).sum(axis=1)
-            delta = prime /(true_rate * np.sign(grad_prime) + grad_prime)
+            prime = (ratio[a] * coord_diff).sum(axis=1)
+            grad_prime = (diff[a] - right * left) / prod[a]
+            grad_prime = grad_prime.sum(axis=1)
+            delta = prime / (true_rate * np.sign(grad_prime) + grad_prime)
             points[a] += true_rate * delta
-            total_delta += np.sqrt((delta**2).sum()) / n
-        stress = 1 / dissimilarity_matrix.sum() * ((diff * diff) / prod).sum() / 2
-        if verbose and (n_iter * verbose) % 50 == 0:
-            print("iteration", n_iter, "with stress", stress, "and delta", total_delta)
+            total_delta += np.sqrt((delta**2).sum()) / n_samples
 
-        if total_delta < eps: break
+        stress = 1 / dissimilarity_matrix.sum() * (diff * ratio).sum() / 2
+        if verbose and (n_iter * verbose) % 50 == 0:
+            print("iteration", n_iter,
+                  "with stress", stress,
+                  "and delta", total_delta)
+        if total_delta < eps:
+            break
     return points, stress, n_iter
