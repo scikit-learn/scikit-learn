@@ -408,7 +408,7 @@ class MDS(BaseEstimator):
         """
         X = check_array(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
-            warnings.warn("The MDS API has changed. ``fit`` now constructs an"
+            warnings.warn("The MDS API has changed. ``fit`` now constructs a"
                           " dissimilarity matrix from data. To use a custom "
                           "dissimilarity matrix, set "
                           "``dissimilarity='precomputed'``.")
