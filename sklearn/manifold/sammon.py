@@ -27,7 +27,7 @@ Sammon's Mapping
 # he was "unashamed of his ecstasy." It was as if the threads of all those
 # innumerable worlds of God met in his soul and his soul was vibrating from
 # its contact with "different worlds." He craved to forgive everyone and
-# everything, and to beg for forgiveness—oh, not forgiveness for just himself,
+# everything, and to beg for forgiveness-oh, not forgiveness for just himself,
 # but for everyone and everything. "Others will ask forgiveness of me too," a
 # voice rang out in his soul again. Every moment he felt clearly, almost
 # physically, something real and indestructible, like the vault of the sky
@@ -43,7 +43,6 @@ Sammon's Mapping
 import numpy as np
 
 import warnings
-import random
 
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
@@ -117,8 +116,8 @@ class Sammon(BaseEstimator):
 
     """
 
-    def __init__(self, n_components=2, max_iter=500, l_rate=0.8, decay=0.005,
-                 base_rate=0.1, verbose=0, eps=1e-3, random_state=None,
+    def __init__(self, n_components=2, max_iter=1500, l_rate=0.9, decay=0.0025,
+                 base_rate=0.1, verbose=0, eps=1e-4, random_state=None,
                  sensitivity=1e-5, dissimilarity="euclidean"):
         self.n_components = n_components
         self.random_state = random_state
@@ -148,9 +147,7 @@ class Sammon(BaseEstimator):
         y: Ignored
 
         init : ndarray, shape (n_samples,), optional, default: None
-            Starting configuration of the embedding to initialize the SMACOF
-            algorithm. By default, the algorithm is initialized with a randomly
-            chosen array.
+            Starting configuration of the embedding.
         """
         self.fit_transform(X, init=init)
         return self
@@ -168,9 +165,7 @@ class Sammon(BaseEstimator):
         y: Ignored
 
         init : ndarray, shape (n_samples,), optional, default: None
-            Starting configuration of the embedding to initialize the SMACOF
-            algorithm. By default, the algorithm is initialized with a randomly
-            chosen array.
+            Starting configuration of the embedding.
         """
         X = check_array(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
@@ -245,12 +240,18 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
             max_iter, verbose, eps, sensitivity):
 
     n_samples = len(init)
+
+    if n_samples == 0:
+        return np.array([])
+    if n_samples == 1:
+        return init - np.sum(init, axis=0) / len(init)
+
     points = init[:]
-    indices = [i for i in range(n_samples)]
     dissimilarity_matrix = np.maximum(dissimilarity_matrix, sensitivity)
+    total_sum = dissimilarity_matrix.sum()
 
     for n_iter in range(max_iter):
-        random.shuffle(indices)
+
         lo_dists = euclidean_distances(points)
         lo_dists = np.maximum(lo_dists, sensitivity)
         prod = dissimilarity_matrix * lo_dists
@@ -259,22 +260,32 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
         total_delta = 0.0
         l_rate *= 1 - decay
         true_rate = l_rate + base_rate
-        for a in indices:
+
+        for a in range(n_samples):
             coord_diff = (points - points[a]).T
             left = (coord_diff * coord_diff) / lo_dists[a]
             right = 1.0 + diff[a] / lo_dists[a]
             prime = (ratio[a] * coord_diff).sum(axis=1)
             grad_prime = (diff[a] - right * left) / prod[a]
             grad_prime = grad_prime.sum(axis=1)
-            delta = prime / (true_rate * np.sign(grad_prime) + grad_prime)
+            # added checks to make sure that
+            # delta does not blow up
+            padding = 0.1 * true_rate * np.sign(grad_prime)
+            delta = prime / (padding + grad_prime)
             points[a] += true_rate * delta
-            total_delta += np.sqrt((delta**2).sum()) / n_samples
+            total_delta += np.sqrt((delta**2).sum()  / n_samples) / total_sum
 
-        stress = 1 / dissimilarity_matrix.sum() * (diff * ratio).sum() / 2
+        stress = (diff * ratio).sum() / 2 / total_sum
         if verbose and (n_iter * verbose) % 50 == 0:
             print("iteration", n_iter,
                   "with stress", stress,
-                  "and delta", total_delta)
-        if total_delta < eps:
+                  "and delta", 1e5 * total_delta)
+        if 1e5 * total_delta < eps:
             break
-    return points, stress, n_iter
+
+    points -= np.sum(points, axis=0) / len(points)
+    eigs, arr = np.linalg.eig(points.T.dot(points))
+    arr = arr[:, np.argsort(eigs)]
+    rot_points = points.dot(arr)
+
+    return rot_points, stress, n_iter
