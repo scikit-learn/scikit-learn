@@ -757,6 +757,11 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if self.linkage != 'ward':
             kwargs['linkage'] = self.linkage
             kwargs['affinity'] = self.affinity
+
+        # n_clusters_ holds either the number of clusters at initialization or
+        # the number of clusters at which to cut the tree when distance
+        # threshold is reached
+        self.n_clusters_ = self.n_clusters
         distance_threshold = self.distance_threshold
         # if distance_threshold is set then distances is returned
         if distance_threshold is not None:
@@ -765,9 +770,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
                                            n_clusters=n_clusters,
                                            return_distance=True,
                                            **kwargs)
-            # find number of clusters to cut the tree when distance threshold
-            # is reached
-            self.n_clusters = np.count_nonzero(
+            self.n_clusters_ = np.count_nonzero(
                 distances >= distance_threshold) + 1
         else:
             ch, n_comps, n_lvs, parents = \
@@ -778,7 +781,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
         # Cut the tree
         if compute_full_tree:
-            self.labels_ = _hc_cut(self.n_clusters, self.children_,
+            self.labels_ = _hc_cut(self.n_clusters_, self.children_,
                                    self.n_leaves_)
         else:
             labels = _hierarchical.hc_get_heads(parents, copy=False)

@@ -562,8 +562,9 @@ def test_agg_n_cluster_and_distance_threshold():
                                   distance_threshold=dist_thresh)
     agc.fit(X)
     # Expecting no errors here
-    assert_true(agc.n_clusters != n_clus)
-    assert_true(agc.n_clusters > 0)
+    assert_true(agc.n_clusters == n_clus)
+    assert_true(agc.n_clusters_ != n_clus)
+    assert_true(agc.n_clusters_ > 0)
 
 
 def test_affinity_passed_to_fix_connectivity():
