@@ -26,14 +26,13 @@ import matplotlib.pyplot as plt
 np.random.seed(0)
 n_points_per_cluster = 250
 
-X = np.empty((0, 2))
-X = np.r_[X, [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)]
-X = np.r_[X, [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)]
-X = np.r_[X, [1, -2] + .2 * np.random.randn(n_points_per_cluster, 2)]
-X = np.r_[X, [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)]
-X = np.r_[X, [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)]
-X = np.r_[X, [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)]
-
+C1 = [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)
+C2 = [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)
+C3 = [1, -2] + .2 * np.random.randn(n_points_per_cluster, 2)
+C4 = [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)
+C5 = [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)
+C6 = [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)
+X = np.vstack((C1, C2, C3, C4, C5, C6))
 
 clust = OPTICS(min_samples=9, rejection_ratio=0.5)
 
@@ -68,18 +67,6 @@ for k, c in zip(range(1, 7), color):
 ax1.plot(space[C == -1], R[C == -1], 'k.', alpha=0.3)
 ax1.plot(space, np.ones_like(space) * 0.75, 'k-', alpha=0.5)
 ax1.plot(space, np.ones_like(space) * 0.25, 'k-.', alpha=0.5)
-
-np.random.seed(0)
-n_points_per_cluster = 250
-
-X = np.empty((0, 2))
-X = np.r_[X, [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)]
-X = np.r_[X, [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)]
-X = np.r_[X, [1, -2] + .2 * np.random.randn(n_points_per_cluster, 2)]
-X = np.r_[X, [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)]
-X = np.r_[X, [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)]
-X = np.r_[X, [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)]
-
 
 clust = OPTICS(min_samples=9, rejection_ratio=.5)
 

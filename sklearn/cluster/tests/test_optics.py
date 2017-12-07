@@ -80,13 +80,13 @@ def test_auto_extract_hier():
     np.random.seed(0)
     n_points_per_cluster = 250
 
-    X = np.empty((0, 2))
-    X = np.r_[X, [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)]
-    X = np.r_[X, [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)]
-    X = np.r_[X, [1, -2] + .2 * np.random.randn(n_points_per_cluster, 2)]
-    X = np.r_[X, [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)]
-    X = np.r_[X, [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)]
-    X = np.r_[X, [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)]
+    C1 = [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)
+    C3 = [1, -2] + .2 * np.random.randn(n_points_per_cluster, 2)
+    C4 = [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)
+    C5 = [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)
+    C6 = [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2, C3, C4, C5, C6))
 
     # Compute OPTICS
 
@@ -104,14 +104,13 @@ def test_reach_dists():
     np.random.seed(0)
     n_points_per_cluster = 250
 
-    X = np.empty((0, 2))
-    X = np.r_[X, [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)]
-    # eps not used for 'auto' extract
-    X = np.r_[X, [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)]
-    X = np.r_[X, [1, -2] + .2 * np.random.randn(n_points_per_cluster, 2)]
-    X = np.r_[X, [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)]
-    X = np.r_[X, [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)]
-    X = np.r_[X, [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)]
+    C1 = [-5, -2] + .8 * np.random.randn(n_points_per_cluster, 2)
+    C2 = [4, -1] + .1 * np.random.randn(n_points_per_cluster, 2)
+    C3 = [1, -2] + .2 * np.random.randn(n_points_per_cluster, 2)
+    C4 = [-2, 3] + .3 * np.random.randn(n_points_per_cluster, 2)
+    C5 = [3, -2] + 1.6 * np.random.randn(n_points_per_cluster, 2)
+    C6 = [5, 6] + 2 * np.random.randn(n_points_per_cluster, 2)
+    X = np.vstack((C1, C2, C3, C4, C5, C6))
 
     # Compute OPTICS
 
@@ -120,8 +119,9 @@ def test_reach_dists():
     # Run the fit
     clust.fit(X)
 
-    # Expected values
-    # Skip to line 370
+    # Expected values, matches 'RD' results from:
+    # http://chemometria.us.edu.pl/download/optics.py
+    # Skip to line 342
 
     v = [np.inf, 0.606005, 0.472013, 0.162951, 0.161000, 0.385547, 0.179715,
          0.213507, 0.348468, 0.308146, 0.560519, 0.266072, 0.764384, 0.253164,
