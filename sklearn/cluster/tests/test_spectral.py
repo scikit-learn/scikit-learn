@@ -179,8 +179,6 @@ def test_spectral_clustering_solvers():
     except ImportError:
         amg_loaded = False
 
-    rng = np.random.RandomState(0)
-
     # a small two coin image
     x, y = np.indices((40, 40))
 
@@ -190,10 +188,9 @@ def test_spectral_clustering_solvers():
     circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1 ** 2
     circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2 ** 2
 
-    img = circle1 + circle2
-    mask = img.astype(bool)
-    img = img.astype(float)
-    img += 1 + 0.05 * rng.randn(*img.shape)
+    circles = circle1 | circle2
+    mask = circles.copy()
+    img = circles.astype(float)
 
     graph = img_to_graph(img, mask=mask)
     graph.data = np.exp(-graph.data / graph.data.std())
