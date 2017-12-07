@@ -242,10 +242,9 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
     n_samples = len(init)
 
     if n_samples == 0:
-        return np.array([])
+        return np.array([]), 0.0, 0.0
     if n_samples == 1:
-        return init - np.sum(init, axis=0) / len(init)
-
+        return init - np.sum(init, axis=0) / len(init), 0.0, 0.0
     points = init[:]
     dissimilarity_matrix = np.maximum(dissimilarity_matrix, sensitivity)
     total_sum = dissimilarity_matrix.sum()
@@ -268,12 +267,11 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
             prime = (ratio[a] * coord_diff).sum(axis=1)
             grad_prime = (diff[a] - right * left) / prod[a]
             grad_prime = grad_prime.sum(axis=1)
-            # added checks to make sure that
-            # delta does not blow up
+            # checks to make sure that delta doesnt blow up
             padding = 0.1 * true_rate * np.sign(grad_prime)
             delta = prime / (padding + grad_prime)
             points[a] += true_rate * delta
-            total_delta += np.sqrt((delta**2).sum()  / n_samples) / total_sum
+            total_delta += np.sqrt((delta**2).sum() / n_samples) / total_sum
 
         stress = (diff * ratio).sum() / 2 / total_sum
         if verbose and (n_iter * verbose) % 50 == 0:
