@@ -1001,7 +1001,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             le = LabelEncoder()
             le.fit(y)
             y_ = le.transform(y)
-            n_trim_classes = np.count_nonzero(np.bincount(y_, weights=sample_weight))
+            n_trim_classes = np.count_nonzero(np.bincount(y_, sample_weight))
             if n_trim_classes < 2:
                 raise ValueError("y contains %d class after sample_weight "
                                  "trimmed classes with zero weights, while a "
