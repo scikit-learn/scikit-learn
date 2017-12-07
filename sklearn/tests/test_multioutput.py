@@ -13,7 +13,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_less
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.datasets import make_classification
@@ -473,27 +472,21 @@ def test_base_chain_random_order():
 
 
 def test_base_chain_crossval_fit_and_predict():
-    # Fit regressor chain with cross_val_predict and verify predict
+    # Fit chain with cross_val_predict and verify predict
     # performance
     X, Y = generate_multilabel_dataset_with_correlations()
 
-    chains_cv = [ClassifierChain(LogisticRegression(), cv=3),
-                 RegressorChain(LinearRegression(), cv=3)]
-
-    chains = [ClassifierChain(LogisticRegression()),
-              RegressorChain(LinearRegression())]
-
-    similarity_condition = [jaccard_similarity_score, mean_squared_error]
-    asserts = [assert_greater, assert_less]
-    threshold = [0.4, 0.25]
-
-    for chain_cv, chain, condition, assertion, num in zip(chains_cv, chains,
-                                                          similarity_condition,
-                                                          asserts, threshold):
-        chain_cv.fit(X, Y)
+    for chain in [ClassifierChain(LogisticRegression()),
+                  RegressorChain(LinearRegression())]:
         chain.fit(X, Y)
+        chain_cv = clone(chain).set_params(cv=3)
+        chain_cv.fit(X, Y)
         Y_pred_cv = chain_cv.predict(X)
         Y_pred = chain.predict(X)
-        assert_equal(Y_pred_cv.shape, Y_pred.shape)
-        assertion(condition(Y, Y_pred_cv), num)
-        assert_not_equal(condition(Y, Y_pred_cv), condition(Y, Y_pred))
+
+        assert Y_pred_cv.shape == Y_pred.shape
+        assert not np.all(Y_pred == Y_pred_cv)
+        if isinstance(chain, ClassifierChain):
+            assert jaccard_similarity_score(Y, Y_pred_cv) > .4
+        else:
+            assert mean_squared_error(Y, Y_pred_cv) < .25
