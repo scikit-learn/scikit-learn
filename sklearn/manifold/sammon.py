@@ -296,10 +296,11 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
         if 1e5 * total_delta < eps:
             break
 
-        # add small randomness points to prevent local minima
+        # add small randomness points to prevent getting stuck in local minima
         if n_iter % 100 == 0 and n_iter < max_iter * 0.75:
             random_element = random_state.rand(n_samples, n_components)
-            points *= random_element ** (0.01 * l_rate/gmean(random_element))
+            random_element = random_element ** (0.01 * l_rate)
+            points *= random_element / gmean(random_element)
 
         stress = (diff * diff).sum() * 100
         if verbose and (n_iter * verbose) % 50 == 0:
