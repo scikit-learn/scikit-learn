@@ -40,13 +40,14 @@ Sammon's Mapping
 #
 # """
 
-import numpy as np
-
 import warnings
 
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
+
+import numpy as np
+from scipy.stats.mstats import gmean
 
 
 class Sammon(BaseEstimator):
@@ -116,7 +117,7 @@ class Sammon(BaseEstimator):
 
     """
 
-    def __init__(self, n_components=2, max_iter=1500, l_rate=0.9, decay=0.0025,
+    def __init__(self, n_components=2, max_iter=1500, l_rate=0.6, decay=0.0025,
                  base_rate=0.1, verbose=0, eps=1e-4, random_state=None,
                  sensitivity=1e-5, dissimilarity="euclidean"):
         self.n_components = n_components
@@ -201,7 +202,6 @@ class Sammon(BaseEstimator):
 def sammon(dissimilarity_matrix, n_components,
            init, l_rate, decay, base_rate,
            max_iter, verbose, eps, sensitivity, random_state):
-
     dissimilarity_matrix = check_array(dissimilarity_matrix)
     dissimilarity_matrix = check_symmetric(
         dissimilarity_matrix, raise_exception=True)
@@ -211,6 +211,7 @@ def sammon(dissimilarity_matrix, n_components,
     if init is None:
         # Randomly choose initial configuration
         X = random_state.rand(n_samples * n_components)
+        X *= np.mean(dissimilarity_matrix)
         X = X.reshape((n_samples, n_components))
     else:
         n_components = init.shape[1]
@@ -226,6 +227,7 @@ def sammon(dissimilarity_matrix, n_components,
         dissimilarity_matrix,
         X,
         sensitivity=sensitivity,
+        random_state=random_state,
         max_iter=max_iter,
         base_rate=base_rate,
         verbose=verbose,
@@ -237,14 +239,17 @@ def sammon(dissimilarity_matrix, n_components,
 
 
 def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
-            max_iter, verbose, eps, sensitivity):
+            max_iter, verbose, eps, sensitivity, random_state):
+    """
+    Computes Sammon's mapping by alternating between first and second
+    order gradient descent methods to ensure good convergence.
+    """
 
-    n_samples = len(init)
+    n_samples, n_components = init.shape
 
-    if n_samples == 0:
-        return np.array([]), 0.0, 0.0
     if n_samples == 1:
         return init - np.sum(init, axis=0) / len(init), 0.0, 0.0
+
     points = init[:]
     dissimilarity_matrix = np.maximum(dissimilarity_matrix, sensitivity)
     total_sum = dissimilarity_matrix.sum()
@@ -260,30 +265,46 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
         l_rate *= 1 - decay
         true_rate = l_rate + base_rate
 
-        for a in range(n_samples):
-            coord_diff = (points - points[a]).T
-            left = (coord_diff * coord_diff) / lo_dists[a]
-            right = 1.0 + diff[a] / lo_dists[a]
-            prime = (ratio[a] * coord_diff).sum(axis=1)
-            grad_prime = (diff[a] - right * left) / prod[a]
-            grad_prime = grad_prime.sum(axis=1)
-            # checks to make sure that delta doesnt blow up
-            padding = 0.1 * true_rate * np.sign(grad_prime)
-            delta = prime / (padding + grad_prime)
-            points[a] += true_rate * delta
-            total_delta += np.sqrt((delta**2).sum() / n_samples) / total_sum
+        # randomize order
+        samples = np.argsort(random_state.rand(n_samples))
 
-        stress = (diff * ratio).sum() / 2 / total_sum
+        # alternate between second order and first order method
+        # to ensure good convergence
+        if n_iter // 50 % 2:
+            for a in samples:
+                coord_diff = (points - points[a]).T
+                prime = (ratio[a] * coord_diff).sum(axis=1)
+
+                left = (coord_diff * coord_diff) / lo_dists[a]
+                right = 1.0 + diff[a] / lo_dists[a]
+                grad_prime = (diff[a] - right * left) / prod[a]
+                grad_prime = grad_prime.sum(axis=1)
+                # checks to make sure that delta doesnt blow up
+                padding = 0.1 * true_rate * np.sign(grad_prime)
+                delta = prime / (padding + grad_prime) - prime
+                points[a] += true_rate * delta
+        else:
+            for a in samples:
+                coord_diff = (points - points[a]).T
+                prime = (ratio[a] * coord_diff).sum(axis=1)
+                points[a] -= true_rate * prime / 2
+
+        total_diff = np.sqrt((prime**2).sum() / n_samples)
+        total_delta *= 0.99
+        total_delta = max(total_delta, total_diff / total_sum)
+
+        if 1e5 * total_delta < eps:
+            break
+
+        # add small randomness points to prevent local minima
+        if n_iter % 100 == 0 and n_iter < max_iter * 0.75:
+            random_element = random_state.rand(n_samples, n_components)
+            points *= random_element ** (0.01 * l_rate/gmean(random_element))
+
+        stress = (diff * diff).sum() * 100
         if verbose and (n_iter * verbose) % 50 == 0:
             print("iteration", n_iter,
                   "with stress", stress,
                   "and delta", 1e5 * total_delta)
-        if 1e5 * total_delta < eps:
-            break
 
-    points -= np.sum(points, axis=0) / len(points)
-    eigs, arr = np.linalg.eig(points.T.dot(points))
-    arr = arr[:, np.argsort(eigs)]
-    rot_points = points.dot(arr)
-
-    return rot_points, stress, n_iter
+    return points, stress, n_iter
