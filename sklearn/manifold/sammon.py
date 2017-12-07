@@ -246,7 +246,7 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
 
     n_samples = len(init)
     points = init[:]
-    indices = [*range(n_samples)]
+    indices = [i for i in range(n_samples)]
     dissimilarity_matrix = np.maximum(dissimilarity_matrix, sensitivity)
 
     for n_iter in range(max_iter):
