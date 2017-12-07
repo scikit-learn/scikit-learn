@@ -859,11 +859,13 @@ class GridSearchCV(BaseSearchCV):
               as in '2*n_jobs'
 
     iid : boolean, default='warn'
-        If True, the data is assumed to be identically distributed across
-        the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds. Default is True,
-        but will change to False in version 0.21, to correspond to the
-        standard definition of cross-validation.
+        If True, return the average score across folds, weighted by the number
+        of samples in each test set. In this case, the data is assumed to be
+        identically distributed across the folds, and the loss minimized is
+        the total loss per sample, and not the mean loss across the folds. If
+        False, return the average score across folds. Default is True, but
+        will change to False in version 0.21, to correspond to the standard
+        definition of cross-validation.
 
         ..versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
@@ -1184,11 +1186,13 @@ class RandomizedSearchCV(BaseSearchCV):
               as in '2*n_jobs'
 
     iid : boolean, default='warn'
-        If True, the data is assumed to be identically distributed across
-        the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds. Default is True,
-        but will change to False in version 0.21, to correspond to the
-        standard definition of cross-validation.
+        If True, return the average score across folds, weighted by the number
+        of samples in each test set. In this case, the data is assumed to be
+        identically distributed across the folds, and the loss minimized is
+        the total loss per sample, and not the mean loss across the folds. If
+        False, return the average score across folds. Default is True, but
+        will change to False in version 0.21, to correspond to the standard
+        definition of cross-validation.
 
         ..versionchanged:: 0.20
             Parameter ``iid`` will change from True to False by default in
