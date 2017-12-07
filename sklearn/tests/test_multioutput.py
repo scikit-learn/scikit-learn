@@ -461,6 +461,7 @@ def test_base_chain_random_order():
         chain_random.fit(X, Y)
         chain_fixed = clone(chain).set_params(order=chain_random.order_)
         chain_fixed.fit(X, Y)
+        assert_array_equal(chain_fixed.order_, chain_random.order_)
         assert_not_equal(list(chain_random.order), list(range(4)))
         assert_equal(len(chain_random.order_), 4)
         assert_equal(len(set(chain_random.order_)), 4)
