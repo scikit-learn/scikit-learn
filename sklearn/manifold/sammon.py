@@ -6,38 +6,38 @@ Sammon's Mapping
 # License: BSD
 
 # """
-# He did not stop outside the door but walked quickly into the yard. His soul 
+# He did not stop outside the door but walked quickly into the yard. His soul
 # was overflowing with emotion and he felt he needed lots of room to move
-# freely. Over his head was the vast vault of the sky studded with shining, 
-# silent stars. The still-dim Milky Way was split in two from the zenith to 
-# the horizon. A cool, completely still night enfolded the earth. The white 
-# tower and the golden domes gleamed in the sapphire sky. The gorgeous 
-# autumnal flowers in the flowerbeds by the building were asleep until 
-# morning. The silence of the earth seemed to merge with the silence of the 
-# sky and the mystery of the earth was one with the mystery of the stars ... 
-# Alyosha stood and gazed for a while; then like a blade of grass cut by a 
+# freely. Over his head was the vast vault of the sky studded with shining,
+# silent stars. The still-dim Milky Way was split in two from the zenith to
+# the horizon. A cool, completely still night enfolded the earth. The white
+# tower and the golden domes gleamed in the sapphire sky. The gorgeous
+# autumnal flowers in the flowerbeds by the building were asleep until
+# morning. The silence of the earth seemed to merge with the silence of the
+# sky and the mystery of the earth was one with the mystery of the stars ...
+# Alyosha stood and gazed for a while; then like a blade of grass cut by a
 # scythe, he fell to the ground.
 
-# He did not know why he was hugging the earth, why he could not kiss it 
-# enough, why he longed to kiss it all ... He kissed it again and again, 
-# drenching it with his tears, vowing to love it always, always. “Water the 
-# earth with tears of your joy and love those tears,” a voice rang out in his 
-# soul. What was he weeping about? Oh, he was weeping with ecstasy, weeping, # 
-# even, over those stars that shone down upon him from infinite distances, and 
-# he was “unashamed of his ecstasy.” It was as if the threads of all those 
-# innumerable worlds of God met in his soul and his soul was vibrating from 
-# its contact with “different worlds.” He craved to forgive everyone and 
-# everything, and to beg for forgiveness—oh, not forgiveness for just himself, 
-# but for everyone and everything. “Others will ask forgiveness of me too,” a 
-# voice rang out in his soul again. Every moment he felt clearly, almost 
-# physically, something real and indestructible, like the vault of the sky 
-# over his head, entering his soul. Something, a kind of idea, had taken over 
-# his soul for ever and ever. He was a weak youth when he fell on the ground 
-# and he rose a strong and determined fighter. He knew it. He felt it during 
-# that moment of rapture. And never, never thereafter would Alyosha forget 
-# that moment. “Someone visited my soul then,” he would say later, with firm 
+# He did not know why he was hugging the earth, why he could not kiss it
+# enough, why he longed to kiss it all ... He kissed it again and again,
+# drenching it with his tears, vowing to love it always, always. “Water the
+# earth with tears of your joy and love those tears,” a voice rang out in his
+# soul. What was he weeping about? Oh, he was weeping with ecstasy, weeping,
+# even, over those stars that shone down upon him from infinite distances, and
+# he was “unashamed of his ecstasy.” It was as if the threads of all those
+# innumerable worlds of God met in his soul and his soul was vibrating from
+# its contact with “different worlds.” He craved to forgive everyone and
+# everything, and to beg for forgiveness—oh, not forgiveness for just himself,
+# but for everyone and everything. “Others will ask forgiveness of me too,” a
+# voice rang out in his soul again. Every moment he felt clearly, almost
+# physically, something real and indestructible, like the vault of the sky
+# over his head, entering his soul. Something, a kind of idea, had taken over
+# his soul for ever and ever. He was a weak youth when he fell on the ground
+# and he rose a strong and determined fighter. He knew it. He felt it during
+# that moment of rapture. And never, never thereafter would Alyosha forget
+# that moment. “Someone visited my soul then,” he would say later, with firm
 # faith his words.
-# 
+#
 # """
 
 import numpy as np
@@ -111,7 +111,7 @@ class Sammon(BaseEstimator):
 
     Reference
     ---------
-    Sammon J.W. (1969) A non-linear mapping for data structure analysis. 
+    Sammon J.W. (1969) A non-linear mapping for data structure analysis.
     IEEE Transactions on Computers, 18, 401-409. pdf
 
     """
@@ -205,7 +205,7 @@ class Sammon(BaseEstimator):
 
 
 
-def sammon(dissimilarity_matrix, n_components, 
+def sammon(dissimilarity_matrix, n_components,
            init, l_rate, decay, base_rate,
            max_iter, verbose, eps, sensitivity, random_state):
 
@@ -230,14 +230,14 @@ def sammon(dissimilarity_matrix, n_components,
         init = np.asarray(init).copy()
 
     pos, stress, n_iter_ = _sammon(
-        dissimilarity_matrix, 
-        X, 
+        dissimilarity_matrix,
+        X,
         sensitivity=sensitivity,
-        max_iter=max_iter, 
-        base_rate=base_rate, 
-        verbose=verbose, 
+        max_iter=max_iter,
+        base_rate=base_rate,
+        verbose=verbose,
         l_rate=l_rate,
-        decay=decay, 
+        decay=decay,
         eps=eps)
 
     return pos, stress, n_iter_
