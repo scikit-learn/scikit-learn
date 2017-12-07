@@ -481,6 +481,8 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
     all of the available features provided to the model plus the predictions
     of models that are earlier in the chain.
 
+    Read more in the :ref:`User Guide <classifierchain>`.
+
     Parameters
     ----------
     base_estimator : estimator
@@ -628,6 +630,8 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
     Each model makes a prediction in the order specified by the chain using
     all of the available features provided to the model plus the predictions
     of models that are earlier in the chain.
+
+    Read more in the :ref:`User Guide <regressorchain>`.
 
     Parameters
     ----------
