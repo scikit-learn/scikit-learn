@@ -55,6 +55,15 @@ to create a pull request from your fork. This will send an email to the committe
 (If any of the above seems like magic to you, please look up the
 [Git documentation](https://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
 
+Installing from Source
+----------------------
+
+For installing scikit-learn from source (also refered as development version), following
+packages are required:
+
+
+
+
 Pull Request Checklist
 ----------------------
 
