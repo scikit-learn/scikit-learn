@@ -20,22 +20,22 @@ Sammon's Mapping
 
 # He did not know why he was hugging the earth, why he could not kiss it
 # enough, why he longed to kiss it all ... He kissed it again and again,
-# drenching it with his tears, vowing to love it always, always. “Water the
-# earth with tears of your joy and love those tears,” a voice rang out in his
+# drenching it with his tears, vowing to love it always, always. "Water the
+# earth with tears of your joy and love those tears," a voice rang out in his
 # soul. What was he weeping about? Oh, he was weeping with ecstasy, weeping,
 # even, over those stars that shone down upon him from infinite distances, and
-# he was “unashamed of his ecstasy.” It was as if the threads of all those
+# he was "unashamed of his ecstasy." It was as if the threads of all those
 # innumerable worlds of God met in his soul and his soul was vibrating from
-# its contact with “different worlds.” He craved to forgive everyone and
+# its contact with "different worlds." He craved to forgive everyone and
 # everything, and to beg for forgiveness—oh, not forgiveness for just himself,
-# but for everyone and everything. “Others will ask forgiveness of me too,” a
+# but for everyone and everything. "Others will ask forgiveness of me too," a
 # voice rang out in his soul again. Every moment he felt clearly, almost
 # physically, something real and indestructible, like the vault of the sky
 # over his head, entering his soul. Something, a kind of idea, had taken over
 # his soul for ever and ever. He was a weak youth when he fell on the ground
 # and he rose a strong and determined fighter. He knew it. He felt it during
 # that moment of rapture. And never, never thereafter would Alyosha forget
-# that moment. “Someone visited my soul then,” he would say later, with firm
+# that moment. "Someone visited my soul then," he would say later, with firm
 # faith his words.
 #
 # """
