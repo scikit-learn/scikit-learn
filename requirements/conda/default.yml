@@ -1,0 +1,5 @@
+dependencies:
+  - python
+  - numpy
+  - scipy
+  - cython

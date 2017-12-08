@@ -1,0 +1,8 @@
+pytest
+coverage
+matplotlib
+sphinx==1.6.2
+pillow
+sphinx-gallery
+# Use numpydoc master (for now)
+git+https://github.com/numpy/numpydoc
