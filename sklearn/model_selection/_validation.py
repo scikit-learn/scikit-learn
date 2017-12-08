@@ -1214,7 +1214,7 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
 def validation_curve(estimator, X, y, param_name, param_range, groups=None,
                      cv=None, scoring=None, n_jobs=1, pre_dispatch="all",
-                     verbose=0):
+                     verbose=0, fit_params=None):
     """Validation curve.
 
     Determine training and test scores for varying parameter values.
@@ -1281,6 +1281,9 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
+    fit_params : dict, optional
+        Parameters to pass to the fit method of the estimator.
+
     Returns
     -------
     train_scores : array, shape (n_ticks, n_cv_folds)
@@ -1303,7 +1306,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
         clone(estimator), X, y, scorer, train, test, verbose,
-        parameters={param_name: v}, fit_params=None, return_train_score=True)
+        parameters={param_name: v}, fit_params=fit_params,
+        return_train_score=True)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
     out = np.asarray(out)
