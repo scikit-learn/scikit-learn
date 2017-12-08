@@ -11,7 +11,7 @@ def test_sammon_precomputed():
     fitter = Sammon(3, dissimilarity="precomputed", verbose=1, eps=0)
     X = fitter.fit_transform(dists)
     sampled_dists = euclidean_distances(X)
-    assert_array_almost_equal(sampled_dists, dists, decimal=3)
+    assert_array_almost_equal(sampled_dists, dists, decimal=2)
 
 
 def test_sammon_euclidean():
@@ -21,7 +21,7 @@ def test_sammon_euclidean():
 
     sampled_dists = euclidean_distances(X)
     true_dists = euclidean_distances(points)
-    assert_array_almost_equal(sampled_dists, true_dists, decimal=3)
+    assert_array_almost_equal(sampled_dists, true_dists, decimal=2)
 
 
 def test_sammon_other_metric():
@@ -47,4 +47,4 @@ def test_sammon_init_2():
 
     sampled_dists = euclidean_distances(X)
     true_dists = euclidean_distances(points)
-    assert_array_almost_equal(sampled_dists, true_dists, decimal=3)
+    assert_array_almost_equal(sampled_dists, true_dists, decimal=2)

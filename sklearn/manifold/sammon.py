@@ -289,7 +289,7 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
             # getting stuck in local minima
             if n_iter < max_iter * 0.75:
                 random_element = random_state.rand(n_samples)
-                random_element = random_element ** (0.01 * l_rate)
+                random_element = random_element ** (0.04 * l_rate)
                 random_element /= gmean(random_element)
                 points = (points.T * random_element.T).T
         else:
