@@ -5,7 +5,7 @@ from sklearn.utils.testing import assert_array_equal, assert_array_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal, assert_true, assert_greater
 from sklearn.utils.testing import assert_raises, assert_raises_regexp
-
+from sklearn.utils.testing import assert_warns_message
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
@@ -315,6 +315,13 @@ def test_sample_weight_missing():
 
     clf = AdaBoostRegressor(KMeans())
     assert_raises(ValueError, clf.fit, X, y_regr)
+
+
+def test_sample_weights_infinite():
+    w = "Sample weights have reached infinite values"
+    clf = AdaBoostClassifier(n_estimators=30, learning_rate=5.,
+                             algorithm="SAMME")
+    assert_warns_message(UserWarning, w, clf.fit, iris.data, iris.target)
 
 
 def test_sparse_classification():

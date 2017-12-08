@@ -27,7 +27,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from numpy.core.umath_tests import inner1d
-import math
+import warnings
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_regressor, is_classifier
 from ..externals import six
@@ -140,18 +140,19 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
                 iboost,
-                X, y,
+                X, y, 
                 sample_weight,
                 random_state)
 
             # Early termination
             
             if sample_weight is None:
-                if estimator_error is not None and math.isnan(estimator_error):
-                    print("Early termination due to underflow of estimated_error.Iterations stopped")
-                    break
                 break
-
+            if not np.isfinite(np.sum(sample_weight)):
+                warnings.warn("Sample weights have reached infinite values,"
+                              " causing overflow. Iterations stopped."
+                              " Try lowering the learning rate.")
+                break
             self.estimator_weights_[iboost] = estimator_weight
             self.estimator_errors_[iboost] = estimator_error
 
@@ -501,8 +502,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Error fraction
         estimator_error = np.mean(
             np.average(incorrect, weights=sample_weight, axis=0))
-        if math.isnan(estimator_error):
-            return None, None, estimator_error
        
 
         # Stop if classification is perfect
@@ -559,8 +558,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Error fraction
         estimator_error = np.mean(
             np.average(incorrect, weights=sample_weight, axis=0))
-        if math.isnan(estimator_error):
-            return None, None, estimator_error
 
         # Stop if classification is perfect
         if estimator_error <= 0:
