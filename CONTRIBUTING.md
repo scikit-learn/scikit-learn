@@ -62,14 +62,11 @@ Before installing scikit-learn from source (development version), make sure thes
 packages are installed first:
 
 -  [Python](https://www.python.org/downloads) (>= 2.7 or >= 3.4)
-
 -  [Numpy](https://pypi.python.org/pypi/numpy) (>= 1.8.2)
-
 -  [Scipy](https://pypi.python.org/pypi/scipy) (>= 0.13.3)
-
 -  [Cython](https://pypi.python.org/pypi/Cython) Latest version. (As of this writing 0.27.3)
 
-Follow [these guidelines](http://scikit-learn.org/stable/developers/contributing.html#retrieving-the-latest-code)
+Once ready with these packages, follow [these guidelines](http://scikit-learn.org/stable/developers/contributing.html#retrieving-the-latest-code)
 to install the development version.
 
 Pull Request Checklist
