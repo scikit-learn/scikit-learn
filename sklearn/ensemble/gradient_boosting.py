@@ -997,7 +997,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
 
-        if not np.issubdtype(y.dtype, np.dtype('float')):
+        if isinstance(self, GradientBoostingClassifier):
             le = LabelEncoder()
             le.fit(y)
             y_ = le.transform(y)
