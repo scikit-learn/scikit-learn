@@ -140,12 +140,11 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
                 iboost,
-                X, y, 
+                X, y,
                 sample_weight,
                 random_state)
 
-            # Early termination
-            
+            # Early termination 
             if sample_weight is None:
                 break
             if not np.isfinite(np.sum(sample_weight)):
@@ -502,7 +501,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Error fraction
         estimator_error = np.mean(
             np.average(incorrect, weights=sample_weight, axis=0))
-       
+
 
         # Stop if classification is perfect
         if estimator_error <= 0:
