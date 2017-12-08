@@ -211,8 +211,9 @@ def sammon(dissimilarity_matrix, n_components,
     if init is None:
         # Randomly choose initial configuration
         X = random_state.rand(n_samples * n_components)
-        X *= np.mean(dissimilarity_matrix)
         X = X.reshape((n_samples, n_components))
+        X -= np.mean(X, axis=0)
+        X *= np.mean(dissimilarity_matrix)
     else:
         n_components = init.shape[1]
         if n_samples != init.shape[0]:
@@ -253,7 +254,7 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
     points = init[:]
     dissimilarity_matrix = np.maximum(dissimilarity_matrix, sensitivity)
     total_sum = dissimilarity_matrix.sum()
-
+    total_delta = eps * 10
     for n_iter in range(max_iter):
 
         lo_dists = euclidean_distances(points)
@@ -261,16 +262,16 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
         prod = dissimilarity_matrix * lo_dists
         diff = dissimilarity_matrix - lo_dists
         ratio = diff / prod
-        total_delta = 0.0
+
         l_rate *= 1 - decay
         true_rate = l_rate + base_rate
 
-        # randomize order
+        # randomize coordinate order
         samples = np.argsort(random_state.rand(n_samples))
 
         # alternate between second order and first order method
         # to ensure good convergence
-        if n_iter // 50 % 2:
+        if n_iter // 50 % 2 == 0:
             for a in samples:
                 coord_diff = (points - points[a]).T
                 prime = (ratio[a] * coord_diff).sum(axis=1)
@@ -281,31 +282,33 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
                 grad_prime = grad_prime.sum(axis=1)
                 # checks to make sure that delta doesnt blow up
                 padding = 0.1 * true_rate * np.sign(grad_prime)
-                delta = prime / (padding + grad_prime) - prime
+                delta = prime / (padding + grad_prime)
                 points[a] += true_rate * delta
+
+            # add small randomness points to prevent
+            # getting stuck in local minima
+            if n_iter < max_iter * 0.75:
+                random_element = random_state.rand(n_samples)
+                random_element = random_element ** (0.05 * l_rate)
+                random_element /= gmean(random_element)
+                points = (points.T * random_element.T).T
         else:
             for a in samples:
                 coord_diff = (points - points[a]).T
                 prime = (ratio[a] * coord_diff).sum(axis=1)
-                points[a] -= true_rate * prime / 2
+                points[a] -= true_rate * prime / total_sum * 4
 
-        total_diff = np.sqrt((prime**2).sum() / n_samples)
+        total_diff = np.sqrt((prime*prime).sum() / n_samples)
         total_delta *= 0.99
         total_delta = max(total_delta, total_diff / total_sum)
 
-        if 1e5 * total_delta < eps:
+        if total_delta < eps:
             break
-
-        # add small randomness points to prevent getting stuck in local minima
-        if n_iter % 100 == 0 and n_iter < max_iter * 0.75:
-            random_element = random_state.rand(n_samples, n_components)
-            random_element = random_element ** (0.01 * l_rate)
-            points *= random_element / gmean(random_element)
 
         stress = (diff * diff).sum() * 100
         if verbose and (n_iter * verbose) % 50 == 0:
             print("iteration", n_iter,
-                  "with stress", stress,
-                  "and delta", 1e5 * total_delta)
+                  "with stress", stress / total_sum,
+                  "and delta", total_delta)
 
     return points, stress, n_iter
