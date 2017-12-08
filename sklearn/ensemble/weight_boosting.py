@@ -144,7 +144,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 sample_weight,
                 random_state)
 
-            # Early termination 
+            # Early termination
             if sample_weight is None:
                 break
             if not np.isfinite(np.sum(sample_weight)):
