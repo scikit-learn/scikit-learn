@@ -1582,3 +1582,59 @@ Drawbacks
  *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
     analysis". Communications in Statistics-theory and Methods 3: 1-27.
     `doi:10.1080/03610926.2011.560741 <http://dx.doi.org/10.1080/03610926.2011.560741>`_.
+
+.. _contingency_matrix:
+
+Contingency Matrix
+------------------
+
+Contingency matrix (:func:`sklearn.metrics.cluster.contingency_matrix`)
+reports the intersection cardinality for every true/predicted cluster pair.
+The contingency matrix provides sufficient statistics for all clustering
+metrics where the samples are independent and identically distributed and
+one doesn't need to account for some instances not being clustered.
+
+Here is an example::
+
+   >>> from sklearn.metrics.cluster import contingency_matrix
+   >>> x = ["a", "a", "a", "b", "b", "b"]
+   >>> y = [0, 0, 1, 1, 2, 2]
+   >>> contingency_matrix(x, y)
+   array([[2, 1, 0],
+          [0, 1, 2]])
+
+The first row of output array indicates that there are three samples whose
+true cluster is "a". Of them, two are in predicted cluster 0, one is in 1,
+and none is in 2. And the second row indicates that there are three samples
+whose true cluster is "b". Of them, none is in predicted cluster 0, one is in
+1 and two are in 2.
+
+A :ref:`confusion matrix <confusion_matrix>` for classification is a square
+contingency matrix where the order of rows and columns correspond to a list
+of classes.
+
+
+Advantages
+~~~~~~~~~~
+
+- Allows to examine the spread of each true cluster across predicted
+  clusters and vice versa.
+
+- The contingency table calculated is typically utilized in the calculation
+  of a similarity statistic (like the others listed in this document) between
+  the two clusterings.
+
+Drawbacks
+~~~~~~~~~
+
+- Contingency matrix is easy to interpret for a small number of clusters, but
+  becomes very hard to interpret for a large number of clusters.
+
+- It doesn't give a single metric to use as an objective for clustering
+  optimisation.
+
+
+.. topic:: References
+
+ * `Wikipedia entry for contingency matrix
+   <https://en.wikipedia.org/wiki/Contingency_table>`_
