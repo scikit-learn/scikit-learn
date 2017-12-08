@@ -254,7 +254,7 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
     points = init[:]
     dissimilarity_matrix = np.maximum(dissimilarity_matrix, sensitivity)
     total_sum = dissimilarity_matrix.sum()
-    total_delta = eps * 10
+    total_delta = eps * 2
     for n_iter in range(max_iter):
 
         lo_dists = euclidean_distances(points)
@@ -289,7 +289,7 @@ def _sammon(dissimilarity_matrix, init, l_rate, decay, base_rate,
             # getting stuck in local minima
             if n_iter < max_iter * 0.75:
                 random_element = random_state.rand(n_samples)
-                random_element = random_element ** (0.05 * l_rate)
+                random_element = random_element ** (0.01 * l_rate)
                 random_element /= gmean(random_element)
                 points = (points.T * random_element.T).T
         else:
