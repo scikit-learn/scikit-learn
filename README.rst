@@ -76,6 +76,19 @@ or ``conda``::
 
 The documentation includes more detailed `installation instructions <http://scikit-learn.org/stable/install.html>`_.
 
+Source installation
+~~~~~~~~~~~~~~~~~~~
+
+Before installing scikit-learn from source (development version), you need these following packages installed:
+
+-  `Python <https://www.python.org/downloads>`_ (>= 2.7 or >= 3.4)
+-  `Numpy <https://pypi.python.org/pypi/numpy>`_ (>= 1.8.2)
+-  `Scipy <https://pypi.python.org/pypi/scipy>`_ (>= 0.13.3)
+-  `Cython <https://pypi.python.org/pypi/Cython>`_ Latest version. (As of this writing 0.27.3)
+
+For source installation commands, follow `these guidelines <http://scikit-learn.org/stable/developers/contributing.html#retrieving-the-latest-code>`_
+to install the development version.
+
 
 Development
 -----------
