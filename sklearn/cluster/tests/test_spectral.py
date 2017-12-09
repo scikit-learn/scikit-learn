@@ -36,7 +36,6 @@ def test_spectral_clustering():
                   [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
                   [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0]])
 
-    # FIXME: amg is not returning the correct result
     for eigen_solver in ('arpack', 'lobpcg'):
         for assign_labels in ('kmeans', 'discretize'):
             for mat in (S, sparse.csr_matrix(S)):
