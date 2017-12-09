@@ -22,6 +22,12 @@ from sklearn.metrics import v_measure_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.datasets.samples_generator import make_blobs
 
+try:
+    from pyamg import smoothed_aggregation_solver  # noqa
+    amg_loaded = True
+except ImportError:
+    amg_loaded = False
+
 
 def test_spectral_clustering():
     S = np.array([[1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
@@ -170,14 +176,6 @@ def test_spectral_clustering_solvers():
     # Test that spectral_clustering is the same for all solvers
     # Based on toy example from plot_segmentation_toy.py
 
-    try:
-        # Testing amg solver requires optional package pyamg
-        from pyamg import smoothed_aggregation_solver
-        # Silence unused import warning
-        smoothed_aggregation_solver
-        amg_loaded = True
-    except ImportError:
-        amg_loaded = False
 
     # a small two coin image
     x, y = np.indices((40, 40))
