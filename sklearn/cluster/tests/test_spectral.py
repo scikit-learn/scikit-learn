@@ -18,7 +18,6 @@ from sklearn.cluster.spectral import discretize
 from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
-from sklearn.metrics import v_measure_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.datasets.samples_generator import make_blobs
 
@@ -50,7 +49,7 @@ def test_spectral_clustering():
                 if labels[0] == 0:
                     labels = 1 - labels
 
-                assert_array_equal(labels, [1, 1, 1, 0, 0, 0, 0])
+                assert adjusted_rand_score(labels, [1, 1, 1, 0, 0, 0, 0]) == 1
 
                 model_copy = cPickle.loads(cPickle.dumps(model))
                 assert_equal(model_copy.n_clusters, model.n_clusters)
@@ -100,7 +99,7 @@ def test_spectral_clustering_sparse():
 
     labels = SpectralClustering(random_state=0, n_clusters=2,
                                 affinity='precomputed').fit(S).labels_
-    assert_equal(adjusted_rand_score(y, labels), 1)
+    assert adjusted_rand_score(y, labels) == 1
 
 
 def test_affinities():
@@ -114,11 +113,11 @@ def test_affinities():
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
     assert_warns_message(UserWarning, 'not fully connected', sp.fit, X)
-    assert_equal(adjusted_rand_score(y, sp.labels_), 1)
+    assert adjusted_rand_score(y, sp.labels_) == 1
 
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
     labels = sp.fit(X).labels_
-    assert_equal(adjusted_rand_score(y, labels), 1)
+    assert adjusted_rand_score(y, labels) == 1
 
     X = check_random_state(10).rand(10, 5) * 10
 
@@ -169,7 +168,7 @@ def test_discretize(seed=8):
                             + 0.1 * random_state.randn(n_samples,
                                                        n_class + 1))
             y_pred = discretize(y_true_noisy, random_state)
-            assert_greater(adjusted_rand_score(y_true, y_pred), 0.8)
+            assert adjusted_rand_score(y_true, y_pred) > 0.8
 
 
 def test_spectral_clustering_solvers():
@@ -193,16 +192,14 @@ def test_spectral_clustering_solvers():
     graph = img_to_graph(img, mask=mask)
     graph.data = np.exp(-graph.data / graph.data.std())
 
-    labels_arpack = spectral_clustering(graph, n_clusters=2,
-                                        eigen_solver='arpack',
-                                        random_state=0)
-    labels_lobpcg = spectral_clustering(graph, n_clusters=2,
-                                        eigen_solver='lobpcg',
-                                        random_state=0)
-    assert v_measure_score(labels_arpack, labels_lobpcg) == 1
+    labels_arpack = spectral_clustering(
+        graph, n_clusters=2, eigen_solver='arpack', random_state=0)
+
+    labels_lobpcg = spectral_clustering(
+        graph, n_clusters=2, eigen_solver='lobpcg', random_state=0)
+    assert adjusted_rand_score(labels_arpack, labels_lobpcg) == 1
 
     if amg_loaded:
-        labels_amg = spectral_clustering(graph, n_clusters=2,
-                                         eigen_solver='amg',
-                                         random_state=0)
-        assert v_measure_score(labels_amg, labels_lobpcg) == 1
+        labels_amg = spectral_clustering(
+            graph, n_clusters=2, eigen_solver='amg', random_state=0)
+        assert adjusted_rand_score(labels_arpack, labels_amg) == 1
