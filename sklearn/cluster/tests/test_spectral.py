@@ -10,7 +10,6 @@ from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
@@ -52,8 +51,8 @@ def test_spectral_clustering():
                 assert adjusted_rand_score(labels, [1, 1, 1, 0, 0, 0, 0]) == 1
 
                 model_copy = cPickle.loads(cPickle.dumps(model))
-                assert_equal(model_copy.n_clusters, model.n_clusters)
-                assert_equal(model_copy.eigen_solver, model.eigen_solver)
+                assert model_copy.n_clusters == model.n_clusters
+                assert model_copy.eigen_solver == model.eigen_solver
                 assert_array_equal(model_copy.labels_, model.labels_)
 
 
@@ -129,12 +128,12 @@ def test_affinities():
             sp = SpectralClustering(n_clusters=2, affinity=kern,
                                     random_state=0)
             labels = sp.fit(X).labels_
-            assert_equal((X.shape[0],), labels.shape)
+            assert (X.shape[0],) == labels.shape
 
     sp = SpectralClustering(n_clusters=2, affinity=lambda x, y: 1,
                             random_state=0)
     labels = sp.fit(X).labels_
-    assert_equal((X.shape[0],), labels.shape)
+    assert (X.shape[0],) == labels.shape
 
     def histogram(x, y, **kwargs):
         # Histogram kernel implemented as a callable.
@@ -143,7 +142,7 @@ def test_affinities():
 
     sp = SpectralClustering(n_clusters=2, affinity=histogram, random_state=0)
     labels = sp.fit(X).labels_
-    assert_equal((X.shape[0],), labels.shape)
+    assert (X.shape[0],) == labels.shape
 
     # raise error on unknown affinity
     sp = SpectralClustering(n_clusters=2, affinity='<unknown>')
