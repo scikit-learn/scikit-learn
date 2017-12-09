@@ -1004,8 +1004,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             n_trim_classes = np.count_nonzero(np.bincount(y_, sample_weight))
             if n_trim_classes < 2:
                 raise ValueError("y contains %d class after sample_weight "
-                                 "trimmed classes with zero weights, while a "
-                                 "minimum of 1 class is required."
+                                 "trimmed classes with zero weights, while "
+                                 "a minimum of 2 classes are required."
                                  % n_trim_classes)
 
         check_consistent_length(X, y, sample_weight)
