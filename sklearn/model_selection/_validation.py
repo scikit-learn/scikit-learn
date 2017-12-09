@@ -1115,7 +1115,7 @@ def learning_curve(estimator, X, y, groups=None,
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose) for train, test in cv_iter)
+            scorer, verbose, fit_params=fit_params) for train, test in cv_iter)
     else:
         train_test_proportions = []
         for train, test in cv_iter:
@@ -1196,7 +1196,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
 
 def _incremental_fit_estimator(estimator, X, y, classes, train, test,
-                               train_sizes, scorer, verbose):
+                               train_sizes, scorer, verbose, fit_params):
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores = [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
