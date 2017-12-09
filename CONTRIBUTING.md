@@ -55,20 +55,6 @@ to create a pull request from your fork. This will send an email to the committe
 (If any of the above seems like magic to you, please look up the
 [Git documentation](https://git-scm.com/documentation) on the web, or ask a friend or another contributor for help.)
 
-Installing from Source
-----------------------
-
-Before installing scikit-learn from source (development version), make sure these following
-packages are installed first:
-
--  [Python](https://www.python.org/downloads) (>= 2.7 or >= 3.4)
--  [Numpy](https://pypi.python.org/pypi/numpy) (>= 1.8.2)
--  [Scipy](https://pypi.python.org/pypi/scipy) (>= 0.13.3)
--  [Cython](https://pypi.python.org/pypi/Cython) Latest version. (As of this writing 0.27.3)
-
-Once ready with these packages, follow [these guidelines](http://scikit-learn.org/stable/developers/contributing.html#retrieving-the-latest-code)
-to install the development version.
-
 Pull Request Checklist
 ----------------------
 
