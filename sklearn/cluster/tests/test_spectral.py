@@ -194,6 +194,8 @@ def test_spectral_clustering_solvers():
     labels_arpack = spectral_clustering(
         graph, n_clusters=2, eigen_solver='arpack', random_state=0)
 
+    assert len(np.unique(labels_arpack)) == 2
+
     labels_lobpcg = spectral_clustering(
         graph, n_clusters=2, eigen_solver='lobpcg', random_state=0)
     assert adjusted_rand_score(labels_arpack, labels_lobpcg) == 1
