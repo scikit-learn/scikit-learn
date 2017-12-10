@@ -175,8 +175,8 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
             Calculate metrics for each instance, and find their average.
 
     pos_label : int or str (default=1)
-        The label of the positive class. For multilabel-indicator y_true,
-        pos_label is fixed to 1.
+        The label of the positive class. Only applied to binary ``y_true``.
+        For multilabel-indicator ``y_true``, ``pos_label`` is fixed to 1.
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -218,21 +218,15 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
         return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
     y_type = type_of_target(y_true)
-    if y_type == "binary":
-        _partial_binary_uninterpolated_average_precision = partial(
-            _binary_uninterpolated_average_precision,
-            pos_label=pos_label)
-        return _average_binary_score(
-            _partial_binary_uninterpolated_average_precision, y_true,
-            y_score, average, sample_weight=sample_weight)
-    else:
-        if pos_label != 1:
-            raise ValueError("Parameter pos_label is fixed to 1 for "
-                             "multilabel-indicator y_true. Do not set "
-                             "pos_label or set pos_label to 1.")
-        return _average_binary_score(
-            _binary_uninterpolated_average_precision, y_true, y_score,
-            average, sample_weight=sample_weight)
+    if y_type == "multilabel-indicator" and pos_label != 1:
+        raise ValueError("Parameter pos_label is fixed to 1 for "
+                         "multilabel-indicator y_true. Do not set "
+                         "pos_label or set pos_label to 1.")
+    average_precision = partial(_binary_uninterpolated_average_precision,
+                                pos_label=pos_label)
+    return _average_binary_score(average_precision, y_true, y_score,
+                                 average, sample_weight=sample_weight)
+
 
 def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
