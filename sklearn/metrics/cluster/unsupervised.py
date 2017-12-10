@@ -225,7 +225,6 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
                                     labels=labels, label_freqs=label_freqs,
                                     add_at=add_at)
     results = pairwise_distances_chunked(X, reduce_func=reduce_func, **kwds)
-    print(len(results))
     intra_clust_dists, inter_clust_dists = results
 
     if len(intra_clust_dists) == 1:
