@@ -624,7 +624,10 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     See also
     --------
-    RidgeClassifier, RidgeCV, :class:`sklearn.kernel_ridge.KernelRidge`
+    RidgeClassifier : Ridge classifier
+    RidgeCV : Ridge regression with built-in cross validation
+    :class:`sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
+        combines ridge regression with the kernel trick
 
     Examples
     --------
@@ -770,7 +773,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     See also
     --------
-    Ridge, RidgeClassifierCV
+    Ridge : Ridge regression
+    RidgeClassifierCV :  Ridge classifier with built-in cross validation
 
     Notes
     -----
@@ -1233,9 +1237,9 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
     See also
     --------
-    Ridge: Ridge regression
-    RidgeClassifier: Ridge classifier
-    RidgeClassifierCV: Ridge classifier with built-in cross validation
+    Ridge : Ridge regression
+    RidgeClassifier : Ridge classifier
+    RidgeClassifierCV : Ridge classifier with built-in cross validation
     """
     pass
 
@@ -1318,9 +1322,9 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     See also
     --------
-    Ridge: Ridge regression
-    RidgeClassifier: Ridge classifier
-    RidgeCV: Ridge regression with built-in cross validation
+    Ridge : Ridge regression
+    RidgeClassifier : Ridge classifier
+    RidgeCV : Ridge regression with built-in cross validation
 
     Notes
     -----
