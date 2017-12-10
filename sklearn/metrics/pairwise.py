@@ -259,13 +259,10 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     return distances if squared else np.sqrt(distances, out=distances)
 
 
-def _argmin_min_reduce_min(dist, start):
+def _argmin_min_reduce_func(dist, start):
     indices = dist.argmin(axis=1)
     values = dist[np.arange(dist.shape[0]), indices]
     return indices, values
-
-
-BYTES_PER_FLOAT = 8
 
 
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
@@ -356,7 +353,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         X, Y = Y, X
 
     indices, values = pairwise_distances_chunked(
-        X, Y, reduce_func=_argmin_min_reduce_min, metric=metric,
+        X, Y, reduce_func=_argmin_min_reduce_func, metric=metric,
         **metric_kwargs)
 
     if metric == "euclidean" and not metric_kwargs.get("squared", False):
