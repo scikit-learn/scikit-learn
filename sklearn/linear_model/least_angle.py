@@ -101,8 +101,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         This option is only allowed with method 'lasso'. Note that the model
         coefficients will not converge to the ordinary-least-squares solution
         for small values of alpha. Only coefficients up to the smallest alpha
-        value (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by the
-        stepwise Lars-Lasso algorithm are typically in congruence with the
+        value (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by
+        the stepwise Lars-Lasso algorithm are typically in congruence with the
         solution of the coordinate descent lasso_path function.
 
     Returns
@@ -145,7 +145,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     """
     if method == 'lar' and positive:
-        warnings.warn('positive option is broken for Least '
+        warnings.warn('positive option is broken for Least'
                       ' Angle Regression (LAR). Use method="lasso".'
                       ' This option will be removed in version 0.21.',
                       DeprecationWarning)
@@ -549,7 +549,7 @@ class Lars(LinearModel, RegressorMixin):
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
 
-        The option is deprecated and will be removed in v0.21.
+        The option is broken and deprecated. It will be removed in v0.21.
 
     Attributes
     ----------
@@ -1039,7 +1039,7 @@ class LarsCV(Lars):
         Restrict coefficients to be >= 0. Be aware that you might want to
         remove fit_intercept which is set True by default.
 
-        The option is deprecated and will be removed in v0.21.
+        The option is broken and deprecated. It will be removed in v0.21.
 
     Attributes
     ----------
