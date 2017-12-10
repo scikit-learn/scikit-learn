@@ -1156,7 +1156,7 @@ def _generate_pairwise_distances_chunked(X, Y, metric, reduce_func,
     n_samples = X.shape[0]
     for start in range(0, n_samples, block_n_rows):
         # get distances from block to every other sample
-        stop = min(start + block_n_rows, X.shape[0])
+        stop = min(start + block_n_rows, n_samples)
         if start == 0 and stop >= n_samples:
             X_chunk = X  # allow fast paths in pairwise_distances
         else:
@@ -1245,11 +1245,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
 
     Returns
     -------
-    D : array-like or sparse matrix or tuple
-        A distance matrix D such that D_{i, j} is the distance between the
-        ith and jth vectors of the given matrix X, if Y is None.
-        If Y is not None, then D_{i, j} is the distance between the ith array
-        from X and the jth array from Y.
+    TODO
 
     """
     block_n_rows = get_block_n_rows(row_bytes=_num_samples(Y if Y is not None
