@@ -183,7 +183,13 @@ General Concepts
         See the :ref:`Contributors' Guide <contributing_deprecation>`.
 
     docstring
-        TODO
+        The embedded documentation for a module, class, function, etc., usually
+        in code as a string at the beginning of the object's definition, and
+        accessible as the object's ``__doc__`` attribute.
+
+        We try to adhere to `PEP257
+        <http://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
+        conventions <numpydoc.readthedocs.io/en/latest/format.html>`_.
 
     double underscore notation
         When specifying parameter names for nested estimators, ``__`` may be
@@ -313,9 +319,25 @@ General Concepts
         The state of an estimator after :term:`fitting`.
 
     function
-        TODO
+        We provide ad hoc function interfaces for many algorithms, while
+        :term:`estimator` classes provide a more consistent interface.
 
-        Talk about where estimator fit or fit_transform functionality is present in a function.
+        In particular, Scikit-learn may provide a function interface that fits
+        a model to some data and returns the learnt model parameters, as in
+        :func:`linear_model.enet_path`.  For transductive models, this also
+        returns the embedding or cluster labels, as in
+        :func:`manifold.spectral_embedding` or :func:`cluster.dbscan`.  Many
+        preprocessing transformers also provide a function interface, akin to
+        calling :term:`fit_transform`, as in
+        :func:`preprocessing.maxabs_scale`.  Users should be careful to avoid
+        :term:`data leakage` when making use of these
+        ``fit_transform``-equivalent functions.
+
+        We do not have a strict policy about when to or when not to provide
+        function forms of estimators, but maintainers should consider
+        consistency with existing interfaces, and whether providing a function
+        would lead users astray from best practices (as regards data leakage,
+        etc.)
 
     hyperparameter
     hyper-parameter
@@ -420,7 +442,8 @@ General Concepts
         See precomputed.
 
     pd
-        A shorthand for Pandas due to the conventional import statement::
+        A shorthand for `Pandas <http://pandas.pydata.org>`_ due to the
+        conventional import statement::
 
             import pandas as pd
 
@@ -495,6 +518,7 @@ Class APIs and Estimator Types
         :term:`function`.
 
     feature extractor
+    feature extractors
         A :term:`tranformer` which takes input where each sample is not
         represented as an :term:`array-like` object of fixed length, and
         produces an `array-like` object of :term:`features` for each sample
@@ -669,7 +693,12 @@ Methods
             (TODO: check equality case) indicates an inlier.
 
     ``get_feature_names``
-        TODO
+        Primarily for :term:`feature extractors`, but also used for other
+        transformers to provide string names for each column in the output of
+        the estimator's :term:`transform` method.  It outputs a list of
+        strings, and may take a list of strings as input, corresponding
+        to the names of input columns from which output column names can
+        be generated.  By default input features are named x0, x1, ....
 
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
@@ -678,7 +707,15 @@ Methods
         split.
 
     ``get_params``
-        TODO
+        Gets all :term:`parameters`, and their values, that can be set using
+        :term:`set_params`.  A parameter ``deep`` can be used, when set to
+        False to only return those parameters not including ``__``, i.e.  not
+        due to indirection via contained estimators.
+        
+        Most estimators adopt the definition from :class:`base.BaseEstimator`,
+        the exception being estimators such as :class:`pipeline.Pipeline`. It
+        reimplements get_params to declare the estimators named in its
+        ``steps`` parameters as themselves being parameters.
 
     ``fit_predict``
         TODO
