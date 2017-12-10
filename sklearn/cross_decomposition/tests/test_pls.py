@@ -1,9 +1,13 @@
 import numpy as np
+from numpy.testing import assert_approx_equal
+
 from sklearn.utils.testing import (assert_equal, assert_array_almost_equal,
                                    assert_array_equal, assert_true,
                                    assert_raise_message)
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_, CCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils import check_random_state
 
 
 def test_pls():
@@ -164,17 +168,17 @@ def test_pls():
     p_noise = 10
     q_noise = 5
     # 2 latents vars:
-    np.random.seed(11)
-    l1 = np.random.normal(size=n)
-    l2 = np.random.normal(size=n)
+    rng = check_random_state(11)
+    l1 = rng.normal(size=n)
+    l2 = rng.normal(size=n)
     latents = np.array([l1, l1, l2, l2]).T
-    X = latents + np.random.normal(size=4 * n).reshape((n, 4))
-    Y = latents + np.random.normal(size=4 * n).reshape((n, 4))
+    X = latents + rng.normal(size=4 * n).reshape((n, 4))
+    Y = latents + rng.normal(size=4 * n).reshape((n, 4))
     X = np.concatenate(
-        (X, np.random.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
+        (X, rng.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
     Y = np.concatenate(
-        (Y, np.random.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
-    np.random.seed(None)
+        (Y, rng.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
+
     pls_ca = pls_.PLSCanonical(n_components=3)
     pls_ca.fit(X, Y)
 
@@ -351,6 +355,7 @@ def test_scale_and_stability():
             assert_array_almost_equal(X_s_score, X_score)
             assert_array_almost_equal(Y_s_score, Y_score)
 
+
 def test_pls_errors():
     d = load_linnerud()
     X = d.data
@@ -358,4 +363,30 @@ def test_pls_errors():
     for clf in [pls_.PLSCanonical(), pls_.PLSRegression(),
                 pls_.PLSSVD()]:
         clf.n_components = 4
-        assert_raise_message(ValueError, "Invalid number of components", clf.fit, X, Y)
+        assert_raise_message(ValueError, "Invalid number of components",
+                             clf.fit, X, Y)
+
+
+def test_pls_scaling():
+    # sanity check for scale=True
+    n_samples = 1000
+    n_targets = 5
+    n_features = 10
+
+    rng = check_random_state(0)
+
+    Q = rng.randn(n_targets, n_features)
+    Y = rng.randn(n_samples, n_targets)
+    X = np.dot(Y, Q) + 2 * rng.randn(n_samples, n_features) + 1
+    X *= 1000
+    X_scaled = StandardScaler().fit_transform(X)
+
+    pls = pls_.PLSRegression(n_components=5, scale=True)
+
+    pls.fit(X, Y)
+    score = pls.score(X, Y)
+
+    pls.fit(X_scaled, Y)
+    score_scaled = pls.score(X_scaled, Y)
+
+    assert_approx_equal(score, score_scaled)

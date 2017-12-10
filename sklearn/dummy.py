@@ -47,8 +47,11 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
              Dummy Classifier now supports prior fitting strategy using
              parameter *prior*.
 
-    random_state : int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use.
+    random_state : int, RandomState instance or None, optional, default=None
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     constant : int or str or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
@@ -103,6 +106,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        force_all_finite=False)
+
         if self.strategy not in ("most_frequent", "stratified", "uniform",
                                  "constant", "prior"):
             raise ValueError("Unknown strategy type.")
@@ -171,7 +177,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        force_all_finite=False)
         # numpy random_state expects Python int and not long as size argument
         # under Windows
         n_samples = int(X.shape[0])
@@ -251,7 +258,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        force_all_finite=False)
         # numpy random_state expects Python int and not long as size argument
         # under Windows
         n_samples = int(X.shape[0])
@@ -389,6 +397,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        force_all_finite=False)
 
         if self.strategy not in ("mean", "median", "quantile", "constant"):
             raise ValueError("Unknown strategy type: %s, expected "
@@ -465,7 +475,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Predicted target values for X.
         """
         check_is_fitted(self, "constant_")
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                        force_all_finite=False)
         n_samples = X.shape[0]
 
         y = np.ones((n_samples, 1)) * self.constant_

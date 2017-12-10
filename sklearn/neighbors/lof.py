@@ -55,12 +55,6 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    p : integer, optional (default=2)
-        Parameter for the Minkowski metric from
-        :ref:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-
     metric : string or callable, default 'minkowski'
         metric used for the distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
@@ -81,13 +75,19 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
-          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
-          'sqeuclidean', 'yule']
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics:
         http://docs.scipy.org/doc/scipy/reference/spatial.distance.html
+
+    p : integer, optional (default=2)
+        Parameter for the Minkowski metric from
+        :func:`sklearn.metrics.pairwise.pairwise_distances`. When p = 1, this
+        is equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, optional (default=None)
         Additional keyword arguments for the metric function.
@@ -106,7 +106,7 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
     Attributes
     ----------
     negative_outlier_factor_ : numpy array, shape (n_samples,)
-        The opposite LOF of the training samples. The lower, the more normal.
+        The opposite LOF of the training samples. The lower, the more abnormal.
         Inliers tend to have a LOF score close to 1, while outliers tend
         to have a larger LOF score.
 
@@ -294,5 +294,5 @@ class LocalOutlierFactor(NeighborsBase, KNeighborsMixin, UnsupervisedMixin):
                                         self.n_neighbors_ - 1]
         reach_dist_array = np.maximum(distances_X, dist_k)
 
-        #  1e-10 to avoid `nan' when when nb of duplicates > n_neighbors_:
+        #  1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
         return 1. / (np.mean(reach_dist_array, axis=1) + 1e-10)

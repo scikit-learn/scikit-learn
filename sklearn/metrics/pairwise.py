@@ -285,13 +285,14 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
     Parameters
     ----------
-    X, Y : {array-like, sparse matrix}
-        Arrays containing points. Respective shapes (n_samples1, n_features)
-        and (n_samples2, n_features)
+    X : {array-like, sparse matrix}, shape (n_samples1, n_features)
+        Array containing points.
 
-    block_size : int, default=64
-        The maximum number of mebibytes (MiB) of memory per job to use at a
-        time for calculating pairwise distances.
+    Y : {array-like, sparse matrix}, shape (n_samples2, n_features)
+        Arrays containing points.
+
+    axis : int, optional, default 1
+        Axis along which the argmin and distances are to be computed.
 
     metric : string or callable, default 'euclidean'
         metric to use for distance computation. Any metric from scikit-learn
@@ -312,18 +313,25 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
-          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
-          'sqeuclidean', 'yule']
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
+    block_size : int, default=64
+        The maximum number of mebibytes (MiB) of memory per job to use at a
+        time for calculating pairwise distances.
+    batch_size : integer
+        To reduce memory consumption over the naive solution, data are
+        processed in batches, comprising batch_size rows of X and
+        batch_size rows of Y. The default value is quite conservative, but
+        can be changed for fine-tuning. The larger the number, the larger the
+        memory usage.
+
     metric_kwargs : dict, optional
         Keyword arguments to pass to specified metric function.
-
-    axis : int, optional, default 1
-        Axis along which the argmin and distances are to be computed.
 
     Returns
     -------
@@ -385,9 +393,8 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean", block_size=500,
         Arrays containing points. Respective shapes (n_samples1, n_features)
         and (n_samples2, n_features)
 
-    block_size : int, default=64
-        The maximum number of mebibytes (MiB) of memory per job to use at a
-        time for calculating pairwise distances.
+    axis : int, optional, default 1
+        Axis along which the argmin and distances are to be computed.
 
     metric : string or callable
         metric to use for distance computation. Any metric from scikit-learn
@@ -408,18 +415,22 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean", block_size=500,
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
-          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
-          'sqeuclidean', 'yule']
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
+    block_size : int, default=64
+        The maximum number of mebibytes (MiB) of memory per job to use at a
+        time for calculating pairwise distances.
+
+    batch_size : integer
+        Deprecated. Use block_size instead.
+
     metric_kwargs : dict
         keyword arguments to pass to specified metric function.
-
-    axis : int, optional, default 1
-        Axis along which the argmin and distances are to be computed.
 
     Returns
     -------
@@ -442,7 +453,7 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean", block_size=500,
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True,
-                        size_threshold=5e8):
+                        size_threshold=None):
     """ Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -495,6 +506,10 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     array([[ 1.,  1.],
            [ 1.,  1.]]...)
     """
+    if size_threshold is not None:
+        warnings.warn('Use of the "size_threshold" is deprecated '
+                      'in 0.19 and it will be removed version '
+                      '0.21 of scikit-learn', DeprecationWarning)
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
@@ -1338,7 +1353,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
-      'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
+      'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
       'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
       See the documentation for scipy.spatial.distance for details on these
       metrics. These metrics do not support sparse matrix inputs.
@@ -1383,7 +1398,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    `**kwds` : optional keyword parameters
+    **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
@@ -1485,9 +1500,8 @@ def kernel_metrics():
 
 KERNEL_PARAMS = {
     "additive_chi2": (),
-    "chi2": (),
+    "chi2": frozenset(["gamma"]),
     "cosine": (),
-    "exp_chi2": frozenset(["gamma"]),
     "linear": (),
     "poly": frozenset(["gamma", "degree", "coef0"]),
     "polynomial": frozenset(["gamma", "degree", "coef0"]),
@@ -1536,6 +1550,9 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
+    filter_params : boolean
+        Whether to filter invalid parameters or not.
+
     n_jobs : int
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
@@ -1546,10 +1563,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    filter_params : boolean
-        Whether to filter invalid parameters or not.
-
-    `**kwds` : optional keyword parameters
+    **kwds : optional keyword parameters
         Any further parameters are passed directly to the kernel function.
 
     Returns

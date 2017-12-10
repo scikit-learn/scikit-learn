@@ -1,15 +1,15 @@
+from itertools import chain, product
 import warnings
 
 import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import pinv2
-from itertools import chain
+from scipy.sparse.csgraph import laplacian
 
 from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
                                    assert_almost_equal, assert_array_equal,
                                    SkipTest, assert_raises_regex,
-                                   assert_greater_equal)
-
+                                   assert_greater_equal, ignore_warnings)
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
 from sklearn.utils import resample
@@ -22,7 +22,6 @@ from sklearn.utils import flexible_vstack
 from sklearn.utils.extmath import pinvh
 from sklearn.utils.arpack import eigsh
 from sklearn.utils.mocking import MockDataFrame
-from sklearn.utils.graph import graph_laplacian
 
 
 def test_make_rng():
@@ -147,6 +146,7 @@ def test_safe_mask():
     assert_equal(X_csr[mask].shape[0], 3)
 
 
+@ignore_warnings  # Test deprecated backport to be removed in 0.21
 def test_pinvh_simple_real():
     a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 10]], dtype=np.float64)
     a = np.dot(a, a.T)
@@ -154,6 +154,7 @@ def test_pinvh_simple_real():
     assert_almost_equal(np.dot(a, a_pinv), np.eye(3))
 
 
+@ignore_warnings  # Test deprecated backport to be removed in 0.21
 def test_pinvh_nonpositive():
     a = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float64)
     a = np.dot(a, a.T)
@@ -165,6 +166,7 @@ def test_pinvh_nonpositive():
     assert_almost_equal(a_pinv, a_pinvh)
 
 
+@ignore_warnings  # Test deprecated backport to be removed in 0.21
 def test_pinvh_simple_complex():
     a = (np.array([[1, 2, 3], [4, 5, 6], [7, 8, 10]])
          + 1j * np.array([[10, 8, 7], [6, 5, 4], [3, 2, 1]]))
@@ -173,6 +175,7 @@ def test_pinvh_simple_complex():
     assert_almost_equal(np.dot(a, a_pinv), np.eye(3))
 
 
+@ignore_warnings  # Test deprecated backport to be removed in 0.21
 def test_arpack_eigsh_initialization():
     # Non-regression test that shows null-space computation is better with
     # initialization of eigsh from [-1,1] instead of [0,1]
@@ -180,7 +183,7 @@ def test_arpack_eigsh_initialization():
 
     A = random_state.rand(50, 50)
     A = np.dot(A.T, A)  # create s.p.d. matrix
-    A = graph_laplacian(A) + 1e-7 * np.identity(A.shape[0])
+    A = laplacian(A) + 1e-7 * np.identity(A.shape[0])
     k = 5
 
     # Test if eigsh is working correctly
@@ -240,10 +243,15 @@ def test_safe_indexing_pandas():
     # this happens in joblib memmapping
     X.setflags(write=False)
     X_df_readonly = pd.DataFrame(X)
-    with warnings.catch_warnings(record=True):
-        X_df_ro_indexed = safe_indexing(X_df_readonly, inds)
+    inds_readonly = inds.copy()
+    inds_readonly.setflags(write=False)
 
-    assert_array_equal(np.array(X_df_ro_indexed), X_indexed)
+    for this_df, this_inds in product([X_df, X_df_readonly],
+                                      [inds, inds_readonly]):
+        with warnings.catch_warnings(record=True):
+            X_df_indexed = safe_indexing(this_df, this_inds)
+
+        assert_array_equal(np.array(X_df_indexed), X_indexed)
 
 
 def test_safe_indexing_mock_pandas():

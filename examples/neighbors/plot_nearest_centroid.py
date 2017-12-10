@@ -18,8 +18,9 @@ n_neighbors = 15
 
 # import some data to play with
 iris = datasets.load_iris()
-X = iris.data[:, :2]  # we only take the first two features. We could
-                      # avoid this ugly slicing by using a two-dim dataset
+# we only take the first two features. We could avoid this ugly
+# slicing by using a two-dim dataset
+X = iris.data[:, :2]
 y = iris.target
 
 h = .02  # step size in the mesh
@@ -48,7 +49,8 @@ for shrinkage in [None, .2]:
     plt.pcolormesh(xx, yy, Z, cmap=cmap_light)
 
     # Plot also the training points
-    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
+    plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold,
+                edgecolor='b', s=20)
     plt.title("3-Class classification (shrink_threshold=%r)"
               % shrinkage)
     plt.axis('tight')

@@ -42,7 +42,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.naive_bayes import BernoulliNB, MultinomialNB
+from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
 from sklearn.ensemble import RandomForestClassifier
@@ -100,7 +100,7 @@ op.print_help()
 print()
 
 
-###############################################################################
+# #############################################################################
 # Load some categories from the training set
 if opts.all_categories:
     categories = None
@@ -152,7 +152,7 @@ y_train, y_test = data_train.target, data_test.target
 print("Extracting features from the training data using a sparse vectorizer")
 t0 = time()
 if opts.use_hashing:
-    vectorizer = HashingVectorizer(stop_words='english', non_negative=True,
+    vectorizer = HashingVectorizer(stop_words='english', alternate_sign=False,
                                    n_features=opts.n_features)
     X_train = vectorizer.transform(data_train.data)
 else:
@@ -201,7 +201,7 @@ def trim(s):
     return s if len(s) <= 80 else s[:77] + "..."
 
 
-###############################################################################
+# #############################################################################
 # Benchmark classifiers
 def benchmark(clf):
     print('_' * 80)
@@ -248,8 +248,9 @@ def benchmark(clf):
 results = []
 for clf, name in (
         (RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
-        (Perceptron(n_iter=50), "Perceptron"),
-        (PassiveAggressiveClassifier(n_iter=50), "Passive-Aggressive"),
+        (Perceptron(n_iter=50, tol=1e-3), "Perceptron"),
+        (PassiveAggressiveClassifier(n_iter=50, tol=1e-3),
+         "Passive-Aggressive"),
         (KNeighborsClassifier(n_neighbors=10), "kNN"),
         (RandomForestClassifier(n_estimators=100), "Random forest")):
     print('=' * 80)
@@ -265,13 +266,15 @@ for penalty in ["l2", "l1"]:
 
     # Train SGD model
     results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                           penalty=penalty)))
+                                           penalty=penalty,
+                                           max_iter=5)))
 
 # Train SGD with Elastic Net penalty
 print('=' * 80)
 print("Elastic-Net penalty")
 results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                       penalty="elasticnet")))
+                                       penalty="elasticnet",
+                                       max_iter=5)))
 
 # Train NearestCentroid without threshold
 print('=' * 80)
@@ -283,6 +286,7 @@ print('=' * 80)
 print("Naive Bayes")
 results.append(benchmark(MultinomialNB(alpha=.01)))
 results.append(benchmark(BernoulliNB(alpha=.01)))
+results.append(benchmark(ComplementNB(alpha=.1)))
 
 print('=' * 80)
 print("LinearSVC with L1-based feature selection")
