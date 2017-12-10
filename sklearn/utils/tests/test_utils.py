@@ -18,7 +18,6 @@ from sklearn.utils import column_or_1d
 from sklearn.utils import safe_indexing
 from sklearn.utils import shuffle
 from sklearn.utils import gen_even_slices
-from sklearn.utils import flexible_vstack
 from sklearn.utils.extmath import pinvh
 from sklearn.utils.arpack import eigsh
 from sklearn.utils.mocking import MockDataFrame
@@ -39,48 +38,6 @@ def test_make_rng():
     assert_true(check_random_state(43).randint(100) != rng_42.randint(100))
 
     assert_raises(ValueError, check_random_state, "some invalid seed")
-
-
-def test_flexible_vstack():
-    from scipy import sparse
-
-    def make_example(typ):
-        yield typ([1, 2])
-        yield typ([3])
-        yield typ([4, 5, 6])
-
-    results = flexible_vstack(make_example(list))
-    expected_results = [1, 2, 3, 4, 5, 6]
-    assert_equal(results, expected_results)
-
-    results = flexible_vstack(make_example(np.array))
-    expected_results = np.array([1, 2, 3, 4, 5, 6])
-    assert_array_equal(results, expected_results)
-
-    results = flexible_vstack(zip(make_example(list), make_example(np.array)))
-    expected_results = ([1, 2, 3, 4, 5, 6], np.array([1, 2, 3, 4, 5, 6]))
-    assert_array_equal(results, expected_results)
-
-    results = flexible_vstack(make_example(np.array), final_len=6)
-    expected_results = np.array([1, 2, 3, 4, 5, 6])
-    assert_array_equal(results, expected_results)
-
-    results = flexible_vstack(
-        make_example(lambda x: np.array(x).reshape(-1, 1)))
-    expected_results = np.array([[1], [2], [3], [4], [5], [6]])
-    assert_array_equal(results, expected_results)
-
-    results = flexible_vstack(
-        make_example(lambda x: sparse.csr_matrix(np.array(x).reshape(-1, 1))))
-    expected_results = np.array([[1], [2], [3], [4], [5], [6]], dtype=np.int64)
-    assert_equal(results.format, 'csr')
-    assert_array_equal(results.A, expected_results)
-
-    results = flexible_vstack(
-        make_example(lambda x: sparse.csc_matrix(np.array(x).reshape(-1, 1))))
-    expected_results = np.array([[1], [2], [3], [4], [5], [6]], dtype=np.int64)
-    assert_equal(results.format, 'csc')
-    assert_array_equal(results.A, expected_results)
 
 
 def test_deprecated():

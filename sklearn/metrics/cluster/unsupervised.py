@@ -224,8 +224,11 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     reduce_func = functools.partial(_silhouette_reduce,
                                     labels=labels, label_freqs=label_freqs,
                                     add_at=add_at)
-    results = pairwise_distances_chunked(X, reduce_func=reduce_func, **kwds)
+    results = zip(*pairwise_distances_chunked(X, reduce_func=reduce_func,
+                                              **kwds))
     intra_clust_dists, inter_clust_dists = results
+    intra_clust_dists = np.concatenate(intra_clust_dists)
+    inter_clust_dists = np.concatenate(inter_clust_dists)
 
     if len(intra_clust_dists) == 1:
         intra_clust_dists = intra_clust_dists[0]

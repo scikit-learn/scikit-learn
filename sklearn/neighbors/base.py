@@ -377,15 +377,13 @@ class KNeighborsMixin(object):
                                   return_distance=return_distance)
 
             # for efficiency, use squared euclidean distances
-            if self.effective_metric_ == 'euclidean':
-                result = pairwise_distances_chunked(
-                    X, self._fit_X, reduce_func=reduce_func,
-                    metric='euclidean', n_jobs=n_jobs, squared=True)
-            else:
-                result = pairwise_distances_chunked(
-                    X, self._fit_X, reduce_func=reduce_func,
-                    metric=self.effective_metric_, n_jobs=n_jobs,
-                    **self.effective_metric_params_)
+            kwds = ({'squared': True} if self.effective_metric_ == 'euclidean'
+                    else self.effective_metric_params_)
+
+            result = pairwise_distances_chunked(
+                X, self._fit_X, reduce_func=reduce_func,
+                metric=self.effective_metric_, n_jobs=n_jobs,
+                **kwds)
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):
@@ -397,13 +395,14 @@ class KNeighborsMixin(object):
                     X[s], n_neighbors, return_distance)
                 for s in gen_even_slices(X.shape[0], n_jobs)
             )
-            if return_distance:
-                dist, neigh_ind = tuple(zip(*result))
-                result = np.vstack(dist), np.vstack(neigh_ind)
-            else:
-                result = np.vstack(result)
         else:
             raise ValueError("internal: _fit_method not recognized")
+
+        if return_distance:
+            dist, neigh_ind = zip(*result)
+            result = np.vstack(dist), np.vstack(neigh_ind)
+        else:
+            result = np.vstack(result)
 
         if not query_is_train:
             return result
@@ -518,24 +517,18 @@ class RadiusNeighborsMixin(object):
 
     def _radius_neighbors_reduce_func(self, dist, start,
                                       radius, return_distance):
-        neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
-
-        # See https://github.com/numpy/numpy/issues/5456
-        # if you want to understand why this is initialized this way.
-        neigh_ind = np.empty(dist.shape[0], dtype='object')
-        neigh_ind[:] = neigh_ind_list
+        neigh_ind = [np.where(d <= radius)[0] for d in dist]
 
         if return_distance:
             dist_array = np.empty(dist.shape[0], dtype='object')
             if self.effective_metric_ == 'euclidean':
-                dist_list = [np.sqrt(d[neigh_ind[i]])
-                             for i, d in enumerate(dist)]
+                dist = [np.sqrt(d[neigh_ind[i]])
+                        for i, d in enumerate(dist)]
             else:
-                dist_list = [d[neigh_ind[i]]
-                             for i, d in enumerate(dist)]
-            dist_array[:] = dist_list
+                dist = [d[neigh_ind[i]]
+                        for i, d in enumerate(dist)]
 
-            results = dist_array, neigh_ind
+            results = dist, neigh_ind
         else:
             results = neigh_ind
         return results
@@ -623,23 +616,33 @@ class RadiusNeighborsMixin(object):
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
                 radius *= radius
-                reduce_func = partial(self._radius_neighbors_reduce_func,
-                                      radius=radius,
-                                      return_distance=return_distance)
-
-                results = pairwise_distances_chunked(
-                    X, self._fit_X, reduce_func=reduce_func,
-                    metric='euclidean', n_jobs=self.n_jobs,
-                    squared=True)
+                kwds = {'squared': True}
             else:
-                reduce_func = partial(self._radius_neighbors_reduce_func,
-                                      radius=radius,
-                                      return_distance=return_distance)
+                kwds = self.effective_metric_params_
 
-                results = pairwise_distances_chunked(
-                    X, self._fit_X, reduce_func=reduce_func,
-                    metric=self.effective_metric_, n_jobs=self.n_jobs,
-                    **self.effective_metric_params_)
+            reduce_func = partial(self._radius_neighbors_reduce_func,
+                                  radius=radius,
+                                  return_distance=return_distance)
+
+            results = pairwise_distances_chunked(
+                X, self._fit_X, reduce_func=reduce_func,
+                metric=self.effective_metric_, n_jobs=self.n_jobs,
+                **kwds)
+            if return_distance:
+                dist_chunks, neigh_ind_chunks = zip(*results)
+                dist_list = sum(dist_chunks, [])
+                neigh_ind_list = sum(neigh_ind_chunks, [])
+                # See https://github.com/numpy/numpy/issues/5456
+                # if you want to understand why this is initialized this way.
+                dist = np.empty(len(dist_list), dtype='object')
+                dist[:] = dist_list
+                neigh_ind = np.empty(len(neigh_ind_list), dtype='object')
+                neigh_ind[:] = neigh_ind_list
+                results = dist, neigh_ind
+            else:
+                neigh_ind_list = sum(results, [])
+                results = np.empty(len(neigh_ind_list), dtype='object')
+                results[:] = neigh_ind_list
 
         elif self._fit_method in ['ball_tree', 'kd_tree']:
             if issparse(X):

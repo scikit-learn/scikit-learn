@@ -22,7 +22,6 @@ from ..utils import check_array
 from ..utils import gen_even_slices
 from ..utils import get_block_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils import flexible_vstack
 from ..utils.validation import _num_samples
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
@@ -352,9 +351,11 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     if axis == 0:
         X, Y = Y, X
 
-    indices, values = pairwise_distances_chunked(
+    indices, values = zip(*pairwise_distances_chunked(
         X, Y, reduce_func=_argmin_min_reduce, metric=metric,
-        **metric_kwargs)
+        **metric_kwargs))
+    indices = np.concatenate(indices)
+    values = np.concatenate(values)
 
     if metric == "euclidean" and not metric_kwargs.get("squared", False):
         np.sqrt(values, values)
@@ -1110,65 +1111,6 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
 
 
-def _generate_pairwise_distances_chunked(X, Y, metric, reduce_func,
-                                         n_jobs, block_n_rows, **kwds):
-    """Generates blocks of the distance matrix from X and optional Y.
-
-    Parameters
-    ----------
-    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or,
-        [n_samples_a, n_features] otherwise
-        Array of pairwise distances between samples, or a feature array.
-
-    Y : array [n_samples_b, n_features], optional
-        An optional second feature array. Only allowed if
-        metric != "precomputed".
-
-    reduce_func : callable, optional
-        The function which is applied on each chunk of the distance matrix,
-        reducing it to needed values.  ``reduce_func`` receives the distances
-        chunk, an array or sparse matrix of shape
-        ``(X_chunk_n_samples, Y_n_samples)``,
-        and also the index of the first row in X.  It should return an array,
-        a list, or a sparse matrix of length ``X_chunk_n_samples``, or a tuple
-        of such objects.
-
-    metric : string, or callable
-        The metric to use when calculating distance between instances in a
-        feature array.
-
-    n_jobs : int
-        The number of jobs to use for the computation.
-
-    block_n_rows : int
-        Number of rows to be computed for each block.
-
-    `**kwds` : optional keyword parameters
-        Any further parameters are passed directly to the distance function.
-
-    Returns
-    -------
-    D : generator
-        Yields (distance_matrix_chunk, start_idx) matrices.
-    """
-    if metric != 'precomputed' and Y is None:
-        Y = X
-    n_samples = X.shape[0]
-    for start in range(0, n_samples, block_n_rows):
-        # get distances from block to every other sample
-        stop = min(start + block_n_rows, n_samples)
-        if start == 0 and stop >= n_samples:
-            X_chunk = X  # allow fast paths in pairwise_distances
-        else:
-            X_chunk = X[start:stop]
-        D_chunk = pairwise_distances(X_chunk, Y, metric=metric,
-                                     n_jobs=n_jobs, **kwds)
-        if reduce_func is not None:
-            D_chunk = reduce_func(D_chunk, start)
-            _check_chunk_size(D_chunk, stop - start)
-        yield D_chunk
-
-
 def _check_chunk_size(reduced, chunk_size):
     is_tuple = isinstance(reduced, tuple)
     if not is_tuple:
@@ -1245,22 +1187,32 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
 
     Returns
     -------
-    TODO
+    D_chunks : generator
+        Each element in the generator is either a slice of distance matrix or a
+        reduced distance matrix.
 
     """
     block_n_rows = get_block_n_rows(row_bytes=_num_samples(Y if Y is not None
                                                            else X) * 8,
                                     max_n_rows=_num_samples(X),
                                     working_memory=working_memory)
-    gen = _generate_pairwise_distances_chunked(X, Y, metric=metric,
-                                               n_jobs=n_jobs,
-                                               reduce_func=reduce_func,
-                                               block_n_rows=block_n_rows,
-                                               **kwds)
-    if reduce_func is None:
-        return gen
-    else:
-        return flexible_vstack(gen, final_len=_num_samples(X))
+
+    if metric != 'precomputed' and Y is None:
+        Y = X
+    n_samples = X.shape[0]
+    for start in range(0, n_samples, block_n_rows):
+        # get distances from block to every other sample
+        stop = min(start + block_n_rows, n_samples)
+        if start == 0 and stop >= n_samples:
+            X_chunk = X  # allow fast paths in pairwise_distances
+        else:
+            X_chunk = X[start:stop]
+        D_chunk = pairwise_distances(X_chunk, Y, metric=metric,
+                                     n_jobs=n_jobs, **kwds)
+        if reduce_func is not None:
+            D_chunk = reduce_func(D_chunk, start)
+            _check_chunk_size(D_chunk, stop - start)
+        yield D_chunk
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):

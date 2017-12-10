@@ -388,9 +388,9 @@ def test_pairwise_distances_chunked_reduce():
     X = rng.random_sample((400, 4))
     # Reduced Euclidean distance
     S = pairwise_distances(X)[:, :100]
-    S2 = pairwise_distances_chunked(X, None, reduce_func=_reduce_func,
-                                    working_memory=1)
-    assert_array_almost_equal(S, S2)
+    S_chunks = pairwise_distances_chunked(X, None, reduce_func=_reduce_func,
+                                          working_memory=1)
+    assert_array_almost_equal(S, np.vstack(S_chunks))
 
 
 def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
