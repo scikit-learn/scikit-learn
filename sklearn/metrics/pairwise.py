@@ -1145,12 +1145,11 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
 
     reduce_func : callable, optional
         The function which is applied on each chunk of the distance matrix,
-        reducing it to needed values.  ``reduce_func`` receives the distances
-        chunk, an array or sparse matrix of shape
-        ``(X_chunk_n_samples, Y_n_samples)``,
-        and also the index of the first row in X.  It should return an array,
-        a list, or a sparse matrix of length ``X_chunk_n_samples``, or a tuple
-        of such objects.
+        reducing it to needed values.  ``reduce_func(D_chunk, start)``
+        is called repeatedly, where ``D_chunk`` is a contiguous vertical
+        slice of the pairwise distance matrix, starting at row ``start``.
+        It should return an array, a list, or a sparse matrix of length
+        ``D_chunk.shape[0]``, or a tuple of such objects.
 
         If None, pairwise_distances_chunked returns a generator of vertical
         chunks of the distance matrix.
