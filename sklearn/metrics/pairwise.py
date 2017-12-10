@@ -1269,7 +1269,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     if reduce_func is None:
         return gen
     else:
-        return flexible_vstack(gen)
+        return flexible_vstack(gen, final_len=_num_samples(X))
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
