@@ -17,7 +17,7 @@ from scipy.sparse import csr_matrix, issparse
 from .ball_tree import BallTree
 from .kd_tree import KDTree
 from ..base import BaseEstimator
-from ..metrics import pairwise_distances_reduce
+from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.multiclass import check_classification_targets
@@ -274,7 +274,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 class KNeighborsMixin(object):
     """Mixin for k-neighbors searches"""
 
-    def _kneighbors_reduce_func(self, dist, n_neighbors, return_distance):
+    def _kneighbors_reduce_func(self, dist, start,
+                                n_neighbors, return_distance):
         sample_range = np.arange(dist.shape[0])[:, None]
         neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
         neigh_ind = neigh_ind[:, :n_neighbors]
@@ -377,11 +378,11 @@ class KNeighborsMixin(object):
 
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == 'euclidean':
-                result = pairwise_distances_reduce(
+                result = pairwise_distances_chunked(
                     X, self._fit_X, reduce_func=reduce_func,
                     metric='euclidean', n_jobs=n_jobs, squared=True)
             else:
-                result = pairwise_distances_reduce(
+                result = pairwise_distances_chunked(
                     X, self._fit_X, reduce_func=reduce_func,
                     metric=self.effective_metric_, n_jobs=n_jobs,
                     **self.effective_metric_params_)
@@ -515,7 +516,8 @@ class KNeighborsMixin(object):
 class RadiusNeighborsMixin(object):
     """Mixin for radius-based neighbors searches"""
 
-    def _radius_neighbors_reduce_func(self, dist, radius, return_distance):
+    def _radius_neighbors_reduce_func(self, dist, start,
+                                      radius, return_distance):
         neigh_ind_list = [np.where(d <= radius)[0] for d in dist]
 
         # See https://github.com/numpy/numpy/issues/5456
@@ -625,7 +627,7 @@ class RadiusNeighborsMixin(object):
                                       radius=radius,
                                       return_distance=return_distance)
 
-                results = pairwise_distances_reduce(
+                results = pairwise_distances_chunked(
                     X, self._fit_X, reduce_func=reduce_func,
                     metric='euclidean', n_jobs=self.n_jobs,
                     squared=True)
@@ -634,7 +636,7 @@ class RadiusNeighborsMixin(object):
                                       radius=radius,
                                       return_distance=return_distance)
 
-                results = pairwise_distances_reduce(
+                results = pairwise_distances_chunked(
                     X, self._fit_X, reduce_func=reduce_func,
                     metric=self.effective_metric_, n_jobs=self.n_jobs,
                     **self.effective_metric_params_)

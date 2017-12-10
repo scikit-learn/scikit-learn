@@ -51,7 +51,7 @@ from .pairwise import pairwise_distances
 from .pairwise import pairwise_distances_argmin
 from .pairwise import pairwise_distances_argmin_min
 from .pairwise import pairwise_kernels
-from .pairwise import pairwise_distances_reduce
+from .pairwise import pairwise_distances_chunked
 
 from .regression import explained_variance_score
 from .regression import mean_absolute_error
@@ -102,10 +102,10 @@ __all__ = [
     'mutual_info_score',
     'normalized_mutual_info_score',
     'pairwise_distances',
-    'pairwise_distances_reduce',
     'pairwise_distances_argmin',
     'pairwise_distances_argmin_min',
     'pairwise_distances_argmin_min',
+    'pairwise_distances_chunked',
     'pairwise_kernels',
     'precision_recall_curve',
     'precision_recall_fscore_support',

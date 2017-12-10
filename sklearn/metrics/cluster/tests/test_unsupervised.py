@@ -35,26 +35,6 @@ def test_silhouette():
         score_euclidean = silhouette_score(X, y, metric='euclidean')
         assert_almost_equal(score_precomputed, score_euclidean)
 
-        # test block_size
-        score_batched = silhouette_score(X, y, block_size=10,
-                                         metric='euclidean')
-        assert_almost_equal(score_batched, score_euclidean)
-        score_batched = silhouette_score(D, y, block_size=10,
-                                         metric='precomputed')
-        assert_almost_equal(score_batched, score_euclidean)
-        # absurdly large block_size
-        score_batched = silhouette_score(D, y, block_size=10000,
-                                         metric='precomputed')
-        assert_almost_equal(score_batched, score_euclidean)
-
-        # smoke test n_jobs with and without explicit block_size
-        score_parallel = silhouette_score(X, y,
-                                          n_jobs=2, metric='euclidean')
-        assert_almost_equal(score_parallel, score_euclidean)
-        score_parallel = silhouette_score(X, y, block_size=10,
-                                          n_jobs=2, metric='euclidean')
-        assert_almost_equal(score_parallel, score_euclidean)
-
         if X is X_dense:
             score_dense_without_sampling = score_precomputed
         else:
@@ -99,14 +79,6 @@ def test_cluster_size_1():
     assert_false(np.isnan(silhouette))
     ss = silhouette_samples(X, labels)
     assert_array_equal(ss, [0, .5, .5, 0, 1, 1])
-
-
-def test_silhouette_invalid_block_size():
-    X = [[0], [0], [1]]
-    y = [1, 1, 2]
-    assert_raise_message(ValueError, 'block_size should be at least n_samples '
-                         '* 8 bytes = 1 MiB, got 0',
-                         silhouette_score, X, y, block_size=0)
 
 
 def test_no_nan():

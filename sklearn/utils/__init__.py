@@ -18,6 +18,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
+from .. import get_config
 
 __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
@@ -614,3 +615,39 @@ def flexible_vstack(it, final_len=None):
 
     stacked_results = finalize(accumulator, first)
     return stacked_results
+
+
+def get_block_n_rows(row_bytes, max_n_rows=None,
+                     working_memory=None):
+    """Calculates the number of rows that fit in working_memory
+
+    Parameters
+    ----------
+    row_bytes : int
+        The number of bytes consumed by each row
+    max_n_rows : int, optional
+        The maximum return value.
+    working_memory : int, optional
+        The number of rows to fit inside this number of MiB will be returned.
+        Defaults to ``sklearn.get_config()['working_memory']``.
+
+    Returns
+    -------
+    int or n_samples
+    """
+
+    if working_memory is None:
+        working_memory = get_config()['working_memory']
+
+    if working_memory is None:
+        return max_n_rows
+
+    block_n_rows = working_memory * (2 ** 20) // row_bytes
+    if max_n_rows is not None:
+        block_n_rows = min(block_n_rows, max_n_rows)
+    if block_n_rows < 1:
+        warnings.warn('Could not adhere to working_memory config. '
+                      'Currently %dMiB, %.0fMiB required.' %
+                      (working_memory, np.ceil(row_bytes * 2 ** -20)))
+        block_n_rows = 1
+    return block_n_rows
