@@ -1171,7 +1171,6 @@ def _generate_pairwise_distances_chunked(X, Y, metric, reduce_func,
         if reduce_func is not None:
             D_chunk = reduce_func(D_chunk, start)
             _check_chunk_size(D_chunk, stop - start)
-            # TODO: check that len(flexible_vstack([D_chunk])) == stop - start
         yield D_chunk
 
 
@@ -1270,7 +1269,6 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     if reduce_func is None:
         return gen
     else:
-        # TODO: check that the shapes of objects in reduce_func are correct
         return flexible_vstack(gen)
 
 
