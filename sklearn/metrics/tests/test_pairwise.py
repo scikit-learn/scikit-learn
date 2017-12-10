@@ -395,16 +395,14 @@ def test_pairwise_distances_chunked_reduce():
 
 
 def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
-    from sklearn.metrics.pairwise import BYTES_PER_FLOAT
     gen = pairwise_distances_chunked(X, Y, working_memory=working_memory,
                                      metric=metric)
     blockwise_distances = list(gen)
-    min_block_mib = X.shape[0] * BYTES_PER_FLOAT * 2 ** -20
-    if working_memory < min_block_mib:
-        working_memory = min_block_mib
+    min_block_mib = X.shape[0] * 8 * 2 ** -20
+    working_memory = min(working_memory, min_block_mib)
 
     for block in blockwise_distances:
-        memory_used = len(block) * BYTES_PER_FLOAT
+        memory_used = len(block) * 8
         assert_true(memory_used <= working_memory * 2 ** 20)
 
     blockwise_distances = np.vstack(blockwise_distances)

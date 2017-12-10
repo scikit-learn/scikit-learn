@@ -259,7 +259,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False,
     return distances if squared else np.sqrt(distances, out=distances)
 
 
-def _argmin_min_reduce_func(dist, start):
+def _argmin_min_reduce(dist, start):
     indices = dist.argmin(axis=1)
     values = dist[np.arange(dist.shape[0]), indices]
     return indices, values
@@ -353,7 +353,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         X, Y = Y, X
 
     indices, values = pairwise_distances_chunked(
-        X, Y, reduce_func=_argmin_min_reduce_func, metric=metric,
+        X, Y, reduce_func=_argmin_min_reduce, metric=metric,
         **metric_kwargs)
 
     if metric == "euclidean" and not metric_kwargs.get("squared", False):
@@ -431,13 +431,11 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin_min
     """
-    if batch_size is not None:
-        warnings.warn("'batch_size' was deprecated in version 0.20 and will "
-                      "be removed in version 0.22.", DeprecationWarning)
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    return pairwise_distances_argmin_min(X, Y, axis, metric, metric_kwargs)[0]
+    return pairwise_distances_argmin_min(X, Y, axis, metric, metric_kwargs,
+                                         batch_size=batch_size)[0]
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True,
