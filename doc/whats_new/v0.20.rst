@@ -116,6 +116,15 @@ Model evaluation and meta-estimators
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
   :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+- The default of ``iid`` parameter of :class:`model_selection.GridSearchCV`
+  and :class:`model_selection.RandomizedSearchCV` will change from ``True`` to
+  ``False`` in version 0.22 to correspond to the standard definition of
+  cross-validation, and the parameter will be removed in version 0.24
+  altogether. This parameter is of greatest practical significance where the
+  sizes of different test sets in cross-validation were very unequal, i.e. in
+  group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
+  and `Andreas Müller`_.
+
 Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
