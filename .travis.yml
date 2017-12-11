@@ -39,10 +39,10 @@ matrix:
            COVERAGE=true
       if: type != cron
     # This environment tests the newest supported Anaconda release (5.0.0)
-    # It also runs tests requiring Pandas.
+    # It also runs tests requiring Pandas and PyAMG
     - env: DISTRIB="conda" PYTHON_VERSION="3.6.2" INSTALL_MKL="true"
            NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1" PANDAS_VERSION="0.20.3"
-           CYTHON_VERSION="0.26.1" COVERAGE=true
+           CYTHON_VERSION="0.26.1" PYAMG_VERSION="3.3.2" COVERAGE=true
            CHECK_PYTEST_SOFT_DEPENDENCY="true"
       if: type != cron
     # flake8 linting on diff wrt common ancestor with upstream/master

@@ -37,23 +37,24 @@ if [[ "$DISTRIB" == "conda" ]]; then
     export PATH=$MINICONDA_PATH/bin:$PATH
     conda update --yes conda
 
-    # Configure the conda environment and put it in the path using the
-    # provided versions
-    if [[ "$INSTALL_MKL" == "true" ]]; then
-        conda create -n testenv --yes python=$PYTHON_VERSION pip \
-            pytest pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-            mkl cython=$CYTHON_VERSION \
-            ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
+    TO_INSTALL="python=$PYTHON_VERSION pip pytest pytests-cov" \
+              " numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION" \
+              " cython=$CYTHON_VERSION"
 
-    else
-        conda create -n testenv --yes python=$PYTHON_VERSION pip \
-            pytest pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
-            nomkl cython=$CYTHON_VERSION \
-            ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
+    if [[ "$INSTALL_MKL" == "true" ]]; then
+        TO_INSTALL="$TO_INSTALL mkl"
     fi
+
+    if [[ -n "$PANDAS_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
+    fi
+
+    conda create -n testenv --yes $TO_INSTALL
     source activate testenv
-    # required to test spectral clustering
-    conda install --yes pyamg -c conda-forge
+
+    if [[ -n "$PYAMG_VERSION" ]]; then
+        conda install --yes pyamg=$PYAMG_VERSION
+    fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
