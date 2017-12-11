@@ -997,20 +997,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
 
-        if isinstance(self, GradientBoostingClassifier):
-            le = LabelEncoder()
-            le.fit(y)
-            y_ = le.transform(y)
-            n_trim_classes = np.count_nonzero(np.bincount(y_, sample_weight))
-            if n_trim_classes < 2:
-                raise ValueError("y contains %d class after sample_weight "
-                                 "trimmed classes with zero weights, while "
-                                 "a minimum of 2 classes are required."
-                                 % n_trim_classes)
-
         check_consistent_length(X, y, sample_weight)
 
-        y = self._validate_y(y)
+        if isinstance(self, GradientBoostingClassifier):
+            y = self._validate_y(y, sample_weight)
+        else:
+            y = self._validate_y(y)
 
         if self.n_iter_no_change is not None:
             X, X_val, y, y_val, sample_weight, sample_weight_val = (
@@ -1555,9 +1547,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol)
 
-    def _validate_y(self, y):
+    def _validate_y(self, y, sample_weight):
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
+        n_trim_classes = np.count_nonzero(np.bincount(y, sample_weight))
+        if n_trim_classes < 2:
+            raise ValueError("y contains %d class after sample_weight "
+                             "trimmed classes with zero weights, while a "
+                             "minimum of 2 classes are required."
+                             % n_trim_classes)
         self.n_classes_ = len(self.classes_)
         return y
 
