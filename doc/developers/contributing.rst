@@ -435,9 +435,9 @@ HTML output by building the documentation website.
 **Building the documentation**
 
 Building the documentation requires the ``sphinx``, ``sphinx-gallery``,
-``numpydoc``, and ``matplotlib`` packages::
+``numpydoc``, ``matplotlib``, and ``Pillow`` packages::
 
-    pip install sphinx numpydoc sphinx-gallery matplotlib
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow
 
 It also requires having the version of scikit-learn installed that corresponds
 to the documentation, e.g.::
