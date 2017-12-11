@@ -308,6 +308,26 @@ Debian / Ubuntu.
     or upgrade to Python 3.4 which has a new version of ``multiprocessing``
     that should be immune to this problem.
 
+Limiting Working Memory
+-----------------------
+
+Some calculations when implemented using standard numpy vectorized
+operations involve using a large amount of temporary memory.
+As well as potentially exhausting system memory, memory management
+can overwhelm computation time.  Where computations can be performed
+in fixed-memory chunks, we attempt to do so, and allow the user to
+hint at the maximum size of this working memory (defaulting to 64 MiB)
+using :func:`sklearn.set_config` or :func:`config_context`.
+The following suggests to limit temporary working memory to 128 MiB::
+
+  >>> import sklearn
+  >>> with sklearn.config_context(working_memory=128):
+  ...    pass  # do chunked work here
+
+An example of a chunked operation adhering to this setting is
+:func:`metric.pairwise_distances_chunked`, which facilitates computing
+row-wise reductions of a pairwise distance matrix.
+
 Model Compression
 -----------------
 
