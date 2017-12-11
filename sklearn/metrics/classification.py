@@ -1451,14 +1451,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     digits : int
         Number of digits for formatting output floating point values
 
-    average : string, ['weighted' (default), 'binary', 'micro', 'macro',
+    average : string, ['weighted' (default), 'micro', 'macro',
                        'samples']
         Determines the type of averaging performed on the data, after
         reporting the individual results per class:
 
-        ``'binary'``:
-            Only report results for the class specified by ``pos_label``.
-            This is applicable only if targets (``y_{true,pred}``) are binary.
         ``'micro'``:
             Calculate metrics globally by counting the total true positives,
             false negatives and false positives.
@@ -1527,7 +1524,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                 "parameter".format(len(labels), len(target_names))
             )
 
-    average_options = ('micro', 'macro', 'weighted', 'binary', 'samples')
+    average_options = ('micro', 'macro', 'weighted', 'samples')
     if average not in average_options:
         raise ValueError('average has to be one of ' + str(average_options))
 

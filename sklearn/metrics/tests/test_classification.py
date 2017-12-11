@@ -989,24 +989,6 @@ versicolor       0.33      0.10      0.15        31
     assert_equal(report, expected_report)
 
 
-def test_classification_report_binary_averaging():
-    y_true = [0, 1, 1, 1, 0, 1, 1, 0]
-    y_pred = [0, 0, 1, 1, 1, 0, 1, 0]
-
-    # print classification report with class names
-    expected_report = """\
-            precision    recall  f1-score   support
-
-         0       0.50      0.67      0.57         3
-         1       0.75      0.60      0.67         5
-
-binary avg       0.75      0.60      0.67         8
-"""
-
-    report = classification_report(y_true, y_pred, average='binary')
-    assert_equal(report, expected_report)
-
-
 def test_multilabel_zero_one_loss_subset():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
