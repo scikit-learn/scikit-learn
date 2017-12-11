@@ -1,3 +1,11 @@
+
+..
+    This file maps contributor names to their URLs. It should mostly be used
+    for core contributors, and occasionally for contributors who do not want
+    their github page to be their URL target. Historically it was used to
+    hyperlink all contributors' names, and ``:user:`` should now be preferred.
+
+
 .. _Olivier Grisel: https://twitter.com/ogrisel
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
@@ -141,3 +149,7 @@
 .. _Neeraj Gangwar: http://neerajgangwar.in
 
 .. _Arthur Mensch: https://amensch.fr
+
+.. _Joris Van den Bossche: https://github.com/jorisvandenbossche
+
+.. _Roman Yurchak: https://github.com/rth

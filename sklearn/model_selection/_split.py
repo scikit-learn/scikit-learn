@@ -1253,7 +1253,7 @@ class ShuffleSplit(BaseShuffleSplit):
         If float, should be between 0.0 and 1.0 and represent the proportion
         of the dataset to include in the test split. If int, represents the
         absolute number of test samples. If None, the value is set to the
-        complement of the train size. By default (the is parameter
+        complement of the train size. By default (the parameter is
         unspecified), the value is set to 0.1.
         The default will change in version 0.21. It will remain 0.1 only
         if ``train_size`` is unspecified, otherwise it will complement
@@ -1534,8 +1534,9 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                                                   self.train_size)
 
         if y.ndim == 2:
-            # for multi-label y, map each distinct row to its string repr:
-            y = np.array([str(row) for row in y])
+            # for multi-label y, map each distinct row to a string repr
+            # using join because str(row) uses an ellipsis if len(row) > 1000
+            y = np.array([' '.join(row.astype('str')) for row in y])
 
         classes, y_indices = np.unique(y, return_inverse=True)
         n_classes = classes.shape[0]
@@ -2058,8 +2059,8 @@ def train_test_split(*arrays, **options):
                                      safe_indexing(a, test)) for a in arrays))
 
 
-train_test_split.__test__ = False  # to avoid a pb with nosetests
-
+# Tell nose that train_test_split is not a test
+train_test_split.__test__ = False
 
 def _build_repr(self):
     # XXX This is copied from BaseEstimator's get_params

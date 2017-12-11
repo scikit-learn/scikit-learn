@@ -158,8 +158,8 @@ def _kl_divergence(params, P, degrees_of_freedom, n_samples, n_components,
 
     # Q is a heavy-tailed distribution: Student's t-distribution
     dist = pdist(X_embedded, "sqeuclidean")
-    dist += 1.
     dist /= degrees_of_freedom
+    dist += 1.
     dist **= (degrees_of_freedom + 1.0) / -2.0
     Q = np.maximum(dist / (2.0 * np.sum(dist)), MACHINE_EPSILON)
 
@@ -423,9 +423,9 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
         dist_X = X
     else:
         dist_X = pairwise_distances(X, squared=True)
-    dist_X_embedded = pairwise_distances(X_embedded, squared=True)
     ind_X = np.argsort(dist_X, axis=1)
-    ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, 1:n_neighbors + 1]
+    ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
+        return_distance=False)
 
     n_samples = X.shape[0]
     t = 0.0
