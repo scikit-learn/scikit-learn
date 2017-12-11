@@ -520,55 +520,28 @@ def get_chunk_n_rows(row_bytes, max_n_rows=None,
         from some function being applied to each chunk.
     max_n_rows : int, optional
         The maximum return value.
-    working_memory : int, optional
+    working_memory : int or float, optional
         The number of rows to fit inside this number of MiB will be returned.
         Defaults to ``sklearn.get_config()['working_memory']``.
 
     Returns
     -------
     int or the value of n_samples
+
+    Warns
+    -----
+    Issues a UserWarning if ``row_bytes`` exceeds ``working_memory`` MiB.
     """
 
     if working_memory is None:
         working_memory = get_config()['working_memory']
 
-    chunk_n_rows = working_memory * (2 ** 20) // row_bytes
+    chunk_n_rows = int(working_memory * (2 ** 20) // row_bytes)
     if max_n_rows is not None:
         chunk_n_rows = min(chunk_n_rows, max_n_rows)
     if chunk_n_rows < 1:
         warnings.warn('Could not adhere to working_memory config. '
-                      'Currently %dMiB, %.0fMiB required.' %
+                      'Currently %.0fMiB, %.0fMiB required.' %
                       (working_memory, np.ceil(row_bytes * 2 ** -20)))
         chunk_n_rows = 1
     return chunk_n_rows
-
-
-def generate_chunks(X, row_bytes, working_memory=None):
-    """Generates vertical chunks of X to process within constant memory
-
-    Parameters
-    ----------
-    X : array-like
-    row_bytes : int
-        The number of bytes consumed by each row of expected output
-        from some function being applied to each chunk.
-    working_memory : int, optional
-        The number of rows to fit inside this number of MiB will be returned.
-        Defaults to ``sklearn.get_config()['working_memory']``.
-
-    Yields
-    ------
-    X_chunk : array-like
-    start : int
-    """
-    n_samples = _num_samples(X)
-    chunk_n_rows = get_chunk_n_rows(row_bytes=row_bytes,
-                                    max_n_rows=n_samples,
-                                    working_memory=working_memory)
-    for start in range(0, n_samples, chunk_n_rows):
-        stop = min(start + chunk_n_rows, n_samples)
-        if start == 0 and stop >= n_samples:
-            X_chunk = X  # potential for fast paths
-        else:
-            X_chunk = X[start:stop]
-        yield X_chunk, start

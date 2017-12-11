@@ -1190,18 +1190,19 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         A contiguous slice of distance matrix, optionally processed by
         ``reduce_func``.
     """
-    n_samples = _num_samples(X)
+    n_samples_X = _num_samples(X)
     if metric == 'precomputed':
         slices = (slice(0, n_samples),)
     else:
         if Y is None:
             Y = X
         chunk_n_rows = get_chunk_n_rows(row_bytes=8 * _num_samples(Y),
+                                        max_n_rows=n_samples_X,
                                         working_memory=working_memory)
-        slices = gen_batches(n_samples, chunk_n_rows)
+        slices = gen_batches(n_samples_X, chunk_n_rows)
 
     for sl in slices:
-        if sl.start == 0 and sl.stop == n_samples:
+        if sl.start == 0 and sl.stop == n_samples_X:
             X_chunk = X  # enable optimised paths for X is Y
         else:
             X_chunk = X[sl]
