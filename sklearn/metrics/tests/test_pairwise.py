@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import linalg
+import pytest
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski, wminkowski
@@ -389,15 +390,56 @@ def test_pairwise_distances_chunked_reduce():
     # Reduced Euclidean distance
     S = pairwise_distances(X)[:, :100]
     S_chunks = pairwise_distances_chunked(X, None, reduce_func=_reduce_func,
-                                          working_memory=1)
+                                          working_memory=2 ** -16)
+    assert hasattr(S_chunks, '__next__')
+    S_chunks = list(S_chunks)
+    assert len(S_chunks) > 1
     assert_array_almost_equal(S, np.vstack(S_chunks))
+
+
+@pytest.mark.parametrize('good_reduce', [
+    lambda D, start: list(D),
+    lambda D, start: np.array(D),
+    lambda D, start: csr_matrix(D),
+    lambda D, start: (list(D), list(D)),
+    lambda D, start: (dok_matrix(D), np.array(D), list(D)),
+    lambda D, start: 'abcdefghijklmnopqrstuvwxyz'[:len(D)],
+    ])
+def test_pairwise_distances_chunked_reduce_valid(good_reduce):
+    X = np.arange(10).reshape(-1, 1)
+    S_chunks = pairwise_distances_chunked(X, None, reduce_func=good_reduce,
+                                          working_memory=64)
+    next(S_chunks)
+
+
+@pytest.mark.parametrize(('bad_reduce', 'err_type', 'message'), [
+    (lambda D, s: np.concatenate([D, D[-1:]]), ValueError,
+     r'length 11\..* input: 10\.'),
+    (lambda D, s: (D, np.concatenate([D, D[-1:]])), ValueError,
+     r'length \(10, 11\)\..* input: 10\.'),
+    (lambda D, s: (D[:9], D), ValueError,
+     r'length \(9, 10\)\..* input: 10\.'),
+    (lambda D, s: 7, TypeError,
+     r'returned 7\. Expected sequence\(s\) of length 10\.'),
+    (lambda D, s: (7, 8), TypeError,
+     r'returned \(7, 8\)\. Expected sequence\(s\) of length 10\.'),
+    (lambda D, s: (np.arange(10), 9), TypeError,
+     r', 9\)\. Expected sequence\(s\) of length 10\.'),
+])
+def test_pairwise_distances_chunked_reduce_invalid(bad_reduce, err_type,
+                                                   message):
+    X = np.arange(10).reshape(-1, 1)
+    S_chunks = pairwise_distances_chunked(X, None, reduce_func=bad_reduce,
+                                          working_memory=64)
+    assert_raises_regexp(err_type, message, next, S_chunks)
 
 
 def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
     gen = pairwise_distances_chunked(X, Y, working_memory=working_memory,
                                      metric=metric)
+    assert hasattr(gen, '__next__')
     blockwise_distances = list(gen)
-    min_block_mib = X.shape[0] * 8 * 2 ** -20
+    min_block_mib = np.array(X).shape[0] * 8 * 2 ** -20
     working_memory = min(working_memory, min_block_mib)
 
     for block in blockwise_distances:
@@ -416,9 +458,14 @@ def test_pairwise_distances_chunked():
     X = rng.random_sample((400, 4))
     check_pairwise_distances_chunked(X, None, working_memory=1,
                                      metric='euclidean')
+    # X as list
+    check_pairwise_distances_chunked(X.tolist(), None, working_memory=1,
+                                     metric='euclidean')
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((200, 4))
     check_pairwise_distances_chunked(X, Y, working_memory=1,
+                                     metric='euclidean')
+    check_pairwise_distances_chunked(X.tolist(), Y.tolist(), working_memory=1,
                                      metric='euclidean')
     # absurdly large working_memory
     check_pairwise_distances_chunked(X, Y, working_memory=10000,
@@ -430,6 +477,15 @@ def test_pairwise_distances_chunked():
     # Test that a value error is raised if the metric is unknown
     assert_raises(ValueError, next,
                   pairwise_distances_chunked(X, Y, metric="blah"))
+
+    # Test precomputed returns all at once
+    D = pairwise_distances(X)
+    gen = pairwise_distances_chunked(D,
+                                     working_memory=2 ** -16,
+                                     metric='precomputed')
+    assert hasattr(gen, '__next__')
+    assert next(gen) is D
+    assert_raises(StopIteration, next, gen)
 
 
 def test_euclidean_distances():

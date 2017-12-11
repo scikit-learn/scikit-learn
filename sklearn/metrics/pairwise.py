@@ -1115,11 +1115,17 @@ def _check_chunk_size(reduced, chunk_size):
     is_tuple = isinstance(reduced, tuple)
     if not is_tuple:
         reduced = (reduced,)
-    if not np.all(len(r) == chunk_size for r in reduced):
-        actual_size = tuple(map(len, reduced)) if is_tuple else len(reduced)
+    if any(isinstance(r, tuple) or not hasattr(r, '__iter__')
+           for r in reduced):
+        raise TypeError('reduce_func returned %r. '
+                        'Expected sequence(s) of length %d.' %
+                        (reduced if is_tuple else reduced[0], chunk_size))
+    if any(_num_samples(r) != chunk_size for r in reduced):
+        actual_size = tuple(map(_num_samples, reduced))
         raise ValueError('reduce_func returned object of length %s. '
                          'Expected same length as input: %d.' %
-                         (actual_size, chunk_size))
+                         (actual_size if is_tuple else actual_size[0],
+                          chunk_size))
 
 
 def pairwise_distances_chunked(X, Y=None, reduce_func=None,
@@ -1192,7 +1198,7 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     """
     n_samples_X = _num_samples(X)
     if metric == 'precomputed':
-        slices = (slice(0, n_samples),)
+        slices = (slice(0, n_samples_X),)
     else:
         if Y is None:
             Y = X
