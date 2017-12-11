@@ -21,7 +21,7 @@ from scipy.sparse import issparse
 from ..utils.validation import _num_samples
 from ..utils import check_array
 from ..utils import gen_even_slices
-from ..utils import generate_chunks
+from ..utils import gen_batches, get_chunk_n_rows
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
@@ -1190,20 +1190,26 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         A contiguous slice of distance matrix, optionally processed by
         ``reduce_func``.
     """
+    n_samples = _num_samples(X)
     if metric == 'precomputed':
-        it = ((X, 0),)
+        slices = (slice(0, n_samples),)
     else:
         if Y is None:
             Y = X
-        row_bytes = 8 * _num_samples(Y)
-        it = generate_chunks(X, row_bytes, working_memory)
+        chunk_n_rows = get_chunk_n_rows(row_bytes=8 * _num_samples(Y),
+                                        working_memory=working_memory)
+        slices = gen_batches(n_samples, chunk_n_rows)
 
-    for X_chunk, start in it:
+    for sl in slices:
+        if sl.start == 0 and sl.stop == n_samples:
+            X_chunk = X  # enable optimised paths for X is Y
+        else:
+            X_chunk = X[sl]
         D_chunk = pairwise_distances(X_chunk, Y, metric=metric,
                                      n_jobs=n_jobs, **kwds)
         if reduce_func is not None:
             chunk_size = D_chunk.shape[0]
-            D_chunk = reduce_func(D_chunk, start)
+            D_chunk = reduce_func(D_chunk, sl.start)
             _check_chunk_size(D_chunk, chunk_size)
         yield D_chunk
 
