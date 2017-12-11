@@ -17,7 +17,6 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-from .validation import _num_samples
 from .. import get_config
 
 __all__ = ["murmurhash3_32", "as_float_array",
