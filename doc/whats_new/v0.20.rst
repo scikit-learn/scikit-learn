@@ -74,6 +74,13 @@ Model evaluation
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
+Misc
+
+- A new configuration parameter, ``working_memory`` was added to control memory
+  consumption limits in chunked operations, such as the new
+  :func:`metrics.pairwise_distances_chunked`.  See :ref:`working_memory`.
+  :issue:`10280` by `Joel Nothman`_ and :user:`Aman Dalmia <dalmia>`.
+
 Enhancements
 ............
 
@@ -108,6 +115,10 @@ Classifiers and regressors
   :class:`linear_model.BayesianRidge` for weighted linear regression.
   :issue:`10111` by :user:`Peter St. John <pstjohn>`.
 
+- :mod:`Nearest neighbors <neighbors>` query methods are now more memory
+  efficient when ``algorithm='brute'``. :issue:`10280` by `Joel Nothman`_
+  and :user:`Aman Dalmia <dalmia>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -117,6 +128,10 @@ Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
   ``{0, 1}`` or ``{-1, 1}``. :issue:`9828` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- :func:`metrics.cluster.silhouette_score` and
+  :func:`metrics.cluster.silhouette_samples` are more memory efficient,
+  causing them to run faster. :issue:`10280` by `Joel Nothman`_.
 
 Linear, kernelized and related models
 
@@ -254,6 +269,12 @@ Metrics
   for :func:`metrics.roc_auc_score`. Moreover using ``reorder=True`` can hide bugs
   due to floating point error in the input.
   :issue:`9851` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- The ``batch_size`` parameter to :func:`metrics.pairwise_distances_argmin_min`
+  and :func:`metrics.pairwise_distances_argmin` is deprecated to be removed in
+  v0.22.  It no longer has any effect, as batch size is determined by global
+  ``working_memory`` config. See :ref:`working_memory`. :issue:`10280` by `Joel
+  Nothman`_ and :user:`Aman Dalmia <dalmia>`.
 
 Cluster
 
