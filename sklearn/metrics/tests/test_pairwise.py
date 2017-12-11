@@ -1,3 +1,5 @@
+from types import GeneratorType
+
 import numpy as np
 from numpy import linalg
 import pytest
@@ -391,7 +393,7 @@ def test_pairwise_distances_chunked_reduce():
     S = pairwise_distances(X)[:, :100]
     S_chunks = pairwise_distances_chunked(X, None, reduce_func=_reduce_func,
                                           working_memory=2 ** -16)
-    assert hasattr(S_chunks, '__next__')
+    assert isinstance(S_chunks, GeneratorType)
     S_chunks = list(S_chunks)
     assert len(S_chunks) > 1
     assert_array_almost_equal(S, np.vstack(S_chunks))
@@ -403,7 +405,6 @@ def test_pairwise_distances_chunked_reduce():
     lambda D, start: csr_matrix(D),
     lambda D, start: (list(D), list(D)),
     lambda D, start: (dok_matrix(D), np.array(D), list(D)),
-    lambda D, start: 'abcdefghijklmnopqrstuvwxyz'[:len(D)],
     ])
 def test_pairwise_distances_chunked_reduce_valid(good_reduce):
     X = np.arange(10).reshape(-1, 1)
@@ -437,7 +438,7 @@ def test_pairwise_distances_chunked_reduce_invalid(bad_reduce, err_type,
 def check_pairwise_distances_chunked(X, Y, working_memory, metric='euclidean'):
     gen = pairwise_distances_chunked(X, Y, working_memory=working_memory,
                                      metric=metric)
-    assert hasattr(gen, '__next__')
+    assert isinstance(gen, GeneratorType)
     blockwise_distances = list(gen)
     min_block_mib = np.array(X).shape[0] * 8 * 2 ** -20
     working_memory = min(working_memory, min_block_mib)
@@ -483,7 +484,7 @@ def test_pairwise_distances_chunked():
     gen = pairwise_distances_chunked(D,
                                      working_memory=2 ** -16,
                                      metric='precomputed')
-    assert hasattr(gen, '__next__')
+    assert isinstance(gen, GeneratorType)
     assert next(gen) is D
     assert_raises(StopIteration, next, gen)
 
