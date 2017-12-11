@@ -1507,16 +1507,25 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     """
 
+    labels_given = True
     if labels is None:
         labels = unique_labels(y_true, y_pred)
+        labels_given = False
     else:
         labels = np.asarray(labels)
 
     if target_names is not None and len(labels) != len(target_names):
-        warnings.warn(
-            "labels size, {0}, does not match size of target_names, {1}"
+        if labels_given:
+            warnings.warn(
+                "labels size, {0}, does not match size of target_names, {1}"
                 .format(len(labels), len(target_names))
-        )
+            )
+        else:
+            raise ValueError(
+                "Number of classes, {0}, does not match size of "
+                "target_names, {1}. Try specifying the labels "
+                "parameter".format(len(labels), len(target_names))
+            )
 
     average_options = ('micro', 'macro', 'weighted', 'binary', 'samples')
     if average not in average_options:

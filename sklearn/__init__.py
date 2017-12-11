@@ -127,7 +127,7 @@ except NameError:
 
 if __SKLEARN_SETUP__:
     sys.stderr.write('Partial import of sklearn during the build process.\n')
-    # We are not importing the rest of the scikit during the build
+    # We are not importing the rest of scikit-learn during the build
     # process, as it may not be compiled yet
 else:
     from . import __check_build
