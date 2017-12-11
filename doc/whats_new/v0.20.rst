@@ -74,6 +74,9 @@ Model evaluation
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
 
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
 Enhancements
 ............
 
@@ -123,6 +126,12 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Miscellaneous
+
+- Add ``filename`` attribute to datasets that have a CSV file.
+  :issue:`9101` by :user:`alex-33 <alex-33>`
+  and :user:`Maskani Filali Mohamed <maskani-moh>`.
 
 Bug fixes
 .........
@@ -247,6 +256,10 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+- Deprecate ``positive=True`` option in :class:`linear_model.Lars` as the
+  underlying implementation is broken. Use :class:`linear_model.Lasso` instead.
+  :issue:`9837` by `Alexandre Gramfort`_.
 
 Metrics
 
