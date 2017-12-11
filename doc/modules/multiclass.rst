@@ -397,6 +397,8 @@ Below is an example of multioutput classification:
            [0, 0, 2],
            [2, 0, 0]])
 
+.. classifierchain:
+
 Classifier Chain
 ================
 
@@ -425,3 +427,13 @@ averaged together.
 
     Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
         "Classifier Chains for Multi-label Classification", 2009.
+
+.. regressorchain:
+
+Regressor Chain
+================
+
+Regressor chains (see :class:`RegressorChain`) is analogous to 
+ClassifierChain as a way of combining a number of regressions 
+into a single multi-target model that is capable of exploiting 
+correlations among targets.
