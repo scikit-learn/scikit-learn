@@ -25,6 +25,7 @@ from . import _utils
 from . import _barnes_hut_tsne
 from ..externals.six import string_types
 from ..utils import deprecated
+from ..utils.fixes import getnnz
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
@@ -639,29 +640,28 @@ class TSNE(BaseEstimator):
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
+        if self.method == 'barnes_hut':
+            X = check_array(X, accept_sparse=['csr'], ensure_min_samples=2,
+                            dtype=[np.float32, np.float64])
+        else:
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                            dtype=[np.float32, np.float64])
         if self.metric == "precomputed":
             if isinstance(self.init, string_types) and self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be "
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
-            if np.any(X < 0):
-                raise ValueError("All distances should be positive, the "
-                                 "precomputed distances given as X is not "
-                                 "correct")
-        if self.method == 'barnes_hut' and sp.issparse(X):
-            raise TypeError('A sparse matrix was passed, but dense '
-                            'data is required for method="barnes_hut". Use '
-                            'X.toarray() to convert to a dense numpy array if '
-                            'the array is small enough for it to fit in '
-                            'memory. Otherwise consider dimensionality '
-                            'reduction techniques (e.g. TruncatedSVD)')
-        if self.method == 'barnes_hut':
-            X = check_array(X, ensure_min_samples=2,
-                            dtype=[np.float32, np.float64])
-        else:
-            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                            dtype=[np.float32, np.float64])
+            if sp.issparse(X):
+                if np.any(X.data < 0):
+                    raise ValueError("All distances should be positive, the "
+                                     "precomputed distances given as X is not "
+                                     "correct")
+            else:
+                if np.any(X < 0):
+                    raise ValueError("All distances should be positive, the "
+                                     "precomputed distances given as X is not "
+                                     "correct")
         if self.method == 'barnes_hut' and self.n_components > 3:
             raise ValueError("'n_components' should be inferior to 4 for the "
                              "barnes_hut algorithm as it relies on "
@@ -713,6 +713,11 @@ class TSNE(BaseEstimator):
 
             if self.verbose:
                 print("[t-SNE] Computing {} nearest neighbors...".format(k))
+
+            if self.metric == "precomputed" and sp.issparse(X):
+                if np.any(getnnz(X, axis=1) < k):
+                    raise ValueError("Perplexity of the sparse matrix is high."
+                                     " Please reduce the perplexity.")
 
             # Find the nearest neighbors for every point
             knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
