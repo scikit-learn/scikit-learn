@@ -18,11 +18,11 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
+from ..utils.validation import _num_samples
 from ..utils import check_array
 from ..utils import gen_even_slices
-from ..utils import get_block_n_rows
+from ..utils import generate_chunks
 from ..utils.extmath import row_norms, safe_sparse_dot
-from ..utils.validation import _num_samples
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
@@ -1191,26 +1191,21 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         reduced distance matrix.
 
     """
-    block_n_rows = get_block_n_rows(row_bytes=_num_samples(Y if Y is not None
-                                                           else X) * 8,
-                                    max_n_rows=_num_samples(X),
-                                    working_memory=working_memory)
+    if metric == 'precomputed':
+        it = ((X, 0),)
+    else:
+        if Y is None:
+            Y = X
+        row_bytes = 8 * _num_samples(Y)
+        it = generate_chunks(X, row_bytes, working_memory)
 
-    if metric != 'precomputed' and Y is None:
-        Y = X
-    n_samples = X.shape[0]
-    for start in range(0, n_samples, block_n_rows):
-        # get distances from block to every other sample
-        stop = min(start + block_n_rows, n_samples)
-        if start == 0 and stop >= n_samples:
-            X_chunk = X  # allow fast paths in pairwise_distances
-        else:
-            X_chunk = X[start:stop]
+    for X_chunk, start in it:
         D_chunk = pairwise_distances(X_chunk, Y, metric=metric,
                                      n_jobs=n_jobs, **kwds)
         if reduce_func is not None:
+            chunk_size = D_chunk.shape[0]
             D_chunk = reduce_func(D_chunk, start)
-            _check_chunk_size(D_chunk, stop - start)
+            _check_chunk_size(D_chunk, chunk_size)
         yield D_chunk
 
 

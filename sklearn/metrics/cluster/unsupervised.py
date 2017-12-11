@@ -13,7 +13,6 @@ import numpy as np
 
 from ...utils import check_random_state
 from ...utils import check_X_y
-from ...utils import get_block_n_rows
 from ..pairwise import pairwise_distances_chunked
 from ...preprocessing import LabelEncoder
 
@@ -106,27 +105,24 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
 
 
-def _silhouette_reduce(D_chunk, start, labels, label_freqs, add_at):
-    """Accumulate silhouette statistics for X[start:start+block_n_rows]
+def _silhouette_reduce(D_chunk, start, labels, label_freqs):
+    """Accumulate silhouette statistics for vertical chunk of X
 
     Parameters
     ----------
     D_chunk : shape (n_chunk_samples, n_samples)
         precomputed distances for a chunk
     start : int
-        first index in block
+        first index in chunk
     labels : array, shape (n_samples,)
         corresponding cluster labels, encoded as {0, ..., n_clusters-1}
     label_freqs : array
         distribution of cluster labels in ``labels``
-    add_at : array, shape (block_n_rows * n_clusters,)
-        indices into a flattened array of shape (block_n_rows, n_clusters)
-        where distances from block points to each cluster are accumulated
     """
     # accumulate distances from each sample to each cluster
-    clust_dists = np.bincount(add_at[:D_chunk.size],
-                              D_chunk.ravel())
-    clust_dists = clust_dists.reshape(-1, len(label_freqs))
+    clust_dists = np.zeros((len(D_chunk), len(label_freqs)),
+                           dtype=D_chunk.dtype)
+    np.add.at(clust_dists.T, labels, D_chunk.T)
 
     # intra_index selects intra-cluster distances within clust_dists
     intra_index = (np.arange(len(D_chunk)), labels[start:start + len(D_chunk)])
@@ -206,24 +202,9 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     label_freqs = np.bincount(labels)
     check_number_of_labels(len(le.classes_), n_samples)
 
-    block_n_rows = get_block_n_rows(row_bytes=n_samples * 8,
-                                    max_n_rows=n_samples)
-    intra_clust_dists = []
-    inter_clust_dists = []
-
-    # We use these indices as bins to accumulate distances from each sample in
-    # a block to each cluster.
-    # NB: we currently use np.bincount but could use np.add.at when Numpy >=1.8
-    # is minimum dependency, which would avoid materialising this index.
-    block_range = np.arange(block_n_rows)
-    add_at = np.ravel_multi_index((np.repeat(block_range, n_samples),
-                                   np.tile(labels, block_n_rows)),
-                                  dims=(block_n_rows, len(label_freqs)))
-
     kwds['metric'] = metric
     reduce_func = functools.partial(_silhouette_reduce,
-                                    labels=labels, label_freqs=label_freqs,
-                                    add_at=add_at)
+                                    labels=labels, label_freqs=label_freqs)
     results = zip(*pairwise_distances_chunked(X, reduce_func=reduce_func,
                                               **kwds))
     intra_clust_dists, inter_clust_dists = results

@@ -17,6 +17,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from ..externals.joblib import cpu_count
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
+from .validation import _num_samples
 from .. import get_config
 
 __all__ = ["murmurhash3_32", "as_float_array",
@@ -508,7 +509,7 @@ def indices_to_mask(indices, mask_length):
     return mask
 
 
-def get_block_n_rows(row_bytes, max_n_rows=None,
+def get_chunk_n_rows(row_bytes, max_n_rows=None,
                      working_memory=None):
     """Calculates the number of rows that fit in working_memory
 
@@ -533,12 +534,26 @@ def get_block_n_rows(row_bytes, max_n_rows=None,
     if working_memory is None:
         return max_n_rows
 
-    block_n_rows = working_memory * (2 ** 20) // row_bytes
+    chunk_n_rows = working_memory * (2 ** 20) // row_bytes
     if max_n_rows is not None:
-        block_n_rows = min(block_n_rows, max_n_rows)
-    if block_n_rows < 1:
+        chunk_n_rows = min(chunk_n_rows, max_n_rows)
+    if chunk_n_rows < 1:
         warnings.warn('Could not adhere to working_memory config. '
                       'Currently %dMiB, %.0fMiB required.' %
                       (working_memory, np.ceil(row_bytes * 2 ** -20)))
-        block_n_rows = 1
-    return block_n_rows
+        chunk_n_rows = 1
+    return chunk_n_rows
+
+
+def generate_chunks(X, row_bytes, working_memory=None):
+    n_samples = _num_samples(X)
+    chunk_n_rows = get_chunk_n_rows(row_bytes=row_bytes,
+                                    max_n_rows=n_samples,
+                                    working_memory=working_memory)
+    for start in range(0, n_samples, chunk_n_rows):
+        stop = min(start + chunk_n_rows, n_samples)
+        if start == 0 and stop >= n_samples:
+            X_chunk = X  # potential for fast paths
+        else:
+            X_chunk = X[start:stop]
+        yield X_chunk, start
