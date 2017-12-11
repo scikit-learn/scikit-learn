@@ -21,7 +21,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.externals.joblib import cpu_count
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Ridge
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
 from sklearn.metrics import jaccard_similarity_score, mean_squared_error
@@ -424,7 +424,7 @@ def test_classifier_chain_vs_independent_models():
 def test_base_chain_fit_and_predict():
     # Fit base chain and verify predict performance
     X, Y = generate_multilabel_dataset_with_correlations()
-    chains = [RegressorChain(LinearRegression()),
+    chains = [RegressorChain(Ridge()),
               ClassifierChain(LogisticRegression())]
     for chain in chains:
         chain.fit(X, Y)
@@ -445,7 +445,7 @@ def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
     X, Y = generate_multilabel_dataset_with_correlations()
     X_sparse = sp.csr_matrix(X)
     base_chains = [ClassifierChain(LogisticRegression(), cv=3),
-                   RegressorChain(LinearRegression(), cv=3)]
+                   RegressorChain(Ridge(), cv=3)]
     for chain in base_chains:
         chain.fit(X_sparse, Y)
         Y_pred = chain.predict(X_sparse)
@@ -456,7 +456,7 @@ def test_base_chain_random_order():
     # Fit base chain with random order
     X, Y = generate_multilabel_dataset_with_correlations()
     for chain in [ClassifierChain(LogisticRegression()),
-                  RegressorChain(LinearRegression())]:
+                  RegressorChain(Ridge())]:
         chain_random = clone(chain).set_params(order='random', random_state=42)
         chain_random.fit(X, Y)
         chain_fixed = clone(chain).set_params(order=chain_random.order_)
@@ -472,27 +472,13 @@ def test_base_chain_random_order():
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
-def test_investigate_linear_regression_indeterminacy():
-    # Is scipy.linalg.lstsq deterministic?
-    from scipy.linalg import lstsq
-    X, Y = generate_multilabel_dataset_with_correlations()
-    y = Y[:, 1].astype(np.float64)
-    X -= X.mean(axis=0)
-    y -= y.mean()
-
-    ref = lstsq(X, y)[0]
-    for i in range(1000):
-        coef = lstsq(X, y)[0]
-        assert_array_equal(ref, coef, 'iter %d' % i)
-
-
 def test_base_chain_crossval_fit_and_predict():
     # Fit chain with cross_val_predict and verify predict
     # performance
     X, Y = generate_multilabel_dataset_with_correlations()
 
     for chain in [ClassifierChain(LogisticRegression()),
-                  RegressorChain(LinearRegression())]:
+                  RegressorChain(Ridge())]:
         chain.fit(X, Y)
         chain_cv = clone(chain).set_params(cv=3)
         chain_cv.fit(X, Y)
