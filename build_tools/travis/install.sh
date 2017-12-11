@@ -52,7 +52,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
     fi
     source activate testenv
-    # FIXME: required to test spectral clustering
+    # required to test spectral clustering
     conda install --yes pyamg -c conda-forge
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
