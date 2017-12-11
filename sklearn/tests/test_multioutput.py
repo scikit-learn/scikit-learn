@@ -472,6 +472,16 @@ def test_base_chain_random_order():
             assert_array_almost_equal(est1.coef_, est2.coef_)
 
 
+def test_investigate_linear_regression_indeterminacy():
+    # Is LinearRegression deterministic?
+    X, Y = generate_multilabel_dataset_with_correlations()
+    y = Y[:, 1]
+    ref = LinearRegression().fit(X, y).coef_
+    for i in range(10000):
+        coef = LinearRegression().fit(X, y).coef_
+        assert_array_equal(ref, coef, 'iter %d' % i)
+
+
 def test_base_chain_crossval_fit_and_predict():
     # Fit chain with cross_val_predict and verify predict
     # performance
