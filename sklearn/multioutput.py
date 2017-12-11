@@ -376,6 +376,7 @@ class _BaseChain(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.cv = cv
         self.random_state = random_state
 
+    @abstractmethod
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
 
@@ -562,7 +563,6 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
             self.classes_.append(estimator.classes_)
         return self
 
-
     @if_delegate_has_method('base_estimator')
     def predict_proba(self, X):
         """Predict probability estimates.
@@ -682,3 +682,20 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
         The order of labels in the classifier chain.
 
     """
+    def fit(self, X, Y):
+        """Fit the model to data matrix X and targets Y.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+        Y : array-like, shape (n_samples, n_classes)
+            The target values.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        super(RegressorChain, self).fit(X, Y)
+        return self
