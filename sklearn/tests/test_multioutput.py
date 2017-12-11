@@ -476,7 +476,7 @@ def test_investigate_linear_regression_indeterminacy():
     # Is scipy.linalg.lstsq deterministic?
     from scipy.linalg import lstsq
     X, Y = generate_multilabel_dataset_with_correlations()
-    y = Y[:, 1]
+    y = Y[:, 1].astype(np.float64)
     X -= X.mean(axis=0)
     y -= y.mean()
 
