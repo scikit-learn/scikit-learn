@@ -520,14 +520,12 @@ class RadiusNeighborsMixin(object):
         neigh_ind = [np.where(d <= radius)[0] for d in dist]
 
         if return_distance:
-            dist_array = np.empty(dist.shape[0], dtype='object')
             if self.effective_metric_ == 'euclidean':
                 dist = [np.sqrt(d[neigh_ind[i]])
                         for i, d in enumerate(dist)]
             else:
                 dist = [d[neigh_ind[i]]
                         for i, d in enumerate(dist)]
-
             results = dist, neigh_ind
         else:
             results = neigh_ind

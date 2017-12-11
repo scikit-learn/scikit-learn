@@ -4,7 +4,6 @@ The :mod:`sklearn.utils` module includes various utilities.
 from collections import Sequence
 
 import numpy as np
-from scipy import sparse
 from scipy.sparse import issparse
 import warnings
 
