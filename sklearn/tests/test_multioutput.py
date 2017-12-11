@@ -473,12 +473,16 @@ def test_base_chain_random_order():
 
 
 def test_investigate_linear_regression_indeterminacy():
-    # Is LinearRegression deterministic?
+    # Is scipy.linalg.lstsq deterministic?
+    from scipy.linalg import lstsq
     X, Y = generate_multilabel_dataset_with_correlations()
     y = Y[:, 1]
-    ref = LinearRegression().fit(X, y).coef_
-    for i in range(10000):
-        coef = LinearRegression().fit(X, y).coef_
+    X -= X.mean(axis=0)
+    y -= y.mean()
+
+    ref = lstsq(X, y)[0]
+    for i in range(1000):
+        coef = lstsq(X, y)[0]
         assert_array_equal(ref, coef, 'iter %d' % i)
 
 
