@@ -1064,6 +1064,7 @@ Model validation
     multioutput.ClassifierChain
     multioutput.MultiOutputRegressor
     multioutput.MultiOutputClassifier
+    multioutput.RegressorChain
 
 .. _naive_bayes_ref:
 
