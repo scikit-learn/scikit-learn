@@ -20,9 +20,14 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
+from sklearn.exceptions import SkipTestWarning
 
 import sklearn
+from warnings import warn
+from sklearn.base import RegressorMixin
 from sklearn.cluster.bicluster import BiclusterMixin
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.linear_model import Ridge
 
 from sklearn.linear_model.base import LinearClassifierMixin
 from sklearn.utils.estimator_checks import (
@@ -42,28 +47,69 @@ def test_all_estimator_no_base_class():
 
 
 def test_all_estimators():
-    # Test that estimators are default-constructible, cloneable
-    # and have working repr.
+    # input validation etc for non-meta estimators
     estimators = all_estimators(include_meta_estimators=True)
-
-    # Meta sanity-check to make sure that the estimator introspection runs
-    # properly
     assert_greater(len(estimators), 0)
-
     for name, Estimator in estimators:
-        # some can just not be sensibly default constructed
-        yield check_parameters_default_constructible, name, Estimator
+        if name.startswith("_"):
+            # skip private classes
+            continue
+
+        # class-level tests
+        # both skip if _required_parameters are more complex
+        # than "estimator" or "base_estimator"
+        yield (check_parameters_default_constructible,
+               name, Estimator)
+        yield check_no_fit_attributes_set_in_init, name, Estimator
+
+        if issubclass(Estimator, BiclusterMixin):  # FIXME
+            continue
+
+        required_parameters = getattr(Estimator, "_required_parameters", [])
+        if len(required_parameters):
+            if required_parameters in (["estimator"], ["base_estimator"]):
+                if issubclass(Estimator, RegressorMixin):
+                    estimator = Estimator(Ridge())
+                else:
+                    estimator = Estimator(LinearDiscriminantAnalysis())
+            else:
+                warn("Can't instantiate estimator {} which requires "
+                     "parameters {}".format(name, required_parameters),
+                     SkipTestWarning)
+                continue
+        else:
+            estimator = Estimator()
+
+        set_checking_parameters(estimator)
+        for check in _yield_all_checks(name, estimator):
+            yield check, name, estimator
 
 
 def test_non_meta_estimators():
     # input validation etc for non-meta estimators
     estimators = all_estimators()
     for name, Estimator in estimators:
+
         if issubclass(Estimator, BiclusterMixin):
             continue
         if name.startswith("_"):
             continue
-        estimator = Estimator()
+
+        required_parameters = getattr(Estimator, "_required_parameters", [])
+        if len(required_parameters):
+            if required_parameters in (["estimator"], ["base_estimator"]):
+                if issubclass(Estimator, RegressorMixin):
+                    estimator = Estimator(Ridge())
+                else:
+                    estimator = Estimator(LinearDiscriminantAnalysis())
+            else:
+                warn("Can't instantiate estimator {} which requires "
+                     "parameters {}".format(name, required_parameters),
+                     SkipTestWarning)
+                continue
+        else:
+            estimator = Estimator()
+
         # check this on class
         yield check_no_fit_attributes_set_in_init, name, Estimator
 
@@ -107,8 +153,8 @@ def test_class_weight_balanced_linear_classifiers():
         linear_classifiers = [
             (name, clazz)
             for name, clazz in classifiers
-            if ('class_weight' in clazz().get_params().keys() and
-                issubclass(clazz, LinearClassifierMixin))]
+            if (issubclass(clazz, LinearClassifierMixin) and
+                'class_weight' in clazz().get_params().keys())]
 
     for name, Classifier in linear_classifiers:
         yield check_class_weight_balanced_linear_classifier, name, Classifier

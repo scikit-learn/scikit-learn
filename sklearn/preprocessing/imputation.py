@@ -8,7 +8,7 @@ import numpy.ma as ma
 from scipy import sparse
 from scipy import stats
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 from ..utils import check_array
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
@@ -374,3 +374,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             X[coordinates] = values
 
         return X
+
+    def _get_tags(self):
+        return _update_tags(super(Imputer, self),
+                            missing_values=True)

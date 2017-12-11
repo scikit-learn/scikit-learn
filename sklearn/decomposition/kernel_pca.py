@@ -10,12 +10,12 @@ from scipy.sparse.linalg import eigsh
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, check_array
 from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _UnstableOn32BitMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
 
-class KernelPCA(BaseEstimator, TransformerMixin):
+class KernelPCA(BaseEstimator, TransformerMixin, _UnstableOn32BitMixin):
     """Kernel Principal component analysis (KPCA)
 
     Non-linear dimensionality reduction through the use of kernels (see

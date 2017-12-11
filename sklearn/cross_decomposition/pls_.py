@@ -13,6 +13,7 @@ from scipy.linalg import pinv2, svd
 from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
+from ..base import MultiOutputMixin, _update_tags
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
@@ -116,7 +117,7 @@ def _center_scale_xy(X, Y, scale=True):
 
 
 class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
-           RegressorMixin):
+           RegressorMixin, MultiOutputMixin):
     """Partial Least Squares (PLS)
 
     This class implements the generic PLS algorithm, constructors' parameters
@@ -451,6 +452,9 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         x_scores if Y is not given, (x_scores, y_scores) otherwise.
         """
         return self.fit(X, y).transform(X, y)
+
+    def _get_tags(self):
+        return _update_tags(super(_PLS, self), test_predictions=False)
 
 
 class PLSRegression(_PLS):

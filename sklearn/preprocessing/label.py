@@ -13,7 +13,7 @@ import array
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 
 from ..utils.fixes import sparse_min_max
 from ..utils import column_or_1d
@@ -154,6 +154,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                     "y contains previously unseen labels: %s" % str(diff))
         y = np.asarray(y)
         return self.classes_[y]
+
+    def _get_tags(self):
+        return _update_tags(super(LabelEncoder, self),
+                            input_types=["1dlabels"])
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
@@ -387,6 +391,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             y_inv = y_inv.toarray()
 
         return y_inv
+
+    def _get_tags(self):
+        return _update_tags(super(LabelBinarizer, self),
+                            input_types=["1dlabels"])
 
 
 def label_binarize(y, classes, neg_label=0, pos_label=1, sparse_output=False):
@@ -828,3 +836,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
                                  'Also got {0}'.format(unexpected))
             return [tuple(self.classes_.compress(indicators)) for indicators
                     in yt]
+
+    def _get_tags(self):
+        return _update_tags(super(MultiLabelBinarizer, self),
+                            input_types=["2dlabels"])

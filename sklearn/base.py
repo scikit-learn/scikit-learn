@@ -6,6 +6,7 @@
 import copy
 import warnings
 from collections import defaultdict
+import struct
 
 import numpy as np
 from scipy import sparse
@@ -13,8 +14,29 @@ from .externals import six
 from .utils.fixes import signature
 from . import __version__
 
+_DEFAULT_TAGS = {
+    'deterministic': True,
+    'requires_positive_data': False,
+    'input_types': ['2darray'],
+    'test_predictions': True,
+    'input_validation': True,
+    'multioutput': False,
+    "missing_values": False,
+    'stateless': False,
+    'multilabel': False,
+    '_skip_test': False,
+    'multioutput_only': False}
 
-##############################################################################
+
+def _update_tags(sup, **kwargs):
+    if hasattr(sup, "_get_tags"):
+        tags_old = sup._get_tags().copy()
+        tags_old.update(kwargs)
+        return tags_old
+    else:
+        return kwargs.copy()
+
+
 def _first_and_last_element(arr):
     """Returns first and last element of numpy array or sparse matrix."""
     if isinstance(arr, np.ndarray) or hasattr(arr, 'data'):
@@ -121,7 +143,6 @@ def clone(estimator, safe=True):
     return new_object
 
 
-###############################################################################
 def _pprint(params, offset=0, printer=repr):
     """Pretty print the dictionary 'params'
 
@@ -172,7 +193,6 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-###############################################################################
 class BaseEstimator(object):
     """Base class for all estimators in scikit-learn
 
@@ -302,7 +322,6 @@ class BaseEstimator(object):
             self.__dict__.update(state)
 
 
-###############################################################################
 class ClassifierMixin(object):
     """Mixin class for all classifiers in scikit-learn."""
     _estimator_type = "classifier"
@@ -334,8 +353,11 @@ class ClassifierMixin(object):
         from .metrics import accuracy_score
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
+    def _get_tags(self):
+        return _update_tags(super(ClassifierMixin, self),
+                            is_classifier=True)
 
-###############################################################################
+
 class RegressorMixin(object):
     """Mixin class for all regression estimators in scikit-learn."""
     _estimator_type = "regressor"
@@ -372,8 +394,11 @@ class RegressorMixin(object):
         return r2_score(y, self.predict(X), sample_weight=sample_weight,
                         multioutput='variance_weighted')
 
+    def _get_tags(self):
+        return _update_tags(super(RegressorMixin, self),
+                            is_regressor=True)
 
-###############################################################################
+
 class ClusterMixin(object):
     """Mixin class for all cluster estimators in scikit-learn."""
     _estimator_type = "clusterer"
@@ -395,6 +420,9 @@ class ClusterMixin(object):
         # method is possible for a given clustering algorithm
         self.fit(X)
         return self.labels_
+
+    def _get_tags(self):
+        return _update_tags(super(ClusterMixin, self), is_clusterer=True)
 
 
 class BiclusterMixin(object):
@@ -472,7 +500,6 @@ class BiclusterMixin(object):
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-###############################################################################
 class TransformerMixin(object):
     """Mixin class for all transformers in scikit-learn."""
 
@@ -505,6 +532,10 @@ class TransformerMixin(object):
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
 
+    def _get_tags(self):
+        return _update_tags(super(TransformerMixin, self),
+                            is_transformer=True)
+
 
 class DensityMixin(object):
     """Mixin class for all density estimators in scikit-learn."""
@@ -524,13 +555,30 @@ class DensityMixin(object):
         pass
 
 
-###############################################################################
 class MetaEstimatorMixin(object):
+    _required_parameters = ["estimator"]
+
     """Mixin class for all meta estimators in scikit-learn."""
-    # this is just a tag for the moment
 
 
-###############################################################################
+class MultiOutputMixin(object):
+    """Mixin to mark estimators that support multioutput."""
+    def _get_tags(self):
+        return _update_tags(super(MultiOutputMixin, self),
+                            multioutput=True)
+
+
+def _is_32bit():
+    """Detect if process is 32bit Python."""
+    return struct.calcsize('P') * 8 == 32
+
+
+class _UnstableOn32BitMixin(object):
+    """Mark estimators that are non-determinstic on 32bit."""
+    def _get_tags(self):
+        return _update_tags(super(_UnstableOn32BitMixin, self),
+                            deterministic=_is_32bit())
+
 
 def is_classifier(estimator):
     """Returns True if the given estimator is (probably) a classifier.

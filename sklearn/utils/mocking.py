@@ -1,6 +1,6 @@
 import numpy as np
 
-from ..base import BaseEstimator, ClassifierMixin
+from ..base import BaseEstimator, ClassifierMixin, _update_tags
 from .testing import assert_true
 from .validation import _num_samples, check_array
 
@@ -84,3 +84,7 @@ class CheckingClassifier(BaseEstimator, ClassifierMixin):
         else:
             score = 0.
         return score
+
+    def _get_tags(self):
+        return _update_tags(super(CheckingClassifier, self),
+                            input_types=["1dlabels"], _skip_test=True)

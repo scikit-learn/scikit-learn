@@ -9,7 +9,7 @@ from operator import itemgetter
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, _update_tags
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils import check_array, tosequence
@@ -59,8 +59,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Whether transform should produce scipy.sparse matrices.
         True by default.
     sort : boolean, optional.
-        Whether ``feature_names_`` and ``vocabulary_`` should be sorted when fitting.
-        True by default.
+        Whether ``feature_names_`` and ``vocabulary_`` should be
+        sorted when fitting.  True by default.
 
     Attributes
     ----------
@@ -363,3 +363,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
                                                     key=itemgetter(1))]
 
         return self
+
+    def _get_tags(self):
+        return _update_tags(super(DictVectorizer, self),
+                            input_types=["dict"])

@@ -22,7 +22,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import issparse
 
-from .base import BaseEstimator, ClassifierMixin
+from .base import BaseEstimator, ClassifierMixin, _update_tags
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
@@ -626,6 +626,10 @@ class BaseDiscreteNB(BaseNB):
 
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
+
+    def _get_tags(self):
+        return _update_tags(super(BaseDiscreteNB, self),
+                            test_predictions=False)
 
 
 class MultinomialNB(BaseDiscreteNB):
