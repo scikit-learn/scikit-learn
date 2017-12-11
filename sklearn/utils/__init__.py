@@ -516,7 +516,8 @@ def get_chunk_n_rows(row_bytes, max_n_rows=None,
     Parameters
     ----------
     row_bytes : int
-        The number of bytes consumed by each row
+        The number of bytes consumed by each row of expected output
+        from some function being applied to each chunk.
     max_n_rows : int, optional
         The maximum return value.
     working_memory : int, optional
@@ -525,7 +526,7 @@ def get_chunk_n_rows(row_bytes, max_n_rows=None,
 
     Returns
     -------
-    int or n_samples
+    int or the value of n_samples
     """
 
     if working_memory is None:
@@ -546,6 +547,23 @@ def get_chunk_n_rows(row_bytes, max_n_rows=None,
 
 
 def generate_chunks(X, row_bytes, working_memory=None):
+    """Generates vertical chunks of X to process within constant memory
+
+    Parameters
+    ----------
+    X : array-like
+    row_bytes : int
+        The number of bytes consumed by each row of expected output
+        from some function being applied to each chunk.
+    working_memory : int, optional
+        The number of rows to fit inside this number of MiB will be returned.
+        Defaults to ``sklearn.get_config()['working_memory']``.
+
+    Yields
+    ------
+    X_chunk : array-like
+    start : int
+    """
     n_samples = _num_samples(X)
     chunk_n_rows = get_chunk_n_rows(row_bytes=row_bytes,
                                     max_n_rows=n_samples,

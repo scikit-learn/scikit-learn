@@ -1184,12 +1184,11 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
         If using a scipy.spatial.distance metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
 
-    Returns
-    -------
-    D_chunks : generator
-        Each element in the generator is either a slice of distance matrix or a
-        reduced distance matrix.
-
+    Yields
+    ------
+    D_chunk : array or sparse matrix
+        A contiguous slice of distance matrix, optionally processed by
+        ``reduce_func``.
     """
     if metric == 'precomputed':
         it = ((X, 0),)
