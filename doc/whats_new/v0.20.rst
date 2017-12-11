@@ -127,7 +127,7 @@ Linear, kernelized and related models
 Miscellaneous
 
 - Add ``filename`` attribute to datasets that have a CSV file.
-  :issue:`9101` by :user:`Alexey Dral <alex-33>`
+  :issue:`9101` by :user:`alex-33 <alex-33>`
   and :user:`Maskani Filali Mohamed <maskani-moh>`.
 
 Bug fixes
