@@ -211,13 +211,6 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     intra_clust_dists = np.concatenate(intra_clust_dists)
     inter_clust_dists = np.concatenate(inter_clust_dists)
 
-    if len(intra_clust_dists) == 1:
-        intra_clust_dists = intra_clust_dists[0]
-        inter_clust_dists = inter_clust_dists[0]
-    else:
-        intra_clust_dists = np.hstack(intra_clust_dists)
-        inter_clust_dists = np.hstack(inter_clust_dists)
-
     denom = (label_freqs - 1).take(labels, mode='clip')
     with np.errstate(divide="ignore", invalid="ignore"):
         intra_clust_dists /= denom

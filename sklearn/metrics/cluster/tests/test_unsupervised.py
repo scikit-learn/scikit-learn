@@ -81,20 +81,6 @@ def test_cluster_size_1():
     assert_array_equal(ss, [0, .5, .5, 0, 1, 1])
 
 
-def test_no_nan():
-    # Assert Silhouette Coefficient != nan when there is 1 sample in a class.
-    # This tests for the condition that caused issue #960.
-    # Note that there is only one sample in cluster 0. This used to cause the
-    # silhouette_score to return nan.
-    labels = np.array([1, 0, 1, 1, 1])
-    # The distance matrix doesn't actually matter.
-    D = np.random.RandomState(0).rand(len(labels), len(labels))
-    silhouette = silhouette_score(D, labels, metric='precomputed')
-    assert_false(np.isnan(silhouette))
-    ss = silhouette_samples(D, labels, metric='precomputed')
-    assert_false(np.isnan(ss).any())
-
-
 def test_silhouette_paper_example():
     # Explicitly check per-sample results against Rousseeuw (1987)
     lower = [5.58,

@@ -532,9 +532,6 @@ def get_chunk_n_rows(row_bytes, max_n_rows=None,
     if working_memory is None:
         working_memory = get_config()['working_memory']
 
-    if working_memory is None:
-        return max_n_rows
-
     chunk_n_rows = working_memory * (2 ** 20) // row_bytes
     if max_n_rows is not None:
         chunk_n_rows = min(chunk_n_rows, max_n_rows)
