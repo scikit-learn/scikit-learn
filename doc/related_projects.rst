@@ -44,6 +44,10 @@ enhance the functionality of scikit-learn's estimators.
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
 
+- `scikit-optimize <https://scikit-optimize.github.io/>`_
+   A library to minimize (very) expensive and noisy black-box functions. It
+   implements several methods for sequential model-based optimization.
+
 **Experimentation frameworks**
 
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
