@@ -998,10 +998,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         check_consistent_length(X, y, sample_weight)
 
-        if isinstance(self, GradientBoostingClassifier):
-            y = self._validate_y(y, sample_weight)
-        else:
-            y = self._validate_y(y)
+        y = self._validate_y(y, sample_weight)
 
         if self.n_iter_no_change is not None:
             X, X_val, y, y_val, sample_weight, sample_weight_val = (
@@ -1232,7 +1229,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         importances = total_sum / len(self.estimators_)
         return importances
 
-    def _validate_y(self, y):
+    def _validate_y(self, y, sample_weight):
+        # 'sample_weight' is not utilised but is used for
+        # consistency with similar method _validate_y of GBC
         self.n_classes_ = 1
         if y.dtype.kind == 'O':
             y = y.astype(np.float64)
