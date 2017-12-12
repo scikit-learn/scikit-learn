@@ -1007,7 +1007,7 @@ def test_multiclass_jaccard_similarity_score():
     assert_equal(jaccard_similarity_score(y_true, y_pred,
                                                 average='micro'), 1. / 2)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                average='weighted'), 7. / 12)
+                                                average='weighted'), 17. / 36)
     msg = ("In multiclass classification average must be one of "
            "('micro', 'macro', 'weighted'), got average=None.")
     assert_raise_message(ValueError, msg, jaccard_similarity_score, y_true,

@@ -476,8 +476,9 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
 
     >>> y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
     >>> y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
-    >>> jaccard_similarity_score(y_true, y_pred) # doctest: +ELLIPSIS
-    0.388...
+    >>> jaccard_similarity_score(y_true, y_pred, average='weighted')
+    ... # doctest: +ELLIPSIS
+    0.4722...
     """
 
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
@@ -556,16 +557,15 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             score = np.sum(C.diagonal())
             return score / den
         elif average == 'weighted':
+            # computation similar to average='macro', apart from computation
+            # of sample_weight below
             den = C.sum(0) + C.sum(1) - C.diagonal()
-            score = C.diagonal()/den
-            if sample_weight == None:
-                sample_weight = C.sum(0)/C.sum()
+            score = C.diagonal() / den
+            if sample_weight is None:
+                _, y_true = np.unique(y_true, return_inverse=True)
+                num = np.bincount(y_true)
+                sample_weight = num / np.sum(num)
             return np.sum(sample_weight*score)
-#        else:
-#            # average='samples'
-#            den = C.sum(0) + C.sum(1) - C.diagonal()
-#            score = C.diagonal() / den
-#            return score
         else:
             raise ValueError("In multiclass classification average must be "
                              "one of ('micro', 'macro', 'weighted'), got "
