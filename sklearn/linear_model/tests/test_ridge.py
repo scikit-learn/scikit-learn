@@ -49,8 +49,11 @@ iris = datasets.load_iris()
 X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
 
-DENSE_FILTER = lambda X: X
-SPARSE_FILTER = lambda X: sp.csr_matrix(X)
+
+def DENSE_FILTER(X): return X
+
+
+def SPARSE_FILTER(X): return sp.csr_matrix(X)
 
 
 def test_ridge():
@@ -352,7 +355,7 @@ def _test_ridge_loo(filter_):
     assert_equal(ridge_gcv2.alpha_, alpha_)
 
     # check that we get same best alpha with custom score_func
-    func = lambda x, y: -mean_squared_error(x, y)
+    def func(x, y): return -mean_squared_error(x, y)
     scoring = make_scorer(func)
     ridge_gcv3 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)
@@ -576,7 +579,7 @@ def test_class_weights_cv():
 
 def test_ridgecv_store_cv_values():
     # Test _RidgeCV's store_cv_values attribute.
-    rng = rng = np.random.RandomState(42)
+    rng = np.random.RandomState(42)
 
     n_samples = 8
     n_features = 5
@@ -596,6 +599,33 @@ def test_ridgecv_store_cv_values():
     y = rng.randn(n_samples, n_responses)
     r.fit(x, y)
     assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
+
+
+def test_ridge_classifier_cv_store_cv_values():
+    # Test RidgeClassifier
+    x = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
+                  [1.0, 1.0], [1.0, 0.0]])
+    y = np.array([1, 1, 1, -1, -1])
+
+    n_samples = x.shape[0]
+
+    alphas = [1e-1, 1e0, 1e1]
+    n_alphas = len(alphas)
+
+    r = RidgeClassifierCV(alphas=alphas, store_cv_values=True)
+
+    # with len(y.shape) == 1
+    n_targets = 1
+    r.fit(x, y)
+    assert_equal(r.cv_values_.shape, (n_samples, n_targets, n_alphas))
+
+    # with len(y.shape) == 2
+    y = np.array([[1, 1, 1, -1, -1],
+                  [1, -1, 1, -1, 1],
+                  [-1, -1, 1, -1, -1]]).transpose()
+    n_targets = y.shape[1]
+    r.fit(x, y)
+    assert_equal(r.cv_values_.shape, (n_samples, n_targets, n_alphas))
 
 
 def test_ridgecv_sample_weight():
