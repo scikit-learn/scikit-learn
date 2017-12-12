@@ -948,21 +948,22 @@ def test_jaccard_similarity_score():
 
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
-    assert_raises(ValueError, jaccard_similarity_score, y_true, y_pred,
-                  average='binary', pos_label=-1)
+    msg1 = ("Target is multilabel-indicator but average='binary'. "
+            "Please choose another average setting.")
+    assert_raise_message(ValueError, msg1, jaccard_similarity_score, y_true,
+                         y_pred, average='binary', pos_label=-1)
 
     y_true = np.array([0, 1, 1, 0, 2])
     y_pred = np.array([1, 1, 1, 1, 0])
     assert_raises(ValueError, jaccard_similarity_score, y_true, y_pred,
                   average='binary')
 
-    # test 'pos_label'
-#    assert_warns_message(UserWarning,
-#                        "Note that pos_label (set to 3) is ignored when "
-#                        "average != 'binary' (got None). You may use "
-#                        "labels=[pos_label] to specify a single positive "
-#                        "class.", jaccard_similarity_score, y_true, y_pred,
-#                        pos_label=3)
+    assert_warns_message(UserWarning,
+                        "Note that pos_label (set to 3) is ignored when "
+                        "average != 'binary' (got 'micro'). You may use "
+                        "labels=[pos_label] to specify a single positive "
+                        "class.", jaccard_similarity_score, y_true, y_pred,
+                        average='micro', pos_label=3)
 
 
 def test_multilabel_jaccard_similarity_score():
