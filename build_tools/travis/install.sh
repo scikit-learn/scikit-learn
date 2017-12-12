@@ -43,6 +43,8 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     if [[ "$INSTALL_MKL" == "true" ]]; then
         TO_INSTALL="$TO_INSTALL mkl"
+    else
+        TO_INSTALL="$TO_INSTALL nomkl"
     fi
 
     if [[ -n "$PANDAS_VERSION" ]]; then
