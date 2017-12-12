@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
@@ -144,6 +145,15 @@ def test_masked_unsupervised_kneighbors():
 
     assert_array_equal(X2_neigh, N3)
     assert_array_equal(XY2_neigh, N4)
+
+    # Test 3
+    nan = float("nan")
+    samples = csc_matrix([[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]])
+    neigh = neighbors.NearestNeighbors(n_neighbors=2,
+                                       metric="masked_euclidean")
+    msg = "Nearest neighbor algorithm does not currently support the use of " \
+          "sparse matrices for missing values."
+    assert_raise_message(ValueError, msg, neigh.fit, samples)
 
 
 def test_unsupervised_inputs():

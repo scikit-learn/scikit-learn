@@ -304,11 +304,11 @@ def test_imputation_copy():
 
     # copy=True, dense => copy
     # copy=False, dense => no copy
-    for imputer_est, params in imputers.items():
+    for imputer_cls, params in imputers.items():
         for copy in [True, False]:
             X = X_orig.copy().toarray()
             params["copy"] = copy
-            imputer = imputer_est(**params)
+            imputer = imputer_cls(**params)
             Xt = imputer.fit(X).transform(X)
             Xt[0, 0] = -1
             if copy:
@@ -386,8 +386,8 @@ def test_knn_imputation_shape():
     X[0, 0] = np.nan
 
     for weights in ['uniform', 'distance']:
-        for n_neighbors in range(1, 6):
-            imputer = KNNImputer(n_neighbors=n_neighbors, weights=weights)
+        for max_neighbors in range(1, 6):
+            imputer = KNNImputer(max_neighbors=max_neighbors, weights=weights)
             X_imputed = imputer.fit_transform(X)
             assert_equal(X_imputed.shape, (n_rows, n_cols))
 
@@ -395,12 +395,12 @@ def test_knn_imputation_shape():
 def test_knn_imputation_zero():
     # Test imputation when missing_values == 0
     missing_values = 0
-    n_neighbors = 2
+    max_neighbors = 2
     imputer = KNNImputer(missing_values=missing_values,
-                         n_neighbors=n_neighbors,
+                         max_neighbors=max_neighbors,
                          weights="uniform")
     imputer_nan = KNNImputer(missing_values="NaN",
-                             n_neighbors=n_neighbors,
+                             max_neighbors=max_neighbors,
                              weights="uniform")
 
     # Test with missing_values=0 when NaN present
@@ -426,14 +426,14 @@ def test_knn_imputation_zero():
 
     # Test with an imputable matrix and also compare with missing_values="NaN"
     X = np.array([
-        [1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1.],
         [2, 1, 2, 2, 3],
         [3, 2, 3, 0, 0],
         [6, 6, 0, 5, 17],
     ])
 
     X_nan = np.array([
-        [1, np.nan, 1,      np.nan, 1],
+        [1, np.nan, 1,      np.nan, 1.],
         [2, 1,      2,      2,      3],
         [3, 2,      3,      np.nan, np.nan],
         [6, 6,      np.nan, 5,      17],
@@ -441,7 +441,7 @@ def test_knn_imputation_zero():
     statistics_mean = np.nanmean(X_nan, axis=0)
 
     X_imputed = np.array([
-        [1, 1.5, 1,   2, 1],
+        [1, 1.5, 1,   2, 1.],
         [2, 1,   2,   2, 3],
         [3, 2,   3,   2, 2],
         [6, 6,   2.5, 5, 17],
@@ -589,8 +589,8 @@ def test_default_with_invalid_input():
         [3, 2, 3, 3, 8],
         [6, 6, 2, 5, 13],
     ])
-    msg = "There are only %d samples, but n_neighbors=%d." % \
-          (X.shape[0], imputer.n_neighbors)
+    msg = "There are only %d samples, but max_neighbors=%d." % \
+          (X.shape[0], imputer.max_neighbors)
     assert_raise_message(ValueError, msg, imputer.fit, X)
 
     # Test with inf present
@@ -605,7 +605,7 @@ def test_default_with_invalid_input():
     msg = "+/- inf values are not allowed."
     assert_raise_message(ValueError, msg, KNNImputer().fit, X)
 
-    # Test with inf present in matrix passed in tranform
+    # Test with inf present in matrix passed in transform()
     X = np.array([
         [np.inf, 1, 1, 2, np.nan],
         [2, 1, 2, 2, 3],
@@ -627,7 +627,7 @@ def test_default_with_invalid_input():
     assert_raise_message(ValueError, msg, KNNImputer().fit(X_fit).transform, X)
 
 
-def test_knn_n_neighbors():
+def test_knn_max_neighbors():
 
     X = np.array([
         [0,      0],
@@ -651,9 +651,9 @@ def test_knn_n_neighbors():
         [14,     13]
     ])
 
-    n_neighbors = 1
-    imputer = KNNImputer(n_neighbors=n_neighbors)
-    imputer_plus1 = KNNImputer(n_neighbors=n_neighbors+1)
+    max_neighbors = 1
+    imputer = KNNImputer(max_neighbors=max_neighbors)
+    imputer_plus1 = KNNImputer(max_neighbors=max_neighbors + 1)
 
     assert_array_equal(imputer.fit_transform(X), X_imputed_1NN)
     assert_array_equal(imputer.statistics_, statistics_mean)
@@ -681,9 +681,9 @@ def test_knn_n_neighbors():
         [14,     13]
     ])
 
-    n_neighbors = 6
-    imputer = KNNImputer(n_neighbors=6)
-    imputer_plus1 = KNNImputer(n_neighbors=n_neighbors + 1)
+    max_neighbors = 6
+    imputer = KNNImputer(max_neighbors=6)
+    imputer_plus1 = KNNImputer(max_neighbors=max_neighbors + 1)
 
     assert_array_equal(imputer.fit_transform(X), X_imputed_6NN)
     assert_array_equal(imputer.statistics_, statistics_mean)
@@ -691,7 +691,7 @@ def test_knn_n_neighbors():
         X).transform(X))
 
 
-def test_weight_type():
+def test_weight_uniform():
     X = np.array([
         [0,      0],
         [np.nan, 2],
@@ -723,10 +723,22 @@ def test_weight_type():
     imputer = KNNImputer(weights=no_weight)
     assert_array_equal(imputer.fit_transform(X), X_imputed_uniform)
 
+
+def test_weight_distance():
+    X = np.array([
+        [0, 0],
+        [np.nan, 2],
+        [4, 3],
+        [5, 6],
+        [7, 7],
+        [9, 8],
+        [11, 10]
+    ])
+
     # Test with "distance" weight
     nn = NearestNeighbors(metric="masked_euclidean")
     nn.fit(X)
-    # Get distance of "n_neighbors" neighbors of row 1
+    # Get distance of "max_neighbors" neighbors of row 1
     dist, index = nn.kneighbors()
     dist = dist[1, :]
     index = index[1, :]
@@ -762,7 +774,7 @@ def test_weight_type():
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed_distance2,
                               decimal=6)
 
-    # Test with weights = "distance" and n_neighbors=2
+    # Test with weights = "distance" and max_neighbors=2
     X = np.array([
         [np.nan, 0,      0],
         [2,      1,      2],
@@ -778,7 +790,7 @@ def test_weight_type():
         [4,      5,     5],
     ])
 
-    imputer = KNNImputer(n_neighbors=2, weights="distance")
+    imputer = KNNImputer(max_neighbors=2, weights="distance")
     assert_array_almost_equal(imputer.fit_transform(X), X_imputed,
                               decimal=4)
     assert_array_equal(imputer.statistics_, statistics_mean)
@@ -852,3 +864,30 @@ def test_metric_type():
     # Test with a metric type without NaN support
     imputer = KNNImputer(metric="euclidean")
     assert_raises(ValueError, imputer.fit, X)
+
+
+def test_callable_metric():
+
+    # Define callable metric that prefers a 6,9,... alternating pattern:
+    def always_six_nine(x, y, missing_values="NaN"):
+        x = np.ma.array(x, mask=np.isnan(x))
+        y = np.ma.array(y, mask=np.isnan(y))
+        dist = abs(np.nansum(x-y))
+        return dist
+
+    X = np.array([
+        [4, 3, 3, np.nan],
+        [6, 9, 6, 9],
+        [4, 8, 6, 9],
+        [np.nan, 9, 11, 10.]
+    ])
+
+    X_imputed = np.array([
+        [4, 3, 3, 9],
+        [6, 9, 6, 9],
+        [4, 8, 6, 9],
+        [5, 9, 11, 10.]
+    ])
+
+    imputer = KNNImputer(max_neighbors=2, metric=always_six_nine)
+    assert_array_equal(imputer.fit_transform(X), X_imputed)

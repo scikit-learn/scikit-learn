@@ -11,8 +11,7 @@ more effective.
 
 Imputer:
 Using Imputer, missing values can be replaced by the mean, the median or the
-most frequent
-value using the ``strategy`` hyper-parameter.
+most frequent value using the ``strategy`` hyper-parameter.
 The median is a more robust estimator for data with high magnitude variables
 which could dominate results (otherwise known as a 'long tail').
 
@@ -35,7 +34,7 @@ import numpy as np
 from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing.imputation import Imputer, KNNImputer
+from sklearn.preprocessing import Imputer, KNNImputer
 from sklearn.model_selection import cross_val_score
 
 rng = np.random.RandomState(0)
@@ -80,11 +79,8 @@ score = cross_val_score(estimator, X_missing, y_missing).mean()
 print("Score after imputation of the missing values = %.2f" % score)
 
 # Estimate the score after kNN-imputation of the missing values
-X_missing = X_full.copy()
-X_missing[np.where(missing_samples)[0], missing_features] = np.nan
-y_missing = y_full.copy()
-knn_estimator = Pipeline([("knnimputer", KNNImputer(n_neighbors=10)),
-                          ("forest", RandomForestRegressor(random_state=0,
-                                                           n_estimators=100))])
+knn_estimator = Pipeline(
+    [("knnimputer", KNNImputer(missing_values=0, n_neighbors=10)),
+     ("forest", RandomForestRegressor(random_state=0, n_estimators=100))])
 knn_score = cross_val_score(knn_estimator, X_missing, y_missing).mean()
 print("Score after knn-imputation of the missing values = %.2f" % knn_score)

@@ -322,7 +322,7 @@ def masked_euclidean_distances(X, Y=None, squared=False,
 
     Returns
     -------
-    distances : {array, sparse matrix}, shape (n_samples_1, n_samples_2)
+    distances : {array}, shape (n_samples_1, n_samples_2)
 
     Examples
     --------
@@ -371,9 +371,8 @@ def masked_euclidean_distances(X, Y=None, squared=False,
         raise ValueError("One or more rows only contain missing values.")
 
     # else:
-    if missing_values != "NaN" and \
-            (np.any(np.isnan(X)) or
-                (Y is not X and np.any(np.isnan(Y)))):
+    if missing_values not in ["NaN", np.nan] and (
+            np.any(np.isnan(X)) or (Y is not X and np.any(np.isnan(Y)))):
         raise ValueError(
             "NaN values present but missing_value = {0}".format(
                 missing_values))
@@ -387,7 +386,7 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     X[mask_X] = 0
 
     # Calculate distances
-    # The following formula was derived in matrix form by:
+    # The following formula derived by:
     # Shreya Bhattarai <shreya.bhattarai@gmail.com>
 
     distances = (X.shape[1] / (np.dot(NX, NYT))) * \
@@ -1242,7 +1241,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 def _pairwise_callable(X, Y, metric, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    force_all_finite = False if callable(metric) else True
+    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
 
     if X is Y:
         # Only calculate metric for upper triangle
@@ -1279,7 +1279,7 @@ _VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
                   'sokalsneath', 'sqeuclidean', 'yule', "wminkowski",
                   'masked_euclidean']
 
-_MASKED_SUPPORTED_METRICS = ['masked_euclidean']
+_MASKED_METRICS = ['masked_euclidean']
 
 
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
@@ -1369,11 +1369,11 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
                          "Valid metrics are %s, or 'precomputed', or a "
                          "callable" % (metric, _VALID_METRICS))
 
-    if metric in _MASKED_SUPPORTED_METRICS:
+    if metric in _MASKED_METRICS or callable(metric):
         missing_values = kwds.get("missing_values") if kwds.get(
             "missing_values") is not None else np.nan
 
-        if(np.any(_get_mask(X, missing_values).sum(axis=1) == X.shape[1])):
+        if np.all(_get_mask(X, missing_values)):
             raise ValueError(
                 "One or more samples(s) only have missing values.")
 

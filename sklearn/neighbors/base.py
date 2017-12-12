@@ -17,7 +17,7 @@ from .kd_tree import KDTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..metrics.pairwise import _MASKED_SUPPORTED_METRICS
+from ..metrics.pairwise import _MASKED_METRICS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
@@ -159,7 +159,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._fit_method = None
 
     def _fit(self, X):
-        allow_nans = self.metric in _MASKED_SUPPORTED_METRICS
+        allow_nans = self.metric in _MASKED_METRICS or callable(self.metric)
 
         if self.metric_params is None:
             self.effective_metric_params_ = {}
@@ -214,7 +214,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         if issparse(X):
             if allow_nans:
                 raise ValueError(
-                    "Nearest neighbor algorithm does not currently support"
+                    "Nearest neighbor algorithm does not currently support "
                     "the use of sparse matrices for missing values."
                 )
             if self.algorithm not in ('auto', 'brute'):
@@ -340,7 +340,8 @@ class KNeighborsMixin(object):
 
         if X is not None:
             query_is_train = False
-            if self.effective_metric_ in _MASKED_SUPPORTED_METRICS:
+            if self.effective_metric_ in _MASKED_METRICS or callable(
+                    self.effective_metric_):
                 X = check_array(X, accept_sparse='csr',
                                 force_all_finite=False)
             else:
