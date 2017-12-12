@@ -212,7 +212,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("n_samples must be greater than 0")
 
         if issparse(X):
-            if allow_nans:
+            if np.any(np.isnan(X.data)):
                 raise ValueError(
                     "kNN does not support sparse matrix with missing data")
             if self.algorithm not in ('auto', 'brute'):
