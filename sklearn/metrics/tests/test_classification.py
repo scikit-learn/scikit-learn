@@ -956,12 +956,13 @@ def test_jaccard_similarity_score():
     assert_raises(ValueError, jaccard_similarity_score, y_true, y_pred,
                   average='binary')
 
-    assert_warns_message(UserWarning,
-                        "Note that pos_label (set to 3) is ignored when "
-                        "average != 'binary' (got None). You may use "
-                        "labels=[pos_label] to specify a single positive "
-                        "class.", jaccard_similarity_score, y_true, y_pred,
-                        pos_label=3)
+    # test 'pos_label'
+#    assert_warns_message(UserWarning,
+#                        "Note that pos_label (set to 3) is ignored when "
+#                        "average != 'binary' (got None). You may use "
+#                        "labels=[pos_label] to specify a single positive "
+#                        "class.", jaccard_similarity_score, y_true, y_pred,
+#                        pos_label=3)
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -1007,8 +1008,10 @@ def test_multiclass_jaccard_similarity_score():
                                                 average='micro'), 1. / 2)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                 average='weighted'), 7. / 12)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred),
-                        np.array([2. / 3, 0., 1. / 2]))
+    msg = ("In multiclass classification average must be one of "
+           "('micro', 'macro', 'weighted'), got average=None.")
+    assert_raise_message(ValueError, msg, jaccard_similarity_score, y_true,
+                         y_pred)
 
 
 @ignore_warnings

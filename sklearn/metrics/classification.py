@@ -408,7 +408,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         scores for that label only.
 
     average : string, [None (default), 'binary', 'micro', 'macro', 'samples', \
-                       'weighted',]
+                       'weighted']
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
@@ -429,11 +429,11 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification).
 
-    warn : bool, for internal use
+    warn : bool, optional (default=True), for internal use
         This determines whether warning will be raised or not,
 
     normalize: True, False or None (default)
-        whether to normalize (default) the result or return an array
+        whether to normalize the result or return an array
         (specified with `normalize=False`). This is only to be specified
         in case `average='samples'`.
 
@@ -448,11 +448,6 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     See also
     --------
     accuracy_score, hamming_loss, zero_one_loss
-
-    Notes
-    -----
-    It differs in implementation from ``accuracy_score`` from all three
-    classifications i.e. binary, mutliclass and multilabel.
 
     References
     ----------
@@ -485,8 +480,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     0.388...
     """
 
-    average_options = (None, 'binary', 'micro', 'macro', 'weighted', 'samples')
-    if average not in average_options:
+    average_options = (None, 'micro', 'macro', 'weighted', 'samples')
+    if average not in average_options and average != 'binary':
         raise ValueError("average has to be one of " + str(average_options))
 
     # Compute accuracy for each possible representation
@@ -512,17 +507,6 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                       "labels=[pos_label] to specify a single positive class."
                       % (pos_label, average), UserWarning)
 
-    if average == None:
-        average = 'samples'
-
-    if average == 'samples':
-        if normalize is None:
-            normalize = True
-    elif normalize is not None:
-        warnings.warn("Note that normalize (set to %r) is ignored when "
-                      "average != 'samples' (got %r)."
-                      % (normalize, average), UserWarning)
-
     if labels is None:
         labels = present_labels
         n_labels = None
@@ -532,6 +516,10 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                                                  assume_unique=True)])
 
     if y_type.startswith('multilabel'):
+        if average is None:
+            average = 'samples'
+        if average == 'samples' and normalize is None:
+            normalize = True
         # default average in multilabel is 'samples'
 
         with np.errstate(divide='ignore', invalid='ignore'):
@@ -573,11 +561,15 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             if sample_weight == None:
                 sample_weight = C.sum(0)/C.sum()
             return np.sum(sample_weight*score)
+#        else:
+#            # average='samples'
+#            den = C.sum(0) + C.sum(1) - C.diagonal()
+#            score = C.diagonal() / den
+#            return score
         else:
-            # average='samples'
-            den = C.sum(0) + C.sum(1) - C.diagonal()
-            score = C.diagonal() / den
-            return score
+            raise ValueError("In multiclass classification average must be "
+                             "one of ('micro', 'macro', 'weighted'), got "
+                             "average=%s." % average)
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):
