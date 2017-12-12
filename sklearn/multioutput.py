@@ -483,7 +483,6 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
     of models that are earlier in the chain.
 
     Read more in the :ref:`User Guide <classifierchain>`.
-    See Also :ref:`Regressor Chain <regressorchain>`.
 
     Parameters
     ----------
@@ -536,6 +535,10 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
     order_ : list
         The order of labels in the classifier chain.
+
+    See also
+    --------
+    RegressorChain
 
     References
     ----------
@@ -633,7 +636,6 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
     of models that are earlier in the chain.
 
     Read more in the :ref:`User Guide <regressorchain>`.
-    See Also :ref:`Classifier Chain <classifierchain>`.
 
     Parameters
     ----------
@@ -682,6 +684,10 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
 
     order_ : list
         The order of labels in the classifier chain.
+
+    See also
+    --------
+    ClassifierChain
 
     """
     def fit(self, X, Y):
