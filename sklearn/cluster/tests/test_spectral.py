@@ -199,3 +199,8 @@ def test_spectral_clustering_with_arpack_amg_solvers():
         labels_amg = spectral_clustering(
             graph, n_clusters=2, eigen_solver='amg', random_state=0)
         assert adjusted_rand_score(labels_arpack, labels_amg) == 1
+    else:
+        assert_raises(
+            ValueError, spectral_clustering,
+            graph, n_clusters=2, eigen_solver='amg', random_state=0)
+
