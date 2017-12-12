@@ -65,11 +65,22 @@ Preprocessing
   the maximum value in the features. :issue:`9151` by
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
+- Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
+  power transformation, allowing users to map data from any distribution to a
+  Gaussian distribution. This is useful as a variance-stabilizing transformation
+  in situations where normality and homoscedasticity are desirable.
+  :issue:`10210` by :user:`Eric Chang <ericchang00>` and
+  :user:`Maniteja Nandana <maniteja123>`.
+
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
+
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
 Enhancements
 ............
@@ -110,6 +121,15 @@ Model evaluation and meta-estimators
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
   :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
 
+- The default of ``iid`` parameter of :class:`model_selection.GridSearchCV`
+  and :class:`model_selection.RandomizedSearchCV` will change from ``True`` to
+  ``False`` in version 0.22 to correspond to the standard definition of
+  cross-validation, and the parameter will be removed in version 0.24
+  altogether. This parameter is of greatest practical significance where the
+  sizes of different test sets in cross-validation were very unequal, i.e. in
+  group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
+  and `Andreas Müller`_.
+
 Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
@@ -120,6 +140,12 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Miscellaneous
+
+- Add ``filename`` attribute to datasets that have a CSV file.
+  :issue:`9101` by :user:`alex-33 <alex-33>`
+  and :user:`Maskani Filali Mohamed <maskani-moh>`.
 
 Bug fixes
 .........
@@ -152,6 +178,13 @@ Classifiers and regressors
 - Fixed a bug in :class:`linear_model.ARDRegression` which caused incorrectly
   updated estimates for the standard deviation and the coefficients.
   :issue:`10153` by :user:`Jörg Döpfert <jdoepfert>`.
+
+- Fixed a bug when fitting :class:`ensemble.GradientBoostingClassifier` or
+  :class:`ensemble.GradientBoostingRegressor` with ``warm_start=True`` which
+  previously raised a segmentation fault due to a non-conversion of CSC matrix
+  into CSR format expected by ``decision_function``. Similarly, Fortran-ordered
+  arrays are converted to C-ordered arrays in the dense case. :issue:`9991` by
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 Decomposition, manifold learning and clustering
 
@@ -187,6 +220,11 @@ Decomposition, manifold learning and clustering
 - Fixed a bug when setting parameters on meta-estimator, involving both a
   wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
   <marcus-voss>` and `Joel Nothman`_.
+  
+- ``k_means`` now gives a warning, if the number of distinct clusters found
+  is smaller than ``n_clusters``. This may occur when the number of distinct 
+  points in the data set is actually smaller than the number of cluster one is 
+  looking for. :issue:`10059` by :user:`Christian Braune <christianbraune79>`.
 
 - Fixed a bug in :func:`datasets.make_circles`, where no odd number of data
   points could be generated. :issue:`10037` by :user:`Christian Braune
@@ -232,6 +270,10 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+- Deprecate ``positive=True`` option in :class:`linear_model.Lars` as the
+  underlying implementation is broken. Use :class:`linear_model.Lasso` instead.
+  :issue:`9837` by `Alexandre Gramfort`_.
 
 Metrics
 
