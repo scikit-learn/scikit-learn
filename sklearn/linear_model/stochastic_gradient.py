@@ -127,7 +127,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                     "they default to max_iter=5 and tol=None. "
                     "If tol is not None, max_iter defaults to max_iter=1000. "
                     "From 0.21, default max_iter will be 1000, and"
-                    " default tol will be 1e-3." % type(self), FutureWarning)
+                    " default tol will be 1e-3." % type(self).__name__,
+                    FutureWarning)
                 # Before 0.19, default was n_iter=5
             max_iter = 5
         else:
