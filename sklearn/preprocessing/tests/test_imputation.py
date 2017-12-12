@@ -868,11 +868,11 @@ def test_metric_type():
 
 def test_callable_metric():
 
-    # Define callable metric that prefers a 6,9,... alternating pattern:
-    def always_six_nine(x, y, missing_values="NaN"):
+    # Define callable metric that returns the l1 norm:
+    def custom_callable(x, y, missing_values="NaN"):
         x = np.ma.array(x, mask=np.isnan(x))
         y = np.ma.array(y, mask=np.isnan(y))
-        dist = abs(np.nansum(x-y))
+        dist = np.nansum(np.abs(x-y))
         return dist
 
     X = np.array([
@@ -889,5 +889,5 @@ def test_callable_metric():
         [5, 9, 11, 10.]
     ])
 
-    imputer = KNNImputer(max_neighbors=2, metric=always_six_nine)
+    imputer = KNNImputer(max_neighbors=2, metric=custom_callable)
     assert_array_equal(imputer.fit_transform(X), X_imputed)
