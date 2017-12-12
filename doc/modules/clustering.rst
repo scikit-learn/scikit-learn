@@ -506,7 +506,7 @@ embeddings.  In this case, the affinity matrix is the adjacency matrix of the
 graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
     >>> from sklearn.cluster import SpectralClustering
-    >>> sc = SpectralClustering(k, affinity='precomputed', n_init=100,
+    >>> sc = SpectralClustering(3, affinity='precomputed', n_init=100,
     ...                         assign_labels='discretize')
     >>> sc.fit_predict(adjacency_matrix)  # doctest: +SKIP
 
