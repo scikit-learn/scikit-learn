@@ -483,6 +483,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
     of models that are earlier in the chain.
 
     Read more in the :ref:`User Guide <classifierchain>`.
+    See Also :ref:`Regressor Chain <regressorchain>`.
 
     Parameters
     ----------
@@ -632,6 +633,7 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
     of models that are earlier in the chain.
 
     Read more in the :ref:`User Guide <regressorchain>`.
+    See Also :ref:`Classifier Chain <classifierchain>`.
 
     Parameters
     ----------

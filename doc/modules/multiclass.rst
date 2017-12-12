@@ -421,7 +421,7 @@ has no information about the other labels while the last model in the chain
 has features indicating the presence of all of the other labels. In general
 one does not know the optimal ordering of the models in the chain so
 typically many randomly ordered chains are fit and their predictions are
-averaged together. (See Also :ref:`Regressor Chain <regressorchain>`)
+averaged together.
 
 .. topic:: References:
 
@@ -436,4 +436,4 @@ Regressor Chain
 Regressor chains (see :class:`RegressorChain`) is analogous to 
 ClassifierChain as a way of combining a number of regressions 
 into a single multi-target model that is capable of exploiting 
-correlations among targets. (See Also :ref:`Classifier Chain <classifierchain>`)
+correlations among targets.
