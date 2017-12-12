@@ -49,12 +49,12 @@ if [[ "$DISTRIB" == "conda" ]]; then
         TO_INSTALL="$TO_INSTALL pandas=$PANDAS_VERSION"
     fi
 
+    if [[ -n "$PYAMG_VERSION" ]]; then
+        TO_INSTALL="$TO_INSTALL pyamg=$PYAMG_VERSION"
+    fi
+
     conda create -n testenv --yes $TO_INSTALL
     source activate testenv
-
-    if [[ -n "$PYAMG_VERSION" ]]; then
-        conda install --yes pyamg=$PYAMG_VERSION
-    fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
