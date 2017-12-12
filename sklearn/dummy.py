@@ -398,7 +398,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Returns self.
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
+                        force_all_finite=False, dtype=None,
+                        ensure_min_features=0)
 
         if self.strategy not in ("mean", "median", "quantile", "constant"):
             raise ValueError("Unknown strategy type: %s, expected "
