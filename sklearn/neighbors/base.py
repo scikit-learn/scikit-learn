@@ -214,9 +214,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         if issparse(X):
             if allow_nans:
                 raise ValueError(
-                    "Nearest neighbor algorithm does not currently support "
-                    "the use of sparse matrices for missing values."
-                )
+                    "kNN does not support sparse matrix with missing data")
             if self.algorithm not in ('auto', 'brute'):
                 warnings.warn("cannot use tree with sparse input: "
                               "using brute force")

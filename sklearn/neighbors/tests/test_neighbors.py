@@ -151,8 +151,7 @@ def test_masked_unsupervised_kneighbors():
     samples = csc_matrix([[0, 5, 5], [1, 0, nan], [4, 1, 1], [nan, 2, 3]])
     neigh = neighbors.NearestNeighbors(n_neighbors=2,
                                        metric="masked_euclidean")
-    msg = "Nearest neighbor algorithm does not currently support the use of " \
-          "sparse matrices for missing values."
+    msg = "kNN does not support sparse matrix with missing data"
     assert_raise_message(ValueError, msg, neigh.fit, samples)
 
 
