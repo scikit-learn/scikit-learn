@@ -538,10 +538,9 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
     See also
     --------
-    RegressorChain: Arranges regressions into a chain.
-
+    RegressorChain: Equivalent for regression
     MultioutputClassifier: Classifies each output independently rather than
-    chaining.
+        chaining.
 
     References
     ----------
@@ -690,10 +689,9 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
 
     See also
     --------
-    ClassifierChain: Arranges binary classifiers into a chain
-
+    ClassifierChain: Equivalent for classification
     MultioutputRegressor: Learns each output independently rather than
-    chaining.
+        chaining.
 
     """
     def fit(self, X, Y):
