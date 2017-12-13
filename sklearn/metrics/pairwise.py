@@ -1311,6 +1311,11 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         If Y is not None, then D_{i, j} is the distance between the ith array
         from X and the jth array from Y.
 
+    See also
+    --------
+    pairwise_distances_chunked : performs the same calculation as this funtion,
+        but returns a generator of chunks of the distance matrix, in order to
+        limit memory usage.
     """
     if (metric not in _VALID_METRICS and
             not callable(metric) and metric != "precomputed"):
