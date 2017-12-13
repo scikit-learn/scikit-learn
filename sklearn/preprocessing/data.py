@@ -4,6 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Eric Martin <eric@ericmart.in>
 #          Giorgio Patrini <giorgio.patrini@anu.edu.au>
+#          Eric Chang <ericchang2017@u.northwestern.edu>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -51,6 +52,7 @@ __all__ = [
     'RobustScaler',
     'StandardScaler',
     'QuantileTransformer',
+    'PowerTransformer',
     'add_dummy_feature',
     'binarize',
     'normalize',
@@ -59,6 +61,7 @@ __all__ = [
     'maxabs_scale',
     'minmax_scale',
     'quantile_transform',
+    'power_transform',
 ]
 
 
@@ -2167,9 +2170,11 @@ class QuantileTransformer(BaseEstimator, TransformerMixin):
     See also
     --------
     quantile_transform : Equivalent function without the estimator API.
-    StandardScaler : perform standardization that is faster, but less robust
+    PowerTransformer : Perform mapping to a normal distribution using a power
+        transform.
+    StandardScaler : Perform standardization that is faster, but less robust
         to outliers.
-    RobustScaler : perform robust standardization that removes the influence
+    RobustScaler : Perform robust standardization that removes the influence
         of outliers but does not put outliers and inliers on the same scale.
 
     Notes
@@ -2553,9 +2558,11 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     QuantileTransformer : Performs quantile-based scaling using the
         ``Transformer`` API (e.g. as part of a preprocessing
         :class:`sklearn.pipeline.Pipeline`).
-    scale : perform standardization that is faster, but less robust
+    power_transform : Maps data to a normal distribution using a
+        power transformation.
+    scale : Performs standardization that is faster, but less robust
         to outliers.
-    robust_scale : perform robust standardization that removes the influence
+    robust_scale : Performs robust standardization that removes the influence
         of outliers but does not put outliers and inliers on the same scale.
 
     Notes
@@ -2577,6 +2584,249 @@ def quantile_transform(X, axis=0, n_quantiles=1000,
     else:
         raise ValueError("axis should be either equal to 0 or 1. Got"
                          " axis={}".format(axis))
+
+
+class PowerTransformer(BaseEstimator, TransformerMixin):
+    """Apply a power transform featurewise to make data more Gaussian-like.
+
+    Power transforms are a family of parametric, monotonic transformations
+    that are applied to make data more Gaussian-like. This is useful for
+    modeling issues related to heteroscedasticity (non-constant variance),
+    or other situations where normality is desired. Note that power
+    transforms do not result in standard normal distributions (i.e. the
+    transformed data could be far from zero-mean, unit-variance).
+
+    Currently, PowerTransformer supports the Box-Cox transform. Box-Cox
+    requires input data to be strictly positive. The optimal parameter
+    for stabilizing variance and minimizing skewness is estimated through
+    maximum likelihood.
+
+    Read more in the :ref:`User Guide <preprocessing_transformer>`.
+
+    Parameters
+    ----------
+    method : str, (default='box-cox')
+        The power transform method. Currently, 'box-cox' (Box-Cox transform)
+        is the only option available.
+
+    copy : boolean, optional, default=True
+        Set to False to perform inplace computation during transformation.
+
+    Attributes
+    ----------
+    lambdas_ : array of float, shape (n_features,)
+        The parameters of the power transformation for the selected features.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import PowerTransformer
+    >>> pt = PowerTransformer()
+    >>> data = [[1, 2], [3, 2], [4, 5]]
+    >>> print(pt.fit(data))
+    PowerTransformer(copy=True, method='box-cox')
+    >>> print(pt.lambdas_)  # doctest: +ELLIPSIS
+    [ 1.051... -2.345...]
+    >>> print(pt.transform(data))  # doctest: +ELLIPSIS
+    [[ 0...      0.342...]
+     [ 2.068...  0.342...]
+     [ 3.135...  0.416...]]
+
+    See also
+    --------
+    power_transform : Equivalent function without the estimator API.
+
+    QuantileTransformer : Maps data to a standard normal distribution with
+        the parameter `output_distribution='normal'`.
+
+    Notes
+    -----
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    References
+    ----------
+    G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
+    Royal Statistical Society B, 26, 211-252 (1964).
+
+    """
+    def __init__(self, method='box-cox', copy=True):
+        self.method = method
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        """Estimate the optimal parameter for each feature.
+
+        The optimal parameter for minimizing skewness is estimated
+        on each feature independently. If the method is Box-Cox,
+        the lambdas are estimated using maximum likelihood.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data used to estimate the optimal transformation parameters.
+
+        y : Ignored
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        X = self._check_input(X, check_positive=True, check_method=True)
+
+        self.lambdas_ = []
+        for col in X.T:
+            _, lmbda = stats.boxcox(col, lmbda=None)
+            self.lambdas_.append(lmbda)
+        self.lambdas_ = np.array(self.lambdas_)
+
+        return self
+
+    def transform(self, X):
+        """Apply the power transform to each feature using the fitted lambdas.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The data to be transformed using a power transformation.
+        """
+        check_is_fitted(self, 'lambdas_')
+        X = self._check_input(X, check_positive=True, check_shape=True)
+
+        for i, lmbda in enumerate(self.lambdas_):
+            X[:, i] = stats.boxcox(X[:, i], lmbda=lmbda)
+
+        return X
+
+    def inverse_transform(self, X):
+        """Apply the inverse power transformation using the fitted lambdas.
+
+        The inverse of the Box-Cox transformation is given by::
+
+            if lambda == 0:
+                X = exp(X_trans)
+            else:
+                X = (X_trans * lambda + 1) ** (1 / lambda)
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            The transformed data.
+        """
+        check_is_fitted(self, 'lambdas_')
+        X = self._check_input(X, check_shape=True)
+
+        for i, lmbda in enumerate(self.lambdas_):
+            x = X[:, i]
+            if lmbda == 0:
+                x_inv = np.exp(x)
+            else:
+                x_inv = (x * lmbda + 1) ** (1 / lmbda)
+            X[:, i] = x_inv
+
+        return X
+
+    def _check_input(self, X, check_positive=False, check_shape=False,
+                     check_method=False):
+        """Validate the input before fit and transform.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        check_positive : bool
+            If True, check that all data is postive and non-zero.
+
+        check_shape : bool
+            If True, check that n_features matches the length of self.lambdas_
+
+        check_method : bool
+            If True, check that the transformation method is valid.
+        """
+        X = check_array(X, ensure_2d=True, dtype=FLOAT_DTYPES, copy=self.copy)
+
+        if check_positive and self.method == 'box-cox' and np.any(X <= 0):
+            raise ValueError("The Box-Cox transformation can only be applied "
+                             "to strictly positive data")
+
+        if check_shape and not X.shape[1] == len(self.lambdas_):
+            raise ValueError("Input data has a different number of features "
+                             "than fitting data. Should have {n}, data has {m}"
+                             .format(n=len(self.lambdas_), m=X.shape[1]))
+
+        valid_methods = ('box-cox',)
+        if check_method and self.method not in valid_methods:
+            raise ValueError("'method' must be one of {}, "
+                             "got {} instead."
+                             .format(valid_methods, self.method))
+
+        return X
+
+
+def power_transform(X, method='box-cox', copy=True):
+    """Apply a power transform featurewise to make data more Gaussian-like.
+
+    Power transforms are a family of parametric, monotonic transformations
+    that are applied to make data more Gaussian-like. This is useful for
+    modeling issues related to heteroscedasticity (non-constant variance),
+    or other situations where normality is desired. Note that power
+    transforms do not result in standard normal distributions (i.e. the
+    transformed data could be far from zero-mean, unit-variance).
+.
+
+    Currently, power_transform() supports the Box-Cox transform. Box-Cox
+    requires input data to be strictly positive. The optimal parameter
+    for stabilizing variance and minimizing skewness is estimated
+    through maximum likelihood.
+
+
+    Read more in the :ref:`User Guide <preprocessing_transformer>`.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        The data to be transformed using a power transformation.
+
+    method : str, (default='box-cox')
+        The power transform method. Currently, 'box-cox' (Box-Cox transform)
+        is the only option available.
+
+    copy : boolean, optional, default=True
+        Set to False to perform inplace computation.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import power_transform
+    >>> data = [[1, 2], [3, 2], [4, 5]]
+    >>> print(power_transform(data, method='box-cox'))  # doctest: +ELLIPSIS
+    [[ 0...      0.342...]
+     [ 2.068...  0.342...]
+     [ 3.135...  0.416...]]
+
+    See also
+    --------
+    PowerTransformer: Performs power transformation using the ``Transformer``
+        API (as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+
+    quantile_transform : Maps data to a standard normal distribution with
+        the parameter `output_distribution='normal'`.
+
+    Notes
+    -----
+    For a comparison of the different scalers, transformers, and normalizers,
+    see :ref:`examples/preprocessing/plot_all_scaling.py
+    <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
+
+    References
+    ----------
+    G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
+    Royal Statistical Society B, 26, 211-252 (1964).
+    """
+    pt = PowerTransformer(method=method, copy=copy)
+    return pt.fit_transform(X)
 
 
 class CategoricalEncoder(BaseEstimator, TransformerMixin):
