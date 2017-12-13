@@ -258,6 +258,9 @@ Domain specific packages
 - `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
   conformational dynamics time series.
 
+- `scikit-surprise <http://surpriselib.com>`_ A scikit for building and
+  evaluating recommender systems.
+
 Snippets and tidbits
 ---------------------
 

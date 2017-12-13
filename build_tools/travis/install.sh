@@ -108,7 +108,5 @@ except ImportError:
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
-    # flake8 3.5 only available from pip at the time of writing (2017-11-08)
-    # bug fixed in flake8 3.5 is https://gitlab.com/pycqa/flake8/issues/362
-    pip install flake8
+    conda install flake8 -y
 fi
