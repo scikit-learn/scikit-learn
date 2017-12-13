@@ -639,6 +639,3 @@ def test_dummy_classifier_on_object_values():
     y_pred_proba = cls.predict_proba(X)
     assert_array_equal(y_pred, y_expected)
     assert_array_equal(y_pred_proba, y_proba_expected)
-
-
-test_dummy_classifier_on_object_values()
