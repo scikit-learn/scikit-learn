@@ -536,6 +536,12 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
     order_ : list
         The order of labels in the classifier chain.
 
+    See also
+    --------
+    RegressorChain: Equivalent for regression
+    MultioutputClassifier: Classifies each output independently rather than
+        chaining.
+
     References
     ----------
     Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
@@ -680,6 +686,12 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
 
     order_ : list
         The order of labels in the classifier chain.
+
+    See also
+    --------
+    ClassifierChain: Equivalent for classification
+    MultioutputRegressor: Learns each output independently rather than
+        chaining.
 
     """
     def fit(self, X, Y):
