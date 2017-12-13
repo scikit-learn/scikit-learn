@@ -73,21 +73,15 @@ Model evaluation
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
-
 - Added :class:`multioutput.RegressorChain` for multi-target
   regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
 
-- Added the :class:`preprocessing.TransformedTargetRegressor` which transforms
-  the target y before fitting a regression model. The predictions are mapped
-  back to the original space via an inverse transform. :issue:`9041` by
-  `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
-
-
 Clustering
 
-- Added support for Single Linkage clustering to :class:`cluster
-    .AgglomerativeClustering` via ``linkage='single'``. :issue:`9372` by
+- :class:`cluster.AgglomerativeClustering` now supports Single Linkage
+  clustering via ``linkage='single'``. :issue:`9372` by
   :user:`Leland McInnes <lmcinnes>` and :user:`Steve Astels <sastels>`.
+
 
 Enhancements
 ............
@@ -227,10 +221,10 @@ Decomposition, manifold learning and clustering
 - Fixed a bug when setting parameters on meta-estimator, involving both a
   wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
   <marcus-voss>` and `Joel Nothman`_.
-
+  
 - ``k_means`` now gives a warning, if the number of distinct clusters found
-  is smaller than ``n_clusters``. This may occur when the number of distinct
-  points in the data set is actually smaller than the number of cluster one is
+  is smaller than ``n_clusters``. This may occur when the number of distinct 
+  points in the data set is actually smaller than the number of cluster one is 
   looking for. :issue:`10059` by :user:`Christian Braune <christianbraune79>`.
 
 - Fixed a bug in :func:`datasets.make_circles`, where no odd number of data
@@ -301,7 +295,3 @@ Changes to estimator checks
 - Allow tests in :func:`estimator_checks.check_estimator` to test functions
   that accept pairwise data.
   :issue:`9701` by :user:`Kyle Johnson <gkjohns>`
-
-- Allow :func:`estimator_checks.check_estimator` to check that there is no
-  private settings apart from parameters during estimator initialization.
-  :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
