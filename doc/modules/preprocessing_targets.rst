@@ -26,7 +26,7 @@ prediction, and the transformer that will be applied to the target variable::
   >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
   >>> regr = TransformedTargetRegressor(regressor=regressor,
-  ...                                 transformer=transformer)
+  ...                                   transformer=transformer)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
   TransformedTargetRegressor(...)
@@ -49,7 +49,7 @@ Subsequently, the object is created as::
 
   >>> regr = TransformedTargetRegressor(regressor=regressor,
   ...                                   func=func,
-  ...                                 inverse_func=inverse_func)
+  ...                                   inverse_func=inverse_func)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
   TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
@@ -62,9 +62,9 @@ each other. However, it is possible to bypass this checking by setting
   >>> def inverse_func(x):
   ...     return x
   >>> regr = TransformedTargetRegressor(regressor=regressor,
-  ...                                 func=func,
-  ...                                 inverse_func=inverse_func,
-  ...                                 check_inverse=False)
+  ...                                   func=func,
+  ...                                   inverse_func=inverse_func,
+  ...                                   check_inverse=False)
   >>> regr.fit(X_train, y_train) # doctest: +ELLIPSIS
   TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
