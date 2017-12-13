@@ -343,6 +343,13 @@ General Concepts
     hyper-parameter
         See :term:`parameter`.
 
+    induction
+    inductive
+        Inductive (contrasted with :term:`transductive`) machine learning
+        builds a model of some data that can then be applied to new instances.
+        Inductive estimators in Scikit-learn have :term:`predict` and/or
+        :term:`transform` methods.
+
     joblib
         A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
         facilite simple parallelism and caching.  Joblib is oriented towards
@@ -530,6 +537,14 @@ General Concepts
 
         Dependent variable or outcome variable.
 
+    transduction
+    transductive
+        A transductive (contrasted with :term:`inductive`) machine learning
+        method is designed to model a specific dataset, but not to apply that
+        model to unseen data.  Examples include :class:`manifold.TSNE`,
+        :class:`cluster.AgglomerativeClustering` and
+        :class:`neighbors.LocalOutlierFactor`.
+
     unlabeled
     unlabeled data
         TODO
@@ -562,12 +577,13 @@ Class APIs and Estimator Types
 
     feature extractor
     feature extractors
-        A :term:`tranformer` which takes input where each sample is not
+        A :term:`transformer` which takes input where each sample is not
         represented as an :term:`array-like` object of fixed length, and
         produces an `array-like` object of :term:`features` for each sample
         (and thus a 2-dimensional array-like for a set of samples).  In other
         words, it (lossily) maps a non-rectangular data representation into
-        :term:`rectangular` data.
+        :term:`rectangular` data. Feature extractors should define
+        :term:`get_feature_names`.
 
     meta-estimator
     meta-estimators
@@ -581,17 +597,19 @@ Class APIs and Estimator Types
         TODO
 
     predictor
-        An :term:`estimator` which provides :term:`predict`.
-        This encompasses :term:`classifier`, :term:`regressor`,
-        :term:`outlier detector` and sometimes :term:`clusterer` (at least when
-        they are inductive).
+        An estimator which provides :term:`predict`.  This encompasses
+        :term:`classifier`, :term:`regressor`, :term:`outlier detector` and
+        sometimes :term:`clusterer` (although the latter only provide
+        :term:`fit_predict` when they are not :term:`inductive`).
 
     regressor
         TODO
         Mention :func:`~base.is_regressor`.
 
     transformer
-        TODO
+        An estimator supporting :term:`fit` and :term:`transform` and/or
+        :term:`fit_transform`.  A purely :term:`transductive` transformer,
+        such as :class:`manifold.TSNE`, may not implement ``transform``.
 
     vectorizer
         See :term:`feature extractor`.
