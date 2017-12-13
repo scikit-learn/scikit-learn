@@ -7,6 +7,11 @@
 Version 0.20 (under development)
 ================================
 
+As well as a plethora of new features and enhancements, this release is the
+first to be accompanied by a :ref:`glossary`. This a reference resource to help
+users and contributors become familiar with the terminology used in
+Scikit-learn.
+
 Changed models
 --------------
 
