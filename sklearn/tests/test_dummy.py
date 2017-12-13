@@ -628,6 +628,7 @@ def test_dummy_regressor_on_object_values():
     y_pred = cls.predict(X)
     assert_array_equal(y_pred, y_expected)
 
+
 def test_dummy_classifier_on_object_values():
     X = np.array([['foo'], ['bar'], ['baz']], dtype=object)
     y = [3, 3, 3]
