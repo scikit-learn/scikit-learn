@@ -470,18 +470,59 @@ General Concepts
 
     sample property
     sample properties
-        TODO
+        A sample property is data for each sample (e.g. an array of length
+        n_samples) passed to an estimator method or a similar function,
+        alongside but distinct from the :term:`features` (``X``) and
+        :term:`target` (``y``). The most prominent example is
+        :term:`sample_weight`; see others at :ref:`glossary_sample_props`.
+
+        As of version 0.19 we do not have a consistent approach to handling
+        sample properties and their routing in :term:`meta-estimators`, though
+        a ``fit_params`` parameter is often used.
 
     scikit-learn-contrib
-        TODO
+        A venue for publishing Scikit-learn-compatible libraries that are
+        broadly authorized by the core developers and the contrib community,
+        but not maintained by the core developer team.
+        See `http://scikit-learn-contrib.github.io`_
 
     scorer
-        TODO
-        See :ref:`scoring_parameter`.
-        See also :term:`evaluation metric`.
+        An object which evaluates an estimator on given test data, returning
+        a number. See :ref:`scoring_parameter`; see also :term:`evaluation
+        metric`.
 
     sparse matrix
-        TODO
+        A representation of two-dimensional numeric data that is more memory
+        efficient the corresponding dense numpy array where almost all elements
+        are zero. We use the :mod:`scipy.sparse` framework, which provides
+        several underlying sparse data representations, or *formats*.
+        Some formats are more efficient than others for particular tasks, and
+        when a particular format provides especial benefit, we try to document
+        this fact in Scikit-learn parameter descriptions.
+
+        Some sparse matrix formats (notably CSR, CSC, COO and LIL) distinguish
+        between *implicit* and *explicit* zeros. Explicit zeros are stored
+        (i.e. they consume memory in a ``data`` array) in the data structure,
+        while implicit zeros correspond to every element not otherwise defined
+        in explicit storage.
+
+        Two semantics for sparse matrices are used in Scikit-learn:
+
+        matrix semantics
+            The sparse matrix is interpreted as an array with implicit and
+            explicit zeros being interpreted as the number 0.  This is the
+            interpretation most often adopted, e.g. when sparse matrices
+            are used for feature matrices or multilabel indicator matrices.
+        graph semantics
+            As with :mod:`scipy.sparse.csgraph`, explicit zeros are
+            interpreted as the number 0, but implicit zeros indicate a masked
+            or absent value, such as the absence of an edge between two
+            vertices of a graph, where an explicit value indicates an edge's
+            weight. This interpretation is adopted to represent connectivity
+            in clustering, in representations of nearest neighborhoods
+            (e.g. :func:`neighbors.kneighbors_graph`), and for precomputed
+            distance representation where only distances in the neighborhood
+            of each point are required.
 
     target
     targets
