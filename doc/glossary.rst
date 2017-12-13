@@ -962,7 +962,6 @@ non-estimator parameters with similar semantics.
 
     ``kernel``
         TODO
-        See also :term:`affinity`
 
     ``max_iter``
         For estimators involving iterative optimization, this determines the
