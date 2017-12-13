@@ -37,6 +37,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
+    'sphinx.ext.todo',
 ]
 
 # this is needed for some reason...
@@ -290,6 +291,3 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
                                          u'https://github.com/scikit-learn/'
                                          'scikit-learn/blob/{revision}/'
                                          '{package}/{path}#L{lineno}')
-
-
-numpydoc_show_defaults = True

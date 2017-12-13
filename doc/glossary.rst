@@ -167,6 +167,15 @@ General Concepts
         exceptional behaviours on the estimator using semantic :term:`estimator
         tags`.
 
+    cross validation splitter
+    CV splitter
+        A non-estimator family of classes used to split a dataset into a
+        sequence of train and test portions (see :ref:`cross_validation`),
+        by providing :term:`split` and :term:`get_n_splits` methods.
+        Note that unlike estimators, these do not have :term:`fit` methods
+        in which to perform parameter validation, etc., and do not provide
+        :term:`set_params` or :term:`get_params`.
+
     deprecation
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to to:
@@ -260,6 +269,7 @@ General Concepts
           alongside a technical description of the estimator.
 
     evaluation metric
+    evaluation metrics
         TODO
 
     estimator tags
@@ -565,10 +575,6 @@ Class APIs and Estimator Types
     clusterer
         TODO
 
-    cross validation splitter
-    CV splitter
-        TODO
-
     estimator
         TODO
 
@@ -639,12 +645,13 @@ Target Types
         labels.  A binary decision function is represented as a 1d array.
 
         Semantically, one class is often considered the "positive" class.
-        Unless otherwise specified (e.g. using :term:`pos_label` in metrics),
-        we consider the class label with the greater value as the positive
-        class: of labels [0, 1], 1 is the positive class; of [1, 2], 2 is the
-        positive class; of ['no', 'yes'], 'yes' is the positive class; of
-        ['no', 'YES'], 'no' is the positive class.  This affects the output
-        of :term:`decision_function`, for instance.
+        Unless otherwise specified (e.g. using :term:`pos_label` in
+        :term:`evaluation metrics`), we consider the class label with the
+        greater value as the positive class: of labels [0, 1], 1 is the
+        positive class; of [1, 2], 2 is the positive class; of ['no', 'yes'],
+        'yes' is the positive class; of ['no', 'YES'], 'no' is the positive
+        class.  This affects the output of :term:`decision_function`, for
+        instance.
 
         Note that a dataset sampled from a multiclass ``y`` or a continuous
         ``y`` may appear to be binary.
@@ -898,12 +905,6 @@ non-estimator parameters with similar semantics.
 
 .. glossary::
 
-    ``affinity``
-        TODO
-        See also :term:`kernel`
-
-        XXX: hierarchical clustering uses ``affinity`` for a distance metric.
-
     ``class_weight``
         Used to specify sample weights when fitting classifiers as a function
         of the :term:`target` class.  Where the :term:`sample_weight`
@@ -987,7 +988,15 @@ non-estimator parameters with similar semantics.
         :func:`utils.validation.check_memory`.
 
     ``metric``
-        TODO
+        As a parameter, this is the scheme for determining the distance between
+        two data points.  See :func:`metrics.pairwise_distances`.  In practice,
+        for some algorithms, an improper distance metric (one that does not
+        obey the triangle inequality, such as Cosine Distance) may be used.
+
+        XXX: hierarchical clustering uses ``affinity`` with this meaning.
+
+        We also use *metric* to refer to :term:`evaluation metrics`, but avoid
+        using this sense as a parameter name.
 
     ``n_components``
         TODO
