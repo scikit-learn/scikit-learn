@@ -108,6 +108,7 @@ conda update --yes --quiet conda
 # provided versions
 conda env create --name=$CONDA_ENV_NAME --file requirements/conda/default.yml --quiet
 conda env update --name=$CONDA_ENV_NAME --file requirements/conda/docs.yml --quiet
+conda install --name $CONDA_ENV_NAME --yes --quiet cython
 source activate $CONDA_ENV_NAME
 
 # Build and install scikit-learn in dev mode
