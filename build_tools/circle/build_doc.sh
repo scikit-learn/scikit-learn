@@ -144,7 +144,7 @@ if [ -n "$CI_PULL_REQUEST" ]
 then
 	echo "The following documentation files may have been changed by PR #$CI_PULL_REQUEST:"
 	affected=$(affected_doc_paths)
-	echo "$affected" | sed 's|^|* http://scikit-learn.org/circle?'$CIRCLE_BUILD_NUM'/|'
+	echo "$affected"
 	(
 	echo '<html><body><ul>'
 	echo "$affected" | sed 's|.*|<li><a href="&">&</a></li>|'
