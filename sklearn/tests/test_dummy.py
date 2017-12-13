@@ -620,11 +620,12 @@ def test_dummy_regressor_on_nan_value():
 
 
 def test_dummy_regressor_on_string_values():
-    X = np.array(['foo', 'bar', 'baz'])
-    X = np.reshape(X, (-1, 1))
+    X = np.array([['foo'], ['bar'], ['baz']], dtype=object)
     y = np.array([1, 2, 3])
     y_expected = np.array([2, 2, 2])
     cls = DummyRegressor(strategy='mean')
     cls.fit(X, y)
     y_pred = cls.predict(X)
     assert_array_equal(y_pred, y_expected)
+
+test_dummy_regressor_on_string_values()
