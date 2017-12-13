@@ -640,3 +640,15 @@ def test_dummy_classifier_on_object_values():
     y_pred_proba = cls.predict_proba(X)
     assert_array_equal(y_pred, y_expected)
     assert_array_equal(y_pred_proba, y_proba_expected)
+
+
+def test_dummy_regressor_on_zero_arrays():
+    X = np.array([[], [], []])
+    y = np.array([2, 2, 2])
+    y_expected = np.array([2, 2, 2])
+    cls = DummyRegressor(strategy='mean')
+    cls.fit(X, y)
+    y_pred = cls.predict(X)
+    assert_array_equal(y_pred, y_expected)
+
+test_dummy_regressor_on_zero_arrays()
