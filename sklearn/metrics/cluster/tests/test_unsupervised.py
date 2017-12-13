@@ -83,6 +83,7 @@ def test_cluster_size_1():
 
 def test_silhouette_paper_example():
     # Explicitly check per-sample results against Rousseeuw (1987)
+    # Data from Table 1
     lower = [5.58,
              7.00, 6.50,
              7.08, 7.00, 3.83,
@@ -101,13 +102,15 @@ def test_silhouette_paper_example():
     names = ['BEL', 'BRA', 'CHI', 'CUB', 'EGY', 'FRA', 'IND', 'ISR', 'USA',
              'USS', 'YUG', 'ZAI']
 
+    # Data from Figure 2
     labels1 = [1, 1, 2, 2, 1, 1, 2, 1, 1, 2, 2, 1]
-    labels2 = [1, 2, 3, 3, 1, 1, 2, 1, 1, 3, 3, 2]
-
     expected1 = {'USA': .43, 'BEL': .39, 'FRA': .35, 'ISR': .30, 'BRA': .22,
                  'EGY': .20, 'ZAI': .19, 'CUB': .40, 'USS': .34, 'CHI': .33,
                  'YUG': .26, 'IND': -.04}
     score1 = .28
+
+    # Data from Figure 3
+    labels2 = [1, 2, 3, 3, 1, 1, 2, 1, 1, 3, 3, 2]
     expected2 = {'USA': .47, 'FRA': .44, 'BEL': .42, 'ISR': .37, 'EGY': .02,
                  'ZAI': .28, 'BRA': .25, 'IND': .17, 'CUB': .48, 'USS': .44,
                  'YUG': .31, 'CHI': .31}
