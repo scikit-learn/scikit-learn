@@ -1,0 +1,101 @@
+"""
+==========================================
+Large Margin Nearest Neighbor Illustration
+==========================================
+
+An example illustrating the goal of learning a distance metric that maximizes
+the nearest neighbors classification accuracy. The example is solely for
+illustration purposes. Please refer to the :ref:`User Guide <lmnn>` for
+more information.
+"""
+
+# Author: John Chiotellis <johnyc.code@gmail.com>
+# License: BSD 3 clause
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
+from sklearn.neighbors import NeighborhoodComponentsAnalysis
+from matplotlib import cm
+from scipy.misc import logsumexp
+
+from sklearn.preprocessing import OneHotEncoder
+
+print(__doc__)
+
+n_neighbors = 1
+random_state = 0
+
+# Create a tiny data set of 9 samples from 3 classes
+X, y = make_classification(n_samples=9, n_features=2, n_informative=2,
+                           n_redundant=0, n_classes=3, n_clusters_per_class=1,
+                           class_sep=1.0, random_state=random_state)
+
+# Plot the points in the original space
+plt.figure()
+ax = plt.gca()
+
+# Draw the graph nodes
+ax.scatter(X[:, 0], X[:, 1], s=300, c=y, cmap='tab10', alpha=0.4)
+for i in range(X.shape[0]):
+    ax.text(X[i, 0], X[i, 1], str(i), va='center', ha='center')
+
+
+
+def p_i(X, i):
+    diff_embedded = X[i] - X
+    dist_embedded = np.einsum('ij,ij->i', diff_embedded,
+                              diff_embedded)
+    dist_embedded[i] = np.inf
+
+    # compute exponentiated distances (use the log-sum-exp trick to
+    # avoid numerical instabilities
+    exp_dist_embedded = np.exp(-dist_embedded -
+                               logsumexp(-dist_embedded))
+    return exp_dist_embedded
+
+
+masks = OneHotEncoder(sparse=False,
+                      dtype=bool).fit_transform(y[:, np.newaxis])
+
+# for i, pt_i in enumerate(X):  # or maybe select only one point
+i=3
+def relate_point(X, i, ax):
+    pt_i = X[i]
+    for j, pt_j in enumerate(X):
+        thickness = p_i(X, i)
+        if i != j:
+            line = ([pt_i[0], pt_j[0]], [pt_i[1], pt_j[1]])
+            ax.plot(*line, c=cm.tab10(y[j]),
+                    linewidth=5*thickness[j])
+
+relate_point(X, i, ax)
+ax.set_title("Original points")
+ax.axes.get_xaxis().set_visible(False)
+ax.axes.get_yaxis().set_visible(False)
+
+# Learn an embedding with LargeMarginNearestNeighbor
+nca = NeighborhoodComponentsAnalysis(max_iter=30, random_state=random_state)
+nca = nca.fit(X, y)
+
+# Plot the points after transformation with LargeMarginNearestNeighbor
+plt.figure()
+ax2 = plt.gca()
+
+# Get the embedding and find the new nearest neighbors
+X_embedded = nca.transform(X)
+
+ax2.scatter(X_embedded[:, 0], X_embedded[:, 1], s=300, c=y, cmap='tab10',
+            alpha=0.4)
+
+relate_point(X_embedded, i, ax2)
+
+for i in range(len(X)):
+    ax2.text(X_embedded[i, 0], X_embedded[i, 1], str(i),
+             va='center', ha='center')
+
+# Make axes equal so that boundaries are displayed correctly as circles
+ax2.set_title("NCA embedding")
+ax2.axes.get_xaxis().set_visible(False)
+ax2.axes.get_yaxis().set_visible(False)
+plt.show()
