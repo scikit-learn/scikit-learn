@@ -1374,6 +1374,7 @@ Low-level methods
    utils.estimator_checks.check_estimator
    utils.extmath.safe_sparse_dot
    utils.indexable
+   utils.multiclass.type_of_target
    utils.resample
    utils.safe_indexing
    utils.shuffle

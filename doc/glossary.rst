@@ -72,7 +72,7 @@ General Concepts
         estimator instance is required to begin with an alphabetic character
         and end in a single underscore if it is set in :term:`fit` or
         :term:`partial_fit`.  These are what is documented under an estimator's
-        *Attributes* documentation.  The information stored in attributes are
+        *Attributes* documentation.  The information stored in attributes is
         usually either: sufficient statistics used for prediction or
         transformation; or diagnostic data, such as
         :term:`feature_importances_`.
@@ -147,7 +147,7 @@ General Concepts
     clone
         To copy an :term:`estimator instance` and create a new one with
         identical :term:`parameters`, but without any fitted
-        :term:`attributes`, using :func:`~skelarn.base.clone`.
+        :term:`attributes`, using :func:`~sklearn.base.clone`.
 
         When ``fit`` is called, a :term:`meta-estimator` usually clones
         a wrapped estimator instance before fitting the cloned instance.
@@ -209,9 +209,9 @@ General Concepts
         TODO. Mention casting.
 
     duck typing
-        We try to apply [duck
-        typing](https://en.wikipedia.org/wiki/Duck_typing) to determine how to
-        handle some input values (e.g. checking whether a given estimator is a
+        We try to apply `duck typing
+        <https://en.wikipedia.org/wiki/Duck_typing>_ to determine how to handle
+        some input values (e.g. checking whether a given estimator is a
         classifier).  That is, we avoid using ``isinstance`` where possible,
         and rely on the presence or absence of attributes to determine an
         object's behaviour.  Some nuance is required when following this
@@ -452,7 +452,7 @@ General Concepts
         parameter is set. Parameter validation is performed when :term:`fit` is
         called.
 
-        Common parameters are listed :ref:`below <glossary_attributes>`.
+        Common parameters are listed :ref:`below <glossary_parameters>`.
 
     pairwise metric
         TODO
@@ -760,6 +760,42 @@ Methods
             A 1-dimensional array, where a value greater than or equal to zero
             (TODO: check equality case) indicates an inlier.
 
+    ``fit``
+        The ``fit`` method is provided on every estimator. It usually takes some
+        :term:`samples` ``X``, :term:`targets` ``y`` if the model is supervised,
+        and potentially other :term:`sample properties` such as
+        :term:`sample_weight`.  It should:
+
+        * clear any prior :term:`attributes` stored on the estimator, unless
+          :term:`warm_start` is used;
+        * validate and interpret any :term:`parameters`, ideally raising an
+          error if invalid;
+        * validate the input data;
+        * estimate and store model attributes from the estimated parameters and
+          provided data; and
+        * return the now :term:`fitted` estimator to facilitate method
+          chaining.
+
+        :ref:`glossary_target_types` describes possible formats for ``y``.
+
+    ``fit_predict``
+        Used especially for :term:`transductive` estimators, this fits the
+        model and returns the predictions (similar to :term:`predict`) on the
+        training data. In clusterers, these predictions are also stored in the
+        :term:`labels_` attribute.
+
+    ``fit_transform``
+        TODO
+
+        Syntactic sugar.
+        Efficiency.
+        ``transform`` may not be available.
+        ``fit_transform`` can be different, as in stacking.
+        These rare cases should be clearly documented.
+
+        Ordinarily should not be applied to the entirety of a dataset, only the
+        training data, to avoid :term:`leakage`.
+
     ``get_feature_names``
         Primarily for :term:`feature extractors`, but also used for other
         transformers to provide string names for each column in the output of
@@ -784,42 +820,6 @@ Methods
         the exception being estimators such as :class:`pipeline.Pipeline`. It
         reimplements get_params to declare the estimators named in its
         ``steps`` parameters as themselves being parameters.
-
-    ``fit_predict``
-        Used especially for :term:`transductive` estimators, this fits the
-        model and returns the predictions (similar to :term:`predict`) on the
-        training data. In clusterers, these predictions are also stored in the
-        :term:`labels_` attribute.
-
-    ``fit_transform``
-        TODO
-
-        Syntactic sugar.
-        Efficiency.
-        ``transform`` may not be available.
-        ``fit_transform`` can be different, as in stacking.
-        These rare cases should be clearly documented.
-
-        Ordinarily should not be applied to the entirety of a dataset, only the
-        training data, to avoid :term:`leakage`.
-
-    ``fit``
-        The ``fit`` method is provided on every estimator. It usually takes some
-        :term:`samples` ``X``, :term:`targets` ``y`` if the model is supervised,
-        and potentially other :term:`sample properties` such as
-        :term:`sample_weight`.  It should:
-
-        * clear any prior :term:`attributes` stored on the estimator, unless
-          :term:`warm_start` is used;
-        * validate and interpret any :term:`parameters`, ideally raising an
-          error if invalid;
-        * validate the input data;
-        * estimate and store model attributes from the estimated parameters and
-          provided data; and
-        * return the now :term:`fitted` estimator to facilitate method
-          chaining.
-
-        :ref:`glossary_target_types` describes possible formats for ``y``.
 
     ``partial_fit``
         Facilitates fitting an estimator in an online fashion.  Unlike ``fit``,
@@ -895,6 +895,9 @@ Methods
         TODO
 
     ``split``
+        TODO
+
+    ``transform``
         TODO
 
 .. _glossary_parameters:
