@@ -1204,6 +1204,15 @@ def pairwise_distances_chunked(X, Y=None, reduce_func=None,
     else:
         if Y is None:
             Y = X
+        # We get as many rows as possible within our working_memory budget to
+        # store len(Y) distances in each row of output.
+        #
+        # Note:
+        #  - this will get at least 1 row, even if 1 row of distances will
+        #    exceed working_memory.
+        #  - this does not account for any temporary memory usage while
+        #    calculating distances (e.g. difference of vectors in manhattan
+        #    distance.
         chunk_n_rows = get_chunk_n_rows(row_bytes=8 * _num_samples(Y),
                                         max_n_rows=n_samples_X,
                                         working_memory=working_memory)

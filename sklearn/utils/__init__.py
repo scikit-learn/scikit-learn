@@ -510,13 +510,13 @@ def indices_to_mask(indices, mask_length):
 
 def get_chunk_n_rows(row_bytes, max_n_rows=None,
                      working_memory=None):
-    """Calculates the number of rows that fit in working_memory
+    """Calculates how many rows can be processed within working_memory
 
     Parameters
     ----------
     row_bytes : int
-        The number of bytes consumed by each row of expected output
-        from some function being applied to each chunk.
+        The expected number of bytes of memory that will be consumed
+        during the processing of each row.
     max_n_rows : int, optional
         The maximum return value.
     working_memory : int or float, optional
