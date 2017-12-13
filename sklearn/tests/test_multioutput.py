@@ -15,20 +15,22 @@ from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import fetch_mldata
 from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.externals.joblib import cpu_count
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import Ridge
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
-from sklearn.metrics import jaccard_similarity_score
+from sklearn.metrics import jaccard_similarity_score, mean_squared_error
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multioutput import ClassifierChain
+from sklearn.multioutput import ClassifierChain, RegressorChain
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
+from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 
 
@@ -166,8 +168,9 @@ def test_multi_output_classification_partial_fit_parallelism():
     est1 = mor.estimators_[0]
     mor.partial_fit(X, y)
     est2 = mor.estimators_[0]
-    # parallelism requires this to be the case for a sane implementation
-    assert_false(est1 is est2)
+    if cpu_count() > 1:
+        # parallelism requires this to be the case for a sane implementation
+        assert_false(est1 is est2)
 
 
 def test_multi_output_classification_partial_fit():
@@ -364,23 +367,6 @@ def generate_multilabel_dataset_with_correlations():
     return X, Y_multi
 
 
-def test_classifier_chain_fit_and_predict_with_logistic_regression():
-    # Fit classifier chain and verify predict performance
-    X, Y = generate_multilabel_dataset_with_correlations()
-    classifier_chain = ClassifierChain(LogisticRegression())
-    classifier_chain.fit(X, Y)
-
-    Y_pred = classifier_chain.predict(X)
-    assert_equal(Y_pred.shape, Y.shape)
-
-    Y_prob = classifier_chain.predict_proba(X)
-    Y_binary = (Y_prob >= .5)
-    assert_array_equal(Y_binary, Y_pred)
-
-    assert_equal([c.coef_.size for c in classifier_chain.estimators_],
-                 list(range(X.shape[1], X.shape[1] + Y.shape[1])))
-
-
 def test_classifier_chain_fit_and_predict_with_linear_svc():
     # Fit classifier chain and verify predict performance using LinearSVC
     X, Y = generate_multilabel_dataset_with_correlations()
@@ -413,60 +399,6 @@ def test_classifier_chain_fit_and_predict_with_sparse_data():
     assert_array_equal(Y_pred_sparse, Y_pred_dense)
 
 
-def test_classifier_chain_fit_and_predict_with_sparse_data_and_cv():
-    # Fit classifier chain with sparse data cross_val_predict
-    X, Y = generate_multilabel_dataset_with_correlations()
-    X_sparse = sp.csr_matrix(X)
-    classifier_chain = ClassifierChain(LogisticRegression(), cv=3)
-    classifier_chain.fit(X_sparse, Y)
-    Y_pred = classifier_chain.predict(X_sparse)
-    assert_equal(Y_pred.shape, Y.shape)
-
-
-def test_classifier_chain_random_order():
-    # Fit classifier chain with random order
-    X, Y = generate_multilabel_dataset_with_correlations()
-    classifier_chain_random = ClassifierChain(LogisticRegression(),
-                                              order='random',
-                                              random_state=42)
-    classifier_chain_random.fit(X, Y)
-    Y_pred_random = classifier_chain_random.predict(X)
-
-    assert_not_equal(list(classifier_chain_random.order), list(range(4)))
-    assert_equal(len(classifier_chain_random.order_), 4)
-    assert_equal(len(set(classifier_chain_random.order_)), 4)
-
-    classifier_chain_fixed = \
-        ClassifierChain(LogisticRegression(),
-                        order=classifier_chain_random.order_)
-    classifier_chain_fixed.fit(X, Y)
-    Y_pred_fixed = classifier_chain_fixed.predict(X)
-
-    # Randomly ordered chain should behave identically to a fixed order chain
-    # with the same order.
-    assert_array_equal(Y_pred_random, Y_pred_fixed)
-
-
-def test_classifier_chain_crossval_fit_and_predict():
-    # Fit classifier chain with cross_val_predict and verify predict
-    # performance
-    X, Y = generate_multilabel_dataset_with_correlations()
-    classifier_chain_cv = ClassifierChain(LogisticRegression(), cv=3)
-    classifier_chain_cv.fit(X, Y)
-
-    classifier_chain = ClassifierChain(LogisticRegression())
-    classifier_chain.fit(X, Y)
-
-    Y_pred_cv = classifier_chain_cv.predict(X)
-    Y_pred = classifier_chain.predict(X)
-
-    assert_equal(Y_pred_cv.shape, Y.shape)
-    assert_greater(jaccard_similarity_score(Y, Y_pred_cv), 0.4)
-
-    assert_not_equal(jaccard_similarity_score(Y, Y_pred_cv),
-                     jaccard_similarity_score(Y, Y_pred))
-
-
 def test_classifier_chain_vs_independent_models():
     # Verify that an ensemble of classifier chains (each of length
     # N) can achieve a higher Jaccard similarity score than N independent
@@ -487,3 +419,75 @@ def test_classifier_chain_vs_independent_models():
 
     assert_greater(jaccard_similarity_score(Y_test, Y_pred_chain),
                    jaccard_similarity_score(Y_test, Y_pred_ovr))
+
+
+def test_base_chain_fit_and_predict():
+    # Fit base chain and verify predict performance
+    X, Y = generate_multilabel_dataset_with_correlations()
+    chains = [RegressorChain(Ridge()),
+              ClassifierChain(LogisticRegression())]
+    for chain in chains:
+        chain.fit(X, Y)
+        Y_pred = chain.predict(X)
+        assert_equal(Y_pred.shape, Y.shape)
+        assert_equal([c.coef_.size for c in chain.estimators_],
+                     list(range(X.shape[1], X.shape[1] + Y.shape[1])))
+
+    Y_prob = chains[1].predict_proba(X)
+    Y_binary = (Y_prob >= .5)
+    assert_array_equal(Y_binary, Y_pred)
+
+    assert isinstance(chains[1], ClassifierMixin)
+
+
+def test_base_chain_fit_and_predict_with_sparse_data_and_cv():
+    # Fit base chain with sparse data cross_val_predict
+    X, Y = generate_multilabel_dataset_with_correlations()
+    X_sparse = sp.csr_matrix(X)
+    base_chains = [ClassifierChain(LogisticRegression(), cv=3),
+                   RegressorChain(Ridge(), cv=3)]
+    for chain in base_chains:
+        chain.fit(X_sparse, Y)
+        Y_pred = chain.predict(X_sparse)
+        assert_equal(Y_pred.shape, Y.shape)
+
+
+def test_base_chain_random_order():
+    # Fit base chain with random order
+    X, Y = generate_multilabel_dataset_with_correlations()
+    for chain in [ClassifierChain(LogisticRegression()),
+                  RegressorChain(Ridge())]:
+        chain_random = clone(chain).set_params(order='random', random_state=42)
+        chain_random.fit(X, Y)
+        chain_fixed = clone(chain).set_params(order=chain_random.order_)
+        chain_fixed.fit(X, Y)
+        assert_array_equal(chain_fixed.order_, chain_random.order_)
+        assert_not_equal(list(chain_random.order), list(range(4)))
+        assert_equal(len(chain_random.order_), 4)
+        assert_equal(len(set(chain_random.order_)), 4)
+        # Randomly ordered chain should behave identically to a fixed order
+        # chain with the same order.
+        for est1, est2 in zip(chain_random.estimators_,
+                              chain_fixed.estimators_):
+            assert_array_almost_equal(est1.coef_, est2.coef_)
+
+
+def test_base_chain_crossval_fit_and_predict():
+    # Fit chain with cross_val_predict and verify predict
+    # performance
+    X, Y = generate_multilabel_dataset_with_correlations()
+
+    for chain in [ClassifierChain(LogisticRegression()),
+                  RegressorChain(Ridge())]:
+        chain.fit(X, Y)
+        chain_cv = clone(chain).set_params(cv=3)
+        chain_cv.fit(X, Y)
+        Y_pred_cv = chain_cv.predict(X)
+        Y_pred = chain.predict(X)
+
+        assert Y_pred_cv.shape == Y_pred.shape
+        assert not np.all(Y_pred == Y_pred_cv)
+        if isinstance(chain, ClassifierChain):
+            assert jaccard_similarity_score(Y, Y_pred_cv) > .4
+        else:
+            assert mean_squared_error(Y, Y_pred_cv) < .25

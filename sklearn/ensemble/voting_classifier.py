@@ -21,12 +21,13 @@ from ..preprocessing import LabelEncoder
 from ..externals.joblib import Parallel, delayed
 from ..utils.validation import has_fit_parameter, check_is_fitted
 from ..utils.metaestimators import _BaseComposition
+from ..utils import Bunch
 
 
-def _parallel_fit_estimator(estimator, X, y, sample_weight):
+def _parallel_fit_estimator(estimator, X, y, sample_weight=None):
     """Private function used to fit an estimator within a job."""
     if sample_weight is not None:
-        estimator.fit(X, y, sample_weight)
+        estimator.fit(X, y, sample_weight=sample_weight)
     else:
         estimator.fit(X, y)
     return estimator
@@ -75,6 +76,11 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not `None`.
 
+    named_estimators_ : Bunch object, a dictionary with attribute access
+        Attribute to access any fitted sub-estimators by name.
+
+        .. versionadded:: 0.20
+
     classes_ : array-like, shape = [n_predictions]
         The classes labels.
 
@@ -94,6 +100,9 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>> eclf1 = eclf1.fit(X, y)
     >>> print(eclf1.predict(X))
     [1 1 1 2 2 2]
+    >>> np.array_equal(eclf1.named_estimators_.lr.predict(X),
+    ...                eclf1.named_estimators_['lr'].predict(X))
+    True
     >>> eclf2 = VotingClassifier(estimators=[
     ...         ('lr', clf1), ('rf', clf2), ('gnb', clf3)],
     ...         voting='soft')
@@ -122,7 +131,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
     @property
     def named_estimators(self):
-        return dict(self.estimators)
+        return Bunch(**dict(self.estimators))
 
     def fit(self, X, y, sample_weight=None):
         """ Fit the estimators.
@@ -185,9 +194,12 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
-                                                 sample_weight)
+                                                 sample_weight=sample_weight)
                 for clf in clfs if clf is not None)
 
+        self.named_estimators_ = Bunch(**dict())
+        for k, e in zip(self.estimators, self.estimators_):
+            self.named_estimators_[k[0]] = e
         return self
 
     @property

@@ -432,9 +432,12 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features)
             OR, if affinity==`precomputed`, a precomputed affinity
             matrix of shape (n_samples, n_samples)
+
+        y : Ignored
+
         """
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=np.float64)
+                        dtype=np.float64, ensure_min_samples=2)
         if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
             warnings.warn("The spectral clustering API has changed. ``fit``"
                           "now constructs an affinity matrix from data. To use"
@@ -442,7 +445,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                           "set ``affinity=precomputed``.")
 
         if self.affinity == 'nearest_neighbors':
-            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors, include_self=True,
+            connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors,
+                                            include_self=True,
                                             n_jobs=self.n_jobs)
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == 'precomputed':

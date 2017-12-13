@@ -6,39 +6,40 @@ Base IO code for all datasets
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+from __future__ import print_function
 
 import os
 import csv
 import sys
 import shutil
-from os import environ
-from os.path import dirname
-from os.path import join
-from os.path import exists
-from os.path import expanduser
-from os.path import isdir
-from os.path import splitext
-from os import listdir
-from os import makedirs
+from collections import namedtuple
+from os import environ, listdir, makedirs
+from os.path import dirname, exists, expanduser, isdir, join, splitext
+import hashlib
+
 from ..utils import Bunch
+from ..utils import check_random_state
 
 import numpy as np
 
-from ..utils import check_random_state
+from sklearn.externals.six.moves.urllib.request import urlretrieve
+
+RemoteFileMetadata = namedtuple('RemoteFileMetadata',
+                                ['filename', 'url', 'checksum'])
 
 
 def get_data_home(data_home=None):
     """Return the path of the scikit-learn data dir.
 
-    This folder is used by some large dataset loaders to avoid
-    downloading the data several times.
+    This folder is used by some large dataset loaders to avoid downloading the
+    data several times.
 
-    By default the data dir is set to a folder named 'scikit_learn_data'
-    in the user home folder.
+    By default the data dir is set to a folder named 'scikit_learn_data' in the
+    user home folder.
 
     Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
-    variable or programmatically by giving an explicit folder path. The
-    '~' symbol is expanded to the user home folder.
+    variable or programmatically by giving an explicit folder path. The '~'
+    symbol is expanded to the user home folder.
 
     If the folder does not already exist, it is automatically created.
 
@@ -87,23 +88,22 @@ def load_files(container_path, description=None, categories=None,
                 file_44.txt
                 ...
 
-    The folder names are used as supervised signal label names. The
-    individual file names are not important.
+    The folder names are used as supervised signal label names. The individual
+    file names are not important.
 
-    This function does not try to extract features into a numpy array or
-    scipy sparse matrix. In addition, if load_content is false it
-    does not try to load the files in memory.
+    This function does not try to extract features into a numpy array or scipy
+    sparse matrix. In addition, if load_content is false it does not try to
+    load the files in memory.
 
-    To use text files in a scikit-learn classification or clustering
-    algorithm, you will need to use the `sklearn.feature_extraction.text`
-    module to build a feature extraction transformer that suits your
-    problem.
+    To use text files in a scikit-learn classification or clustering algorithm,
+    you will need to use the `sklearn.feature_extraction.text` module to build
+    a feature extraction transformer that suits your problem.
 
-    If you set load_content=True, you should also specify the encoding of
-    the text using the 'encoding' parameter. For many modern text files,
-    'utf-8' will be the correct encoding. If you leave encoding equal to None,
-    then the content will be made of bytes instead of Unicode, and you will
-    not be able to use most functions in `sklearn.feature_extraction.text`.
+    If you set load_content=True, you should also specify the encoding of the
+    text using the 'encoding' parameter. For many modern text files, 'utf-8'
+    will be the correct encoding. If you leave encoding equal to None, then the
+    content will be made of bytes instead of Unicode, and you will not be able
+    to use most functions in `sklearn.feature_extraction.text`.
 
     Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
@@ -120,14 +120,14 @@ def load_files(container_path, description=None, categories=None,
         reference, etc.
 
     categories : A collection of strings or None, optional (default=None)
-        If None (default), load all the categories.
-        If not None, list of category names to load (other categories ignored).
+        If None (default), load all the categories. If not None, list of
+        category names to load (other categories ignored).
 
     load_content : boolean, optional (default=True)
-        Whether to load or not the content of the different files. If
-        true a 'data' attribute containing the text information is present
-        in the data structure returned. If not, a filenames attribute
-        gives the path to the files.
+        Whether to load or not the content of the different files. If true a
+        'data' attribute containing the text information is present in the data
+        structure returned. If not, a filenames attribute gives the path to the
+        files.
 
     shuffle : bool, optional (default=True)
         Whether or not to shuffle the data: might be important for models that
@@ -135,10 +135,9 @@ def load_files(container_path, description=None, categories=None,
         distributed (i.i.d.), such as stochastic gradient descent.
 
     encoding : string or None (default is None)
-        If None, do not try to decode the content of the files (e.g. for
-        images or other non-text content).
-        If not None, encoding to use to decode text files to Unicode if
-        load_content is True.
+        If None, do not try to decode the content of the files (e.g. for images
+        or other non-text content). If not None, encoding to use to decode text
+        files to Unicode if load_content is True.
 
     decode_error : {'strict', 'ignore', 'replace'}, optional
         Instruction on what to do if a byte sequence is given to analyze that
@@ -273,16 +272,15 @@ def load_wine(return_X_y=False):
     Returns
     -------
     data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the classification labels,
-        'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, and 'DESCR', the
-        full description of the dataset.
+        Dictionary-like object, the interesting attributes are: 'data', the
+        data to learn, 'target', the classification labels, 'target_names', the
+        meaning of the labels, 'feature_names', the meaning of the features,
+        and 'DESCR', the full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
-    The copy of UCI ML Wine Data Set dataset is
-    downloaded and modified to fit standard format from:
+    The copy of UCI ML Wine Data Set dataset is downloaded and modified to fit
+    standard format from:
     https://archive.ics.uci.edu/ml/machine-learning-databases/wine/wine.data
 
     Examples
@@ -343,8 +341,8 @@ def load_iris(return_X_y=False):
     Parameters
     ----------
     return_X_y : boolean, default=False.
-        If True, returns ``(data, target)`` instead of a Bunch object.
-        See below for more information about the `data` and `target` object.
+        If True, returns ``(data, target)`` instead of a Bunch object. See
+        below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
 
@@ -354,8 +352,9 @@ def load_iris(return_X_y=False):
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, and 'DESCR', the
-        full description of the dataset.
+        meaning of the features, 'DESCR', the full description of
+        the dataset, 'filename', the physical location of
+        iris csv dataset (added in version `0.20`).
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -375,6 +374,7 @@ def load_iris(return_X_y=False):
     """
     module_path = dirname(__file__)
     data, target, target_names = load_data(module_path, 'iris.csv')
+    iris_csv_filename = join(module_path, 'data', 'iris.csv')
 
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
@@ -386,7 +386,8 @@ def load_iris(return_X_y=False):
                  target_names=target_names,
                  DESCR=fdescr,
                  feature_names=['sepal length (cm)', 'sepal width (cm)',
-                                'petal length (cm)', 'petal width (cm)'])
+                                'petal length (cm)', 'petal width (cm)'],
+                 filename=iris_csv_filename)
 
 
 def load_breast_cancer(return_X_y=False):
@@ -417,8 +418,9 @@ def load_breast_cancer(return_X_y=False):
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the classification labels,
         'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, and 'DESCR', the
-        full description of the dataset.
+        meaning of the features, and 'DESCR', the full description of
+        the dataset, 'filename', the physical location of
+        breast cancer csv dataset (added in version `0.20`).
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -442,6 +444,7 @@ def load_breast_cancer(return_X_y=False):
     """
     module_path = dirname(__file__)
     data, target, target_names = load_data(module_path, 'breast_cancer.csv')
+    csv_filename = join(module_path, 'data', 'breast_cancer.csv')
 
     with open(join(module_path, 'descr', 'breast_cancer.rst')) as rst_file:
         fdescr = rst_file.read()
@@ -468,7 +471,8 @@ def load_breast_cancer(return_X_y=False):
     return Bunch(data=data, target=target,
                  target_names=target_names,
                  DESCR=fdescr,
-                 feature_names=feature_names)
+                 feature_names=feature_names,
+                 filename=csv_filename)
 
 
 def load_digits(n_class=10, return_X_y=False):
@@ -575,18 +579,21 @@ def load_diabetes(return_X_y=False):
     -------
     data : Bunch
         Dictionary-like object, the interesting attributes are:
-        'data', the data to learn and 'target', the regression target for each
-        sample.
+        'data', the data to learn, 'target', the regression target for each
+        sample, 'data_filename', the physical location
+        of diabetes data csv dataset, and 'target_filename', the physical
+        location of diabetes targets csv datataset (added in version `0.20`).
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
     """
-
     module_path = dirname(__file__)
     base_dir = join(module_path, 'data')
-    data = np.loadtxt(join(base_dir, 'diabetes_data.csv.gz'))
-    target = np.loadtxt(join(base_dir, 'diabetes_target.csv.gz'))
+    data_filename = join(base_dir, 'diabetes_data.csv.gz')
+    data = np.loadtxt(data_filename)
+    target_filename = join(base_dir, 'diabetes_target.csv.gz')
+    target = np.loadtxt(target_filename)
 
     with open(join(module_path, 'descr', 'diabetes.rst')) as rst_file:
         fdescr = rst_file.read()
@@ -596,7 +603,9 @@ def load_diabetes(return_X_y=False):
 
     return Bunch(data=data, target=target, DESCR=fdescr,
                  feature_names=['age', 'sex', 'bmi', 'bp',
-                                's1', 's2', 's3', 's4', 's5', 's6'])
+                                's1', 's2', 's3', 's4', 's5', 's6'],
+                 data_filename=data_filename,
+                 target_filename=target_filename)
 
 
 def load_linnerud(return_X_y=False):
@@ -624,21 +633,29 @@ def load_linnerud(return_X_y=False):
         'targets', the two multivariate datasets, with 'data' corresponding to
         the exercise and 'targets' corresponding to the physiological
         measurements, as well as 'feature_names' and 'target_names'.
+        In addition, you will also have access to 'data_filename',
+        the physical location of linnerud data csv dataset, and
+        'target_filename', the physical location of
+        linnerud targets csv datataset (added in version `0.20`).
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
     """
     base_dir = join(dirname(__file__), 'data/')
+    data_filename = join(base_dir, 'linnerud_exercise.csv')
+    target_filename = join(base_dir, 'linnerud_physiological.csv')
+
     # Read data
-    data_exercise = np.loadtxt(base_dir + 'linnerud_exercise.csv', skiprows=1)
-    data_physiological = np.loadtxt(base_dir + 'linnerud_physiological.csv',
-                                    skiprows=1)
+    data_exercise = np.loadtxt(data_filename, skiprows=1)
+    data_physiological = np.loadtxt(target_filename, skiprows=1)
+
     # Read header
-    with open(base_dir + 'linnerud_exercise.csv') as f:
+    with open(data_filename) as f:
         header_exercise = f.readline().split()
-    with open(base_dir + 'linnerud_physiological.csv') as f:
+    with open(target_filename) as f:
         header_physiological = f.readline().split()
+
     with open(dirname(__file__) + '/descr/linnerud.rst') as f:
         descr = f.read()
 
@@ -648,7 +665,9 @@ def load_linnerud(return_X_y=False):
     return Bunch(data=data_exercise, feature_names=header_exercise,
                  target=data_physiological,
                  target_names=header_physiological,
-                 DESCR=descr)
+                 DESCR=descr,
+                 data_filename=data_filename,
+                 target_filename=target_filename)
 
 
 def load_boston(return_X_y=False):
@@ -674,7 +693,9 @@ def load_boston(return_X_y=False):
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the regression targets,
-        and 'DESCR', the full description of the dataset.
+        'DESCR', the full description of the dataset,
+        and 'filename', the physical location of boston
+        csv dataset (added in version `0.20`).
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -715,20 +736,21 @@ def load_boston(return_X_y=False):
                  target=target,
                  # last column is target value
                  feature_names=feature_names[:-1],
-                 DESCR=descr_text)
+                 DESCR=descr_text,
+                 filename=data_file_name)
 
 
 def load_sample_images():
     """Load sample images for image manipulation.
+
     Loads both, ``china`` and ``flower``.
 
     Returns
     -------
     data : Bunch
-        Dictionary-like object with the following attributes :
-        'images', the two sample images, 'filenames', the file
-        names for the images, and 'DESCR'
-        the full description of the dataset.
+        Dictionary-like object with the following attributes : 'images', the
+        two sample images, 'filenames', the file names for the images, and
+        'DESCR' the full description of the dataset.
 
     Examples
     --------
@@ -810,18 +832,18 @@ def load_sample_image(image_name):
 def _pkl_filepath(*args, **kwargs):
     """Ensure different filenames for Python 2 and Python 3 pickles
 
-    An object pickled under Python 3 cannot be loaded under Python 2.
-    An object pickled under Python 2 can sometimes not be loaded
-    correctly under Python 3 because some Python 2 strings are decoded as
-    Python 3 strings which can be problematic for objects that use Python 2
-    strings as byte buffers for numerical data instead of "real" strings.
+    An object pickled under Python 3 cannot be loaded under Python 2. An object
+    pickled under Python 2 can sometimes not be loaded correctly under Python 3
+    because some Python 2 strings are decoded as Python 3 strings which can be
+    problematic for objects that use Python 2 strings as byte buffers for
+    numerical data instead of "real" strings.
 
     Therefore, dataset loaders in scikit-learn use different files for pickles
-    manages by Python 2 and Python 3 in the same SCIKIT_LEARN_DATA folder so
-    as to avoid conflicts.
+    manages by Python 2 and Python 3 in the same SCIKIT_LEARN_DATA folder so as
+    to avoid conflicts.
 
-    args[-1] is expected to be the ".pkl" filename. Under Python 3, a
-    suffix is inserted before the extension to s
+    args[-1] is expected to be the ".pkl" filename. Under Python 3, a suffix is
+    inserted before the extension to s
 
     _pkl_filepath('/path/to/folder', 'filename.pkl') returns:
       - /path/to/folder/filename.pkl under Python 2
@@ -834,3 +856,50 @@ def _pkl_filepath(*args, **kwargs):
         basename += py3_suffix
     new_args = args[:-1] + (basename + ext,)
     return join(*new_args)
+
+
+def _sha256(path):
+    """Calculate the sha256 hash of the file at path."""
+    sha256hash = hashlib.sha256()
+    chunk_size = 8192
+    with open(path, "rb") as f:
+        while True:
+            buffer = f.read(chunk_size)
+            if not buffer:
+                break
+            sha256hash.update(buffer)
+    return sha256hash.hexdigest()
+
+
+def _fetch_remote(remote, dirname=None):
+    """Helper function to download a remote dataset into path
+
+    Fetch a dataset pointed by remote's url, save into path using remote's
+    filename and ensure its integrity based on the SHA256 Checksum of the
+    downloaded file.
+
+    Parameters
+    -----------
+    remote : RemoteFileMetadata
+        Named tuple containing remote dataset meta information: url, filename
+        and checksum
+
+    dirname : string
+        Directory to save the file to.
+
+    Returns
+    -------
+    file_path: string
+        Full path of the created file.
+    """
+
+    file_path = (remote.filename if dirname is None
+                 else join(dirname, remote.filename))
+    urlretrieve(remote.url, file_path)
+    checksum = _sha256(file_path)
+    if remote.checksum != checksum:
+        raise IOError("{} has an SHA256 checksum ({}) "
+                      "differing from expected ({}), "
+                      "file may be corrupted.".format(file_path, checksum,
+                                                      remote.checksum))
+    return file_path

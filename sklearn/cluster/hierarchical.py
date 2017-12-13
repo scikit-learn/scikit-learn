@@ -15,10 +15,10 @@ from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
-from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import check_array
+from ..utils.validation import check_memory
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -369,7 +369,7 @@ def linkage_tree(X, connectivity=None, n_components='deprecated',
     ward_tree : hierarchical clustering with ward linkage
     """
     if n_components != 'deprecated':
-        warnings.warn("n_components was deprecated in 0.18"
+        warnings.warn("n_components was deprecated in 0.19"
                       "will be removed in 0.21", DeprecationWarning)
 
     X = np.asarray(X)
@@ -609,8 +609,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
-            (default=None)
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
@@ -642,10 +641,12 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         - complete or maximum linkage uses the maximum distances between
           all observations of the two sets.
 
-    pooling_func : callable, default=np.mean
-        This combines the values of agglomerated features into a single
-        value, and should accept an array of shape [M, N] and the keyword
-        argument ``axis=1``, and reduce it to an array of size [M].
+    pooling_func : callable, default='deprecated'
+        Ignored.
+
+        .. deprecated:: 0.20
+            ``pooling_func`` has been deprecated in 0.20 and will be removed
+            in 0.22.
 
     Attributes
     ----------
@@ -658,7 +659,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     n_components_ : int
         The estimated number of connected components in the graph.
 
-    children_ : array-like, shape (n_nodes-1, 2)
+    children_ : array-like, shape (n_samples-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -671,7 +672,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', pooling_func=np.mean):
+                 linkage='ward', pooling_func='deprecated'):
         self.n_clusters = n_clusters
         self.memory = memory
         self.connectivity = connectivity
@@ -686,23 +687,21 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            The samples a.k.a. observations.
+            Training data. Shape [n_samples, n_features], or [n_samples,
+            n_samples] if affinity=='precomputed'.
+
+        y : Ignored
 
         Returns
         -------
         self
         """
+        if self.pooling_func != 'deprecated':
+            warnings.warn('Agglomerative "pooling_func" parameter is not used.'
+                          ' It has been deprecated in version 0.20 and will be'
+                          'removed in 0.22', DeprecationWarning)
         X = check_array(X, ensure_min_samples=2, estimator=self)
-        memory = self.memory
-        if memory is None:
-            memory = Memory(cachedir=None, verbose=0)
-        elif isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory, verbose=0)
-        elif not isinstance(memory, Memory):
-            raise ValueError("'memory' should either be a string or"
-                             " a sklearn.externals.joblib.Memory"
-                             " instance, got 'memory={!r}' instead.".format(
-                                 type(memory)))
+        memory = check_memory(self.memory)
 
         if self.n_clusters <= 0:
             raise ValueError("n_clusters should be an integer greater than 0."
@@ -779,8 +778,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
-    memory : Instance of sklearn.externals.joblib.Memory or string, optional \
-            (default=None)
+    memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
@@ -837,6 +835,16 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         are merged to form node `n_features + i`
     """
 
+    def __init__(self, n_clusters=2, affinity="euclidean",
+                 memory=None,
+                 connectivity=None, compute_full_tree='auto',
+                 linkage='ward', pooling_func=np.mean):
+        super(FeatureAgglomeration, self).__init__(
+            n_clusters=n_clusters, memory=memory, connectivity=connectivity,
+            compute_full_tree=compute_full_tree, linkage=linkage,
+            affinity=affinity)
+        self.pooling_func = pooling_func
+
     def fit(self, X, y=None, **params):
         """Fit the hierarchical clustering on the data
 
@@ -844,6 +852,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         ----------
         X : array-like, shape = [n_samples, n_features]
             The data
+
+        y : Ignored
 
         Returns
         -------

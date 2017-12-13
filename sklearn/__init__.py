@@ -17,6 +17,11 @@ import re
 import warnings
 import os
 from contextlib import contextmanager as _contextmanager
+import logging
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler())
+logger.setLevel(logging.INFO)
 
 _ASSUME_FINITE = bool(os.environ.get('SKLEARN_ASSUME_FINITE', False))
 
@@ -122,7 +127,7 @@ except NameError:
 
 if __SKLEARN_SETUP__:
     sys.stderr.write('Partial import of sklearn during the build process.\n')
-    # We are not importing the rest of the scikit during the build
+    # We are not importing the rest of scikit-learn during the build
     # process, as it may not be compiled yet
 else:
     from . import __check_build

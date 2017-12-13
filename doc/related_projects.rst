@@ -23,6 +23,9 @@ enhance the functionality of scikit-learn's estimators.
 
 - `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
   scikit-learn pipelines and pandas data frame with dedicated transformers.
+  
+- `sklearn_xarray <https://github.com/phausamann/sklearn-xarray/>`_ provides
+  compatibility of scikit-learn estimators with xarray data structures.
 
 **Auto-ML**
 
@@ -155,6 +158,10 @@ and tasks.
 - `xgboost <https://github.com/dmlc/xgboost>`_ Optimised gradient boosted decision
   tree library.
 
+- `ML-Ensemble <http://mlens.readthedocs.io/en/latest/>`_ Generalized
+  ensemble learning (stacking, blending, subsemble, deep ensembles,
+  etc.).
+
 - `lightning <https://github.com/scikit-learn-contrib/lightning>`_ Fast
   state-of-the-art linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
 
@@ -250,6 +257,9 @@ Domain specific packages
 
 - `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
   conformational dynamics time series.
+
+- `scikit-surprise <http://surpriselib.com>`_ A scikit for building and
+  evaluating recommender systems.
 
 Snippets and tidbits
 ---------------------

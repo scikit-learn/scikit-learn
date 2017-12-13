@@ -248,7 +248,7 @@ def sag(SequentialDataset dataset,
     ---------
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
     Minimizing finite sums with the stochastic average gradient
-    https://hal.inria.fr/hal-00860051/PDF/sag_journal.pdf
+    https://hal.inria.fr/hal-00860051/document
     (section 4.3)
 
     Defazio, A., Bach, F., Lacoste-Julien, S. (2014),
@@ -263,7 +263,7 @@ def sag(SequentialDataset dataset,
     cdef int *x_ind_ptr = NULL
     # the number of non-zero features for current sample
     cdef int xnnz = -1
-    # the label value for curent sample
+    # the label value for current sample
     cdef double y
     # the sample weight
     cdef double sample_weight

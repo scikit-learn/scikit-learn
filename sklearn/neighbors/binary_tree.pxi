@@ -296,7 +296,7 @@ Query for k-nearest neighbors
     >>> np.random.seed(0)
     >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)              # doctest: +SKIP
-    >>> dist, ind = tree.query([X[0]], k=3)                # doctest: +SKIP
+    >>> dist, ind = tree.query(X[:1], k=3)                # doctest: +SKIP
     >>> print(ind)  # indices of 3 closest neighbors
     [0 3 1]
     >>> print(dist)  # distances to 3 closest neighbors
@@ -312,7 +312,7 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
     >>> tree = {BinaryTree}(X, leaf_size=2)        # doctest: +SKIP
     >>> s = pickle.dumps(tree)                     # doctest: +SKIP
     >>> tree_copy = pickle.loads(s)                # doctest: +SKIP
-    >>> dist, ind = tree_copy.query(X[0], k=3)     # doctest: +SKIP
+    >>> dist, ind = tree_copy.query(X[:1], k=3)     # doctest: +SKIP
     >>> print(ind)  # indices of 3 closest neighbors
     [0 3 1]
     >>> print(dist)  # distances to 3 closest neighbors
@@ -324,9 +324,9 @@ Query for neighbors within a given radius
     >>> np.random.seed(0)
     >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)     # doctest: +SKIP
-    >>> print(tree.query_radius(X[0], r=0.3, count_only=True))
+    >>> print(tree.query_radius(X[:1], r=0.3, count_only=True))
     3
-    >>> ind = tree.query_radius(X[0], r=0.3)  # doctest: +SKIP
+    >>> ind = tree.query_radius(X[:1], r=0.3)  # doctest: +SKIP
     >>> print(ind)  # indices of neighbors within distance 0.3
     [3 0 1]
 
@@ -1240,7 +1240,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array-like, last dimension self.dim
+        X : array-like, shape = [n_samples, n_features]
             An array of points to query
         k : integer  (default = 1)
             The number of nearest neighbors to return
@@ -1272,20 +1272,6 @@ cdef class BinaryTree:
         i : array of integers - shape: x.shape[:-1] + (k,)
             each entry gives the list of indices of
             neighbors of the corresponding point
-
-        Examples
-        --------
-        Query for k-nearest neighbors
-
-            >>> import numpy as np
-            >>> np.random.seed(0)
-            >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
-            >>> tree = BinaryTree(X, leaf_size=2)    # doctest: +SKIP
-            >>> dist, ind = tree.query(X[0], k=3)    # doctest: +SKIP
-            >>> print(ind)  # indices of 3 closest neighbors
-            [0 3 1]
-            >>> print(dist)  # distances to 3 closest neighbors
-            [ 0.          0.19662693  0.29473397]
         """
         # XXX: we should allow X to be a pre-built tree.
         X = check_array(X, dtype=DTYPE, order='C')
@@ -1364,7 +1350,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array-like, last dimension self.dim
+        X : array-like, shape = [n_samples, n_features]
             An array of points to query
         r : distance within which neighbors are returned
             r can be a single value, or an array of values of shape
@@ -1406,20 +1392,6 @@ cdef class BinaryTree:
         dist : array of objects, shape = X.shape[:-1]
             each element is a numpy double array
             listing the distances corresponding to indices in i.
-
-        Examples
-        --------
-        Query for neighbors in a given radius
-
-        >>> import numpy as np
-        >>> np.random.seed(0)
-        >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
-        >>> tree = BinaryTree(X, leaf_size=2)     # doctest: +SKIP
-        >>> print(tree.query_radius(X[0], r=0.3, count_only=True))
-        3
-        >>> ind = tree.query_radius(X[0], r=0.3)  # doctest: +SKIP
-        >>> print(ind)  # indices of neighbors within distance 0.3
-        [3 0 1]
         """
         if count_only and return_distance:
             raise ValueError("count_only and return_distance "
@@ -1513,7 +1485,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array_like
+        X : array-like, shape = [n_samples, n_features]
             An array of points to query.  Last dimension should match dimension
             of training data.
         h : float
@@ -1544,17 +1516,6 @@ cdef class BinaryTree:
         -------
         density : ndarray
             The array of (log)-density evaluations, shape = X.shape[:-1]
-
-        Examples
-        --------
-        Compute a gaussian kernel density estimate:
-
-        >>> import numpy as np
-        >>> np.random.seed(1)
-        >>> X = np.random.random((100, 3))
-        >>> tree = BinaryTree(X)           # doctest: +SKIP
-        >>> tree.kernel_density(X[:3], h=0.1, kernel='gaussian')
-        array([ 6.94114649,  7.83281226,  7.2071716 ])
         """
         cdef DTYPE_t h_c = h
         cdef DTYPE_t log_atol = log(atol)
@@ -1657,7 +1618,7 @@ cdef class BinaryTree:
 
         Parameters
         ----------
-        X : array_like
+        X : array-like, shape = [n_samples, n_features]
             An array of points to query.  Last dimension should match dimension
             of training data.
         r : array_like
@@ -1672,18 +1633,6 @@ cdef class BinaryTree:
         counts : ndarray
             counts[i] contains the number of pairs of points with distance
             less than or equal to r[i]
-
-        Examples
-        --------
-        Compute the two-point autocorrelation function of X:
-
-        >>> import numpy as np
-        >>> np.random.seed(0)
-        >>> X = np.random.random((30, 3))
-        >>> r = np.linspace(0, 1, 5)
-        >>> tree = BinaryTree(X)     # doctest: +SKIP
-        >>> tree.two_point_correlation(X, r)
-        array([ 30,  62, 278, 580, 820])
         """
         cdef ITYPE_t n_features = self.data.shape[1]
         cdef ITYPE_t i

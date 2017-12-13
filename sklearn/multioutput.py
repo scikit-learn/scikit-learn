@@ -18,7 +18,7 @@ import numpy as np
 import scipy.sparse as sp
 from abc import ABCMeta, abstractmethod
 from .base import BaseEstimator, clone, MetaEstimatorMixin
-from .base import RegressorMixin, ClassifierMixin
+from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.fixes import parallel_helper
@@ -28,7 +28,8 @@ from .utils.multiclass import check_classification_targets
 from .externals.joblib import Parallel, delayed
 from .externals import six
 
-__all__ = ["MultiOutputRegressor", "MultiOutputClassifier", "ClassifierChain"]
+__all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
+           "ClassifierChain", "RegressorChain"]
 
 
 def _fit_estimator(estimator, X, y, sample_weight=None):
@@ -152,7 +153,7 @@ class MultiOutputEstimator(six.with_metaclass(ABCMeta, BaseEstimator,
                          multi_output=True,
                          accept_sparse=True)
 
-        if isinstance(self, ClassifierMixin):
+        if is_classifier(self):
             check_classification_targets(y)
 
         if y.ndim == 1:
@@ -316,7 +317,7 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
 
     def predict_proba(self, X):
         """Probability estimates.
-        Returns prediction probabilites for each class of each output.
+        Returns prediction probabilities for each class of each output.
 
         Parameters
         ----------
@@ -368,77 +369,14 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
         return np.mean(np.all(y == y_pred, axis=1))
 
 
-class ClassifierChain(BaseEstimator):
-    """A multi-label model that arranges binary classifiers into a chain.
-
-    Each model makes a prediction in the order specified by the chain using
-    all of the available features provided to the model plus the predictions
-    of models that are earlier in the chain.
-
-    Parameters
-    ----------
-    base_estimator : estimator
-        The base estimator from which the classifier chain is built.
-
-    order : array-like, shape=[n_outputs] or 'random', optional
-        By default the order will be determined by the order of columns in
-        the label matrix Y.::
-
-            order = [0, 1, 2, ..., Y.shape[1] - 1]
-
-        The order of the chain can be explicitly set by providing a list of
-        integers. For example, for a chain of length 5.::
-
-            order = [1, 3, 2, 4, 0]
-
-        means that the first model in the chain will make predictions for
-        column 1 in the Y matrix, the second model will make predictions
-        for column 3, etc.
-
-        If order is 'random' a random ordering will be used.
-
-    cv : int, cross-validation generator or an iterable, optional (
-    default=None)
-        Determines whether to use cross validated predictions or true
-        labels for the results of previous estimators in the chain.
-        If cv is None the true labels are used when fitting. Otherwise
-        possible inputs for cv are:
-            * integer, to specify the number of folds in a (Stratified)KFold,
-            * An object to be used as a cross-validation generator.
-            * An iterable yielding train, test splits.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-        The random number generator is used to generate random chain orders.
-
-    Attributes
-    ----------
-    classes_ : list
-        A list of arrays of length ``len(estimators_)`` containing the
-        class labels for each estimator in the chain.
-
-    estimators_ : list
-        A list of clones of base_estimator.
-
-    order_ : list
-        The order of labels in the classifier chain.
-
-    References
-    ----------
-    Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
-    Chains for Multi-label Classification", 2009.
-
-    """
+class _BaseChain(six.with_metaclass(ABCMeta, BaseEstimator)):
     def __init__(self, base_estimator, order=None, cv=None, random_state=None):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
         self.random_state = random_state
 
+    @abstractmethod
     def fit(self, X, Y):
         """Fit the model to data matrix X and targets Y.
 
@@ -469,8 +407,6 @@ class ClassifierChain(BaseEstimator):
 
         self.estimators_ = [clone(self.base_estimator)
                             for _ in range(Y.shape[1])]
-
-        self.classes_ = []
 
         if self.cv is None:
             Y_pred_chain = Y[:, self.order_]
@@ -503,7 +439,6 @@ class ClassifierChain(BaseEstimator):
                 else:
                     X_aug[:, col_idx] = cv_result
 
-            self.classes_.append(estimator.classes_)
         return self
 
     def predict(self, X):
@@ -539,14 +474,98 @@ class ClassifierChain(BaseEstimator):
 
         return Y_pred
 
+
+class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
+    """A multi-label model that arranges binary classifiers into a chain.
+
+    Each model makes a prediction in the order specified by the chain using
+    all of the available features provided to the model plus the predictions
+    of models that are earlier in the chain.
+
+    Read more in the :ref:`User Guide <classifierchain>`.
+
+    Parameters
+    ----------
+    base_estimator : estimator
+        The base estimator from which the classifier chain is built.
+
+    order : array-like, shape=[n_outputs] or 'random', optional
+        By default the order will be determined by the order of columns in
+        the label matrix Y.::
+
+            order = [0, 1, 2, ..., Y.shape[1] - 1]
+
+        The order of the chain can be explicitly set by providing a list of
+        integers. For example, for a chain of length 5.::
+
+            order = [1, 3, 2, 4, 0]
+
+        means that the first model in the chain will make predictions for
+        column 1 in the Y matrix, the second model will make predictions
+        for column 3, etc.
+
+        If order is 'random' a random ordering will be used.
+
+    cv : int, cross-validation generator or an iterable, optional \
+    (default=None)
+        Determines whether to use cross validated predictions or true
+        labels for the results of previous estimators in the chain.
+        If cv is None the true labels are used when fitting. Otherwise
+        possible inputs for cv are:
+            * integer, to specify the number of folds in a (Stratified)KFold,
+            * An object to be used as a cross-validation generator.
+            * An iterable yielding train, test splits.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+        The random number generator is used to generate random chain orders.
+
+    Attributes
+    ----------
+    classes_ : list
+        A list of arrays of length ``len(estimators_)`` containing the
+        class labels for each estimator in the chain.
+
+    estimators_ : list
+        A list of clones of base_estimator.
+
+    order_ : list
+        The order of labels in the classifier chain.
+
+    References
+    ----------
+    Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
+    Chains for Multi-label Classification", 2009.
+
+    """
+
+    def fit(self, X, Y):
+        """Fit the model to data matrix X and targets Y.
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+        Y : array-like, shape (n_samples, n_classes)
+            The target values.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        super(ClassifierChain, self).fit(X, Y)
+        self.classes_ = []
+        for chain_idx, estimator in enumerate(self.estimators_):
+            self.classes_.append(estimator.classes_)
+        return self
+
     @if_delegate_has_method('base_estimator')
     def predict_proba(self, X):
         """Predict probability estimates.
-
-        By default the inputs to later models in a chain is the binary class
-        predictions not the class probabilities. To use class probabilities
-        as features in subsequent models set the cv property to be one of
-        the allowed values other than None.
 
         Parameters
         ----------
@@ -603,3 +622,80 @@ class ClassifierChain(BaseEstimator):
         Y_decision = Y_decision_chain[:, inv_order]
 
         return Y_decision
+
+
+class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
+    """A multi-label model that arranges regressions into a chain.
+
+    Each model makes a prediction in the order specified by the chain using
+    all of the available features provided to the model plus the predictions
+    of models that are earlier in the chain.
+
+    Read more in the :ref:`User Guide <regressorchain>`.
+
+    Parameters
+    ----------
+    base_estimator : estimator
+        The base estimator from which the classifier chain is built.
+
+    order : array-like, shape=[n_outputs] or 'random', optional
+        By default the order will be determined by the order of columns in
+        the label matrix Y.::
+
+            order = [0, 1, 2, ..., Y.shape[1] - 1]
+
+        The order of the chain can be explicitly set by providing a list of
+        integers. For example, for a chain of length 5.::
+
+            order = [1, 3, 2, 4, 0]
+
+        means that the first model in the chain will make predictions for
+        column 1 in the Y matrix, the second model will make predictions
+        for column 3, etc.
+
+        If order is 'random' a random ordering will be used.
+
+    cv : int, cross-validation generator or an iterable, optional \
+    (default=None)
+        Determines whether to use cross validated predictions or true
+        labels for the results of previous estimators in the chain.
+        If cv is None the true labels are used when fitting. Otherwise
+        possible inputs for cv are:
+            * integer, to specify the number of folds in a (Stratified)KFold,
+            * An object to be used as a cross-validation generator.
+            * An iterable yielding train, test splits.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+        The random number generator is used to generate random chain orders.
+
+    Attributes
+    ----------
+    estimators_ : list
+        A list of clones of base_estimator.
+
+    order_ : list
+        The order of labels in the classifier chain.
+
+    """
+    def fit(self, X, Y):
+        """Fit the model to data matrix X and targets Y.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            The input data.
+        Y : array-like, shape (n_samples, n_classes)
+            The target values.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        super(RegressorChain, self).fit(X, Y)
+        return self

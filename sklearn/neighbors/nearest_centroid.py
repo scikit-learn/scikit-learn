@@ -115,7 +115,8 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         self.classes_ = classes = le.classes_
         n_classes = classes.size
         if n_classes < 2:
-            raise ValueError('y has less than 2 classes')
+            raise ValueError('The number of classes has to be greater than'
+                             ' one; got %d class' % (n_classes))
 
         # Mask mapping each class to its members.
         self.centroids_ = np.empty((n_classes, n_features), dtype=np.float64)

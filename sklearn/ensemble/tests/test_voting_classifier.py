@@ -2,6 +2,7 @@
 
 import numpy as np
 from sklearn.utils.testing import assert_almost_equal, assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal, assert_true, assert_false
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_warns_message
@@ -17,6 +18,7 @@ from sklearn.datasets import make_multilabel_classification
 from sklearn.svm import SVC
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 
 # Load the iris dataset and randomly permute it
@@ -242,7 +244,7 @@ def test_parallel_fit():
         n_jobs=2).fit(X, y)
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
-    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+    assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
 def test_sample_weight():
@@ -257,14 +259,14 @@ def test_sample_weight():
         ('lr', clf1), ('rf', clf2), ('svc', clf3)],
         voting='soft').fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
-    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+    assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
     sample_weight = np.random.RandomState(123).uniform(size=(len(y),))
     eclf3 = VotingClassifier(estimators=[('lr', clf1)], voting='soft')
     eclf3.fit(X, y, sample_weight)
     clf1.fit(X, y, sample_weight)
     assert_array_equal(eclf3.predict(X), clf1.predict(X))
-    assert_array_equal(eclf3.predict_proba(X), clf1.predict_proba(X))
+    assert_array_almost_equal(eclf3.predict_proba(X), clf1.predict_proba(X))
 
     clf4 = KNeighborsClassifier()
     eclf3 = VotingClassifier(estimators=[
@@ -274,6 +276,20 @@ def test_sample_weight():
     assert_raise_message(ValueError, msg, eclf3.fit, X, y, sample_weight)
 
 
+def test_sample_weight_kwargs():
+    """Check that VotingClassifier passes sample_weight as kwargs"""
+    class MockClassifier(BaseEstimator, ClassifierMixin):
+        """Mock Classifier to check that sample_weight is received as kwargs"""
+        def fit(self, X, y, *args, **sample_weight):
+            assert_true('sample_weight' in sample_weight)
+
+    clf = MockClassifier()
+    eclf = VotingClassifier(estimators=[('mock', clf)], voting='soft')
+
+    # Should not raise an error.
+    eclf.fit(X, y, sample_weight=np.ones((len(y),)))
+
+
 def test_set_params():
     """set_params should be able to set estimators"""
     clf1 = LogisticRegression(random_state=123, C=1.0)
@@ -281,14 +297,21 @@ def test_set_params():
     clf3 = GaussianNB()
     eclf1 = VotingClassifier([('lr', clf1), ('rf', clf2)], voting='soft',
                              weights=[1, 2])
+    assert_true('lr' in eclf1.named_estimators)
+    assert_true(eclf1.named_estimators.lr is eclf1.estimators[0][1])
+    assert_true(eclf1.named_estimators.lr is eclf1.named_estimators['lr'])
     eclf1.fit(X, y)
+    assert_true('lr' in eclf1.named_estimators_)
+    assert_true(eclf1.named_estimators_.lr is eclf1.estimators_[0])
+    assert_true(eclf1.named_estimators_.lr is eclf1.named_estimators_['lr'])
+
     eclf2 = VotingClassifier([('lr', clf1), ('nb', clf3)], voting='soft',
                              weights=[1, 2])
     eclf2.set_params(nb=clf2).fit(X, y)
     assert_false(hasattr(eclf2, 'nb'))
 
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
-    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+    assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
     assert_equal(eclf2.estimators[0][1].get_params(), clf1.get_params())
     assert_equal(eclf2.estimators[1][1].get_params(), clf2.get_params())
 
@@ -326,7 +349,7 @@ def test_set_estimator_none():
     eclf1.set_params(voting='soft').fit(X, y)
     eclf2.set_params(voting='soft').fit(X, y)
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
-    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+    assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
     msg = ('All estimators are None. At least one is required'
            ' to be a classifier!')
     assert_raise_message(
@@ -341,9 +364,12 @@ def test_set_estimator_none():
     eclf2 = VotingClassifier(estimators=[('rf', clf2), ('nb', clf3)],
                              voting='soft', weights=[1, 0.5])
     eclf2.set_params(rf=None).fit(X1, y1)
-    assert_array_equal(eclf1.transform(X1), np.array([[[0.7, 0.3], [0.3, 0.7]],
-                                                      [[1., 0.], [0., 1.]]]))
-    assert_array_equal(eclf2.transform(X1), np.array([[[1., 0.], [0., 1.]]]))
+    assert_array_almost_equal(eclf1.transform(X1),
+                              np.array([[[0.7, 0.3], [0.3, 0.7]],
+                                        [[1., 0.], [0., 1.]]]))
+    assert_array_almost_equal(eclf2.transform(X1),
+                              np.array([[[1., 0.],
+                                         [0., 1.]]]))
     eclf1.set_params(voting='hard')
     eclf2.set_params(voting='hard')
     assert_array_equal(eclf1.transform(X1), np.array([[0, 0], [1, 1]]))
@@ -364,7 +390,7 @@ def test_estimator_weights_format():
                 voting='soft')
     eclf1.fit(X, y)
     eclf2.fit(X, y)
-    assert_array_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+    assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
 def test_transform():
@@ -396,7 +422,9 @@ def test_transform():
     assert_array_equal(res.shape, (3, 4, 2))
     assert_array_equal(eclf2.transform(X).shape, (4, 6))
     assert_array_equal(eclf3.transform(X).shape, (3, 4, 2))
-    assert_array_equal(res.swapaxes(0, 1).reshape((4, 6)),
-                       eclf2.transform(X))
-    assert_array_equal(eclf3.transform(X).swapaxes(0, 1).reshape((4, 6)),
-                       eclf2.transform(X))
+    assert_array_almost_equal(res.swapaxes(0, 1).reshape((4, 6)),
+                              eclf2.transform(X))
+    assert_array_almost_equal(
+            eclf3.transform(X).swapaxes(0, 1).reshape((4, 6)),
+            eclf2.transform(X)
+    )
