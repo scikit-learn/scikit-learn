@@ -13,7 +13,7 @@ import struct
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
@@ -258,9 +258,9 @@ def check_estimator(Estimator):
     if isinstance(Estimator, type):
         # got a class
         name = Estimator.__name__
-        check_parameters_default_constructible(name, Estimator)
-        check_no_fit_attributes_set_in_init(name, Estimator)
         estimator = Estimator()
+        check_parameters_default_constructible(name, Estimator)
+        check_no_attributes_set_in_init(name, estimator)
     else:
         # got an instance
         estimator = Estimator
@@ -1658,22 +1658,32 @@ def check_estimators_overwrite_params(name, estimator_orig):
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_no_fit_attributes_set_in_init(name, Estimator):
-    """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
-    # this check works on classes, not instances
-    estimator = Estimator()
-    for attr in dir(estimator):
-        if attr.endswith("_") and not attr.startswith("__"):
-            # This check is for properties, they can be listed in dir
-            # while at the same time have hasattr return False as long
-            # as the property getter raises an AttributeError
-            assert_false(
-                hasattr(estimator, attr),
-                "By convention, attributes ending with '_' are "
-                'estimated from data in scikit-learn. Consequently they '
-                'should not be initialized in the constructor of an '
-                'estimator but in the fit method. Attribute {!r} '
-                'was found in estimator {}'.format(attr, name))
+def check_no_attributes_set_in_init(name, estimator):
+    """Check setting during init. """
+
+    if hasattr(type(estimator).__init__, "deprecated_original"):
+        return
+
+    init_params = _get_args(type(estimator).__init__)
+    parents_init_params = [param for params_parent in
+                           (_get_args(parent) for parent in
+                            type(estimator).__mro__)
+                           for param in params_parent]
+
+    # Test for no setting apart from parameters during init
+    invalid_attr = (set(vars(estimator)) - set(init_params)
+                    - set(parents_init_params))
+    assert_false(invalid_attr,
+                 "Estimator %s should not set any attribute apart"
+                 " from parameters during init. Found attributes %s."
+                 % (name, sorted(invalid_attr)))
+    # Ensure that each parameter is set in init
+    invalid_attr = (set(init_params) - set(vars(estimator))
+                    - set(["self"]))
+    assert_false(invalid_attr,
+                 "Estimator %s should store all parameters"
+                 " as an attribute during init. Did not find "
+                 "attributes %s." % (name, sorted(invalid_attr)))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

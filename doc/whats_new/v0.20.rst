@@ -289,3 +289,7 @@ Changes to estimator checks
 - Allow tests in :func:`estimator_checks.check_estimator` to test functions
   that accept pairwise data.
   :issue:`9701` by :user:`Kyle Johnson <gkjohns>`
+
+- Allow :func:`estimator_checks.check_estimator` to check that there is no
+  private settings apart from parameters during estimator initialization.
+  :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
