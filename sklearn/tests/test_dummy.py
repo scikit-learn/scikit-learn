@@ -659,5 +659,4 @@ def test_dummy_classifier_on_zero_arrays():
     cls = DummyClassifier()
     cls.fit(X, y)
     y_pred = cls.predict(X)
-    print(y_pred)
     assert_array_equal(y_pred, y_expected)
