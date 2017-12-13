@@ -396,6 +396,8 @@ General Concepts
     outputs
         TODO?
 
+        Others may call these "responses" or "tasks" or "targets"
+
     parameter
     parameters
     param
