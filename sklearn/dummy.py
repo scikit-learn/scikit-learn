@@ -261,7 +261,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         check_is_fitted(self, 'classes_')
 
         X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
+                        force_all_finite=False, dtype=None,
+                        ensure_min_features=0)
         # numpy random_state expects Python int and not long as size argument
         # under Windows
         n_samples = int(X.shape[0])
