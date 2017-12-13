@@ -67,12 +67,11 @@ General Concepts
 
     attribute
     attributes
-
         We mostly use attribute to refer to how model information is stored on
         an estimator during fitting.  Any public attribute stored on an
         estimator instance is required to begin with an alphabetic character
         and end in a single underscore if it is set in :term:`fit` or
-        :term:`public_fit`.  These are what is documented under an estimator's
+        :term:`partial_fit`.  These are what is documented under an estimator's
         *Attributes* documentation.  The information stored in attributes are
         usually either: sufficient statistics used for prediction or
         transformation; or diagnostic data, such as
@@ -751,6 +750,7 @@ Methods
             classification format, though its semantics differ: it should be
             interpreted, like in the binary case, by thresholding at 0.
 
+            TODO
             ..
             see https://gist.github.com/jnothman/4807b1b0266613c20ba4d1f88d0f8cf5
         multioutput classification
@@ -786,9 +786,10 @@ Methods
         ``steps`` parameters as themselves being parameters.
 
     ``fit_predict``
-        TODO
-
-        See :term:`labels_`
+        Used especially for :term:`transductive` estimators, this fits the
+        model and returns the predictions (similar to :term:`predict`) on the
+        training data. In clusterers, these predictions are also stored in the
+        :term:`labels_` attribute.
 
     ``fit_transform``
         TODO
@@ -797,6 +798,7 @@ Methods
         Efficiency.
         ``transform`` may not be available.
         ``fit_transform`` can be different, as in stacking.
+        These rare cases should be clearly documented.
 
         Ordinarily should not be applied to the entirety of a dataset, only the
         training data, to avoid :term:`leakage`.
@@ -870,7 +872,8 @@ Methods
         Mention ``return_std``
 
     ``predict_log_proba``
-        TODO
+        The natural logarithm of the output of :term:`predict_proba`, provided
+        to facilitate numerical stability.
 
     ``predict_proba``
         TODO
