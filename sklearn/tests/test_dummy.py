@@ -620,7 +620,7 @@ def test_dummy_regressor_on_nan_value():
 
 
 def test_dummy_regressor_on_object_values():
-    X = np.array([[], [], []], dtype=object)
+    X = np.array([['foo'], ['bar'], ['baz]], dtype=object)
     y = np.array([2, 2, 2])
     y_expected = np.array([2, 2, 2])
     cls = DummyRegressor()
@@ -630,7 +630,7 @@ def test_dummy_regressor_on_object_values():
 
 
 def test_dummy_classifier_on_object_values():
-    X = np.array([[], [], []], dtype=object)
+    X = np.array([['foo'], ['bar'], ['baz]], dtype=object)
     y = [2, 2, 2]
     y_expected = [2, 2, 2]
     y_proba_expected = [[1], [1], [1]]
