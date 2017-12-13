@@ -137,8 +137,9 @@ def test_affinity_propagation_predict_non_convergence():
 
     # At prediction time, consider new samples as noise since there are no
     # clusters
-    assert_array_equal(np.array([-1, -1, -1]),
-                       af.predict(np.array([[2, 2], [3, 3], [4, 4]])))
+    to_predict = np.array([[2, 2], [3, 3], [4, 4]])
+    y = assert_warns(ConvergenceWarning, af.predict, to_predict)
+    assert_array_equal(np.array([-1, -1, -1]), y)
 
 
 def test_equal_similarities_and_preferences():
