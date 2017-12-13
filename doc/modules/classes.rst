@@ -1206,6 +1206,7 @@ Model validation
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
+   preprocessing.TransformedTargetRegressor
 
 .. autosummary::
    :toctree: generated/

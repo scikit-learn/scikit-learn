@@ -25,7 +25,6 @@ from .data import power_transform
 from .data import OneHotEncoder
 from .data import PowerTransformer
 from .data import CategoricalEncoder
-
 from .data import PolynomialFeatures
 
 from .label import label_binarize
@@ -33,6 +32,7 @@ from .label import LabelBinarizer
 from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
+from ._target import TransformedTargetRegressor
 from .imputation import Imputer
 
 
@@ -53,6 +53,7 @@ __all__ = [
     'PowerTransformer',
     'RobustScaler',
     'StandardScaler',
+    'TransformedTargetRegressor',
     'add_dummy_feature',
     'PolynomialFeatures',
     'binarize',
