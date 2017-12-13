@@ -642,7 +642,7 @@ def test_dummy_classifier_on_object_values():
     assert_array_equal(y_pred_proba, y_proba_expected)
 
 
-def test_dummy_regressor_on_zero_arrays():
+def test_dummy_regressor_on_zero_feature_arrays():
     X = np.array([[], [], []])
     y = np.array([2, 2, 2])
     y_expected = np.array([2, 2, 2])
@@ -652,7 +652,7 @@ def test_dummy_regressor_on_zero_arrays():
     assert_array_equal(y_pred, y_expected)
 
 
-def test_dummy_classifier_on_zero_arrays():
+def test_dummy_classifier_on_zero_feature_arrays():
     X = np.array([[], [], []])
     y = np.array([2, 2, 2])
     y_expected = np.array([2, 2, 2])
