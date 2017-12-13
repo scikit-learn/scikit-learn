@@ -45,6 +45,7 @@ except NameError:
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
+from sklearn.externals.funcsigs import signature
 from sklearn.utils import deprecated
 
 additional_names_in_all = []
@@ -511,7 +512,8 @@ def uninstall_mldata_mock():
 META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "MultiOutputRegressor", "MultiOutputClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier",
-                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain"]
+                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain",
+                   "RegressorChain"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel"]
@@ -758,11 +760,12 @@ class TempMemmap(object):
 
 def _get_args(function, varargs=False):
     """Helper to get function arguments"""
-    # NOTE this works only in python3.5
-    if sys.version_info < (3, 5):
-        NotImplementedError("_get_args is not available for python < 3.5")
 
-    params = inspect.signature(function).parameters
+    try:
+        params = signature(function).parameters
+    except ValueError:
+        # Error on builtin C function
+        return []
     args = [key for key, param in params.items()
             if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
     if varargs:
