@@ -619,7 +619,7 @@ def test_dummy_regressor_on_nan_value():
     assert_array_equal(y_pred, y_expected)
 
 
-def test_dummy_regressor_on_string_values():
+def test_dummy_regressor_on_object_values():
     X = np.array([['foo'], ['bar'], ['baz']], dtype=object)
     y = np.array([1, 2, 3])
     y_expected = np.array([2, 2, 2])
@@ -628,4 +628,17 @@ def test_dummy_regressor_on_string_values():
     y_pred = cls.predict(X)
     assert_array_equal(y_pred, y_expected)
 
-test_dummy_regressor_on_string_values()
+def test_dummy_classifier_on_object_values():
+    X = np.array([['foo'], ['bar'], ['baz']], dtype=object)
+    y = [3, 3, 3]
+    y_expected = [3, 3, 3]
+    y_proba_expected = [[1], [1], [1]]
+    cls = DummyClassifier()
+    cls.fit(X, y)
+    y_pred = cls.predict(X)
+    y_pred_proba = cls.predict_proba(X)
+    assert_array_equal(y_pred, y_expected)
+    assert_array_equal(y_pred_proba, y_proba_expected)
+
+
+test_dummy_classifier_on_object_values()
