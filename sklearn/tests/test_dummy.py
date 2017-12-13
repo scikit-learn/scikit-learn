@@ -651,4 +651,15 @@ def test_dummy_regressor_on_zero_arrays():
     y_pred = cls.predict(X)
     assert_array_equal(y_pred, y_expected)
 
-test_dummy_regressor_on_zero_arrays()
+
+def test_dummy_classifier_on_zero_arrays():
+    X = np.array([[], [], []])
+    y = np.array([2, 2, 2])
+    y_expected = np.array([2, 2, 2])
+    cls = DummyClassifier()
+    cls.fit(X, y)
+    y_pred = cls.predict(X)
+    print(y_pred)
+    assert_array_equal(y_pred, y_expected)
+
+test_dummy_classifier_on_zero_arrays()
