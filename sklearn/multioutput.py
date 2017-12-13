@@ -538,7 +538,7 @@ class ClassifierChain(_BaseChain, ClassifierMixin, MetaEstimatorMixin):
 
     See also
     --------
-    RegressorChain
+    RegressorChain, MultioutputClassifier, MultioutputRegressor
 
     References
     ----------
@@ -687,7 +687,7 @@ class RegressorChain(_BaseChain, RegressorMixin, MetaEstimatorMixin):
 
     See also
     --------
-    ClassifierChain
+    ClassifierChain, MultioutputClassifier, MultioutputRegressor
 
     """
     def fit(self, X, Y):
