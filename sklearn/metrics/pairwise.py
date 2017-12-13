@@ -704,7 +704,7 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
 
     See also
     --------
-    pairwise_distances : pairwise distances.
+    pairwise_distances : Computes the distance matrix from a vector array
     """
 
     if metric in PAIRED_DISTANCES:
@@ -1218,7 +1218,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
     See also
     --------
-    paired_distances : paired distances.
+    paired_distances : Computes the paired distances between two arrays
 
     """
     if (metric not in _VALID_METRICS and
