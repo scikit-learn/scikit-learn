@@ -2599,8 +2599,8 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     for stabilizing variance and minimizing skewness is estimated through
     maximum likelihood.
 
-    By default, the transformed data is normalized to zero-mean,
-    unit-variance.
+    By default, zero-mean, unit-variance normalization is applied to the
+    transformed data.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
@@ -2610,8 +2610,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         The power transform method. Currently, 'box-cox' (Box-Cox transform)
         is the only option available.
 
-    standardize : boolean, default=true
-        If True, standardize output to zero-mean, unit-variance.
+    standardize : boolean, default=True
+        Set to True to apply zero-mean, unit-variance normalization to the
+        transformed output.
 
     copy : boolean, optional, default=True
         Set to False to perform inplace computation during transformation.
@@ -2798,8 +2799,8 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
     for stabilizing variance and minimizing skewness is estimated
     through maximum likelihood.
 
-    By default, the transformed data is normalized to zero-mean,
-    unit-variance.
+    By default, zero-mean, unit-variance normalization is applied to the
+    transformed data.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
@@ -2808,12 +2809,13 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
     X : array-like, shape (n_samples, n_features)
         The data to be transformed using a power transformation.
 
-    standardize : boolean, default=true
-        If True, standardize output to zero-mean, unit-variance.
-
     method : str, (default='box-cox')
         The power transform method. Currently, 'box-cox' (Box-Cox transform)
         is the only option available.
+
+    standardize : boolean, default=True
+        Set to True to apply zero-mean, unit-variance normalization to the
+        transformed output.
 
     copy : boolean, optional, default=True
         Set to False to perform inplace computation.

@@ -297,15 +297,14 @@ make_plot(4)
 #
 # ``PowerTransformer`` applies a power transformation to each
 # feature to make the data more Gaussian-like. Currently,
-# ``PowerTransformer`` implements the Box-Cox transform. It differs from
-# QuantileTransformer (Gaussian output) in that it does not map the
-# data to a zero-mean, unit-variance Gaussian distribution. Instead, Box-Cox
+# ``PowerTransformer`` implements the Box-Cox transform. The Box-Cox transform
 # finds the optimal scaling factor to stabilize variance and mimimize skewness
-# through maximum likelihood estimation. Note that Box-Cox can only be applied
-# to positive, non-zero data. Income and number of households happen to be
-# strictly positive, but if negative values are present, a constant can be
-# added to each feature to shift it into the positive range - this is known as
-# the two-parameter Box-Cox transform.
+# through maximum likelihood estimation. By default, ``PowerTransformer`` also
+# applies zero-mean, unit variance normalization to the transformed output.
+# Note that Box-Cox can only be applied to positive, non-zero data. Income and
+# number of households happen to be strictly positive, but if negative values
+# are present, a constant can be added to each feature to shift it into the
+# positive range - this is known as the two-parameter Box-Cox transform.
 
 make_plot(5)
 
