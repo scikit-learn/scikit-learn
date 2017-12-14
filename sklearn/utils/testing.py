@@ -363,7 +363,7 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
 
     *args : the positional arguments to `function`.
 
-    **kw : the keyword arguments to `function`.
+    **kwargs : the keyword arguments to `function`.
     """
     try:
         function(*args, **kwargs)
