@@ -1948,11 +1948,11 @@ def check_set_params(name, estimator_orig):
                 # continue checking other test values
                 pass
             else:
-                _params = estimator.get_params()
-                errmsg = msg.format(name, params, _params)
+                new_params = estimator.get_params()
+                errmsg = msg.format(name, params, new_params)
 
-                assert_equal(set(params.keys()), set(_params.keys()), errmsg)
-                for k, v in _params.items():
+                assert_equal(set(params.keys()), set(new_params.keys()), errmsg)
+                for k, v in new_params.items():
                     assert_is(params[k], v, errmsg)
 
 
