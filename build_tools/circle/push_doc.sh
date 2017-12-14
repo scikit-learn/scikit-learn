@@ -14,7 +14,7 @@ fi
 DOC_REPO="scikit-learn.github.io"
 GENERATED_DOC_DIR=$1
 
-if [[ -z "$GENERATED_DIR" ]]; then
+if [[ -z "$GENERATED_DOC_DIR" ]]; then
     echo "Need to pass directory of the generated doc as argument"
     echo "Usage: $0 <generated_doc_dir>"
     exit 1
