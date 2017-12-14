@@ -39,7 +39,6 @@ General Concepts
         are not assured to be stable.
 
     array-like
-
         The most common data format for *input* to Scikit-learn estimators and
         functions, array-like is any type object for which
         :func:`numpy.asarray` will produce an array of appropriate shape
@@ -555,6 +554,23 @@ General Concepts
     unlabeled data
         TODO
 
+    ``X``
+        Denotes data that is observed at training and prediction time, used as
+        independent variables in learning.  The notation is uppercase to denote
+        that it is ordinarily a matrix (see :term:`rectangular`).
+
+    ``Xt``
+        Shorthand for "transformed :term:`X`".
+
+    ``y``
+    ``Y``
+        Denotes data that may be observed at training time as the dependent
+        variable in learning, but which is unavailable at prediction time, and
+        is usually the :term:`target` of prediction.  The notation may be
+        uppercase to denote that it is a matrix, representing
+        :term:`multi-output` targets, for instance; but usually we use ``y``
+        and sometimes do so even when multiple outputs are assumed.
+
 .. _glossary_estimator_types:
 
 Class APIs and Estimator Types
@@ -930,7 +946,7 @@ Parameters
 ==========
 
 These common parameter names, specifically used in estimator construction
-(see concept :term:`parameter`) sometimes also appear as parameters of
+(see concept :term:`parameter`), sometimes also appear as parameters of
 functions or non-estimator constructors.
 
 .. glossary::
@@ -1037,7 +1053,7 @@ functions or non-estimator constructors.
         used for parallelized routines.  Scikit-learn uses one processor for
         its processing by default, although it also makes use of NumPy, which
         may be configured to use a threaded numerical processor library (like
-        MKL).
+        MKL; see :ref:`FAQ <faq_mkl_threading>`).
 
         ``n_jobs`` is an int, specifying the maximum number of concurrently
         running jobs.  If set to -1, all CPUs are used. If 1 is given, no
@@ -1084,11 +1100,15 @@ functions or non-estimator constructors.
                 multiple times will produce the same result), an arbitrary
                 integer ``random_state`` can be used. However, it may be
                 worthwhile checking that your results are stable across a
-                number of different distinct random seeds.
+                number of different distinct random seeds. Popular integer
+                random seeds are 0 and `42
+                <http://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
 
             A :class:`numpy.random.RandomState` instance
                 Use the provided random state, only affecting other users
-                of the same random state instance.
+                of the same random state instance. Calling fit multiple times
+                will reuse the same instance, and will produce different
+                results.
 
         :func:`utils.check_random_state` is used internally to validate the
         input ``random_state`` and return a :class:`~numpy.random.RandomState`
@@ -1101,8 +1121,8 @@ functions or non-estimator constructors.
         by :func:`metrics.get_scorer` or a callable :term:`scorer`, not to be
         confused with an :term:`evaluation metric`, as the latter have a more
         diverse API.  ``scoring`` may also be set to None, in which case the
-        estimator's ``score`` method is used.  See :ref:`scoring_parameter` in
-        the user guide.
+        estimator's :term:`score` method is used.  See :ref:`scoring_parameter`
+        in the User Guide.
 
         Where multiple metrics can be evaluated, ``scoring`` may be given
         either as a list of unique strings or a dict with names as keys and
@@ -1167,9 +1187,9 @@ See concept :term:`attribute`.
 
     ``components_``
         An affine transformation matrix of shape ``(n_components, n_features)``
-        used in many linear :term:`transformers` where ``n_components`` is the
-        number of output features and ``n_features`` is the number of input
-        features.
+        used in many linear :term:`transformers` where :term:`n_components` is
+        the number of output features and :term:`n_features`` is the number of
+        input features.
 
         See also :term:`components_` which is a similar attribute for linear
         predictors.
@@ -1179,8 +1199,8 @@ See concept :term:`attribute`.
         :term:`predictor`, of shape ``(n_features,)`` for binary classification
         and single-output regression, ``(n_classes, n_features)`` for
         multiclass classification and ``(n_targets, n_features)`` for
-        multi-output regression. Note this does not include the intercept,
-        or bias, term, which is stored in ``intercept_``.
+        multi-output regression. Note this does not include the intercept
+        (or bias) term, which is stored in ``intercept_``.
 
         When available, ``feature_importances_`` is not usually provided as
         well, but can be calculated as the  norm of each feature's entry in
@@ -1229,12 +1249,15 @@ See concept :term:`sample property`.
         A relative weight for each sample.  Intuitively, if all weights are
         integers, a weighted model or score should be equivalent to that
         calculated when repeating the sample the number of times specified in
-        the weight.  Weights may be specified as floats, so that
-        sample weights are usually equivalent up to a constant positive
-        scaling factor.
+        the weight.  Weights may be specified as floats, so that sample weights
+        are usually equivalent up to a constant positive scaling factor.
 
         FIXME  Is this interpretation always the case in practice? We have no
         common tests.
+
+        Some estimators, such as decision trees, support negative weights.
+        FIXME: This feature or its absence may not be tested or documented in
+        many estimators.
 
         This is not entirely the case where other parameters of the model
         consider the number of samples in a region, as with ``min_samples`` in
