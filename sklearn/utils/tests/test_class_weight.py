@@ -226,3 +226,15 @@ def test_compute_sample_weight_errors():
 
     # Incorrect length list for multi-output
     assert_raises(ValueError, compute_sample_weight, [{1: 2, 2: 1}], y_)
+
+
+def test_compute_class_default():
+    # Test for the case where no weight is given for a present class.
+    # Current behaviour appears to assign the unweighted classes a weight of 1.
+    y = np.asarray([2, 2, 2, 3, 3, 4])
+    classes = np.unique(y)
+
+    cw = compute_class_weight(None, classes, y)
+
+    assert_equal(len(cw), len(classes))
+    assert_array_almost_equal(np.ones(3), cw)
