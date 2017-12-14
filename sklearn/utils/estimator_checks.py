@@ -1938,7 +1938,6 @@ def check_set_params(name, estimator_orig):
            "called set_params of {0} with {1} "
            "but get_params returns {2}")
     for param_name in params.keys():
-        estimator = clone(estimator_orig)
         params = estimator.get_params()
         for value in test_values:
             params[param_name] = value
