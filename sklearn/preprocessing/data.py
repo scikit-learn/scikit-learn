@@ -2592,14 +2592,15 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
-    or other situations where normality is desired. Note that power
-    transforms do not result in standard normal distributions (i.e. the
-    transformed data could be far from zero-mean, unit-variance).
+    or other situations where normality is desired.
 
     Currently, PowerTransformer supports the Box-Cox transform. Box-Cox
     requires input data to be strictly positive. The optimal parameter
     for stabilizing variance and minimizing skewness is estimated through
     maximum likelihood.
+
+    By default, the transformed data is normalized to zero-mean,
+    unit-variance.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
@@ -2608,6 +2609,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     method : str, (default='box-cox')
         The power transform method. Currently, 'box-cox' (Box-Cox transform)
         is the only option available.
+
+    standardize : boolean, default=true
+        If True, standardize output to zero-mean, unit-variance.
 
     copy : boolean, optional, default=True
         Set to False to perform inplace computation during transformation.
@@ -2651,8 +2655,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Royal Statistical Society B, 26, 211-252 (1964).
 
     """
-    def __init__(self, method='box-cox', copy=True):
+    def __init__(self, method='box-cox', standardize=True, copy=True):
         self.method = method
+        self.standardize = standardize
         self.copy = copy
 
     def fit(self, X, y=None):
@@ -2698,6 +2703,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         for i, lmbda in enumerate(self.lambdas_):
             X[:, i] = stats.boxcox(X[:, i], lmbda=lmbda)
 
+        if self.standardize:
+            self._scaler = StandardScaler()
+            X = self._scaler.fit_transform(X)
+
         return X
 
     def inverse_transform(self, X):
@@ -2717,6 +2726,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'lambdas_')
         X = self._check_input(X, check_shape=True)
+
+        if self.standardize:
+            X = self._scaler.inverse_transform(X)
 
         for i, lmbda in enumerate(self.lambdas_):
             x = X[:, i]
@@ -2765,22 +2777,21 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
-def power_transform(X, method='box-cox', copy=True):
+def power_transform(X, method='box-cox', standardize=True, copy=True):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
-    or other situations where normality is desired. Note that power
-    transforms do not result in standard normal distributions (i.e. the
-    transformed data could be far from zero-mean, unit-variance).
-.
+    or other situations where normality is desired.
 
     Currently, power_transform() supports the Box-Cox transform. Box-Cox
     requires input data to be strictly positive. The optimal parameter
     for stabilizing variance and minimizing skewness is estimated
     through maximum likelihood.
 
+    By default, the transformed data is normalized to zero-mean,
+    unit-variance.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
@@ -2788,6 +2799,9 @@ def power_transform(X, method='box-cox', copy=True):
     ----------
     X : array-like, shape (n_samples, n_features)
         The data to be transformed using a power transformation.
+
+    standardize : boolean, default=true
+        If True, standardize output to zero-mean, unit-variance.
 
     method : str, (default='box-cox')
         The power transform method. Currently, 'box-cox' (Box-Cox transform)
@@ -2825,7 +2839,7 @@ def power_transform(X, method='box-cox', copy=True):
     G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
     Royal Statistical Society B, 26, 211-252 (1964).
     """
-    pt = PowerTransformer(method=method, copy=copy)
+    pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)
 
 
