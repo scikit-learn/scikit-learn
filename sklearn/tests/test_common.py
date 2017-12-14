@@ -20,7 +20,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import _named_check
 
 import sklearn
 from sklearn.cluster.bicluster import BiclusterMixin
@@ -30,7 +29,7 @@ from sklearn.utils.estimator_checks import (
     _yield_all_checks,
     set_checking_parameters,
     check_parameters_default_constructible,
-    check_no_fit_attributes_set_in_init,
+    check_no_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier)
 
 
@@ -53,8 +52,7 @@ def test_all_estimators():
 
     for name, Estimator in estimators:
         # some can just not be sensibly default constructed
-        yield (_named_check(check_parameters_default_constructible, name),
-               name, Estimator)
+        yield check_parameters_default_constructible, name, Estimator
 
 
 def test_non_meta_estimators():
@@ -67,17 +65,16 @@ def test_non_meta_estimators():
             continue
         estimator = Estimator()
         # check this on class
-        yield _named_check(
-            check_no_fit_attributes_set_in_init, name), name, Estimator
+        yield check_no_attributes_set_in_init, name, estimator
 
         for check in _yield_all_checks(name, estimator):
             set_checking_parameters(estimator)
-            yield _named_check(check, name), name, estimator
+            yield check, name, estimator
 
 
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
-    # 'configure' functions in the setup.pys in the scikit
+    # 'configure' functions in the setup.pys in scikit-learn
     cwd = os.getcwd()
     setup_path = os.path.abspath(os.path.join(sklearn.__path__[0], '..'))
     setup_filename = os.path.join(setup_path, 'setup.py')
@@ -114,8 +111,7 @@ def test_class_weight_balanced_linear_classifiers():
                 issubclass(clazz, LinearClassifierMixin))]
 
     for name, Classifier in linear_classifiers:
-        yield _named_check(check_class_weight_balanced_linear_classifier,
-                           name), name, Classifier
+        yield check_class_weight_balanced_linear_classifier, name, Classifier
 
 
 @ignore_warnings

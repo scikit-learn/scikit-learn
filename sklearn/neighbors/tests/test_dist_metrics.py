@@ -15,35 +15,39 @@ def dist_func(x1, x2, p):
     return np.sum((x1 - x2) ** p) ** (1. / p)
 
 
-class TestMetrics:
-    def __init__(self, n1=20, n2=25, d=4, zero_frac=0.5,
-                 rseed=0, dtype=np.float64):
-        rng = check_random_state(rseed)
-        self.X1 = rng.random_sample((n1, d)).astype(dtype)
-        self.X2 = rng.random_sample((n2, d)).astype(dtype)
+class TestMetrics(object):
+    n1 = 20
+    n2 = 25
+    d = 4
+    zero_frac = 0.5
+    rseed = 0
+    dtype = np.float64
+    rng = check_random_state(rseed)
+    X1 = rng.random_sample((n1, d)).astype(dtype)
+    X2 = rng.random_sample((n2, d)).astype(dtype)
 
-        # make boolean arrays: ones and zeros
-        self.X1_bool = self.X1.round(0)
-        self.X2_bool = self.X2.round(0)
+    # make boolean arrays: ones and zeros
+    X1_bool = X1.round(0)
+    X2_bool = X2.round(0)
 
-        V = rng.random_sample((d, d))
-        VI = np.dot(V, V.T)
+    V = rng.random_sample((d, d))
+    VI = np.dot(V, V.T)
 
-        self.metrics = {'euclidean': {},
-                        'cityblock': {},
-                        'minkowski': dict(p=(1, 1.5, 2, 3)),
-                        'chebyshev': {},
-                        'seuclidean': dict(V=(rng.random_sample(d),)),
-                        'wminkowski': dict(p=(1, 1.5, 3),
-                                           w=(rng.random_sample(d),)),
-                        'mahalanobis': dict(VI=(VI,)),
-                        'hamming': {},
-                        'canberra': {},
-                        'braycurtis': {}}
+    metrics = {'euclidean': {},
+               'cityblock': {},
+               'minkowski': dict(p=(1, 1.5, 2, 3)),
+               'chebyshev': {},
+               'seuclidean': dict(V=(rng.random_sample(d),)),
+               'wminkowski': dict(p=(1, 1.5, 3),
+                                  w=(rng.random_sample(d),)),
+               'mahalanobis': dict(VI=(VI,)),
+               'hamming': {},
+               'canberra': {},
+               'braycurtis': {}}
 
-        self.bool_metrics = ['matching', 'jaccard', 'dice',
-                             'kulsinski', 'rogerstanimoto', 'russellrao',
-                             'sokalmichener', 'sokalsneath']
+    bool_metrics = ['matching', 'jaccard', 'dice',
+                    'kulsinski', 'rogerstanimoto', 'russellrao',
+                    'sokalmichener', 'sokalsneath']
 
     def test_cdist(self):
         for metric, argdict in self.metrics.items():

@@ -155,7 +155,7 @@ that aims to build a hierarchy of clusters. In general, the various approaches
 of this technique are either:
 
   * **Agglomerative** - bottom-up approaches: each observation starts in its
-    own cluster, and clusters are iterativelly merged in such a way to
+    own cluster, and clusters are iteratively merged in such a way to
     minimize a *linkage* criterion. This approach is particularly interesting
     when the clusters of interest are made of only a few observations. When
     the number of clusters is large, it is much more computationally efficient
@@ -171,7 +171,7 @@ Connectivity-constrained clustering
 .....................................
 
 With agglomerative clustering, it is possible to specify which samples can be
-clustered together by giving a connectivity graph. Graphs in the scikit
+clustered together by giving a connectivity graph. Graphs in scikit-learn
 are represented by their adjacency matrix. Often, a sparse matrix is used.
 This can be useful, for instance, to retrieve connected regions (sometimes
 also referred to as connected components) when
