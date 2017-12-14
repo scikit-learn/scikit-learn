@@ -990,7 +990,7 @@ class GridSearchCV(BaseSearchCV):
         However computing the scores on the training set can be computationally
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
-        
+
     use_warm_start : str or list of str, optional
         The parameters named here will be searched over without clearing the
         estimator state in between.  This allows efficient searches over
