@@ -2682,10 +2682,19 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X = self._check_input(X, check_positive=True, check_method=True)
 
         self.lambdas_ = []
+        transformed = []
+
         for col in X.T:
-            _, lmbda = stats.boxcox(col, lmbda=None)
+            col_trans, lmbda = stats.boxcox(col, lmbda=None)
             self.lambdas_.append(lmbda)
+            transformed.append(col_trans)
+
         self.lambdas_ = np.array(self.lambdas_)
+        transformed = np.array(transformed)
+
+        if self.standardize:
+            self._scaler = StandardScaler()
+            self._scaler.fit(X=transformed.T)
 
         return self
 
@@ -2704,8 +2713,7 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
             X[:, i] = stats.boxcox(X[:, i], lmbda=lmbda)
 
         if self.standardize:
-            self._scaler = StandardScaler()
-            X = self._scaler.fit_transform(X)
+            X = self._scaler.transform(X)
 
         return X
 
