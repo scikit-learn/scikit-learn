@@ -2628,13 +2628,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> pt = PowerTransformer()
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(pt.fit(data))
-    PowerTransformer(copy=True, method='box-cox')
+    PowerTransformer(copy=True, method='box-cox', standardize=True)
     >>> print(pt.lambdas_)  # doctest: +ELLIPSIS
     [ 1.051... -2.345...]
     >>> print(pt.transform(data))  # doctest: +ELLIPSIS
-    [[ 0...      0.342...]
-     [ 2.068...  0.342...]
-     [ 3.135...  0.416...]]
+    [[-1.332... -0.707...]
+     [ 0.256... -0.707...]
+     [ 1.076...  1.414...]]
 
     See also
     --------
@@ -2815,10 +2815,10 @@ def power_transform(X, method='box-cox', standardize=True, copy=True):
     >>> import numpy as np
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(power_transform(data, method='box-cox'))  # doctest: +ELLIPSIS
-    [[ 0...      0.342...]
-     [ 2.068...  0.342...]
-     [ 3.135...  0.416...]]
+    >>> print(power_transform(data))  # doctest: +ELLIPSIS
+    [[-1.332... -0.707...]
+     [ 0.256... -0.707...]
+     [ 1.076...  1.414...]]
 
     See also
     --------
