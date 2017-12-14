@@ -1937,8 +1937,8 @@ def check_set_params(name, estimator_orig):
     msg = ("get_params result does not match what was passed to set_params: "
            "called set_params of {0} with {1} "
            "but get_params returns {2}")
+    params = estimator.get_params()
     for param_name in params.keys():
-        params = estimator.get_params()
         for value in test_values:
             params[param_name] = value
             try:
