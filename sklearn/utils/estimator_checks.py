@@ -1949,7 +1949,9 @@ def check_set_params(name, estimator_orig):
                 new_params = estimator.get_params()
                 errmsg = msg.format(name, params, new_params)
 
-                assert_equal(set(params.keys()), set(new_params.keys()), errmsg)
+                assert_equal(set(params.keys()),
+                             set(new_params.keys()),
+                             errmsg)
                 for k, v in new_params.items():
                     assert_is(params[k], v, errmsg)
         params[param_name] = default_value
