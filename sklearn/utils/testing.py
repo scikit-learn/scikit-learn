@@ -45,6 +45,7 @@ except NameError:
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
+from sklearn.externals.funcsigs import signature
 from sklearn.utils import deprecated
 
 additional_names_in_all = []
@@ -511,7 +512,8 @@ def uninstall_mldata_mock():
 META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "MultiOutputRegressor", "MultiOutputClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier",
-                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain"]
+                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain",
+                   "RegressorChain"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel"]
@@ -521,7 +523,7 @@ DONT_TEST = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              'LabelBinarizer', 'LabelEncoder',
              'MultiLabelBinarizer', 'TfidfTransformer',
              'TfidfVectorizer', 'IsotonicRegression',
-             'OneHotEncoder', 'RandomTreesEmbedding',
+             'OneHotEncoder', 'RandomTreesEmbedding', 'CategoricalEncoder',
              'FeatureHasher', 'DummyClassifier', 'DummyRegressor',
              'TruncatedSVD', 'PolynomialFeatures',
              'GaussianRandomProjectionHash', 'HashingVectorizer',
@@ -753,36 +755,17 @@ class TempMemmap(object):
         _delete_folder(self.temp_folder)
 
 
-class _named_check(object):
-    """Wraps a check to show a useful description
-
-    Parameters
-    ----------
-    check : function
-        Must have ``__name__`` and ``__call__``
-    arg_text : str
-        A summary of arguments to the check
-    """
-    # Setting the description on the function itself can give incorrect results
-    # in failing tests
-    def __init__(self, check, arg_text):
-        self.check = check
-        self.description = ("{0[1]}.{0[3]}:{1.__name__}({2})".format(
-            inspect.stack()[1], check, arg_text))
-
-    def __call__(self, *args, **kwargs):
-        return self.check(*args, **kwargs)
-
 # Utils to test docstrings
 
 
 def _get_args(function, varargs=False):
     """Helper to get function arguments"""
-    # NOTE this works only in python3.5
-    if sys.version_info < (3, 5):
-        NotImplementedError("_get_args is not available for python < 3.5")
 
-    params = inspect.signature(function).parameters
+    try:
+        params = signature(function).parameters
+    except ValueError:
+        # Error on builtin C function
+        return []
     args = [key for key, param in params.items()
             if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
     if varargs:
@@ -844,6 +827,7 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     incorrect : list
         A list of string describing the incorrect results.
     """
+
     from numpydoc import docscrape
     incorrect = []
     ignore = [] if ignore is None else ignore

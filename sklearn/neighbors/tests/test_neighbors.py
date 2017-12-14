@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
 
@@ -658,6 +659,21 @@ def test_radius_neighbors_regressor(n_samples=40,
             y_pred = neigh.predict(X[:n_test_pts] + epsilon)
             assert_true(np.all(abs(y_pred - y_target) < radius / 2))
 
+    # test that nan is returned when no nearby observations
+    for weights in ['uniform', 'distance']:
+        neigh = neighbors.RadiusNeighborsRegressor(radius=radius,
+                                                   weights=weights,
+                                                   algorithm='auto')
+        neigh.fit(X, y)
+        X_test_nan = np.ones((1, n_features))*-1
+        empty_warning_msg = ("One or more samples have no neighbors "
+                             "within specified radius; predicting NaN.")
+        pred = assert_warns_message(UserWarning,
+                                    empty_warning_msg,
+                                    neigh.predict,
+                                    X_test_nan)
+        assert_true(np.all(np.isnan(pred)))
+
 
 def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
     # Test radius neighbors in multi-output regression (uniform weight)
@@ -1265,6 +1281,35 @@ def test_dtype_convert():
 
     result = classifier.fit(X, y).predict(X)
     assert_array_equal(result, y)
+
+
+def test_sparse_metric_callable():
+    def sparse_metric(x, y):  # Metric accepting sparse matrix input (only)
+        assert_true(issparse(x) and issparse(y))
+        return x.dot(y.T).A.item()
+
+    X = csr_matrix([  # Population matrix
+        [1, 1, 1, 1, 1],
+        [1, 0, 1, 0, 1],
+        [0, 0, 1, 0, 0]
+    ])
+
+    Y = csr_matrix([  # Query matrix
+        [1, 1, 0, 1, 1],
+        [1, 0, 0, 0, 1]
+    ])
+
+    nn = neighbors.NearestNeighbors(algorithm='brute', n_neighbors=2,
+                                    metric=sparse_metric).fit(X)
+    N = nn.kneighbors(Y, return_distance=False)
+
+    # GS indices of nearest neighbours in `X` for `sparse_metric`
+    gold_standard_nn = np.array([
+        [2, 1],
+        [2, 1]
+    ])
+
+    assert_array_equal(N, gold_standard_nn)
 
 
 # ignore conversion to boolean in pairwise_distances

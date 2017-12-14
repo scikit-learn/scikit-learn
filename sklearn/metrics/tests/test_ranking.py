@@ -601,6 +601,14 @@ def test_binary_clf_curve():
     assert_raise_message(ValueError, msg, precision_recall_curve,
                          y_true, y_pred)
 
+def test_binary_clf_curve():
+    rng = check_random_state(404)
+    y_true = rng.randint(0, 3, size=10)
+    y_pred = rng.rand(10)
+    msg = "multiclass format is not supported"
+    assert_raise_message(ValueError, msg, precision_recall_curve,
+                         y_true, y_pred)
+
 def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
     _test_precision_recall_curve(y_true, probas_pred)

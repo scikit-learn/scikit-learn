@@ -217,7 +217,6 @@ def average_precision_score(y_true, y_score, average="macro",
                                  y_true, y_score, average,
                                  sample_weight=sample_weight)
 
-
 def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                   sample_weight=None):
     """Compute Area Under the Curve (AUC) from prediction scores
