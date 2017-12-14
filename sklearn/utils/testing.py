@@ -19,6 +19,7 @@ import struct
 
 import scipy as sp
 import scipy.io
+from numpydoc import docscrape
 from functools import wraps
 from operator import itemgetter
 try:
@@ -824,7 +825,6 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     incorrect : list
         A list of string describing the incorrect results.
     """
-    from numpydoc import docscrape
     incorrect = []
     ignore = [] if ignore is None else ignore
 
@@ -882,3 +882,105 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
             if n1 != n2:
                 incorrect += [func_name + ' ' + n1 + ' != ' + n2]
     return incorrect
+
+
+def check_data(doc_list, type_dict, type_name, object_name, include, exclude):
+    for name, type_definition, description in doc_list:
+        # remove all whitespaces
+        type_definition = type_definition.replace(' ', '')
+        description = [element.replace(' ', '') for element in description]
+
+        if name in type_dict:
+            u_dict = type_dict[name]
+            if (u_dict['type_definition'] != type_definition or
+                    u_dict['description'] != description):
+                if exclude is None:
+                    if (include == '*' or name in include):
+                        raise AssertionError(type_name+" "+name+" of " +
+                                             object_name+" has inconsistency.")
+                else:
+                    if name not in exclude:
+                        raise AssertionError(type_name+" "+name+" of " +
+                                             object_name+" has inconsistency.")
+        else:
+            if include is None:
+                if name not in exclude:
+                    add_dict = {}
+                    add_dict['type_definition'] = type_definition
+                    add_dict['description'] = description
+                    type_dict[name] = add_dict
+            else:
+                if include == '*' or name in include:
+                    add_dict = {}
+                    add_dict['type_definition'] = type_definition
+                    add_dict['description'] = description
+                    type_dict[name] = add_dict
+
+    return type_dict
+
+
+def assert_consistent_docs(objects,
+                           include_params=None, exclude_params=None,
+                           include_attribs=None, exclude_attribs=None,
+                           include_returns=None, exclude_returns=None):
+    """
+    Checks consistency between the docstring of ``objects``.
+
+    Checks if types and descriptions of Parameters/Attributes/Returns are
+    identical across ``objects``. Raises AssertionError if found otherwise.
+
+    Parameters
+    ----------
+    objects : list
+        The list of objects that may be either ``NumpyDocString`` instances or
+        objects (classes, functions, descriptors) with docstrings that can be
+        parsed as numpydoc.
+
+    include_params : list, '*' or None (default)
+        List of Parameters to be included. '*' for including all parameters.
+
+    include_attribs : list, '*' or None (default)
+        List of Attributes to be included. '*' for including all attributes.
+
+    include_returns : list, '*' or None (default)
+        List of Returns to be included. '*' for including all returns.
+
+    exclude_params : list, '*' or None (default)
+        List of Parameters to be excluded. '*' for excluding all parameters.
+
+    exclude_attribs : list, '*' or None (default)
+        List of Attributes to be excluded. '*' for excluding all attributes.
+
+    exclude_returns : list, '*' or None (default)
+        List of Returns to be excluded. '*' for excluding all returns.
+
+    """
+    # Dictionary of all different Parameters/Attributes/Returns found
+    param_dict = {}
+    attrib_dict = {}
+    return_dict = {}
+
+    for u in objects:
+        if isinstance(u, docscrape.NumpyDocString):
+            doc = u
+            name = 'NumpyDocString'
+        elif (inspect.isdatadescriptor(u) or inspect.isfunction(u) or
+                inspect.isclass(u)):
+            doc = docscrape.NumpyDocString(inspect.getdoc(u))
+            name = u.__name__
+        else:
+            raise TypeError("Object passed not a Function, Class, "
+                            "Descriptor or NumpyDocString.")
+
+        if exclude_params != '*':  # check for inconsistency in Parameters
+            param_dict = check_data(doc['Parameters'], param_dict, 'Parameter',
+                                    name, include_params, exclude_params)
+
+        if exclude_attribs != '*':  # check for inconsistency in Attributes
+            attrib_dict = check_data(doc['Attributes'], attrib_dict,
+                                     'Attribute', name, include_attribs,
+                                     exclude_attribs)
+
+        if exclude_returns != '*':  # check for inconsistency in Returns
+            return_dict = check_data(doc['Returns'], return_dict, 'Return',
+                                     name, include_returns, exclude_returns)

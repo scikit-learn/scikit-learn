@@ -1,8 +1,10 @@
 import warnings
 import unittest
+import inspect
 import sys
 import numpy as np
 from scipy import sparse
+from numpydoc import docscrape
 
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import if_delegate_has_method
@@ -16,6 +18,7 @@ from sklearn.utils.testing import (
     assert_warns,
     assert_no_warnings,
     assert_equal,
+    assert_consistent_docs,
     set_random_state,
     assert_raise_message,
     ignore_warnings,
@@ -26,6 +29,9 @@ from sklearn.utils.testing import (
 from sklearn.utils.testing import SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.metrics import (f1_score, fbeta_score, mean_absolute_error,
+                             precision_score, precision_recall_fscore_support,
+                             recall_score)
 
 
 def test_assert_less():
@@ -491,3 +497,31 @@ def test_check_docstring_parameters():
          'type definition for param: "c " (type definition was "")',
          'sklearn.utils.tests.test_testing.f_check_param_definition There was '
          'no space between the param name and colon ("d:int")'])
+
+
+def test_assert_consistent_docs():
+    # Test function assert_consistent_docs
+    assert_consistent_docs([precision_recall_fscore_support, precision_score,
+                            recall_score, f1_score, fbeta_score],
+                           exclude_returns='*',
+                           exclude_params=['labels', 'average', 'beta'],
+                           exclude_attribs='*')
+
+    # Consider all parameters, attributes and returns
+    assert_raises(AssertionError, assert_consistent_docs,
+                  [precision_recall_fscore_support, precision_score,
+                   recall_score, f1_score, fbeta_score], include_returns='*',
+                  include_params='*', include_attribs='*')
+
+    # Consider a classification and a regression metric
+    assert_raises(AssertionError, assert_consistent_docs,
+                  [mean_absolute_error, precision_score], exclude_returns='*',
+                  include_params='*', exclude_attribs='*')
+
+    # Using NumpyDocString object
+    doc = docscrape.NumpyDocString(inspect.getdoc(precision_score))
+    assert_consistent_docs([precision_recall_fscore_support, recall_score,
+                            f1_score, fbeta_score, doc],
+                           exclude_returns='*',
+                           exclude_params=['labels', 'average', 'beta'],
+                           exclude_attribs='*')
