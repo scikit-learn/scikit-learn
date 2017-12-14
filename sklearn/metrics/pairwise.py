@@ -1220,7 +1220,6 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     --------
     paired_distances : Computes the distances between corresponding
                        elements of two arrays
-
     """
     if (metric not in _VALID_METRICS and
             not callable(metric) and metric != "precomputed"):
