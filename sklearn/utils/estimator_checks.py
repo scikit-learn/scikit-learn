@@ -1929,10 +1929,7 @@ def check_set_params(name, estimator_orig):
     # before and after set_params() with some fuzz
     # values
 
-    test_values = [-np.inf, np.inf, None,
-                   -100, 100, -0.5, 0.5, 0,
-                   "", "value",
-                   ('a', 'b'), {'key': 'value'}]
+    test_values = [-np.inf, np.inf, None]
 
     msg = ("get_params result does not match what was passed to set_params: "
            "called set_params of {0} with {1} "
