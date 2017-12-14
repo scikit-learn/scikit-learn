@@ -52,7 +52,7 @@ plot_cols = 2
 for i, distance_metric in enumerate(selected_distance_metrics):
 
     # Obtain labels for each point in mesh. Use last trained model.
-    model = KMedoids(n_clusters=n_digits, distance_metric=distance_metric)
+    model = KMedoids(n_clusters=n_digits, metric=distance_metric)
     model.fit(reduced_data)
     Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
 

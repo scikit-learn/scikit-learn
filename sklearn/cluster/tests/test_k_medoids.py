@@ -45,12 +45,11 @@ def test_kmedoids_input_validation_and_fit_check():
 
 
 def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
-    for distance_metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
-
-        if distance_metric == 'precomputed':
+    for metric in PAIRWISE_DISTANCE_FUNCTIONS.keys():
+        if metric == 'precomputed':
             continue
 
-        model = KMedoids(n_clusters=3, metric=distance_metric)
+        model = KMedoids(n_clusters=3, metric=metric)
         Xnaive = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
         model.fit(Xnaive)
@@ -118,7 +117,7 @@ def test_kmedoids_fit_predict_transform():
 
 def test_callable_distance_metric():
     def my_metric(a, b):
-        return len(a) - len(b)
+        return np.sqrt(np.sum(np.power(a - b, 2)))
 
     model = KMedoids(random_state=rng, metric=my_metric)
     labels1 = model.fit_predict(X)
