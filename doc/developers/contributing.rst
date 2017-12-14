@@ -1246,7 +1246,9 @@ is implemented using the ``_estimator_type`` attribute, which takes a string val
 It should be ``"classifier"`` for classifiers and ``"regressor"`` for
 regressors and ``"clusterer"`` for clustering methods, to work as expected.
 Inheriting from ``ClassifierMixin``, ``RegressorMixin`` or ``ClusterMixin``
-will set the attribute automatically.
+will set the attribute automatically.  When a meta-estimator needs to distinguish
+among estimator types, instead of checking ``_estimator_type`` directly, helpers
+like :func:`base.is_classifier` should be used.
 
 Working notes
 -------------

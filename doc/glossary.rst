@@ -133,16 +133,18 @@ General Concepts
 
     categorical feature
         A categorical or nominal :term:`feature` is one that has a finite set
-        of discrete values across the population of data.  These should be
-        represented as a column of integers. In representation, categorical
-        features are not distinguished from other integer features: ordinal or
-        count-valued.  :class:`~sklearn.preprocessing.CategoricalEncoder` helps
-        encoding string-valued categorical features.  Some estimators may
-        handle categorical features better when one-hot encoded.  See also
+        of discrete values across the population of data.  These are commonly
+        represented as columns of integers or strings. Strings will be rejected
+        by most scikit-learn estimators, and integers will be treated as
+        ordinal or count-valued. For the use with most estimators, categorical
+        variables should be one-hot encoded.
+        :class:`~sklearn.preprocessing.CategoricalEncoder` helps encoding
+        string-valued categorical features.  Some estimators may handle
+        categorical features better when one-hot encoded.  See also
         :ref:`preprocessing_categorical_features` and the
         `http://contrib.scikit-learn.org/categorical-encoding
-        <category_encoders>`_ package for tools related to encoding
-        categorical features.
+        <category_encoders>`_ package for tools related to encoding categorical
+        features.
 
     clone
         To copy an :term:`estimator instance` and create a new one with
@@ -166,20 +168,11 @@ General Concepts
         exceptional behaviours on the estimator using semantic :term:`estimator
         tags`.
 
-    cross validation splitter
-    CV splitter
-        A non-estimator family of classes used to split a dataset into a
-        sequence of train and test portions (see :ref:`cross_validation`),
-        by providing :term:`split` and :term:`get_n_splits` methods.
-        Note that unlike estimators, these do not have :term:`fit` methods
-        in which to perform parameter validation, etc., and do not provide
-        :term:`set_params` or :term:`get_params`.
-
     deprecation
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to to:
 
-        * change the semantics of the default value of a parameter; or
+        * change the the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
 
         We will ordinarily issue a warning when a deprecated element is used,
@@ -199,10 +192,16 @@ General Concepts
         <http://www.python.org/dev/peps/pep-0257/>`_, and follow `NumpyDoc
         conventions <numpydoc.readthedocs.io/en/latest/format.html>`_.
 
+    double underscore
     double underscore notation
         When specifying parameter names for nested estimators, ``__`` may be
-        used to separate between parent and child in some contexts.
-        See :term:`parameter`.
+        used to separate between parent and child in some contexts. The most
+        common use is when setting parameters through a meta-estimator with
+        :term:`set_params` and hence in specifying a search grid in
+        :ref:`parameter search <grid_search>`. See :term:`parameter`.
+        It is also used in :meth:`pipeline.Pipeline.fit` for passing
+        :term:`sample properties` to the ``fit`` methods of estimators in
+        the pipeline.
 
     dtype
     data type
@@ -356,8 +355,8 @@ General Concepts
     inductive
         Inductive (contrasted with :term:`transductive`) machine learning
         builds a model of some data that can then be applied to new instances.
-        Inductive estimators in Scikit-learn have :term:`predict` and/or
-        :term:`transform` methods.
+        Most estimators in Scikit-learn are inductive, having :term:`predict`
+        and/or :term:`transform` methods.
 
     joblib
         A Python library (http://joblib.readthedocs.io) used in Scikit-learn to
@@ -438,10 +437,12 @@ General Concepts
         When talking about the parameters of a :term:`meta-estimator`, we may
         also be including the parameters of the estimators wrapped by the
         meta-estimator.  Ordinarily, these nested parameters are denoted by
-        using a double-underscore (``__``) to separate between the
-        estimator-as-parameter and its parameter.  Thus
-        ``BaggingClassifier(base_estimator=DecisionTreeClassifier(max_depth=3))``
-        has a deep parameter ``base_estimator__max_depth`` with value ``3``.
+        using a :term:`double underscore` (``__``) to separate between the
+        estimator-as-parameter and its parameter.  Thus ``clf =
+        BaggingClassifier(base_estimator=DecisionTreeClassifier(max_depth=3))``
+        has a deep parameter ``base_estimator__max_depth`` with value ``3``,
+        which is accessible with ``clf.base_estimator.max_depth`` or
+        ``clf.get_params()['base_estimator__max_depth']``.
 
         The list of parameters and their current values can be retrieved from
         an :term:`estimator instance` using its :term:`get_params` method.
@@ -482,7 +483,8 @@ General Concepts
     samples
         We usually use this term as a noun to indicate a single feature vector.
         Elsewhere a sample is called an instance, data point, or observation.
-        ``n_samples`` indicates the number of samples in a dataset.
+        ``n_samples`` indicates the number of samples in a dataset, being the
+        number of rows in a data array ``X``.
 
     sample property
     sample properties
@@ -501,11 +503,6 @@ General Concepts
         broadly authorized by the core developers and the contrib community,
         but not maintained by the core developer team.
         See `http://scikit-learn-contrib.github.io`_
-
-    scorer
-        An object which evaluates an estimator on given test data, returning
-        a number. See :ref:`scoring_parameter`; see also :term:`evaluation
-        metric`.
 
     sparse matrix
         A representation of two-dimensional numeric data that is more memory
@@ -595,8 +592,9 @@ Class APIs and Estimator Types
         TODO
 
         Mention duck typing. Mention that duck typing of methods only works
-        after fitting. Mention lenient validation. ?Mention sample props.
-        Mention clone.
+        after fitting (see
+        :func:`utils.metaestimators.if_delegate_has_method`). Mention lenient
+        validation. ?Mention sample props.  Mention clone.
 
     outlier detector
         TODO
@@ -625,11 +623,27 @@ Class APIs and Estimator Types
 There are further APIs specifically related to a small family of estimators,
 such as:
 
+.. glossary:
+
+    cross validation splitter
+    CV splitter
+        A non-estimator family of classes used to split a dataset into a
+        sequence of train and test portions (see :ref:`cross_validation`),
+        by providing :term:`split` and :term:`get_n_splits` methods.
+        Note that unlike estimators, these do not have :term:`fit` methods
+        and do not provide :term:`set_params` or :term:`get_params`.
+        Parameter validation may be performed in ``__init__``.
+
+    scorer
+        A non-estimator callable object which evaluates an estimator on given
+        test data, returning a number. See :ref:`scoring_parameter`; see also
+        :term:`evaluation metric`.
+
+Further examples:
+
 * :class:`neighbors.DistanceMetric`
 * :class:`gaussian_process.kernels.Kernel`
 * ``tree.Criterion``
-* :term:`scorer`
-* :term:`CV splitter`
 
 .. _glossary_target_types:
 
@@ -646,11 +660,11 @@ Target Types
         Semantically, one class is often considered the "positive" class.
         Unless otherwise specified (e.g. using :term:`pos_label` in
         :term:`evaluation metrics`), we consider the class label with the
-        greater value as the positive class: of labels [0, 1], 1 is the
-        positive class; of [1, 2], 2 is the positive class; of ['no', 'yes'],
-        'yes' is the positive class; of ['no', 'YES'], 'no' is the positive
-        class.  This affects the output of :term:`decision_function`, for
-        instance.
+        greater value (numerically or lexicographically) as the positive class:
+        of labels [0, 1], 1 is the positive class; of [1, 2], 2 is the positive
+        class; of ['no', 'yes'], 'yes' is the positive class; of ['no', 'YES'],
+        'no' is the positive class.  This affects the output of
+        :term:`decision_function`, for instance.
 
         Note that a dataset sampled from a multiclass ``y`` or a continuous
         ``y`` may appear to be binary.
@@ -782,7 +796,9 @@ Methods
         Used especially for :term:`transductive` estimators, this fits the
         model and returns the predictions (similar to :term:`predict`) on the
         training data. In clusterers, these predictions are also stored in the
-        :term:`labels_` attribute.
+        :term:`labels_` attribute, and the output of ``.fit_predict(X)`` is
+        usually equivalent to ``.fit(X).predict(X)``. The parameters to
+        ``fit_predict`` are the same as those to ``fit``.
 
     ``fit_transform``
         TODO
@@ -792,6 +808,8 @@ Methods
         ``transform`` may not be available.
         ``fit_transform`` can be different, as in stacking.
         These rare cases should be clearly documented.
+        
+        The parameters to ``fit_predict`` are the same as those to ``fit``.
 
         Ordinarily should not be applied to the entirety of a dataset, only the
         training data, to avoid :term:`leakage`.
@@ -817,9 +835,10 @@ Methods
         due to indirection via contained estimators.
         
         Most estimators adopt the definition from :class:`base.BaseEstimator`,
-        the exception being estimators such as :class:`pipeline.Pipeline`. It
-        reimplements get_params to declare the estimators named in its
-        ``steps`` parameters as themselves being parameters.
+        which simply adopts the parameters defined for ``__init__``.
+        :class:`pipeline.Pipeline`, among others, reimplements ``get_params``
+        to declare the estimators named in its ``steps`` parameters as
+        themselves being parameters.
 
     ``partial_fit``
         Facilitates fitting an estimator in an online fashion.  Unlike ``fit``,
@@ -839,7 +858,9 @@ Methods
 
         Generally, estimator parameters should not be modified between calls
         to ``partial_fit``, although ``partial_fit`` should validate them
-        as well as the new mini-batch of data.
+        as well as the new mini-batch of data.  In contrast, ``warm_start``
+        is used to repeatedly fit the same estimator with the same data
+        but varying parameters.
 
         Like ``fit``, ``partial_fit`` should return the estimator object.
 
@@ -886,7 +907,10 @@ Methods
         means that the method will only appear after fitting.
 
     ``score``
-        TODO
+        A method on an estimator, usually a :term:`predictor`, which evaluates
+        its predictions on a given dataset, and returns a single numerical
+        score.  A greater return value should indicate better predictions;
+        accuracy is used for classifiers and R^2 for regressors by default.
 
     ``score_samples``
         TODO
@@ -906,18 +930,18 @@ Parameters
 ==========
 
 These common parameter names, specifically used in estimator construction
-(see concept :term:`parameter`) sometimes also appear as function and
-non-estimator parameters with similar semantics.
+(see concept :term:`parameter`) sometimes also appear as parameters of
+functions or non-estimator constructors.
 
 .. glossary::
 
     ``class_weight``
         Used to specify sample weights when fitting classifiers as a function
-        of the :term:`target` class.  Where the :term:`sample_weight`
-        :term:`sample property` is also supported and given, it is multiplied
-        by the ``class_weight`` contribution. Similarly, where ``class_weight``
-        is used in a :term:`multioutput` (including :term:`multilabel`) tasks,
-        the weights are multiplied across outputs (i.e. columns of ``y``).
+        of the :term:`target` class.  Where :term:`sample_weight` is also
+        supported and given, it is multiplied by the ``class_weight``
+        contribution. Similarly, where ``class_weight`` is used in a
+        :term:`multioutput` (including :term:`multilabel`) tasks, the weights
+        are multiplied across outputs (i.e. columns of ``y``).
 
         By default all samples have equal weight such that classes are
         effectively weighted by their their prevalence in the training data.
@@ -944,7 +968,8 @@ non-estimator parameters with similar semantics.
     ``cv``
         Determines a cross validation splitting strategy, as used in
         cross-validation based routines. ``cv`` is also available in estimators
-        such as :class:`multioutput.ClassifierChain` which use the predictions
+        such as :class:`multioutput.ClassifierChain` or
+        :class:`calibration.CalibratedClassifierCV` which use the predictions
         of one estimator as training data for another, to not overfit the
         training supervision.
 
@@ -973,9 +998,10 @@ non-estimator parameters with similar semantics.
         For estimators involving iterative optimization, this determines the
         maximum number of iterations to be performed in :term:`fit`.  If
         ``max_iter`` iterations are run without convergence, a
-        :class:`exceptions.ConvergenceWarning` should be raised.
-
-        TODO is this always epochs?
+        :class:`exceptions.ConvergenceWarning` should be raised.  Note that the
+        interpretation of "a single iteration" is inconsistent across
+        estimators: some, but not all, use it to mean a single epoch (i.e. a
+        pass over every sample in the data).
 
         FIXME perhaps we should have some common tests about the relationship
         between ConvergenceWarning and max_iter.
@@ -1134,7 +1160,7 @@ See concept :term:`attribute`.
         aligned with ``classes_``. For :term:`multi-output` classifiers,
         ``classes_`` should be a list of lists, with one class listing for
         each output.  For each output, the classes should be sorted
-        (numerically or using string comparison).
+        (numerically, or lexicographically for strings).
 
         ``classes_`` and the mapping to indices is often managed with
         :class:`preprocessing.LabelEncoder`.
