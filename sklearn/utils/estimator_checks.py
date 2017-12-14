@@ -1939,6 +1939,7 @@ def check_set_params(name, estimator_orig):
            "but get_params returns {2}")
     params = estimator.get_params()
     for param_name in params.keys():
+        default_value = params[param_name]
         for value in test_values:
             params[param_name] = value
             try:
@@ -1954,6 +1955,7 @@ def check_set_params(name, estimator_orig):
                 assert_equal(set(params.keys()), set(new_params.keys()), errmsg)
                 for k, v in new_params.items():
                     assert_is(params[k], v, errmsg)
+        params[param_name] = default_value
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
