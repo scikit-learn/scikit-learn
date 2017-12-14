@@ -186,6 +186,11 @@ Classifiers and regressors
   arrays are converted to C-ordered arrays in the dense case. :issue:`9991` by
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Fixed a bug in :class:`neighbors.NearestNeighbors` where fitting a
+  NearestNeighbors model fails when a) the distance metric used is a
+  callable and b) the input to the NearestNeighbors model is sparse.
+  :issue:`9199` by :user:`Thomas Kober <tttthomasssss>`.
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
