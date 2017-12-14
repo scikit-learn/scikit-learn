@@ -26,10 +26,12 @@ from sklearn.neighbors import LocalOutlierFactor
 np.random.seed(42)
 
 # Generate train data
-X = 0.3 * np.random.randn(100, 2)
+X_inliers = 0.3 * np.random.randn(100, 2)
+X_inliers = np.r_[X_inliers + 2, X_inliers - 2]
+
 # Generate some abnormal novel observations
 X_outliers = np.random.uniform(low=-4, high=4, size=(20, 2))
-X = np.r_[X + 2, X - 2, X_outliers]
+X = np.r_[X_inliers, X_outliers]
 
 # fit the model
 clf = LocalOutlierFactor(n_neighbors=20)
@@ -43,9 +45,9 @@ Z = Z.reshape(xx.shape)
 plt.title("Local Outlier Factor (LOF)")
 plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
 
-a = plt.scatter(X[:200, 0], X[:200, 1], c='white',
+a = plt.scatter(X_inliers[:, 0], X_inliers[:, 1], c='white',
                 edgecolor='k', s=20)
-b = plt.scatter(X[200:, 0], X[200:, 1], c='red',
+b = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c='red',
                 edgecolor='k', s=20)
 plt.axis('tight')
 plt.xlim((-5, 5))
