@@ -34,7 +34,6 @@ X = np.r_[X + 2, X - 2, X_outliers]
 # fit the model
 clf = LocalOutlierFactor(n_neighbors=20)
 y_pred = clf.fit_predict(X)
-y_pred_outliers = y_pred[200:]
 
 # plot the level sets of the decision function
 xx, yy = np.meshgrid(np.linspace(-5, 5, 50), np.linspace(-5, 5, 50))
