@@ -529,7 +529,7 @@ def make_pipeline(*steps, **kwargs):
 
     Parameters
     ----------
-    *steps : list of estimators,
+    *steps : list of estimators.
 
     memory : None, str or object with the joblib.Memory interface, optional
         Used to cache the fitted transformers of the pipeline. By default,

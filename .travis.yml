@@ -22,6 +22,7 @@ matrix:
   include:
     # This environment tests that scikit-learn can be built against
     # versions of numpy, scipy with ATLAS that comes with Ubuntu Trusty 14.04
+    # i.e. numpy 1.8.2 and scipy 0.13.3
     - env: DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.5"
            COVERAGE=true
       if: type != cron
@@ -30,11 +31,11 @@ matrix:
           packages:
             # these only required by the DISTRIB="ubuntu" builds:
             - python-scipy
-            - libatlas3gf-base
+            - libatlas3-base
             - libatlas-dev
-    # This environment tests the oldest supported anaconda env
-    - env: DISTRIB="conda" PYTHON_VERSION="2.7" INSTALL_MKL="false"
-           NUMPY_VERSION="1.8.2" SCIPY_VERSION="0.13.3" CYTHON_VERSION="0.23.5"
+    # Python 3.4 build
+    - env: DISTRIB="conda" PYTHON_VERSION="3.4" INSTALL_MKL="false"
+           NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.16.1" CYTHON_VERSION="0.25.2"
            COVERAGE=true
       if: type != cron
     # This environment tests the newest supported Anaconda release (5.0.0)

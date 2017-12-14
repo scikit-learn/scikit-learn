@@ -301,7 +301,7 @@ is given.
 Affinity Propagation can be interesting as it chooses the number of
 clusters based on the data provided. For this purpose, the two important
 parameters are the *preference*, which controls how many exemplars are
-used, and the *damping factor* which damps the responsibility and 
+used, and the *damping factor* which damps the responsibility and
 availability messages to avoid numerical oscillations when updating these
 messages.
 
@@ -352,7 +352,7 @@ to be the exemplar of sample :math:`i` is given by:
 
 To begin with, all values for :math:`r` and :math:`a` are set to zero,
 and the calculation of each iterates until convergence.
-As discussed above, in order to avoid numerical oscillations when updating the 
+As discussed above, in order to avoid numerical oscillations when updating the
 messages, the damping factor :math:`\lambda` is introduced to iteration process:
 
 .. math:: r_{t+1}(i, k) = \lambda\cdot r_{t}(i, k) + (1-\lambda)\cdot r_{t+1}(i, k)
@@ -481,7 +481,7 @@ function of the gradient of the image.
     :scale: 65
 
 Different label assignment strategies
----------------------------------------
+-------------------------------------
 
 Different label assignment strategies can be used, corresponding to the
 ``assign_labels`` parameter of :class:`SpectralClustering`.
@@ -498,6 +498,17 @@ geometrical shape.
 |face_kmeans|                          |face_discretize|
 =====================================  =====================================
 
+Spectral Clustering Graphs
+--------------------------
+
+Spectral Clustering can also be used to cluster graphs by their spectral
+embeddings.  In this case, the affinity matrix is the adjacency matrix of the
+graph, and SpectralClustering is initialized with `affinity='precomputed'`::
+
+    >>> from sklearn.cluster import SpectralClustering
+    >>> sc = SpectralClustering(3, affinity='precomputed', n_init=100,
+    ...                         assign_labels='discretize')
+    >>> sc.fit_predict(adjacency_matrix)  # doctest: +SKIP
 
 .. topic:: References:
 
@@ -734,8 +745,8 @@ set of non-core samples, which are samples that are neighbors of a core sample
 in the cluster but are not themselves core samples. Intuitively, these samples
 are on the fringes of a cluster.
 
-Any core sample is part of a cluster, by definition. Any sample that is not a 
-core sample, and is at least ``eps`` in distance from any core sample, is 
+Any core sample is part of a cluster, by definition. Any sample that is not a
+core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
 In the figure below, the color indicates cluster membership, with large circles
@@ -755,9 +766,9 @@ by black points below.
 
 .. topic:: Implementation
 
-    The DBSCAN algorithm is deterministic, always generating the same clusters 
+    The DBSCAN algorithm is deterministic, always generating the same clusters
     when given the same data in the same order.  However, the results can differ when
-    data is provided in a different order. First, even though the core samples 
+    data is provided in a different order. First, even though the core samples
     will always be assigned to the same clusters, the labels of those clusters
     will depend on the order in which those samples are encountered in the data.
     Second and more importantly, the clusters to which non-core samples are assigned
@@ -1139,7 +1150,7 @@ With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U`
 and :math:`V` is calculated by:
 
 .. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|}\sum_{j=1}^{|V|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
- 
+
 where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object
 picked at random falls into both classes :math:`U_i` and :math:`V_j`.
 
@@ -1582,3 +1593,59 @@ Drawbacks
  *  Caliński, T., & Harabasz, J. (1974). "A dendrite method for cluster
     analysis". Communications in Statistics-theory and Methods 3: 1-27.
     `doi:10.1080/03610926.2011.560741 <http://dx.doi.org/10.1080/03610926.2011.560741>`_.
+
+.. _contingency_matrix:
+
+Contingency Matrix
+------------------
+
+Contingency matrix (:func:`sklearn.metrics.cluster.contingency_matrix`)
+reports the intersection cardinality for every true/predicted cluster pair.
+The contingency matrix provides sufficient statistics for all clustering
+metrics where the samples are independent and identically distributed and
+one doesn't need to account for some instances not being clustered.
+
+Here is an example::
+
+   >>> from sklearn.metrics.cluster import contingency_matrix
+   >>> x = ["a", "a", "a", "b", "b", "b"]
+   >>> y = [0, 0, 1, 1, 2, 2]
+   >>> contingency_matrix(x, y)
+   array([[2, 1, 0],
+          [0, 1, 2]])
+
+The first row of output array indicates that there are three samples whose
+true cluster is "a". Of them, two are in predicted cluster 0, one is in 1,
+and none is in 2. And the second row indicates that there are three samples
+whose true cluster is "b". Of them, none is in predicted cluster 0, one is in
+1 and two are in 2.
+
+A :ref:`confusion matrix <confusion_matrix>` for classification is a square
+contingency matrix where the order of rows and columns correspond to a list
+of classes.
+
+
+Advantages
+~~~~~~~~~~
+
+- Allows to examine the spread of each true cluster across predicted
+  clusters and vice versa.
+
+- The contingency table calculated is typically utilized in the calculation
+  of a similarity statistic (like the others listed in this document) between
+  the two clusterings.
+
+Drawbacks
+~~~~~~~~~
+
+- Contingency matrix is easy to interpret for a small number of clusters, but
+  becomes very hard to interpret for a large number of clusters.
+
+- It doesn't give a single metric to use as an objective for clustering
+  optimisation.
+
+
+.. topic:: References
+
+ * `Wikipedia entry for contingency matrix
+   <https://en.wikipedia.org/wiki/Contingency_table>`_
