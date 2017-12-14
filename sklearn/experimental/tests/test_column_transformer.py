@@ -262,27 +262,28 @@ def test_column_transformer_invalid_columns():
 def test_make_column_transformer():
     scaler = StandardScaler()
     norm = Normalizer()
-    ct = make_column_transformer({scaler: 'first', norm: ['second']})
+    ct = make_column_transformer((scaler, 'first'), (norm, ['second']))
     names, transformers, columns = zip(*ct.transformers)
-    assert_equal(names, ("normalizer", "standardscaler"))
-    assert_equal(transformers, (norm, scaler))
-    assert_equal(columns, (['second'], 'first'))
+    assert_equal(names, ("standardscaler", "normalizer"))
+    assert_equal(transformers, (scaler, norm))
+    assert_equal(columns, ('first', ['second']))
 
 
 def test_make_column_transformer_kwargs():
     scaler = StandardScaler()
     norm = Normalizer()
-    ct = make_column_transformer({scaler: 'first', norm: ['second']}, n_jobs=3)
+    ct = make_column_transformer((scaler, 'first'), (norm, ['second']),
+                                 n_jobs=3)
     assert_equal(
         ct.transformers,
-        make_column_transformer({scaler: 'first',
-                                 norm: ['second']}).transformers)
+        make_column_transformer((scaler, 'first'),
+                                (norm, ['second'])).transformers)
     assert_equal(ct.n_jobs, 3)
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
         'Unknown keyword arguments: "transformer_weights"',
-        make_column_transformer, {scaler: 'first', norm: ['second']},
+        make_column_transformer, (scaler, 'first'), (norm, ['second']),
         transformer_weights={'pca': 10, 'Transf': 1}
     )
 

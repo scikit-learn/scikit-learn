@@ -485,18 +485,18 @@ def _get_column_indices(X, key):
 
 def _get_transformer_list(estimators):
     """
-    Construct (name, trans, column) tuples from dictionary
+    Construct (name, trans, column) tuples from list
 
     """
-    transformers = estimators.keys()
-    names = _name_estimators(transformers)
+    transformers = [trans[0] for trans in estimators]
+    columns = [trans[1] for trans in estimators]
+    names = [trans[0] for trans in _name_estimators(transformers)]
 
-    transformer_list = [(name, trans, estimators[trans])
-                        for (name, trans) in names]
-    return sorted(transformer_list, key=lambda x: x[0])
+    transformer_list = list(zip(names, transformers, columns))
+    return transformer_list
 
 
-def make_column_transformer(transformers, **kwargs):
+def make_column_transformer(*transformers, **kwargs):
     """Construct a ColumnTransformer from the given transformers.
 
     This is a shorthand for the ColumnTransformer constructor; it does not
@@ -506,31 +506,30 @@ def make_column_transformer(transformers, **kwargs):
 
     Parameters
     ----------
-    transformers : dict of estimators
-        Dictionary of transformer to column selection.
+    *transformers : tuples of transformers and column selections
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
     Returns
     -------
-    f : ColumnTransformer
+    ct : ColumnTransformer
 
     Examples
     --------
-    >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
+    >>> from sklearn.preprocessing import StandardScaler, CategoricalEncoder
     >>> from sklearn.experimental import make_column_transformer
     >>> make_column_transformer(
-    ...     {StandardScaler(): ['numerical_column'],
-    ...      OneHotEncoder(): ['categorical_column']})
+    ...     (StandardScaler(), ['numerical_column']),
+    ...     (CategoricalEncoder(), ['categorical_column']))
     ...     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     ColumnTransformer(n_jobs=1, passthrough=None, transformer_weights=None,
-         transformers=[('onehotencoder',
-                        OneHotEncoder(...),
-                        ['categorical_column']),
-                       ('standardscaler',
-                        StandardScaler(...),
-                        ['numerical_column'])])
+             transformers=[('standardscaler',
+                            StandardScaler(...),
+                            ['numerical_column']),
+                           ('categoricalencoder',
+                            CategoricalEncoder(...),
+                            ['categorical_column'])])
 
     """
     n_jobs = kwargs.pop('n_jobs', 1)
