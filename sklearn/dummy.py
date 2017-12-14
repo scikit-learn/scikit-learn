@@ -92,9 +92,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix}
+            Input vector, only requires a length
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
@@ -166,9 +165,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix}
+            Input vector, only requires a length
 
         Returns
         -------
@@ -243,9 +241,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix}
+            Input vector, only requires a length
 
         Returns
         -------
@@ -306,9 +303,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix}
+            Input vector, only requires a length
 
         Returns
         -------
@@ -378,9 +374,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix}
+            Input vector, only requires a length
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
@@ -458,9 +453,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, sparse matrix}
+            Input vector, only requires a length
 
         Returns
         -------
