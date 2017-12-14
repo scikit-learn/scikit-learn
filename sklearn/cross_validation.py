@@ -1687,7 +1687,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           "Details: \n%s" % (
                             error_score,
                             format_exception_only(type(e), e)[0]
-                          ), 
+                          ),
                           FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
