@@ -71,7 +71,7 @@ Another dimensionality reduction function in this package is the class :class:`m
 extends the ``tsne`` algorithm (available in ``manifold`` module) to work with multiview data.
 It based on the conversion of affinities of data to probabilities. The affinities
 in the original space are represented by Gaussian joint probabilities and the affinities
-in the embedded space are represented by Student’s t-distributions.
+in the embedded space are represented by Studentâ€™s t-distributions.
 
 .. figure:: ../auto_examples/multiview/images/sphx_glr_plot_mvtsne_001.png
    :target: ../auto_examples/multiview/plot_mvtsne.html
