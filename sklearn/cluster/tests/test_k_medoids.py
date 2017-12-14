@@ -4,12 +4,10 @@ from scipy.sparse import csc_matrix
 
 from sklearn.cluster import KMedoids, KMeans
 from sklearn.datasets import load_iris
-from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal, assert_raises, \
-    assert_raise_message
+from sklearn.utils.testing import assert_equal, assert_raise_message
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_allclose
 
@@ -27,19 +25,23 @@ def test_kmedoids_input_validation_and_fit_check():
                                      "integer. None was given",
                          KMedoids(n_clusters=None).fit, X)
 
+    assert_raise_message(ValueError, "max_iter should be a nonnegative "
+                                     "integer. 0 was given",
+                         KMedoids(n_clusters=1, max_iter=0).fit, X)
+
+    assert_raise_message(ValueError, "max_iter should be a nonnegative "
+                                     "integer. None was given",
+                         KMedoids(n_clusters=1, max_iter=None).fit, X)
+
     assert_raise_message(ValueError, "init needs to be one of the following: "
                                      "['random', 'heuristic']",
                          KMedoids(init=None).fit, X)
 
     # Trying to fit 3 samples to 8 clusters
     Xsmall = rng.rand(5, 2)
-    assert_raise_message(ValueError, "The number of medoids 8 must be less "
+    assert_raise_message(ValueError, "The number of medoids (8) must be less "
                                      "than the number of samples 5.",
                          KMedoids(n_clusters=8).fit, Xsmall)
-
-    # Test if NotFittedError is raised appropriately
-    assert_raises(NotFittedError, KMedoids().transform, X)
-    assert_raises(NotFittedError, KMedoids().predict, X)
 
 
 def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
@@ -48,7 +50,7 @@ def test_kmedoids_fit_naive_with_all_pairwise_distance_functions():
         if distance_metric == 'precomputed':
             continue
 
-        model = KMedoids(n_clusters=3, distance_metric=distance_metric)
+        model = KMedoids(n_clusters=3, metric=distance_metric)
         Xnaive = np.asarray([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
         model.fit(Xnaive)
@@ -76,7 +78,7 @@ def test_kmedoids_iris_with_all_pairwise_distance_functions():
                 continue
 
             model = KMedoids(n_clusters=3,
-                             distance_metric=distance_metric,
+                             metric=distance_metric,
                              init=init,
                              random_state=rng)
             model.fit(X_iris)
@@ -114,6 +116,16 @@ def test_kmedoids_fit_predict_transform():
     assert_array_equal(Xt1, Xt2)
 
 
+def test_callable_distance_metric():
+    def my_metric(a, b):
+        return len(a) - len(b)
+
+    model = KMedoids(random_state=rng, metric=my_metric)
+    labels1 = model.fit_predict(X)
+    assert_equal(len(labels1), 100)
+    assert_array_equal(labels1, model.labels_)
+
+
 def test_outlier_robustness():
     kmeans = KMeans(n_clusters=2, random_state=rng)
     kmedoids = KMedoids(n_clusters=2, random_state=rng)
@@ -124,7 +136,7 @@ def test_outlier_robustness():
     kmeans.fit(X)
     kmedoids.fit(X)
 
-    assert_array_equal(kmeans.labels_, [0, 0, 0, 0, 0, 0, 1])
+    assert_array_equal(kmeans.labels_, [1, 1, 1, 1, 1, 1, 0])
     assert_array_equal(kmedoids.labels_, [0, 0, 0, 1, 1, 1, 1])
 
 

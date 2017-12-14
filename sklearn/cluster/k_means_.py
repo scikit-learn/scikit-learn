@@ -819,6 +819,13 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         For large scale learning (say n_samples > 10k) MiniBatchKMeans is
         probably much faster than the default batch implementation.
 
+
+    KMedoids
+        KMedoids tries to minimize the sum of distances between each point and
+        the medoid of its cluster. Unlike in KMeans the medoid is a data point.
+        The use of a data point to represent each cluster's center allows the
+        use of any distance metric for clustering.
+
     Notes
     ------
     The k-means problem is solved using Lloyd's algorithm.

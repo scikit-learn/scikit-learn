@@ -290,7 +290,6 @@ small, as shown in the example and cited reference.
 K-Medoids
 =========
 
-
 :class:`KMedoids` is related to the :class:`KMeans` algorithm. While
 :class:`KMeans` tries to minimize the within cluster sum-of-squares,
 :class:`KMedoids` tries to minimize the sum of distances between each point and
