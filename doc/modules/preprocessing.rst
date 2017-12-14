@@ -336,9 +336,9 @@ lognormal distribution to a normal distribution::
          [-0.05...,  0.58..., -0.57...],
          [ 0.69..., -0.84...,  0.10...]])
 
-While the above example sets the `standardize` option to `False`, by default,
+While the above example sets the `standardize` option to `False`,
 :class:`PowerTransformer` will apply zero-mean, unit-variance normalization
-to the transformed output.
+to the transformed output by default.
 
 Below are examples of Box-Cox applied to various probability distributions.
 Note that when applied to certain distributions, Box-Cox achieves very
