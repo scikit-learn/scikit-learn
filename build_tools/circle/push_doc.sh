@@ -20,6 +20,9 @@ if [[ -z "$GENERATED_DOC_DIR" ]]; then
     exit 1
 fi
 
+# Absolute path needed because we use cd further down in this script
+GENERATED_DOC_DIR=$(readlink -f $GENERATED_DOC_DIR)
+
 if [ "$CIRCLE_BRANCH" = "master" ]
 then
 	dir=dev
