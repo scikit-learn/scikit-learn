@@ -13,7 +13,7 @@ import struct
 
 from sklearn.externals.six.moves import zip
 from sklearn.externals.joblib import hash, Memory
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, _get_args
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_equal
@@ -63,7 +63,7 @@ BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 MULTI_OUTPUT = ['CCA', 'DecisionTreeRegressor', 'ElasticNet',
                 'ExtraTreeRegressor', 'ExtraTreesRegressor', 'GaussianProcess',
-                'GaussianProcessRegressor',
+                'GaussianProcessRegressor', 'TransformedTargetRegressor',
                 'KNeighborsRegressor', 'KernelRidge', 'Lars', 'Lasso',
                 'LassoLars', 'LinearRegression', 'MultiTaskElasticNet',
                 'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',
@@ -258,9 +258,9 @@ def check_estimator(Estimator):
     if isinstance(Estimator, type):
         # got a class
         name = Estimator.__name__
-        check_parameters_default_constructible(name, Estimator)
-        check_no_fit_attributes_set_in_init(name, Estimator)
         estimator = Estimator()
+        check_parameters_default_constructible(name, Estimator)
+        check_no_attributes_set_in_init(name, estimator)
     else:
         # got an instance
         estimator = Estimator
@@ -729,6 +729,9 @@ def check_transformer_general(name, transformer):
                       random_state=0, n_features=2, cluster_std=0.1)
     X = StandardScaler().fit_transform(X)
     X -= X.min()
+    if name == 'PowerTransformer':
+        # Box-Cox requires positive, non-zero data
+        X += 1
     _check_transformer(name, transformer, X, y)
     _check_transformer(name, transformer, X.tolist(), y.tolist())
 
@@ -850,6 +853,9 @@ def check_pipeline_consistency(name, estimator_orig):
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     X -= X.min()
+    if name == 'PowerTransformer':
+        # Box-Cox requires positive, non-zero data
+        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -911,6 +917,9 @@ def check_estimators_dtypes(name, estimator_orig):
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
     for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
+        if name == 'PowerTransformer':
+            # Box-Cox requires positive, non-zero data
+            X_train = np.abs(X_train) + 1
         estimator = clone(estimator_orig)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
@@ -1025,6 +1034,9 @@ def check_estimators_pickle(name, estimator_orig):
 
     # some estimators can't do features less than 0
     X -= X.min()
+    if name == 'PowerTransformer':
+        # Box-Cox requires positive, non-zero data
+        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
 
     estimator = clone(estimator_orig)
@@ -1301,6 +1313,9 @@ def check_estimators_fit_returns_self(name, estimator_orig):
     X, y = make_blobs(random_state=0, n_samples=9, n_features=4)
     # some want non-negative input
     X -= X.min()
+    if name == 'PowerTransformer':
+        # Box-Cox requires positive, non-zero data
+        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig)
 
     estimator = clone(estimator_orig)
@@ -1609,6 +1624,9 @@ def check_estimators_overwrite_params(name, estimator_orig):
     X, y = make_blobs(random_state=0, n_samples=9)
     # some want non-negative input
     X -= X.min()
+    if name == 'PowerTransformer':
+        # Box-Cox requires positive, non-zero data
+        X += 1
     X = pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
     estimator = clone(estimator_orig)
     y = multioutput_estimator_convert_y_2d(estimator, y)
@@ -1640,22 +1658,32 @@ def check_estimators_overwrite_params(name, estimator_orig):
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-def check_no_fit_attributes_set_in_init(name, Estimator):
-    """Check that Estimator.__init__ doesn't set trailing-_ attributes."""
-    # this check works on classes, not instances
-    estimator = Estimator()
-    for attr in dir(estimator):
-        if attr.endswith("_") and not attr.startswith("__"):
-            # This check is for properties, they can be listed in dir
-            # while at the same time have hasattr return False as long
-            # as the property getter raises an AttributeError
-            assert_false(
-                hasattr(estimator, attr),
-                "By convention, attributes ending with '_' are "
-                'estimated from data in scikit-learn. Consequently they '
-                'should not be initialized in the constructor of an '
-                'estimator but in the fit method. Attribute {!r} '
-                'was found in estimator {}'.format(attr, name))
+def check_no_attributes_set_in_init(name, estimator):
+    """Check setting during init. """
+
+    if hasattr(type(estimator).__init__, "deprecated_original"):
+        return
+
+    init_params = _get_args(type(estimator).__init__)
+    parents_init_params = [param for params_parent in
+                           (_get_args(parent) for parent in
+                            type(estimator).__mro__)
+                           for param in params_parent]
+
+    # Test for no setting apart from parameters during init
+    invalid_attr = (set(vars(estimator)) - set(init_params)
+                    - set(parents_init_params))
+    assert_false(invalid_attr,
+                 "Estimator %s should not set any attribute apart"
+                 " from parameters during init. Found attributes %s."
+                 % (name, sorted(invalid_attr)))
+    # Ensure that each parameter is set in init
+    invalid_attr = (set(init_params) - set(vars(estimator))
+                    - set(["self"]))
+    assert_false(invalid_attr,
+                 "Estimator %s should store all parameters"
+                 " as an attribute during init. Did not find "
+                 "attributes %s." % (name, sorted(invalid_attr)))
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))

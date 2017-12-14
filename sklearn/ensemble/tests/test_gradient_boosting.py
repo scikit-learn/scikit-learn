@@ -16,6 +16,7 @@ from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
+from sklearn.ensemble._gradient_boosting import predict_stages
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
@@ -82,7 +83,6 @@ def test_classification_toy():
 
 def test_classifier_parameter_checks():
     # Check input parameter validation for GradientBoostingClassifier.
-
     assert_raises(ValueError,
                   GradientBoostingClassifier(n_estimators=0).fit, X, y)
     assert_raises(ValueError,
@@ -140,6 +140,13 @@ def test_classifier_parameter_checks():
                       loss='deviance').fit(X, y),
                   X, [0, 0, 0, 0])
 
+    allowed_presort = ('auto', True, False)
+    assert_raise_message(ValueError,
+                         "'presort' should be in {}. "
+                         "Got 'invalid' instead.".format(allowed_presort),
+                         GradientBoostingClassifier(presort='invalid')
+                         .fit, X, y)
+
 
 def test_regressor_parameter_checks():
     # Check input parameter validation for GradientBoostingRegressor
@@ -157,6 +164,12 @@ def test_regressor_parameter_checks():
     assert_raise_message(ValueError, "n_iter_no_change should either be None"
                          " or an integer. 'invalid' was passed",
                          GradientBoostingRegressor(n_iter_no_change='invalid')
+                         .fit, X, y)
+    allowed_presort = ('auto', True, False)
+    assert_raise_message(ValueError,
+                         "'presort' should be in {}. "
+                         "Got 'invalid' instead.".format(allowed_presort),
+                         GradientBoostingRegressor(presort='invalid')
                          .fit, X, y)
 
 
@@ -377,6 +390,25 @@ def test_check_inputs_predict():
 
     x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
     assert_raises(ValueError, clf.predict, x)
+
+
+def test_check_inputs_predict_stages():
+    # check that predict_stages through an error if the type of X is not
+    # supported
+    x, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    x_sparse_csc = csc_matrix(x)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(x, y)
+    score = np.zeros((y.shape)).reshape(-1, 1)
+    assert_raise_message(ValueError,
+                         "When X is a sparse matrix, a CSR format is expected",
+                         predict_stages, clf.estimators_, x_sparse_csc,
+                         clf.learning_rate, score)
+    x_fortran = np.asfortranarray(x)
+    assert_raise_message(ValueError,
+                         "X should be C-ordered np.ndarray",
+                         predict_stages, clf.estimators_, x_fortran,
+                         clf.learning_rate, score)
 
 
 def test_check_max_features():
@@ -847,6 +879,56 @@ def test_warm_start_oob():
 
         assert_array_almost_equal(est_ws.oob_improvement_[:100],
                                   est.oob_improvement_[:100])
+
+
+def test_warm_start_sparse():
+    # Test that all sparse matrix types are supported
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    sparse_matrix_type = [csr_matrix, csc_matrix, coo_matrix]
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est_dense = Cls(n_estimators=100, max_depth=1, subsample=0.5,
+                        random_state=1, warm_start=True)
+        est_dense.fit(X, y)
+        est_dense.predict(X)
+        est_dense.set_params(n_estimators=200)
+        est_dense.fit(X, y)
+        y_pred_dense = est_dense.predict(X)
+
+        for sparse_constructor in sparse_matrix_type:
+            X_sparse = sparse_constructor(X)
+
+            est_sparse = Cls(n_estimators=100, max_depth=1, subsample=0.5,
+                             random_state=1, warm_start=True)
+            est_sparse.fit(X_sparse, y)
+            est_sparse.predict(X)
+            est_sparse.set_params(n_estimators=200)
+            est_sparse.fit(X_sparse, y)
+            y_pred_sparse = est_sparse.predict(X)
+
+            assert_array_almost_equal(est_dense.oob_improvement_[:100],
+                                      est_sparse.oob_improvement_[:100])
+            assert_array_almost_equal(y_pred_dense, y_pred_sparse)
+
+
+def test_warm_start_fortran():
+    # Test that feeding a X in Fortran-ordered is giving the same results as
+    # in C-ordered
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est_c = Cls(n_estimators=1, random_state=1, warm_start=True)
+        est_fortran = Cls(n_estimators=1, random_state=1, warm_start=True)
+
+        est_c.fit(X, y)
+        est_c.set_params(n_estimators=11)
+        est_c.fit(X, y)
+
+        X_fortran = np.asfortranarray(X)
+        est_fortran.fit(X_fortran, y)
+        est_fortran.set_params(n_estimators=11)
+        est_fortran.fit(X_fortran, y)
+
+        assert_array_almost_equal(est_c.predict(X),
+                                  est_fortran.predict(X))
 
 
 def early_stopping_monitor(i, est, locals):

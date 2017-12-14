@@ -231,7 +231,7 @@ rules before submitting a pull request:
       automatically be closed by GitHub. If your pull request is simply
       related to some other issues/PRs, create a link to them without using
       the keywords (e.g., ``See also #1234``).
-    
+
     * All public methods should have informative docstrings with sample
       usage presented as doctests when appropriate.
 
@@ -428,19 +428,37 @@ Documentation
 
 We are glad to accept any sort of documentation: function docstrings,
 reStructuredText documents (like this one), tutorials, etc. reStructuredText
-documents live in the source code repository under the doc/ directory.
-
+documents live in the source code repository under the ``doc/`` directory.
 You can edit the documentation using any text editor, and then generate the
-HTML output by typing ``make html`` from the doc/ directory. Alternatively,
-``make html-noplot`` can be used to quickly generate the documentation without
-the example gallery. The resulting HTML files will be placed in _build/html/
-and are viewable in a web browser. See the README file in the doc/ directory
-for more information.
+HTML output by building the documentation website.
 
-For building the documentation, you will need `sphinx
-<http://www.sphinx-doc.org/en/stable/>`_,
-`matplotlib <http://matplotlib.org>`_ and
-`pillow <http://pillow.readthedocs.io/en/latest/>`_.
+**Building the documentation**
+
+Building the documentation requires the ``sphinx``, ``sphinx-gallery``,
+``numpydoc``, ``matplotlib``, and ``Pillow`` packages::
+
+    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow
+
+It also requires having the version of scikit-learn installed that corresponds
+to the documentation, e.g.::
+
+    pip install --editable ..
+
+To generate the full web site, including the example gallery (this might take a
+while)::
+
+    make html
+
+Or, if you'd rather quickly generate the documentation without the example
+gallery::
+
+    make html-noplot
+
+That should create all the documentation in the ``_build/html/stable`` directory.
+
+To build the PDF manual, run::
+
+    make latexpdf
 
 **When you are writing documentation**, it is important to keep a good
 compromise between mathematical and algorithmic details, and give

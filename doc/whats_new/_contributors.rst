@@ -151,3 +151,5 @@
 .. _Arthur Mensch: https://amensch.fr
 
 .. _Joris Van den Bossche: https://github.com/jorisvandenbossche
+
+.. _Roman Yurchak: https://github.com/rth
