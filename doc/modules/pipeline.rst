@@ -276,4 +276,4 @@ and ignored by setting to ``None``::
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_feature_stacker.py`
+ * :ref:`sphx_glr_auto_examples_plot_feature_stacker.py`

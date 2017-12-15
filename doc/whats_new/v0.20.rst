@@ -71,6 +71,7 @@ Preprocessing
   :issue:`10210` by :user:`Eric Chang <ericchang00>` and
   :user:`Maniteja Nandana <maniteja123>`.
 
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding

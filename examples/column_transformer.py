@@ -1,7 +1,7 @@
 """
-=============================================
-Feature Union with Heterogeneous Data Sources
-=============================================
+==================================================
+Column Transformer with Heterogeneous Data Sources
+==================================================
 
 Datasets can often contain components of that require different feature
 extraction and processing pipelines.  This scenario might occur when:

@@ -119,11 +119,12 @@ Processing your data before passing it to scikit-learn might be problematic for
 one of the following reasons:
 
 1. Incorporating statistics from test data into the preprocessors makes
-   cross-validation scores unreliable (known as *data leakage*).
+   cross-validation scores unreliable (known as *data leakage*),
+   for example in the case of scalers or imputing missing values.
 2. You may want to include the parameters of the preprocessors in a
    :ref:`parameter search <grid_search>`.
 
-:class:`~sklearn.experimental.ColumnTransformer` helps performing different
+The :class:`~sklearn.experimental.ColumnTransformer` helps performing different
 transformations for different columns of the data, within a
 :class:`~sklearn.pipeline.Pipeline` that is safe from data leakage and that can
 be parametrized. :class:`~sklearn.experimental.ColumnTransformer` works on

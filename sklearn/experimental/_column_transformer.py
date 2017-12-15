@@ -38,7 +38,7 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     to be transformed separately and the results combined into a single
     feature space.
     This is useful for heterogeneous or columnar data, to combine several
-    feature extraction mechanisms into a single transformer.
+    feature extraction mechanisms or transformations into a single transformer.
 
     Read more in the :ref:`User Guide <column_transformer>`.
 
@@ -64,11 +64,14 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             otherwise a 2d array will be passed to the transformer.
 
     passthrough : string or int, array-like of string or int, slice or \
-boolean mask array
-        Specifies the columns that should be passed through untransformed.
-        This selection of columns is concatenated with the output of the
-        transformers. See explanation of `column` above for details on the
-        format.
+boolean mask array, optional
+        By default only the specified columns are transformed and combined
+        in the output. With this keyword additional columns can be specified
+        that should be passed through untransformed. This selection of columns
+        is concatenated with the output of the transformers. See explanation
+        of `column` above for details on the format.
+        ``passthrough='remainder'`` can be used to automatically select all
+        columns that were not specified in `transformers`.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
@@ -94,7 +97,8 @@ boolean mask array
     The order of the columns in the transformed feature matrix follows the
     order of how the columns are specified in the `transformers` list.
     Columns of the original feature matrix that are not specified are
-    dropped from the resulting transformed feature matrix.
+    dropped from the resulting transformed feature matrix, unless specified
+    in the `passthrough` keyword.
 
     Examples
     --------
@@ -176,6 +180,7 @@ boolean mask array
         return ((name, trans, _get_column(X, column) if X is not None else X,
                  get_weight(name))
                 for name, trans, column in transformers
+                # skip transformer when it is None, unless skip_none=False
                 if not skip_none or trans is not None)
 
     def _validate_transformers(self):
@@ -195,10 +200,11 @@ boolean mask array
                                 (t, type(t)))
 
     def _validate_passthrough(self, X):
-
+        """Generate list of passthrough columns for 'remainder' case.
+        """
         n_columns = X.shape[1]
 
-        if self.passthrough is True:
+        if self.passthrough == 'remainder':
             cols = []
             for _, _, columns in self.transformers:
                 cols.extend(_get_column_indices(X, columns))
@@ -312,6 +318,7 @@ boolean mask array
             sparse matrices.
 
         """
+        self._validate_transformers()
         self._validate_passthrough(X)
 
         result = self._fit_transform(X, y, _fit_transform_one)
@@ -338,8 +345,7 @@ boolean mask array
         Parameters
         ----------
         X : array-like or DataFrame of shape [n_samples, n_features]
-            Input data, of which specified subsets are used to fit the
-            transformers.
+            The data to be transformed by subset.
 
         Returns
         -------
