@@ -954,6 +954,20 @@ def assert_consistent_docs(objects,
     exclude_returns : list, '*' or None (default)
         List of Returns to be excluded. '*' for excluding all returns.
 
+    Examples
+    --------
+    >>> from sklearn.metrics import (mean_absolute_error, mean_squared_error,
+    ... median_absolute_error)
+    >>> from sklearn.utils.testing import assert_consistent_docs
+    >>> assert_consistent_docs([mean_absolute_error, mean_squared_error],
+    ... include_params=['y_true', 'y_pred', 'sample_weight'],
+    ... exclude_attribs='*', exclude_returns='*')
+    >>> assert_consistent_docs([median_absolute_error, mean_squared_error],
+    ... include_params='*', exclude_attribs='*', exclude_returns='*')
+    Traceback (most recent call last):
+        ...
+    AssertionError: Parameter y_true of mean_squared_error has inconsistency.
+
     """
     from numpydoc import docscrape
 
