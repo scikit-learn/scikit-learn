@@ -207,20 +207,40 @@ div.navbar div.nav-icon {
 }
 
 .search_form {
-    margin-top: -23px;
-    /*The min-height is added here, to prevent the element from shrinking
-    too much, while the scripts are still loading the search-bar.
-    Without it, layout glitches occur, as the element keeps dynamically
-    changing its size while its loading-contents adjusts into position.*/
+    margin-top: -40px;
     min-height: 42px;
 }
 
 #cse .gsc-clear-button {
     width: 50px;
+    position: relative;
+    top: -2px;
 }
 
 .gsc-branding {
-    display: none;
+    display: none !important;
+}
+
+form.gsc-search-box {
+    padding: 0 !important;
+}
+
+input.gsc-search-button {
+    position: relative;
+    top: -4px;
+    border-radius: 5px !important;
+    border-color: #FFFFFF !important;
+    background-color: #ff9c34 !important;
+}
+
+a.gs-title, a.gs-title > b{
+    color: blue !important;
+}
+
+.gsc-results .gsc-cursor-box .gsc-cursor-current-page {
+    border-color: white !important;
+    background-color: #ff9c34 !important;
+    color: white !important;
 }
 
 /*---------------------------------------------------------------*/
@@ -539,7 +559,7 @@ div.body p, div.body dd, div.body li {
     line-height: 1.5em;
 }
 
-div.admonition p.admonition-title + p {
+div.admonition p.admonition-title + p, div.deprecated p {
     display: inline;
 }
 
@@ -595,7 +615,7 @@ div.topic {
     -moz-border-radius: 4px;
 }
 
-div.admonition {
+div.admonition, div.deprecated {
     margin-bottom: 10px;
     margin-top: 10px;
     padding: 7px;
@@ -802,10 +822,7 @@ div.sprint-wrapper:hover {
 
 /*-----------------------The Examples Gallery-------------------------------*/
 
-div.sphx-glr-download code.download {
-  display: inline-block;
-  white-space: normal;
-}
+div.sphx-glr-footer .container  {width: auto;}
 
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img.align-center {

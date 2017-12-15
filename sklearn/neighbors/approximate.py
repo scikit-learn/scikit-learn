@@ -85,7 +85,7 @@ class ProjectionToHashMixin(object):
         self.fit(X)
         return self.transform(X)
 
-    def transform(self, X, y=None):
+    def transform(self, X):
         return self._to_hash(super(ProjectionToHashMixin, self).transform(X))
 
 
@@ -93,7 +93,7 @@ class GaussianRandomProjectionHash(ProjectionToHashMixin,
                                    GaussianRandomProjection):
     """Use GaussianRandomProjection to produce a cosine LSH fingerprint"""
     def __init__(self,
-                 n_components=8,
+                 n_components=32,
                  random_state=None):
         super(GaussianRandomProjectionHash, self).__init__(
             n_components=n_components,
@@ -122,19 +122,17 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
     points. Its value does not depend on the norm of the vector points but
     only on their relative angles.
 
-    Read more in the :ref:`User Guide <approximate_nearest_neighbors>`.
-
     Parameters
     ----------
 
     n_estimators : int (default = 10)
         Number of trees in the LSH Forest.
 
-    min_hash_match : int (default = 4)
-        lowest hash length to be searched when candidate selection is
-        performed for nearest neighbors.
+    radius : float, optinal (default = 1.0)
+        Radius from the data point to its neighbors. This is the parameter
+        space to use by default for the :meth:`radius_neighbors` queries.
 
-    n_candidates : int (default = 10)
+    n_candidates : int (default = 50)
         Minimum number of candidates evaluated per estimator, assuming enough
         items meet the `min_hash_match` constraint.
 
@@ -142,9 +140,9 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         Number of neighbors to be returned from query function when
         it is not provided to the :meth:`kneighbors` method.
 
-    radius : float, optinal (default = 1.0)
-        Radius from the data point to its neighbors. This is the parameter
-        space to use by default for the :meth`radius_neighbors` queries.
+    min_hash_match : int (default = 4)
+        lowest hash length to be searched when candidate selection is
+        performed for nearest neighbors.
 
     radius_cutoff_ratio : float, optional (default = 0.9)
         A value ranges from 0 to 1. Radius neighbors will be searched until
@@ -216,6 +214,10 @@ class LSHForest(BaseEstimator, KNeighborsMixin, RadiusNeighborsMixin):
         self.n_neighbors = n_neighbors
         self.min_hash_match = min_hash_match
         self.radius_cutoff_ratio = radius_cutoff_ratio
+
+        warnings.warn("LSHForest has poor performance and has been deprecated "
+                      "in 0.19. It will be removed in version 0.21.",
+                      DeprecationWarning)
 
     def _compute_distances(self, query, candidates):
         """Computes the cosine distance.

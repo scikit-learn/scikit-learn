@@ -181,7 +181,7 @@ almost always depends on the data.
 The next figure compares the results obtained for the different type of the
 weight concentration prior (parameter ``weight_concentration_prior_type``)
 for different values of ``weight_concentration_prior``.
-Here, we can see the the value of the ``weight_concentration_prior`` parameter
+Here, we can see the value of the ``weight_concentration_prior`` parameter
 has a strong impact on the effective number of active components obtained. We
 can also notice that large values for the concentration weight prior lead to
 more uniform weights when the type of prior is 'dirichlet_distribution' while
@@ -264,7 +264,7 @@ Pros
 :Less sensitivity to the number of parameters: unlike finite models, which will
    almost always use all components as much as they can, and hence will produce
    wildly different solutions for different numbers of components, the
-   variantional inference with a Dirichlet process prior
+   variational inference with a Dirichlet process prior
    (``weight_concentration_prior_type='dirichlet_process'``) won't change much
    with changes to the parameters, leading to more stability and less tuning.
 
@@ -303,7 +303,7 @@ with a finite Gaussian mixture model.
 An important question is how can the Dirichlet process use an infinite,
 unbounded number of clusters and still be consistent. While a full explanation
 doesn't fit this manual, one can think of its `stick breaking process
-<https://en.wikipedia.org/wiki/Dirichlet_process#The_stick-breaking_process>`
+<https://en.wikipedia.org/wiki/Dirichlet_process#The_stick-breaking_process>`_
 analogy to help understanding it. The stick breaking process is a generative
 story for the Dirichlet process. We start with a unit-length stick and in each
 step we break off a portion of the remaining stick. Each time, we associate the

@@ -8,9 +8,11 @@ import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_warns_message
@@ -21,11 +23,12 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
                                     _passthrough_scorer)
+from sklearn.metrics import accuracy_score
+from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
-from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
@@ -38,16 +41,18 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import joblib
 
 
-REGRESSION_SCORERS = ['r2', 'neg_mean_absolute_error',
-                      'neg_mean_squared_error', 'neg_mean_squared_log_error',
+REGRESSION_SCORERS = ['explained_variance', 'r2',
+                      'neg_mean_absolute_error', 'neg_mean_squared_error',
+                      'neg_mean_squared_log_error',
                       'neg_median_absolute_error', 'mean_absolute_error',
                       'mean_squared_error', 'median_absolute_error']
 
-CLF_SCORERS = ['accuracy', 'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
+CLF_SCORERS = ['accuracy', 'balanced_accuracy',
+               'f1', 'f1_weighted', 'f1_macro', 'f1_micro',
                'roc_auc', 'average_precision', 'precision',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
-               'neg_log_loss', 'log_loss']
+               'neg_log_loss', 'log_loss', 'brier_score_loss']
 
 # All supervised cluster scorers (They behave like classification metric)
 CLUSTER_SCORERS = ["adjusted_rand_score",
@@ -64,7 +69,7 @@ MULTILABEL_ONLY_SCORERS = ['precision_samples', 'recall_samples', 'f1_samples']
 
 def _make_estimators(X_train, y_train, y_ml_train):
     # Make estimators that make sense to test various scoring methods
-    sensible_regr = DummyRegressor(strategy='median')
+    sensible_regr = DecisionTreeRegressor(random_state=0)
     sensible_regr.fit(X_train, y_train)
     sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
@@ -104,18 +109,18 @@ def teardown_module():
 
 
 class EstimatorWithoutFit(object):
-    """Dummy estimator to test check_scoring"""
+    """Dummy estimator to test scoring validators"""
     pass
 
 
 class EstimatorWithFit(BaseEstimator):
-    """Dummy estimator to test check_scoring"""
+    """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
         return self
 
 
 class EstimatorWithFitAndScore(object):
-    """Dummy estimator to test check_scoring"""
+    """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
         return self
 
@@ -124,7 +129,7 @@ class EstimatorWithFitAndScore(object):
 
 
 class EstimatorWithFitAndPredict(object):
-    """Dummy estimator to test check_scoring"""
+    """Dummy estimator to test scoring validators"""
     def fit(self, X, y):
         self.y = y
         return self
@@ -145,16 +150,16 @@ def test_all_scorers_repr():
         repr(scorer)
 
 
-def test_check_scoring():
-    # Test all branches of check_scoring
+def check_scoring_validator_for_single_metric_usecases(scoring_validator):
+    # Test all branches of single metric usecases
     estimator = EstimatorWithoutFit()
     pattern = (r"estimator should be an estimator implementing 'fit' method,"
                r" .* was passed")
-    assert_raises_regexp(TypeError, pattern, check_scoring, estimator)
+    assert_raises_regexp(TypeError, pattern, scoring_validator, estimator)
 
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
-    scorer = check_scoring(estimator)
+    scorer = scoring_validator(estimator)
     assert_true(scorer is _passthrough_scorer)
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
@@ -162,18 +167,85 @@ def test_check_scoring():
     estimator.fit([[1]], [1])
     pattern = (r"If no scoring is specified, the estimator passed should have"
                r" a 'score' method\. The estimator .* does not\.")
-    assert_raises_regexp(TypeError, pattern, check_scoring, estimator)
+    assert_raises_regexp(TypeError, pattern, scoring_validator, estimator)
 
-    scorer = check_scoring(estimator, "accuracy")
+    scorer = scoring_validator(estimator, "accuracy")
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFit()
-    scorer = check_scoring(estimator, "accuracy")
+    scorer = scoring_validator(estimator, "accuracy")
     assert_true(isinstance(scorer, _PredictScorer))
 
-    estimator = EstimatorWithFit()
-    scorer = check_scoring(estimator, allow_none=True)
-    assert_true(scorer is None)
+    # Test the allow_none parameter for check_scoring alone
+    if scoring_validator is check_scoring:
+        estimator = EstimatorWithFit()
+        scorer = scoring_validator(estimator, allow_none=True)
+        assert_true(scorer is None)
+
+
+def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
+    # This wraps the _check_multimetric_scoring to take in single metric
+    # scoring parameter so we can run the tests that we will run for
+    # check_scoring, for check_multimetric_scoring too for single-metric
+    # usecases
+    scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
+    # For all single metric use cases, it should register as not multimetric
+    assert_false(is_multi)
+    if args[0] is not None:
+        assert_true(scorers is not None)
+        names, scorers = zip(*scorers.items())
+        assert_equal(len(scorers), 1)
+        assert_equal(names[0], 'score')
+        scorers = scorers[0]
+    return scorers
+
+
+def test_check_scoring_and_check_multimetric_scoring():
+    check_scoring_validator_for_single_metric_usecases(check_scoring)
+    # To make sure the check_scoring is correctly applied to the constituent
+    # scorers
+    check_scoring_validator_for_single_metric_usecases(
+        check_multimetric_scoring_single_metric_wrapper)
+
+    # For multiple metric use cases
+    # Make sure it works for the valid cases
+    for scoring in (('accuracy',), ['precision'],
+                    {'acc': 'accuracy', 'precision': 'precision'},
+                    ('accuracy', 'precision'), ['precision', 'accuracy'],
+                    {'accuracy': make_scorer(accuracy_score),
+                     'precision': make_scorer(precision_score)}):
+        estimator = LinearSVC(random_state=0)
+        estimator.fit([[1], [2], [3]], [1, 1, 0])
+
+        scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
+        assert_true(is_multi)
+        assert_true(isinstance(scorers, dict))
+        assert_equal(sorted(scorers.keys()), sorted(list(scoring)))
+        assert_true(all([isinstance(scorer, _PredictScorer)
+                         for scorer in list(scorers.values())]))
+
+        if 'acc' in scoring:
+            assert_almost_equal(scorers['acc'](
+                estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
+        if 'accuracy' in scoring:
+            assert_almost_equal(scorers['accuracy'](
+                estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
+        if 'precision' in scoring:
+            assert_almost_equal(scorers['precision'](
+                estimator, [[1], [2], [3]], [1, 0, 0]), 0.5)
+
+    estimator = EstimatorWithFitAndPredict()
+    estimator.fit([[1]], [1])
+
+    # Make sure it raises errors when scoring parameter is not valid.
+    # More weird corner cases are tested at test_validation.py
+    error_message_regexp = ".*must be unique strings.*"
+    for scoring in ((make_scorer(precision_score),  # Tuple of callables
+                     make_scorer(accuracy_score)), [5],
+                    (make_scorer(precision_score),), (), ('f1', 'f1')):
+        assert_raises_regexp(ValueError, error_message_regexp,
+                             _check_multimetric_scoring, estimator,
+                             scoring=scoring)
 
 
 def test_check_scoring_gridsearchcv():
