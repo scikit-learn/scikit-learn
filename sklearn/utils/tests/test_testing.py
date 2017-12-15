@@ -4,7 +4,6 @@ import inspect
 import sys
 import numpy as np
 from scipy import sparse
-from numpydoc import docscrape
 
 from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import if_delegate_has_method
@@ -501,6 +500,13 @@ def test_check_docstring_parameters():
 
 def test_assert_consistent_docs():
     # Test function assert_consistent_docs
+    try:
+        import numpydoc  # noqa
+        assert sys.version_info >= (3, 5)
+    except (ImportError, AssertionError):
+        raise SkipTest("numpydoc is required to test the docstrings, "
+                       "as well as python version >= 3.5")
+
     assert_consistent_docs([precision_recall_fscore_support, precision_score,
                             recall_score, f1_score, fbeta_score],
                            exclude_returns='*',
@@ -519,7 +525,7 @@ def test_assert_consistent_docs():
                   include_params='*', exclude_attribs='*')
 
     # Using NumpyDocString object
-    doc = docscrape.NumpyDocString(inspect.getdoc(precision_score))
+    doc = numpydoc.docscrape.NumpyDocString(inspect.getdoc(precision_score))
     assert_consistent_docs([precision_recall_fscore_support, recall_score,
                             f1_score, fbeta_score, doc],
                            exclude_returns='*',

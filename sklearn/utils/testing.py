@@ -19,7 +19,6 @@ import struct
 
 import scipy as sp
 import scipy.io
-from numpydoc import docscrape
 from functools import wraps
 from operator import itemgetter
 try:
@@ -825,6 +824,7 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     incorrect : list
         A list of string describing the incorrect results.
     """
+    from numpydoc import docscrape
     incorrect = []
     ignore = [] if ignore is None else ignore
 
@@ -955,6 +955,8 @@ def assert_consistent_docs(objects,
         List of Returns to be excluded. '*' for excluding all returns.
 
     """
+    from numpydoc import docscrape
+
     # Dictionary of all different Parameters/Attributes/Returns found
     param_dict = {}
     attrib_dict = {}
