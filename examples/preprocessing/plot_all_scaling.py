@@ -29,8 +29,10 @@ Scalers are linear (or more precisely affine) transformers and differ from each
 other in the way to estimate the parameters used to shift and scale each
 feature.
 
-``QuantileTransformer`` provides a non-linear transformation in which distances
-between marginal outliers and inliers are shrunk.
+``QuantileTransformer`` provides non-linear transformations in which distances
+between marginal outliers and inliers are shrunk. ``PowerTransformer`` provides
+non-linear transformations in which data is mapped to a normal distribution to
+stabilize variance and minimize skewness.
 
 Unlike the previous transformations, normalization refers to a per sample
 transformation instead of a per feature transformation.
@@ -59,7 +61,8 @@ from sklearn.preprocessing import MaxAbsScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import RobustScaler
 from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing.data import QuantileTransformer
+from sklearn.preprocessing import QuantileTransformer
+from sklearn.preprocessing import PowerTransformer
 
 from sklearn.datasets import fetch_california_housing
 
@@ -84,14 +87,16 @@ distributions = [
         MaxAbsScaler().fit_transform(X)),
     ('Data after robust scaling',
         RobustScaler(quantile_range=(25, 75)).fit_transform(X)),
-    ('Data after quantile transformation (uniform pdf)',
-        QuantileTransformer(output_distribution='uniform')
-        .fit_transform(X)),
+    ('Data after power transformation (Box-Cox)',
+     PowerTransformer(method='box-cox').fit_transform(X)),
     ('Data after quantile transformation (gaussian pdf)',
         QuantileTransformer(output_distribution='normal')
         .fit_transform(X)),
+    ('Data after quantile transformation (uniform pdf)',
+        QuantileTransformer(output_distribution='uniform')
+        .fit_transform(X)),
     ('Data after sample-wise L2 normalizing',
-        Normalizer().fit_transform(X))
+        Normalizer().fit_transform(X)),
 ]
 
 # scale the output between 0 and 1 for the colorbar
@@ -286,6 +291,34 @@ make_plot(3)
 
 make_plot(4)
 
+##############################################################################
+# PowerTransformer (Box-Cox)
+# --------------------------
+#
+# ``PowerTransformer`` applies a power transformation to each
+# feature to make the data more Gaussian-like. Currently,
+# ``PowerTransformer`` implements the Box-Cox transform. The Box-Cox transform
+# finds the optimal scaling factor to stabilize variance and mimimize skewness
+# through maximum likelihood estimation. By default, ``PowerTransformer`` also
+# applies zero-mean, unit variance normalization to the transformed output.
+# Note that Box-Cox can only be applied to positive, non-zero data. Income and
+# number of households happen to be strictly positive, but if negative values
+# are present, a constant can be added to each feature to shift it into the
+# positive range - this is known as the two-parameter Box-Cox transform.
+
+make_plot(5)
+
+##############################################################################
+# QuantileTransformer (Gaussian output)
+# -------------------------------------
+#
+# ``QuantileTransformer`` has an additional ``output_distribution`` parameter
+# allowing to match a Gaussian distribution instead of a uniform distribution.
+# Note that this non-parametetric transformer introduces saturation artifacts
+# for extreme values.
+
+make_plot(6)
+
 ###################################################################
 # QuantileTransformer (uniform output)
 # ------------------------------------
@@ -302,18 +335,7 @@ make_plot(4)
 # any outlier by setting them to the a priori defined range boundaries (0 and
 # 1).
 
-make_plot(5)
-
-##############################################################################
-# QuantileTransformer (Gaussian output)
-# -------------------------------------
-#
-# ``QuantileTransformer`` has an additional ``output_distribution`` parameter
-# allowing to match a Gaussian distribution instead of a uniform distribution.
-# Note that this non-parametetric transformer introduces saturation artifacts
-# for extreme values.
-
-make_plot(6)
+make_plot(7)
 
 ##############################################################################
 # Normalizer
@@ -326,5 +348,6 @@ make_plot(6)
 # transformed data only lie in the positive quadrant. This would not be the
 # case if some original features had a mix of positive and negative values.
 
-make_plot(7)
+make_plot(8)
+
 plt.show()

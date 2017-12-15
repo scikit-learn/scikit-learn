@@ -538,7 +538,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
     .. math::
 
-        MI(U,V)=\sum_{i=1}^|U| \sum_{j=1}^|V| \\frac{|U_i\cap V_j|}{N}
+        MI(U,V)=\sum_{i=1}^{|U|} \sum_{j=1}^{|V|} \\frac{|U_i\cap V_j|}{N}
         \log\\frac{N|U_i \cap V_j|}{|U_i||V_j|}
 
     This metric is independent of the absolute values of the labels:
@@ -651,7 +651,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     See also
     --------
     adjusted_rand_score: Adjusted Rand Index
-    mutual_information_score: Mutual Information (not adjusted for chance)
+    mutual_info_score: Mutual Information (not adjusted for chance)
 
     Examples
     --------
@@ -710,7 +710,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     Normalized Mutual Information (NMI) is an normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
     information) and 1 (perfect correlation). In this function, mutual
-    information is normalized by ``sqrt(H(labels_true) * H(labels_pred))``
+    information is normalized by ``sqrt(H(labels_true) * H(labels_pred))``.
 
     This measure is not adjusted for chance. Therefore
     :func:`adjusted_mustual_info_score` might be preferred.

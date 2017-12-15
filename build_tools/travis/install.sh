@@ -39,30 +39,19 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     # Configure the conda environment and put it in the path using the
     # provided versions
-    if [[ "$USE_PYTEST" == "true" ]]; then
-        TEST_RUNNER_PACKAGE=pytest
-    else
-        TEST_RUNNER_PACKAGE=nose
-    fi
-
     if [[ "$INSTALL_MKL" == "true" ]]; then
         conda create -n testenv --yes python=$PYTHON_VERSION pip \
-            $TEST_RUNNER_PACKAGE numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+            pytest pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             mkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
             
     else
         conda create -n testenv --yes python=$PYTHON_VERSION pip \
-            $TEST_RUNNER_PACKAGE numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
+            pytest pytest-cov numpy=$NUMPY_VERSION scipy=$SCIPY_VERSION \
             nomkl cython=$CYTHON_VERSION \
             ${PANDAS_VERSION+pandas=$PANDAS_VERSION}
     fi
     source activate testenv
-
-    if [[ $USE_PYTEST != "true" ]]; then
-        # Install nose-timer via pip
-        pip install nose-timer
-    fi
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # At the time of writing numpy 1.9.1 is included in the travis
@@ -73,7 +62,7 @@ elif [[ "$DISTRIB" == "ubuntu" ]]; then
     # and scipy
     virtualenv --system-site-packages testvenv
     source testvenv/bin/activate
-    pip install nose nose-timer cython==$CYTHON_VERSION
+    pip install pytest pytest-cov cython==$CYTHON_VERSION
 
 elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
     # Set up our own virtualenv environment to avoid travis' numpy.
@@ -86,12 +75,7 @@ elif [[ "$DISTRIB" == "scipy-dev-wheels" ]]; then
     echo "Installing numpy and scipy master wheels"
     dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
     pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
-    if [[ $USE_PYTEST == "true" ]]; then
-        pip install pytest
-    else
-        # Install nose-timer via pip
-        pip install nose nose-timer
-    fi
+    pip install pytest pytest-cov
 fi
 
 if [[ "$COVERAGE" == "true" ]]; then
@@ -102,8 +86,8 @@ if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     pip install sphinx numpydoc  # numpydoc requires sphinx
 fi
 
-if [[ "$SKIP_TESTS" == "true" ]]; then
-    echo "No need to build scikit-learn when not running the tests"
+if [[ "$SKIP_TESTS" == "true" && "$CHECK_PYTEST_SOFT_DEPENDENCY" != "true" ]]; then
+    echo "No need to build scikit-learn"
 else
     # Build scikit-learn in the install.sh script to collapse the verbose
     # build output in the travis output when it succeeds.
@@ -124,7 +108,5 @@ except ImportError:
 fi
 
 if [[ "$RUN_FLAKE8" == "true" ]]; then
-    # flake8 3.5 only available from pip at the time of writing (2017-11-08)
-    # bug fixed in flake8 3.5 is https://gitlab.com/pycqa/flake8/issues/362
-    pip install flake8
+    conda install flake8 -y
 fi
