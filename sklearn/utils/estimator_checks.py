@@ -1919,22 +1919,22 @@ def check_get_params_invariance(name, estimator_orig):
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
 def check_set_params(name, estimator_orig):
-    estimator = clone(estimator_orig)
-
-    # Trivial check to make sure set_params is working
-    params = estimator.get_params()
-    estimator.set_params(**params)
-
     # Check that get_params() returns the same thing
     # before and after set_params() with some fuzz
-    # values
+    estimator = clone(estimator_orig)
 
+    params = estimator.get_params()
+    msg = ("get_params result does not match what was passed to set_params")
+
+    estimator.set_params(**params)
+    new_params = estimator.get_params()
+    assert_equal(params.keys(), new_params.keys(), msg)
+    for k, v in new_params.items():
+        assert_is(params[k], v, msg)
+
+    # some fuzz values
     test_values = [-np.inf, np.inf, None]
 
-    msg = ("get_params result does not match what was passed to set_params: "
-           "called set_params of {0} with {1} "
-           "but get_params returns {2}")
-    params = estimator.get_params()
     for param_name in params.keys():
         default_value = params[param_name]
         for value in test_values:
@@ -1947,13 +1947,9 @@ def check_set_params(name, estimator_orig):
                 pass
             else:
                 new_params = estimator.get_params()
-                errmsg = msg.format(name, params, new_params)
-
-                assert_equal(set(params.keys()),
-                             set(new_params.keys()),
-                             errmsg)
+                assert_equal(params.keys(), new_params.keys(), msg)
                 for k, v in new_params.items():
-                    assert_is(params[k], v, errmsg)
+                    assert_is(params[k], v, msg)
         params[param_name] = default_value
 
 
