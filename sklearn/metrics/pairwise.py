@@ -704,7 +704,7 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
 
     See also
     --------
-    pairwise_distances : Computes the distance matrix from a vector array
+    pairwise_distances : Computes the distance between every pair of samples
     """
 
     if metric in PAIRED_DISTANCES:
