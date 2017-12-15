@@ -17,7 +17,8 @@ ___status___ = "Pre-Production"
 
 
 import numpy as np
-import sklearn.multiview.utils as utils
+from sklearn.multiview import x2p
+from sklearn.multiview import whiten as whiten_function
 import itertools
 import warnings
 from numbers import Number
@@ -68,14 +69,14 @@ def find_pooling(X, is_distance, random_state, initial_dims=30, perplexity=30,
             X[i] = X[i] / np.max(X[i])
             initial_dims = min(initial_dims, X[i].shape[1])
             if whiten:
-                X[i] = utils.whiten(X[i], n_comp=initial_dims)
+                X[i] = whiten_function(X[i], n_comp=initial_dims)
         n = X[i].shape[0]
 
     # Compute the probability distribution of each input view
     # Now P is an array of nviews x n x n  (instead of n x n)
     P = np.zeros((nviews, n, n))
     for i in np.arange(nviews):
-        P[i] = utils.x2p(X[i], perplexity, 1e-05)[0]
+        P[i] = x2p(X[i], perplexity, 1e-05)[0]
         P[i] = 0.5 * (P[i] + P[i].T)
         P[i][P[i] < eps] = eps
         P[i] = P[i] / np.sum(P[i])

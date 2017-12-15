@@ -9,7 +9,7 @@ md_mds, computes the MDS algorithm itself for a set of matrices."""
 
 
 import numpy as np
-import sklearn.multiview.cpcmv as cpcmv
+from sklearn.multiview import MVCPC
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_array
@@ -99,7 +99,7 @@ def mvmds(x, is_distance, k=2):
             my_view = x[i]
         my_views2 = preprocess_mvmds(my_view)
         my_mat[i] = -my_views2 / 2
-    cpc = cpcmv.MVCPC(k=k)
+    cpc = MVCPC(k=k)
     common = cpc.fit_transform(my_mat)
     return common[1]
 

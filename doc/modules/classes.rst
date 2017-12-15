@@ -1386,6 +1386,29 @@ Low-level methods
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
+   
+   
+.. _multiview_ref:
+
+:mod:`sklearn.multiview`: Multiview Learning
+============================================
+
+.. automodule:: sklearn.multiview
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`multiview` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated
+   :template: class.rst
+
+   multiview.MVMDS
+   multiview.MVSC
+   multiview.MvtSNE
+   multiview.MVCPC
 
 Recently deprecated
 ===================
