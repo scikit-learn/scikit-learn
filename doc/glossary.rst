@@ -208,9 +208,9 @@ General Concepts
 
     duck typing
         We try to apply `duck typing
-        <https://en.wikipedia.org/wiki/Duck_typing>_ to determine how to handle
-        some input values (e.g. checking whether a given estimator is a
-        classifier).  That is, we avoid using ``isinstance`` where possible,
+        <https://en.wikipedia.org/wiki/Duck_typing>`_ to determine how to
+        handle some input values (e.g. checking whether a given estimator is
+        a classifier).  That is, we avoid using ``isinstance`` where possible,
         and rely on the presence or absence of attributes to determine an
         object's behaviour.  Some nuance is required when following this
         approach:
@@ -501,7 +501,7 @@ General Concepts
         A venue for publishing Scikit-learn-compatible libraries that are
         broadly authorized by the core developers and the contrib community,
         but not maintained by the core developer team.
-        See `http://scikit-learn-contrib.github.io`_
+        See http://scikit-learn-contrib.github.io.
 
     sparse matrix
         A representation of two-dimensional numeric data that is more memory
