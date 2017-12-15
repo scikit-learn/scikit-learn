@@ -127,24 +127,32 @@ CLASSIFICATION_METRICS = {
     "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
     "weighted_precision_score": partial(precision_score, average="weighted"),
     "weighted_recall_score": partial(recall_score, average="weighted"),
+    "weighted_jaccard_similarity_score":
+    partial(jaccard_similarity_score, average="weighted"),
 
     "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
     "micro_f1_score": partial(f1_score, average="micro"),
     "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
     "micro_precision_score": partial(precision_score, average="micro"),
     "micro_recall_score": partial(recall_score, average="micro"),
+    "micro_jaccard_similarity_score":
+    partial(jaccard_similarity_score, average="micro"),
 
     "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
     "macro_f1_score": partial(f1_score, average="macro"),
     "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
+    "macro_jaccard_similarity_score":
+    partial(jaccard_similarity_score, average="macro"),
 
     "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
     "samples_f1_score": partial(f1_score, average="samples"),
     "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
     "samples_precision_score": partial(precision_score, average="samples"),
     "samples_recall_score": partial(recall_score, average="samples"),
+    "samples_jaccard_similarity_score":
+    partial(jaccard_similarity_score, average="samples"),
 
     "cohen_kappa_score": cohen_kappa_score,
 }
@@ -200,6 +208,7 @@ METRIC_UNDEFINED_BINARY = [
     "samples_precision_score",
     "samples_recall_score",
     "coverage_error",
+    "samples_jaccard_similarity_score",
 
     "average_precision_score",
     "weighted_average_precision_score",
@@ -222,6 +231,8 @@ METRIC_UNDEFINED_MULTICLASS = [
     "macro_roc_auc",
     "samples_roc_auc",
 
+    "samples_jaccard_similarity_score",
+
     # with default average='binary', multiclass is prohibited
     "precision_score",
     "recall_score",
@@ -236,7 +247,8 @@ METRIC_UNDEFINED_BINARY_MULTICLASS = set(METRIC_UNDEFINED_BINARY).union(
 
 # Metrics with an "average" argument
 METRICS_WITH_AVERAGING = [
-    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
+    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+    "jaccard_similarity_score"
 ]
 
 # Threshold-based metrics with an "average" argument
@@ -272,15 +284,19 @@ METRICS_WITH_LABELS = [
     "hamming_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+    "jaccard_similarity_score",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
+    "weighted_jaccard_similarity_score",
 
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
+    "micro_jaccard_similarity_score",
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
+    "macro_jaccard_similarity_score",
 
     "cohen_kappa_score",
 ]
@@ -316,15 +332,19 @@ MULTILABELS_METRICS = [
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
+    "weighted_jaccard_similarity_score",
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
+    "macro_jaccard_similarity_score",
 
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
+    "micro_jaccard_similarity_score",
 
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
+    "samples_jaccard_similarity_score"
 ]
 
 # Regression metrics with "multioutput-continuous" format support
@@ -340,6 +360,8 @@ SYMMETRIC_METRICS = [
     "hamming_loss",
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
+
+    "micro_jaccard_similarity_score", "macro_jaccard_similarity_score",
 
     "f1_score", "micro_f1_score", "macro_f1_score",
     "weighted_recall_score",
