@@ -93,7 +93,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}
-            Input vector, only requires a length
+            Input vector, requires length = n_samples
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
@@ -166,7 +166,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}
-            Input vector, only requires a length
+            Input vector, requires length = n_samples
 
         Returns
         -------
@@ -242,7 +242,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}
-            Input vector, only requires a length
+            Input vector, requires length = n_samples
 
         Returns
         -------
@@ -304,7 +304,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}
-            Input vector, only requires a length
+            Input vector, requires length = n_samples
 
         Returns
         -------
@@ -375,7 +375,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}
-            Input vector, only requires a length
+            Input vector, requires length = n_samples
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
@@ -454,7 +454,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}
-            Input vector, only requires a length
+            Input vector, requires length = n_samples
 
         Returns
         -------
