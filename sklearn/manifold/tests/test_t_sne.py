@@ -323,6 +323,15 @@ def test_non_positive_precomputed_distances():
                              tsne.fit_transform, bad_dist)
 
 
+def test_non_positive_precomputed_csr_distances():
+    # Sparse precomputed distance matrices must be positive
+    dist = np.array([[0., -1.], [1., 0.]])
+    bad_dist = sp.csr_matrix(dist)
+    tsne = TSNE(metric="precomputed")
+    assert_raises_regexp(ValueError, "All distances .*precomputed.*",
+                         tsne.fit_transform, bad_dist)
+
+
 def test_non_positive_computed_distances():
     # Computed distance matrices must be positive.
     def metric(x, y):
@@ -798,7 +807,7 @@ def test_tsne_with_different_distance_metrics():
 
 
 def test_tsne_with_different_csr_distance_metrics():
-    """Make sure that TSNE works for different distance metrics"""
+    """Make sure that TSNE works for different csr distance metrics"""
     random_state = check_random_state(0)
     n_components_original = 3
     n_components_embedding = 2
