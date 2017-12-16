@@ -217,6 +217,7 @@ def average_precision_score(y_true, y_score, average="macro",
                                  y_true, y_score, average,
                                  sample_weight=sample_weight)
 
+
 def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
                   sample_weight=None):
     """Compute Area Under the Curve (AUC) from prediction scores
@@ -311,6 +312,10 @@ def roc_auc_score(y_true, y_score, multiclass="ovr", average="macro",
     if y_type == "multiclass" or (y_type == "binary" and
                                   y_score.ndim == 2 and
                                   y_score.shape[1] > 2):
+        # validation of the input y_score
+        if not np.allclose(1, y_score.sum(axis=1)):
+            raise ValueError("Target scores should sum up to 1.0 for all"
+                             "samples.")
         # validation for multiclass parameter specifications
         average_options = ("macro", "weighted")
         if average not in average_options:
