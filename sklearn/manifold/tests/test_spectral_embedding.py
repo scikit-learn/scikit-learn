@@ -258,7 +258,7 @@ def test_spectral_embedding_unnormalized():
     laplacian, dd = csgraph.laplacian(sims, normed=False,
                                       return_diag=True)
     _, diffusion_map = eigh(laplacian)
-    embedding_2 = diffusion_map.T[:n_components] * dd
+    embedding_2 = diffusion_map.T[:n_components]
     embedding_2 = _deterministic_vector_sign_flip(embedding_2).T
 
     assert_array_almost_equal(embedding_1, embedding_2)
