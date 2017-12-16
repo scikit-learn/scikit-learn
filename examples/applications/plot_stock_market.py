@@ -124,8 +124,8 @@ def quotes_historical_google(symbol, start_date, end_date):
     data = np.genfromtxt(response, delimiter=',', skip_header=1,
                          dtype=dtype, converters=converters,
                          missing_values='-', filling_values=-1)
-    min_date = min(data['date'], default=datetime.min.date())
-    max_date = max(data['date'], default=datetime.max.date())
+    min_date = min(data['date']) if len(data) else datetime.min.date()
+    max_date = max(data['date']) if len(data) else datetime.max.date()
     start_end_diff = (end_date - start_date).days
     min_max_diff = (max_date - min_date).days
     data_is_fine = (

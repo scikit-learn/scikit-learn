@@ -4,6 +4,136 @@
 
 .. _changes_0_19:
 
+Version 0.19.1
+==============
+
+**October 23, 2017**
+
+This is a bug-fix release with some minor documentation improvements and
+enhancements to features released in 0.19.0.
+
+Note there may be minor differences in TSNE output in this release (due to
+:issue:`9623`), in the case where multiple samples have equal distance to some
+sample.
+
+Changelog
+---------
+
+API changes
+...........
+
+- Reverted the addition of ``metrics.ndcg_score`` and ``metrics.dcg_score``
+  which had been merged into version 0.19.0 by error.  The implementations
+  were broken and undocumented.
+
+- ``return_train_score`` which was added to
+  :class:`model_selection.GridSearchCV`,
+  :class:`model_selection.RandomizedSearchCV` and
+  :func:`model_selection.cross_validate` in version 0.19.0 will be changing its
+  default value from True to False in version 0.21.  We found that calculating
+  training score could have a great effect on cross validation runtime in some
+  cases.  Users should explicitly set ``return_train_score`` to False if
+  prediction or scoring functions are slow, resulting in a deleterious effect
+  on CV runtime, or to True if they wish to use the calculated scores.
+  :issue:`9677` by :user:`Kumar Ashutosh <thechargedneutron>` and `Joel
+  Nothman`_.
+
+- ``correlation_models`` and ``regression_models`` from the legacy gaussian
+  processes implementation have been belatedly deprecated. :issue:`9717` by
+  :user:`Kumar Ashutosh <thechargedneutron>`.
+
+Bug fixes
+.........
+
+- Avoid integer overflows in :func:`metrics.matthews_corrcoef`.
+  :issue:`9693` by :user:`Sam Steingold <sam-s>`.
+
+- Fix ValueError in :class:`preprocessing.LabelEncoder` when using
+  ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
+  <newey01c>`.
+
+- Fixed a bug in the objective function for :class:`manifold.TSNE` (both exact
+  and with the Barnes-Hut approximation) when ``n_components >= 3``.
+  :issue:`9711` by :user:`goncalo-rodrigues`.
+
+- Fix regression in :func:`model_selection.cross_val_predict` where it
+  raised an error with ``method='predict_proba'`` for some probabilistic
+  classifiers. :issue:`9641` by :user:`James Bourbeau <jrbourbeau>`.
+
+- Fixed a bug where :func:`datasets.make_classification` modified its input
+  ``weights``. :issue:`9865` by :user:`Sachin Kelkar <s4chin>`.
+
+- :class:`model_selection.StratifiedShuffleSplit` now works with multioutput
+  multiclass or multilabel data with more than 1000 columns.  :issue:`9922` by
+  :user:`Charlie Brummitt <crbrummitt>`.
+
+- Fixed a bug with nested and conditional parameter setting, e.g. setting a
+  pipeline step and its parameter at the same time. :issue:`9945` by `Andreas
+  Müller`_ and `Joel Nothman`_.
+
+Regressions in 0.19.0 fixed in 0.19.1:
+
+- Fixed a bug where parallelised prediction in random forests was not
+  thread-safe and could (rarely) result in arbitrary errors. :issue:`9830` by
+  `Joel Nothman`_.
+
+- Fix regression in :func:`model_selection.cross_val_predict` where it no
+  longer accepted ``X`` as a list. :issue:`9600` by :user:`Rasul Kerimov
+  <CoderINusE>`.
+
+- Fixed handling of :func:`cross_val_predict` for binary classification with
+  ``method='decision_function'``. :issue:`9593` by :user:`Reiichiro Nakano
+  <reiinakano>` and core devs.
+
+- Fix regression in :class:`pipeline.Pipeline` where it no longer accepted
+  ``steps`` as a tuple. :issue:`9604` by :user:`Joris Van den Bossche
+  <jorisvandenbossche>`.
+
+- Fix bug where ``n_iter`` was not properly deprecated, leaving ``n_iter``
+  unavailable for interim use in
+  :class:`linear_model.SGDClassifier`, :class:`linear_model.SGDRegressor`,
+  :class:`linear_model.PassiveAggressiveClassifier`,
+  :class:`linear_model.PassiveAggressiveRegressor` and
+  :class:`linear_model.Perceptron`. :issue:`9558` by `Andreas Müller`_.
+
+- Dataset fetchers make sure temporary files are closed before removing them,
+  which caused errors on Windows. :issue:`9847` by :user:`Joan Massich <massich>`.
+
+- Fixed a regression in :class:`manifold.TSNE` where it no longer supported
+  metrics other than 'euclidean' and 'precomputed'. :issue:`9623` by :user:`Oli
+  Blum <oliblum90>`.
+
+Enhancements
+............
+
+- Our test suite and :func:`utils.estimator_checks.check_estimators` can now be
+  run without Nose installed. :issue:`9697` by :user:`Joan Massich <massich>`.
+
+- To improve usability of version 0.19's :class:`pipeline.Pipeline`
+  caching, ``memory`` now allows ``joblib.Memory`` instances.
+  This make use of the new :func:`utils.validation.check_memory` helper.
+  issue:`9584` by :user:`Kumar Ashutosh <thechargedneutron>`
+
+- Some fixes to examples: :issue:`9750`, :issue:`9788`, :issue:`9815`
+
+- Made a FutureWarning in SGD-based estimators less verbose. :issue:`9802` by
+  :user:`Vrishank Bhardwaj <vrishank97>`.
+
+Code and Documentation Contributors
+-----------------------------------
+
+With thanks to:
+
+Joel Nothman, Loic Esteve, Andreas Mueller, Kumar Ashutosh,
+Vrishank Bhardwaj, Hanmin Qin, Rasul Kerimov, James Bourbeau,
+Nagarjuna Kumar, Nathaniel Saul, Olivier Grisel, Roman
+Yurchak, Reiichiro Nakano, Sachin Kelkar, Sam Steingold,
+Yaroslav Halchenko, diegodlh, felix, goncalo-rodrigues,
+jkleint, oliblum90, pasbi, Anthony Gitter, Ben Lawson, Charlie
+Brummitt, Didi Bar-Zev, Gael Varoquaux, Joan Massich, Joris
+Van den Bossche, nielsenmarkus11
+
+
 Version 0.19
 ============
 
