@@ -56,7 +56,6 @@ profcorr = readData("mfeat-fac.txt", 1)
 pixels = readData("mfeat-pix.txt", 1)
 morpho = readData("mfeat-mor.txt", 0)
 
-classes = np.array([[x] * 200 for x in range(10)]).ravel()
 markers = ['o', '2', '<', '*', 'h', 'x', 'D', '|', '_', 'v']
 mypalette = ['green', 'purple', 'pink', 'blue', 'black',
              'brown', 'yellow', 'orange', 'gray', 'red']
