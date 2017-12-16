@@ -204,12 +204,18 @@ boolean mask array, optional
         """
         n_columns = X.shape[1]
 
-        if self.passthrough == 'remainder':
+        if (isinstance(self.passthrough, six.string_types)
+                and self.passthrough == 'remainder'):
             cols = []
             for _, _, columns in self.transformers:
                 cols.extend(_get_column_indices(X, columns))
             self._passthrough = sorted(list(set(range(n_columns)) - set(cols)))
         else:
+            if (isinstance(self.passthrough, int)
+                    or isinstance(self.passthrough, six.string_types)):
+                raise ValueError("Scalar value for 'passthrough' is not "
+                                 "accepted (except 'remainder'). Specify a "
+                                 "list, slice or boolean mask array instead")
             self._passthrough = self.passthrough
 
     @property
@@ -325,12 +331,16 @@ boolean mask array, optional
 
         if not result:
             # All transformers are None
-            return np.zeros((X.shape[0], 0))
+            if self._passthrough is None:
+                return np.zeros((X.shape[0], 0))
+            else:
+                return _get_column(X, self._passthrough)
+
         Xs, transformers = zip(*result)
 
         self._update_fitted_transformers(transformers)
 
-        if self._passthrough:
+        if self._passthrough is not None:
             Xs = list(Xs) + [_get_column(X, self._passthrough)]
 
         if any(sparse.issparse(f) for f in Xs):
@@ -367,7 +377,7 @@ boolean mask array, optional
             else:
                 return _get_column(X, self._passthrough)
 
-        if self._passthrough:
+        if self._passthrough is not None:
             Xs = list(Xs) + [_get_column(X, self._passthrough)]
 
         if any(sparse.issparse(f) for f in Xs):
@@ -449,6 +459,8 @@ def _get_column(X, key):
 def _get_column_indices(X, key):
     """
     Get feature column indices for input data X and key.
+
+    For accepted values of `key`, see the docstring of _get_column
 
     """
     n_columns = X.shape[1]

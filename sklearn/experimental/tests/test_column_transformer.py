@@ -4,6 +4,7 @@ Test the ColumnTransformer.
 
 import numpy as np
 from scipy import sparse
+import pytest
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
@@ -395,12 +396,15 @@ def test_column_transformer_passthrough():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
 
     X_res_first = np.array([0, 1, 2]).reshape(-1, 1)
+    X_res_second = np.array([2, 4, 6]).reshape(-1, 1)
     X_res_both = X_array
 
+    # default no passthrough
     ct = ColumnTransformer([('trans', Trans(), [0])])
     assert_array_equal(ct.fit_transform(X_array), X_res_first)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_first)
 
+    # specify passthrough column
     ct = ColumnTransformer([('trans1', Trans(), [0])], passthrough=[1])
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
@@ -410,7 +414,56 @@ def test_column_transformer_passthrough():
     assert_array_equal(ct.fit_transform(X_array), X_res_both[:, ::-1])
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both[:, ::-1])
 
-    # passthrough=True -> passthrough all none selected columns
+    # passthrough='remainder' -> passthrough all none selected columns
     ct = ColumnTransformer([('trans1', Trans(), [0])], passthrough='remainder')
     assert_array_equal(ct.fit_transform(X_array), X_res_both)
     assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+
+    # passthrough when all transformers are None
+    ct = ColumnTransformer([('trans1', None, [0])], passthrough='remainder')
+    assert_array_equal(ct.fit_transform(X_array), X_res_second)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_second)
+
+    # error on invalid arg
+    ct = ColumnTransformer([('trans1', Trans(), [0])], passthrough=1)
+    assert_raise_message(ValueError, "Scalar value for \'passthrough\' is not ",
+                         ct.fit, X_array)
+    assert_raise_message(ValueError, "Scalar value for \'passthrough\' is not ",
+                         ct.fit_transform, X_array)
+
+    ct = ColumnTransformer([('trans1', Trans(), [0])], passthrough=[1.0])
+    assert_raise_message(ValueError, "No valid specification",
+                         ct.fit_transform, X_array)
+    ct.fit(X_array)
+    assert_raise_message(ValueError, "No valid specification",
+                         ct.transform, X_array)
+
+
+@pytest.mark.parametrize("key", [[1], np.array([1]), slice(1, 2),
+                                 np.array([False, True])])
+def test_column_transformer_passthrough_key(key):
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_res_both = X_array
+
+    ct = ColumnTransformer([('trans1', Trans(), [0])], passthrough=key)
+    assert_array_equal(ct.fit_transform(X_array), X_res_both)
+    assert_array_equal(ct.fit(X_array).transform(X_array), X_res_both)
+
+
+@pytest.mark.parametrize("key", [[1], slice(1, 2), np.array([False, True]),
+                                 ['second'], slice('second', None),
+                                 slice('second', 'second')])
+def test_column_transformer_passthrough_key_pandas(key):
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest("pandas is not installed: skipping ColumnTransformer "
+                       "tests for DataFrames.")
+
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_df = pd.DataFrame(X_array, columns=['first', 'second'])
+    X_res_both = X_array
+
+    ct = ColumnTransformer([('trans1', Trans(), ['first'])], passthrough=key)
+    assert_array_equal(ct.fit_transform(X_df), X_res_both)
+    assert_array_equal(ct.fit(X_df).transform(X_df), X_res_both)
