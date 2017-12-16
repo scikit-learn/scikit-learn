@@ -260,6 +260,21 @@ def test_column_transformer_invalid_columns():
                              ct.fit, X_array)
 
 
+def test_column_transformer_invalid_transformer():
+
+    class NoTrans(BaseEstimator):
+        def fit(self, X, y=None):
+            return self
+
+        def predict(self, X):
+            return X
+
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    ct = ColumnTransformer([('trans', NoTrans(), [0])])
+    assert_raise_message(TypeError, "All estimators should implement fit",
+                         ct.fit, X_array)
+
+
 def test_make_column_transformer():
     scaler = StandardScaler()
     norm = Normalizer()
@@ -426,9 +441,9 @@ def test_column_transformer_passthrough():
 
     # error on invalid arg
     ct = ColumnTransformer([('trans1', Trans(), [0])], passthrough=1)
-    assert_raise_message(ValueError, "Scalar value for \'passthrough\' is not ",
+    assert_raise_message(ValueError, "Scalar value for \'passthrough\' is not",
                          ct.fit, X_array)
-    assert_raise_message(ValueError, "Scalar value for \'passthrough\' is not ",
+    assert_raise_message(ValueError, "Scalar value for \'passthrough\' is not",
                          ct.fit_transform, X_array)
 
     ct = ColumnTransformer([('trans1', Trans(), [0])], passthrough=[1.0])
