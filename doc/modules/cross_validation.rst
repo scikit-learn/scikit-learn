@@ -233,7 +233,7 @@ Here is an example of ``cross_validate`` using a single metric::
     ...                         scoring='precision_macro',
     ...                         return_estimator=True)
     >>> sorted(scores.keys())
-    ['estimator', 'fit_time', 'score_time', test_score', 'train_score']
+    ['estimator', 'fit_time', 'score_time', 'test_score', 'train_score']
 
 
 Obtaining predictions by cross-validation
