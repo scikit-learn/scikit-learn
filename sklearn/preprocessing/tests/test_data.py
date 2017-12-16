@@ -2236,40 +2236,54 @@ def test_power_transformer_notfitted():
 
 
 def test_power_transformer_1d():
-    pt = PowerTransformer(method='box-cox')
     X = np.abs(X_1col)
-    X_trans = pt.fit_transform(X)
-    X_expected, lambda_expected = stats.boxcox(X.flatten())
 
-    assert_almost_equal(X_expected.reshape(-1, 1), X_trans)
-    assert_almost_equal(X_expected.reshape(-1, 1), power_transform(X))
+    for standardize in [True, False]:
+        pt = PowerTransformer(method='box-cox', standardize=standardize)
 
-    assert_almost_equal(X, pt.inverse_transform(X_trans))
-    assert_almost_equal(lambda_expected, pt.lambdas_[0])
+        X_trans = pt.fit_transform(X)
+        X_trans_func = power_transform(X, standardize=standardize)
 
-    assert len(pt.lambdas_) == X.shape[1]
-    assert isinstance(pt.lambdas_, np.ndarray)
+        X_expected, lambda_expected = stats.boxcox(X.flatten())
+
+        if standardize:
+            X_expected = scale(X_expected)
+
+        assert_almost_equal(X_expected.reshape(-1, 1), X_trans)
+        assert_almost_equal(X_expected.reshape(-1, 1), X_trans_func)
+
+        assert_almost_equal(X, pt.inverse_transform(X_trans))
+        assert_almost_equal(lambda_expected, pt.lambdas_[0])
+
+        assert len(pt.lambdas_) == X.shape[1]
+        assert isinstance(pt.lambdas_, np.ndarray)
 
 
 def test_power_transformer_2d():
-    pt = PowerTransformer(method='box-cox')
     X = np.abs(X_2d)
 
-    X_trans_class = pt.fit_transform(X)
-    X_trans_func = power_transform(X)
+    for standardize in [True, False]:
+        pt = PowerTransformer(method='box-cox', standardize=standardize)
 
-    for X_trans in [X_trans_class, X_trans_func]:
-        for j in range(X_trans.shape[1]):
-            X_expected, lmbda = stats.boxcox(X[:, j].flatten())
-            assert_almost_equal(X_trans[:, j], X_expected)
-            assert_almost_equal(lmbda, pt.lambdas_[j])
+        X_trans_class = pt.fit_transform(X)
+        X_trans_func = power_transform(X, standardize=standardize)
 
-        # Test inverse transformation
-        X_inv = pt.inverse_transform(X_trans)
-        assert_array_almost_equal(X_inv, X)
+        for X_trans in [X_trans_class, X_trans_func]:
+            for j in range(X_trans.shape[1]):
+                X_expected, lmbda = stats.boxcox(X[:, j].flatten())
 
-    assert len(pt.lambdas_) == X.shape[1]
-    assert isinstance(pt.lambdas_, np.ndarray)
+                if standardize:
+                    X_expected = scale(X_expected)
+
+                assert_almost_equal(X_trans[:, j], X_expected)
+                assert_almost_equal(lmbda, pt.lambdas_[j])
+
+            # Test inverse transformation
+            X_inv = pt.inverse_transform(X_trans)
+            assert_array_almost_equal(X_inv, X)
+
+        assert len(pt.lambdas_) == X.shape[1]
+        assert isinstance(pt.lambdas_, np.ndarray)
 
 
 def test_power_transformer_strictly_positive_exception():
@@ -2326,7 +2340,7 @@ def test_power_transformer_method_exception():
 
 
 def test_power_transformer_lambda_zero():
-    pt = PowerTransformer(method='box-cox')
+    pt = PowerTransformer(method='box-cox', standardize=False)
     X = np.abs(X_2d)[:, 0:1]
 
     # Test the lambda = 0 case
