@@ -18,7 +18,7 @@ persistence model, namely `pickle <https://docs.python.org/2/library/pickle.html
 
   >>> from sklearn import svm
   >>> from sklearn import datasets
-  >>> clf = svm.SVC()
+  >>> clf = svm.SVC(gamma='auto')
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
   >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE

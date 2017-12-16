@@ -1546,18 +1546,18 @@ def test_deprecated_grid_search_iid():
     depr_message = ("The default of the `iid` parameter will change from True "
                     "to False in version 0.22")
     X, y = make_blobs(n_samples=54, random_state=0, centers=2)
-    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=3)
+    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=3)
     # no warning with equally sized test sets
     assert_no_warnings(grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=5)
+    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=5)
     # warning because 54 % 5 != 0
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=2)
+    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=2)
     # warning because stratification into two classes and 27 % 2 != 0
     assert_warns_message(DeprecationWarning, depr_message, grid.fit, X, y)
 
-    grid = GridSearchCV(SVC(), param_grid={'C': [1]}, cv=KFold(2))
+    grid = GridSearchCV(SVC(gamma='scale'), param_grid={'C': [1]}, cv=KFold(2))
     # no warning because no stratification and 54 % 2 == 0
     assert_no_warnings(grid.fit, X, y)

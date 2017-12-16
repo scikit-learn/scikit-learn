@@ -448,12 +448,12 @@ class SVC(BaseSVC):
         Penalty parameter C of the error term.
 
     kernel : string, optional (default='rbf')
-         Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
-         If none is given, 'rbf' will be used. If a callable is given it is
-         used to pre-compute the kernel matrix from data matrices; that matrix
-         should be an array of shape ``(n_samples, n_samples)``.
+        Specifies the kernel type to be used in the algorithm.
+        It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
+        a callable.
+        If none is given, 'rbf' will be used. If a callable is given it is
+        used to pre-compute the kernel matrix from data matrices; that matrix
+        should be an array of shape ``(n_samples, n_samples)``.
 
     degree : int, optional (default=3)
         Degree of the polynomial kernel function ('poly').
@@ -463,12 +463,12 @@ class SVC(BaseSVC):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 'auto' then 1/n_features will be used.
         If gamma is 'scale' then 1/(n_features * X.std()) will be used.
-        The current default 'auto' is deprecated in version 0.19 and will 
-        be replaced by 'scale' in version 0.21.
+        The current default 'auto' is deprecated in version 0.20 and will
+        be replaced by 'scale' in version 0.22.
 
-        .. versionchanged:: 0.19
-            Default parameter value 'auto' is deprecated and will be replaced by 
-            'scale' in version 0.21
+        .. versionchanged:: 0.20
+           Default parameter value 'auto' is deprecated and will be replaced
+           by 'scale' in version 0.22
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -559,7 +559,7 @@ class SVC(BaseSVC):
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import SVC
-    >>> clf = SVC()
+    >>> clf = SVC(gamma='auto')
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
         decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
@@ -582,7 +582,7 @@ class SVC(BaseSVC):
 
     _impl = 'c_svc'
 
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto',
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
                  verbose=False, max_iter=-1, decision_function_shape='ovr',
@@ -629,12 +629,12 @@ class NuSVC(BaseSVC):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 'auto' then 1/n_features will be used.
         If gamma is 'scale' then 1/(n_features * X.std()) will be used.
-        The current default 'auto' is deprecated in version 0.19 and will 
-        be replaced by 'scale' in version 0.21.
+        The current default 'auto' is deprecated in version 0.12 and will
+        be replaced by 'scale' in version 0.22.
 
-        .. versionchanged:: 0.19
-            Default parameter value 'auto' is deprecated and will be replaced by 
-            'scale' in version 0.21
+        .. versionchanged:: 0.20
+           Default parameter value 'auto' is deprecated and will be replaced by
+           'scale' in version 0.22
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -794,12 +794,12 @@ class SVR(BaseLibSVM, RegressorMixin):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 'auto' then 1/n_features will be used.
         If gamma is 'scale' then 1/(n_features * X.std()) will be used.
-        The current default 'auto' is deprecated in version 0.19 and will 
-        be replaced by 'scale' in version 0.21.
+        The current default 'auto' is deprecated in version 0.12 and will
+        be replaced by 'scale' in version 0.22.
 
-        .. versionchanged:: 0.19
-            Default parameter value 'auto' is deprecated and will be replaced by 
-            'scale' in version 0.21
+        .. versionchanged:: 0.20
+           Default parameter value 'auto' is deprecated and will be replaced by
+           'scale' in version 0.22
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -919,12 +919,12 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 'auto' then 1/n_features will be used.
         If gamma is 'scale' then 1/(n_features * X.std()) will be used.
-        The current default 'auto' is deprecated in version 0.19 and will 
-        be replaced by 'scale' in version 0.21.
+        The current default 'auto' is deprecated in version 0.12 and will
+        be replaced by 'scale' in version 0.22.
 
-        .. versionchanged:: 0.19
-            Default parameter value 'auto' is deprecated and will be replaced by 
-            'scale' in version 0.21
+        .. versionchanged:: 0.20
+           Default parameter value 'auto' is deprecated and will be replaced by
+           'scale' in version 0.22
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.
@@ -1037,12 +1037,12 @@ class OneClassSVM(BaseLibSVM):
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 'auto' then 1/n_features will be used.
         If gamma is 'scale' then 1/(n_features * X.std()) will be used.
-        The current default 'auto' is deprecated in version 0.19 and will 
-        be replaced by 'scale' in version 0.21.
+        The current default 'auto' is deprecated in version 0.12 and will
+        be replaced by 'scale' in version 0.22.
 
-        .. versionchanged:: 0.19
-            Default parameter value 'auto' is deprecated and will be replaced by 
-            'scale' in version 0.21
+        .. versionchanged:: 0.20
+           Default parameter value 'auto' is deprecated and will be replaced by
+           'scale' in version 0.22
 
     coef0 : float, optional (default=0.0)
         Independent term in kernel function.

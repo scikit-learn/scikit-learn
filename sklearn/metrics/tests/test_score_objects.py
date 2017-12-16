@@ -252,11 +252,11 @@ def test_check_scoring_gridsearchcv():
     # test that check_scoring works on GridSearchCV and pipeline.
     # slightly redundant non-regression test.
 
-    grid = GridSearchCV(LinearSVC(gamma="scale"), param_grid={'C': [.1, 1]})
+    grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]})
     scorer = check_scoring(grid, "f1")
     assert_true(isinstance(scorer, _PredictScorer))
 
-    pipe = make_pipeline(LinearSVC(gamma="scale"))
+    pipe = make_pipeline(LinearSVC())
     scorer = check_scoring(pipe, "f1")
     assert_true(isinstance(scorer, _PredictScorer))
 

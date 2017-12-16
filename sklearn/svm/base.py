@@ -167,14 +167,21 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "%r vs %r\n"
                              "Note: Sparse matrices cannot be indexed w/"
                              "boolean masks (use `indices=True` in CV)."
-                             % (sample_weight.shape, X.shape))        
+                             % (sample_weight.shape, X.shape))
 
         if self.gamma == 'scale':
-            self._gamma = 1.0 / (X.shape[1] * X.std())
-        elif self.gamma == 'auto':
-            warnings.warn("The default gamma parameter value 'auto', calculated as 1 / n_features,"
-                " is depreciated in version 0.19 and will be replaced by 'scale'," 
-                " calculated as 1 / (n_features * X.std()) in version 0.21.", DeprecationWarning)
+            if isinstance(X, sp.spmatrix):
+                X_std = np.sqrt(X.power(2).mean() - (X.mean())**2)
+            else:
+                X_std = X.std()
+            self._gamma = 1.0 / (X.shape[1] * X_std)
+        elif self.gamma == 'auto' or self.gamma == 'auto_deprecated':
+            if self.gamma == 'auto_deprecated':
+                warnings.warn("The default gamma parameter value 'auto', "
+                              "calculated as 1 / n_features, is deprecated in "
+                              "version 0.20 and will be replaced by 'scale', "
+                              "calculated as 1 / (n_features * X.std()) in "
+                              "version 0.22.", DeprecationWarning)
             self._gamma = 1.0 / X.shape[1]
         else:
             self._gamma = self.gamma

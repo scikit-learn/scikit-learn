@@ -976,20 +976,21 @@ def test_ovr_decision_function():
     # compared to the second point
     assert_true(np.all(pred_class_deci_val[:, 0] < pred_class_deci_val[:, 1]))
 
+
 def test_gamma_auto():
     X, y = [[0.0], [1.0]], [0, 1]
 
-    msg = ("The default gamma parameter value 'auto', calculated as 1 / n_features,"
-        " is depreciated in version 0.19 and will be replaced by 'scale',"
-        " calculated as 1 / (n_features * X.std()) in version 0.21.")
+    msg = ("The default gamma parameter value 'auto', calculated as "
+           "1 / n_features, is deprecated in version 0.20 and will be "
+           "replaced by 'scale', calculated as 1 / (n_features * X.std()) in "
+           "version 0.22.")
 
-    assert_warns_message(DeprecationWarning,
-                         msg,
-                         svm.SVC(gamma='auto').fit, X, y)
+    assert_warns_message(DeprecationWarning, msg,
+                         svm.SVC().fit, X, y)
+
 
 def test_gamma_scale():
     X, y = [[0.0], [1.0]], [0, 1]
 
     clf = svm.SVC(gamma='scale').fit(X, y)
     assert_equal(clf._gamma, 2.0)
-    
