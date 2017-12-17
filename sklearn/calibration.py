@@ -44,6 +44,18 @@ class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
         The classifier whose decision threshold will be adapted according to the
         acquired optimal cutoff point
 
+    method : str
+        The method to use for choosing the optimal cutoff point.
+
+        - 'roc', selects the point on the roc_curve that is closer to the ideal
+        corner (0, 1)
+
+        - 'max_se', selects the point that yields the highest sensitivity with
+        specificity at least equal to the value of the parameter min_val_sp
+
+        - 'max_sp', selects the point that yields the highest specificity with
+        sensitivity at least equal to the value of the parameter min_val_se
+
     pos_label : object
         Object representing the positive label
         (default value: 1)
@@ -54,16 +66,28 @@ class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
         calibration of the probability threshold
         (default value: "prefit")
 
+    min_val_sp : float in [0, 1]
+        In case method = 'max_se' this value must be set to specify the minimum
+        required value for the specificity
+
+    min_val_se : float in [0, 1]
+        In case method = 'max_sp' this value must be set to specify the minimum
+        required value for the sensitivity
+
     Attributes
     ----------
     threshold : float
         Decision threshold for the positive class. Determines the output of
         predict
     """
-    def __init__(self, base_estimator=None, pos_label=1, cv=3):
+    def __init__(self, base_estimator=None, method='roc', pos_label=1, cv=3,
+                 min_val_sp=None, min_val_se=None):
         self.base_estimator = base_estimator
+        self.method = method
         self.pos_label = pos_label
         self.cv = cv
+        self.min_val_sp = min_val_sp
+        self.min_val_se = min_val_se
         self.threshold = None
 
     def fit(self, X, y):
@@ -90,7 +114,8 @@ class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
 
         if self.cv == 'prefit':
             self.threshold = _OptimalCutoffClassifier(
-                self.base_estimator, self.pos_label
+                self.base_estimator, self.method, self.pos_label,
+                self.min_val_sp, self.min_val_se
             ).fit(X, y).threshold
         else:
             cv = check_cv(self.cv, y, classifier=True)
@@ -98,12 +123,14 @@ class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
 
             for train, test in cv.split(X, y):
                 estimator = clone(self.base_estimator).fit(X[train], y[train])
-                thresholds.append(_OptimalCutoffClassifier(
-                        estimator, self.pos_label
+                thresholds.append(
+                    _OptimalCutoffClassifier(
+                        estimator, self.method, self.pos_label, self.min_val_sp,
+                        self.min_val_se
                     ).fit(X[test], y[test]).threshold
-                                             )
+                )
             self.threshold = sum(thresholds) / \
-                             len(thresholds)
+                len(thresholds)
             self.base_estimator.fit(X, y)
         return self
 
@@ -129,17 +156,34 @@ class _OptimalCutoffClassifier(object):
         The classifier whose decision threshold will be adapted according to the
         acquired optimal cutoff point
 
+    method : 'roc' or 'max_se' or 'max_sp'
+        The method to use for choosing the optimal cutoff point.
+
     pos_label : object
         Label considered as positive during the roc_curve construction.
+
+    min_val_sp : float in [0, 1]
+        minimum required value for specificity in case method 'max_se' is used
+
+    min_val_se : float in [0, 1]
+        minimum required value for sensitivity in case method 'max_sp' is used
+
+    min_val_se : float in [0, 1]
+        In case method = 'max_sp' this value must be set to specify the minimum
+        required value for the sensitivity
 
     Attributes
     ----------
     threshold : float
         Acquired optimal decision threshold for the positive class
     """
-    def __init__(self, base_estimator, pos_label):
+    def __init__(self, base_estimator, method, pos_label, min_val_sp,
+                 min_val_se):
         self.base_estimator = base_estimator
+        self.method = method
         self.pos_label = pos_label
+        self.min_val_sp = min_val_sp
+        self.min_val_se = min_val_se
         self.threshold = None
 
     def fit(self, X, y):
@@ -161,9 +205,17 @@ class _OptimalCutoffClassifier(object):
         """
         y_score = self.base_estimator.predict_proba(X)[:, self.pos_label]
         fpr, tpr, thresholds = roc_curve(y, y_score, self.pos_label)
-        self.threshold = thresholds[np.argmin(
-            euclidean_distances(np.column_stack((fpr, tpr)), [[0, 1]])
-        )]
+
+        if self.method == 'roc':
+            self.threshold = thresholds[np.argmin(
+                euclidean_distances(np.column_stack((fpr, tpr)), [[0, 1]])
+            )]
+        elif self.method == 'max_se':
+            indices = np.where(1 - fpr >= self.min_val_sp)
+            self.threshold = thresholds[indices[np.argmax(tpr[indices])]]
+        elif self.method == 'max_sp':
+            indices = np.where(tpr >= self.min_val_se)
+            self.threshold = thresholds[indices[np.argmax(1 - fpr[indices])]]
         return self
 
 
