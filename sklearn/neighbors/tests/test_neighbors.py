@@ -18,6 +18,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_warns_message
@@ -164,25 +165,27 @@ def test_precomputed(random_state=42):
 
 
 def test_precomputed_sparse():
-    dist = np.array([[1., 2., 0.], [5., .5, 0.], [1., 1., .5]])
+    # Ensures enough number of nearest neighbors
+    dist = np.array([[0., 2., 1.], [2., .5, 0.], [1., 0., 1.]])
     dist_csr = csr_matrix(dist)
     neigh = neighbors.NearestNeighbors(n_neighbors=1, metric="precomputed")
     neigh.fit(dist_csr)
     neigh.kneighbors(None, n_neighbors=1)
 
-    dist = np.array([[0., 0., 0.], [5., .5, 0.], [1., 1., .5]])
+    dist = np.array([[0., 2., 1.], [2., 0., 0.], [1., 0., 1.]])
     dist_csr = csr_matrix(dist)
     neigh.fit(dist_csr)
-    assert_raises(ValueError, neigh.kneighbors, None, n_neighbors=1)
+    assert_raises_regex(ValueError, "Not enough neighbors in"
+                        " .*nearest neighbors.*",neigh.kneighbors,
+                        None, n_neighbors=1)
 
-
-def test_precomputed_sparse_values():
-    X = np.array([[2., 1., 100.], [5., .5, 100.], [1., 2., .5]])
-    X_csr = csr_matrix(X)
-    neigh = neighbors.NearestNeighbors(n_neighbors=1, metric="precomputed")
-    neigh.fit(X)
+    # Tests consistency of csr matrix with zeros replaced by large values
+    dist = np.array([[0., 2., 1.], [2., .5, 0.], [1., 0., 1.]])
+    dist_csr = csr_matrix(dist)
+    dist_orig = np.array([[100., 2., 1.], [2., .5, 100.], [1., 100., 1.]])
+    neigh.fit(dist_orig)
     k_neighbors = neigh.kneighbors(None, n_neighbors=1)
-    neigh.fit(X_csr)
+    neigh.fit(dist_csr)
     k_neighbors_csr = neigh.kneighbors(None, n_neighbors=1)
     assert_array_equal(k_neighbors, k_neighbors_csr)
 

@@ -367,9 +367,8 @@ class KNeighborsMixin(object):
                                      "nearest neighbors".format(n_neighbors))
                 neigh_ind = np.zeros((dist.shape[0], n_neighbors))
                 for i in range(0, dist.shape[0]):
-                    row = dist.getrow(i)
                     neigh_ind[i][:n_neighbors] = \
-                        row.indices[np.argsort(row.data)][:n_neighbors]
+                        dist.indices[dist.indptr[i]:dist.indptr[i+1]][np.argsort(dist.data[dist.indptr[i]:dist.indptr[i+1]])][:n_neighbors]
             else:
                 neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
                 neigh_ind = neigh_ind[:, :n_neighbors]

@@ -652,16 +652,10 @@ class TSNE(BaseEstimator):
                                  "used with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
-            if sp.issparse(X):
-                if np.any(X.data < 0):
-                    raise ValueError("All distances should be positive, the "
-                                     "precomputed distances given as X is not "
-                                     "correct")
-            else:
-                if np.any(X < 0):
-                    raise ValueError("All distances should be positive, the "
-                                     "precomputed distances given as X is not "
-                                     "correct")
+            if X.min() < 0:
+                raise ValueError("All distances should be positive, the "
+                                 "precomputed distances given as X is not "
+                                 "correct")
         if self.method == 'barnes_hut' and self.n_components > 3:
             raise ValueError("'n_components' should be inferior to 4 for the "
                              "barnes_hut algorithm as it relies on "
@@ -716,8 +710,10 @@ class TSNE(BaseEstimator):
 
             if self.metric == "precomputed" and sp.issparse(X):
                 if np.any(getnnz(X, axis=1) < k):
-                    raise ValueError("Perplexity of the sparse matrix is high."
-                                     " Please reduce the perplexity.")
+                    raise ValueError("{} neighbors per sample are required for"
+                                     " current perplexity. Decrease perplexity,"
+                                     " or provide more precomputed distances per"
+                                     " sample".format(k))
 
             # Find the nearest neighbors for every point
             knn = NearestNeighbors(algorithm='auto', n_neighbors=k,

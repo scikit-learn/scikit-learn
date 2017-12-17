@@ -337,7 +337,8 @@ def test_high_perplexity_precomputed_sparse_distances():
     dist = np.array([[1., 0., 0.], [0., 1., 0.], [0., 0., 0.]])
     bad_dist = sp.csr_matrix(dist)
     tsne = TSNE(metric="precomputed")
-    assert_raises_regexp(ValueError, "Perplexity of the .*sparse.*",
+    assert_raises_regexp(ValueError, "2 neighbors per sample are "
+                         "required .*precomputed distance.*",
                          tsne.fit_transform, bad_dist)
 
 
