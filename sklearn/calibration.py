@@ -44,8 +44,8 @@ class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
         The classifier whose decision threshold will be adapted according to the
         acquired optimal cutoff point
 
-    pos_label : 0 or 1 (optional)
-        Label considered as positive
+    pos_label : object
+        Object representing the positive label
         (default value: 1)
 
     cv : int, cross-validation generator, iterable or "prefit" (optional)
@@ -75,13 +75,19 @@ class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
             Training data
 
         y : array-like, shape (n_samples,)
-            Target values
+            Target values. There must be two 2 distinct values.
 
         Returns
         -------
         self : object
             Instance of self.
         """
+        self.label_encoder = LabelEncoder().fit(y)
+        if len(self.label_encoder.classes_) != 2:
+            raise ValueError('Target must contain two distinct values')
+        y = self.label_encoder.transform(y)
+        self.pos_label = self.label_encoder.transform(self.pos_label)
+
         if self.cv == 'prefit':
             self.threshold = _OptimalCutoffClassifier(
                 self.base_estimator, self.pos_label
@@ -102,8 +108,10 @@ class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
-        return (self.base_estimator.predict_proba(X)[:, self.pos_label] >
-                self.threshold).astype(int)
+        return self.label_encoder.inverse_transform(
+            (self.base_estimator.predict_proba(X)[:, self.pos_label] >
+             self.threshold).astype(int)
+        )
 
 
 class _OptimalCutoffClassifier(object):
@@ -121,7 +129,7 @@ class _OptimalCutoffClassifier(object):
         The classifier whose decision threshold will be adapted according to the
         acquired optimal cutoff point
 
-    pos_label : 0 or 1
+    pos_label : object
         Label considered as positive during the roc_curve construction.
 
     Attributes
