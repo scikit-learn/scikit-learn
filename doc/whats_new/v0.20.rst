@@ -283,6 +283,18 @@ Cluster
   :class:`cluster.AgglomerativeClustering`. :issue:`9875` by :user:`Kumar Ashutosh
   <thechargedneutron>`.
 
+Misc
+
+- Changed warning type from UserWarning to ConvergenceWarning for failing
+  convergence in :func:`linear_model.logistic_regression_path`,
+  :class:`linear_model.RANSACRegressor`, :func:`linear_model.ridge_regression`,
+  :class:`gaussian_process.GaussianProcessRegressor`,
+  :class:`gaussian_process.GaussianProcessClassifier`,
+  :func:`decomposition.fastica`, :class:`cross_decomposition.PLSCanonical`,
+  :class:`cluster.AffinityPropagation`, and :class:`cluster.Birch`.
+  :issue:`#10306` by :user:`Jonathan Siebert <jotasi>`.
+
+
 Changes to estimator checks
 ---------------------------
 
