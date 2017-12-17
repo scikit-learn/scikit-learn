@@ -843,7 +843,8 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
                           'predict_proba': 0}
         predictions_for_all_classes = np.full((_num_samples(predictions),
                                                n_classes),
-                                              default_values[method])
+                                              default_values[method],
+                                              dtype=predictions.dtype)
         predictions_for_all_classes[:, classes] = predictions
         predictions = predictions_for_all_classes
     return predictions
