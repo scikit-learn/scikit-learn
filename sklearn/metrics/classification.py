@@ -1063,7 +1063,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
         # All labels are index integers for multilabel.
         # Select labels:
-        if not np.all(labels == present_labels):
+        if not np.all(labels == present_labels) & n_labels < len(labels):
             if np.max(labels) > np.max(present_labels):
                 raise ValueError('All labels must be in [0, n labels). '
                                  'Got %d > %d' %
@@ -1072,7 +1072,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 raise ValueError('All labels must be in [0, n labels). '
                                  'Got %d < 0' % np.min(labels))
 
-            y_true = y_true[:, labels[:n_labels]]
+            y_true = y_true[:, :n_labels]
             y_pred = y_pred[:, labels[:n_labels]]
 
         # calculate weighted counts
