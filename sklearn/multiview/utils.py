@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Utilities to be used in this package.
 
 There are mainly four functions to help other classes:
