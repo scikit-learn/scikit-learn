@@ -959,6 +959,10 @@ def test_jaccard_similarity_score():
             "another average setting.")
     assert_raise_message(ValueError, msg2, jaccard_similarity_score, y_true,
                          y_pred, average='binary')
+    msg3 = ("Sample-based jaccard similarity score is not meaningful outside "
+            "multilabel classification. See the accuracy_score instead.")
+    assert_raise_message(ValueError, msg3, jaccard_similarity_score, y_true,
+                         y_pred, average='samples')
 
     assert_warns_message(UserWarning,
                         "Note that pos_label (set to 3) is ignored when "

@@ -553,6 +553,10 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                 score = pred_and_true / pred_or_true
                 score = _weighted_sum(score, sample_weight, normalize=True)
                 return score
+    elif average == 'samples':
+        raise ValueError("Sample-based jaccard similarity score is "
+                         "not meaningful outside multilabel "
+                         "classification. See the accuracy_score instead.")
     else:
         C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
         if average == 'macro':
