@@ -16,12 +16,14 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_warns_message
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.utils.testing import assert_raises_regex
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_warns
 from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score
@@ -379,6 +381,28 @@ def test_cross_validate():
 
         yield check_cross_validate_single_metric, est, X, y, scores
         yield check_cross_validate_multi_metric, est, X, y, scores
+
+
+def test_cross_validate_return_train_score_warn():
+    # Test that warnings are raised. Will be removed in 0.21
+
+    X, y = make_classification(random_state=0)
+    estimator = MockClassifier()
+
+    result = {}
+    for val in [False, True, 'warn']:
+        result[val] = assert_no_warnings(cross_validate, estimator, X, y,
+                                         return_train_score=val)
+
+    msg = (
+        'You are accessing a training score ({!r}), '
+        'which will not be available by default '
+        'any more in 0.21. If you need training scores, '
+        'please set return_train_score=True').format('train_score')
+    train_score = assert_warns_message(FutureWarning, msg,
+                                       result['warn'].get, 'train_score')
+    assert np.allclose(train_score, result[True]['train_score'])
+    assert 'train_score' not in result[False]
 
 
 def check_cross_validate_single_metric(clf, X, y, scores):
@@ -778,9 +802,18 @@ def test_cross_val_predict():
 
     assert_raises(ValueError, cross_val_predict, est, X, y, cv=BadCV())
 
+    X, y = load_iris(return_X_y=True)
+
+    warning_message = ('Number of classes in training fold (2) does '
+                       'not match total number of classes (3). '
+                       'Results may not be appropriate for your use case.')
+    assert_warns_message(RuntimeWarning, warning_message,
+                         cross_val_predict, LogisticRegression(),
+                         X, y, method='predict_proba', cv=KFold(2))
+
 
 def test_cross_val_predict_decision_function_shape():
-    X, y = make_classification(n_classes=2, n_samples=50)
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     preds = cross_val_predict(LogisticRegression(), X, y,
                               method='decision_function')
@@ -798,9 +831,14 @@ def test_cross_val_predict_decision_function_shape():
     # class.
     X = X[:100]
     y = y[:100]
-    preds = cross_val_predict(RidgeClassifier(), X, y,
-                              method='decision_function', cv=KFold(2))
-    assert_equal(preds.shape, (100,))
+    assert_raise_message(ValueError,
+                         'Only 1 class/es in training fold, this'
+                         ' is not supported for decision_function'
+                         ' with imbalanced folds. To fix '
+                         'this, use a cross-validation technique '
+                         'resulting in properly stratified folds',
+                         cross_val_predict, RidgeClassifier(), X, y,
+                         method='decision_function', cv=KFold(2))
 
     X, y = load_digits(return_X_y=True)
     est = SVC(kernel='linear', decision_function_shape='ovo')
@@ -810,9 +848,18 @@ def test_cross_val_predict_decision_function_shape():
                               method='decision_function')
     assert_equal(preds.shape, (1797, 45))
 
+    ind = np.argsort(y)
+    X, y = X[ind], y[ind]
+    assert_raises_regex(ValueError,
+                        'Output shape \(599L?, 21L?\) of decision_function '
+                        'does not match number of classes \(7\) in fold. '
+                        'Irregular decision_function .*',
+                        cross_val_predict, est, X, y,
+                        cv=KFold(n_splits=3), method='decision_function')
+
 
 def test_cross_val_predict_predict_proba_shape():
-    X, y = make_classification(n_classes=2, n_samples=50)
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
     preds = cross_val_predict(LogisticRegression(), X, y,
                               method='predict_proba')
@@ -822,6 +869,20 @@ def test_cross_val_predict_predict_proba_shape():
 
     preds = cross_val_predict(LogisticRegression(), X, y,
                               method='predict_proba')
+    assert_equal(preds.shape, (150, 3))
+
+
+def test_cross_val_predict_predict_log_proba_shape():
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_log_proba')
+    assert_equal(preds.shape, (50, 2))
+
+    X, y = load_iris(return_X_y=True)
+
+    preds = cross_val_predict(LogisticRegression(), X, y,
+                              method='predict_log_proba')
     assert_equal(preds.shape, (150, 3))
 
 
@@ -1224,7 +1285,13 @@ def check_cross_val_predict_with_method_multiclass(est, X, y, method):
     cv = KFold(n_splits=3, shuffle=False)
 
     # Generate expected outputs
-    expected_predictions = np.zeros((len(X), len(set(y))))
+    float_min = np.finfo(np.float64).min
+    default_values = {'decision_function': float_min,
+                      'predict_log_proba': float_min,
+                      'predict_proba': 0}
+    expected_predictions = np.full((len(X), len(set(y))),
+                                   default_values[method],
+                                   dtype=np.float64)
     _, y_enc = np.unique(y, return_inverse=True)
     for train, test in cv.split(X, y_enc):
         est = clone(est).fit(X[train], y_enc[train])
@@ -1246,6 +1313,10 @@ def check_cross_val_predict_with_method_multilabel(est, X, y, method):
     cv = KFold(n_splits=3, shuffle=False)
 
     # Create empty arrays of the correct size to hold outputs
+    float_min = np.finfo(np.float64).min
+    default_values = {'decision_function': float_min,
+                      'predict_log_proba': float_min,
+                      'predict_proba': 0}
     n_targets = y.shape[1]
     expected_preds = []
     for i_col in range(n_targets):
@@ -1254,7 +1325,8 @@ def check_cross_val_predict_with_method_multilabel(est, X, y, method):
             exp_shape = (len(X),)
         else:
             exp_shape = (len(X), n_classes_in_label)
-        expected_preds.append(np.zeros(exp_shape))
+        expected_preds.append(np.full(exp_shape, default_values[method],
+                                      dtype=np.float64))
 
     # Generate expected outputs
     y_enc_cols = [np.unique(y[:, i], return_inverse=True)[1][:, np.newaxis]
@@ -1268,10 +1340,6 @@ def check_cross_val_predict_with_method_multilabel(est, X, y, method):
             if expected_preds[i_col].ndim == 1:
                 # Decision function with <=2 classes
                 expected_preds[i_col][test] = fold_preds[i_col]
-            elif method == 'decision_function' and len(fold_cols) == 2:
-                # Decision function, > 2 classes in full data, but <=2 classes
-                # in this CV fold's test set
-                expected_preds[i_col][test, fold_cols[-1]] = fold_preds[i_col]
             else:
                 idx = np.ix_(test, fold_cols)
                 expected_preds[i_col][idx] = fold_preds[i_col]
@@ -1399,7 +1467,7 @@ def test_cross_val_predict_with_method_multilabel_rf_rare_class():
     rng = np.random.RandomState(0)
     X = rng.normal(0, 1, size=(5, 10))
     y = np.array([[0, 0], [1, 1], [2, 1], [0, 1], [1, 0]])
-    for method in ['predict_proba', 'predict_log_proba', 'decision_function']:
+    for method in ['predict_proba', 'predict_log_proba']:
         est = RFWithDecisionFunction(n_estimators=5, random_state=0)
         with warnings.catch_warnings():
             # Suppress "RuntimeWarning: divide by zero encountered in log"
@@ -1417,11 +1485,12 @@ def get_expected_predictions(X, y, cv, classes, est, method):
         est.fit(X[train], y[train])
         expected_predictions_ = func(X[test])
         # To avoid 2 dimensional indexing
-        exp_pred_test = np.zeros((len(test), classes))
-        if method is 'decision_function' and len(est.classes_) == 2:
-            exp_pred_test[:, est.classes_[-1]] = expected_predictions_
+        if method is 'predict_proba':
+            exp_pred_test = np.zeros((len(test), classes))
         else:
-            exp_pred_test[:, est.classes_] = expected_predictions_
+            exp_pred_test = np.full((len(test), classes),
+                                    np.finfo(expected_predictions.dtype).min)
+        exp_pred_test[:, est.classes_] = expected_predictions_
         expected_predictions[test] = exp_pred_test
 
     return expected_predictions
@@ -1429,9 +1498,9 @@ def get_expected_predictions(X, y, cv, classes, est, method):
 
 def test_cross_val_predict_class_subset():
 
-    X = np.arange(8).reshape(4, 2)
-    y = np.array([0, 0, 1, 2])
-    classes = 3
+    X = np.arange(200).reshape(100, 2)
+    y = np.array([x//10 for x in range(100)])
+    classes = 10
 
     kfold3 = KFold(n_splits=3)
     kfold4 = KFold(n_splits=4)
@@ -1459,7 +1528,7 @@ def test_cross_val_predict_class_subset():
         assert_array_almost_equal(expected_predictions, predictions)
 
         # Testing unordered labels
-        y = [1, 1, -4, 6]
+        y = shuffle(np.repeat(range(10), 10), random_state=0)
         predictions = cross_val_predict(est, X, y, method=method,
                                         cv=kfold3)
         y = le.fit_transform(y)

@@ -11,7 +11,7 @@ from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
 from sklearn.gaussian_process import correlation_models as correlation
 from sklearn.datasets import make_regression
-from sklearn.utils.testing import assert_greater, assert_true, raises
+from sklearn.utils.testing import assert_greater, assert_true, assert_raises
 
 
 f = lambda x: x * np.sin(x)
@@ -95,10 +95,9 @@ def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
 
 
-@raises(ValueError)
 def test_wrong_number_of_outputs():
     gp = GaussianProcess()
-    gp.fit([[1, 2, 3], [4, 5, 6]], [1, 2, 3])
+    assert_raises(ValueError, gp.fit, [[1, 2, 3], [4, 5, 6]], [1, 2, 3])
 
 
 def test_more_builtin_correlation_models(random_start=1):

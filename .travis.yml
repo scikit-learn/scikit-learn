@@ -22,43 +22,41 @@ matrix:
   include:
     # This environment tests that scikit-learn can be built against
     # versions of numpy, scipy with ATLAS that comes with Ubuntu Trusty 14.04
-    - env: DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.4"
+    # i.e. numpy 1.8.2 and scipy 0.13.3
+    - env: DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.5"
            COVERAGE=true
+      if: type != cron
       addons:
         apt:
           packages:
             # these only required by the DISTRIB="ubuntu" builds:
             - python-scipy
-            - libatlas3gf-base
+            - libatlas3-base
             - libatlas-dev
-    # This environment tests the oldest supported anaconda env
-    - env: DISTRIB="conda" PYTHON_VERSION="2.7" INSTALL_MKL="false"
-           NUMPY_VERSION="1.8.2" SCIPY_VERSION="0.13.3" CYTHON_VERSION="0.23.5"
+    # Python 3.4 build
+    - env: DISTRIB="conda" PYTHON_VERSION="3.4" INSTALL_MKL="false"
+           NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.16.1" CYTHON_VERSION="0.25.2"
            COVERAGE=true
-    # This environment tests the newest supported Anaconda release (4.4.0)
+      if: type != cron
+    # This environment tests the newest supported Anaconda release (5.0.0)
     # It also runs tests requiring Pandas.
-    - env: DISTRIB="conda" PYTHON_VERSION="3.6.1" INSTALL_MKL="true"
-           NUMPY_VERSION="1.12.1" SCIPY_VERSION="0.19.0" PANDAS_VERSION="0.20.1"
-           CYTHON_VERSION="0.25.2" COVERAGE=true
-    # This environment use pytest to run the tests. It uses the newest
-    # supported Anaconda release (4.4.0). It also runs tests requiring Pandas.
-    - env: USE_PYTEST="true" DISTRIB="conda" PYTHON_VERSION="3.6.1"
-           INSTALL_MKL="true" NUMPY_VERSION="1.12.1" SCIPY_VERSION="0.19.0"
-           PANDAS_VERSION="0.20.1" CYTHON_VERSION="0.25.2"
-           TEST_DOCSTRINGS="true"
+    - env: DISTRIB="conda" PYTHON_VERSION="3.6.2" INSTALL_MKL="true"
+           NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1" PANDAS_VERSION="0.20.3"
+           CYTHON_VERSION="0.26.1" COVERAGE=true
+           CHECK_PYTEST_SOFT_DEPENDENCY="true"
+      if: type != cron
     # flake8 linting on diff wrt common ancestor with upstream/master
     - env: RUN_FLAKE8="true" SKIP_TESTS="true"
            DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-           NUMPY_VERSION="1.12.1" SCIPY_VERSION="0.19.0" CYTHON_VERSION="0.23.5"
+           NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
+           CYTHON_VERSION="0.26.1"
+      if: type != cron
     # This environment tests scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
-    -  python: 3.5
+    -  python: 3.6
        env: DISTRIB="scipy-dev-wheels"
-  allow_failures:
-    # allow_failures seems to be keyed on the python version
-    # We are using this to allow failures for DISTRIB=scipy-dev-wheels
-    - python: 3.5
+       if: type = cron
 
 install: source build_tools/travis/install.sh
 script: bash build_tools/travis/test_script.sh

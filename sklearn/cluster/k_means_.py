@@ -31,7 +31,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.six import string_types
-
+from ..exceptions import ConvergenceWarning
 from . import _k_means
 from ._k_means_elkan import k_means_elkan
 
@@ -374,6 +374,13 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances='auto',
             X += X_mean
         best_centers += X_mean
 
+    distinct_clusters = len(set(best_labels))
+    if distinct_clusters < n_clusters:
+        warnings.warn("Number of distinct clusters ({}) found smaller than "
+                      "n_clusters ({}). Possibly due to duplicate points "
+                      "in X.".format(distinct_clusters, n_clusters),
+                      ConvergenceWarning, stacklevel=2)
+
     if return_n_iter:
         return best_centers, best_labels, best_inertia, best_n_iter
     else:
@@ -551,7 +558,7 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
         Indices of clusters that samples are assigned to.
 
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     """
     n_samples = X.shape[0]
@@ -602,7 +609,7 @@ def _labels_inertia(X, x_squared_norms, centers,
         The resulting assignment
 
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
     """
     n_samples = X.shape[0]
     # set the default value of centers to -1 to be able to detect any anomaly
@@ -792,7 +799,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Labels of each point
 
     inertia_ : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     Examples
     --------
@@ -879,6 +886,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Training instances to cluster.
+
+        y : Ignored
+
         """
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
@@ -904,6 +914,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to transform.
 
+        u : Ignored
+
         Returns
         -------
         labels : array, shape [n_samples,]
@@ -920,6 +932,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to transform.
+
+        y : Ignored
 
         Returns
         -------
@@ -990,6 +1004,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data.
 
+        y : Ignored
+
         Returns
         -------
         score : float
@@ -1059,7 +1075,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     Returns
     -------
     inertia : float
-        Sum of distances of samples to their closest cluster center.
+        Sum of squared distances of samples to their closest cluster center.
 
     squared_diff : numpy array, shape (n_clusters,)
         Squared distances between previous and updated cluster centers.
@@ -1336,6 +1352,9 @@ class MiniBatchKMeans(KMeans):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
             Training instances to cluster.
+
+        y : Ignored
+
         """
         random_state = check_random_state(self.random_state)
         X = check_array(X, accept_sparse="csr", order='C',
@@ -1498,6 +1517,9 @@ class MiniBatchKMeans(KMeans):
         ----------
         X : array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster.
+
+        y : Ignored
+
         """
 
         X = check_array(X, accept_sparse="csr")

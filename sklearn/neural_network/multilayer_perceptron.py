@@ -51,7 +51,8 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                  alpha, batch_size, learning_rate, learning_rate_init, power_t,
                  max_iter, loss, shuffle, random_state, tol, verbose,
                  warm_start, momentum, nesterovs_momentum, early_stopping,
-                 validation_fraction, beta_1, beta_2, epsilon):
+                 validation_fraction, beta_1, beta_2, epsilon,
+                 n_iter_no_change):
         self.activation = activation
         self.solver = solver
         self.alpha = alpha
@@ -74,6 +75,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.beta_1 = beta_1
         self.beta_2 = beta_2
         self.epsilon = epsilon
+        self.n_iter_no_change = n_iter_no_change
 
     def _unpack(self, packed_parameters):
         """Extract the coefficients and intercepts from packed_parameters."""
@@ -415,6 +417,9 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                              self.beta_2)
         if self.epsilon <= 0.0:
             raise ValueError("epsilon must be > 0, got %s." % self.epsilon)
+        if self.n_iter_no_change <= 0:
+            raise ValueError("n_iter_no_change must be > 0, got %s."
+                             % self.n_iter_no_change)
 
         # raise ValueError if not registered
         supported_activations = ('identity', 'logistic', 'tanh', 'relu')
@@ -537,15 +542,17 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
                 # for learning rate that needs to be updated at iteration end
                 self._optimizer.iteration_ends(self.t_)
 
-                if self._no_improvement_count > 2:
-                    # not better than last two iterations by tol.
+                if self._no_improvement_count > self.n_iter_no_change:
+                    # not better than last `n_iter_no_change` iterations by tol
                     # stop or decrease learning rate
                     if early_stopping:
                         msg = ("Validation score did not improve more than "
-                               "tol=%f for two consecutive epochs." % self.tol)
+                               "tol=%f for %d consecutive epochs." % (
+                                   self.tol, self.n_iter_no_change))
                     else:
                         msg = ("Training loss did not improve more than tol=%f"
-                               " for two consecutive epochs." % self.tol)
+                               " for %d consecutive epochs." % (
+                                   self.tol, self.n_iter_no_change))
 
                     is_stopping = self._optimizer.trigger_stopping(
                         msg, self.verbose)
@@ -780,9 +787,9 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     tol : float, optional, default 1e-4
         Tolerance for the optimization. When the loss or score is not improving
-        by at least tol for two consecutive iterations, unless `learning_rate`
-        is set to 'adaptive', convergence is considered to be reached and
-        training stops.
+        by at least ``tol`` for ``n_iter_no_change`` consecutive iterations,
+        unless ``learning_rate`` is set to 'adaptive', convergence is
+        considered to be reached and training stops.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
@@ -804,8 +811,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least tol for two consecutive
-        epochs.
+        validation score is not improving by at least tol for
+        ``n_iter_no_change`` consecutive epochs.
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, optional, default 0.1
@@ -823,6 +830,12 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
 
     epsilon : float, optional, default 1e-8
         Value for numerical stability in adam. Only used when solver='adam'
+
+    n_iter_no_change : int, optional, default 10
+        Maximum number of epochs to not meet ``tol`` improvement.
+        Only effective when solver='sgd' or 'adam'
+
+        .. versionadded:: 0.20
 
     Attributes
     ----------
@@ -890,7 +903,7 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8):
+                 epsilon=1e-8, n_iter_no_change=10):
 
         sup = super(MLPClassifier, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -903,7 +916,8 @@ class MLPClassifier(BaseMultilayerPerceptron, ClassifierMixin):
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
-                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon)
+                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
+                     n_iter_no_change=n_iter_no_change)
 
     def _validate_input(self, X, y, incremental):
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
@@ -1157,9 +1171,9 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     tol : float, optional, default 1e-4
         Tolerance for the optimization. When the loss or score is not improving
-        by at least tol for two consecutive iterations, unless `learning_rate`
-        is set to 'adaptive', convergence is considered to be reached and
-        training stops.
+        by at least ``tol`` for ``n_iter_no_change`` consecutive iterations,
+        unless ``learning_rate`` is set to 'adaptive', convergence is
+        considered to be reached and training stops.
 
     verbose : bool, optional, default False
         Whether to print progress messages to stdout.
@@ -1181,8 +1195,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
         Whether to use early stopping to terminate training when validation
         score is not improving. If set to true, it will automatically set
         aside 10% of training data as validation and terminate training when
-        validation score is not improving by at least tol for two consecutive
-        epochs.
+        validation score is not improving by at least ``tol`` for
+        ``n_iter_no_change`` consecutive epochs.
         Only effective when solver='sgd' or 'adam'
 
     validation_fraction : float, optional, default 0.1
@@ -1200,6 +1214,12 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
 
     epsilon : float, optional, default 1e-8
         Value for numerical stability in adam. Only used when solver='adam'
+
+    n_iter_no_change : int, optional, default 10
+        Maximum number of epochs to not meet ``tol`` improvement.
+        Only effective when solver='sgd' or 'adam'
+
+        .. versionadded:: 0.20
 
     Attributes
     ----------
@@ -1265,7 +1285,7 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                  verbose=False, warm_start=False, momentum=0.9,
                  nesterovs_momentum=True, early_stopping=False,
                  validation_fraction=0.1, beta_1=0.9, beta_2=0.999,
-                 epsilon=1e-8):
+                 epsilon=1e-8, n_iter_no_change=10):
 
         sup = super(MLPRegressor, self)
         sup.__init__(hidden_layer_sizes=hidden_layer_sizes,
@@ -1278,7 +1298,8 @@ class MLPRegressor(BaseMultilayerPerceptron, RegressorMixin):
                      nesterovs_momentum=nesterovs_momentum,
                      early_stopping=early_stopping,
                      validation_fraction=validation_fraction,
-                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon)
+                     beta_1=beta_1, beta_2=beta_2, epsilon=epsilon,
+                     n_iter_no_change=n_iter_no_change)
 
     def predict(self, X):
         """Predict using the multi-layer perceptron model.
