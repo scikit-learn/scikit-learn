@@ -141,9 +141,9 @@ else:
                'isotonic', 'kernel_approximation', 'kernel_ridge',
                'learning_curve', 'linear_model', 'manifold', 'metrics',
                'mixture', 'model_selection', 'multiclass', 'multioutput',
-               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
-               'preprocessing', 'random_projection', 'semi_supervised',
-               'svm', 'tree', 'discriminant_analysis',
+               'multiview', 'naive_bayes', 'neighbors', 'neural_network',
+               'pipeline', 'preprocessing', 'random_projection',
+               'semi_supervised', 'svm', 'tree', 'discriminant_analysis',
                # Non-modules:
                'clone']
 

@@ -16,3 +16,4 @@ Unsupervised learning
     modules/outlier_detection
     modules/density
     modules/neural_networks_unsupervised
+    modules/multiview
