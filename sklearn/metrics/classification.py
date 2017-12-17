@@ -559,9 +559,10 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             score = C.diagonal() / den
             return np.average(score)
         elif average == 'micro':
-            den = 2*np.sum(C) - np.sum(C.diagonal())
-            score = np.sum(C.diagonal())
-            return score / den
+            # micro-average on all labels is not useful in the
+            # multiclass case. It is identical to accuracy.
+            score = y_true == y_pred
+            return _weighted_sum(score, sample_weight, normalize)
         elif average == 'weighted':
             # computation similar to average='macro', apart from computation
             # of sample_weight below
