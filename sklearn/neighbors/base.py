@@ -359,11 +359,22 @@ class KNeighborsMixin(object):
                     X, self._fit_X, self.effective_metric_, n_jobs=n_jobs,
                     **self.effective_metric_params_)
 
-            neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
-            neigh_ind = neigh_ind[:, :n_neighbors]
-            # argpartition doesn't guarantee sorted order, so we sort again
-            neigh_ind = neigh_ind[
-                sample_range, np.argsort(dist[sample_range, neigh_ind])]
+            if issparse(dist):
+                if np.any(getnnz(dist, axis=1) < n_neighbors):
+                    raise ValueError("Not enough neighbors in sparse"
+                                     "precomputed matrix to get {n_neighbors} "
+                                     "nearest neighbors")
+                neigh_ind = np.zeros((dist.shape[0], n_neighbors))
+                for i in range(0, dist.shape[0]):
+                    row = dist.getrow(i)
+                    neigh_ind[i][:n_neighbors] = \
+                        row.indices[np.argsort(row.data)][:n_neighbors]
+            else:
+                neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
+                neigh_ind = neigh_ind[:, :n_neighbors]
+                # argpartition doesn't guarantee sorted order, so we sort again
+                neigh_ind = neigh_ind[
+                    sample_range, np.argsort(dist[sample_range, neigh_ind])]
 
             if return_distance:
                 if self.effective_metric_ == 'euclidean':
