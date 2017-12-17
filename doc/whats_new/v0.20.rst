@@ -130,6 +130,10 @@ Model evaluation and meta-estimators
   group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
   and `Andreas Müller`_.
 
+- Added ability for :func:`model_selection.cross_val_predict` to handle multi-label		
+  (and multioutput-multiclass) targets with ``predict_proba``-type methods.		
+  :issue:`8773` by :user:`Stephen Hoover <stephen-hoover>`.
+
 Metrics
 
 - :func:`metrics.roc_auc_score` now supports binary ``y_true`` other than
