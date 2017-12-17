@@ -163,6 +163,30 @@ def test_precomputed(random_state=42):
         assert_array_almost_equal(pred_X, pred_D)
 
 
+def test_precomputed_sparse():
+    dist = np.array([[1., 2., 0.], [5., .5, 0.], [1., 1., .5]])
+    dist_csr = csr_matrix(dist)
+    neigh = NearestNeighbors(n_neighbors=1, metric="precomputed")
+    neigh.fit(dist_csr)
+    neigh.kneighbors(None, n_neighbors=1)
+
+    dist = np.array([[0., 0., 0.], [5., .5, 0.], [1., 1., .5]])
+    dist_csr = csr_matrix(dist)
+    neigh.fit(dist_csr)
+    assert_raises(ValueError, neigh.kneighbors, None, n_neighbors=1)
+
+
+def test_precomputed_sparse_values():
+    X = np.array([[2., 1., 100.], [5., .5, 100.], [1., 2., .5]])
+    X_csr = csr_matrix(X)
+    neigh = NearestNeighbors(n_neighbors=1, metric="precomputed")
+    neigh.fit(X)
+    neighbors = neigh.kneighbors(None, n_neighbors=1)
+    neigh.fit(X_csr)
+    neighbors_csr = neigh.kneighbors(None, n_neighbors=1)
+    assert_array_equal(neighbors, neighbors_csr)
+
+
 def test_precomputed_cross_validation():
     # Ensure array is split correctly
     rng = np.random.RandomState(0)
