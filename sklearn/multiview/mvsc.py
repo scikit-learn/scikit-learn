@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Multiview Spectral Clustering.
 
 It provides a function which produces
