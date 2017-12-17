@@ -30,22 +30,22 @@ from .metrics.pairwise import euclidean_distances
 from .metrics.ranking import roc_curve
 
 
-class CalibratedThresholdClassifier(BaseEstimator, ClassifierMixin):
-    """Decision threshold calibration for binary classification using the
-    point on the roc curve that is closest to the ideal corner.
+class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
+    """Optimal cutoff point selection.
 
     If cv="prefit" the base estimator is assumed to be fitted and all data will
-    be used for the calibration of the decision threshold that determines the
+    be used for the selection of the cutoff point that determines the
     output of predict. Otherwise predict will use the average of the thresholds
-    of the calibrated classifiers resulting from the cross-validation loop.
+    resulting from the cross-validation loop.
 
     Parameters
     ----------
     base_estimator : instance BaseEstimator
-        The classifier whose prediction threshold will be calibrated
+        The classifier whose decision threshold will be adapted according to the
+        acquired optimal cutoff point
 
     pos_label : 0 or 1 (optional)
-        Label considered as positive.
+        Label considered as positive
         (default value: 1)
 
     cv : int, cross-validation generator, iterable or "prefit" (optional)
@@ -56,15 +56,15 @@ class CalibratedThresholdClassifier(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    calibrated_threshold : float
-        Decision threshold for the positive class that determines the output
-        of predict
+    threshold : float
+        Decision threshold for the positive class. Determines the output of
+        predict
     """
     def __init__(self, base_estimator=None, pos_label=1, cv=3):
         self.base_estimator = base_estimator
         self.pos_label = pos_label
         self.cv = cv
-        self.calibrated_threshold = None
+        self.threshold = None
 
     def fit(self, X, y):
         """Fit model
@@ -72,10 +72,10 @@ class CalibratedThresholdClassifier(BaseEstimator, ClassifierMixin):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data.
+            Training data
 
         y : array-like, shape (n_samples,)
-            Target values.
+            Target values
 
         Returns
         -------
@@ -83,41 +83,43 @@ class CalibratedThresholdClassifier(BaseEstimator, ClassifierMixin):
             Instance of self.
         """
         if self.cv == 'prefit':
-            self.calibrated_threshold = _CalibratedThresholdClassifier(
+            self.threshold = _OptimalCutoffClassifier(
                 self.base_estimator, self.pos_label
             ).fit(X, y).threshold
         else:
             cv = check_cv(self.cv, y, classifier=True)
-            calibrated_thresholds = []
+            thresholds = []
 
             for train, test in cv.split(X, y):
                 estimator = clone(self.base_estimator).fit(X[train], y[train])
-                calibrated_thresholds.append(_CalibratedThresholdClassifier(
+                thresholds.append(_OptimalCutoffClassifier(
                         estimator, self.pos_label
                     ).fit(X[test], y[test]).threshold
-                )
-            self.calibrated_threshold = sum(calibrated_thresholds) /\
-                len(calibrated_thresholds)
+                                             )
+            self.threshold = sum(thresholds) / \
+                             len(thresholds)
             self.base_estimator.fit(X, y)
         return self
 
     def predict(self, X):
         return (self.base_estimator.predict_proba(X)[:, self.pos_label] >
-                self.calibrated_threshold).astype(int)
+                self.threshold).astype(int)
 
 
-class _CalibratedThresholdClassifier(object):
-    """Decision threshold calibration using the optimal point of the roc curve
+class _OptimalCutoffClassifier(object):
+    """Optimal cutoff point selection based on diagnostic test accuracy
+    measures (Sensitivity / Specificity).
 
-    It assumes that base_estimator has already been fit, and trains the
-    calibration on the input set of the fit function. Note that this class
-    should not be used as an estimator directly. Use CalibratedClassifierCV
-    with cv="prefit" instead.
+    It assumes that base_estimator has already been fit, and uses the input set
+    of the fit function to select an optimal cutoff point. Note that this
+    class should not be used as an estimator directly. Use the
+    OptimalCutoffClassifier with cv="prefit" instead.
 
     Parameters
     ----------
     base_estimator : instance BaseEstimator
-        The classifier whose prediction threshold will be calibrated
+        The classifier whose decision threshold will be adapted according to the
+        acquired optimal cutoff point
 
     pos_label : 0 or 1
         Label considered as positive during the roc_curve construction.
@@ -125,7 +127,7 @@ class _CalibratedThresholdClassifier(object):
     Attributes
     ----------
     threshold : float
-        Calibrated decision threshold for the positive class
+        Acquired optimal decision threshold for the positive class
     """
     def __init__(self, base_estimator, pos_label):
         self.base_estimator = base_estimator
@@ -133,8 +135,8 @@ class _CalibratedThresholdClassifier(object):
         self.threshold = None
 
     def fit(self, X, y):
-        """Calibrate the decision threshold for the fitted model's positive
-        class
+        """Select a decision threshold based on an optimal cutoff point for the
+        fitted model's positive class
 
         Parameters
         ----------
