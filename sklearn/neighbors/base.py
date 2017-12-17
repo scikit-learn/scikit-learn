@@ -18,6 +18,7 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_X_y, check_array, _get_n_jobs, gen_even_slices
+from ..utils.fixes import getnnz
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..externals import six
