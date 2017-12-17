@@ -1373,7 +1373,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         missing_values = kwds.get("missing_values") if kwds.get(
             "missing_values") is not None else np.nan
 
-        if np.all(_get_mask(X, missing_values)):
+        if np.all(_get_mask(X.data if issparse(X) else X, missing_values)):
             raise ValueError(
                 "One or more samples(s) only have missing values.")
 
