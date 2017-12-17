@@ -332,6 +332,15 @@ def test_non_positive_precomputed_csr_distances():
                          tsne.fit_transform, bad_dist)
 
 
+def test_high_perplexity_precomputed_sparse_distances():
+    # Perplexity should be less than 50
+    dist = np.array([[1., 0., 0.], [0., 1., 0.], [0., 0., 0.]])
+    bad_dist = sp.csr_matrix(dist)
+    tsne = TSNE(metric="precomputed")
+    assert_raises_regexp(ValueError, "Perplexity of the .*sparse.*",
+                         tsne.fit_transform, bad_dist)
+
+
 def test_non_positive_computed_distances():
     # Computed distance matrices must be positive.
     def metric(x, y):
