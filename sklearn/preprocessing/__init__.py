@@ -21,8 +21,10 @@ from .data import robust_scale
 from .data import maxabs_scale
 from .data import minmax_scale
 from .data import quantile_transform
+from .data import power_transform
 from .data import OneHotEncoder
-
+from .data import PowerTransformer
+from .data import CategoricalEncoder
 from .data import PolynomialFeatures
 
 from .label import label_binarize
@@ -30,6 +32,7 @@ from .label import LabelBinarizer
 from .label import LabelEncoder
 from .label import MultiLabelBinarizer
 
+from ._target import TransformedTargetRegressor
 from .imputation import Imputer
 
 
@@ -46,8 +49,11 @@ __all__ = [
     'QuantileTransformer',
     'Normalizer',
     'OneHotEncoder',
+    'CategoricalEncoder',
+    'PowerTransformer',
     'RobustScaler',
     'StandardScaler',
+    'TransformedTargetRegressor',
     'add_dummy_feature',
     'PolynomialFeatures',
     'binarize',
@@ -58,4 +64,5 @@ __all__ = [
     'minmax_scale',
     'label_binarize',
     'quantile_transform',
+    'power_transform',
 ]

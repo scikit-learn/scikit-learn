@@ -62,7 +62,7 @@ categories = [
     'talk.religion.misc',
 ]
 # Uncomment the following line to use a larger set (11k+ documents)
-#categories = None
+# categories = None
 
 print(__doc__)
 print("Usage: %s [n_features_for_hashing]" % sys.argv[0])
