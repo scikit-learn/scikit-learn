@@ -391,8 +391,8 @@ class KNNImputer(BaseEstimator, TransformerMixin):
     ----------
     missing_values : integer or "NaN", optional (default = "NaN")
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed. For missing values encoded as np.nan,
-        use the string value "NaN".
+        `missing_values` will be imputed. For missing values encoded as
+        ``np.nan``, use the string value "NaN".
 
     max_neighbors : int, optional (default = 5)
         Maximum number of neighboring samples to use for imputation. When any
@@ -426,9 +426,9 @@ class KNNImputer(BaseEstimator, TransformerMixin):
     row_max_missing : float, optional (default = 0.5)
         The maximum percentage of columns (i.e. features) that can be missing
         before the sample is excluded from nearest neighbor imputation. It
-        means that such rows will not be considered a potential donor in fit(),
-        and in transform() their missing feature values will be imputed to be
-        the column mean for the entire dataset.
+        means that such rows will not be considered a potential donor in
+        ``fit()``, and in ``transform()`` their missing feature values will be
+        imputed to be the column mean for the entire dataset.
 
     col_max_missing : float, optional (default = 0.8)
         The maximum percentage of rows (or samples) that can be missing

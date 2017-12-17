@@ -288,10 +288,8 @@ def masked_euclidean_distances(X, Y=None, squared=False,
                                missing_values="NaN", copy=True):
     """Calculates euclidean distances in the presence of missing values
 
-    Considering the rows of X (and Y=X) as samples, compute the distance matrix
-    between each pair of samples. Similarly, if Y is not X, then compute the
-    distance matrix between each sample pair (i.e., each row pair) in X and Y.
-
+    Computes the euclidean distance between each pair of samples (rows) in X
+    and Y, where Y=X is assumed if Y=None.
     When calculating the distance between a pair of samples, this formulation
     essentially zero-weights feature coordinates with a missing value in either
     sample and scales up the weight of the remaining coordinates:
@@ -363,7 +361,7 @@ def masked_euclidean_distances(X, Y=None, squared=False,
     mask_X = _get_mask(X, missing_values)
 
     YT = Y.T
-    mask_YT = _get_mask(YT, missing_values)
+    mask_YT = mask_X.T if Y is X else _get_mask(YT, missing_values)
 
     # Check if any rows have only missing value
     if np.any(mask_X.sum(axis=1) == X.shape[1])\
@@ -377,21 +375,23 @@ def masked_euclidean_distances(X, Y=None, squared=False,
             "NaN values present but missing_value = {0}".format(
                 missing_values))
 
-    # Get anti-mask and set Y.T's missing to zero
-    NYT = (~mask_YT).astype(np.int32)
+    # Get mask of non-missing values set Y.T's missing to zero.
+    # Further, casting the mask to int to be used in formula later.
+    not_YT = (~mask_YT).astype(np.int32)
     YT[mask_YT] = 0
 
-    # Get X anti-mask and set X's missing to zero
-    NX = (~mask_X).astype(np.int32)
+    # Get X's mask of non-missing values and set X's missing to zero
+    not_X = (~mask_X).astype(np.int32)
     X[mask_X] = 0
 
     # Calculate distances
     # The following formula derived by:
     # Shreya Bhattarai <shreya.bhattarai@gmail.com>
 
-    distances = (X.shape[1] / (np.dot(NX, NYT))) * \
-                (np.dot(X * X, NYT) - 2 * (np.dot(X, YT)) +
-                 np.dot(NX, YT * YT))
+    distances = (
+            (X.shape[1] / (np.dot(not_X, not_YT))) *
+            (np.dot(X * X, not_YT) - 2 * (np.dot(X, YT)) +
+             np.dot(not_X, YT * YT)))
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.

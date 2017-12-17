@@ -553,7 +553,7 @@ estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missin
 
 The :class:`KNNImputer` class provides imputation for completing missing
 values using the k-Nearest Neighbors approach. Each sample's missing values
-are imputed from up to n_neighbors nearest neighbors found in the training set.
+are imputed from up to ``n_neighbors`` nearest neighbors found in the training set.
 Each missing feature is then imputed as the average, either weighted or
 unweighted, of the neighbors who have a value for it.
 When any of the neighbors themselves have the feature value missing then
