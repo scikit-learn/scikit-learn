@@ -969,7 +969,12 @@ def assert_consistent_docs(objects,
     AssertionError: Parameter y_true of mean_squared_error has inconsistency.
 
     """
-    from numpydoc import docscrape
+    try:
+        import numpydoc  # noqa
+        assert sys.version_info >= (3, 5)
+    except (ImportError, AssertionError):
+        raise SkipTest("numpydoc is required to test the docstrings, "
+                       "as well as python version >= 3.5")
 
     # Dictionary of all different Parameters/Attributes/Returns found
     param_dict = {}
@@ -977,12 +982,12 @@ def assert_consistent_docs(objects,
     return_dict = {}
 
     for u in objects:
-        if isinstance(u, docscrape.NumpyDocString):
+        if isinstance(u, numpydoc.docscrape.NumpyDocString):
             doc = u
             name = 'NumpyDocString'
         elif (inspect.isdatadescriptor(u) or inspect.isfunction(u) or
                 inspect.isclass(u)):
-            doc = docscrape.NumpyDocString(inspect.getdoc(u))
+            doc = numpydoc.docscrape.NumpyDocString(inspect.getdoc(u))
             name = u.__name__
         else:
             raise TypeError("Object passed not a Function, Class, "
