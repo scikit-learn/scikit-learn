@@ -45,7 +45,7 @@ def cpc(x, k=0):
             d[:, m] = np.dot(np.dot(q.T, x[m]), q)
 
         # Second for-loop
-        for i in np.arange(iterator):
+        for _ in np.arange(iterator):
             s = np.zeros((p, p))
             for m in np.arange(mcas):
                 s += (n_g[m] * x[m] / d[:, m])
