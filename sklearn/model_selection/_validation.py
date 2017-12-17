@@ -813,8 +813,7 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
         warnings.warn('Number of classes in training fold ({}) does '
                       'not match total number of classes ({}). '
                       'Results may not be appropriate for your use case. '
-                      '{}'.format(len(classes),
-                                  n_classes, recommendation),
+                      '{}'.format(len(classes), n_classes, recommendation),
                       RuntimeWarning)
         if method == 'decision_function':
             if (predictions.ndim == 2 and
@@ -828,8 +827,7 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
                                  'Irregular decision_function outputs '
                                  'are not currently supported by '
                                  'cross_val_predict'.format(
-                                    predictions.shape, method,
-                                    len(classes), recommendation))
+                                    predictions.shape, method, len(classes)))
             if len(classes) <= 2:
                 # In this special case, `predictions` contains a 1D array.
                 raise ValueError('Only {} class/es in training fold, this '
