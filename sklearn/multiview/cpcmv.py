@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 CPC computes Common principal components of a set of matrices.
 
