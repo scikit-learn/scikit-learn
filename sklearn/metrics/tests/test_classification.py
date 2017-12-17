@@ -955,8 +955,10 @@ def test_jaccard_similarity_score():
 
     y_true = np.array([0, 1, 1, 0, 2])
     y_pred = np.array([1, 1, 1, 1, 0])
-    assert_raises(ValueError, jaccard_similarity_score, y_true, y_pred,
-                  average='binary')
+    msg2 = ("Target is multiclass but average='binary'. Please choose "
+            "another average setting.")
+    assert_raise_message(ValueError, msg2, jaccard_similarity_score, y_true,
+                         y_pred, average='binary')
 
     assert_warns_message(UserWarning,
                         "Note that pos_label (set to 3) is ignored when "

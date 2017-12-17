@@ -428,6 +428,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification).
+        ``'none-samples'``:
 
     warn : bool, optional (default=True), for internal use
         This determines whether warning will be raised or not,
@@ -436,6 +437,10 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         whether to normalize the result or return an array
         (specified with `normalize=False`). This is only to be specified
         in case `average='samples'`.
+
+        .. versionchanged: 0.20
+           'normalize' is deprecated and will be removed in 0.22, instead use
+           `average='none-samples'`
 
     sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
@@ -481,7 +486,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     0.4722...
     """
 
-    average_options = (None, 'micro', 'macro', 'weighted', 'samples')
+    average_options = (None, 'micro', 'macro', 'weighted', 'samples',
+                       'none-samples')
     if average not in average_options and average != 'binary':
         raise ValueError("average has to be one of " + str(average_options))
 
