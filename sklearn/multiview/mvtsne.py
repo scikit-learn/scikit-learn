@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 MV-tSNE with log-linear opinion pooling, using GAs to optimize the weights of
 each view (opinion).
