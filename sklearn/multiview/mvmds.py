@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Multiview Multidimensional Scaling.
 
 Multiview MDS (multidimensional scaling) provides a representation of the
