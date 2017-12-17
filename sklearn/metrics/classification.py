@@ -373,7 +373,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
 
 
 def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
-                             average=None, warn=True, normalize=None,
+                             average=None, warn=True, normalize=True,
                              sample_weight=None):
     """Jaccard similarity coefficient score
 
@@ -433,10 +433,11 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     warn : bool, optional (default=True), for internal use
         This determines whether warning will be raised or not,
 
-    normalize: True, False or None (default)
-        whether to normalize the result or return an array
-        (specified with `normalize=False`). This is only to be specified
-        in case `average='samples'`.
+    normalize: bool, optional (defaul=True)
+        If ``False``, return the sum of the Jaccard similarity coefficient
+        over the sample set. Otherwise, return the average of Jaccard
+        similarity coefficient. This is only to be specified in case
+        `average='samples'`.
 
         .. versionchanged: 0.20
            'normalize' is deprecated and will be removed in 0.22, instead use
@@ -463,13 +464,6 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     --------
     >>> import numpy as np
     >>> from sklearn.metrics import jaccard_similarity_score
-    >>> y_pred = [0, 2, 1, 3]
-    >>> y_true = [0, 1, 2, 3]
-    >>> jaccard_similarity_score(y_true, y_pred, average='macro')
-    0.5
-    >>> jaccard_similarity_score(y_true, y_pred, average='micro')
-    ... # doctest: +ELLIPSIS
-    0.33...
 
     In the multilabel case with binary label indicators:
 
@@ -478,6 +472,13 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     0.75
 
     In the multiclass case:
+
+    >>> y_pred = [0, 2, 1, 3]
+    >>> y_true = [0, 1, 2, 3]
+    >>> jaccard_similarity_score(y_true, y_pred, average='macro')
+    0.5
+    >>> jaccard_similarity_score(y_true, y_pred, average='micro')
+    ... # doctest: +ELLIPSIS
 
     >>> y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
     >>> y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
