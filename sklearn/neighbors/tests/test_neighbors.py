@@ -176,7 +176,7 @@ def test_precomputed_sparse():
     dist_csr = csr_matrix(dist)
     neigh.fit(dist_csr)
     assert_raises_regex(ValueError, "Not enough neighbors in"
-                        " .*nearest neighbors.*",neigh.kneighbors,
+                        " .*nearest neighbors.*", neigh.kneighbors,
                         None, n_neighbors=1)
 
     # Tests consistency of csr matrix with zeros replaced by large values

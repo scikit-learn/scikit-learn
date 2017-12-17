@@ -711,9 +711,9 @@ class TSNE(BaseEstimator):
             if self.metric == "precomputed" and sp.issparse(X):
                 if np.any(getnnz(X, axis=1) < k):
                     raise ValueError("{} neighbors per sample are required for"
-                                     " current perplexity. Decrease perplexity,"
-                                     " or provide more precomputed distances per"
-                                     " sample".format(k))
+                                     " current perplexity. Decrease "
+                                     "perplexity, or provide more precomputed"
+                                     " distances per sample".format(k))
 
             # Find the nearest neighbors for every point
             knn = NearestNeighbors(algorithm='auto', n_neighbors=k,
