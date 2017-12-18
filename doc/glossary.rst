@@ -408,9 +408,11 @@ General Concepts
         TODO
 
     outputs
-        TODO?
+        TODO
 
-        Others may call these "responses" or "tasks" or "targets"
+        Others may call these "responses" or "tasks" or "targets".
+
+        See :term:`multioutput multiclass` and :term:`multioutput continuous`.
 
     parameter
     parameters
@@ -618,6 +620,8 @@ Class APIs and Estimator Types
 
     meta-estimator
     meta-estimators
+    metaestimator
+    metaestimators
         TODO
 
         Mention duck typing. Mention that duck typing of methods only works
