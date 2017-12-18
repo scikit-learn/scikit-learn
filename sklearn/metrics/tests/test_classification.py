@@ -41,7 +41,7 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-from sklearn.metrics import top_n_accuracy_score
+from sklearn.metrics import top_k_accuracy_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 
@@ -101,21 +101,24 @@ def make_prediction(dataset=None, binary=False):
 ###############################################################################
 # Tests
 
-def test_top_n_accuracy_score():
-    # Test top_n_accuracy_score on three-class prediction task
-    y_true, y_pred, pred_proba = make_prediction(binary=False)
+def test_top_k_accuracy_score():
+    # Test top_k_accuracy_score on synthetic five-class prediction task
+    y_true = np.array([2, 1, 2, 3])
+    # Correct classes in pred_proba are at ranks 2, 4, 3, 4
+    pred_proba = np.array([[0.3, 0.2, 0.25, 0.15, 0.1],
+                           [0.2, 0.06, 0.1, 0.04, 0.6],
+                           [0.1, 0.15, 0.2, 0.3, 0.25],
+                           [0.4, 0.05, 0.25, 0.1, 0.2]])
+
     # edge case, perfect accuracy
-    assert_equal(top_n_accuracy_score(y_true, pred_proba, n=3), 1.0)
-    # edge case. Should be the same as accuracy_score, but 'probabilities'
-    # for SVM don't always align with class predictions. This happens with
-    # make_prediction function so we validate predictions with np.argmax on
-    # pred_proba instead of using generated class predictions y_pred. Maybe
-    # preferable to generate test data with a classifier that produces valid
-    # probabilities.
-    assert_equal(top_n_accuracy_score(y_true, pred_proba, n=1),
+    assert_equal(top_k_accuracy_score(y_true, pred_proba, k=5), 1.0)
+
+    assert_equal(top_k_accuracy_score(y_true, pred_proba, k=1),
                  accuracy_score(y_true, np.argmax(pred_proba, axis=1)))
-    assert_equal(top_n_accuracy_score(y_true, pred_proba, n=3),
-                 1.0)
+    assert_equal(top_k_accuracy_score(y_true, pred_proba, k=2), 0.25)
+    assert_equal(top_k_accuracy_score(y_true, pred_proba, k=3), 0.5)
+    assert_equal(top_k_accuracy_score(y_true, pred_proba, k=4), 1.0)
+
 
 
 def test_multilabel_accuracy_score_subset_accuracy():
