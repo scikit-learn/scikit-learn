@@ -503,6 +503,14 @@ General Concepts
         but not maintained by the core developer team.
         See http://scikit-learn-contrib.github.io.
 
+    semi-supervised
+    semi-supervised learning
+    semisupervised
+        Learning where the expected prediction (label or ground truth) is only
+        available for some samples provided as training data when
+        :term:`fitting` the model.  We conventionally apply the label ``-1``
+        to unlabelled samples in semi-supervised classification.
+
     sparse matrix
         A representation of two-dimensional numeric data that is more memory
         efficient the corresponding dense numpy array where almost all elements
@@ -542,6 +550,13 @@ General Concepts
         possible (i.e. if an estimator does not / cannot support sparse
         matrices).
 
+    supervised
+    supervised learning
+        Learning where the expected prediction (label or ground truth) is
+        available for each sample when :term:`fitting` the model, provided as
+        :term:`y`.  This is the approach taken in a :term:`classifier` or
+        :term:`regressor` among other estimators.
+
     target
     targets
         TODO
@@ -560,6 +575,12 @@ General Concepts
     unlabeled data
         TODO
 
+    unsupervised
+    unsupervised learning
+        Learning where the expected prediction (label or ground truth) is not
+        available for each sample when :term:`fitting` the model, as in
+        :term:`clusterers` and :term:`outlier detectors`.
+
 .. _glossary_estimator_types:
 
 Class APIs and Estimator Types
@@ -568,15 +589,18 @@ Class APIs and Estimator Types
 .. glossary::
 
     classifier
+    classifiers
         TODO
         Mention that within scikit-learn, all support multi-class
         classification, defaulting to OvR.
         Mention :func:`~base.is_classifier`.
 
     clusterer
+    clusterers
         TODO
 
     estimator
+    estimators
         TODO
 
         The core functionality of some estimators may also be available as a
@@ -602,24 +626,31 @@ Class APIs and Estimator Types
         validation. ?Mention sample props.  Mention clone.
 
     outlier detector
+    outlier detectors
         TODO
 
     predictor
+    predictors
         An estimator which provides :term:`predict`.  This encompasses
         :term:`classifier`, :term:`regressor`, :term:`outlier detector` and
         sometimes :term:`clusterer` (although the latter only provide
         :term:`fit_predict` when they are not :term:`inductive`).
 
+        In statistics, "predictors" refers to :term:`features`.
+
     regressor
+    regressors
         TODO
         Mention :func:`~base.is_regressor`.
 
     transformer
+    transformers
         An estimator supporting :term:`fit` and :term:`transform` and/or
         :term:`fit_transform`.  A purely :term:`transductive` transformer,
         such as :class:`manifold.TSNE`, may not implement ``transform``.
 
     vectorizer
+    vectorizers
         See :term:`feature extractor`.
 
     ``Xt``
