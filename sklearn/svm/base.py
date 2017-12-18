@@ -637,6 +637,15 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         kernel = self.kernel
         if callable(kernel):
             kernel = 'precomputed'
+        
+        if six.PY2:
+	        # In python2 ensure kernel is ascii bytes to prevent a TypeError
+	        if isinstance(kernel, six.types.UnicodeType):
+	            kernel = str(kernel)
+        if six.PY3:
+            # In python3 ensure kernel is utf8 unicode to prevent a TypeError
+            if isinstance(kernel, bytes):
+	            kernel = str(kernel, 'utf8')
 
         svm_type = LIBSVM_IMPL.index(self._impl)
         pprob = libsvm.predict_proba(
