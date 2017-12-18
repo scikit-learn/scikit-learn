@@ -1369,7 +1369,7 @@ def test_grid_search_failing_classifier_raise():
                       refit=False, error_score='raise')
 
     # FailingClassifier issues a ValueError so this is what we look for.
-    assert_raises(ValueError, gs.fit, X, y)
+    assert_raise_message(ValueError, "Grid Search failed", gs.fit, X, y)
 
 
 def test_parameters_sampler_replacement():
