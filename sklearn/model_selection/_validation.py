@@ -15,6 +15,7 @@ from __future__ import division
 import warnings
 import numbers
 import time
+from traceback import format_exception_only
 
 import numpy as np
 import scipy.sparse as sp
@@ -476,7 +477,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                     train_scores = error_score
             warnings.warn("Classifier fit failed. The score on this train-test"
                           " partition for these parameters will be set to %f. "
-                          "Details: \n%r" % (error_score, e), FitFailedWarning)
+                          "Details: \n%s" %
+                          (error_score, format_exception_only(type(e), e)[0]),
+                          FitFailedWarning)
         else:
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
