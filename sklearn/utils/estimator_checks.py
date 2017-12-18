@@ -1928,7 +1928,7 @@ def check_set_params(name, estimator_orig):
 
     estimator.set_params(**params)
     new_params = estimator.get_params(deep=False)
-    assert_equal(params.keys(), new_params.keys(), msg)
+    assert_equal(set(params.keys()), set(new_params.keys()), msg)
     for k, v in new_params.items():
         assert_is(params[k], v, msg)
 
@@ -1947,7 +1947,7 @@ def check_set_params(name, estimator_orig):
                 pass
             else:
                 new_params = estimator.get_params(deep=False)
-                assert_equal(params.keys(), new_params.keys(), msg)
+                assert_equal(set(params.keys()), set(new_params.keys()), msg)
                 for k, v in new_params.items():
                     assert_is(params[k], v, msg)
         params[param_name] = default_value
