@@ -536,6 +536,12 @@ General Concepts
             distance representation where only distances in the neighborhood
             of each point are required.
 
+        When working with sparse matrices, we assume that it is sparse for a
+        good reason, and avoid writing code that densifies a user-provided
+        sparse matrix, instead maintaining sparsity or raising an error if not
+        possible (i.e. if an estimator does not / cannot support sparse
+        matrices).
+
     target
     targets
         TODO
@@ -553,23 +559,6 @@ General Concepts
     unlabeled
     unlabeled data
         TODO
-
-    ``X``
-        Denotes data that is observed at training and prediction time, used as
-        independent variables in learning.  The notation is uppercase to denote
-        that it is ordinarily a matrix (see :term:`rectangular`).
-
-    ``Xt``
-        Shorthand for "transformed :term:`X`".
-
-    ``y``
-    ``Y``
-        Denotes data that may be observed at training time as the dependent
-        variable in learning, but which is unavailable at prediction time, and
-        is usually the :term:`target` of prediction.  The notation may be
-        uppercase to denote that it is a matrix, representing
-        :term:`multi-output` targets, for instance; but usually we use ``y``
-        and sometimes do so even when multiple outputs are assumed.
 
 .. _glossary_estimator_types:
 
@@ -737,6 +726,8 @@ Target Types
         TODO
 
     multioutput multiclass
+        TODO
+
         A classification problem...
 
         :mod:`multioutput` provides estimators which estimate multi-output
@@ -744,8 +735,6 @@ Target Types
         account for dependencies among the different outputs, which methods
         natively handling the multioutput case (e.g. decision trees, nearest
         neighbors, neural networks) may do better.
-
-        TODO
 
 .. _glossary_methods:
 
@@ -755,10 +744,10 @@ Methods
 .. glossary::
 
     ``decision_function``
-
         In a fitted :term:`classifier` or :term:`outlier detector`, predicts a
         "soft" score for each sample in relation to each class, rather than the
-        "hard" categorical prediction produced by :term:`predict`.
+        "hard" categorical prediction produced by :term:`predict`.  Its input
+        is usually only some observed data, :term:`X`.
 
         Output conventions:
 
@@ -817,18 +806,28 @@ Methods
         ``fit_predict`` are the same as those to ``fit``.
 
     ``fit_transform``
-        TODO
+        A method on :term:`transformers` which fits the estimator and returns
+        the transformed training data. It takes parameters as in :term:`fit`
+        and its output should have the same shape as calling ``.fit(X,
+        ...).transform(X)``. There are nonetheless rare cases where
+        ``.fit_transform(X, ...)`` and ``.fit(X, ...).transform(X)`` do not
+        return the same value, wherein training data needs to be handled
+        differently (due to model blending in stacked ensembles, for instance;
+        such cases should be clearly documented).
+        :term:`Transductive` transformers may also provide ``fit_transform``
+        but not :term:`transform`.
 
-        Syntactic sugar.
-        Efficiency.
-        ``transform`` may not be available.
-        ``fit_transform`` can be different, as in stacking.
-        These rare cases should be clearly documented.
-        
-        The parameters to ``fit_predict`` are the same as those to ``fit``.
+        One reason to implement ``fit_transform`` is that performing ``fit``
+        and ``transform`` separately would be less efficient than together.
+        :class:`base.TransformerMixin` provides a default implementation,
+        providing a consistent interface across transformers where
+        ``fit_transform`` is or is not specialised.
 
-        Ordinarily should not be applied to the entirety of a dataset, only the
-        training data, to avoid :term:`leakage`.
+        In :term:`inductive` learning -- where the goal is to learn a
+        generalised model that can be applied to new data -- users should be
+        careful not to apply ``fit_transform`` to the entirety of a dataset
+        (i.e. training and test data together) before further modelling, as
+        this results in :term:`data leakage`.
 
     ``get_feature_names``
         Primarily for :term:`feature extractors`, but also used for other
@@ -884,43 +883,62 @@ Methods
         with :func:`base.clone`.
 
     ``predict``
-        Makes a prediction for each sample. In a :term:`classifier` or
-        :term:`regressor`, this prediction is in the same target space used in
-        fitting (e.g. one of {'red', 'amber', 'green'} if the ``y`` in fitting
-        consisted of these strings).  In a :term:`clusterer` or :term:`outlier
-        detector` the prediction is an integer.
+        Makes a prediction for each sample, usually only taking :term:`X` as
+        input (but see under regressor output conventions below). In a
+        :term:`classifier` or :term:`regressor`, this prediction is in the same
+        target space used in fitting (e.g. one of {'red', 'amber', 'green'} if
+        the ``y`` in fitting consisted of these strings).  Despite this, even
+        when ``y`` passed to :term:`fit` is a list or other array-like, the
+        output of ``predict`` should always be an array or sparse matrix. In a
+        :term:`clusterer` or :term:`outlier detector` the prediction is an
+        integer.
 
-        TODO
-
-        Return type is array ...
+        Output conventions:
 
         classifier
-            TODO
+            An array of shape ``(n_samples,)`` ``(n_samples, n_outputs)``.
+            :term:`Multilabel` data may be represented as a sparse matrix if
+            a sparse matrix was used in fitting. Each element should be one
+            of the values in the classifier's :term:`classes_` attribute.
 
         clusterer
-            TODO
-            -1 in DBSCAN
+            An array of shape ``(n_samples,) where each value is from 0 to
+            ``n_clusters - 1`` if the corresponding sample is clustered,
+            and -1 if the sample is not clustered, as in
+            :func:`cluster.dbscan`.
 
         outlier detector
-            TODO
+            An array of shape ``(n_samples,)`` where each value is -1 for an
+            outlier and 1 otherwise.
 
         regressor
-
-        Mention ``return_std``
+            A numeric array of shape ``(n_samples,)``, usually float64.
+            Some regressors have extra options in their ``predict`` method,
+            allowing them to return standard deviation (``return_std=True``)
+            or covariance (``return_cov=True``) relative to the predicted
+            value.  In this case, the return value is a tuple of arrays
+            corresponding to (prediction mean, std, cov) as required.
 
     ``predict_log_proba``
         The natural logarithm of the output of :term:`predict_proba`, provided
         to facilitate numerical stability.
 
     ``predict_proba``
-        TODO
+        A method in classifiers that are able to return probability estimates
+        for each class.  Its input is usually only some observed data,
+        :term:`X`.
 
-        Output conventions are like those for ``decision_function`` except
-        in the :term:`binary` case.
+        Output conventions are like those for :term:`decision_function` except
+        in the :term:`binary` classification case, where one column is output
+        for each class (while ``decision_function`` outputs a 1d array). For
+        binary and multiclass predictions, each row should add to 1.
 
         Like other methods, ``predict_proba`` should only be present when the
-        estimator can make probabilistic predictions.  In some cases, this
-        means that the method will only appear after fitting.
+        estimator can make probabilistic predictions (see :term:`duck typing`).
+        This means that the presence of the method may depend on estimator
+        parameters (e.g. in :class:`linear_model.SGDClassifier`) or training
+        data (e.g. in :class:`model_selection.GridSearchCV`) and may only
+        appear after fitting.
 
     ``score``
         A method on an estimator, usually a :term:`predictor`, which evaluates
@@ -932,13 +950,28 @@ Methods
         TODO
 
     ``set_params``
-        TODO
+        Available in any estimator, takes keyword arguments corresponding to
+        keys in :term:`get_params`.  Each is provided a new value to assign
+        such that calling ``get_params`` after ``set_params`` will reflect the
+        changed :term:`parameters`.  Most estimators use the implementation in
+        :class:`base.BaseEstimator`, which handles nested parameters and
+        otherwise sets the parameter as an attribute on the estimator.
+        The method is overridden in :class:`pipeline.Pipeline` and related
+        estimators.
 
     ``split``
-        TODO
+        On a :term:`CV splitter` (not an estimator), this method accepts
+        parameters (:term:`X`, :term:`y`, :term:`groups`), where all may be
+        optional, and returns an iterator over ``(train_idx, test_idx)``
+        pairs.  Each of {train,test}_idx is a 1d integer array, with values
+        from 0 from ``X.shape[0] - 1`` of any length, such that no values
+        appear in both some ``train_idx`` and its corresponding ``test_idx``.
 
     ``transform``
-        TODO
+        In a :term:`transformer`, transforms the input, usually only :term:`X`,
+        into some transformed space (conventionally notated as :term:`Xt`).
+        Output is an array or sparse matrix of length :term:`n_samples` and
+        with number of columns fixed after :term:`fitting`.
 
 .. _glossary_parameters:
 
@@ -1266,3 +1299,21 @@ See concept :term:`sample property`.
 
         In classification, sample weights can also be specified as a function
         of class with the :term:`class_weight` estimator :term:`parameter`.
+
+    ``X``
+        Denotes data that is observed at training and prediction time, used as
+        independent variables in learning.  The notation is uppercase to denote
+        that it is ordinarily a matrix (see :term:`rectangular`).
+
+    ``Xt``
+        Shorthand for "transformed :term:`X`".
+
+    ``y``
+    ``Y``
+        Denotes data that may be observed at training time as the dependent
+        variable in learning, but which is unavailable at prediction time, and
+        is usually the :term:`target` of prediction.  The notation may be
+        uppercase to denote that it is a matrix, representing
+        :term:`multi-output` targets, for instance; but usually we use ``y``
+        and sometimes do so even when multiple outputs are assumed.
+
