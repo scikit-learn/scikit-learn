@@ -179,7 +179,8 @@ def test_ovr_fit_predict_sparse():
         assert_array_equal(pred, Y_pred_sprs.toarray())
 
         # Test decision_function
-        clf_sprs = OneVsRestClassifier(svm.SVC(gamma="scale")).fit(X_train, sparse(Y_train))
+        clf = svm.SVC(gamma="scale")
+        clf_sprs = OneVsRestClassifier(clf).fit(X_train, sparse(Y_train))
         dec_pred = (clf_sprs.decision_function(X_test) > 0).astype(int)
         assert_array_equal(dec_pred, clf_sprs.predict(X_test).toarray())
 

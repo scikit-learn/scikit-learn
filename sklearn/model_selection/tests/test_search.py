@@ -870,11 +870,12 @@ def test_random_search_cv_results():
     n_splits = 3
     n_search_iter = 30
     params = dict(C=expon(scale=10), gamma=expon(scale=0.1))
-    random_search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=n_search_iter,
-                                       cv=n_splits, iid=False,
-                                       param_distributions=params)
+    random_search = RandomizedSearchCV(SVC(gamma="scale"),
+                                       n_iter=n_search_iter, cv=n_splits,
+                                       iid=False, param_distributions=params)
     random_search.fit(X, y)
-    random_search_iid = RandomizedSearchCV(SVC(gamma="scale"), n_iter=n_search_iter,
+    random_search_iid = RandomizedSearchCV(SVC(gamma="scale"),
+                                           n_iter=n_search_iter,
                                            cv=n_splits, iid=True,
                                            param_distributions=params)
     random_search_iid.fit(X, y)
@@ -923,7 +924,8 @@ def test_search_iid_param():
     # create "cv" for splits
     cv = [[mask, ~mask], [~mask, mask]]
     # once with iid=True (default)
-    grid_search = GridSearchCV(SVC(gamma="scale"), param_grid={'C': [1, 10]}, cv=cv)
+    grid_search = GridSearchCV(SVC(gamma="scale"), param_grid={'C': [1, 10]},
+                               cv=cv)
     random_search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=2,
                                        param_distributions={'C': [1, 10]},
                                        cv=cv)

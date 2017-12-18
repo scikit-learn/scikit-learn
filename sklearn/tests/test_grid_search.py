@@ -578,8 +578,9 @@ def test_randomized_search_grid_scores():
                   gamma=expon(scale=0.1))
     n_cv_iter = 3
     n_search_iter = 30
-    search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=n_search_iter, cv=n_cv_iter,
-                                param_distributions=params, iid=False)
+    search = RandomizedSearchCV(SVC(gamma="scale"), n_iter=n_search_iter,
+                                cv=n_cv_iter, param_distributions=params,
+                                iid=False)
     search.fit(X, y)
     assert_equal(len(search.grid_scores_), n_search_iter)
 
