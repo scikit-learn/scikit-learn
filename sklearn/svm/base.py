@@ -170,8 +170,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              % (sample_weight.shape, X.shape))
 
         if self.gamma == 'scale':
-            if isinstance(X, sp.spmatrix):
-                X_std = np.sqrt(X.power(2).mean() - (X.mean())**2)
+            if isinstance(X, sp.csr_matrix):
+                # std = sqrt(E[X^2] - E[X]^2)
+                X_std = np.sqrt((X.multiply(X)).mean() - (X.mean())**2)
             else:
                 X_std = X.std()
             self._gamma = 1.0 / (X.shape[1] * X_std)
