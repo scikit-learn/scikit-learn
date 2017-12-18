@@ -120,7 +120,6 @@ def test_top_k_accuracy_score():
     assert_equal(top_k_accuracy_score(y_true, pred_proba, k=4), 1.0)
 
 
-
 def test_multilabel_accuracy_score_subset_accuracy():
     # Dense label indicator matrix format
     y1 = np.array([[0, 1, 1], [1, 0, 1]])
