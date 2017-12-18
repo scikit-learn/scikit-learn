@@ -343,7 +343,7 @@ more than once will overwrite what was learned by any previous ``fit()``::
     max_iter=-1, probability=False, random_state=None, shrinking=True,
     tol=0.001, verbose=False)
   >>> clf.predict(X_test)
-  array([0, 0, 0, 1, 0])
+  array([1, 0, 1, 1, 0])
 
 Here, the default kernel ``rbf`` is first changed to ``linear`` after the
 estimator has been constructed via ``SVC(gamma='scale')``, and changed back to ``rbf`` to
