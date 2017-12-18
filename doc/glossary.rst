@@ -182,6 +182,12 @@ General Concepts
 
         See the :ref:`Contributors' Guide <contributing_deprecation>`.
 
+    dimensionality
+        May be used to refer to the number of :term:`features` (i.e.
+        :term:`n_features`), or columns in a 2d feature matrix.
+        Dimensions are, however, also used to refer to the length of a NumPy
+        array's shape, distinguishing a 1d array from a 2d matrix.
+
     docstring
         The embedded documentation for a module, class, function, etc., usually
         in code as a string at the beginning of the object's definition, and
@@ -267,7 +273,25 @@ General Concepts
 
     evaluation metric
     evaluation metrics
-        TODO
+        Evaluation metrics give a measure of how well a model performs.  We may
+        use this term specifically to refer to the functions in :mod:`metrics`
+        (disregarding :mod:`metrics.pairwise`), as distinct from the
+        :term:`score` method and the :term:`scoring` API used in cross
+        validation. See :ref:`model_evaluation`.
+
+        These functions usually accept a ground truth (or the raw data
+        where the metric evaluates clustering without a ground truth) and a
+        prediction, be it the output of :term:`predict` (``y_pred``),
+        of :term:`predict_proba` (``y_proba``), or of an arbitrary score
+        function including :term:`decision_function` (``y_score``).
+        Functions are usually named to end with ``_score`` if a greater
+        score indicates a better model, and ``_loss`` if a lesser score
+        indicates a better model.  This diversity of interface motivates
+        the scoring API.
+
+        Note that some estimators can calculate metrics that are not included
+        in :mod:`metrics` and are estimator-specific, notably model
+        likelihoods.
 
     estimator tags
         A proposed feature (e.g. :issue:`8022`) by which the capabilities of an
@@ -280,26 +304,29 @@ General Concepts
         the :term:`duck typing` of methods like ``predict_proba`` and through
         some special attributes on estimator objects:
 
-        ``_estimator_type``
-            This string-valued attribute identifies an estimator as being a
-            classifier, regressor, etc. It is set by mixins such as
-            :class:`base.ClassifierMixin`, but needs to be more explicitly
-            adopted on a :term:`meta-estimator`.  Its value should usually be
-            checked by way of a helper such as :func:`base.is_classifier`.
+        .. glossary::
 
-        ``_pairwise``
-            This boolean attribute indicates whether the data (``X``) passed to
-            :func:`fit` and similar methods consists of pairwise measures over
-            samples rather than a feature representation for each sample.  It
-            is usually ``True`` where an estimator has a ``metric`` or
-            ``affinity`` or ``kernel`` parameter with value 'precomputed'.
-            Its primary purpose is that when a :term:`meta-estimator`
-            extracts a sub-sample of data intended for a pairwise estimator,
-            the data needs to be indexed on both axes, while other data is
-            indexed only on the first axis.
+            ``_estimator_type``
+                This string-valued attribute identifies an estimator as being a
+                classifier, regressor, etc. It is set by mixins such as
+                :class:`base.ClassifierMixin`, but needs to be more explicitly
+                adopted on a :term:`meta-estimator`.  Its value should usually be
+                checked by way of a helper such as :func:`base.is_classifier`.
+
+            ``_pairwise``
+                This boolean attribute indicates whether the data (``X``) passed to
+                :func:`fit` and similar methods consists of pairwise measures over
+                samples rather than a feature representation for each sample.  It
+                is usually ``True`` where an estimator has a ``metric`` or
+                ``affinity`` or ``kernel`` parameter with value 'precomputed'.
+                Its primary purpose is that when a :term:`meta-estimator`
+                extracts a sub-sample of data intended for a pairwise estimator,
+                the data needs to be indexed on both axes, while other data is
+                indexed only on the first axis.
 
     feature
     features
+    feature vector
         In the abstract, a feature is a function (in its mathematical sense)
         mapping a sampled object to a numeric or categorical quantity.
         "Feature" is also commonly used to refer to these quantities, being the
@@ -457,9 +484,24 @@ General Concepts
         Common parameters are listed :ref:`below <glossary_parameters>`.
 
     pairwise metric
-        TODO
+    pairwise metrics
 
-        See precomputed.
+        In its broad sense, a pairwise metric defines a function for measuring
+        similarity or dissimilarity between two samples (with each ordinarily
+        represented as a :term:`feature vector`).  We particularly provide
+        implementations of distance metrics (as well as improper metrics like
+        Cosine Distance) through :func:`metrics.pairwise_distances`, and of
+        kernel functions (a constrained class of similarity functions) in
+        :func:`metrics.pairwise_kernels`.  These can compute pairwise distance
+        matrices that are symmetric and hence store data redundantly.
+
+        See also :term:`precomputed` and :term:`metric`.
+
+        Note that for most distance metrics, we rely on implementations from
+        :mod:`scipy.spatial.distance`, but may reimplement for efficiency in
+        our context.  The :mod:`neighbors` module also duplicates some metric
+        implementations for integration with efficient binary tree search data
+        structures.
 
     pd
         A shorthand for `Pandas <http://pandas.pydata.org>`_ due to the
@@ -468,7 +510,19 @@ General Concepts
             import pandas as pd
 
     precomputed
-        TODO
+        Where algorithms rely on :term:`pairwise metrics`, and can be computed
+        from pairwise metrics alone, we often allow the user to specify that
+        the :term:`X` provided is already in the pairwise (dis)similarity
+        space, rather than in a feature space.  That is, when passed to
+        :term:`fit`, it is a square, symmetric matrix, with each vector
+        indicating (dis)similarity to every sample, and when passed to
+        prediction/transformation methods, each row corresponds to a testing
+        sample and each column to a training sample.
+
+        Use of precomputed X is usually indicated by setting a ``metric``,
+        ``affinity`` or ``kernel`` parameter to the string 'precomputed'.  An
+        estimator should mark itself as being :term:`_pairwise` if this is the
+        case.
 
     rectangular
         Data that can be represented as a matrix with :term:`samples` on the
@@ -485,7 +539,7 @@ General Concepts
         We usually use this term as a noun to indicate a single feature vector.
         Elsewhere a sample is called an instance, data point, or observation.
         ``n_samples`` indicates the number of samples in a dataset, being the
-        number of rows in a data array ``X``.
+        number of rows in a data array :term:`X`.
 
     sample property
     sample properties
@@ -657,9 +711,6 @@ Class APIs and Estimator Types
     vectorizers
         See :term:`feature extractor`.
 
-    ``Xt``
-        Shorthand for transformed ``X``.
-
 There are further APIs specifically related to a small family of estimators,
 such as:
 
@@ -804,15 +855,15 @@ Methods
             classification format, though its semantics differ: it should be
             interpreted, like in the binary case, by thresholding at 0.
 
-            TODO
-            ..
-            see https://gist.github.com/jnothman/4807b1b0266613c20ba4d1f88d0f8cf5
+            TODO: `This gist
+            <https://gist.github.com/jnothman/4807b1b0266613c20ba4d1f88d0f8cf5>`_
+            higlights the use of the different formats for multilabel.
         multioutput classification
             A list of 2d arrays, corresponding to each multiclass decision
             function.
         outlier detection
             A 1-dimensional array, where a value greater than or equal to zero
-            (TODO: check equality case) indicates an inlier.
+            indicates an inlier.
 
     ``fit``
         The ``fit`` method is provided on every estimator. It usually takes some
@@ -959,9 +1010,9 @@ Methods
         to facilitate numerical stability.
 
     ``predict_proba``
-        A method in classifiers that are able to return probability estimates
-        for each class.  Its input is usually only some observed data,
-        :term:`X`.
+        A method in :term:`classifiers` and :term:`clusterers` that are able to
+        return probability estimates for each class/cluster.  Its input is
+        usually only some observed data, :term:`X`.
 
         Output conventions are like those for :term:`decision_function` except
         in the :term:`binary` classification case, where one column is output
@@ -980,6 +1031,9 @@ Methods
         its predictions on a given dataset, and returns a single numerical
         score.  A greater return value should indicate better predictions;
         accuracy is used for classifiers and R^2 for regressors by default.
+
+        Some estimators implement a custom, estimator-specific score function,
+        often the likelihood of the data under the model.
 
     ``score_samples``
         TODO
@@ -1114,7 +1168,9 @@ functions or non-estimator constructors.
         using this sense as a parameter name.
 
     ``n_components``
-        TODO
+        The number of features which a :term:`transformer` should transform the
+        input into. See :term:`components_` for the special case of affine
+        projection.
 
     ``n_jobs``
         This is used to specify how many concurrent processes/threads should be
@@ -1159,24 +1215,24 @@ functions or non-estimator constructors.
 
         ``random_state``'s value may be:
 
-            None (default)
-                Use the global random state from :mod:`numpy.random`.
+        None (default)
+            Use the global random state from :mod:`numpy.random`.
 
-            An integer
-                Use a new random number generator seeded by the given integer.
-                To make a randomized algorithm deterministic (i.e. running it
-                multiple times will produce the same result), an arbitrary
-                integer ``random_state`` can be used. However, it may be
-                worthwhile checking that your results are stable across a
-                number of different distinct random seeds. Popular integer
-                random seeds are 0 and `42
-                <http://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
+        An integer
+            Use a new random number generator seeded by the given integer.
+            To make a randomized algorithm deterministic (i.e. running it
+            multiple times will produce the same result), an arbitrary
+            integer ``random_state`` can be used. However, it may be
+            worthwhile checking that your results are stable across a
+            number of different distinct random seeds. Popular integer
+            random seeds are 0 and `42
+            <http://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
 
-            A :class:`numpy.random.RandomState` instance
-                Use the provided random state, only affecting other users
-                of the same random state instance. Calling fit multiple times
-                will reuse the same instance, and will produce different
-                results.
+        A :class:`numpy.random.RandomState` instance
+            Use the provided random state, only affecting other users
+            of the same random state instance. Calling fit multiple times
+            will reuse the same instance, and will produce different
+            results.
 
         :func:`utils.check_random_state` is used internally to validate the
         input ``random_state`` and return a :class:`~numpy.random.RandomState`
@@ -1299,8 +1355,8 @@ See concept :term:`attribute`.
 
 .. _glossary_sample_props:
 
-Sample properties
-=================
+Data and sample properties
+==========================
 
 See concept :term:`sample property`.
 
@@ -1339,6 +1395,11 @@ See concept :term:`sample property`.
         Denotes data that is observed at training and prediction time, used as
         independent variables in learning.  The notation is uppercase to denote
         that it is ordinarily a matrix (see :term:`rectangular`).
+        When a matrix, each sample may be represented by a :term:`feature`
+        vector, or a vector of :term:`precomputed` (dis)similarity with each
+        training sample. ``X`` may also not be a matrix, and may require a
+        :term:`feature extractor` or a :term:`pairwise metric` to turn it into
+        one before learning a model.
 
     ``Xt``
         Shorthand for "transformed :term:`X`".
@@ -1351,4 +1412,3 @@ See concept :term:`sample property`.
         uppercase to denote that it is a matrix, representing
         :term:`multi-output` targets, for instance; but usually we use ``y``
         and sometimes do so even when multiple outputs are assumed.
-
