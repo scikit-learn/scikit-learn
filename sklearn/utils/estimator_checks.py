@@ -1923,11 +1923,11 @@ def check_set_params(name, estimator_orig):
     # before and after set_params() with some fuzz
     estimator = clone(estimator_orig)
 
-    params = estimator.get_params()
+    params = estimator.get_params(deep=False)
     msg = ("get_params result does not match what was passed to set_params")
 
     estimator.set_params(**params)
-    new_params = estimator.get_params()
+    new_params = estimator.get_params(deep=False)
     assert_equal(params.keys(), new_params.keys(), msg)
     for k, v in new_params.items():
         assert_is(params[k], v, msg)
@@ -1946,7 +1946,7 @@ def check_set_params(name, estimator_orig):
                 # continue checking other test values
                 pass
             else:
-                new_params = estimator.get_params()
+                new_params = estimator.get_params(deep=False)
                 assert_equal(params.keys(), new_params.keys(), msg)
                 for k, v in new_params.items():
                     assert_is(params[k], v, msg)
