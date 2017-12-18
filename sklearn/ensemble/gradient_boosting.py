@@ -115,7 +115,12 @@ class LogOddsEstimator(object):
             neg = np.sum(sample_weight * (1 - y))
 
         if neg == 0 or pos == 0:
-            raise ValueError('y contains non binary labels.')
+            if sample_weight is None:
+                raise ValueError("y should contain 2 classes.")
+            else:
+                raise ValueError("y should contain 2 classes after "
+                                 "sample_weight trims samples with "
+                                 "zero weights.")
         self.prior = self.scale * np.log(pos / neg)
 
     def predict(self, X):
