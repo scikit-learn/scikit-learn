@@ -116,7 +116,7 @@ __all__ = [
     'SCORERS',
     'silhouette_samples',
     'silhouette_score',
-    'top_n_accuracy_score',
+    'top_k_accuracy_score',
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',

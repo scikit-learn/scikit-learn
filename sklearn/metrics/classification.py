@@ -201,6 +201,8 @@ def top_k_accuracy_score(y_true, y_pred, k=5, normalize=True):
         likelihood of each possible class.
         The number of columns must be at least as large as the set of possible
         classes.
+    k : int, optional (default=5) predictions are counted as correct if
+        probability of correct class is in the top k classes.
 
     normalize : bool, optional (default=True)
         If ``False``, return the number of top k correctly classified samples.
@@ -240,13 +242,13 @@ def top_k_accuracy_score(y_true, y_pred, k=5, normalize=True):
     ...                    [0.2, 0.3, 0.4, 0.1],
     ...                    [0.8, 0.1, 0.025, 0.075]])
     >>> y_true = np.array([2, 2, 2, 1])
-    >>> top_k_accuracy_score(y_true, y_pred, n=1)
+    >>> top_k_accuracy_score(y_true, y_pred, k=1)
     0.5
-    >>> top_k_accuracy_score(y_true, y_pred, n=2)
+    >>> top_k_accuracy_score(y_true, y_pred, k=2)
     0.75
-    >>> top_k_accuracy_score(y_true, y_pred, n=3)
+    >>> top_k_accuracy_score(y_true, y_pred, k=3)
     1.0
-    >>> top_k_accuracy_score(y_true, y_pred, n=2, normalize=False)
+    >>> top_k_accuracy_score(y_true, y_pred, k=2, normalize=False)
     3
     """
     if len(y_true.shape) == 2:
