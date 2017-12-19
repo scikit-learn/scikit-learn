@@ -713,7 +713,10 @@ minimizes the following cost function:
 Similarly, L1 regularized logistic regression solves the following
 optimization problem
 
-.. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+.. math:: \underset{w, c}{min\,} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
+
+Note that, in this notation, it's assumed that the observation :math:`y_i` takes values in the set
+:math:`{-1, 1}` at trial :math:`i`.
 
 The solvers implemented in the class :class:`LogisticRegression`
 are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
@@ -1141,7 +1144,7 @@ in the following ways.
 
 .. topic:: References:
 
-    .. [#f1] Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
+  * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
 
 Also, this estimator is different from the R implementation of Robust Regression
 (http://www.ats.ucla.edu/stat/r/dae/rreg.htm) because the R implementation does a weighted least

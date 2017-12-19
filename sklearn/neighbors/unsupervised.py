@@ -39,12 +39,6 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p : integer, optional (default = 2)
-        Parameter for the Minkowski metric from
-        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
-        equivalent to using manhattan_distance (l1), and euclidean_distance
-        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
-
     metric : string or callable, default 'minkowski'
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
@@ -64,12 +58,18 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
           'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
-          'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath',
-          'sqeuclidean', 'yule']
+          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
+          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+          'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
+
+    p : integer, optional (default = 2)
+        Parameter for the Minkowski metric from
+        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+        equivalent to using manhattan_distance (l1), and euclidean_distance
+        (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
     metric_params : dict, optional (default = None)
         Additional keyword arguments for the metric function.
@@ -116,8 +116,9 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     def __init__(self, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30, metric='minkowski',
                  p=2, metric_params=None, n_jobs=1, **kwargs):
-        self._init_params(n_neighbors=n_neighbors,
-                          radius=radius,
-                          algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, p=p,
-                          metric_params=metric_params, n_jobs=n_jobs, **kwargs)
+        super(NearestNeighbors, self).__init__(
+              n_neighbors=n_neighbors,
+              radius=radius,
+              algorithm=algorithm,
+              leaf_size=leaf_size, metric=metric, p=p,
+              metric_params=metric_params, n_jobs=n_jobs, **kwargs)

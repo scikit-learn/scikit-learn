@@ -66,45 +66,27 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.power_t = power_t
         self.warm_start = warm_start
         self.average = average
-
-        if n_iter is not None:
-            warnings.warn("n_iter parameter is deprecated in 0.19 and will be"
-                          " removed in 0.21. Use max_iter and tol instead.",
-                          DeprecationWarning)
-            # Same behavior as before 0.19
-            self.max_iter = n_iter
-            tol = None
-
-        elif tol is None and max_iter is None:
-            warnings.warn(
-                "max_iter and tol parameters have been added in %s in 0.19. If"
-                " both are left unset, they default to max_iter=5 and tol=None"
-                ". If tol is not None, max_iter defaults to max_iter=1000. "
-                "From 0.21, default max_iter will be 1000, "
-                "and default tol will be 1e-3." % type(self), FutureWarning)
-            # Before 0.19, default was n_iter=5
-            self.max_iter = 5
-        else:
-            self.max_iter = max_iter if max_iter is not None else 1000
-
+        self.n_iter = n_iter
+        self.max_iter = max_iter
         self.tol = tol
-
-        self._validate_params()
+        # current tests expect init to do parameter validation
+        # but we are not allowed to set attributes
+        self._validate_params(set_max_iter=False)
 
     def set_params(self, *args, **kwargs):
         super(BaseSGD, self).set_params(*args, **kwargs)
-        self._validate_params()
+        self._validate_params(set_max_iter=False)
         return self
 
     @abstractmethod
     def fit(self, X, y):
         """Fit model."""
 
-    def _validate_params(self):
+    def _validate_params(self, set_max_iter=True, for_partial_fit=False):
         """Validate input params. """
         if not isinstance(self.shuffle, bool):
             raise ValueError("shuffle must be either True or False")
-        if self.max_iter <= 0:
+        if self.max_iter is not None and self.max_iter <= 0:
             raise ValueError("max_iter must be > zero. Got %f" % self.max_iter)
         if not (0.0 <= self.l1_ratio <= 1.0):
             raise ValueError("l1_ratio must be in [0, 1]")
@@ -124,6 +106,34 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
 
         if self.loss not in self.loss_functions:
             raise ValueError("The loss %s is not supported. " % self.loss)
+
+        if not set_max_iter:
+            return
+        # n_iter deprecation, set self._max_iter, self._tol
+        self._tol = self.tol
+        if self.n_iter is not None:
+            warnings.warn("n_iter parameter is deprecated in 0.19 and will be"
+                          " removed in 0.21. Use max_iter and tol instead.",
+                          DeprecationWarning)
+            # Same behavior as before 0.19
+            max_iter = self.n_iter
+            self._tol = None
+
+        elif self.tol is None and self.max_iter is None:
+            if not for_partial_fit:
+                warnings.warn(
+                    "max_iter and tol parameters have been "
+                    "added in %s in 0.19. If both are left unset, "
+                    "they default to max_iter=5 and tol=None. "
+                    "If tol is not None, max_iter defaults to max_iter=1000. "
+                    "From 0.21, default max_iter will be 1000, and"
+                    " default tol will be 1e-3." % type(self).__name__,
+                    FutureWarning)
+                # Before 0.19, default was n_iter=5
+            max_iter = 5
+        else:
+            max_iter = self.max_iter if self.max_iter is not None else 1000
+        self._max_iter = max_iter
 
     def _get_loss_function(self, loss):
         """Get concrete ``LossFunction`` object for str ``loss``. """
@@ -365,7 +375,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         n_samples, n_features = X.shape
 
-        self._validate_params()
         _check_partial_fit_first_call(self, classes)
 
         n_classes = self.classes_.shape[0]
@@ -398,13 +407,15 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                              sample_weight=sample_weight,
                              max_iter=max_iter)
         else:
-            raise ValueError("The number of class labels must be "
-                             "greater than one.")
+            raise ValueError(
+                "The number of classes has to be greater than one;"
+                " got %d class" % n_classes)
 
         return self
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
+        self._validate_params()
         if hasattr(self, "classes_"):
             self.classes_ = None
 
@@ -433,11 +444,11 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         # Clear iteration count for multiple call to fit.
         self.t_ = 1.0
 
-        self._partial_fit(X, y, alpha, C, loss, learning_rate, self.max_iter,
+        self._partial_fit(X, y, alpha, C, loss, learning_rate, self._max_iter,
                           classes, sample_weight, coef_init, intercept_init)
 
-        if (self.tol is not None and self.tol > -np.inf
-                and self.n_iter_ == self.max_iter):
+        if (self._tol is not None and self._tol > -np.inf
+                and self.n_iter_ == self._max_iter):
             warnings.warn("Maximum number of iteration reached before "
                           "convergence. Consider increasing max_iter to "
                           "improve the fit.",
@@ -530,6 +541,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         -------
         self : returns an instance of self.
         """
+        self._validate_params(for_partial_fit=True)
         if self.class_weight in ['balanced']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
@@ -605,11 +617,14 @@ class SGDClassifier(BaseSGDClassifier):
 
     Parameters
     ----------
-    loss : str, 'hinge', 'log', 'modified_huber', 'squared_hinge',\
-                'perceptron', or a regression loss: 'squared_loss', 'huber',\
-                'epsilon_insensitive', or 'squared_epsilon_insensitive'
+    loss : str, default: 'hinge'
         The loss function to be used. Defaults to 'hinge', which gives a
         linear SVM.
+
+        The possible options are 'hinge', 'log', 'modified_huber',
+        'squared_hinge', 'perceptron', or a regression loss: 'squared_loss',
+        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
+
         The 'log' loss gives logistic regression, a probabilistic classifier.
         'modified_huber' is another smooth loss that brings tolerance to
         outliers as well as probability estimates.
@@ -637,13 +652,6 @@ class SGDClassifier(BaseSGDClassifier):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
@@ -663,13 +671,6 @@ class SGDClassifier(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
-
     verbose : integer, optional
         The verbosity level
 
@@ -685,6 +686,13 @@ class SGDClassifier(BaseSGDClassifier):
         The number of CPUs to use to do the OVA (One Versus All, for
         multi-class problems) computation. -1 means 'all CPUs'. Defaults
         to 1.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
 
     learning_rate : string, optional
         The learning rate schedule:
@@ -717,12 +725,27 @@ class SGDClassifier(BaseSGDClassifier):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+        Repeatedly calling fit or partial_fit when warm_start is True can
+        result in a different solution than when calling fit a single time
+        because of the way the data is shuffled.
+        If a dynamic learning rate is used, the learning rate is adapted
+        depending on the number of samples already seen. Calling ``fit`` resets
+        this counter, while ``partial_fit`` will result in increasing the
+        existing counter.
+
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
         average. So ``average=10`` will begin averaging after seeing 10
         samples.
+
+    n_iter : int, optional
+        The number of passes over the training data (aka epochs).
+        Defaults to None. Deprecated, will be removed in 0.21.
+
+        .. versionchanged:: 0.19
+            Deprecated
 
     Attributes
     ----------
@@ -750,7 +773,7 @@ class SGDClassifier(BaseSGDClassifier):
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
            eta0=0.0, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
+           learning_rate='optimal', loss='hinge', max_iter=None, n_iter=None,
            n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
            shuffle=True, tol=None, verbose=0, warm_start=False)
 
@@ -759,7 +782,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     See also
     --------
-    LinearSVC, LogisticRegression, Perceptron
+    sklearn.svm.LinearSVC, LogisticRegression, Perceptron
 
     """
 
@@ -930,8 +953,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
         n_samples, n_features = X.shape
 
-        self._validate_params()
-
         # Allocate datastructures from input arguments
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
@@ -973,6 +994,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         -------
         self : returns an instance of self.
         """
+        self._validate_params(for_partial_fit=True)
         return self._partial_fit(X, y, self.alpha, C=1.0,
                                  loss=self.loss,
                                  learning_rate=self.learning_rate, max_iter=1,
@@ -981,6 +1003,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None):
+        self._validate_params()
         if self.warm_start and getattr(self, "coef_", None) is not None:
             if coef_init is None:
                 coef_init = self.coef_
@@ -1000,11 +1023,11 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self.t_ = 1.0
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate,
-                          self.max_iter, sample_weight, coef_init,
+                          self._max_iter, sample_weight, coef_init,
                           intercept_init)
 
-        if (self.tol is not None and self.tol > -np.inf
-                and self.n_iter_ == self.max_iter):
+        if (self._tol is not None and self._tol > -np.inf
+                and self.n_iter_ == self._max_iter):
             warnings.warn("Maximum number of iteration reached before "
                           "convergence. Consider increasing max_iter to "
                           "improve the fit.",
@@ -1093,7 +1116,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         # Windows
         seed = random_state.randint(0, np.iinfo(np.int32).max)
 
-        tol = self.tol if self.tol is not None else -np.inf
+        tol = self._tol if self._tol is not None else -np.inf
 
         if self.average > 0:
             self.standard_coef_, self.standard_intercept_, \
@@ -1172,15 +1195,17 @@ class SGDRegressor(BaseSGDRegressor):
 
     Parameters
     ----------
-    loss : str, 'squared_loss', 'huber', 'epsilon_insensitive', \
-                or 'squared_epsilon_insensitive'
-        The loss function to be used. Defaults to 'squared_loss' which refers
-        to the ordinary least squares fit. 'huber' modifies 'squared_loss' to
-        focus less on getting outliers correct by switching from squared to
-        linear loss past a distance of epsilon. 'epsilon_insensitive' ignores
-        errors less than epsilon and is linear past that; this is the loss
-        function used in SVR. 'squared_epsilon_insensitive' is the same but
-        becomes squared loss past a tolerance of epsilon.
+    loss : str, default: 'squared_loss'
+        The loss function to be used. The possible values are 'squared_loss',
+        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'
+
+        The 'squared_loss' refers to the ordinary least squares fit.
+        'huber' modifies 'squared_loss' to focus less on getting outliers
+        correct by switching from squared to linear loss past a distance of
+        epsilon. 'epsilon_insensitive' ignores errors less than epsilon and is
+        linear past that; this is the loss function used in SVR.
+        'squared_epsilon_insensitive' is the same but becomes squared loss past
+        a tolerance of epsilon.
 
     penalty : str, 'none', 'l2', 'l1', or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -1201,13 +1226,6 @@ class SGDRegressor(BaseSGDRegressor):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered. Defaults to True.
 
-    n_iter : int, optional
-        The number of passes over the training data (aka epochs).
-        Defaults to None. Deprecated, will be removed in 0.21.
-
-        .. versionchanged:: 0.19
-            Deprecated
-
     max_iter : int, optional
         The maximum number of passes over the training data (aka epochs).
         It only impacts the behavior in the ``fit`` method, and not the
@@ -1227,13 +1245,6 @@ class SGDRegressor(BaseSGDRegressor):
         Whether or not the training data should be shuffled after each epoch.
         Defaults to True.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
-
     verbose : integer, optional
         The verbosity level.
 
@@ -1245,12 +1256,19 @@ class SGDRegressor(BaseSGDRegressor):
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
 
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data.  If int, random_state is the seed used by the random number
+        generator; If RandomState instance, random_state is the random number
+        generator; If None, the random number generator is the RandomState
+        instance used by `np.random`.
+
     learning_rate : string, optional
         The learning rate schedule:
 
         - 'constant': eta = eta0
-        - 'optimal': eta = 1.0 / (alpha * (t + t0)) [default]
-        - 'invscaling': eta = eta0 / pow(t, power_t)
+        - 'optimal': eta = 1.0 / (alpha * (t + t0))
+        - 'invscaling': eta = eta0 / pow(t, power_t) [default]
 
         where t0 is chosen by a heuristic proposed by Leon Bottou.
 
@@ -1264,12 +1282,27 @@ class SGDRegressor(BaseSGDRegressor):
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
+        Repeatedly calling fit or partial_fit when warm_start is True can
+        result in a different solution than when calling fit a single time
+        because of the way the data is shuffled.
+        If a dynamic learning rate is used, the learning rate is adapted
+        depending on the number of samples already seen. Calling ``fit`` resets
+        this counter, while ``partial_fit``  will result in increasing the
+        existing counter.
+
     average : bool or int, optional
         When set to True, computes the averaged SGD weights and stores the
         result in the ``coef_`` attribute. If set to an int greater than 1,
         averaging will begin once the total number of samples seen reaches
         average. So ``average=10`` will begin averaging after seeing 10
         samples.
+
+    n_iter : int, optional
+        The number of passes over the training data (aka epochs).
+        Defaults to None. Deprecated, will be removed in 0.21.
+
+        .. versionchanged:: 0.19
+            Deprecated
 
     Attributes
     ----------
@@ -1301,14 +1334,14 @@ class SGDRegressor(BaseSGDRegressor):
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDRegressor(alpha=0.0001, average=False, epsilon=0.1, eta0=0.01,
            fit_intercept=True, l1_ratio=0.15, learning_rate='invscaling',
-           loss='squared_loss', max_iter=5, n_iter=None, penalty='l2',
+           loss='squared_loss', max_iter=None, n_iter=None, penalty='l2',
            power_t=0.25, random_state=None, shuffle=True, tol=None,
            verbose=0, warm_start=False)
 
 
     See also
     --------
-    Ridge, ElasticNet, Lasso, SVR
+    Ridge, ElasticNet, Lasso, sklearn.svm.SVR
 
     """
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,

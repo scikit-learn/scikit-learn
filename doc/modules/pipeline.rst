@@ -14,13 +14,18 @@ Pipeline: chaining estimators
 :class:`Pipeline` can be used to chain multiple estimators
 into one. This is useful as there is often a fixed sequence
 of steps in processing the data, for example feature selection, normalization
-and classification. :class:`Pipeline` serves two purposes here:
+and classification. :class:`Pipeline` serves multiple purposes here:
 
-    **Convenience**: You only have to call ``fit`` and ``predict`` once on your
+Convenience and encapsulation
+    You only have to call ``fit`` and ``predict`` once on your
     data to fit a whole sequence of estimators.
-
-    **Joint parameter selection**: You can :ref:`grid search <grid_search>`
+Joint parameter selection
+    You can :ref:`grid search <grid_search>`
     over parameters of all estimators in the pipeline at once.
+Safety
+    Pipelines help avoid leaking statistics from your test data into the
+    trained model in cross-validation, by ensuring that the same samples are
+    used to train the transformers and predictors.
 
 All estimators in a pipeline, except the last one, must be transformers
 (i.e. must have a ``transform`` method).
@@ -124,6 +129,8 @@ i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
 pipeline.
 
+.. _pipeline_cache:
+
 Caching transformers: avoid repeated computation
 -------------------------------------------------
 
@@ -157,7 +164,7 @@ object::
     >>> # Clear the cache directory when you don't need it anymore
     >>> rmtree(cachedir)
 
-.. warning:: **Side effect of caching transfomers**
+.. warning:: **Side effect of caching transformers**
 
    Using a :class:`Pipeline` without cache enabled, it is possible to
    inspect the original instance such as::

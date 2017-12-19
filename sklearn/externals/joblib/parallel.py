@@ -48,7 +48,7 @@ BACKENDS = {
 DEFAULT_BACKEND = 'multiprocessing'
 DEFAULT_N_JOBS = 1
 
-# Thread local value that can be overriden by the ``parallel_backend`` context
+# Thread local value that can be overridden by the ``parallel_backend`` context
 # manager
 _backend = threading.local()
 
@@ -245,7 +245,7 @@ def register_parallel_backend(name, factory, make_default=False):
 def effective_n_jobs(n_jobs=-1):
     """Determine the number of jobs that can actually run in parallel
 
-    n_jobs is the is the number of workers requested by the callers.
+    n_jobs is the number of workers requested by the callers.
     Passing n_jobs=-1 means requesting all available workers for instance
     matching the number of CPU cores on the worker host(s).
 

@@ -6,7 +6,7 @@ from re import finditer, search
 
 from numpy.random import RandomState
 
-from sklearn.base import ClassifierMixin
+from sklearn.base import is_classifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import export_graphviz
@@ -210,8 +210,6 @@ def test_graphviz_toy():
                 'fillcolor="#e5813900"] ;\n' \
                 '}'
 
-    assert_equal(contents1, contents2)
-
 
 def test_graphviz_errors():
     # Check for errors of export_graphviz
@@ -234,6 +232,11 @@ def test_graphviz_errors():
                "3 does not match number of features, 2")
     assert_raise_message(ValueError, message, export_graphviz, clf, None,
                          feature_names=["a", "b", "c"])
+
+    # Check error when argument is not an estimator
+    message = "is not an estimator instance"
+    assert_raise_message(TypeError, message,
+                         export_graphviz, clf.fit(X, y).tree_)
 
     # Check class_names error
     out = StringIO()
@@ -292,7 +295,7 @@ def test_precision():
                     len(search("\.\d+", finding.group()).group()),
                     precision + 1)
             # check impurity
-            if isinstance(clf, ClassifierMixin):
+            if is_classifier(clf):
                 pattern = "gini = \d+\.\d+"
             else:
                 pattern = "friedman_mse = \d+\.\d+"

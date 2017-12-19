@@ -23,6 +23,9 @@ enhance the functionality of scikit-learn's estimators.
 
 - `sklearn_pandas <https://github.com/paulgb/sklearn-pandas/>`_ bridge for
   scikit-learn pipelines and pandas data frame with dedicated transformers.
+  
+- `sklearn_xarray <https://github.com/phausamann/sklearn-xarray/>`_ provides
+  compatibility of scikit-learn estimators with xarray data structures.
 
 **Auto-ML**
 
@@ -41,10 +44,13 @@ enhance the functionality of scikit-learn's estimators.
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
 
-**Experimentation frameworks**
+- `scikit-optimize <https://scikit-optimize.github.io/>`_
+   A library to minimize (very) expensive and noisy black-box functions. It
+   implements several methods for sequential model-based optimization, and
+   includes a replacement for ``GridSearchCV`` or ``RandomizedSearchCV`` to do
+   cross-validated parameter search using any of these strategies.
 
-- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
-  fitting algorithms.
+**Experimentation frameworks**
 
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
   research in a consistent and reproducible way
@@ -158,6 +164,10 @@ and tasks.
 - `xgboost <https://github.com/dmlc/xgboost>`_ Optimised gradient boosted decision
   tree library.
 
+- `ML-Ensemble <http://mlens.readthedocs.io/en/latest/>`_ Generalized
+  ensemble learning (stacking, blending, subsemble, deep ensembles,
+  etc.).
+
 - `lightning <https://github.com/scikit-learn-contrib/lightning>`_ Fast
   state-of-the-art linear model solvers (SDCA, AdaGrad, SVRG, SAG, etc...).
 
@@ -222,17 +232,18 @@ Other packages useful for data analysis and machine learning.
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
+- `PyMC <http://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
+  fitting algorithms.
+
 - `Sacred <https://github.com/IDSIA/Sacred>`_ Tool to help you configure,
   organize, log and reproduce experiments
-
-- `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
-  document indexing and similarity retrieval
 
 - `Seaborn <http://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
   matplotlib. It provides a high-level interface for drawing attractive statistical graphics.
 
 - `Deep Learning <http://deeplearning.net/software_links/>`_ A curated list of deep learning
   software libraries.
+
 
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -243,12 +254,18 @@ Domain specific packages
 - `Natural language toolkit (nltk) <http://www.nltk.org/>`_ Natural language
   processing and some machine learning.
 
+- `gensim <https://radimrehurek.com/gensim/>`_  A library for topic modelling,
+  document indexing and similarity retrieval
+
 - `NiLearn <https://nilearn.github.io/>`_ Machine learning for neuro-imaging.
 
 - `AstroML <http://www.astroml.org/>`_  Machine learning for astronomy.
 
 - `MSMBuilder <http://msmbuilder.org/>`_  Machine learning for protein
   conformational dynamics time series.
+
+- `scikit-surprise <http://surpriselib.com>`_ A scikit for building and
+  evaluating recommender systems.
 
 Snippets and tidbits
 ---------------------

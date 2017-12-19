@@ -26,18 +26,15 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    C : float, optional (default=1.0)
-        Penalty parameter C of the error term.
+    penalty : string, 'l1' or 'l2' (default='l2')
+        Specifies the norm used in the penalization. The 'l2'
+        penalty is the standard used in SVC. The 'l1' leads to ``coef_``
+        vectors that are sparse.
 
     loss : string, 'hinge' or 'squared_hinge' (default='squared_hinge')
         Specifies the loss function. 'hinge' is the standard SVM loss
         (used e.g. by the SVC class) while 'squared_hinge' is the
         square of the hinge loss.
-
-    penalty : string, 'l1' or 'l2' (default='l2')
-        Specifies the norm used in the penalization. The 'l2'
-        penalty is the standard used in SVC. The 'l1' leads to ``coef_``
-        vectors that are sparse.
 
     dual : bool, (default=True)
         Select the algorithm to either solve the dual or primal
@@ -45,6 +42,9 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     tol : float, optional (default=1e-4)
         Tolerance for stopping criteria.
+
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
 
     multi_class : string, 'ovr' or 'crammer_singer' (default='ovr')
         Determines the multi-class strategy if `y` contains more than
@@ -88,10 +88,13 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        the data for the dual coordinate descent (if ``dual=True``). When
+        ``dual=False`` the underlying implementation of :class:`LinearSVC`
+        is not random and ``random_state`` has no effect on the results. If
+        int, random_state is the seed used by the random number generator; If
+        RandomState instance, random_state is the random number generator; If
+        None, the random number generator is the RandomState instance used by
+        `np.random`.
 
     max_iter : int, (default=1000)
         The maximum number of iterations to be run.
@@ -107,6 +110,24 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
+
+    Examples
+    --------
+    >>> from sklearn.svm import LinearSVC
+    >>> from sklearn.datasets import make_classification
+    >>> X, y = make_classification(n_features=4, random_state=0)
+    >>> clf = LinearSVC(random_state=0)
+    >>> clf.fit(X, y)
+    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+         intercept_scaling=1, loss='squared_hinge', max_iter=1000,
+         multi_class='ovr', penalty='l2', random_state=0, tol=0.0001,
+         verbose=0)
+    >>> print(clf.coef_)
+    [[ 0.08551385  0.39414796  0.49847831  0.37513797]]
+    >>> print(clf.intercept_)
+    [ 0.28418066]
+    >>> print(clf.predict([[0, 0, 0, 0]]))
+    [1]
 
     Notes
     -----
@@ -302,6 +323,22 @@ class LinearSVR(LinearModel, RegressorMixin):
     intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
         Constants in decision function.
 
+    Examples
+    --------
+    >>> from sklearn.svm import LinearSVR
+    >>> from sklearn.datasets import make_regression
+    >>> X, y = make_regression(n_features=4, random_state=0)
+    >>> regr = LinearSVR(random_state=0)
+    >>> regr.fit(X, y)
+    LinearSVR(C=1.0, dual=True, epsilon=0.0, fit_intercept=True,
+         intercept_scaling=1.0, loss='epsilon_insensitive', max_iter=1000,
+         random_state=0, tol=0.0001, verbose=0)
+    >>> print(regr.coef_)
+    [ 16.35750999  26.91499923  42.30652207  60.47843124]
+    >>> print(regr.intercept_)
+    [-4.29756543]
+    >>> print(regr.predict([[0, 0, 0, 0]]))
+    [-4.29756543]
 
     See also
     --------
@@ -475,11 +512,11 @@ class SVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        The seed of the pseudo random number generator used when shuffling
+        the data for probability estimates. If int, random_state is the
+        seed used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random
+        number generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -536,6 +573,8 @@ class SVC(BaseSVC):
 
     """
 
+    _impl = 'c_svc'
+
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
@@ -543,7 +582,7 @@ class SVC(BaseSVC):
                  random_state=None):
 
         super(SVC, self).__init__(
-            impl='c_svc', kernel=kernel, degree=degree, gamma=gamma,
+            kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
@@ -631,11 +670,11 @@ class NuSVC(BaseSVC):
            Deprecated *decision_function_shape='ovo' and None*.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        The seed of the pseudo random number generator used when shuffling
+        the data for probability estimates. If int, random_state is the seed
+        used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random
+        number generator is the RandomState instance used by `np.random`.
 
     Attributes
     ----------
@@ -690,13 +729,15 @@ class NuSVC(BaseSVC):
         liblinear.
     """
 
+    _impl = 'nu_svc'
+
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  shrinking=True, probability=False, tol=1e-3, cache_size=200,
                  class_weight=None, verbose=False, max_iter=-1,
                  decision_function_shape='ovr', random_state=None):
 
         super(NuSVC, self).__init__(
-            impl='nu_svc', kernel=kernel, degree=degree, gamma=gamma,
+            kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=0., nu=nu, shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
@@ -807,12 +848,15 @@ class SVR(BaseLibSVM, RegressorMixin):
         Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
     """
+
+    _impl = 'epsilon_svr'
+
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
         super(SVR, self).__init__(
-            'epsilon_svr', kernel=kernel, degree=degree, gamma=gamma,
+            kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=0., epsilon=epsilon, verbose=verbose,
             shrinking=shrinking, probability=False, cache_size=cache_size,
             class_weight=None, max_iter=max_iter, random_state=None)
@@ -920,12 +964,14 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         epsilon Support Vector Machine for regression implemented with libsvm.
     """
 
+    _impl = 'nu_svr'
+
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma='auto', coef0=0.0, shrinking=True, tol=1e-3,
                  cache_size=200, verbose=False, max_iter=-1):
 
         super(NuSVR, self).__init__(
-            'nu_svr', kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
+            kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
             tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=False, cache_size=cache_size, class_weight=None,
             verbose=verbose, max_iter=max_iter, random_state=None)
@@ -985,11 +1031,11 @@ class OneClassSVM(BaseLibSVM):
         Hard limit on iterations within solver, or -1 for no limit.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        Ignored.
+
+        .. deprecated:: 0.20
+           ``random_state`` has been deprecated in 0.20 and will be removed in
+           0.22.
 
     Attributes
     ----------
@@ -1013,12 +1059,15 @@ class OneClassSVM(BaseLibSVM):
         Constant in the decision function.
 
     """
+
+    _impl = 'one_class'
+
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1, random_state=None):
 
         super(OneClassSVM, self).__init__(
-            'one_class', kernel, degree, gamma, coef0, tol, 0., nu, 0.,
+            kernel, degree, gamma, coef0, tol, 0., nu, 0.,
             shrinking, False, cache_size, None, verbose, max_iter,
             random_state)
 
@@ -1046,6 +1095,11 @@ class OneClassSVM(BaseLibSVM):
         If X is not a C-ordered contiguous array it is copied.
 
         """
+
+        if self.random_state is not None:
+            warnings.warn("The random_state parameter is deprecated and will"
+                          " be removed in version 0.22.", DeprecationWarning)
+
         super(OneClassSVM, self).fit(X, np.ones(_num_samples(X)),
                                      sample_weight=sample_weight, **params)
         return self
