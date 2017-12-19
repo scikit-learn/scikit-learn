@@ -322,6 +322,11 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  "the number of samples at training time" %
                                  (X.shape[1], self.shape_fit_[0]))
 
+        if six.PY3:
+            # In python3 ensure kernel is utf8 unicode to prevent a TypeError
+            if isinstance(kernel, bytes):
+                kernel = str(kernel, 'utf8')
+
         svm_type = LIBSVM_IMPL.index(self._impl)
 
         return libsvm.predict(
