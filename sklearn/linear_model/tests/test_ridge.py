@@ -595,10 +595,10 @@ def test_ridgecv_store_cv_values():
     assert_equal(r.cv_values_.shape, (n_samples, n_alphas))
 
     # with len(y.shape) == 2
-    n_responses = 3
-    y = rng.randn(n_samples, n_responses)
+    n_targets = 3
+    y = rng.randn(n_samples, n_targets)
     r.fit(x, y)
-    assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
+    assert_equal(r.cv_values_.shape, (n_samples, n_targets, n_alphas))
 
 
 def test_ridge_classifier_cv_store_cv_values():
