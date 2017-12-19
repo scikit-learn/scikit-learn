@@ -642,7 +642,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         kernel = self.kernel
         if callable(kernel):
             kernel = 'precomputed'
-        
+
         if six.PY2:
             # In python2 ensure kernel is ascii bytes to prevent a TypeError
             if isinstance(kernel, six.types.UnicodeType):
