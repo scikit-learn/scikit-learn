@@ -176,13 +176,13 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             else:
                 X_std = X.std()
             self._gamma = 1.0 / (X.shape[1] * X_std)
-        elif self.gamma == 'auto' or self.gamma == 'auto_deprecated':
-            if self.gamma == 'auto_deprecated':
+        elif self.gamma == 'auto' or self.gamma == 'auto_default':
+            if self.gamma == 'auto_default':
                 warnings.warn("The default gamma parameter value 'auto', "
-                              "calculated as 1 / n_features, is deprecated in "
-                              "version 0.20 and will be replaced by 'scale', "
-                              "calculated as 1 / (n_features * X.std()) in "
-                              "version 0.22.", DeprecationWarning)
+                              "calculated as 1 / n_features, will change to "
+                              "'scale' calculated as "
+                              "1 / (n_features * X.std()) in version 0.22.",
+                              DeprecationWarning)
             self._gamma = 1.0 / X.shape[1]
         else:
             self._gamma = self.gamma

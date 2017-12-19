@@ -981,9 +981,8 @@ def test_gamma_auto():
     X, y = [[0.0], [1.0]], [0, 1]
 
     msg = ("The default gamma parameter value 'auto', calculated as "
-           "1 / n_features, is deprecated in version 0.20 and will be "
-           "replaced by 'scale', calculated as 1 / (n_features * X.std()) in "
-           "version 0.22.")
+           "1 / n_features, will change to 'scale' calculated as "
+           "1 / (n_features * X.std()) in version 0.22.")
 
     assert_warns_message(DeprecationWarning, msg,
                          svm.SVC().fit, X, y)
