@@ -645,13 +645,12 @@ estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missin
 
 The :class:`KNNImputer` class provides imputation for completing missing
 values using the k-Nearest Neighbors approach. Each sample's missing values
-are imputed from up to ``n_neighbors`` nearest neighbors found in the training set.
-Each missing feature is then imputed as the average, either weighted or
-unweighted, of the neighbors who have a value for it.
+are imputed from up to ``max_neighbors`` nearest neighbors found in the
+training set. Each missing feature is then imputed as the average, either
+weighted or unweighted, of the neighbors who have a value for it.
 When any of the neighbors themselves have the feature value missing then
-the remaining n_neighbors-1 neighbors are used and, if need be,
-the process repeats until a single neighbor remains. Where all neighbors have
-that feature value missing, the training set average for that feature is used.
+the remaining neighbors are used. Where all neighbors have that feature value
+missing, the training set average for that feature is used.
 For more information on the methodology, see ref. [#]_.
 
 The following snippet demonstrates how to replace missing values,
@@ -662,7 +661,7 @@ neighbors of the rows that contain the missing values::
     >>> from sklearn.preprocessing.imputation import KNNImputer
     >>> nan = np.nan
     >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
-    >>> imputer = KNNImputer(n_neighbors=2, weights="uniform")
+    >>> imputer = KNNImputer(max_neighbors=2, weights="uniform")
     >>> imputer.fit_transform(X)
     array([[ 1. ,  2. ,  4. ],
            [ 3. ,  4. ,  3. ],
