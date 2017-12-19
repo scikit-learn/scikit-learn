@@ -503,6 +503,7 @@ def test_bad_input():
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
 
+
 def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError
     if six.PY2:
