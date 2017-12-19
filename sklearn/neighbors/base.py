@@ -365,7 +365,7 @@ class KNeighborsMixin(object):
                     raise ValueError("Not enough neighbors in sparse "
                                      "precomputed matrix to get {} "
                                      "nearest neighbors".format(n_neighbors))
-                neigh_ind = np.zeros((dist.shape[0], n_neighbors))
+                neigh_ind = np.zeros((dist.shape[0], n_neighbors), dtype=np.int)
                 for i in range(0, dist.shape[0]):
                     row = slice(dist.indptr[i], dist.indptr[i + 1])
                     col = slice(dist.indptr[i], dist.indptr[i+1])
