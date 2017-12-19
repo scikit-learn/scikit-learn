@@ -20,7 +20,7 @@ def json_urlread(url):
     try:
         return json.loads(urlopen(url).read().decode('utf8'))
     except Exception:
-        print('Error reading', url, file=sys.stderr)
+        print('Error reading {} {}'.format(url, file=sys.stderr))
         raise
 
 
