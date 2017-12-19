@@ -210,7 +210,14 @@ General Concepts
 
     dtype
     data type
-        TODO. Mention casting.
+        NumPy arrays assume a homogeneous data type throughout, available in
+        the ``.dtype`` attribute of an array (or sparse matrix). We generally
+        assume simple data types for scikit-learn data: float or integer.
+        We may support object or string data types for arrays before encoding
+        or vectorizing.  Our estimators do not work with struct arrays, for
+        instance.
+
+        TODO: Mention efficiency and precision issues; casting policy.
 
     duck typing
         We try to apply `duck typing
@@ -404,10 +411,21 @@ General Concepts
     memmapping
     memory map
     memory mapping
-        TODO
+        A memory efficiency strategy that keeps data on disk rather than
+        copying it into main memory.  Memory maps can be created for arrays
+        that can be read, written, or both, using :obj:`numpy.memmap`. When
+        using :term:`joblib` to parallelize operations in Scikit-learn, it
+        may automatically memmap large arrays to reduce memory duplication
+        overhead in multiprocessing.
 
     missing values
-        TODO
+        Most Scikit-learn estimators do not work with missing values. When they
+        do (e.g. in :class:`preprocessing.Imputer`), NaN is the preferred
+        representation of missing values in float arrays.  If the array has
+        integer dtype, NaN cannot be represented. For this reason, we support
+        specifying another ``missing_values`` value when imputation or
+        learning can be performed in integer space.  :term:`Unlabeled data`
+        is a special case of missing values in the :term:`target`.
 
     ``n_features``
         The number of :term:`features`.
@@ -431,14 +449,22 @@ General Concepts
 
             import numpy as np
 
+    online learning
+        Where a model is iteratively updated by receiving each batch of ground
+        truth :term:`targets` soon after making predictions on corresponding
+        batch of data.  Intrinsically, the model must be usable for prediction
+        after each batch. See :term:`partial_fit`.
+
     out-of-core
-        TODO
+        An efficiency strategy where not all the data is stored in main memory
+        at once, usually by performing learning on batches of data. See
+        :term:`partial_fit`.
 
     outputs
-        TODO
-
-        Others may call these "responses" or "tasks" or "targets".
-
+        Individual scalar/categorical variables per sample in the
+        :term:`target`.  For example, in multilabel classification each
+        possible label corresponds to a binary output. Also called *responses*,
+        *tasks* or *targets*.
         See :term:`multioutput multiclass` and :term:`multioutput continuous`.
 
     parameter
@@ -565,7 +591,7 @@ General Concepts
         Learning where the expected prediction (label or ground truth) is only
         available for some samples provided as training data when
         :term:`fitting` the model.  We conventionally apply the label ``-1``
-        to unlabelled samples in semi-supervised classification.
+        to :term:`unlabeled` samples in semi-supervised classification.
 
     sparse matrix
         A representation of two-dimensional numeric data that is more memory
@@ -615,9 +641,13 @@ General Concepts
 
     target
     targets
-        TODO
-
-        Dependent variable or outcome variable.
+        The *dependent variable* in :term:`supervised` (and
+        :term:`semisupervised`) learning, passed as :term:`y` to an estimator's
+        :term:`fit` method.  Also known as *dependent variable*, *outcome
+        variable*, *response variable*, *ground truth* or *label*. Scikit-learn
+        works with targets that have minimal structure: a class from a finite
+        set, a finite real-valued number, multiple classes, or multiple
+        numbers. See :ref:`glossary_target_types`.
 
     transduction
     transductive
@@ -629,13 +659,16 @@ General Concepts
 
     unlabeled
     unlabeled data
-        TODO
+        Samples with an unknown ground truth when fitting; equivalently,
+        :term:`missing values` in the :term:`target`.  See also
+        :term:`semisupervised` and :term:`unsupervised` learning.
 
     unsupervised
     unsupervised learning
         Learning where the expected prediction (label or ground truth) is not
         available for each sample when :term:`fitting` the model, as in
-        :term:`clusterers` and :term:`outlier detectors`.
+        :term:`clusterers` and :term:`outlier detectors`.  Unsupervised
+        estimators ignore any :term:`y` passed to :term:`fit`.
 
 .. _glossary_estimator_types:
 
@@ -884,12 +917,12 @@ Methods
         :ref:`glossary_target_types` describes possible formats for ``y``.
 
     ``fit_predict``
-        Used especially for :term:`transductive` estimators, this fits the
-        model and returns the predictions (similar to :term:`predict`) on the
-        training data. In clusterers, these predictions are also stored in the
-        :term:`labels_` attribute, and the output of ``.fit_predict(X)`` is
-        usually equivalent to ``.fit(X).predict(X)``. The parameters to
-        ``fit_predict`` are the same as those to ``fit``.
+        Used especially for :term:`unsupervised`, :term:`transductive`
+        estimators, this fits the model and returns the predictions (similar to
+        :term:`predict`) on the training data. In clusterers, these predictions
+        are also stored in the :term:`labels_` attribute, and the output of
+        ``.fit_predict(X)`` is usually equivalent to ``.fit(X).predict(X)``.
+        The parameters to ``fit_predict`` are the same as those to ``fit``.
 
     ``fit_transform``
         A method on :term:`transformers` which fits the estimator and returns
@@ -949,9 +982,9 @@ Methods
         Each mini-batch must be of consistent shape, etc.
 
         ``partial_fit`` may also be used for :term:`out-of-core` learning,
-        although limited to the case where learning can be performed online,
-        i.e. the model is usable after each ``partial_fit`` and there is no
-        separate processing needed to finalize the model.
+        although usually limited to the case where learning can be performed
+        online, i.e. the model is usable after each ``partial_fit`` and there
+        is no separate processing needed to finalize the model.
         :class:`cluster.Birch` introduces the convention that calling
         ``partial_fit(X)`` will produce a model that is not finalized, but the
         model can be finalized by calling ``partial_fit()`` i.e. without
