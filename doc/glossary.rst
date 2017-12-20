@@ -73,7 +73,8 @@ General Concepts
         :term:`partial_fit`.  These are what is documented under an estimator's
         *Attributes* documentation.  The information stored in attributes is
         usually either: sufficient statistics used for prediction or
-        transformation; or diagnostic data, such as
+        transformation; :term:`transductive` outputs such as :term:`labels_` or
+        :term:`embedding_`; or diagnostic data, such as
         :term:`feature_importances_`.
         Common attributes are listed :ref:`below <glossary_attributes>`.
 
@@ -691,18 +692,69 @@ Class APIs and Estimator Types
 
     classifier
     classifiers
-        TODO
-        Mention that within scikit-learn, all support multi-class
-        classification, defaulting to OvR.
-        Mention :func:`~base.is_classifier`.
+        A :term:`supervised` (or :term:`semi-supervised`) :term:`predictor`
+        with a finite set of discrete possible output values.
+
+        A classifier supports modeling some of :term:`binary`,
+        :term:`multiclass`, :term:`multilabel`, or :term:`multioutput
+        multiclass` targets.  Within scikit-learn, all classifiers support
+        multi-class classification, defaulting to using a one-vs-rest
+        strategy over the binary classification problem.
+
+        Classifiers must store a :term:`classes_` attribute after fitting,
+        and usually inherit from :class:`base.ClassifierMixin`, which sets
+        their :term:`_estimator_type` attribute.
+
+        A classifier can be distinguished from other estimators with
+        :func:`~base.is_classifier`.
+
+        A classifier must implement:
+
+        * :term:`fit`
+        * :term:`predict`
+        * :term:`score`
+
+        It may also be appropriate to implement :term:`decision_function`,
+        :term:`predict_proba` and :term:`predict_log_proba`.
 
     clusterer
     clusterers
+        A :term:`unsupervised` :term:`predictor` with a finite set of discrete
+        output values.
+
+        A clusterer usually stores :term:`labels_` after fitting, and must do
+        so if it is :term:`transductive`.
+
+        A clusterer must implement:
+
+        * :term:`fit`
+        * :term:`fit_predict` if :term:`transductive`
+        * :term:`predict` if :term:`inductive`
+
+    density estimator
         TODO
 
     estimator
     estimators
-        TODO
+        An object which manages the estimation and decoding of a model. The
+        model is estimated as a deterministic function of:
+
+        * :term:`parameters` provided in object construction or with
+          :term:`set_params`;
+        * the global :mod:`numpy.random` random state if the estimator's
+          :term:`random_state` parameter is set to None; and
+        * any data or :term:`sample properties` passed to the most recent
+          call to :term:`fit`, :term:`fit_transform` or :term:`fit_predict`,
+          or data similarly passed in a sequence of calls to
+          :term:`partial_fit`.
+
+        The estimated model is stored in public and private :term:`attributes`
+        on the estimator instance, facilitating decoding through prediction
+        and transformation methods.
+
+        Estimators must provide a :term:`fit` method, and should provide
+        :term:`set_params` and :term:`get_params`, although these are usually
+        provided by inheritance from :class:`base.BaseEstimator`.
 
         The core functionality of some estimators may also be available as a
         :term:`function`.
@@ -714,8 +766,11 @@ Class APIs and Estimator Types
         produces an `array-like` object of :term:`features` for each sample
         (and thus a 2-dimensional array-like for a set of samples).  In other
         words, it (lossily) maps a non-rectangular data representation into
-        :term:`rectangular` data. Feature extractors should define
-        :term:`get_feature_names`.
+        :term:`rectangular` data. Feature extractors should define at least:
+
+        * :term:`fit`
+        * :term:`transform`
+        * :term:`get_feature_names`
 
     meta-estimator
     meta-estimators
@@ -734,23 +789,34 @@ Class APIs and Estimator Types
 
     predictor
     predictors
-        An estimator which provides :term:`predict`.  This encompasses
-        :term:`classifier`, :term:`regressor`, :term:`outlier detector` and
-        sometimes :term:`clusterer` (although the latter only provide
-        :term:`fit_predict` when they are not :term:`inductive`).
+        An :term:`estimator` supporting :term:`predict` and/or
+        :term:`fit_predict`. This encompasses :term:`classifier`,
+        :term:`regressor`, :term:`outlier detector` and :term:`clusterer`.
 
         In statistics, "predictors" refers to :term:`features`.
 
     regressor
     regressors
-        TODO
-        Mention :func:`~base.is_regressor`.
+        A :term:`supervised` (or :term:`semi-supervised`) :term:`predictor`
+        with :term:`continuous` output values.
+
+        Regressors usually inherit from :class:`base.RegressorMixin`, which
+        sets their :term:`_estimator_type` attribute.
+
+        A regressor can be distinguished from other estimators with
+        :func:`~base.is_regressor`.
+
+        A regressor must implement:
+
+        * :term:`fit`
+        * :term:`predict`
+        * :term:`score`
 
     transformer
     transformers
-        An estimator supporting :term:`fit` and :term:`transform` and/or
-        :term:`fit_transform`.  A purely :term:`transductive` transformer,
-        such as :class:`manifold.TSNE`, may not implement ``transform``.
+        An estimator supporting :term:`transform` and/or :term:`fit_transform`.
+        A purely :term:`transductive` transformer, such as
+        :class:`manifold.TSNE`, may not implement ``transform``.
 
     vectorizer
     vectorizers
