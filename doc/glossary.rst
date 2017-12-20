@@ -359,6 +359,18 @@ General Concepts
     fitted
         The state of an estimator after :term:`fitting`.
 
+        There is no conventional procedure for checking if an estimator
+        is fitted.  However, an estimator that is not fitted:
+
+        * should raise :class:`exceptions.NotFittedError` when a prediction
+          method (:term:`predict`, :term:`transform`, etc.) is called.
+          (:func:`utils.validation.check_is_fitted` is used internally
+          for this purpose.)
+        * should not have any :term:`attributes` beginning with an alphabetic
+          character and ending with an underscore. (Note that a descriptor for
+          the attribute may still be present on the class, but hasattr should
+          return False)
+
     function
         We provide ad hoc function interfaces for many algorithms, while
         :term:`estimator` classes provide a more consistent interface.
@@ -868,6 +880,9 @@ Methods
         "hard" categorical prediction produced by :term:`predict`.  Its input
         is usually only some observed data, :term:`X`.
 
+        If the estimator was not already :term:`fitted`, calling this method
+        should raise a :class:`exceptions.NotFittedError`.
+
         Output conventions:
 
         binary classification
@@ -1012,6 +1027,9 @@ Methods
         :term:`clusterer` or :term:`outlier detector` the prediction is an
         integer.
 
+        If the estimator was not already :term:`fitted`, calling this method
+        should raise a :class:`exceptions.NotFittedError`.
+
         Output conventions:
 
         classifier
@@ -1047,6 +1065,9 @@ Methods
         return probability estimates for each class/cluster.  Its input is
         usually only some observed data, :term:`X`.
 
+        If the estimator was not already :term:`fitted`, calling this method
+        should raise a :class:`exceptions.NotFittedError`.
+
         Output conventions are like those for :term:`decision_function` except
         in the :term:`binary` classification case, where one column is output
         for each class (while ``decision_function`` outputs a 1d array). For
@@ -1065,11 +1086,17 @@ Methods
         score.  A greater return value should indicate better predictions;
         accuracy is used for classifiers and R^2 for regressors by default.
 
+        If the estimator was not already :term:`fitted`, calling this method
+        should raise a :class:`exceptions.NotFittedError`.
+
         Some estimators implement a custom, estimator-specific score function,
         often the likelihood of the data under the model.
 
     ``score_samples``
         TODO
+
+        If the estimator was not already :term:`fitted`, calling this method
+        should raise a :class:`exceptions.NotFittedError`.
 
     ``set_params``
         Available in any estimator, takes keyword arguments corresponding to
@@ -1094,6 +1121,9 @@ Methods
         into some transformed space (conventionally notated as :term:`Xt`).
         Output is an array or sparse matrix of length :term:`n_samples` and
         with number of columns fixed after :term:`fitting`.
+
+        If the estimator was not already :term:`fitted`, calling this method
+        should raise a :class:`exceptions.NotFittedError`.
 
 .. _glossary_parameters:
 
