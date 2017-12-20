@@ -116,9 +116,9 @@ Classifiers and regressors
   :class:`linear_model.BayesianRidge` for weighted linear regression.
   :issue:`10111` by :user:`Peter St. John <pstjohn>`.
 
-- :class:'dummy.DummyClassifier' and :class:'dummy.DummyRegresssor' now
-  only requires X to be an object with finite length or shape.
-  :issue:'9832' by :user:'Vrishank Bhardwaj <vrishank97>'.
+- :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
+  only require X to be an object with finite length or shape.
+  :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
 
 Model evaluation and meta-estimators
 
