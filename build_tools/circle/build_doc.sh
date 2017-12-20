@@ -106,8 +106,8 @@ conda update --yes --quiet conda
 
 # Configure the conda environment and put it in the path using the
 # provided versions
-conda create -n $CONDA_ENV_NAME --yes --quiet python="$PYTHON_VERSION" numpy scipy \
-  cython pytest coverage matplotlib="$MATPLOTLIB_VERSION" sphinx=1.6.2 pillow
+conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" numpy scipy \
+  cython pytest coverage matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=1.6.2 pillow
 
 source activate testenv
 pip install sphinx-gallery
