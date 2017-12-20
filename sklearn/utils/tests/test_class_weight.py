@@ -230,7 +230,7 @@ def test_compute_sample_weight_errors():
 
 def test_compute_class_default():
     # Test for the case where no weight is given for a present class.
-    # Current behaviour appears to assign the unweighted classes a weight of 1.
+    # Current behaviour is to assign the unweighted classes a weight of 1.
     y = np.asarray([2, 2, 2, 3, 3, 4])
     classes = np.unique(y)
     classes_len = len(classes)
