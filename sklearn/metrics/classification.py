@@ -373,7 +373,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
 
 
 def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
-                             average=None, warn=True, normalize=True,
+                             average=None, warn=True, normalize=None,
                              sample_weight=None):
     """Jaccard similarity coefficient score
 

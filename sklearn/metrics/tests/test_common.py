@@ -155,6 +155,9 @@ CLASSIFICATION_METRICS = {
     partial(jaccard_similarity_score, average="samples"),
 
     "cohen_kappa_score": cohen_kappa_score,
+
+    "none-samples_jaccard_similarity_score":
+    partial(jaccard_similarity_score, average='none-samples')
 }
 
 THRESHOLDED_METRICS = {
@@ -209,6 +212,7 @@ METRIC_UNDEFINED_BINARY = [
     "samples_recall_score",
     "coverage_error",
     "samples_jaccard_similarity_score",
+    "none-samples_jaccard_similarity_score",
 
     "average_precision_score",
     "weighted_average_precision_score",
@@ -232,6 +236,7 @@ METRIC_UNDEFINED_MULTICLASS = [
     "samples_roc_auc",
 
     "samples_jaccard_similarity_score",
+    "none-samples_jaccard_similarity_score",
 
     # with default average='binary', multiclass is prohibited
     "precision_score",
@@ -305,6 +310,7 @@ METRICS_WITH_LABELS = [
 METRICS_WITH_NORMALIZE_OPTION = [
     "accuracy_score",
     "jaccard_similarity_score",
+    "samples_jaccard_similarity_score",
     "zero_one_loss",
 ]
 
@@ -344,7 +350,8 @@ MULTILABELS_METRICS = [
 
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
-    "samples_jaccard_similarity_score"
+    "samples_jaccard_similarity_score",
+    "none-samples_jaccard_similarity_score"
 ]
 
 # Regression metrics with "multioutput-continuous" format support
