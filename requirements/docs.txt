@@ -1,0 +1,8 @@
+pytest
+coverage
+matplotlib
+sphinx==1.6.2
+pillow
+sphinx-gallery
+numpydoc
+# Note that CirclecI uses dev numpydoc (for now)
