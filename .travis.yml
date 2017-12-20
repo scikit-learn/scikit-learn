@@ -56,7 +56,7 @@ matrix:
     # interpreter provided by travis.
     -  python: 3.6
        env: DISTRIB="scipy-dev-wheels"
-       if: type != cron
+       if: type = cron
 
 install: source build_tools/travis/install.sh
 script: bash build_tools/travis/test_script.sh
