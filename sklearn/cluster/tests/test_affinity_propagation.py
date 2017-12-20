@@ -133,7 +133,8 @@ def test_affinity_propagation_predict_non_convergence():
     X = np.array([[0, 0], [1, 1], [-2, -2]])
 
     # Force non-convergence by allowing only a single iteration
-    af = AffinityPropagation(preference=-10, max_iter=1).fit(X)
+    af = assert_warns(ConvergenceWarning,
+                      AffinityPropagation(preference=-10, max_iter=1).fit, X)
 
     # At prediction time, consider new samples as noise since there are no
     # clusters
