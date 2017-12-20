@@ -37,7 +37,6 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx_gallery.gen_gallery',
     'sphinx_issues',
-    'sphinx.ext.todo',
 ]
 
 # this is needed for some reason...
