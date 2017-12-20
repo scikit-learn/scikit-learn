@@ -365,13 +365,18 @@ class KNeighborsMixin(object):
                     raise ValueError("Not enough neighbors in sparse "
                                      "precomputed matrix to get {} "
                                      "nearest neighbors".format(n_neighbors))
-                neigh_ind = np.zeros((dist.shape[0], n_neighbors), dtype=np.int)
+                neigh_ind = np.zeros((dist.shape[0], n_neighbors),
+                                     dtype=np.int)
                 for i in range(0, dist.shape[0]):
                     row = slice(dist.indptr[i], dist.indptr[i + 1])
                     col = slice(dist.indptr[i], dist.indptr[i+1])
                     sort = np.argsort(dist.data[col])
                     neigh_ind[i][:n_neighbors] = \
                         dist.indices[row][sort][:n_neighbors]
+                if query_is_train:
+                    # this is done to add self as nearest neighbor
+                    neigh_ind = np.concatenate((sample_range, neigh_ind), axis=1)
+                    neigh_ind = neigh_ind[:, :-1]
             else:
                 neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
                 neigh_ind = neigh_ind[:, :n_neighbors]
@@ -424,7 +429,6 @@ class KNeighborsMixin(object):
             # In that case mask the first duplicate.
             dup_gr_nbrs = np.all(sample_mask, axis=1)
             sample_mask[:, 0][dup_gr_nbrs] = False
-
             neigh_ind = np.reshape(
                 neigh_ind[sample_mask], (n_samples, n_neighbors - 1))
 

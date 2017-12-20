@@ -5,6 +5,7 @@ import scipy.sparse as sp
 
 from sklearn.neighbors import BallTree
 from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import kneighbors_graph
 from sklearn.utils.testing import assert_less_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -828,7 +829,9 @@ def test_tsne_with_different_csr_distance_metrics():
     for metric, dist_func in zip(metrics, dist_funcs):
         X_transformed_tsne = TSNE(
             metric=metric, n_components=n_components_embedding,
-            random_state=0).fit_transform(X_csr)
+            random_state=0).fit_transform(X)
+        D = dist_func(X)
+        D_csr = kneighbors_graph(X, 5, mode='distance')
         X_transformed_tsne_precomputed = TSNE(
             metric='precomputed', n_components=n_components_embedding,
             random_state=0).fit_transform(dist_func(X_csr))

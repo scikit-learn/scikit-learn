@@ -166,13 +166,13 @@ def test_precomputed(random_state=42):
 
 def test_precomputed_sparse():
     # Ensures enough number of nearest neighbors
-    dist = np.array([[0., 2., 1.], [2., .5, 0.], [1., 0., 1.]])
+    dist = np.array([[0., 2., 1.], [2., 0., 3.], [1., 3., 0.]])
     dist_csr = csr_matrix(dist)
     neigh = neighbors.NearestNeighbors(n_neighbors=1, metric="precomputed")
     neigh.fit(dist_csr)
     neigh.kneighbors(None, n_neighbors=1)
 
-    dist = np.array([[0., 2., 1.], [2., 0., 0.], [1., 0., 1.]])
+    dist = np.array([[0., 2., 0.], [2., 0., 3.], [0., 3., 0.]])
     dist_csr = csr_matrix(dist)
     neigh.fit(dist_csr)
     assert_raises_regex(ValueError, "Not enough neighbors in"
@@ -180,9 +180,10 @@ def test_precomputed_sparse():
                         None, n_neighbors=1)
 
     # Tests consistency of csr matrix with zeros replaced by large values
-    dist = np.array([[0., 2., 1.], [2., .5, 0.], [1., 0., 1.]])
+    neigh = neighbors.NearestNeighbors(n_neighbors=2, metric="precomputed")
+    dist = np.array([[0., 1., 0., 3.], [1., 0., 3., 0.], [0., 3., 0., 1.], [3., 0., 1., 0.]])
     dist_csr = csr_matrix(dist)
-    dist_orig = np.array([[100., 2., 1.], [2., .5, 100.], [1., 100., 1.]])
+    dist_orig = np.array([[0., 1., 100., 3.], [1., 0., 3., 100.], [100., 3., 0., 1.], [3., 100., 1., 0.]])
     neigh.fit(dist_orig)
     k_neighbors = neigh.kneighbors(None, n_neighbors=1)
     neigh.fit(dist_csr)
