@@ -830,10 +830,11 @@ def _enforce_prediction_order(classes, predictions, n_classes, method):
                                     predictions.shape, method, len(classes)))
             if len(classes) <= 2:
                 # In this special case, `predictions` contains a 1D array.
-                raise ValueError('Only {} class/es in training fold, this '
+                raise ValueError('Only {} class/es in training fold, but {} '
+                                 'in overall dataset. This '
                                  'is not supported for decision_function '
                                  'with imbalanced folds. {}'.format(
-                                    len(classes), recommendation))
+                                    len(classes), n_classes, recommendation))
 
         float_min = np.finfo(predictions.dtype).min
         default_values = {'decision_function': float_min,

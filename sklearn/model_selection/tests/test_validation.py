@@ -832,7 +832,8 @@ def test_cross_val_predict_decision_function_shape():
     X = X[:100]
     y = y[:100]
     assert_raise_message(ValueError,
-                         'Only 1 class/es in training fold, this'
+                         'Only 1 class/es in training fold,'
+                         ' but 2 in overall dataset. This'
                          ' is not supported for decision_function'
                          ' with imbalanced folds. To fix '
                          'this, use a cross-validation technique '
