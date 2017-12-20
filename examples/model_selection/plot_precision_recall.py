@@ -140,10 +140,11 @@ import matplotlib.pyplot as plt
 
 precision, recall, _ = precision_recall_curve(y_test, y_score)
 
+# no step argument for plt.fill_between for matplotlib < 1.5
+step_kwargs = {'step': 'post'} if hasattr(plt.cm, 'viridis') else {}
 plt.step(recall, precision, color='b', alpha=0.2,
          where='post')
-plt.fill_between(recall, precision, step='post', alpha=0.2,
-                 color='b')
+plt.fill_between(recall, precision, alpha=0.2, color='b', **step_kwargs)
 
 plt.xlabel('Recall')
 plt.ylabel('Precision')
@@ -212,8 +213,8 @@ print('Average precision score, micro-averaged over all classes: {0:0.2f}'
 plt.figure()
 plt.step(recall['micro'], precision['micro'], color='b', alpha=0.2,
          where='post')
-plt.fill_between(recall["micro"], precision["micro"], step='post', alpha=0.2,
-                 color='b')
+plt.fill_between(recall["micro"], precision["micro"], alpha=0.2, color='b',
+                 **step_kwargs)
 
 plt.xlabel('Recall')
 plt.ylabel('Precision')
