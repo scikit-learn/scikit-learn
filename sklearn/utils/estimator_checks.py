@@ -1202,7 +1202,8 @@ def check_classifiers_one_label(name, classifier_orig):
 def check_classifiers_one_label_sample_weights(name, classifier_orig):
     # check that classifiers accepting sample_weight fit fine or
     # throws an ValueError if the problem is reduce to one class.
-    error_fit = "Classifier can't train when only one class is present after sample_weight trimming."
+    error_fit = ("Classifier can't train when only one class is present "
+                 "after sample_weight trimming.")
     if has_fit_parameter(classifier_orig, "sample_weight"):
         classifier = clone(classifier_orig)
         rnd = np.random.RandomState(0)
@@ -1211,12 +1212,13 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
         y = np.arange(10) % 2
         # keep only one class
         sample_weight = y
-        # Test that fitting the estimators won't raise an unexpected exception
+        # Test that fit won't raise an unexpected exception
         try:
             classifier.fit(X, y, sample_weight=sample_weight)
         except ValueError as e:
-            # 'specified nu is infeasible' is the message thrown by nuSVC in this case
-            if ("class" not in repr(e)) and ("specified nu is infeasible" not in repr(e)):
+            # 'specified nu is infeasible' thrown by nuSVC in this case
+            if (("class" not in repr(e)) and
+                ("specified nu is infeasible" not in repr(e))):
                 print(error_fit, classifier, e)
                 traceback.print_exc(file=sys.stdout)
                 raise e
