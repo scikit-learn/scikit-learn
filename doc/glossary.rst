@@ -10,7 +10,8 @@ This glossary hopes to definitively represent the tacit and explicit
 conventions applied in Scikit-learn and its API, while providing a reference
 for users and contributors. It aims to describe the concepts and either detail
 their corresponding API or link to other relevant parts of the documentation
-which do so.
+which do so. By linking to glossary entries from the API Reference and User
+Guide, we may minimize redundancy and inconsistency.
 
 We begin by listing general concepts (and any that didn't fit elsewhere), but
 more specific sets of related terms are listed below:
@@ -255,6 +256,10 @@ General Concepts
           flaw).  So code which does ``hasattr`` followed by ``getattr`` should
           be avoided; ``getattr`` within a try-except block is preferred.
 
+        * For determining some aspects of an estimator's expectations or
+          support for some feature, we use :term:`estimator tags` instead of
+          duck typing.
+
     estimator instance
         We sometimes use this terminology to distinguish an :term:`estimator`
         class from a constructed instance. For example, in the following,
@@ -275,7 +280,8 @@ General Concepts
           rendered (using `sphinx-gallery
           <https://sphinx-gallery.readthedocs.io/>`_) from scripts in the
           ``examples/`` directory, exemplifying key features or parameters
-          of the estimator/function.
+          of the estimator/function.  These should also be referenced from the
+          User Guide.
         * sometimes in the :ref:`User Guide <user_guide>` (built from ``doc/``)
           alongside a technical description of the estimator.
 
@@ -393,6 +399,9 @@ General Concepts
         would lead users astray from best practices (as regards data leakage,
         etc.)
 
+    gallery
+        See :term:`examples`.
+
     hyperparameter
     hyper-parameter
         See :term:`parameter`.
@@ -455,7 +464,16 @@ General Concepts
     narrative docs
     narrative documentation
         An alias for :ref:`User Guide <user_guide>`, i.e. documentation written
-        in ``doc/modules/``.
+        in ``doc/modules/``. Unlike the :ref:`API reference <api_ref>` provided
+        through docstrings, the User Guide aims to:
+
+        * group tools provided by Scikit-learn together thematically or in
+          terms of usage;
+        * motivate why someone would use each particular tool, often through
+          comparison;
+        * provide both intuitive and technical descriptions of tools;
+        * provide or link to :term:`examples` of using key features of a
+          tool.
 
     np
         A shorthand for Numpy due to the conventional import statement::
