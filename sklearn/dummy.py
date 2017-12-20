@@ -92,8 +92,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}
-            Input vector, requires length = n_samples
+        X : {array-like, object with finite length or shape}
+            Training data
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
@@ -165,8 +165,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}
-            Input vector, requires length = n_samples
+        X : {array-like, object with finite length or shape}
+            Training data
 
         Returns
         -------
@@ -241,8 +241,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}
-            Input vector, requires length = n_samples
+        X : {array-like, object with finite length or shape}
+            Training data
 
         Returns
         -------
@@ -303,8 +303,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}
-            Input vector, requires length = n_samples
+        X : {array-like, object with finite length or shape}
+            Training data
 
         Returns
         -------
@@ -374,8 +374,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}
-            Input vector, requires length = n_samples
+        X : {array-like, object with finite length or shape}
+            Training data
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
@@ -453,8 +453,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}
-            Input vector, requires length = n_samples
+        X : {array-like, object with finite length or shape}
+            Training data
 
         Returns
         -------
