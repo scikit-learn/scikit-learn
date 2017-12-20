@@ -1218,7 +1218,7 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
         except ValueError as e:
             # 'specified nu is infeasible' thrown by nuSVC in this case
             if (("class" not in repr(e)) and
-                ("specified nu is infeasible" not in repr(e))):
+               ("specified nu is infeasible" not in repr(e))):
                 print(error_fit, classifier, e)
                 traceback.print_exc(file=sys.stdout)
                 raise e
