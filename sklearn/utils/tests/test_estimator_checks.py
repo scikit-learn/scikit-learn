@@ -10,7 +10,8 @@ from sklearn.externals import joblib
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.testing import (assert_raises_regex, assert_true,
-                                   assert_equal, ignore_warnings)
+                                   assert_equal, ignore_warnings,
+                                   assert_warns)
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.estimator_checks import set_checking_parameters
@@ -84,7 +85,7 @@ class ChangesUnderscoreAttribute(BaseEstimator):
         return self
 
 
-class RaisesError(BaseEstimator):
+class RaisesErrorInSetParams(BaseEstimator):
     def __init__(self, p=0):
         self.p = p
 
@@ -94,7 +95,7 @@ class RaisesError(BaseEstimator):
             if p < 0:
                 raise ValueError("p can't be less than 0")
             self.p = p
-        return super(RaisesError, self).set_params(**kwargs)
+        return super(RaisesErrorInSetParams, self).set_params(**kwargs)
 
     def fit(self, X, y=None):
         X, y = check_X_y(X, y)
@@ -201,7 +202,7 @@ def test_check_estimator():
     msg = "get_params result does not match what was passed to set_params"
     assert_raises_regex(AssertionError, msg, check_estimator,
                         ModifiesValueInsteadOfRaisingError())
-    check_estimator(RaisesError())
+    assert_warns(UserWarning, check_estimator, RaisesErrorInSetParams())
     assert_raises_regex(AssertionError, msg, check_estimator,
                         ModifiesAnotherValue())
     # check that we have a fit method
