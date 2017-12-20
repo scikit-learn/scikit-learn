@@ -1125,7 +1125,7 @@ the correct interface more easily.
 
 .. topic:: ``BaseEstimator`` and mixins:
 
-    We tend to use "duck typing", so building an estimator which follows
+    We tend to use use "duck typing", so building an estimator which follows
     the API suffices for compatibility, without needing to inherit from or
     even import any scikit-learn classes.
 
