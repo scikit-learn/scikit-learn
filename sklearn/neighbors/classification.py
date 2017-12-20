@@ -120,10 +120,12 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                  p=2, metric='minkowski', metric_params=None, n_jobs=1,
                  **kwargs):
 
-        self._init_params(n_neighbors=n_neighbors,
-                          algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, p=p,
-                          metric_params=metric_params, n_jobs=n_jobs, **kwargs)
+        super(KNeighborsClassifier, self).__init__(
+            n_neighbors=n_neighbors,
+            algorithm=algorithm,
+            leaf_size=leaf_size, metric=metric, p=p,
+            metric_params=metric_params,
+            n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -316,11 +318,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
                  outlier_label=None, metric_params=None, **kwargs):
-        self._init_params(radius=radius,
-                          algorithm=algorithm,
-                          leaf_size=leaf_size,
-                          metric=metric, p=p, metric_params=metric_params,
-                          **kwargs)
+        super(RadiusNeighborsClassifier, self).__init__(
+              radius=radius,
+              algorithm=algorithm,
+              leaf_size=leaf_size,
+              metric=metric, p=p, metric_params=metric_params, **kwargs)
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 

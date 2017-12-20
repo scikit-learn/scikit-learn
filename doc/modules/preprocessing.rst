@@ -325,7 +325,7 @@ parameterized by :math:`\lambda`, which is determined through maximum likelihood
 estimation. Here is an example of using Box-Cox to map samples drawn from a
 lognormal distribution to a normal distribution::
 
-  >>> pt = preprocessing.PowerTransformer(method='box-cox')
+  >>> pt = preprocessing.PowerTransformer(method='box-cox', standardize=False)
   >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
   >>> X_lognormal                                         # doctest: +ELLIPSIS
   array([[ 1.28...,  1.18...,  0.84...],
@@ -335,6 +335,10 @@ lognormal distribution to a normal distribution::
   array([[ 0.49...,  0.17..., -0.15...],
          [-0.05...,  0.58..., -0.57...],
          [ 0.69..., -0.84...,  0.10...]])
+
+While the above example sets the `standardize` option to `False`,
+:class:`PowerTransformer` will apply zero-mean, unit-variance normalization
+to the transformed output by default.
 
 Below are examples of Box-Cox applied to various probability distributions.
 Note that when applied to certain distributions, Box-Cox achieves very

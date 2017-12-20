@@ -1064,6 +1064,7 @@ Model validation
     multioutput.ClassifierChain
     multioutput.MultiOutputRegressor
     multioutput.MultiOutputClassifier
+    multioutput.RegressorChain
 
 .. _naive_bayes_ref:
 
@@ -1205,6 +1206,7 @@ Model validation
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
+   preprocessing.TransformedTargetRegressor
 
 .. autosummary::
    :toctree: generated/

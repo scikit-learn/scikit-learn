@@ -106,10 +106,13 @@ conda update --yes --quiet conda
 
 # Configure the conda environment and put it in the path using the
 # provided versions
-conda env create --name=$CONDA_ENV_NAME --file requirements/conda/default.yml --quiet
-conda env update --name=$CONDA_ENV_NAME --file requirements/conda/docs.yml --quiet
-conda install --name $CONDA_ENV_NAME --yes --quiet cython
-source activate $CONDA_ENV_NAME
+conda create -n $CONDA_ENV_NAME --yes --quiet python="$PYTHON_VERSION" numpy scipy \
+  cython pytest coverage matplotlib="$MATPLOTLIB_VERSION" sphinx=1.6.2 pillow
+
+source activate testenv
+pip install sphinx-gallery
+# Use numpydoc master (for now)
+pip install git+https://github.com/numpy/numpydoc
 
 # Build and install scikit-learn in dev mode
 python setup.py develop
@@ -141,7 +144,7 @@ if [ -n "$CI_PULL_REQUEST" ]
 then
 	echo "The following documentation files may have been changed by PR #$CI_PULL_REQUEST:"
 	affected=$(affected_doc_paths)
-	echo "$affected" | sed 's|^|* http://scikit-learn.org/circle?'$CIRCLE_BUILD_NUM'/|'
+	echo "$affected"
 	(
 	echo '<html><body><ul>'
 	echo "$affected" | sed 's|.*|<li><a href="&">&</a></li>|'
