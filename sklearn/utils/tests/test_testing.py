@@ -513,6 +513,11 @@ def test_assert_consistent_docs():
                            exclude_params=['labels', 'average', 'beta'],
                            exclude_attribs='*')
 
+    assert_raises(AssertionError, assert_consistent_docs,
+                  [precision_recall_fscore_support, precision_score,
+                   recall_score, f1_score, fbeta_score], exclude_returns='*',
+                  exclude_params=['labels', 'beta'], exclude_attribs='*')
+
     # Consider all parameters, attributes and returns
     assert_raises(AssertionError, assert_consistent_docs,
                   [precision_recall_fscore_support, precision_score,
@@ -531,3 +536,9 @@ def test_assert_consistent_docs():
                            exclude_returns='*',
                            exclude_params=['labels', 'average', 'beta'],
                            exclude_attribs='*')
+
+    # Testing invalid object type
+    assert_raises(TypeError, assert_consistent_docs,
+                  ["precision_recall_fscore_support", precision_score,
+                   recall_score, f1_score, fbeta_score], include_returns='*',
+                  include_params='*', include_attribs='*')
