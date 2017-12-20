@@ -1206,9 +1206,8 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
     if has_fit_parameter(classifier_orig, "sample_weight"):
         classifier = clone(classifier_orig)
         rnd = np.random.RandomState(0)
-        # Exception can be raised for SVC(kernel='precomputed') if X.shape[0] != X.shape[1]
-        # after trimming. This is skipped here by setting X.shape[1] to the good size.
-        X = rnd.uniform(size=(10, 5))
+        # X should be square for test on SVC with precomputed kernel.
+        X = rnd.uniform(size=(10, 10))
         y = np.arange(10) % 2
         # keep only one class
         sample_weight = y
@@ -1216,7 +1215,7 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
         try:
             classifier.fit(X, y, sample_weight=sample_weight)
         except ValueError as e:
-            # specified nu is infeasible is the message thrown by nuSVC in this case
+            # 'specified nu is infeasible' is the message thrown by nuSVC in this case
             if ("class" not in repr(e)) and ("specified nu is infeasible" not in repr(e)):
                 print(error_fit, classifier, e)
                 traceback.print_exc(file=sys.stdout)
