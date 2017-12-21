@@ -333,10 +333,10 @@ def test_cross_validate_invalid_scoring_param():
 
     # Multiclass Scorers that return multiple values are not supported yet
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
+                        cross_validate, SVC(gamma='scale'), X, y,
                         scoring=multivalued_scorer)
     assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
+                        cross_validate, SVC(gamma='scale'), X, y,
                         scoring={"foo": multivalued_scorer})
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
@@ -526,7 +526,7 @@ def test_cross_val_score_pandas():
 
 def test_cross_val_score_mask():
     # test that cross_val_score works with boolean masks
-    svm = SVC(kernel="linear")
+    svm = SVC(gamma='scale', kernel="linear")
     iris = load_iris()
     X, y = iris.data, iris.target
     kfold = KFold(5)
@@ -545,17 +545,17 @@ def test_cross_val_score_mask():
 
 def test_cross_val_score_precomputed():
     # test for svm with precomputed kernel
-    svm = SVC(kernel="precomputed")
+    svm = SVC(gamma='scale', kernel="precomputed")
     iris = load_iris()
     X, y = iris.data, iris.target
     linear_kernel = np.dot(X, X.T)
     score_precomputed = cross_val_score(svm, linear_kernel, y)
-    svm = SVC(kernel="linear")
+    svm = SVC(gamma='scale', kernel="linear")
     score_linear = cross_val_score(svm, X, y)
     assert_array_almost_equal(score_precomputed, score_linear)
 
     # test with callable
-    svm = SVC(kernel=lambda x, y: np.dot(x, y.T))
+    svm = SVC(gamma='scale', kernel=lambda x, y: np.dot(x, y.T))
     score_callable = cross_val_score(svm, X, y)
     assert_array_almost_equal(score_precomputed, score_callable)
 
@@ -626,7 +626,7 @@ def test_cross_val_score_errors():
 
 def test_cross_val_score_with_score_func_classification():
     iris = load_iris()
-    clf = SVC(kernel='linear')
+    clf = SVC(gamma='scale', kernel='linear')
 
     # Default score (should be the accuracy score)
     scores = cross_val_score(clf, iris.data, iris.target, cv=5)
@@ -676,7 +676,7 @@ def test_permutation_score():
     X = iris.data
     X_sparse = coo_matrix(X)
     y = iris.target
-    svm = SVC(kernel='linear')
+    svm = SVC(gamma='scale', kernel='linear')
     cv = StratifiedKFold(2)
 
     score, scores, pvalue = permutation_test_score(
@@ -691,7 +691,7 @@ def test_permutation_score():
     assert_true(pvalue_group == pvalue)
 
     # check that we obtain the same results with a sparse representation
-    svm_sparse = SVC(kernel='linear')
+    svm_sparse = SVC(gamma='scale', kernel='linear')
     cv_sparse = StratifiedKFold(2)
     score_group, _, pvalue_group = permutation_test_score(
         svm_sparse, X_sparse, y, n_permutations=30, cv=cv_sparse,
@@ -840,7 +840,7 @@ def test_cross_val_predict_decision_function_shape():
                          method='decision_function', cv=KFold(2))
 
     X, y = load_digits(return_X_y=True)
-    est = SVC(kernel='linear', decision_function_shape='ovo')
+    est = SVC(gamma='scale', kernel='linear', decision_function_shape='ovo')
 
     preds = cross_val_predict(est,
                               X, y,
@@ -1201,8 +1201,8 @@ def test_validation_curve_cv_splits_consistency():
     n_splits = 5
     X, y = make_classification(n_samples=100, random_state=0)
 
-    scores1 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+    scores1 = validation_curve(SVC(gamma='scale', kernel='linear', random_state=0),
+                               X, y, 'C', [0.1, 0.1, 0.2, 0.2],
                                cv=OneTimeSplitter(n_splits=n_splits,
                                                   n_samples=n_samples))
     # The OneTimeSplitter is a non-re-entrant cv splitter. Unless, the
@@ -1212,8 +1212,8 @@ def test_validation_curve_cv_splits_consistency():
     assert_array_almost_equal(*np.vsplit(np.hstack(scores1)[(0, 2, 1, 3), :],
                                          2))
 
-    scores2 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+    scores2 = validation_curve(SVC(gamma='scale', kernel='linear', random_state=0),
+                               X, y, 'C', [0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits, shuffle=True))
 
     # For scores2, compare the 1st and 2nd parameter's scores
@@ -1222,8 +1222,8 @@ def test_validation_curve_cv_splits_consistency():
     assert_array_almost_equal(*np.vsplit(np.hstack(scores2)[(0, 2, 1, 3), :],
                                          2))
 
-    scores3 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+    scores3 = validation_curve(SVC(gamma='scale', kernel='linear', random_state=0),
+                               X, y, 'C', [0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits))
 
     # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
@@ -1252,7 +1252,7 @@ def test_cross_val_predict_sparse_prediction():
                                           random_state=1)
     X_sparse = csr_matrix(X)
     y_sparse = csr_matrix(y)
-    classif = OneVsRestClassifier(SVC(kernel='linear'))
+    classif = OneVsRestClassifier(SVC(gamma='scale', kernel='linear'))
     preds = cross_val_predict(classif, X, y, cv=10)
     preds_sparse = cross_val_predict(classif, X_sparse, y_sparse, cv=10)
     preds_sparse = preds_sparse.toarray()
