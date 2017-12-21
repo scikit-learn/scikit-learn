@@ -104,13 +104,15 @@ chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
 export PATH="$MINICONDA_PATH/bin:$PATH"
 conda update --yes --quiet conda
 
-# Configure the conda environment and put it in the path using the
-# provided versions
-conda create -n $CONDA_ENV_NAME --yes --quiet python="$PYTHON_VERSION" numpy scipy \
-  cython pytest coverage matplotlib="$MATPLOTLIB_VERSION" sphinx=1.6.2 pillow
+# Configure the conda environment using provided versions
+# Note: sphinx-gallery needs to be downloaded from conda-forge
+conda config --append channels conda-forge
+conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" cython \
+  --file requirements/default.txt --file requirements/docs.txt \
+  --file requirements/test.txt
+conda install -n $CONDA_ENV_NAME --yes --quiet matplotlib="${MATPLOTLIB_VERSION:-*}"
 
 source activate $CONDA_ENV_NAME
-pip install sphinx-gallery
 # Use numpydoc master (for now)
 pip install git+https://github.com/numpy/numpydoc
 
