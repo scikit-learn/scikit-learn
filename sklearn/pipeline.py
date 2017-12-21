@@ -80,7 +80,7 @@ class Pipeline(_BaseComposition):
     ...     n_informative=5, n_redundant=0, random_state=42)
     >>> # ANOVA SVM-C
     >>> anova_filter = SelectKBest(f_regression, k=5)
-    >>> clf = svm.SVC(kernel='linear')
+    >>> clf = svm.SVC(gamma='scale', kernel='linear')
     >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])
     >>> # You can set the parameters using the names issued
     >>> # For instance, fit using a k of 10 in the SelectKBest

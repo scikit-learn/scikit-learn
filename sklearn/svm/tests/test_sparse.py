@@ -99,9 +99,9 @@ def test_unsorted_indices():
     X_test = sparse.csr_matrix(digits.data[50:100])
 
     X_sparse = sparse.csr_matrix(X)
-    coef_dense = svm.SVC(kernel='linear', probability=True,
+    coef_dense = svm.SVC(gamma='scale', kernel='linear', probability=True,
                          random_state=0).fit(X, y).coef_
-    sparse_svc = svm.SVC(kernel='linear', probability=True,
+    sparse_svc = svm.SVC(gamma='scale', kernel='linear', probability=True,
                          random_state=0).fit(X_sparse, y)
     coef_sorted = sparse_svc.coef_
     # make sure dense and sparse SVM give the same result
@@ -114,7 +114,7 @@ def test_unsorted_indices():
     assert_false(X_sparse_unsorted.has_sorted_indices)
     assert_false(X_test_unsorted.has_sorted_indices)
 
-    unsorted_svc = svm.SVC(kernel='linear', probability=True,
+    unsorted_svc = svm.SVC(gamma='scale', kernel='linear', probability=True,
                            random_state=0).fit(X_sparse_unsorted, y)
     coef_unsorted = unsorted_svc.coef_
     # make sure unsorted indices give same result
@@ -126,7 +126,7 @@ def test_unsorted_indices():
 def test_svc_with_custom_kernel():
     def kfunc(x, y):
         return safe_sparse_dot(x, y.T)
-    clf_lin = svm.SVC(kernel='linear').fit(X_sp, Y)
+    clf_lin = svm.SVC(gamma='scale', kernel='linear').fit(X_sp, Y)
     clf_mylin = svm.SVC(gamma='scale', kernel=kfunc).fit(X_sp, Y)
     assert_array_equal(clf_lin.predict(X_sp), clf_mylin.predict(X_sp))
 
@@ -154,7 +154,7 @@ def test_sparse_decision_function():
     # returns the same as the one in libsvm
 
     # multi class:
-    svc = svm.SVC(kernel='linear', C=0.1, decision_function_shape='ovo')
+    svc = svm.SVC(gamma='scale', kernel='linear', C=0.1, decision_function_shape='ovo')
     clf = svc.fit(iris.data, iris.target)
 
     dec = safe_sparse_dot(iris.data, clf.coef_.T) + clf.intercept_
@@ -304,8 +304,8 @@ def test_sparse_realdata():
          3., 0., 0., 2., 2., 1., 3., 1., 1., 0., 1., 2., 1.,
          1., 3.])
 
-    clf = svm.SVC(kernel='linear').fit(X.toarray(), y)
-    sp_clf = svm.SVC(kernel='linear').fit(sparse.coo_matrix(X), y)
+    clf = svm.SVC(gamma='scale', kernel='linear').fit(X.toarray(), y)
+    sp_clf = svm.SVC(gamma='scale', kernel='linear').fit(sparse.coo_matrix(X), y)
 
     assert_array_equal(clf.support_vectors_, sp_clf.support_vectors_.toarray())
     assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.toarray())

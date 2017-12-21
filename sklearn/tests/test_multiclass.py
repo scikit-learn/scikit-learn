@@ -275,7 +275,7 @@ def test_ovr_binary():
                      Ridge(), ElasticNet()):
         conduct_test(base_clf)
 
-    for base_clf in (MultinomialNB(), SVC(probability=True),
+    for base_clf in (MultinomialNB(), SVC(gamma='scale', probability=True),
                      LogisticRegression()):
         conduct_test(base_clf, test_predict_proba=True)
 
@@ -348,14 +348,14 @@ def test_ovr_multilabel_predict_proba():
         assert_false(hasattr(decision_only, 'predict_proba'))
 
         # Estimator with predict_proba disabled, depending on parameters.
-        decision_only = OneVsRestClassifier(svm.SVC(probability=False))
+        decision_only = OneVsRestClassifier(svm.SVC(gamma='scale', probability=False))
         assert_false(hasattr(decision_only, 'predict_proba'))
         decision_only.fit(X_train, Y_train)
         assert_false(hasattr(decision_only, 'predict_proba'))
         assert_true(hasattr(decision_only, 'decision_function'))
 
         # Estimator which can get predict_proba enabled after fitting
-        gs = GridSearchCV(svm.SVC(probability=False),
+        gs = GridSearchCV(svm.SVC(gamma='scale', probability=False),
                           param_grid={'probability': [True]})
         proba_after_fit = OneVsRestClassifier(gs)
         assert_false(hasattr(proba_after_fit, 'predict_proba'))
@@ -440,7 +440,7 @@ def test_ovr_pipeline():
 
 
 def test_ovr_coef_():
-    for base_classifier in [SVC(kernel='linear', random_state=0),
+    for base_classifier in [SVC(gamma='scale', kernel='linear', random_state=0),
                             LinearSVC(random_state=0)]:
         # SVC has sparse coef with sparse input data
 
@@ -711,7 +711,7 @@ def test_ecoc_float_y():
 
 
 def test_pairwise_indices():
-    clf_precomputed = svm.SVC(kernel='precomputed')
+    clf_precomputed = svm.SVC(gamma='scale', kernel='precomputed')
     X, y = iris.data, iris.target
 
     ovr_false = OneVsOneClassifier(clf_precomputed)
@@ -739,8 +739,8 @@ def test_pairwise_attribute():
 
 
 def test_pairwise_cross_val_score():
-    clf_precomputed = svm.SVC(kernel='precomputed')
-    clf_notprecomputed = svm.SVC(kernel='linear')
+    clf_precomputed = svm.SVC(gamma='scale', kernel='precomputed')
+    clf_notprecomputed = svm.SVC(gamma='scale', kernel='linear')
 
     X, y = iris.data, iris.target
 

@@ -41,7 +41,7 @@ iris.target = iris.target[perm]
 
 def test_libsvm_parameters():
     # Test parameters on classes that make use of libsvm.
-    clf = svm.SVC(kernel='linear').fit(X, Y)
+    clf = svm.SVC(gamma='scale', kernel='linear').fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[-0.25, .25]])
     assert_array_equal(clf.support_, [1, 3])
     assert_array_equal(clf.support_vectors_, (X[1], X[3]))
@@ -89,7 +89,7 @@ def test_libsvm_iris():
 def test_precomputed():
     # SVC with a precomputed kernel.
     # We test it with a toy dataset and with iris.
-    clf = svm.SVC(kernel='precomputed')
+    clf = svm.SVC(gamma='scale', kernel='precomputed')
     # Gram matrix for train data (square matrix)
     # (we use just a linear kernel)
     K = np.dot(X, np.array(X).T)
@@ -130,8 +130,8 @@ def test_precomputed():
 
     # test a precomputed kernel with the iris dataset
     # and check parameters against a linear SVC
-    clf = svm.SVC(kernel='precomputed')
-    clf2 = svm.SVC(kernel='linear')
+    clf = svm.SVC(gamma='scale', kernel='precomputed')
+    clf2 = svm.SVC(gamma='scale', kernel='linear')
     K = np.dot(iris.data, iris.data.T)
     clf.fit(K, iris.target)
     clf2.fit(iris.data, iris.target)
@@ -287,7 +287,7 @@ def test_tweak_params():
     # of C/Python copying in the libsvm bindings.
     # The success of this test ensures that the mapping between libsvm and
     # the python classifier is complete.
-    clf = svm.SVC(kernel='linear', C=1.0)
+    clf = svm.SVC(gamma='scale', kernel='linear', C=1.0)
     clf.fit(X, Y)
     assert_array_equal(clf.dual_coef_, [[-.25, .25]])
     assert_array_equal(clf.predict([[-.1, -.1]]), [1])
@@ -318,7 +318,7 @@ def test_decision_function():
     # Sanity check, test that decision_function implemented in python
     # returns the same as the one in libsvm
     # multi class:
-    clf = svm.SVC(kernel='linear', C=0.1,
+    clf = svm.SVC(gamma='scale', kernel='linear', C=0.1,
                   decision_function_shape='ovo').fit(iris.data, iris.target)
 
     dec = np.dot(iris.data, clf.coef_.T) + clf.intercept_
@@ -349,7 +349,7 @@ def test_decision_function_shape():
     # check that decision_function_shape='ovr' gives
     # correct shape and is consistent with predict
 
-    clf = svm.SVC(kernel='linear', C=0.1,
+    clf = svm.SVC(gamma='scale', kernel='linear', C=0.1,
                   decision_function_shape='ovr').fit(iris.data, iris.target)
     dec = clf.decision_function(iris.data)
     assert_equal(dec.shape, (len(iris.data), 3))
@@ -359,14 +359,14 @@ def test_decision_function_shape():
     X, y = make_blobs(n_samples=80, centers=5, random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    clf = svm.SVC(kernel='linear', C=0.1,
+    clf = svm.SVC(gamma='scale', kernel='linear', C=0.1,
                   decision_function_shape='ovr').fit(X_train, y_train)
     dec = clf.decision_function(X_test)
     assert_equal(dec.shape, (len(X_test), 5))
     assert_array_equal(clf.predict(X_test), np.argmax(dec, axis=1))
 
     # check shape of ovo_decition_function=True
-    clf = svm.SVC(kernel='linear', C=0.1,
+    clf = svm.SVC(gamma='scale', kernel='linear', C=0.1,
                   decision_function_shape='ovo').fit(X_train, y_train)
     dec = clf.decision_function(X_train)
     assert_equal(dec.shape, (len(X_train), 10))
@@ -449,8 +449,8 @@ def test_auto_weight():
     class_weights = compute_class_weight('balanced', classes, y[unbalanced])
     assert_true(np.argmax(class_weights) == 2)
 
-    for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
-                LogisticRegression()):
+    for clf in (svm.SVC(gamma='scale', kernel='linear'),
+                svm.LinearSVC(random_state=0), LogisticRegression()):
         # check that score is better when class='balanced' is set.
         y_pred = clf.fit(X[unbalanced], y[unbalanced]).predict(X)
         clf.set_params(class_weight='balanced')
@@ -508,11 +508,11 @@ def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError on clf.fit
     if six.PY2:
         # Test unicode (same as str on python3)
-        clf = svm.SVC(kernel=unicode('linear'))
+        clf = svm.SVC(gamma='scale', kernel=unicode('linear'))
         clf.fit(X, Y)
 
         # Test ascii bytes (str is bytes in python2)
-        clf = svm.SVC(kernel=str('linear'))
+        clf = svm.SVC(gamma='scale', kernel=str('linear'))
         clf.fit(X, Y)
     else:
         # Test unicode (str is unicode in python3)
@@ -524,7 +524,7 @@ def test_unicode_kernel():
         clf.fit(X, Y)
 
     # Test default behavior on both versions
-    clf = svm.SVC(kernel='linear')
+    clf = svm.SVC(gamma='scale', kernel='linear')
     clf.fit(X, Y)
 
 
@@ -777,7 +777,7 @@ def test_liblinear_set_coef():
 def test_immutable_coef_property():
     # Check that primal coef modification are not silently ignored
     svms = [
-        svm.SVC(kernel='linear').fit(iris.data, iris.target),
+        svm.SVC(gamma='scale', kernel='linear').fit(iris.data, iris.target),
         svm.NuSVC(kernel='linear').fit(iris.data, iris.target),
         svm.SVR(kernel='linear').fit(iris.data, iris.target),
         svm.NuSVR(kernel='linear').fit(iris.data, iris.target),
@@ -806,15 +806,15 @@ def test_linearsvc_verbose():
 def test_svc_clone_with_callable_kernel():
     # create SVM with callable linear kernel, check that results are the same
     # as with built-in linear kernel
-    svm_callable = svm.SVC(kernel=lambda x, y: np.dot(x, y.T),
+    svm_callable = svm.SVC(gamma='scale', kernel=lambda x, y: np.dot(x, y.T),
                            probability=True, random_state=0,
                            decision_function_shape='ovr')
     # clone for checking clonability with lambda functions..
     svm_cloned = base.clone(svm_callable)
     svm_cloned.fit(iris.data, iris.target)
 
-    svm_builtin = svm.SVC(kernel='linear', probability=True, random_state=0,
-                          decision_function_shape='ovr')
+    svm_builtin = svm.SVC(gamma='scale', kernel='linear', probability=True,
+                          random_state=0, decision_function_shape='ovr')
     svm_builtin.fit(iris.data, iris.target)
 
     assert_array_almost_equal(svm_cloned.dual_coef_,
@@ -832,7 +832,7 @@ def test_svc_clone_with_callable_kernel():
 
 
 def test_svc_bad_kernel():
-    svc = svm.SVC(kernel=lambda x, y: x)
+    svc = svm.SVC(gamma='scale', kernel=lambda x, y: x)
     assert_raises(ValueError, svc.fit, X, Y)
 
 
@@ -908,12 +908,12 @@ def test_hasattr_predict_proba():
     # Method must be (un)available before or after fit, switched by
     # `probability` param
 
-    G = svm.SVC(probability=True)
+    G = svm.SVC(gamma='scale', probability=True)
     assert_true(hasattr(G, 'predict_proba'))
     G.fit(iris.data, iris.target)
     assert_true(hasattr(G, 'predict_proba'))
 
-    G = svm.SVC(probability=False)
+    G = svm.SVC(gamma='scale', probability=False)
     assert_false(hasattr(G, 'predict_proba'))
     G.fit(iris.data, iris.target)
     assert_false(hasattr(G, 'predict_proba'))
@@ -930,7 +930,7 @@ def test_decision_function_shape_two_class():
     for n_classes in [2, 3]:
         X, y = make_blobs(centers=n_classes, random_state=0)
         for estimator in [svm.SVC, svm.NuSVC]:
-            clf = OneVsRestClassifier(estimator(
+            clf = OneVsRestClassifier(estimator(gamma='scale',
                 decision_function_shape="ovr")).fit(X, y)
             assert_equal(len(clf.predict(X)), len(y))
 
@@ -953,7 +953,8 @@ def test_ovr_decision_function():
 
     y_test = [0] * 2 + [1] * 2 + [2] * 2 + [3] * 2
 
-    clf = svm.SVC(kernel='linear', decision_function_shape='ovr')
+    clf = svm.SVC(gamma='scale', kernel='linear',
+                  decision_function_shape='ovr')
     clf.fit(X_train, y_train)
 
     y_pred = clf.predict(X_test)

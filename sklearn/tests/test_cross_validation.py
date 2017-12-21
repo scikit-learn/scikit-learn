@@ -700,7 +700,7 @@ def test_cross_val_score_pandas():
 
 def test_cross_val_score_mask():
     # test that cross_val_score works with boolean masks
-    svm = SVC(kernel="linear")
+    svm = SVC(gamma='scale', kernel="linear")
     iris = load_iris()
     X, y = iris.data, iris.target
     cv_indices = cval.KFold(len(y), 5)
@@ -719,12 +719,12 @@ def test_cross_val_score_mask():
 
 def test_cross_val_score_precomputed():
     # test for svm with precomputed kernel
-    svm = SVC(kernel="precomputed")
+    svm = SVC(gamma='scale', kernel="precomputed")
     iris = load_iris()
     X, y = iris.data, iris.target
     linear_kernel = np.dot(X, X.T)
     score_precomputed = cval.cross_val_score(svm, linear_kernel, y)
-    svm = SVC(kernel="linear")
+    svm = SVC(gamma='scale', kernel="linear")
     score_linear = cval.cross_val_score(svm, X, y)
     assert_array_equal(score_precomputed, score_linear)
 
@@ -878,7 +878,7 @@ def train_test_split_mock_pandas():
 
 def test_cross_val_score_with_score_func_classification():
     iris = load_iris()
-    clf = SVC(kernel='linear')
+    clf = SVC(gamma='scale', kernel='linear')
 
     # Default score (should be the accuracy score)
     scores = cval.cross_val_score(clf, iris.data, iris.target, cv=5)
@@ -928,7 +928,7 @@ def test_permutation_score():
     X = iris.data
     X_sparse = coo_matrix(X)
     y = iris.target
-    svm = SVC(kernel='linear')
+    svm = SVC(gamma='scale', kernel='linear')
     cv = cval.StratifiedKFold(y, 2)
 
     score, scores, pvalue = cval.permutation_test_score(
@@ -943,7 +943,7 @@ def test_permutation_score():
     assert_true(pvalue_label == pvalue)
 
     # check that we obtain the same results with a sparse representation
-    svm_sparse = SVC(kernel='linear')
+    svm_sparse = SVC(gamma='scale', kernel='linear')
     cv_sparse = cval.StratifiedKFold(y, 2)
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm_sparse, X_sparse, y, n_permutations=30, cv=cv_sparse,
@@ -1037,7 +1037,7 @@ def test_shufflesplit_reproducible():
 
 def test_safe_split_with_precomputed_kernel():
     clf = SVC(gamma="scale")
-    clfp = SVC(kernel="precomputed")
+    clfp = SVC(gamma='scale', kernel="precomputed")
 
     iris = load_iris()
     X, y = iris.data, iris.target
@@ -1245,7 +1245,7 @@ def test_cross_val_predict_sparse_prediction():
                                           random_state=1)
     X_sparse = csr_matrix(X)
     y_sparse = csr_matrix(y)
-    classif = OneVsRestClassifier(SVC(kernel='linear'))
+    classif = OneVsRestClassifier(SVC(gamma='scale', kernel='linear'))
     preds = cval.cross_val_predict(classif, X, y, cv=10)
     preds_sparse = cval.cross_val_predict(classif, X_sparse, y_sparse, cv=10)
     preds_sparse = preds_sparse.toarray()

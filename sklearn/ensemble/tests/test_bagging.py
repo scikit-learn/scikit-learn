@@ -115,7 +115,8 @@ def test_sparse_classification():
             for f in ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']:
                 # Trained on sparse format
                 sparse_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(decision_function_shape='ovr'),
+                    base_estimator=CustomSVC(gamma='scale',
+                                             decision_function_shape='ovr'),
                     random_state=1,
                     **params
                 ).fit(X_train_sparse, y_train)
@@ -123,7 +124,8 @@ def test_sparse_classification():
 
                 # Trained on dense format
                 dense_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(decision_function_shape='ovr'),
+                    base_estimator=CustomSVC(gamma='scale',
+                                             decision_function_shape='ovr'),
                     random_state=1,
                     **params
                 ).fit(X_train, y_train)
@@ -440,7 +442,8 @@ def test_parallel_classification():
     assert_array_almost_equal(y1, y3)
 
     # decision_function
-    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
+    ensemble = BaggingClassifier(SVC(gamma='scale',
+                                     decision_function_shape='ovr'),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
@@ -457,7 +460,7 @@ def test_parallel_classification():
                          "".format(X_test.shape[1], X_err.shape[1]),
                          ensemble.decision_function, X_err)
 
-    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
+    ensemble = BaggingClassifier(SVC(gamma='scale', decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
 
