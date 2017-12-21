@@ -175,9 +175,12 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 X_std = np.sqrt((X.multiply(X)).mean() - (X.mean())**2)
             else:
                 X_std = X.std()
-            self._gamma = 1.0 / (X.shape[1] * X_std)
-        elif self.gamma == 'auto' or self.gamma == 'auto_default':
-            if self.gamma == 'auto_default':
+            if X_std != 0:
+                self._gamma = 1.0 / (X.shape[1] * X_std)
+            else:
+                self._gamma = 1.0
+        elif self.gamma == 'auto' or self.gamma == 'auto_deprecated':
+            if self.gamma == 'auto_deprecated':
                 warnings.warn("The default gamma parameter value 'auto', "
                               "calculated as 1 / n_features, will change to "
                               "'scale' calculated as "

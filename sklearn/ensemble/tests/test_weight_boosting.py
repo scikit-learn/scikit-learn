@@ -194,23 +194,23 @@ def test_staged_predict():
     assert_array_almost_equal(score, staged_scores[-1])
 
 
-#def test_gridsearch():
-#    # Check that base trees can be grid-searched.
-#    # AdaBoost classification
-#    boost = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
-#    parameters = {'n_estimators': (1, 2),
-#                  'base_estimator__max_depth': (1, 2),
-#                  'algorithm': ('SAMME', 'SAMME.R')}
-#    clf = GridSearchCV(boost, parameters)
-#    clf.fit(iris.data, iris.target)
-#
-#    # AdaBoost regression
-#    boost = AdaBoostRegressor(base_estimator=DecisionTreeRegressor(),
-#                              random_state=0)
-#    parameters = {'n_estimators': (1, 2),
-#                  'base_estimator__max_depth': (1, 2)}
-#    clf = GridSearchCV(boost, parameters)
-#    clf.fit(boston.data, boston.target)
+def test_gridsearch():
+    # Check that base trees can be grid-searched.
+    # AdaBoost classification
+    boost = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
+    parameters = {'n_estimators': (1, 2),
+                  'base_estimator__max_depth': (1, 2),
+                  'algorithm': ('SAMME', 'SAMME.R')}
+    clf = GridSearchCV(boost, parameters)
+    clf.fit(iris.data, iris.target)
+
+    # AdaBoost regression
+    boost = AdaBoostRegressor(base_estimator=DecisionTreeRegressor(),
+                              random_state=0)
+    parameters = {'n_estimators': (1, 2),
+                  'base_estimator__max_depth': (1, 2)}
+    clf = GridSearchCV(boost, parameters)
+    clf.fit(boston.data, boston.target)
 
 
 def test_pickle():

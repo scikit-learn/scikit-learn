@@ -582,7 +582,7 @@ class SVC(BaseSVC):
 
     _impl = 'c_svc'
 
-    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto_default',
+    def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto_deprecated',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
                  verbose=False, max_iter=-1, decision_function_shape='ovr',
@@ -745,9 +745,9 @@ class NuSVC(BaseSVC):
 
     _impl = 'nu_svc'
 
-    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
-                 shrinking=True, probability=False, tol=1e-3, cache_size=200,
-                 class_weight=None, verbose=False, max_iter=-1,
+    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto_deprecated',
+                 coef0=0.0, shrinking=True, probability=False, tol=1e-3,
+                 cache_size=200, class_weight=None, verbose=False, max_iter=-1,
                  decision_function_shape='ovr', random_state=None):
 
         super(NuSVC, self).__init__(
@@ -872,8 +872,8 @@ class SVR(BaseLibSVM, RegressorMixin):
 
     _impl = 'epsilon_svr'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
-                 tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
+    def __init__(self, kernel='rbf', degree=3, gamma='auto_deprecated',
+                 coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
         super(SVR, self).__init__(
@@ -995,8 +995,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     _impl = 'nu_svr'
 
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
-                 gamma='auto', coef0=0.0, shrinking=True, tol=1e-3,
-                 cache_size=200, verbose=False, max_iter=-1):
+                 gamma='auto_deprecated', coef0=0.0, shrinking=True,
+                 tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
 
         super(NuSVR, self).__init__(
             kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
@@ -1097,8 +1097,8 @@ class OneClassSVM(BaseLibSVM):
 
     _impl = 'one_class'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
-                 tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
+    def __init__(self, kernel='rbf', degree=3, gamma='auto_deprecated',
+                 coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1, random_state=None):
 
         super(OneClassSVM, self).__init__(
