@@ -581,7 +581,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
-            sample_weight = np.log(np.exp(sample_weight) +
+            sample_weight = np.exp(np.log(sample_weight) *
                                     estimator_weight * incorrect *
                                     ((sample_weight > 0) |
                                      (estimator_weight < 0)))
