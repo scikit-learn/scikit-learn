@@ -193,7 +193,7 @@ Classifiers and regressors
 - Fixed a bug in :class:`neighbors.NearestNeighbors` where fitting a
   NearestNeighbors model fails when a) the distance metric used is a
   callable and b) the input to the NearestNeighbors model is sparse.
-  :issue:`9199` by :user:`Thomas Kober <tttthomasssss>`.
+  :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
 Decomposition, manifold learning and clustering
 
