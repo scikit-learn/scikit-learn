@@ -211,7 +211,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             if self.algorithm not in ('auto', 'brute'):
                 warnings.warn("cannot use tree with sparse input: "
                               "using brute force")
-            if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
+            if self.effective_metric_ not in VALID_METRICS_SPARSE['brute'] \
+                    and not callable(self.effective_metric_):
+
                 raise ValueError("metric '%s' not valid for sparse input"
                                  % self.effective_metric_)
             self._fit_X = X.copy()
