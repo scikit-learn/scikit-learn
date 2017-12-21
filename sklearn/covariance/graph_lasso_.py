@@ -720,10 +720,6 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 return_n_iter=False):
     """l1-penalized covariance estimator
 
-    .. deprecated:: 0.20
-        The `graph_lasso` was renamed to `graphical_lasso` in version 0.20
-        and will be removed in 0.22.
-
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     Parameters
@@ -813,10 +809,6 @@ class GraphLasso(GraphicalLasso):
 
     This class implements the Graphical Lasso algorithm.
 
-    .. deprecated:: 0.20
-        The `GraphLasso` was renamed to `GraphicalLasso` in version 0.20
-        and will be removed in 0.22.
-
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
     Parameters
@@ -876,10 +868,6 @@ class GraphLassoCV(GraphicalLassoCV):
     """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
 
     This class implements the Graphical Lasso algorithm.
-
-    .. deprecated:: 0.20
-        The `GraphLassoCV` was renamed to `GraphicalLassoCV` in version 0.20
-        and will be removed in 0.22.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
