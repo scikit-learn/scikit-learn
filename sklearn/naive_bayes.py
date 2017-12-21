@@ -471,10 +471,10 @@ class BaseDiscreteNB(BaseNB):
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
     def _check_alpha(self):
-        if self.alpha < 0:
+        if np.min(self.alpha) < 0:
             raise ValueError('Smoothing parameter alpha = %.1e. '
                              'alpha should be > 0.' % self.alpha)
-        if self.alpha < _ALPHA_MIN:
+        if np.min(self.alpha) < _ALPHA_MIN:
             warnings.warn('alpha too small will result in numeric errors, '
                           'setting alpha = %.1e' % _ALPHA_MIN)
             return _ALPHA_MIN

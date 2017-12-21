@@ -668,3 +668,20 @@ def test_alpha():
                          X, y, classes=[0, 1])
     assert_raise_message(ValueError, expected_msg, m_nb.partial_fit,
                          X, y, classes=[0, 1])
+
+def test_alpha_vector():
+    X = np.array([[1, 0], [1, 1]])
+    y = np.array([0, 1])
+
+    # Setting alpha=np.array with same length as number of features should be fine
+    alpha = np.array([1.,2.])
+    nb = MultinomialNB(alpha=alpha)
+    nb.partial_fit(X, y, classes=[0, 1])
+
+    # Test feature probabilities uses pseudo-counts (alpha)
+    feature_prob = np.array([[1./2, 1./2], [2./5, 3./5]])
+    assert_array_almost_equal(nb.feature_log_prob_, np.log(feature_prob))
+
+    # Test predictions
+    prob = np.array( [[5./9, 4./9], [25./49, 24./49]] )
+    assert_array_almost_equal(nb.predict_proba(X), prob)
