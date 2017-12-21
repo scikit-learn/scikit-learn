@@ -24,6 +24,7 @@ from ..utils import Bunch
 
 _SEARCH_NAME = "https://openml.org/api/v1/json/data/list/data_name/{}/limit/1"
 _DATA_INFO = "https://openml.org/api/v1/json/data/{}"
+_DATA_FEATURES = "https://openml.org/api/v1/json/data/features/{}"
 
 
 def _get_data_info_by_name(name, version):
@@ -80,6 +81,21 @@ def _get_data_description_by_id(data_id):
     return json_data['data_set_description']
 
 
+def _get_data_features(data_id):
+    data_found = True
+    try:
+        json_string = urlopen(_DATA_FEATURES.format(data_id))
+    except HTTPError as error:
+        if error.code == 412:
+            data_found = False
+    if not data_found:
+        # not in except for nicer traceback
+        raise ValueError("Dataset with id {} "
+                         "not found.".format(data_id))
+    json_data = json.loads(json_string.read().decode("utf-8"))
+    return json_data['data_features']['feature']
+
+
 def _download_data(url):
     response = urlopen(url)
     if sys.version_info[0] == 2:
@@ -90,6 +106,14 @@ def _download_data(url):
 
     response.close()
     return arff
+
+
+def _download_data_csv(file_id):
+    response = urlopen("https://openml.org/data/v1/get_csv/{}".format(file_id))
+    data = np.genfromtxt(response, names=True, dtype=None, delimiter=',',
+                         missing_values='?')
+    response.close()
+    return data
 
 
 def fetch_openml(name_or_id=None, version='active', data_home=None,
@@ -142,7 +166,8 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
             return func
     _get_data_info_by_name_ = mem(_get_data_info_by_name)
     _get_data_description_by_id_ = mem(_get_data_description_by_id)
-    _download_data_ = mem(_download_data)
+    _get_data_features_ = mem(_get_data_features)
+    _download_data_csv_ = mem(_download_data_csv)
 
     if not exists(data_home):
         os.makedirs(data_home)
@@ -173,17 +198,24 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
         target_column = data_description.get('default_target_attribute', None)
 
     # download actual data
-    data, meta = _download_data_(data_description['url'])
+    features = _get_data_features_(data_id)
     # TODO: stacking the content of the structured array
     # this results in a copy. If the data was homogeneous
     # and target at start or end, we could use a view instead.
-    data_columns = meta.names()
+    data_columns = []
+    for feature in features:
+        if (feature['name'] != target_column and feature['is_ignore'] ==
+                'false' and feature['is_row_identifier'] == 'false'):
+            data_columns.append(feature['name'])
+
+    data = _download_data_csv_(data_description['file_id'])
     if target_column is not None:
         y = data[target_column]
-        data_columns.remove(target_column)
     else:
         y = None
-    if all([x == "numeric" for x in meta.types()]):
+
+    if all([feature['data_type'] == "numeric" for feature in features
+            if feature['name'] in data_columns]):
         dtype = None
     else:
         dtype = object
@@ -194,7 +226,7 @@ def fetch_openml(name_or_id=None, version='active', data_home=None,
 
     bunch = Bunch(
         data=X, target=y, feature_names=data_columns,
-        DESCR=description, details=data_description, meta=meta,
+        DESCR=description, details=data_description, features=features,
         url="https://www.openml.org/d/{}".format(data_id))
 
     return bunch
