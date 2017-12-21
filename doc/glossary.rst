@@ -148,6 +148,7 @@ General Concepts
         features.
 
     clone
+    cloned
         To copy an :term:`estimator instance` and create a new one with
         identical :term:`parameters`, but without any fitted
         :term:`attributes`, using :func:`~sklearn.base.clone`.
@@ -784,7 +785,9 @@ Class APIs and Estimator Types
         produces an `array-like` object of :term:`features` for each sample
         (and thus a 2-dimensional array-like for a set of samples).  In other
         words, it (lossily) maps a non-rectangular data representation into
-        :term:`rectangular` data. Feature extractors should define at least:
+        :term:`rectangular` data.
+        
+        Feature extractors must implement at least:
 
         * :term:`fit`
         * :term:`transform`
@@ -794,16 +797,54 @@ Class APIs and Estimator Types
     meta-estimators
     metaestimator
     metaestimators
-        TODO
+        An :term:`estimator` which takes another estimator as a parameter.
+        Examples include :class:`pipeline.Pipeline`,
+        :class:`model_selection.GridSearchCV`,
+        :class:`feature_selection.SelectFromModel` and
+        :class:`ensemble.BaggingClassifier`.
 
-        Mention duck typing. Mention that duck typing of methods only works
-        after fitting (see
-        :func:`utils.metaestimators.if_delegate_has_method`). Mention lenient
-        validation. ?Mention sample props.  Mention clone.
+        In a meta-estimator's :term:`fit` method, any contained estimators
+        should be :term:`cloned` before they are fit (although FIXME: Pipeline
+        and FeatureUnion do not do this currently). An exception to this is
+        that an estimator may explicitly document that it accepts a prefitted
+        estimator (e.g. using ``prefit=True`` in
+        :class:`feature_selection.SelectFromModel`). One known issue with this
+        is that the prefitted estimator will lose its model if the
+        meta-estimator is cloned.  A meta-estimator should have ``fit`` called
+        before prediction, even if all contained estimators are prefitted.
+
+        In cases where a meta-estimator's primary behaviors (e.g.
+        :term:`predict` or :term:`transform` implementation) are functions of
+        prediction/transformation methods of the provided *base estimator* (or
+        multiple base estimators), a meta-estimator should provide at least the
+        standard methods provided by the base estimator.  It may not be
+        possible to identify which methods are provided by the underlying
+        estimator until the meta-estimator has been :term:`fitted` (see also
+        :term:`duck typing`), for which
+        :func:`utils.metaestimators.if_delegate_has_method` may help.  It
+        should also provide (or modify) the :term:`estimator tags` and
+        :term:`classes_` attribute provided by the base estimator.
+
+        Meta-estimators should be careful to validate data as minimally as
+        possible before passing it to an underlying estimator. This saves
+        computation time, and may, for instance, allow the underlying
+        estimator to easily work with data that is not :term:`rectangular`.
 
     outlier detector
     outlier detectors
-        TODO
+        An :term:`unsupervised` binary :term:`predictor` which models the
+        distinction between core and outlying samples.
+
+        Outlier detectors must implement:
+
+        * :term:`fit`
+        * :term:`fit_predict` if :term:`transductive`
+        * :term:`predict` if :term:`inductive`
+
+        Inductive outlier detectors may also implement
+        :term:`decision_function` to give a normalized inlier score where
+        outliers have score below 0.  :term:`score_samples` may provide an
+        unnormalized score per sample.
 
     predictor
     predictors
