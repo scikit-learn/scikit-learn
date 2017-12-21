@@ -109,7 +109,7 @@ conda update --yes --quiet conda
 conda create -n $CONDA_ENV_NAME --yes --quiet python="$PYTHON_VERSION" numpy scipy \
   cython pytest coverage matplotlib="$MATPLOTLIB_VERSION" sphinx=1.6.2 pillow
 
-source activate testenv
+source activate $CONDA_ENV_NAME
 pip install sphinx-gallery
 # Use numpydoc master (for now)
 pip install git+https://github.com/numpy/numpydoc
