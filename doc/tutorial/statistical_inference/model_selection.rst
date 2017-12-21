@@ -17,7 +17,7 @@ better**.
     >>> digits = datasets.load_digits()
     >>> X_digits = digits.data
     >>> y_digits = digits.target
-    >>> svc = svm.SVC(C=1, kernel='linear')
+    >>> svc = svm.SVC(gamma='scale', C=1, kernel='linear')
     >>> svc.fit(X_digits[:-100], y_digits[:-100]).score(X_digits[-100:], y_digits[-100:])
     0.97999999999999998
 

@@ -44,7 +44,7 @@ data for testing (evaluating) our classifier::
   >>> X_test.shape, y_test.shape
   ((60, 4), (60,))
 
-  >>> clf = svm.SVC(kernel='linear', C=1).fit(X_train, y_train)
+  >>> clf = svm.SVC(gamma='scale', kernel='linear', C=1).fit(X_train, y_train)
   >>> clf.score(X_test, y_test)                           # doctest: +ELLIPSIS
   0.96...
 
@@ -103,7 +103,7 @@ a model and computing the score 5 consecutive times (with different splits each
 time)::
 
   >>> from sklearn.model_selection import cross_val_score
-  >>> clf = svm.SVC(kernel='linear', C=1)
+  >>> clf = svm.SVC(gamma='scale', kernel='linear', C=1)
   >>> scores = cross_val_score(clf, iris.data, iris.target, cv=5)
   >>> scores                                              # doctest: +ELLIPSIS
   array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
@@ -156,7 +156,7 @@ validation iterator instead, for instance::
       ...     iris.data, iris.target, test_size=0.4, random_state=0)
       >>> scaler = preprocessing.StandardScaler().fit(X_train)
       >>> X_train_transformed = scaler.transform(X_train)
-      >>> clf = svm.SVC(C=1).fit(X_train_transformed, y_train)
+      >>> clf = svm.SVC(gamma='scale', C=1).fit(X_train_transformed, y_train)
       >>> X_test_transformed = scaler.transform(X_test)
       >>> clf.score(X_test_transformed, y_test)  # doctest: +ELLIPSIS
       0.9333...
@@ -165,7 +165,8 @@ validation iterator instead, for instance::
     estimators, providing this behavior under cross-validation::
 
       >>> from sklearn.pipeline import make_pipeline
-      >>> clf = make_pipeline(preprocessing.StandardScaler(), svm.SVC(C=1))
+      >>> clf = make_pipeline(preprocessing.StandardScaler(),
+      ...                     svm.SVC(gamma='scale', C=1))
       >>> cross_val_score(clf, iris.data, iris.target, cv=cv)
       ...                                                 # doctest: +ELLIPSIS
       array([ 0.97...,  0.93...,  0.95...])
@@ -202,7 +203,7 @@ predefined scorer names::
     >>> from sklearn.model_selection import cross_validate
     >>> from sklearn.metrics import recall_score
     >>> scoring = ['precision_macro', 'recall_macro']
-    >>> clf = svm.SVC(kernel='linear', C=1, random_state=0)
+    >>> clf = svm.SVC(gamma='scale', kernel='linear', C=1, random_state=0)
     >>> scores = cross_validate(clf, iris.data, iris.target, scoring=scoring,
     ...                         cv=5, return_train_score=False)
     >>> sorted(scores.keys())

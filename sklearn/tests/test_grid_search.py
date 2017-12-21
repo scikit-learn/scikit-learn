@@ -318,15 +318,15 @@ def test_grid_search_one_grid_point():
 
 def test_grid_search_bad_param_grid():
     param_dict = {"C": 1.0}
-    clf = SVC()
+    clf = SVC(gamma='scale')
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
     param_dict = {"C": []}
-    clf = SVC()
+    clf = SVC(gamma='scale')
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
     param_dict = {"C": np.ones(6).reshape(3, 2)}
-    clf = SVC()
+    clf = SVC(gamma='scale')
     assert_raises(ValueError, GridSearchCV, clf, param_dict)
 
 
@@ -689,7 +689,7 @@ def test_predict_proba_disabled():
     # Test predict_proba when disabled on estimator.
     X = np.arange(20).reshape(5, -1)
     y = [0, 0, 1, 1, 1]
-    clf = SVC(probability=False)
+    clf = SVC(gamma='scale', probability=False)
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
     assert_false(hasattr(gs, "predict_proba"))
 

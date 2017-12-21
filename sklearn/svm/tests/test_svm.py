@@ -54,7 +54,7 @@ def test_libsvm_iris():
 
     # shuffle the dataset so that labels are not ordered
     for k in ('linear', 'rbf'):
-        clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
+        clf = svm.SVC(gamma='scale', kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
         assert_true(hasattr(clf, "coef_") == (k == 'linear'))
 
@@ -119,7 +119,7 @@ def test_precomputed():
     # matrix. kernel is just a linear kernel
 
     kfunc = lambda x, y: np.dot(x, y.T)
-    clf = svm.SVC(kernel=kfunc)
+    clf = svm.SVC(gamma='scale', kernel=kfunc)
     clf.fit(X, Y)
     pred = clf.predict(T)
 
@@ -151,7 +151,7 @@ def test_precomputed():
     pred = clf.predict(K)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
-    clf = svm.SVC(kernel=kfunc)
+    clf = svm.SVC(gamma='scale', kernel=kfunc)
     clf.fit(iris.data, iris.target)
     assert_almost_equal(np.mean(pred == iris.target), .99, decimal=2)
 
@@ -299,8 +299,8 @@ def test_probability():
     # Predict probabilities using SVC
     # This uses cross validation, so we use a slightly bigger testing set.
 
-    for clf in (svm.SVC(probability=True, random_state=0, C=1.0),
-                svm.NuSVC(probability=True, random_state=0)):
+    for clf in (svm.SVC(gamma='scale', probability=True, random_state=0,
+                C=1.0), svm.NuSVC(probability=True, random_state=0)):
         clf.fit(iris.data, iris.target)
 
         prob_predict = clf.predict_proba(iris.data)
@@ -396,7 +396,7 @@ def test_svr_predict():
 
 def test_weight():
     # Test class weights
-    clf = svm.SVC(class_weight={1: 0.1})
+    clf = svm.SVC(gamma='scale', class_weight={1: 0.1})
     # we give a small weights to class 1
     clf.fit(X, Y)
     # so all predicted values belong to class 2
@@ -463,7 +463,7 @@ def test_auto_weight():
 def test_bad_input():
     # Test that it gives proper exception on deficient input
     # impossible value of C
-    assert_raises(ValueError, svm.SVC(C=-1).fit, X, Y)
+    assert_raises(ValueError, svm.SVC(gamma='scale', C=-1).fit, X, Y)
 
     # impossible value of nu
     clf = svm.NuSVC(nu=0.0)

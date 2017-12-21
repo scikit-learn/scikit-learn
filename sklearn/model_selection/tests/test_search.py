@@ -834,7 +834,7 @@ def test_grid_search_cv_results():
     n_candidates = n_grid_points
 
     for iid in (False, True):
-        search = GridSearchCV(SVC(), cv=n_splits, iid=iid, param_grid=params)
+        search = GridSearchCV(SVC(gamma='scale'), cv=n_splits, iid=iid, param_grid=params)
         search.fit(X, y)
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
@@ -894,8 +894,9 @@ def test_random_search_cv_results():
     n_cand = n_search_iter
 
     for iid in (False, True):
-        search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_splits,
-                                    iid=iid, param_distributions=params)
+        search = RandomizedSearchCV(SVC(gamma='scale'), n_iter=n_search_iter,
+                                    cv=n_splits, iid=iid,
+                                    param_distributions=params)
         search.fit(X, y)
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
@@ -962,7 +963,8 @@ def test_search_iid_param():
         assert_almost_equal(test_mean, expected_test_mean)
         assert_almost_equal(test_std, expected_test_std)
         assert_array_almost_equal(test_cv_scores,
-                                  cross_val_score(SVC(C=1), X, y, cv=cv))
+                                  cross_val_score(SVC(gamma='scale', C=1), X,
+                                                  y, cv=cv))
 
         # For the train scores, we do not take a weighted mean irrespective of
         # i.i.d. or not
@@ -1018,7 +1020,7 @@ def test_grid_search_cv_results_multimetric():
         for scoring in ({'accuracy': make_scorer(accuracy_score),
                          'recall': make_scorer(recall_score)},
                         'accuracy', 'recall'):
-            grid_search = GridSearchCV(SVC(), cv=n_splits, iid=iid,
+            grid_search = GridSearchCV(SVC(gamma='scale'), cv=n_splits, iid=iid,
                                        param_grid=params, scoring=scoring,
                                        refit=False)
             grid_search.fit(X, y)
@@ -1044,7 +1046,7 @@ def test_random_search_cv_results_multimetric():
                 # If True, for multi-metric pass refit='accuracy'
                 if refit:
                     refit = 'accuracy' if isinstance(scoring, tuple) else refit
-                clf = SVC(probability=True, random_state=42)
+                clf = SVC(gamma='scale', probability=True, random_state=42)
                 random_search = RandomizedSearchCV(clf, n_iter=n_search_iter,
                                                    cv=n_splits, iid=iid,
                                                    param_distributions=params,
@@ -1302,7 +1304,7 @@ def test_predict_proba_disabled():
     # Test predict_proba when disabled on estimator.
     X = np.arange(20).reshape(5, -1)
     y = [0, 0, 1, 1, 1]
-    clf = SVC(probability=False)
+    clf = SVC(gamma='scale', probability=False)
     gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
     assert_false(hasattr(gs, "predict_proba"))
 
