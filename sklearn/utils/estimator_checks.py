@@ -1946,21 +1946,25 @@ def check_set_params(name, estimator_orig):
                 e_type = e.__class__.__name__
                 # Exception occurred, possibly parameter validation
                 warnings.warn("{} occurred during set_params. "
-                              "It is recommended to delay parameter validation "
-                              "until fit.".format(e_type))
+                              "It is recommended to delay parameter "
+                              "validation until fit.".format(e_type))
 
-                change_warning_msg = "Estimator's parameters changed after set_params raised {}".format(e_type)
+                change_warning_msg = "Estimator's parameters changed after " \
+                                     "set_params raised {}".format(e_type)
                 params_before_exception = curr_params
                 curr_params = estimator.get_params(deep=False)
                 try:
-                    assert_equal(set(params_before_exception.keys()), set(curr_params.keys()))
+                    assert_equal(set(params_before_exception.keys()),
+                                 set(curr_params.keys()))
                     for k, v in curr_params.items():
                         assert_is(params_before_exception[k], v)
                 except AssertionError:
                     warnings.warn(change_warning_msg)
             else:
                 curr_params = estimator.get_params(deep=False)
-                assert_equal(set(test_params.keys()), set(curr_params.keys()), msg)
+                assert_equal(set(test_params.keys()),
+                             set(curr_params.keys()),
+                             msg)
                 for k, v in curr_params.items():
                     assert_is(test_params[k], v, msg)
         test_params[param_name] = default_value
