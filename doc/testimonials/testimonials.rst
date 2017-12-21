@@ -119,6 +119,41 @@ Gilad Lotan, Chief Data Scientist
    </span>
 
 
+`Hugging Face <https://huggingface.co>`_
+------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/huggingface.png
+    :width: 120pt
+    :target: https://huggingface.co
+
+.. raw:: html
+
+  </div>
+
+At Hugging Face we're using NLP and probabilistic models to generate
+conversational Artificial intelligences that are fun to chat with. Despite using
+deep neural nets for `a few <https://medium.com/huggingface/understanding-emotions-from-keras-to-pytorch-3ccb61d5a983>`_ 
+of our `NLP tasks <https://huggingface.co/coref/>`_, scikit-learn is still the bread-and-butter of
+our daily machine learning routine. The ease of use and predictability of the
+interface, as well as the straightforward mathematical explanations that are
+here when you need them, is the killer feature. We use a variety of scikit-learn
+models in production and they are also operationally very pleasant to work with.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Julien Chaumond, Chief Technology Officer
+
+.. raw:: html
+
+   </span>
+
+
 `Evernote <https://evernote.com>`_
 ----------------------------------
 
