@@ -113,8 +113,6 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
             Instance of self.
         """
         self.label_encoder = LabelEncoder().fit(y)
-        if len(self.label_encoder.classes_) != 2:
-            raise ValueError('Target must contain two distinct values')
         y = self.label_encoder.transform(y)
         self.pos_label = self.label_encoder.transform(self.pos_label)
 
