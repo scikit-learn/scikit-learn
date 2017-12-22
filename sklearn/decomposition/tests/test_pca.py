@@ -537,6 +537,34 @@ def test_infer_dim_3():
     assert_greater(_infer_dimension_(spect, n, p), 2)
 
 
+def test_infer_dim_bad_spec():
+    # Test a spectrum that drops to near zero
+    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
+    n_samples = 10
+    n_features = 5
+    ret = _infer_dimension_(spectrum, n_samples, n_features)
+    assert_equal(ret, 0)
+
+
+def test_assess_dimension_small_eigenvalues():
+    # Test tiny eigenvalues appropriately when 'mle'
+    spectrum = np.array([1, 1e-30, 1e-30, 1e-30])
+    n_samples = 10
+    n_features = 5
+    rank = 4
+    ret = _assess_dimension_(spectrum, rank, n_samples, n_features)
+    assert_equal(ret, -np.inf)
+
+
+def test_infer_dim_mle():
+    # Test small eigenvalues when 'mle' with pathelogical 'X' dataset
+    X, _ = datasets.make_classification(n_informative=1, n_repeated=18,
+                                        n_redundant=1, n_clusters_per_class=1,
+                                        random_state=42)
+    pca = PCA(n_components='mle').fit(X)
+    assert_equal(pca.n_components_, 0)
+
+
 def test_infer_dim_by_explained_variance():
     X = iris.data
     pca = PCA(n_components=0.95, svd_solver='full')
