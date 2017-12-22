@@ -296,15 +296,15 @@ Cluster
 Changes to estimator checks
 ---------------------------
 
-- Allow tests in :func:`estimator_checks.check_estimator` to test functions
+- Allow tests in :func:`utils.estimator_checks.check_estimator` to test functions
   that accept pairwise data.
   :issue:`9701` by :user:`Kyle Johnson <gkjohns>`
 
-- Allow :func:`estimator_checks.check_estimator` to check that there is no
+- Allow :func:`utils.estimator_checks.check_estimator` to check that there is no
   private settings apart from parameters during estimator initialization.
   :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
 
-- The set of checks in :func:`estimator_checks.check_estimator` now includes a
+- The set of checks in :func:`utils.estimator_checks.check_estimator` now includes a
   ``check_set_params`` test which checks that ``set_params`` is equivalent to
   passing parameters in ``__init__`` and warns if it encounters parameter
   validation. :issue:`7738` by :user:`Alvin Chiang <absolutelyNoWarranty>`
