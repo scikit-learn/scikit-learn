@@ -304,7 +304,7 @@ Changes to estimator checks
   private settings apart from parameters during estimator initialization.
   :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
 
-- :func:`estimator_checks.check_estimator` now includes a ``check_set_params``
-  test which checks that ``set_params`` is equivalent to passing parameters in
-  ``__init__`` and warns if it encounters parameter validation.
-  :issue:`7738` by :user:`Alvin Chiang <absolutelyNoWarranty>`
+- The set of checks in :func:`estimator_checks.check_estimator` now includes a
+  ``check_set_params`` test which checks that ``set_params`` is equivalent to
+  passing parameters in ``__init__`` and warns if it encounters parameter
+  validation. :issue:`7738` by :user:`Alvin Chiang <absolutelyNoWarranty>`
