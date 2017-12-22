@@ -55,11 +55,13 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         - 'roc', selects the point on the roc_curve that is closer to the ideal
         corner (0, 1)
 
-        - 'max_se', selects the point that yields the highest sensitivity with
-        specificity at least equal to the value of the parameter min_val_sp
+        - 'max_tpr', selects the point that yields the highest true positive
+        rate with true negative rate at least equal to the value of the
+        parameter min_val_tnr
 
-        - 'max_sp', selects the point that yields the highest specificity with
-        sensitivity at least equal to the value of the parameter min_val_se
+        - 'max_tnr', selects the point that yields the highest true negative
+        rate with true positive rate at least equal to the value of the
+        parameter min_val_tpr
 
     pos_label : object
         Object representing the positive label
@@ -71,13 +73,13 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         calibration of the probability threshold
         (default value: "prefit")
 
-    min_val_sp : float in [0, 1]
-        In case method = 'max_se' this value must be set to specify the minimum
-        required value for the specificity
+    min_val_tnr : float in [0, 1]
+        In case method = 'max_tpr' this value must be set to specify the minimum
+        required value for the true negative rate
 
-    min_val_se : float in [0, 1]
-        In case method = 'max_sp' this value must be set to specify the minimum
-        required value for the sensitivity
+    min_val_tpr : float in [0, 1]
+        In case method = 'max_tnr' this value must be set to specify the minimum
+        required value for the true positive rate
 
     Attributes
     ----------
@@ -86,13 +88,13 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         predict
     """
     def __init__(self, base_estimator=None, method='roc', pos_label=1, cv=3,
-                 min_val_sp=None, min_val_se=None):
+                 min_val_tnr=None, min_val_tpr=None):
         self.base_estimator = base_estimator
         self.method = method
         self.pos_label = pos_label
         self.cv = cv
-        self.min_val_sp = min_val_sp
-        self.min_val_se = min_val_se
+        self.min_val_tnr = min_val_tnr
+        self.min_val_tpr = min_val_tpr
         self.threshold = None
 
     def fit(self, X, y):
@@ -120,7 +122,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         if self.cv == 'prefit':
             self.threshold = _CutoffClassifier(
                 self.base_estimator, self.method, self.pos_label,
-                self.min_val_sp, self.min_val_se
+                self.min_val_tnr, self.min_val_tpr
             ).fit(X, y).threshold
         else:
             cv = check_cv(self.cv, y, classifier=True)
@@ -130,8 +132,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
                 estimator = clone(self.base_estimator).fit(X[train], y[train])
                 thresholds.append(
                     _CutoffClassifier(
-                        estimator, self.method, self.pos_label, self.min_val_sp,
-                        self.min_val_se
+                        estimator, self.method, self.pos_label, self.min_val_tnr,
+                        self.min_val_tpr
                     ).fit(X[test], y[test]).threshold
                 )
             self.threshold = sum(thresholds) / \
@@ -181,13 +183,13 @@ class _CutoffClassifier(object):
     threshold : float
         Acquired optimal decision threshold for the positive class
     """
-    def __init__(self, base_estimator, method, pos_label, min_val_sp,
-                 min_val_se):
+    def __init__(self, base_estimator, method, pos_label, min_val_tnr,
+                 min_val_tpr):
         self.base_estimator = base_estimator
         self.method = method
         self.pos_label = pos_label
-        self.min_val_sp = min_val_sp
-        self.min_val_se = min_val_se
+        self.min_val_tnr = min_val_tnr
+        self.min_val_tpr = min_val_tpr
         self.threshold = None
 
     def fit(self, X, y):
@@ -214,11 +216,11 @@ class _CutoffClassifier(object):
             self.threshold = thresholds[np.argmin(
                 euclidean_distances(np.column_stack((fpr, tpr)), [[0, 1]])
             )]
-        elif self.method == 'max_se':
-            indices = np.where(1 - fpr >= self.min_val_sp)
+        elif self.method == 'max_tpr':
+            indices = np.where(1 - fpr >= self.min_val_tnr)
             self.threshold = thresholds[indices[np.argmax(tpr[indices])]]
-        elif self.method == 'max_sp':
-            indices = np.where(tpr >= self.min_val_se)
+        elif self.method == 'max_tnr':
+            indices = np.where(tpr >= self.min_val_tpr)
             self.threshold = thresholds[indices[np.argmax(1 - fpr[indices])]]
         return self
 
