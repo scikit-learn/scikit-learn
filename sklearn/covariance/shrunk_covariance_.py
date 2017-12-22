@@ -438,9 +438,8 @@ def oas(X, assume_centered=False):
 
     where mu = trace(cov) / n_features
 
-    The formula we used to implement the OAS
-    does not correspond to the one given in the article. It is slightly
-    modified (see :class:`OAS` for details).
+    The formula we used to implement the OAS is slightly modified compared
+    to the one given in the article. See :class:`OAS` for more details.
 
     """
     X = np.asarray(X)
