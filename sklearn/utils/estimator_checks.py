@@ -1204,27 +1204,37 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
     # throws an ValueError if the problem is reduce to one class.
     error_fit = ("Classifier can't train when only one class is present "
                  "after sample_weight trimming.")
+    error_predict = ("Classifier can't predict when only one class is "
+                     "present after sample_weight trimming.")
     if has_fit_parameter(classifier_orig, "sample_weight"):
         classifier = clone(classifier_orig)
         rnd = np.random.RandomState(0)
         # X should be square for test on SVC with precomputed kernel.
-        X = rnd.uniform(size=(10, 10))
+        X_train = rnd.uniform(size=(10, 10))
+        X_test = rnd.uniform(size=(10, 10))
         y = np.arange(10) % 2
         # keep only one class
         sample_weight = y
         # Test that fit won't raise an unexpected exception
+        # 'specified nu is infeasible' thrown by nuSVC in this case
         try:
-            classifier.fit(X, y, sample_weight=sample_weight)
+            classifier.fit(X_train, y, sample_weight=sample_weight)
         except ValueError as e:
-            # 'specified nu is infeasible' thrown by nuSVC in this case
-            if (("class" not in repr(e)) and
-               ("specified nu is infeasible" not in repr(e))):
+            if ("class" not in repr(e)) and ("specified nu" not in repr(e)):
                 print(error_fit, classifier, e)
                 traceback.print_exc(file=sys.stdout)
                 raise e
+            else:
+                return
         except Exception as exc:
             print(error_fit, classifier, exc)
             traceback.print_exc(file=sys.stdout)
+            raise exc
+        # predict
+        try:
+            assert_array_equal(classifier.predict(X_test), np.ones(10))
+        except Exception as exc:
+            print(error_predict, classifier, exc)
             raise exc
 
 
