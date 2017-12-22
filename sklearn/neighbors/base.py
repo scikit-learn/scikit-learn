@@ -202,7 +202,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32])
 
         n_samples = X.shape[0]
         if n_samples == 0:
