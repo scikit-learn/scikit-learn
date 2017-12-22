@@ -104,7 +104,7 @@ digg and Scale Model. Consistently the betaworks data science team uses
 Scikit-learn for a variety of tasks. From exploratory analysis, to product
 development, it is an essential part of our toolkit. Recent uses are included
 in `digg’s new video recommender system
-<https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3#.g5kk2u89v>`_,
+<https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3>`_,
 and Poncho’s `dynamic heuristic subspace clustering
 <https://medium.com/@DiggData/scaling-poncho-using-data-ca24569d56fd>`_. 
 
