@@ -30,8 +30,13 @@ from .metrics.pairwise import euclidean_distances
 from .metrics.ranking import roc_curve
 
 
-class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
-    """Optimal cutoff point selection.
+class CutoffClassifier(BaseEstimator, ClassifierMixin):
+    """Uses a base estimator and finds a cutoff point (decision threshold) to be
+    used by predict. Applicable only on binary classification problems.
+
+    The methods for picking "optimal" cutoff points are inferred from ROC
+    analysis; making use of true positive and true negative rates and their
+    corresponding thresholds.
 
     If cv="prefit" the base estimator is assumed to be fitted and all data will
     be used for the selection of the cutoff point that determines the
@@ -42,10 +47,10 @@ class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
     ----------
     base_estimator : instance BaseEstimator
         The classifier whose decision threshold will be adapted according to the
-        acquired optimal cutoff point
+        acquired cutoff point
 
     method : str
-        The method to use for choosing the optimal cutoff point.
+        The method to use for choosing the cutoff point.
 
         - 'roc', selects the point on the roc_curve that is closer to the ideal
         corner (0, 1)
@@ -113,7 +118,7 @@ class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
         self.pos_label = self.label_encoder.transform(self.pos_label)
 
         if self.cv == 'prefit':
-            self.threshold = _OptimalCutoffClassifier(
+            self.threshold = _CutoffClassifier(
                 self.base_estimator, self.method, self.pos_label,
                 self.min_val_sp, self.min_val_se
             ).fit(X, y).threshold
@@ -124,7 +129,7 @@ class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
             for train, test in cv.split(X, y):
                 estimator = clone(self.base_estimator).fit(X[train], y[train])
                 thresholds.append(
-                    _OptimalCutoffClassifier(
+                    _CutoffClassifier(
                         estimator, self.method, self.pos_label, self.min_val_sp,
                         self.min_val_se
                     ).fit(X[test], y[test]).threshold
@@ -141,9 +146,8 @@ class OptimalCutoffClassifier(BaseEstimator, ClassifierMixin):
         )
 
 
-class _OptimalCutoffClassifier(object):
-    """Optimal cutoff point selection based on diagnostic test accuracy
-    measures (Sensitivity / Specificity).
+class _CutoffClassifier(object):
+    """Optimal cutoff point selection.
 
     It assumes that base_estimator has already been fit, and uses the input set
     of the fit function to select an optimal cutoff point. Note that this
@@ -157,7 +161,7 @@ class _OptimalCutoffClassifier(object):
         acquired optimal cutoff point
 
     method : 'roc' or 'max_se' or 'max_sp'
-        The method to use for choosing the optimal cutoff point.
+        The method to use for choosing the cutoff point.
 
     pos_label : object
         Label considered as positive during the roc_curve construction.
