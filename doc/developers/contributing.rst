@@ -359,7 +359,7 @@ following rules before submitting:
 -  If you are submitting an algorithm or feature request, please verify that
    the algorithm fulfills our
    `new algorithm requirements
-   <http://scikit-learn.org/stable/faq.html#can-i-add-this-new-algorithm-that-i-or-someone-else-just-published>`_.
+   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
 
 -  Please ensure all code snippets and error messages are formatted in
    appropriate code blocks.

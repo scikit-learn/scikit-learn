@@ -1301,7 +1301,7 @@ Here is a small example of usage of this function:::
 .. topic:: References:
 
   * G. Brier, `Verification of forecasts expressed in terms of probability
-    <http://docs.lib.noaa.gov/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
+    <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
     Monthly weather review 78.1 (1950)
 
 .. _multilabel_ranking_metrics:
