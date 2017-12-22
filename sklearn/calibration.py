@@ -39,8 +39,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
     corresponding thresholds.
 
     If cv="prefit" the base estimator is assumed to be fitted and all data will
-    be used for the selection of the cutoff point that determines the
-    output of predict. Otherwise predict will use the average of the thresholds
+    be used for the selection of the cutoff point that determines the output of
+    predict. Otherwise predict will use the average of the thresholds
     resulting from the cross-validation loop.
 
     Parameters
@@ -128,10 +128,13 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
             for train, test in cv.split(X, y):
                 estimator = clone(self.base_estimator).fit(X[train], y[train])
                 thresholds.append(
-                    _CutoffClassifier(
-                        estimator, self.method, self.pos_label, self.min_val_tnr,
-                        self.min_val_tpr
-                    ).fit(X[test], y[test]).threshold
+                    _CutoffClassifier(estimator,
+                                      self.method,
+                                      self.pos_label,
+                                      self.min_val_tnr,
+                                      self.min_val_tpr).fit(
+                        X[test], y[test]
+                    ).threshold
                 )
             self.threshold = sum(thresholds) / \
                 len(thresholds)
