@@ -95,7 +95,6 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         self.cv = cv
         self.min_val_tnr = min_val_tnr
         self.min_val_tpr = min_val_tpr
-        self.threshold = None
 
     def fit(self, X, y):
         """Fit model
@@ -190,7 +189,6 @@ class _CutoffClassifier(object):
         self.pos_label = pos_label
         self.min_val_tnr = min_val_tnr
         self.min_val_tpr = min_val_tpr
-        self.threshold = None
 
     def fit(self, X, y):
         """Select a decision threshold based on an optimal cutoff point for the
