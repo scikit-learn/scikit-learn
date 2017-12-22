@@ -148,7 +148,7 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
 .. topic:: References
 
     * "Notes on Regularized Least Squares", Rifkin & Lippert (`technical report
-      <http://cbcl.mit.edu/projects/cbcl/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
+      <http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf>`_,
       `course slides
       <http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf>`_).
 
