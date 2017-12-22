@@ -424,10 +424,6 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
 
 
 def _check_solver_option(solver, multi_class, penalty, dual):
-    if solver == 'auto' and penalty == 'l2':
-        solver = 'liblinear'
-    if multi_class == 'auto' and solver != 'liblinear':
-        multi_class = 'ovr'
     if solver not in ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga']:
         raise ValueError("Logistic Regression supports only liblinear, "
                          "newton-cg, lbfgs, sag and saga solvers, got %s"
@@ -1202,14 +1198,18 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self : object
             Returns self.
         """
-        if self.solver == 'auto' and self.penalty == 'l2':
-            self.solver = 'liblinear'
+        if self.solver == 'auto':
+            _solver = 'liblinear'
             warnings.warn("Auto solver will be changed to 'lbfgs' in 0.22",
                           FutureWarning)
-        if self.multi_class == 'auto' and self.solver != 'liblinear':
-            self.multi_class = 'ovr'
+        else:
+            _solver = self.solver
+        if self.multi_class == 'auto':
+            _multi_class = 'ovr'
             warnings.warn("Default multi_class will be changed to "
                           "'multinomial' in 0.22", FutureWarning)
+        else:
+            _multi_class = self.multi_class
         if not isinstance(self.C, numbers.Number) or self.C < 0:
             raise ValueError("Penalty term must be positive; got (C=%r)"
                              % self.C)
@@ -1220,7 +1220,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise ValueError("Tolerance for stopping criteria must be "
                              "positive; got (tol=%r)" % self.tol)
 
-        if self.solver in ['newton-cg']:
+        if _solver in ['newton-cg']:
             _dtype = [np.float64, np.float32]
         else:
             _dtype = np.float64
@@ -1231,10 +1231,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
 
-        _check_solver_option(self.solver, self.multi_class, self.penalty,
+        _check_solver_option(_solver, _multi_class, self.penalty,
                              self.dual)
 
-        if self.solver == 'liblinear':
+        if _solver == 'liblinear':
             if self.n_jobs != 1:
                 warnings.warn("'n_jobs' > 1 does not have any effect when"
                               " 'solver' is set to 'liblinear'. Got 'n_jobs'"
@@ -1247,7 +1247,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             self.n_iter_ = np.array([n_iter_])
             return self
 
-        if self.solver in ['sag', 'saga']:
+        if _solver in ['sag', 'saga']:
             max_squared_sum = row_norms(X, squared=True).max()
         else:
             max_squared_sum = None
@@ -1276,7 +1276,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         self.intercept_ = np.zeros(n_classes)
 
         # Hack so that we iterate only once for the multinomial case.
-        if self.multi_class == 'multinomial':
+        if _multi_class == 'multinomial':
             classes_ = [None]
             warm_start_coef = [warm_start_coef]
         if warm_start_coef is None:
@@ -1286,7 +1286,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
-        if self.solver in ['sag', 'saga']:
+        if _solver in ['sag', 'saga']:
             backend = 'threading'
         else:
             backend = 'multiprocessing'
@@ -1294,8 +1294,8 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                                backend=backend)(
             path_func(X, y, pos_class=class_, Cs=[self.C],
                       fit_intercept=self.fit_intercept, tol=self.tol,
-                      verbose=self.verbose, solver=self.solver,
-                      multi_class=self.multi_class, max_iter=self.max_iter,
+                      verbose=self.verbose, solver=_solver,
+                      multi_class=_multi_class, max_iter=self.max_iter,
                       class_weight=self.class_weight, check_input=False,
                       random_state=self.random_state, coef=warm_start_coef_,
                       penalty=self.penalty,
@@ -1306,7 +1306,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
         self.n_iter_ = np.asarray(n_iter_, dtype=np.int32)[:, 0]
 
-        if self.multi_class == 'multinomial':
+        if _multi_class == 'multinomial':
             self.coef_ = fold_coefs_[0][0]
         else:
             self.coef_ = np.asarray(fold_coefs_)
@@ -1344,7 +1344,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         """
         if not hasattr(self, "coef_"):
             raise NotFittedError("Call fit before prediction")
-        calculate_ovr = self.coef_.shape[0] == 1 or self.multi_class == "ovr"
+        if self.multi_class == 'auto':
+            _multi_class = 'ovr'
+        else:
+            _multi_class = self.multi_class
+        calculate_ovr = self.coef_.shape[0] == 1 or _multi_class == "ovr"
         if calculate_ovr:
             return super(LogisticRegression, self)._predict_proba_lr(X)
         else:
