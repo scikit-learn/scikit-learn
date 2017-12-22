@@ -10,6 +10,7 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .utils import check_random_state
+from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted
@@ -91,9 +92,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
@@ -106,9 +106,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
-
         if self.strategy not in ("most_frequent", "stratified", "uniform",
                                  "constant", "prior"):
             raise ValueError("Unknown strategy type.")
@@ -131,6 +128,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
+
+        check_consistent_length(X, y, sample_weight)
 
         if self.strategy == "constant":
             if self.constant is None:
@@ -166,9 +165,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
 
         Returns
         -------
@@ -177,11 +175,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
         # numpy random_state expects Python int and not long as size argument
         # under Windows
-        n_samples = int(X.shape[0])
+        n_samples = _num_samples(X)
         rs = check_random_state(self.random_state)
 
         n_classes_ = self.n_classes_
@@ -245,9 +241,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
 
         Returns
         -------
@@ -258,11 +253,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         """
         check_is_fitted(self, 'classes_')
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
         # numpy random_state expects Python int and not long as size argument
         # under Windows
-        n_samples = int(X.shape[0])
+        n_samples = _num_samples(X)
         rs = check_random_state(self.random_state)
 
         n_classes_ = self.n_classes_
@@ -310,9 +303,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
 
         Returns
         -------
@@ -382,9 +374,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             Target values.
@@ -397,9 +388,6 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
-
         if self.strategy not in ("mean", "median", "quantile", "constant"):
             raise ValueError("Unknown strategy type: %s, expected "
                              "'mean', 'median', 'quantile' or 'constant'"
@@ -465,9 +453,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input vectors, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : {array-like, object with finite length or shape}
+            Training data, requires length = n_samples
 
         Returns
         -------
@@ -475,9 +462,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             Predicted target values for X.
         """
         check_is_fitted(self, "constant_")
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        force_all_finite=False)
-        n_samples = X.shape[0]
+        n_samples = _num_samples(X)
 
         y = np.ones((n_samples, 1)) * self.constant_
 

@@ -854,6 +854,7 @@ details.
    metrics.adjusted_rand_score
    metrics.calinski_harabaz_score
    metrics.completeness_score
+   metrics.cluster.contingency_matrix
    metrics.fowlkes_mallows_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
@@ -1063,6 +1064,7 @@ Model validation
     multioutput.ClassifierChain
     multioutput.MultiOutputRegressor
     multioutput.MultiOutputClassifier
+    multioutput.RegressorChain
 
 .. _naive_bayes_ref:
 
@@ -1204,6 +1206,7 @@ Model validation
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
+   preprocessing.TransformedTargetRegressor
 
 .. autosummary::
    :toctree: generated/
