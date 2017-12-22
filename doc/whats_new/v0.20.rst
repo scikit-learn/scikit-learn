@@ -116,6 +116,10 @@ Classifiers and regressors
   :class:`linear_model.BayesianRidge` for weighted linear regression.
   :issue:`10111` by :user:`Peter St. John <pstjohn>`.
 
+- :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
+  only require X to be an object with finite length or shape.
+  :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -189,7 +193,7 @@ Classifiers and regressors
 - Fixed a bug in :class:`neighbors.NearestNeighbors` where fitting a
   NearestNeighbors model fails when a) the distance metric used is a
   callable and b) the input to the NearestNeighbors model is sparse.
-  :issue:`9199` by :user:`Thomas Kober <tttthomasssss>`.
+  :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
 Decomposition, manifold learning and clustering
 
