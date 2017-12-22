@@ -25,7 +25,7 @@ from sklearn.utils.testing import (
     assert_allclose_dense_sparse,
     assert_raises_regex)
 
-from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import if_numpydoc, SkipTest
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.metrics import (f1_score, fbeta_score, mean_absolute_error,
@@ -498,47 +498,39 @@ def test_check_docstring_parameters():
          'no space between the param name and colon ("d:int")'])
 
 
+@if_numpydoc
 def test_assert_consistent_docs():
     # Test function assert_consistent_docs
-    try:
-        import numpydoc  # noqa
-        assert sys.version_info >= (3, 5)
-    except (ImportError, AssertionError):
-        raise SkipTest("numpydoc is required to test the docstrings, "
-                       "as well as python version >= 3.5")
-
     assert_consistent_docs([precision_recall_fscore_support, precision_score,
                             recall_score, f1_score, fbeta_score],
-                           exclude_returns='*',
+                           include_returns=False,
                            exclude_params=['labels', 'average', 'beta'],
-                           exclude_attribs='*')
-
-    assert_raises(AssertionError, assert_consistent_docs,
-                  [precision_recall_fscore_support, precision_score,
-                   recall_score, f1_score, fbeta_score], exclude_returns='*',
-                  exclude_params=['labels', 'beta'], exclude_attribs='*')
+                           include_attribs=False)
 
     # Consider all parameters, attributes and returns
     assert_raises(AssertionError, assert_consistent_docs,
                   [precision_recall_fscore_support, precision_score,
-                   recall_score, f1_score, fbeta_score], include_returns='*',
-                  include_params='*', include_attribs='*')
+                   recall_score, f1_score, fbeta_score], include_returns=True,
+                  include_params=True, include_attribs=True)
 
     # Consider a classification and a regression metric
     assert_raises(AssertionError, assert_consistent_docs,
-                  [mean_absolute_error, precision_score], exclude_returns='*',
-                  include_params='*', exclude_attribs='*')
+                  [mean_absolute_error, precision_score],
+                  include_returns=False, include_params=True,
+                  include_attribs=False)
 
     # Using NumpyDocString object
-    doc = numpydoc.docscrape.NumpyDocString(inspect.getdoc(precision_score))
+    from numpydoc import docscrape
+
+    doc = docscrape.NumpyDocString(inspect.getdoc(precision_score))
     assert_consistent_docs([precision_recall_fscore_support, recall_score,
                             f1_score, fbeta_score, doc],
-                           exclude_returns='*',
+                           include_returns=False,
                            exclude_params=['labels', 'average', 'beta'],
-                           exclude_attribs='*')
+                           include_attribs=False)
 
     # Testing invalid object type
     assert_raises(TypeError, assert_consistent_docs,
                   ["precision_recall_fscore_support", precision_score,
-                   recall_score, f1_score, fbeta_score], include_returns='*',
-                  include_params='*', include_attribs='*')
+                   recall_score, f1_score, fbeta_score], include_returns=True,
+                  include_params=True, include_attribs=True)

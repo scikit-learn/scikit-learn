@@ -699,6 +699,27 @@ def if_safe_multiprocessing_with_blas(func):
     return run_test
 
 
+def if_numpydoc(func):
+    """
+    Decorator to check if numpydoc is available and python version is
+    atleast 3.5.
+    Meant for testing docstrings.
+    """
+    @wraps(func)
+    def run_test(*args, **kwargs):
+        try:
+            import numpydoc  # noqa
+            numpydoc.docscrape.NumpyDocString("Test Docstring")
+            assert sys.version_info >= (3, 5)
+        except (ImportError, AssertionError):
+            raise SkipTest("numpydoc is required to test the docstrings, "
+                           "as well as python version >= 3.5")
+        else:
+            return func(*args, **kwargs)
+
+    return run_test
+
+
 def clean_warning_registry():
     """Safe way to reset warnings."""
     warnings.resetwarnings()
@@ -884,45 +905,49 @@ def check_docstring_parameters(func, doc=None, ignore=None, class_name=None):
     return incorrect
 
 
-def check_data(doc_list, type_dict, type_name, object_name, include, exclude):
-    for name, type_definition, description in doc_list:
-        # remove all whitespaces
-        type_definition = type_definition.replace(' ', '')
-        description = [element.replace(' ', '') for element in description]
+def _check_matching_docstrings(doc_list, type_dict, type_name, object_name,
+                               include, exclude):
+    """
+    Checks if the docstring element, Parameter/Attribute/Return, having the
+    same name as a key in ``type_dict``, also has the same type definition and
+    description as that in ``type_dict``.
 
-        if name in type_dict:
-            u_dict = type_dict[name]
-            if (u_dict['type_definition'] != type_definition or
-                    u_dict['description'] != description):
-                if exclude is None:
-                    if (include == '*' or name in include):
-                        raise AssertionError(type_name+" "+name+" of " +
-                                             object_name+" has inconsistency.")
-                else:
-                    if name not in exclude:
-                        raise AssertionError(type_name+" "+name+" of " +
-                                             object_name+" has inconsistency.")
+    If a matching key is not found in ``type_dict``, the docstring element is
+    added in it with it's name as the key and value being a dictionary of it's
+    type_definition and description.
+
+    """
+    for name, type_definition, description in doc_list:
+        if exclude is not None and name in exclude:
+            pass
+        elif include is not True and name not in include:
+            pass
         else:
-            if include is None:
-                if name not in exclude:
-                    add_dict = {}
-                    add_dict['type_definition'] = type_definition
-                    add_dict['description'] = description
-                    type_dict[name] = add_dict
+            # remove all whitespaces
+            type_definition = " ".join(type_definition.split())
+            description = [" ".join(s.split()) for s in description]
+
+            if name in type_dict:
+                u_dict = type_dict[name]
+                msg1 = (type_name + " " + name + " of " + object_name +
+                        " has inconsistent type definition.")
+                msg2 = (type_name + " " + name + " of " + object_name +
+                        " has inconsistent description.")
+
+                assert u_dict['type_definition'] == type_definition, msg1
+                assert u_dict['description'] == description, msg2
             else:
-                if include == '*' or name in include:
-                    add_dict = {}
-                    add_dict['type_definition'] = type_definition
-                    add_dict['description'] = description
-                    type_dict[name] = add_dict
+                add_dict = {'type_definition': type_definition,
+                            'description': description}
+                type_dict[name] = add_dict
 
     return type_dict
 
 
 def assert_consistent_docs(objects,
-                           include_params=None, exclude_params=None,
-                           include_attribs=None, exclude_attribs=None,
-                           include_returns=None, exclude_returns=None):
+                           include_params=True, exclude_params=None,
+                           include_attribs=True, exclude_attribs=None,
+                           include_returns=True, exclude_returns=None):
     """
     Checks consistency between the docstring of ``objects``.
 
@@ -936,23 +961,31 @@ def assert_consistent_docs(objects,
         objects (classes, functions, descriptors) with docstrings that can be
         parsed as numpydoc.
 
-    include_params : list, '*' or None (default)
-        List of Parameters to be included. '*' for including all parameters.
+    include_params : list, False or True (default)
+        List of Parameters to be included. True, for including all parameters.
 
-    include_attribs : list, '*' or None (default)
-        List of Attributes to be included. '*' for including all attributes.
+    exclude_params : list or None (default)
+        List of Parameters to be excluded. Set only if include_params is True.
 
-    include_returns : list, '*' or None (default)
-        List of Returns to be included. '*' for including all returns.
+    include_attribs : list, False or True (default)
+        List of Attributes to be included. True, for including all attributes.
 
-    exclude_params : list, '*' or None (default)
-        List of Parameters to be excluded. '*' for excluding all parameters.
+    exclude_attribs : list or None (default)
+        List of Attributes to be excluded. Set only if include_attribs is True.
 
-    exclude_attribs : list, '*' or None (default)
-        List of Attributes to be excluded. '*' for excluding all attributes.
+    include_returns : list, False or True (default)
+        List of Returns to be included. True, for including all returns.
 
-    exclude_returns : list, '*' or None (default)
-        List of Returns to be excluded. '*' for excluding all returns.
+    exclude_returns : list or None (default)
+        List of Returns to be excluded. Set only if include_returns is True.
+
+    Notes
+    -----
+    This function asserts that any Parameters/Returns/Attributes entries having
+    the same name among ``objects`` docstrings also have the same type
+    specification and description.
+    It compares only those entries having the same name in the docstring, does
+    no comparison if an entry in a docstring is unique.
 
     Examples
     --------
@@ -971,12 +1004,7 @@ def assert_consistent_docs(objects,
     AssertionError: Parameter y_true of mean_squared_error has inconsistency.
 
     """
-    try:
-        import numpydoc  # noqa
-        assert sys.version_info >= (3, 5)
-    except (ImportError, AssertionError):
-        raise SkipTest("numpydoc is required to test the docstrings, "
-                       "as well as python version >= 3.5")
+    from numpydoc import docscrape
 
     # Dictionary of all different Parameters/Attributes/Returns found
     param_dict = {}
@@ -984,26 +1012,34 @@ def assert_consistent_docs(objects,
     return_dict = {}
 
     for u in objects:
-        if isinstance(u, numpydoc.docscrape.NumpyDocString):
+        if isinstance(u, docscrape.NumpyDocString):
             doc = u
             name = 'NumpyDocString'
         elif (inspect.isdatadescriptor(u) or inspect.isfunction(u) or
                 inspect.isclass(u)):
-            doc = numpydoc.docscrape.NumpyDocString(inspect.getdoc(u))
+            doc = docscrape.NumpyDocString(inspect.getdoc(u))
             name = u.__name__
         else:
             raise TypeError("Object passed not a Function, Class, "
                             "Descriptor or NumpyDocString.")
 
-        if exclude_params != '*':  # check for inconsistency in Parameters
-            param_dict = check_data(doc['Parameters'], param_dict, 'Parameter',
-                                    name, include_params, exclude_params)
+        # check for inconsistency in Parameters
+        if include_params is not False:
+            param_dict = _check_matching_docstrings(doc['Parameters'],
+                                                    param_dict, 'Parameter',
+                                                    name, include_params,
+                                                    exclude_params)
 
-        if exclude_attribs != '*':  # check for inconsistency in Attributes
-            attrib_dict = check_data(doc['Attributes'], attrib_dict,
-                                     'Attribute', name, include_attribs,
-                                     exclude_attribs)
+        # check for inconsistency in Attributes
+        if include_attribs is not False:
+            attrib_dict = _check_matching_docstrings(doc['Attributes'],
+                                                     attrib_dict, 'Attribute',
+                                                     name, include_attribs,
+                                                     exclude_attribs)
 
-        if exclude_returns != '*':  # check for inconsistency in Returns
-            return_dict = check_data(doc['Returns'], return_dict, 'Return',
-                                     name, include_returns, exclude_returns)
+        # check for inconsistency in Returns
+        if include_returns is not False:
+            return_dict = _check_matching_docstrings(doc['Returns'],
+                                                     return_dict, 'Return',
+                                                     name, include_returns,
+                                                     exclude_returns)
