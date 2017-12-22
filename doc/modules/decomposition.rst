@@ -820,7 +820,7 @@ stored components::
       A. Cichocki, P. Anh-Huy, 2009
 
     .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
-      <http://http://arxiv.org/pdf/1010.1763v3.pdf>`_
+      <https://arxiv.org/pdf/1010.1763.pdf>`_
       C. Fevotte, J. Idier, 2011
 
 
