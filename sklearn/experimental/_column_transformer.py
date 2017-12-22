@@ -74,7 +74,9 @@ or "remainder", optional
         is concatenated with the output of the transformers. See explanation
         of `column` above for details on the format.
         ``passthrough='remainder'`` can be used to automatically select all
-        columns that were not specified in `transformers`.
+        columns that were not specified in `transformers`. Even if a
+        `transformer` is set to None the column(s) will not be included in
+        'remainder'.
 
     n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
