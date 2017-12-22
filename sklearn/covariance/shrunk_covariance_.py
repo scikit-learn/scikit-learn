@@ -440,7 +440,7 @@ def oas(X, assume_centered=False):
 
     The formula we used to implement the OAS
     does not correspond to the one given in the article. It is slightly
-    modified (see OAS class description for details).
+    modified (see :class:`OAS` for details).
 
     """
     X = np.asarray(X)
@@ -483,7 +483,7 @@ class OAS(EmpiricalCovariance):
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
     The formula used here does not correspond to the one given in the
-    article. In the original article, formula (23) states that 2/p is 
+    article. In the original article, formula (23) states that 2/p is
     multiplied by Trace(cov*cov) in both the numerator and denominator, but
     this operation is omitted because for a large p, the value of 2/p is
     so small that it doesn't affect the value of the estimator.
