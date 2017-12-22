@@ -197,8 +197,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     References
     ----------
     .. [1] https://en.wikipedia.org/wiki/RANSAC
-    .. [2] https://www.sri.com/sites/default/files/publications/ransac
-                -publication.pdf
+    .. [2] https://www.sri.com/sites/default/files/publications/ransac-publication.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """
 
