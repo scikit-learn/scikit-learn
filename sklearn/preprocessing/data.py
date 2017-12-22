@@ -1016,7 +1016,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
-    https://en.wikipedia.org/wiki/Median_(statistics)
+    https://en.wikipedia.org/wiki/Median
     https://en.wikipedia.org/wiki/Interquartile_range
     """
 

@@ -396,7 +396,7 @@ fold cross validation should be preferred to LOO.
 
  * `<http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html>`_;
  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
-   <http://statweb.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009
+   <https://web.stanford.edu/~hastie/ElemStatLearn/>`_, Springer 2009
  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
    <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection

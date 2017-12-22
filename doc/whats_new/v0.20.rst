@@ -116,6 +116,10 @@ Classifiers and regressors
   :class:`linear_model.BayesianRidge` for weighted linear regression.
   :issue:`10111` by :user:`Peter St. John <pstjohn>`.
 
+- :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
+  only require X to be an object with finite length or shape.
+  :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
@@ -189,7 +193,7 @@ Classifiers and regressors
 - Fixed a bug in :class:`neighbors.NearestNeighbors` where fitting a
   NearestNeighbors model fails when a) the distance metric used is a
   callable and b) the input to the NearestNeighbors model is sparse.
-  :issue:`9199` by :user:`Thomas Kober <tttthomasssss>`.
+  :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
 Decomposition, manifold learning and clustering
 
@@ -225,15 +229,20 @@ Decomposition, manifold learning and clustering
 - Fixed a bug when setting parameters on meta-estimator, involving both a
   wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
   <marcus-voss>` and `Joel Nothman`_.
-  
+
 - ``k_means`` now gives a warning, if the number of distinct clusters found
-  is smaller than ``n_clusters``. This may occur when the number of distinct 
-  points in the data set is actually smaller than the number of cluster one is 
+  is smaller than ``n_clusters``. This may occur when the number of distinct
+  points in the data set is actually smaller than the number of cluster one is
   looking for. :issue:`10059` by :user:`Christian Braune <christianbraune79>`.
 
 - Fixed a bug in :func:`datasets.make_circles`, where no odd number of data
   points could be generated. :issue:`10037` by :user:`Christian Braune
   <christianbraune79>`_.
+
+- Fixed a bug in :func:`cluster.spectral_clustering` where the normalization of
+  the spectrum was using a division instead of a multiplication. :issue:`8129`
+  by :user:`Jan Margeta <jmargeta>`, :user:`Guillaume Lemaitre <glemaitre>`,
+  and :user:`Devansh D. <devanshdalal>`.
 
 Metrics
 
