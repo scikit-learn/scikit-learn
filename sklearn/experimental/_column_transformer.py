@@ -32,7 +32,8 @@ _ERR_MSG_1DCOLUMN = ("1D data passed to a transformer that expects 2D data. "
 class ColumnTransformer(_BaseComposition, TransformerMixin):
     """Applies transformers to columns of an array or pandas DataFrame.
 
-    EXPERIMENTAL
+    EXPERIMENTAL: some behaviors may change between releases without
+    deprecation.
 
     This estimator allows different columns or column subsets of the input
     to be transformed separately and the results combined into a single
@@ -41,6 +42,8 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
     feature extraction mechanisms or transformations into a single transformer.
 
     Read more in the :ref:`User Guide <column_transformer>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -56,15 +59,15 @@ class ColumnTransformer(_BaseComposition, TransformerMixin):
             If None, nothing is output for this triple. Estimator must support
             `fit` and `transform`.
         column : string or int, array-like of string or int, slice or boolean \
- mask array
+mask array
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
             ``transformer`` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
 
-    passthrough : string or int, array-like of string or int, slice or \
-boolean mask array, optional
+    passthrough : array-like of string or int, slice or boolean mask array, \
+or "remainder", optional
         By default only the specified columns are transformed and combined
         in the output. With this keyword additional columns can be specified
         that should be passed through untransformed. This selection of columns
@@ -98,7 +101,8 @@ boolean mask array, optional
     order of how the columns are specified in the `transformers` list.
     Columns of the original feature matrix that are not specified are
     dropped from the resulting transformed feature matrix, unless specified
-    in the `passthrough` keyword.
+    in the `passthrough` keyword. Those columns specified with `passthrough`
+    are added at the right to the output of the transformers.
 
     Examples
     --------
