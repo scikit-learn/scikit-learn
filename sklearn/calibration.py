@@ -114,7 +114,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         """
         self.label_encoder = LabelEncoder().fit(y)
         y = self.label_encoder.transform(y)
-        self.pos_label = self.label_encoder.transform(self.pos_label)
+        self.pos_label = self.label_encoder.transform([self.pos_label])[0]
 
         if self.cv == 'prefit':
             self.threshold = _CutoffClassifier(
@@ -143,9 +143,9 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
 
     def predict(self, X):
         return self.label_encoder.inverse_transform(
-            (self.base_estimator.predict_proba(X)[:, self.pos_label] >
-             self.threshold).astype(int)
-        )
+            [(self.base_estimator.predict_proba(X)[:, self.pos_label] >
+             self.threshold).astype(int)]
+        )[0]
 
 
 class _CutoffClassifier(object):
