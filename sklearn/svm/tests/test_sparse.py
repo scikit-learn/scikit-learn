@@ -179,7 +179,7 @@ def test_error():
     assert_raises(ValueError, svm.SVC(gamma='scale', C=-1).fit, X, Y)
 
     # impossible value of nu
-    clf = svm.NuSVC(nu=0.0)
+    clf = svm.NuSVC(gamma='scale', nu=0.0)
     assert_raises(ValueError, clf.fit, X_sp, Y)
 
     Y2 = Y[:-1]  # wrong dimensions for labels
@@ -277,8 +277,8 @@ def test_sparse_oneclasssvm():
     kernels = ["linear", "poly", "rbf", "sigmoid"]
     for dataset in datasets:
         for kernel in kernels:
-            clf = svm.OneClassSVM(kernel=kernel)
-            sp_clf = svm.OneClassSVM(kernel=kernel)
+            clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
+            sp_clf = svm.OneClassSVM(gamma='scale', kernel=kernel)
             check_svm_model_equal(clf, sp_clf, *dataset)
 
 

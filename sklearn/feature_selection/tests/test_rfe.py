@@ -236,7 +236,7 @@ def test_rfe_min_step():
     n_features = 10
     X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
     n_samples, n_features = X.shape
-    estimator = SVR(kernel="linear")
+    estimator = SVR(gamma='scale', kernel="linear")
 
     # Test when floor(step * n_features) <= 0
     selector = RFE(estimator, step=0.01)

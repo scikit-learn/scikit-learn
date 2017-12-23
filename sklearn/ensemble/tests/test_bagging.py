@@ -153,7 +153,7 @@ def test_regression():
                            DummyRegressor(),
                            DecisionTreeRegressor(),
                            KNeighborsRegressor(),
-                           SVR()]:
+                           SVR(gamma='scale')]:
         for params in grid:
             BaggingRegressor(base_estimator=base_estimator,
                              random_state=rng,
@@ -199,7 +199,7 @@ def test_sparse_regression():
 
             # Trained on sparse format
             sparse_classifier = BaggingRegressor(
-                base_estimator=CustomSVR(),
+                base_estimator=CustomSVR(gamma='scale'),
                 random_state=1,
                 **params
             ).fit(X_train_sparse, y_train)
@@ -207,7 +207,7 @@ def test_sparse_regression():
 
             # Trained on dense format
             dense_results = BaggingRegressor(
-                base_estimator=CustomSVR(),
+                base_estimator=CustomSVR(gamma='scale'),
                 random_state=1,
                 **params
             ).fit(X_train, y_train).predict(X_test)
@@ -553,7 +553,7 @@ def test_base_estimator():
 
     assert_true(isinstance(ensemble.base_estimator_, DecisionTreeRegressor))
 
-    ensemble = BaggingRegressor(SVR(),
+    ensemble = BaggingRegressor(SVR(gamma='scale'),
                                 n_jobs=3,
                                 random_state=0).fit(X_train, y_train)
     assert_true(isinstance(ensemble.base_estimator_, SVR))

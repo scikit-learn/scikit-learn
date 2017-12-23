@@ -724,10 +724,10 @@ class NuSVC(BaseSVC):
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> y = np.array([1, 1, 2, 2])
     >>> from sklearn.svm import NuSVC
-    >>> clf = NuSVC()
+    >>> clf = NuSVC(gamma='scale')
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     NuSVC(cache_size=200, class_weight=None, coef0=0.0,
-          decision_function_shape='ovr', degree=3, gamma='auto', kernel='rbf',
+          decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
           max_iter=-1, nu=0.5, probability=False, random_state=None,
           shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
@@ -854,9 +854,9 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = SVR(C=1.0, epsilon=0.2)
+    >>> clf = SVR(gamma='scale', C=1.0, epsilon=0.2)
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
-    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma='auto',
+    SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma='scale',
         kernel='rbf', max_iter=-1, shrinking=True, tol=0.001, verbose=False)
 
     See also
@@ -976,9 +976,9 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> np.random.seed(0)
     >>> y = np.random.randn(n_samples)
     >>> X = np.random.randn(n_samples, n_features)
-    >>> clf = NuSVR(C=1.0, nu=0.1)
+    >>> clf = NuSVR(gamma='scale', C=1.0, nu=0.1)
     >>> clf.fit(X, y)  #doctest: +NORMALIZE_WHITESPACE
-    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma='auto',
+    NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma='scale',
           kernel='rbf', max_iter=-1, nu=0.1, shrinking=True, tol=0.001,
           verbose=False)
 

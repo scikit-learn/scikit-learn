@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_greater, assert_in, assert_less
 from sklearn.utils.testing import assert_raises_regexp, assert_warns
 from sklearn.utils.testing import assert_warns_message, assert_raise_message
 from sklearn.utils.testing import ignore_warnings, assert_raises
+from sklearn.utils.testing import assert_no_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.multiclass import OneVsRestClassifier
@@ -160,9 +161,9 @@ def test_svr():
     # Test Support Vector Regression
 
     diabetes = datasets.load_diabetes()
-    for clf in (svm.NuSVR(kernel='linear', nu=.4, C=1.0),
-                svm.NuSVR(kernel='linear', nu=.4, C=10.),
-                svm.SVR(kernel='linear', C=10.),
+    for clf in (svm.NuSVR(gamma='scale', kernel='linear', nu=.4, C=1.0),
+                svm.NuSVR(gamma='scale', kernel='linear', nu=.4, C=10.),
+                svm.SVR(gamma='scale', kernel='linear', C=10.),
                 svm.LinearSVR(C=10.),
                 svm.LinearSVR(C=10.),
                 ):
@@ -171,7 +172,7 @@ def test_svr():
 
     # non-regression test; previously, BaseLibSVM would check that
     # len(np.unique(y)) < 2, which must only be done for SVC
-    svm.SVR().fit(diabetes.data, np.ones(len(diabetes.data)))
+    svm.SVR(gamma='scale').fit(diabetes.data, np.ones(len(diabetes.data)))
     svm.LinearSVR().fit(diabetes.data, np.ones(len(diabetes.data)))
 
 
@@ -182,7 +183,8 @@ def test_linearsvr():
     lsvr = svm.LinearSVR(C=1e3).fit(diabetes.data, diabetes.target)
     score1 = lsvr.score(diabetes.data, diabetes.target)
 
-    svr = svm.SVR(kernel='linear', C=1e3).fit(diabetes.data, diabetes.target)
+    svr = svm.SVR(gamma='scale', kernel='linear', C=1e3).fit(diabetes.data,
+                                                             diabetes.target)
     score2 = svr.score(diabetes.data, diabetes.target)
 
     assert_allclose(np.linalg.norm(lsvr.coef_),
@@ -230,22 +232,22 @@ def test_svr_errors():
     y = [0.0, 0.5]
 
     # Bad kernel
-    clf = svm.SVR(kernel=lambda x, y: np.array([[1.0]]))
+    clf = svm.SVR(gamma='scale', kernel=lambda x, y: np.array([[1.0]]))
     clf.fit(X, y)
     assert_raises(ValueError, clf.predict, X)
 
 
 def test_oneclass():
     # Test OneClassSVM
-    clf = svm.OneClassSVM()
+    clf = svm.OneClassSVM(gamma='scale')
     clf.fit(X)
     pred = clf.predict(T)
 
     assert_array_equal(pred, [-1, -1, -1])
     assert_equal(pred.dtype, np.dtype('intp'))
-    assert_array_almost_equal(clf.intercept_, [-1.008], decimal=3)
+    assert_array_almost_equal(clf.intercept_, [-1.117], decimal=3)
     assert_array_almost_equal(clf.dual_coef_,
-                              [[0.632, 0.233, 0.633, 0.234, 0.632, 0.633]],
+                              [[0.681, 0.139, 0.68, 0.14, 0.68, 0.68]],
                               decimal=3)
     assert_raises(AttributeError, lambda: clf.coef_)
 
@@ -300,7 +302,8 @@ def test_probability():
     # This uses cross validation, so we use a slightly bigger testing set.
 
     for clf in (svm.SVC(gamma='scale', probability=True, random_state=0,
-                C=1.0), svm.NuSVC(probability=True, random_state=0)):
+                C=1.0), svm.NuSVC(gamma='scale', probability=True,
+                                  random_state=0)):
         clf.fit(iris.data, iris.target)
 
         prob_predict = clf.predict_proba(iris.data)
@@ -381,7 +384,7 @@ def test_svr_predict():
     y = iris.target
 
     # linear kernel
-    reg = svm.SVR(kernel='linear', C=0.1).fit(X, y)
+    reg = svm.SVR(gamma='scale', kernel='linear', C=0.1).fit(X, y)
 
     dec = np.dot(X, reg.coef_.T) + reg.intercept_
     assert_array_almost_equal(dec.ravel(), reg.predict(X).ravel())
@@ -466,7 +469,7 @@ def test_bad_input():
     assert_raises(ValueError, svm.SVC(gamma='scale', C=-1).fit, X, Y)
 
     # impossible value of nu
-    clf = svm.NuSVC(nu=0.0)
+    clf = svm.NuSVC(gamma='scale', nu=0.0)
     assert_raises(ValueError, clf.fit, X, Y)
 
     Y2 = Y[:-1]  # wrong dimensions for labels
@@ -484,7 +487,7 @@ def test_bad_input():
         assert_array_equal(clf.predict(T), true_result)
 
     # error for precomputed kernelsx
-    clf = svm.SVC(kernel='precomputed')
+    clf = svm.SVC(gamma='scale', kernel='precomputed')
     assert_raises(ValueError, clf.fit, X, Y)
 
     # sample_weight bad dimensions
@@ -516,11 +519,11 @@ def test_unicode_kernel():
         clf.fit(X, Y)
     else:
         # Test unicode (str is unicode in python3)
-        clf = svm.SVC(kernel=str('linear'))
+        clf = svm.SVC(gamma='scale', kernel=str('linear'))
         clf.fit(X, Y)
 
         # Test ascii bytes (same as str on python2)
-        clf = svm.SVC(kernel=bytes('linear', 'ascii'))
+        clf = svm.SVC(gamma='scale', kernel=bytes('linear', 'ascii'))
         clf.fit(X, Y)
 
     # Test default behavior on both versions
@@ -529,7 +532,7 @@ def test_unicode_kernel():
 
 
 def test_sparse_precomputed():
-    clf = svm.SVC(kernel='precomputed')
+    clf = svm.SVC(gamma='scale', kernel='precomputed')
     sparse_gram = sparse.csr_matrix([[1, 0], [0, 1]])
     try:
         clf.fit(sparse_gram, [0, 1])
@@ -778,10 +781,10 @@ def test_immutable_coef_property():
     # Check that primal coef modification are not silently ignored
     svms = [
         svm.SVC(gamma='scale', kernel='linear').fit(iris.data, iris.target),
-        svm.NuSVC(kernel='linear').fit(iris.data, iris.target),
-        svm.SVR(kernel='linear').fit(iris.data, iris.target),
-        svm.NuSVR(kernel='linear').fit(iris.data, iris.target),
-        svm.OneClassSVM(kernel='linear').fit(iris.data),
+        svm.NuSVC(gamma='scale', kernel='linear').fit(iris.data, iris.target),
+        svm.SVR(gamma='scale', kernel='linear').fit(iris.data, iris.target),
+        svm.NuSVR(gamma='scale', kernel='linear').fit(iris.data, iris.target),
+        svm.OneClassSVM(gamma='scale', kernel='linear').fit(iris.data),
     ]
     for clf in svms:
         assert_raises(AttributeError, clf.__setattr__, 'coef_', np.arange(3))
@@ -849,7 +852,7 @@ def test_unfitted():
     assert_raises_regexp(Exception, r".*\bSVC\b.*\bnot\b.*\bfitted\b",
                          clf.predict, X)
 
-    clf = svm.NuSVR()
+    clf = svm.NuSVR(gamma='scale')
     assert_raises_regexp(Exception, r".*\bNuSVR\b.*\bnot\b.*\bfitted\b",
                          clf.predict, X)
 
@@ -878,7 +881,8 @@ def test_svr_coef_sign():
     X = np.random.RandomState(21).randn(10, 3)
     y = np.random.RandomState(12).randn(10)
 
-    for svr in [svm.SVR(kernel='linear'), svm.NuSVR(kernel='linear'),
+    for svr in [svm.SVR(gamma='scale', kernel='linear'),
+                svm.NuSVR(gamma='scale', kernel='linear'),
                 svm.LinearSVR()]:
         svr.fit(X, y)
         assert_array_almost_equal(svr.predict(X),
@@ -990,7 +994,8 @@ def test_gamma_auto():
 
 
 def test_gamma_scale():
-    X, y = [[0.0], [1.0]], [0, 1]
+    X, y = [[0.], [1.]], [0, 1]
 
-    clf = svm.SVC(gamma='scale').fit(X, y)
-    assert_equal(clf._gamma, 2.0)
+    clf = svm.SVC(gamma='scale')
+    assert_no_warnings(clf.fit, X, y)
+    assert_equal(clf._gamma, 2.)
