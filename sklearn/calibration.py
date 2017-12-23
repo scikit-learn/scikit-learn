@@ -119,6 +119,9 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         X, y = check_X_y(X, y)
 
         self.label_encoder = LabelEncoder().fit(y)
+        if len(self.label_encoder.classes_) > 2:
+            raise ValueError('Found more than two distinct values in target y')
+
         y = self.label_encoder.transform(y)
         self.pos_label = self.label_encoder.transform([self.pos_label])[0]
 
