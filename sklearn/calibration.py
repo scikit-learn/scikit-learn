@@ -116,6 +116,9 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         y = self.label_encoder.transform(y)
         self.pos_label = self.label_encoder.transform([self.pos_label])[0]
 
+        if not self.base_estimator:
+            self.base_estimator = LinearSVC(random_state=0)
+
         if self.cv == 'prefit':
             self.threshold = _CutoffClassifier(
                 self.base_estimator, self.method, self.pos_label,
