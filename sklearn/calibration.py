@@ -83,7 +83,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    threshold : float
+    threshold_ : float
         Decision threshold for the positive class. Determines the output of
         predict
     """
@@ -118,18 +118,18 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
 
         X, y = check_X_y(X, y)
 
-        self.label_encoder = LabelEncoder().fit(y)
-        if len(self.label_encoder.classes_) > 2:
+        self.label_encoder_ = LabelEncoder().fit(y)
+        if len(self.label_encoder_.classes_) > 2:
             raise ValueError('Found more than two distinct values in target y')
 
-        y = self.label_encoder.transform(y)
-        self.pos_label = self.label_encoder.transform([self.pos_label])[0]
+        y = self.label_encoder_.transform(y)
+        self.pos_label = self.label_encoder_.transform([self.pos_label])[0]
 
         if self.cv == 'prefit':
-            self.threshold = _CutoffClassifier(
+            self.threshold_ = _CutoffClassifier(
                 self.base_estimator, self.method, self.pos_label,
                 self.min_val_tnr, self.min_val_tpr
-            ).fit(X, y).threshold
+            ).fit(X, y).threshold_
         else:
             cv = check_cv(self.cv, y, classifier=True)
             thresholds = []
@@ -143,20 +143,20 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
                                       self.min_val_tnr,
                                       self.min_val_tpr).fit(
                         X[test], y[test]
-                    ).threshold
+                    ).threshold_
                 )
-            self.threshold = sum(thresholds) / \
-                len(thresholds)
+            self.threshold_ = sum(thresholds) / \
+                              len(thresholds)
             self.base_estimator.fit(X, y)
         return self
 
     def predict(self, X):
         X = check_array(X)
-        check_is_fitted(self, ["label_encoder", "threshold"])
+        check_is_fitted(self, ["label_encoder_", "threshold_"])
 
-        return self.label_encoder.inverse_transform(
+        return self.label_encoder_.inverse_transform(
             [(self.base_estimator.predict_proba(X)[:, self.pos_label] >
-             self.threshold).astype(int)]
+              self.threshold_).astype(int)]
         )[0]
 
 
@@ -192,7 +192,7 @@ class _CutoffClassifier(object):
 
     Attributes
     ----------
-    threshold : float
+    threshold_ : float
         Acquired optimal decision threshold for the positive class
     """
     def __init__(self, base_estimator, method, pos_label, min_val_tnr,
@@ -224,15 +224,15 @@ class _CutoffClassifier(object):
         fpr, tpr, thresholds = roc_curve(y, y_score, self.pos_label)
 
         if self.method == 'roc':
-            self.threshold = thresholds[np.argmin(
+            self.threshold_ = thresholds[np.argmin(
                 euclidean_distances(np.column_stack((fpr, tpr)), [[0, 1]])
             )]
         elif self.method == 'max_tpr':
             indices = np.where(1 - fpr >= self.min_val_tnr)
-            self.threshold = thresholds[indices[np.argmax(tpr[indices])]]
+            self.threshold_ = thresholds[indices[np.argmax(tpr[indices])]]
         elif self.method == 'max_tnr':
             indices = np.where(tpr >= self.min_val_tpr)
-            self.threshold = thresholds[indices[np.argmax(1 - fpr[indices])]]
+            self.threshold_ = thresholds[indices[np.argmax(1 - fpr[indices])]]
         return self
 
 
