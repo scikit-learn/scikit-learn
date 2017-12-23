@@ -112,6 +112,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         self : object
             Instance of self.
         """
+        X, y = check_X_y(X, y)
+
         self.label_encoder = LabelEncoder().fit(y)
         y = self.label_encoder.transform(y)
         self.pos_label = self.label_encoder.transform([self.pos_label])[0]
@@ -145,6 +147,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
+        X = check_array(X)
         check_is_fitted(self, ["label_encoder", "threshold"])
 
         return self.label_encoder.inverse_transform(
