@@ -1751,7 +1751,8 @@ def test_cv_pipeline_precomputed():
     y_true = np.ones((4,))
     K = X.dot(X.T)
     kcent = KernelCenterer()
-    pipeline = Pipeline([("kernel_centerer", kcent), ("svr", SVR())])
+    pipeline = Pipeline([("kernel_centerer", kcent), ("svr",
+                        SVR(gamma='scale'))])
 
     # did the pipeline set the _pairwise attribute?
     assert_true(pipeline._pairwise)

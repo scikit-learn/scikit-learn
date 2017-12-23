@@ -523,7 +523,7 @@ def test_check_is_fitted():
     assert_raises(TypeError, check_is_fitted, "SVR", "support_")
 
     ard = ARDRegression()
-    svr = SVR()
+    svr = SVR(gamma='scale')
 
     try:
         assert_raises(NotFittedError, check_is_fitted, ard, "coef_")

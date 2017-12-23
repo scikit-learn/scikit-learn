@@ -344,7 +344,7 @@ def test_ovr_multilabel_predict_proba():
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
         # Decision function only estimator.
-        decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
+        decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')).fit(X_train, Y_train)
         assert_false(hasattr(decision_only, 'predict_proba'))
 
         # Estimator with predict_proba disabled, depending on parameters.
@@ -379,7 +379,7 @@ def test_ovr_single_label_predict_proba():
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
     # Decision function only estimator.
-    decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
+    decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')).fit(X_train, Y_train)
     assert_false(hasattr(decision_only, 'predict_proba'))
 
     Y_pred = clf.predict(X_test)
