@@ -87,7 +87,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         Decision threshold for the positive class. Determines the output of
         predict
     """
-    def __init__(self, base_estimator=None, method='roc', pos_label=1, cv=3,
+    def __init__(self, base_estimator, method='roc', pos_label=1, cv=3,
                  min_val_tnr=None, min_val_tpr=None):
         self.base_estimator = base_estimator
         self.method = method
@@ -112,14 +112,15 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         self : object
             Instance of self.
         """
+        if not isinstance(self.base_estimator, BaseEstimator):
+            raise AttributeError('Base estimator must be of type BaseEstimator;'
+                                 'got %s instead' % type(self.base_estimator))
+
         X, y = check_X_y(X, y)
 
         self.label_encoder = LabelEncoder().fit(y)
         y = self.label_encoder.transform(y)
         self.pos_label = self.label_encoder.transform([self.pos_label])[0]
-
-        if not self.base_estimator:
-            self.base_estimator = LinearSVC(random_state=0)
 
         if self.cv == 'prefit':
             self.threshold = _CutoffClassifier(
