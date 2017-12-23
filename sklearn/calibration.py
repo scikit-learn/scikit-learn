@@ -145,6 +145,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
+        check_is_fitted(self, ["label_encoder", "threshold"])
+
         return self.label_encoder.inverse_transform(
             [(self.base_estimator.predict_proba(X)[:, self.pos_label] >
              self.threshold).astype(int)]
