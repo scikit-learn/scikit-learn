@@ -10,7 +10,6 @@ import time
 
 import numpy as np
 
-from .model_selection import train_test_split
 from .utils.validation import _num_samples
 from .gaussian_process import GaussianProcessRegressor
 from .gaussian_process.kernels import DotProduct
@@ -70,7 +69,15 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
     estimator = est
     parameters = est_params
     n_samples = []
+    model_memory = []
     SAMPLES = 8
+
+    if profile_memory:
+        try:
+            import psutil
+        except ImportError:
+            # To-Do : Make error message more informative
+            raise ImportError("Please install psutil")
 
     if parameters is not None:
         estimator.set_params(**parameters)
@@ -97,33 +104,60 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
 
     if vary_n_samples:
         for _ in range(0, n_fits):
-            if SAMPLES < length/2:
+            if SAMPLES < length:
                 SAMPLES *= 2
+            else:
+                SAMPLES = length
             n_samples.append(SAMPLES)
             train_size = n_samples[_] - 1
-            X_vary, X_test, y_vary, y_test = train_test_split(X, y, train_size)
+            X_vary = X[:train_size]
+            y_vary = y[:train_size]
             if y is None:
                 if fit_params is not None:
                     start_time = time.time()
+                    mem_start = psutil.virtual_memory()[3]
+                    mem_start += psutil.swap_memory()[1]
                     estimator.fit(X_vary, **fit_params)
+                    mem_end = psutil.virtual_memory()[3]
+                    mem_end += psutil.swap_memory()[1]
                     time_taken = time.time() - start_time
+                    mem_diff = mem_end - mem_start
                     fit_times.append(time_taken)
+                    model_memory.append(mem_diff)
                 else:
                     start_time = time.time()
+                    mem_start = psutil.virtual_memory()[3]
+                    mem_start += psutil.swap_memory()[1]
                     estimator.fit(X_vary)
+                    mem_end = psutil.virtual_memory()[3]
+                    mem_end += psutil.swap_memory()[1]
                     time_taken = time.time() - start_time
+                    mem_diff = mem_end - mem_start
                     fit_times.append(time_taken)
+                    model_memory.append(mem_diff)
             else:
                 if fit_params is not None:
                     start_time = time.time()
+                    mem_start = psutil.virtual_memory()[3]
+                    mem_start += psutil.swap_memory()[1]
                     estimator.fit(X_vary, y_vary, **fit_params)
+                    mem_end = psutil.virtual_memory()[3]
+                    mem_end += psutil.swap_memory()[1]
                     time_taken = time.time() - start_time
+                    mem_diff = mem_end - mem_start
                     fit_times.append(time_taken)
+                    model_memory.append(mem_diff)
                 else:
                     start_time = time.time()
+                    mem_start = psutil.virtual_memory()[3]
+                    mem_start += psutil.swap_memory()[1]
                     estimator.fit(X_vary, y_vary)
+                    mem_end = psutil.virtual_memory()[3]
+                    mem_end += psutil.swap_memory()[1]
                     time_taken = time.time() - start_time
+                    mem_diff = mem_end - mem_start
                     fit_times.append(time_taken)
+                    model_memory.append(mem_diff)
 
     models = {}
 
@@ -137,15 +171,17 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
     if profile_memory:
         fit_time = GaussianProcessRegressor()
         models["peak_memory"] = peak_memory.fit(n_samples, peak_memory)
-
-        fit_time = GaussianProcessRegressor()
-        models["model_memory"] = model_memory.fit(n_samples, model_memory)
-
     '''
+    results = {}
+
+    if profile_memory:
+        model_mem = GaussianProcessRegressor()
+        models["model_memory"] = model_mem.fit(n_samples, model_memory)
+        results["model_memory"] = model_memory
+
     fit_time = GaussianProcessRegressor(kernel, alpha=0.1)
     models["fit_time"] = fit_time.fit(n_samples.reshape(-1, 1), fit_times)
 
-    results = {}
     results["n_samples"] = n_samples
     results["fit_time"] = fit_times
 
