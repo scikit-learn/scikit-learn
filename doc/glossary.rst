@@ -24,6 +24,16 @@ General Concepts
 
 .. glossary::
 
+    1d
+    1d array
+        One-dimensional array. A NumPy array whose ``.shape`` has length 1.
+        A vector.
+
+    2d
+    2d array
+        Two-dimensional array. A NumPy array whose ``.shape`` has length 2.
+        Often represents a matrix.
+
     API
         Refers to both the *specific* interfaces for estimators implemented in
         Scikit-learn and the *generalized* conventions across types of
@@ -497,7 +507,7 @@ General Concepts
         :term:`target`.  For example, in multilabel classification each
         possible label corresponds to a binary output. Also called *responses*,
         *tasks* or *targets*.
-        See :term:`multioutput multiclass` and :term:`multioutput continuous`.
+        See :term:`multiclass multioutput` and :term:`continuous multioutput`.
 
     parameter
     parameters
@@ -715,8 +725,8 @@ Class APIs and Estimator Types
         with a finite set of discrete possible output values.
 
         A classifier supports modeling some of :term:`binary`,
-        :term:`multiclass`, :term:`multilabel`, or :term:`multioutput
-        multiclass` targets.  Within scikit-learn, all classifiers support
+        :term:`multiclass`, :term:`multilabel`, or :term:`multiclass
+        multioutput` targets.  Within scikit-learn, all classifiers support
         multi-class classification, defaulting to using a one-vs-rest
         strategy over the binary classification problem.
 
@@ -934,7 +944,28 @@ Target Types
         binary input, or a similar array with only a single class present.
 
     continuous
-        TODO
+        A regression problem where each sample's target is a finite floating
+        point number, represented as a 1-dimensional array of floats (or
+        sometimes ints).
+
+        :func:`~utils.multiclass.type_of_target` will return 'continuous' for
+        continuous input, but if the data is all integers, it will be
+        identified as 'multiclass'.
+
+    continuous multioutput
+    multioutput continuous
+        A regression problem where each sample's target consists of ``n_outputs``
+        :term:`outputs`, each one a finite floating point number, for a
+        fixed int ``n_outputs > 1`` in a particular dataset.
+
+        Continous multioutput targets are represented as multiple
+        :term:`continuous` targets, horizontally stacked into an array
+        of shape ``(n_samples, n_outputs)``.
+
+        :func:`~utils.multiclass.type_of_target` will return
+        'continuous-multioutput' for continuous multioutput input, but if the
+        data is all integers, it will be identified as
+        'multiclass-multioutput'.
 
     multiclass
         A classification problem consisting of more than two classes.  A
@@ -959,13 +990,39 @@ Target Types
         multiclass input. The user may also want to handle 'binary' input
         identically to 'multiclass'.
 
+    multiclass multioutput
+    multioutput multiclass
+        A classification problem where each sample's target consists of
+        ``n_outputs`` :term:`outputs`, each a class label, for a fixed int
+        ``n_outputs > 1`` in a particular dataset.  Each output has a
+        fixed set of available classes, and each sample is labelled with a
+        class for each output. An output may be binary or multiclass, and in
+        the case where all outputs are binary, the target is
+        :term:`multilabel`.
+
+        Multiclass multioutput targets are represented as multiple
+        :term:`multiclass` targets, horizontally stacked into an array
+        of shape ``(n_samples, n_outputs)``.
+
+        XXX: For simplicity, we may not always support string class labels
+        for multiclass multioutput, and integer class labels should be used.
+
+        :mod:`multioutput` provides estimators which estimate multi-output
+        problems using multiple single-output estimators.  This may not fully
+        account for dependencies among the different outputs, which methods
+        natively handling the multioutput case (e.g. decision trees, nearest
+        neighbors, neural networks) may do better.
+
+        :func:`~utils.multiclass.type_of_target` will return
+        'multiclass-multioutput' for multiclass multioutput input.
+
     multilabel
-        A :term:`multioutput` target where each output is :term:`binary`.  This
-        may be represented as a 2d (dense) array or sparse matrix of integers,
-        such that each column is a separate binary target, where positive
-        labels are indicated with 1 and negative labels are usually -1 or 0.
-        Sparse multilabel targets are not supported everywhere that dense
-        multilabel targets are supported.
+        A :term:`multiclass multioutput` target where each output is
+        :term:`binary`.  This may be represented as a 2d (dense) array or
+        sparse matrix of integers, such that each column is a separate binary
+        target, where positive labels are indicated with 1 and negative labels
+        are usually -1 or 0.  Sparse multilabel targets are not supported
+        everywhere that dense multilabel targets are supported.
 
         Semantically, a multilabel target can be thought of as a set of labels
         for each sample.  While not used internally,
@@ -977,20 +1034,6 @@ Target Types
 
         :func:`~utils.multiclass.type_of_target` will return
         'multilabel-indicator' for multilabel input, whether sparse or dense.
-
-    multioutput continuous
-        TODO
-
-    multioutput multiclass
-        TODO
-
-        A classification problem...
-
-        :mod:`multioutput` provides estimators which estimate multi-output
-        problems using multiple single-output estimators.  This may not fully
-        account for dependencies among the different outputs, which methods
-        natively handling the multioutput case (e.g. decision trees, nearest
-        neighbors, neural networks) may do better.
 
 .. _glossary_methods:
 
@@ -1020,8 +1063,8 @@ Methods
             :term:`classes_`.
         multilabel classification
             Scikit-learn is inconsistent in its representation of multilabel
-            decision functions.  Some estimators represent it like multioutput
-            multiclass, i.e. a list of 2d arrays, each with two columns. Others
+            decision functions.  Some estimators represent it like multiclass
+            multioutput, i.e. a list of 2d arrays, each with two columns. Others
             represent it with a single 2d array, whose columns correspond to
             the individual binary classification decisions. The latter
             representation is ambiguously identical to the multiclass
