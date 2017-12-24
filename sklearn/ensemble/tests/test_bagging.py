@@ -115,7 +115,7 @@ def test_sparse_classification():
             for f in ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']:
                 # Trained on sparse format
                 sparse_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(gamma='scale',
+                    base_estimator=CustomSVC(gamma='auto',
                                              decision_function_shape='ovr'),
                     random_state=1,
                     **params
@@ -124,7 +124,7 @@ def test_sparse_classification():
 
                 # Trained on dense format
                 dense_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(gamma='scale',
+                    base_estimator=CustomSVC(gamma='auto',
                                              decision_function_shape='ovr'),
                     random_state=1,
                     **params
