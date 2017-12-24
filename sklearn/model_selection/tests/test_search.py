@@ -834,7 +834,8 @@ def test_grid_search_cv_results():
     n_candidates = n_grid_points
 
     for iid in (False, True):
-        search = GridSearchCV(SVC(gamma='scale'), cv=n_splits, iid=iid, param_grid=params)
+        search = GridSearchCV(SVC(gamma='scale'), cv=n_splits, iid=iid,
+                              param_grid=params)
         search.fit(X, y)
         assert_equal(iid, search.iid)
         cv_results = search.cv_results_
@@ -1020,9 +1021,9 @@ def test_grid_search_cv_results_multimetric():
         for scoring in ({'accuracy': make_scorer(accuracy_score),
                          'recall': make_scorer(recall_score)},
                         'accuracy', 'recall'):
-            grid_search = GridSearchCV(SVC(gamma='scale'), cv=n_splits, iid=iid,
-                                       param_grid=params, scoring=scoring,
-                                       refit=False)
+            grid_search = GridSearchCV(SVC(gamma='scale'), cv=n_splits,
+                                       iid=iid, param_grid=params,
+                                       scoring=scoring, refit=False)
             grid_search.fit(X, y)
             assert_equal(grid_search.iid, iid)
             grid_searches.append(grid_search)

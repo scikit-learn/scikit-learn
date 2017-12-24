@@ -154,7 +154,8 @@ def test_sparse_decision_function():
     # returns the same as the one in libsvm
 
     # multi class:
-    svc = svm.SVC(gamma='scale', kernel='linear', C=0.1, decision_function_shape='ovo')
+    svc = svm.SVC(gamma='scale', kernel='linear', C=0.1,
+                  decision_function_shape='ovo')
     clf = svc.fit(iris.data, iris.target)
 
     dec = safe_sparse_dot(iris.data, clf.coef_.T) + clf.intercept_
@@ -305,7 +306,8 @@ def test_sparse_realdata():
          1., 3.])
 
     clf = svm.SVC(gamma='scale', kernel='linear').fit(X.toarray(), y)
-    sp_clf = svm.SVC(gamma='scale', kernel='linear').fit(sparse.coo_matrix(X), y)
+    sp_clf = svm.SVC(gamma='scale',
+                     kernel='linear').fit(sparse.coo_matrix(X), y)
 
     assert_array_equal(clf.support_vectors_, sp_clf.support_vectors_.toarray())
     assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.toarray())

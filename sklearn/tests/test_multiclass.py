@@ -344,11 +344,13 @@ def test_ovr_multilabel_predict_proba():
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
         # Decision function only estimator.
-        decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')).fit(X_train, Y_train)
+        decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')
+                                            ).fit(X_train, Y_train)
         assert_false(hasattr(decision_only, 'predict_proba'))
 
         # Estimator with predict_proba disabled, depending on parameters.
-        decision_only = OneVsRestClassifier(svm.SVC(gamma='scale', probability=False))
+        decision_only = OneVsRestClassifier(svm.SVC(gamma='scale',
+                                                    probability=False))
         assert_false(hasattr(decision_only, 'predict_proba'))
         decision_only.fit(X_train, Y_train)
         assert_false(hasattr(decision_only, 'predict_proba'))
@@ -379,7 +381,8 @@ def test_ovr_single_label_predict_proba():
     clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
 
     # Decision function only estimator.
-    decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')).fit(X_train, Y_train)
+    decision_only = OneVsRestClassifier(svm.SVR(gamma='scale')
+                                        ).fit(X_train, Y_train)
     assert_false(hasattr(decision_only, 'predict_proba'))
 
     Y_pred = clf.predict(X_test)
@@ -440,7 +443,8 @@ def test_ovr_pipeline():
 
 
 def test_ovr_coef_():
-    for base_classifier in [SVC(gamma='scale', kernel='linear', random_state=0),
+    for base_classifier in [SVC(gamma='scale', kernel='linear',
+                                random_state=0),
                             LinearSVC(random_state=0)]:
         # SVC has sparse coef with sparse input data
 

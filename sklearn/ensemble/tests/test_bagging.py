@@ -460,7 +460,8 @@ def test_parallel_classification():
                          "".format(X_test.shape[1], X_err.shape[1]),
                          ensemble.decision_function, X_err)
 
-    ensemble = BaggingClassifier(SVC(gamma='scale', decision_function_shape='ovr'),
+    ensemble = BaggingClassifier(SVC(gamma='scale',
+                                     decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
 
