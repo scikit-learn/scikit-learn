@@ -121,7 +121,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
     >>>
     """
 
-    def __init__(self, estimators, voting='hard', verbose = True, weights=None, n_jobs=1,
+    def __init__(self, estimators, voting='hard', verbose=1, weights=None, n_jobs=1,
                  flatten_transform=None):
         self.estimators = estimators
         self.voting = voting
@@ -193,7 +193,7 @@ class VotingClassifier(_BaseComposition, ClassifierMixin, TransformerMixin):
 
         transformed_y = self.le_.transform(y)
 
-        self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose = True)(
+        self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=1)(
                 delayed(_parallel_fit_estimator)(clone(clf), X, transformed_y,
                                                  sample_weight=sample_weight)
                 for clf in clfs if clf is not None)
