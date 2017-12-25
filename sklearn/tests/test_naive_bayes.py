@@ -674,7 +674,7 @@ def test_alpha_vector():
     y = np.array([0, 1])
 
     # Setting alpha=np.array with same length as number of features should be fine
-    alpha = np.array([1.,2.])
+    alpha = np.array([1., 2.])
     nb = MultinomialNB(alpha=alpha)
     nb.partial_fit(X, y, classes=[0, 1])
 
@@ -685,3 +685,16 @@ def test_alpha_vector():
     # Test predictions
     prob = np.array( [[5./9, 4./9], [25./49, 24./49]] )
     assert_array_almost_equal(nb.predict_proba(X), prob)
+
+    # Test alpha non-negative
+    alpha = np.array([1., -0.1])
+    expected_msg = ('Smoothing parameter alpha = -1.0e-01. '
+                    'alpha should be > 0.')
+    m_nb = MultinomialNB(alpha=alpha)
+    assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
+
+    # Test correct dimensions
+    alpha = np.array([1.,2.,3.])
+    m_nb = MultinomialNB(alpha=alpha)
+    expected_msg = ('alpha should be a scalar or a numpy array with shape [n_features]')
+    assert_raise_message(ValueError, expected_msg, m_nb.fit, X, y)
