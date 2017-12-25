@@ -195,6 +195,10 @@ Classifiers and regressors
   callable and b) the input to the NearestNeighbors model is sparse.
   :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
+- Fixed a bug in :class:`naive_bayes.MultinomialNB` which did not accept vector
+  valued pseudocounts (alpha).
+  :issue:`10350` by :user:`Tobias Madsen <TobiasMadsen>`
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
