@@ -17,7 +17,8 @@ import numpy as np
 from scipy.optimize import fmin_bfgs
 from sklearn.preprocessing import LabelEncoder
 
-from .base import BaseEstimator, ClassifierMixin, RegressorMixin, clone
+from .base import BaseEstimator, ClassifierMixin, RegressorMixin,\
+    MetaEstimatorMixin, clone
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_X_y, check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
@@ -30,9 +31,10 @@ from .metrics.pairwise import euclidean_distances
 from .metrics.ranking import roc_curve
 
 
-class CutoffClassifier(BaseEstimator, ClassifierMixin):
-    """Uses a base estimator and finds a cutoff point (decision threshold) to be
-    used by predict. Applicable only on binary classification problems.
+class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
+    """Meta estimator that uses a base estimator and finds a cutoff point
+    (decision threshold) to be used by predict. Applicable only on binary
+    classification problems.
 
     The methods for picking "optimal" cutoff points are inferred from ROC
     analysis; making use of true positive and true negative rates and their
