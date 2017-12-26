@@ -455,7 +455,8 @@ class PCA(_BasePCA):
         # Postprocess the number of components required
         if n_components == 'mle':
             n_components = \
-                _infer_dimension_(explained_variance_, n_samples, n_features)
+                _infer_dimension_(explained_variance_, n_samples,
+                                  n_features) + 1
         elif 0 < n_components < 1.0:
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold

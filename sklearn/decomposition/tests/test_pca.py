@@ -490,7 +490,7 @@ def test_pca_dim():
     X[:10] += np.array([3, 4, 5, 1, 2])
     pca = PCA(n_components='mle', svd_solver='full').fit(X)
     assert_equal(pca.n_components, 'mle')
-    assert_equal(pca.n_components_, 1)
+    assert_equal(pca.n_components_, 2)
 
 
 def test_infer_dim_1():
@@ -562,7 +562,7 @@ def test_infer_dim_mle():
                                         n_redundant=1, n_clusters_per_class=1,
                                         random_state=42)
     pca = PCA(n_components='mle').fit(X)
-    assert_equal(pca.n_components_, 0)
+    assert_equal(pca.n_components_, 1)
 
 
 def test_infer_dim_by_explained_variance():
