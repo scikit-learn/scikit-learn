@@ -9,6 +9,7 @@ from time import sleep
 
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
+from sklearn.tests.test_grid_search import FailingClassifier
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -1421,3 +1422,16 @@ def test_permutation_test_score_pandas():
         check_series = lambda x: isinstance(x, TargetType)
         clf = CheckingClassifier(check_X=check_df, check_y=check_series)
         permutation_test_score(clf, X_df, y_ser)
+
+
+def test_fit_and_score_warning():
+    from .._validation import _fit_and_score
+    failing_classifier = FailingClassifier(2)
+    X = np.array([1, 2, 3])
+    y = np.array([1, 2, 3])
+    # TODO: test the _fit_and_score function
+    # _fit_and_score(failing_classifier, X, y, error_score=0.1)
+
+
+if __name__ == '__main__':
+    test_fit_and_score_warning()
