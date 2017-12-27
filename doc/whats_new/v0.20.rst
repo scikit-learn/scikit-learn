@@ -155,6 +155,12 @@ Classifiers and regressors
   arrays are converted to C-ordered arrays in the dense case. :issue:`9991` by
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- Fixed a bug in :class: `linear_model.RidgeClassifierCV` where
+  the parameter `store_cv_values` was not immplemented though it was documented
+  in `cv_values_` as a way to set up the storage of cross-validation
+  values for different alphas. :issue:`10297` by 
+  :user:`Isabel María Villalba-Jiménez <mabelvj>`. 
+
 Decomposition, manifold learning and clustering
 
 - Fix for uninformative error in :class:`decomposition.IncrementalPCA`:
