@@ -468,11 +468,17 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-    Features which contain only missing values at ``fit`` are discarded upon
+    The R version of MICE does not have inductive functionality, i.e. first
+    fitting on `X_train` and then transforming any `X_test` without additional
+    fitting. We do this by storing each feature's predictor during the
+    round-robin ``fit`` phase, and predicting without refitting (in order)
+    during the ``transform`` phase.
+
+    Features which contain all missing values at ``fit`` are discarded upon
     ``transform``.
 
     Features with missing values in transform which did not have any missing
-    values in fit will be imputed with the initial imputation method.
+    values in fit will be imputed with the initial imputation method only.
 
     References
     ----------
@@ -512,7 +518,8 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                             mask_missing_values,
                             feat_idx,
                             neighbor_feat_idx,
-                            predictor=None):
+                            predictor=None,
+                            fit_mode=True):
         """Imputes a single feature from the others provided.
 
         This function predicts the missing values of one of the features using
@@ -537,15 +544,15 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         predictor : object, default=self._predictor
             The predictor to use at this step of the round-robin imputation.
             It must support ``return_std`` in its ``predict`` method.
-            If None, it will be cloned from self._predictor and fit. Otherwise
-            if a predictor is provided, it will not be fit but used only to
-            predict.
+            If None, it will be cloned from self._predictor.
+
+        fit_mode: boolean, default=True
+            Whether to fit and predict with the predictor or just predict.
 
         Returns
         -------
         X_filled : array-like
-            Input data with `X_filled[missing_row_mask, feat_idx]`
-            updated.
+            Input data with `X_filled[missing_row_mask, feat_idx]` updated.
 
         predictor : predictor with sklearn API
             The fitted predictor used to impute
@@ -553,25 +560,29 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         """
 
         # if nothing is missing, just return the default
-        # should not happen at fit time
         missing_row_mask = mask_missing_values[:, feat_idx]
         if not np.any(missing_row_mask):
             return X_filled, predictor
 
-        # if no predictor provided, instantiate a new one and fit
+        if predictor is None and fit_mode is False:
+            raise ValueError("If fit_mode is False, then an already-fitted "
+                             "predictor should be passed in.")
+
+        # if no predictor provided, instantiate a new one
         if predictor is None:
+            predictor = clone(self._predictor)
+
+        if fit_mode:
             X_train = safe_indexing(X_filled[:, neighbor_feat_idx],
                                     ~missing_row_mask)
             y_train = safe_indexing(X_filled[:, feat_idx],
                                     ~missing_row_mask)
-            predictor = clone(self._predictor)
             predictor.fit(X_train, y_train)
 
         # get posterior samples
         X_test = safe_indexing(X_filled[:, neighbor_feat_idx],
                                missing_row_mask)
         mus, sigmas = predictor.predict(X_test, return_std=True)
-        # only sample where sigmas are > 0
         good_sigmas = sigmas > 0
         imputed_values = np.zeros(mus.shape)
         imputed_values[~good_sigmas] = mus[~good_sigmas]
@@ -802,7 +813,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         self.imputation_sequence_ = []
         if self.verbose > 0:
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
-            start_t = time()
+        start_t = time()
         for i_rnd in range(n_rounds):
             # recompute order if random
             if self.imputation_order == 'random':
@@ -815,7 +826,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                                                                 abs_corr_mat)
                 X_filled, predictor = self._impute_one_feature(
                     X_filled, mask_missing_values, feat_idx, neighbor_feat_idx,
-                    predictor=None)
+                    predictor=None, fit_mode=True)
                 predictor_triplet = MICETriplet(feat_idx,
                                                 neighbor_feat_idx,
                                                 predictor)
@@ -865,14 +876,15 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         Xt = np.zeros(X.shape)
         if self.verbose > 0:
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
-            start_t = time()
+        start_t = time()
         for it, predictor_triplet in enumerate(self.imputation_sequence_):
             X_filled, _ = self._impute_one_feature(
                 X_filled,
                 mask_missing_values,
                 predictor_triplet.feat_idx,
                 predictor_triplet.neighbor_feat_idx,
-                predictor_triplet.predictor
+                predictor=predictor_triplet.predictor,
+                fit_mode=False
             )
             if not (it + 1) % imputations_per_round:
                 if i_rnd >= self.n_burn_in:

@@ -282,26 +282,6 @@ def test_imputation_pipeline_grid_search():
     gs.fit(X, Y)
 
 
-def test_mice_pipeline_grid_search():
-    # Test imputation within a pipeline + gridsearch.
-    pipeline = Pipeline([('imputer', MICEImputer(missing_values=0,
-                                                 n_imputations=1,
-                                                 n_burn_in=1,
-                                                 random_state=0)),
-                         ('tree', tree.DecisionTreeRegressor(random_state=0))])
-
-    parameters = {
-        'imputer__initial_strategy': ["mean", "median", "most_frequent"]
-    }
-
-    n = 100
-    d = 10
-    X = sparse_random_matrix(n, d, density=0.50).toarray()
-    Y = np.random.random((n, d))
-    gs = GridSearchCV(pipeline, parameters)
-    gs.fit(X, Y)
-
-
 def test_imputation_pickle():
     # Test for pickling imputers.
     import pickle
@@ -395,6 +375,26 @@ def test_imputation_copy():
     # made, even if copy=False.
 
 
+def test_mice_pipeline_grid_search():
+    # Test imputation within a pipeline + gridsearch.
+    pipeline = Pipeline([('imputer', MICEImputer(missing_values=0,
+                                                 n_imputations=1,
+                                                 n_burn_in=1,
+                                                 random_state=0)),
+                         ('tree', tree.DecisionTreeRegressor(random_state=0))])
+
+    parameters = {
+        'imputer__initial_strategy': ["mean", "median", "most_frequent"]
+    }
+
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.50).toarray()
+    Y = np.random.random((n, d))
+    gs = GridSearchCV(pipeline, parameters)
+    gs.fit(X, Y)
+
+
 def test_mice_rank_one():
     np.random.seed(0)
     d = 100
@@ -469,6 +469,24 @@ def test_mice_predictors():
         assert len(set(hashes)) == len(hashes)
 
 
+def test_mice_clip():
+    np.random.seed(0)
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.10).toarray()
+
+    imputer = MICEImputer(missing_values=0,
+                          n_imputations=1,
+                          n_burn_in=1,
+                          min_value=0.1,
+                          max_value=0.2)
+
+    Xt = imputer.fit_transform(X)
+    assert_array_almost_equal(np.min(Xt[X == 0]), 0.1)
+    assert_array_almost_equal(np.max(Xt[X == 0]), 0.2)
+    assert_array_almost_equal(Xt[X != 0], X[X != 0])
+
+
 def test_mice_missing_at_transform():
     np.random.seed(0)
     n = 100
@@ -493,7 +511,7 @@ def test_mice_missing_at_transform():
                       initial_imputer.transform(X_test)[:, 0])
 
 
-def test_transform_stochasticity():
+def test_mice_transform_stochasticity():
     np.random.seed(0)
     n = 100
     d = 10
