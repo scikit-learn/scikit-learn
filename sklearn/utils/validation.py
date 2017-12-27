@@ -318,7 +318,8 @@ def _ensure_no_complex_data(array):
 def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                 copy=False, force_all_finite=True, ensure_2d=True,
                 allow_nd=False, ensure_min_samples=1, ensure_min_features=1,
-                warn_on_dtype=False, estimator=None,accept_large_sparse=False):
+                warn_on_dtype=False, estimator=None,
+                accept_large_sparse=False):
     """Input validation on an array, list, sparse matrix or similar.
 
     By default, the input is converted to an at least 2D numpy array.
@@ -507,37 +508,37 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
                % (dtype_orig, array.dtype, context))
         warnings.warn(msg, DataConversionWarning)
 
-    ## Indices Datatype regulation
-    sparse_indices_check(array,accept_large_sparse)
+    # Indices Datatype regulation
+    sparse_indices_check(array, accept_large_sparse)
 
     return array
 
-def sparse_indices_check(array,accept_large_sparse=False):
+
+def sparse_indices_check(array, accept_large_sparse=False):
     """
     Indices Regulation for CSR Matrices.
     Only Int32 are supported for now
 
     """
-    if accept_large_sparse==False:
-        if type(array) ==sp.csr.csr_matrix:
-            supported_indices=["int32"]
-            if hasattr(array, "indices"):
-                if hasattr(array.indices, "dtype"):
-                    if array.indices.dtype not in supported_indices:
-                        raise ValueError("CSR arrays accepts only 32 bit integers indexing. You provided %s bit indexing"
-                            %array.indices.dtype)
-            if hasattr(array, "indptr"):
-                if hasattr(array.indptr,  "dtype"):
-                    if array.indptr.dtype not in supported_indices:
-                        raise ValueError("CSR arrays accepts only 32 bit integers indexing. You provided %s bit indexing"
-                            %array.indices.dtype)
+    if accept_large_sparse is False and type(array) == sp.csr.csr_matrix:
+        supported_indices = ["int32"]
+        if (hasattr(array, "indices") and hasattr(array.indices, "dtype") and
+                array.indices.dtype not in supported_indices):
+            raise ValueError("CSR arrays accepts only 32 bit integer indexing."
+                             " You provided % s bit indexing"
+                             % array.indices.dtype)
+        if (hasattr(array, "indptr") and hasattr(array.indptr,  "dtype") and
+                array.indptr.dtype not in supported_indices):
+            raise ValueError("CSR arrays accepts only 32 bit integer indexing."
+                             " You provided %s bit indexing"
+                             % array.indices.dtype)
 
 
 def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
               copy=False, force_all_finite=True, ensure_2d=True,
               allow_nd=False, multi_output=False, ensure_min_samples=1,
               ensure_min_features=1, y_numeric=False,
-              warn_on_dtype=False, estimator=None,accept_large_sparse=False):
+              warn_on_dtype=False, estimator=None, accept_large_sparse=False):
     """Input validation for standard estimators.
 
     Checks X and y for consistent length, enforces X 2d and y 1d.
@@ -627,7 +628,8 @@ def check_X_y(X, y, accept_sparse=False, dtype="numeric", order=None,
     """
     X = check_array(X, accept_sparse, dtype, order, copy, force_all_finite,
                     ensure_2d, allow_nd, ensure_min_samples,
-                    ensure_min_features, warn_on_dtype, estimator,accept_large_sparse=accept_large_sparse)
+                    ensure_min_features, warn_on_dtype, estimator,
+                    accept_large_sparse=accept_large_sparse)
     if multi_output:
         y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
                         dtype=None)
