@@ -573,6 +573,8 @@ class SVC(BaseSVC):
 
     """
 
+    _impl = 'c_svc'
+
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma='auto',
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
@@ -580,7 +582,7 @@ class SVC(BaseSVC):
                  random_state=None):
 
         super(SVC, self).__init__(
-            impl='c_svc', kernel=kernel, degree=degree, gamma=gamma,
+            kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=0., shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
@@ -727,13 +729,15 @@ class NuSVC(BaseSVC):
         liblinear.
     """
 
+    _impl = 'nu_svc'
+
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  shrinking=True, probability=False, tol=1e-3, cache_size=200,
                  class_weight=None, verbose=False, max_iter=-1,
                  decision_function_shape='ovr', random_state=None):
 
         super(NuSVC, self).__init__(
-            impl='nu_svc', kernel=kernel, degree=degree, gamma=gamma,
+            kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=0., nu=nu, shrinking=shrinking,
             probability=probability, cache_size=cache_size,
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
@@ -844,12 +848,15 @@ class SVR(BaseLibSVM, RegressorMixin):
         Scalable Linear Support Vector Machine for regression
         implemented using liblinear.
     """
+
+    _impl = 'epsilon_svr'
+
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
                  cache_size=200, verbose=False, max_iter=-1):
 
         super(SVR, self).__init__(
-            'epsilon_svr', kernel=kernel, degree=degree, gamma=gamma,
+            kernel=kernel, degree=degree, gamma=gamma,
             coef0=coef0, tol=tol, C=C, nu=0., epsilon=epsilon, verbose=verbose,
             shrinking=shrinking, probability=False, cache_size=cache_size,
             class_weight=None, max_iter=max_iter, random_state=None)
@@ -957,12 +964,14 @@ class NuSVR(BaseLibSVM, RegressorMixin):
         epsilon Support Vector Machine for regression implemented with libsvm.
     """
 
+    _impl = 'nu_svr'
+
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma='auto', coef0=0.0, shrinking=True, tol=1e-3,
                  cache_size=200, verbose=False, max_iter=-1):
 
         super(NuSVR, self).__init__(
-            'nu_svr', kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
+            kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
             tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=False, cache_size=cache_size, class_weight=None,
             verbose=verbose, max_iter=max_iter, random_state=None)
@@ -1050,12 +1059,15 @@ class OneClassSVM(BaseLibSVM):
         Constant in the decision function.
 
     """
+
+    _impl = 'one_class'
+
     def __init__(self, kernel='rbf', degree=3, gamma='auto', coef0=0.0,
                  tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1, random_state=None):
 
         super(OneClassSVM, self).__init__(
-            'one_class', kernel, degree, gamma, coef0, tol, 0., nu, 0.,
+            kernel, degree, gamma, coef0, tol, 0., nu, 0.,
             shrinking, False, cache_size, None, verbose, max_iter,
             random_state)
 

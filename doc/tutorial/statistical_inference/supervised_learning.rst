@@ -330,7 +330,7 @@ application of Occam's razor: *prefer simpler models*.
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
        max_iter=1000, normalize=False, positive=False, precompute=False,
        random_state=None, selection='cyclic', tol=0.0001, warm_start=False)
-    >>> print(regr.coef_)
+    >>> print(regr.coef_)  # doctest: +NORMALIZE_WHITESPACE
     [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
      -187.19554705   69.38229038  508.66011217   71.84239008]
 

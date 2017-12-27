@@ -60,11 +60,27 @@ Preprocessing
   the maximum value in the features. :issue:`9151` by
   :user:`Vighnesh Birodkar <vighneshbirodkar>` and `Joris Van den Bossche`_.
 
+- Added :class:`preprocessing.PowerTransformer`, which implements the Box-Cox
+  power transformation, allowing users to map data from any distribution to a
+  Gaussian distribution. This is useful as a variance-stabilizing transformation
+  in situations where normality and homoscedasticity are desirable.
+  :issue:`10210` by :user:`Eric Chang <ericchang00>` and
+  :user:`Maniteja Nandana <maniteja123>`.
+
+
 Model evaluation
 
 - Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
   ``'balanced_accuracy'`` scorer for binary classification.
   :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
+
+- Added :class:`multioutput.RegressorChain` for multi-target
+  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
+
+- Added the :class:`preprocessing.TransformedTargetRegressor` which transforms
+  the target y before fitting a regression model. The predictions are mapped
+  back to the original space via an inverse transform. :issue:`9041` by
+  `Andreas Müller`_ and :user:`Guillaume Lemaitre <glemaitre>`.
 
 Enhancements
 ............
@@ -100,10 +116,23 @@ Classifiers and regressors
   :class:`linear_model.BayesianRidge` for weighted linear regression.
   :issue:`10111` by :user:`Peter St. John <pstjohn>`.
 
+- :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegresssor` now
+  only require X to be an object with finite length or shape.
+  :issue:`9832` by :user:`Vrishank Bhardwaj <vrishank97>`.
+
 Model evaluation and meta-estimators
 
 - A scorer based on :func:`metrics.brier_score_loss` is also available.
   :issue:`9521` by :user:`Hanmin Qin <qinhanmin2014>`.
+
+- The default of ``iid`` parameter of :class:`model_selection.GridSearchCV`
+  and :class:`model_selection.RandomizedSearchCV` will change from ``True`` to
+  ``False`` in version 0.22 to correspond to the standard definition of
+  cross-validation, and the parameter will be removed in version 0.24
+  altogether. This parameter is of greatest practical significance where the
+  sizes of different test sets in cross-validation were very unequal, i.e. in
+  group-based CV strategies. :issue:`9085` by :user:`Laurent Direr <ldirer>`
+  and `Andreas Müller`_.
 
 Metrics
 
@@ -115,6 +144,12 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+Miscellaneous
+
+- Add ``filename`` attribute to datasets that have a CSV file.
+  :issue:`9101` by :user:`alex-33 <alex-33>`
+  and :user:`Maskani Filali Mohamed <maskani-moh>`.
 
 Bug fixes
 .........
@@ -155,7 +190,12 @@ Classifiers and regressors
   arrays are converted to C-ordered arrays in the dense case. :issue:`9991` by
   :user:`Guillaume Lemaitre <glemaitre>`.
 
-- Fixed a bug in :class: `linear_model.RidgeClassifierCV` where
+- Fixed a bug in :class:`neighbors.NearestNeighbors` where fitting a
+  NearestNeighbors model fails when a) the distance metric used is a
+  callable and b) the input to the NearestNeighbors model is sparse.
+  :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
+
+- Fixed a bug in :class:`linear_model.RidgeClassifierCV` where
   the parameter `store_cv_values` was not immplemented though it was documented
   in `cv_values_` as a way to set up the storage of cross-validation
   values for different alphas. :issue:`10297` by 
@@ -196,9 +236,19 @@ Decomposition, manifold learning and clustering
   wrapped estimator and its parameter. :issue:`9999` by :user:`Marcus Voss
   <marcus-voss>` and `Joel Nothman`_.
 
+- ``k_means`` now gives a warning, if the number of distinct clusters found
+  is smaller than ``n_clusters``. This may occur when the number of distinct
+  points in the data set is actually smaller than the number of cluster one is
+  looking for. :issue:`10059` by :user:`Christian Braune <christianbraune79>`.
+
 - Fixed a bug in :func:`datasets.make_circles`, where no odd number of data
   points could be generated. :issue:`10037` by :user:`Christian Braune
   <christianbraune79>`_.
+
+- Fixed a bug in :func:`cluster.spectral_clustering` where the normalization of
+  the spectrum was using a division instead of a multiplication. :issue:`8129`
+  by :user:`Jan Margeta <jmargeta>`, :user:`Guillaume Lemaitre <glemaitre>`,
+  and :user:`Devansh D. <devanshdalal>`.
 
 Metrics
 
@@ -224,15 +274,13 @@ Feature Extraction
   throw an exception if ``max_patches`` was greater than or equal to the number
   of all possible patches rather than simply returning the number of possible
   patches. :issue:`10100` by :user:`Varun Agrawal <varunagrawal>`
-  
+
 - Fixed a bug in :class:`feature_extraction.text.CountVectorizer`,
   :class:`feature_extraction.text.TfidfVectorizer`,
   :class:`feature_extraction.text.HashingVectorizer` to support 64 bit sparse
   array indexing necessary to process large datasets with more than 2·10⁹ tokens
   (words or n-grams). :issue:`9147` by :user:`Claes-Fredrik Mannby <mannby>`
   and `Roman Yurchak`_.
-
-	
 
 API changes summary
 -------------------
@@ -242,6 +290,10 @@ Linear, kernelized and related models
 - Deprecate ``random_state`` parameter in :class:`svm.OneClassSVM` as the
   underlying implementation is not random.
   :issue:`9497` by :user:`Albert Thomas <albertcthomas>`.
+
+- Deprecate ``positive=True`` option in :class:`linear_model.Lars` as the
+  underlying implementation is broken. Use :class:`linear_model.Lasso` instead.
+  :issue:`9837` by `Alexandre Gramfort`_.
 
 Metrics
 
@@ -262,3 +314,7 @@ Changes to estimator checks
 - Allow tests in :func:`estimator_checks.check_estimator` to test functions
   that accept pairwise data.
   :issue:`9701` by :user:`Kyle Johnson <gkjohns>`
+
+- Allow :func:`estimator_checks.check_estimator` to check that there is no
+  private settings apart from parameters during estimator initialization.
+  :issue:`9378` by :user:`Herilalaina Rakotoarison <herilalaina>`
