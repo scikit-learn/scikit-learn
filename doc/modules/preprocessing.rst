@@ -588,8 +588,39 @@ Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
-:class:`Imputer` can be used in a Pipeline as a way to build a composite
-estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
+A more sophisticated approach is to use the :class:`MICEImputer` class, which
+implements the multivariate imputation by chained equations technique. While
+the :class:`Imputer` class fills in each missing value in a feature column
+by a constant that is a function of that feature only, MICE fills in each
+feature's missing values based on the values of the other features as well.
+It does so in a round-robin fashion: at each step a feature column is
+designated as output and the other feature columns are treated as inputs. A
+regressor is fit on the non-missing values of the output feature column and the
+corresponding values in the input columns. Then, the regressor is applied so as
+to predict the unknown values of the output feature. This is repeated for each
+feature, and then is done for a number of imputation rounds. Here is an example
+snippet::
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import MICEImputer
+    >>> imp = MICEImputer(missing_values='NaN', n_imputations=10)
+    >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
+    MICEImputer(imputation_order='monotone', initial_strategy='mean',
+          max_value=None, min_value=None, missing_values='NaN', n_burn_in=10,
+          n_imputations=10, n_nearest_features=None, predictor=None,
+          random_state=None, verbose=False)
+    >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
+    >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
+    [[  1.00098372   2.        ]
+     [  6.           3.70553303]
+     [ 12.73625469   6.        ]]
+
+Note that MICE uses sampling as part of its imputation process, so the exact
+values of the imputed data will be slightly different each time you run it.
+
+Both :class:`Imputer` and :class:`MICEImputer` can be used in a Pipeline as a
+way to build a composite estimator that supports imputation.
+See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
 
 .. _polynomial_features:
 

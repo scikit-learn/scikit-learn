@@ -560,6 +560,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         """
 
         # if nothing is missing, just return the default
+        # (should not happen at fit time because feat_ids would be excluded)
         missing_row_mask = mask_missing_values[:, feat_idx]
         if not np.any(missing_row_mask):
             return X_filled, predictor
@@ -701,7 +702,6 @@ class MICEImputer(BaseEstimator, TransformerMixin):
             round. The diagonal has been zeroed out and each feature's absolute
             correlations with all others have been normalized to sum to 1.
         """
-        # at each stage all but one of the features is used as input
         n_features = X_filled.shape[1]
         if (self.n_nearest_features is None or
                 self.n_nearest_features >= n_features):
@@ -709,7 +709,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         abs_corr_mat = np.abs(np.corrcoef(X_filled.T))
         # np.corrcoef is not defined for features with zero std
         abs_corr_mat[np.isnan(abs_corr_mat)] = tolerance
-        # ensures exploration
+        # ensures exploration, i.e. at least some probability of sampling
         abs_corr_mat[abs_corr_mat < tolerance] = tolerance
         # features are not their own neighbors
         np.fill_diagonal(abs_corr_mat, 0)
