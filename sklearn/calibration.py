@@ -48,8 +48,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     Parameters
     ----------
     base_estimator : instance BaseEstimator
-        The classifier whose decision threshold will be adapted according to the
-        acquired cutoff point
+        The classifier whose decision threshold will be adapted according to
+        the acquired cutoff point
 
     method : str
         The method to use for choosing the cutoff point.
@@ -71,17 +71,17 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     cv : int, cross-validation generator, iterable or "prefit" (optional)
         Determines the cross-validation splitting strategy. If cv="prefit" the
-        base estimator is assumed to be fitted and all data will be used for the
-        calibration of the probability threshold
+        base estimator is assumed to be fitted and all data will be used for
+        the calibration of the probability threshold
         (default value: "prefit")
 
     min_val_tnr : float in [0, 1]
-        In case method = 'max_tpr' this value must be set to specify the minimum
-        required value for the true negative rate
+        In case method = 'max_tpr' this value must be set to specify the
+        minimum required value for the true negative rate
 
     min_val_tpr : float in [0, 1]
-        In case method = 'max_tnr' this value must be set to specify the minimum
-        required value for the true positive rate
+        In case method = 'max_tnr' this value must be set to specify the
+        minimum required value for the true positive rate
 
     Attributes
     ----------
@@ -115,8 +115,8 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             Instance of self.
         """
         if not isinstance(self.base_estimator, BaseEstimator):
-            raise AttributeError('Base estimator must be of type BaseEstimator;'
-                                 'got %s instead' % type(self.base_estimator))
+            raise AttributeError('Base estimator must be of type BaseEstimator'
+                                 ' got %s instead' % type(self.base_estimator))
 
         X, y = check_X_y(X, y)
 
@@ -147,8 +147,7 @@ class CutoffClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                         X[test], y[test]
                     ).threshold_
                 )
-            self.threshold_ = sum(thresholds) / \
-                              len(thresholds)
+            self.threshold_ = sum(thresholds) / len(thresholds)
             self.base_estimator.fit(X, y)
         return self
 
@@ -173,8 +172,8 @@ class _CutoffClassifier(object):
     Parameters
     ----------
     base_estimator : instance BaseEstimator
-        The classifier whose decision threshold will be adapted according to the
-        acquired optimal cutoff point
+        The classifier whose decision threshold will be adapted according to
+        the acquired optimal cutoff point
 
     method : 'roc' or 'max_se' or 'max_sp'
         The method to use for choosing the cutoff point.
