@@ -511,6 +511,20 @@ def test_transform_stochasticity():
     assert_not_equal(np.mean(X_fitted_1), np.mean(X_fitted_2))
 
 
+def test_mice_no_missing():
+    np.random.seed(0)
+    X = np.random.rand(100, 100)
+    X[:, 0] = np.nan
+    m1 = MICEImputer(n_imputations=10)
+    m2 = MICEImputer(n_imputations=10)
+    pred1 = m1.fit(X).transform(X)
+    pred2 = m2.fit_transform(X)
+    # should exclude the first column entirely
+    assert_array_almost_equal(X[:, 1:], pred1)
+    # fit and fit_transform should both be identical
+    assert_array_almost_equal(pred1, pred2)
+
+
 def test_mice_transform_recovery():
     def make_data(rank):
         n = 100

@@ -717,7 +717,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X : array-like, shape (n_samples, n_features)
+        Xt : array-like, shape (n_samples, n_features)
             Input data, where "n_samples" is the number of samples and
             "n_features" is the number of features.
 
@@ -742,10 +742,10 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         # removing empty features
         valid_mask = np.flatnonzero(np.logical_not(
             np.isnan(self.initial_imputer_.statistics_)))
-        X = X[:, valid_mask]
+        Xt = X[:, valid_mask]
         mask_missing_values = mask_missing_values[:, valid_mask]
 
-        return X, X_filled, mask_missing_values
+        return Xt, X_filled, mask_missing_values
 
     def fit_transform(self, X, y=None):
         """Fits the imputer on X and return the transformed X.
@@ -784,7 +784,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
         if self.n_imputations < 1:
             return X_filled
 
-        n_samples, n_features = X.shape
+        n_samples, n_features = X_filled.shape
 
         # order in which to impute
         # note this is probably too slow for large feature data (d > 100000)
@@ -798,7 +798,7 @@ class MICEImputer(BaseEstimator, TransformerMixin):
 
         # impute data
         n_rounds = self.n_burn_in + self.n_imputations
-        Xt = np.zeros(X.shape)
+        Xt = np.zeros((n_samples, n_features))
         self.imputation_sequence_ = []
         if self.verbose > 0:
             print("[MICE] Completing matrix with shape %s" % (X.shape,))
@@ -828,7 +828,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                       '%d/%d, elapsed time %0.2f'
                       % (i_rnd + 1, n_rounds, time() - start_t))
 
-        return Xt / self.n_imputations
+        Xt /= self.n_imputations
+        Xt[~mask_missing_values] = X[~mask_missing_values]
+        return Xt
 
     def transform(self, X):
         """Imputes all missing values in X.
@@ -881,7 +883,9 @@ class MICEImputer(BaseEstimator, TransformerMixin):
                           % (i_rnd + 1, n_rounds, time() - start_t))
                 i_rnd += 1
 
-        return Xt / self.n_imputations
+        Xt /= self.n_imputations
+        Xt[~mask_missing_values] = X[~mask_missing_values]
+        return Xt
 
     def fit(self, X, y=None):
         """Fits the imputer on X and return self.
