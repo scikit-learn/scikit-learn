@@ -608,7 +608,7 @@ snippet::
     MICEImputer(imputation_order='monotone', initial_strategy='mean',
           max_value=None, min_value=None, missing_values='NaN', n_burn_in=10,
           n_imputations=10, n_nearest_features=None, predictor=None,
-          random_state=None, verbose=False)
+          random_state=0, verbose=False)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
     >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
     [[  0.99991667   2.        ]
