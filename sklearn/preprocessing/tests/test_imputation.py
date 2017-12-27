@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_not_equal
 
 from sklearn.preprocessing.imputation import Imputer
 from sklearn.preprocessing.imputation import MICEImputer
@@ -395,6 +396,7 @@ def test_imputation_copy():
 
 
 def test_mice_rank_one():
+    np.random.seed(0)
     d = 100
     A = np.random.random((d, 1))
     B = np.random.random((1, d))
@@ -411,6 +413,7 @@ def test_mice_rank_one():
 
 
 def test_mice_imputation_order():
+    np.random.seed(0)
     n = 100
     d = 10
     X = sparse_random_matrix(n, d, density=0.10).toarray()
@@ -436,9 +439,12 @@ def test_mice_imputation_order():
             ordered_idx_round_1 = ordered_idx[:d-1]
             ordered_idx_round_2 = ordered_idx[d-1:]
             assert ordered_idx_round_1 != ordered_idx_round_2
+        elif 'monotone' in imputation_order:
+            assert len(ordered_idx) == 2 * (d - 1)
 
 
 def test_mice_predictors():
+    np.random.seed(0)
     from sklearn.dummy import DummyRegressor
     from sklearn.linear_model import BayesianRidge, ARDRegression
 
@@ -453,31 +459,59 @@ def test_mice_predictors():
                               predictor=predictor())
         imputer.fit_transform(X)
 
+        # correct types for predictors?
+        hashes = []
+        for triplet in imputer.imputation_sequence_:
+            assert triplet.predictor
+            hashes.append(triplet.predictor.__hash__())
+
+        # each predictor unique?
+        assert len(set(hashes)) == len(hashes)
+
 
 def test_mice_missing_at_transform():
+    np.random.seed(0)
     n = 100
     d = 10
-    Xtr = np.random.randint(low=0, high=3, size=(n, d))
-    Xts = np.random.randint(low=0, high=3, size=(n, d))
+    X_train = np.random.randint(low=0, high=3, size=(n, d))
+    X_test = np.random.randint(low=0, high=3, size=(n, d))
 
-    Xtr[:, 0] = 1  # definitely no missing values in 0th column
-    Xts[0, 0] = 0  # definitely missing value in 0th column
+    X_train[:, 0] = 1  # definitely no missing values in 0th column
+    X_test[0, 0] = 0  # definitely missing value in 0th column
 
     for strategy in ["mean", "median", "most_frequent"]:
         mice = MICEImputer(missing_values=0,
                            n_imputations=1,
                            n_burn_in=1,
-                           initial_strategy=strategy).fit(Xtr)
-        initial_imputer = Imputer(missing_values=0, strategy=strategy).fit(Xtr)
+                           initial_strategy=strategy).fit(X_train)
+        initial_imputer = Imputer(missing_values=0,
+                                  strategy=strategy).fit(X_train)
 
         # if there were no missing values at time of fit, then mice will
         # only use the initial imputer for that feature at transform
-        assert np.all(mice.transform(Xts)[:, 0] ==
-                      initial_imputer.transform(Xts)[:, 0])
+        assert np.all(mice.transform(X_test)[:, 0] ==
+                      initial_imputer.transform(X_test)[:, 0])
 
 
-def test_mice_transform_correctness():
-    # make data
+def test_transform_stochasticity():
+    np.random.seed(0)
+    n = 100
+    d = 10
+    X = sparse_random_matrix(n, d, density=0.10).toarray()
+
+    imputer = MICEImputer(missing_values=0,
+                          n_imputations=1,
+                          n_burn_in=1)
+    imputer.fit(X)
+
+    X_fitted_1 = imputer.transform(X)
+    X_fitted_2 = imputer.transform(X)
+
+    # sufficient to assert that the means are not the same
+    assert_not_equal(np.mean(X_fitted_1), np.mean(X_fitted_2))
+
+
+def test_mice_transform_recovery():
     def make_data(rank):
         n = 100
         d = 100
@@ -491,20 +525,20 @@ def test_mice_transform_correctness():
         X_missing[nan_mask] = np.nan
 
         # split up data in half
-        n = int(n/2)
-        Xtr_filled = Xfilled[:n]
-        Xtr = X_missing[:n]
-        Xts_filled = Xfilled[n:]
-        Xts = X_missing[n:]
-        return Xtr_filled, Xtr, Xts_filled, Xts
+        n = n // 2
+        X_train_filled = Xfilled[:n]
+        X_train = X_missing[:n]
+        X_test_filled = Xfilled[n:]
+        X_test = X_missing[n:]
+        return X_train_filled, X_train, X_test_filled, X_test
 
     for rank in [5, 10]:
-        Xtr_filled, Xtr, Xts_filled, Xts = make_data(rank)
+        X_train_filled, X_train, X_test_filled, X_test = make_data(rank)
         imputer = MICEImputer(n_imputations=10,
                               n_burn_in=10,
-                              verbose=True).fit(Xtr)
-        Xts_est = imputer.fit_transform(Xts)
-        assert_array_almost_equal(Xts_filled, Xts_est, decimal=1)
+                              verbose=True).fit(X_train)
+        X_test_est = imputer.transform(X_test)
+        assert_array_almost_equal(X_test_filled, X_test_est, decimal=1)
 
 
 def test_mice_additive_matrix():
@@ -516,20 +550,20 @@ def test_mice_additive_matrix():
         Xfilled = np.zeros(A.shape)
         for i in range(d):
             for j in range(d):
-                Xfilled[:, (i+j) % d] += (A[:, i] + B[:, j])/2
+                Xfilled[:, (i+j) % d] += (A[:, i] + B[:, j]) / 2
         # a quarter is randomly missing
         nan_mask = np.random.random((n, d)) < 0.25
         X_missing = Xfilled.copy()
         X_missing[nan_mask] = np.nan
 
         # split up data
-        n = int(n/2)
-        Xtr = X_missing[:n]
-        Xts_filled = Xfilled[n:]
-        Xts = X_missing[n:]
+        n = n // 2
+        X_train = X_missing[:n]
+        X_test_filled = Xfilled[n:]
+        X_test = X_missing[n:]
 
         imputer = MICEImputer(n_imputations=10,
                               n_burn_in=10,
-                              verbose=True).fit(Xtr)
-        Xts_est = imputer.fit_transform(Xts)
-        assert_array_almost_equal(Xts_filled, Xts_est, decimal=2)
+                              verbose=True).fit(X_train)
+        X_test_est = imputer.transform(X_test)
+        assert_array_almost_equal(X_test_filled, X_test_est, decimal=2)
