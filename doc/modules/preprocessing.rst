@@ -610,10 +610,10 @@ snippet::
           n_imputations=10, n_nearest_features=None, predictor=None,
           random_state=0, verbose=False)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
-    >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
-    [[  0.99991667   2.        ]
-     [  6.           3.70470405]
-     [ 12.73765182   6.        ]]
+    >>> print(np.round(imp.transform(X_test)))            # doctest: +ELLIPSIS
+    [[  1.   2.]
+     [  6.   4.]
+     [ 13.   6.]]
 
 Note that MICE uses sampling as part of its imputation process, so the exact
 values of the imputed data will be slightly different each time you run it.
