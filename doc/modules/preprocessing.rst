@@ -603,7 +603,7 @@ snippet::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import MICEImputer
-    >>> imp = MICEImputer(missing_values='NaN', n_imputations=10)
+    >>> imp = MICEImputer(n_imputations=10, random_state=0)
     >>> imp.fit([[1, 2], [np.nan, 3], [7, np.nan]])
     MICEImputer(imputation_order='monotone', initial_strategy='mean',
           max_value=None, min_value=None, missing_values='NaN', n_burn_in=10,
@@ -611,9 +611,9 @@ snippet::
           random_state=None, verbose=False)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
     >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
-    [[  1.00098372   2.        ]
-     [  6.           3.70553303]
-     [ 12.73625469   6.        ]]
+    [[  0.99991667   2.        ]
+     [  6.           3.70470405]
+     [ 12.73765182   6.        ]]
 
 Note that MICE uses sampling as part of its imputation process, so the exact
 values of the imputed data will be slightly different each time you run it.
