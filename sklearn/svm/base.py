@@ -14,7 +14,7 @@ from ..utils import check_array, check_consistent_length, check_random_state
 from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted,sparse_indices_check
+from ..utils.validation import check_is_fitted, sparse_indices_check
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
 from ..exceptions import ConvergenceWarning
@@ -146,7 +146,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
-        X, y = check_X_y(X, y, dtype=np.float64, order='C', accept_sparse='csr')
+        X, y = check_X_y(X, y, dtype=np.float64,
+                         order='C', accept_sparse='csr')
         y = self._validate_targets(y)
 
         sample_weight = np.asarray([]
@@ -190,7 +191,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.shape_fit_ = X.shape
 
         # In binary case, we need to flip the sign of coef, intercept and
-        # decision function. Use self._intercept_ and self._dual_coef_ internally.
+        # decision function. Use self._intercept_ and self._dual_coef_
+        # internally.
         self._intercept_ = self.intercept_.copy()
         self._dual_coef_ = self.dual_coef_
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
@@ -875,7 +877,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     libsvm_sparse.set_verbosity_wrap(verbose)
     liblinear.set_verbosity_wrap(verbose)
 
-    ##Liblinear doesnt support 64bit sparse matrix indices yet
+    # Liblinear doesn't support 64bit sparse matrix indices yet
     sparse_indices_check(X)
 
     # LibLinear wants targets as doubles, even for classification

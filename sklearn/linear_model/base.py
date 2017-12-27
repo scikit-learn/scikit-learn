@@ -236,7 +236,8 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
     def _decision_function(self, X):
         check_is_fitted(self, "coef_")
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],accept_large_sparse=True)
+        X = check_array(X, accept_sparse=[
+                        'csr', 'csc', 'coo'], accept_large_sparse=True)
         return safe_sparse_dot(X, self.coef_.T,
                                dense_output=True) + self.intercept_
 
@@ -479,7 +480,7 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         n_jobs_ = self.n_jobs
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         y_numeric=True, multi_output=True,accept_large_sparse=True)
+                         y_numeric=True, multi_output=True, accept_large_sparse=True)
 
         if sample_weight is not None and np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample weights must be 1D array or scalar")

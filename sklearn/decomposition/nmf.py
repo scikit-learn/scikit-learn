@@ -474,7 +474,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     """
     # so W and Ht are both in C order in memory
     Ht = check_array(H.T, order='C')
-    X = check_array(X, accept_sparse='csr',accept_large_sparse=True)
+    X = check_array(X, accept_sparse='csr', accept_large_sparse=True)
 
     rng = check_random_state(random_state)
 
@@ -971,7 +971,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-    X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float,accept_large_sparse=True)
+    X = check_array(X, accept_sparse=('csr', 'csc'),
+                    dtype=float, accept_large_sparse=True)
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
@@ -1222,7 +1223,8 @@ class NMF(BaseEstimator, TransformerMixin):
         W : array, shape (n_samples, n_components)
             Transformed data.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'), dtype=float,accept_large_sparse=True)
+        X = check_array(X, accept_sparse=('csr', 'csc'),
+                        dtype=float, accept_large_sparse=True)
 
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,

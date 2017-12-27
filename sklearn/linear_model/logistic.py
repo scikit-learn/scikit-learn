@@ -215,7 +215,7 @@ def _logistic_grad_hess(w, X, y, alpha, sample_weight=None):
     d = sample_weight * z * (1 - z)
     if sparse.issparse(X):
         dX = safe_sparse_dot(sparse.dia_matrix((d, 0),
-                             shape=(n_samples, n_samples)), X)
+                                               shape=(n_samples, n_samples)), X)
     else:
         # Precompute as much as possible
         dX = d[:, np.newaxis] * X
@@ -1214,7 +1214,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             _dtype = np.float64
 
         X, y = check_X_y(X, y, accept_sparse='csr', dtype=_dtype,
-                         order="C",accept_large_sparse=True)
+                         order="C", accept_large_sparse=True)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
         n_samples, n_features = X.shape
