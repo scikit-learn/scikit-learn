@@ -1,6 +1,6 @@
 """
-The :mod:`sklearn.benchmark` module includes utilities for documenting
-the estimated runtime or space complexities of estimators and algorithms.
+The :mod:`sklearn.benchmark` module includes utilities for estimating
+runtimes or space complexities of estimators and algorithms.
 """
 
 # Author: Vrishank Bhardwaj <vrishank1997@gmail.com>
@@ -66,115 +66,67 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
     """
     fit_times = []
     length = _num_samples(X)
-    estimator = est
     parameters = est_params
     n_samples = []
     model_memory = []
+    peak_memory = []
+    models = {}
+    results = {}
+    errors = {}
+    errors["n_samples"] = []
     SAMPLES = 8
 
     if profile_memory:
         try:
-            import psutil
+            from memory_profiler import memory_usage
         except ImportError:
-            # To-Do : Make error message more informative
-            raise ImportError("Please install psutil")
+            raise ImportError("Please install memory_profiler")
 
     if parameters is not None:
-        estimator.set_params(**parameters)
+        est.set_params(**parameters)
+    if fit_params is None:
+        fit_params = {}
 
-    if not vary_n_samples:
-        for _ in range(0, n_fits):
-            if y is None:
-                start_time = time.time()
-                if fit_params is not None:
-                    estimator.fit(X, **fit_params)
-                else:
-                    estimator.fit(X)
-                time_taken = time.time() - start_time
-                fit_times.append(time_taken)
-                n_samples.append(length)
-            else:
-                start_time = time.time()
-                if fit_params is not None:
-                    estimator.fit(X, y, **fit_params)
-                else:
-                    estimator.fit(X, y)
-                time_taken = time.time() - start_time
-                fit_times.append(time_taken)
-
-    if vary_n_samples:
-        for _ in range(0, n_fits):
-            if SAMPLES < length:
-                SAMPLES *= 2
+    for _ in range(0, n_fits):
+        if vary_n_samples:
+            if 8*2**_ < length:
+                SAMPLES = 8*2**_
             else:
                 SAMPLES = length
+
             n_samples.append(SAMPLES)
             train_size = n_samples[_] - 1
-            X_vary = X[:train_size]
-            y_vary = y[:train_size]
-            if y is None:
-                if fit_params is not None:
-                    start_time = time.time()
-                    mem_start = psutil.virtual_memory()[3]
-                    mem_start += psutil.swap_memory()[1]
-                    estimator.fit(X_vary, **fit_params)
-                    mem_end = psutil.virtual_memory()[3]
-                    mem_end += psutil.swap_memory()[1]
-                    time_taken = time.time() - start_time
-                    mem_diff = mem_end - mem_start
-                    fit_times.append(time_taken)
-                    model_memory.append(mem_diff)
-                else:
-                    start_time = time.time()
-                    mem_start = psutil.virtual_memory()[3]
-                    mem_start += psutil.swap_memory()[1]
-                    estimator.fit(X_vary)
-                    mem_end = psutil.virtual_memory()[3]
-                    mem_end += psutil.swap_memory()[1]
-                    time_taken = time.time() - start_time
-                    mem_diff = mem_end - mem_start
-                    fit_times.append(time_taken)
-                    model_memory.append(mem_diff)
-            else:
-                if fit_params is not None:
-                    start_time = time.time()
-                    mem_start = psutil.virtual_memory()[3]
-                    mem_start += psutil.swap_memory()[1]
-                    estimator.fit(X_vary, y_vary, **fit_params)
-                    mem_end = psutil.virtual_memory()[3]
-                    mem_end += psutil.swap_memory()[1]
-                    time_taken = time.time() - start_time
-                    mem_diff = mem_end - mem_start
-                    fit_times.append(time_taken)
-                    model_memory.append(mem_diff)
-                else:
-                    start_time = time.time()
-                    mem_start = psutil.virtual_memory()[3]
-                    mem_start += psutil.swap_memory()[1]
-                    estimator.fit(X_vary, y_vary)
-                    mem_end = psutil.virtual_memory()[3]
-                    mem_end += psutil.swap_memory()[1]
-                    time_taken = time.time() - start_time
-                    mem_diff = mem_end - mem_start
-                    fit_times.append(time_taken)
-                    model_memory.append(mem_diff)
+            X_fit = X[:train_size]
+            y_fit = y[:train_size]
+        else:
+            n_samples.append(length)
+            X_fit = X[:length]
+            y_fit = y[:length]
 
-    models = {}
+        start_time = time.time()
+
+        try:
+            if profile_memory:
+                args = (est, X_fit, y_fit, fit_params)
+                mem = memory_usage((est_arg_handler, args), interval=.0001)
+                model_memory.append(mem[-1]-mem[0])
+                peak_memory.append(np.max(mem))
+            else:
+                est_arg_handler(est, X_fit, y_fit, fit_params)
+        except:
+            errors["n_samples"].append(SAMPLES)
+
+        time_taken = time.time() - start_time
+        fit_times.append(time_taken)
 
     kernel = DotProduct()
     n_samples = np.array(n_samples).reshape(-1, 1)
-    '''
-    -----------
-    TODO
-    -----------
 
     if profile_memory:
-        fit_time = GaussianProcessRegressor()
-        models["peak_memory"] = peak_memory.fit(n_samples, peak_memory)
-    '''
-    results = {}
+        model_peak_mem = GaussianProcessRegressor()
+        models["peak_memory"] = model_peak_mem.fit(n_samples, peak_memory)
+        results["peak_memory"] = peak_memory
 
-    if profile_memory:
         model_mem = GaussianProcessRegressor()
         models["model_memory"] = model_mem.fit(n_samples, model_memory)
         results["model_memory"] = model_memory
@@ -185,4 +137,18 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
     results["n_samples"] = n_samples
     results["fit_time"] = fit_times
 
-    return results, models
+    return results, models, errors
+
+
+def est_arg_handler(estimator, X, y=None, fit_params=None):
+    if y is None:
+        if fit_params is None:
+            estimator.fit(X)
+        else:
+            estimator.fit(X, **fit_params)
+    else:
+        if fit_params is None:
+            estimator.fit(X, y)
+        else:
+            estimator.fit(X, y, **fit_params)
+    return
