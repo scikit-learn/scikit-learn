@@ -443,11 +443,9 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             self.priors_ = self.priors_ / self.priors_.sum()
 
         # Get the maximum number of components
-        if self.n_components is None:
-            self._max_components = X.shape[1]
-        else:
-            self._max_components = min(X.shape[1],
-                                       self.n_components)
+        self._max_components = X.shape[1]
+        if self.n_components is not None:
+            self._max_components = self.n_components
 
         if self.solver == 'svd':
             if self.shrinkage is not None:
