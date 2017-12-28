@@ -530,8 +530,23 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             normalize = True
         # default average in multilabel is 'samples'
 
+        if not np.all(labels == present_labels):
+            if np.max(labels) > np.max(present_labels):
+                raise ValueError('All labels must be in [0, n, labels). '
+                                 'Got %d > %d' %
+                                 (np.max(labels), np.max(present_labels)))
+            if np.min(labels) < 0:
+                raise ValueError('All labels must be in [0, n, labels). '
+                                 'Got %d < 0' % np.min(labels))
+
+        # wait for response on 'prf-bug' PR, since I'm less than 90% sure
+        if n_labels is not None:
+            y_true = y_true[:, labels[:n_labels]]
+            y_pred = y_pred[:, labels[:n_labels]]
+
         with np.errstate(divide='ignore', invalid='ignore'):
             sum_axis = 1 if average == 'samples' else 0
+
 
             pred_or_true = count_nonzero(y_true + y_pred, axis=sum_axis)
             pred_and_true = count_nonzero(y_true.multiply(y_pred),
