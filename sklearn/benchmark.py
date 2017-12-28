@@ -63,6 +63,15 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
     errors : list of dicts
         lists the parameters that resulted in exceptions
 
+    Notes
+    -----
+    Memory estimates are only for the current process, memory will not be
+    estimated correctly if `n_jobs` with multiprocessing is used in the
+    estimator.
+
+    Peak memory measurements are approximate, as they are based on polling
+    current memory usage during execution.
+
     """
     fit_times = []
     length = _num_samples(X)
@@ -80,7 +89,9 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
         try:
             from memory_profiler import memory_usage
         except ImportError:
-            raise ImportError("Please install memory_profiler")
+            raise ImportError("To run the profiler with `profile_memory=True,`"
+                              " you need to install 'memory_profiler`. Please "
+                              "run `pip install memory_profiler`.")
 
     if parameters is not None:
         est.set_params(**parameters)
@@ -88,6 +99,8 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
         fit_params = {}
 
     for _ in range(0, n_fits):
+        # if vary_n_samples=True, number of samples starts at 8 and doubles
+        # for every fit.
         if vary_n_samples:
             if 8*2**_ < length:
                 SAMPLES = 8*2**_
@@ -98,6 +111,8 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
             train_size = n_samples[_] - 1
             X_fit = X[:train_size]
             y_fit = y[:train_size]
+        # if vary_n_samples=False, the estimator is fit on the entire data for
+        # every fit.
         else:
             n_samples.append(length)
             X_fit = X[:length]
@@ -118,6 +133,8 @@ def benchmark_estimator_cost(est, X, y=None, est_params=None, fit_params=None,
 
         time_taken = time.time() - start_time
         fit_times.append(time_taken)
+
+    # Generate models
 
     kernel = DotProduct()
     n_samples = np.array(n_samples).reshape(-1, 1)
