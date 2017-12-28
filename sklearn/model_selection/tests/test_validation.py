@@ -1433,8 +1433,8 @@ def test_fit_and_score():
     # dummy X data
     X = np.arange(1, 10)
     fit_and_score_args = [failing_clf, X, None, dict(), None,
-                          None, None, None, None]
-    # passing error score to trigger the warning message
+                          None, 0, None, None]
+    # passing error score to trigg  er the warning message
     fit_and_score_kwargs = {'error_score': 0}
     # check if the warning message type is as expected
     assert_warns(FitFailedWarning, _fit_and_score, *fit_and_score_args,
