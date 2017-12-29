@@ -1,15 +1,14 @@
 """
-==========================================
-Large Margin Nearest Neighbor Illustration
-==========================================
+=============================================
+Neighborhood Components Analysis Illustration
+=============================================
 
 An example illustrating the goal of learning a distance metric that maximizes
 the nearest neighbors classification accuracy. The example is solely for
-illustration purposes. Please refer to the :ref:`User Guide <lmnn>` for
+illustration purposes. Please refer to the :ref:`User Guide <nca>` for
 more information.
 """
 
-# Author: John Chiotellis <johnyc.code@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np
@@ -58,8 +57,6 @@ def p_i(X, i):
 masks = OneHotEncoder(sparse=False,
                       dtype=bool).fit_transform(y[:, np.newaxis])
 
-# for i, pt_i in enumerate(X):  # or maybe select only one point
-i=3
 def relate_point(X, i, ax):
     pt_i = X[i]
     for j, pt_j in enumerate(X):
@@ -69,16 +66,20 @@ def relate_point(X, i, ax):
             ax.plot(*line, c=cm.tab10(y[j]),
                     linewidth=5*thickness[j])
 
+# we consider only point n°3
+i=3
+
+# Plot bonds linked to sample i in the original space
 relate_point(X, i, ax)
 ax.set_title("Original points")
 ax.axes.get_xaxis().set_visible(False)
 ax.axes.get_yaxis().set_visible(False)
 
-# Learn an embedding with LargeMarginNearestNeighbor
+# Learn an embedding with NeighborhoodComponentsAnalysis
 nca = NeighborhoodComponentsAnalysis(max_iter=30, random_state=random_state)
 nca = nca.fit(X, y)
 
-# Plot the points after transformation with LargeMarginNearestNeighbor
+# Plot the points after transformation with NeighborhoodComponentsAnalysis
 plt.figure()
 ax2 = plt.gca()
 

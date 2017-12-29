@@ -524,10 +524,13 @@ Neighborhood Components Analysis
 
 .. sectionauthor:: William de Vazelhes <william.de-vazelhes@inria.fr>
 
-Neighborhood Components Analysis (NCA,
-:class:`NeighborhoodComponentAnalysis`) is
-a distance metric learning algorithm which aims to improve the accuracy of
+Neighborhood Components Analysis (NCA, :class:`NeighborhoodComponentsAnalysis`   )
+is a distance metric learning algorithm which aims to improve the accuracy of
 nearest neighbors classification compared to the standard Euclidean distance.
+The algorithm  directly  maximizes  a stochastic  variant  of  the
+leave-one-out k-nearest neighbors (KNN) score on the training set.  It can also
+learn a low-dimensional linear  embedding  of  labeled  data  that  can  be
+used for  data  visualization and fast classification.
 
 .. |nca_illustration_1| image:: ../auto_examples/neighbors/images/sphx_glr_plot_nca_illustration_001.png
    :target: ../auto_examples/neighbors/plot_nca_illustration.html
@@ -539,23 +542,15 @@ nearest neighbors classification compared to the standard Euclidean distance.
 
 .. centered:: |nca_illustration_1| |nca_illustration_2|
 
-The algorithm  directly  maximizes  a stochastic  variant  of  the
-leave-one-out k-nearest neighbors (KNN) score on the training set.  It can also
-learn a low-dimensional linear  embedding  of  labeled  data  that  can  be
-used for  data  visualization and fast classification.  Unlike other methods,
-our classification model is non-parametric, making no assumptions about the
-shape of the class distributions or the boundaries between them.  The
-performance of the method is demonstrated on several data sets, both for metric
-learning and linear dimensionality reduction.
-In the above figure, we consider some points from a randomly generated
-dataset. We focus on the stochastic KNN classification of point n°3. In the
-original
-space, it has
-many stochastic neighbors, the thickness of the bond representing the
-softmax distance to it hence their weight in the prediction of its class.
-However, in the embedding space, the only non-negligible stochastic
-neighbors are from the same class as sample 3, guaranteeing that it will be
-well classified.
+
+In the above figure, we consider some points from a randomly generated dataset.
+We focus on the stochastic KNN classification of point n°3, the thickness of a
+bond representing a softmax distance hence the weight of the neighbor vote in
+the classification. In the original space, sample 3 has many stochastic
+neighbors from various classes, so the right class is not very likely. However,
+in the embedding space, the only non-negligible stochastic neighbors are from
+the same class as sample 3, guaranteeing that the latter will be well
+classified.
 
 
 
@@ -564,8 +559,8 @@ Classification
 
 Combined with a nearest neighbors classifier (:class:`KNeighborsClassifier`),
 this method is attractive for classification because it can naturally
-handle multi-class problems without any increase in the model size, and only
-a single parameter (``n_neighbors``) has to be selected by the user before
+handle multi-class problems without any increase in the model size, and no
+additional parameter than that of KNN has to be selected by the user before
 training.
 
 Neighborhood Components Analysis classification has been shown to work well in
@@ -575,10 +570,9 @@ assumptions about the class distributions. The nearest neighbor classification
 can naturally produce highly irregular decision boundaries.
 
 To use this model for classification, one needs to combine a
-:class:`NeighborhoodComponentsAnalysis`
-instance that learns the optimal transformation with a :class:`KNeighborsClassifier`
-instance that performs the classification in the embedded space. Here is an
-example using the two classes:
+:class:`NeighborhoodComponentsAnalysis` instance that learns the optimal
+transformation with a :class:`KNeighborsClassifier` instance that performs the
+classification in the embedded space. Here is an example using the two classes:
 
     >>> from sklearn.neighbors import NeighborhoodComponentsAnalysis
     >>> from sklearn.neighbors import KNeighborsClassifier
@@ -619,9 +613,9 @@ that automatically applies the transformation when fitting or predicting:
 
 .. centered:: |nca_classification_1| |nca_classification_2|
 
-
-The plot shows decision boundaries for nearest neighbor classification and
-large margin nearest neighbor classification.
+The plot shows decision boundaries for Nearest Neighbor Classification and
+Neighborhood Components Analysis classification, when training and scoring
+on only two features, for visualisation purpose.
 
 
 Dimensionality reduction
@@ -630,20 +624,16 @@ Dimensionality reduction
 :class:`NeighborhoodComponentsAnalysis` can be used to perform supervised
 dimensionality reduction. The input data are projected onto a linear subspace
 consisting of the directions which minimize the NCA objective. The desired
-dimensionality can be set using the parameter ``n_features_out``.
-For instance, the following shows a comparison of dimensionality reduction
-with Principal Component Analysis (:class:`sklearn.decomposition.PCA`),
-Linear Discriminant Analysis (:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
+dimensionality can be set using the parameter ``n_features_out``. For instance,
+the following shows a comparison of dimensionality reduction with Principal
+Component Analysis (:class:`sklearn.decomposition.PCA`), Linear Discriminant
+Analysis (:class:`sklearn.discriminant_analysis.LinearDiscriminantAnalysis`)
 and Neighborhood Component Analysis (:class:`NeighborhoodComponentsAnalysis`)
-on the Digits dataset, a dataset with size
-:math:`n_{samples} = 1797` and :math:`n_{features} = 64`.
-The data set is splitted in a training and test set of equal size. What is
-more, a :class:`sklearn.preprocessing.StandardScaler` fitted on the training
-set and
-transforms
-the data from both sets. For evaluation the 3-nearest neighbor classification
-accuracy is
-computed on the
+on the Digits dataset, a dataset with size :math:`n_{samples} = 1797` and
+:math:`n_{features} = 64`. The data set is splitted in a training and test set
+of equal size. What is more, a :class:`sklearn.preprocessing.StandardScaler`
+fitted on the training set and transforms the data from both sets. For
+evaluation the 3-nearest neighbor classification accuracy is computed on the
 2-dimensional embedding found by each method. Each data sample belongs to one
 of 10 classes.
 
@@ -666,15 +656,9 @@ Mathematical formulation
 ------------------------
 
 NCA learns a linear transformation matrix :math:`L` of
-size ``(n_features_out, n_features)``. NCA maximises in average the
+size ``(n_features_out, n_features)``, which maximises in average the
 probability :math:`p_i` of sample :math:`i` being
-classified as :math:`C_i`, where :math:`p_i` is a weighted sum of all other
-samples of
-class :math:`C_i`, with a weighting related to their distance to :math:`i`.
-
-The contribution of sample :math:`i` to the cost function is therefore the
-following (it is the probability of sample :math:`i` to be classify as
-:math:`C`):
+classified as :math:`C_i`, defined by:
 
 .. math::
 
@@ -700,29 +684,40 @@ NCA can be seen as learning a (squared) Mahalanobis distance metric:
     || L(x_i - x_j)||^2 = (x_i - x_j)^TM(x_i - x_j),
 
 where :math:`M = L^T L` is a symmetric positive semi-definite matrix of size
-``(n_features_out, n_features_out)``.
+``(n_features, n_features)``.
 
 
 Implementation
 --------------
 
 This implementation follows what is explained in the paper. For the
-optimisation method,
-currently it uses scipy's l-bfgs-b optimization method with a full gradient
-computation at each iteration, to avoid to tune the
-learning rate and provide a stable learning.
+optimisation method, it currently uses scipy's l-bfgs-b with a full gradient
+computation at each iteration, to avoid to tune the learning rate and provide a
+stable learning.
 
 See the examples below and the doc string of
-:meth:`NeighborhoodComponentsAnalysis.fit`
-for further information.
+:meth:`NeighborhoodComponentsAnalysis.fit` for further information.
 
 Complexity
 ----------
 
-All pairwise differences are needed to compute the cost function, at each
-iteration, so the complexity is :math:`O(d*n^2*i)` with :math:`d` the
-dimension of the input space, :math:`n` the number of samples, and :math:`i`
- the number of iterations.
+Training
+^^^^^^^^
+First, time complexity depends on the number of iterations done. Besides,
+currently the algorithm has to compute, for each sample, its contribution to
+the cost and the gradient. The more complex operation in this computation are
+the dot products between differences in the input space and differences in the
+embedded space, which has complexity ``n_features_out * n_features *
+n_samples``. Therefore time complexity is ``O[n_iterations * n_samples^2 *
+n_features * n_features_out]`` In addition, the biggest matrix in memory has
+size ``max(n_features * n_features_out, n_features * n_samples,
+n_features_out * n_samples)``.
+
+Transform
+^^^^^^^^^
+Here the ``transform`` operation returns :math:`LX^T`, therefore its time
+complexity equals ``n_features_out * n_features * n_samples_test``. There is no
+added space complexity in the operation.
 
 
 .. topic:: Examples:
@@ -738,5 +733,5 @@ dimension of the input space, :math:`n` the number of samples, and :math:`i`
      | J. Goldberger, G. Hinton, S. Roweis, R. Salakhutdinov, Advances in
      | Neural Information Processing Systems, Vol. 17, May 2005, pp. 513-520.
 
-    * `Wikipedia entry on Neighborhood Components Analysis
-      <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_
+   * `Wikipedia entry on Neighborhood Components Analysis
+     <https://en.wikipedia.org/wiki/Neighbourhood_components_analysis>`_

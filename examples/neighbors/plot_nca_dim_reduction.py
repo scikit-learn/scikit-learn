@@ -68,7 +68,6 @@ lda = make_pipeline(StandardScaler(),
 # Reduce dimension to 2 with NeighborhoodComponentAnalysis
 nca = make_pipeline(StandardScaler(),
                     NeighborhoodComponentsAnalysis(n_features_out=2,
-                                                   verbose=1,
                                                    random_state=random_state))
 
 # Use a nearest neighbor classifier to evaluate the methods

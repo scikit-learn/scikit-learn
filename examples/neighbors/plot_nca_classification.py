@@ -33,7 +33,7 @@ n_neighbors = 1
 dataset = datasets.load_iris()
 X, y = dataset.data, dataset.target
 
-# we only take the first two features. We could avoid this ugly
+# we only take two features. We could avoid this ugly
 # slicing by using a two-dim datasets
 X = X[:, [0, 2]]
 
@@ -46,7 +46,7 @@ h = .01  # step size in the mesh
 cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
 cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
 
-names = ['K-Nearest Neighbors', 'Neighborhood Components Analysis']
+names = ['KNN', 'NCA, KNN']
 
 classifiers = [Pipeline([('scaler', StandardScaler()),
                         ('knn', KNeighborsClassifier(n_neighbors=n_neighbors))
