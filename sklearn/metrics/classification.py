@@ -524,11 +524,21 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                                                  assume_unique=True)])
 
     if y_type.startswith('multilabel'):
-        if average is None:
-            average = 'samples'
-        if average == 'samples' and normalize is None:
-            normalize = True
-        # default average in multilabel is 'samples'
+        if average in (None, 'samples'):
+            if normalize is None:
+                # default is average='samples'
+                average = 'samples'
+            else:
+                if normalize:
+                    average = 'samples'
+                else:
+                    average = 'none-samples'
+                warn_message = ("'normalize' was removed in version 0.20 and "
+                                "will be removed in 0.22, instead use "
+                                "`average='%s'`." % normalize)
+                warnings.warn(warn_message, DeprecationWarning)
+        # else:
+            # otherwise what should we do? raise warning or ValueError?
 
         if not np.all(labels == present_labels):
             if np.max(labels) > np.max(present_labels):
@@ -545,28 +555,53 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             y_pred = y_pred[:, labels[:n_labels]]
 
         with np.errstate(divide='ignore', invalid='ignore'):
-            sum_axis = 1 if average == 'samples' else 0
-
-
-            pred_or_true = count_nonzero(y_true + y_pred, axis=sum_axis)
-            pred_and_true = count_nonzero(y_true.multiply(y_pred),
-                                          axis=sum_axis)
 
             if average == 'samples':
+                pred_or_true = count_nonzero(y_true + y_pred, axis=1)
+                pred_and_true = count_nonzero(y_true.multiply(y_pred),
+                                              axis=1)
                 score = pred_and_true / pred_or_true
-                score[pred_or_true == 0.0] = 1.0
-                return _weighted_sum(score, sample_weight, normalize=normalize)
+                score[pred_or_true == 0.0] == 1.0
+                return _weighted_sum(score, sample_weight, normalize=True)
+            elif average == 'none-samples':
+                pred_or_true = count_nonzero(y_true + y_pred, axis=1)
+                pred_and_true = count_nonzero(y_true.multiply(y_pred),
+                                              axis=1)
+                score = pred_and_true / pred_or_true
+                score[pred_or_true == 0.0] == 1.0
+                return _weighted_sum(score, sample_weight, normalize=False)
+            elif average == 'micro':
+                pred_or_true = count_nonzero(y_true + y_pred, axis=1,
+                                             sample_weight=sample_weight)
+                pred_and_true = count_nonzero(y_true.multiply(y_pred),
+                                              axis=1,
+                                              sample_weight=sample_weight)
+                if np.sum(pred_or_true):
+                    score = np.sum(pred_and_true) / np.sum(pred_or_true)
+                else:
+                    score = 1.
+                return score
             elif average == 'macro':
+                pred_or_true = count_nonzero(y_true + y_pred, axis=0,
+                                             sample_weight=sample_weight)
+                pred_and_true = count_nonzero(y_true.multiply(y_pred),
+                                              axis=0,
+                                              sample_weight=sample_weight)
                 score = pred_and_true / pred_or_true
+                score[pred_or_true == 0.0] == 1.0
                 n_features = y_true.shape[1]
                 return np.sum(score) / n_features
-            elif average == 'micro':
-                score = np.sum(pred_and_true) / np.sum(pred_or_true)
-                return score
             else:
-                # average='weighted'
+                pred_or_true = count_nonzero(y_true + y_pred, axis=0,
+                                             sample_weight=sample_weight)
+                pred_and_true = count_nonzero(y_true.multiply(y_pred),
+                                              axis=0,
+                                              sample_weight=sample_weight)
                 score = pred_and_true / pred_or_true
-                score = _weighted_sum(score, sample_weight, normalize=True)
+                score[pred_or_true == 0.0] == 1.0
+                weights = y_true.toarray().sum(axis=0)
+                score = _weighted_sum(score, sample_weight=weights,
+                                      normalize=True)
                 return score
     elif average == 'samples':
         raise ValueError("Sample-based jaccard similarity score is "

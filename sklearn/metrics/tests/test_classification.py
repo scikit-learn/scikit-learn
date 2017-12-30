@@ -1000,10 +1000,30 @@ def test_multilabel_jaccard_similarity_score():
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred), 7. / 12)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                 sample_weight=np.array([0.1, 0.9])), 31. / 60)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='samples',
+                                                 labels=[0, 2]), 1. / 2)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='samples',
+                                                 labels=[1, 2]), 1. / 2)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='samples',
+                                                 sample_weight=[1, 2]), 5. / 9)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='micro',
+                                                 sample_weight=[1, 2]), 4. / 7)
+    y_true = np.array([[0, 1, 1], [1, 0, 1]])
+    y_pred = np.array([[1, 1, 1], [1, 0, 1]])
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='macro'), 5. / 6)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='macro',
+                                                 sample_weight=[1, 2]), 8. / 9)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='weighted'), 7. / 8)
     # average='binary' (wrong example)
 #    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
 #                                    average='binary', pos_label=1), 1. / 2)
-    # average='weighted'
 
 
 def test_multiclass_jaccard_similarity_score():
