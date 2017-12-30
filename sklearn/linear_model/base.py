@@ -480,7 +480,8 @@ class LinearRegression(LinearModel, RegressorMixin):
 
         n_jobs_ = self.n_jobs
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         y_numeric=True, multi_output=True, accept_large_sparse=True)
+                         y_numeric=True, multi_output=True,
+                         accept_large_sparse=True)
 
         if sample_weight is not None and np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample weights must be 1D array or scalar")

@@ -387,6 +387,30 @@ def test_check_array_accept_sparse_no_exception():
     check_array(X_csr, accept_sparse=('csr',))
 
 
+def test_check_array_accept_large_sparse_no_exception():
+
+    # When large sparse are allowed
+
+    X = sp.rand(10, 1000, format='csr')
+    X.indices = X.indices.astype('int64')
+    X.indptr = X.indptr.astype('int64')
+    check_array(X, accept_large_sparse=True, accept_sparse=True)
+
+
+def test_check_array_accept_large_sparse_raise_exception():
+
+    # When large sparse are not allowed
+
+    X = sp.rand(10, 1000, format='csr')
+    X.indices = X.indices.astype('int64')
+    X.indptr = X.indptr.astype('int64')
+    msg = "CSR arrays accepts only 32 bit integer indexing." + \
+        " You provided int64 bit indexing"
+    assert_raise_message(ValueError, msg.format([]),
+                         check_array, X, accept_sparse=True,
+                         accept_large_sparse=False)
+
+
 def test_check_array_min_samples_and_features_messages():
     # empty list is considered 2D by default:
     msg = "0 feature(s) (shape=(1, 0)) while a minimum of 1 is required."
@@ -589,6 +613,7 @@ def test_suppress_validation():
 
 
 class DummyMemory(object):
+
     def cache(self, func):
         return func
 

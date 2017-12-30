@@ -509,12 +509,12 @@ def check_array(array, accept_sparse=False, dtype="numeric", order=None,
         warnings.warn(msg, DataConversionWarning)
 
     # Indices Datatype regulation
-    sparse_indices_check(array, accept_large_sparse)
+    _check_large_sparse(array, accept_large_sparse)
 
     return array
 
 
-def sparse_indices_check(array, accept_large_sparse=False):
+def _check_large_sparse(array, accept_large_sparse=False):
     """
     Indices Regulation for CSR Matrices.
     Only Int32 are supported for now

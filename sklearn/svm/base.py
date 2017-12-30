@@ -14,7 +14,7 @@ from ..utils import check_array, check_consistent_length, check_random_state
 from ..utils import column_or_1d, check_X_y
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, sparse_indices_check
+from ..utils.validation import check_is_fitted, _check_large_sparse
 from ..utils.multiclass import check_classification_targets
 from ..externals import six
 from ..exceptions import ConvergenceWarning
@@ -878,7 +878,7 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     liblinear.set_verbosity_wrap(verbose)
 
     # Liblinear doesn't support 64bit sparse matrix indices yet
-    sparse_indices_check(X)
+    _check_large_sparse(X)
 
     # LibLinear wants targets as doubles, even for classification
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
