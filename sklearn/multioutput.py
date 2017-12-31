@@ -315,7 +315,8 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
     def __init__(self, estimator, n_jobs=1):
         super(MultiOutputClassifier, self).__init__(estimator, n_jobs)
 
-    def predict_proba(self, X):
+    @property
+    def predict_proba(self):
         """Probability estimates.
         Returns prediction probabilities for each class of each output.
 
@@ -331,11 +332,13 @@ class MultiOutputClassifier(MultiOutputEstimator, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        return self._predict_proba
+
+    def _predict_proba(self, X):
         check_is_fitted(self, 'estimators_')
-        if not hasattr(self.estimator, "predict_proba"):
+        if not hasattr(self.estimators_[0], "predict_proba"):
             raise ValueError("The base estimator should implement"
                              "predict_proba method")
-
         results = [estimator.predict_proba(X) for estimator in
                    self.estimators_]
         return results
