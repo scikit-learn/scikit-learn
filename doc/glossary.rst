@@ -1543,7 +1543,7 @@ See concept :term:`attribute`.
     ``components_``
         An affine transformation matrix of shape ``(n_components, n_features)``
         used in many linear :term:`transformers` where :term:`n_components` is
-        the number of output features and :term:`n_features`` is the number of
+        the number of output features and :term:`n_features` is the number of
         input features.
 
         See also :term:`components_` which is a similar attribute for linear
