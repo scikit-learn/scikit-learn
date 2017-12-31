@@ -89,10 +89,11 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         Cross validation average score of the selected subset.
 
     subsets_ : dict
-        A dictionary of selected feature subsets during the
-        sequential selection, where the dictionary keys are
-        the lengths k of these feature subsets. The dictionary
-        values are dictionaries themselves with the following
+        A dictionary containing the best selected feature subset
+        for each feature subset size selected by the
+        sequential feature selection algorithm.
+        Here the dictionary keys are the lengths k of these feature subsets.
+        The dictionary values are dictionaries themselves with the following
         keys: 'feature_subset_idx' (tuple of indices of the feature subset)
               'cv_scores' (list individual cross-validation scores)
               'avg_score' (average cross-validation score)
@@ -153,8 +154,8 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         """
         self._scorer = check_scoring(self.estimator, scoring=self.scoring)
 
-        if not isinstance(self.n_features_to_select, int) and\
-                not isinstance(self.n_features_to_select, tuple):
+        if not (isinstance(self.n_features_to_select, int) and
+                not isinstance(self.n_features_to_select, tuple)):
             raise ValueError('n_features_to_select must be a positive integer'
                              ' or tuple')
 
@@ -307,10 +308,6 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
                    all_avg_scores[best],
                    all_cv_scores[best])
         return res
-
-    @property
-    def _estimator_type(self):
-        return self.estimator._estimator_type
 
     def _get_support_mask(self):
         check_is_fitted(self, 'feature_subset_idx_')
