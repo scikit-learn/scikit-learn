@@ -82,9 +82,6 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
 
     Attributes
     ----------
-    estimator_ : scikit-learn Classifier or Regressor
-        Fitted clone of `estimator`.
-
     feature_subset_idx_ : array-like, shape = [n_predictions]
         Feature Indices of the selected feature subsets.
 
@@ -192,7 +189,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
             select_in_range = False
             k_to_select = self.n_features_to_select
 
-        self.estimator_ = clone(self.estimator)
+        cloned_estimator = clone(self.estimator)
 
         self._n_features = X.shape[1]
         self.subsets_ = {}
@@ -207,7 +204,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
                 k_to_select = self.n_features_to_select[0]
             k_idx = tuple(range(self._n_features))
             k = len(k_idx)
-            k_score = self._calc_score(X, y, k_idx)
+            k_score = self._calc_score(X, y, k_idx, cloned_estimator)
             self.subsets_[k] = {
                 'feature_subset_idx': k_idx,
                 'cv_scores': k_score,
@@ -258,21 +255,21 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         self.score_ = k_score
         return self
 
-    def _calc_score(self, X, y, indices):
+    def _calc_score(self, X, y, indices, estimator):
         if self.cv:
-            scores = cross_val_score(self.estimator_,
+            scores = cross_val_score(estimator,
                                      X[:, indices], y,
                                      cv=self.cv,
                                      scoring=self._scorer,
                                      n_jobs=self.n_jobs,
                                      pre_dispatch=self.pre_dispatch)
         else:
-            self.estimator_.fit(X[:, indices], y)
-            scores = np.array([self._scorer(self.estimator_,
+            estimator.fit(X[:, indices], y)
+            scores = np.array([self._scorer(estimator,
                                X[:, indices], y)])
         return scores
 
-    def _inclusion(self, orig_set, subset, X, y):
+    def _inclusion(self, orig_set, subset, X, y, estimator):
         all_avg_scores = []
         all_cv_scores = []
         all_subsets = []
@@ -281,7 +278,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         if remaining:
             for feature in remaining:
                 new_subset = tuple(subset | {feature})
-                cv_scores = self._calc_score(X, y, new_subset)
+                cv_scores = self._calc_score(X, y, new_subset, estimator)
                 all_avg_scores.append(np.nanmean(cv_scores))
                 all_cv_scores.append(cv_scores)
                 all_subsets.append(new_subset)
@@ -291,7 +288,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
                    all_cv_scores[best])
         return res
 
-    def _exclusion(self, feature_set, X, y, fixed_feature=None):
+    def _exclusion(self, feature_set, X, y, estimator, fixed_feature=None):
         n = len(feature_set)
         res = (None, None, None)
         if n > 1:
@@ -301,7 +298,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
             for p in combinations(feature_set, r=n - 1):
                 if fixed_feature and fixed_feature not in set(p):
                     continue
-                cv_scores = self._calc_score(X, y, p)
+                cv_scores = self._calc_score(X, y, p, estimator)
                 all_avg_scores.append(np.nanmean(cv_scores))
                 all_cv_scores.append(cv_scores)
                 all_subsets.append(p)
@@ -313,7 +310,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
 
     @property
     def _estimator_type(self):
-        return self.estimator_._estimator_type
+        return self.estimator._estimator_type
 
     def _get_support_mask(self):
         check_is_fitted(self, 'feature_subset_idx_')
