@@ -122,6 +122,17 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         >>> sfs.transform(X).shape
         (150, 3)
 
+    See also
+    --------
+    RFE : Recursive feature elimination selection of the best
+    number of features
+
+    References
+    ----------
+    .. [1] Ferri, F. J., Pudil P., Hatef, M., Kittler, J., "Comparative
+           study of techniques for large-scale feature selection,"
+           Pattern Recognition in Practice IV : 403-413, 1994
+
     """
     def __init__(self, estimator, n_features_to_select=1,
                  forward=True, scoring=None,
