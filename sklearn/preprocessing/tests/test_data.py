@@ -2224,3 +2224,30 @@ def test_quantile_transform_valid_axis():
 
     assert_raises_regex(ValueError, "axis should be either equal to 0 or 1"
                         ". Got axis=2", quantile_transform, X.T, axis=2)
+
+
+def test_categorical_encoder_feature_names():
+    enc = CategoricalEncoder()
+    X = [['Male', 1, 'girl', 2, 3],
+         ['Female', 41, 'girl', 1, 10],
+         ['Male', 51, 'boy', 12, 3],
+         ['Male', 91, 'girl', 21, 30]]
+
+    enc.fit(X)
+    feature_names = enc.get_feature_names()
+
+    assert_array_equal(['x0_Female', 'x0_Male',
+                        'x1_1', 'x1_41', 'x1_51', 'x1_91',
+                        'x2_boy', 'x2_girl',
+                        'x3_1', 'x3_2', 'x3_12', 'x3_21',
+                        'x4_3',
+                        'x4_10', 'x4_30'], feature_names)
+
+    feature_names2 = enc.get_feature_names(['one', 'two',
+                                            'three', 'four', 'five'])
+
+    assert_array_equal(['one_Female', 'one_Male',
+                        'two_1', 'two_41', 'two_51', 'two_91',
+                        'three_boy', 'three_girl',
+                        'four_1', 'four_2', 'four_12', 'four_21',
+                        'five_3', 'five_10', 'five_30'], feature_names2)

@@ -16,6 +16,7 @@ from itertools import combinations_with_replacement as combinations_w_r
 import numpy as np
 from scipy import sparse
 from scipy import stats
+import sys
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
@@ -2655,6 +2656,8 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
+    >>> enc.get_feature_names()
+    ['x0_Female', 'x0_Male', 'x1_1', 'x1_2', 'x1_3']
 
     See also
     --------
@@ -2873,3 +2876,38 @@ class CategoricalEncoder(BaseEstimator, TransformerMixin):
                     X_tr[mask, idx] = None
 
         return X_tr
+
+    def get_feature_names(self, input_features=None):
+        """Return feature names for output features
+
+        Parameters
+        ----------
+        input_features : list of string, length n_features, optional
+            String names for input features if available. By default,
+            "x0", "x1", ... "xn_features" is used.
+
+        Returns
+        -------
+        output_feature_names : list of string, length n_output_features
+
+        """
+        is_python3 = sys.version_info.major == 3
+        if is_python3:
+            unicode = str
+
+        cats = self.categories_
+        feature_names = []
+        if input_features is None:
+            input_features = ['x%d' % i for i in range(len(cats))]
+        elif(len(input_features) != len(self.categories_)):
+            raise ValueError("input_features should have"
+                             " length equal to number of features")
+
+        def to_unicode(text):
+            return text if isinstance(text, unicode) else text.encode('utf8')
+
+        for i in range(len(cats)):
+            feature_names.extend(to_unicode(
+                input_features[i] + '_' + str(t)) for t in cats[i])
+
+        return feature_names
