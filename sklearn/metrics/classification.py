@@ -592,6 +592,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                 n_features = y_true.shape[1]
                 return np.sum(score) / n_features
             else:
+                # average = 'weighted'
                 pred_or_true = count_nonzero(y_true + y_pred, axis=0,
                                              sample_weight=sample_weight)
                 pred_and_true = count_nonzero(y_true.multiply(y_pred),
@@ -608,26 +609,47 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                          "not meaningful outside multilabel "
                          "classification. See the accuracy_score instead.")
     else:
-        C = confusion_matrix(y_true, y_pred, sample_weight=sample_weight)
+        le = LabelEncoder()
+        le.fit(labels)
+        y_true = le.transform(y_true)
+        y_pred = le.transform(y_pred)
+        sorted_labels = le.classes_
+
+        tp = y_true == y_pred
+        tp_bins = y_true[tp]
+        if sample_weight is not None:
+            tp_bins_weights = np.asarray(sample_weight)[tp]
+        else:
+            tp_bins_weights = None
+
+        if len(tp_bins):
+            tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
+                                 minlength=len(labels))
+        else:
+            true_sum = pred_sum = tp_sum = np.zeros(len(labels))
+        if len(y_pred):
+            pred_sum = np.bincount(y_pred, weights=sample_weight,
+                                   minlength=len(labels))
+        if len(y_true):
+            true_sum = np.bincount(y_true, weights=sample_weight,
+                                   minlength=len(labels))
+
+        indices = np.searchsorted(sorted_labels, labels[:n_labels])
+        tp_sum = tp_sum[indices]
+        true_sum = true_sum[indices]
+        pred_sum = pred_sum[indices]
+        den = true_sum + pred_sum - tp_sum
+
         if average == 'macro':
-            den = C.sum(0) + C.sum(1) - C.diagonal()
-            score = C.diagonal() / den
+            score = tp_sum / den
             return np.average(score)
-        elif average == 'micro':
-            # micro-average on all labels is not useful in the
-            # multiclass case. It is identical to accuracy.
-            score = y_true == y_pred
-            return _weighted_sum(score, sample_weight, normalize)
-        elif average == 'weighted':
-            # computation similar to average='macro', apart from computation
-            # of sample_weight below
-            den = C.sum(0) + C.sum(1) - C.diagonal()
-            score = C.diagonal() / den
-            if sample_weight is None:
-                _, y_true = np.unique(y_true, return_inverse=True)
-                num = np.bincount(y_true)
-                sample_weight = num / np.sum(num)
-            return np.sum(sample_weight*score)
+        if average == 'weighted':
+            pass
+
+        if average == 'micro':
+            tp_sum = tp_sum.sum()
+            score = tp_sum / den
+            return score
         else:
             raise ValueError("In multiclass classification average must be "
                              "one of ('micro', 'macro', 'weighted'), got "

@@ -1027,8 +1027,8 @@ def test_multilabel_jaccard_similarity_score():
 
 
 def test_multiclass_jaccard_similarity_score():
-    y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
-    y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
+    y_true = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
+    y_pred = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                 average='macro'), 7. / 18)
     assert_equal(jaccard_similarity_score(y_true, y_pred,
