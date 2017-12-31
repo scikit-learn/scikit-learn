@@ -152,10 +152,9 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         self : object
 
         """
-        self._scorer = check_scoring(self.estimator, scoring=self.scoring)
 
-        if not (isinstance(self.n_features_to_select, int) and
-                not isinstance(self.n_features_to_select, tuple)):
+        if not (isinstance(self.n_features_to_select, int) or
+                isinstance(self.n_features_to_select, tuple)):
             raise ValueError('n_features_to_select must be a positive integer'
                              ' or tuple')
 
@@ -190,6 +189,8 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
             select_in_range = False
             k_to_select = self.n_features_to_select
 
+        self._scorer = check_scoring(self.estimator, scoring=self.scoring)
+
         cloned_estimator = clone(self.estimator)
 
         self._n_features = X.shape[1]
@@ -222,13 +223,15 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
                     orig_set=orig_set,
                     subset=prev_subset,
                     X=X,
-                    y=y
+                    y=y,
+                    estimator=cloned_estimator
                 )
             else:
                 k_idx, k_score, cv_scores = self._exclusion(
                     feature_set=prev_subset,
                     X=X,
-                    y=y
+                    y=y,
+                    estimator=cloned_estimator
                 )
 
             k = len(k_idx)
