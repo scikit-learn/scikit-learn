@@ -45,6 +45,7 @@ except NameError:
 import sklearn
 from sklearn.base import BaseEstimator
 from sklearn.externals import joblib
+from sklearn.externals.funcsigs import signature
 from sklearn.utils import deprecated
 
 additional_names_in_all = []
@@ -122,7 +123,7 @@ def assert_warns(warning_class, func, *args, **kw):
         The class to test for, e.g. UserWarning.
 
     func : callable
-        Calable object to trigger warnings.
+        Callable object to trigger warnings.
 
     *args : the positional arguments to `func`.
 
@@ -168,12 +169,12 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
         The class to test for, e.g. UserWarning.
 
     message : str | callable
-        The entire message or a substring to  test for. If callable,
-        it takes a string as argument and will trigger an assertion error
-        if it returns `False`.
+        The message or a substring of the message to test for. If callable,
+        it takes a string as the argument and will trigger an AssertionError
+        if the callable returns `False`.
 
     func : callable
-        Calable object to trigger warnings.
+        Callable object to trigger warnings.
 
     *args : the positional arguments to `func`.
 
@@ -181,7 +182,6 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
     Returns
     -------
-
     result : the return value of `func`
 
     """
@@ -251,9 +251,9 @@ def assert_no_warnings(func, *args, **kw):
 def ignore_warnings(obj=None, category=Warning):
     """Context manager and decorator to ignore warnings.
 
-    Note. Using this (in both variants) will clear all warnings
+    Note: Using this (in both variants) will clear all warnings
     from all python modules loaded. In case you need to test
-    cross-module-warning-logging this is not your tool of choice.
+    cross-module-warning-logging, this is not your tool of choice.
 
     Parameters
     ----------
@@ -281,7 +281,7 @@ def ignore_warnings(obj=None, category=Warning):
 class _IgnoreWarnings(object):
     """Improved and simplified Python warnings context manager and decorator.
 
-    This class allows to ignore the warnings raise by a function.
+    This class allows the user to ignore the warnings raised by a function.
     Copied from Python 2.7.5 and modified as required.
 
     Parameters
@@ -344,19 +344,27 @@ assert_greater = _dummy.assertGreater
 assert_allclose = np.testing.assert_allclose
 
 def assert_raise_message(exceptions, message, function, *args, **kwargs):
-    """Helper function to test error messages in exceptions.
+    """Helper function to test the message raised in an exception.
+
+    Given an exception, a callable to raise the exception, and
+    a message string, tests that the correct exception is raised and
+    that the message is a substring of the error thrown. Used to test
+    that the specific message thrown during an exception is correct.
 
     Parameters
     ----------
     exceptions : exception or tuple of exception
-        Name of the estimator
+        An Exception object.
+
+    message : str
+        The error message or a substring of the error message.
 
     function : callable
-        Calable object to raise error
+        Callable object to raise error.
 
     *args : the positional arguments to `function`.
 
-    **kw : the keyword arguments to `function`
+    **kwargs : the keyword arguments to `function`.
     """
     try:
         function(*args, **kwargs)
@@ -511,7 +519,8 @@ def uninstall_mldata_mock():
 META_ESTIMATORS = ["OneVsOneClassifier", "MultiOutputEstimator",
                    "MultiOutputRegressor", "MultiOutputClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier",
-                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain"]
+                   "RFE", "RFECV", "BaseEnsemble", "ClassifierChain",
+                   "RegressorChain"]
 # estimators that there is no way to default-construct sensibly
 OTHER = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV",
          "SelectFromModel"]
@@ -758,11 +767,12 @@ class TempMemmap(object):
 
 def _get_args(function, varargs=False):
     """Helper to get function arguments"""
-    # NOTE this works only in python3.5
-    if sys.version_info < (3, 5):
-        NotImplementedError("_get_args is not available for python < 3.5")
 
-    params = inspect.signature(function).parameters
+    try:
+        params = signature(function).parameters
+    except ValueError:
+        # Error on builtin C function
+        return []
     args = [key for key, param in params.items()
             if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
     if varargs:
