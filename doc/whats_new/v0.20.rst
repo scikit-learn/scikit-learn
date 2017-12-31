@@ -246,6 +246,10 @@ Decomposition, manifold learning and clustering
 
 Metrics
 
+- Fixed a bug in :func:`metrics.precision_precision_recall_fscore_support`
+  when truncated `range(n_labels)` is passed as value for `labels`.
+  :issue:`10377` by :user:`Gaurav Dhingra <gxyd>`.
+
 - Fixed a bug due to floating point error in :func:`metrics.roc_auc_score` with
   non-integer sample weights. :issue:`9786` by :user:`Hanmin Qin <qinhanmin2014>`.
 

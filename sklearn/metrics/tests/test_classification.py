@@ -197,6 +197,7 @@ def test_precision_recall_f_extra_labels():
         assert_raises(ValueError, recall_score, y_true_bin, y_pred_bin,
                       labels=np.arange(-1, 4), average=average)
 
+    # test non-regression added in PR #10377
     y_true = np.array([[0, 1, 1], [1, 0, 0]])
     y_pred = np.array([[1, 1, 1], [1, 0, 1]])
     p, r, f, _ = precision_recall_fscore_support(y_true, y_pred,
