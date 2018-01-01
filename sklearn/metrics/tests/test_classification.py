@@ -1027,14 +1027,24 @@ def test_multilabel_jaccard_similarity_score():
 
 
 def test_multiclass_jaccard_similarity_score():
-    y_true = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
-    y_pred = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
+    y_true = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat', 'bird', 'bird']
+    y_pred = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird', 'bird', 'cat']
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                average='macro'), 7. / 18)
-    assert_equal(jaccard_similarity_score(y_true, y_pred,
-                                                average='micro'), 1. / 2)
+                                                 average='macro'), 7. / 15)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                average='weighted'), 17. / 36)
+                                                 average='macro',
+                                                 labels=['ant', 'bird']),
+                        1. / 2)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='macro',
+                                                 labels=['ant', 'cat']),
+                        8. / 15)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='macro',
+                                                 labels=['cat', 'bird']),
+                        11. / 30)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='weighted'), 29. / 60)
     msg = ("In multiclass classification average must be one of "
            "('micro', 'macro', 'weighted'), got average=None.")
     assert_raise_message(ValueError, msg, jaccard_similarity_score, y_true,

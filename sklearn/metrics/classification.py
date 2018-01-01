@@ -433,7 +433,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     warn : bool, optional (default=True), for internal use
         This determines whether warning will be raised or not,
 
-    normalize: bool, optional (defaul=True)
+    normalize : bool, optional (defaul=True)
         If ``False``, return the sum of the Jaccard similarity coefficient
         over the sample set. Otherwise, return the average of Jaccard
         similarity coefficient. This is only to be specified in case
@@ -615,6 +615,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         y_pred = le.transform(y_pred)
         sorted_labels = le.classes_
 
+        # labels are now from 0 to len(labels) - 1
         tp = y_true == y_pred
         tp_bins = y_true[tp]
         if sample_weight is not None:
@@ -635,18 +636,21 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                                    minlength=len(labels))
 
         indices = np.searchsorted(sorted_labels, labels[:n_labels])
-        tp_sum = tp_sum[indices]
         true_sum = true_sum[indices]
         pred_sum = pred_sum[indices]
-        den = true_sum + pred_sum - tp_sum
+        tp_sum = tp_sum[indices]
 
         if average == 'macro':
+            den = true_sum + pred_sum - tp_sum
             score = tp_sum / den
             return np.average(score)
         if average == 'weighted':
-            pass
-
+            den = true_sum + pred_sum - tp_sum
+            score = tp_sum / den
+            return _weighted_sum(score, sample_weight=true_sum, normalize=True)
+        # wrong logic for 'micro'
         if average == 'micro':
+            den = (true_sum + pred_sum - tp_sum).sum()
             tp_sum = tp_sum.sum()
             score = tp_sum / den
             return score
