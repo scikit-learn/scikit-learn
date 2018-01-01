@@ -82,8 +82,8 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
 
     Attributes
     ----------
-    feature_subset_idx_ : array-like, shape = [n_predictions]
-        Feature Indices of the selected feature subsets.
+    support_ : array of shape [n_features]
+        The mask of selected features.
 
     score_ : float
         Cross validation average score of the selected subset.
@@ -221,7 +221,7 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
             self.subsets_[k] = {
                 'feature_subset_idx': k_idx,
                 'cv_scores': k_score,
-                'avg_score': np.nanmean(k_score)
+                'avg_score': np.mean(k_score)
                 }
 
         best_subset = None
@@ -266,7 +266,8 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
             k_score = max_score
             k_idx = self.subsets_[best_subset]['feature_subset_idx']
 
-        self.feature_subset_idx_ = k_idx
+        self.support_ = k_idx
+        self.support_ = self._get_support_mask()
         self.score_ = k_score
         return self
 
@@ -324,8 +325,8 @@ class SequentialFeatureSelector(BaseEstimator, MetaEstimatorMixin,
         return res
 
     def _get_support_mask(self):
-        check_is_fitted(self, 'feature_subset_idx_')
+        check_is_fitted(self, 'support_')
         mask = np.zeros((self._n_features,), dtype=np.bool)
         # list to avoid IndexError in old NumPy versions
-        mask[list(self.feature_subset_idx_)] = True
+        mask[list(self.support_)] = True
         return mask

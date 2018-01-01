@@ -3,6 +3,7 @@ Testing Sequential feature selection
 """
 import numpy as np
 from numpy.testing import assert_almost_equal
+from numpy.testing import assert_array_equal
 from sklearn.utils.testing import assert_raise_message
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LinearRegression
@@ -37,7 +38,8 @@ def test_run_default():
     knn = KNeighborsClassifier()
     sfs = SFS(estimator=knn)
     sfs.fit(X, y)
-    assert sfs.feature_subset_idx_ == (3, )
+    assert_array_equal(sfs.support_,
+                       np.array([False, False, False, True]))
 
 
 def test_kfeatures_type_1():
@@ -163,7 +165,8 @@ def test_knn_option_sbs():
                forward=False,
                cv=4)
     sfs3 = sfs3.fit(X, y)
-    assert sfs3.feature_subset_idx_ == (1, 2, 3)
+    assert_array_equal(sfs3.support_,
+                       np.array([False, True, True, True]))
 
 
 def test_knn_option_sfs_tuplerange():
@@ -177,7 +180,8 @@ def test_knn_option_sfs_tuplerange():
                cv=4)
     sfs4 = sfs4.fit(X, y)
     assert round(sfs4.score_, 3) == 0.967
-    assert sfs4.feature_subset_idx_ == (0, 2, 3)
+    assert_array_equal(sfs4.support_,
+                       np.array([True, False, True, True]))
 
 
 def test_knn_scoring_metric():
@@ -217,7 +221,7 @@ def test_regression():
                 forward=True,
                 cv=10)
     sfs_r = sfs_r.fit(X, y)
-    assert len(sfs_r.feature_subset_idx_) == 13
+    assert sum(sfs_r.support_) == 13
     assert round(sfs_r.score_, 4) == 0.2001
 
 
@@ -233,7 +237,7 @@ def test_regression_in_tuplerange_forward():
                 forward=True,
                 cv=10)
     sfs_r = sfs_r.fit(X, y)
-    assert len(sfs_r.feature_subset_idx_) == 9
+    assert sum(sfs_r.support_) == 9
     assert round(sfs_r.score_, 4) == 0.2991, sfs_r.score_
 
 
@@ -252,7 +256,12 @@ def test_regression_in_tuplerange_backward():
                 cv=10)
 
     sfs_r = sfs_r.fit(X, y)
-    assert len(sfs_r.feature_subset_idx_) == 5
+    print(sfs_r.support_)
+    print(type(sfs_r.support_))
+    assert_array_equal(sfs_r.support_,
+                       np.array([False, False, False, False,
+                                 True, False, False,  True,
+                                 True, False, True, False, True]))
 
 
 def test_transform_not_fitted():
