@@ -197,7 +197,7 @@ Classifiers and regressors
 
 - Fixed a bug in :class:`naive_bayes.MultinomialNB` which did not accept vector
   valued pseudocounts (alpha).
-  :issue:`10350` by :user:`Tobias Madsen <TobiasMadsen>`
+  :issue:`10346` by :user:`Tobias Madsen <TobiasMadsen>`
 
 Decomposition, manifold learning and clustering
 
