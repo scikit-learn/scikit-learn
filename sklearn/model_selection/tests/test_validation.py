@@ -9,6 +9,9 @@ from time import sleep
 
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
+from sklearn.exceptions import FitFailedWarning
+
+from sklearn.tests.test_grid_search import FailingClassifier
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
@@ -39,7 +42,8 @@ from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.model_selection import learning_curve
 from sklearn.model_selection import validation_curve
-from sklearn.model_selection._validation import _check_is_permutation
+from sklearn.model_selection._validation import _check_is_permutation, \
+    _fit_and_score
 
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_boston
@@ -1424,10 +1428,6 @@ def test_permutation_test_score_pandas():
 
 
 def test_fit_and_score():
-    from sklearn.tests.test_grid_search import FailingClassifier
-    from sklearn.model_selection._validation import _fit_and_score
-    from sklearn.exceptions import FitFailedWarning
-
     # Create a failing classifier to deliberately fail
     failing_clf = FailingClassifier(FailingClassifier.FAILING_PARAMETER)
     # dummy X data
