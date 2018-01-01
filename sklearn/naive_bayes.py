@@ -476,7 +476,7 @@ class BaseDiscreteNB(BaseNB):
                              'alpha should be > 0.' % np.min(self.alpha))
         if isinstance(self.alpha, np.ndarray):
             if not self.alpha.shape[0] == self.feature_count_.shape[1]:
-                raise ValueError("alpha should be a scalar or a numpy array"
+                raise ValueError("alpha should be a scalar or a numpy array "
                                  "with shape [n_features]")
         if np.min(self.alpha) < _ALPHA_MIN:
             warnings.warn('alpha too small will result in numeric errors, '
