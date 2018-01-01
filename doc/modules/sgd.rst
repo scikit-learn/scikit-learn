@@ -59,13 +59,13 @@ for the training samples::
     >>> from sklearn.linear_model import SGDClassifier
     >>> X = [[0., 0.], [1., 1.]]
     >>> y = [0, 1]
-    >>> clf = SGDClassifier(loss="hinge", penalty="l2")
+    >>> clf = SGDClassifier(loss="hinge", penalty="l2", max_iter=5)
     >>> clf.fit(X, y)
     SGDClassifier(alpha=0.0001, average=False, class_weight=None, epsilon=0.1,
            eta0=0.0, fit_intercept=True, l1_ratio=0.15,
-           learning_rate='optimal', loss='hinge', n_iter=5, n_jobs=1,
-           penalty='l2', power_t=0.5, random_state=None, shuffle=True,
-           verbose=0, warm_start=False)
+           learning_rate='optimal', loss='hinge', max_iter=5, n_iter=None,
+           n_jobs=1, penalty='l2', power_t=0.5, random_state=None,
+           shuffle=True, tol=None, verbose=0, warm_start=False)
 
 
 After being fitted, the model can then be used to predict new values::
@@ -109,7 +109,7 @@ Using ``loss="log"`` or ``loss="modified_huber"`` enables the
 ``predict_proba`` method, which gives a vector of probability estimates
 :math:`P(y|x)` per sample :math:`x`::
 
-    >>> clf = SGDClassifier(loss="log").fit(X, y)
+    >>> clf = SGDClassifier(loss="log", max_iter=5).fit(X, y)
     >>> clf.predict_proba([[1., 1.]])                      # doctest: +ELLIPSIS
     array([[ 0.00...,  0.99...]])
 
@@ -279,7 +279,7 @@ Mathematical formulation
 ========================
 
 Given a set of training examples :math:`(x_1, y_1), \ldots, (x_n, y_n)` where
-:math:`x_i \in \mathbf{R}^n` and :math:`y_i \in \{-1,1\}`, our goal is to
+:math:`x_i \in \mathbf{R}^m` and :math:`y_i \in \{-1,1\}`, our goal is to
 learn a linear scoring function :math:`f(x) = w^T x + b` with model parameters
 :math:`w \in \mathbf{R}^m` and intercept :math:`b \in \mathbf{R}`. In order
 to make predictions, we simply look at the sign of :math:`f(x)`.

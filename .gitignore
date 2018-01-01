@@ -63,12 +63,5 @@ benchmarks/bench_covertype_data/
 *.sln
 *.pyproj
 
-sklearn/sklearn.egg-info/top_level.txt
-
-sklearn/sklearn.egg-info/SOURCES.txt
-
-sklearn/sklearn.egg-info/PKG-INFO
-
-sklearn/sklearn.egg-info/pbr.json
-
-sklearn/sklearn.egg-info/dependency_links.txt
+# Used by py.test
+.cache

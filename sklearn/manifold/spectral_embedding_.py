@@ -4,18 +4,21 @@
 #         Wei LI <kuantkid@gmail.com>
 # License: BSD 3 clause
 
+from __future__ import division
+
 import warnings
+
 import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
-from scipy.sparse.linalg import lobpcg
+from scipy.sparse.linalg import eigsh, lobpcg
+from scipy.sparse.csgraph import connected_components
+from scipy.sparse.csgraph import laplacian as csgraph_laplacian
+
 from ..base import BaseEstimator
 from ..externals import six
 from ..utils import check_random_state, check_array, check_symmetric
 from ..utils.extmath import _deterministic_vector_sign_flip
-from ..utils.graph import graph_laplacian
-from ..utils.sparsetools import connected_components
-from ..utils.arpack import eigsh
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
 
@@ -149,6 +152,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     However care must taken to always make the affinity matrix symmetric
     so that the eigenvector decomposition works as expected.
 
+    Note : Laplacian Eigenmaps is the actual algorithm implemented here.
+
     Read more in the :ref:`User Guide <spectral_embedding>`.
 
     Parameters
@@ -164,23 +169,26 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
 
-    random_state : int seed, RandomState instance, or None (default)
+    random_state : int, RandomState instance or None, optional, default: None
         A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when eigen_solver == 'amg'.
-        By default, arpack is used.
+        lobpcg eigenvectors decomposition.  If int, random_state is the seed
+        used by the random number generator; If RandomState instance,
+        random_state is the random number generator; If None, the random number
+        generator is the RandomState instance used by `np.random`. Used when
+        ``solver`` == 'amg'.
 
     eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
+
+    norm_laplacian : bool, optional, default=True
+        If True, then compute normalized Laplacian.
 
     drop_first : bool, optional, default=True
         Whether to drop the first eigenvector. For spectral embedding, this
         should be True as the first eigenvector should be constant vector for
         connected graph, but for spectral clustering, this should be kept as
         False to retain the first eigenvector.
-
-    norm_laplacian : bool, optional, default=True
-        If True, then compute normalized Laplacian.
 
     Returns
     -------
@@ -189,9 +197,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Notes
     -----
-    Spectral embedding is most useful when the graph has one connected
-    component. If there graph has many components, the first few eigenvectors
-    will simply uncover the connected components of the graph.
+    Spectral Embedding (Laplacian Eigenmaps) is most useful when the graph
+    has one connected component. If there graph has many components, the first
+    few eigenvectors will simply uncover the connected components of the graph.
 
     References
     ----------
@@ -229,8 +237,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not work as expected.")
 
-    laplacian, dd = graph_laplacian(adjacency,
-                                    normed=norm_laplacian, return_diag=True)
+    laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
+                                      return_diag=True)
     if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
        (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
@@ -263,7 +271,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             lambdas, diffusion_map = eigsh(laplacian, k=n_components,
                                            sigma=1.0, which='LM',
                                            tol=eigen_tol, v0=v0)
-            embedding = diffusion_map.T[n_components::-1] * dd
+            embedding = diffusion_map.T[n_components::-1]
+            if norm_laplacian:
+                embedding = embedding / dd
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
@@ -286,7 +296,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         X[:, 0] = dd.ravel()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
-        embedding = diffusion_map.T * dd
+        embedding = diffusion_map.T
+        if norm_laplacian:
+            embedding = embedding / dd
         if embedding.shape[0] == 1:
             raise ValueError
 
@@ -301,7 +313,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.toarray()
             lambdas, diffusion_map = eigh(laplacian)
-            embedding = diffusion_map.T[:n_components] * dd
+            embedding = diffusion_map.T[:n_components]
+            if norm_laplacian:
+                embedding = embedding / dd
         else:
             laplacian = _set_diag(laplacian, 1, norm_laplacian)
             # We increase the number of eigenvectors requested, as lobpcg
@@ -310,7 +324,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             X[:, 0] = dd.ravel()
             lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
                                             largest=False, maxiter=2000)
-            embedding = diffusion_map.T[:n_components] * dd
+            embedding = diffusion_map.T[:n_components]
+            if norm_laplacian:
+                embedding = embedding / dd
             if embedding.shape[0] == 1:
                 raise ValueError
 
@@ -329,21 +345,14 @@ class SpectralEmbedding(BaseEstimator):
     The resulting transformation is given by the value of the
     eigenvectors for each data point.
 
+    Note : Laplacian Eigenmaps is the actual algorithm implemented here.
+
     Read more in the :ref:`User Guide <spectral_embedding>`.
 
     Parameters
     -----------
     n_components : integer, default: 2
         The dimension of the projected subspace.
-
-    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG requires pyamg
-        to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities.
-
-    random_state : int seed, RandomState instance, or None, default : None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition when eigen_solver == 'amg'.
 
     affinity : string or callable, default : "nearest_neighbors"
         How to construct the affinity matrix.
@@ -356,6 +365,19 @@ class SpectralEmbedding(BaseEstimator):
 
     gamma : float, optional, default : 1/n_features
         Kernel coefficient for rbf kernel.
+
+    random_state : int, RandomState instance or None, optional, default: None
+        A pseudo random number generator used for the initialization of the
+        lobpcg eigenvectors.  If int, random_state is the seed used by the
+        random number generator; If RandomState instance, random_state is the
+        random number generator; If None, the random number generator is the
+        RandomState instance used by `np.random`. Used when ``solver`` ==
+        'amg'.
+
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities.
 
     n_neighbors : int, default : max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.
@@ -380,7 +402,7 @@ class SpectralEmbedding(BaseEstimator):
       Ulrike von Luxburg
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
 
-    - On Spectral Clustering: Analysis and an algorithm, 2011
+    - On Spectral Clustering: Analysis and an algorithm, 2001
       Andrew Y. Ng, Michael I. Jordan, Yair Weiss
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
 
@@ -416,6 +438,8 @@ class SpectralEmbedding(BaseEstimator):
             X : array-like, shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
+
+        Y: Ignored
 
         Returns
         -------
@@ -463,6 +487,8 @@ class SpectralEmbedding(BaseEstimator):
             Interpret X as precomputed adjacency graph computed from
             samples.
 
+        Y: Ignored
+
         Returns
         -------
         self : object
@@ -502,6 +528,8 @@ class SpectralEmbedding(BaseEstimator):
             X : array-like, shape (n_samples, n_samples),
             Interpret X as precomputed adjacency graph computed from
             samples.
+
+        Y: Ignored
 
         Returns
         -------

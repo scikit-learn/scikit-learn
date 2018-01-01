@@ -5,7 +5,7 @@ from numpy.distutils.misc_util import Configuration
 
 
 def configuration(parent_package="", top_path=None):
-    config = Configuration("metrics/cluster", parent_package, top_path)
+    config = Configuration("metrics.cluster", parent_package, top_path)
     libraries = []
     if os.name == 'posix':
         libraries.append('m')
