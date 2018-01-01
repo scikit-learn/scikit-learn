@@ -1497,7 +1497,7 @@ class SparseHebbianLearning(BaseEstimator, SparseCodingMixin):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = check_array(X, ensure_min_samples=2)
 
         U, self.n_iter_ = dict_learning_grad(
             X, self.eta, self.n_components, self.transform_n_nonzero_coefs,
