@@ -1021,9 +1021,6 @@ def test_multilabel_jaccard_similarity_score():
                                                  sample_weight=[1, 2]), 8. / 9)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='weighted'), 7. / 8)
-    # average='binary' (wrong example)
-#    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-#                                    average='binary', pos_label=1), 1. / 2)
 
 
 def test_multiclass_jaccard_similarity_score():
@@ -1045,6 +1042,30 @@ def test_multiclass_jaccard_similarity_score():
                         11. / 30)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='weighted'), 29. / 60)
+
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='micro',
+                                                 labels=['ant', 'cat']),
+                        4. / 7)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='micro',
+                                                 labels=['cat']), 2. / 5)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='micro',
+                                                 labels=['ant']), 2. / 3)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='micro',
+                                                 labels=['bird']), 1. / 3)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='micro',
+                                                 labels=['ant', 'bird']),
+                        1. / 2)
+    weight = np.array([1, 2, 1, 1, 2, 1, 2, 3])
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='micro',
+                                                 labels=['ant', 'bird'],
+                                                 sample_weight=weight),
+                        6. / 11)
     msg = ("In multiclass classification average must be one of "
            "('micro', 'macro', 'weighted'), got average=None.")
     assert_raise_message(ValueError, msg, jaccard_similarity_score, y_true,

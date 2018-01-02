@@ -636,24 +636,31 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
                                    minlength=len(labels))
 
         indices = np.searchsorted(sorted_labels, labels[:n_labels])
+        tp_sum = tp_sum[indices]
+
+        if average == 'micro':
+            tp_sum = tp_sum.sum()
+            labels = le.transform(labels[:n_labels])
+            union_indices = np.where(np.isin(y_true, labels) +
+                                     np.isin(y_pred, labels) == True)[0]
+            if sample_weight is not None:
+                den = sample_weight[union_indices].sum()
+            else:
+                den = len(union_indices)
+            score = tp_sum / den
+            return score
+
         true_sum = true_sum[indices]
         pred_sum = pred_sum[indices]
-        tp_sum = tp_sum[indices]
 
         if average == 'macro':
             den = true_sum + pred_sum - tp_sum
             score = tp_sum / den
             return np.average(score)
-        if average == 'weighted':
+        elif average == 'weighted':
             den = true_sum + pred_sum - tp_sum
             score = tp_sum / den
             return _weighted_sum(score, sample_weight=true_sum, normalize=True)
-        # wrong logic for 'micro'
-        if average == 'micro':
-            den = (true_sum + pred_sum - tp_sum).sum()
-            tp_sum = tp_sum.sum()
-            score = tp_sum / den
-            return score
         else:
             raise ValueError("In multiclass classification average must be "
                              "one of ('micro', 'macro', 'weighted'), got "
