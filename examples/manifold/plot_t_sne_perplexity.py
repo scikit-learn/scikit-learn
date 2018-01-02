@@ -71,11 +71,8 @@ for i, perplexity in enumerate(perplexities):
 # Another example using s-curve
 X, color = datasets.samples_generator.make_s_curve(n_samples, random_state=0)
 
-# viridis does not exist in matplotlib < 1.5
-cmap = getattr(plt.cm, 'viridis', plt.cm.YlGnBu_r)
-
 ax = subplots[1][0]
-ax.scatter(X[:, 0], X[:, 2], c=color, cmap=cmap)
+ax.scatter(X[:, 0], X[:, 2], c=color)
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 
@@ -90,7 +87,7 @@ for i, perplexity in enumerate(perplexities):
     print("S-curve, perplexity=%d in %.2g sec" % (perplexity, t1 - t0))
 
     ax.set_title("Perplexity=%d" % perplexity)
-    ax.scatter(Y[:, 0], Y[:, 1], c=color, cmap=cmap)
+    ax.scatter(Y[:, 0], Y[:, 1], c=color)
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
     ax.axis('tight')
@@ -105,7 +102,7 @@ X = np.hstack([
 ])
 color = xx.ravel()
 ax = subplots[2][0]
-ax.scatter(X[:, 0], X[:, 1], c=color, cmap=cmap)
+ax.scatter(X[:, 0], X[:, 1], c=color)
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 
@@ -120,7 +117,7 @@ for i, perplexity in enumerate(perplexities):
     print("uniform grid, perplexity=%d in %.2g sec" % (perplexity, t1 - t0))
 
     ax.set_title("Perplexity=%d" % perplexity)
-    ax.scatter(Y[:, 0], Y[:, 1], c=color, cmap=cmap)
+    ax.scatter(Y[:, 0], Y[:, 1], c=color)
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
     ax.axis('tight')
