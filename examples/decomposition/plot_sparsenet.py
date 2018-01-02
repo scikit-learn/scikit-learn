@@ -6,8 +6,9 @@ Dictionary learning using Sparse coding
 
 This example compares the set of filters obtained by sparse coding
 algorithm described by Olshausen and Field in Nature, vol. 381,
-pp. 607-609 with that obtained using :ref:`DictionaryLearning`. The
-main differences lying in the different strategies to control the norm
+pp. 607-609 with that obtained using
+:class:`sklearn.decomposition.DictionaryLearning`. The main differences
+lying in the different strategies to control the norm
 of the filters during the learning phase, that is by the homeostasis
 algorithm.
 
@@ -21,11 +22,12 @@ filters and then slowly adapts them such that they are closer to the input
 (here, patches from natural images). However, filters that learn first are
 more likely to be subsequently selected and some regulation mechanism is
 necessary such that all atoms from the dictionary learn equally.
-The most basic mechanism, as implemented in  :ref:`DictionaryLearning`,
-is to normalize the energy of each atom to a given value (for instance to 1).
+The most basic mechanism, as implemented in
+:class:`sklearn.decomposition.MiniBatchDictionaryLearning`, is to normalize the
+energy of each atom to a given value (for instance to 1).
 
-It can be seen from the plots that the results of :ref:`DictionaryLearning`
-without homeostasis leads to the emergence of edge-like filters but that a
+It can be seen from the plots that the results without homeostasis
+leads to the emergence of edge-like filters but that a
 number of filters are not learned: They still are closer to noise and are
 unlikely to be selected by the sparse coding algorithm without homeostasy.
 The heuristic used here follow the assumption that during learning,
@@ -36,7 +38,7 @@ leading to a ``monopolistic'' distribution of dictionary elements,
 some having learned more often than others.
 
 Following the classical SparseNet algorithm from Olshausen, we
-compute in :class:`sklearn.decomposition.DictionaryLearning` a "gain vector"
+compute in :class:`sklearn.decomposition.SparseHebbianLearning` a "gain vector"
 for the dictionary.
 This gain is used to tune the weight of each dictionary element during the
 learning phase. By dividing their norm by their mean estimated variance,
