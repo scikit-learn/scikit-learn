@@ -7,6 +7,11 @@
 Version 0.20 (under development)
 ================================
 
+As well as a plethora of new features and enhancements, this release is the
+first to be accompanied by a :ref:`glossary` developed by `Joel Nothman`_. The
+glossary is a reference resource to help users and contributors become familiar
+with the terminology and conventions used in Scikit-learn.
+
 Changed models
 --------------
 
