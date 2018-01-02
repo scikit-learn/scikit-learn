@@ -609,12 +609,17 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         le.fit(labels)
         y_true = le.transform(y_true)
         y_pred = le.transform(y_pred)
-        sorted_labels = le.classes_
 
-        # labels are now from 0 to len(labels) - 1
+        labels = le.transform(labels)[:n_labels]
+        indices = np.where(np.isin(y_true, labels) +
+                           np.isin(y_pred, labels) == True)[0]
+
+        y_true = y_true[indices]
+        y_pred = y_pred[indices]
         tp = y_true == y_pred
         tp_bins = y_true[tp]
         if sample_weight is not None:
+            sample_weight = sample_weight[indices]
             tp_bins_weights = np.asarray(sample_weight)[tp]
         else:
             tp_bins_weights = None
@@ -623,7 +628,9 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
                                  minlength=len(labels))
         else:
+            # pathological case
             true_sum = pred_sum = tp_sum = np.zeros(len(labels))
+
         if len(y_pred):
             pred_sum = np.bincount(y_pred, weights=sample_weight,
                                    minlength=len(labels))
@@ -631,36 +638,24 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             true_sum = np.bincount(y_true, weights=sample_weight,
                                    minlength=len(labels))
 
-        indices = np.searchsorted(sorted_labels, labels[:n_labels])
-        tp_sum = tp_sum[indices]
-
         if average == 'micro' or average == 'binary':
-            tp_sum = tp_sum.sum()
-            labels = le.transform(labels[:n_labels])
-            union_indices = np.where(np.isin(y_true, labels) +
-                                     np.isin(y_pred, labels) == True)[0]
-            if sample_weight is not None:
-                den = sample_weight[union_indices].sum()
-            else:
-                den = len(union_indices)
-            score = tp_sum / den
-            return score
-
-        true_sum = true_sum[indices]
-        pred_sum = pred_sum[indices]
-
-        if average == 'macro':
-            den = true_sum + pred_sum - tp_sum
-            score = tp_sum / den
-            return np.average(score)
+            num = np.array([tp_sum.sum()])
+            den = np.array([true_sum.sum()])
+            weights = None
+        elif average == 'macro':
+            num = tp_sum[labels]
+            den = true_sum[labels] + pred_sum[labels] - tp_sum[labels]
+            weights = None
         elif average == 'weighted':
-            den = true_sum + pred_sum - tp_sum
-            score = tp_sum / den
-            return _weighted_sum(score, sample_weight=true_sum, normalize=True)
+            num = tp_sum[labels]
+            den = true_sum[labels] + pred_sum[labels] - tp_sum[labels]
+            weights = true_sum[labels]
         else:
             raise ValueError("In multiclass classification average must be "
                              "one of ('micro', 'macro', 'weighted'), got "
                              "average=%s." % average)
+        score = num / den
+        return np.average(score, weights=weights)
 
 
 def matthews_corrcoef(y_true, y_pred, sample_weight=None):
