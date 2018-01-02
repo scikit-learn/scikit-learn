@@ -474,7 +474,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     >>> jaccard_similarity_score(y_true, y_pred, average='macro')
     0.5
     >>> jaccard_similarity_score(y_true, y_pred, average='micro')
-    ... # doctest: +ELLIPSIS
+    0.5
 
     >>> y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
     >>> y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
