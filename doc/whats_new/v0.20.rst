@@ -22,7 +22,7 @@ random sampling procedures.
 - :class:`metrics.roc_auc_score` (bug fix)
 - :class:`metrics.roc_curve` (bug fix)
 - :class:`neural_network.BaseMultilayerPerceptron` (bug fix)
-- :class:`neural_network.MLPRegressor` (bug fix)
+- :class:`neural_network.MLPRidgeClassifierCV_store_cv_values_issue_10284Regressor` (bug fix)
 - :class:`neural_network.MLPClassifier` (bug fix)
 
 Details are listed in the changelog below.
@@ -196,10 +196,10 @@ Classifiers and regressors
   :issue:`9579` by :user:`Thomas Kober <tttthomasssss>`.
 
 - Fixed a bug in :class:`linear_model.RidgeClassifierCV` where
-  the parameter `store_cv_values` was not immplemented though it was documented
-  in `cv_values_` as a way to set up the storage of cross-validation
-  values for different alphas. :issue:`10297` by 
-  :user:`Isabel María Villalba-Jiménez <mabelvj>`. 
+  the parameter ``store_cv_values`` was not immplemented though
+  it was documented in ``cv_values_`` as a way to set up the storage
+  of cross-validation values for different alphas. :issue:`10297` by 
+  :user:`Mabel Villalba-Jiménez <mabelvj>`. 
 
 Decomposition, manifold learning and clustering
 
