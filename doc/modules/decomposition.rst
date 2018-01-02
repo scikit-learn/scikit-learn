@@ -472,6 +472,7 @@ extracted from part of the image of a raccoon face looks like.
     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
+
 .. _MiniBatchDictionaryLearning:
 
 Mini-batch dictionary learning
@@ -490,6 +491,23 @@ The estimator also implements ``partial_fit``, which updates the dictionary by
 iterating only once over a mini-batch. This can be used for online learning
 when the data is not readily available from the start, or for when the data
 does not fit into the memory.
+
+
+.. _SparseHebbianLearning:
+
+Original SparseNet algorithm
+----------------------------
+
+:class:`SparseHebbianLearning` implements the original algorithm from Olshausen
+and Field (1996) by adding an homeostasis mechanism to
+:class:`MiniBatchDictionaryLearning`.
+
+.. topic:: References:
+
+  * `"Emergence of simple-cell receptive field properties by learning a sparse code for natural images"
+    <http://dx.doi.org/10.1038/381607a0>`_
+    B. Olshausen and D. Field, 1996,  Nature, vol. 381, pp. 607-609
+
 
 .. currentmodule:: sklearn.cluster
 

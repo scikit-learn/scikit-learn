@@ -301,6 +301,7 @@ Samples generator
    decomposition.KernelPCA
    decomposition.LatentDirichletAllocation
    decomposition.MiniBatchDictionaryLearning
+   decomposition.SparseHebbianLearning
    decomposition.MiniBatchSparsePCA
    decomposition.NMF
    decomposition.PCA
