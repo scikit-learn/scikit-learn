@@ -498,20 +498,115 @@ def test_check_docstring_parameters():
          'no space between the param name and colon ("d:int")'])
 
 
+def func_doc1(y_true, y_pred, sample_weight):
+    """Dummy function for docstring testing.
+
+    Parameters
+    ----------
+    y_true : 1d array-like
+        Ground truth (correct) target values.
+
+    y_pred : 1d array-like
+        Estimated targets as returned by a classifier.
+
+    sample_weight : array-like of shape = [n_samples], optional
+        Sample weights.
+
+    Returns
+    -------
+    fbeta_score : float or array of float, shape = [n_unique_labels]
+        F-beta score of the positive class in binary classification.
+
+    precision : float or array of float, shape = [n_unique_labels]
+
+    recall : float or array of float, shape = [n_unique_labels]
+
+    """
+    pass
+
+
+def func_doc2(y_true, y_pred, sample_weight):
+    """Dummy function for docstring testing.
+
+    Parameters
+    ----------
+    y_true : 1d array-like
+        Ground truth (correct) target values.
+
+    y_pred : 1d array-like
+        Estimated targets as returned by a classifier.
+
+    sample_weight : array-like of shape = [n_samples], optional
+
+    Returns
+    -------
+    fbeta_score : float or array of float, shape = [n_unique_labels]
+        F-beta score of the positive class in binary classification.
+
+    """
+    pass
+
+
+def func_doc3(y_true, y_pred, sample_weight):
+    """Dummy function for docstring testing.
+
+    Parameters
+    ----------
+    y_true : 1d array-like
+        Ground truth (correct) target values.
+
+    y_pred : 1d array-like
+        Estimated targets as returned by a classifier.
+
+    sample_weight : array-like of shape = [n_samples]
+        Sample weights.
+
+    Returns
+    -------
+    recall : float or array of float, shape = [n_unique_labels]
+        Recall value(s).
+
+    """
+    pass
+
+
 @if_numpydoc
 def test_assert_consistent_docs():
-    # Test function assert_consistent_docs
+    # Test for consistent parameters
+    assert_consistent_docs([func_doc1, func_doc2, func_doc3],
+                           include_params=['y_true', 'y_pred'],
+                           include_returns=False)
+    assert_consistent_docs([func_doc1, func_doc2, func_doc3],
+                           exclude_params=['sample_weight'],
+                           include_returns=False)
+
+    # Test for returns
+    assert_consistent_docs([func_doc1, func_doc2], include_params=False)
+    assert_consistent_docs([func_doc1, func_doc2],
+                           exclude_params=['y_pred', 'y_true',
+                                           'sample_weight'])
+
+    # Test for inconsistent parameter 'sample_weight'
+    assert_raises(AssertionError, assert_consistent_docs,
+                  [func_doc1, func_doc2], include_params=['sample_weight'],
+                  include_returns=False)
+    assert_raises(AssertionError, assert_consistent_docs,
+                  [func_doc1, func_doc3], include_params=['sample_weight'],
+                  include_returns=False)
+
+    # Test for inconsistent return 'recall'
+    assert_raises(AssertionError, assert_consistent_docs,
+                  [func_doc1, func_doc3], include_params=False,
+                  include_returns=['recall'])
+    assert_raises(AssertionError, assert_consistent_docs,
+                  [func_doc1, func_doc3], include_params=False,
+                  exclude_returns=['fbeta_score', 'precision'])
+
+    # Test with actual classification metrics
     assert_consistent_docs([precision_recall_fscore_support, precision_score,
                             recall_score, f1_score, fbeta_score],
                            include_returns=False,
-                           exclude_params=['labels', 'average', 'beta'],
-                           include_attribs=False)
-
-    # Consider all parameters, attributes and returns
-    assert_raises(AssertionError, assert_consistent_docs,
-                  [precision_recall_fscore_support, precision_score,
-                   recall_score, f1_score, fbeta_score], include_returns=True,
-                  include_params=True, include_attribs=True)
+                           exclude_params=['labels', 'average', 'beta'])
 
     # Consider a classification and a regression metric
     assert_raises(AssertionError, assert_consistent_docs,

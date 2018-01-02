@@ -926,6 +926,10 @@ def _check_matching_docstrings(doc_list, type_dict, type_name, object_name,
             # remove all whitespaces
             type_definition = " ".join(type_definition.split())
             description = [" ".join(s.split()) for s in description]
+            try:
+                description.remove('')
+            except (ValueError):
+                pass
 
             if name in type_dict:
                 u_dict = type_dict[name]
