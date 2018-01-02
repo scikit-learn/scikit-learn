@@ -373,8 +373,7 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
 
 
 def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
-                             average=None, warn=True, normalize=None,
-                             sample_weight=None):
+                             average=None, normalize=None, sample_weight=None):
     """Jaccard similarity coefficient score
 
     The Jaccard index [1], or Jaccard similarity coefficient, defined as
@@ -429,9 +428,6 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification).
         ``'none-samples'``:
-
-    warn : bool, optional (default=True), for internal use
-        This determines whether warning will be raised or not,
 
     normalize : bool, optional (defaul=True)
         If ``False``, return the sum of the Jaccard similarity coefficient
