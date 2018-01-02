@@ -964,8 +964,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
+            Target values (strings or integers in classification, real numbers
+            in regression)
             For classification, labels must correspond to classes.
 
         sample_weight : array-like, shape = [n_samples] or None
@@ -1003,7 +1003,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         check_consistent_length(X, y, sample_weight)
 
-        y = self._validate_y(y)
+        y = self._validate_y(y, sample_weight)
 
         if self.n_iter_no_change is not None:
             X, X_val, y, y_val, sample_weight, sample_weight_val = (
@@ -1039,6 +1039,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                  % (self.n_estimators,
                                     self.estimators_.shape[0]))
             begin_at_stage = self.estimators_.shape[0]
+            # The requirements of _decision_function (called in two lines
+            # below) are more constrained than fit. It accepts only CSR
+            # matrices.
+            X = check_array(X, dtype=DTYPE, order="C", accept_sparse='csr')
             y_pred = self._decision_function(X)
             self._resize_state()
 
@@ -1233,7 +1237,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         importances = total_sum / len(self.estimators_)
         return importances
 
-    def _validate_y(self, y):
+    def _validate_y(self, y, sample_weight):
+        # 'sample_weight' is not utilised but is used for
+        # consistency with similar method _validate_y of GBC
         self.n_classes_ = 1
         if y.dtype.kind == 'O':
             y = y.astype(np.float64)
@@ -1547,9 +1553,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol)
 
-    def _validate_y(self, y):
+    def _validate_y(self, y, sample_weight):
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
+        n_trim_classes = np.count_nonzero(np.bincount(y, sample_weight))
+        if n_trim_classes < 2:
+            raise ValueError("y contains %d class after sample_weight "
+                             "trimmed classes with zero weights, while a "
+                             "minimum of 2 classes are required."
+                             % n_trim_classes)
         self.n_classes_ = len(self.classes_)
         return y
 

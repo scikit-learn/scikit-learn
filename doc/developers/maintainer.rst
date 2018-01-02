@@ -8,12 +8,12 @@ For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-t
 
 1. Update docs:
 
-    - edit the doc/whats_new.rst file to add release title and commit
-      statistics. You can retrieve commit statistics with::
+   - Edit the doc/whats_new.rst file to add release title and commit
+     statistics. You can retrieve commit statistics with::
 
         $ git shortlog -ns 0.998..
 
-    - edit the doc/index.rst to change the 'News' entry of the front page.
+   - Edit the doc/index.rst to change the 'News' entry of the front page.
 
 2. Update the version number in sklearn/__init__.py, the __version__
    variable
@@ -38,7 +38,6 @@ For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-t
 5. Push the documentation to the website. Circle CI should do this
    automatically for master and <N>.<N>.X branches.
 
-
 6. Build binaries using dedicated CI servers by updating the git submodule
    reference to the new scikit-learn tag of the release at:
 
@@ -53,6 +52,16 @@ For more information see https://github.com/scikit-learn/scikit-learn/wiki/How-t
 
 
 7. FOR FINAL RELEASE: Update the release date in What's New
+
+The scikit-learn.org web site
+-----------------------------
+
+The scikit-learn web site (http://scikit-learn.org) is hosted at GitHub,
+but should rarely be updated manually by pushing to the
+https://github.com/scikit-learn/scikit-learn.github.io repository. Most
+updates can be made by pushing to master (for /dev) or a release branch
+like 0.99.X, from which Circle CI builds and uploads the documentation
+automatically.
 
 Travis Cron jobs
 ----------------
