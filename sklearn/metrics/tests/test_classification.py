@@ -1070,6 +1070,13 @@ def test_multiclass_jaccard_similarity_score():
            "('micro', 'macro', 'weighted'), got average=None.")
     assert_raise_message(ValueError, msg, jaccard_similarity_score, y_true,
                          y_pred)
+    y_true = np.array([1, 0, 1, 1, 0])
+    y_pred = np.array([1, 0, 1, 1, 1])
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='binary'), 3. / 4)
+    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
+                                                 average='binary',
+                                                 pos_label=0), 1. / 2)
 
 
 @ignore_warnings

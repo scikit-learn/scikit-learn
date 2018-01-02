@@ -634,7 +634,7 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
         indices = np.searchsorted(sorted_labels, labels[:n_labels])
         tp_sum = tp_sum[indices]
 
-        if average == 'micro':
+        if average == 'micro' or average == 'binary':
             tp_sum = tp_sum.sum()
             labels = le.transform(labels[:n_labels])
             union_indices = np.where(np.isin(y_true, labels) +
