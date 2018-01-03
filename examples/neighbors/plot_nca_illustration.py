@@ -67,7 +67,7 @@ def relate_point(X, i, ax):
                     linewidth=5*thickness[j])
 
 
-# we consider only point n°3
+# we consider only point 3
 i = 3
 
 # Plot bonds linked to sample i in the original space
