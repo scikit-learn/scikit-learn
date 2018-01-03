@@ -114,9 +114,9 @@ def _yield_classifier_checks(name, classifier):
     yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
     yield check_classifiers_one_label
+    yield check_classifiers_one_label_sample_weights
     yield check_classifiers_classes
     yield check_estimators_partial_fit_n_features
-    yield check_classifiers_one_label_sample_weights
     # basic consistency testing
     yield check_classifiers_train
     yield check_classifiers_regression_target
@@ -1220,7 +1220,7 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
         try:
             classifier.fit(X_train, y, sample_weight=sample_weight)
         except ValueError as e:
-            if ("class" not in repr(e)) and ("specified nu" not in repr(e)):
+            if ("class" not in repr(e)):
                 print(error_fit, classifier, e)
                 traceback.print_exc(file=sys.stdout)
                 raise e

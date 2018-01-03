@@ -134,6 +134,70 @@ class NoSampleWeightPandasSeriesType(BaseEstimator):
         return np.ones(X.shape[0])
 
 
+class OneClassErrorClassifier(BaseBadClassifier):
+    def fit(self, X, y):
+        # Convert data
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc"),
+                         multi_output=True,
+                         y_numeric=True)
+
+        cls, y = np.unique(y, return_inverse=True)
+        # find the number of class after trimming
+        if cls.shape[0] < 2:
+            raise ValueError("Nonsensical Error")
+
+        return self
+
+    def predict(self, X):
+        X = check_array(X)
+        return np.ones(X.shape[0])
+
+
+class OneClassSampleErrorClassifier(BaseBadClassifier):
+    def fit(self, X, y, sample_weight=None):
+        # Convert data
+        X, y = check_X_y(X, y,
+                         accept_sparse=("csr", "csc"),
+                         multi_output=True,
+                         y_numeric=True)
+
+        cls, y = np.unique(y, return_inverse=True)
+        nb_cls = cls.shape[0]
+        if nb_cls < 2:
+            raise ValueError("normal class error")
+
+        # find the number of class after trimming
+        if sample_weight is not None:
+            nb_cls = cls.shape[0]
+            if len(sample_weight) > 0:
+                nb_cls = np.count_nonzero(np.bincount(y, sample_weight))
+            if nb_cls < 2:
+                raise ValueError("Nonsensical Error")
+
+        return self
+
+    def predict(self, X):
+        X = check_array(X)
+        return np.ones(X.shape[0])
+
+
+def assert_raises_with_message_in_print(estimator, msg):
+    # the check for sparse input handling prints to the stdout,
+    # instead of raising an error, so as not to remove the original traceback.
+    # that means we need to jump through some hoops to catch it.
+    old_stdout = sys.stdout
+    string_buffer = StringIO()
+    sys.stdout = string_buffer
+    try:
+        check_estimator(estimator)
+    except:
+        pass
+    finally:
+        sys.stdout = old_stdout
+    assert_true(msg in string_buffer.getvalue())
+
+
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
@@ -152,6 +216,7 @@ def test_check_estimator():
                         BaseBadClassifier)
     assert_raises_regex(AssertionError, msg, check_estimator,
                         BaseBadClassifier())
+
     # check that sample_weights in fit accepts pandas.Series type
     try:
         from pandas import Series  # noqa
@@ -187,19 +252,11 @@ def test_check_estimator():
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
-    # the check for sparse input handling prints to the stdout,
-    # instead of raising an error, so as not to remove the original traceback.
-    # that means we need to jump through some hoops to catch it.
-    old_stdout = sys.stdout
-    string_buffer = StringIO()
-    sys.stdout = string_buffer
-    try:
-        check_estimator(NoSparseClassifier)
-    except:
-        pass
-    finally:
-        sys.stdout = old_stdout
-    assert_true(msg in string_buffer.getvalue())
+    assert_raises_with_message_in_print(NoSparseClassifier, msg)
+    # check that one label fit with classifier
+    msg = "Classifier can't train when only one class is present"
+    assert_raises_with_message_in_print(OneClassErrorClassifier, msg)
+    assert_raises_with_message_in_print(OneClassSampleErrorClassifier, msg)
 
     # doesn't error on actual estimator
     check_estimator(AdaBoostClassifier)
