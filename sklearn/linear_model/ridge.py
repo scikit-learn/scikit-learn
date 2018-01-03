@@ -1042,7 +1042,7 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         for i, alpha in enumerate(self.alphas):
-            if float(alpha) < 0:
+            if alpha < 0:
                 raise ValueError("alpha value cannot be negative")
             if error:
                 out, c = _errors(float(alpha), y, v, Q, QT_y)
