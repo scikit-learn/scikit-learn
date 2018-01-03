@@ -238,6 +238,8 @@ class GaussianNB(BaseNB):
         # Compute (potentially weighted) mean and variance of new datapoints
         if sample_weight is not None:
             n_new = float(sample_weight.sum())
+            if n_new == 0:
+                return 0, 0
             new_mu = np.average(X, axis=0, weights=sample_weight / n_new)
             new_var = np.average((X - new_mu) ** 2, axis=0,
                                  weights=sample_weight / n_new)
@@ -444,6 +446,7 @@ class GaussianNB(BaseNB):
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
 
+
 _ALPHA_MIN = 1e-10
 
 
@@ -599,6 +602,9 @@ class BaseDiscreteNB(BaseNB):
         if sample_weight is not None:
             sample_weight = np.atleast_2d(sample_weight)
             Y *= check_array(sample_weight).T
+
+        # find the number of class after trimming used for complementNB
+        self.nb_trim_classes_ = np.sum(np.sum(Y, axis=0) > 0)
 
         class_prior = self.class_prior
 
@@ -832,7 +838,7 @@ class ComplementNB(BaseDiscreteNB):
 
         X = check_array(X, accept_sparse="csr")
         jll = safe_sparse_dot(X, self.feature_log_prob_.T)
-        if len(self.classes_) == 1:
+        if len(self.classes_) == 1 or self.nb_trim_classes_ == 1:
             jll += self.class_log_prior_
         return jll
 
