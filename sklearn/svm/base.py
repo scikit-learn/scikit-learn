@@ -145,12 +145,15 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise TypeError("Sparse precomputed kernels are not supported.")
         self._sparse = sparse and not callable(self.kernel)
 
-        X, y = check_X_y(X, y, dtype=np.float64, order='C', accept_sparse='csr')
-        y = self._validate_targets(y)
+        X, y = check_X_y(X, y, dtype=np.float64, order='C',
+                         accept_sparse='csr')
 
         sample_weight = np.asarray([]
                                    if sample_weight is None
                                    else sample_weight, dtype=np.float64)
+
+        y = self._validate_targets(y, sample_weight)
+
         solver_type = LIBSVM_IMPL.index(self._impl)
 
         # input validation
@@ -189,7 +192,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.shape_fit_ = X.shape
 
         # In binary case, we need to flip the sign of coef, intercept and
-        # decision function. Use self._intercept_ and self._dual_coef_ internally.
+        # decision function. Use self._intercept_
+        # and self._dual_coef_internally.
         self._intercept_ = self.intercept_.copy()
         self._dual_coef_ = self.dual_coef_
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
@@ -198,7 +202,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return self
 
-    def _validate_targets(self, y):
+    def _validate_targets(self, y, sample_weight):
         """Validation of y and class_weight.
 
         Default implementation for SVR and one-class; overridden in BaseSVC.
@@ -494,15 +498,19 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             class_weight=class_weight, verbose=verbose, max_iter=max_iter,
             random_state=random_state)
 
-    def _validate_targets(self, y):
+    def _validate_targets(self, y, sample_weight):
         y_ = column_or_1d(y, warn=True)
         check_classification_targets(y)
         cls, y = np.unique(y_, return_inverse=True)
         self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
-        if len(cls) < 2:
+        # find the number of class after trimming
+        nb_cls = cls.shape[0]
+        if sample_weight.shape[0] > 0:
+            nb_cls = np.count_nonzero(np.bincount(y, sample_weight))
+        if nb_cls < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
-                " class" % len(cls))
+                " class" % nb_cls)
 
         self.classes_ = cls
 
@@ -864,8 +872,8 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     bias = -1.0
     if fit_intercept:
         if intercept_scaling <= 0:
-            raise ValueError("Intercept scaling is %r but needs to be greater than 0."
-                             " To disable fitting an intercept,"
+            raise ValueError("Intercept scaling is %r but needs to be greater"
+                             " than 0. To disable fitting an intercept,"
                              " set fit_intercept=False." % intercept_scaling)
         else:
             bias = intercept_scaling
