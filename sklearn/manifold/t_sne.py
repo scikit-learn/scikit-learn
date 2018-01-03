@@ -425,9 +425,20 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
         dist_X = pairwise_distances(X, squared=True)
     np.fill_diagonal(dist_X, np.inf)  # excludes dist(x_i, x_i)
     ind_X = np.argsort(dist_X, axis=1)[:, :-1]
+    # ind_X[i] now is the ordered list of k-neighbors of i in the input space
     ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
         return_distance=False)
 
+    # We build an inverted index returning the rank of sample j w.r.t sample i
+    # in the input space by accessing the i,j-th element of the inverted index.
+    # We therefore want to have, for every samples i and j (i!=j):
+    # inverted_index[i][j] = (ind_X[i]'s index of element of value j) + 1
+    # (the +1 is because we consider knn ranks are non-zero)
+    # For instance if ind_X = [[1, 2], [0, 2], [1, 0]], the following
+    # inverted index is OK:
+    # inverted_index = [[0, 1, 2], [1, 0, 2], [2, 1, 0]])
+    # (the first element of line i will never be accessed because i is not in
+    # i's k-neighbors in the output space)
     n_samples = X.shape[0]
     inverted_index = np.zeros((n_samples, n_samples))
     ordered_indices = np.arange(n_samples)
