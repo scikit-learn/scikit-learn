@@ -871,25 +871,26 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
     if y_type not in ("multilabel-indicator", "continuous-multioutput",
                       "multiclass-multioutput"):
         raise ValueError("{0} format is not supported".format(y_type))
-
-    y_true = np.array(y_true, dtype=float, copy=True)
-    for sample in range(len(y_true)):
-        _average_ties(y_true[sample], y_score[sample])
-    ranking = np.argsort(y_score)[:, ::-1]
-    ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
+    discount = 1 / (np.log(np.arange(y_true.shape[1]) + 2) / np.log(log_basis))
     if k is not None:
-        ranked = ranked[:, :k]
-    discount = 1 / (np.log(np.arange(ranked.shape[1]) + 2) / np.log(log_basis))
-    gain = (ranked * discount).sum(axis=1)
-    return gain
+        discount[k:] = 0
+    discount_cumsum = np.cumsum(discount)
+    cumulative_gains = [_tie_averaged_dcg(y_t, y_s, discount_cumsum) for
+                        y_t, y_s in zip(y_true, y_score)]
+    return np.asarray(cumulative_gains)
 
 
-def _average_ties(y_true, scores):
-    unique_scores = np.unique(scores)
-    for score in unique_scores:
-        indices = scores == score
-        average = y_true[indices].mean()
-        y_true[indices] = average
+def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
+    _, inv, counts = np.unique(
+        - y_score, return_inverse=True, return_counts=True)
+    ranked = np.zeros(len(counts))
+    np.add.at(ranked, inv, y_true)
+    ranked /= counts
+    groups = np.cumsum(counts) - 1
+    discount_sums = np.zeros(len(counts))
+    discount_sums[0] = discount_cumsum[groups[0]]
+    discount_sums[1:] = np.diff(discount_cumsum[groups])
+    return(ranked * discount_sums).sum()
 
 
 def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
