@@ -706,11 +706,22 @@ def test_sparse_design_with_sample_weights():
 
 def test_ridgecv_alphas():
     # Test that no error is raised when fitting RidgeCV
-    # either for positive or negatives alphas
+    # with integer alpha values and also
+    # check that an error is raised for negative alphas
 
     X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0],
                   [1.0, 1.0], [1.0, 0.0]])
     y = [1, 1, 1, -1, -1]
+
+    # Integers
+    alphas = (1, 10, 100)
+    ridge = RidgeCV(alphas)
+    ridge.fit(X, y)
+
+    # Negative integers
+    alphas = (-1, -10, -100)
+    ridge = RidgeCV(alphas)
+    assert_raises(ValueError, ridge.fit, X, y)
 
     # Positive alphas
     alphas = (0.1, 1.0, 10.0)
@@ -720,7 +731,7 @@ def test_ridgecv_alphas():
     # Negative alphas
     alphas = (-0.1, -1.0, -10.0)
     ridge = RidgeCV(alphas)
-    ridge.fit(X, y)
+    assert_raises(ValueError, ridge.fit, X, y)
 
 
 def test_raises_value_error_if_solver_not_supported():
