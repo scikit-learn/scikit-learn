@@ -49,12 +49,12 @@ cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
 names = ['KNN', 'NCA, KNN']
 
 classifiers = [Pipeline([('scaler', StandardScaler()),
-                        ('knn', KNeighborsClassifier(n_neighbors=n_neighbors))
-                        ]),
+                         ('knn', KNeighborsClassifier(n_neighbors=n_neighbors))
+                         ]),
                Pipeline([('scaler', StandardScaler()),
-                        ('nca', NeighborhoodComponentsAnalysis()),
-                        ('knn', KNeighborsClassifier(n_neighbors=n_neighbors))
-                        ])
+                         ('nca', NeighborhoodComponentsAnalysis()),
+                         ('knn', KNeighborsClassifier(n_neighbors=n_neighbors))
+                         ])
                ]
 
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1

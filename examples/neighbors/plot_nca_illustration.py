@@ -40,7 +40,6 @@ for i in range(X.shape[0]):
     ax.text(X[i, 0], X[i, 1], str(i), va='center', ha='center')
 
 
-
 def p_i(X, i):
     diff_embedded = X[i] - X
     dist_embedded = np.einsum('ij,ij->i', diff_embedded,
@@ -57,6 +56,7 @@ def p_i(X, i):
 masks = OneHotEncoder(sparse=False,
                       dtype=bool).fit_transform(y[:, np.newaxis])
 
+
 def relate_point(X, i, ax):
     pt_i = X[i]
     for j, pt_j in enumerate(X):
@@ -67,7 +67,7 @@ def relate_point(X, i, ax):
                     linewidth=5*thickness[j])
 
 # we consider only point n°3
-i=3
+i = 3
 
 # Plot bonds linked to sample i in the original space
 relate_point(X, i, ax)
