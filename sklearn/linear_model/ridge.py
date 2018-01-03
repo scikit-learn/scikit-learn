@@ -1043,9 +1043,9 @@ class _RidgeGCV(LinearModel):
 
         for i, alpha in enumerate(self.alphas):
             if error:
-                out, c = _errors(alpha, y, v, Q, QT_y)
+                out, c = _errors(float(alpha), y, v, Q, QT_y)
             else:
-                out, c = _values(alpha, y, v, Q, QT_y)
+                out, c = _values(float(alpha), y, v, Q, QT_y)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
