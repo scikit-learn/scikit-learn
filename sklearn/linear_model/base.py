@@ -298,7 +298,7 @@ class LinearClassifierMixin(ClassifierMixin):
             raise NotFittedError("This %(name)s instance is not fitted "
                                  "yet" % {'name': type(self).__name__})
 
-        X = check_array(X, accept_sparse='csr')
+        X = check_array(X, accept_sparse='csr', accept_large_sparse=True)
 
         n_features = self.coef_.shape[1]
         if X.shape[1] != n_features:

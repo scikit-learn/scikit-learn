@@ -404,8 +404,8 @@ def test_check_array_accept_large_sparse_raise_exception():
     X = sp.rand(10, 1000, format='csr')
     X.indices = X.indices.astype('int64')
     X.indptr = X.indptr.astype('int64')
-    msg = "CSR arrays accepts only 32 bit integer indexing." + \
-        " You provided int64 bit indexing"
+    msg = "Only sparse matrices with 32-bit integer indices" + \
+        " are accepted. Got int64 indices."
     assert_raise_message(ValueError, msg.format([]),
                          check_array, X, accept_sparse=True,
                          accept_large_sparse=False)

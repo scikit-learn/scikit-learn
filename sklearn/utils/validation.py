@@ -524,13 +524,13 @@ def _check_large_sparse(array, accept_large_sparse=False):
         supported_indices = ["int32"]
         if (hasattr(array, "indices") and hasattr(array.indices, "dtype") and
                 array.indices.dtype not in supported_indices):
-            raise ValueError("CSR arrays accepts only 32 bit integer indexing."
-                             " You provided % s bit indexing"
+            raise ValueError("Only sparse matrices with 32-bit integer indices"
+                             " are accepted. Got % s indices."
                              % array.indices.dtype)
-        if (hasattr(array, "indptr") and hasattr(array.indptr,  "dtype") and
+        if (hasattr(array, "indptr") and hasattr(array.indptr, "dtype") and
                 array.indptr.dtype not in supported_indices):
-            raise ValueError("CSR arrays accepts only 32 bit integer indexing."
-                             " You provided %s bit indexing"
+            raise ValueError("Only sparse matrices with 32-bit integer indices"
+                             " are accepted. Got % s indices."
                              % array.indices.dtype)
 
 
