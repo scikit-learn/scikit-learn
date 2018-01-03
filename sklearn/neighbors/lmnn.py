@@ -30,6 +30,8 @@ from ..externals.six import integer_types, string_types
 class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     """Distance metric learning for large margin classification.
 
+    Read more in the :ref:`User Guide <lmnn>`.
+
     Parameters
     ----------
     n_neighbors : int, optional (default=3)
@@ -168,26 +170,10 @@ class LargeMarginNearestNeighbor(BaseEstimator, TransformerMixin):
     >>> print(knn.score(lmnn.transform(X_test), y_test))
     0.971428571429
 
-    Notes
-    -----
-    Large margin nearest neighbor (LMNN) is a machine learning algorithm for
-    metric learning. It learns a (pseudo-)metric in a supervised fashion to
-    improve the classification accuracy of the k-nearest neighbor rule.
-    The main intuition behind LMNN is to learn a pseudometric under which all
-    data instances in the training set are surrounded by at least k instances
-    that share the same class label. If this is achieved, the leave-one-out
-    error is minimized.
-    This implementation follows closely Kilian Weinberger's MATLAB code found
-    at <https://bitbucket.org/mlcircus/lmnn> which solves the unconstrained
-    problem, finding a linear transformation with L-BFGS instead of solving the
-    constrained problem that finds the globally optimal metric. Different from
-    the paper, the problem solved by this implementation is with the squared
-    hinge loss (to make the problem differentiable).
-
     .. warning::
 
-        Exact floating-point reproducibility is generally not guaranteed (
-        unless special care is taken with library and compiler options). As
+        Exact floating-point reproducibility is generally not guaranteed
+        (unless special care is taken with library and compiler options). As
         a consequence, the transformations computed in 2 identical runs of
         LargeMarginNearestNeighbor can differ from each other. This can
         happen even before the optimizer is called if initialization with
