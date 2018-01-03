@@ -872,6 +872,9 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
                       "multiclass-multioutput"):
         raise ValueError("{0} format is not supported".format(y_type))
 
+    y_true = np.array(y_true, dtype=float, copy=True)
+    for sample in range(len(y_true)):
+        _average_ties(y_true[sample], y_score[sample])
     ranking = np.argsort(y_score)[:, ::-1]
     ranked = y_true[np.arange(ranking.shape[0])[:, np.newaxis], ranking]
     if k is not None:
@@ -879,6 +882,14 @@ def _dcg_sample_scores(y_true, y_score, k=None, log_basis=2):
     discount = 1 / (np.log(np.arange(ranked.shape[1]) + 2) / np.log(log_basis))
     gain = (ranked * discount).sum(axis=1)
     return gain
+
+
+def _average_ties(y_true, scores):
+    unique_scores = np.unique(scores)
+    for score in unique_scores:
+        indices = scores == score
+        average = y_true[indices].mean()
+        y_true[indices] = average
 
 
 def dcg_score(y_true, y_score, k=None, log_basis=2, sample_weight=None):
