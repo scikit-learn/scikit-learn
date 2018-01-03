@@ -191,7 +191,7 @@ def assert_raises_with_message_in_print(estimator, msg):
     sys.stdout = string_buffer
     try:
         check_estimator(estimator)
-    except:
+    except Exception as e:
         pass
     finally:
         sys.stdout = old_stdout
