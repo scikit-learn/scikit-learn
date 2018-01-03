@@ -66,6 +66,7 @@ def relate_point(X, i, ax):
             ax.plot(*line, c=cm.tab10(y[j]),
                     linewidth=5*thickness[j])
 
+
 # we consider only point n°3
 i = 3
 
