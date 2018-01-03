@@ -137,11 +137,14 @@ print('Average precision-recall score: {0:0.2f}'.format(
 # ................................
 from sklearn.metrics import precision_recall_curve
 import matplotlib.pyplot as plt
+from sklearn.externals.funcsigs import signature
 
 precision, recall, _ = precision_recall_curve(y_test, y_score)
 
-# no step argument for plt.fill_between for matplotlib < 1.5
-step_kwargs = {'step': 'post'} if hasattr(plt.cm, 'viridis') else {}
+# In matplotlib < 1.5, plt.fill_between does not have a 'step' argument
+step_kwargs = ({'step': 'post'}
+               if 'step' in signature(plt.fill_between).parameters
+               else {})
 plt.step(recall, precision, color='b', alpha=0.2,
          where='post')
 plt.fill_between(recall, precision, alpha=0.2, color='b', **step_kwargs)
