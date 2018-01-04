@@ -1016,7 +1016,7 @@ class RobustScaler(BaseEstimator, TransformerMixin):
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
 
-    https://en.wikipedia.org/wiki/Median_(statistics)
+    https://en.wikipedia.org/wiki/Median
     https://en.wikipedia.org/wiki/Interquartile_range
     """
 
@@ -2592,14 +2592,15 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
-    or other situations where normality is desired. Note that power
-    transforms do not result in standard normal distributions (i.e. the
-    transformed data could be far from zero-mean, unit-variance).
+    or other situations where normality is desired.
 
     Currently, PowerTransformer supports the Box-Cox transform. Box-Cox
     requires input data to be strictly positive. The optimal parameter
     for stabilizing variance and minimizing skewness is estimated through
     maximum likelihood.
+
+    By default, zero-mean, unit-variance normalization is applied to the
+    transformed data.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
@@ -2608,6 +2609,10 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     method : str, (default='box-cox')
         The power transform method. Currently, 'box-cox' (Box-Cox transform)
         is the only option available.
+
+    standardize : boolean, default=True
+        Set to True to apply zero-mean, unit-variance normalization to the
+        transformed output.
 
     copy : boolean, optional, default=True
         Set to False to perform inplace computation during transformation.
@@ -2624,13 +2629,13 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     >>> pt = PowerTransformer()
     >>> data = [[1, 2], [3, 2], [4, 5]]
     >>> print(pt.fit(data))
-    PowerTransformer(copy=True, method='box-cox')
+    PowerTransformer(copy=True, method='box-cox', standardize=True)
     >>> print(pt.lambdas_)  # doctest: +ELLIPSIS
     [ 1.051... -2.345...]
     >>> print(pt.transform(data))  # doctest: +ELLIPSIS
-    [[ 0...      0.342...]
-     [ 2.068...  0.342...]
-     [ 3.135...  0.416...]]
+    [[-1.332... -0.707...]
+     [ 0.256... -0.707...]
+     [ 1.076...  1.414...]]
 
     See also
     --------
@@ -2651,8 +2656,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
     Royal Statistical Society B, 26, 211-252 (1964).
 
     """
-    def __init__(self, method='box-cox', copy=True):
+    def __init__(self, method='box-cox', standardize=True, copy=True):
         self.method = method
+        self.standardize = standardize
         self.copy = copy
 
     def fit(self, X, y=None):
@@ -2677,10 +2683,19 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         X = self._check_input(X, check_positive=True, check_method=True)
 
         self.lambdas_ = []
+        transformed = []
+
         for col in X.T:
-            _, lmbda = stats.boxcox(col, lmbda=None)
+            col_trans, lmbda = stats.boxcox(col, lmbda=None)
             self.lambdas_.append(lmbda)
+            transformed.append(col_trans)
+
         self.lambdas_ = np.array(self.lambdas_)
+        transformed = np.array(transformed)
+
+        if self.standardize:
+            self._scaler = StandardScaler()
+            self._scaler.fit(X=transformed.T)
 
         return self
 
@@ -2697,6 +2712,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
 
         for i, lmbda in enumerate(self.lambdas_):
             X[:, i] = stats.boxcox(X[:, i], lmbda=lmbda)
+
+        if self.standardize:
+            X = self._scaler.transform(X)
 
         return X
 
@@ -2717,6 +2735,9 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         """
         check_is_fitted(self, 'lambdas_')
         X = self._check_input(X, check_shape=True)
+
+        if self.standardize:
+            X = self._scaler.inverse_transform(X)
 
         for i, lmbda in enumerate(self.lambdas_):
             x = X[:, i]
@@ -2765,22 +2786,21 @@ class PowerTransformer(BaseEstimator, TransformerMixin):
         return X
 
 
-def power_transform(X, method='box-cox', copy=True):
+def power_transform(X, method='box-cox', standardize=True, copy=True):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
     modeling issues related to heteroscedasticity (non-constant variance),
-    or other situations where normality is desired. Note that power
-    transforms do not result in standard normal distributions (i.e. the
-    transformed data could be far from zero-mean, unit-variance).
-.
+    or other situations where normality is desired.
 
     Currently, power_transform() supports the Box-Cox transform. Box-Cox
     requires input data to be strictly positive. The optimal parameter
     for stabilizing variance and minimizing skewness is estimated
     through maximum likelihood.
 
+    By default, zero-mean, unit-variance normalization is applied to the
+    transformed data.
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
@@ -2793,6 +2813,10 @@ def power_transform(X, method='box-cox', copy=True):
         The power transform method. Currently, 'box-cox' (Box-Cox transform)
         is the only option available.
 
+    standardize : boolean, default=True
+        Set to True to apply zero-mean, unit-variance normalization to the
+        transformed output.
+
     copy : boolean, optional, default=True
         Set to False to perform inplace computation.
 
@@ -2801,10 +2825,10 @@ def power_transform(X, method='box-cox', copy=True):
     >>> import numpy as np
     >>> from sklearn.preprocessing import power_transform
     >>> data = [[1, 2], [3, 2], [4, 5]]
-    >>> print(power_transform(data, method='box-cox'))  # doctest: +ELLIPSIS
-    [[ 0...      0.342...]
-     [ 2.068...  0.342...]
-     [ 3.135...  0.416...]]
+    >>> print(power_transform(data))  # doctest: +ELLIPSIS
+    [[-1.332... -0.707...]
+     [ 0.256... -0.707...]
+     [ 1.076...  1.414...]]
 
     See also
     --------
@@ -2825,7 +2849,7 @@ def power_transform(X, method='box-cox', copy=True):
     G.E.P. Box and D.R. Cox, "An Analysis of Transformations", Journal of the
     Royal Statistical Society B, 26, 211-252 (1964).
     """
-    pt = PowerTransformer(method=method, copy=copy)
+    pt = PowerTransformer(method=method, standardize=standardize, copy=copy)
     return pt.fit_transform(X)
 
 

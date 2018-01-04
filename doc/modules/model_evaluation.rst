@@ -1301,7 +1301,7 @@ Here is a small example of usage of this function:::
 .. topic:: References:
 
   * G. Brier, `Verification of forecasts expressed in terms of probability
-    <http://docs.lib.noaa.gov/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
+    <ftp://ftp.library.noaa.gov/docs.lib/htdocs/rescue/mwr/078/mwr-078-01-0001.pdf>`_,
     Monthly weather review 78.1 (1950)
 
 .. _multilabel_ranking_metrics:
@@ -1737,7 +1737,7 @@ implements several such simple strategies for classification:
   set class distribution.
 - ``most_frequent`` always predicts the most frequent label in the training set.
 - ``prior`` always predicts the class that maximizes the class prior
-  (like ``most_frequent`) and ``predict_proba`` returns the class prior.
+  (like ``most_frequent``) and ``predict_proba`` returns the class prior.
 - ``uniform`` generates predictions uniformly at random.
 - ``constant`` always predicts a constant label that is provided by the user.
    A major motivation of this method is F1-scoring, when the positive class

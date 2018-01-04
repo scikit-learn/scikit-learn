@@ -15,7 +15,9 @@ Weibull, Gaussian, Uniform, and Bimodal.
 Note that the transformation successfully maps the data to a normal
 distribution when applied to certain datasets, but is ineffective with others.
 This highlights the importance of visualizing the data before and after
-transformation.
+transformation. Also note that while the standardize option is set to False for
+the plot examples, by default, :class:`preprocessing.PowerTransformer` also
+applies zero-mean, unit-variance standardization to the transformed outputs.
 """
 
 # Author: Eric Chang <ericchang2017@u.northwestern.edu>
@@ -34,7 +36,7 @@ FONT_SIZE = 6
 BINS = 100
 
 
-pt = PowerTransformer(method='box-cox')
+pt = PowerTransformer(method='box-cox', standardize=False)
 rng = np.random.RandomState(304)
 size = (N_SAMPLES, 1)
 
@@ -54,7 +56,7 @@ X_weibull = rng.weibull(a=a, size=size)
 loc = 100
 X_gaussian = rng.normal(loc=loc, size=size)
 
-# uniform distirbution
+# uniform distribution
 X_uniform = rng.uniform(low=0, high=1, size=size)
 
 # bimodal distribution
