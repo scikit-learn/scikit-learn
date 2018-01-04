@@ -137,26 +137,6 @@ def configuration(parent_package='', top_path=None):
     return config
 
 
-def get_scipy_status():
-    """
-    Returns a dictionary containing a boolean specifying whether SciPy
-    is up-to-date, along with the version string (empty string if
-    not installed).
-    """
-    scipy_status = {}
-    try:
-        import scipy
-        scipy_version = scipy.__version__
-        scipy_status['up_to_date'] = parse_version(
-            scipy_version) >= parse_version(SCIPY_MIN_VERSION)
-        scipy_status['version'] = scipy_version
-    except ImportError:
-        traceback.print_exc()
-        scipy_status['up_to_date'] = False
-        scipy_status['version'] = ""
-    return scipy_status
-
-
 def get_numpy_status():
     """
     Returns a dictionary containing a boolean specifying whether NumPy
@@ -229,9 +209,6 @@ def setup_package():
         numpy_status = get_numpy_status()
         numpy_req_str = "scikit-learn requires NumPy >= {0}.\n".format(
             NUMPY_MIN_VERSION)
-        scipy_status = get_scipy_status()
-        scipy_req_str = "scikit-learn requires SciPy >= {0}.\n".format(
-            SCIPY_MIN_VERSION)
 
         instructions = ("Installation instructions are available on the "
                         "scikit-learn website: "
@@ -247,20 +224,28 @@ def setup_package():
                 raise ImportError("Numerical Python (NumPy) is not "
                                   "installed.\n{0}{1}"
                                   .format(numpy_req_str, instructions))
-        if scipy_status['up_to_date'] is False:
-            if scipy_status['version']:
-                raise ImportError("Your installation of Scientific Python "
-                                  "(SciPy) {0} is out-of-date.\n{1}{2}"
-                                  .format(scipy_status['version'],
-                                          scipy_req_str, instructions))
-            else:
-                raise ImportError("Scientific Python (SciPy) is not "
-                                  "installed.\n{0}{1}"
-                                  .format(scipy_req_str, instructions))
 
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration
+
+
+    build_requires = []
+    try:
+        import scipy
+    except ImportError:  # We do not have scipy installed
+        build_requires += ['scipy>={0}'.format(SCIPY_MIN_VERSION)]
+    else:
+        # If we're building a wheel, assume there already exist scipy wheels
+        # for this platform, so it is safe to add scipy to build requirements.
+        build_requires += (
+            ['scipy>={0}'.format(SCIPY_MIN_VERSION)]
+            if 'bdist_wheel' in sys.argv[1:] else [])
+
+    if build_requires:
+        metadata.update(
+            setup_requires=build_requires,
+            install_requires=build_requires)
 
     setup(**metadata)
 
