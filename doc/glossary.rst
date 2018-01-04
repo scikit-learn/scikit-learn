@@ -143,19 +143,22 @@ General Concepts
         as software regressions.
 
     categorical feature
-        A categorical or nominal :term:`feature` is one that has a finite set
-        of discrete values across the population of data.  These are commonly
-        represented as columns of integers or strings. Strings will be rejected
-        by most scikit-learn estimators, and integers will be treated as
-        ordinal or count-valued. For the use with most estimators, categorical
-        variables should be one-hot encoded.
-        :class:`~sklearn.preprocessing.CategoricalEncoder` helps encoding
-        string-valued categorical features.  Some estimators may handle
-        categorical features better when one-hot encoded.  See also
-        :ref:`preprocessing_categorical_features` and the
+        A categorical or nominal :term:`feature` is one that has a
+        finite set of discrete values across the population of data.
+        These are commonly represented as columns of integers or
+        strings. Strings will be rejected by most scikit-learn
+        estimators, and integers will be treated as ordinal or
+        count-valued. For the use with most estimators, categorical
+        variables should be one-hot encoded. Notable exceptions include
+        tree-based models such as random forests and gradient boosting
+        models that often work better and faster with integer-coded
+        categorical variables.
+        :class:`~sklearn.preprocessing.CategoricalEncoder` helps
+        encoding string-valued categorical features.
+        See also :ref:`preprocessing_categorical_features` and the
         `http://contrib.scikit-learn.org/categorical-encoding
-        <category_encoders>`_ package for tools related to encoding categorical
-        features.
+        <category_encoders>`_ package for tools related to encoding
+        categorical features.
 
     clone
     cloned
