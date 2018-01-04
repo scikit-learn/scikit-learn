@@ -136,26 +136,6 @@ def configuration(parent_package='', top_path=None):
     return config
 
 
-def get_numpy_status():
-    """
-    Returns a dictionary containing a boolean specifying whether NumPy
-    is up-to-date, along with the version string (empty string if
-    not installed).
-    """
-    numpy_status = {}
-    try:
-        import numpy
-        numpy_version = numpy.__version__
-        numpy_status['up_to_date'] = parse_version(
-            numpy_version) >= parse_version(NUMPY_MIN_VERSION)
-        numpy_status['version'] = numpy_version
-    except ImportError:
-        traceback.print_exc()
-        numpy_status['up_to_date'] = False
-        numpy_status['version'] = ""
-    return numpy_status
-
-
 def setup_package():
     metadata = dict(name=DISTNAME,
                     maintainer=MAINTAINER,
@@ -205,31 +185,29 @@ def setup_package():
 
         metadata['version'] = VERSION
     else:
-        numpy_status = get_numpy_status()
-        numpy_req_str = "scikit-learn requires NumPy >= {0}.\n".format(
-            NUMPY_MIN_VERSION)
+        try:
+            metadata['configuration'] = configuration
+            from numpy.distutils.core import setup
 
-        instructions = ("Installation instructions are available on the "
-                        "scikit-learn website: "
-                        "http://scikit-learn.org/stable/install.html\n")
-
-        if numpy_status['up_to_date'] is False:
-            if numpy_status['version']:
-                raise ImportError("Your installation of Numerical Python "
-                                  "(NumPy) {0} is out-of-date.\n{1}{2}"
-                                  .format(numpy_status['version'],
-                                          numpy_req_str, instructions))
-            else:
-                raise ImportError("Numerical Python (NumPy) is not "
-                                  "installed.\n{0}{1}"
-                                  .format(numpy_req_str, instructions))
-
-        from numpy.distutils.core import setup
-
-        metadata['configuration'] = configuration
-
+            metadata['configuration'] = configuration
+        except ImportError:
+            try:
+                from setuptools import setup
+            except ImportError:
+                from distutils.core import setup
 
     build_requires = []
+    try:
+        import numpy  # noqa: F401
+    except ImportError:  # We do not have numpy installed
+        build_requires += ['numpy>={0}'.format(NUMPY_MIN_VERSION)]
+    else:
+        # If we're building a wheel, assume there already exist numpy wheels
+        # for this platform, so it is safe to add numpy to build requirements.
+        build_requires += (
+            ['numpy>={0}'.format(NUMPY_MIN_VERSION)]
+            if 'bdist_wheel' in sys.argv[1:] else [])
+
     try:
         import scipy  # noqa: F401
     except ImportError:  # We do not have scipy installed
