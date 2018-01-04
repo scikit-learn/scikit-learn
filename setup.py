@@ -231,7 +231,7 @@ def setup_package():
 
     build_requires = []
     try:
-        import scipy
+        import scipy  # noqa: F401
     except ImportError:  # We do not have scipy installed
         build_requires += ['scipy>={0}'.format(SCIPY_MIN_VERSION)]
     else:
