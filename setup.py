@@ -71,7 +71,6 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
 else:
     extra_setuptools_args = dict()
 
-
 # Custom clean command to remove build artifacts
 
 class CleanCommand(Clean):
