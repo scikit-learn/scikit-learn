@@ -1426,7 +1426,7 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None):
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          sample_weight=None, digits=2, average='weighted'):
+                          sample_weight=None, digits=2):
     """Build a text report showing the main classification metrics
 
     Read more in the :ref:`User Guide <classification_report>`.
@@ -1451,36 +1451,18 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     digits : int
         Number of digits for formatting output floating point values
 
-    average : string, ['weighted' (default), 'micro', 'macro',
-                       'samples']
-        Determines the type of averaging performed on the data, after
-        reporting the individual results per class:
-
-        ``'micro'``:
-            Calculate metrics globally by counting the total true positives,
-            false negatives and false positives.
-        ``'macro'``:
-            Calculate metrics for each label, and find their unweighted
-            mean.  This does not take label imbalance into account.
-        ``'weighted'``:
-            Calculate metrics for each label, and find their average, weighted
-            by support (the number of true instances for each label). This
-            alters 'macro' to account for label imbalance; it can result in an
-            F-score that is not between precision and recall.
-        ``'samples'``:
-            Calculate metrics for each instance, and find their average (only
-            meaningful for multilabel classification where this differs from
-            :func:`accuracy_score`).
-
     Returns
     -------
     report : string
         Text summary of the precision, recall, F1 score for each class,
         including averages across classes.
 
-        Unless specified otherwise, the reported averages are a
-        prevalence-weighted macro-average across classes (equivalent to
-        :func:`precision_recall_fscore_support` with ``average='weighted'``).
+        The reported averages include micro average (averaging the
+        total true positives, false negatives and false positives), macro
+        average (averaging the unweighted mean per label), weighted average
+        (averaging the support-weighted mean per label) and sample average
+        (only for multilabel classification). See also
+        :func:`precision_recall_fscore_support` for more details on averages.
 
         Note that in binary classification, recall of the positive class
         is also known as "sensitivity"; recall of the negative class is
@@ -1499,10 +1481,13 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
          class 1       0.00      0.00      0.00         1
          class 2       1.00      0.67      0.80         3
     <BLANKLINE>
+       micro avg       0.60      0.60      0.60         5
+       macro avg       0.50      0.56      0.49         5
     weighted avg       0.70      0.60      0.61         5
     <BLANKLINE>
-
     """
+
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
     labels_given = True
     if labels is None:
@@ -1524,16 +1509,12 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
                 "parameter".format(len(labels), len(target_names))
             )
 
-    average_options = ('micro', 'macro', 'weighted', 'samples')
-    if average not in average_options:
-        raise ValueError('average has to be one of ' + str(average_options))
-
-    last_line_heading = average + ' avg'
+    longest_last_line_heading = 'weighted avg'
 
     if target_names is None:
         target_names = [u'%s' % l for l in labels]
     name_width = max(len(cn) for cn in target_names)
-    width = max(name_width, len(last_line_heading), digits)
+    width = max(name_width, len(longest_last_line_heading), digits)
 
     headers = ["precision", "recall", "f1-score", "support"]
     head_fmt = u'{:>{width}s} ' + u' {:>9}' * len(headers)
@@ -1553,18 +1534,27 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     report += u'\n'
 
-    # compute averages with specified averaging method
-    avg_p, avg_r, avg_f1, unused_s = \
-        precision_recall_fscore_support(y_true, y_pred, labels=labels,
-                                        average=average,
-                                        sample_weight=sample_weight)
+    if y_type.startswith('multilabel'):
+        average_options = ('micro', 'macro', 'weighted', 'samples')
+    else:
+        average_options = ('micro', 'macro', 'weighted')
 
-    report += row_fmt.format(last_line_heading,
-                             avg_p,
-                             avg_r,
-                             avg_f1,
-                             np.sum(s),
-                             width=width, digits=digits)
+    # compute all applicable averages
+    for average in average_options:
+        last_line_heading = average + ' avg'
+
+        # compute averages with specified averaging method
+        avg_p, avg_r, avg_f1, unused_s = \
+            precision_recall_fscore_support(y_true, y_pred, labels=labels,
+                                            average=average,
+                                            sample_weight=sample_weight)
+
+        report += row_fmt.format(last_line_heading,
+                                 avg_p,
+                                 avg_r,
+                                 avg_f1,
+                                 np.sum(s),
+                                 width=width, digits=digits)
 
     return report
 

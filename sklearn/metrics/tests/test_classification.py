@@ -737,12 +737,51 @@ def test_classification_report_multiclass():
   versicolor       0.33      0.10      0.15        31
    virginica       0.42      0.90      0.57        20
 
+   micro avg       0.53      0.53      0.53        75
+   macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names)
     assert_equal(report, expected_report)
+
+
+def test_classification_report_multiclass_balanced():
+    categories = ['alt.atheism', 'soc.religion.christian','comp.graphics', 'sci.med']
+    twenty_train = fetch_20newsgroups(subset='train',   categories=categories, shuffle=True, random_state=42)
+    twenty_test = fetch_20newsgroups(subset='test', categories=categories, shuffle=True, random_state=42)
+    docs_test = twenty_test.data
+    text_clf = Pipeline([('vect', CountVectorizer()),
+                         ('tfidf', TfidfTransformer()),
+                         ('clf', MultinomialNB()),
+                         ])
+    text_clf.fit(twenty_train.data, twenty_train.target)
+    predicted = text_clf.predict(docs_test)
+    print(classification_report(twenty_test.target, predicted, target_names=twenty_test.target_names))
+    print(metrics.confusion_matrix(twenty_test.target, predicted))
+
+    y_true, y_pred = [0, 0, 0, 1, 1, 1, 2, 2, 2], [0, 1, 2, 0, 1, 2, 0, 1, 2]
+
+    expected_report = """\
+              precision    recall  f1-score   support
+
+           0       0.33      0.33      0.33         3
+           1       0.33      0.33      0.33         3
+           2       0.33      0.33      0.33         3
+
+   micro avg       0.33      0.33      0.33         9
+   macro avg       0.33      0.33      0.33         9
+weighted avg       0.33      0.33      0.33         9
+"""
+    report = classification_report(y_true, y_pred)
+    assert_equal(report, expected_report)
+
+
+def test_classification_report_multiclass_with_label_detection():
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
+
     # print classification report with label detection
     expected_report = """\
               precision    recall  f1-score   support
@@ -751,6 +790,8 @@ weighted avg       0.51      0.53      0.47        75
            1       0.33      0.10      0.15        31
            2       0.42      0.90      0.57        20
 
+   micro avg       0.53      0.53      0.53        75
+   macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred)
@@ -770,23 +811,13 @@ def test_classification_report_multiclass_with_digits():
   versicolor    0.33333   0.09677   0.15000        31
    virginica    0.41860   0.90000   0.57143        20
 
+   micro avg    0.53333   0.53333   0.53333        75
+   macro avg    0.52601   0.59615   0.50998        75
 weighted avg    0.51375   0.53333   0.47310        75
 """
     report = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
         target_names=iris.target_names, digits=5)
-    assert_equal(report, expected_report)
-    # print classification report with label detection
-    expected_report = """\
-              precision    recall  f1-score   support
-
-           0       0.83      0.79      0.81        24
-           1       0.33      0.10      0.15        31
-           2       0.42      0.90      0.57        20
-
-weighted avg       0.51      0.53      0.47        75
-"""
-    report = classification_report(y_true, y_pred)
     assert_equal(report, expected_report)
 
 
@@ -803,6 +834,8 @@ def test_classification_report_multiclass_with_string_label():
        green       0.33      0.10      0.15        31
          red       0.42      0.90      0.57        20
 
+   micro avg       0.53      0.53      0.53        75
+   macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred)
@@ -815,6 +848,8 @@ weighted avg       0.51      0.53      0.47        75
            b       0.33      0.10      0.15        31
            c       0.42      0.90      0.57        20
 
+   micro avg       0.53      0.53      0.53        75
+   macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred,
@@ -836,6 +871,8 @@ def test_classification_report_multiclass_with_unicode_label():
       green\xa2       0.33      0.10      0.15        31
         red\xa2       0.42      0.90      0.57        20
 
+   micro avg       0.53      0.53      0.53        75
+   macro avg       0.53      0.60      0.51        75
 weighted avg       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred)
@@ -856,6 +893,8 @@ def test_classification_report_multiclass_with_long_string_label():
 greengreengreengreengreen       0.33      0.10      0.15        31
                       red       0.42      0.90      0.57        20
 
+                micro avg       0.53      0.53      0.53        75
+                macro avg       0.53      0.60      0.51        75
              weighted avg       0.51      0.53      0.47        75
 """
 
@@ -911,81 +950,13 @@ def test_multilabel_classification_report():
            2       0.29      0.08      0.12        26
            3       0.52      0.56      0.54        27
 
+   micro avg       0.50      0.51      0.50       104
+   macro avg       0.45      0.51      0.46       104
 weighted avg       0.45      0.51      0.46       104
+ samples avg       0.46      0.42      0.40       104
 """
 
     report = classification_report(y_true, y_pred)
-    assert_equal(report, expected_report)
-
-
-def test_multilabel_classification_report_with_samples_averaging():
-    n_classes = 4
-    n_samples = 50
-
-    _, y_true = make_multilabel_classification(n_features=1,
-                                               n_samples=n_samples,
-                                               n_classes=n_classes,
-                                               random_state=0)
-
-    _, y_pred = make_multilabel_classification(n_features=1,
-                                               n_samples=n_samples,
-                                               n_classes=n_classes,
-                                               random_state=1)
-
-    expected_report = """\
-             precision    recall  f1-score   support
-
-          0       0.50      0.67      0.57        24
-          1       0.51      0.74      0.61        27
-          2       0.29      0.08      0.12        26
-          3       0.52      0.56      0.54        27
-
-samples avg       0.46      0.42      0.40       104
-"""
-
-    report = classification_report(y_true, y_pred, average='samples')
-    assert_equal(report, expected_report)
-
-
-def test_classification_report_multiclass_with_micro_averaging():
-    # Test performance report
-    iris = datasets.load_iris()
-    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
-
-    # print classification report with class names
-    expected_report = """\
-            precision    recall  f1-score   support
-
-    setosa       0.83      0.79      0.81        24
-versicolor       0.33      0.10      0.15        31
- virginica       0.42      0.90      0.57        20
-
- micro avg       0.53      0.53      0.53        75
-"""
-    report = classification_report(
-        y_true, y_pred, labels=np.arange(len(iris.target_names)),
-        target_names=iris.target_names, average='micro')
-    assert_equal(report, expected_report)
-
-
-def test_classification_report_multiclass_with_macro_averaging():
-    # Test performance report
-    iris = datasets.load_iris()
-    y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
-
-    # print classification report with class names
-    expected_report = """\
-            precision    recall  f1-score   support
-
-    setosa       0.83      0.79      0.81        24
-versicolor       0.33      0.10      0.15        31
- virginica       0.42      0.90      0.57        20
-
- macro avg       0.53      0.60      0.51        75
-"""
-    report = classification_report(
-        y_true, y_pred, labels=np.arange(len(iris.target_names)),
-        target_names=iris.target_names, average='macro')
     assert_equal(report, expected_report)
 
 

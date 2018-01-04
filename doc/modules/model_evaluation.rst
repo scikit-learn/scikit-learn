@@ -590,6 +590,8 @@ and inferred labels::
         class 1       0.00      0.00      0.00         1
         class 2       1.00      0.50      0.67         2
    <BLANKLINE>
+      micro avg       0.60      0.60      0.60         5
+      macro avg       0.56      0.50      0.49         5
    weighted avg       0.67      0.60      0.59         5
    <BLANKLINE>
 
