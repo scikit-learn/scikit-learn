@@ -57,7 +57,7 @@ get_build_type() {
         echo QUICK BUILD: no changed filenames for $git_range
         return
     fi
-    changed_examples=$(echo "$filenames" | grep -q -e ^examples/)
+    changed_examples=$(echo "$filenames" | grep -e ^examples/)
     if [[ -n "$changed_examples" ]]
     then
         echo BUILD: detected examples/ filename modified in $git_range: $changed_examples
@@ -82,10 +82,10 @@ then
 elif [[ "$build_type" =~ ^QUICK ]]
 then
     make_args=html-noplot
-elif [[ "build_type" =~ ^'BUILD: detected examples' ]]
+elif [[ "$build_type" =~ ^'BUILD: detected examples' ]]
 then
     # pattern for examples to run is the last line of output
-    pattern = echo $build_type | tail -n 1
+    pattern=$(echo "$build_type" | tail -n 1)
     make_args="html-pattern PATTERN=$pattern"
 else
     make_args=html
