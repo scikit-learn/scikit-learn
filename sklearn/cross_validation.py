@@ -525,9 +525,9 @@ class StratifiedKFold(_BaseKFold):
     Notes
     -----
     For each class ``c``, the first ``n_samples_c % n_splits`` folds have
-    ``n_samples_c // n_splits + 1`` samples of class ``c``, and other folds have
-    ``n_samples_c // n_splits` of them, where ``n_samples_c`` is the number of
-    samples of the dataset of class ``c``.
+    ``n_samples_c // n_splits + 1`` samples of class ``c``, and other folds
+    have ``n_samples_c // n_splits` of them, where ``n_samples_c`` is the
+    number of samples of the dataset of class ``c``.
 
     See also
     --------
