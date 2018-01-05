@@ -799,7 +799,7 @@ Class APIs and Estimator Types
         (and thus a 2-dimensional array-like for a set of samples).  In other
         words, it (lossily) maps a non-rectangular data representation into
         :term:`rectangular` data.
-        
+
         Feature extractors must implement at least:
 
         * :term:`fit`
@@ -1153,7 +1153,7 @@ Methods
         :term:`set_params`.  A parameter ``deep`` can be used, when set to
         False to only return those parameters not including ``__``, i.e.  not
         due to indirection via contained estimators.
-        
+
         Most estimators adopt the definition from :class:`base.BaseEstimator`,
         which simply adopts the parameters defined for ``__init__``.
         :class:`pipeline.Pipeline`, among others, reimplements ``get_params``
@@ -1210,7 +1210,7 @@ Methods
             of the values in the classifier's :term:`classes_` attribute.
 
         clusterer
-            An array of shape ``(n_samples,) where each value is from 0 to
+            An array of shape ``(n_samples,)`` where each value is from 0 to
             ``n_clusters - 1`` if the corresponding sample is clustered,
             and -1 if the sample is not clustered, as in
             :func:`cluster.dbscan`.
