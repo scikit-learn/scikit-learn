@@ -273,7 +273,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
             np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
             np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-            int svm_type=0, int kernel_type=1, int degree=3,
+            int svm_type=0, int kernel_type=2, int degree=3,
             double gamma=0.1, double coef0=0.,
             np.ndarray[np.float64_t, ndim=1, mode='c']
                 class_weight=np.empty(0),
@@ -340,7 +340,7 @@ def predict_proba(
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, int kernel_type=1, int degree=3,
+    int svm_type=0, int kernel_type=2, int degree=3,
     double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
@@ -407,7 +407,7 @@ def decision_function(
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, int kernel_type=1, int degree=3,
+    int svm_type=0, int kernel_type=2, int degree=3,
     double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
