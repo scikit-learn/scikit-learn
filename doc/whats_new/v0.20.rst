@@ -180,6 +180,11 @@ Classifiers and regressors
   error for prior list which summed to 1.
   :issue:`10005` by :user:`Gaurav Dhingra <gxyd>`.
 
+- Fixed a bug in :class:`linear_model.LogisticRegression` where when using the
+  parameter ``multi_class='multinomial'``, the ``predict_proba`` method was
+  returning incorrect probabilities in the case of binary outcomes.
+  :issue:`9939` by :user:`Roger Westover <rwolst>`.
+
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
   :issue:`10071` by `Alexandre Gramfort`_.
