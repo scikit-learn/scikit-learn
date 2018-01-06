@@ -246,7 +246,7 @@ def fit(
 
 
 cdef void set_predict_params(
-    svm_parameter *param, int svm_type, kernel, int degree, double gamma,
+    svm_parameter *param, int svm_type, int kernel_type, int degree, double gamma,
     double coef0, double cache_size, int probability, int nr_weight,
     char *weight_label, char *weight) except *:
     """Fill param with prediction time-only parameters."""
@@ -260,9 +260,7 @@ cdef void set_predict_params(
     cdef double tol = .1
     cdef int random_seed = -1
 
-    kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
-
-    set_parameter(param, svm_type, kernel_index, degree, gamma, coef0, nu,
+    set_parameter(param, svm_type, kernel_type, degree, gamma, coef0, nu,
                          cache_size, C, tol, epsilon, shrinking, probability,
                          nr_weight, weight_label, weight, max_iter, random_seed)
 
@@ -275,7 +273,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
             np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
             np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-            int svm_type=0, kernel='rbf', int degree=3,
+            int svm_type=0, int kernel_type=2, int degree=3,
             double gamma=0.1, double coef0=0.,
             np.ndarray[np.float64_t, ndim=1, mode='c']
                 class_weight=np.empty(0),
@@ -313,7 +311,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
-    set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
+    set_predict_params(&param, svm_type, kernel_type, degree, gamma, coef0,
                        cache_size, 0, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
@@ -342,7 +340,7 @@ def predict_proba(
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, str kernel='rbf', int degree=3,
+    int svm_type=0, int kernel_type=2, int degree=3,
     double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
@@ -379,7 +377,7 @@ def predict_proba(
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     cdef int rv
 
-    set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
+    set_predict_params(&param, svm_type, kernel_type, degree, gamma, coef0,
                        cache_size, 1, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
@@ -409,7 +407,7 @@ def decision_function(
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, kernel='rbf', int degree=3,
+    int svm_type=0, int kernel_type=2, int degree=3,
     double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
@@ -432,7 +430,7 @@ def decision_function(
 
     cdef int rv
 
-    set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
+    set_predict_params(&param, svm_type, kernel_type, degree, gamma, coef0,
                        cache_size, 0, <int>class_weight.shape[0],
                        class_weight_label.data, class_weight.data)
 

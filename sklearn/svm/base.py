@@ -68,7 +68,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     # The order of these must match the integer values in LibSVM.
     # XXX These are actually the same in the dense case. Need to factor
     # this out.
-    _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
+    _kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
 
     @abstractmethod
     def __init__(self, kernel, degree, gamma, coef0,
@@ -259,7 +259,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
         X.sort_indices()
 
-        kernel_type = self._sparse_kernels.index(kernel)
+        kernel_type = self._kernels.index(kernel)
 
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
@@ -323,11 +323,12 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  (X.shape[1], self.shape_fit_[0]))
 
         svm_type = LIBSVM_IMPL.index(self._impl)
+        kernel_type = self._kernels.index(kernel)
 
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
             self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_, svm_type=svm_type, kernel=kernel,
+            self.probA_, self.probB_, svm_type=svm_type, kernel_type=kernel_type,
             degree=self.degree, coef0=self.coef0, gamma=self._gamma,
             cache_size=self.cache_size)
 
@@ -337,7 +338,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         if callable(kernel):
             kernel = 'precomputed'
 
-        kernel_type = self._sparse_kernels.index(kernel)
+        kernel_type = self._kernels.index(kernel)
 
         C = 0.0  # C is not useful here
 
@@ -402,12 +403,14 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         if callable(kernel):
             kernel = 'precomputed'
 
+        kernel_type = self._kernels.index(kernel)
+
         return libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
             self._dual_coef_, self._intercept_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self._impl),
-            kernel=kernel, degree=self.degree, cache_size=self.cache_size,
+            kernel_type=kernel_type, degree=self.degree, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self._gamma)
 
     def _sparse_decision_function(self, X):
@@ -417,7 +420,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         if hasattr(kernel, '__call__'):
             kernel = 'precomputed'
 
-        kernel_type = self._sparse_kernels.index(kernel)
+        kernel_type = self._kernels.index(kernel)
 
         return libsvm_sparse.libsvm_sparse_decision_function(
             X.data, X.indices, X.indptr,
@@ -639,11 +642,12 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
             kernel = 'precomputed'
 
         svm_type = LIBSVM_IMPL.index(self._impl)
+        kernel_type = self._kernels.index(kernel)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
             self._dual_coef_, self._intercept_,
             self.probA_, self.probB_,
-            svm_type=svm_type, kernel=kernel, degree=self.degree,
+            svm_type=svm_type, kernel_type=kernel_type, degree=self.degree,
             cache_size=self.cache_size, coef0=self.coef0, gamma=self._gamma)
 
         return pprob
@@ -655,7 +659,7 @@ class BaseSVC(six.with_metaclass(ABCMeta, BaseLibSVM, ClassifierMixin)):
         if callable(kernel):
             kernel = 'precomputed'
 
-        kernel_type = self._sparse_kernels.index(kernel)
+        kernel_type = self._kernels.index(kernel)
 
         return libsvm_sparse.libsvm_sparse_predict_proba(
             X.data, X.indices, X.indptr,
