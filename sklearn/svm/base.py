@@ -327,8 +327,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self._dual_coef_, self._intercept_,
-            self.probA_, self.probB_, svm_type=svm_type, kernel_type=kernel_type,
+            self._dual_coef_, self._intercept_, self.probA_, self.probB_,
+            svm_type=svm_type, kernel_type=kernel_type,
             degree=self.degree, coef0=self.coef0, gamma=self._gamma,
             cache_size=self.cache_size)
 
@@ -409,8 +409,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             X, self.support_, self.support_vectors_, self.n_support_,
             self._dual_coef_, self._intercept_,
             self.probA_, self.probB_,
-            svm_type=LIBSVM_IMPL.index(self._impl),
-            kernel_type=kernel_type, degree=self.degree, cache_size=self.cache_size,
+            svm_type=LIBSVM_IMPL.index(self._impl), kernel_type=kernel_type,
+            degree=self.degree, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self._gamma)
 
     def _sparse_decision_function(self, X):
