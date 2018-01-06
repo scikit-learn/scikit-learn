@@ -183,7 +183,7 @@ Classifiers and regressors
 - Fixed a bug in :class:`linear_model.LogisticRegression` where when using the
   parameter ``multi_class='multinomial'``, the ``predict_proba`` method was
   returning incorrect probabilities in the case of binary outcomes.
-  :issue:`9939` by :user: `rwolst`.
+  :issue:`9939` by :user:`Roger Westover <rwolst>`.
 
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.

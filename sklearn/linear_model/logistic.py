@@ -1338,13 +1338,15 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
             raise NotFittedError("Call fit before prediction")
         if self.multi_class == "ovr":
             return super(LogisticRegression, self)._predict_proba_lr(X)
-        elif self.coef_.shape[0] == 1:
-            # Workaround for multi_class="multinomial" and binary outcomes
-            # which requires softmax prediction with only a 1D coef_ vector.
-            decision = self.decision_function(X)
-            return softmax(np.c_[-decision, decision], copy=False)
         else:
-            return softmax(self.decision_function(X), copy=False)
+            decision = self.decision_function(X)
+            if decision.ndim == 1:
+                # Workaround for multi_class="multinomial" and binary outcomes
+                # which requires softmax prediction with only a 1D decision.
+                decision_2d = np.c_[-decision, decision]
+            else:
+                decision_2d = decision
+            return softmax(decision_2d, copy=False)
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
