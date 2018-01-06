@@ -273,7 +273,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
             np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
             np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-            int svm_type=0, int kernel_type=2, int degree=3,
+            int svm_type=0, int kernel_type=1, int degree=3,
             double gamma=0.1, double coef0=0.,
             np.ndarray[np.float64_t, ndim=1, mode='c']
                 class_weight=np.empty(0),
@@ -288,7 +288,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     X : array-like, dtype=float, size=[n_samples, n_features]
     svm_type : {0, 1, 2, 3, 4}
         Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
-    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
+    kernel_type : index of ['linear', 'rbf', 'poly', 'sigmoid', 'precomputed']
         Type of kernel.
     degree : int
         Degree of the polynomial kernel.
@@ -340,7 +340,7 @@ def predict_proba(
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, int kernel_type=2, int degree=3,
+    int svm_type=0, int kernel_type=1, int degree=3,
     double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
@@ -363,7 +363,7 @@ def predict_proba(
     Parameters
     ----------
     X : array-like, dtype=float
-    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
+    kernel_type : index of ['linear', 'rbf', 'poly', 'sigmoid', 'precomputed']
 
     Returns
     -------
@@ -407,7 +407,7 @@ def decision_function(
     np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, int kernel_type=2, int degree=3,
+    int svm_type=0, int kernel_type=1, int degree=3,
     double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
