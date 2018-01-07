@@ -1,10 +1,11 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+#          Prokopios Gryllos <gryllosprokopis@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
 import numpy as np
 from scipy import sparse
-from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import LeaveOneOut, train_test_split
 
 from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_greater, assert_almost_equal,
@@ -13,15 +14,82 @@ from sklearn.utils.testing import (assert_array_almost_equal, assert_equal,
                                    assert_raises,
                                    ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
+from sklearn.linear_model import LogisticRegression
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import Imputer
-from sklearn.metrics import brier_score_loss, log_loss
-from sklearn.calibration import CalibratedClassifierCV
+from sklearn.metrics import brier_score_loss, log_loss, confusion_matrix
+from sklearn.calibration import CalibratedClassifierCV, CutoffClassifier
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
+
+
+def test_cutoff_prefit():
+    calibration_samples = 200
+    X, y = make_classification(n_samples=1000, n_features=6, random_state=42,
+                               n_classes=2)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        train_size=0.6,
+                                                        random_state=42)
+    lr = LogisticRegression().fit(X_train, y_train)
+
+    clf = CutoffClassifier(lr, method='roc', cv='prefit').fit(
+        X_test[:calibration_samples], y_train[:calibration_samples]
+    )
+
+    y_pred = lr.predict(X_test[calibration_samples:])
+    y_pred_clf = clf.predict(X_test[calibration_samples:])
+
+    tn, fp, fn, tp = confusion_matrix(
+        y_test[calibration_samples:], y_pred).ravel()
+    tn_clf, fp_clf, fn_clf, tp_clf = confusion_matrix(
+        y_test[calibration_samples:], y_pred_clf).ravel()
+
+    tpr = tp / (tp + fn)
+    tnr = tn / (tn + fp)
+
+    tpr_clf_roc = tp_clf / (tp_clf + fn_clf)
+    tnr_clf_roc = tn_clf / (tn_clf + fp_clf)
+
+    # check that the sum of tpr + tnr has improved
+    assert_greater(tpr_clf_roc + tnr_clf_roc, tpr + tnr)
+
+    clf = CutoffClassifier(
+        lr, method='max_tpr', cv='prefit', min_val_tnr=0.3
+    ).fit(X_test[:calibration_samples], y_train[:calibration_samples])
+
+    y_pred_clf = clf.predict(X_test[calibration_samples:])
+
+    tn_clf, fp_clf, fn_clf, tp_clf = confusion_matrix(
+        y_test[calibration_samples:], y_pred_clf).ravel()
+
+    tpr_clf_max_tpr = tp_clf / (tp_clf + fn_clf)
+    tnr_clf_max_tpr = tn_clf / (tn_clf + fp_clf)
+
+    # check that the tpr increases with tnr >= min_val_tnr
+    assert_greater(tpr_clf_max_tpr, tpr)
+    assert_greater(tpr_clf_max_tpr, tpr_clf_roc)
+    assert_greater_equal(tnr_clf_max_tpr, 0.3)
+
+    clf = CutoffClassifier(
+        lr, method='max_tnr', cv='prefit', min_val_tpr=0.3
+    ).fit(X_test[:calibration_samples], y_train[:calibration_samples])
+
+    y_pred_clf = clf.predict(X_test[calibration_samples:])
+
+    tn_clf, fp_clf, fn_clf, tp_clf = confusion_matrix(
+        y_test[calibration_samples:], y_pred_clf).ravel()
+
+    tnr_clf_max_tnr = tn_clf / (tn_clf + fp_clf)
+    tpr_clf_max_tnr = tp_clf / (tp_clf + fn_clf)
+
+    # check that the tnr increases with tpr >= min_val_tpr
+    assert_greater(tnr_clf_max_tnr, tnr)
+    assert_greater(tnr_clf_max_tnr, tnr_clf_roc)
+    assert_greater_equal(tpr_clf_max_tnr, 0.3)
 
 
 @ignore_warnings
