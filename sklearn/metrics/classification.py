@@ -474,7 +474,8 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
     >>> jaccard_similarity_score(y_true, y_pred, average='macro')
     0.5
     >>> jaccard_similarity_score(y_true, y_pred, average='micro')
-    0.5
+    ... # doctest: +ELLIPSIS
+    0.333...
 
     >>> y_pred = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat']
     >>> y_true = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird']
@@ -626,30 +627,30 @@ def jaccard_similarity_score(y_true, y_pred, labels=None, pos_label=1,
 
         if len(tp_bins):
             tp_sum = np.bincount(tp_bins, weights=tp_bins_weights,
-                                 minlength=len(labels))
+                                 minlength=len(labels))[labels]
         else:
             # pathological case
             true_sum = pred_sum = tp_sum = np.zeros(len(labels))
 
         if len(y_pred):
             pred_sum = np.bincount(y_pred, weights=sample_weight,
-                                   minlength=len(labels))
+                                   minlength=len(labels))[labels]
         if len(y_true):
             true_sum = np.bincount(y_true, weights=sample_weight,
-                                   minlength=len(labels))
+                                   minlength=len(labels))[labels]
 
         if average == 'micro' or average == 'binary':
             num = np.array([tp_sum.sum()])
-            den = np.array([true_sum.sum()])
+            den = np.array([true_sum.sum() + pred_sum.sum() - tp_sum.sum()])
             weights = None
         elif average == 'macro':
-            num = tp_sum[labels]
-            den = true_sum[labels] + pred_sum[labels] - tp_sum[labels]
+            num = tp_sum
+            den = true_sum + pred_sum - tp_sum
             weights = None
         elif average == 'weighted':
-            num = tp_sum[labels]
-            den = true_sum[labels] + pred_sum[labels] - tp_sum[labels]
-            weights = true_sum[labels]
+            num = tp_sum
+            den = true_sum + pred_sum - tp_sum
+            weights = true_sum
         else:
             raise ValueError("In multiclass classification average must be "
                              "one of ('micro', 'macro', 'weighted'), got "

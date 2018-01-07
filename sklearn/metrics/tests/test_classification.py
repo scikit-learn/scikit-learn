@@ -1046,7 +1046,7 @@ def test_multiclass_jaccard_similarity_score():
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='micro',
                                                  labels=['ant', 'cat']),
-                        4. / 7)
+                        1. / 2)
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='micro',
                                                  labels=['cat']), 2. / 5)
