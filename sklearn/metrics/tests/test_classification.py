@@ -748,19 +748,6 @@ weighted avg       0.51      0.53      0.47        75
 
 
 def test_classification_report_multiclass_balanced():
-    categories = ['alt.atheism', 'soc.religion.christian','comp.graphics', 'sci.med']
-    twenty_train = fetch_20newsgroups(subset='train',   categories=categories, shuffle=True, random_state=42)
-    twenty_test = fetch_20newsgroups(subset='test', categories=categories, shuffle=True, random_state=42)
-    docs_test = twenty_test.data
-    text_clf = Pipeline([('vect', CountVectorizer()),
-                         ('tfidf', TfidfTransformer()),
-                         ('clf', MultinomialNB()),
-                         ])
-    text_clf.fit(twenty_train.data, twenty_train.target)
-    predicted = text_clf.predict(docs_test)
-    print(classification_report(twenty_test.target, predicted, target_names=twenty_test.target_names))
-    print(metrics.confusion_matrix(twenty_test.target, predicted))
-
     y_true, y_pred = [0, 0, 0, 1, 1, 1, 2, 2, 2], [0, 1, 2, 0, 1, 2, 0, 1, 2]
 
     expected_report = """\
