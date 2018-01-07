@@ -172,6 +172,19 @@ def test_expected_mutual_info_overflow():
     assert expected_mutual_information(np.array([[70000]]), 70000) <= 1
 
 
+def test_int_overflow_mutual_info_score():
+    # Test overflow in mutual_info_classif
+    x = np.concatenate((np.repeat(1, 52632 + 2529), np.repeat(2, 14660+793),
+                       np.repeat(3, 3271+204), np.repeat(4, 814+39),
+                       np.repeat(5, 316+20)))
+    y = np.concatenate((np.repeat(0, 52632), np.repeat(1, 2529),
+                       np.repeat(0, 14660), np.repeat(1, 793), np.repeat(0, 3271),
+                       np.repeat(1, 204), np.repeat(0, 814), np.repeat(1, 39),
+                       np.repeat(0, 316), np.repeat(1, 20)))
+
+    mutual_info_score(x.ravel(), y.ravel())
+
+
 def test_entropy():
     ent = entropy([0, 0, 42.])
     assert_almost_equal(ent, 0.6365141, 5)
