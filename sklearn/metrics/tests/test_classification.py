@@ -10,7 +10,7 @@ from sklearn import datasets
 from sklearn import svm
 
 from sklearn.datasets import make_multilabel_classification
-from sklearn.preprocessing import label_binarize
+from sklearn.preprocessing import label_binarize, LabelBinarizer
 from sklearn.utils.validation import check_random_state
 
 from sklearn.utils.testing import assert_raises, clean_warning_registry
@@ -1026,40 +1026,24 @@ def test_multilabel_jaccard_similarity_score():
 def test_multiclass_jaccard_similarity_score():
     y_true = ['ant', 'ant', 'cat', 'cat', 'ant', 'cat', 'bird', 'bird']
     y_pred = ['cat', 'ant', 'cat', 'cat', 'ant', 'bird', 'bird', 'cat']
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='macro'), 7. / 15)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='macro',
-                                                 labels=['ant', 'bird']),
-                        1. / 2)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='macro',
-                                                 labels=['ant', 'cat']),
-                        8. / 15)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='macro',
-                                                 labels=['cat', 'bird']),
-                        11. / 30)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='weighted'), 29. / 60)
-
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='micro',
-                                                 labels=['ant', 'cat']),
-                        1. / 2)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='micro',
-                                                 labels=['cat']), 2. / 5)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='micro',
-                                                 labels=['ant']), 2. / 3)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='micro',
-                                                 labels=['bird']), 1. / 3)
-    assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
-                                                 average='micro',
-                                                 labels=['ant', 'bird']),
-                        1. / 2)
+    labels = ['ant', 'bird', 'cat']
+    lb = LabelBinarizer()
+    lb.fit(labels)
+    y_true_bin = lb.transform(y_true)
+    y_pred_bin = lb.transform(y_pred)
+    multi_jaccard_similarity_score = partial(jaccard_similarity_score, y_true,
+                                             y_pred)
+    bin_jaccard_similarity_score = partial(jaccard_similarity_score, y_true_bin
+                                           , y_pred_bin)
+    multi_labels_list = [['ant', 'bird'], ['ant', 'cat'], ['cat', 'bird'],
+                         ['ant'], ['bird'], ['cat'], None]
+    bin_labels_list = [[0, 1], [0, 2], [2, 1], [0], [1], [2], None]
+    for average in ('macro', 'weighted', 'micro'):
+        for m_label, b_label in zip(multi_labels_list, bin_labels_list):
+            assert_almost_equal(multi_jaccard_similarity_score(average=average,
+                                                               labels=m_label),
+                                bin_jaccard_similarity_score(average=average,
+                                                             labels=b_label))
     weight = np.array([1, 2, 1, 1, 2, 1, 2, 3])
     assert_almost_equal(jaccard_similarity_score(y_true, y_pred,
                                                  average='micro',
