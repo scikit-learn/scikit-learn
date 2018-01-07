@@ -175,21 +175,19 @@ class _CutoffClassifier(object):
         The classifier whose decision threshold will be adapted according to
         the acquired optimal cutoff point
 
-    method : 'roc' or 'max_se' or 'max_sp'
+    method : 'roc' or 'max_tpr' or 'max_tnr'
         The method to use for choosing the cutoff point.
 
     pos_label : object
         Label considered as positive during the roc_curve construction.
 
-    min_val_sp : float in [0, 1]
-        minimum required value for specificity in case method 'max_se' is used
+    min_val_tnr : float in [0, 1]
+        minimum required value for true negative rate (specificity) in case
+        method 'max_tpr' is used
 
-    min_val_se : float in [0, 1]
-        minimum required value for sensitivity in case method 'max_sp' is used
-
-    min_val_se : float in [0, 1]
-        In case method = 'max_sp' this value must be set to specify the minimum
-        required value for the sensitivity
+    min_val_tpr : float in [0, 1]
+        minimum required value for true positive rate (sensitivity) in case
+        method 'max_tnr' is used
 
     Attributes
     ----------
