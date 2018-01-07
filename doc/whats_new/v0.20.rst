@@ -7,6 +7,11 @@
 Version 0.20 (under development)
 ================================
 
+As well as a plethora of new features and enhancements, this release is the
+first to be accompanied by a :ref:`glossary` developed by `Joel Nothman`_. The
+glossary is a reference resource to help users and contributors become familiar
+with the terminology and conventions used in Scikit-learn.
+
 Changed models
 --------------
 
@@ -174,6 +179,11 @@ Classifiers and regressors
 - Fixed a bug in :class:`naive_bayes.GaussianNB` which incorrectly raised
   error for prior list which summed to 1.
   :issue:`10005` by :user:`Gaurav Dhingra <gxyd>`.
+
+- Fixed a bug in :class:`linear_model.LogisticRegression` where when using the
+  parameter ``multi_class='multinomial'``, the ``predict_proba`` method was
+  returning incorrect probabilities in the case of binary outcomes.
+  :issue:`9939` by :user:`Roger Westover <rwolst>`.
 
 - Fixed a bug in :class:`linear_model.OrthogonalMatchingPursuit` that was
   broken when setting ``normalize=False``.
